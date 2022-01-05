@@ -44,31 +44,6 @@ std::pair<std::string_view, logical_line_segment_eol> extract_line(std::string_v
     }
 }
 
-std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count)
-{
-    size_t utf16_skipped = 0;
-    for (; count; --count)
-    {
-        if (s.empty())
-            break;
-        unsigned char c = s.front();
-        if (c < 0x80)
-        {
-            s.remove_prefix(1);
-            utf16_skipped++;
-            continue;
-        }
-
-        const auto cs = utf8_prefix_sizes[c];
-        if (!cs.utf8 || s.size() < cs.utf8)
-            throw hlasm_plugin::parser_library::lexing::utf8_error();
-
-        s.remove_prefix(cs.utf8);
-        utf16_skipped += cs.utf16;
-    }
-    return std::pair(s, utf16_skipped);
-}
-
 template<bool validate>
 std::pair<size_t, size_t> substr_step(std::string_view& s, size_t& chars)
 {
@@ -106,6 +81,13 @@ std::pair<size_t, size_t> substr_step(std::string_view& s, size_t& chars)
     return result;
 }
 
+std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count)
+{
+    const auto s_ = s;
+    auto [_, utf16_skipped] = substr_step<true>(s, count);
+    return std::pair(s_.substr(s_.size() - s.size()), utf16_skipped);
+}
+
 template<bool validate>
 utf8_substr_result utf8_substr(std::string_view s, size_t offset, size_t length)
 {
@@ -126,30 +108,13 @@ utf8_substr_result utf8_substr(std::string_view s, size_t offset, size_t length)
 template utf8_substr_result utf8_substr<false>(std::string_view s, size_t offset, size_t length);
 template utf8_substr_result utf8_substr<true>(std::string_view s, size_t offset, size_t length);
 
-std::pair<size_t, bool> length_utf16(std::string_view s)
+size_t length_utf16(std::string_view s)
 {
-    bool last = false;
-    size_t len = 0;
-    while (!s.empty())
-    {
-        unsigned char c = s.front();
-        if (c < 0x80)
-        {
-            s.remove_prefix(1);
-            len++;
-            last = false;
-            continue;
-        }
+    auto len = (size_t)-1;
 
-        const auto cs = utf8_prefix_sizes[c];
-        if (!cs.utf8 || s.size() < cs.utf8)
-            throw hlasm_plugin::parser_library::lexing::utf8_error();
-        s.remove_prefix(cs.utf8);
+    auto [_, utf16] = substr_step<true>(s, len);
 
-        len += cs.utf16;
-        last = cs.utf16 > 1;
-    }
-    return std::make_pair(len, last);
+    return utf16;
 }
 
 // returns "need more", input must be non-empty

@@ -153,10 +153,10 @@ inline bool operator!=(const utf8_substr_result& l, const utf8_substr_result& r)
 
 // utf-8 substr in unicode characters with optional validation
 template<bool validate = false>
-utf8_substr_result utf8_substr(std::string_view s, size_t offset_chars, size_t length_chars);
+utf8_substr_result utf8_substr(std::string_view s, size_t offset_chars = 0, size_t length_chars = (size_t)-1);
 
-// returns the length of the string in utf-16 symbols and info if the last character takes two units
-std::pair<size_t, bool> length_utf16(std::string_view text);
+// returns the length of the string in utf-16 symbols
+size_t length_utf16(std::string_view text);
 
 } // namespace hlasm_plugin::parser_library::lexing
 

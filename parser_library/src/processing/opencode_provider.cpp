@@ -70,8 +70,7 @@ void opencode_provider::generate_aread_highlighting(std::string_view text, size_
     if (rest.empty())
         return;
 
-    auto [rest_len, last_big] = lexing::length_utf16(rest);
-    if (rest_len)
+    if (auto rest_len = lexing::length_utf16(rest))
         m_src_proc->add_hl_symbol(
             token_info(range(position(line_no, utf16_skipped), position(line_no, utf16_skipped + rest_len)),
                 semantics::hl_scopes::ignored));
@@ -175,8 +174,8 @@ void opencode_provider::process_comment()
     {
         if (l.code.size())
         {
-            auto [skip_len, _] = lexing::length_utf16(l.line.substr(0, l.code.data() - l.line.data()));
-            auto [code_len, last_big] = lexing::length_utf16(l.code);
+            auto skip_len = lexing::length_utf16(l.line.substr(0, l.code.data() - l.line.data()));
+            auto code_len = lexing::length_utf16(l.code);
 
             m_src_proc->add_hl_symbol(
                 token_info(range(position(line_no, skip_len), position(line_no, skip_len + code_len)),
