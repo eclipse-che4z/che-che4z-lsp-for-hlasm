@@ -36,6 +36,8 @@ class cics_preprocessor : public preprocessor
     std::string m_buffer;
     cics_preprocessor_options m_options;
     bool m_end_seen = false;
+    bool m_global_macro_called = false;
+    bool m_pendig_prolog = false;
 
 public:
     cics_preprocessor(const cics_preprocessor_options& options, library_fetcher libs, diagnostic_op_consumer* diags)
@@ -44,7 +46,41 @@ public:
         , m_options(options)
     {}
 
-    void inject_no_end_warning() { m_buffer.append("         DFHEIMSG 4 \n"); }
+    void inject_no_end_warning()
+    {
+        m_buffer.append("*DFH7041I W  NO END CARD FOUND - COPYBOOK ASSUMED.\n"
+                        "         DFHEIMSG 4\n");
+    }
+
+    void inject_DFHEIGBL(bool rsect)
+    {
+        if (rsect)
+        {
+            if (m_options.leasm)
+                m_buffer.append("         DFHEIGBL ,,RS,LE          INSERTED BY TRANSLATOR\n");
+            else
+                m_buffer.append("         DFHEIGBL ,,RS,NOLE        INSERTED BY TRANSLATOR\n");
+        }
+        else
+        {
+            if (m_options.leasm)
+                m_buffer.append("         DFHEIGBL ,,,LE            INSERTED BY TRANSLATOR\n");
+            else
+                m_buffer.append("         DFHEIGBL ,,,NOLE          INSERTED BY TRANSLATOR\n");
+        }
+    }
+
+    void inject_prolog() { m_buffer.append("         DFHEIENT                  INSERTED BY TRANSLATOR\n"); }
+    void inject_end_code()
+    {
+        if (m_options.epilog)
+            m_buffer.append("         DFHEIRET                  INSERTED BY TRANSLATOR\n");
+        if (m_options.prolog)
+        {
+            m_buffer.append("         DFHEISTG                  INSERTED BY TRANSLATOR\n");
+            m_buffer.append("         DFHEIEND                  INSERTED BY TRANSLATOR\n");
+        }
+    }
 
     bool try_asm_xopts(std::string_view input, size_t lineno)
     {
@@ -90,9 +126,19 @@ public:
         return true;
     }
 
+    static constexpr size_t valid_cols = 1 + lexing::default_ictl.end - (lexing::default_ictl.begin - 1);
+    static auto create_line_preview(std::string_view input)
+    {
+        return lexing::utf8_substr(lexing::extract_line(input).first, lexing::default_ictl.begin - 1, valid_cols);
+    }
+
+    static bool ignore_line(std::string_view s) { return s.empty() || s.front() == '*' || s.substr(0, 2) == ".*"; }
+
     /* returns number of consumed lines */
     size_t fill_buffer(std::string_view& input, size_t lineno)
     {
+        if (std::exchange(m_pendig_prolog, false))
+            inject_prolog();
         if (input.empty())
         {
             if (!std::exchange(m_end_seen, true))
@@ -103,7 +149,95 @@ public:
         if (lineno == 0 && try_asm_xopts(input, lineno))
             return 0;
 
-        return 0;
+        auto [line, line_len_chars, _] = create_line_preview(input);
+
+        if (ignore_line(line))
+            return 0;
+
+        // apparently lines full of characters are ignored
+        if (line_len_chars == valid_cols && line.find(' ') == std::string_view::npos)
+            return 0;
+
+        static const std::regex line_of_interest(
+            "([^ ]*)[ ]+(START|CSECT|RSECT|END|[eE][xX][eE][cC][ ]+[cC][iI][cC][sS])(?: .+)?");
+
+        std::match_results<std::string_view::iterator> matches;
+        if (!std::regex_match(line.begin(), line.end(), matches, line_of_interest))
+            return 0;
+
+        auto label = matches[1].length() ? std::string_view(&*matches[1].first, matches[1].second - matches[1].first)
+                                         : std::string_view();
+        switch (*matches[2].first)
+        {
+            case 'S':
+            case 'C':
+                if (!std::exchange(m_global_macro_called, true))
+                    inject_DFHEIGBL(false);
+                m_pendig_prolog = m_options.prolog;
+                return 0;
+
+            case 'R':
+                m_global_macro_called = true;
+                inject_DFHEIGBL(true);
+                m_pendig_prolog = m_options.prolog;
+                return 0;
+
+            case 'e':
+            case 'E':
+                if (matches[2].first[1] == 'N')
+                {
+                    inject_end_code();
+                    return 0;
+                }
+                break;
+
+            default:
+                assert(false);
+                break;
+        }
+
+        static constexpr const lexing::logical_line_extractor_args cics_extract { 1, 71, 2, false, false };
+        m_logical_line.clear();
+        bool extracted = lexing::extract_logical_line(m_logical_line, input, cics_extract);
+        assert(extracted);
+
+        // print the first line, remove continuation character
+        auto buf_len = m_buffer.size();
+        m_buffer.append(lexing::utf8_substr(m_logical_line.segments.front().line, 0, cics_extract.end).str);
+        if (auto after_cont = lexing::utf8_substr(m_logical_line.segments.front().line, cics_extract.end + 1).str;
+            !after_cont.empty())
+            m_buffer.append(" ").append(after_cont);
+        m_buffer.replace(buf_len, label.size(), lexing::utf8_substr(label).char_count, ' ');
+        m_buffer[buf_len] = '*';
+        m_buffer.append("\n");
+
+        if (auto char_count = lexing::utf8_substr(label).char_count; char_count <= 8)
+            m_buffer.append(label).append(9 - char_count, ' ');
+        else
+            m_buffer.append(label).append(" DS 0H\n").append(9, ' ');
+
+        m_buffer.append("DFHECALL =X'0E'\n"); // TODO: generate correct calls
+
+        if (m_logical_line.continuation_error)
+            m_buffer
+                .append("*DFH7080I W  CONTINUATION OF EXEC COMMAND IGNORED.\n"
+                        "         DFHEIMSG 4\n")
+                .append("*DFH7080I W  CONTINUATION OF EXEC COMMAND IGNORED.\n"
+                        "         DFHEIMSG 4\n"); // seems to be done twice
+
+        for (auto it = m_logical_line.segments.begin() + 1; it != m_logical_line.segments.end(); ++it)
+        {
+            const auto& l = *it;
+            buf_len = m_buffer.size();
+            m_buffer.append(lexing::utf8_substr(l.line, 0, cics_extract.end).str);
+            if (auto after_cont = lexing::utf8_substr(l.line, cics_extract.end + 1).str; !after_cont.empty())
+                m_buffer.append(" ").append(after_cont);
+            if (!m_logical_line.continuation_error)
+                m_buffer[buf_len] = '*';
+            m_buffer.append("\n");
+        }
+
+        return m_logical_line.segments.size();
     }
 
     // Inherited via preprocessor
@@ -124,6 +258,8 @@ public:
         else
             return std::nullopt;
     }
+
+    bool finished() const override { return !m_pendig_prolog; }
 
     cics_preprocessor_options current_options() const { return m_options; }
 };
