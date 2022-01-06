@@ -511,6 +511,8 @@ bool opencode_provider::finished() const
         return true;
     if (!m_ainsert_buffer.empty())
         return false;
+    if (m_preprocessor && !m_preprocessor->finished())
+        return false;
     const auto& o = m_ctx->hlasm_ctx->opencode_copy_stack();
     if (o.empty())
         return true;

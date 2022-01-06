@@ -641,6 +641,8 @@ class db2_preprocessor : public preprocessor
             return std::nullopt;
     }
 
+    bool finished() const override { return true; }
+
 public:
     db2_preprocessor(library_fetcher libs, diagnostic_op_consumer* diags)
         : m_libs(std::move(libs))

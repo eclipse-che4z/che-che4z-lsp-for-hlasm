@@ -41,6 +41,8 @@ public:
 
     virtual std::optional<std::string> generate_replacement(std::string_view& input, size_t& lineno) = 0;
 
+    virtual bool finished() const = 0;
+
     static std::unique_ptr<preprocessor> create(
         const cics_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
 
