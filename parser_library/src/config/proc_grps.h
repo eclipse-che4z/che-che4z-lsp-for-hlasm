@@ -53,8 +53,15 @@ void to_json(nlohmann::json& j, const db2_preprocessor& p);
 void from_json(const nlohmann::json& j, db2_preprocessor& p);
 
 struct cics_preprocessor
-{};
-inline bool operator==(const cics_preprocessor&, const cics_preprocessor&) { return true; }
+{
+    bool prolog = true;
+    bool epilog = true;
+    bool leasm = false;
+};
+inline bool operator==(const cics_preprocessor& l, const cics_preprocessor& r)
+{
+    return l.prolog == r.prolog && l.epilog == r.epilog && l.leasm == r.leasm;
+}
 inline bool operator!=(const cics_preprocessor& l, const cics_preprocessor& r) { return !(l == r); }
 
 void to_json(nlohmann::json& j, const cics_preprocessor& p);

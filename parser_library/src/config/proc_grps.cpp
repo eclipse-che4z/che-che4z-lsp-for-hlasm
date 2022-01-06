@@ -66,8 +66,61 @@ void from_json(const nlohmann::json& j, assembler_options& p)
 void to_json(nlohmann::json& j, const db2_preprocessor&) { j = "DB2"; }
 void from_json(const nlohmann::json&, db2_preprocessor&) {}
 
-void to_json(nlohmann::json& j, const cics_preprocessor&) { j = "CICS"; }
-void from_json(const nlohmann::json&, cics_preprocessor&) {}
+void to_json(nlohmann::json& j, const cics_preprocessor& v)
+{
+    static const cics_preprocessor default_config;
+    if (v == default_config)
+    {
+        j = "CICS";
+        return;
+    }
+
+    j = nlohmann::json {
+        { "name", "CICS" },
+        {
+            "options",
+            nlohmann::json::array({
+                v.prolog ? "PROLOG" : "NOPROLOG",
+                v.epilog ? "EPILOG" : "NOEPILOG",
+                v.leasm ? "LEASM" : "NOLEASM",
+            }),
+        },
+    };
+}
+
+namespace {
+std::map<std::string_view, std::pair<bool(cics_preprocessor::*), bool>, std::less<>> cics_preprocessor_options = {
+    { "PROLOG", { &cics_preprocessor::prolog, true } },
+    { "NOPROLOG", { &cics_preprocessor::prolog, false } },
+    { "EPILOG", { &cics_preprocessor::epilog, true } },
+    { "NOEPILOG", { &cics_preprocessor::epilog, false } },
+    { "LEASM", { &cics_preprocessor::leasm, true } },
+    { "NOLEASM", { &cics_preprocessor::leasm, false } },
+};
+}
+
+void from_json(const nlohmann::json& j, cics_preprocessor& v)
+{
+    v = cics_preprocessor {};
+    if (!j.is_object())
+        return;
+    if (auto it = j.find("options"); it != j.end())
+    {
+        if (!it->is_array())
+            throw nlohmann::json::other_error::create(501, "Array of CICS options expected.");
+        for (const auto& e : *it)
+        {
+            if (!e.is_string())
+                throw nlohmann::json::other_error::create(501, "CICS option expected.");
+            if (auto cpo = cics_preprocessor_options.find(e.get<std::string_view>());
+                cpo != cics_preprocessor_options.end())
+            {
+                const auto [member, value] = cpo->second;
+                v.*member = value;
+            }
+        }
+    }
+}
 
 namespace {
 struct preprocessor_visitor
