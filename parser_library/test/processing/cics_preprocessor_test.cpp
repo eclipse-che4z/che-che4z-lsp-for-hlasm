@@ -23,9 +23,10 @@
 
 using namespace hlasm_plugin::parser_library::processing;
 
-namespace hlasm_plugin::parser_library::processing {
+namespace hlasm_plugin::parser_library::processing::test {
 cics_preprocessor_options test_cics_current_options(const preprocessor& p);
-}
+std::pair<int, std::string> test_cics_miniparser(const std::vector<std::string_view>& list);
+} // namespace hlasm_plugin::parser_library::processing::test
 
 TEST(cics_preprocessor, asm_xopts_parsing)
 {
@@ -52,6 +53,7 @@ TEST(cics_preprocessor, asm_xopts_parsing)
         auto result = p->generate_replacement(text, lineno);
         EXPECT_FALSE(result.has_value());
 
+        using hlasm_plugin::parser_library::processing::test::test_cics_current_options;
         EXPECT_EQ(test_cics_current_options(*p), expected) << text_template;
     }
 }
@@ -87,8 +89,13 @@ TEST_P(cics_preprocessor_tests, basics)
 
     auto result_it = expected.begin();
 
-    while (!text.empty() || !p->finished())
+    bool passed_empty_to_preprocessor = false;
+
+    while (!passed_empty_to_preprocessor || !text.empty() || !p->finished())
     {
+        if (text.empty())
+            passed_empty_to_preprocessor = true;
+
         auto result = p->generate_replacement(text, lineno);
         if (result.has_value())
         {
@@ -102,6 +109,8 @@ TEST_P(cics_preprocessor_tests, basics)
         }
         else
         {
+            if (text.empty())
+                break;
             ASSERT_NE(result_it, expected.end()) << text_template;
             EXPECT_EQ(lexing::extract_line(text).first, *result_it);
             ++result_it;
@@ -154,4 +163,180 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
                 " END",
             },
         } },
+        { {
+            { " LA 0,DFHRESP(NORMAL)\n", cics_preprocessor_options() },
+            {
+                "*LA 0,DFHRESP(NORMAL)",
+                "         LA   0,=F'0'",
+                "*DFH7041I W  NO END CARD FOUND - COPYBOOK ASSUMED.",
+                "         DFHEIMSG 4",
+            },
+        } },
+        { {
+            { "A LA 0,DFHRESP(NORMAL)\n", cics_preprocessor_options() },
+            {
+                "* LA 0,DFHRESP(NORMAL)",
+                "A        LA   0,=F'0'",
+                "*DFH7041I W  NO END CARD FOUND - COPYBOOK ASSUMED.",
+                "         DFHEIMSG 4",
+            },
+        } },
+        { {
+            { " LA 0,DFHRESP()\n", cics_preprocessor_options() },
+            {
+                " LA 0,DFHRESP()",
+                "*DFH7218I S  SUB-OPERAND(S) OF 'DFHRESP' CANNOT BE NULL. COMMAND NOT",
+                "*            TRANSLATED.",
+                "         DFHEIMSG 12",
+                "*DFH7041I W  NO END CARD FOUND - COPYBOOK ASSUMED.",
+                "         DFHEIMSG 4",
+            },
+        } },
+    }));
+
+class cics_preprocessor_dfhresp_fixture
+    : public ::testing::TestWithParam<std::pair<std::vector<std::string_view>, std::pair<int, std::string>>>
+{};
+
+TEST_P(cics_preprocessor_dfhresp_fixture, dfhresp_substitution)
+{
+    using hlasm_plugin::parser_library::processing::test::test_cics_miniparser;
+
+    auto [input, expected] = GetParam();
+
+    EXPECT_EQ(test_cics_miniparser(input), expected);
+}
+
+INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
+    cics_preprocessor_dfhresp_fixture,
+    ::testing::ValuesIn(std::initializer_list<std::pair<std::vector<std::string_view>, std::pair<int, std::string>>> {
+        {
+            {},
+            { 0, "" },
+        },
+        {
+            { "" },
+            { 0, "" },
+        },
+        {
+            { "AAAA" },
+            { 0, "AAAA" },
+        },
+        {
+            {
+                "AAAA",
+                "BBBB",
+            },
+            { 0, "AAAABBBB" },
+        },
+        {
+            {
+                "AAAA ",
+                "BBBB",
+            },
+            { 0, "AAAA" },
+        },
+        {
+            { "DFHRESP()" },
+            { -1, "" },
+        },
+        {
+            { "A,DFHRESP()" },
+            { -1, "" },
+        },
+        {
+            {
+                "A ",
+                "DFHRESP()",
+            },
+            { 0, "A" },
+        },
+        {
+            { "A,", "DFHRESP()" },
+            { -1, "" },
+        },
+        {
+            { "DFHRESP(NORMAL)" },
+            { 1, "=F'0'" },
+        },
+        {
+            { "DFHRESP(NORMAL),DFHRESP(NORMAL)" },
+            { 2, "=F'0',=F'0'" },
+        },
+        {
+            { "DFHRESP(NORMAL) DFHRESP(NORMAL)" },
+            { 1, "=F'0'" },
+        },
+        {
+            {
+                "DFHRESP(NORMAL) ",
+                "DFHRESP(NORMAL)",
+            },
+            { 1, "=F'0'" },
+        },
+        {
+            {
+                "DFHRESP(NORMAL),",
+                "DFHRESP(NORMAL)",
+            },
+            { 2, "=F'0',=F'0'" },
+        },
+        {
+            {
+                "DFHRESP(NORMAL), DFHRESP(NORMAL)",
+                "DFHRESP(NORMAL)",
+            },
+            { 2, "=F'0',=F'0'" },
+        },
+        {
+            { "L'DFHRESP(NORMAL)" },
+            { 0, "L'DFHRESP(NORMAL)" },
+        },
+        {
+            {
+                "L'DFHRESP(NORMAL),",
+                "DFHRESP(NORMAL)",
+            },
+            { 1, "L'DFHRESP(NORMAL),=F'0'" },
+        },
+        {
+            { "L'DFHRESP(DFHRESP(NORMAL))" },
+            { 1, "L'DFHRESP(=F'0')" },
+        },
+        {
+            { "=C'DFHRESP(NORMAL)'" },
+            { 0, "=C'DFHRESP(NORMAL)'" },
+        },
+        {
+            { "L'DFHRESP(NORMAL),=C'DFHRESP(NORMAL)'" },
+            { 0, "L'DFHRESP(NORMAL),=C'DFHRESP(NORMAL)'" },
+        },
+        {
+            { "DFHRESP(ERROR),=C'DFHRESP(NORMAL)',1+DFHRESP(INVREQ)" },
+            { 2, "=F'1',=C'DFHRESP(NORMAL)',1+=F'16'" },
+        },
+        {
+            { "DFhreSP( ERROR),1+dFHRESP ( INvrEQ )" },
+            { 2, "=F'1',1+=F'16'" },
+        },
+        {
+            { "=C'DFHRESP(NORMAL)" }, // invalid code
+            { 0, "=C'DFHRESP(NORMAL)" },
+        },
+        {
+            { "A.DFHRESP(NORMAL)" },
+            { 1, "A.=F'0'" },
+        },
+        {
+            { "ADFHRESP(NORMAL)" },
+            { 0, "ADFHRESP(NORMAL)" },
+        },
+        {
+            { "DFHRESPZ(NORMAL)" },
+            { 0, "DFHRESPZ(NORMAL)" },
+        },
+        {
+            { "ADFHRESPZ(NORMAL)" },
+            { 0, "ADFHRESPZ(NORMAL)" },
+        },
     }));
