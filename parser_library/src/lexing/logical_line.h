@@ -102,6 +102,88 @@ struct logical_line
         so_si_continuation = false;
         missing_next_line = false;
     }
+
+    struct const_iterator
+    {
+        using segment_iterator = std::vector<logical_line_segment>::const_iterator;
+        using column_iterator = std::string_view::const_iterator;
+
+        using iterator_category = std::bidirectional_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = char;
+        using pointer = const char*;
+        using reference = const char&;
+
+        const_iterator() = default;
+        const_iterator(segment_iterator segment, column_iterator col, segment_iterator segment_end)
+            : m_segment(segment)
+            , m_col(col)
+            , m_segment_end(segment_end)
+        {}
+
+        reference operator*() const noexcept { return *m_col; }
+        pointer operator->() const noexcept { return &*m_col; }
+        const_iterator& operator++() noexcept
+        {
+            ++m_col;
+            while (m_col == m_segment->code.end())
+            {
+                if (++m_segment == m_segment_end)
+                {
+                    m_col = column_iterator();
+                    break;
+                }
+                m_col = m_segment->code.begin();
+            }
+            return *this;
+        }
+        const_iterator operator++(int) noexcept
+        {
+            const_iterator tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+        const_iterator& operator--() noexcept
+        {
+            while (m_segment == m_segment_end || m_col == m_segment->code.begin())
+            {
+                --m_segment;
+                m_col = m_segment->code.end();
+            }
+            --m_col;
+            return *this;
+        }
+        const_iterator operator--(int) noexcept
+        {
+            const_iterator tmp = *this;
+            --(*this);
+            return tmp;
+        }
+        friend bool operator==(const const_iterator& a, const const_iterator& b) noexcept
+        {
+            return a.m_segment == b.m_segment && a.m_col == b.m_col;
+        }
+        friend bool operator!=(const const_iterator& a, const const_iterator& b) noexcept { return !(a == b); }
+
+        bool same_line(const const_iterator& o) const noexcept { return m_segment == o.m_segment; }
+
+    private:
+        segment_iterator m_segment = segment_iterator();
+        column_iterator m_col = std::string_view::const_iterator();
+        segment_iterator m_segment_end = segment_iterator();
+    };
+
+    const_iterator begin() const noexcept
+    {
+        for (auto s = segments.begin(); s != segments.end(); ++s)
+            if (!s->code.empty())
+                return const_iterator(s, s->code.begin(), segments.end());
+        return end();
+    }
+    const_iterator end() const noexcept
+    {
+        return const_iterator(segments.end(), std::string_view::const_iterator(), segments.end());
+    }
 };
 
 // defines the layout of the hlasm source file and options to follow for line extraction
