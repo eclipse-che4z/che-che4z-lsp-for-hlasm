@@ -332,7 +332,7 @@ bool opencode_provider::try_running_preprocessor()
     if (!result.has_value() || result.value().empty())
         return false;
 
-    auto virtual_copy_name = m_ctx->hlasm_ctx->ids().add("DB2:" + std::to_string(current_line));
+    auto virtual_copy_name = m_ctx->hlasm_ctx->ids().add("preprocessor:" + std::to_string(current_line));
 
     auto [new_file, inserted] = m_virtual_files.try_emplace(virtual_copy_name, std::move(result.value()));
 

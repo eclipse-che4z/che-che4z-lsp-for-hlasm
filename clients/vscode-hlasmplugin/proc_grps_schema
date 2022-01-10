@@ -70,7 +70,10 @@
                             {
                                 "type": "string",
                                 "description": "Name of the preprocessor.",
-                                "pattern": "DB2"
+                                "enum": [
+                                    "DB2",
+                                    "CICS"
+                                ]
                             },
                             {
                                 "type": "object",
@@ -78,7 +81,28 @@
                                     "name": {
                                         "type": "string",
                                         "description": "Name of the preprocessor.",
-                                        "pattern": "DB2"
+                                        "enum": [
+                                            "DB2"
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Name of the preprocessor.",
+                                        "enum": [
+                                            "CICS"
+                                        ]
+                                    },
+                                    "options": {
+                                        "type": "array",
+                                        "description": "Parameters for the preprocessor.",
+                                        "items": {
+                                            "type": "string"
+                                        }
                                     }
                                 }
                             }
