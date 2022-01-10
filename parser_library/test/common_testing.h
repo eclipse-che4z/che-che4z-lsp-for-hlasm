@@ -135,6 +135,22 @@ inline bool matches_message_codes(const std::vector<diagnostic_s>& d, std::initi
     return std::is_permutation(codes.begin(), codes.end(), m.begin(), m.end());
 }
 
+inline bool contains_message_codes(const std::vector<diagnostic_s>& d, std::initializer_list<std::string> m)
+{
+    if (d.size() < m.size())
+        return false;
+
+    std::vector<std::string> codes;
+    std::transform(d.begin(), d.end(), std::back_inserter(codes), [](const auto& d) { return d.code; });
+
+    std::vector to_find(m.begin(), m.end());
+
+    std::sort(codes.begin(), codes.end());
+    std::sort(to_find.begin(), to_find.end());
+
+    return std::includes(codes.begin(), codes.end(), to_find.begin(), to_find.end());
+}
+
 inline const section* get_section(hlasm_context& ctx, std::string name)
 {
     auto sect = ctx.ids().find(std::move(name));

@@ -2053,6 +2053,14 @@ diagnostic_op diagnostic_op::warn_CIC001(const range& range)
         range);
 }
 
+diagnostic_op diagnostic_op::warn_CIC002(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "CIC002",
+        std::string("CICS preprocessor - DFHRESP argument cannot be NULL"),
+        range);
+}
+
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
 {
     return diagnostic_s(ws_uri,

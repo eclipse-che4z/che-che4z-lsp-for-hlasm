@@ -654,6 +654,8 @@ struct diagnostic_op
     static diagnostic_op error_DB005(const range& range);
 
     static diagnostic_op warn_CIC001(const range& range);
+
+    static diagnostic_op warn_CIC002(const range& range);
 };
 
 struct range_uri_s

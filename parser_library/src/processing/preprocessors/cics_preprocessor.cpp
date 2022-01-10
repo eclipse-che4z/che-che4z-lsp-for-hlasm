@@ -480,42 +480,31 @@ public:
     };
 
     template<typename It>
-    void echo_first_line(It b, It e, const label_info& li)
+    void echo_text_and_inject_label(It b, It e, const label_info& li)
     {
-        // print the first line, remove continuation character
-        auto buf_len = m_buffer.size();
-        m_buffer.append(lexing::utf8_substr(m_logical_line.segments.front().line, 0, cics_extract.end).str);
-        if (auto after_cont = lexing::utf8_substr(m_logical_line.segments.front().line, cics_extract.end + 1).str;
-            !after_cont.empty())
-            m_buffer.append(" ").append(after_cont);
-        m_buffer.replace(buf_len, li.byte_length, li.char_length, ' ');
-        m_buffer[buf_len] = '*';
-        m_buffer.append("\n");
-    }
+        // print lines, remove continuation character and label on the first line
+        bool first_line = true;
+        for (const auto& l : m_logical_line.segments)
+        {
+            auto buf_len = m_buffer.size();
+            m_buffer.append(lexing::utf8_substr(l.line, 0, cics_extract.end).str);
 
-    template<typename It>
-    void inject_label(It b, It e, const label_info& li)
-    {
+            if (auto after_cont = lexing::utf8_substr(l.line, cics_extract.end + 1).str; !after_cont.empty())
+                m_buffer.append(" ").append(after_cont);
+
+            if (first_line)
+                m_buffer.replace(buf_len, li.byte_length, li.char_length, ' ');
+
+            m_buffer[buf_len] = '*';
+            m_buffer.append("\n");
+            first_line = false;
+        }
+
         m_buffer.append(b, e);
         if (li.char_length <= 8)
             m_buffer.append(9 - li.char_length, ' ');
         else
             m_buffer.append(" DS 0H\n").append(9, ' ');
-    }
-
-    void echo_remaining_lines()
-    {
-        for (auto it = m_logical_line.segments.begin() + 1; it != m_logical_line.segments.end(); ++it)
-        {
-            const auto& l = *it;
-            auto buf_len = m_buffer.size();
-            m_buffer.append(lexing::utf8_substr(l.line, 0, cics_extract.end).str);
-            if (auto after_cont = lexing::utf8_substr(l.line, cics_extract.end + 1).str; !after_cont.empty())
-                m_buffer.append(" ").append(after_cont);
-            if (!m_logical_line.continuation_error)
-                m_buffer[buf_len] = '*';
-            m_buffer.append("\n");
-        }
     }
 
     void process_exec_cics(const std::match_results<lexing::logical_line::const_iterator>& matches)
@@ -526,23 +515,9 @@ public:
             (size_t)std::distance(label_b, label_e),
             (size_t)std::count_if(label_b, label_e, [](unsigned char c) { return (c & 0xc0) != 0x80; }),
         };
-        echo_first_line(matches[1].first, matches[1].second, li);
+        echo_text_and_inject_label(label_b, label_e, li);
 
-        // TODO: check EXEC alone
-        if (m_logical_line.continuation_error)
-            m_buffer
-                .append("*DFH7080I W  CONTINUATION OF EXEC COMMAND IGNORED.\n"
-                        "         DFHEIMSG 4\n")
-                .append("*DFH7080I W  CONTINUATION OF EXEC COMMAND IGNORED.\n"
-                        "         DFHEIMSG 4\n"); // seems to be done twice
-        else
-            echo_remaining_lines();
-
-        inject_label(label_b, label_e, li);
         m_buffer.append("DFHECALL =X'0E'\n"); // TODO: generate correct calls
-
-        if (!m_logical_line.continuation_error)
-            echo_remaining_lines();
     }
 
     int try_substituting_dfhresp(const std::match_results<lexing::logical_line::const_iterator>& matches)
@@ -558,9 +533,7 @@ public:
                 (size_t)std::count_if(label_b, label_e, [](unsigned char c) { return (c & 0xc0) != 0x80; }),
             };
 
-            echo_first_line(label_b, label_e, li);
-            echo_remaining_lines();
-            inject_label(label_b, label_e, li);
+            echo_text_and_inject_label(label_b, label_e, li);
 
             auto text_to_add = matches[2].str();
             if (auto instr_len = lexing::utf8_substr(text_to_add).char_count; instr_len < 4)
@@ -627,12 +600,27 @@ public:
 
         bool extracted = lexing::extract_logical_line(m_logical_line, input, cics_extract);
         assert(extracted);
+        bool exec_cics_continuation_error = false;
+        if (m_logical_line.continuation_error)
+        {
+            exec_cics_continuation_error = true;
+            // keep 1st line only
+            m_logical_line.segments.erase(m_logical_line.segments.begin() + 1, m_logical_line.segments.end());
+        }
 
         static const std::regex exec_cics("([^ ]*)[ ]+(?:[eE][xX][eE][cC][ ]+[cC][iI][cC][sS])(?: .+)?");
 
         if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), matches_ll, exec_cics))
         {
             process_exec_cics(matches_ll);
+
+            if (exec_cics_continuation_error)
+            {
+                if (m_diags)
+                    m_diags->add_diagnostic(diagnostic_op::warn_CIC001(range(position(lineno, 0))));
+                m_buffer.append("*DFH7080I W  CONTINUATION OF EXEC COMMAND IGNORED.\n"
+                                "         DFHEIMSG 4\n");
+            }
 
             return m_logical_line.segments.size();
         }
@@ -645,12 +633,18 @@ public:
         extracted = lexing::extract_logical_line(m_logical_line, input, lexing::default_ictl);
         assert(extracted);
 
-        if (!m_logical_line.continuation_error // ignored otherwise
-            && std::regex_match(m_logical_line.begin(), m_logical_line.end(), matches_ll, dfhresp_lookup))
+        if (m_logical_line.continuation_error)
+        {
+            if (m_diags)
+                m_diags->add_diagnostic(diagnostic_op::warn_CIC001(range(position(lineno, 0))));
+        }
+        else if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), matches_ll, dfhresp_lookup))
         {
             switch (try_substituting_dfhresp(matches_ll))
             {
                 case -1:
+                    if (m_diags)
+                        m_diags->add_diagnostic(diagnostic_op::warn_CIC002(range(position(lineno, 0))));
                     m_pending_dfhresp_null_error = true;
                     break;
 

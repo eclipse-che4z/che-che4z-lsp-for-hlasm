@@ -340,3 +340,57 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
             { 0, "ADFHRESPZ(NORMAL)" },
         },
     }));
+
+TEST(cics_preprocessor, check_continuation_error_message)
+{
+    std::string input = R"(
+         MACRO
+         DFHECALL
+         MEND
+         MACRO
+         DFHEIMSG
+         MEND
+
+         EXEC CICS ABEND ABCODE('1234') NODUMP                         X
+AAAAAA   SAM31
+         END
+)";
+    analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CIC001" }));
+}
+
+TEST(cics_preprocessor, check_null_argument_message)
+{
+    std::string input = R"(
+         MACRO
+         DFHEIMSG
+         MEND
+
+         LARL 0,DFHRESP()
+         END
+)";
+    analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(contains_message_codes(a.diags(), { "CIC002" }));
+}
+
+TEST(cics_preprocessor, dfhresp_substitution)
+{
+    std::string input = R"(
+         LARL 0,DFHRESP(NORMAL)
+         END
+)";
+    analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
