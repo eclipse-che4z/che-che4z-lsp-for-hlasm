@@ -224,7 +224,7 @@ In the `pgm_conf.json` above, the `source_code` file has a configuration, so all
 
 ### Preprocessors
 
-Processor groups can be configured so that the HLASM source will be processed with a preprocessor. Currently, there is the option to use `DB2` preprocessor.
+Processor groups can be configured so that the HLASM source will be processed with a preprocessor. Currently, there are two preprocessor options available - `DB2` and `CICS`.
 
 It can by configured using the `preprocessor` key in processor group:
 ```
@@ -234,6 +234,16 @@ It can by configured using the `preprocessor` key in processor group:
       "name": "GROUP1",
       "libs": [ "ASMMAC/" ],
       "preprocessor": "DB2"
+    },
+    {
+      "name": "GROUP2",
+      "libs": [ "ASMMAC/" ],
+      "preprocessor": {
+        "name": "CICS",
+        "options": [
+          "NOPROLOG"
+        ]
+      }
     }
   ]
 }

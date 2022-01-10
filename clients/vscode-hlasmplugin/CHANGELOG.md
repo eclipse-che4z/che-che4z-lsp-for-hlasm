@@ -5,6 +5,7 @@
 #### Added
 - Literal support
 - Location counter length attribute support
+- Toleration of EXEC CICS statements and related preprocessing
 
 #### Fixed
 - Highlighting now fully works with themes, not just categories dark, light and contrast.
