@@ -517,3 +517,35 @@ TEST(data_definition, loctr_ref)
         EXPECT_TRUE(parsed.references_loctr);
     }
 }
+
+TEST(data_definition, multivalue_alignment)
+{
+    std::string input = R"(
+X   DSECT
+    DS    H
+    DS    H,3F
+LEN EQU   *-X
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 16);
+}
+
+TEST(data_definition, multivalue_alignment_misaligned)
+{
+    std::string input = R"(
+X   DSECT
+    DS    C
+    DS    H,2FD
+LEN EQU   *-X
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 24);
+}

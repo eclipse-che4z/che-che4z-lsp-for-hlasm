@@ -15,6 +15,7 @@ target_sources(parser_library PRIVATE
 	asm_processor.h
 	ca_processor.cpp
 	ca_processor.h
+	data_def_postponed_statement.cpp
 	data_def_postponed_statement.h
 	instruction_processor.h
 	low_language_processor.cpp

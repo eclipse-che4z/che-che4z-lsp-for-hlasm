@@ -15,104 +15,67 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROCESSING_DATA_DEF_POSTPONED_STATEMENT_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROCESSING_DATA_DEF_POSTPONED_STATEMENT_H
 
-#include <variant>
-
-#include "checking/data_definition/data_definition_operand.h"
-#include "context/ordinary_assembly/symbol_dependency_tables.h"
+#include "checking/data_definition/data_def_type_base.h"
+#include "context/ordinary_assembly/dependable.h"
 #include "postponed_statement_impl.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
 template<checking::data_instr_type instr_type>
-struct data_def_postponed_statement : public postponed_statement_impl, public context::resolvable
+class data_def_dependency final : public context::resolvable
 {
-    data_def_postponed_statement(rebuilt_statement stmt, context::processing_stack_t stmt_location_stack)
-        : postponed_statement_impl(std::move(stmt), std::move(stmt_location_stack))
+    const semantics::operand_ptr* m_begin;
+    const semantics::operand_ptr* m_end;
+    context::address m_loctr;
+
+public:
+    data_def_dependency(const semantics::operand_ptr* b, const semantics::operand_ptr* e, context::address loctr)
+        : m_begin(b)
+        , m_end(e)
+        , m_loctr(std::move(loctr))
     {}
 
+    static int32_t get_operands_length(const semantics::operand_ptr* b,
+        const semantics::operand_ptr* e,
+        context::dependency_solver& _solver,
+        const context::address* loctr = nullptr);
 
     // Inherited via resolvable
-    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override
-    {
-        context::dependency_collector conjunction;
-        for (const auto& op : operands_ref().value)
-        {
-            if (op->type == semantics::operand_type::EMPTY)
-                continue;
-            conjunction = conjunction + op->access_data_def()->get_length_dependencies(solver);
-        }
-        return conjunction;
-    }
+    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    static int32_t get_operands_length(const semantics::operand_list& operands, context::dependency_solver& _solver)
-    {
-        struct data_def_dependency_solver final : public context::dependency_solver
-        {
-            explicit data_def_dependency_solver(context::dependency_solver& base)
-                : base(base)
-            {}
-            context::dependency_solver& base;
-            uint64_t operands_bit_length = 0;
+    context::symbol_value resolve(context::dependency_solver& solver) const override;
+};
 
-            const context::symbol* get_symbol(context::id_index name) const override { return base.get_symbol(name); }
-            std::optional<context::address> get_loctr() const override
-            {
-                if (auto loctr = base.get_loctr(); loctr.has_value())
-                    return loctr.value() + (int)(operands_bit_length / 8);
+template<checking::data_instr_type instr_type>
+class data_def_postponed_statement final : public postponed_statement_impl
+{
+    std::vector<data_def_dependency<instr_type>> m_dependencies;
 
-                return std::nullopt;
-            }
-            context::id_index get_literal_id(const std::string& text,
-                const std::shared_ptr<const expressions::data_definition>& dd,
-                const range& r,
-                bool align_on_halfword) override
-            {
-                return base.get_literal_id(text, dd, r, align_on_halfword);
-            }
-        } solver(_solver);
+public:
+    data_def_postponed_statement(rebuilt_statement stmt,
+        context::processing_stack_t stmt_location_stack,
+        std::vector<data_def_dependency<instr_type>> dependencies);
 
-        constexpr const auto round_up_bytes = [](uint64_t& v, uint64_t bytes) { v = checking::round_up(v, bytes * 8); };
+    const std::vector<data_def_dependency<instr_type>>& get_dependencies() const { return m_dependencies; }
+};
 
-        for (const auto& op : operands)
-        {
-            if (op->type == semantics::operand_type::EMPTY)
-                continue;
+struct data_def_dependency_solver final : public context::dependency_solver
+{
+    data_def_dependency_solver(context::dependency_solver& base, const context::address* loctr)
+        : base(base)
+        , loctr(loctr)
+    {}
 
-            if (auto dd = op->access_data_def()->value.get();
-                dd->length_type != expressions::data_definition::length_type::BIT)
-            {
-                // align to whole byte
-                round_up_bytes(solver.operands_bit_length, 1);
+    context::dependency_solver& base;
+    const context::address* loctr;
+    uint64_t operands_bit_length = 0;
 
-                // enforce data def alignment
-                round_up_bytes(solver.operands_bit_length, dd->get_alignment().boundary);
-            }
-            const auto o = op->access_data_def()->get_operand_value(solver);
-            const auto* dd_op = dynamic_cast<checking::data_definition_operand*>(o.get());
-
-
-            if (!dd_op->check<instr_type>(diagnostic_collector()))
-                return 0;
-
-            solver.operands_bit_length += dd_op->get_length();
-        }
-
-        // align to whole byte
-        round_up_bytes(solver.operands_bit_length, 1);
-
-        // returns the length in bytes
-        uint64_t len = solver.operands_bit_length / 8;
-
-        if (len > INT32_MAX)
-            return 0;
-        else
-            return (int32_t)len;
-    }
-
-    context::symbol_value resolve(context::dependency_solver& solver) const override
-    {
-        return get_operands_length(operands_ref().value, solver);
-    }
+    const context::symbol* get_symbol(context::id_index name) const override;
+    std::optional<context::address> get_loctr() const override;
+    context::id_index get_literal_id(const std::string& text,
+        const std::shared_ptr<const expressions::data_definition>& dd,
+        const range& r,
+        bool align_on_halfword) override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -213,23 +213,6 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     context::address loctr = hlasm_ctx.ord_ctx.align(al);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
 
-    // dependency sources is list of all expressions in data def operand, that have some unresolved dependencies.
-    bool has_dependencies = false;
-    // has_length_dependencies specifies whether the length of the data instruction can be resolved right now or must be
-    // postponed
-    bool has_length_dependencies = false;
-    for (const auto& op : stmt.operands_ref().value)
-    {
-        auto data_op = op->access_data_def();
-
-        has_dependencies |= data_op->has_dependencies(dep_solver);
-
-        has_length_dependencies |= data_op->get_length_dependencies(dep_solver).contains_dependencies();
-
-        // some types require operands that consist only of one symbol
-        data_op->value->check_single_symbol_ok(diagnostic_collector(this));
-    }
-
     // process label
     auto label = find_label_symbol(stmt);
 
@@ -267,55 +250,112 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
     }
 
+    const auto& operands = stmt.operands_ref().value;
+
+    const context::resolvable* l_dep = nullptr;
+    const context::resolvable* s_dep = nullptr;
+    if (label != context::id_storage::empty_id)
+    {
+        auto data_op = operands.front()->access_data_def();
+
+        if (data_op->value->length && data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
+            l_dep = data_op->value->length.get();
+
+        if (data_op->value->scale && data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
+            s_dep = data_op->value->scale.get();
+    }
+
     // TODO issue warning when alignment is bigger than section's alignment
     // hlasm_ctx.ord_ctx.current_section()->current_location_counter().
 
+    // dependency sources is list of all expressions in data def operand, that have some unresolved dependencies.
+    bool has_dependencies = false;
+
+    std::vector<data_def_dependency<instr_type>> dependencies;
+    std::vector<context::space_ptr> dependencies_spaces;
+
+    // Why is this so complicated?
+    // 1. We cannot represent the individual operands because of bitfields.
+    // 2. We cannot represent the whole area as a single dependency when the alignment requirements are growing.
+    // Therefore, we split the operands into chunks depending on the alignent.
+    // Whenever the alignment requirement increases between consecutive operands, we start a new chunk.
+    for (auto it = operands.begin(); it != operands.end();)
+    {
+        const auto start = it;
+
+        const auto initial_alignment = (*it)->access_data_def()->value->get_alignment();
+        context::address op_loctr = hlasm_ctx.ord_ctx.align(initial_alignment);
+        data_def_dependency_solver op_solver(dep_solver, &op_loctr);
+
+        auto current_alignment = initial_alignment;
+
+        // has_length_dependencies specifies whether the length of the data instruction can be resolved right now or
+        // must be postponed
+        bool has_length_dependencies = false;
+
+        for (; it != operands.end(); ++it)
+        {
+            const auto& op = *it;
+
+            auto data_op = op->access_data_def();
+            auto op_align = data_op->value->get_alignment();
+
+            // leave for the next round to make sure that the actual alignment is computed correctly
+            if (op_align.boundary > current_alignment.boundary)
+                break;
+            current_alignment = op_align;
+
+            has_dependencies |= data_op->has_dependencies(op_solver);
+
+            has_length_dependencies |= data_op->get_length_dependencies(op_solver).contains_dependencies();
+
+            // some types require operands that consist only of one symbol
+            (void)data_op->value->check_single_symbol_ok(diagnostic_collector(this));
+        }
+
+        const auto* b = &*start;
+        const auto* e = b + (it - start);
+
+        if (has_length_dependencies)
+        {
+            dependencies.emplace_back(b, e, std::move(op_loctr));
+            dependencies_spaces.emplace_back(hlasm_ctx.ord_ctx.register_ordinary_space(current_alignment));
+        }
+        else
+        {
+            auto length = data_def_dependency<instr_type>::get_operands_length(b, e, op_solver);
+            hlasm_ctx.ord_ctx.reserve_storage_area(length, context::no_align);
+        }
+    }
 
     if (has_dependencies)
     {
+        auto dep_stmt = std::make_unique<data_def_postponed_statement<instr_type>>(
+            std::move(stmt), hlasm_ctx.processing_stack(), std::move(dependencies));
+        const auto& deps = dep_stmt->get_dependencies();
+
         auto adder = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependencies(
-            std::make_unique<data_def_postponed_statement<instr_type>>(std::move(stmt), hlasm_ctx.processing_stack()),
-            dep_solver.derive_current_dependency_evaluation_context());
-        if (has_length_dependencies)
-        {
-            auto sp = hlasm_ctx.ord_ctx.register_ordinary_space(al);
-            adder.add_dependency(
-                sp, dynamic_cast<const data_def_postponed_statement<instr_type>*>(&*adder.source_stmt));
-        }
-        else
-            hlasm_ctx.ord_ctx.reserve_storage_area(
-                data_def_postponed_statement<instr_type>::get_operands_length(
-                    adder.source_stmt->resolved_stmt()->operands_ref().value, dep_solver),
-                context::no_align);
+            std::move(dep_stmt), dep_solver.derive_current_dependency_evaluation_context());
+        adder.add_dependency();
 
         bool cycle_ok = true;
 
-        if (label != context::id_storage::empty_id)
-        {
-            auto data_op = adder.source_stmt->resolved_stmt()->operands_ref().value.front()->access_data_def();
-
-            if (data_op->value->length && data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
-                cycle_ok = adder.add_dependency(label, context::data_attr_kind::L, data_op->value->length.get());
-
-            if (data_op->value->scale && data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
-                cycle_ok &= adder.add_dependency(label, context::data_attr_kind::S, data_op->value->scale.get());
-        }
-
-        adder.add_dependency();
+        if (l_dep)
+            cycle_ok &= adder.add_dependency(label, context::data_attr_kind::L, l_dep);
+        if (s_dep)
+            cycle_ok &= adder.add_dependency(label, context::data_attr_kind::S, s_dep);
 
         if (!cycle_ok)
-            add_diagnostic(diagnostic_op::error_E033(
-                adder.source_stmt->resolved_stmt()->operands_ref().value.front()->operand_range));
+            add_diagnostic(diagnostic_op::error_E033(operands.front()->operand_range));
+
+        auto sp = dependencies_spaces.begin();
+        for (const auto& d : deps)
+            adder.add_dependency(std::move(*sp++), &d);
 
         adder.finish();
     }
     else
-    {
-        hlasm_ctx.ord_ctx.reserve_storage_area(
-            data_def_postponed_statement<instr_type>::get_operands_length(stmt.operands_ref().value, dep_solver),
-            context::no_align);
         check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
-    }
 }
 
 void asm_processor::process_DC(rebuilt_statement stmt)
