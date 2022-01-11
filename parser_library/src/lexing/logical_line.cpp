@@ -98,7 +98,9 @@ utf8_substr_result utf8_substr(std::string_view s, size_t offset, size_t length)
 
     utf8_substr_result result = { s, 0, 0 };
 
-    std::tie(result.char_count, result.utf16_len) = substr_step<validate>(s, length);
+    auto [char_count, utf16_len] = substr_step<validate>(s, length);
+    result.char_count = char_count;
+    result.utf16_len = utf16_len;
 
     result.str = result.str.substr(0, result.str.size() - s.size());
 
