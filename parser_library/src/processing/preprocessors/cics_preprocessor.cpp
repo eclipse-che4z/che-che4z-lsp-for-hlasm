@@ -225,7 +225,7 @@ public:
         std::match_results<It> matches;
         bool next_last_attribute = false;
         bool next_new_token = true;
-        for (; m_begin != m_end;)
+        while (m_begin != m_end)
         {
             const bool last_attribute = std::exchange(next_last_attribute, false);
             const bool new_token = std::exchange(next_new_token, false);
@@ -417,7 +417,7 @@ public:
         if (!std::regex_match(line.begin(), line.end(), m_regex_match, asm_statement) || m_regex_match[1].length() == 0)
             return false;
 
-        std::string_view operands = std::string_view(&*m_regex_match[1].first, (size_t)m_regex_match[1].length());
+        std::string_view operands(&*m_regex_match[1].first, (size_t)m_regex_match[1].length());
         auto opts_begin =
             std::regex_token_iterator<std::string_view::iterator>(operands.begin(), operands.end(), op_sep, -1);
         auto opts_end = std::regex_token_iterator<std::string_view::iterator>();

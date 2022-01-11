@@ -89,7 +89,7 @@ void to_json(nlohmann::json& j, const cics_preprocessor& v)
 }
 
 namespace {
-std::map<std::string_view, std::pair<bool(cics_preprocessor::*), bool>, std::less<>> cics_preprocessor_options = {
+const std::map<std::string_view, std::pair<bool(cics_preprocessor::*), bool>, std::less<>> cics_preprocessor_options = {
     { "PROLOG", { &cics_preprocessor::prolog, true } },
     { "NOPROLOG", { &cics_preprocessor::prolog, false } },
     { "EPILOG", { &cics_preprocessor::epilog, true } },
