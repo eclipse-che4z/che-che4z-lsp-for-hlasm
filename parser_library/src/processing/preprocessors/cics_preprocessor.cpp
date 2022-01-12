@@ -150,23 +150,23 @@ const std::unordered_map<std::string_view, int> DFHRESP_operands = {
     { "BUSY", 128 },
 };
 
+const std::regex DFHRESP_matcher(
+    [](const auto& operands) {
+        std::string list;
+        for (const auto& [key, value] : operands)
+            list.append(key).append(1, '|');
+        // keep the empty alternative
+        return "^DFHRESP[ ]*\\([ ]*(" + list + ")[ ]*\\)";
+    }(DFHRESP_operands),
+    std::regex_constants::icase);
+
 // emulates limited variant of alternative operand parser and performs DFHRESP substitutions
 // recognizes L' attribute, '...' strings and skips end of line comments
 template<typename It>
 class mini_parser
 {
-    It m_begin;
-    It m_end;
-    std::string substituted_operands;
-    int valid_dfhresp = 0;
-
-    int next() const
-    {
-        auto n = std::next(m_begin);
-        if (n == m_end)
-            return -1;
-        return *n;
-    }
+    std::string m_substituted_operands;
+    std::match_results<It> m_matches;
 
     enum class symbol_type : unsigned char
     {
@@ -213,23 +213,21 @@ class mini_parser
     }
 
 public:
-    mini_parser(It b, It e)
-        : m_begin(b)
-        , m_end(e)
-    {}
+    const std::string& operands() const& { return m_substituted_operands; }
+    std::string operands() && { return std::move(m_substituted_operands); }
 
-    std::string operands() && { return std::move(substituted_operands); }
-
-    int parse_and_substitue()
+    int parse_and_substitute(It b, It e)
     {
-        std::match_results<It> matches;
+        m_substituted_operands.clear();
+        int valid_dfhresp = 0;
+
         bool next_last_attribute = false;
         bool next_new_token = true;
-        while (m_begin != m_end)
+        while (b != e)
         {
             const bool last_attribute = std::exchange(next_last_attribute, false);
             const bool new_token = std::exchange(next_new_token, false);
-            const char c = *m_begin;
+            const char c = *b;
             const symbol_type s = symbols[(unsigned char)c];
 
             switch (s)
@@ -239,12 +237,12 @@ public:
                         break;
                     if (c == 'L' || c == 'l')
                     {
-                        if (next() == '\'')
+                        if (auto n = std::next(b); n != e && *n == '\'')
                         {
-                            substituted_operands.push_back(c);
-                            substituted_operands.push_back('\'');
-                            ++m_begin;
-                            ++m_begin;
+                            m_substituted_operands.push_back(c);
+                            m_substituted_operands.push_back('\'');
+                            ++b;
+                            ++b;
                             next_last_attribute = true;
                             next_new_token = true;
                             continue;
@@ -253,24 +251,15 @@ public:
                     else if (!last_attribute && (c == 'D' || c == 'd'))
                     {
                         // check for DFHRESP expression
-                        static const std::regex DFHRESP_matcher(
-                            []() {
-                                std::string list;
-                                for (const auto& [key, value] : DFHRESP_operands)
-                                    list.append(key).append(1, '|');
-                                // keep the empty alternative
-                                return "^DFHRESP[ ]*\\([ ]*(" + list + ")[ ]*\\)";
-                            }(),
-                            std::regex_constants::icase);
-                        if (std::regex_search(m_begin, m_end, matches, DFHRESP_matcher))
+                        if (std::regex_search(b, e, m_matches, DFHRESP_matcher))
                         {
-                            if (matches[1].length() == 0)
+                            if (m_matches[1].length() == 0)
                                 return -1; // indicate NULL argument error
 
-                            substituted_operands.append("=F'")
-                                .append(std::to_string(DFHRESP_operands.at(context::to_upper_copy(matches[1].str()))))
+                            m_substituted_operands.append("=F'")
+                                .append(std::to_string(DFHRESP_operands.at(context::to_upper_copy(m_matches[1].str()))))
                                 .append("'");
-                            m_begin = matches.suffix().first;
+                            b = m_matches.suffix().first;
                             ++valid_dfhresp;
                             continue;
                         }
@@ -286,23 +275,23 @@ public:
                     next_new_token = true;
                     do
                     {
-                        substituted_operands.push_back(*m_begin);
-                        ++m_begin;
-                        if (m_begin == m_end)
+                        m_substituted_operands.push_back(*b);
+                        ++b;
+                        if (b == e)
                             goto done;
-                    } while (*m_begin != '\'');
+                    } while (*b != '\'');
                     break;
 
                 case symbol_type::comma:
                     next_new_token = true;
-                    if (next() == ' ')
+                    if (auto n = std::next(b); n != e && *n == ' ')
                     {
                         // skips comment at the end of the line
-                        substituted_operands.push_back(c);
-                        auto skip_line = m_begin;
-                        while (skip_line != m_end && same_line(m_begin, skip_line))
+                        m_substituted_operands.push_back(c);
+                        auto skip_line = b;
+                        while (skip_line != e && same_line(b, skip_line))
                             ++skip_line;
-                        m_begin = skip_line;
+                        b = skip_line;
                         continue;
                     }
                     break;
@@ -315,8 +304,8 @@ public:
                     assert(false);
                     break;
             }
-            substituted_operands.push_back(c);
-            ++m_begin;
+            m_substituted_operands.push_back(c);
+            ++b;
         }
 
     done:
@@ -339,8 +328,10 @@ class cics_preprocessor : public preprocessor
     bool m_pending_prolog = false;
     bool m_pending_dfhresp_null_error = false;
 
-    std::match_results<std::string_view::iterator> matches_sv;
-    std::match_results<lexing::logical_line::const_iterator> matches_ll;
+    std::match_results<std::string_view::iterator> m_matches_sv;
+    std::match_results<lexing::logical_line::const_iterator> m_matches_ll;
+
+    mini_parser<lexing::logical_line::const_iterator> m_mini_parser;
 
 public:
     cics_preprocessor(const cics_preprocessor_options& options, library_fetcher libs, diagnostic_op_consumer* diags)
@@ -522,8 +513,7 @@ public:
 
     int try_substituting_dfhresp(const std::match_results<lexing::logical_line::const_iterator>& matches)
     {
-        mini_parser p(matches[3].first, matches[3].second);
-        auto events = p.parse_and_substitue();
+        auto events = m_mini_parser.parse_and_substitute(matches[3].first, matches[3].second);
         if (events > 0)
         {
             auto label_b = matches[1].first;
@@ -538,7 +528,7 @@ public:
             auto text_to_add = matches[2].str();
             if (auto instr_len = lexing::utf8_substr(text_to_add).char_count; instr_len < 4)
                 text_to_add.append(4 - instr_len, ' ');
-            text_to_add.append(1, ' ').append(std::move(p).operands());
+            text_to_add.append(1, ' ').append(m_mini_parser.operands());
 
             std::string_view t = text_to_add;
 
@@ -590,9 +580,9 @@ public:
 
         static const std::regex line_of_interest("(?:[^ ]*)[ ]+(START|CSECT|RSECT|END)(?: .+)?");
 
-        if (std::regex_match(line.begin(), line.end(), matches_sv, line_of_interest))
+        if (std::regex_match(line.begin(), line.end(), m_matches_sv, line_of_interest))
         {
-            process_asm_statement(*matches_sv[1].first);
+            process_asm_statement(*m_matches_sv[1].first);
             return 0;
         }
 
@@ -610,9 +600,9 @@ public:
 
         static const std::regex exec_cics("([^ ]*)[ ]+(?:[eE][xX][eE][cC][ ]+[cC][iI][cC][sS])(?: .+)?");
 
-        if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), matches_ll, exec_cics))
+        if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, exec_cics))
         {
-            process_exec_cics(matches_ll);
+            process_exec_cics(m_matches_ll);
 
             if (exec_cics_continuation_error)
             {
@@ -638,9 +628,9 @@ public:
             if (m_diags)
                 m_diags->add_diagnostic(diagnostic_op::warn_CIC001(range(position(lineno, 0))));
         }
-        else if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), matches_ll, dfhresp_lookup))
+        else if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, dfhresp_lookup))
         {
-            switch (try_substituting_dfhresp(matches_ll))
+            switch (try_substituting_dfhresp(m_matches_ll))
             {
                 case -1:
                     if (m_diags)
@@ -708,10 +698,10 @@ std::pair<int, std::string> test_cics_miniparser(const std::vector<std::string_v
         return lls;
     });
 
-    mini_parser p(ll.begin(), ll.end());
+    mini_parser<lexing::logical_line::const_iterator> p;
     std::pair<int, std::string> result;
 
-    if ((result.first = p.parse_and_substitue()) >= 0)
+    if ((result.first = p.parse_and_substitute(ll.begin(), ll.end())) >= 0)
         result.second = std::move(p).operands();
 
     return result;

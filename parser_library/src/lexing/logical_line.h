@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_HLASMPARSERLIBRARY_LOGICAL_LINE_H
 
 #include <array>
+#include <cassert>
 #include <limits>
 #include <stdexcept>
 #include <string_view>
@@ -115,20 +116,21 @@ struct logical_line
         using reference = const char&;
 
         const_iterator() = default;
-        const_iterator(segment_iterator segment, column_iterator col, segment_iterator segment_end)
+        const_iterator(segment_iterator segment, column_iterator col, const logical_line* ll)
             : m_segment(segment)
             , m_col(col)
-            , m_segment_end(segment_end)
+            , m_logical_line(ll)
         {}
 
         reference operator*() const noexcept { return *m_col; }
         pointer operator->() const noexcept { return &*m_col; }
         const_iterator& operator++() noexcept
         {
+            assert(m_logical_line);
             ++m_col;
             while (m_col == m_segment->code.end())
             {
-                if (++m_segment == m_segment_end)
+                if (++m_segment == m_logical_line->segments.end())
                 {
                     m_col = column_iterator();
                     break;
@@ -145,7 +147,8 @@ struct logical_line
         }
         const_iterator& operator--() noexcept
         {
-            while (m_segment == m_segment_end || m_col == m_segment->code.begin())
+            assert(m_logical_line);
+            while (m_segment == m_logical_line->segments.end() || m_col == m_segment->code.begin())
             {
                 --m_segment;
                 m_col = m_segment->code.end();
@@ -161,28 +164,33 @@ struct logical_line
         }
         friend bool operator==(const const_iterator& a, const const_iterator& b) noexcept
         {
+            assert(a.m_logical_line == b.m_logical_line);
             return a.m_segment == b.m_segment && a.m_col == b.m_col;
         }
         friend bool operator!=(const const_iterator& a, const const_iterator& b) noexcept { return !(a == b); }
 
-        bool same_line(const const_iterator& o) const noexcept { return m_segment == o.m_segment; }
+        bool same_line(const const_iterator& o) const noexcept
+        {
+            assert(m_logical_line == o.m_logical_line);
+            return m_segment == o.m_segment;
+        }
 
     private:
         segment_iterator m_segment = segment_iterator();
         column_iterator m_col = std::string_view::const_iterator();
-        segment_iterator m_segment_end = segment_iterator();
+        const logical_line* m_logical_line = nullptr;
     };
 
     const_iterator begin() const noexcept
     {
         for (auto s = segments.begin(); s != segments.end(); ++s)
             if (!s->code.empty())
-                return const_iterator(s, s->code.begin(), segments.end());
+                return const_iterator(s, s->code.begin(), this);
         return end();
     }
     const_iterator end() const noexcept
     {
-        return const_iterator(segments.end(), std::string_view::const_iterator(), segments.end());
+        return const_iterator(segments.end(), std::string_view::const_iterator(), this);
     }
 };
 
