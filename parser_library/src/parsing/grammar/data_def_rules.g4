@@ -24,6 +24,13 @@ mach_expr_pars returns [mach_expr_ptr e]
 		$e = std::move($mach_expr.m_e);
 	};
 
+data_def_string returns [std::string value]
+	: ap1=(APOSTROPHE|ATTR) string_ch_c ap2=(APOSTROPHE|ATTR)
+	{
+		$value.append(std::move($string_ch_c.value));
+		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string));
+	};
+
 nominal_value returns [nominal_value_ptr value]
 	: data_def_string
 	{
@@ -62,11 +69,8 @@ mach_expr_or_address_comma_c returns [expr_or_address_list exprs]
 	}
 	;
 	
-data_def_text
-	: (IDENTIFIER|NUM|ORDSYMBOL)+;
-	
-data_def_text_plus_minus
-	: (plus|minus) (IDENTIFIER|NUM|ORDSYMBOL)+;
+data_def_text [bool allow_sign]
+	: ({$allow_sign}? (plus|minus))? (IDENTIFIER|NUM|ORDSYMBOL)+;
 
 data_def returns [data_definition value] locals [data_definition_parser p]
 	:
@@ -74,21 +78,11 @@ data_def returns [data_definition value] locals [data_definition_parser p]
 	(
 		{ $p.allowed().expression }? mach_expr_pars	{if ($mach_expr_pars.e) $p.push(std::move($mach_expr_pars.e), provider.get_range($mach_expr_pars.ctx)); }
 		|
-		{ $p.allowed().string }? data_def_text {$p.push($data_def_text.text, provider.get_range($data_def_text.ctx));}
-		|
-		{ $p.allowed().plus_minus }? data_def_text_plus_minus {$p.push($data_def_text_plus_minus.text, provider.get_range($data_def_text_plus_minus.ctx));}
+		{ $p.allowed().string || $p.allowed().plus_minus }? data_def_text[$p.allowed().plus_minus] {$p.push($data_def_text.text, provider.get_range($data_def_text.ctx));}
 		|
 		{ $p.allowed().dot }? DOT {$p.push(".", provider.get_range($DOT));}
 	)+
 	(nominal_value {$p.push(std::move($nominal_value.value));})?
 	{
 		$value = $p.take_result();
-	};
-
-
-data_def_string returns [std::string value]
-	: ap1=(APOSTROPHE|ATTR) string_ch_c ap2=(APOSTROPHE|ATTR)	
-	{ 
-		$value.append(std::move($string_ch_c.value));
-		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
 	};
