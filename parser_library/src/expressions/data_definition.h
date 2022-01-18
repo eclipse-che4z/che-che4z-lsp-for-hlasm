@@ -118,7 +118,9 @@ public:
 
     const allowed_t& allowed() const { return m_allowed; }
 
-    void push(std::variant<std::string, mach_expr_ptr> v, range r);
+    using push_arg = std::variant<std::string_view, mach_expr_ptr>;
+
+    void push(push_arg v, range r);
     void push(nominal_value_ptr n);
 
     data_definition take_result();
@@ -127,6 +129,7 @@ public:
 
 private:
     std::optional<std::pair<int, range>> parse_number(std::string_view& v, range& r);
+    mach_expr_ptr read_number(push_arg& v, range& r);
     mach_expr_ptr read_number(std::string_view& v, range& r);
 
     allowed_t m_allowed = { true, true, false, false };

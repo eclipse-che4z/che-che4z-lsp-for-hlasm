@@ -560,6 +560,14 @@ static bool can_have_exponent(char type)
     }
 }
 
+mach_expr_ptr data_definition_parser::read_number(push_arg& v, range& r)
+{
+    if (std::holds_alternative<mach_expr_ptr>(v))
+        return std::get<mach_expr_ptr>(std::move(v));
+    else
+        return read_number(std::get<std::string_view>(v), r);
+}
+
 mach_expr_ptr data_definition_parser::read_number(std::string_view& v, range& r)
 {
     auto parse_result = parse_number(v, r);
@@ -569,65 +577,87 @@ mach_expr_ptr data_definition_parser::read_number(std::string_view& v, range& r)
     return std::make_unique<mach_expr_constant>(num, rng);
 }
 
-void data_definition_parser::push(std::variant<std::string, mach_expr_ptr> v, range r)
+namespace {
+struct
 {
-    std::string_view remaining_text;
-    mach_expr_ptr expr;
-    if (std::holds_alternative<std::string>(v))
+    bool operator()(const std::string_view& s) const { return s.empty(); }
+    bool operator()(const mach_expr_ptr& p) const { return !p; }
+} constexpr argument_emtpy;
+struct
+{
+    std::optional<char> operator()(const std::string_view& s) const
     {
-        remaining_text = std::get<std::string>(v);
-        if (remaining_text.empty())
-        {
-            m_allowed = {};
-            return;
-        }
+        if (s.empty())
+            return std::nullopt;
+        else
+            return s.front();
     }
-    else if (std::holds_alternative<mach_expr_ptr>(v))
+    std::optional<char> operator()(const mach_expr_ptr&) const { return std::nullopt; }
+} constexpr first_letter;
+struct
+{
+    std::optional<char> operator()(const std::string_view& s) const
     {
-        expr = std::get<mach_expr_ptr>(std::move(v));
-        if (!expr)
-        {
-            m_allowed = {};
-            return;
-        }
+        if (s.empty())
+            return std::nullopt;
+        else
+            return (char)toupper((unsigned char)s.front());
     }
-    const auto move_by_one = [&remaining_text, &r]() {
-        assert(!remaining_text.empty());
+    std::optional<char> operator()(const mach_expr_ptr&) const { return std::nullopt; }
+} constexpr first_letter_upper;
+struct
+{
+    bool operator()(const std::string_view& s) const
+    {
+        if (s.empty())
+            return false;
+        else
+            return isdigit((unsigned char)s.front());
+    }
+    bool operator()(const mach_expr_ptr&) const { return true; }
+} constexpr is_dupl_factor;
+} // namespace
+
+void data_definition_parser::push(push_arg v, range r)
+{
+    if (std::visit(argument_emtpy, v))
+    {
+        m_allowed = {};
+        return;
+    }
+
+    const auto move_by_one = [&v, &r]() {
+        assert(std::holds_alternative<std::string_view>(v));
+        auto& text = std::get<std::string_view>(v);
+        assert(!text.empty());
         auto ret = r;
-        remove_char(remaining_text, r);
+        remove_char(text, r);
         ret.end = r.start;
 
         return ret;
     };
 
-    while (!remaining_text.empty() || expr)
+    while (!std::visit(argument_emtpy, v))
     {
         switch (m_state)
         {
             case state::duplicating_factor:
-                if (expr)
-                    m_result.dupl_factor = std::move(expr);
-                else if (isdigit((unsigned char)remaining_text.front())
-                    && !(m_result.dupl_factor = read_number(remaining_text, r)))
-                {
-                    m_allowed = {};
-                    return;
-                }
+                if (std::visit(is_dupl_factor, v))
+                    m_result.dupl_factor = read_number(v, r);
                 m_allowed = { false, true, false, false };
                 m_state = state::read_type;
                 break;
 
             case state::read_type: {
-                m_result.type = (char)toupper((unsigned char)remaining_text.front());
+                m_result.type = std::visit(first_letter_upper, v).value();
                 m_result.type_range = move_by_one();
                 auto type_range = m_result.type_range;
 
-                if (!remaining_text.empty())
+                if (auto t_e = std::visit(first_letter_upper, v); t_e.has_value())
                 {
-                    char t_e = (char)toupper((unsigned char)remaining_text.front());
-                    if (is_type_extension(m_result.type, t_e))
+                    if (is_type_extension(m_result.type, t_e.value()))
                     {
-                        m_result.extension = t_e;
+                        m_result.extension = t_e.value();
 
                         m_result.extension_range = move_by_one();
 
@@ -636,7 +666,7 @@ void data_definition_parser::push(std::variant<std::string, mach_expr_ptr> v, ra
                 }
                 m_collector->add_hl_symbol(token_info(type_range, semantics::hl_scopes::data_def_type));
 
-                if (remaining_text.empty())
+                if (!std::visit(first_letter, v).has_value())
                 {
                     m_allowed = {};
                     return;
@@ -648,7 +678,7 @@ void data_definition_parser::push(std::variant<std::string, mach_expr_ptr> v, ra
             }
 
             case state::try_reading_program:
-                if (auto c = remaining_text.front(); c != 'P' && c != 'p')
+                if (auto c = std::visit(first_letter, v); c != 'P' && c != 'p')
                 {
                     m_state = state::try_reading_length;
                     break;
@@ -660,7 +690,7 @@ void data_definition_parser::push(std::variant<std::string, mach_expr_ptr> v, ra
                 break;
 
             case state::read_program:
-                if (!(m_result.program_type = expr ? std::move(expr) : read_number(remaining_text, r)))
+                if (!(m_result.program_type = read_number(v, r)))
                 {
                     m_allowed = {};
                     return;
@@ -671,7 +701,7 @@ void data_definition_parser::push(std::variant<std::string, mach_expr_ptr> v, ra
                 break;
 
             case state::try_reading_length:
-                if (auto c = remaining_text.front(); c != 'L' && c != 'l')
+                if (auto c = std::visit(first_letter, v); c != 'L' && c != 'l')
                 {
                     m_state = state::try_reading_scale;
                     break;
@@ -683,7 +713,7 @@ void data_definition_parser::push(std::variant<std::string, mach_expr_ptr> v, ra
                 break;
 
             case state::try_reading_bitfield:
-                if (remaining_text == ".")
+                if (std::visit(first_letter, v) == '.')
                 {
                     m_result.length_type = data_definition::length_type::BIT;
                     move_by_one();
@@ -693,7 +723,7 @@ void data_definition_parser::push(std::variant<std::string, mach_expr_ptr> v, ra
                 break;
 
             case state::read_length:
-                if (!(m_result.length = expr ? std::move(expr) : read_number(remaining_text, r)))
+                if (!(m_result.length = read_number(v, r)))
                 {
                     m_allowed = {};
                     return;
@@ -704,7 +734,7 @@ void data_definition_parser::push(std::variant<std::string, mach_expr_ptr> v, ra
                 break;
 
             case state::try_reading_scale:
-                if (auto c = remaining_text.front(); c != 'S' && c != 's')
+                if (auto c = std::visit(first_letter, v); c != 'S' && c != 's')
                 {
                     m_state = state::try_reading_exponent;
                     break;
@@ -716,7 +746,7 @@ void data_definition_parser::push(std::variant<std::string, mach_expr_ptr> v, ra
                 break;
 
             case state::read_scale:
-                if (!(m_result.scale = expr ? std::move(expr) : read_number(remaining_text, r)))
+                if (!(m_result.scale = read_number(v, r)))
                 {
                     m_allowed = {};
                     return;
@@ -727,7 +757,7 @@ void data_definition_parser::push(std::variant<std::string, mach_expr_ptr> v, ra
                 break;
 
             case state::try_reading_exponent:
-                if (auto c = remaining_text.front(); c != 'E' && c != 'e' || !can_have_exponent(m_result.type))
+                if (auto c = std::visit(first_letter, v); c != 'E' && c != 'e' || !can_have_exponent(m_result.type))
                 {
                     m_state = state::too_much_text;
                     break;
@@ -739,7 +769,7 @@ void data_definition_parser::push(std::variant<std::string, mach_expr_ptr> v, ra
                 break;
 
             case state::read_exponent:
-                if (!(m_result.exponent = expr ? std::move(expr) : read_number(remaining_text, r)))
+                if (!(m_result.exponent = read_number(v, r)))
                 {
                     m_allowed = {};
                     return;
