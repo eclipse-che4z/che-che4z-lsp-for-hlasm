@@ -116,7 +116,7 @@ public:
         bool dot;
     };
 
-    const allowed_t& allowed() const { return m_allowed; }
+    const allowed_t& allowed() const { return m_state.allowed; }
 
     using push_arg = std::variant<std::string_view, mach_expr_ptr>;
 
@@ -132,14 +132,13 @@ private:
     mach_expr_ptr read_number(push_arg& v, range& r);
     mach_expr_ptr read_number(std::string_view& v, range& r);
 
-    allowed_t m_allowed = { true, true, false, false };
     data_definition m_result;
 
     semantics::collector* m_collector = nullptr;
-    std::optional<position> m_expecting_next;
 
     enum class state
     {
+        done,
         duplicating_factor,
         read_type,
         try_reading_program,
@@ -152,7 +151,14 @@ private:
         try_reading_exponent,
         read_exponent,
         too_much_text,
-    } m_state = state::duplicating_factor;
+    };
+
+    struct
+    {
+        state parsing_state;
+        allowed_t allowed;
+        std::optional<position> expecting_next;
+    } m_state = { state::duplicating_factor, { true, true, false, false }, std::nullopt };
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

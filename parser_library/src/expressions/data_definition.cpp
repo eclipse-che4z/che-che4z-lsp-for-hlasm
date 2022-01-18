@@ -582,7 +582,7 @@ struct
 {
     bool operator()(const std::string_view& s) const { return s.empty(); }
     bool operator()(const mach_expr_ptr& p) const { return !p; }
-} constexpr argument_emtpy;
+} constexpr argument_empty;
 struct
 {
     std::optional<char> operator()(const std::string_view& s) const
@@ -620,9 +620,9 @@ struct
 
 void data_definition_parser::push(push_arg v, range r)
 {
-    if (std::visit(argument_emtpy, v))
+    if (std::visit(argument_empty, v))
     {
-        m_allowed = {};
+        m_state = {};
         return;
     }
 
@@ -637,15 +637,17 @@ void data_definition_parser::push(push_arg v, range r)
         return ret;
     };
 
-    while (!std::visit(argument_emtpy, v))
+    while (!std::visit(argument_empty, v))
     {
-        switch (m_state)
+        switch (m_state.parsing_state)
         {
+            case state::done:
+                return;
+
             case state::duplicating_factor:
                 if (std::visit(is_dupl_factor, v))
                     m_result.dupl_factor = read_number(v, r);
-                m_allowed = { false, true, false, false };
-                m_state = state::read_type;
+                m_state = { state::read_type, { false, true, false, false }, r.end };
                 break;
 
             case state::read_type: {
@@ -665,51 +667,37 @@ void data_definition_parser::push(push_arg v, range r)
                     }
                 }
                 m_collector->add_hl_symbol(token_info(type_range, semantics::hl_scopes::data_def_type));
-
-                if (!std::visit(first_letter, v).has_value())
-                {
-                    m_allowed = {};
-                    return;
-                }
-
-                m_state = state::try_reading_program;
-
+                m_state = { state::try_reading_program, { false, false, false, false }, std::nullopt };
                 break;
             }
 
             case state::try_reading_program:
                 if (auto c = std::visit(first_letter, v); c != 'P' && c != 'p')
                 {
-                    m_state = state::try_reading_length;
+                    m_state.parsing_state = state::try_reading_length;
                     break;
                 }
                 m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
-                m_state = state::read_program;
-                m_allowed = { true, false, true, false };
-                m_expecting_next = r.start;
+                m_state = { state::read_program, { true, false, true, false }, r.start };
                 break;
 
             case state::read_program:
                 if (!(m_result.program_type = read_number(v, r)))
                 {
-                    m_allowed = {};
+                    m_state = {};
                     return;
                 }
-                m_expecting_next.reset();
-                m_state = state::try_reading_length;
-                m_allowed = { false, true, false, false };
+                m_state = { state::try_reading_length, { false, true, false, false }, std::nullopt };
                 break;
 
             case state::try_reading_length:
                 if (auto c = std::visit(first_letter, v); c != 'L' && c != 'l')
                 {
-                    m_state = state::try_reading_scale;
+                    m_state.parsing_state = state::try_reading_scale;
                     break;
                 }
                 m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
-                m_state = state::try_reading_bitfield;
-                m_allowed = { true, false, false, true };
-                m_expecting_next = r.start;
+                m_state = { state::try_reading_bitfield, { true, false, false, true }, r.start };
                 break;
 
             case state::try_reading_bitfield:
@@ -718,69 +706,58 @@ void data_definition_parser::push(push_arg v, range r)
                     m_result.length_type = data_definition::length_type::BIT;
                     move_by_one();
                 }
-                m_state = state::read_length;
-                m_allowed = { true, true, false, false };
+                m_state = { state::read_length, { true, true, false, false }, r.start };
                 break;
 
             case state::read_length:
                 if (!(m_result.length = read_number(v, r)))
                 {
-                    m_allowed = {};
+                    m_state = {};
                     return;
                 }
-                m_expecting_next.reset();
-                m_state = state::try_reading_scale;
-                m_allowed = { false, true, false, false };
+                m_state = { state::try_reading_scale, { false, true, false, false }, std::nullopt };
                 break;
 
             case state::try_reading_scale:
                 if (auto c = std::visit(first_letter, v); c != 'S' && c != 's')
                 {
-                    m_state = state::try_reading_exponent;
+                    m_state.parsing_state = state::try_reading_exponent;
                     break;
                 }
                 m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
-                m_state = state::read_scale;
-                m_allowed = { true, false, true, false };
-                m_expecting_next = r.start;
+                m_state = { state::read_scale, { true, false, true, false }, r.start };
                 break;
 
             case state::read_scale:
                 if (!(m_result.scale = read_number(v, r)))
                 {
-                    m_allowed = {};
+                    m_state = {};
                     return;
                 }
-                m_expecting_next.reset();
-                m_state = state::try_reading_exponent;
-                m_allowed = { false, true, false, false };
+                m_state = { state::try_reading_exponent, { false, true, false, false }, std::nullopt };
                 break;
 
             case state::try_reading_exponent:
                 if (auto c = std::visit(first_letter, v); c != 'E' && c != 'e' || !can_have_exponent(m_result.type))
                 {
-                    m_state = state::too_much_text;
+                    m_state.parsing_state = state::too_much_text;
                     break;
                 }
                 m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
-                m_state = state::read_exponent;
-                m_allowed = { true, false, true, false };
-                m_expecting_next = r.start;
+                m_state = { state::read_exponent, { true, false, true, false }, r.start };
                 break;
 
             case state::read_exponent:
                 if (!(m_result.exponent = read_number(v, r)))
                 {
-                    m_allowed = {};
+                    m_state = {};
                     return;
                 }
-                m_expecting_next.reset();
-                m_state = state::too_much_text;
-                m_allowed = {};
+                m_state = { state::too_much_text, {}, std::nullopt };
                 break;
 
             case state::too_much_text:
-                m_allowed = {};
+                m_state = {};
                 m_result.add_diagnostic(diagnostic_op::error_D006(r));
                 return;
 
@@ -793,10 +770,9 @@ void data_definition_parser::push(nominal_value_ptr n) { m_result.nominal_value 
 
 data_definition data_definition_parser::take_result()
 {
-    if (m_expecting_next.has_value())
-    {
-        m_result.add_diagnostic(diagnostic_op::error_D003(range(m_expecting_next.value())));
-    }
+    if (m_state.expecting_next.has_value())
+        m_result.add_diagnostic(diagnostic_op::error_D003(range(m_state.expecting_next.value())));
+
     loctr_reference_visitor v;
     m_result.apply(v);
     m_result.references_loctr = v.found_loctr_reference;
