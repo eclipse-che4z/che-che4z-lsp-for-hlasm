@@ -60,19 +60,6 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
     length_type length_type = length_type::BYTE;
     bool references_loctr = false;
 
-    inline static const char* expr_placeholder = "&";
-    inline static const char* nominal_placeholder = " ";
-    // Creates the data definition. format is the string representation of data definition as the user
-    // has written it, excapt all expressions are replaced with '&' and nominal value is replaced with " ".
-    // The expressions are passed separately as exprs in the same order as '&' appear in the format. begin is
-    // the position of first character of data definition. The function filles the passed collector with
-    // highlighting information.
-    static data_definition create(semantics::collector& coll,
-        std::string format,
-        mach_expr_list exprs,
-        nominal_value_ptr nominal,
-        position begin);
-
     // Returns conjunction of all dependencies of all expression in data_definition.
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
     // Returns conjunction of dependencies of length modifier and duplication factor, which are the only ones
@@ -115,65 +102,54 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
     friend bool is_similar(const data_definition& l, const data_definition& r) noexcept;
 
     size_t hash() const;
-
-private:
-    class parser;
 };
 
-// Parses data definition from the form it comes from the grammar, the input comes with expressions and nominal value
-// replaced by special characters. On one instance, parse may be called only once.
-// If there are errors, they are reported with diagnostics of data_definition. Only those checks needed for valid
-// parsing of the data definition are performed here (syntax errors). Checks regarding values of fields are
-// implemented in checking.
-class data_definition::parser
+// Guide the ANTLR parser through the process of parsing data definition expression
+class data_definition_parser
 {
 public:
-    parser(semantics::collector& coll,
-        std::string format,
-        mach_expr_list exprs,
-        nominal_value_ptr nominal,
-        position begin);
-    // Parses the data definition specified as parameters of constructor.
-    data_definition parse();
+    struct allowed_t
+    {
+        bool expression;
+        bool string;
+        bool plus_minus;
+        bool dot;
+    };
 
-    // Parses number from format on position p_ and returns it, if it is valid.
-    std::optional<int> parse_number();
-    // Returns position behind number that follows.
-    size_t get_number_end(size_t begin);
-    // Sets the position behind the expression.
-    void update_position(const mach_expression& e);
-    // Moves the position one character forward.
-    // TODO: continuation support: current implementation never moves to the next line
-    void update_position_by_one();
-    void parse_duplication_factor();
-    void parse_modifier();
-    // Returns the next expression from the input list.
-    mach_expr_ptr move_next_expression();
-    // Either returns expression that user specified as a modifier or creates expression from number that he specified
-    // Either L(48+12) or L60
-    mach_expr_ptr parse_modifier_num_or_expr();
-    // Moves the expression to the right modifier field in the result.
-    void assign_expr_to_modifier(char modifier, mach_expr_ptr expr);
+    const allowed_t& allowed() const { return m_allowed; }
+
+    void push(std::variant<std::string, mach_expr_ptr> v, range r);
+    void push(nominal_value_ptr n);
+
+    data_definition take_result();
+
+    void set_collector(semantics::collector& collector) { m_collector = &collector; }
 
 private:
-    semantics::collector& collector_;
-    // Input parameters specifying the data definition as grammar parsed it
-    std::string format_;
-    mach_expr_list exprs_;
-    nominal_value_ptr nominal_;
+    std::optional<std::pair<int, range>> parse_number(std::string_view& v, range& r);
+    mach_expr_ptr read_number(std::string_view& v, range& r);
 
-    // Current state of parsing:
-    // Current position in text
-    position pos_;
-    // Current position in format
-    size_t p_;
-    // Current position in expressions vector
-    size_t exprs_i_;
-    // Lists currently remaining valid modifiers: (P)rogram type, (L)ength, (S)cale, (E)xponent
-    std::string remaining_modifiers_ = "PLSE";
-    bool nominal_parsed_ = false;
+    allowed_t m_allowed = { true, true, false, false };
+    data_definition m_result;
 
-    data_definition result_;
+    semantics::collector* m_collector = nullptr;
+    std::optional<position> m_expecting_next;
+
+    enum class state
+    {
+        duplicating_factor,
+        read_type,
+        try_reading_program,
+        read_program,
+        try_reading_bitfield,
+        try_reading_length,
+        read_length,
+        try_reading_scale,
+        read_scale,
+        try_reading_exponent,
+        read_exponent,
+        too_much_text,
+    } m_state = state::duplicating_factor;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions
