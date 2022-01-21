@@ -607,14 +607,14 @@ struct
 } constexpr first_letter_upper;
 struct
 {
-    bool operator()(const std::string_view& s) const
+    std::pair<bool, bool> operator()(const std::string_view& s) const
     {
         if (s.empty())
-            return false;
+            return { false, false };
         else
-            return isdigit((unsigned char)s.front());
+            return { isdigit((unsigned char)s.front()), false };
     }
-    bool operator()(const mach_expr_ptr&) const { return true; }
+    std::pair<bool, bool> operator()(const mach_expr_ptr&) const { return { true, true }; }
 } constexpr is_dupl_factor;
 } // namespace
 
@@ -644,11 +644,13 @@ void data_definition_parser::push(push_arg v, range r)
             case state::done:
                 return;
 
-            case state::duplicating_factor:
-                if (std::visit(is_dupl_factor, v))
+            case state::duplicating_factor: {
+                auto [has_dup_factor, is_expr] = std::visit(is_dupl_factor, v);
+                if (has_dup_factor)
                     m_result.dupl_factor = read_number(v, r);
-                m_state = { state::read_type, { false, true, false, false }, r.end };
+                m_state = { state::read_type, { false, is_expr, false, false }, r.end };
                 break;
+            }
 
             case state::read_type: {
                 m_result.type = std::visit(first_letter_upper, v).value();
@@ -700,14 +702,16 @@ void data_definition_parser::push(push_arg v, range r)
                 m_state = { state::try_reading_bitfield, { true, false, false, true }, r.start };
                 break;
 
-            case state::try_reading_bitfield:
-                if (std::visit(first_letter, v) == '.')
+            case state::try_reading_bitfield: {
+                auto bit_field = std::visit(first_letter, v) == '.';
+                if (bit_field)
                 {
                     m_result.length_type = data_definition::length_type::BIT;
                     move_by_one();
                 }
-                m_state = { state::read_length, { true, true, false, false }, r.start };
+                m_state = { state::read_length, { true, bit_field, false, false }, r.start };
                 break;
+            }
 
             case state::read_length:
                 if (!(m_result.length = read_number(v, r)))
