@@ -36,22 +36,21 @@ bool id_storage::empty() const { return lit_.empty(); }
 
 id_storage::const_pointer id_storage::find(std::string val) const
 {
-    to_upper(val);
-
     if (val.empty())
         return empty_id;
+
+    to_upper(val);
 
     const_iterator tmp = lit_.find(val);
 
     return tmp == lit_.end() ? nullptr : &*tmp;
 }
 
-id_storage::const_pointer id_storage::add(std::string value, bool is_uri)
+id_storage::const_pointer id_storage::add(std::string value)
 {
     if (value.empty())
         return empty_id;
-    if (!is_uri)
-        to_upper(value);
+    to_upper(value);
     return &*lit_.insert(std::move(value)).first;
 }
 

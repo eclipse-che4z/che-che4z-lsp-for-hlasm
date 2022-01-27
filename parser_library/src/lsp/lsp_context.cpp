@@ -764,7 +764,8 @@ std::string lsp_context::get_macro_documentation(const macro_info& m) const
 
 completion_list_s lsp_context::complete_instr(const file_info&, position) const
 {
-    completion_list_s result = completion_item_s::instruction_completion_items_;
+    completion_list_s result(completion_item_s::instruction_completion_items_.begin(),
+        completion_item_s::instruction_completion_items_.end());
 
     for (const auto& [_, macro_i] : macros_)
     {
@@ -902,9 +903,7 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
             }
             else
             {
-                auto it = std::find_if(completion_item_s::instruction_completion_items_.begin(),
-                    completion_item_s::instruction_completion_items_.end(),
-                    [&occ](const auto& item) { return item.label == *occ.name; });
+                auto it = completion_item_s::instruction_completion_items_.find(*occ.name);
                 if (it == completion_item_s::instruction_completion_items_.end())
                     return "";
                 return it->detail + "  \n" + it->documentation;

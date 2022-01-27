@@ -125,7 +125,7 @@ const std::vector<ca_instruction> instruction::ca_instructions = {
     { "ASPACE", false },
 };
 
-const std::map<std::string, assembler_instruction> instruction::assembler_instructions = {
+const std::map<std::string_view, assembler_instruction> instruction::assembler_instructions = {
     { "*PROCESS", assembler_instruction(1, -1, true, "") }, // TO DO
     { "ACONTROL", assembler_instruction(1, -1, false, "<selection>+") },
     { "ADATA", assembler_instruction(5, 5, false, "value1,value2,value3,value4,character_string") },
@@ -1639,9 +1639,9 @@ const std::set<machine_instruction, machine_instruction_comparer>& instruction::
     return machine_instructions;
 }
 
-static std::map<std::string, mnemonic_code> generate_mnemonic_codes()
+static auto generate_mnemonic_codes()
 {
-    std::map<std::string, mnemonic_code> result;
+    std::map<std::string_view, mnemonic_code> result;
 
     const auto add_mnemonic_code = [&result](std::string_view mnemonic,
                                        std::string_view base_instr,
@@ -1650,7 +1650,7 @@ static std::map<std::string, mnemonic_code> generate_mnemonic_codes()
             replacement.begin(), replacement.end(), [](const auto& l, const auto& r) { return l.first < r.first; }));
         auto instr_p = machine_instructions.find(base_instr);
         assert(instr_p != machine_instructions.end());
-        result.try_emplace(std::string(mnemonic), &*instr_p, replacement);
+        result.try_emplace(mnemonic, &*instr_p, replacement);
     };
 
     add_mnemonic_code("B", "BC", { { 0, 15 } });
@@ -2610,7 +2610,7 @@ static std::map<std::string, mnemonic_code> generate_mnemonic_codes()
     return result;
 }
 
-const std::map<std::string, mnemonic_code> instruction::mnemonic_codes = generate_mnemonic_codes();
+const std::map<std::string_view, mnemonic_code> instruction::mnemonic_codes = generate_mnemonic_codes();
 
 // Generates a bitmask for an arbitrary machine instruction indicating which operands
 // are of the RI type (and therefore are modified by transform_reloc_imm_operands)

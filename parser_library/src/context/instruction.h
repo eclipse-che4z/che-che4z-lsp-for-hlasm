@@ -289,7 +289,7 @@ struct machine_instruction_comparer
 
 struct ca_instruction
 {
-    std::string name;
+    std::string_view name;
     bool operandless;
 };
 
@@ -299,7 +299,6 @@ struct mnemonic_code
     static unsigned char generate_reladdr_bitmask(
         const machine_instruction* instruction, const std::vector<std::pair<size_t, size_t>>& replaced);
 
-public:
     mnemonic_code(const machine_instruction* instr, std::vector<std::pair<size_t, size_t>> replaced)
         : instruction(instr)
         , replaced(replaced)
@@ -341,13 +340,13 @@ public:
 
     static const std::vector<ca_instruction> ca_instructions;
 
-    static const std::map<std::string, assembler_instruction> assembler_instructions;
+    static const std::map<std::string_view, assembler_instruction> assembler_instructions;
 
     static const machine_instruction& get_machine_instructions(std::string_view name);
     static const machine_instruction* find_machine_instructions(std::string_view name);
     static const std::set<machine_instruction, machine_instruction_comparer>& all_machine_instructions();
 
-    static const std::map<std::string, mnemonic_code> mnemonic_codes;
+    static const std::map<std::string_view, mnemonic_code> mnemonic_codes;
 
     static const std::map<mach_format, std::string> mach_format_to_string;
 };

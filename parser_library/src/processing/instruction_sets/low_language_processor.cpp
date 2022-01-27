@@ -354,18 +354,18 @@ bool low_language_processor::check(const resolved_statement& stmt,
     transform_result operand_vector;
 
     auto mnem_tmp = context::instruction::mnemonic_codes.find(*stmt.opcode_ref().value);
-    const std::string* instruction_name;
+    std::string_view instruction_name;
 
     if (mnem_tmp != context::instruction::mnemonic_codes.end())
     {
         operand_vector = transform_mnemonic(stmt, dep_solver, collector);
         // save the actual mnemonic name
-        instruction_name = &mnem_tmp->first;
+        instruction_name = mnem_tmp->first;
     }
     else
     {
         operand_vector = transform_default(stmt, dep_solver, collector);
-        instruction_name = stmt.opcode_ref().value;
+        instruction_name = *stmt.opcode_ref().value;
     }
 
     if (!operand_vector)
@@ -374,5 +374,6 @@ bool low_language_processor::check(const resolved_statement& stmt,
     for (const auto& op : *operand_vector)
         operand_ptr_vector.push_back(op.get());
 
-    return checker.check(*instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
+    // TODO: !!!
+    return checker.check(std::string(instruction_name), operand_ptr_vector, stmt.stmt_range_ref(), collector);
 }
