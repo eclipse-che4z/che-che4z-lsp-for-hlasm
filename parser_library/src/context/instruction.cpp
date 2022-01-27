@@ -190,7 +190,7 @@ bool hlasm_plugin::parser_library::context::machine_instruction::check_nth_opera
     return false;
 }
 
-bool hlasm_plugin::parser_library::context::machine_instruction::check(const std::string& name_of_instruction,
+bool hlasm_plugin::parser_library::context::machine_instruction::check(std::string_view name_of_instruction,
     const std::vector<const checking::machine_operand*> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
@@ -224,9 +224,7 @@ static auto generate_machine_instructions()
     const auto add_machine_instr = [&result](std::string_view instruction_name,
                                        mach_format format,
                                        std::initializer_list<machine_operand_format> op_format,
-                                       short page_no) {
-        result.emplace(std::string(instruction_name), format, op_format, page_no);
-    };
+                                       short page_no) { result.emplace(instruction_name, format, op_format, page_no); };
 
     add_machine_instr("AR", mach_format::RR, { reg_4_U, reg_4_U }, 510);
     add_machine_instr("ADDFRR", mach_format::RRE, { reg_4_U, reg_4_U }, 7);

@@ -119,12 +119,12 @@ public:
 
     // check whether the operand satisfies its format
     virtual bool check(diagnostic_op& diag,
-        const machine_operand_format to_check,
-        const std::string& instr_name,
+        const machine_operand_format& to_check,
+        std::string_view instr_name,
         const range& stmt_range) const = 0;
 
     diagnostic_op get_simple_operand_expected(
-        const machine_operand_format& op_format, const std::string& instr_name, const range& stmt_range) const;
+        const machine_operand_format& op_format, std::string_view instr_name, const range& stmt_range) const;
 
     static bool is_size_corresponding_signed(int operand, int size);
     static bool is_size_corresponding_unsigned(int operand, int size);
@@ -145,15 +145,15 @@ public:
     address_operand(address_state state, int displacement, int first, int second);
     address_operand(address_state state, int displacement, int first, int second, operand_state op_state);
 
-    diagnostic_op get_first_parameter_error(const machine_operand_type& op_type,
-        const std::string& instr_name,
+    diagnostic_op get_first_parameter_error(machine_operand_type op_type,
+        std::string_view instr_name,
         long long from,
         long long to,
         const range& stmt_range) const;
 
     bool check(diagnostic_op& diag,
-        const machine_operand_format to_check,
-        const std::string& instr_name,
+        const machine_operand_format& to_check,
+        std::string_view instr_name,
         const range& range) const override;
 
     bool is_length_corresponding(int param_value, int length_size) const;
@@ -183,8 +183,8 @@ public:
     one_operand(const one_operand& op);
 
     bool check(diagnostic_op& diag,
-        const machine_operand_format to_check,
-        const std::string& instr_name,
+        const machine_operand_format& to_check,
+        std::string_view instr_name,
         const range& stmt_range) const override;
 };
 
@@ -194,8 +194,8 @@ public:
     empty_operand();
 
     bool check(diagnostic_op& diag,
-        const machine_operand_format to_check,
-        const std::string& instr_name,
+        const machine_operand_format& to_check,
+        std::string_view instr_name,
         const range& stmt_range) const override;
 };
 

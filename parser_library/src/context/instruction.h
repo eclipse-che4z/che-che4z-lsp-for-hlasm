@@ -226,7 +226,7 @@ struct machine_instruction
 {
     static unsigned char generate_reladdr_bitmask(const std::vector<checking::machine_operand_format>& operands);
 
-    std::string instr_name;
+    std::string_view instr_name;
     mach_format format;
     char size_for_alloc;
     short page_no;
@@ -235,7 +235,7 @@ struct machine_instruction
     std::vector<checking::machine_operand_format> operands; // what the vector of operands should look like
 
 
-    machine_instruction(const std::string& name,
+    machine_instruction(std::string_view name,
         mach_format format,
         std::vector<checking::machine_operand_format> operands,
         short page_no)
@@ -261,7 +261,7 @@ struct machine_instruction
             return 16;
         return 0;
     }
-    bool check(const std::string& name_of_instruction,
+    bool check(std::string_view name_of_instruction,
         const std::vector<const checking::machine_operand*> operands,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const; // input vector is the vector of the actual incoming values

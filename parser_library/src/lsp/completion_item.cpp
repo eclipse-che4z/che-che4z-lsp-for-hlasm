@@ -43,6 +43,9 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
         std::stringstream doc_ss(" ");
         std::stringstream detail_ss(""); // operands used for hover - e.g. V,D12U(X,B)[,M]
         std::stringstream autocomplete(""); // operands used for autocomplete - e.g. V,D12U(X,B) [,M]
+
+        autocomplete << machine_instr.instr_name << "   ";
+
         for (size_t i = 0; i < machine_instr.operands.size(); i++)
         {
             const auto& op = machine_instr.operands[i];
@@ -88,9 +91,9 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
         }
         doc_ss << "Machine instruction " << std::endl
                << "Instruction format: " << instruction::mach_format_to_string.at(machine_instr.format);
-        result.emplace_back(machine_instr.instr_name,
+        result.emplace_back(std::string(machine_instr.instr_name),
             "Operands: " + detail_ss.str(),
-            machine_instr.instr_name + "   " + autocomplete.str(),
+            autocomplete.str(),
             doc_ss.str(),
             completion_item_kind::mach_instr);
     }

@@ -72,8 +72,8 @@ address_operand::address_operand(address_state state, int displacement, int firs
     , second_op(second)
     , op_state(op_state) {};
 
-diagnostic_op address_operand::get_first_parameter_error(const machine_operand_type& op_type,
-    const std::string& instr_name,
+diagnostic_op address_operand::get_first_parameter_error(machine_operand_type op_type,
+    std::string_view instr_name,
     long long from,
     long long to,
     const range& stmt_range) const
@@ -94,8 +94,8 @@ diagnostic_op address_operand::get_first_parameter_error(const machine_operand_t
 }
 
 bool address_operand::check(diagnostic_op& diag,
-    const machine_operand_format to_check,
-    const std::string& instr_name,
+    const machine_operand_format& to_check,
+    std::string_view instr_name,
     const range& stmt_range) const
 {
     if (is_simple_operand(to_check))
@@ -201,7 +201,7 @@ bool hlasm_plugin::parser_library::checking::address_operand::is_length_correspo
 };
 
 diagnostic_op machine_operand::get_simple_operand_expected(
-    const machine_operand_format& op_format, const std::string& instr_name, const range& stmt_range) const
+    const machine_operand_format& op_format, std::string_view instr_name, const range& stmt_range) const
 {
     switch (op_format.identifier.type)
     {
@@ -265,7 +265,7 @@ one_operand::one_operand(const one_operand& op)
     , is_default(op.is_default) {};
 
 bool one_operand::check(
-    diagnostic_op& diag, const machine_operand_format to_check, const std::string& instr_name, const range&) const
+    diagnostic_op& diag, const machine_operand_format& to_check, std::string_view instr_name, const range&) const
 {
     if (!is_simple_operand(to_check))
     {
@@ -331,7 +331,7 @@ bool one_operand::check(
 empty_operand::empty_operand() {}
 
 bool empty_operand::check(
-    diagnostic_op& diag, const machine_operand_format, const std::string& instr_name, const range&) const
+    diagnostic_op& diag, const machine_operand_format&, std::string_view instr_name, const range&) const
 {
     diag = diagnostic_op::error_M003(instr_name, operand_range);
     return false;
