@@ -2008,40 +2008,56 @@ diagnostic_op diagnostic_op::error_CW001(const range& range)
     return diagnostic_op(diagnostic_severity::warning, "CW001", "Substring count points past string end", range);
 }
 
-diagnostic_op diagnostic_op::error_P0001(const range& range)
+diagnostic_op diagnostic_op::error_DB001(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "P0001", "DB2 preprocessor - invalid line continuation", range);
+    return diagnostic_op(diagnostic_severity::error, "DB001", "DB2 preprocessor - invalid line continuation", range);
 }
 
-diagnostic_op diagnostic_op::error_P0002(const range& range, std::string_view lib)
+diagnostic_op diagnostic_op::error_DB002(const range& range, std::string_view lib)
 {
     return diagnostic_op(diagnostic_severity::error,
-        "P0002",
+        "DB002",
         std::string("DB2 preprocessor - unable to find library '").append(lib).append("'"),
         range);
 }
 
-diagnostic_op diagnostic_op::error_P0003(const range& range, std::string_view lib)
+diagnostic_op diagnostic_op::error_DB003(const range& range, std::string_view lib)
 {
     return diagnostic_op(diagnostic_severity::error,
-        "P0003",
+        "DB003",
         std::string("DB2 preprocessor - nested include '").append(lib).append("' requested"),
         range);
 }
 
-diagnostic_op diagnostic_op::error_P0004(const range& range)
+diagnostic_op diagnostic_op::error_DB004(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
-        "P0004",
+        "DB004",
         std::string("DB2 preprocessor - requested SQL TYPE not recognized"),
         range);
 }
 
-diagnostic_op diagnostic_op::error_P0005(const range& range)
+diagnostic_op diagnostic_op::error_DB005(const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning,
-        "P0005",
+        "DB005",
         std::string("DB2 preprocessor - continuation detected on SQL TYPE statement"),
+        range);
+}
+
+diagnostic_op diagnostic_op::warn_CIC001(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "CIC001",
+        std::string("CICS preprocessor - continuation ignored on ASM statement"),
+        range);
+}
+
+diagnostic_op diagnostic_op::warn_CIC002(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "CIC002",
+        std::string("CICS preprocessor - DFHRESP argument cannot be NULL"),
         range);
 }
 

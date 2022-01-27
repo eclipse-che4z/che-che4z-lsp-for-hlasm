@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_HLASMPARSERLIBRARY_LOGICAL_LINE_H
 
 #include <array>
+#include <cassert>
 #include <limits>
 #include <stdexcept>
 #include <string_view>
@@ -102,6 +103,95 @@ struct logical_line
         so_si_continuation = false;
         missing_next_line = false;
     }
+
+    struct const_iterator
+    {
+        using segment_iterator = std::vector<logical_line_segment>::const_iterator;
+        using column_iterator = std::string_view::const_iterator;
+
+        using iterator_category = std::bidirectional_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = char;
+        using pointer = const char*;
+        using reference = const char&;
+
+        const_iterator() = default;
+        const_iterator(segment_iterator segment, column_iterator col, const logical_line* ll)
+            : m_segment(segment)
+            , m_col(col)
+            , m_logical_line(ll)
+        {}
+
+        reference operator*() const noexcept { return *m_col; }
+        pointer operator->() const noexcept { return &*m_col; }
+        const_iterator& operator++() noexcept
+        {
+            assert(m_logical_line);
+            ++m_col;
+            while (m_col == m_segment->code.end())
+            {
+                if (++m_segment == m_logical_line->segments.end())
+                {
+                    m_col = column_iterator();
+                    break;
+                }
+                m_col = m_segment->code.begin();
+            }
+            return *this;
+        }
+        const_iterator operator++(int) noexcept
+        {
+            const_iterator tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+        const_iterator& operator--() noexcept
+        {
+            assert(m_logical_line);
+            while (m_segment == m_logical_line->segments.end() || m_col == m_segment->code.begin())
+            {
+                --m_segment;
+                m_col = m_segment->code.end();
+            }
+            --m_col;
+            return *this;
+        }
+        const_iterator operator--(int) noexcept
+        {
+            const_iterator tmp = *this;
+            --(*this);
+            return tmp;
+        }
+        friend bool operator==(const const_iterator& a, const const_iterator& b) noexcept
+        {
+            assert(a.m_logical_line == b.m_logical_line);
+            return a.m_segment == b.m_segment && a.m_col == b.m_col;
+        }
+        friend bool operator!=(const const_iterator& a, const const_iterator& b) noexcept { return !(a == b); }
+
+        bool same_line(const const_iterator& o) const noexcept
+        {
+            assert(m_logical_line == o.m_logical_line);
+            return m_segment == o.m_segment;
+        }
+
+    private:
+        segment_iterator m_segment = segment_iterator();
+        column_iterator m_col = std::string_view::const_iterator();
+        const logical_line* m_logical_line = nullptr;
+    };
+
+    const_iterator begin() const noexcept
+    {
+        for (auto s = segments.begin(); s != segments.end(); ++s)
+            if (!s->code.empty())
+                return const_iterator(s, s->code.begin(), this);
+        return end();
+    }
+    const_iterator end() const noexcept
+    {
+        return const_iterator(segments.end(), std::string_view::const_iterator(), this);
+    }
 };
 
 // defines the layout of the hlasm source file and options to follow for line extraction
@@ -137,8 +227,26 @@ void finish_logical_line(logical_line& out, const logical_line_extractor_args& o
 // returns the remaining string and size of the skipped length in utf-16 encoding
 std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count);
 
-// returns the length of the string in utf-16 symbols and info if the last character is two-byte
-std::pair<size_t, bool> length_utf16(std::string_view text);
+struct utf8_substr_result
+{
+    std::string_view str;
+    size_t char_count;
+    size_t utf16_len;
+};
+
+inline bool operator==(const utf8_substr_result& l, const utf8_substr_result& r)
+{
+    return l.str == r.str && l.char_count == r.char_count && l.utf16_len == r.utf16_len;
+}
+
+inline bool operator!=(const utf8_substr_result& l, const utf8_substr_result& r) { return !(l == r); }
+
+// utf-8 substr in unicode characters with optional validation
+template<bool validate = false>
+utf8_substr_result utf8_substr(std::string_view s, size_t offset_chars = 0, size_t length_chars = (size_t)-1);
+
+// returns the length of the string in utf-16 symbols
+size_t length_utf16(std::string_view text);
 
 } // namespace hlasm_plugin::parser_library::lexing
 

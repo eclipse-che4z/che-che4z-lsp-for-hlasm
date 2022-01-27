@@ -26,8 +26,7 @@
 #include "semantics/collector.h"
 #include "utils/similar.h"
 
-using namespace hlasm_plugin::parser_library::expressions;
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin::parser_library::expressions {
 
 
 data_definition data_definition::create(
@@ -82,7 +81,7 @@ context::alignment data_definition::get_alignment() const
         return context::no_align;
 }
 
-char hlasm_plugin::parser_library::expressions::data_definition::get_type_attribute() const
+char data_definition::get_type_attribute() const
 {
     switch (type)
     {
@@ -412,7 +411,7 @@ void data_definition::apply(mach_expr_visitor& visitor) const
     }
 }
 
-size_t hlasm_plugin::parser_library::expressions::data_definition::hash() const
+size_t data_definition::hash() const
 {
     auto ret = (size_t)0x65b40f329f97f6c9;
     ret = hash_combine(ret, type);
@@ -732,9 +731,9 @@ data_definition data_definition::parser::parse()
     return std::move(result_);
 }
 
-bool hlasm_plugin::parser_library::expressions::is_similar(const data_definition& l, const data_definition& r) noexcept
+bool is_similar(const data_definition& l, const data_definition& r) noexcept
 {
-    return hlasm_plugin::utils::is_similar(l,
+    return utils::is_similar(l,
         r,
         &data_definition::type,
         &data_definition::extension,
@@ -746,3 +745,5 @@ bool hlasm_plugin::parser_library::expressions::is_similar(const data_definition
         &data_definition::exponent,
         &data_definition::nominal_value);
 }
+
+} // namespace hlasm_plugin::parser_library::expressions

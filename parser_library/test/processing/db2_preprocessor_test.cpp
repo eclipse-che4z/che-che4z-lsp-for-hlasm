@@ -220,7 +220,7 @@ TEST(db2_preprocessor, missing_member)
     EXPECT_EQ(lineno, 1);
 
     ASSERT_EQ(diags.diags.size(), 1U);
-    EXPECT_EQ(diags.diags[0].code, "P0002");
+    EXPECT_EQ(diags.diags[0].code, "DB002");
 }
 
 TEST(db2_preprocessor, bad_continuation)
@@ -237,7 +237,7 @@ badcontinuation)";
     EXPECT_EQ(lineno, 2);
 
     ASSERT_EQ(diags.diags.size(), 1U);
-    EXPECT_EQ(diags.diags[0].code, "P0001");
+    EXPECT_EQ(diags.diags[0].code, "DB001");
 }
 
 TEST(db2_preprocessor, no_nested_include)
@@ -257,7 +257,7 @@ TEST(db2_preprocessor, no_nested_include)
     EXPECT_EQ(lineno, 1);
 
     ASSERT_EQ(diags.diags.size(), 1U);
-    EXPECT_EQ(diags.diags[0].code, "P0003");
+    EXPECT_EQ(diags.diags[0].code, "DB003");
 }
 
 TEST(db2_preprocessor, sqlsect_available)
@@ -930,7 +930,7 @@ TEST(db2_preprocessor, sql_type_fails)
         EXPECT_TRUE(p->generate_replacement(text, lineno));
 
         ASSERT_EQ(diags.diags.size(), 1U);
-        EXPECT_EQ(diags.diags[0].code, "P0004");
+        EXPECT_EQ(diags.diags[0].code, "DB004");
     }
 }
 
@@ -947,5 +947,5 @@ TEST(db2_preprocessor, sql_type_warn_on_continuation)
     EXPECT_TRUE(p->generate_replacement(text, lineno));
 
     ASSERT_EQ(diags.diags.size(), 1U);
-    EXPECT_EQ(diags.diags[0].code, "P0005");
+    EXPECT_EQ(diags.diags[0].code, "DB005");
 }

@@ -18,8 +18,8 @@
 #include <utility>
 
 #include "lexing/logical_line.h"
-#include "preprocessor.h"
 #include "preprocessor_options.h"
+#include "processing/preprocessor.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace {
@@ -207,7 +207,7 @@ class db2_preprocessor : public preprocessor
         if (!include_text.has_value())
         {
             if (m_diags)
-                m_diags->add_diagnostic(diagnostic_op::error_P0002(range(position(lineno, 0)), operands));
+                m_diags->add_diagnostic(diagnostic_op::error_DB002(range(position(lineno, 0)), operands));
             return;
         }
 
@@ -572,7 +572,7 @@ class db2_preprocessor : public preprocessor
         assert(extracted);
 
         if (m_logical_line.continuation_error && m_diags)
-            m_diags->add_diagnostic(diagnostic_op::error_P0001(range(position(lineno, 0))));
+            m_diags->add_diagnostic(diagnostic_op::error_DB001(range(position(lineno, 0))));
 
         switch (instruction)
         {
@@ -589,18 +589,18 @@ class db2_preprocessor : public preprocessor
                 if (std::string_view operands = trim_right(m_operands); include_allowed)
                     process_include(operands, lineno);
                 else if (m_diags)
-                    m_diags->add_diagnostic(diagnostic_op::error_P0003(range(position(lineno, 0)), operands));
+                    m_diags->add_diagnostic(diagnostic_op::error_DB003(range(position(lineno, 0)), operands));
                 break;
 
             case line_type::sql_type:
                 process_sql_type_line(first_line_skipped);
                 // DB2 preprocessor exhibits strange behavior when SQL TYPE line is continued
                 if (m_logical_line.segments.size() > 1 && m_diags)
-                    m_diags->add_diagnostic(diagnostic_op::error_P0005(range(position(lineno, 0))));
+                    m_diags->add_diagnostic(diagnostic_op::error_DB005(range(position(lineno, 0))));
                 if (label.empty())
                     label = " "; // best matches the observed behavior
                 if (!process_sql_type_operands(m_operands, label) && m_diags)
-                    m_diags->add_diagnostic(diagnostic_op::error_P0004(range(position(lineno, 0))));
+                    m_diags->add_diagnostic(diagnostic_op::error_DB004(range(position(lineno, 0))));
                 break;
         }
 
@@ -640,6 +640,8 @@ class db2_preprocessor : public preprocessor
         else
             return std::nullopt;
     }
+
+    bool finished() const override { return true; }
 
 public:
     db2_preprocessor(library_fetcher libs, diagnostic_op_consumer* diags)

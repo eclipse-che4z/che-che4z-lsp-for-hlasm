@@ -126,6 +126,17 @@ TEST(proc_grps, full_content_read)
             proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"DB2"}}]})"_json,
             proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
+        std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS"}}]})"_json,
+            proc_grps { { { "P1", {}, {}, cics_preprocessor {} } } }),
+        std::make_pair(
+            R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS","options":["NOPROLOG"]}}]})"_json,
+            proc_grps { { { "P1", {}, {}, cics_preprocessor { false } } } }),
+        std::make_pair(
+            R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS","options":["NOEPILOG","NOPROLOG"]}}]})"_json,
+            proc_grps { { { "P1", {}, {}, cics_preprocessor { false, false } } } }),
+        std::make_pair(
+            R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS","options":["LEASM"]}}]})"_json,
+            proc_grps { { { "P1", {}, {}, cics_preprocessor { true, true, true } } } }),
     };
 
     for (const auto& [input, expected] : cases)
@@ -156,6 +167,11 @@ TEST(proc_grps, full_content_write)
             R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_grps { { { "P1", {}, {}, std::monostate {} } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"DB2"}]})"_json,
             proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
+        std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"CICS"}]})"_json,
+            proc_grps { { { "P1", {}, {}, cics_preprocessor {} } } }),
+        std::make_pair(
+            R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS", "options":["NOPROLOG","NOEPILOG","LEASM"]}}]})"_json,
+            proc_grps { { { "P1", {}, {}, cics_preprocessor { false, false, true } } } }),
     };
 
     for (const auto& [expected, input] : cases)

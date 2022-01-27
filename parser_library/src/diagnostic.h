@@ -643,15 +643,19 @@ struct diagnostic_op
 
     static diagnostic_op error_S100(const std::string& message, const range& range);
 
-    static diagnostic_op error_P0001(const range& range);
+    static diagnostic_op error_DB001(const range& range);
 
-    static diagnostic_op error_P0002(const range& range, std::string_view lib);
+    static diagnostic_op error_DB002(const range& range, std::string_view lib);
 
-    static diagnostic_op error_P0003(const range& range, std::string_view lib);
+    static diagnostic_op error_DB003(const range& range, std::string_view lib);
 
-    static diagnostic_op error_P0004(const range& range);
+    static diagnostic_op error_DB004(const range& range);
 
-    static diagnostic_op error_P0005(const range& range);
+    static diagnostic_op error_DB005(const range& range);
+
+    static diagnostic_op warn_CIC001(const range& range);
+
+    static diagnostic_op warn_CIC002(const range& range);
 };
 
 struct range_uri_s

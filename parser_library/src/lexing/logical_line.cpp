@@ -44,55 +44,79 @@ std::pair<std::string_view, logical_line_segment_eol> extract_line(std::string_v
     }
 }
 
-std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count)
+template<bool validate>
+std::pair<size_t, size_t> substr_step(std::string_view& s, size_t& chars)
 {
-    size_t utf16_skipped = 0;
-    for (; count; --count)
+    std::pair<size_t, size_t> result = { 0, 0 };
+
+    while (chars)
     {
         if (s.empty())
             break;
+        --chars;
+        ++result.first;
+
         unsigned char c = s.front();
         if (c < 0x80)
         {
+            ++result.second;
             s.remove_prefix(1);
-            utf16_skipped++;
             continue;
         }
 
         const auto cs = utf8_prefix_sizes[c];
-        if (!cs.utf8 || s.size() < cs.utf8)
-            throw hlasm_plugin::parser_library::lexing::utf8_error();
+        if constexpr (validate)
+        {
+            if (!cs.utf8 || s.size() < cs.utf8)
+                throw hlasm_plugin::parser_library::lexing::utf8_error();
+            for (const auto* p = s.data() + 1; p != s.data() + cs.utf8; ++p)
+                if ((*p & 0xc0) != 0x80)
+                    throw hlasm_plugin::parser_library::lexing::utf8_error();
+        }
 
+        result.second += cs.utf16;
         s.remove_prefix(cs.utf8);
-        utf16_skipped += cs.utf16;
     }
-    return std::pair(s, utf16_skipped);
+
+    return result;
 }
 
-std::pair<size_t, bool> length_utf16(std::string_view s)
+std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count)
 {
-    bool last = false;
-    size_t len = 0;
-    while (!s.empty())
-    {
-        unsigned char c = s.front();
-        if (c < 0x80)
-        {
-            s.remove_prefix(1);
-            len++;
-            last = false;
-            continue;
-        }
+    const auto s_ = s;
+    auto [_, utf16_skipped] = substr_step<true>(s, count);
+    return std::pair(s_.substr(s_.size() - s.size()), utf16_skipped);
+}
 
-        const auto cs = utf8_prefix_sizes[c];
-        if (!cs.utf8 || s.size() < cs.utf8)
-            throw hlasm_plugin::parser_library::lexing::utf8_error();
-        s.remove_prefix(cs.utf8);
+template<bool validate>
+utf8_substr_result utf8_substr(std::string_view s, size_t offset, size_t length)
+{
+    substr_step<validate>(s, offset);
 
-        len += cs.utf16;
-        last = cs.utf16 > 1;
-    }
-    return std::make_pair(len, last);
+    if (offset) // not long enought
+        return {};
+
+    utf8_substr_result result = { s, 0, 0 };
+
+    auto [char_count, utf16_len] = substr_step<validate>(s, length);
+    result.char_count = char_count;
+    result.utf16_len = utf16_len;
+
+    result.str = result.str.substr(0, result.str.size() - s.size());
+
+    return result;
+}
+
+template utf8_substr_result utf8_substr<false>(std::string_view s, size_t offset, size_t length);
+template utf8_substr_result utf8_substr<true>(std::string_view s, size_t offset, size_t length);
+
+size_t length_utf16(std::string_view s)
+{
+    auto len = (size_t)-1;
+
+    auto [_, utf16] = substr_step<true>(s, len);
+
+    return utf16;
 }
 
 // returns "need more", input must be non-empty

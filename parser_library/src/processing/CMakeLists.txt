@@ -14,7 +14,6 @@ target_sources(parser_library PRIVATE
 	branching_provider.h
 	context_manager.cpp
 	context_manager.h
-	db2_preprocessor.cpp
 	error_statement.cpp
 	error_statement.h
 	op_code.cpp
@@ -32,6 +31,7 @@ target_sources(parser_library PRIVATE
 )
 
 add_subdirectory(instruction_sets)
+add_subdirectory(preprocessors)
 add_subdirectory(statement_analyzers)
 add_subdirectory(statement_processors)
 add_subdirectory(statement_providers)

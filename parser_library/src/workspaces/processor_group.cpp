@@ -23,6 +23,10 @@ struct translate_pp_options
 {
     preprocessor_options operator()(const std::monostate&) const { return std::monostate {}; }
     preprocessor_options operator()(const config::db2_preprocessor&) const { return db2_preprocessor_options {}; }
+    preprocessor_options operator()(const config::cics_preprocessor& opt) const
+    {
+        return cics_preprocessor_options(opt.prolog, opt.epilog, opt.leasm);
+    }
 };
 
 asm_option translate_assembler_options(const config::assembler_options& asm_options)

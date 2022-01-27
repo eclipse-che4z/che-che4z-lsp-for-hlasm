@@ -70,8 +70,7 @@ void opencode_provider::generate_aread_highlighting(std::string_view text, size_
     if (rest.empty())
         return;
 
-    auto [rest_len, last_big] = lexing::length_utf16(rest);
-    if (rest_len)
+    if (auto rest_len = lexing::length_utf16(rest))
         m_src_proc->add_hl_symbol(
             token_info(range(position(line_no, utf16_skipped), position(line_no, utf16_skipped + rest_len)),
                 semantics::hl_scopes::ignored));
@@ -175,8 +174,8 @@ void opencode_provider::process_comment()
     {
         if (l.code.size())
         {
-            auto [skip_len, _] = lexing::length_utf16(l.line.substr(0, l.code.data() - l.line.data()));
-            auto [code_len, last_big] = lexing::length_utf16(l.code);
+            auto skip_len = lexing::length_utf16(l.line.substr(0, l.code.data() - l.line.data()));
+            auto code_len = lexing::length_utf16(l.code);
 
             m_src_proc->add_hl_symbol(
                 token_info(range(position(line_no, skip_len), position(line_no, skip_len + code_len)),
@@ -333,7 +332,7 @@ bool opencode_provider::try_running_preprocessor()
     if (!result.has_value() || result.value().empty())
         return false;
 
-    auto virtual_copy_name = m_ctx->hlasm_ctx->ids().add("DB2:" + std::to_string(current_line));
+    auto virtual_copy_name = m_ctx->hlasm_ctx->ids().add("preprocessor:" + std::to_string(current_line));
 
     auto [new_file, inserted] = m_virtual_files.try_emplace(virtual_copy_name, std::move(result.value()));
 
@@ -511,6 +510,8 @@ bool opencode_provider::finished() const
     if (!m_ctx->hlasm_ctx->in_opencode())
         return true;
     if (!m_ainsert_buffer.empty())
+        return false;
+    if (m_preprocessor && !m_preprocessor->finished())
         return false;
     const auto& o = m_ctx->hlasm_ctx->opencode_copy_stack();
     if (o.empty())
