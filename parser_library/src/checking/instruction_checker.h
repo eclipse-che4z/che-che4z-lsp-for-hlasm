@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_INSTRUCTION_CHECKER_H
 
 #include <map>
+#include <string_view>
 
 #include "asm_instr_check.h"
 #include "context/instruction.h"
@@ -26,35 +27,32 @@ namespace hlasm_plugin::parser_library::checking {
 class instruction_checker
 {
 public:
-    virtual bool check(const std::string& instruction_name,
+    virtual bool check(std::string_view instruction_name,
         const std::vector<const operand*>& operand_vector,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const = 0;
 };
 
 // derived checker for assembler instructions
-class assembler_checker : public instruction_checker
+class assembler_checker final : public instruction_checker
 
 {
 public:
-    assembler_checker();
-    bool check(const std::string& instruction_name,
+    bool check(std::string_view instruction_name,
         const std::vector<const operand*>& operand_vector,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
     // map of all assembler instruction maes to their representations
-    static std::map<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
+    static const std::map<std::string_view,
+        std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
         assembler_instruction_map;
-
-protected:
-    void initialize_assembler_map();
 };
 
 // derived checker for machine instructions
-class machine_checker : public instruction_checker
+class machine_checker final : public instruction_checker
 {
 public:
-    bool check(const std::string& instruction_name,
+    bool check(std::string_view instruction_name,
         const std::vector<const operand*>& operand_vector,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;

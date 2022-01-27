@@ -374,6 +374,5 @@ bool low_language_processor::check(const resolved_statement& stmt,
     for (const auto& op : *operand_vector)
         operand_ptr_vector.push_back(op.get());
 
-    // TODO: !!!
-    return checker.check(std::string(instruction_name), operand_ptr_vector, stmt.stmt_range_ref(), collector);
+    return checker.check(instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
 }
