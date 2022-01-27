@@ -315,8 +315,8 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 
     if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(&ev_op))
     {
-        const auto* instr =
-            mnemonic ? mnemonic->instruction : &context::instruction::machine_instructions.at(*stmt.opcode_ref().value);
+        const auto* instr = mnemonic ? mnemonic->instruction
+                                     : &context::instruction::get_machine_instructions(*stmt.opcode_ref().value);
         if (instr->operands.size() > op_position)
         {
             auto type = instr->operands[op_position].identifier.type;

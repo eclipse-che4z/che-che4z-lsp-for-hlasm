@@ -337,8 +337,6 @@ bool empty_operand::check(
     return false;
 }
 
-bool parameter::is_empty() const { return (!is_signed && type == machine_operand_type::NONE && size == 0); }
-
 std::string parameter::to_string() const
 {
     std::string ret_val = "";

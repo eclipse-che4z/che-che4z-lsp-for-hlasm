@@ -15,9 +15,11 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CONTEXT_INSTRUCTION_H
 #define HLASMPLUGIN_PARSERLIBRARY_CONTEXT_INSTRUCTION_H
 
+#include <algorithm>
 #include <array>
 #include <functional>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -116,30 +118,30 @@ enum class mach_format : unsigned char
     VSI
 };
 
-const checking::parameter empty = { false, 0, checking::machine_operand_type::NONE };
-const checking::parameter reg = { false, 4, checking::machine_operand_type::REG };
-const checking::parameter dis_reg = { false, 4, checking::machine_operand_type::DIS_REG };
-const checking::parameter dis_reg_r = { false, 4, checking::machine_operand_type::REG };
-const checking::parameter mask = { false, 4, checking::machine_operand_type::MASK };
-const checking::parameter dis_12u = { false, 12, checking::machine_operand_type::DISPLC };
-const checking::parameter dis_20s = { true, 20, checking::machine_operand_type::DISPLC };
-const checking::parameter base_ = { false, 4, checking::machine_operand_type::BASE };
-const checking::parameter length_8 = { false, 8, checking::machine_operand_type::LENGTH };
-const checking::parameter length_4 = { false, 4, checking::machine_operand_type::LENGTH };
-const checking::parameter imm_4u = { false, 4, checking::machine_operand_type::IMM };
-const checking::parameter imm_8s = { true, 8, checking::machine_operand_type::IMM };
-const checking::parameter imm_8u = { false, 8, checking::machine_operand_type::IMM };
-const checking::parameter imm_12s = { true, 12, checking::machine_operand_type::IMM };
-const checking::parameter imm_16s = { true, 16, checking::machine_operand_type::IMM };
-const checking::parameter imm_16u = { false, 16, checking::machine_operand_type::IMM };
-const checking::parameter imm_24s = { true, 24, checking::machine_operand_type::IMM };
-const checking::parameter imm_32s = { true, 32, checking::machine_operand_type::IMM };
-const checking::parameter imm_32u = { false, 32, checking::machine_operand_type::IMM };
-const checking::parameter vec_reg = { false, 5, checking::machine_operand_type::VEC_REG };
-const checking::parameter reladdr_imm_12s = { true, 12, checking::machine_operand_type::RELOC_IMM };
-const checking::parameter reladdr_imm_16s = { true, 16, checking::machine_operand_type::RELOC_IMM };
-const checking::parameter reladdr_imm_24s = { true, 24, checking::machine_operand_type::RELOC_IMM };
-const checking::parameter reladdr_imm_32s = { true, 32, checking::machine_operand_type::RELOC_IMM };
+constexpr checking::parameter empty = { false, 0, checking::machine_operand_type::NONE };
+constexpr checking::parameter reg = { false, 4, checking::machine_operand_type::REG };
+constexpr checking::parameter dis_reg = { false, 4, checking::machine_operand_type::DIS_REG };
+constexpr checking::parameter dis_reg_r = { false, 4, checking::machine_operand_type::REG };
+constexpr checking::parameter mask = { false, 4, checking::machine_operand_type::MASK };
+constexpr checking::parameter dis_12u = { false, 12, checking::machine_operand_type::DISPLC };
+constexpr checking::parameter dis_20s = { true, 20, checking::machine_operand_type::DISPLC };
+constexpr checking::parameter base_ = { false, 4, checking::machine_operand_type::BASE };
+constexpr checking::parameter length_8 = { false, 8, checking::machine_operand_type::LENGTH };
+constexpr checking::parameter length_4 = { false, 4, checking::machine_operand_type::LENGTH };
+constexpr checking::parameter imm_4u = { false, 4, checking::machine_operand_type::IMM };
+constexpr checking::parameter imm_8s = { true, 8, checking::machine_operand_type::IMM };
+constexpr checking::parameter imm_8u = { false, 8, checking::machine_operand_type::IMM };
+constexpr checking::parameter imm_12s = { true, 12, checking::machine_operand_type::IMM };
+constexpr checking::parameter imm_16s = { true, 16, checking::machine_operand_type::IMM };
+constexpr checking::parameter imm_16u = { false, 16, checking::machine_operand_type::IMM };
+constexpr checking::parameter imm_24s = { true, 24, checking::machine_operand_type::IMM };
+constexpr checking::parameter imm_32s = { true, 32, checking::machine_operand_type::IMM };
+constexpr checking::parameter imm_32u = { false, 32, checking::machine_operand_type::IMM };
+constexpr checking::parameter vec_reg = { false, 5, checking::machine_operand_type::VEC_REG };
+constexpr checking::parameter reladdr_imm_12s = { true, 12, checking::machine_operand_type::RELOC_IMM };
+constexpr checking::parameter reladdr_imm_16s = { true, 16, checking::machine_operand_type::RELOC_IMM };
+constexpr checking::parameter reladdr_imm_24s = { true, 24, checking::machine_operand_type::RELOC_IMM };
+constexpr checking::parameter reladdr_imm_32s = { true, 32, checking::machine_operand_type::RELOC_IMM };
 
 /*
 Rules for displacement operands:
@@ -150,88 +152,105 @@ With DXB Formats
         - can be either D(X,B) or D(,B) - in this case, the X is replaced with 0
         - parser returns this in (displacement, x, base, false) format
 */
-const checking::machine_operand_format db_12_4_U = checking::machine_operand_format(dis_12u, empty, base_);
-const checking::machine_operand_format db_20_4_S = checking::machine_operand_format(dis_20s, empty, base_);
-const checking::machine_operand_format drb_12_4x4_U = checking::machine_operand_format(dis_12u, dis_reg_r, base_);
-const checking::machine_operand_format dxb_12_4x4_U = checking::machine_operand_format(dis_12u, dis_reg, base_);
-const checking::machine_operand_format dxb_20_4x4_S = checking::machine_operand_format(dis_20s, dis_reg, base_);
-const checking::machine_operand_format dvb_12_5x4_U = checking::machine_operand_format(dis_12u, vec_reg, base_);
-const checking::machine_operand_format reg_4_U = checking::machine_operand_format(reg, empty, empty);
-const checking::machine_operand_format mask_4_U = checking::machine_operand_format(mask, empty, empty);
-const checking::machine_operand_format imm_4_U = checking::machine_operand_format(imm_4u, empty, empty);
-const checking::machine_operand_format imm_8_S = checking::machine_operand_format(imm_8s, empty, empty);
-const checking::machine_operand_format imm_8_U = checking::machine_operand_format(imm_8u, empty, empty);
-const checking::machine_operand_format imm_16_U = checking::machine_operand_format(imm_16u, empty, empty);
-const checking::machine_operand_format imm_12_S = checking::machine_operand_format(imm_12s, empty, empty);
-const checking::machine_operand_format imm_16_S = checking::machine_operand_format(imm_16s, empty, empty);
-const checking::machine_operand_format imm_32_S = checking::machine_operand_format(imm_32s, empty, empty);
-const checking::machine_operand_format imm_32_U = checking::machine_operand_format(imm_32u, empty, empty);
-const checking::machine_operand_format vec_reg_5_U = checking::machine_operand_format(vec_reg, empty, empty);
-const checking::machine_operand_format db_12_8x4L_U = checking::machine_operand_format(dis_12u, length_8, base_);
-const checking::machine_operand_format db_12_4x4L_U = checking::machine_operand_format(dis_12u, length_4, base_);
-const checking::machine_operand_format rel_addr_imm_12_S =
-    checking::machine_operand_format(reladdr_imm_12s, empty, empty);
-const checking::machine_operand_format rel_addr_imm_16_S =
-    checking::machine_operand_format(reladdr_imm_16s, empty, empty);
-const checking::machine_operand_format rel_addr_imm_24_S =
-    checking::machine_operand_format(reladdr_imm_24s, empty, empty);
-const checking::machine_operand_format rel_addr_imm_32_S =
-    checking::machine_operand_format(reladdr_imm_32s, empty, empty);
+constexpr checking::machine_operand_format db_12_4_U(dis_12u, empty, base_);
+constexpr checking::machine_operand_format db_20_4_S(dis_20s, empty, base_);
+constexpr checking::machine_operand_format drb_12_4x4_U(dis_12u, dis_reg_r, base_);
+constexpr checking::machine_operand_format dxb_12_4x4_U(dis_12u, dis_reg, base_);
+constexpr checking::machine_operand_format dxb_20_4x4_S(dis_20s, dis_reg, base_);
+constexpr checking::machine_operand_format dvb_12_5x4_U(dis_12u, vec_reg, base_);
+constexpr checking::machine_operand_format reg_4_U(reg, empty, empty);
+constexpr checking::machine_operand_format mask_4_U(mask, empty, empty);
+constexpr checking::machine_operand_format imm_4_U(imm_4u, empty, empty);
+constexpr checking::machine_operand_format imm_8_S(imm_8s, empty, empty);
+constexpr checking::machine_operand_format imm_8_U(imm_8u, empty, empty);
+constexpr checking::machine_operand_format imm_16_U(imm_16u, empty, empty);
+constexpr checking::machine_operand_format imm_12_S(imm_12s, empty, empty);
+constexpr checking::machine_operand_format imm_16_S(imm_16s, empty, empty);
+constexpr checking::machine_operand_format imm_32_S(imm_32s, empty, empty);
+constexpr checking::machine_operand_format imm_32_U(imm_32u, empty, empty);
+constexpr checking::machine_operand_format vec_reg_5_U(vec_reg, empty, empty);
+constexpr checking::machine_operand_format db_12_8x4L_U(dis_12u, length_8, base_);
+constexpr checking::machine_operand_format db_12_4x4L_U(dis_12u, length_4, base_);
+constexpr checking::machine_operand_format rel_addr_imm_12_S(reladdr_imm_12s, empty, empty);
+constexpr checking::machine_operand_format rel_addr_imm_16_S(reladdr_imm_16s, empty, empty);
+constexpr checking::machine_operand_format rel_addr_imm_24_S(reladdr_imm_24s, empty, empty);
+constexpr checking::machine_operand_format rel_addr_imm_32_S(reladdr_imm_32s, empty, empty);
+
+// optional variants
+constexpr checking::machine_operand_format db_12_4_U_opt(dis_12u, empty, base_, true);
+constexpr checking::machine_operand_format db_20_4_S_opt(dis_20s, empty, base_, true);
+constexpr checking::machine_operand_format drb_12_4x4_U_opt(dis_12u, dis_reg_r, base_, true);
+constexpr checking::machine_operand_format dxb_12_4x4_U_opt(dis_12u, dis_reg, base_, true);
+constexpr checking::machine_operand_format dxb_20_4x4_S_opt(dis_20s, dis_reg, base_, true);
+constexpr checking::machine_operand_format dvb_12_5x4_U_opt(dis_12u, vec_reg, base_, true);
+constexpr checking::machine_operand_format reg_4_U_opt(reg, empty, empty, true);
+constexpr checking::machine_operand_format mask_4_U_opt(mask, empty, empty, true);
+constexpr checking::machine_operand_format imm_4_U_opt(imm_4u, empty, empty, true);
+constexpr checking::machine_operand_format imm_8_S_opt(imm_8s, empty, empty, true);
+constexpr checking::machine_operand_format imm_8_U_opt(imm_8u, empty, empty, true);
+constexpr checking::machine_operand_format imm_16_U_opt(imm_16u, empty, empty, true);
+constexpr checking::machine_operand_format imm_12_S_opt(imm_12s, empty, empty, true);
+constexpr checking::machine_operand_format imm_16_S_opt(imm_16s, empty, empty, true);
+constexpr checking::machine_operand_format imm_32_S_opt(imm_32s, empty, empty, true);
+constexpr checking::machine_operand_format imm_32_U_opt(imm_32u, empty, empty, true);
+constexpr checking::machine_operand_format vec_reg_5_U_opt(vec_reg, empty, empty, true);
+constexpr checking::machine_operand_format db_12_8x4L_U_opt(dis_12u, length_8, base_, true);
+constexpr checking::machine_operand_format db_12_4x4L_U_opt(dis_12u, length_4, base_, true);
+constexpr checking::machine_operand_format rel_addr_imm_12_S_opt(reladdr_imm_12s, empty, empty, true);
+constexpr checking::machine_operand_format rel_addr_imm_16_S_opt(reladdr_imm_16s, empty, empty, true);
+constexpr checking::machine_operand_format rel_addr_imm_24_S_opt(reladdr_imm_24s, empty, empty, true);
+constexpr checking::machine_operand_format rel_addr_imm_32_S_opt(reladdr_imm_32s, empty, empty, true);
 
 class reladdr_transform_mask
 {
     unsigned char m_mask;
 
 public:
-    reladdr_transform_mask(unsigned char m)
+    constexpr reladdr_transform_mask(unsigned char m)
         : m_mask(m)
     {}
-    unsigned char mask() const { return m_mask; }
+    constexpr unsigned char mask() const { return m_mask; }
 
-    friend bool operator==(const reladdr_transform_mask& l, const reladdr_transform_mask& r)
+    constexpr friend bool operator==(const reladdr_transform_mask& l, const reladdr_transform_mask& r)
     {
         return l.m_mask == r.m_mask;
     }
-    friend bool operator!=(const reladdr_transform_mask& l, const reladdr_transform_mask& r) { return !(l == r); }
+    constexpr friend bool operator!=(const reladdr_transform_mask& l, const reladdr_transform_mask& r)
+    {
+        return !(l == r);
+    }
 };
 
 // machine instruction representation for checking
-class machine_instruction
+struct machine_instruction
 {
     static unsigned char generate_reladdr_bitmask(const std::vector<checking::machine_operand_format>& operands);
 
-public:
     std::string instr_name;
     mach_format format;
-    std::vector<checking::machine_operand_format> operands; // what the vector of operands should look like
-    size_t size_for_alloc;
-    int no_optional;
-    size_t page_no;
-
+    char size_for_alloc;
+    short page_no;
+    short no_optional;
     reladdr_transform_mask reladdr_mask;
+    std::vector<checking::machine_operand_format> operands; // what the vector of operands should look like
+
 
     machine_instruction(const std::string& name,
         mach_format format,
         std::vector<checking::machine_operand_format> operands,
-        int no_optional,
-        size_t page_no)
+        short page_no)
         : instr_name(name)
         , format(format)
-        , operands(operands)
         , size_for_alloc(get_length_by_format(format))
-        , no_optional(no_optional)
         , page_no(page_no)
-        , reladdr_mask(generate_reladdr_bitmask(operands)) {};
-    machine_instruction(const std::string& name,
-        mach_format format,
-        std::vector<checking::machine_operand_format> operands,
-        size_t page_no)
-        : machine_instruction(name, format, operands, 0, page_no)
+        , no_optional((short)std::count_if(operands.begin(), operands.end(), [](const auto& o) { return o.optional; }))
+        , reladdr_mask(generate_reladdr_bitmask(operands))
+        , operands(std::move(operands))
     {}
 
     bool check_nth_operand(size_t place, const checking::machine_operand* operand);
 
-    static int get_length_by_format(mach_format instruction_format)
+    static char get_length_by_format(mach_format instruction_format)
     {
         auto interval = (int)(instruction_format);
         if (interval >= (int)mach_format::length_48)
@@ -246,6 +265,26 @@ public:
         const std::vector<const checking::machine_operand*> operands,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const; // input vector is the vector of the actual incoming values
+};
+
+struct machine_instruction_comparer
+{
+    using is_transparent = void;
+
+    bool operator()(const machine_instruction& l, const machine_instruction& r) const
+    {
+        return l.instr_name < r.instr_name;
+    }
+    template<typename L>
+    bool operator()(const L& l, const machine_instruction& r) const
+    {
+        return l < r.instr_name;
+    }
+    template<typename R>
+    bool operator()(const machine_instruction& l, const R& r) const
+    {
+        return l.instr_name < r;
+    }
 };
 
 struct ca_instruction
@@ -295,10 +334,6 @@ struct assembler_instruction
 class instruction
 {
 public:
-    static std::map<std::string, machine_instruction> get_machine_instructions();
-
-    static std::map<std::string, mnemonic_code> get_mnemonic_codes(const std::map<std::string, machine_instruction>&);
-
     /*
     min_operands - minimal number of operands, non-negative integer, always defined
     max_operands - if not defined (can be infinite), value is -1, otherwise a non-negative integer
@@ -308,9 +343,9 @@ public:
 
     static const std::map<std::string, assembler_instruction> assembler_instructions;
 
-    // static const std::vector<std::string> macro_processing_instructions;
-
-    static const std::map<std::string, machine_instruction> machine_instructions;
+    static const machine_instruction& get_machine_instructions(std::string_view name);
+    static const machine_instruction* find_machine_instructions(std::string_view name);
+    static const std::set<machine_instruction, machine_instruction_comparer>& all_machine_instructions();
 
     static const std::map<std::string, mnemonic_code> mnemonic_codes;
 

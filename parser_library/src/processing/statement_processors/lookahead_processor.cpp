@@ -264,7 +264,7 @@ void lookahead_processor::assign_machine_attributes(context::id_index symbol_nam
             mnemonic != context::instruction::mnemonic_codes.end())
             return *mnemonic->second.instruction;
         else
-            return context::instruction::machine_instructions.at(opcode);
+            return context::instruction::get_machine_instructions(opcode);
     }(*statement.opcode_ref().value);
 
     register_attr_ref(symbol_name,

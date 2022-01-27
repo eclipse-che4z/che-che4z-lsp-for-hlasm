@@ -237,7 +237,7 @@ bool machine_checker::check(const std::string& instruction_name,
     if (context::instruction::mnemonic_codes.find(instruction_name) != context::instruction::mnemonic_codes.end())
         mach_name = context::instruction::mnemonic_codes.at(instruction_name).instruction->instr_name;
 
-    return context::instruction::machine_instructions.at(mach_name).check(
+    return context::instruction::get_machine_instructions(mach_name).check(
         instruction_name, ops, stmt_range, add_diagnostic);
 }
 

@@ -38,7 +38,7 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
     std::vector<completion_item_s> result;
 
 
-    for (const auto& [_, machine_instr] : instruction::machine_instructions)
+    for (const auto& machine_instr : instruction::all_machine_instructions())
     {
         std::stringstream doc_ss(" ");
         std::stringstream detail_ss(""); // operands used for hover - e.g. V,D12U(X,B)[,M]

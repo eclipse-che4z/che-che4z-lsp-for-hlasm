@@ -23,9 +23,8 @@ inline unsigned char get_reladdr_bitmask(context::id_index id)
     if (!id || id->empty())
         return 0;
 
-    if (auto p_instr = context::instruction::machine_instructions.find(*id);
-        p_instr != context::instruction::machine_instructions.end())
-        return p_instr->second.reladdr_mask.mask();
+    if (auto p_instr = context::instruction::find_machine_instructions(*id))
+        return p_instr->reladdr_mask.mask();
 
     if (auto p_mnemo = context::instruction::mnemonic_codes.find(*id);
         p_mnemo != context::instruction::mnemonic_codes.end())
@@ -39,9 +38,8 @@ unsigned char processing_status_cache_key::generate_loctr_len(context::id_index 
 {
     if (id && !id->empty())
     {
-        if (auto p_instr = context::instruction::machine_instructions.find(*id);
-            p_instr != context::instruction::machine_instructions.end())
-            return static_cast<unsigned char>(p_instr->second.size_for_alloc / 8);
+        if (auto p_instr = context::instruction::find_machine_instructions(*id))
+            return static_cast<unsigned char>(p_instr->size_for_alloc / 8);
 
         if (auto p_mnemo = context::instruction::mnemonic_codes.find(*id);
             p_mnemo != context::instruction::mnemonic_codes.end())

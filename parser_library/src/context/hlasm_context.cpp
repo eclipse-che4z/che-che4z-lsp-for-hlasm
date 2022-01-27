@@ -31,22 +31,22 @@ const code_scope* hlasm_context::curr_scope() const { return &scope_stack_.back(
 hlasm_context::instruction_storage hlasm_context::init_instruction_map()
 {
     hlasm_context::instruction_storage instr_map;
-    for (auto& [name, instr] : instruction::machine_instructions)
+    for (const auto& instr : instruction::all_machine_instructions())
+    {
+        auto id = ids().add(instr.instr_name);
+        instr_map.emplace(id, &instr);
+    }
+    for (const auto& [name, instr] : instruction::assembler_instructions)
     {
         auto id = ids().add(name);
         instr_map.emplace(id, &instr);
     }
-    for (auto& [name, instr] : instruction::assembler_instructions)
-    {
-        auto id = ids().add(name);
-        instr_map.emplace(id, &instr);
-    }
-    for (auto& instr : instruction::ca_instructions)
+    for (const auto& instr : instruction::ca_instructions)
     {
         auto id = ids().add(instr.name);
         instr_map.emplace(id, &instr);
     }
-    for (auto& [name, instr] : instruction::mnemonic_codes)
+    for (const auto& [name, instr] : instruction::mnemonic_codes)
     {
         auto id = ids().add(name);
         instr_map.emplace(id, &instr);

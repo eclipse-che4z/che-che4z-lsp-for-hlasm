@@ -40,7 +40,7 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
             mnemonic != context::instruction::mnemonic_codes.end())
             return *mnemonic->second.instruction;
         else
-            return context::instruction::machine_instructions.at(name);
+            return context::instruction::get_machine_instructions(name);
     }(*stmt->opcode_ref().value);
 
     auto label_name = find_label_symbol(rebuilt_stmt);

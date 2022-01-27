@@ -38,7 +38,7 @@ public:
             { "COPYFILE", R"(R2 EQU 2
             LR R2,R2)" } })
         , a(contents, analyzer_options { SOURCE_FILE, &lib_provider })
-        , instruction_count(context::instruction::machine_instructions.size()
+        , instruction_count(context::instruction::all_machine_instructions().size()
               + context::instruction::assembler_instructions.size() + context::instruction::ca_instructions.size()
               + context::instruction::mnemonic_codes.size()) {};
 

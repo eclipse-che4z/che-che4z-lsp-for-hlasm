@@ -15,6 +15,7 @@
 #ifndef CONTEXT_HLASM_CONTEXT_H
 #define CONTEXT_HLASM_CONTEXT_H
 
+#include <cassert>
 #include <deque>
 #include <memory>
 #include <set>

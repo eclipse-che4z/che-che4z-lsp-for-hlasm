@@ -84,7 +84,7 @@ struct parameter
     uint8_t size;
     machine_operand_type type;
 
-    bool is_empty() const;
+    constexpr bool is_empty() const { return (!is_signed && type == machine_operand_type::NONE && size == 0); }
 
     std::string to_string() const;
 };
@@ -97,14 +97,15 @@ struct machine_operand_format
     parameter identifier; // used as displacement operand in address operand
     parameter first; // empty when simple operand
     parameter second; // empty when simple operand
+    bool optional = false;
 
-    machine_operand_format(parameter id, parameter first, parameter second)
+    constexpr machine_operand_format(parameter id, parameter first, parameter second, bool optional = false)
         : identifier(id)
         , first(first)
         , second(second)
+        , optional(optional)
     {
-        if (second.is_empty() && !first.is_empty())
-            assert(false);
+        assert(!second.is_empty() || first.is_empty());
     };
 
     std::string to_string() const;
