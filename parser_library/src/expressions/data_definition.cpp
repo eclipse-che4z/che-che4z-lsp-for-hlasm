@@ -657,16 +657,14 @@ void data_definition_parser::push(push_arg v, range r)
                 m_result.type_range = move_by_one();
                 auto type_range = m_result.type_range;
 
-                if (auto t_e = std::visit(first_letter_upper, v); t_e.has_value())
+                if (auto t_e = std::visit(first_letter_upper, v);
+                    t_e.has_value() && is_type_extension(m_result.type, t_e.value()))
                 {
-                    if (is_type_extension(m_result.type, t_e.value()))
-                    {
-                        m_result.extension = t_e.value();
+                    m_result.extension = t_e.value();
 
-                        m_result.extension_range = move_by_one();
+                    m_result.extension_range = move_by_one();
 
-                        type_range.end = r.start;
-                    }
+                    type_range.end = r.start;
                 }
                 m_collector->add_hl_symbol(token_info(type_range, semantics::hl_scopes::data_def_type));
                 m_state = { state::try_reading_program, { false, false, false, false }, std::nullopt };
