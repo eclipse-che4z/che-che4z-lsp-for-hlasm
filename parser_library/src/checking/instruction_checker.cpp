@@ -49,8 +49,7 @@ struct instruction_adder
     template<typename T, typename... Rest>
     void add(std::string_view name, std::initializer_list<label_types> labels, Rest&&... rest)
     {
-        add(name,
-            std::make_unique<T>(std::vector<label_types>(labels), std::string(name), std::forward<Rest>(rest)...));
+        add(name, std::make_unique<T>(std::vector<label_types>(labels), name, std::forward<Rest>(rest)...));
     };
 };
 } // namespace
