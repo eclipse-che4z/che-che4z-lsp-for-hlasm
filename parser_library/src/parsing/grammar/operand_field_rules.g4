@@ -15,25 +15,6 @@
  //rules for operand field
 parser grammar operand_field_rules;
 
-operand returns [operand_ptr op]
-	: operand_not_empty					{$op = std::move($operand_not_empty.op);}
-	|									{$op = std::make_unique<semantics::empty_operand>(provider.get_empty_range( _localctx->getStart()));};
-
-
-operand_not_empty returns [operand_ptr op]
-	: {MACH()}? mach_op																	
-	{
-		$op = std::move($mach_op.op);
-	}
-	| {ASM()}? asm_op																	
-	{
-		$op = std::move($asm_op.op);
-	}
-	| {DAT()}? data_def
-	{
-		$op = std::make_unique<data_def_operand>(std::move($data_def.value),provider.get_range($data_def.ctx));
-	};
-
 //////////////////////////////////////// mach
 
 op_rem_body_mach

@@ -188,41 +188,15 @@ self_def_term returns [self_def_t value]
 		$value = parse_self_def_term(opt, $string.value, provider.get_range($ORDSYMBOL,$string.ctx->getStop()));
 	};
 
-
-id_ch returns [std::string value]
-	: IDENTIFIER								{$value = $IDENTIFIER->getText();} 
-	| NUM										{$value = $NUM->getText();} 
-	| ORDSYMBOL									{$value = $ORDSYMBOL->getText();};
-
-id_ch_c returns [std::string value]
-	: id_ch										{$value = std::move($id_ch.value);}
-	| tmp=id_ch_c id_ch							{$tmp.value.append(std::move($id_ch.value));  $value = std::move($tmp.value);};
-
-
 id returns [id_index name, id_index using_qualifier]
-	: id_no_dot									{$name = $id_no_dot.name;}
-	| q=id_no_dot dot n=id_no_dot				{$name = $n.name; $using_qualifier = $q.name; };
+	: f=id_no_dot {$name = $f.name;} (dot s=id_no_dot {$name = $s.name; $using_qualifier = $f.name;})?;
 
-id_no_dot returns [id_index name = id_storage::empty_id]
-	: ORDSYMBOL id_ch_c
+id_no_dot returns [id_index name = id_storage::empty_id] locals [std::string buffer]
+	: ORDSYMBOL { $buffer = $ORDSYMBOL->getText(); } (l=(IDENTIFIER|NUM|ORDSYMBOL) {$buffer.append($l->getText());})*
 	{
-		std::string tmp($ORDSYMBOL->getText());
-		tmp.append(std::move($id_ch_c.value));
-		$name = parse_identifier(std::move(tmp),provider.get_range($ORDSYMBOL,$id_ch_c.ctx->getStop()));
+		$name = parse_identifier(std::move($buffer),provider.get_range($ORDSYMBOL,$l?$l:$ORDSYMBOL));
 	}
-	| ORDSYMBOL									{$name = parse_identifier($ORDSYMBOL->getText(),provider.get_range($ORDSYMBOL));};
-
-
-
-
-opt_dot returns [std::string value]
-	: dot id_ch_c								{$value = std::move($id_ch_c.value); }
-	| ;
-
-id_comma_c: id
-	| id comma id_comma_c;
-
-
+	;
 
 remark_ch: DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|NUM|VERTICAL|ORDSYMBOL|SPACE|ATTR;
 

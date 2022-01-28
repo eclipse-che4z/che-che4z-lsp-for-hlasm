@@ -1363,15 +1363,16 @@ diagnostic_op diagnostic_op::error_D003(const range& range)
         diagnostic_severity::error, "D003", "Expected an integer or an expression after modifier", range);
 }
 
-diagnostic_op diagnostic_op::error_D004(const range& range)
-{
-    return diagnostic_op(diagnostic_severity::error, "D004", "Wrong order of modifiers", range);
-}
+// diagnostic_op diagnostic_op::error_D004(const range& range)
+// {
+//     return diagnostic_op(diagnostic_severity::error, "D004", "Wrong order of modifiers", range);
+// }
 
-diagnostic_op diagnostic_op::error_D005(const range& range)
-{
-    return diagnostic_op(diagnostic_severity::error, "D005", "Unexpected '.' in modifier other than length", range);
-}
+// diagnostic_op diagnostic_op::error_D005(const range& range)
+// {
+//     return diagnostic_op(diagnostic_severity::error, "D005", "Unexpected '.' in modifier other than length", range);
+// }
+
 diagnostic_op diagnostic_op::error_D006(const range& range)
 {
     return diagnostic_op(
@@ -1493,14 +1494,6 @@ diagnostic_op diagnostic_op::warn_D025(const range& range, const std::string& ty
         diagnostic_severity::warning, "D025", "The " + modifier + " modifier is ignored with type " + type, range);
 }
 
-diagnostic_op diagnostic_op::warn_D031(const range& range, const std::string& operand_value)
-{
-    return diagnostic_op(diagnostic_severity::warning,
-        "D031",
-        "Using absolute value '" + operand_value + "' as relative immediate value",
-        range);
-}
-
 diagnostic_op diagnostic_op::error_D026(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "D026", "Invalid round mode", range);
@@ -1532,6 +1525,14 @@ diagnostic_op diagnostic_op::error_D030(const range& range, const std::string& t
 diagnostic_op diagnostic_op::error_D031(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "D031", "Duplication factor in literals must be positive", range);
+}
+
+diagnostic_op diagnostic_op::warn_D032(const range& range, const std::string& operand_value)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "D032",
+        "Using absolute value '" + operand_value + "' as relative immediate value",
+        range);
 }
 
 

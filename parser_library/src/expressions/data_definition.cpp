@@ -21,6 +21,7 @@
 
 #include "checking/data_definition/data_def_fields.h"
 #include "checking/data_definition/data_def_type_base.h"
+#include "lexing/logical_line.h"
 #include "mach_expr_term.h"
 #include "mach_expr_visitor.h"
 #include "semantics/collector.h"
@@ -28,15 +29,7 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
-
-data_definition data_definition::create(
-    semantics::collector& coll, std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin)
-{
-    parser p(coll, std::move(format), std::move(exprs), std::move(nominal), begin);
-    return p.parse();
-}
-
-void insert_deps(
+static void insert_deps(
     context::dependency_collector& into, context::dependency_solver& solver, const context::dependable* from)
 {
     if (from)
@@ -434,18 +427,19 @@ size_t data_definition::hash() const
     return ret;
 }
 
-data_definition::parser::parser(
-    semantics::collector& coll, std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin)
-    : collector_(coll)
-    , format_(std::move(format))
-    , exprs_(std::move(exprs))
-    , nominal_(std::move(nominal))
-    , pos_(begin)
-    , p_(0)
-    , exprs_i_(0)
+namespace {
+struct loctr_reference_visitor final : public mach_expr_visitor
 {
-    context::to_upper(format_);
-}
+    bool found_loctr_reference = false;
+
+    void visit(const mach_expr_constant&) override {}
+    void visit(const mach_expr_data_attr&) override {}
+    void visit(const mach_expr_symbol&) override {}
+    void visit(const mach_expr_location_counter&) override { found_loctr_reference = true; }
+    void visit(const mach_expr_self_def&) override {}
+    void visit(const mach_expr_default&) override {}
+    void visit(const mach_expr_literal& expr) override { expr.get_data_definition().apply(*this); }
+};
 
 constexpr unsigned char digit_to_value(unsigned char c)
 {
@@ -462,273 +456,330 @@ constexpr unsigned char digit_to_value(unsigned char c)
     return c - '0';
 }
 
-// parses a number that begins on index begin in format_ string. Leaves index of the first character after the number in
-// begin.
-std::optional<int> data_definition::parser::parse_number()
+bool is_type_extension(char type, char ch)
 {
+    return checking::data_def_type::types_and_extensions.count(std::make_pair(type, ch)) > 0;
+}
+
+void move_range(range& r)
+{
+    // TODO: this is not a good way to handle this - parser should ideally provide the correct tokens
+    if (r.start.column >= lexing::default_ictl.end)
+    {
+        r.start.line += 1;
+        r.start.column = lexing::default_ictl.continuation;
+    }
+    else
+        r.start.column += 1;
+}
+
+void remove_char(std::string_view& v, range& r)
+{
+    v.remove_prefix(1);
+    move_range(r);
+}
+} // namespace
+
+std::optional<std::pair<int, range>> data_definition_parser::parse_number(std::string_view& v, range& r)
+{
+    if (v.empty())
+        return std::nullopt;
+
     constexpr long long min_l = -(1LL << 31);
     constexpr long long max_l = (1LL << 31) - 1;
     constexpr long long parse_limit_l = (1LL << 31);
     static_assert(std::numeric_limits<int>::min() <= min_l);
     static_assert(std::numeric_limits<int>::max() >= max_l);
 
-    const auto initial_p = p_;
-    const position initial_pos = pos_;
+    const auto move_by_one = [&v, &r]() {
+        assert(!v.empty());
+        remove_char(v, r);
+    };
 
-    long long v = 0;
-    const bool negative = format_[p_] == '-';
+    long long result = 0;
+    const bool negative = [&]() {
+        switch (v.front())
+        {
+            case '-':
+                move_by_one();
+                return true;
+            case '+':
+                move_by_one();
+                return false;
+            default:
+                return false;
+        }
+    }();
+
+    auto range_start = r;
+
     bool parsed_one = false;
-    if (format_[p_] == '+' || negative)
-        ++p_;
-    while (p_ < format_.size())
+    while (!v.empty())
     {
-        unsigned char c = format_[p_];
+        unsigned char c = v.front();
         if (!isdigit(c))
             break;
         parsed_one = true;
-        ++p_;
 
-        if (v > parse_limit_l)
+        move_by_one();
+
+        if (result > parse_limit_l)
             continue;
 
-        v = v * 10 + digit_to_value(c);
+        result = result * 10 + digit_to_value(c);
     }
-    pos_.column += p_ - initial_p;
     if (!parsed_one)
     {
-        result_.add_diagnostic(diagnostic_op::error_D002({ initial_pos, pos_ }));
+        m_result.add_diagnostic(diagnostic_op::error_D002({ range_start.start, r.start }));
         return std::nullopt;
     }
     if (negative)
-        v = -v;
-    if (v < min_l || v > max_l)
+        result = -result;
+    if (result < min_l || result > max_l)
     {
-        result_.add_diagnostic(diagnostic_op::error_D001({ initial_pos, pos_ }));
+        m_result.add_diagnostic(diagnostic_op::error_D001({ range_start.start, r.start }));
         return std::nullopt;
     }
-    collector_.add_hl_symbol(token_info(range(initial_pos, pos_), semantics::hl_scopes::number));
+    m_collector->add_hl_symbol(token_info(range(range_start.start, r.start), semantics::hl_scopes::number));
 
-    return (int)v;
+    return std::make_pair((int)result, range(range_start.start, r.start));
 }
 
-void data_definition::parser::update_position(const mach_expression& e)
+static bool can_have_exponent(char type)
 {
-    pos_ = e.get_range().end;
-    pos_.column += 1;
-}
-void data_definition::parser::update_position_by_one() { ++pos_.column; }
-
-void data_definition::parser::parse_duplication_factor()
-{
-    if (isdigit(static_cast<unsigned char>(format_[0])) || format_[0] == '-') // duplication factor is present
+    switch (type)
     {
-        position old_pos = pos_;
-        auto dupl_factor_num = parse_number();
-
-        if (dupl_factor_num)
-            result_.dupl_factor = std::make_unique<mach_expr_constant>(*dupl_factor_num, range(old_pos, pos_));
-    }
-    else if (format_[0] == *data_definition::expr_placeholder)
-    { // duplication factor as expression
-        result_.dupl_factor = move_next_expression();
-    }
-}
-
-bool is_type_extension(char type, char ch)
-{
-    return checking::data_def_type::types_and_extensions.count(std::make_pair(type, ch)) > 0;
-}
-
-bool is_modifier_or_prog(char ch) { return ch == 'P' || ch == 'L' || ch == 'S' || ch == 'E'; }
-
-mach_expr_ptr data_definition::parser::move_next_expression()
-{
-    assert(exprs_i_ < exprs_.size());
-    auto res = std::move(exprs_[exprs_i_]);
-    ++exprs_i_;
-    update_position(*res);
-    ++p_;
-
-    return res;
-}
-
-mach_expr_ptr data_definition::parser::parse_modifier_num_or_expr()
-{
-    if (auto c = format_[p_]; isdigit(c) || c == '-' || c == '+')
-    {
-        position old_pos = pos_;
-        auto modifier = parse_number();
-
-        if (modifier)
-            return std::make_unique<mach_expr_constant>(*modifier, range(old_pos, pos_));
-        // else leave expr null
-    }
-    else if (format_[p_] == expr_placeholder[0])
-    {
-        return move_next_expression();
-    }
-    else if (format_[p_] == nominal_placeholder[0])
-    {
-        auto exprs = nominal_->access_exprs();
-        if (exprs && exprs->exprs.size() == 1 && std::holds_alternative<mach_expr_ptr>(exprs->exprs[0]))
-        {
-            // it is possible that a modifier has been parsed as nominal value,
-            // if nominal value is not present at all and duplication factor is 0 or with DS instruction
-            mach_expr_ptr& modifier = std::get<mach_expr_ptr>(exprs->exprs[0]);
-            ++p_;
-            update_position(*modifier);
-            nominal_parsed_ = true;
-            return std::move(modifier);
-        }
-        else
-        {
-            result_.add_diagnostic(diagnostic_op::error_D003({ pos_, { pos_.line, pos_.column + 1 } }));
-            ++p_;
-            // no need to update pos_, nominal value (if present) is the last character of the format string
-        }
-    }
-    return nullptr;
-}
-
-void data_definition::parser::assign_expr_to_modifier(char modifier, mach_expr_ptr expr)
-{
-    switch (modifier)
-    {
-        case 'P':
-            result_.program_type = std::move(expr);
-            break;
-        case 'L':
-            result_.length = std::move(expr);
-            break;
-        case 'S':
-            result_.scale = std::move(expr);
-            break;
+        case 'D':
         case 'E':
-            result_.exponent = std::move(expr);
-            break;
+        case 'F':
+        case 'H':
+        case 'L':
+            return true;
         default:
-            assert(false);
+            return false;
     }
 }
 
-
-
-void data_definition::parser::parse_modifier()
+mach_expr_ptr data_definition_parser::read_number(push_arg& v, range& r)
 {
-    // we assume, that format_[p_] determines one of modifiers PLSE
-    position begin_pos = pos_;
-    char modifier = format_[p_++];
-    collector_.add_hl_symbol(token_info(
-        range { begin_pos, { begin_pos.line, begin_pos.column + 1 } }, semantics::hl_scopes::data_def_modifier));
-    if (p_ >= format_.size())
-    {
-        // expected something after modifier character
-        result_.add_diagnostic(diagnostic_op::error_D003({ begin_pos, { begin_pos.line, begin_pos.column + 1 } }));
-        return;
-    }
-
-    update_position_by_one();
-
-    // parse bit length
-    if (format_[p_] == '.')
-    {
-        ++p_;
-
-        if (modifier == 'L')
-            result_.length_type = length_type::BIT;
-        else
-            result_.add_diagnostic(diagnostic_op::error_D005({ begin_pos, { begin_pos.line, begin_pos.column + 1 } }));
-
-        update_position_by_one();
-
-        if (p_ >= format_.size())
-        {
-            // expected something after modifier character
-            result_.add_diagnostic(diagnostic_op::error_D003({ begin_pos, { begin_pos.line, begin_pos.column + 1 } }));
-            return;
-        }
-    }
-    mach_expr_ptr expr = parse_modifier_num_or_expr();
-
-    size_t rem_pos = remaining_modifiers_.find(modifier);
-    if (rem_pos == std::string::npos) // wrong order
-        result_.add_diagnostic(diagnostic_op::error_D004({ begin_pos, pos_ }));
+    if (std::holds_alternative<mach_expr_ptr>(v))
+        return std::get<mach_expr_ptr>(std::move(v));
     else
-        remaining_modifiers_ = remaining_modifiers_.substr(rem_pos + 1);
+        return read_number(std::get<std::string_view>(v), r);
+}
 
-    assign_expr_to_modifier(modifier, std::move(expr));
+mach_expr_ptr data_definition_parser::read_number(std::string_view& v, range& r)
+{
+    auto parse_result = parse_number(v, r);
+    if (!parse_result.has_value())
+        return {};
+    const auto& [num, rng] = parse_result.value();
+    return std::make_unique<mach_expr_constant>(num, rng);
 }
 
 namespace {
-struct loctr_reference_visitor final : public mach_expr_visitor
+struct
 {
-    bool found_loctr_reference = false;
-
-    void visit(const mach_expr_constant&) override {}
-    void visit(const mach_expr_data_attr&) override {}
-    void visit(const mach_expr_symbol&) override {}
-    void visit(const mach_expr_location_counter&) override { found_loctr_reference = true; }
-    void visit(const mach_expr_self_def&) override {}
-    void visit(const mach_expr_default&) override {}
-    void visit(const mach_expr_literal& expr) override { expr.get_data_definition().apply(*this); }
-};
+    bool operator()(const std::string_view& s) const { return s.empty(); }
+    bool operator()(const mach_expr_ptr& p) const { return !p; }
+} constexpr argument_empty;
+struct
+{
+    std::optional<char> operator()(const std::string_view& s) const
+    {
+        if (s.empty())
+            return std::nullopt;
+        else
+            return s.front();
+    }
+    std::optional<char> operator()(const mach_expr_ptr&) const { return std::nullopt; }
+} constexpr first_letter;
+struct
+{
+    std::optional<char> operator()(const std::string_view& s) const
+    {
+        if (s.empty())
+            return std::nullopt;
+        else
+            return (char)toupper((unsigned char)s.front());
+    }
+    std::optional<char> operator()(const mach_expr_ptr&) const { return std::nullopt; }
+} constexpr first_letter_upper;
+struct
+{
+    std::pair<bool, bool> operator()(const std::string_view& s) const
+    {
+        if (s.empty())
+            return { false, false };
+        else
+            return { isdigit((unsigned char)s.front()), false };
+    }
+    std::pair<bool, bool> operator()(const mach_expr_ptr&) const { return { true, true }; }
+} constexpr is_dupl_factor;
 } // namespace
 
-data_definition data_definition::parser::parse()
+void data_definition_parser::push(push_arg v, range r)
 {
-    parse_duplication_factor();
-
-    result_.type = format_[p_++];
-    result_.type_range = { pos_, { pos_.line, pos_.column + 1 } };
-    range unified_type_range = result_.type_range;
-    update_position_by_one();
-
-
-    if (p_ >= format_.size())
-        return std::move(result_);
-
-    if (is_type_extension(result_.type, format_[p_]))
+    if (std::visit(argument_empty, v))
     {
-        result_.extension = format_[p_];
-        result_.extension_range = { pos_, { pos_.line, pos_.column + 1 } };
-        unified_type_range.end = result_.extension_range.end;
-        ++p_;
-        update_position_by_one();
+        m_state = {};
+        return;
     }
 
-    collector_.add_hl_symbol(token_info(unified_type_range, semantics::hl_scopes::data_def_type));
+    const auto move_by_one = [&v, &r]() {
+        assert(std::holds_alternative<std::string_view>(v));
+        auto& text = std::get<std::string_view>(v);
+        assert(!text.empty());
+        auto ret = r;
+        remove_char(text, r);
+        ret.end = r.start;
 
-    for (size_t i = 0; i < 5 && p_ < format_.size(); ++i)
+        return ret;
+    };
+
+    while (!std::visit(argument_empty, v))
     {
-        if (is_modifier_or_prog(format_[p_]))
+        switch (m_state.parsing_state)
         {
-            parse_modifier();
-        }
-        else if (format_[p_] == nominal_placeholder[0])
-        {
-            result_.nominal_value = std::move(nominal_);
-            ++p_;
-            break;
-        }
-        else
-        {
-            // consume all invalid characters and produce one diagnostic regarding all of them
-            auto begin_pos = pos_;
-            while (p_ < format_.size() && !is_modifier_or_prog(format_[p_]) && format_[p_] != nominal_placeholder[0])
-            {
-                ++p_;
-                update_position_by_one();
+            case state::done:
+                return;
+
+            case state::duplicating_factor: {
+                auto [has_dup_factor, is_expr] = std::visit(is_dupl_factor, v);
+                if (has_dup_factor)
+                    m_result.dupl_factor = read_number(v, r);
+                m_state = { state::read_type, { false, is_expr, false, false }, r.end };
+                break;
             }
 
-            result_.add_diagnostic(diagnostic_op::error_D006({ begin_pos, pos_ }));
+            case state::read_type: {
+                m_result.type = std::visit(first_letter_upper, v).value();
+                m_result.type_range = move_by_one();
+                auto type_range = m_result.type_range;
+
+                if (auto t_e = std::visit(first_letter_upper, v);
+                    t_e.has_value() && is_type_extension(m_result.type, t_e.value()))
+                {
+                    m_result.extension = t_e.value();
+
+                    m_result.extension_range = move_by_one();
+
+                    type_range.end = r.start;
+                }
+                m_collector->add_hl_symbol(token_info(type_range, semantics::hl_scopes::data_def_type));
+                m_state = { state::try_reading_program, { false, false, false, false }, std::nullopt };
+                break;
+            }
+
+            case state::try_reading_program:
+                if (auto c = std::visit(first_letter, v); c != 'P' && c != 'p')
+                {
+                    m_state.parsing_state = state::try_reading_length;
+                    break;
+                }
+                m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
+                m_state = { state::read_program, { true, false, true, false }, r.start };
+                break;
+
+            case state::read_program:
+                if (!(m_result.program_type = read_number(v, r)))
+                {
+                    m_state = {};
+                    return;
+                }
+                m_state = { state::try_reading_length, { false, true, false, false }, std::nullopt };
+                break;
+
+            case state::try_reading_length:
+                if (auto c = std::visit(first_letter, v); c != 'L' && c != 'l')
+                {
+                    m_state.parsing_state = state::try_reading_scale;
+                    break;
+                }
+                m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
+                m_state = { state::try_reading_bitfield, { true, false, false, true }, r.start };
+                break;
+
+            case state::try_reading_bitfield: {
+                auto bit_field = std::visit(first_letter, v) == '.';
+                if (bit_field)
+                {
+                    m_result.length_type = data_definition::length_type::BIT;
+                    move_by_one();
+                }
+                m_state = { state::read_length, { true, bit_field, false, false }, r.start };
+                break;
+            }
+
+            case state::read_length:
+                if (!(m_result.length = read_number(v, r)))
+                {
+                    m_state = {};
+                    return;
+                }
+                m_state = { state::try_reading_scale, { false, true, false, false }, std::nullopt };
+                break;
+
+            case state::try_reading_scale:
+                if (auto c = std::visit(first_letter, v); c != 'S' && c != 's')
+                {
+                    m_state.parsing_state = state::try_reading_exponent;
+                    break;
+                }
+                m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
+                m_state = { state::read_scale, { true, false, true, false }, r.start };
+                break;
+
+            case state::read_scale:
+                if (!(m_result.scale = read_number(v, r)))
+                {
+                    m_state = {};
+                    return;
+                }
+                m_state = { state::try_reading_exponent, { false, true, false, false }, std::nullopt };
+                break;
+
+            case state::try_reading_exponent:
+                if (auto c = std::visit(first_letter, v); c != 'E' && c != 'e' || !can_have_exponent(m_result.type))
+                {
+                    m_state.parsing_state = state::too_much_text;
+                    break;
+                }
+                m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
+                m_state = { state::read_exponent, { true, false, true, false }, r.start };
+                break;
+
+            case state::read_exponent:
+                if (!(m_result.exponent = read_number(v, r)))
+                {
+                    m_state = {};
+                    return;
+                }
+                m_state = { state::too_much_text, {}, std::nullopt };
+                break;
+
+            case state::too_much_text:
+                m_state = {};
+                m_result.add_diagnostic(diagnostic_op::error_D006(r));
+                return;
+
+            default:
+                assert(false);
         }
     }
+}
+void data_definition_parser::push(nominal_value_ptr n) { m_result.nominal_value = std::move(n); }
+
+data_definition data_definition_parser::take_result()
+{
+    if (m_state.expecting_next.has_value())
+        m_result.add_diagnostic(diagnostic_op::error_D003(range(m_state.expecting_next.value())));
 
     loctr_reference_visitor v;
-    result_.apply(v);
-    result_.references_loctr = v.found_loctr_reference;
+    m_result.apply(v);
+    m_result.references_loctr = v.found_loctr_reference;
 
-    return std::move(result_);
+    return std::move(m_result);
 }
 
 bool is_similar(const data_definition& l, const data_definition& r) noexcept

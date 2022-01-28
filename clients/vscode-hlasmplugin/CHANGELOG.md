@@ -10,6 +10,7 @@
 #### Fixed
 - Highlighting now fully works with themes, not just categories dark, light and contrast.
 - Incorrect module layout generated when data defintion operands have different alignments
+- Data definition grammar is too greedy
 
 ## [0.15.1](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.0...0.15.1) (2021-11-11)
 

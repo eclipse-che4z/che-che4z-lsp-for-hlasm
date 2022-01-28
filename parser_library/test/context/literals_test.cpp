@@ -503,3 +503,16 @@ TEST(literals, invalid_loctr_references)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0012", "S0012", "S0009", "S0009" }));
 }
+
+TEST(literals, part_of_expression)
+{
+    std::string input = R"(
+    LARL 0,=A(0)+2
+    LHI  0,L'=A(0)+2
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}

@@ -87,6 +87,10 @@ mach_term returns [mach_expr_ptr m_e]
 				}
 			}, $mach_data_attribute.data);
 	}
+	| self_def_term
+	{
+		$m_e = std::make_unique<mach_expr_constant>($self_def_term.value, provider.get_range( $self_def_term.ctx));
+	}
 	| id
 	{
 		collector.add_hl_symbol(token_info(provider.get_range( $id.ctx),hl_scopes::ordinary_symbol));
@@ -96,10 +100,6 @@ mach_term returns [mach_expr_ptr m_e]
 	{
 		collector.add_hl_symbol(token_info(provider.get_range( $num.ctx),hl_scopes::number));
 		$m_e =  std::make_unique<mach_expr_constant>($num.value, provider.get_range( $num.ctx));
-	}
-	| self_def_term
-	{
-		$m_e = std::make_unique<mach_expr_constant>($self_def_term.value, provider.get_range( $self_def_term.ctx));
 	}
 	| literal
 	{
@@ -117,10 +117,10 @@ literal returns [std::optional<data_definition> value]
 		bool lit_allowed = allow_literals();
 		auto lit_restore = disable_literals();
 	}
-	data_def
+	data_def_with_nominal
 	{
 		if (lit_allowed)
-			$value = std::move($data_def.value);
+			$value = std::move($data_def_with_nominal.value);
 		else
 			add_diagnostic(diagnostic_severity::error, "S0013", "Invalid literal usage", provider.get_range($equals.ctx));
 	};

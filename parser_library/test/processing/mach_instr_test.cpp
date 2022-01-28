@@ -100,8 +100,7 @@ TEST(mach_instr_processing, reloc_symbol_expected)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "D031");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D032" }));
 }
 TEST(mach_instr_processing, setc_variable_mnemonic_reloc_operand)
 {
@@ -147,8 +146,7 @@ TEST CSECT
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "D031");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D032" }));
 }
 TEST(mach_instr_processing, reloc_parsed_in_macro_valid)
 {
@@ -181,8 +179,7 @@ LABEL  BRAS  0,12
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "D031");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D032" }));
 }
 TEST(mach_instr_processing, reloc_parsed_in_macro_alignment_error)
 {

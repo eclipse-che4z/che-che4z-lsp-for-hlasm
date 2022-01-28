@@ -417,8 +417,8 @@ struct diagnostic_op
     static diagnostic_op error_D001(const range& range);
     static diagnostic_op error_D002(const range& range);
     static diagnostic_op error_D003(const range& range);
-    static diagnostic_op error_D004(const range& range);
-    static diagnostic_op error_D005(const range& range);
+    // static diagnostic_op error_D004(const range& range);
+    // static diagnostic_op error_D005(const range& range);
     static diagnostic_op error_D006(const range& range);
     static diagnostic_op error_D007(const range& range, const std::string& type);
     static diagnostic_op error_D008(
@@ -446,7 +446,7 @@ struct diagnostic_op
     static diagnostic_op error_D029(const range& range);
     static diagnostic_op error_D030(const range& range, const std::string& type);
     static diagnostic_op error_D031(const range& range);
-    static diagnostic_op warn_D031(const range& range, const std::string& modifier);
+    static diagnostic_op warn_D032(const range& range, const std::string& modifier);
 
     static diagnostic_op error_M102(const std::string& instr_name, const range& range);
 

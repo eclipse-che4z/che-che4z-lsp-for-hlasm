@@ -233,7 +233,7 @@ TEST(data_definition, duplication_factor_invalid_number)
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_GT(parsed.diags().size(), (size_t)0);
+    EXPECT_GT(parsed.diags().size() + a.diags().size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
@@ -341,10 +341,9 @@ TEST(data_definition, unexpected_dot)
     EXPECT_EQ(parsed.program_type, nullptr);
     EXPECT_EQ(parsed.length->evaluate(dep_solver).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BIT);
-    EXPECT_EQ(parsed.scale->evaluate(dep_solver).get_abs(), -8);
-    EXPECT_EQ(parsed.exponent->evaluate(dep_solver).get_abs(), -24);
-    ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
-    EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
+    EXPECT_FALSE(parsed.scale);
+    EXPECT_FALSE(parsed.exponent);
+    EXPECT_FALSE(parsed.nominal_value);
 }
 
 TEST(data_definition, unexpected_minus)
