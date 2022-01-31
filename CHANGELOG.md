@@ -1,3 +1,32 @@
+## [1.0.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.1...1.0.0) (2022-01-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* Release V1
+
+### Features
+
+* Literal support ([#207](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/207)) ([44a93f2](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/44a93f28a124ba873811f0a5f314e02c1693655f)), closes [#193](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/193) [#75](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/75)
+* Location counter length attribute support ([#208](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/208)) ([c2d64c9](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/c2d64c9023ce438af7e3737ced4330a9f5f805bb)), closes [#71](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/71)
+* Toleration of EXEC CICS statements and related preprocessing ([#219](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/219)) ([5e10293](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/5e10293594d96dcd64446de49c68a83e98a13ca9))
+
+
+### Fixes
+
+* Data definition grammar is too greedy ([#223](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/223)) ([dd9b557](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/dd9b55773cb887c6e538872529fbcf5e408f6dca))
+* Improve statement parsing performance ([#201](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/201)) ([c949784](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/c949784a87fb4b48dfdd6c37e54c4e205711da9d))
+* Incorrect module layout generated when data definition operands have different alignments ([#210](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/210)) ([8660232](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/8660232500d8ce38ea1f8d5fe02bac15c590fe2c))
+* Provide semantic tokens through language client 7.0.0 ([#211](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/211)) ([42a830b](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/42a830b52586b358f9ef73dbe72a41a6ce8d7357)), closes [#82](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/82)
+
+
+* Release V1 ([312295a](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/312295a53f9b30245dce3f4c07bf05ba4246625e))
+
+
+### Other changes
+
+* Readme update ([35800e5](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/35800e57e560323dd21d24d1a1fe171ea56f8de8))
+
 ### [0.15.1](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.0...0.15.1) (2021-11-11)
 
 
