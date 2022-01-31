@@ -2,7 +2,7 @@
 
 All notable changes to the HLASM Language Support extension are documented in this file.
 
-## [1.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.1...1.0) (2022-01-31)
+## [1.0.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.1...1.0.0) (2022-01-31)
 
 #### Added
 - Literal support
