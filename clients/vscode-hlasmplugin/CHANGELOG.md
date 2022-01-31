@@ -1,6 +1,8 @@
-# Changelog
+# HLASM Language Support Changelog
 
-## ****Unreleased****
+All notable changes to the HLASM Language Support extension are documented in this file.
+
+## [1.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.1...1.0) (2022-01-31)
 
 #### Added
 - Literal support
@@ -11,6 +13,7 @@
 - Highlighting now fully works with themes, not just categories dark, light and contrast.
 - Incorrect module layout generated when data defintion operands have different alignments
 - Data definition grammar is too greedy
+- Readme update
 
 ## [0.15.1](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.0...0.15.1) (2021-11-11)
 
