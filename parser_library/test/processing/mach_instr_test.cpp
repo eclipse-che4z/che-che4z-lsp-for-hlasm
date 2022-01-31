@@ -250,7 +250,7 @@ TEST(mach_instr_processing, rel_addr_bitmask)
              { "JNE", 0x80 },
          })
     {
-        EXPECT_EQ(context::instruction::mnemonic_codes.at(instr).reladdr_mask.mask(), expected) << instr;
+        EXPECT_EQ(context::instruction::get_mnemonic_codes(instr).reladdr_mask.mask(), expected) << instr;
     }
 }
 

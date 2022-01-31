@@ -36,9 +36,8 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
     auto loctr = hlasm_ctx.ord_ctx.align(context::halfword);
 
     const auto& mach_instr = [](const std::string& name) {
-        if (auto mnemonic = context::instruction::mnemonic_codes.find(name);
-            mnemonic != context::instruction::mnemonic_codes.end())
-            return *mnemonic->second.instruction;
+        if (auto mnemonic = context::instruction::find_mnemonic_codes(name))
+            return *mnemonic->instruction;
         else
             return context::instruction::get_machine_instructions(name);
     }(*stmt->opcode_ref().value);

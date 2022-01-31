@@ -211,7 +211,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     // the name of the instruction (mnemonic) obtained from the user
     auto instr_name = *stmt.opcode_ref().value;
     // the associated mnemonic structure with the given name
-    auto mnemonic = context::instruction::mnemonic_codes.at(instr_name);
+    auto mnemonic = context::instruction::get_mnemonic_codes(instr_name);
     // the machine instruction structure associated with the given instruction name
     auto curr_instr = mnemonic.instruction;
 
@@ -301,9 +301,8 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 {
     const auto& ev_op = dynamic_cast<const semantics::evaluable_operand&>(*op);
 
-    auto tmp = context::instruction::assembler_instructions.find(*stmt.opcode_ref().value);
-    bool can_have_ord_syms =
-        tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
+    auto tmp = context::instruction::find_assembler_instructions(*stmt.opcode_ref().value);
+    bool can_have_ord_syms = tmp ? tmp->has_ord_symbols : true;
 
     if (can_have_ord_syms && ev_op.has_dependencies(dep_solver))
     {
@@ -353,14 +352,12 @@ bool low_language_processor::check(const resolved_statement& stmt,
     std::vector<const checking::operand*> operand_ptr_vector;
     transform_result operand_vector;
 
-    auto mnem_tmp = context::instruction::mnemonic_codes.find(*stmt.opcode_ref().value);
-    std::string_view instruction_name;
+    std::string_view instruction_name = *stmt.opcode_ref().value;
+    auto mnem_tmp = context::instruction::find_mnemonic_codes(instruction_name);
 
-    if (mnem_tmp != context::instruction::mnemonic_codes.end())
+    if (mnem_tmp)
     {
         operand_vector = transform_mnemonic(stmt, dep_solver, collector);
-        // save the actual mnemonic name
-        instruction_name = mnem_tmp->first;
     }
     else
     {

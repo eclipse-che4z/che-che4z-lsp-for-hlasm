@@ -91,7 +91,7 @@ const std::set<completion_item_s, completion_item_s::label_comparer> completion_
                 }
             }
             doc_ss << "Machine instruction " << std::endl
-                   << "Instruction format: " << instruction::mach_format_to_string.at(machine_instr.format);
+                   << "Instruction format: " << instruction::mach_format_to_string(machine_instr.format);
             result.emplace(std::string(machine_instr.instr_name),
                 "Operands: " + detail_ss.str(),
                 autocomplete.str(),
@@ -99,7 +99,7 @@ const std::set<completion_item_s, completion_item_s::label_comparer> completion_
                 completion_item_kind::mach_instr);
         }
 
-        for (const auto& [instr_name, asm_instr] : instruction::assembler_instructions)
+        for (const auto& [instr_name, asm_instr] : instruction::all_assembler_instructions())
         {
             std::stringstream doc_ss(" ");
             std::stringstream detail_ss("");
@@ -117,7 +117,7 @@ const std::set<completion_item_s, completion_item_s::label_comparer> completion_
                 completion_item_kind::asm_instr);
         }
 
-        for (const auto& [mnemonic_name, mnemonic_instr] : instruction::mnemonic_codes)
+        for (const auto& [mnemonic_name, mnemonic_instr] : instruction::all_mnemonic_codes())
         {
             std::stringstream doc_ss(" ");
             std::stringstream detail_ss("");
@@ -214,8 +214,7 @@ const std::set<completion_item_s, completion_item_s::label_comparer> completion_
             detail_ss << "Operands: " + subs_ops_nomnems.str();
             doc_ss << "Mnemonic code for " << mnemonic_instr.instruction->instr_name << " instruction" << std::endl
                    << "Substituted operands: " << subs_ops_mnems.str() << std::endl
-                   << "Instruction format: "
-                   << instruction::mach_format_to_string.at(mnemonic_instr.instruction->format);
+                   << "Instruction format: " << instruction::mach_format_to_string(mnemonic_instr.instruction->format);
             result.emplace(std::string(mnemonic_name),
                 detail_ss.str(),
                 std::string(mnemonic_name) + "   " + subs_ops_nomnems.str(),
@@ -223,7 +222,7 @@ const std::set<completion_item_s, completion_item_s::label_comparer> completion_
                 completion_item_kind::mach_instr);
         }
 
-        for (const auto& ca_instr : instruction::ca_instructions)
+        for (const auto& ca_instr : instruction::all_ca_instructions())
         {
             result.emplace(std::string(ca_instr.name),
                 "",

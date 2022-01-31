@@ -39,8 +39,9 @@ public:
             LR R2,R2)" } })
         , a(contents, analyzer_options { SOURCE_FILE, &lib_provider })
         , instruction_count(context::instruction::all_machine_instructions().size()
-              + context::instruction::assembler_instructions.size() + context::instruction::ca_instructions.size()
-              + context::instruction::mnemonic_codes.size()) {};
+              + context::instruction::all_assembler_instructions().size()
+              + context::instruction::all_ca_instructions().size()
+              + context::instruction::all_mnemonic_codes().size()) {};
 
     void SetUp() override { a.analyze(); }
     void TearDown() override {}

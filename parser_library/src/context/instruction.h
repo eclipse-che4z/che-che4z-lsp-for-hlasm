@@ -115,7 +115,7 @@ enum class mach_format : unsigned char
     VRR_h,
     VRR_i,
     VRS_d,
-    VSI
+    VSI,
 };
 
 constexpr checking::parameter empty = { false, 0, checking::machine_operand_type::NONE };
@@ -338,17 +338,23 @@ public:
     max_operands - if not defined (can be infinite), value is -1, otherwise a non-negative integer
     */
 
-    static const std::vector<ca_instruction> ca_instructions;
+    static const ca_instruction& get_ca_instructions(std::string_view name);
+    static const ca_instruction* find_ca_instructions(std::string_view name);
+    static const std::vector<ca_instruction>& all_ca_instructions();
 
-    static const std::map<std::string_view, assembler_instruction> assembler_instructions;
+    static const assembler_instruction& get_assembler_instructions(std::string_view name);
+    static const assembler_instruction* find_assembler_instructions(std::string_view name);
+    static const std::map<std::string_view, assembler_instruction>& all_assembler_instructions();
 
     static const machine_instruction& get_machine_instructions(std::string_view name);
     static const machine_instruction* find_machine_instructions(std::string_view name);
     static const std::set<machine_instruction, machine_instruction_comparer>& all_machine_instructions();
 
-    static const std::map<std::string_view, mnemonic_code> mnemonic_codes;
+    static const mnemonic_code& get_mnemonic_codes(std::string_view name);
+    static const mnemonic_code* find_mnemonic_codes(std::string_view name);
+    static const std::map<std::string_view, mnemonic_code>& all_mnemonic_codes();
 
-    static const std::map<mach_format, std::string> mach_format_to_string;
+    static std::string_view mach_format_to_string(mach_format);
 };
 
 } // namespace hlasm_plugin::parser_library::context

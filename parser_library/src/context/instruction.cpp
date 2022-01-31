@@ -21,164 +21,298 @@ using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;
 
-const std::map<mach_format, std::string> instruction::mach_format_to_string = {
-    { mach_format::E, "E" },
-    { mach_format::I, "I" },
-    { mach_format::IE, "IE" },
-    { mach_format::MII, "MII" },
-    { mach_format::RI_a, "RI-a" },
-    { mach_format::RI_b, "RI-b" },
-    { mach_format::RI_c, "RI-c" },
-    { mach_format::RIE_a, "RIE-a" },
-    { mach_format::RIE_b, "RIE-b" },
-    { mach_format::RIE_c, "RIE-c" },
-    { mach_format::RIE_d, "RIE-d" },
-    { mach_format::RIE_e, "RIE-e" },
-    { mach_format::RIE_f, "RIE-f" },
-    { mach_format::RIE_g, "RIE-g" },
-    { mach_format::RIL_a, "RIL-a" },
-    { mach_format::RIL_b, "RIL-b" },
-    { mach_format::RIL_c, "RIL-c" },
-    { mach_format::RIS, "RIS" },
-    { mach_format::RR, "RR" },
-    { mach_format::RRD, "RRD" },
-    { mach_format::RRE, "RRE" },
-    { mach_format::RRF_a, "RRF-a" },
-    { mach_format::RRF_b, "RRF-b" },
-    { mach_format::RRF_c, "RRF-c" },
-    { mach_format::RRF_d, "RRF-d" },
-    { mach_format::RRF_e, "RRF-e" },
-    { mach_format::RRS, "RRS" },
-    { mach_format::RS_a, "RS-a" },
-    { mach_format::RS_b, "RS-b" },
-    { mach_format::RSI, "RSI" },
-    { mach_format::RSL_a, "RSL-a" },
-    { mach_format::RSL_b, "RSL-b" },
-    { mach_format::RSY_a, "RSY-a" },
-    { mach_format::RSY_b, "RSY-b" },
-    { mach_format::RX_a, "RX-a" },
-    { mach_format::RX_b, "RX-b" },
-    { mach_format::RXE, "RXE" },
-    { mach_format::RXF, "RXF" },
-    { mach_format::RXY_a, "RXY-a" },
-    { mach_format::RXY_b, "RXY-b" },
-    { mach_format::S, "S" },
-    { mach_format::SI, "SI" },
-    { mach_format::SIL, "SIL" },
-    { mach_format::SIY, "SIY" },
-    { mach_format::SMI, "SMI" },
-    { mach_format::SS_a, "SS-a" },
-    { mach_format::SS_b, "SS-b" },
-    { mach_format::SS_c, "SS-c" },
-    { mach_format::SS_d, "SS-d" },
-    { mach_format::SS_e, "SS-e" },
-    { mach_format::SS_f, "SS-f" },
-    { mach_format::SSE, "SSE" },
-    { mach_format::SSF, "SSF" },
-    { mach_format::VRI_a, "VRI-a" },
-    { mach_format::VRI_b, "VRI-b" },
-    { mach_format::VRI_c, "VRI-c" },
-    { mach_format::VRI_d, "VRI-d" },
-    { mach_format::VRI_e, "VRI-e" },
-    { mach_format::VRI_f, "VRI-f" },
-    { mach_format::VRI_g, "VRI-g" },
-    { mach_format::VRI_h, "VRI-h" },
-    { mach_format::VRI_i, "VRI-i" },
-    { mach_format::VRR_a, "VRR-a" },
-    { mach_format::VRR_b, "VRR-b" },
-    { mach_format::VRR_c, "VRR-c" },
-    { mach_format::VRR_d, "VRR-d" },
-    { mach_format::VRR_e, "VRR-e" },
-    { mach_format::VRR_f, "VRR-f" },
-    { mach_format::VRR_g, "VRR-g" },
-    { mach_format::VRR_h, "VRR-h" },
-    { mach_format::VRR_i, "VRR-i" },
-    { mach_format::VRS_a, "VRS-a" },
-    { mach_format::VRS_b, "VRS-b" },
-    { mach_format::VRS_c, "VRS-c" },
-    { mach_format::VRS_d, "VRS-d" },
-    { mach_format::VSI, "VSI" },
-    { mach_format::VRV, "VRV" },
-    { mach_format::VRX, "VRX" },
-};
+std::string_view instruction::mach_format_to_string(mach_format f)
+{
+    switch (f)
+    {
+        case mach_format::E:
+            return "E";
+        case mach_format::I:
+            return "I";
+        case mach_format::IE:
+            return "IE";
+        case mach_format::MII:
+            return "MII";
+        case mach_format::RI_a:
+            return "RI-a";
+        case mach_format::RI_b:
+            return "RI-b";
+        case mach_format::RI_c:
+            return "RI-c";
+        case mach_format::RIE_a:
+            return "RIE-a";
+        case mach_format::RIE_b:
+            return "RIE-b";
+        case mach_format::RIE_c:
+            return "RIE-c";
+        case mach_format::RIE_d:
+            return "RIE-d";
+        case mach_format::RIE_e:
+            return "RIE-e";
+        case mach_format::RIE_f:
+            return "RIE-f";
+        case mach_format::RIE_g:
+            return "RIE-g";
+        case mach_format::RIL_a:
+            return "RIL-a";
+        case mach_format::RIL_b:
+            return "RIL-b";
+        case mach_format::RIL_c:
+            return "RIL-c";
+        case mach_format::RIS:
+            return "RIS";
+        case mach_format::RR:
+            return "RR";
+        case mach_format::RRD:
+            return "RRD";
+        case mach_format::RRE:
+            return "RRE";
+        case mach_format::RRF_a:
+            return "RRF-a";
+        case mach_format::RRF_b:
+            return "RRF-b";
+        case mach_format::RRF_c:
+            return "RRF-c";
+        case mach_format::RRF_d:
+            return "RRF-d";
+        case mach_format::RRF_e:
+            return "RRF-e";
+        case mach_format::RRS:
+            return "RRS";
+        case mach_format::RS_a:
+            return "RS-a";
+        case mach_format::RS_b:
+            return "RS-b";
+        case mach_format::RSI:
+            return "RSI";
+        case mach_format::RSL_a:
+            return "RSL-a";
+        case mach_format::RSL_b:
+            return "RSL-b";
+        case mach_format::RSY_a:
+            return "RSY-a";
+        case mach_format::RSY_b:
+            return "RSY-b";
+        case mach_format::RX_a:
+            return "RX-a";
+        case mach_format::RX_b:
+            return "RX-b";
+        case mach_format::RXE:
+            return "RXE";
+        case mach_format::RXF:
+            return "RXF";
+        case mach_format::RXY_a:
+            return "RXY-a";
+        case mach_format::RXY_b:
+            return "RXY-b";
+        case mach_format::S:
+            return "S";
+        case mach_format::SI:
+            return "SI";
+        case mach_format::SIL:
+            return "SIL";
+        case mach_format::SIY:
+            return "SIY";
+        case mach_format::SMI:
+            return "SMI";
+        case mach_format::SS_a:
+            return "SS-a";
+        case mach_format::SS_b:
+            return "SS-b";
+        case mach_format::SS_c:
+            return "SS-c";
+        case mach_format::SS_d:
+            return "SS-d";
+        case mach_format::SS_e:
+            return "SS-e";
+        case mach_format::SS_f:
+            return "SS-f";
+        case mach_format::SSE:
+            return "SSE";
+        case mach_format::SSF:
+            return "SSF";
+        case mach_format::VRI_a:
+            return "VRI-a";
+        case mach_format::VRI_b:
+            return "VRI-b";
+        case mach_format::VRI_c:
+            return "VRI-c";
+        case mach_format::VRI_d:
+            return "VRI-d";
+        case mach_format::VRI_e:
+            return "VRI-e";
+        case mach_format::VRI_f:
+            return "VRI-f";
+        case mach_format::VRI_g:
+            return "VRI-g";
+        case mach_format::VRI_h:
+            return "VRI-h";
+        case mach_format::VRI_i:
+            return "VRI-i";
+        case mach_format::VRR_a:
+            return "VRR-a";
+        case mach_format::VRR_b:
+            return "VRR-b";
+        case mach_format::VRR_c:
+            return "VRR-c";
+        case mach_format::VRR_d:
+            return "VRR-d";
+        case mach_format::VRR_e:
+            return "VRR-e";
+        case mach_format::VRR_f:
+            return "VRR-f";
+        case mach_format::VRR_g:
+            return "VRR-g";
+        case mach_format::VRR_h:
+            return "VRR-h";
+        case mach_format::VRR_i:
+            return "VRR-i";
+        case mach_format::VRS_a:
+            return "VRS-a";
+        case mach_format::VRS_b:
+            return "VRS-b";
+        case mach_format::VRS_c:
+            return "VRS-c";
+        case mach_format::VRS_d:
+            return "VRS-d";
+        case mach_format::VSI:
+            return "VSI";
+        case mach_format::VRV:
+            return "VRV";
+        case mach_format::VRX:
+            return "VRX";
+        default:
+            assert(false);
+            return "";
+    }
+}
 
-const std::vector<ca_instruction> instruction::ca_instructions = {
-    { "AIF", false },
-    { "AGO", false },
-    { "ACTR", false },
-    { "SETA", false },
-    { "SETB", false },
-    { "SETC", false },
-    { "ANOP", true },
-    { "LCLA", false },
-    { "LCLB", false },
-    { "LCLC", false },
-    { "GBLA", false },
-    { "GBLB", false },
-    { "GBLC", false },
-    { "MACRO", true },
-    { "MEND", true },
-    { "MEXIT", true },
-    { "MHELP", false },
-    { "AEJECT", true },
-    { "AREAD", false },
-    { "ASPACE", false },
-};
+const std::vector<ca_instruction>* ca_instructions = &instruction::all_ca_instructions();
 
-const std::map<std::string_view, assembler_instruction> instruction::assembler_instructions = {
-    { "*PROCESS", assembler_instruction(1, -1, true, "") }, // TO DO
-    { "ACONTROL", assembler_instruction(1, -1, false, "<selection>+") },
-    { "ADATA", assembler_instruction(5, 5, false, "value1,value2,value3,value4,character_string") },
-    { "AINSERT", assembler_instruction(2, 2, false, "'record',BACK|FRONT") },
-    { "ALIAS", assembler_instruction(1, 1, false, "alias_string") },
-    { "AMODE", assembler_instruction(1, 1, false, "amode_option") },
-    { "CATTR", assembler_instruction(1, -1, false, "attribute+") },
-    { "CCW", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-    { "CCW0", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-    { "CCW1", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-    { "CEJECT", assembler_instruction(0, 1, true, "?number_of_lines") },
-    { "CNOP", assembler_instruction(2, 2, true, "byte,boundary") },
-    { "COM", assembler_instruction(0, 0, false, "") },
-    { "COPY", assembler_instruction(1, 1, false, "member") },
-    { "CSECT", assembler_instruction(0, 0, false, "") },
-    { "CXD", assembler_instruction(0, 0, false, "") },
-    { "DC", assembler_instruction(1, -1, true, "<operand>+") },
-    { "DROP", assembler_instruction(0, -1, true, "?<<base_register|label>+>") },
-    { "DS", assembler_instruction(1, -1, true, "<operand>+") },
-    { "DSECT", assembler_instruction(0, 0, false, "") },
-    { "DXD", assembler_instruction(1, -1, true, "<operand>+") },
-    { "EJECT", assembler_instruction(0, 0, false, "") },
-    { "END", assembler_instruction(0, 2, true, "?expression,?language") },
-    { "ENTRY", assembler_instruction(1, -1, true, "entry_point+") },
-    { "EQU",
-        assembler_instruction(1,
-            5,
-            true,
-            "value,?<length_attribute_value>,?<type_attribute_value>,?<program_type_value>,?<assembler_type_"
-            "value>") },
-    { "EXITCTL", assembler_instruction(2, 5, false, "exit_type,control_value+") },
-    { "EXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
-    { "ICTL", assembler_instruction(1, 3, false, "begin,?<end>,?<continue>") },
-    { "ISEQ", assembler_instruction(0, 2, false, "?<left,right>") },
-    { "LOCTR", assembler_instruction(0, 0, false, "") },
-    { "LTORG", assembler_instruction(0, 0, false, "") },
-    { "MNOTE", assembler_instruction(1, 2, false, "?<<severity|*|>,>message") },
-    { "OPSYN", assembler_instruction(0, 1, false, "?operation_code_2") },
-    { "ORG", assembler_instruction(0, 3, true, "expression?<,boundary?<,offset>>") },
-    { "POP", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
-    { "PRINT", assembler_instruction(1, -1, false, "operand+") },
-    { "PUNCH", assembler_instruction(1, 1, false, "string") },
-    { "PUSH", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
-    { "REPRO", assembler_instruction(0, 0, false, "") },
-    { "RMODE", assembler_instruction(1, 1, false, "rmode_option") },
-    { "RSECT", assembler_instruction(0, 0, false, "") },
-    { "SPACE", assembler_instruction(0, 1, true, "?number_of_lines") },
-    { "START", assembler_instruction(0, 1, true, "?expression") },
-    { "TITLE", assembler_instruction(1, 1, false, "title_string") },
-    { "USING", assembler_instruction(2, -1, true, "operand+") },
-    { "WXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
-    { "XATTR", assembler_instruction(1, -1, false, "attribute+") },
-};
+const std::vector<ca_instruction>& instruction::all_ca_instructions()
+{
+    if (ca_instructions)
+        return *ca_instructions;
+    static const std::vector<ca_instruction> ca_instructions_ = {
+        { "AIF", false },
+        { "AGO", false },
+        { "ACTR", false },
+        { "SETA", false },
+        { "SETB", false },
+        { "SETC", false },
+        { "ANOP", true },
+        { "LCLA", false },
+        { "LCLB", false },
+        { "LCLC", false },
+        { "GBLA", false },
+        { "GBLB", false },
+        { "GBLC", false },
+        { "MACRO", true },
+        { "MEND", true },
+        { "MEXIT", true },
+        { "MHELP", false },
+        { "AEJECT", true },
+        { "AREAD", false },
+        { "ASPACE", false },
+    };
+    return ca_instructions_;
+}
+
+const ca_instruction* instruction::find_ca_instructions(std::string_view name)
+{
+    auto it = std::find_if(
+        ca_instructions->begin(), ca_instructions->end(), [name](const auto& i) { return i.name == name; });
+
+    if (it == ca_instructions->end())
+        return nullptr;
+    return &*it;
+}
+
+const ca_instruction& instruction::get_ca_instructions(std::string_view name)
+{
+    auto result = find_ca_instructions(name);
+    assert(result);
+    return *result;
+}
+
+const std::map<std::string_view, assembler_instruction>* assembler_instructions =
+    &instruction::all_assembler_instructions();
+
+const assembler_instruction* instruction::find_assembler_instructions(std::string_view instr)
+{
+    auto it = assembler_instructions->find(instr);
+    if (it == assembler_instructions->end())
+        return nullptr;
+    return &it->second;
+}
+
+const assembler_instruction& instruction::get_assembler_instructions(std::string_view instr)
+{
+    auto result = find_assembler_instructions(instr);
+    assert(result);
+    return *result;
+}
+
+const std::map<std::string_view, assembler_instruction>& instruction::all_assembler_instructions()
+{
+    if (assembler_instructions)
+        return *assembler_instructions;
+    static const std::map<std::string_view, assembler_instruction> assembler_instructions_ = {
+        { "*PROCESS", assembler_instruction(1, -1, true, "") }, // TO DO
+        { "ACONTROL", assembler_instruction(1, -1, false, "<selection>+") },
+        { "ADATA", assembler_instruction(5, 5, false, "value1,value2,value3,value4,character_string") },
+        { "AINSERT", assembler_instruction(2, 2, false, "'record',BACK|FRONT") },
+        { "ALIAS", assembler_instruction(1, 1, false, "alias_string") },
+        { "AMODE", assembler_instruction(1, 1, false, "amode_option") },
+        { "CATTR", assembler_instruction(1, -1, false, "attribute+") },
+        { "CCW", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
+        { "CCW0", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
+        { "CCW1", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
+        { "CEJECT", assembler_instruction(0, 1, true, "?number_of_lines") },
+        { "CNOP", assembler_instruction(2, 2, true, "byte,boundary") },
+        { "COM", assembler_instruction(0, 0, false, "") },
+        { "COPY", assembler_instruction(1, 1, false, "member") },
+        { "CSECT", assembler_instruction(0, 0, false, "") },
+        { "CXD", assembler_instruction(0, 0, false, "") },
+        { "DC", assembler_instruction(1, -1, true, "<operand>+") },
+        { "DROP", assembler_instruction(0, -1, true, "?<<base_register|label>+>") },
+        { "DS", assembler_instruction(1, -1, true, "<operand>+") },
+        { "DSECT", assembler_instruction(0, 0, false, "") },
+        { "DXD", assembler_instruction(1, -1, true, "<operand>+") },
+        { "EJECT", assembler_instruction(0, 0, false, "") },
+        { "END", assembler_instruction(0, 2, true, "?expression,?language") },
+        { "ENTRY", assembler_instruction(1, -1, true, "entry_point+") },
+        { "EQU",
+            assembler_instruction(1,
+                5,
+                true,
+                "value,?<length_attribute_value>,?<type_attribute_value>,?<program_type_value>,?<assembler_type_"
+                "value>") },
+        { "EXITCTL", assembler_instruction(2, 5, false, "exit_type,control_value+") },
+        { "EXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
+        { "ICTL", assembler_instruction(1, 3, false, "begin,?<end>,?<continue>") },
+        { "ISEQ", assembler_instruction(0, 2, false, "?<left,right>") },
+        { "LOCTR", assembler_instruction(0, 0, false, "") },
+        { "LTORG", assembler_instruction(0, 0, false, "") },
+        { "MNOTE", assembler_instruction(1, 2, false, "?<<severity|*|>,>message") },
+        { "OPSYN", assembler_instruction(0, 1, false, "?operation_code_2") },
+        { "ORG", assembler_instruction(0, 3, true, "expression?<,boundary?<,offset>>") },
+        { "POP", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
+        { "PRINT", assembler_instruction(1, -1, false, "operand+") },
+        { "PUNCH", assembler_instruction(1, 1, false, "string") },
+        { "PUSH", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
+        { "REPRO", assembler_instruction(0, 0, false, "") },
+        { "RMODE", assembler_instruction(1, 1, false, "rmode_option") },
+        { "RSECT", assembler_instruction(0, 0, false, "") },
+        { "SPACE", assembler_instruction(0, 1, true, "?number_of_lines") },
+        { "START", assembler_instruction(0, 1, true, "?expression") },
+        { "TITLE", assembler_instruction(1, 1, false, "title_string") },
+        { "USING", assembler_instruction(2, -1, true, "operand+") },
+        { "WXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
+        { "XATTR", assembler_instruction(1, -1, false, "attribute+") },
+    };
+    return assembler_instructions_;
+}
 
 bool hlasm_plugin::parser_library::context::machine_instruction::check_nth_operand(
     size_t place, const checking::machine_operand* operand)
@@ -1617,13 +1751,22 @@ static auto generate_machine_instructions()
     return result;
 }
 
-const std::set<machine_instruction, machine_instruction_comparer> machine_instructions =
-    generate_machine_instructions();
+const std::set<machine_instruction, machine_instruction_comparer>* machine_instructions =
+    &instruction::all_machine_instructions();
+
+const std::set<machine_instruction, machine_instruction_comparer>& instruction::all_machine_instructions()
+{
+    if (machine_instructions)
+        return *machine_instructions;
+    static const std::set<machine_instruction, machine_instruction_comparer> machine_instructions_ =
+        generate_machine_instructions();
+    return machine_instructions_;
+}
 
 const machine_instruction* instruction::find_machine_instructions(std::string_view name)
 {
-    auto it = machine_instructions.find(name);
-    if (it == machine_instructions.end())
+    auto it = machine_instructions->find(name);
+    if (it == machine_instructions->end())
         return nullptr;
     return &*it;
 }
@@ -1634,23 +1777,18 @@ const machine_instruction& instruction::get_machine_instructions(std::string_vie
     return *mi;
 }
 
-const std::set<machine_instruction, machine_instruction_comparer>& instruction::all_machine_instructions()
-{
-    return machine_instructions;
-}
-
 static auto generate_mnemonic_codes()
 {
     std::map<std::string_view, mnemonic_code> result;
 
-    const auto add_mnemonic_code = [&result](std::string_view mnemonic,
+    const auto add_mnemonic_code = [&result, &mi = instruction::all_machine_instructions()](std::string_view mnemonic,
                                        std::string_view base_instr,
                                        std::initializer_list<std::pair<size_t, size_t>> replacement) {
         assert(std::is_sorted(
             replacement.begin(), replacement.end(), [](const auto& l, const auto& r) { return l.first < r.first; }));
-        auto instr_p = machine_instructions.find(base_instr);
-        assert(instr_p != machine_instructions.end());
-        result.try_emplace(mnemonic, &*instr_p, replacement);
+        auto bi = mi.find(base_instr);
+        assert(bi != mi.end());
+        result.try_emplace(mnemonic, &*bi, replacement);
     };
 
     add_mnemonic_code("B", "BC", { { 0, 15 } });
@@ -2610,7 +2748,28 @@ static auto generate_mnemonic_codes()
     return result;
 }
 
-const std::map<std::string_view, mnemonic_code> instruction::mnemonic_codes = generate_mnemonic_codes();
+const std::map<std::string_view, mnemonic_code>* mnemonic_codes = &instruction::all_mnemonic_codes();
+
+const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name)
+{
+    auto it = mnemonic_codes->find(name);
+    if (it == mnemonic_codes->end())
+        return nullptr;
+    return &it->second;
+}
+const mnemonic_code& instruction::get_mnemonic_codes(std::string_view name)
+{
+    auto result = find_mnemonic_codes(name);
+    assert(result);
+    return *result;
+}
+const std::map<std::string_view, mnemonic_code>& instruction::all_mnemonic_codes()
+{
+    if (mnemonic_codes)
+        return *mnemonic_codes;
+    static const std::map<std::string_view, mnemonic_code> mnemonic_codes_ = generate_mnemonic_codes();
+    return mnemonic_codes_;
+}
 
 // Generates a bitmask for an arbitrary machine instruction indicating which operands
 // are of the RI type (and therefore are modified by transform_reloc_imm_operands)
