@@ -19,7 +19,7 @@ HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio
 
 Follow these steps to open a HLASM project:
 
-1. In _File_ -> _Open Folder..._, select the folder with the HLASM sources. <!-- (An example workspace is provided in the folder `example_workspace`.) Uncomment once PR#44 is merged-->
+1. In **File** -> **Open Folder...**, select the folder with the HLASM sources. <!-- (An example workspace is provided in the folder `example_workspace`.) Uncomment once PR#44 is merged-->
 2. Open any HLASM source file (note that HLASM does not have a standard filename extension) or create a new file.
 3. If the auto-detection of HLASM language does not recognize the file, set it manually in the bottom-right corner of the VS Code window.  
 4. The extension is now enabled on the open file. If you have macro definitions in separate files or use the COPY instruction, you need to set up a workspace.
@@ -30,7 +30,7 @@ The HLASM COPY instruction copies the source code from various external files, a
 
 To do this, set up two configuration files — `proc_grps.json` and `pgm_conf.json`. Follow these steps:
 
-1. After you open a HLASM file for the first time, two pop-ups display. Select _Create pgm_conf.json with current program_ and _Create empty proc_grps.json_. 
+1. After you open a HLASM file for the first time, two pop-ups display. Select **Create pgm_conf.json with current program** and **Create empty proc_grps.json**. 
    The two configuration files are then created with default values. They are stored in the `.hlasmplugin` subfolder.
 2. Navigate to the `proc_grps.json` file. This is the entry point where you can specify paths to macro definitions and COPY files. 
 3. Fill the `libs` array with the corresponding paths. For example, if you have your macro files in the `ASMMAC/` folder, add the string `"ASMMAC"` into the libs array.
@@ -70,7 +70,7 @@ The macro tracer is not a debugger. It cannot debug running executables, only tr
 2. In the left sidebar, click the bug icon to open the debugging panel (Ctrl + Shift + D).
 3. Select `create a launch.json file`.  
    A "select environment" prompt displays.
-4. Enter *HLASM Macro tracer*.  
+4. Enter **HLASM Macro tracer**.  
    Your workspace is now configured for macro tracing.
 
 ### Using the Macro Tracer
@@ -88,9 +88,9 @@ Breakpoints can be set before or during the debugging session.
 ### External Macro Libraries and COPY Members
 The HLASM Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the `.hlasmplugin` folder of the currently open workspace:
 
-- `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries defined by a list of directories (some of which can be optional). Additionaly, the _SYSPARM_ and _SYSTEM_ID_ options can be specified in the `asm_options` section.
+- `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries defined by a list of directories (some of which can be optional). Additionaly, the `SYSPARM` and `SYSTEM_ID` options can be specified in the `asm_options` section.
 
-- `pgm_conf.json` provides a mapping between _programs_ (open-code files) and processor groups. It specifies which list of directories is used with which source file. If a relative source file path is specified, it is relative to the current workspace.
+- `pgm_conf.json` provides a mapping between programs (open-code files) and processor groups. It specifies which list of directories is used with which source file. If a relative source file path is specified, it is relative to the current workspace.
 
 To use a predefined set of macro and copy members, follow these steps: 
 1. Specify any number of library directories to search for macros and COPY files in `proc_grps.json`. These directories are searched in order they are listed. 
