@@ -21,15 +21,21 @@
 namespace hlasm_plugin::parser_library {
 
 namespace {
-template<typename T, typename = void>
-struct smart_append
+struct concat_helper
 {
-    void operator()(std::string& s, T t) { s.append(std::to_string(std::forward<T>(t))); }
-};
-template<typename T>
-struct smart_append<T, std::void_t<decltype(std::declval<std::string&>().append(std::declval<T>()))>>
-{
-    void operator()(std::string& s, T t) { s.append(std::forward<T>(t)); }
+    void operator()(std::string& s, std::string_view t) { s.append(t); }
+    template<typename T>
+    std::enable_if_t<!std::is_convertible_v<T&&, std::string_view>> operator()(std::string& s, T&& t)
+    {
+        s.append(std::to_string(std::forward<T>(t)));
+    }
+
+    size_t len(std::string_view t) { return t.size(); }
+    template<typename T>
+    std::enable_if_t<!std::is_convertible_v<T&&, std::string_view>, size_t> len(T&& t)
+    {
+        return 8;
+    }
 };
 
 template<typename... Args>
@@ -37,7 +43,11 @@ std::string concat(Args&&... args)
 {
     std::string result;
 
-    (smart_append<Args&&> {}(result, std::forward<Args>(args)), ...);
+    concat_helper h;
+
+    result.reserve((... + h.len(std::forward<Args>(args))));
+
+    (h(result, std::forward<Args>(args)), ...);
 
     return result;
 }
@@ -1688,7 +1698,7 @@ diagnostic_op diagnostic_op::warn_D032(const range& range, std::string_view oper
 {
     return diagnostic_op(diagnostic_severity::warning,
         "D032",
-        "Using absolute value '" + operand_value + "' as relative immediate value",
+        concat("Using absolute value '", operand_value, "' as relative immediate value"),
         range);
 }
 

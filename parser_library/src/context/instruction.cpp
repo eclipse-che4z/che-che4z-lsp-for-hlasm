@@ -286,7 +286,7 @@ const std::map<std::string_view, assembler_instruction>& instruction::all_assemb
             assembler_instruction(1,
                 5,
                 true,
-                "value,?<length_attribute_value>,?<type_attribute_value>,?<program_type_value>,?<assembler_type_"
+                "value,?<length_attribute_value>,?<type_attribute_value>,?<program_type_value>,?<assembler_type>"
                 "value>") },
         { "EXITCTL", assembler_instruction(2, 5, false, "exit_type,control_value+") },
         { "EXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
