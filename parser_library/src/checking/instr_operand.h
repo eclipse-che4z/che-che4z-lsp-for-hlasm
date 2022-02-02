@@ -65,10 +65,10 @@ public:
 
 enum class machine_operand_type : uint8_t
 {
+    NONE,
     MASK,
     REG,
     IMM,
-    NONE,
     DISPLC,
     BASE,
     LENGTH,

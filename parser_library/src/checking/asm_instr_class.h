@@ -58,7 +58,7 @@ public:
         std::string_view name_of_instruction,
         int min_operands,
         int max_operands)
-        : allowed_types(allowed_types)
+        : allowed_types(std::move(allowed_types))
         , name_of_instruction(name_of_instruction)
         , min_operands(min_operands)
         , max_operands(max_operands) {};

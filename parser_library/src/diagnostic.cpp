@@ -23,16 +23,16 @@ namespace hlasm_plugin::parser_library {
 namespace {
 struct concat_helper
 {
-    void operator()(std::string& s, std::string_view t) { s.append(t); }
+    void operator()(std::string& s, std::string_view t) const { s.append(t); }
     template<typename T>
-    std::enable_if_t<!std::is_convertible_v<T&&, std::string_view>> operator()(std::string& s, T&& t)
+    std::enable_if_t<!std::is_convertible_v<T&&, std::string_view>> operator()(std::string& s, T&& t) const
     {
         s.append(std::to_string(std::forward<T>(t)));
     }
 
-    size_t len(std::string_view t) { return t.size(); }
+    size_t len(std::string_view t) const { return t.size(); }
     template<typename T>
-    std::enable_if_t<!std::is_convertible_v<T&&, std::string_view>, size_t> len(T&& t)
+    std::enable_if_t<!std::is_convertible_v<T&&, std::string_view>, size_t> len(T&&) const
     {
         return 8;
     }

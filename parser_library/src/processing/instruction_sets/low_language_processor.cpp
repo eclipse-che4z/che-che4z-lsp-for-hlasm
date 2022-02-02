@@ -353,16 +353,14 @@ bool low_language_processor::check(const resolved_statement& stmt,
     transform_result operand_vector;
 
     std::string_view instruction_name = *stmt.opcode_ref().value;
-    auto mnem_tmp = context::instruction::find_mnemonic_codes(instruction_name);
 
-    if (mnem_tmp)
+    if (auto mnem_tmp = context::instruction::find_mnemonic_codes(instruction_name))
     {
         operand_vector = transform_mnemonic(stmt, dep_solver, collector);
     }
     else
     {
         operand_vector = transform_default(stmt, dep_solver, collector);
-        instruction_name = *stmt.opcode_ref().value;
     }
 
     if (!operand_vector)

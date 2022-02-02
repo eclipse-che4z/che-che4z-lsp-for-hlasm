@@ -187,7 +187,7 @@ std::string_view instruction::mach_format_to_string(mach_format f)
     }
 }
 
-const std::vector<ca_instruction>* ca_instructions = &instruction::all_ca_instructions();
+const std::vector<ca_instruction>* const ca_instructions = &instruction::all_ca_instructions();
 
 const std::vector<ca_instruction>& instruction::all_ca_instructions()
 {
@@ -235,7 +235,7 @@ const ca_instruction& instruction::get_ca_instructions(std::string_view name)
     return *result;
 }
 
-const std::map<std::string_view, assembler_instruction>* assembler_instructions =
+const std::map<std::string_view, assembler_instruction>* const assembler_instructions =
     &instruction::all_assembler_instructions();
 
 const assembler_instruction* instruction::find_assembler_instructions(std::string_view instr)
@@ -355,1403 +355,1416 @@ static auto generate_machine_instructions()
 {
     std::set<machine_instruction, machine_instruction_comparer> result;
 
-    const auto add_machine_instr = [&result](std::string_view instruction_name,
-                                       mach_format format,
-                                       std::initializer_list<machine_operand_format> op_format,
-                                       short page_no) { result.emplace(instruction_name, format, op_format, page_no); };
+    static constexpr machine_operand_format empty_format(empty, empty, empty);
+    struct instruction_definition
+    {
+        constexpr instruction_definition(std::string_view name,
+            mach_format format,
+            std::initializer_list<machine_operand_format> op_format_list,
+            short page_no)
+            : name(name)
+            , format(format)
+            , op_format { empty_format, empty_format, empty_format, empty_format, empty_format, empty_format }
+            , op_format_size(op_format_list.size())
+            , page_no(page_no)
+        {
+            size_t j = 0;
+            for (const auto& f : op_format_list)
+                op_format[j++] = f;
+        }
+        std::string_view name;
+        mach_format format;
+        std::array<machine_operand_format, 6> op_format;
+        size_t op_format_size;
+        short page_no;
+    } static constexpr instructions[] = {
+        { "AR", mach_format::RR, { reg_4_U, reg_4_U }, 510 },
+        { "ADDFRR", mach_format::RRE, { reg_4_U, reg_4_U }, 7 },
+        { "AGR", mach_format::RRE, { reg_4_U, reg_4_U }, 510 },
+        { "AGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 510 },
+        { "ARK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 510 },
+        { "AGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 510 },
+        { "A", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 510 },
+        { "AY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 511 },
+        { "AG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 511 },
+        { "AGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 511 },
+        { "AFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 511 },
+        { "AGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 511 },
+        { "AHIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 511 },
+        { "AGHIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 511 },
+        { "ASI", mach_format::SIY, { db_20_4_S, imm_8_S }, 511 },
+        { "AGSI", mach_format::SIY, { db_20_4_S, imm_8_S }, 511 },
+        { "AH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 512 },
+        { "AHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 512 },
+        { "AGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 512 },
+        { "AHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 512 },
+        { "AGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 513 },
+        { "AHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 513 },
+        { "AHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 513 },
+        { "AIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 513 },
+        { "ALR", mach_format::RR, { reg_4_U, reg_4_U }, 514 },
+        { "ALGR", mach_format::RRE, { reg_4_U, reg_4_U }, 514 },
+        { "ALGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 514 },
+        { "ALRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 514 },
+        { "ALGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 514 },
+        { "AL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 514 },
+        { "ALY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 514 },
+        { "ALG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 514 },
+        { "ALGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 514 },
+        { "ALFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 514 },
+        { "ALGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 514 },
+        { "ALHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 515 },
+        { "ALHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 515 },
+        { "ALCR", mach_format::RRE, { reg_4_U, reg_4_U }, 515 },
+        { "ALCGR", mach_format::RRE, { reg_4_U, reg_4_U }, 515 },
+        { "ALC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 515 },
+        { "ALCG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 515 },
+        { "ALSI", mach_format::SIY, { db_20_4_S, imm_8_S }, 516 },
+        { "ALGSI", mach_format::SIY, { db_20_4_S, imm_8_S }, 516 },
+        { "ALHSIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 516 },
+        { "ALGHSIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 516 },
+        { "ALSIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 517 },
+        { "ALSIHN", mach_format::RIL_a, { reg_4_U, imm_32_S }, 517 },
+        { "NR", mach_format::RR, { reg_4_U, reg_4_U }, 517 },
+        { "NGR", mach_format::RRE, { reg_4_U, reg_4_U }, 517 },
+        { "NRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 517 },
+        { "NGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 517 },
+        { "N", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 517 },
+        { "NY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 517 },
+        { "NG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 517 },
+        { "NI", mach_format::SI, { db_12_4_U, imm_8_U }, 517 },
+        { "NIY", mach_format::SIY, { db_20_4_S, imm_8_U }, 518 },
+        { "NC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 518 },
+        { "NIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 518 },
+        { "NIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 518 },
+        { "NIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 518 },
+        { "NILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 519 },
+        { "NILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 519 },
+        { "NILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 519 },
+        { "BALR", mach_format::RR, { reg_4_U, reg_4_U }, 519 },
+        { "BAL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 519 },
+        { "BASR", mach_format::RR, { reg_4_U, reg_4_U }, 520 },
+        { "BAS", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 520 },
+        { "BASSM", mach_format::RX_a, { reg_4_U, reg_4_U }, 520 },
+        { "BSM", mach_format::RR, { reg_4_U, reg_4_U }, 522 },
+        { "BIC", mach_format::RXY_b, { mask_4_U, dxb_20_4x4_S }, 523 },
+        { "BCR", mach_format::RR, { mask_4_U, reg_4_U }, 524 },
+        { "BC", mach_format::RX_b, { mask_4_U, dxb_12_4x4_U }, 524 },
+        { "BCTR", mach_format::RR, { reg_4_U, reg_4_U }, 525 },
+        { "BCTGR", mach_format::RRE, { reg_4_U, reg_4_U }, 525 },
+        { "BCT", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 525 },
+        { "BCTG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 525 },
+        { "BXH", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 526 },
+        { "BXHG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 526 },
+        { "BXLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 526 },
+        { "BXLEG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 526 },
+        { "BPP", mach_format::SMI, { mask_4_U, rel_addr_imm_16_S, db_12_4_U }, 527 },
+        { "BPRP", mach_format::MII, { mask_4_U, rel_addr_imm_12_S, rel_addr_imm_24_S }, 527 },
+        { "BRAS", mach_format::RI_b, { reg_4_U, rel_addr_imm_16_S }, 530 },
+        { "BRASL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 530 },
+        { "BRC", mach_format::RI_c, { mask_4_U, rel_addr_imm_16_S }, 530 },
+        { "BRCL", mach_format::RIL_c, { mask_4_U, rel_addr_imm_32_S }, 530 },
+        { "BRCT", mach_format::RI_b, { reg_4_U, rel_addr_imm_16_S }, 531 },
+        { "BRCTG", mach_format::RI_b, { reg_4_U, rel_addr_imm_16_S }, 531 },
+        { "BRCTH", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 531 },
+        { "BRXH", mach_format::RSI, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532 },
+        { "BRXHG", mach_format::RIE_e, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532 },
+        { "BRXLE", mach_format::RSI, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532 },
+        { "BRXLG", mach_format::RIE_e, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532 },
+        { "CKSM", mach_format::RRE, { reg_4_U, reg_4_U }, 533 },
+        { "KM", mach_format::RRE, { reg_4_U, reg_4_U }, 537 },
+        { "KMC", mach_format::RRE, { reg_4_U, reg_4_U }, 537 },
+        { "KMA", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 562 },
+        { "KMF", mach_format::RRE, { reg_4_U, reg_4_U }, 576 },
+        { "KMCTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 591 },
+        { "KMO", mach_format::RRE, { reg_4_U, reg_4_U }, 604 },
+        { "CR", mach_format::RR, { reg_4_U, reg_4_U }, 618 },
+        { "CGR", mach_format::RRE, { reg_4_U, reg_4_U }, 618 },
+        { "CGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 618 },
+        { "C", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 618 },
+        { "CY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 618 },
+        { "CG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 618 },
+        { "CGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 618 },
+        { "CFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 618 },
+        { "CGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 619 },
+        { "CRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 619 },
+        { "CGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 619 },
+        { "CGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 619 },
+        { "CRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 619 },
+        { "CGRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 619 },
+        { "CRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 619 },
+        { "CGRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 620 },
+        { "CIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 620 },
+        { "CGIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 620 },
+        { "CIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 620 },
+        { "CGIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 620 },
+        { "CFC", mach_format::S, { db_12_4_U }, 621 },
+        { "CS", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 628 },
+        { "CSY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628 },
+        { "CSG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628 },
+        { "CDS", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 628 },
+        { "CDSY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628 },
+        { "CDSG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628 },
+        { "CSST", mach_format::SSF, { db_12_4_U, db_12_4_U, reg_4_U }, 630 },
+        { "CRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 633 },
+        { "CGRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 633 },
+        { "CIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 633 },
+        { "CGIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 633 },
+        { "CH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 634 },
+        { "CHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 634 },
+        { "CGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 634 },
+        { "CHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 634 },
+        { "CGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 634 },
+        { "CHHSI", mach_format::SIL, { db_12_4_U, imm_16_S }, 634 },
+        { "CHSI", mach_format::SIL, { db_12_4_U, imm_16_S }, 634 },
+        { "CGHSI", mach_format::SIL, { db_12_4_U, imm_16_S }, 634 },
+        { "CHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 634 },
+        { "CGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 634 },
+        { "CHHR", mach_format::RRE, { reg_4_U, reg_4_U }, 635 },
+        { "CHLR", mach_format::RRE, { reg_4_U, reg_4_U }, 635 },
+        { "CHF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 635 },
+        { "CIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 635 },
+        { "CLR", mach_format::RR, { reg_4_U, reg_4_U }, 636 },
+        { "CLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 636 },
+        { "CLGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 636 },
+        { "CL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 636 },
+        { "CLY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636 },
+        { "CLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636 },
+        { "CLGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636 },
+        { "CLC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 636 },
+        { "CLFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 636 },
+        { "CLGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 636 },
+        { "CLI", mach_format::SI, { db_12_4_U, imm_8_U }, 636 },
+        { "CLIY", mach_format::SIY, { db_12_4_U, imm_8_U }, 636 },
+        { "CLFHSI", mach_format::SIL, { db_12_4_U, imm_16_U }, 636 },
+        { "CLGHSI", mach_format::SIL, { db_12_4_U, imm_16_U }, 636 },
+        { "CLHHSI", mach_format::SIL, { db_12_4_U, imm_16_U }, 636 },
+        { "CLRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637 },
+        { "CLGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637 },
+        { "CLGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637 },
+        { "CLHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637 },
+        { "CLGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637 },
+        { "CLRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 638 },
+        { "CLGRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 638 },
+        { "CLRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 638 },
+        { "CLGRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 638 },
+        { "CLIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 638 },
+        { "CLGIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 638 },
+        { "CLIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 638 },
+        { "CLGIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 638 },
+        { "CLRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 639 },
+        { "CLGRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 639 },
+        { "CLT", mach_format::RSY_b, { reg_4_U, mask_4_U, dxb_20_4x4_S }, 639 },
+        { "CLGT", mach_format::RSY_b, { reg_4_U, mask_4_U, dxb_20_4x4_S }, 639 },
+        { "CLFIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 640 },
+        { "CLGIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 640 },
+        { "CLM", mach_format::RS_b, { reg_4_U, mask_4_U, db_12_4_U }, 641 },
+        { "CLMY", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 641 },
+        { "CLMH", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 641 },
+        { "CLHHR", mach_format::RRE, { reg_4_U, reg_4_U }, 641 },
+        { "CLHLR", mach_format::RRE, { reg_4_U, reg_4_U }, 641 },
+        { "CLHF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 641 },
+        { "CLCL", mach_format::RR, { reg_4_U, reg_4_U }, 642 },
+        { "CLIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 642 },
+        { "CLCLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 644 },
+        { "CLCLU", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 647 },
+        { "CLST", mach_format::RRE, { reg_4_U, reg_4_U }, 650 },
+        { "CUSE", mach_format::RRE, { reg_4_U, reg_4_U }, 651 },
+        { "CMPSC", mach_format::RRE, { reg_4_U, reg_4_U }, 654 },
+        { "KIMD", mach_format::RRE, { reg_4_U, reg_4_U }, 672 },
+        { "KLMD", mach_format::RRE, { reg_4_U, reg_4_U }, 685 },
+        { "KMAC", mach_format::RRE, { reg_4_U, reg_4_U }, 703 },
+        { "CVB", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 714 },
+        { "CVBY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 714 },
+        { "CVBG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 714 },
+        { "CVD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 715 },
+        { "CVDY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 715 },
+        { "CVDG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 715 },
+        { "CU24", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 715 },
+        { "CUUTF", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 718 },
+        { "CU21", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 718 },
+        { "CU42", mach_format::RRE, { reg_4_U, reg_4_U }, 722 },
+        { "CU41", mach_format::RRE, { reg_4_U, reg_4_U }, 725 },
+        { "CUTFU", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 728 },
+        { "CU12", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 728 },
+        { "CU14", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 732 },
+        { "CPYA", mach_format::RRE, { reg_4_U, reg_4_U }, 736 },
+        { "DR", mach_format::RR, { reg_4_U, reg_4_U }, 736 },
+        { "D", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 736 },
+        { "DLR", mach_format::RRE, { reg_4_U, reg_4_U }, 737 },
+        { "DLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 737 },
+        { "DL", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 737 },
+        { "DLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 737 },
+        { "DSGR", mach_format::RRE, { reg_4_U, reg_4_U }, 738 },
+        { "DSGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 738 },
+        { "DSG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738 },
+        { "DSGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738 },
+        { "HIO", mach_format::S, { db_12_4_U }, 129 },
+        { "HDV", mach_format::S, { db_12_4_U }, 129 },
+        { "SIO", mach_format::S, { db_12_4_U }, 129 },
+        { "SIOF", mach_format::S, { db_12_4_U }, 129 },
+        { "STIDC", mach_format::S, { db_12_4_U }, 129 },
+        { "CLRCH", mach_format::S, { db_12_4_U }, 367 },
+        { "CLRIO", mach_format::S, { db_12_4_U }, 368 },
+        { "TCH", mach_format::S, { db_12_4_U }, 384 },
+        { "TIO", mach_format::S, { db_12_4_U }, 385 },
+        { "RRB", mach_format::S, { db_12_4_U }, 295 },
+        { "CONCS", mach_format::S, { db_12_4_U }, 263 },
+        { "DISCS", mach_format::S, { db_12_4_U }, 265 },
+        { "XR", mach_format::RR, { reg_4_U, reg_4_U }, 738 },
+        { "XGR", mach_format::RRE, { reg_4_U, reg_4_U }, 738 },
+        { "XRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 738 },
+        { "XGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 738 },
+        { "X", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 738 },
+        { "XY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738 },
+        { "XG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738 },
+        { "XI", mach_format::SI, { db_12_4_U, imm_8_U }, 739 },
+        { "XIY", mach_format::SIY, { db_20_4_S, imm_8_U }, 739 },
+        { "XC", mach_format::SS_a, { db_12_8x4L_U, db_20_4_S }, 739 },
+        { "EX", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 740 },
+        { "XIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 740 },
+        { "XILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 740 },
+        { "EXRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 740 },
+        { "EAR", mach_format::RRE, { reg_4_U, reg_4_U }, 741 },
+        { "ECAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 741 },
+        { "ECTG", mach_format::SSF, { db_12_4_U, db_12_4_U, reg_4_U }, 744 },
+        { "EPSW", mach_format::RRE, { reg_4_U, reg_4_U }, 745 },
+        { "ETND", mach_format::RRE, { reg_4_U }, 745 },
+        { "FLOGR", mach_format::RRE, { reg_4_U, reg_4_U }, 746 },
+        { "IC", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 746 },
+        { "ICY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 746 },
+        { "ICM", mach_format::RS_b, { reg_4_U, mask_4_U, db_12_4_U }, 746 },
+        { "ICMY", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 746 },
+        { "ICMH", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 746 },
+        { "IIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 747 },
+        { "IIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 747 },
+        { "IIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 747 },
+        { "IILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 747 },
+        { "IILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 747 },
+        { "IILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 747 },
+        { "IPM", mach_format::RRE, { reg_4_U }, 748 },
+        { "LR", mach_format::RR, { reg_4_U, reg_4_U }, 748 },
+        { "LGR", mach_format::RRE, { reg_4_U, reg_4_U }, 748 },
+        { "LGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 748 },
+        { "L", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 748 },
+        { "LY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748 },
+        { "LG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748 },
+        { "LGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748 },
+        { "LGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 748 },
+        { "LRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 748 },
+        { "LGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 748 },
+        { "LGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 748 },
+        { "LAM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 749 },
+        { "LAMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 749 },
+        { "LA", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 750 },
+        { "LAY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 750 },
+        { "LAE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 750 },
+        { "LAEY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 750 },
+        { "LARL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 751 },
+        { "LAA", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752 },
+        { "LAAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752 },
+        { "LAAL", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752 },
+        { "LAALG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752 },
+        { "LAN", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753 },
+        { "LANG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753 },
+        { "LAX", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753 },
+        { "LAXG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753 },
+        { "LAO", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 754 },
+        { "LAOG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 754 },
+        { "LTR", mach_format::RR, { reg_4_U, reg_4_U }, 754 },
+        { "LTGR", mach_format::RRE, { reg_4_U, reg_4_U }, 754 },
+        { "LTGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 754 },
+        { "LT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755 },
+        { "LTG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755 },
+        { "LTGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755 },
+        { "LAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755 },
+        { "LGAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755 },
+        { "LZRF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755 },
+        { "LZRG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755 },
+        { "LBR", mach_format::RRE, { reg_4_U, reg_4_U }, 756 },
+        { "LGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 756 },
+        { "LB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756 },
+        { "LGB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756 },
+        { "LBH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756 },
+        { "LCR", mach_format::RR, { reg_4_U, reg_4_U }, 756 },
+        { "LCGR", mach_format::RRE, { reg_4_U, reg_4_U }, 757 },
+        { "LCGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 757 },
+        { "LCBB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U, mask_4_U }, 757 },
+        { "LGG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 758 },
+        { "LLGFSG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 758 },
+        { "LGSC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 759 },
+        { "LHR", mach_format::RRE, { reg_4_U, reg_4_U }, 760 },
+        { "LGHR", mach_format::RRE, { reg_4_U, reg_4_U }, 760 },
+        { "LH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 760 },
+        { "LHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 760 },
+        { "LGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 760 },
+        { "LHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 760 },
+        { "LGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 760 },
+        { "LHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 760 },
+        { "LGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 760 },
+        { "LHH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 761 },
+        { "LOCHI", mach_format::RIE_g, { reg_4_U, imm_16_S, mask_4_U }, 761 },
+        { "LOCGHI", mach_format::RIE_g, { reg_4_U, imm_16_S, mask_4_U }, 761 },
+        { "LOCHHI", mach_format::RIE_g, { reg_4_U, imm_16_S, mask_4_U }, 761 },
+        { "LFH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 762 },
+        { "LFHAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 762 },
+        { "LLGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 762 },
+        { "LLGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 762 },
+        { "LLGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 762 },
+        { "LLGFAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763 },
+        { "LLCR", mach_format::RRE, { reg_4_U, reg_4_U }, 763 },
+        { "LLGCR", mach_format::RRE, { reg_4_U, reg_4_U }, 763 },
+        { "LLC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763 },
+        { "LLGC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763 },
+        { "LLZRGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763 },
+        { "LLCH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 764 },
+        { "LLHR", mach_format::RRE, { reg_4_U, reg_4_U }, 764 },
+        { "LLGHR", mach_format::RRE, { reg_4_U, reg_4_U }, 764 },
+        { "LLH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 764 },
+        { "LLGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 764 },
+        { "LLHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 764 },
+        { "LLGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 764 },
+        { "LLHH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 765 },
+        { "LLIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 765 },
+        { "LLIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 765 },
+        { "LLIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 765 },
+        { "LLILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 765 },
+        { "LLILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 765 },
+        { "LLILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 765 },
+        { "LLGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 765 },
+        { "LLGT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 766 },
+        { "LLGTAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 766 },
+        { "LM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 766 },
+        { "LMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 766 },
+        { "LMG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 766 },
+        { "LMD", mach_format::SS_e, { reg_4_U, reg_4_U, db_12_4_U, db_12_4_U }, 767 },
+        { "LMH", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 767 },
+        { "LNR", mach_format::RR, { reg_4_U, reg_4_U }, 767 },
+        { "LNGR", mach_format::RRE, { reg_4_U, reg_4_U }, 767 },
+        { "LNGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 768 },
+        { "LOCFHR", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 768 },
+        { "LOCFH", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 768 },
+        { "LOCR", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 768 },
+        { "LOCGR", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 768 },
+        { "LOC", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 768 },
+        { "LOCG", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 768 },
+        { "LPD", mach_format::SSF, { reg_4_U, db_12_4_U, db_12_4_U }, 769 },
+        { "LPDG", mach_format::SSF, { reg_4_U, db_12_4_U, db_12_4_U }, 769 },
+        { "LPQ", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 770 },
+        { "LPR", mach_format::RR, { reg_4_U, reg_4_U }, 771 },
+        { "LPGR", mach_format::RRE, { reg_4_U, reg_4_U }, 771 },
+        { "LPGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 771 },
+        { "LRVR", mach_format::RRE, { reg_4_U, reg_4_U }, 771 },
+        { "LRVGR", mach_format::RRE, { reg_4_U, reg_4_U }, 771 },
+        { "LRVH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 771 },
+        { "LRV", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 771 },
+        { "LRVG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 771 },
+        { "MC", mach_format::SI, { db_12_4_U, imm_8_S }, 772 },
+        { "MVC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 773 },
+        { "MVCRL", mach_format::SSE, { db_12_4_U, db_12_4_U }, 788 },
+        { "MVHHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773 },
+        { "MVHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773 },
+        { "MVGHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773 },
+        { "MVI", mach_format::SI, { db_12_4_U, imm_8_U }, 773 },
+        { "MVIY", mach_format::SIY, { db_12_4_U, imm_8_U }, 773 },
+        { "MVCIN", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 774 },
+        { "MVCL", mach_format::RR, { reg_4_U, reg_4_U }, 774 },
+        { "MVCLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 778 },
+        { "MVCLU", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 781 },
+        { "MVN", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 785 },
+        { "MVST", mach_format::RRE, { reg_4_U, reg_4_U }, 785 },
+        { "MVO", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 786 },
+        { "MVZ", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 787 },
+        { "MR", mach_format::RR, { reg_4_U, reg_4_U }, 788 },
+        { "MGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 788 },
+        { "M", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 788 },
+        { "MFY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 788 },
+        { "MG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 788 },
+        { "MH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 789 },
+        { "MHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 789 },
+        { "MGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 789 },
+        { "MHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 789 },
+        { "MGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 789 },
+        { "MLR", mach_format::RRE, { reg_4_U, reg_4_U }, 790 },
+        { "MLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 790 },
+        { "ML", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 790 },
+        { "MLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 790 },
+        { "MSR", mach_format::RRE, { reg_4_U, reg_4_U }, 791 },
+        { "MSRKC", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 791 },
+        { "MSGR", mach_format::RRE, { reg_4_U, reg_4_U }, 791 },
+        { "MSGRKC", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 791 },
+        { "MSGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 791 },
+        { "MS", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 791 },
+        { "MSC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791 },
+        { "MSY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791 },
+        { "MSG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791 },
+        { "MSGC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791 },
+        { "MSGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791 },
+        { "MSFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 791 },
+        { "MSGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 791 },
+        { "NIAI", mach_format::IE, { imm_4_U, imm_4_U }, 792 },
+        { "NTSTG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 794 },
+        { "NCGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 522 },
+        { "NCRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 522 },
+        { "NNRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 796 },
+        { "NNGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 796 },
+        { "NOGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799 },
+        { "NORK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799 },
+        { "NXRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799 },
+        { "NXGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799 },
+        { "OR", mach_format::RR, { reg_4_U, reg_4_U }, 794 },
+        { "OGR", mach_format::RRE, { reg_4_U, reg_4_U }, 794 },
+        { "ORK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 794 },
+        { "OCGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 802 },
+        { "OCRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 802 },
+        { "OGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 794 },
+        { "O", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 794 },
+        { "OY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 794 },
+        { "OG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 795 },
+        { "OI", mach_format::SI, { db_12_4_U, imm_8_U }, 795 },
+        { "OIY", mach_format::SIY, { db_20_4_S, imm_8_U }, 795 },
+        { "OC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 795 },
+        { "OIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 796 },
+        { "OIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 796 },
+        { "OIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 796 },
+        { "OILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 796 },
+        { "OILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 796 },
+        { "OILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 796 },
+        { "PACK", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 796 },
+        { "PKA", mach_format::SS_f, { db_12_4_U, db_12_8x4L_U }, 797 },
+        { "PKU", mach_format::SS_f, { db_12_4_U, db_12_8x4L_U }, 798 },
+        { "PCC", mach_format::RRE, {}, 799 },
+        { "PLO", mach_format::SS_e, { reg_4_U, db_12_4_U, reg_4_U, db_12_4_U }, 815 },
+        { "PPA", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 829 },
+        { "PRNO", mach_format::RRE, { reg_4_U, reg_4_U }, 830 },
+        { "PPNO", mach_format::RRE, { reg_4_U, reg_4_U }, 830 },
+        { "POPCNT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 853 },
+        { "PFD", mach_format::RXY_b, { mask_4_U, dxb_20_4x4_S }, 843 },
+        { "PFDRL", mach_format::RIL_c, { mask_4_U, rel_addr_imm_32_S }, 843 },
+        { "RLL", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 845 },
+        { "RLLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 845 },
+        { "RNSBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 845 },
+        { "RXSBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 846 },
+        { "ROSBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 846 },
+        { "RISBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 847 },
+        { "RISBGN", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 847 },
+        { "RISBHG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 848 },
+        { "RISBLG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 849 },
+        { "RNSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 845 },
+        { "RXSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 846 },
+        { "ROSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 858 },
+        { "RISBGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 858 },
+        { "RISBGNZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 860 },
+        { "RISBHGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 860 },
+        { "RISBLGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 860 },
+        { "SRST", mach_format::RRE, { reg_4_U, reg_4_U }, 850 },
+        { "SRSTU", mach_format::RRE, { reg_4_U, reg_4_U }, 852 },
+        { "SAR", mach_format::RRE, { reg_4_U, reg_4_U }, 854 },
+        { "SAM24", mach_format::E, {}, 854 },
+        { "SAM31", mach_format::E, {}, 854 },
+        { "SAM64", mach_format::E, {}, 854 },
+        { "SPM", mach_format::RR, { reg_4_U }, 855 },
+        { "SLDA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 855 },
+        { "SLA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 856 },
+        { "SLAK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 856 },
+        { "SLAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 856 },
+        { "SLDL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 856 },
+        { "SLL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 857 },
+        { "SLLK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 857 },
+        { "SLLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 857 },
+        { "SRDA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 858 },
+        { "SRDL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 858 },
+        { "SRA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 859 },
+        { "SRAK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 859 },
+        { "SRAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 859 },
+        { "SRL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 860 },
+        { "SRLK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 860 },
+        { "SRLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 860 },
+        { "ST", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 860 },
+        { "STY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 861 },
+        { "STG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 861 },
+        { "STRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 861 },
+        { "STGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 861 },
+        { "STAM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 861 },
+        { "STAMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 861 },
+        { "STC", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 862 },
+        { "STCY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 862 },
+        { "STCH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 862 },
+        { "STCM", mach_format::RS_b, { reg_4_U, mask_4_U, db_12_4_U }, 862 },
+        { "STCMY", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 862 },
+        { "STCMH", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 862 },
+        { "STCK", mach_format::S, { db_12_4_U }, 863 },
+        { "STCKF", mach_format::S, { db_12_4_U }, 863 },
+        { "STCKE", mach_format::S, { db_12_4_U }, 864 },
+        { "STFLE", mach_format::S, { db_20_4_S }, 866 },
+        { "STGSC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 867 },
+        { "STH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 867 },
+        { "STHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 868 },
+        { "STHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 868 },
+        { "STHH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 868 },
+        { "STFH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 868 },
+        { "STM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 869 },
+        { "STMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 869 },
+        { "STMG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 869 },
+        { "STMH", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 869 },
+        { "STOC", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 869 },
+        { "STOCG", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 869 },
+        { "STOCFH", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 870 },
+        { "STPQ", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 870 },
+        { "STRVH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871 },
+        { "STRV", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871 },
+        { "STRVG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871 },
+        { "SR", mach_format::RR, { reg_4_U, reg_4_U }, 871 },
+        { "SGR", mach_format::RRE, { reg_4_U, reg_4_U }, 871 },
+        { "SGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 871 },
+        { "SRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 871 },
+        { "SGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 872 },
+        { "S", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 872 },
+        { "SY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872 },
+        { "SG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872 },
+        { "SGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872 },
+        { "SH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 872 },
+        { "SHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872 },
+        { "SGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872 },
+        { "SHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873 },
+        { "SHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873 },
+        { "SLR", mach_format::RR, { reg_4_U, reg_4_U }, 873 },
+        { "SLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 873 },
+        { "SLGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 873 },
+        { "SLRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873 },
+        { "SLGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873 },
+        { "SL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 874 },
+        { "SLY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 874 },
+        { "SLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 874 },
+        { "SLGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 874 },
+        { "SLFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 874 },
+        { "SLGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 874 },
+        { "SLHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 875 },
+        { "SLHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 875 },
+        { "SLBR", mach_format::RRE, { reg_4_U, reg_4_U }, 875 },
+        { "SLBGR", mach_format::RRE, { reg_4_U, reg_4_U }, 875 },
+        { "SLB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 875 },
+        { "SLBG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 875 },
+        { "SVC", mach_format::I, { imm_8_U }, 876 },
+        { "TS", mach_format::SI, { db_12_4_U }, 876 },
+        { "TAM", mach_format::E, {}, 876 },
+        { "TM", mach_format::SI, { db_12_4_U, imm_8_U }, 877 },
+        { "TMY", mach_format::SIY, { db_20_4_S, imm_8_U }, 877 },
+        { "TMHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 877 },
+        { "TMHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 877 },
+        { "TMH", mach_format::RI_a, { reg_4_U, imm_16_U }, 877 },
+        { "TMLH", mach_format::RI_a, { reg_4_U, imm_16_U }, 877 },
+        { "TML", mach_format::RI_a, { reg_4_U, imm_16_U }, 877 },
+        { "TMLL", mach_format::RI_a, { reg_4_U, imm_16_U }, 877 },
+        { "TABORT", mach_format::S, { db_12_4_U }, 878 },
+        { "TBEGIN", mach_format::SIL, { db_12_4_U, imm_16_S }, 879 },
+        { "TBEGINC", mach_format::SIL, { db_12_4_U, imm_16_S }, 883 },
+        { "TEND", mach_format::S, {}, 885 },
+        { "TR", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 886 },
+        { "TRT", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 887 },
+        { "TRTE", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 887 },
+        { "TRTRE", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 888 },
+        { "TRTR", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 892 },
+        { "TRE", mach_format::RRE, { reg_4_U, reg_4_U }, 893 },
+        { "TROO", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 895 },
+        { "TROT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 895 },
+        { "TRTO", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 895 },
+        { "TRTT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 895 },
+        { "UNPK", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 900 },
+        { "UNPKA", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 901 },
+        { "UNPKU", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 902 },
+        { "UPT", mach_format::E, {}, 903 },
+        { "AP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 920 },
+        { "CP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 921 },
+        { "DP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 921 },
+        { "DFLTCC", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1714 },
+        { "ED", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 922 },
+        { "EDMK", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 925 },
+        { "SRP", mach_format::SS_c, { db_12_4x4L_U, db_12_4_U, imm_4_U }, 926 },
+        { "MP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 926 },
+        { "SP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 927 },
+        { "TP", mach_format::RSL_a, { db_12_4x4L_U }, 928 },
+        { "ZAP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 928 },
+        { "THDR", mach_format::RRE, { reg_4_U, reg_4_U }, 955 },
+        { "THDER", mach_format::RRE, { reg_4_U, reg_4_U }, 955 },
+        { "TBEDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 956 },
+        { "TBDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 956 },
+        { "CPSDR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 958 },
+        { "EFPC", mach_format::RRE, { reg_4_U }, 958 },
+        { "LER", mach_format::RR, { reg_4_U, reg_4_U }, 959 },
+        { "LDR", mach_format::RR, { reg_4_U, reg_4_U }, 959 },
+        { "LXR", mach_format::RRE, { reg_4_U, reg_4_U }, 959 },
+        { "LE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 959 },
+        { "LD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 959 },
+        { "LEY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 959 },
+        { "LDY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 959 },
+        { "LCDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 959 },
+        { "LFPC", mach_format::S, { db_12_4_U }, 959 },
+        { "LFAS", mach_format::S, { db_12_4_U }, 960 },
+        { "LDGR", mach_format::RRE, { reg_4_U, reg_4_U }, 962 },
+        { "LGDR", mach_format::RRE, { reg_4_U, reg_4_U }, 962 },
+        { "LNDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 962 },
+        { "LPDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 962 },
+        { "LZER", mach_format::RRE, { reg_4_U }, 963 },
+        { "LZXR", mach_format::RRE, { reg_4_U }, 963 },
+        { "LZDR", mach_format::RRE, { reg_4_U }, 963 },
+        { "PFPO", mach_format::E, {}, 963 },
+        { "SRNM", mach_format::S, { db_12_4_U }, 975 },
+        { "SRNMB", mach_format::S, { db_12_4_U }, 975 },
+        { "SRNMT", mach_format::S, { db_12_4_U }, 975 },
+        { "SFPC", mach_format::RRE, { reg_4_U }, 975 },
+        { "SFASR", mach_format::RRE, { reg_4_U }, 976 },
+        { "STE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 976 },
+        { "STD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 976 },
+        { "STDY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 977 },
+        { "STEY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 977 },
+        { "STFPC", mach_format::S, { db_12_4_U }, 977 },
+        { "BSA", mach_format::RRE, { reg_4_U, reg_4_U }, 989 },
+        { "BAKR", mach_format::RRE, { reg_4_U, reg_4_U }, 993 },
+        { "BSG", mach_format::RRE, { reg_4_U, reg_4_U }, 995 },
+        { "CRDTE", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U_opt }, 999 },
+        { "CSP", mach_format::RRE, { reg_4_U, reg_4_U }, 1003 },
+        { "CSPG", mach_format::RRE, { reg_4_U, reg_4_U }, 1003 },
+        { "ESEA", mach_format::RRE, { reg_4_U }, 1006 },
+        { "EPAR", mach_format::RRE, { reg_4_U }, 1006 },
+        { "EPAIR", mach_format::RRE, { reg_4_U }, 1006 },
+        { "ESAR", mach_format::RRE, { reg_4_U }, 1006 },
+        { "ESAIR", mach_format::RRE, { reg_4_U }, 1007 },
+        { "EREG", mach_format::RRE, { reg_4_U, reg_4_U }, 1007 },
+        { "EREGG", mach_format::RRE, { reg_4_U, reg_4_U }, 1007 },
+        { "ESTA", mach_format::RRE, { reg_4_U, reg_4_U }, 1008 },
+        { "IAC", mach_format::RRE, { reg_4_U }, 1011 },
+        { "IPK", mach_format::S, {}, 1012 },
+        { "IRBM", mach_format::RRE, { reg_4_U, reg_4_U }, 1012 },
+        { "ISK", mach_format::RR, { reg_4_U, reg_4_U }, 268 },
+        { "ISKE", mach_format::RRE, { reg_4_U, reg_4_U }, 1012 },
+        { "IVSK", mach_format::RRE, { reg_4_U, reg_4_U }, 1013 },
+        { "IDTE", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U_opt }, 1014 },
+        { "IPTE", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U_opt, mask_4_U_opt }, 1019 },
+        { "LASP", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1023 },
+        { "LCTL", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1032 },
+        { "LCTLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 1032 },
+        { "LPTEA", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1032 },
+        { "LPSW", mach_format::SI, { db_12_4_U }, 1036 },
+        { "LPSWE", mach_format::S, { db_12_4_U }, 1037 },
+        { "LRA", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1038 },
+        { "LRAY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 1038 },
+        { "LRAG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 1038 },
+        { "LURA", mach_format::RRE, { reg_4_U, reg_4_U }, 1042 },
+        { "LURAG", mach_format::RRE, { reg_4_U, reg_4_U }, 1042 },
+        { "MSTA", mach_format::RRE, { reg_4_U }, 1043 },
+        { "MVPG", mach_format::RRE, { reg_4_U, reg_4_U }, 1044 },
+        { "MVCP", mach_format::SS_d, { drb_12_4x4_U, db_12_4_U, reg_4_U }, 1046 },
+        { "MVCS", mach_format::SS_d, { drb_12_4x4_U, db_12_4_U, reg_4_U }, 1046 },
+        { "MVCDK", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1048 },
+        { "MVCK", mach_format::SS_d, { drb_12_4x4_U, db_12_4_U, reg_4_U }, 1049 },
+        { "MVCOS", mach_format::SSF, { db_12_4_U, db_12_4_U, reg_4_U }, 1050 },
+        { "MVCSK", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1053 },
+        { "PGIN", mach_format::RRE, { reg_4_U, reg_4_U }, 1054 },
+        { "PGOUT", mach_format::RRE, { reg_4_U, reg_4_U }, 1055 },
+        { "PCKMO", mach_format::RRE, {}, 1056 },
+        { "PFMF", mach_format::RRE, { reg_4_U, reg_4_U }, 1059 },
+        { "PTFF", mach_format::E, {}, 1063 },
+        { "PTF", mach_format::RRE, { reg_4_U }, 1071 },
+        { "PC", mach_format::S, { db_12_4_U }, 1072 },
+        { "PR", mach_format::E, {}, 1085 },
+        { "PTI", mach_format::RRE, { reg_4_U, reg_4_U }, 1089 },
+        { "PT", mach_format::RRE, { reg_4_U, reg_4_U }, 1089 },
+        { "PALB", mach_format::RRE, {}, 1098 },
+        { "PTLB", mach_format::S, {}, 1098 },
+        { "RRBE", mach_format::RRE, { reg_4_U, reg_4_U }, 1098 },
+        { "RRBM", mach_format::RRE, { reg_4_U, reg_4_U }, 1099 },
+        { "RP", mach_format::S, { db_12_4_U }, 1099 },
+        { "SAC", mach_format::S, { db_12_4_U }, 1102 },
+        { "SACF", mach_format::S, { db_12_4_U }, 1102 },
+        { "SCK", mach_format::S, { db_12_4_U }, 1103 },
+        { "SCKC", mach_format::S, { db_12_4_U }, 1104 },
+        { "SCKPF", mach_format::E, {}, 1105 },
+        { "SPX", mach_format::S, { db_12_4_U }, 1105 },
+        { "SPT", mach_format::S, { db_12_4_U }, 1105 },
+        { "SPKA", mach_format::S, { db_12_4_U }, 1106 },
+        { "SSAR", mach_format::RRE, { reg_4_U }, 1107 },
+        { "SSAIR", mach_format::RRE, { reg_4_U }, 1107 },
+        { "SSK", mach_format::RR, { reg_4_U, reg_4_U }, 304 },
+        { "SSKE", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 1112 },
+        { "SSM", mach_format::SI, { db_12_4_U }, 1115 },
+        { "SIGP", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1115 },
+        { "STCKC", mach_format::S, { db_12_4_U }, 1117 },
+        { "STCTL", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1117 },
+        { "STCTG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 1117 },
+        { "STAP", mach_format::S, { db_12_4_U }, 1118 },
+        { "STIDP", mach_format::S, { db_12_4_U }, 1118 },
+        { "STPT", mach_format::S, { db_12_4_U }, 1120 },
+        { "STFL", mach_format::S, { db_12_4_U }, 1120 },
+        { "STPX", mach_format::S, { db_12_4_U }, 1121 },
+        { "STRAG", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1121 },
+        { "STSI", mach_format::S, { db_12_4_U }, 1122 },
+        { "STOSM", mach_format::SI, { db_12_4_U, imm_8_U }, 1146 },
+        { "STNSM", mach_format::SI, { db_12_4_U, imm_8_U }, 1146 },
+        { "STURA", mach_format::RRE, { reg_4_U, reg_4_U }, 1147 },
+        { "STURG", mach_format::RRE, { reg_4_U, reg_4_U }, 1147 },
+        { "TAR", mach_format::RRE, { reg_4_U, reg_4_U }, 1147 },
+        { "TB", mach_format::RRE, { reg_4_U, reg_4_U }, 1149 },
+        { "TPEI", mach_format::RRE, { reg_4_U, reg_4_U }, 1151 },
+        { "TPROT", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1152 },
+        { "TRACE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1155 },
+        { "TRACG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 1155 },
+        { "TRAP2", mach_format::E, {}, 1156 },
+        { "TRAP4", mach_format::S, { db_12_4_U }, 1156 },
+        { "XSCH", mach_format::S, {}, 1215 },
+        { "CSCH", mach_format::S, {}, 1217 },
+        { "HSCH", mach_format::S, {}, 1218 },
+        { "MSCH", mach_format::S, { db_12_4_U }, 1219 },
+        { "RCHP", mach_format::S, {}, 1221 },
+        { "RSCH", mach_format::S, {}, 1222 },
+        { "SAL", mach_format::S, {}, 1224 },
+        { "SCHM", mach_format::S, {}, 1225 },
+        { "SSCH", mach_format::S, { db_12_4_U }, 1227 },
+        { "STCPS", mach_format::S, { db_12_4_U }, 1228 },
+        { "STCRW", mach_format::S, { db_12_4_U }, 1229 },
+        { "STSCH", mach_format::S, { db_12_4_U }, 1230 },
+        { "TPI", mach_format::S, { db_12_4_U }, 1231 },
+        { "TSCH", mach_format::S, { db_12_4_U }, 1232 },
 
-    add_machine_instr("AR", mach_format::RR, { reg_4_U, reg_4_U }, 510);
-    add_machine_instr("ADDFRR", mach_format::RRE, { reg_4_U, reg_4_U }, 7);
-    add_machine_instr("AGR", mach_format::RRE, { reg_4_U, reg_4_U }, 510);
-    add_machine_instr("AGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 510);
-    add_machine_instr("ARK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 510);
-    add_machine_instr("AGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 510);
-    add_machine_instr("A", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 510);
-    add_machine_instr("AY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 511);
-    add_machine_instr("AG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 511);
-    add_machine_instr("AGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 511);
-    add_machine_instr("AFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 511);
-    add_machine_instr("AGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 511);
-    add_machine_instr("AHIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 511);
-    add_machine_instr("AGHIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 511);
-    add_machine_instr("ASI", mach_format::SIY, { db_20_4_S, imm_8_S }, 511);
-    add_machine_instr("AGSI", mach_format::SIY, { db_20_4_S, imm_8_S }, 511);
-    add_machine_instr("AH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 512);
-    add_machine_instr("AHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 512);
-    add_machine_instr("AGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 512);
-    add_machine_instr("AHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 512);
-    add_machine_instr("AGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 513);
-    add_machine_instr("AHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 513);
-    add_machine_instr("AHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 513);
-    add_machine_instr("AIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 513);
-    add_machine_instr("ALR", mach_format::RR, { reg_4_U, reg_4_U }, 514);
-    add_machine_instr("ALGR", mach_format::RRE, { reg_4_U, reg_4_U }, 514);
-    add_machine_instr("ALGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 514);
-    add_machine_instr("ALRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 514);
-    add_machine_instr("ALGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 514);
-    add_machine_instr("AL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 514);
-    add_machine_instr("ALY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 514);
-    add_machine_instr("ALG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 514);
-    add_machine_instr("ALGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 514);
-    add_machine_instr("ALFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 514);
-    add_machine_instr("ALGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 514);
-    add_machine_instr("ALHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 515);
-    add_machine_instr("ALHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 515);
-    add_machine_instr("ALCR", mach_format::RRE, { reg_4_U, reg_4_U }, 515);
-    add_machine_instr("ALCGR", mach_format::RRE, { reg_4_U, reg_4_U }, 515);
-    add_machine_instr("ALC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 515);
-    add_machine_instr("ALCG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 515);
-    add_machine_instr("ALSI", mach_format::SIY, { db_20_4_S, imm_8_S }, 516);
-    add_machine_instr("ALGSI", mach_format::SIY, { db_20_4_S, imm_8_S }, 516);
-    add_machine_instr("ALHSIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 516);
-    add_machine_instr("ALGHSIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 516);
-    add_machine_instr("ALSIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 517);
-    add_machine_instr("ALSIHN", mach_format::RIL_a, { reg_4_U, imm_32_S }, 517);
-    add_machine_instr("NR", mach_format::RR, { reg_4_U, reg_4_U }, 517);
-    add_machine_instr("NGR", mach_format::RRE, { reg_4_U, reg_4_U }, 517);
-    add_machine_instr("NRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 517);
-    add_machine_instr("NGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 517);
-    add_machine_instr("N", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 517);
-    add_machine_instr("NY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 517);
-    add_machine_instr("NG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 517);
-    add_machine_instr("NI", mach_format::SI, { db_12_4_U, imm_8_U }, 517);
-    add_machine_instr("NIY", mach_format::SIY, { db_20_4_S, imm_8_U }, 518);
-    add_machine_instr("NC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 518);
-    add_machine_instr("NIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 518);
-    add_machine_instr("NIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 518);
-    add_machine_instr("NIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 518);
-    add_machine_instr("NILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 519);
-    add_machine_instr("NILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 519);
-    add_machine_instr("NILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 519);
-    add_machine_instr("BALR", mach_format::RR, { reg_4_U, reg_4_U }, 519);
-    add_machine_instr("BAL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 519);
-    add_machine_instr("BASR", mach_format::RR, { reg_4_U, reg_4_U }, 520);
-    add_machine_instr("BAS", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 520);
-    add_machine_instr("BASSM", mach_format::RX_a, { reg_4_U, reg_4_U }, 520);
-    add_machine_instr("BSM", mach_format::RR, { reg_4_U, reg_4_U }, 522);
-    add_machine_instr("BIC", mach_format::RXY_b, { mask_4_U, dxb_20_4x4_S }, 523);
-    add_machine_instr("BCR", mach_format::RR, { mask_4_U, reg_4_U }, 524);
-    add_machine_instr("BC", mach_format::RX_b, { mask_4_U, dxb_12_4x4_U }, 524);
-    add_machine_instr("BCTR", mach_format::RR, { reg_4_U, reg_4_U }, 525);
-    add_machine_instr("BCTGR", mach_format::RRE, { reg_4_U, reg_4_U }, 525);
-    add_machine_instr("BCT", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 525);
-    add_machine_instr("BCTG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 525);
-    add_machine_instr("BXH", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 526);
-    add_machine_instr("BXHG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 526);
-    add_machine_instr("BXLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 526);
-    add_machine_instr("BXLEG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 526);
-    add_machine_instr("BPP", mach_format::SMI, { mask_4_U, rel_addr_imm_16_S, db_12_4_U }, 527);
-    add_machine_instr("BPRP", mach_format::MII, { mask_4_U, rel_addr_imm_12_S, rel_addr_imm_24_S }, 527);
-    add_machine_instr("BRAS", mach_format::RI_b, { reg_4_U, rel_addr_imm_16_S }, 530);
-    add_machine_instr("BRASL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 530);
-    add_machine_instr("BRC", mach_format::RI_c, { mask_4_U, rel_addr_imm_16_S }, 530);
-    add_machine_instr("BRCL", mach_format::RIL_c, { mask_4_U, rel_addr_imm_32_S }, 530);
-    add_machine_instr("BRCT", mach_format::RI_b, { reg_4_U, rel_addr_imm_16_S }, 531);
-    add_machine_instr("BRCTG", mach_format::RI_b, { reg_4_U, rel_addr_imm_16_S }, 531);
-    add_machine_instr("BRCTH", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 531);
-    add_machine_instr("BRXH", mach_format::RSI, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532);
-    add_machine_instr("BRXHG", mach_format::RIE_e, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532);
-    add_machine_instr("BRXLE", mach_format::RSI, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532);
-    add_machine_instr("BRXLG", mach_format::RIE_e, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532);
-    add_machine_instr("CKSM", mach_format::RRE, { reg_4_U, reg_4_U }, 533);
-    add_machine_instr("KM", mach_format::RRE, { reg_4_U, reg_4_U }, 537);
-    add_machine_instr("KMC", mach_format::RRE, { reg_4_U, reg_4_U }, 537);
-    add_machine_instr("KMA", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 562);
-    add_machine_instr("KMF", mach_format::RRE, { reg_4_U, reg_4_U }, 576);
-    add_machine_instr("KMCTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 591);
-    add_machine_instr("KMO", mach_format::RRE, { reg_4_U, reg_4_U }, 604);
-    add_machine_instr("CR", mach_format::RR, { reg_4_U, reg_4_U }, 618);
-    add_machine_instr("CGR", mach_format::RRE, { reg_4_U, reg_4_U }, 618);
-    add_machine_instr("CGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 618);
-    add_machine_instr("C", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 618);
-    add_machine_instr("CY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 618);
-    add_machine_instr("CG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 618);
-    add_machine_instr("CGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 618);
-    add_machine_instr("CFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 618);
-    add_machine_instr("CGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 619);
-    add_machine_instr("CRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 619);
-    add_machine_instr("CGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 619);
-    add_machine_instr("CGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 619);
-    add_machine_instr("CRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 619);
-    add_machine_instr("CGRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 619);
-    add_machine_instr("CRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 619);
-    add_machine_instr("CGRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 620);
-    add_machine_instr("CIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 620);
-    add_machine_instr("CGIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 620);
-    add_machine_instr("CIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 620);
-    add_machine_instr("CGIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 620);
-    add_machine_instr("CFC", mach_format::S, { db_12_4_U }, 621);
-    add_machine_instr("CS", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 628);
-    add_machine_instr("CSY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628);
-    add_machine_instr("CSG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628);
-    add_machine_instr("CDS", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 628);
-    add_machine_instr("CDSY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628);
-    add_machine_instr("CDSG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628);
-    add_machine_instr("CSST", mach_format::SSF, { db_12_4_U, db_12_4_U, reg_4_U }, 630);
-    add_machine_instr("CRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 633);
-    add_machine_instr("CGRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 633);
-    add_machine_instr("CIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 633);
-    add_machine_instr("CGIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 633);
-    add_machine_instr("CH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 634);
-    add_machine_instr("CHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 634);
-    add_machine_instr("CGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 634);
-    add_machine_instr("CHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 634);
-    add_machine_instr("CGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 634);
-    add_machine_instr("CHHSI", mach_format::SIL, { db_12_4_U, imm_16_S }, 634);
-    add_machine_instr("CHSI", mach_format::SIL, { db_12_4_U, imm_16_S }, 634);
-    add_machine_instr("CGHSI", mach_format::SIL, { db_12_4_U, imm_16_S }, 634);
-    add_machine_instr("CHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 634);
-    add_machine_instr("CGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 634);
-    add_machine_instr("CHHR", mach_format::RRE, { reg_4_U, reg_4_U }, 635);
-    add_machine_instr("CHLR", mach_format::RRE, { reg_4_U, reg_4_U }, 635);
-    add_machine_instr("CHF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 635);
-    add_machine_instr("CIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 635);
-    add_machine_instr("CLR", mach_format::RR, { reg_4_U, reg_4_U }, 636);
-    add_machine_instr("CLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 636);
-    add_machine_instr("CLGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 636);
-    add_machine_instr("CL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 636);
-    add_machine_instr("CLY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636);
-    add_machine_instr("CLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636);
-    add_machine_instr("CLGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636);
-    add_machine_instr("CLC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 636);
-    add_machine_instr("CLFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 636);
-    add_machine_instr("CLGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 636);
-    add_machine_instr("CLI", mach_format::SI, { db_12_4_U, imm_8_U }, 636);
-    add_machine_instr("CLIY", mach_format::SIY, { db_12_4_U, imm_8_U }, 636);
-    add_machine_instr("CLFHSI", mach_format::SIL, { db_12_4_U, imm_16_U }, 636);
-    add_machine_instr("CLGHSI", mach_format::SIL, { db_12_4_U, imm_16_U }, 636);
-    add_machine_instr("CLHHSI", mach_format::SIL, { db_12_4_U, imm_16_U }, 636);
-    add_machine_instr("CLRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637);
-    add_machine_instr("CLGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637);
-    add_machine_instr("CLGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637);
-    add_machine_instr("CLHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637);
-    add_machine_instr("CLGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637);
-    add_machine_instr("CLRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 638);
-    add_machine_instr("CLGRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 638);
-    add_machine_instr("CLRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 638);
-    add_machine_instr("CLGRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 638);
-    add_machine_instr("CLIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 638);
-    add_machine_instr("CLGIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 638);
-    add_machine_instr("CLIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 638);
-    add_machine_instr("CLGIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 638);
-    add_machine_instr("CLRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 639);
-    add_machine_instr("CLGRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 639);
-    add_machine_instr("CLT", mach_format::RSY_b, { reg_4_U, mask_4_U, dxb_20_4x4_S }, 639);
-    add_machine_instr("CLGT", mach_format::RSY_b, { reg_4_U, mask_4_U, dxb_20_4x4_S }, 639);
-    add_machine_instr("CLFIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 640);
-    add_machine_instr("CLGIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 640);
-    add_machine_instr("CLM", mach_format::RS_b, { reg_4_U, mask_4_U, db_12_4_U }, 641);
-    add_machine_instr("CLMY", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 641);
-    add_machine_instr("CLMH", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 641);
-    add_machine_instr("CLHHR", mach_format::RRE, { reg_4_U, reg_4_U }, 641);
-    add_machine_instr("CLHLR", mach_format::RRE, { reg_4_U, reg_4_U }, 641);
-    add_machine_instr("CLHF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 641);
-    add_machine_instr("CLCL", mach_format::RR, { reg_4_U, reg_4_U }, 642);
-    add_machine_instr("CLIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 642);
-    add_machine_instr("CLCLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 644);
-    add_machine_instr("CLCLU", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 647);
-    add_machine_instr("CLST", mach_format::RRE, { reg_4_U, reg_4_U }, 650);
-    add_machine_instr("CUSE", mach_format::RRE, { reg_4_U, reg_4_U }, 651);
-    add_machine_instr("CMPSC", mach_format::RRE, { reg_4_U, reg_4_U }, 654);
-    add_machine_instr("KIMD", mach_format::RRE, { reg_4_U, reg_4_U }, 672);
-    add_machine_instr("KLMD", mach_format::RRE, { reg_4_U, reg_4_U }, 685);
-    add_machine_instr("KMAC", mach_format::RRE, { reg_4_U, reg_4_U }, 703);
-    add_machine_instr("CVB", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 714);
-    add_machine_instr("CVBY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 714);
-    add_machine_instr("CVBG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 714);
-    add_machine_instr("CVD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 715);
-    add_machine_instr("CVDY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 715);
-    add_machine_instr("CVDG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 715);
-    add_machine_instr("CU24", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 715);
-    add_machine_instr("CUUTF", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 718);
-    add_machine_instr("CU21", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 718);
-    add_machine_instr("CU42", mach_format::RRE, { reg_4_U, reg_4_U }, 722);
-    add_machine_instr("CU41", mach_format::RRE, { reg_4_U, reg_4_U }, 725);
-    add_machine_instr("CUTFU", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 728);
-    add_machine_instr("CU12", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 728);
-    add_machine_instr("CU14", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 732);
-    add_machine_instr("CPYA", mach_format::RRE, { reg_4_U, reg_4_U }, 736);
-    add_machine_instr("DR", mach_format::RR, { reg_4_U, reg_4_U }, 736);
-    add_machine_instr("D", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 736);
-    add_machine_instr("DLR", mach_format::RRE, { reg_4_U, reg_4_U }, 737);
-    add_machine_instr("DLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 737);
-    add_machine_instr("DL", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 737);
-    add_machine_instr("DLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 737);
-    add_machine_instr("DSGR", mach_format::RRE, { reg_4_U, reg_4_U }, 738);
-    add_machine_instr("DSGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 738);
-    add_machine_instr("DSG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
-    add_machine_instr("DSGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
-    add_machine_instr("HIO", mach_format::S, { db_12_4_U }, 129);
-    add_machine_instr("HDV", mach_format::S, { db_12_4_U }, 129);
-    add_machine_instr("SIO", mach_format::S, { db_12_4_U }, 129);
-    add_machine_instr("SIOF", mach_format::S, { db_12_4_U }, 129);
-    add_machine_instr("STIDC", mach_format::S, { db_12_4_U }, 129);
-    add_machine_instr("CLRCH", mach_format::S, { db_12_4_U }, 367);
-    add_machine_instr("CLRIO", mach_format::S, { db_12_4_U }, 368);
-    add_machine_instr("TCH", mach_format::S, { db_12_4_U }, 384);
-    add_machine_instr("TIO", mach_format::S, { db_12_4_U }, 385);
-    add_machine_instr("RRB", mach_format::S, { db_12_4_U }, 295);
-    add_machine_instr("CONCS", mach_format::S, { db_12_4_U }, 263);
-    add_machine_instr("DISCS", mach_format::S, { db_12_4_U }, 265);
-    add_machine_instr("XR", mach_format::RR, { reg_4_U, reg_4_U }, 738);
-    add_machine_instr("XGR", mach_format::RRE, { reg_4_U, reg_4_U }, 738);
-    add_machine_instr("XRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 738);
-    add_machine_instr("XGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 738);
-    add_machine_instr("X", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 738);
-    add_machine_instr("XY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
-    add_machine_instr("XG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
-    add_machine_instr("XI", mach_format::SI, { db_12_4_U, imm_8_U }, 739);
-    add_machine_instr("XIY", mach_format::SIY, { db_20_4_S, imm_8_U }, 739);
-    add_machine_instr("XC", mach_format::SS_a, { db_12_8x4L_U, db_20_4_S }, 739);
-    add_machine_instr("EX", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 740);
-    add_machine_instr("XIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 740);
-    add_machine_instr("XILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 740);
-    add_machine_instr("EXRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 740);
-    add_machine_instr("EAR", mach_format::RRE, { reg_4_U, reg_4_U }, 741);
-    add_machine_instr("ECAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 741);
-    add_machine_instr("ECTG", mach_format::SSF, { db_12_4_U, db_12_4_U, reg_4_U }, 744);
-    add_machine_instr("EPSW", mach_format::RRE, { reg_4_U, reg_4_U }, 745);
-    add_machine_instr("ETND", mach_format::RRE, { reg_4_U }, 745);
-    add_machine_instr("FLOGR", mach_format::RRE, { reg_4_U, reg_4_U }, 746);
-    add_machine_instr("IC", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 746);
-    add_machine_instr("ICY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 746);
-    add_machine_instr("ICM", mach_format::RS_b, { reg_4_U, mask_4_U, db_12_4_U }, 746);
-    add_machine_instr("ICMY", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 746);
-    add_machine_instr("ICMH", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 746);
-    add_machine_instr("IIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 747);
-    add_machine_instr("IIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 747);
-    add_machine_instr("IIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 747);
-    add_machine_instr("IILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 747);
-    add_machine_instr("IILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 747);
-    add_machine_instr("IILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 747);
-    add_machine_instr("IPM", mach_format::RRE, { reg_4_U }, 748);
-    add_machine_instr("LR", mach_format::RR, { reg_4_U, reg_4_U }, 748);
-    add_machine_instr("LGR", mach_format::RRE, { reg_4_U, reg_4_U }, 748);
-    add_machine_instr("LGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 748);
-    add_machine_instr("L", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 748);
-    add_machine_instr("LY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748);
-    add_machine_instr("LG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748);
-    add_machine_instr("LGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748);
-    add_machine_instr("LGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 748);
-    add_machine_instr("LRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 748);
-    add_machine_instr("LGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 748);
-    add_machine_instr("LGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 748);
-    add_machine_instr("LAM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 749);
-    add_machine_instr("LAMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 749);
-    add_machine_instr("LA", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 750);
-    add_machine_instr("LAY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 750);
-    add_machine_instr("LAE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 750);
-    add_machine_instr("LAEY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 750);
-    add_machine_instr("LARL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 751);
-    add_machine_instr("LAA", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752);
-    add_machine_instr("LAAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752);
-    add_machine_instr("LAAL", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752);
-    add_machine_instr("LAALG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752);
-    add_machine_instr("LAN", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753);
-    add_machine_instr("LANG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753);
-    add_machine_instr("LAX", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753);
-    add_machine_instr("LAXG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753);
-    add_machine_instr("LAO", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 754);
-    add_machine_instr("LAOG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 754);
-    add_machine_instr("LTR", mach_format::RR, { reg_4_U, reg_4_U }, 754);
-    add_machine_instr("LTGR", mach_format::RRE, { reg_4_U, reg_4_U }, 754);
-    add_machine_instr("LTGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 754);
-    add_machine_instr("LT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr("LTG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr("LTGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr("LAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr("LGAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr("LZRF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr("LZRG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr("LBR", mach_format::RRE, { reg_4_U, reg_4_U }, 756);
-    add_machine_instr("LGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 756);
-    add_machine_instr("LB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756);
-    add_machine_instr("LGB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756);
-    add_machine_instr("LBH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756);
-    add_machine_instr("LCR", mach_format::RR, { reg_4_U, reg_4_U }, 756);
-    add_machine_instr("LCGR", mach_format::RRE, { reg_4_U, reg_4_U }, 757);
-    add_machine_instr("LCGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 757);
-    add_machine_instr("LCBB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U, mask_4_U }, 757);
-    add_machine_instr("LGG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 758);
-    add_machine_instr("LLGFSG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 758);
-    add_machine_instr("LGSC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 759);
-    add_machine_instr("LHR", mach_format::RRE, { reg_4_U, reg_4_U }, 760);
-    add_machine_instr("LGHR", mach_format::RRE, { reg_4_U, reg_4_U }, 760);
-    add_machine_instr("LH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 760);
-    add_machine_instr("LHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 760);
-    add_machine_instr("LGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 760);
-    add_machine_instr("LHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 760);
-    add_machine_instr("LGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 760);
-    add_machine_instr("LHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 760);
-    add_machine_instr("LGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 760);
-    add_machine_instr("LHH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 761);
-    add_machine_instr("LOCHI", mach_format::RIE_g, { reg_4_U, imm_16_S, mask_4_U }, 761);
-    add_machine_instr("LOCGHI", mach_format::RIE_g, { reg_4_U, imm_16_S, mask_4_U }, 761);
-    add_machine_instr("LOCHHI", mach_format::RIE_g, { reg_4_U, imm_16_S, mask_4_U }, 761);
-    add_machine_instr("LFH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 762);
-    add_machine_instr("LFHAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 762);
-    add_machine_instr("LLGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 762);
-    add_machine_instr("LLGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 762);
-    add_machine_instr("LLGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 762);
-    add_machine_instr("LLGFAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763);
-    add_machine_instr("LLCR", mach_format::RRE, { reg_4_U, reg_4_U }, 763);
-    add_machine_instr("LLGCR", mach_format::RRE, { reg_4_U, reg_4_U }, 763);
-    add_machine_instr("LLC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763);
-    add_machine_instr("LLGC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763);
-    add_machine_instr("LLZRGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763);
-    add_machine_instr("LLCH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 764);
-    add_machine_instr("LLHR", mach_format::RRE, { reg_4_U, reg_4_U }, 764);
-    add_machine_instr("LLGHR", mach_format::RRE, { reg_4_U, reg_4_U }, 764);
-    add_machine_instr("LLH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 764);
-    add_machine_instr("LLGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 764);
-    add_machine_instr("LLHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 764);
-    add_machine_instr("LLGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 764);
-    add_machine_instr("LLHH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 765);
-    add_machine_instr("LLIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 765);
-    add_machine_instr("LLIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
-    add_machine_instr("LLIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
-    add_machine_instr("LLILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 765);
-    add_machine_instr("LLILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
-    add_machine_instr("LLILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
-    add_machine_instr("LLGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 765);
-    add_machine_instr("LLGT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 766);
-    add_machine_instr("LLGTAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 766);
-    add_machine_instr("LM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 766);
-    add_machine_instr("LMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 766);
-    add_machine_instr("LMG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 766);
-    add_machine_instr("LMD", mach_format::SS_e, { reg_4_U, reg_4_U, db_12_4_U, db_12_4_U }, 767);
-    add_machine_instr("LMH", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 767);
-    add_machine_instr("LNR", mach_format::RR, { reg_4_U, reg_4_U }, 767);
-    add_machine_instr("LNGR", mach_format::RRE, { reg_4_U, reg_4_U }, 767);
-    add_machine_instr("LNGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 768);
-    add_machine_instr("LOCFHR", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 768);
-    add_machine_instr("LOCFH", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 768);
-    add_machine_instr("LOCR", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 768);
-    add_machine_instr("LOCGR", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 768);
-    add_machine_instr("LOC", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 768);
-    add_machine_instr("LOCG", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 768);
-    add_machine_instr("LPD", mach_format::SSF, { reg_4_U, db_12_4_U, db_12_4_U }, 769);
-    add_machine_instr("LPDG", mach_format::SSF, { reg_4_U, db_12_4_U, db_12_4_U }, 769);
-    add_machine_instr("LPQ", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 770);
-    add_machine_instr("LPR", mach_format::RR, { reg_4_U, reg_4_U }, 771);
-    add_machine_instr("LPGR", mach_format::RRE, { reg_4_U, reg_4_U }, 771);
-    add_machine_instr("LPGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 771);
-    add_machine_instr("LRVR", mach_format::RRE, { reg_4_U, reg_4_U }, 771);
-    add_machine_instr("LRVGR", mach_format::RRE, { reg_4_U, reg_4_U }, 771);
-    add_machine_instr("LRVH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 771);
-    add_machine_instr("LRV", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 771);
-    add_machine_instr("LRVG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 771);
-    add_machine_instr("MC", mach_format::SI, { db_12_4_U, imm_8_S }, 772);
-    add_machine_instr("MVC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 773);
-    add_machine_instr("MVCRL", mach_format::SSE, { db_12_4_U, db_12_4_U }, 788);
-    add_machine_instr("MVHHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773);
-    add_machine_instr("MVHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773);
-    add_machine_instr("MVGHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773);
-    add_machine_instr("MVI", mach_format::SI, { db_12_4_U, imm_8_U }, 773);
-    add_machine_instr("MVIY", mach_format::SIY, { db_12_4_U, imm_8_U }, 773);
-    add_machine_instr("MVCIN", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 774);
-    add_machine_instr("MVCL", mach_format::RR, { reg_4_U, reg_4_U }, 774);
-    add_machine_instr("MVCLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 778);
-    add_machine_instr("MVCLU", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 781);
-    add_machine_instr("MVN", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 785);
-    add_machine_instr("MVST", mach_format::RRE, { reg_4_U, reg_4_U }, 785);
-    add_machine_instr("MVO", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 786);
-    add_machine_instr("MVZ", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 787);
-    add_machine_instr("MR", mach_format::RR, { reg_4_U, reg_4_U }, 788);
-    add_machine_instr("MGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 788);
-    add_machine_instr("M", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 788);
-    add_machine_instr("MFY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 788);
-    add_machine_instr("MG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 788);
-    add_machine_instr("MH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 789);
-    add_machine_instr("MHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 789);
-    add_machine_instr("MGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 789);
-    add_machine_instr("MHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 789);
-    add_machine_instr("MGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 789);
-    add_machine_instr("MLR", mach_format::RRE, { reg_4_U, reg_4_U }, 790);
-    add_machine_instr("MLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 790);
-    add_machine_instr("ML", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 790);
-    add_machine_instr("MLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 790);
-    add_machine_instr("MSR", mach_format::RRE, { reg_4_U, reg_4_U }, 791);
-    add_machine_instr("MSRKC", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 791);
-    add_machine_instr("MSGR", mach_format::RRE, { reg_4_U, reg_4_U }, 791);
-    add_machine_instr("MSGRKC", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 791);
-    add_machine_instr("MSGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 791);
-    add_machine_instr("MS", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 791);
-    add_machine_instr("MSC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791);
-    add_machine_instr("MSY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791);
-    add_machine_instr("MSG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791);
-    add_machine_instr("MSGC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791);
-    add_machine_instr("MSGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791);
-    add_machine_instr("MSFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 791);
-    add_machine_instr("MSGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 791);
-    add_machine_instr("NIAI", mach_format::IE, { imm_4_U, imm_4_U }, 792);
-    add_machine_instr("NTSTG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 794);
-    add_machine_instr("NCGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 522);
-    add_machine_instr("NCRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 522);
-    add_machine_instr("NNRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 796);
-    add_machine_instr("NNGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 796);
-    add_machine_instr("NOGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr("NORK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr("NXRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr("NXGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr("OR", mach_format::RR, { reg_4_U, reg_4_U }, 794);
-    add_machine_instr("OGR", mach_format::RRE, { reg_4_U, reg_4_U }, 794);
-    add_machine_instr("ORK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 794);
-    add_machine_instr("OCGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 802);
-    add_machine_instr("OCRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 802);
-    add_machine_instr("OGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 794);
-    add_machine_instr("O", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 794);
-    add_machine_instr("OY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 794);
-    add_machine_instr("OG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 795);
-    add_machine_instr("OI", mach_format::SI, { db_12_4_U, imm_8_U }, 795);
-    add_machine_instr("OIY", mach_format::SIY, { db_20_4_S, imm_8_U }, 795);
-    add_machine_instr("OC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 795);
-    add_machine_instr("OIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 796);
-    add_machine_instr("OIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 796);
-    add_machine_instr("OIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 796);
-    add_machine_instr("OILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 796);
-    add_machine_instr("OILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 796);
-    add_machine_instr("OILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 796);
-    add_machine_instr("PACK", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 796);
-    add_machine_instr("PKA", mach_format::SS_f, { db_12_4_U, db_12_8x4L_U }, 797);
-    add_machine_instr("PKU", mach_format::SS_f, { db_12_4_U, db_12_8x4L_U }, 798);
-    add_machine_instr("PCC", mach_format::RRE, {}, 799);
-    add_machine_instr("PLO", mach_format::SS_e, { reg_4_U, db_12_4_U, reg_4_U, db_12_4_U }, 815);
-    add_machine_instr("PPA", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 829);
-    add_machine_instr("PRNO", mach_format::RRE, { reg_4_U, reg_4_U }, 830);
-    add_machine_instr("PPNO", mach_format::RRE, { reg_4_U, reg_4_U }, 830);
-    add_machine_instr("POPCNT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 853);
-    add_machine_instr("PFD", mach_format::RXY_b, { mask_4_U, dxb_20_4x4_S }, 843);
-    add_machine_instr("PFDRL", mach_format::RIL_c, { mask_4_U, rel_addr_imm_32_S }, 843);
-    add_machine_instr("RLL", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 845);
-    add_machine_instr("RLLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 845);
-    add_machine_instr("RNSBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 845);
-    add_machine_instr("RXSBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 846);
-    add_machine_instr("ROSBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 846);
-    add_machine_instr("RISBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 847);
-    add_machine_instr("RISBGN", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 847);
-    add_machine_instr("RISBHG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 848);
-    add_machine_instr("RISBLG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 849);
-    add_machine_instr("RNSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 845);
-    add_machine_instr("RXSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 846);
-    add_machine_instr("ROSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 858);
-    add_machine_instr("RISBGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 858);
-    add_machine_instr("RISBGNZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 860);
-    add_machine_instr("RISBHGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 860);
-    add_machine_instr("RISBLGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt }, 860);
-    add_machine_instr("SRST", mach_format::RRE, { reg_4_U, reg_4_U }, 850);
-    add_machine_instr("SRSTU", mach_format::RRE, { reg_4_U, reg_4_U }, 852);
-    add_machine_instr("SAR", mach_format::RRE, { reg_4_U, reg_4_U }, 854);
-    add_machine_instr("SAM24", mach_format::E, {}, 854);
-    add_machine_instr("SAM31", mach_format::E, {}, 854);
-    add_machine_instr("SAM64", mach_format::E, {}, 854);
-    add_machine_instr("SPM", mach_format::RR, { reg_4_U }, 855);
-    add_machine_instr("SLDA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 855);
-    add_machine_instr("SLA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 856);
-    add_machine_instr("SLAK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 856);
-    add_machine_instr("SLAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 856);
-    add_machine_instr("SLDL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 856);
-    add_machine_instr("SLL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 857);
-    add_machine_instr("SLLK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 857);
-    add_machine_instr("SLLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 857);
-    add_machine_instr("SRDA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 858);
-    add_machine_instr("SRDL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 858);
-    add_machine_instr("SRA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 859);
-    add_machine_instr("SRAK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 859);
-    add_machine_instr("SRAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 859);
-    add_machine_instr("SRL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 860);
-    add_machine_instr("SRLK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 860);
-    add_machine_instr("SRLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 860);
-    add_machine_instr("ST", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 860);
-    add_machine_instr("STY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 861);
-    add_machine_instr("STG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 861);
-    add_machine_instr("STRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 861);
-    add_machine_instr("STGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 861);
-    add_machine_instr("STAM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 861);
-    add_machine_instr("STAMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 861);
-    add_machine_instr("STC", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 862);
-    add_machine_instr("STCY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 862);
-    add_machine_instr("STCH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 862);
-    add_machine_instr("STCM", mach_format::RS_b, { reg_4_U, mask_4_U, db_12_4_U }, 862);
-    add_machine_instr("STCMY", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 862);
-    add_machine_instr("STCMH", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 862);
-    add_machine_instr("STCK", mach_format::S, { db_12_4_U }, 863);
-    add_machine_instr("STCKF", mach_format::S, { db_12_4_U }, 863);
-    add_machine_instr("STCKE", mach_format::S, { db_12_4_U }, 864);
-    add_machine_instr("STFLE", mach_format::S, { db_20_4_S }, 866);
-    add_machine_instr("STGSC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 867);
-    add_machine_instr("STH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 867);
-    add_machine_instr("STHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 868);
-    add_machine_instr("STHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 868);
-    add_machine_instr("STHH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 868);
-    add_machine_instr("STFH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 868);
-    add_machine_instr("STM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 869);
-    add_machine_instr("STMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 869);
-    add_machine_instr("STMG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 869);
-    add_machine_instr("STMH", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 869);
-    add_machine_instr("STOC", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 869);
-    add_machine_instr("STOCG", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 869);
-    add_machine_instr("STOCFH", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 870);
-    add_machine_instr("STPQ", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 870);
-    add_machine_instr("STRVH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871);
-    add_machine_instr("STRV", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871);
-    add_machine_instr("STRVG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871);
-    add_machine_instr("SR", mach_format::RR, { reg_4_U, reg_4_U }, 871);
-    add_machine_instr("SGR", mach_format::RRE, { reg_4_U, reg_4_U }, 871);
-    add_machine_instr("SGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 871);
-    add_machine_instr("SRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 871);
-    add_machine_instr("SGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 872);
-    add_machine_instr("S", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 872);
-    add_machine_instr("SY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872);
-    add_machine_instr("SG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872);
-    add_machine_instr("SGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872);
-    add_machine_instr("SH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 872);
-    add_machine_instr("SHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872);
-    add_machine_instr("SGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872);
-    add_machine_instr("SHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873);
-    add_machine_instr("SHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873);
-    add_machine_instr("SLR", mach_format::RR, { reg_4_U, reg_4_U }, 873);
-    add_machine_instr("SLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 873);
-    add_machine_instr("SLGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 873);
-    add_machine_instr("SLRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873);
-    add_machine_instr("SLGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873);
-    add_machine_instr("SL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 874);
-    add_machine_instr("SLY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 874);
-    add_machine_instr("SLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 874);
-    add_machine_instr("SLGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 874);
-    add_machine_instr("SLFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 874);
-    add_machine_instr("SLGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 874);
-    add_machine_instr("SLHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 875);
-    add_machine_instr("SLHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 875);
-    add_machine_instr("SLBR", mach_format::RRE, { reg_4_U, reg_4_U }, 875);
-    add_machine_instr("SLBGR", mach_format::RRE, { reg_4_U, reg_4_U }, 875);
-    add_machine_instr("SLB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 875);
-    add_machine_instr("SLBG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 875);
-    add_machine_instr("SVC", mach_format::I, { imm_8_U }, 876);
-    add_machine_instr("TS", mach_format::SI, { db_12_4_U }, 876);
-    add_machine_instr("TAM", mach_format::E, {}, 876);
-    add_machine_instr("TM", mach_format::SI, { db_12_4_U, imm_8_U }, 877);
-    add_machine_instr("TMY", mach_format::SIY, { db_20_4_S, imm_8_U }, 877);
-    add_machine_instr("TMHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr("TMHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr("TMH", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr("TMLH", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr("TML", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr("TMLL", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr("TABORT", mach_format::S, { db_12_4_U }, 878);
-    add_machine_instr("TBEGIN", mach_format::SIL, { db_12_4_U, imm_16_S }, 879);
-    add_machine_instr("TBEGINC", mach_format::SIL, { db_12_4_U, imm_16_S }, 883);
-    add_machine_instr("TEND", mach_format::S, {}, 885);
-    add_machine_instr("TR", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 886);
-    add_machine_instr("TRT", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 887);
-    add_machine_instr("TRTE", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 887);
-    add_machine_instr("TRTRE", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 888);
-    add_machine_instr("TRTR", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 892);
-    add_machine_instr("TRE", mach_format::RRE, { reg_4_U, reg_4_U }, 893);
-    add_machine_instr("TROO", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 895);
-    add_machine_instr("TROT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 895);
-    add_machine_instr("TRTO", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 895);
-    add_machine_instr("TRTT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 895);
-    add_machine_instr("UNPK", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 900);
-    add_machine_instr("UNPKA", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 901);
-    add_machine_instr("UNPKU", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 902);
-    add_machine_instr("UPT", mach_format::E, {}, 903);
-    add_machine_instr("AP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 920);
-    add_machine_instr("CP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 921);
-    add_machine_instr("DP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 921);
-    add_machine_instr("DFLTCC", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1714);
-    add_machine_instr("ED", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 922);
-    add_machine_instr("EDMK", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 925);
-    add_machine_instr("SRP", mach_format::SS_c, { db_12_4x4L_U, db_12_4_U, imm_4_U }, 926);
-    add_machine_instr("MP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 926);
-    add_machine_instr("SP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 927);
-    add_machine_instr("TP", mach_format::RSL_a, { db_12_4x4L_U }, 928);
-    add_machine_instr("ZAP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 928);
-    add_machine_instr("THDR", mach_format::RRE, { reg_4_U, reg_4_U }, 955);
-    add_machine_instr("THDER", mach_format::RRE, { reg_4_U, reg_4_U }, 955);
-    add_machine_instr("TBEDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 956);
-    add_machine_instr("TBDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 956);
-    add_machine_instr("CPSDR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 958);
-    add_machine_instr("EFPC", mach_format::RRE, { reg_4_U }, 958);
-    add_machine_instr("LER", mach_format::RR, { reg_4_U, reg_4_U }, 959);
-    add_machine_instr("LDR", mach_format::RR, { reg_4_U, reg_4_U }, 959);
-    add_machine_instr("LXR", mach_format::RRE, { reg_4_U, reg_4_U }, 959);
-    add_machine_instr("LE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 959);
-    add_machine_instr("LD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 959);
-    add_machine_instr("LEY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 959);
-    add_machine_instr("LDY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 959);
-    add_machine_instr("LCDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 959);
-    add_machine_instr("LFPC", mach_format::S, { db_12_4_U }, 959);
-    add_machine_instr("LFAS", mach_format::S, { db_12_4_U }, 960);
-    add_machine_instr("LDGR", mach_format::RRE, { reg_4_U, reg_4_U }, 962);
-    add_machine_instr("LGDR", mach_format::RRE, { reg_4_U, reg_4_U }, 962);
-    add_machine_instr("LNDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 962);
-    add_machine_instr("LPDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 962);
-    add_machine_instr("LZER", mach_format::RRE, { reg_4_U }, 963);
-    add_machine_instr("LZXR", mach_format::RRE, { reg_4_U }, 963);
-    add_machine_instr("LZDR", mach_format::RRE, { reg_4_U }, 963);
-    add_machine_instr("PFPO", mach_format::E, {}, 963);
-    add_machine_instr("SRNM", mach_format::S, { db_12_4_U }, 975);
-    add_machine_instr("SRNMB", mach_format::S, { db_12_4_U }, 975);
-    add_machine_instr("SRNMT", mach_format::S, { db_12_4_U }, 975);
-    add_machine_instr("SFPC", mach_format::RRE, { reg_4_U }, 975);
-    add_machine_instr("SFASR", mach_format::RRE, { reg_4_U }, 976);
-    add_machine_instr("STE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 976);
-    add_machine_instr("STD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 976);
-    add_machine_instr("STDY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 977);
-    add_machine_instr("STEY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 977);
-    add_machine_instr("STFPC", mach_format::S, { db_12_4_U }, 977);
-    add_machine_instr("BSA", mach_format::RRE, { reg_4_U, reg_4_U }, 989);
-    add_machine_instr("BAKR", mach_format::RRE, { reg_4_U, reg_4_U }, 993);
-    add_machine_instr("BSG", mach_format::RRE, { reg_4_U, reg_4_U }, 995);
-    add_machine_instr("CRDTE", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U_opt }, 999);
-    add_machine_instr("CSP", mach_format::RRE, { reg_4_U, reg_4_U }, 1003);
-    add_machine_instr("CSPG", mach_format::RRE, { reg_4_U, reg_4_U }, 1003);
-    add_machine_instr("ESEA", mach_format::RRE, { reg_4_U }, 1006);
-    add_machine_instr("EPAR", mach_format::RRE, { reg_4_U }, 1006);
-    add_machine_instr("EPAIR", mach_format::RRE, { reg_4_U }, 1006);
-    add_machine_instr("ESAR", mach_format::RRE, { reg_4_U }, 1006);
-    add_machine_instr("ESAIR", mach_format::RRE, { reg_4_U }, 1007);
-    add_machine_instr("EREG", mach_format::RRE, { reg_4_U, reg_4_U }, 1007);
-    add_machine_instr("EREGG", mach_format::RRE, { reg_4_U, reg_4_U }, 1007);
-    add_machine_instr("ESTA", mach_format::RRE, { reg_4_U, reg_4_U }, 1008);
-    add_machine_instr("IAC", mach_format::RRE, { reg_4_U }, 1011);
-    add_machine_instr("IPK", mach_format::S, {}, 1012);
-    add_machine_instr("IRBM", mach_format::RRE, { reg_4_U, reg_4_U }, 1012);
-    add_machine_instr("ISK", mach_format::RR, { reg_4_U, reg_4_U }, 268);
-    add_machine_instr("ISKE", mach_format::RRE, { reg_4_U, reg_4_U }, 1012);
-    add_machine_instr("IVSK", mach_format::RRE, { reg_4_U, reg_4_U }, 1013);
-    add_machine_instr("IDTE", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U_opt }, 1014);
-    add_machine_instr("IPTE", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U_opt, mask_4_U_opt }, 1019);
-    add_machine_instr("LASP", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1023);
-    add_machine_instr("LCTL", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1032);
-    add_machine_instr("LCTLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 1032);
-    add_machine_instr("LPTEA", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1032);
-    add_machine_instr("LPSW", mach_format::SI, { db_12_4_U }, 1036);
-    add_machine_instr("LPSWE", mach_format::S, { db_12_4_U }, 1037);
-    add_machine_instr("LRA", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1038);
-    add_machine_instr("LRAY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 1038);
-    add_machine_instr("LRAG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 1038);
-    add_machine_instr("LURA", mach_format::RRE, { reg_4_U, reg_4_U }, 1042);
-    add_machine_instr("LURAG", mach_format::RRE, { reg_4_U, reg_4_U }, 1042);
-    add_machine_instr("MSTA", mach_format::RRE, { reg_4_U }, 1043);
-    add_machine_instr("MVPG", mach_format::RRE, { reg_4_U, reg_4_U }, 1044);
-    add_machine_instr("MVCP", mach_format::SS_d, { drb_12_4x4_U, db_12_4_U, reg_4_U }, 1046);
-    add_machine_instr("MVCS", mach_format::SS_d, { drb_12_4x4_U, db_12_4_U, reg_4_U }, 1046);
-    add_machine_instr("MVCDK", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1048);
-    add_machine_instr("MVCK", mach_format::SS_d, { drb_12_4x4_U, db_12_4_U, reg_4_U }, 1049);
-    add_machine_instr("MVCOS", mach_format::SSF, { db_12_4_U, db_12_4_U, reg_4_U }, 1050);
-    add_machine_instr("MVCSK", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1053);
-    add_machine_instr("PGIN", mach_format::RRE, { reg_4_U, reg_4_U }, 1054);
-    add_machine_instr("PGOUT", mach_format::RRE, { reg_4_U, reg_4_U }, 1055);
-    add_machine_instr("PCKMO", mach_format::RRE, {}, 1056);
-    add_machine_instr("PFMF", mach_format::RRE, { reg_4_U, reg_4_U }, 1059);
-    add_machine_instr("PTFF", mach_format::E, {}, 1063);
-    add_machine_instr("PTF", mach_format::RRE, { reg_4_U }, 1071);
-    add_machine_instr("PC", mach_format::S, { db_12_4_U }, 1072);
-    add_machine_instr("PR", mach_format::E, {}, 1085);
-    add_machine_instr("PTI", mach_format::RRE, { reg_4_U, reg_4_U }, 1089);
-    add_machine_instr("PT", mach_format::RRE, { reg_4_U, reg_4_U }, 1089);
-    add_machine_instr("PALB", mach_format::RRE, {}, 1098);
-    add_machine_instr("PTLB", mach_format::S, {}, 1098);
-    add_machine_instr("RRBE", mach_format::RRE, { reg_4_U, reg_4_U }, 1098);
-    add_machine_instr("RRBM", mach_format::RRE, { reg_4_U, reg_4_U }, 1099);
-    add_machine_instr("RP", mach_format::S, { db_12_4_U }, 1099);
-    add_machine_instr("SAC", mach_format::S, { db_12_4_U }, 1102);
-    add_machine_instr("SACF", mach_format::S, { db_12_4_U }, 1102);
-    add_machine_instr("SCK", mach_format::S, { db_12_4_U }, 1103);
-    add_machine_instr("SCKC", mach_format::S, { db_12_4_U }, 1104);
-    add_machine_instr("SCKPF", mach_format::E, {}, 1105);
-    add_machine_instr("SPX", mach_format::S, { db_12_4_U }, 1105);
-    add_machine_instr("SPT", mach_format::S, { db_12_4_U }, 1105);
-    add_machine_instr("SPKA", mach_format::S, { db_12_4_U }, 1106);
-    add_machine_instr("SSAR", mach_format::RRE, { reg_4_U }, 1107);
-    add_machine_instr("SSAIR", mach_format::RRE, { reg_4_U }, 1107);
-    add_machine_instr("SSK", mach_format::RR, { reg_4_U, reg_4_U }, 304);
-    add_machine_instr("SSKE", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U_opt }, 1112);
-    add_machine_instr("SSM", mach_format::SI, { db_12_4_U }, 1115);
-    add_machine_instr("SIGP", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1115);
-    add_machine_instr("STCKC", mach_format::S, { db_12_4_U }, 1117);
-    add_machine_instr("STCTL", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1117);
-    add_machine_instr("STCTG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 1117);
-    add_machine_instr("STAP", mach_format::S, { db_12_4_U }, 1118);
-    add_machine_instr("STIDP", mach_format::S, { db_12_4_U }, 1118);
-    add_machine_instr("STPT", mach_format::S, { db_12_4_U }, 1120);
-    add_machine_instr("STFL", mach_format::S, { db_12_4_U }, 1120);
-    add_machine_instr("STPX", mach_format::S, { db_12_4_U }, 1121);
-    add_machine_instr("STRAG", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1121);
-    add_machine_instr("STSI", mach_format::S, { db_12_4_U }, 1122);
-    add_machine_instr("STOSM", mach_format::SI, { db_12_4_U, imm_8_U }, 1146);
-    add_machine_instr("STNSM", mach_format::SI, { db_12_4_U, imm_8_U }, 1146);
-    add_machine_instr("STURA", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
-    add_machine_instr("STURG", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
-    add_machine_instr("TAR", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
-    add_machine_instr("TB", mach_format::RRE, { reg_4_U, reg_4_U }, 1149);
-    add_machine_instr("TPEI", mach_format::RRE, { reg_4_U, reg_4_U }, 1151);
-    add_machine_instr("TPROT", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1152);
-    add_machine_instr("TRACE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1155);
-    add_machine_instr("TRACG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 1155);
-    add_machine_instr("TRAP2", mach_format::E, {}, 1156);
-    add_machine_instr("TRAP4", mach_format::S, { db_12_4_U }, 1156);
-    add_machine_instr("XSCH", mach_format::S, {}, 1215);
-    add_machine_instr("CSCH", mach_format::S, {}, 1217);
-    add_machine_instr("HSCH", mach_format::S, {}, 1218);
-    add_machine_instr("MSCH", mach_format::S, { db_12_4_U }, 1219);
-    add_machine_instr("RCHP", mach_format::S, {}, 1221);
-    add_machine_instr("RSCH", mach_format::S, {}, 1222);
-    add_machine_instr("SAL", mach_format::S, {}, 1224);
-    add_machine_instr("SCHM", mach_format::S, {}, 1225);
-    add_machine_instr("SSCH", mach_format::S, { db_12_4_U }, 1227);
-    add_machine_instr("STCPS", mach_format::S, { db_12_4_U }, 1228);
-    add_machine_instr("STCRW", mach_format::S, { db_12_4_U }, 1229);
-    add_machine_instr("STSCH", mach_format::S, { db_12_4_U }, 1230);
-    add_machine_instr("TPI", mach_format::S, { db_12_4_U }, 1231);
-    add_machine_instr("TSCH", mach_format::S, { db_12_4_U }, 1232);
+        { "AER", mach_format::RR, { reg_4_U, reg_4_U }, 1412 },
+        { "ADR", mach_format::RR, { reg_4_U, reg_4_U }, 1412 },
+        { "AXR", mach_format::RR, { reg_4_U, reg_4_U }, 1412 },
+        { "AE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1412 },
+        { "AD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1412 },
+        { "AWR", mach_format::RR, { reg_4_U, reg_4_U }, 1413 },
+        { "AUR", mach_format::RR, { reg_4_U, reg_4_U }, 1413 },
+        { "AU", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1413 },
+        { "AW", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1413 },
+        { "CER", mach_format::RR, { reg_4_U, reg_4_U }, 1414 },
+        { "CDR", mach_format::RR, { reg_4_U, reg_4_U }, 1414 },
+        { "CXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1414 },
+        { "CE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1414 },
+        { "CD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1414 },
+        { "CEFR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415 },
+        { "CDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415 },
+        { "CXFR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415 },
+        { "CEGR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415 },
+        { "CDGR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415 },
+        { "CXGR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415 },
+        { "CFER", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415 },
+        { "CFDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415 },
+        { "CFXR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415 },
+        { "CGER", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415 },
+        { "CGDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415 },
+        { "CGXR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415 },
+        { "DDR", mach_format::RR, { reg_4_U, reg_4_U }, 1416 },
+        { "DER", mach_format::RR, { reg_4_U, reg_4_U }, 1416 },
+        { "DXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1416 },
+        { "DD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1416 },
+        { "DE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1416 },
+        { "HDR", mach_format::RR, { reg_4_U, reg_4_U }, 1417 },
+        { "HER", mach_format::RR, { reg_4_U, reg_4_U }, 1417 },
+        { "LTER", mach_format::RR, { reg_4_U, reg_4_U }, 1417 },
+        { "LTDR", mach_format::RR, { reg_4_U, reg_4_U }, 1417 },
+        { "LTXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1418 },
+        { "LCER", mach_format::RR, { reg_4_U, reg_4_U }, 1418 },
+        { "LCDR", mach_format::RR, { reg_4_U, reg_4_U }, 1418 },
+        { "LCXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1418 },
+        { "FIER", mach_format::RRE, { reg_4_U, reg_4_U }, 1419 },
+        { "FIDR", mach_format::RRE, { reg_4_U, reg_4_U }, 1419 },
+        { "FIXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1419 },
+        { "LDER", mach_format::RRE, { reg_4_U, reg_4_U }, 1419 },
+        { "LXDR", mach_format::RRE, { reg_4_U, reg_4_U }, 1419 },
+        { "LXER", mach_format::RRE, { reg_4_U, reg_4_U }, 1419 },
+        { "LDE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1419 },
+        { "LXD", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1419 },
+        { "LXE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1419 },
+        { "LNDR", mach_format::RR, { reg_4_U, reg_4_U }, 1420 },
+        { "LNER", mach_format::RR, { reg_4_U, reg_4_U }, 1420 },
+        { "LPDR", mach_format::RR, { reg_4_U, reg_4_U }, 1420 },
+        { "LPER", mach_format::RR, { reg_4_U, reg_4_U }, 1420 },
+        { "LNXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1420 },
+        { "LPXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1420 },
+        { "LEDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421 },
+        { "LDXR", mach_format::RR, { reg_4_U, reg_4_U }, 1421 },
+        { "LRER", mach_format::RR, { reg_4_U, reg_4_U }, 1421 },
+        { "LRDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421 },
+        { "LEXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1421 },
+        { "MEER", mach_format::RRE, { reg_4_U, reg_4_U }, 1421 },
+        { "MDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421 },
+        { "MXR", mach_format::RR, { reg_4_U, reg_4_U }, 1421 },
+        { "MDER", mach_format::RR, { reg_4_U, reg_4_U }, 1421 },
+        { "MER", mach_format::RR, { reg_4_U, reg_4_U }, 1421 },
+        { "MXDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421 },
+        { "MEE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1422 },
+        { "MD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422 },
+        { "MDE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422 },
+        { "MXD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422 },
+        { "ME", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422 },
+        { "MAER", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423 },
+        { "MADR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423 },
+        { "MAD", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423 },
+        { "MAE", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423 },
+        { "MSER", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423 },
+        { "MSDR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423 },
+        { "MSE", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423 },
+        { "MSD", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423 },
+        { "MAYR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1424 },
+        { "MAYHR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1424 },
+        { "MAYLR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1424 },
+        { "MAY", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1424 },
+        { "MAYH", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1424 },
+        { "MAYL", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1424 },
+        { "MYR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1426 },
+        { "MYHR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1426 },
+        { "MYLR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1426 },
+        { "MY", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426 },
+        { "MYH", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426 },
+        { "MYL", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426 },
+        { "SQER", mach_format::RRE, { reg_4_U, reg_4_U }, 1427 },
+        { "SQDR", mach_format::RRE, { reg_4_U, reg_4_U }, 1427 },
+        { "SQXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1427 },
+        { "SQE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1427 },
+        { "SQD", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1427 },
+        { "SER", mach_format::RR, { reg_4_U, reg_4_U }, 1428 },
+        { "SDR", mach_format::RR, { reg_4_U, reg_4_U }, 1428 },
+        { "SXR", mach_format::RR, { reg_4_U, reg_4_U }, 1428 },
+        { "SE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1428 },
+        { "SD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1428 },
+        { "SUR", mach_format::RR, { reg_4_U, reg_4_U }, 1429 },
+        { "SWR", mach_format::RR, { reg_4_U, reg_4_U }, 1429 },
+        { "SU", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1429 },
+        { "SW", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1429 },
+        { "AEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1445 },
+        { "ADBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1445 },
+        { "AXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1445 },
+        { "AEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1445 },
+        { "ADB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1445 },
+        { "CEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1447 },
+        { "CDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1447 },
+        { "CXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1447 },
+        { "CDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1447 },
+        { "CEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1447 },
+        { "KEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448 },
+        { "KDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448 },
+        { "KDSA", mach_format::RRE, { reg_4_U, reg_4_U }, 1700 },
+        { "KXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448 },
+        { "KDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1448 },
+        { "KEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1448 },
+        { "CEFBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449 },
+        { "CDFBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449 },
+        { "CXFBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449 },
+        { "CEGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449 },
+        { "CDGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449 },
+        { "CXGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449 },
+        { "CEFBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449 },
+        { "CDFBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449 },
+        { "CXFBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449 },
+        { "CEGBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449 },
+        { "CDGBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449 },
+        { "CXGBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449 },
+        { "CELFBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451 },
+        { "CDLFBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451 },
+        { "CXLFBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451 },
+        { "CELGBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451 },
+        { "CDLGBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451 },
+        { "CXLGBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451 },
+        { "CFEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452 },
+        { "CFDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452 },
+        { "CFXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452 },
+        { "CGEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452 },
+        { "CGDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452 },
+        { "CGXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452 },
+        { "CFEBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452 },
+        { "CFDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452 },
+        { "CFXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452 },
+        { "CGEBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452 },
+        { "CGDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452 },
+        { "CGXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452 },
+        { "CLFEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455 },
+        { "CLFDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455 },
+        { "CLFXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455 },
+        { "CLGEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455 },
+        { "CLGDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455 },
+        { "CLGXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455 },
+        { "DEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1457 },
+        { "DDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1457 },
+        { "DXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1457 },
+        { "DEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1457 },
+        { "DDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1457 },
+        { "DIEBR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1458 },
+        { "DIDBR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1458 },
+        { "LTEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461 },
+        { "LTDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461 },
+        { "LTXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461 },
+        { "LCEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461 },
+        { "LCDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461 },
+        { "LCXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461 },
+        { "ECCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 39 },
+        { "EPCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 39 },
+        { "ECPGA", mach_format::RRE, { reg_4_U, reg_4_U }, 39 },
+        { "FIEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462 },
+        { "FIDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462 },
+        { "FIXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462 },
+        { "FIEBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462 },
+        { "FIDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462 },
+        { "FIXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462 },
+        { "LSCTL", mach_format::S, { db_12_4_U }, 42 },
+        { "LDEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463 },
+        { "LXDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463 },
+        { "LPCTL", mach_format::S, { db_12_4_U }, 41 },
+        { "LCCTL", mach_format::S, { db_12_4_U }, 40 },
+        { "LXEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463 },
+        { "LDEB", mach_format::RRE, { reg_4_U, reg_4_U }, 1464 },
+        { "LXDB", mach_format::RRE, { reg_4_U, reg_4_U }, 1464 },
+        { "LXEB", mach_format::RRE, { reg_4_U, reg_4_U }, 1464 },
+        { "LNEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1464 },
+        { "LNDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1464 },
+        { "LNXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1464 },
+        { "LPEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465 },
+        { "LPDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465 },
+        { "LPXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465 },
+        { "LEDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465 },
+        { "LDXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465 },
+        { "LEXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465 },
+        { "LEDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465 },
+        { "LDXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465 },
+        { "LEXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465 },
+        { "LPP", mach_format::S, { db_12_4_U }, 11 },
+        { "MEEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467 },
+        { "MDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467 },
+        { "MXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467 },
+        { "MDEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467 },
+        { "MXDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467 },
+        { "MEEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467 },
+        { "MDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467 },
+        { "MDEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467 },
+        { "MXDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467 },
+        { "MADBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468 },
+        { "MAEBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468 },
+        { "MAEB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468 },
+        { "MADB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468 },
+        { "MSEBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468 },
+        { "MSDBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468 },
+        { "MSEB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468 },
+        { "MSDB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468 },
+        { "QCTRI", mach_format::S, { db_12_4_U }, 43 },
+        { "QSI", mach_format::S, { db_12_4_U }, 45 },
+        { "SCCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 46 },
+        { "SPCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 47 },
+        { "SQEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470 },
+        { "SQDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470 },
+        { "SQXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470 },
+        { "SQEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470 },
+        { "SQDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470 },
+        { "SEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470 },
+        { "SDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470 },
+        { "SXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470 },
+        { "SEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470 },
+        { "SDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470 },
+        { "SORTL", mach_format::RRE, { reg_4_U, reg_4_U }, 19 },
+        { "TCEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471 },
+        { "TCDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471 },
+        { "TCXB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471 },
+        { "ADTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1491 },
+        { "AXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1491 },
+        { "ADTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1491 },
+        { "AXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1491 },
+        { "CDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1494 },
+        { "CXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1494 },
+        { "KDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495 },
+        { "KXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495 },
+        { "CEDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495 },
+        { "CEXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495 },
+        { "CDGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1496 },
+        { "CXGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1496 },
+        { "CDGTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496 },
+        { "CXGTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496 },
+        { "CDFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496 },
+        { "CXFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496 },
+        { "CDLGTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497 },
+        { "CXLGTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497 },
+        { "CDLFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497 },
+        { "CXLFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497 },
+        { "CDPT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1498 },
+        { "CXPT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1498 },
+        { "CDSTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500 },
+        { "CXSTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500 },
+        { "CDUTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500 },
+        { "CXUTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500 },
+        { "CDZT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1501 },
+        { "CXZT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1501 },
+        { "CGDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1501 },
+        { "CGXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1501 },
+        { "CGDTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502 },
+        { "CGXTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502 },
+        { "CFDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502 },
+        { "CFXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502 },
+        { "CLGDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504 },
+        { "CLGXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504 },
+        { "CLFDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504 },
+        { "CLFXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504 },
+        { "CPDT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1505 },
+        { "CPXT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1505 },
+        { "CSDTR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1507 },
+        { "CSXTR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1507 },
+        { "CUDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1507 },
+        { "CUXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1507 },
+        { "CZDT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1508 },
+        { "CZXT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1508 },
+        { "DDTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1509 },
+        { "DXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1509 },
+        { "DDTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1509 },
+        { "DXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1509 },
+        { "EEXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511 },
+        { "EEDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511 },
+        { "ESDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511 },
+        { "ESXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511 },
+        { "IEDTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 1512 },
+        { "IEXTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 1512 },
+        { "LTDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1513 },
+        { "LTXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1513 },
+        { "FIDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1514 },
+        { "FIXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1514 },
+        { "LDETR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1517 },
+        { "LXDTR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1517 },
+        { "LEDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1518 },
+        { "LDXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1518 },
+        { "MDTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1519 },
+        { "MXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1519 },
+        { "MDTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1520 },
+        { "MXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1520 },
+        { "QADTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1521 },
+        { "QAXTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1521 },
+        { "RRDTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1524 },
+        { "RRXTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1524 },
+        { "SELFHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864 },
+        { "SELGR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864 },
+        { "SELR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864 },
+        { "SLDT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526 },
+        { "SLXT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526 },
+        { "SRDT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526 },
+        { "SRXT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526 },
+        { "SDTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1527 },
+        { "SXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1527 },
+        { "SDTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1527 },
+        { "SXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1527 },
+        { "TDCET", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1528 },
+        { "TDCDT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1528 },
+        { "TDCXT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1528 },
+        { "TDGET", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529 },
+        { "TDGDT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529 },
+        { "TDGXT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529 },
+        { "VBPERM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1536 },
+        { "VGEF", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1536 },
+        { "VCFPS", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1641 },
+        { "VCLFP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1611 },
+        { "VGEG", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1536 },
+        { "VGBM", mach_format::VRI_a, { vec_reg_5_U, imm_16_U }, 1537 },
+        { "VGM", mach_format::VRI_b, { vec_reg_5_U, imm_8_U, imm_8_U, mask_4_U }, 1537 },
+        { "VL", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U_opt }, 1538 },
+        { "VSTEBRF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576 },
+        { "VSTEBRG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576 },
+        { "VLLEBRZ", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1562 },
+        { "VLREP", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1538 },
+        { "VLR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U }, 1538 },
+        { "VLEB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1538 },
+        { "VLEBRH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1561 },
+        { "VLEBRG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1561 },
+        { "VLBRREP", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1562 },
+        { "VLER", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1564 },
+        { "VLBR", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1563 },
+        { "VLEH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539 },
+        { "VLEIH", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539 },
+        { "VLEF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539 },
+        { "VLEIF", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539 },
+        { "VLEG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539 },
+        { "VLEIG", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539 },
+        { "VLEIB", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539 },
+        { "VLGV", mach_format::VRS_c, { reg_4_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1539 },
+        { "VLLEZ", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1540 },
+        { "VLM", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U_opt }, 1541 },
+        { "VLRLR", mach_format::VRS_d, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1541 },
+        { "VLRL", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1541 },
+        { "VLBB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1542 },
+        { "VLVG", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U, mask_4_U }, 1543 },
+        { "VLVGP", mach_format::VRR_f, { vec_reg_5_U, reg_4_U, reg_4_U }, 1543 },
+        { "VLL", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1543 },
+        { "VMRH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1544 },
+        { "VMRL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1544 },
+        { "VPK", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1545 },
+        { "VPKS", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1545 },
+        { "VPKLS", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1546 },
+        { "VPERM", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1547 },
+        { "VPDI", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1547 },
+        { "VREP", mach_format::VRI_c, { vec_reg_5_U, vec_reg_5_U, imm_16_U, mask_4_U }, 1547 },
+        { "VREPI", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1548 },
+        { "VSCEF", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1548 },
+        { "VSCEG", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1548 },
+        { "VSEL", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1549 },
+        { "VSEG", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1549 },
+        { "VSTBR", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576 },
+        { "VST", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U_opt }, 1550 },
+        { "VSTEB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550 },
+        { "VSTEBRH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576 },
+        { "VSTEH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550 },
+        { "VSTEF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550 },
+        { "VSTEG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550 },
+        { "VSTER", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1578 },
+        { "VSTM", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U_opt }, 1551 },
+        { "VSTRLR", mach_format::VRS_d, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1551 },
+        { "VSTRL", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1551 },
+        { "VSTL", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1552 },
+        { "VUPH", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1552 },
+        { "VUPL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1553 },
+        { "VUPLH", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1553 },
+        { "VUPLL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1554 },
+        { "VA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1557 },
+        { "VACC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1558 },
+        { "VAC", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1558 },
+        { "VACCC", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1559 },
+        { "VN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1559 },
+        { "VNC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1559 },
+        { "VAVG", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1560 },
+        { "VAVGL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1560 },
+        { "VCKSM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1560 },
+        { "VEC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1561 },
+        { "VECL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1561 },
+        { "VCEQ", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1561 },
+        { "VCH", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1562 },
+        { "VCHL", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1563 },
+        { "VCLZ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1564 },
+        { "VCTZ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1564 },
+        { "VGFM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1565 },
+        { "VX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1565 },
+        { "VLC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566 },
+        { "VGFMA", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566 },
+        { "VLP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566 },
+        { "VMX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567 },
+        { "VMXL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567 },
+        { "VMN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567 },
+        { "VMNL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1568 },
+        { "VMAL", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1568 },
+        { "VMAH", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569 },
+        { "VMALH", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569 },
+        { "VMAE", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569 },
+        { "VMALE", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569 },
+        { "VMAO", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570 },
+        { "VMALO", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570 },
+        { "VMH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570 },
+        { "VMLH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1571 },
+        { "VML", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1571 },
+        { "VME", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572 },
+        { "VMLE", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572 },
+        { "VMO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572 },
+        { "VMLO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572 },
+        { "VMSL",
+            mach_format::VRR_d,
+            { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
+            1573 },
+        { "VNN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574 },
+        { "VNO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574 },
+        { "VNX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574 },
+        { "VO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574 },
+        { "VOC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1575 },
+        { "VPOPCT", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1575 },
+        { "VERLLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1575 },
+        { "VERLL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1575 },
+        { "VERIM", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1576 },
+        { "VESLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1577 },
+        { "VESL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1577 },
+        { "VESRAV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1577 },
+        { "VESRA", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1577 },
+        { "VESRLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1578 },
+        { "VESRL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1578 },
+        { "VSLD", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1607 },
+        { "VSRD", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1608 },
+        { "VSLDB", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1579 },
+        { "VSL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579 },
+        { "VSLB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579 },
+        { "VSRA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579 },
+        { "VSRAB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580 },
+        { "VSRL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580 },
+        { "VSRLB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580 },
+        { "VS", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1580 },
+        { "VSCBI", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1581 },
+        { "VCSFP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1644 },
+        { "VSBI", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1581 },
+        { "VSBCBI", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1582 },
+        { "VSUMG", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1582 },
+        { "VSUMQ", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1583 },
+        { "VSUM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1583 },
+        { "VTM", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U }, 1584 },
+        { "VFAE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt }, 1585 },
+        { "VFEE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt }, 1587 },
+        { "VFENE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt }, 1588 },
+        { "VISTR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt }, 1589 },
+        { "VSTRC",
+            mach_format::VRR_d,
+            { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt },
+            1590 },
+        { "VSTRS",
+            mach_format::VRR_d,
+            { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt },
+            1622 },
+        { "VFA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1595 },
+        { "WFC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1599 },
+        { "WFK", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1600 },
+        { "VFCE", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1601 },
+        { "VFCH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1603 },
+        { "VFCHE", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1605 },
+        { "VCFPS", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1607 },
+        { "VCFPL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1643 },
+        { "VCLGD", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1611 },
+        { "VFD", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1613 },
+        { "VFI", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1615 },
+        { "VFLL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1617 },
+        { "VFLR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1618 },
+        { "VFMAX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1619 },
+        { "VFMIN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1625 },
+        { "VFM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1631 },
+        { "VFMA",
+            mach_format::VRR_e,
+            { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
+            1633 },
+        { "VFMS",
+            mach_format::VRR_e,
+            { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
+            1633 },
+        { "VFNMA",
+            mach_format::VRR_e,
+            { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
+            1633 },
+        { "VFNMS",
+            mach_format::VRR_e,
+            { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
+            1633 },
+        { "VFPSO", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1635 },
+        { "VFSQ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1636 },
+        { "VFS", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1637 },
+        { "VFTCI", mach_format::VRI_e, { vec_reg_5_U, vec_reg_5_U, imm_12_S, mask_4_U, mask_4_U }, 1638 },
+        { "VAP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1643 },
+        { "VCP", mach_format::VRR_h, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1644 },
+        { "VCVB", mach_format::VRR_i, { reg_4_U, vec_reg_5_U, mask_4_U }, 1645 },
+        { "VCVBG", mach_format::VRR_i, { reg_4_U, vec_reg_5_U, mask_4_U }, 1645 },
+        { "VCVD", mach_format::VRI_i, { vec_reg_5_U, reg_4_U, imm_8_S, mask_4_U }, 1646 },
+        { "VCVDG", mach_format::VRI_i, { vec_reg_5_U, reg_4_U, imm_8_S, mask_4_U }, 1646 },
+        { "VDP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1648 },
+        { "VMP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1650 },
+        { "VMSP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1651 },
+        { "VRP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1654 },
+        { "VSDP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1656 },
+        { "VSP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1658 },
+        { "VLIP", mach_format::VRI_h, { vec_reg_5_U, imm_16_S, imm_4_U }, 1649 },
+        { "VPKZ", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1652 },
+        { "VPSOP", mach_format::VRI_g, { vec_reg_5_U, vec_reg_5_U, imm_8_U, imm_8_U, mask_4_U }, 1653 },
+        { "VSRP", mach_format::VRI_g, { vec_reg_5_U, vec_reg_5_U, imm_8_U, imm_8_S, mask_4_U }, 1657 },
+        { "SIE", mach_format::S, { db_12_4_U }, 7 },
+        { "VAD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VADS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VDDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMADS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VCDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VAS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VSS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VNS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VOS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VXS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VCS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMSE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMSES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VLINT", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VDD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VDDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VDE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VDES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMXAD", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VMXAE", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VMXSE", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VNVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VOVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VLCVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VLELE", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VLELD", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VLI", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VLID", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VLBIX", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VLVCU", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VLVCA", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VLVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VMNSD", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VMNSE", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VMRRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VMRSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VACRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VACSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VSTVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VSTVP", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VSVMM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VTVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VXELE", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VXELD", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VXVC", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VXVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VXVMM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VSTI", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VSTID", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VRCL", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VRRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VRSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VRSVC", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VSLL", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VSPSD", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VZPSD", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VSRRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VSRSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VOVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VCVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VCZVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VCOVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0 },
+        { "VTP", mach_format::VRR_g, { vec_reg_5_U }, 1660 },
+        { "VUPKZ", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1660 },
+        { "VSTK", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VSE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VSES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VSTD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VSTKD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VSTMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VSTH", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VLD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VLH", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VLMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VLY", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VLYD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VM", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMAD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMAES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMCD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMCE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VMES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VACD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VACE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VAE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VAES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VC", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VCD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VCE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+        { "VCES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0 },
+    };
 
-    add_machine_instr("AER", mach_format::RR, { reg_4_U, reg_4_U }, 1412);
-    add_machine_instr("ADR", mach_format::RR, { reg_4_U, reg_4_U }, 1412);
-    add_machine_instr("AXR", mach_format::RR, { reg_4_U, reg_4_U }, 1412);
-    add_machine_instr("AE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1412);
-    add_machine_instr("AD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1412);
-    add_machine_instr("AWR", mach_format::RR, { reg_4_U, reg_4_U }, 1413);
-    add_machine_instr("AUR", mach_format::RR, { reg_4_U, reg_4_U }, 1413);
-    add_machine_instr("AU", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1413);
-    add_machine_instr("AW", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1413);
-    add_machine_instr("CER", mach_format::RR, { reg_4_U, reg_4_U }, 1414);
-    add_machine_instr("CDR", mach_format::RR, { reg_4_U, reg_4_U }, 1414);
-    add_machine_instr("CXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1414);
-    add_machine_instr("CE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1414);
-    add_machine_instr("CD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1414);
-    add_machine_instr("CEFR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr("CDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr("CXFR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr("CEGR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr("CDGR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr("CXGR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr("CFER", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr("CFDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr("CFXR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr("CGER", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr("CGDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr("CGXR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr("DDR", mach_format::RR, { reg_4_U, reg_4_U }, 1416);
-    add_machine_instr("DER", mach_format::RR, { reg_4_U, reg_4_U }, 1416);
-    add_machine_instr("DXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1416);
-    add_machine_instr("DD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1416);
-    add_machine_instr("DE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1416);
-    add_machine_instr("HDR", mach_format::RR, { reg_4_U, reg_4_U }, 1417);
-    add_machine_instr("HER", mach_format::RR, { reg_4_U, reg_4_U }, 1417);
-    add_machine_instr("LTER", mach_format::RR, { reg_4_U, reg_4_U }, 1417);
-    add_machine_instr("LTDR", mach_format::RR, { reg_4_U, reg_4_U }, 1417);
-    add_machine_instr("LTXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1418);
-    add_machine_instr("LCER", mach_format::RR, { reg_4_U, reg_4_U }, 1418);
-    add_machine_instr("LCDR", mach_format::RR, { reg_4_U, reg_4_U }, 1418);
-    add_machine_instr("LCXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1418);
-    add_machine_instr("FIER", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr("FIDR", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr("FIXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr("LDER", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr("LXDR", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr("LXER", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr("LDE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1419);
-    add_machine_instr("LXD", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1419);
-    add_machine_instr("LXE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1419);
-    add_machine_instr("LNDR", mach_format::RR, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr("LNER", mach_format::RR, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr("LPDR", mach_format::RR, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr("LPER", mach_format::RR, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr("LNXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr("LPXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr("LEDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr("LDXR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr("LRER", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr("LRDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr("LEXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr("MEER", mach_format::RRE, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr("MDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr("MXR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr("MDER", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr("MER", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr("MXDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr("MEE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1422);
-    add_machine_instr("MD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422);
-    add_machine_instr("MDE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422);
-    add_machine_instr("MXD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422);
-    add_machine_instr("ME", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422);
-    add_machine_instr("MAER", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423);
-    add_machine_instr("MADR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423);
-    add_machine_instr("MAD", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423);
-    add_machine_instr("MAE", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423);
-    add_machine_instr("MSER", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423);
-    add_machine_instr("MSDR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423);
-    add_machine_instr("MSE", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423);
-    add_machine_instr("MSD", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423);
-    add_machine_instr("MAYR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1424);
-    add_machine_instr("MAYHR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1424);
-    add_machine_instr("MAYLR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1424);
-    add_machine_instr("MAY", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1424);
-    add_machine_instr("MAYH", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1424);
-    add_machine_instr("MAYL", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1424);
-    add_machine_instr("MYR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1426);
-    add_machine_instr("MYHR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1426);
-    add_machine_instr("MYLR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1426);
-    add_machine_instr("MY", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426);
-    add_machine_instr("MYH", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426);
-    add_machine_instr("MYL", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426);
-    add_machine_instr("SQER", mach_format::RRE, { reg_4_U, reg_4_U }, 1427);
-    add_machine_instr("SQDR", mach_format::RRE, { reg_4_U, reg_4_U }, 1427);
-    add_machine_instr("SQXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1427);
-    add_machine_instr("SQE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1427);
-    add_machine_instr("SQD", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1427);
-    add_machine_instr("SER", mach_format::RR, { reg_4_U, reg_4_U }, 1428);
-    add_machine_instr("SDR", mach_format::RR, { reg_4_U, reg_4_U }, 1428);
-    add_machine_instr("SXR", mach_format::RR, { reg_4_U, reg_4_U }, 1428);
-    add_machine_instr("SE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1428);
-    add_machine_instr("SD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1428);
-    add_machine_instr("SUR", mach_format::RR, { reg_4_U, reg_4_U }, 1429);
-    add_machine_instr("SWR", mach_format::RR, { reg_4_U, reg_4_U }, 1429);
-    add_machine_instr("SU", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1429);
-    add_machine_instr("SW", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1429);
-    add_machine_instr("AEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1445);
-    add_machine_instr("ADBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1445);
-    add_machine_instr("AXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1445);
-    add_machine_instr("AEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1445);
-    add_machine_instr("ADB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1445);
-    add_machine_instr("CEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1447);
-    add_machine_instr("CDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1447);
-    add_machine_instr("CXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1447);
-    add_machine_instr("CDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1447);
-    add_machine_instr("CEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1447);
-    add_machine_instr("KEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448);
-    add_machine_instr("KDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448);
-    add_machine_instr("KDSA", mach_format::RRE, { reg_4_U, reg_4_U }, 1700);
-    add_machine_instr("KXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448);
-    add_machine_instr("KDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1448);
-    add_machine_instr("KEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1448);
-    add_machine_instr("CEFBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr("CDFBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr("CXFBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr("CEGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr("CDGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr("CXGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr("CEFBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr("CDFBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr("CXFBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr("CEGBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr("CDGBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr("CXGBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr("CELFBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr("CDLFBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr("CXLFBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr("CELGBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr("CDLGBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr("CXLGBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr("CFEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr("CFDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr("CFXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr("CGEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr("CGDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr("CGXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr("CFEBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr("CFDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr("CFXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr("CGEBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr("CGDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr("CGXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr("CLFEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr("CLFDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr("CLFXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr("CLGEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr("CLGDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr("CLGXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr("DEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1457);
-    add_machine_instr("DDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1457);
-    add_machine_instr("DXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1457);
-    add_machine_instr("DEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1457);
-    add_machine_instr("DDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1457);
-    add_machine_instr("DIEBR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1458);
-    add_machine_instr("DIDBR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1458);
-    add_machine_instr("LTEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr("LTDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr("LTXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr("LCEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr("LCDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr("LCXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr("ECCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 39);
-    add_machine_instr("EPCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 39);
-    add_machine_instr("ECPGA", mach_format::RRE, { reg_4_U, reg_4_U }, 39);
-    add_machine_instr("FIEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462);
-    add_machine_instr("FIDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462);
-    add_machine_instr("FIXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462);
-    add_machine_instr("FIEBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462);
-    add_machine_instr("FIDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462);
-    add_machine_instr("FIXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462);
-    add_machine_instr("LSCTL", mach_format::S, { db_12_4_U }, 42);
-    add_machine_instr("LDEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463);
-    add_machine_instr("LXDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463);
-    add_machine_instr("LPCTL", mach_format::S, { db_12_4_U }, 41);
-    add_machine_instr("LCCTL", mach_format::S, { db_12_4_U }, 40);
-    add_machine_instr("LXEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463);
-    add_machine_instr("LDEB", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr("LXDB", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr("LXEB", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr("LNEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr("LNDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr("LNXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr("LPEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr("LPDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr("LPXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr("LEDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr("LDXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr("LEXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr("LEDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465);
-    add_machine_instr("LDXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465);
-    add_machine_instr("LEXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465);
-    add_machine_instr("LPP", mach_format::S, { db_12_4_U }, 11);
-    add_machine_instr("MEEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
-    add_machine_instr("MDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
-    add_machine_instr("MXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
-    add_machine_instr("MDEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
-    add_machine_instr("MXDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
-    add_machine_instr("MEEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467);
-    add_machine_instr("MDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467);
-    add_machine_instr("MDEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467);
-    add_machine_instr("MXDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467);
-    add_machine_instr("MADBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468);
-    add_machine_instr("MAEBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468);
-    add_machine_instr("MAEB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468);
-    add_machine_instr("MADB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468);
-    add_machine_instr("MSEBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468);
-    add_machine_instr("MSDBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468);
-    add_machine_instr("MSEB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468);
-    add_machine_instr("MSDB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468);
-    add_machine_instr("QCTRI", mach_format::S, { db_12_4_U }, 43);
-    add_machine_instr("QSI", mach_format::S, { db_12_4_U }, 45);
-    add_machine_instr("SCCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 46);
-    add_machine_instr("SPCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 47);
-    add_machine_instr("SQEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr("SQDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr("SQXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr("SQEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470);
-    add_machine_instr("SQDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470);
-    add_machine_instr("SEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr("SDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr("SXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr("SEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470);
-    add_machine_instr("SDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470);
-    add_machine_instr("SORTL", mach_format::RRE, { reg_4_U, reg_4_U }, 19);
-    add_machine_instr("TCEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471);
-    add_machine_instr("TCDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471);
-    add_machine_instr("TCXB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471);
-    add_machine_instr("ADTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1491);
-    add_machine_instr("AXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1491);
-    add_machine_instr("ADTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1491);
-    add_machine_instr("AXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1491);
-    add_machine_instr("CDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1494);
-    add_machine_instr("CXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1494);
-    add_machine_instr("KDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495);
-    add_machine_instr("KXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495);
-    add_machine_instr("CEDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495);
-    add_machine_instr("CEXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495);
-    add_machine_instr("CDGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1496);
-    add_machine_instr("CXGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1496);
-    add_machine_instr("CDGTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496);
-    add_machine_instr("CXGTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496);
-    add_machine_instr("CDFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496);
-    add_machine_instr("CXFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496);
-    add_machine_instr("CDLGTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497);
-    add_machine_instr("CXLGTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497);
-    add_machine_instr("CDLFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497);
-    add_machine_instr("CXLFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497);
-    add_machine_instr("CDPT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1498);
-    add_machine_instr("CXPT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1498);
-    add_machine_instr("CDSTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500);
-    add_machine_instr("CXSTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500);
-    add_machine_instr("CDUTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500);
-    add_machine_instr("CXUTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500);
-    add_machine_instr("CDZT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1501);
-    add_machine_instr("CXZT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1501);
-    add_machine_instr("CGDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1501);
-    add_machine_instr("CGXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1501);
-    add_machine_instr("CGDTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502);
-    add_machine_instr("CGXTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502);
-    add_machine_instr("CFDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502);
-    add_machine_instr("CFXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502);
-    add_machine_instr("CLGDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504);
-    add_machine_instr("CLGXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504);
-    add_machine_instr("CLFDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504);
-    add_machine_instr("CLFXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504);
-    add_machine_instr("CPDT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1505);
-    add_machine_instr("CPXT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1505);
-    add_machine_instr("CSDTR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1507);
-    add_machine_instr("CSXTR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1507);
-    add_machine_instr("CUDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1507);
-    add_machine_instr("CUXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1507);
-    add_machine_instr("CZDT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1508);
-    add_machine_instr("CZXT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1508);
-    add_machine_instr("DDTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1509);
-    add_machine_instr("DXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1509);
-    add_machine_instr("DDTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1509);
-    add_machine_instr("DXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1509);
-    add_machine_instr("EEXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511);
-    add_machine_instr("EEDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511);
-    add_machine_instr("ESDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511);
-    add_machine_instr("ESXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511);
-    add_machine_instr("IEDTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 1512);
-    add_machine_instr("IEXTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 1512);
-    add_machine_instr("LTDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1513);
-    add_machine_instr("LTXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1513);
-    add_machine_instr("FIDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1514);
-    add_machine_instr("FIXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1514);
-    add_machine_instr("LDETR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1517);
-    add_machine_instr("LXDTR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1517);
-    add_machine_instr("LEDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1518);
-    add_machine_instr("LDXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1518);
-    add_machine_instr("MDTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1519);
-    add_machine_instr("MXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1519);
-    add_machine_instr("MDTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1520);
-    add_machine_instr("MXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1520);
-    add_machine_instr("QADTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1521);
-    add_machine_instr("QAXTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1521);
-    add_machine_instr("RRDTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1524);
-    add_machine_instr("RRXTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1524);
-    add_machine_instr("SELFHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864);
-    add_machine_instr("SELGR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864);
-    add_machine_instr("SELR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864);
-    add_machine_instr("SLDT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526);
-    add_machine_instr("SLXT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526);
-    add_machine_instr("SRDT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526);
-    add_machine_instr("SRXT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526);
-    add_machine_instr("SDTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1527);
-    add_machine_instr("SXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1527);
-    add_machine_instr("SDTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1527);
-    add_machine_instr("SXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1527);
-    add_machine_instr("TDCET", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1528);
-    add_machine_instr("TDCDT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1528);
-    add_machine_instr("TDCXT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1528);
-    add_machine_instr("TDGET", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529);
-    add_machine_instr("TDGDT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529);
-    add_machine_instr("TDGXT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529);
-    add_machine_instr("VBPERM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1536);
-    add_machine_instr("VGEF", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1536);
-    add_machine_instr("VCFPS", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1641);
-    add_machine_instr("VCLFP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1611);
-    add_machine_instr("VGEG", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1536);
-    add_machine_instr("VGBM", mach_format::VRI_a, { vec_reg_5_U, imm_16_U }, 1537);
-    add_machine_instr("VGM", mach_format::VRI_b, { vec_reg_5_U, imm_8_U, imm_8_U, mask_4_U }, 1537);
-    add_machine_instr("VL", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U_opt }, 1538);
-    add_machine_instr("VSTEBRF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr("VSTEBRG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr("VLLEBRZ", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1562);
-    add_machine_instr("VLREP", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1538);
-    add_machine_instr("VLR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U }, 1538);
-    add_machine_instr("VLEB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1538);
-    add_machine_instr("VLEBRH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1561);
-    add_machine_instr("VLEBRG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1561);
-    add_machine_instr("VLBRREP", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1562);
-    add_machine_instr("VLER", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1564);
-    add_machine_instr("VLBR", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1563);
-    add_machine_instr("VLEH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
-    add_machine_instr("VLEIH", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr("VLEF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
-    add_machine_instr("VLEIF", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr("VLEG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
-    add_machine_instr("VLEIG", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr("VLEIB", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr("VLGV", mach_format::VRS_c, { reg_4_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1539);
-    add_machine_instr("VLLEZ", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1540);
-    add_machine_instr("VLM", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U_opt }, 1541);
-    add_machine_instr("VLRLR", mach_format::VRS_d, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1541);
-    add_machine_instr("VLRL", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1541);
-    add_machine_instr("VLBB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1542);
-    add_machine_instr("VLVG", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U, mask_4_U }, 1543);
-    add_machine_instr("VLVGP", mach_format::VRR_f, { vec_reg_5_U, reg_4_U, reg_4_U }, 1543);
-    add_machine_instr("VLL", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1543);
-    add_machine_instr("VMRH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1544);
-    add_machine_instr("VMRL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1544);
-    add_machine_instr("VPK", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1545);
-    add_machine_instr("VPKS", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1545);
-    add_machine_instr("VPKLS", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1546);
-    add_machine_instr("VPERM", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1547);
-    add_machine_instr("VPDI", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1547);
-    add_machine_instr("VREP", mach_format::VRI_c, { vec_reg_5_U, vec_reg_5_U, imm_16_U, mask_4_U }, 1547);
-    add_machine_instr("VREPI", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1548);
-    add_machine_instr("VSCEF", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1548);
-    add_machine_instr("VSCEG", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1548);
-    add_machine_instr("VSEL", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1549);
-    add_machine_instr("VSEG", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1549);
-    add_machine_instr("VSTBR", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr("VST", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U_opt }, 1550);
-    add_machine_instr("VSTEB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr("VSTEBRH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr("VSTEH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr("VSTEF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr("VSTEG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr("VSTER", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1578);
-    add_machine_instr("VSTM", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U_opt }, 1551);
-    add_machine_instr("VSTRLR", mach_format::VRS_d, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1551);
-    add_machine_instr("VSTRL", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1551);
-    add_machine_instr("VSTL", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1552);
-    add_machine_instr("VUPH", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1552);
-    add_machine_instr("VUPL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1553);
-    add_machine_instr("VUPLH", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1553);
-    add_machine_instr("VUPLL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1554);
-    add_machine_instr("VA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1557);
-    add_machine_instr("VACC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1558);
-    add_machine_instr(
-        "VAC", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1558);
-    add_machine_instr(
-        "VACCC", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1559);
-    add_machine_instr("VN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1559);
-    add_machine_instr("VNC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1559);
-    add_machine_instr("VAVG", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1560);
-    add_machine_instr("VAVGL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1560);
-    add_machine_instr("VCKSM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1560);
-    add_machine_instr("VEC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1561);
-    add_machine_instr("VECL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1561);
-    add_machine_instr("VCEQ", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1561);
-    add_machine_instr("VCH", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1562);
-    add_machine_instr("VCHL", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1563);
-    add_machine_instr("VCLZ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1564);
-    add_machine_instr("VCTZ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1564);
-    add_machine_instr("VGFM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1565);
-    add_machine_instr("VX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1565);
-    add_machine_instr("VLC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566);
-    add_machine_instr(
-        "VGFMA", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566);
-    add_machine_instr("VLP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566);
-    add_machine_instr("VMX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567);
-    add_machine_instr("VMXL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567);
-    add_machine_instr("VMN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567);
-    add_machine_instr("VMNL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1568);
-    add_machine_instr(
-        "VMAL", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1568);
-    add_machine_instr(
-        "VMAH", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
-    add_machine_instr(
-        "VMALH", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
-    add_machine_instr(
-        "VMAE", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
-    add_machine_instr(
-        "VMALE", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
-    add_machine_instr(
-        "VMAO", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570);
-    add_machine_instr(
-        "VMALO", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570);
-    add_machine_instr("VMH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570);
-    add_machine_instr("VMLH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1571);
-    add_machine_instr("VML", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1571);
-    add_machine_instr("VME", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
-    add_machine_instr("VMLE", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
-    add_machine_instr("VMO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
-    add_machine_instr("VMLO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
-    add_machine_instr(
-        "VMSL", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1573);
-    add_machine_instr("VNN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
-    add_machine_instr("VNO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
-    add_machine_instr("VNX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
-    add_machine_instr("VO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
-    add_machine_instr("VOC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1575);
-    add_machine_instr("VPOPCT", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1575);
-    add_machine_instr("VERLLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1575);
-    add_machine_instr("VERLL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1575);
-    add_machine_instr("VERIM", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1576);
-    add_machine_instr("VESLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1577);
-    add_machine_instr("VESL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1577);
-    add_machine_instr("VESRAV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1577);
-    add_machine_instr("VESRA", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1577);
-    add_machine_instr("VESRLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1578);
-    add_machine_instr("VESRL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1578);
-    add_machine_instr("VSLD", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1607);
-    add_machine_instr("VSRD", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1608);
-    add_machine_instr("VSLDB", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1579);
-    add_machine_instr("VSL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579);
-    add_machine_instr("VSLB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579);
-    add_machine_instr("VSRA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579);
-    add_machine_instr("VSRAB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580);
-    add_machine_instr("VSRL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580);
-    add_machine_instr("VSRLB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580);
-    add_machine_instr("VS", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1580);
-    add_machine_instr("VSCBI", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1581);
-    add_machine_instr("VCSFP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1644);
-    add_machine_instr(
-        "VSBI", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1581);
-    add_machine_instr(
-        "VSBCBI", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1582);
-    add_machine_instr("VSUMG", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1582);
-    add_machine_instr("VSUMQ", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1583);
-    add_machine_instr("VSUM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1583);
-    add_machine_instr("VTM", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U }, 1584);
-    add_machine_instr(
-        "VFAE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt }, 1585);
-    add_machine_instr(
-        "VFEE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt }, 1587);
-    add_machine_instr(
-        "VFENE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt }, 1588);
-    add_machine_instr("VISTR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt }, 1589);
-    add_machine_instr("VSTRC",
-        mach_format::VRR_d,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt },
-        1590);
-    add_machine_instr("VSTRS",
-        mach_format::VRR_d,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt },
-        1622);
-    add_machine_instr("VFA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1595);
-    add_machine_instr("WFC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1599);
-    add_machine_instr("WFK", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1600);
-    add_machine_instr(
-        "VFCE", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1601);
-    add_machine_instr(
-        "VFCH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1603);
-    add_machine_instr(
-        "VFCHE", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1605);
-    add_machine_instr("VCFPS", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1607);
-    add_machine_instr("VCFPL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1643);
-    add_machine_instr("VCLGD", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1611);
-    add_machine_instr("VFD", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1613);
-    add_machine_instr("VFI", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1615);
-    add_machine_instr("VFLL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1617);
-    add_machine_instr("VFLR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1618);
-    add_machine_instr(
-        "VFMAX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1619);
-    add_machine_instr(
-        "VFMIN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1625);
-    add_machine_instr("VFM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1631);
-    add_machine_instr(
-        "VFMA", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1633);
-    add_machine_instr(
-        "VFMS", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1633);
-    add_machine_instr(
-        "VFNMA", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1633);
-    add_machine_instr(
-        "VFNMS", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1633);
-    add_machine_instr("VFPSO", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1635);
-    add_machine_instr("VFSQ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1636);
-    add_machine_instr("VFS", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1637);
-    add_machine_instr("VFTCI", mach_format::VRI_e, { vec_reg_5_U, vec_reg_5_U, imm_12_S, mask_4_U, mask_4_U }, 1638);
-    add_machine_instr("VAP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1643);
-    add_machine_instr("VCP", mach_format::VRR_h, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1644);
-    add_machine_instr("VCVB", mach_format::VRR_i, { reg_4_U, vec_reg_5_U, mask_4_U }, 1645);
-    add_machine_instr("VCVBG", mach_format::VRR_i, { reg_4_U, vec_reg_5_U, mask_4_U }, 1645);
-    add_machine_instr("VCVD", mach_format::VRI_i, { vec_reg_5_U, reg_4_U, imm_8_S, mask_4_U }, 1646);
-    add_machine_instr("VCVDG", mach_format::VRI_i, { vec_reg_5_U, reg_4_U, imm_8_S, mask_4_U }, 1646);
-    add_machine_instr("VDP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1648);
-    add_machine_instr("VMP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1650);
-    add_machine_instr("VMSP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1651);
-    add_machine_instr("VRP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1654);
-    add_machine_instr("VSDP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1656);
-    add_machine_instr("VSP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1658);
-    add_machine_instr("VLIP", mach_format::VRI_h, { vec_reg_5_U, imm_16_S, imm_4_U }, 1649);
-    add_machine_instr("VPKZ", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1652);
-    add_machine_instr("VPSOP", mach_format::VRI_g, { vec_reg_5_U, vec_reg_5_U, imm_8_U, imm_8_U, mask_4_U }, 1653);
-    add_machine_instr("VSRP", mach_format::VRI_g, { vec_reg_5_U, vec_reg_5_U, imm_8_U, imm_8_S, mask_4_U }, 1657);
-    add_machine_instr("SIE", mach_format::S, { db_12_4_U }, 7);
-    add_machine_instr("VAD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VADS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VDDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMADS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VCDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VAS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VSS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VNS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VOS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VXS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VCS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMSE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMSES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VLINT", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VDD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VDDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VDE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VDES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMXAD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VMXAE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VMXSE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VNVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VOVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VLCVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VLELE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VLELD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VLI", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VLID", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VLBIX", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VLVCU", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VLVCA", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VLVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VMNSD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VMNSE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VMRRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VMRSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VACRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VACSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VSTVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VSTVP", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VSVMM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VTVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VXELE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VXELD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VXVC", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VXVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VXVMM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VSTI", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VSTID", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VRCL", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VRRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VRSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VRSVC", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VSLL", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VSPSD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VZPSD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VSRRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VSRSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VOVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VCVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VCZVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VCOVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr("VTP", mach_format::VRR_g, { vec_reg_5_U }, 1660);
-    add_machine_instr("VUPKZ", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1660);
-    add_machine_instr("VSTK", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VSE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VSES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VSTD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VSTKD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VSTMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VSTH", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VLD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VLH", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VLMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VLY", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VLYD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VM", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMAD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMAES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMCD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMCE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VMES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VACD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VACE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VAE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VAES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VC", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VCD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VCE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr("VCES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    for (const auto& i : instructions)
+        result.emplace(
+            i.name, i.format, std::vector(i.op_format.data(), i.op_format.data() + i.op_format_size), i.page_no);
 
     return result;
 }
 
-const std::set<machine_instruction, machine_instruction_comparer>* machine_instructions =
+const std::set<machine_instruction, machine_instruction_comparer>* const machine_instructions =
     &instruction::all_machine_instructions();
 
 const std::set<machine_instruction, machine_instruction_comparer>& instruction::all_machine_instructions()
@@ -2748,7 +2761,7 @@ static auto generate_mnemonic_codes()
     return result;
 }
 
-const std::map<std::string_view, mnemonic_code>* mnemonic_codes = &instruction::all_mnemonic_codes();
+const std::map<std::string_view, mnemonic_code>* const mnemonic_codes = &instruction::all_mnemonic_codes();
 
 const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name)
 {

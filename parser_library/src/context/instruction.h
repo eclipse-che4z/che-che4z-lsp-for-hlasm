@@ -206,7 +206,7 @@ class reladdr_transform_mask
     unsigned char m_mask;
 
 public:
-    constexpr reladdr_transform_mask(unsigned char m)
+    explicit constexpr reladdr_transform_mask(unsigned char m)
         : m_mask(m)
     {}
     constexpr unsigned char mask() const { return m_mask; }
