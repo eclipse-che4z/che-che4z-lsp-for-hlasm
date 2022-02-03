@@ -222,7 +222,7 @@ jobs:
     name: Alpine VSIX
     runs-on: ubuntu-20.04
     container:
-      image: alpine:3.10
+      image: alpine:3.15
 
     steps:
       - uses: actions/checkout@v1
