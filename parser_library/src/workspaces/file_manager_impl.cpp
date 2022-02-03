@@ -120,7 +120,7 @@ list_directory_result file_manager_impl::list_directory_files(const std::string&
 
 void file_manager_impl::prepare_file_for_change_(std::shared_ptr<file_impl>& file)
 {
-    if (file.unique())
+    if (file.use_count() == 1) // TODO: possible weak_ptr issue
         return;
     // another shared ptr to this file exists, we need to create a copy
     auto proc_file = std::dynamic_pointer_cast<processor_file>(file);
