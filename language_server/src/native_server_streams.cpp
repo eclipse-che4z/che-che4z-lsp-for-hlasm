@@ -19,7 +19,6 @@
 
 #define ASIO_STANDALONE
 #include "asio.hpp"
-#include "asio/stream_socket_service.hpp"
 #include "asio/system_error.hpp"
 
 #ifdef _WIN32 // set binary mode for input on windows
