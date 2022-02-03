@@ -245,7 +245,7 @@ jobs:
       - name: Configure
         run: mkdir build && cd build && cmake -G Ninja ../
       - name: Build
-        run: cd build && cmake --build .
+        run: chown `id -u`:`id -g` . && cd build && cmake --build .
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
       - name: Get VSIX filename
