@@ -506,7 +506,7 @@ static auto generate_machine_instructions()
 
     struct iname
     {
-        constexpr iname(std::string_view n)
+        explicit constexpr iname(std::string_view n)
             : len((unsigned char)n.size())
             , data {}
         {
@@ -517,7 +517,7 @@ static auto generate_machine_instructions()
         unsigned char len;
         std::array<char, 7> data;
 
-        constexpr operator std::string_view() const { return std::string_view(data.data(), len); }
+        constexpr std::string_view to_string_view() const { return std::string_view(data.data(), len); }
     };
     struct instruction_definition
     {
@@ -536,7 +536,8 @@ static auto generate_machine_instructions()
         mach_format format;
 
         short page_no;
-    } static constexpr instructions[] = {
+    };
+    static constexpr instruction_definition instructions[] = {
         { "AR", RR_2, 510 },
         { "ADDFRR", RRE_2, 7 },
         { "AGR", RRE_2, 510 },
@@ -1896,7 +1897,8 @@ static auto generate_machine_instructions()
     };
 
     for (const auto& i : instructions)
-        result.emplace(i.name, i.format, std::vector(i.op_format, i.op_format + i.op_format_size), i.page_no);
+        result.emplace(
+            i.name.to_string_view(), i.format, std::vector(i.op_format, i.op_format + i.op_format_size), i.page_no);
 
     return result;
 }
