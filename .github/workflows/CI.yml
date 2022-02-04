@@ -20,7 +20,6 @@ on:
       - master
       - development
       - release**
-      - cpp20
   pull_request:
     branches:
       - master
