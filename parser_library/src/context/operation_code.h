@@ -23,7 +23,7 @@
 namespace hlasm_plugin::parser_library::context {
 struct ca_instruction;
 struct assembler_instruction;
-struct machine_instruction;
+class machine_instruction;
 struct mnemonic_code;
 
 // structure that represents operation code of an instruction

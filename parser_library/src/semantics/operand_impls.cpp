@@ -687,7 +687,7 @@ void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_
     if (auto mnem_tmp = context::instruction::find_mnemonic_codes(*instruction))
         mask = mnem_tmp->reladdr_mask.mask();
     else
-        mask = context::instruction::get_machine_instructions(*instruction).reladdr_mask.mask();
+        mask = context::instruction::get_machine_instructions(*instruction).reladdr_mask().mask();
 
     for (const auto& operand : op_list)
     {

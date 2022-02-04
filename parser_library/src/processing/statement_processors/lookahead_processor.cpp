@@ -267,7 +267,7 @@ void lookahead_processor::assign_machine_attributes(context::id_index symbol_nam
     }(*statement.opcode_ref().value);
 
     register_attr_ref(symbol_name,
-        context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)instr.size_for_alloc / 8));
+        context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)instr.size_in_bits() / 8));
 }
 
 void lookahead_processor::assign_assembler_attributes(

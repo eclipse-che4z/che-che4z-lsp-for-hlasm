@@ -241,7 +241,7 @@ TEST(mach_instr_processing, rel_addr_bitmask)
              { "BPRP", 0x60 },
          })
     {
-        EXPECT_EQ(context::instruction::get_machine_instructions(instr).reladdr_mask.mask(), expected) << instr;
+        EXPECT_EQ(context::instruction::get_machine_instructions(instr).reladdr_mask().mask(), expected) << instr;
     }
 
     for (const auto& [instr, expected] : std::initializer_list<std::pair<std::string, int>> {

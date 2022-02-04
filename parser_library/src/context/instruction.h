@@ -18,10 +18,11 @@
 #include <algorithm>
 #include <array>
 #include <functional>
+#include <limits>
 #include <map>
 #include <set>
+#include <span>
 #include <string>
-#include <vector>
 
 #include "checking/instr_operand.h"
 #include "diagnostic.h"
@@ -221,36 +222,63 @@ public:
     }
 };
 
-// machine instruction representation for checking
-struct machine_instruction
+template<unsigned char n>
+class inline_string
 {
-    static unsigned char generate_reladdr_bitmask(const std::vector<checking::machine_operand_format>& operands);
+    unsigned char len;
+    std::array<char, n> data;
 
-    std::string_view instr_name;
+public:
+    explicit constexpr inline_string(std::string_view s)
+        : len((unsigned char)s.size())
+        , data {}
+    {
+        assert(s.size() <= n);
+        size_t i = 0;
+        for (char c : s)
+            data[i++] = c;
+    }
+
+    constexpr std::string_view to_string_view() const { return std::string_view(data.data(), len); }
+
+    friend std::strong_ordering operator<=>(const inline_string& l, const inline_string& r)
+    {
+        return l.to_string_view() <=> r.to_string_view();
+    }
+};
+
+
+struct instruction_format_definition
+{
+    std::span<const checking::machine_operand_format> op_format;
+
     mach_format format;
-    char size_for_alloc;
-    short page_no;
-    short no_optional;
-    reladdr_transform_mask reladdr_mask;
-    std::vector<checking::machine_operand_format> operands; // what the vector of operands should look like
+};
 
+// machine instruction representation for checking
+class machine_instruction
+{
+    // Generates a bitmask for an arbitrary machine instruction indicating which operands
+    // are of the RI type (and therefore are modified by transform_reloc_imm_operands)
+    static constexpr unsigned char generate_reladdr_bitmask(std::span<const checking::machine_operand_format> operands)
+    {
+        unsigned char result = 0;
 
-    machine_instruction(std::string_view name,
-        mach_format format,
-        std::vector<checking::machine_operand_format> operands,
-        short page_no)
-        : instr_name(name)
-        , format(format)
-        , size_for_alloc(get_length_by_format(format))
-        , page_no(page_no)
-        , no_optional((short)std::count_if(operands.begin(), operands.end(), [](const auto& o) { return o.optional; }))
-        , reladdr_mask(generate_reladdr_bitmask(operands))
-        , operands(std::move(operands))
-    {}
+        assert(operands.size() <= std::numeric_limits<decltype(result)>::digits);
 
-    bool check_nth_operand(size_t place, const checking::machine_operand* operand);
+        decltype(result) top_bit = 1 << (std::numeric_limits<decltype(result)>::digits - 1);
 
-    static char get_length_by_format(mach_format instruction_format)
+        for (const auto& op : operands)
+        {
+            if (op.identifier.type == checking::machine_operand_type::RELOC_IMM)
+                result |= top_bit;
+            top_bit >>= 1;
+        }
+
+        return result;
+    }
+
+    static constexpr char get_length_by_format(mach_format instruction_format)
     {
         auto interval = (int)(instruction_format);
         if (interval >= (int)mach_format::length_48)
@@ -261,30 +289,56 @@ struct machine_instruction
             return 16;
         return 0;
     }
+
+    inline_string<7> m_name;
+
+    mach_format m_format;
+    char m_size_in_bits;
+    unsigned short m_page_no;
+
+    reladdr_transform_mask m_reladdr_mask;
+    unsigned char m_optional_op_count;
+    unsigned char m_operand_len;
+
+    const checking::machine_operand_format* m_operands;
+
+public:
+    constexpr machine_instruction(std::string_view name,
+        mach_format format,
+        std::span<const checking::machine_operand_format> operands,
+        unsigned short page_no)
+        : m_name(name)
+        , m_format(format)
+        , m_size_in_bits(get_length_by_format(format))
+        , m_page_no(page_no)
+        , m_reladdr_mask(generate_reladdr_bitmask(operands))
+        , m_optional_op_count(
+              (unsigned char)std::ranges::count(operands, true, &checking::machine_operand_format::optional))
+        , m_operand_len((unsigned char)operands.size())
+        , m_operands(operands.data())
+    {
+        assert(operands.size() <= std::numeric_limits<decltype(m_operand_len)>::max());
+    }
+    constexpr machine_instruction(std::string_view name, instruction_format_definition ifd, unsigned short page_no)
+        : machine_instruction(name, ifd.format, ifd.op_format, page_no)
+    {}
+
+    constexpr std::string_view name() const { return m_name.to_string_view(); }
+    mach_format format() const { return m_format; }
+    constexpr size_t page_no() const { return m_page_no; }
+    constexpr size_t size_in_bits() const { return m_size_in_bits; }
+    constexpr reladdr_transform_mask reladdr_mask() const { return m_reladdr_mask; }
+    constexpr std::span<const checking::machine_operand_format> operands() const
+    {
+        return std::span<const checking::machine_operand_format>(m_operands, m_operand_len);
+    }
+    constexpr size_t optional_operand_count() const { return m_optional_op_count; }
+
+    bool check_nth_operand(size_t place, const checking::machine_operand* operand);
     bool check(std::string_view name_of_instruction,
         const std::vector<const checking::machine_operand*> operands,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const; // input vector is the vector of the actual incoming values
-};
-
-struct machine_instruction_comparer
-{
-    using is_transparent = void;
-
-    bool operator()(const machine_instruction& l, const machine_instruction& r) const
-    {
-        return l.instr_name < r.instr_name;
-    }
-    template<typename L>
-    bool operator()(const L& l, const machine_instruction& r) const
-    {
-        return l < r.instr_name;
-    }
-    template<typename R>
-    bool operator()(const machine_instruction& l, const R& r) const
-    {
-        return l.instr_name < r;
-    }
 };
 
 struct ca_instruction
@@ -311,7 +365,10 @@ struct mnemonic_code
 
     reladdr_transform_mask reladdr_mask;
 
-    size_t operand_count() const { return instruction->operands.size() + instruction->no_optional - replaced.size(); }
+    size_t operand_count() const
+    {
+        return instruction->operands().size() + instruction->optional_operand_count() - replaced.size();
+    }
 };
 
 // machine instruction common representation
@@ -348,7 +405,7 @@ public:
 
     static const machine_instruction& get_machine_instructions(std::string_view name);
     static const machine_instruction* find_machine_instructions(std::string_view name);
-    static const std::set<machine_instruction, machine_instruction_comparer>& all_machine_instructions();
+    static std::span<const machine_instruction> all_machine_instructions();
 
     static const mnemonic_code& get_mnemonic_codes(std::string_view name);
     static const mnemonic_code* find_mnemonic_codes(std::string_view name);

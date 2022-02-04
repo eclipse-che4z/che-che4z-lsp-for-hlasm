@@ -218,12 +218,12 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     // check whether substituted mnemonic values are ok
 
     // check size of mnemonic operands
-    int diff = (int)curr_instr->operands.size() - (int)operands.size() - (int)mnemonic.replaced.size();
-    if (std::abs(diff) > curr_instr->no_optional)
+    int diff = (int)curr_instr->operands().size() - (int)operands.size() - (int)mnemonic.replaced.size();
+    if (std::abs(diff) > curr_instr->optional_operand_count())
     {
         auto curr_diag = diagnostic_op::error_optional_number_of_operands(instr_name,
-            curr_instr->no_optional,
-            (int)curr_instr->operands.size() - (int)mnemonic.replaced.size(),
+            curr_instr->optional_operand_count(),
+            (int)curr_instr->operands().size() - (int)mnemonic.replaced.size(),
             stmt.stmt_range_ref());
 
         add_diagnostic(curr_diag);
@@ -236,7 +236,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 
     std::vector<checking::check_op_ptr> operand_vector;
     // create vector of empty operands
-    for (size_t i = 0; i < curr_instr->operands.size() + curr_instr->no_optional; i++)
+    for (size_t i = 0; i < curr_instr->operands().size() + curr_instr->optional_operand_count(); i++)
         operand_vector.push_back(nullptr);
     // add substituted
     for (size_t i = 0; i < mnemonic.replaced.size(); i++)
@@ -316,9 +316,9 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     {
         const auto* instr = mnemonic ? mnemonic->instruction
                                      : &context::instruction::get_machine_instructions(*stmt.opcode_ref().value);
-        if (instr->operands.size() > op_position)
+        if (op_position < instr->operands().size())
         {
-            auto type = instr->operands[op_position].identifier.type;
+            auto type = instr->operands()[op_position].identifier.type;
             uniq = mach_op->get_operand_value(dep_solver, type);
         }
         else

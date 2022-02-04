@@ -179,7 +179,7 @@ struct processing_status_visitor
     processing_status operator()(const context::machine_instruction* i) const
     {
         return return_value(processing_form::MACH,
-            i->operands.empty() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            i->operands().empty() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
             context::instruction_type::MACH);
     }
     processing_status operator()(const context::ca_instruction* i) const
