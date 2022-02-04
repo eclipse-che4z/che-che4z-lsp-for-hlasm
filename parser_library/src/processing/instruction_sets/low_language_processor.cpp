@@ -213,17 +213,19 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     // the associated mnemonic structure with the given name
     auto mnemonic = context::instruction::get_mnemonic_codes(instr_name);
     // the machine instruction structure associated with the given instruction name
-    auto curr_instr = mnemonic.instruction;
+    auto curr_instr = mnemonic.instruction();
+
+    auto replaced = mnemonic.replaced_operands();
 
     // check whether substituted mnemonic values are ok
 
     // check size of mnemonic operands
-    int diff = (int)curr_instr->operands().size() - (int)operands.size() - (int)mnemonic.replaced.size();
+    int diff = (int)curr_instr->operands().size() - (int)operands.size() - (int)replaced.size();
     if (std::abs(diff) > curr_instr->optional_operand_count())
     {
         auto curr_diag = diagnostic_op::error_optional_number_of_operands(instr_name,
             curr_instr->optional_operand_count(),
-            (int)curr_instr->operands().size() - (int)mnemonic.replaced.size(),
+            (int)curr_instr->operands().size() - (int)replaced.size(),
             stmt.stmt_range_ref());
 
         add_diagnostic(curr_diag);
@@ -231,7 +233,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     }
 
     std::vector<checking::check_op_ptr> substituted_mnems;
-    for (auto mnem : mnemonic.replaced)
+    for (auto mnem : replaced)
         substituted_mnems.push_back(std::make_unique<checking::one_operand>((int)mnem.second));
 
     std::vector<checking::check_op_ptr> operand_vector;
@@ -239,8 +241,8 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     for (size_t i = 0; i < curr_instr->operands().size() + curr_instr->optional_operand_count(); i++)
         operand_vector.push_back(nullptr);
     // add substituted
-    for (size_t i = 0; i < mnemonic.replaced.size(); i++)
-        operand_vector[mnemonic.replaced[i].first] = std::move(substituted_mnems[i]);
+    for (size_t i = 0; i < replaced.size(); i++)
+        operand_vector[replaced[i].first] = std::move(substituted_mnems[i]);
     // add other
     size_t real_op_idx = 0;
     for (size_t j = 0; j < operand_vector.size() && real_op_idx < operands.size(); j++)
@@ -302,7 +304,7 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     const auto& ev_op = dynamic_cast<const semantics::evaluable_operand&>(*op);
 
     auto tmp = context::instruction::find_assembler_instructions(*stmt.opcode_ref().value);
-    bool can_have_ord_syms = tmp ? tmp->has_ord_symbols : true;
+    bool can_have_ord_syms = tmp ? tmp->has_ord_symbols() : true;
 
     if (can_have_ord_syms && ev_op.has_dependencies(dep_solver))
     {
@@ -314,7 +316,7 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 
     if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(&ev_op))
     {
-        const auto* instr = mnemonic ? mnemonic->instruction
+        const auto* instr = mnemonic ? mnemonic->instruction()
                                      : &context::instruction::get_machine_instructions(*stmt.opcode_ref().value);
         if (op_position < instr->operands().size())
         {

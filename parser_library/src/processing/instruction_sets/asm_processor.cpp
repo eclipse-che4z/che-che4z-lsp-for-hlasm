@@ -623,7 +623,7 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
         for (auto& op : rebuilt_stmt.operands_ref().value)
         {
             auto tmp = context::instruction::find_assembler_instructions(*rebuilt_stmt.opcode_ref().value);
-            bool can_have_ord_syms = tmp ? tmp->has_ord_symbols : true;
+            bool can_have_ord_syms = tmp ? tmp->has_ord_symbols() : true;
 
             if (op->type != semantics::operand_type::EMPTY && can_have_ord_syms
                 && op->access_asm()->has_dependencies(dep_solver))

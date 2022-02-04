@@ -37,7 +37,7 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
 
     const auto& mach_instr = [](const std::string& name) {
         if (auto mnemonic = context::instruction::find_mnemonic_codes(name))
-            return *mnemonic->instruction;
+            return *mnemonic->instruction();
         else
             return context::instruction::get_machine_instructions(name);
     }(*stmt->opcode_ref().value);

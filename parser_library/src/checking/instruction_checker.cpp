@@ -147,7 +147,7 @@ bool machine_checker::check(std::string_view instruction_name,
 
     // instruction is a mnemonic instruction
     if (auto m = context::instruction::find_mnemonic_codes(instruction_name))
-        mach_name = m->instruction->name();
+        mach_name = m->instruction()->name();
 
     return context::instruction::get_machine_instructions(mach_name).check(
         instruction_name, ops, stmt_range, add_diagnostic);

@@ -36,19 +36,19 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map()
         auto id = ids().add(std::string(instr.name()));
         instr_map.emplace(id, &instr);
     }
-    for (const auto& [name, instr] : instruction::all_assembler_instructions())
+    for (const auto& instr : instruction::all_assembler_instructions())
     {
-        auto id = ids().add(std::string(name));
+        auto id = ids().add(std::string(instr.name()));
         instr_map.emplace(id, &instr);
     }
     for (const auto& instr : instruction::all_ca_instructions())
     {
-        auto id = ids().add(std::string(instr.name));
+        auto id = ids().add(std::string(instr.name()));
         instr_map.emplace(id, &instr);
     }
-    for (const auto& [name, instr] : instruction::all_mnemonic_codes())
+    for (const auto& instr : instruction::all_mnemonic_codes())
     {
-        auto id = ids().add(std::string(name));
+        auto id = ids().add(std::string(instr.name()));
         instr_map.emplace(id, &instr);
     }
     return instr_map;

@@ -99,25 +99,24 @@ const std::set<completion_item_s, completion_item_s::label_comparer> completion_
                 completion_item_kind::mach_instr);
         }
 
-        for (const auto& [instr_name, asm_instr] : instruction::all_assembler_instructions())
+        for (const auto& asm_instr : instruction::all_assembler_instructions())
         {
             std::stringstream doc_ss(" ");
             std::stringstream detail_ss("");
 
             // int min_op = asm_instr.second.min_operands;
             // int max_op = asm_instr.second.max_operands;
-            std::string description = asm_instr.description;
 
-            detail_ss << instr_name << "   " << description;
+            detail_ss << asm_instr.name() << "   " << asm_instr.description();
             doc_ss << "Assembler instruction";
-            result.emplace(std::string(instr_name),
+            result.emplace(std::string(asm_instr.name()),
                 detail_ss.str(),
-                std::string(instr_name) + "   " /*+ description*/,
+                std::string(asm_instr.name()) + "   " /*+ description*/,
                 doc_ss.str(),
                 completion_item_kind::asm_instr);
         }
 
-        for (const auto& [mnemonic_name, mnemonic_instr] : instruction::all_mnemonic_codes())
+        for (const auto& mnemonic_instr : instruction::all_mnemonic_codes())
         {
             std::stringstream doc_ss(" ");
             std::stringstream detail_ss("");
@@ -127,13 +126,13 @@ const std::set<completion_item_s, completion_item_s::label_comparer> completion_
             // get mnemonic operands
             size_t iter_over_mnem = 0;
 
-            const auto& mach_operands = mnemonic_instr.instruction->operands();
-            auto no_optional = mnemonic_instr.instruction->optional_operand_count();
+            const auto& mach_operands = mnemonic_instr.instruction()->operands();
+            auto no_optional = mnemonic_instr.instruction()->optional_operand_count();
             bool first = true;
             std::vector<std::string> mnemonic_with_operand_ommited = { "VNOT", "NOTR", "NOTGR" };
 
 
-            auto replaces = mnemonic_instr.replaced;
+            auto replaces = mnemonic_instr.replaced_operands();
 
             for (size_t i = 0; i < mach_operands.size(); i++)
             {
@@ -157,7 +156,7 @@ const std::set<completion_item_s, completion_item_s::label_comparer> completion_
                             subs_ops_mnems << ",";
                         if (std::find(mnemonic_with_operand_ommited.begin(),
                                 mnemonic_with_operand_ommited.end(),
-                                mnemonic_name)
+                                mnemonic_instr.name())
                             != mnemonic_with_operand_ommited.end())
                         {
                             subs_ops_mnems << mach_operands[i - 1].to_string();
@@ -212,22 +211,22 @@ const std::set<completion_item_s, completion_item_s::label_comparer> completion_
                 first = false;
             }
             detail_ss << "Operands: " + subs_ops_nomnems.str();
-            doc_ss << "Mnemonic code for " << mnemonic_instr.instruction->name() << " instruction" << std::endl
+            doc_ss << "Mnemonic code for " << mnemonic_instr.instruction()->name() << " instruction" << std::endl
                    << "Substituted operands: " << subs_ops_mnems.str() << std::endl
                    << "Instruction format: "
-                   << instruction::mach_format_to_string(mnemonic_instr.instruction->format());
-            result.emplace(std::string(mnemonic_name),
+                   << instruction::mach_format_to_string(mnemonic_instr.instruction()->format());
+            result.emplace(std::string(mnemonic_instr.name()),
                 detail_ss.str(),
-                std::string(mnemonic_name) + "   " + subs_ops_nomnems.str(),
+                std::string(mnemonic_instr.name()) + "   " + subs_ops_nomnems.str(),
                 doc_ss.str(),
                 completion_item_kind::mach_instr);
         }
 
         for (const auto& ca_instr : instruction::all_ca_instructions())
         {
-            result.emplace(std::string(ca_instr.name),
+            result.emplace(std::string(ca_instr.name()),
                 "",
-                std::string(ca_instr.name),
+                std::string(ca_instr.name()),
                 "Conditional Assembly",
                 completion_item_kind::ca_instr);
         }

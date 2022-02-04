@@ -341,49 +341,117 @@ public:
         const diagnostic_collector& add_diagnostic) const; // input vector is the vector of the actual incoming values
 };
 
-struct ca_instruction
+class ca_instruction
 {
-    std::string_view name;
-    bool operandless;
+    inline_string<6> m_name;
+    bool m_operandless;
+
+public:
+    constexpr ca_instruction(std::string_view n, bool opless)
+        : m_name(n)
+        , m_operandless(opless)
+    {}
+
+    constexpr auto name() const { return m_name.to_string_view(); }
+    constexpr auto operandless() const { return m_operandless; }
 };
 
 // representation of mnemonic codes for machine instructions
-struct mnemonic_code
+class mnemonic_code
 {
-    static unsigned char generate_reladdr_bitmask(
-        const machine_instruction* instruction, const std::vector<std::pair<size_t, size_t>>& replaced);
-
-    mnemonic_code(const machine_instruction* instr, std::vector<std::pair<size_t, size_t>> replaced)
-        : instruction(instr)
-        , replaced(replaced)
-        , reladdr_mask(generate_reladdr_bitmask(instr, replaced)) {};
-
-    const machine_instruction* instruction;
+    const machine_instruction* m_instruction;
 
     // first goes place, then value
-    std::vector<std::pair<size_t, size_t>> replaced;
+    std::array<std::pair<unsigned char, unsigned char>, 3> m_replaced;
+    unsigned char m_replaced_count;
 
-    reladdr_transform_mask reladdr_mask;
+    reladdr_transform_mask m_reladdr_mask;
 
-    size_t operand_count() const
+    inline_string<9> m_name;
+
+    // Generates a bitmask for an arbitrary mnemonit indicating which operands
+    // are of the RI type (and therefore are modified by transform_reloc_imm_operands)
+    static constexpr unsigned char generate_reladdr_bitmask(const machine_instruction* instruction,
+        std::initializer_list<const std::pair<unsigned char, unsigned char>> replaced)
     {
-        return instruction->operands().size() + instruction->optional_operand_count() - replaced.size();
+        unsigned char result = 0;
+
+        decltype(result) top_bit = 1 << (std::numeric_limits<decltype(result)>::digits - 1);
+
+        auto replaced_b = replaced.begin();
+        auto const replaced_e = replaced.end();
+
+        size_t position = 0;
+        for (const auto& op : instruction->operands())
+        {
+            if (replaced_b != replaced_e && position == replaced_b->first)
+            {
+                ++replaced_b;
+                ++position;
+                continue;
+            }
+
+            if (op.identifier.type == checking::machine_operand_type::RELOC_IMM)
+                result |= top_bit;
+            top_bit >>= 1;
+
+            ++position;
+        }
+        return result;
     }
+
+public:
+    constexpr mnemonic_code(std::string_view name,
+        const machine_instruction* instr,
+        std::initializer_list<const std::pair<unsigned char, unsigned char>> replaced)
+        : m_instruction(instr)
+        , m_replaced {}
+        , m_replaced_count((unsigned char)replaced.size())
+        , m_reladdr_mask(generate_reladdr_bitmask(instr, replaced))
+        , m_name(name)
+    {
+        assert(replaced.size() <= m_replaced.size());
+        size_t i = 0;
+        for (const auto& r : replaced)
+            m_replaced[i++] = r;
+    };
+
+    constexpr const machine_instruction* instruction() const { return m_instruction; }
+    constexpr std::span<const std::pair<unsigned char, unsigned char>> replaced_operands() const
+    {
+        return { m_replaced.data(), m_replaced_count };
+    }
+    constexpr size_t operand_count() const
+    {
+        return m_instruction->operands().size() + m_instruction->optional_operand_count() - m_replaced_count;
+    }
+    constexpr reladdr_transform_mask reladdr_mask() const { return m_reladdr_mask; }
+    constexpr std::string_view name() const { return m_name.to_string_view(); }
 };
 
 // machine instruction common representation
-struct assembler_instruction
+class assembler_instruction
 {
-    int min_operands;
-    int max_operands; // -1 in case there is no max value
-    bool has_ord_symbols;
-    std::string description; // used only for hover and completion
+    inline_string<11> m_name;
+    bool m_has_ord_symbols;
+    int m_min_operands;
+    int m_max_operands; // -1 in case there is no max value
+    std::string_view m_description; // used only for hover and completion
 
-    assembler_instruction(int min_operands, int max_operands, bool has_ord_symbols, std::string description)
-        : min_operands(min_operands)
-        , max_operands(max_operands)
-        , has_ord_symbols(has_ord_symbols)
-        , description(std::move(description)) {};
+public:
+    constexpr assembler_instruction(
+        std::string_view name, int min_operands, int max_operands, bool has_ord_symbols, std::string_view description)
+        : m_name(name)
+        , m_has_ord_symbols(has_ord_symbols)
+        , m_min_operands(min_operands)
+        , m_max_operands(max_operands)
+        , m_description(std::move(description)) {};
+
+    constexpr auto name() const { return m_name.to_string_view(); }
+    constexpr auto has_ord_symbols() const { return m_has_ord_symbols; }
+    constexpr auto min_operands() const { return m_min_operands; }
+    constexpr auto max_operands() const { return m_max_operands; }
+    constexpr auto description() const { return m_description; }
 };
 
 // static class holding string names of instructions with theirs additional info
@@ -397,11 +465,11 @@ public:
 
     static const ca_instruction& get_ca_instructions(std::string_view name);
     static const ca_instruction* find_ca_instructions(std::string_view name);
-    static const std::vector<ca_instruction>& all_ca_instructions();
+    static std::span<const ca_instruction> all_ca_instructions();
 
     static const assembler_instruction& get_assembler_instructions(std::string_view name);
     static const assembler_instruction* find_assembler_instructions(std::string_view name);
-    static const std::map<std::string_view, assembler_instruction>& all_assembler_instructions();
+    static std::span<const assembler_instruction> all_assembler_instructions();
 
     static const machine_instruction& get_machine_instructions(std::string_view name);
     static const machine_instruction* find_machine_instructions(std::string_view name);
@@ -409,7 +477,7 @@ public:
 
     static const mnemonic_code& get_mnemonic_codes(std::string_view name);
     static const mnemonic_code* find_mnemonic_codes(std::string_view name);
-    static const std::map<std::string_view, mnemonic_code>& all_mnemonic_codes();
+    static std::span<const mnemonic_code> all_mnemonic_codes();
 
     static std::string_view mach_format_to_string(mach_format);
 };

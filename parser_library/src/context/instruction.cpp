@@ -187,43 +187,35 @@ std::string_view instruction::mach_format_to_string(mach_format f)
     }
 }
 
-const std::vector<ca_instruction>* const ca_instructions = &instruction::all_ca_instructions();
-
-const std::vector<ca_instruction>& instruction::all_ca_instructions()
-{
-    if (ca_instructions)
-        return *ca_instructions;
-    static const std::vector<ca_instruction> ca_instructions_ = {
-        { "AIF", false },
-        { "AGO", false },
-        { "ACTR", false },
-        { "SETA", false },
-        { "SETB", false },
-        { "SETC", false },
-        { "ANOP", true },
-        { "LCLA", false },
-        { "LCLB", false },
-        { "LCLC", false },
-        { "GBLA", false },
-        { "GBLB", false },
-        { "GBLC", false },
-        { "MACRO", true },
-        { "MEND", true },
-        { "MEXIT", true },
-        { "MHELP", false },
-        { "AEJECT", true },
-        { "AREAD", false },
-        { "ASPACE", false },
-    };
-    return ca_instructions_;
-}
+constexpr ca_instruction ca_instructions[] = {
+    { "ACTR", false },
+    { "AEJECT", true },
+    { "AGO", false },
+    { "AIF", false },
+    { "ANOP", true },
+    { "AREAD", false },
+    { "ASPACE", false },
+    { "GBLA", false },
+    { "GBLB", false },
+    { "GBLC", false },
+    { "LCLA", false },
+    { "LCLB", false },
+    { "LCLC", false },
+    { "MACRO", true },
+    { "MEND", true },
+    { "MEXIT", true },
+    { "MHELP", false },
+    { "SETA", false },
+    { "SETB", false },
+    { "SETC", false },
+};
+static_assert(std::ranges::is_sorted(ca_instructions, {}, &ca_instruction::name));
 
 const ca_instruction* instruction::find_ca_instructions(std::string_view name)
 {
-    auto it = std::find_if(
-        ca_instructions->begin(), ca_instructions->end(), [name](const auto& i) { return i.name == name; });
+    auto it = std::ranges::lower_bound(ca_instructions, name, {}, &ca_instruction::name);
 
-    if (it == ca_instructions->end())
+    if (it == std::ranges::end(ca_instructions) || it->name() != name)
         return nullptr;
     return &*it;
 }
@@ -235,15 +227,70 @@ const ca_instruction& instruction::get_ca_instructions(std::string_view name)
     return *result;
 }
 
-const std::map<std::string_view, assembler_instruction>* const assembler_instructions =
-    &instruction::all_assembler_instructions();
+std::span<const ca_instruction> instruction::all_ca_instructions() { return ca_instructions; }
+
+constexpr assembler_instruction assembler_instructions[] = {
+    { "*PROCESS", 1, -1, true, "" }, // TO DO
+    { "ACONTROL", 1, -1, false, "<selection>+" },
+    { "ADATA", 5, 5, false, "value1,value2,value3,value4,character_string" },
+    { "AINSERT", 2, 2, false, "'record',BACK|FRONT" },
+    { "ALIAS", 1, 1, false, "alias_string" },
+    { "AMODE", 1, 1, false, "amode_option" },
+    { "CATTR", 1, -1, false, "attribute+" },
+    { "CCW", 4, 4, true, "command_code,data_address,flags,data_count" },
+    { "CCW0", 4, 4, true, "command_code,data_address,flags,data_count" },
+    { "CCW1", 4, 4, true, "command_code,data_address,flags,data_count" },
+    { "CEJECT", 0, 1, true, "?number_of_lines" },
+    { "CNOP", 2, 2, true, "byte,boundary" },
+    { "COM", 0, 0, false, "" },
+    { "COPY", 1, 1, false, "member" },
+    { "CSECT", 0, 0, false, "" },
+    { "CXD", 0, 0, false, "" },
+    { "DC", 1, -1, true, "<operand>+" },
+    { "DROP", 0, -1, true, "?<<base_register|label>+>" },
+    { "DS", 1, -1, true, "<operand>+" },
+    { "DSECT", 0, 0, false, "" },
+    { "DXD", 1, -1, true, "<operand>+" },
+    { "EJECT", 0, 0, false, "" },
+    { "END", 0, 2, true, "?expression,?language" },
+    { "ENTRY", 1, -1, true, "entry_point+" },
+    { "EQU",
+        1,
+        5,
+        true,
+        "value,?<length_attribute_value>,?<type_attribute_value>,?<program_type_value>,?<assembler_type_value>" },
+    { "EXITCTL", 2, 5, false, "exit_type,control_value+" },
+    { "EXTRN", 1, -1, false, "<external_symbol>+|PART(<external_symbol>+" },
+    { "ICTL", 1, 3, false, "begin,?<end>,?<continue>" },
+    { "ISEQ", 0, 2, false, "?<left,right>" },
+    { "LOCTR", 0, 0, false, "" },
+    { "LTORG", 0, 0, false, "" },
+    { "MNOTE", 1, 2, false, "?<<severity|*|>,>message" },
+    { "OPSYN", 0, 1, false, "?operation_code_2" },
+    { "ORG", 0, 3, true, "expression?<,boundary?<,offset>>" },
+    { "POP", 1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT" },
+    { "PRINT", 1, -1, false, "operand+" },
+    { "PUNCH", 1, 1, false, "string" },
+    { "PUSH", 1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT" },
+    { "REPRO", 0, 0, false, "" },
+    { "RMODE", 1, 1, false, "rmode_option" },
+    { "RSECT", 0, 0, false, "" },
+    { "SPACE", 0, 1, true, "?number_of_lines" },
+    { "START", 0, 1, true, "?expression" },
+    { "TITLE", 1, 1, false, "title_string" },
+    { "USING", 2, -1, true, "operand+" },
+    { "WXTRN", 1, -1, false, "<external_symbol>+|PART(<external_symbol>+" },
+    { "XATTR", 1, -1, false, "attribute+" },
+
+};
+static_assert(std::ranges::is_sorted(assembler_instructions, {}, &assembler_instruction::name));
 
 const assembler_instruction* instruction::find_assembler_instructions(std::string_view instr)
 {
-    auto it = assembler_instructions->find(instr);
-    if (it == assembler_instructions->end())
+    auto it = std::ranges::lower_bound(assembler_instructions, instr, {}, &assembler_instruction::name);
+    if (it == std::ranges::end(assembler_instructions) || it->name() != instr)
         return nullptr;
-    return &it->second;
+    return &*it;
 }
 
 const assembler_instruction& instruction::get_assembler_instructions(std::string_view instr)
@@ -253,66 +300,7 @@ const assembler_instruction& instruction::get_assembler_instructions(std::string
     return *result;
 }
 
-const std::map<std::string_view, assembler_instruction>& instruction::all_assembler_instructions()
-{
-    if (assembler_instructions)
-        return *assembler_instructions;
-    static const std::map<std::string_view, assembler_instruction> assembler_instructions_ = {
-        { "*PROCESS", assembler_instruction(1, -1, true, "") }, // TO DO
-        { "ACONTROL", assembler_instruction(1, -1, false, "<selection>+") },
-        { "ADATA", assembler_instruction(5, 5, false, "value1,value2,value3,value4,character_string") },
-        { "AINSERT", assembler_instruction(2, 2, false, "'record',BACK|FRONT") },
-        { "ALIAS", assembler_instruction(1, 1, false, "alias_string") },
-        { "AMODE", assembler_instruction(1, 1, false, "amode_option") },
-        { "CATTR", assembler_instruction(1, -1, false, "attribute+") },
-        { "CCW", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-        { "CCW0", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-        { "CCW1", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-        { "CEJECT", assembler_instruction(0, 1, true, "?number_of_lines") },
-        { "CNOP", assembler_instruction(2, 2, true, "byte,boundary") },
-        { "COM", assembler_instruction(0, 0, false, "") },
-        { "COPY", assembler_instruction(1, 1, false, "member") },
-        { "CSECT", assembler_instruction(0, 0, false, "") },
-        { "CXD", assembler_instruction(0, 0, false, "") },
-        { "DC", assembler_instruction(1, -1, true, "<operand>+") },
-        { "DROP", assembler_instruction(0, -1, true, "?<<base_register|label>+>") },
-        { "DS", assembler_instruction(1, -1, true, "<operand>+") },
-        { "DSECT", assembler_instruction(0, 0, false, "") },
-        { "DXD", assembler_instruction(1, -1, true, "<operand>+") },
-        { "EJECT", assembler_instruction(0, 0, false, "") },
-        { "END", assembler_instruction(0, 2, true, "?expression,?language") },
-        { "ENTRY", assembler_instruction(1, -1, true, "entry_point+") },
-        { "EQU",
-            assembler_instruction(1,
-                5,
-                true,
-                "value,?<length_attribute_value>,?<type_attribute_value>,?<program_type_value>,?<assembler_type>"
-                "value>") },
-        { "EXITCTL", assembler_instruction(2, 5, false, "exit_type,control_value+") },
-        { "EXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
-        { "ICTL", assembler_instruction(1, 3, false, "begin,?<end>,?<continue>") },
-        { "ISEQ", assembler_instruction(0, 2, false, "?<left,right>") },
-        { "LOCTR", assembler_instruction(0, 0, false, "") },
-        { "LTORG", assembler_instruction(0, 0, false, "") },
-        { "MNOTE", assembler_instruction(1, 2, false, "?<<severity|*|>,>message") },
-        { "OPSYN", assembler_instruction(0, 1, false, "?operation_code_2") },
-        { "ORG", assembler_instruction(0, 3, true, "expression?<,boundary?<,offset>>") },
-        { "POP", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
-        { "PRINT", assembler_instruction(1, -1, false, "operand+") },
-        { "PUNCH", assembler_instruction(1, 1, false, "string") },
-        { "PUSH", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
-        { "REPRO", assembler_instruction(0, 0, false, "") },
-        { "RMODE", assembler_instruction(1, 1, false, "rmode_option") },
-        { "RSECT", assembler_instruction(0, 0, false, "") },
-        { "SPACE", assembler_instruction(0, 1, true, "?number_of_lines") },
-        { "START", assembler_instruction(0, 1, true, "?expression") },
-        { "TITLE", assembler_instruction(1, 1, false, "title_string") },
-        { "USING", assembler_instruction(2, -1, true, "operand+") },
-        { "WXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
-        { "XATTR", assembler_instruction(1, -1, false, "attribute+") },
-    };
-    return assembler_instructions_;
-}
+std::span<const assembler_instruction> instruction::all_assembler_instructions() { return assembler_instructions; }
 
 bool hlasm_plugin::parser_library::context::machine_instruction::check_nth_operand(
     size_t place, const checking::machine_operand* operand)
@@ -350,8 +338,6 @@ bool hlasm_plugin::parser_library::context::machine_instruction::check(std::stri
     };
     return (!error);
 }
-
-namespace {
 
 template<mach_format F, const machine_operand_format&... Ops>
 class instruction_format_definition_factory
@@ -1852,8 +1838,6 @@ constexpr machine_instruction machine_instructions[] = {
 };
 static_assert(std::ranges::is_sorted(machine_instructions, {}, &machine_instruction::name));
 
-} // namespace
-
 std::span<const machine_instruction> instruction::all_machine_instructions() { return machine_instructions; }
 
 const machine_instruction* instruction::find_machine_instructions(std::string_view name)
@@ -1870,982 +1854,1141 @@ const machine_instruction& instruction::get_machine_instructions(std::string_vie
     return *mi;
 }
 
-static auto generate_mnemonic_codes()
+constexpr const machine_instruction* find_mi(std::string_view name)
 {
-    std::map<std::string_view, mnemonic_code> result;
-
-    const auto add_mnemonic_code = [&result](std::string_view mnemonic,
-                                       std::string_view base_instr,
-                                       std::initializer_list<std::pair<size_t, size_t>> replacement) {
-        assert(std::ranges::is_sorted(replacement, {}, [](const auto& e) { return e.first; }));
-        result.try_emplace(mnemonic, &instruction::get_machine_instructions(base_instr), replacement);
-    };
-
-    add_mnemonic_code("B", "BC", { { 0, 15 } });
-    add_mnemonic_code("BR", "BCR", { { 0, 15 } });
-    add_mnemonic_code("J", "BRC", { { 0, 15 } });
-    add_mnemonic_code("NOP", "BC", { { 0, 0 } });
-    add_mnemonic_code("NOPR", "BCR", { { 0, 0 } });
-    add_mnemonic_code("JNOP", "BRC", { { 0, 0 } });
-    add_mnemonic_code("BH", "BC", { { 0, 2 } });
-    add_mnemonic_code("BHR", "BCR", { { 0, 2 } });
-    add_mnemonic_code("JH", "BRC", { { 0, 2 } });
-    add_mnemonic_code("BL", "BC", { { 0, 4 } });
-    add_mnemonic_code("BLR", "BCR", { { 0, 4 } });
-    add_mnemonic_code("JL", "BRC", { { 0, 4 } });
-    add_mnemonic_code("BE", "BC", { { 0, 8 } });
-    add_mnemonic_code("BER", "BCR", { { 0, 8 } });
-    add_mnemonic_code("JE", "BRC", { { 0, 8 } });
-    add_mnemonic_code("BNH", "BC", { { 0, 13 } });
-    add_mnemonic_code("BNHR", "BCR", { { 0, 13 } });
-    add_mnemonic_code("JNH", "BRC", { { 0, 13 } });
-    add_mnemonic_code("BNL", "BC", { { 0, 11 } });
-    add_mnemonic_code("BNLR", "BCR", { { 0, 11 } });
-    add_mnemonic_code("JNL", "BRC", { { 0, 11 } });
-    add_mnemonic_code("BNE", "BC", { { 0, 7 } });
-    add_mnemonic_code("BNER", "BCR", { { 0, 7 } });
-    add_mnemonic_code("JNE", "BRC", { { 0, 7 } });
-    add_mnemonic_code("BP", "BC", { { 0, 2 } });
-    add_mnemonic_code("BPR", "BCR", { { 0, 2 } });
-    add_mnemonic_code("JP", "BRC", { { 0, 2 } });
-    add_mnemonic_code("JM", "BRC", { { 0, 4 } });
-    add_mnemonic_code("JZ", "BRC", { { 0, 8 } });
-    add_mnemonic_code("JO", "BRC", { { 0, 1 } });
-    add_mnemonic_code("BNP", "BC", { { 0, 13 } });
-    add_mnemonic_code("BNPR", "BCR", { { 0, 13 } });
-    add_mnemonic_code("JNP", "BRC", { { 0, 13 } });
-    add_mnemonic_code("BNM", "BC", { { 0, 11 } });
-    add_mnemonic_code("JNM", "BRC", { { 0, 11 } });
-    add_mnemonic_code("BNZ", "BC", { { 0, 7 } });
-    add_mnemonic_code("JNZ", "BRC", { { 0, 7 } });
-    add_mnemonic_code("BNO", "BC", { { 0, 14 } });
-    add_mnemonic_code("JNO", "BRC", { { 0, 14 } });
-    add_mnemonic_code("XHLR", "RXSBG", { { 2, 0 }, { 3, 31 }, { 4, 32 } });
-    add_mnemonic_code("XHHR", "RXSBG", { { 2, 0 }, { 3, 31 } });
-    add_mnemonic_code("XLHR", "RXSBG", { { 2, 32 }, { 3, 63 }, { 4, 32 } });
-    add_mnemonic_code("OHLR", "ROSBG", { { 2, 0 }, { 3, 31 }, { 4, 32 } });
-    add_mnemonic_code("OHHR", "ROSBG", { { 2, 0 }, { 3, 31 } });
-    add_mnemonic_code("OLHR", "ROSBG", { { 2, 32 }, { 3, 63 }, { 4, 32 } });
-    add_mnemonic_code("NHLR", "RNSBG", { { 2, 0 }, { 3, 31 }, { 4, 32 } });
-    add_mnemonic_code("NHHR", "RNSBG", { { 2, 0 }, { 3, 31 } });
-    add_mnemonic_code("NLHR", "RNSBG", { { 2, 32 }, { 3, 63 }, { 4, 32 } });
-    add_mnemonic_code("BO", "BC", { { 0, 1 } });
-    add_mnemonic_code("BOR", "BCR", { { 0, 1 } });
-    add_mnemonic_code("BM", "BC", { { 0, 4 } });
-    add_mnemonic_code("BMR", "BCR", { { 0, 4 } });
-    add_mnemonic_code("BZ", "BC", { { 0, 8 } });
-    add_mnemonic_code("BZR", "BCR", { { 0, 8 } });
-    add_mnemonic_code("BNOR", "BCR", { { 0, 14 } });
-    add_mnemonic_code("BNMR", "BCR", { { 0, 11 } });
-    add_mnemonic_code("BNZR", "BCR", { { 0, 7 } });
-    add_mnemonic_code("BRUL", "BRCL", { { 0, 15 } });
-    add_mnemonic_code("BRHL", "BRCL", { { 0, 2 } });
-    add_mnemonic_code("BRLL", "BRCL", { { 0, 4 } });
-    add_mnemonic_code("BREL", "BRCL", { { 0, 8 } });
-    add_mnemonic_code("BRNHL", "BRCL", { { 0, 13 } });
-    add_mnemonic_code("BRNLL", "BRCL", { { 0, 11 } });
-    add_mnemonic_code("BRNEL", "BRCL", { { 0, 7 } });
-    add_mnemonic_code("BRPL", "BRCL", { { 0, 2 } });
-    add_mnemonic_code("BRML", "BRCL", { { 0, 4 } });
-    add_mnemonic_code("BRZL", "BRCL", { { 0, 8 } });
-    add_mnemonic_code("BROL", "BRCL", { { 0, 1 } });
-    add_mnemonic_code("BRNPL", "BRCL", { { 0, 13 } });
-    add_mnemonic_code("BRNML", "BRCL", { { 0, 11 } });
-    add_mnemonic_code("BRNZL", "BRCL", { { 0, 7 } });
-    add_mnemonic_code("BRNOL", "BRCL", { { 0, 14 } });
-    add_mnemonic_code("BRO", "BRC", { { 0, 1 } });
-    add_mnemonic_code("BRP", "BRC", { { 0, 2 } });
-    add_mnemonic_code("BRH", "BRC", { { 0, 2 } });
-    add_mnemonic_code("BRL", "BRC", { { 0, 4 } });
-    add_mnemonic_code("BRM", "BRC", { { 0, 4 } });
-    add_mnemonic_code("BRNE", "BRC", { { 0, 7 } });
-    add_mnemonic_code("BRNZ", "BRC", { { 0, 7 } });
-    add_mnemonic_code("BRE", "BRC", { { 0, 8 } });
-    add_mnemonic_code("BRZ", "BRC", { { 0, 8 } });
-    add_mnemonic_code("BRNL", "BRC", { { 0, 11 } });
-    add_mnemonic_code("BRNM", "BRC", { { 0, 11 } });
-    add_mnemonic_code("BRNH", "BRC", { { 0, 13 } });
-    add_mnemonic_code("BRNP", "BRC", { { 0, 13 } });
-    add_mnemonic_code("BRNO", "BRC", { { 0, 14 } });
-    add_mnemonic_code("BRU", "BRC", { { 0, 15 } });
-    add_mnemonic_code("JLU", "BRCL", { { 0, 15 } });
-    add_mnemonic_code("JLNOP", "BRCL", { { 0, 0 } });
-    add_mnemonic_code("JLH", "BRCL", { { 0, 2 } });
-    add_mnemonic_code("JLL", "BRCL", { { 0, 4 } });
-    add_mnemonic_code("JLE", "BRCL", { { 0, 8 } });
-    add_mnemonic_code("JLNH", "BRCL", { { 0, 13 } });
-    add_mnemonic_code("JLNL", "BRCL", { { 0, 11 } });
-    add_mnemonic_code("JLNE", "BRCL", { { 0, 7 } });
-    add_mnemonic_code("JLP", "BRCL", { { 0, 2 } });
-    add_mnemonic_code("JLM", "BRCL", { { 0, 4 } });
-    add_mnemonic_code("JLZ", "BRCL", { { 0, 8 } });
-    add_mnemonic_code("JLO", "BRCL", { { 0, 1 } });
-    add_mnemonic_code("JLNP", "BRCL", { { 0, 13 } });
-    add_mnemonic_code("JLNM", "BRCL", { { 0, 11 } });
-    add_mnemonic_code("JLNZ", "BRCL", { { 0, 7 } });
-    add_mnemonic_code("JLNO", "BRCL", { { 0, 14 } });
-    add_mnemonic_code("JAS", "BRAS", {});
-    add_mnemonic_code("JASL", "BRASL", {});
-    add_mnemonic_code("JC", "BRC", {});
-    add_mnemonic_code("JCT", "BRCT", {});
-    add_mnemonic_code("JCTG", "BRCTG", {});
-    add_mnemonic_code("JXH", "BRXH", {});
-    add_mnemonic_code("JXHG", "BRXHG", {});
-    add_mnemonic_code("JXLE", "BRXLE", {});
-    add_mnemonic_code("JXLEG", "BRXLG", {});
-    add_mnemonic_code("VCDG", "VCFPS", {});
-    add_mnemonic_code("VCGD", "VCSFP", {});
-    add_mnemonic_code("BIO", "BIC", { { 0, 1 } });
-    add_mnemonic_code("BIP", "BIC", { { 0, 2 } });
-    add_mnemonic_code("BIH", "BIC", { { 0, 2 } });
-    add_mnemonic_code("BIM", "BIC", { { 0, 4 } });
-    add_mnemonic_code("BIL", "BIC", { { 0, 4 } });
-    add_mnemonic_code("BINZ", "BIC", { { 0, 7 } });
-    add_mnemonic_code("BINE", "BIC", { { 0, 7 } });
-    add_mnemonic_code("BIZ", "BIC", { { 0, 8 } });
-    add_mnemonic_code("BIE", "BIC", { { 0, 8 } });
-    add_mnemonic_code("BINM", "BIC", { { 0, 11 } });
-    add_mnemonic_code("BINL", "BIC", { { 0, 11 } });
-    add_mnemonic_code("BINP", "BIC", { { 0, 13 } });
-    add_mnemonic_code("BINH", "BIC", { { 0, 13 } });
-    add_mnemonic_code("BINO", "BIC", { { 0, 14 } });
-    add_mnemonic_code("BI", "BIC", { { 0, 15 } });
-    add_mnemonic_code("VSTBRH", "VSTBR", { { 2, 1 } });
-    add_mnemonic_code("VSTBRF", "VSTBR", { { 2, 2 } });
-    add_mnemonic_code("VSTBRG", "VSTBR", { { 2, 3 } });
-    add_mnemonic_code("VSTBRQ", "VSTBR", { { 2, 4 } });
-    add_mnemonic_code("VSTERH", "VSTER", { { 2, 1 } });
-    add_mnemonic_code("VSTERF", "VSTER", { { 2, 2 } });
-    add_mnemonic_code("VSTERG", "VSTER", { { 2, 3 } });
-    add_mnemonic_code("STERV", "VSTEBRF", { { 2, 0 } });
-    add_mnemonic_code("STDRV", "VSTEBRG", { { 2, 0 } });
-    add_mnemonic_code("SELFHRE", "SELFHR", { { 3, 8 } });
-    add_mnemonic_code("SELFHRH", "SELFHR", { { 3, 2 } });
-    add_mnemonic_code("SELFHRL", "SELFHR", { { 3, 4 } });
-    add_mnemonic_code("SELFHRNE", "SELFHR", { { 3, 7 } });
-    add_mnemonic_code("SELFHRNH", "SELFHR", { { 3, 13 } });
-    add_mnemonic_code("SELFHRNL", "SELFHR", { { 3, 11 } });
-    add_mnemonic_code("SELFHRNO", "SELFHR", { { 3, 14 } });
-    add_mnemonic_code("SELFHRO", "SELFHR", { { 3, 1 } });
-    add_mnemonic_code("LHHR", "RISBHGZ", { { 2, 0 }, { 3, 31 } });
-    add_mnemonic_code("LHLR", "RISBHGZ", { { 2, 0 }, { 3, 31 }, { 4, 32 } });
-    add_mnemonic_code("LLHHHR", "RISBHGZ", { { 2, 16 }, { 3, 31 } });
-    add_mnemonic_code("LLHHLR", "RISBHGZ", { { 2, 16 }, { 3, 31 }, { 4, 32 } });
-    add_mnemonic_code("LLCHHR", "RISBHGZ", { { 2, 24 }, { 3, 31 } });
-    add_mnemonic_code("LLCHLR", "RISBHGZ", { { 2, 24 }, { 3, 31 }, { 4, 32 } });
-    add_mnemonic_code("LLHFR", "RISBLGZ", { { 2, 0 }, { 3, 31 }, { 4, 32 } });
-    add_mnemonic_code("LLHLHR", "RISBLGZ", { { 2, 16 }, { 3, 31 }, { 4, 32 } });
-    add_mnemonic_code("LLCLHR", "RISBLGZ", { { 2, 24 }, { 3, 31 }, { 4, 32 } });
-    add_mnemonic_code("LOCO", "LOC", { { 2, 1 } });
-    add_mnemonic_code("LOCNO", "LOC", { { 2, 14 } });
-    add_mnemonic_code("LOCGO", "LOCG", { { 2, 1 } });
-    add_mnemonic_code("LOCGNO", "LOCG", { { 2, 14 } });
-    add_mnemonic_code("LOCGHIH", "LOCGHI", { { 2, 2 } });
-    add_mnemonic_code("LOCGHIL", "LOCGHI", { { 2, 4 } });
-    add_mnemonic_code("LOCGHIE", "LOCGHI", { { 2, 8 } });
-    add_mnemonic_code("LOCGHINE", "LOCGHI", { { 2, 7 } });
-    add_mnemonic_code("LOCGHINL", "LOCGHI", { { 2, 11 } });
-    add_mnemonic_code("LOCGHINH", "LOCGHI", { { 2, 13 } });
-    add_mnemonic_code("LOCGHINO", "LOCGHI", { { 2, 14 } });
-    add_mnemonic_code("LOCGHIO", "LOCGHI", { { 2, 1 } });
-    add_mnemonic_code("LOCGRO", "LOCGR", { { 2, 1 } });
-    add_mnemonic_code("LOCGRNO", "LOCGR", { { 2, 14 } });
-    add_mnemonic_code("LOCHHIE", "LOCHHI", { { 2, 8 } });
-    add_mnemonic_code("LOCHHIH", "LOCHHI", { { 2, 2 } });
-    add_mnemonic_code("LOCHHIL", "LOCHHI", { { 2, 4 } });
-    add_mnemonic_code("LOCHHINE", "LOCHHI", { { 2, 7 } });
-    add_mnemonic_code("LOCHHINH", "LOCHHI", { { 2, 13 } });
-    add_mnemonic_code("LOCHHINL", "LOCHHI", { { 2, 11 } });
-    add_mnemonic_code("LOCHHINO", "LOCHHI", { { 2, 14 } });
-    add_mnemonic_code("LOCHHIO", "LOCHHI", { { 2, 1 } });
-    add_mnemonic_code("LOCHIE", "LOCHI", { { 2, 8 } });
-    add_mnemonic_code("LOCHIH", "LOCHI", { { 2, 2 } });
-    add_mnemonic_code("LOCHIL", "LOCHI", { { 2, 4 } });
-    add_mnemonic_code("LOCHINE", "LOCHI", { { 2, 7 } });
-    add_mnemonic_code("LOCHINH", "LOCHI", { { 2, 13 } });
-    add_mnemonic_code("LOCHINL", "LOCHI", { { 2, 11 } });
-    add_mnemonic_code("LOCHINO", "LOCHI", { { 2, 14 } });
-    add_mnemonic_code("LOCHIO", "LOCHI", { { 2, 1 } });
-    add_mnemonic_code("LOCRNO", "LOCR", { { 2, 14 } });
-    add_mnemonic_code("LOCRO", "LOCR", { { 2, 1 } });
-    add_mnemonic_code("LOCFHE", "LOCFH", { { 2, 8 } });
-    add_mnemonic_code("LOCFHH", "LOCFH", { { 2, 2 } });
-    add_mnemonic_code("LOCFHL", "LOCFH", { { 2, 4 } });
-    add_mnemonic_code("LOCFHNE", "LOCFH", { { 2, 7 } });
-    add_mnemonic_code("LOCFHNH", "LOCFH", { { 2, 13 } });
-    add_mnemonic_code("LOCFHNL", "LOCFH", { { 2, 11 } });
-    add_mnemonic_code("LOCFHNO", "LOCFH", { { 2, 14 } });
-    add_mnemonic_code("LOCFHO", "LOCFH", { { 2, 1 } });
-    add_mnemonic_code("LOCFHRH", "LOCFHR", { { 2, 2 } });
-    add_mnemonic_code("LOCFHRL", "LOCFHR", { { 2, 4 } });
-    add_mnemonic_code("LOCFHRE", "LOCFHR", { { 2, 8 } });
-    add_mnemonic_code("LOCFHRNE", "LOCFHR", { { 2, 7 } });
-    add_mnemonic_code("LOCFHRNH", "LOCFHR", { { 2, 13 } });
-    add_mnemonic_code("LOCFHRNL", "LOCFHR", { { 2, 11 } });
-    add_mnemonic_code("LOCFHRNO", "LOCFHR", { { 2, 14 } });
-    add_mnemonic_code("LOCFHRO", "LOCFHR", { { 2, 1 } });
-    add_mnemonic_code("STOCFHE", "STOCFH", { { 2, 8 } });
-    add_mnemonic_code("STOCFHH", "STOCFH", { { 2, 2 } });
-    add_mnemonic_code("STOCFHL", "STOCFH", { { 2, 4 } });
-    add_mnemonic_code("STOCFHNE", "STOCFH", { { 2, 7 } });
-    add_mnemonic_code("STOCFHNH", "STOCFH", { { 2, 13 } });
-    add_mnemonic_code("STOCFHNL", "STOCFH", { { 2, 11 } });
-    add_mnemonic_code("STOCFHNO", "STOCFH", { { 2, 14 } });
-    add_mnemonic_code("STOCFHO", "STOCFH", { { 2, 1 } });
-    add_mnemonic_code("STOCGNO", "STOCG", { { 2, 14 } });
-    add_mnemonic_code("STOCGO", "STOCG", { { 2, 1 } });
-    add_mnemonic_code("STOCNO", "STOC", { { 2, 14 } });
-    add_mnemonic_code("STOCO", "STOC", { { 2, 1 } });
-    add_mnemonic_code("SELGRE", "SELGR", { { 3, 8 } });
-    add_mnemonic_code("SELGRH", "SELGR", { { 3, 2 } });
-    add_mnemonic_code("SELGRL", "SELGR", { { 3, 4 } });
-    add_mnemonic_code("SELGRNE", "SELGR", { { 3, 7 } });
-    add_mnemonic_code("SELGRNH", "SELGR", { { 3, 13 } });
-    add_mnemonic_code("SELGRNL", "SELGR", { { 3, 11 } });
-    add_mnemonic_code("SELGRNO", "SELGR", { { 3, 14 } });
-    add_mnemonic_code("SELGRO", "SELGR", { { 3, 1 } });
-    add_mnemonic_code("SELRE", "SELR", { { 3, 8 } });
-    add_mnemonic_code("SELRH", "SELR", { { 3, 2 } });
-    add_mnemonic_code("SELRL", "SELR", { { 3, 4 } });
-    add_mnemonic_code("SELRNE", "SELR", { { 3, 7 } });
-    add_mnemonic_code("SELRNH", "SELR", { { 3, 13 } });
-    add_mnemonic_code("SELRNL", "SELR", { { 3, 11 } });
-    add_mnemonic_code("SELRNO", "SELR", { { 3, 14 } });
-    add_mnemonic_code("SELRO", "SELR", { { 3, 1 } });
-    add_mnemonic_code("VZERO", "VGBM", { { 0, 1 } });
-    add_mnemonic_code("VONE", "VGBM", { { 1, 65535 } });
-    add_mnemonic_code("VGMB", "VGM", { { 3, 0 } });
-    add_mnemonic_code("VGMH", "VGM", { { 3, 1 } });
-    add_mnemonic_code("VGMF", "VGM", { { 3, 2 } });
-    add_mnemonic_code("VGMG", "VGM", { { 3, 3 } });
-    add_mnemonic_code("VLREPB", "VLREP", { { 2, 0 } });
-    add_mnemonic_code("VLREPH", "VLREP", { { 2, 1 } });
-    add_mnemonic_code("VLREPF", "VLREP", { { 2, 2 } });
-    add_mnemonic_code("VLREPG", "VLREP", { { 2, 3 } });
-    add_mnemonic_code("VLGVB", "VLGV", { { 3, 0 } });
-    add_mnemonic_code("VLGVH", "VLGV", { { 3, 1 } });
-    add_mnemonic_code("VLGVF", "VLGV", { { 3, 2 } });
-    add_mnemonic_code("VLGVG", "VLGV", { { 3, 3 } });
-    add_mnemonic_code("VLLEZB", "VLLEZ", { { 2, 0 } });
-    add_mnemonic_code("VLLEZH", "VLLEZ", { { 2, 1 } });
-    add_mnemonic_code("VLLEZF", "VLLEZ", { { 2, 2 } });
-    add_mnemonic_code("VLLEZG", "VLLEZ", { { 2, 3 } });
-    add_mnemonic_code("VLLEZLF", "VLLEZ", { { 2, 6 } });
-    add_mnemonic_code("VLLEBRZE", "VLLEBRZ", { { 2, 6 } });
-    add_mnemonic_code("VLLEBRZG", "VLLEBRZ", { { 2, 3 } });
-    add_mnemonic_code("VLLEBRZF", "VLLEBRZ", { { 2, 2 } });
-    add_mnemonic_code("VLLEBRZH", "VLLEBRZ", { { 2, 1 } });
-    add_mnemonic_code("VLVGB", "VLVG", { { 3, 0 } });
-    add_mnemonic_code("VLVGH", "VLVG", { { 3, 1 } });
-    add_mnemonic_code("VLVGF", "VLVG", { { 3, 2 } });
-    add_mnemonic_code("VLVGG", "VLVG", { { 3, 3 } });
-    add_mnemonic_code("VMRHB", "VMRH", { { 3, 0 } });
-    add_mnemonic_code("VMRHH", "VMRH", { { 3, 1 } });
-    add_mnemonic_code("VMRHF", "VMRH", { { 3, 2 } });
-    add_mnemonic_code("VMRHG", "VMRH", { { 3, 3 } });
-    add_mnemonic_code("VMRLB", "VMRL", { { 3, 0 } });
-    add_mnemonic_code("VMRLH", "VMRL", { { 3, 1 } });
-    add_mnemonic_code("VMRLF", "VMRL", { { 3, 2 } });
-    add_mnemonic_code("VMRLG", "VMRL", { { 3, 3 } });
-    add_mnemonic_code("VPKSH", "VPKS", { { 3, 1 }, { 4, 0 } });
-    add_mnemonic_code("VPKSF", "VPKS", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("VPKSG", "VPKS", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("VPKSHS", "VPKS", { { 3, 1 }, { 4, 1 } });
-    add_mnemonic_code("VPKSFS", "VPKS", { { 3, 2 }, { 4, 1 } });
-    add_mnemonic_code("VPKSGS", "VPKS", { { 3, 3 }, { 4, 1 } });
-    add_mnemonic_code("VPKLSH", "VPKLS", { { 3, 1 }, { 4, 0 } });
-    add_mnemonic_code("VPKLSF", "VPKLS", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("VPKLSG", "VPKLS", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("VPKLSHS", "VPKLS", { { 3, 1 }, { 4, 1 } });
-    add_mnemonic_code("VPKLSFS", "VPKLS", { { 3, 2 }, { 4, 1 } });
-    add_mnemonic_code("VPKLSGS", "VPKLS", { { 3, 3 }, { 4, 1 } });
-    add_mnemonic_code("VREPB", "VREP", { { 3, 0 } });
-    add_mnemonic_code("VREPH", "VREP", { { 3, 1 } });
-    add_mnemonic_code("VREPF", "VREP", { { 3, 2 } });
-    add_mnemonic_code("VREPG", "VREP", { { 3, 3 } });
-    add_mnemonic_code("VREPIB", "VREPI", { { 2, 0 } });
-    add_mnemonic_code("VREPIH", "VREPI", { { 2, 1 } });
-    add_mnemonic_code("VREPIF", "VREPI", { { 2, 2 } });
-    add_mnemonic_code("VREPIG", "VREPI", { { 2, 3 } });
-    add_mnemonic_code("VSEGB", "VSEG", { { 2, 0 } });
-    add_mnemonic_code("VSEGH", "VSEG", { { 2, 1 } });
-    add_mnemonic_code("VSEGF", "VSEG", { { 2, 2 } });
-    add_mnemonic_code("VUPHB", "VUPH", { { 2, 0 } });
-    add_mnemonic_code("VUPHH", "VUPH", { { 2, 1 } });
-    add_mnemonic_code("VUPHF", "VUPH", { { 2, 2 } });
-    add_mnemonic_code("VUPLHB", "VUPLH", { { 2, 0 } });
-    add_mnemonic_code("VUPLHG", "VUPLH", { { 2, 1 } });
-    add_mnemonic_code("VUPLHF", "VUPLH", { { 2, 2 } });
-    add_mnemonic_code("VUPLB", "VUPL", { { 2, 0 } });
-    add_mnemonic_code("VUPLHW", "VUPL", { { 2, 1 } });
-    add_mnemonic_code("VUPLF", "VUPL", { { 2, 2 } });
-    add_mnemonic_code("VUPLLB", "VUPLL", { { 2, 0 } });
-    add_mnemonic_code("VUPLLH", "VUPLL", { { 2, 1 } });
-    add_mnemonic_code("VUPLLF", "VUPLL", { { 2, 2 } });
-    add_mnemonic_code("VAB", "VA", { { 3, 0 } });
-    add_mnemonic_code("VAH", "VA", { { 3, 1 } });
-    add_mnemonic_code("VAF", "VA", { { 3, 2 } });
-    add_mnemonic_code("VAG", "VA", { { 3, 3 } });
-    add_mnemonic_code("VAQ", "VA", { { 3, 4 } });
-    add_mnemonic_code("VACCB", "VACC", { { 3, 0 } });
-    add_mnemonic_code("VACCH", "VACC", { { 3, 1 } });
-    add_mnemonic_code("VACCF", "VACC", { { 3, 2 } });
-    add_mnemonic_code("VACCG", "VACC", { { 3, 3 } });
-    add_mnemonic_code("VACCQ", "VACC", { { 3, 4 } });
-    add_mnemonic_code("VACQ", "VAC", { { 3, 4 } });
-    add_mnemonic_code("VACCCQ", "VACCC", { { 3, 4 } });
-    add_mnemonic_code("VAVGB", "VAVG", { { 3, 0 } });
-    add_mnemonic_code("VAVGH", "VAVG", { { 3, 1 } });
-    add_mnemonic_code("VAVGF", "VAVG", { { 3, 2 } });
-    add_mnemonic_code("VAVGG", "VAVG", { { 3, 3 } });
-    add_mnemonic_code("VAVGLB", "VAVGL", { { 3, 0 } });
-    add_mnemonic_code("VAVGLH", "VAVGL", { { 3, 1 } });
-    add_mnemonic_code("VAVGLF", "VAVGL", { { 3, 2 } });
-    add_mnemonic_code("VAVGLG", "VAVGL", { { 3, 3 } });
-    add_mnemonic_code("VECB", "VEC", { { 2, 0 } });
-    add_mnemonic_code("VECH", "VEC", { { 2, 1 } });
-    add_mnemonic_code("VECF", "VEC", { { 2, 2 } });
-    add_mnemonic_code("VECG", "VEC", { { 2, 3 } });
-    add_mnemonic_code("VECLB", "VECL", { { 2, 0 } });
-    add_mnemonic_code("VECLH", "VECL", { { 2, 1 } });
-    add_mnemonic_code("VECLF", "VECL", { { 2, 2 } });
-    add_mnemonic_code("VECLG", "VECL", { { 2, 3 } });
-    add_mnemonic_code("VCEQB", "VCEQ", { { 3, 0 }, { 4, 0 } });
-    add_mnemonic_code("VCEQH", "VCEQ", { { 3, 1 }, { 4, 0 } });
-    add_mnemonic_code("VCEQF", "VCEQ", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("VCEQG", "VCEQ", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("VCEQBS", "VCEQ", { { 3, 0 }, { 4, 1 } });
-    add_mnemonic_code("VCEQHS", "VCEQ", { { 3, 1 }, { 4, 1 } });
-    add_mnemonic_code("VCEQFS", "VCEQ", { { 3, 2 }, { 4, 1 } });
-    add_mnemonic_code("VCEQGS", "VCEQ", { { 3, 3 }, { 4, 1 } });
-    add_mnemonic_code("VCHB", "VCH", { { 3, 0 }, { 4, 0 } });
-    add_mnemonic_code("VCHH", "VCH", { { 3, 1 }, { 4, 0 } });
-    add_mnemonic_code("VCHF", "VCH", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("VCHG", "VCH", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("VCHBS", "VCH", { { 3, 0 }, { 4, 1 } });
-    add_mnemonic_code("VCHHS", "VCH", { { 3, 1 }, { 4, 1 } });
-    add_mnemonic_code("VCHFS", "VCH", { { 3, 2 }, { 4, 1 } });
-    add_mnemonic_code("VCHGS", "VCH", { { 3, 3 }, { 4, 1 } });
-    add_mnemonic_code("VCHLB", "VCHL", { { 3, 0 }, { 4, 0 } });
-    add_mnemonic_code("VCHLH", "VCHL", { { 3, 1 }, { 4, 0 } });
-    add_mnemonic_code("VCHLF", "VCHL", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("VCHLG", "VCHL", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("VCHLBS", "VCHL", { { 3, 0 }, { 4, 1 } });
-    add_mnemonic_code("VCHLHS", "VCHL", { { 3, 1 }, { 4, 1 } });
-    add_mnemonic_code("VCHLFS", "VCHL", { { 3, 2 }, { 4, 1 } });
-    add_mnemonic_code("VCHLGS", "VCHL", { { 3, 3 }, { 4, 1 } });
-    add_mnemonic_code("VCLZB", "VCLZ", { { 2, 0 } });
-    add_mnemonic_code("VCLZH", "VCLZ", { { 2, 1 } });
-    add_mnemonic_code("VCLZF", "VCLZ", { { 2, 2 } });
-    add_mnemonic_code("VCLZG", "VCLZ", { { 2, 3 } });
-    add_mnemonic_code("VGFMB", "VGFM", { { 3, 0 } });
-    add_mnemonic_code("VGFMH", "VGFM", { { 3, 1 } });
-    add_mnemonic_code("VGFMF", "VGFM", { { 3, 2 } });
-    add_mnemonic_code("VGFMG", "VGFM", { { 3, 3 } });
-    add_mnemonic_code("VGFMAB", "VGFMA", { { 4, 0 } });
-    add_mnemonic_code("VGFMAH", "VGFMA", { { 4, 1 } });
-    add_mnemonic_code("VGFMAF", "VGFMA", { { 4, 2 } });
-    add_mnemonic_code("VGFMAG", "VGFMA", { { 4, 3 } });
-    add_mnemonic_code("VLCB", "VLC", { { 2, 0 } });
-    add_mnemonic_code("VLCH", "VLC", { { 2, 1 } });
-    add_mnemonic_code("VLCF", "VLC", { { 2, 2 } });
-    add_mnemonic_code("VLCG", "VLC", { { 2, 3 } });
-    add_mnemonic_code("VLPB", "VLP", { { 2, 0 } });
-    add_mnemonic_code("VLPH", "VLP", { { 2, 1 } });
-    add_mnemonic_code("VLPF", "VLP", { { 2, 2 } });
-    add_mnemonic_code("VLPG", "VLP", { { 2, 3 } });
-    add_mnemonic_code("VMXB", "VMX", { { 3, 0 } });
-    add_mnemonic_code("VMXH", "VMX", { { 3, 1 } });
-    add_mnemonic_code("VMXF", "VMX", { { 3, 2 } });
-    add_mnemonic_code("VMXG", "VMX", { { 3, 3 } });
-    add_mnemonic_code("VMXLB", "VMXL", { { 3, 0 } });
-    add_mnemonic_code("VMXLH", "VMXL", { { 3, 1 } });
-    add_mnemonic_code("VMXLF", "VMXL", { { 3, 2 } });
-    add_mnemonic_code("VMXLG", "VMXL", { { 3, 3 } });
-    add_mnemonic_code("VMNB", "VMN", { { 3, 0 } });
-    add_mnemonic_code("VMNH", "VMN", { { 3, 1 } });
-    add_mnemonic_code("VMNF", "VMN", { { 3, 2 } });
-    add_mnemonic_code("VMNG", "VMN", { { 3, 3 } });
-    add_mnemonic_code("VMNLB", "VMNL", { { 3, 0 } });
-    add_mnemonic_code("VMNLH", "VMNL", { { 3, 1 } });
-    add_mnemonic_code("VMNLF", "VMNL", { { 3, 2 } });
-    add_mnemonic_code("VMNLG", "VMNL", { { 3, 3 } });
-    add_mnemonic_code("VMALB", "VMAL", { { 4, 0 } });
-    add_mnemonic_code("VMALHW", "VMAL", { { 4, 1 } });
-    add_mnemonic_code("VMALF", "VMAL", { { 4, 2 } });
-    add_mnemonic_code("VMAHB", "VMAH", { { 4, 0 } });
-    add_mnemonic_code("VMAHH", "VMAH", { { 4, 1 } });
-    add_mnemonic_code("VMAHF", "VMAH", { { 4, 2 } });
-    add_mnemonic_code("VMALHB", "VMALH", { { 4, 0 } });
-    add_mnemonic_code("VMALHH", "VMALH", { { 4, 1 } });
-    add_mnemonic_code("VMALHF", "VMALH", { { 4, 2 } });
-    add_mnemonic_code("VMAEB", "VMAE", { { 4, 0 } });
-    add_mnemonic_code("VMAEH", "VMAE", { { 4, 1 } });
-    add_mnemonic_code("VMAEF", "VMAE", { { 4, 2 } });
-    add_mnemonic_code("VMALEB", "VMALE", { { 4, 0 } });
-    add_mnemonic_code("VMALEH", "VMALE", { { 4, 1 } });
-    add_mnemonic_code("VMALEF", "VMALE", { { 4, 2 } });
-    add_mnemonic_code("VMAOB", "VMAO", { { 4, 0 } });
-    add_mnemonic_code("VMAOH", "VMAO", { { 4, 1 } });
-    add_mnemonic_code("VMAOF", "VMAO", { { 4, 2 } });
-    add_mnemonic_code("VMALOB", "VMALO", { { 4, 0 } });
-    add_mnemonic_code("VMALOH", "VMALO", { { 4, 1 } });
-    add_mnemonic_code("VMALOF", "VMALO", { { 4, 2 } });
-    add_mnemonic_code("VMHB", "VMH", { { 3, 0 } });
-    add_mnemonic_code("VMHH", "VMH", { { 3, 1 } });
-    add_mnemonic_code("VMHF", "VMH", { { 3, 2 } });
-    add_mnemonic_code("VMLHB", "VMLH", { { 3, 0 } });
-    add_mnemonic_code("VMLHH", "VMLH", { { 3, 1 } });
-    add_mnemonic_code("VMLHF", "VMLH", { { 3, 2 } });
-    add_mnemonic_code("VMLB", "VML", { { 3, 0 } });
-    add_mnemonic_code("VMLHW", "VML", { { 3, 1 } });
-    add_mnemonic_code("VMLF", "VML", { { 3, 2 } });
-    add_mnemonic_code("VMEB", "VME", { { 3, 0 } });
-    add_mnemonic_code("VMEH", "VME", { { 3, 1 } });
-    add_mnemonic_code("VMEF", "VME", { { 3, 2 } });
-    add_mnemonic_code("VMLEB", "VMLE", { { 3, 0 } });
-    add_mnemonic_code("VMLEH", "VMLE", { { 3, 1 } });
-    add_mnemonic_code("VMLEF", "VMLE", { { 3, 2 } });
-    add_mnemonic_code("VMSLG", "VMSL", { { 4, 3 } });
-    add_mnemonic_code("VMOB", "VMO", { { 3, 0 } });
-    add_mnemonic_code("VMOH", "VMO", { { 3, 1 } });
-    add_mnemonic_code("VMOF", "VMO", { { 3, 2 } });
-    add_mnemonic_code("VMLOB", "VMLO", { { 3, 0 } });
-    add_mnemonic_code("VMLOH", "VMLO", { { 3, 1 } });
-    add_mnemonic_code("VMLOF", "VMLO", { { 3, 2 } });
-    add_mnemonic_code("VPOPCTB", "VPOPCT", { { 2, 0 } });
-    add_mnemonic_code("VPOPCTH", "VPOPCT", { { 2, 1 } });
-    add_mnemonic_code("VPOPCTF", "VPOPCT", { { 2, 2 } });
-    add_mnemonic_code("VPOPCTG", "VPOPCT", { { 2, 3 } });
-    add_mnemonic_code("VERLLVB", "VERLLV", { { 3, 0 } });
-    add_mnemonic_code("VERLLVH", "VERLLV", { { 3, 1 } });
-    add_mnemonic_code("VERLLVF", "VERLLV", { { 3, 2 } });
-    add_mnemonic_code("VERLLVG", "VERLLV", { { 3, 3 } });
-    add_mnemonic_code("VERLLB", "VERLL", { { 3, 0 } });
-    add_mnemonic_code("VERLLH", "VERLL", { { 3, 1 } });
-    add_mnemonic_code("VERLLF", "VERLL", { { 3, 2 } });
-    add_mnemonic_code("VERLLG", "VERLL", { { 3, 3 } });
-    add_mnemonic_code("VERIMB", "VERIM", { { 4, 0 } });
-    add_mnemonic_code("VERIMH", "VERIM", { { 4, 1 } });
-    add_mnemonic_code("VERIMF", "VERIM", { { 4, 2 } });
-    add_mnemonic_code("VERIMG", "VERIM", { { 4, 3 } });
-    add_mnemonic_code("VESLVB", "VESLV", { { 3, 0 } });
-    add_mnemonic_code("VESLVH", "VESLV", { { 3, 1 } });
-    add_mnemonic_code("VESLVF", "VESLV", { { 3, 2 } });
-    add_mnemonic_code("VESLVG", "VESLV", { { 3, 3 } });
-    add_mnemonic_code("VESLB", "VESL", { { 3, 0 } });
-    add_mnemonic_code("VESLH", "VESL", { { 3, 1 } });
-    add_mnemonic_code("VESLF", "VESL", { { 3, 2 } });
-    add_mnemonic_code("VESLG", "VESL", { { 3, 3 } });
-    add_mnemonic_code("VESRAVB", "VESRAV", { { 3, 0 } });
-    add_mnemonic_code("VESRAVH", "VESRAV", { { 3, 1 } });
-    add_mnemonic_code("VESRAVF", "VESRAV", { { 3, 2 } });
-    add_mnemonic_code("VESRAVG", "VESRAV", { { 3, 3 } });
-    add_mnemonic_code("VESRAB", "VESRA", { { 3, 0 } });
-    add_mnemonic_code("VESRAH", "VESRA", { { 3, 1 } });
-    add_mnemonic_code("VESRAF", "VESRA", { { 3, 2 } });
-    add_mnemonic_code("VESRAG", "VESRA", { { 3, 3 } });
-    add_mnemonic_code("VESRLVB", "VESRLV", { { 3, 0 } });
-    add_mnemonic_code("VESRLVH", "VESRLV", { { 3, 1 } });
-    add_mnemonic_code("VESRLVF", "VESRLV", { { 3, 2 } });
-    add_mnemonic_code("VESRLVG", "VESRLV", { { 3, 3 } });
-    add_mnemonic_code("VESRLB", "VESRL", { { 3, 0 } });
-    add_mnemonic_code("VESRLH", "VESRL", { { 3, 1 } });
-    add_mnemonic_code("VESRLF", "VESRL", { { 3, 2 } });
-    add_mnemonic_code("VESRLG", "VESRL", { { 3, 3 } });
-    add_mnemonic_code("VCEFB", "VCFPS", { { 2, 0 } });
-    add_mnemonic_code("VSB", "VS", { { 3, 0 } });
-    add_mnemonic_code("VSH", "VS", { { 3, 1 } });
-    add_mnemonic_code("VSF", "VS", { { 3, 2 } });
-    add_mnemonic_code("VSG", "VS", { { 3, 3 } });
-    add_mnemonic_code("VSQ", "VS", { { 3, 4 } });
-    add_mnemonic_code("VLERH", "VLER", { { 2, 1 } });
-    add_mnemonic_code("VLERF", "VLER", { { 2, 2 } });
-    add_mnemonic_code("VLERG", "VLER", { { 2, 3 } });
-    add_mnemonic_code("VSCBIB", "VSCBI", { { 3, 0 } });
-    add_mnemonic_code("VCFEB", "VCSFP", { { 2, 2 } });
-    add_mnemonic_code("VSCBIH", "VSCBI", { { 3, 1 } });
-    add_mnemonic_code("VSCBIF", "VSCBI", { { 3, 2 } });
-    add_mnemonic_code("VSCBIG", "VSCBI", { { 3, 3 } });
-    add_mnemonic_code("VSCBIQ", "VSCBI", { { 3, 4 } });
-    add_mnemonic_code("VSBIQ", "VSBI", { { 4, 4 } });
-    add_mnemonic_code("VSBCBIQ", "VSBCBI", { { 4, 4 } });
-    add_mnemonic_code("VSUMQF", "VSUMQ", { { 3, 2 } });
-    add_mnemonic_code("VSUMQG", "VSUMQ", { { 3, 3 } });
-    add_mnemonic_code("VSUMGH", "VSUMG", { { 3, 1 } });
-    add_mnemonic_code("VSUMGF", "VSUMG", { { 3, 2 } });
-    add_mnemonic_code("VSUMB", "VSUM", { { 3, 0 } });
-    add_mnemonic_code("VSUMH", "VSUM", { { 3, 1 } });
-    add_mnemonic_code("VFAEB", "VFAE", { { 3, 0 } });
-    add_mnemonic_code("VFAEH", "VFAE", { { 3, 1 } });
-    add_mnemonic_code("VFAEF", "VFAE", { { 3, 2 } });
-    add_mnemonic_code("VFEEB", "VFEE", { { 3, 0 } });
-    add_mnemonic_code("VFEEH", "VFEE", { { 3, 1 } });
-    add_mnemonic_code("VFEEF", "VFEE", { { 3, 2 } });
-    add_mnemonic_code("VLBRH", "VLBR", { { 2, 1 } });
-    add_mnemonic_code("VLBRF", "VLBR", { { 2, 2 } });
-    add_mnemonic_code("VLBRG", "VLBR", { { 2, 3 } });
-    add_mnemonic_code("VLBRQ", "VLBR", { { 2, 4 } });
-    add_mnemonic_code("VFEEBS", "VFEE", { { 3, 0 }, { 4, 1 } });
-    add_mnemonic_code("VFEEGS", "VFEE", { { 3, 1 }, { 4, 1 } });
-    add_mnemonic_code("VFEEFS", "VFEE", { { 3, 2 }, { 4, 1 } });
-    add_mnemonic_code("VFEEZB", "VFEE", { { 3, 0 }, { 4, 2 } });
-    add_mnemonic_code("VFEEZH", "VFEE", { { 3, 1 }, { 4, 2 } });
-    add_mnemonic_code("VFEEZF", "VFEE", { { 3, 2 }, { 4, 2 } });
-    add_mnemonic_code("VFEEZBS", "VFEE", { { 3, 0 }, { 4, 3 } });
-    add_mnemonic_code("VFEEZHS", "VFEE", { { 3, 1 }, { 4, 3 } });
-    add_mnemonic_code("VFEEZFS", "VFEE", { { 3, 2 }, { 4, 3 } });
-    add_mnemonic_code("VFENEB", "VFENE", { { 3, 0 } });
-    add_mnemonic_code("VFENEH", "VFENE", { { 3, 1 } });
-    add_mnemonic_code("VFENEF", "VFENE", { { 3, 2 } });
-    add_mnemonic_code("VFENEBS", "VFENE", { { 3, 0 }, { 4, 1 } });
-    add_mnemonic_code("VFENEHS", "VFENE", { { 3, 1 }, { 4, 1 } });
-    add_mnemonic_code("VFENEFS", "VFENE", { { 3, 2 }, { 4, 1 } });
-    add_mnemonic_code("VFENEZB", "VFENE", { { 3, 0 }, { 4, 2 } });
-    add_mnemonic_code("VFENEZH", "VFENE", { { 3, 1 }, { 4, 2 } });
-    add_mnemonic_code("VFENEZF", "VFENE", { { 3, 2 }, { 4, 2 } });
-    add_mnemonic_code("VFENEZBS", "VFENE", { { 3, 0 }, { 4, 3 } });
-    add_mnemonic_code("VFENEZHS", "VFENE", { { 3, 1 }, { 4, 3 } });
-    add_mnemonic_code("VFENEZFS", "VFENE", { { 3, 2 }, { 4, 3 } });
-    add_mnemonic_code("VISTRB", "VISTR", { { 3, 0 } });
-    add_mnemonic_code("VISTRH", "VISTR", { { 3, 1 } });
-    add_mnemonic_code("VISTRF", "VISTR", { { 3, 2 } });
-    add_mnemonic_code("VISTRBS", "VISTR", { { 3, 0 }, { 4, 1 } });
-    add_mnemonic_code("VISTRHS", "VISTR", { { 3, 1 }, { 4, 1 } });
-    add_mnemonic_code("VISTRFS", "VISTR", { { 3, 2 }, { 4, 1 } });
-    add_mnemonic_code("VSTRCB", "VSTRC", { { 4, 0 } });
-    add_mnemonic_code("VSTRCH", "VSTRC", { { 4, 1 } });
-    add_mnemonic_code("VSTRCF", "VSTRC", { { 4, 2 } });
-    add_mnemonic_code("VLBRREPH", "VLBRREP", { { 2, 1 } });
-    add_mnemonic_code("VLBRREPF", "VLBRREP", { { 2, 2 } });
-    add_mnemonic_code("VLBRREPG", "VLBRREP", { { 2, 3 } });
-    add_mnemonic_code("VFASB", "VFA", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("VFADB", "VFA", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("WCDGB", "VCFPS", { { 2, 2 } });
-    add_mnemonic_code("WFASB", "VFA", { { 3, 2 }, { 4, 8 } });
-    add_mnemonic_code("WFADB", "VFA", { { 3, 3 }, { 4, 8 } });
-    add_mnemonic_code("WFAXB", "VFA", { { 3, 4 }, { 4, 8 } });
-    add_mnemonic_code("WFCSB", "WFC", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("WFCDB", "WFC", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("WFCXB", "WFC", { { 3, 4 }, { 4, 0 } });
-    add_mnemonic_code("WFKSB", "WFK", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("WFKDB", "WFK", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("WFKXB", "WFK", { { 3, 4 }, { 4, 0 } });
-    add_mnemonic_code("VFCESB", "VFCE", { { 3, 2 }, { 4, 0 }, { 5, 0 } });
-    add_mnemonic_code("VFCESBS", "VFCE", { { 3, 2 }, { 4, 0 }, { 5, 1 } });
-    add_mnemonic_code("VFCEDB", "VFCE", { { 3, 3 }, { 4, 0 }, { 5, 0 } });
-    add_mnemonic_code("VFCEDBS", "VFCE", { { 3, 3 }, { 4, 0 }, { 5, 1 } });
-    add_mnemonic_code("WFCESB", "VFCE", { { 3, 2 }, { 4, 8 }, { 5, 0 } });
-    add_mnemonic_code("WFCESBS", "VFCE", { { 3, 2 }, { 4, 8 }, { 5, 1 } });
-    add_mnemonic_code("WFCEDB", "VFCE", { { 3, 3 }, { 4, 8 }, { 5, 0 } });
-    add_mnemonic_code("WFCEDBS", "VFCE", { { 3, 3 }, { 4, 8 }, { 5, 1 } });
-    add_mnemonic_code("WFCEXB", "VFCE", { { 3, 4 }, { 4, 8 }, { 5, 0 } });
-    add_mnemonic_code("WFCEXBS", "VFCE", { { 3, 4 }, { 4, 8 }, { 5, 1 } });
-    add_mnemonic_code("VFKESB", "VFCE", { { 3, 2 }, { 4, 4 }, { 5, 0 } });
-    add_mnemonic_code("VFKESBS", "VFCE", { { 3, 2 }, { 4, 4 }, { 5, 1 } });
-    add_mnemonic_code("VFKEDB", "VFCE", { { 3, 3 }, { 4, 4 }, { 5, 0 } });
-    add_mnemonic_code("VFKEDBS", "VFCE", { { 3, 3 }, { 4, 4 }, { 5, 1 } });
-    add_mnemonic_code("WFKESB", "VFCE", { { 3, 2 }, { 4, 12 }, { 5, 0 } });
-    add_mnemonic_code("WFKESBS", "VFCE", { { 3, 2 }, { 4, 12 }, { 5, 1 } });
-    add_mnemonic_code("WFKEDB", "VFCE", { { 3, 3 }, { 4, 12 }, { 5, 0 } });
-    add_mnemonic_code("WFKEDBS", "VFCE", { { 3, 3 }, { 4, 12 }, { 5, 1 } });
-    add_mnemonic_code("WFKEXB", "VFCE", { { 3, 4 }, { 4, 12 }, { 5, 0 } });
-    add_mnemonic_code("WFKEXBS", "VFCE", { { 3, 4 }, { 4, 12 }, { 5, 1 } });
-    add_mnemonic_code("VSTRSB", "VSTRS", { { 4, 0 } });
-    add_mnemonic_code("VSTRSH", "VSTRS", { { 4, 1 } });
-    add_mnemonic_code("VSTRSF", "VSTRS", { { 4, 2 } });
-    add_mnemonic_code("VSTRSZB", "VSTRS", { { 4, 0 }, { 5, 2 } });
-    add_mnemonic_code("VFCHSB", "VFCH", { { 3, 2 }, { 4, 0 }, { 5, 0 } });
-    add_mnemonic_code("VFCHSBS", "VFCH", { { 3, 2 }, { 4, 0 }, { 5, 1 } });
-    add_mnemonic_code("VFCHDB", "VFCH", { { 3, 3 }, { 4, 0 }, { 5, 0 } });
-    add_mnemonic_code("VFCHDBS", "VFCH", { { 3, 3 }, { 4, 0 }, { 5, 1 } });
-    add_mnemonic_code("WFCHSB", "VFCH", { { 3, 2 }, { 4, 8 }, { 5, 0 } });
-    add_mnemonic_code("WFCHSBS", "VFCH", { { 3, 2 }, { 4, 8 }, { 5, 1 } });
-    add_mnemonic_code("WFCHDB", "VFCH", { { 3, 3 }, { 4, 8 }, { 5, 0 } });
-    add_mnemonic_code("WFCHDBS", "VFCH", { { 3, 3 }, { 4, 8 }, { 5, 1 } });
-    add_mnemonic_code("WFCHXB", "VFCH", { { 3, 4 }, { 4, 8 }, { 5, 0 } });
-    add_mnemonic_code("WFCHXBS", "VFCH", { { 3, 4 }, { 4, 8 }, { 5, 1 } });
-    add_mnemonic_code("VFKHSB", "VFCH", { { 3, 2 }, { 4, 4 }, { 5, 0 } });
-    add_mnemonic_code("VFKHSBS", "VFCH", { { 3, 2 }, { 4, 4 }, { 5, 1 } });
-    add_mnemonic_code("VFKHDB", "VFCH", { { 3, 3 }, { 4, 4 }, { 5, 0 } });
-    add_mnemonic_code("VFKHDBS", "VFCH", { { 3, 3 }, { 4, 4 }, { 5, 1 } });
-    add_mnemonic_code("WFKHSB", "VFCH", { { 3, 2 }, { 4, 12 }, { 5, 0 } });
-    add_mnemonic_code("WFKHSBS", "VFCH", { { 3, 2 }, { 4, 12 }, { 5, 1 } });
-    add_mnemonic_code("WFKHDB", "VFCH", { { 3, 3 }, { 4, 12 }, { 5, 0 } });
-    add_mnemonic_code("WFKHDBS", "VFCH", { { 3, 3 }, { 4, 12 }, { 5, 1 } });
-    add_mnemonic_code("WFKHXB", "VFCH", { { 3, 4 }, { 4, 12 }, { 5, 0 } });
-    add_mnemonic_code("WFKHXBS", "VFCH", { { 3, 4 }, { 4, 12 }, { 5, 1 } });
-    add_mnemonic_code("VFCHESB", "VFCHE", { { 3, 2 }, { 4, 0 }, { 5, 0 } });
-    add_mnemonic_code("VFCHESBS", "VFCHE", { { 3, 2 }, { 4, 0 }, { 5, 1 } });
-    add_mnemonic_code("VFCHEDB", "VFCHE", { { 3, 3 }, { 4, 0 }, { 5, 0 } });
-    add_mnemonic_code("VFCHEDBS", "VFCHE", { { 3, 3 }, { 4, 0 }, { 5, 1 } });
-    add_mnemonic_code("WFCHESB", "VFCHE", { { 3, 2 }, { 4, 8 }, { 5, 0 } });
-    add_mnemonic_code("WFCHESBS", "VFCHE", { { 3, 2 }, { 4, 8 }, { 5, 1 } });
-    add_mnemonic_code("WFCHEDB", "VFCHE", { { 3, 3 }, { 4, 8 }, { 5, 0 } });
-    add_mnemonic_code("WFCHEDBS", "VFCHE", { { 3, 3 }, { 4, 8 }, { 5, 1 } });
-    add_mnemonic_code("WFCHEXB", "VFCHE", { { 3, 4 }, { 4, 8 }, { 5, 0 } });
-    add_mnemonic_code("WFCHEXBS", "VFCHE", { { 3, 4 }, { 4, 8 }, { 5, 1 } });
-    add_mnemonic_code("VFKHESB", "VFCHE", { { 3, 2 }, { 4, 4 }, { 5, 0 } });
-    add_mnemonic_code("VFKHESBS", "VFCHE", { { 3, 2 }, { 4, 4 }, { 5, 1 } });
-    add_mnemonic_code("VFKHEDB", "VFCHE", { { 3, 3 }, { 4, 4 }, { 5, 0 } });
-    add_mnemonic_code("VFKHEDBS", "VFCHE", { { 3, 3 }, { 4, 4 }, { 5, 1 } });
-    add_mnemonic_code("WFKHESB", "VFCHE", { { 3, 2 }, { 4, 12 }, { 5, 0 } });
-    add_mnemonic_code("WFKHESBS", "VFCHE", { { 3, 2 }, { 4, 12 }, { 5, 1 } });
-    add_mnemonic_code("WFKHEDB", "VFCHE", { { 3, 3 }, { 4, 12 }, { 5, 0 } });
-    add_mnemonic_code("WFKHEDBS", "VFCHE", { { 3, 3 }, { 4, 12 }, { 5, 1 } });
-    add_mnemonic_code("WFKHEXB", "VFCHE", { { 3, 4 }, { 4, 12 }, { 5, 0 } });
-    add_mnemonic_code("WFKHEXBS", "VFCHE", { { 3, 4 }, { 4, 12 }, { 5, 1 } });
-    add_mnemonic_code("VCDGB", "VCFPS", { { 2, 3 } });
-    add_mnemonic_code("VCDLG", "VCFPL", {});
-    add_mnemonic_code("VCDLGB", "VCFPL", { { 2, 3 } });
-    add_mnemonic_code("VCGDB", "VCSFP", { { 2, 3 } });
-    add_mnemonic_code("VCLGDB", "VCLGD", { { 2, 3 } });
-    add_mnemonic_code("VCLFEB", "VCLFP", { { 2, 0 } });
-    add_mnemonic_code("VFDSB", "VFD", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("WFDSB", "VFD", { { 3, 2 }, { 4, 8 } });
-    add_mnemonic_code("VFDDB", "VFD", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("WFDDB", "VFD", { { 3, 3 }, { 4, 8 } });
-    add_mnemonic_code("WFDXB", "VFD", { { 3, 4 }, { 4, 8 } });
-    add_mnemonic_code("VFISB", "VFI", { { 2, 2 } });
-    add_mnemonic_code("VFIDB", "VFI", { { 2, 3 } });
-    add_mnemonic_code("VLDE", "VFLL", {});
-    add_mnemonic_code("VLDEB", "VFLL", { { 2, 2 }, { 3, 0 } });
-    add_mnemonic_code("WLDEB", "VFLL", { { 2, 2 }, { 3, 8 } });
-    add_mnemonic_code("VFLLS", "VFLL", { { 2, 2 }, { 3, 0 } });
-    add_mnemonic_code("WFLLS", "VFLL", { { 2, 2 }, { 3, 8 } });
-    add_mnemonic_code("WFLLD", "VFLL", { { 2, 3 }, { 3, 8 } });
-    add_mnemonic_code("VLED", "VFLR", {});
-    add_mnemonic_code("VLEDB", "VFLR", { { 2, 3 } });
-    add_mnemonic_code("VFLRD", "VFLR", { { 2, 3 } });
-    add_mnemonic_code("VFMAXSB", "VFMAX", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("VFMAXDB", "VFMAX", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("WFMAXSB", "VFMAX", { { 3, 2 }, { 4, 8 } });
-    add_mnemonic_code("WFMAXDB", "VFMAX", { { 3, 3 }, { 4, 8 } });
-    add_mnemonic_code("WFMAXXB", "VFMAX", { { 3, 4 }, { 4, 8 } });
-    add_mnemonic_code("VFMINSB", "VFMIN", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("VFMINDB", "VFMIN", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("WFMINSB", "VFMIN", { { 3, 2 }, { 4, 8 } });
-    add_mnemonic_code("WFMINDB", "VFMIN", { { 3, 3 }, { 4, 8 } });
-    add_mnemonic_code("WFMINXB", "VFMIN", { { 3, 4 }, { 4, 8 } });
-    add_mnemonic_code("VFMSB", "VFM", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("VFMDB", "VFM", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("WFMSB", "VFM", { { 3, 2 }, { 4, 8 } });
-    add_mnemonic_code("WFMDB", "VFM", { { 3, 3 }, { 4, 8 } });
-    add_mnemonic_code("WFMXB", "VFM", { { 3, 4 }, { 4, 8 } });
-    add_mnemonic_code("VFMASB", "VFMA", { { 4, 0 }, { 5, 2 } });
-    add_mnemonic_code("VFMADB", "VFMA", { { 4, 0 }, { 5, 3 } });
-    add_mnemonic_code("WFMASB", "VFMA", { { 4, 8 }, { 5, 2 } });
-    add_mnemonic_code("WFMADB", "VFMA", { { 4, 8 }, { 5, 3 } });
-    add_mnemonic_code("WFMAXB", "VFMA", { { 4, 8 }, { 5, 4 } });
-    add_mnemonic_code("VFMSSB", "VFMS", { { 4, 0 }, { 5, 2 } });
-    add_mnemonic_code("VFMSDB", "VFMS", { { 4, 0 }, { 5, 3 } });
-    add_mnemonic_code("WFMSSB", "VFMS", { { 4, 8 }, { 5, 2 } });
-    add_mnemonic_code("WFMSDB", "VFMS", { { 4, 8 }, { 5, 3 } });
-    add_mnemonic_code("WFMSXB", "VFMS", { { 4, 8 }, { 5, 4 } });
-    add_mnemonic_code("VFNMASB", "VFNMA", { { 4, 0 }, { 5, 2 } });
-    add_mnemonic_code("VFNMADB", "VFNMA", { { 4, 0 }, { 5, 3 } });
-    add_mnemonic_code("WFNMASB", "VFNMA", { { 4, 8 }, { 5, 2 } });
-    add_mnemonic_code("WFNMADB", "VFNMA", { { 4, 8 }, { 5, 3 } });
-    add_mnemonic_code("WFNMAXB", "VFNMA", { { 4, 8 }, { 5, 4 } });
-    add_mnemonic_code("VFNMSSB", "VFNMS", { { 4, 0 }, { 5, 2 } });
-    add_mnemonic_code("VFNMSDB", "VFNMS", { { 4, 0 }, { 5, 3 } });
-    add_mnemonic_code("WFNMSSB", "VFNMS", { { 4, 8 }, { 5, 2 } });
-    add_mnemonic_code("WFNMSDB", "VFNMS", { { 4, 8 }, { 5, 3 } });
-    add_mnemonic_code("WFNMSXB", "VFNMS", { { 4, 8 }, { 5, 4 } });
-    add_mnemonic_code("VFPSOSB", "VFPSO", { { 2, 2 }, { 3, 0 } });
-    add_mnemonic_code("WFPSOSB", "VFPSO", { { 2, 2 }, { 3, 8 } });
-    add_mnemonic_code("VFLCSB", "VFPSO", { { 2, 2 }, { 3, 0 }, { 4, 0 } });
-    add_mnemonic_code("VCELFB", "VCFPL", { { 2, 0 } });
-    add_mnemonic_code("VLLEBRZH", "VLLEBRZ", { { 2, 1 } });
-    add_mnemonic_code("VLLEBRZF", "VLLEBRZ", { { 2, 2 } });
-    add_mnemonic_code("VLLEBRZG", "VLLEBRZ", { { 2, 3 } });
-    add_mnemonic_code("VLLEBRZE", "VLLEBRZ", { { 2, 6 } });
-    add_mnemonic_code("LDRV", "VLLEBRZ", { { 2, 3 } });
-    add_mnemonic_code("LERV", "VLLEBRZ", { { 2, 6 } });
-    add_mnemonic_code("VPKF", "VPK", { { 3, 2 } });
-    add_mnemonic_code("VPKG", "VPK", { { 3, 3 } });
-    add_mnemonic_code("VPKH", "VPK", { { 3, 1 } });
-    add_mnemonic_code("WFLCSB", "VFPSO", { { 2, 2 }, { 3, 8 }, { 4, 0 } });
-    add_mnemonic_code("VFLNSB", "VFPSO", { { 2, 2 }, { 3, 0 }, { 4, 1 } });
-    add_mnemonic_code("WFLNSB", "VFPSO", { { 2, 2 }, { 3, 8 }, { 4, 1 } });
-    add_mnemonic_code("VFLPSB", "VFPSO", { { 2, 2 }, { 3, 0 }, { 4, 2 } });
-    add_mnemonic_code("WFLPSB", "VFPSO", { { 2, 2 }, { 3, 8 }, { 4, 2 } });
-    add_mnemonic_code("VFPSODB", "VFPSO", { { 2, 3 }, { 3, 0 } });
-    add_mnemonic_code("WFPSODB", "VFPSO", { { 2, 3 }, { 3, 8 } });
-    add_mnemonic_code("VFLCDB", "VFPSO", { { 2, 3 }, { 3, 0 }, { 4, 0 } });
-    add_mnemonic_code("WFLCDB", "VFPSO", { { 2, 3 }, { 3, 8 }, { 4, 0 } });
-    add_mnemonic_code("VFLNDB", "VFPSO", { { 2, 3 }, { 3, 0 }, { 4, 1 } });
-    add_mnemonic_code("WFLNDB", "VFPSO", { { 2, 3 }, { 3, 8 }, { 4, 1 } });
-    add_mnemonic_code("VFLPDB", "VFPSO", { { 2, 3 }, { 3, 0 }, { 4, 2 } });
-    add_mnemonic_code("WFLPDB", "VFPSO", { { 2, 3 }, { 3, 8 }, { 4, 2 } });
-    add_mnemonic_code("WFPSOXB", "VFPSO", { { 2, 4 }, { 3, 8 } });
-    add_mnemonic_code("WFLCXB", "VFPSO", { { 2, 4 }, { 3, 8 }, { 4, 0 } });
-    add_mnemonic_code("WFLNXB", "VFPSO", { { 2, 4 }, { 3, 8 }, { 4, 1 } });
-    add_mnemonic_code("WFLPXB", "VFPSO", { { 2, 4 }, { 3, 8 }, { 4, 2 } });
-    add_mnemonic_code("VFSQSB", "VFSQ", { { 2, 2 }, { 3, 0 } });
-    add_mnemonic_code("VFSQDB", "VFSQ", { { 2, 3 }, { 3, 0 } });
-    add_mnemonic_code("WFSQSB", "VFSQ", { { 2, 2 }, { 3, 8 } });
-    add_mnemonic_code("WFSQDB", "VFSQ", { { 2, 3 }, { 3, 8 } });
-    add_mnemonic_code("WFSQXB", "VFSQ", { { 2, 4 }, { 3, 8 } });
-    add_mnemonic_code("VFSSB", "VFS", { { 2, 2 }, { 3, 0 } });
-    add_mnemonic_code("VFSDB", "VFS", { { 2, 3 }, { 3, 0 } });
-    add_mnemonic_code("WFSSB", "VFS", { { 2, 2 }, { 3, 8 } });
-    add_mnemonic_code("WFSDB", "VFS", { { 2, 3 }, { 3, 8 } });
-    add_mnemonic_code("WFSXB", "VFS", { { 2, 4 }, { 3, 8 } });
-    add_mnemonic_code("VFTCISB", "VFTCI", { { 3, 2 }, { 4, 0 } });
-    add_mnemonic_code("VFTCIDB", "VFTCI", { { 3, 3 }, { 4, 0 } });
-    add_mnemonic_code("WFTCISB", "VFTCI", { { 3, 2 }, { 4, 8 } });
-    add_mnemonic_code("WFTCIDB", "VFTCI", { { 3, 3 }, { 4, 8 } });
-    add_mnemonic_code("WFTCIXB", "VFTCI", { { 3, 4 }, { 4, 8 } });
-    add_mnemonic_code("XHHR", "RXSBG", { { 2, 0 }, { 3, 31 } });
-    add_mnemonic_code("XLHR", "RXSBG", { { 2, 32 }, { 3, 63 }, { 4, 32 } });
-    // instruction under this position contain an OR operation not marked in this list
-
-    // in case the operand is ommited, the OR number should be assigned to the value of the ommited operand
-    add_mnemonic_code("VFAEBS", "VFAE", { { 3, 0 } }); // operand with index 4 ORed with 1
-    add_mnemonic_code("VFAEHS", "VFAE", { { 3, 1 } }); // operand with index 4 ORed with 1
-    add_mnemonic_code("VFAEFS", "VFAE", { { 3, 2 } }); // operand with index 4 ORed with 1
-    add_mnemonic_code("VFAEZB", "VFAE", { { 3, 0 } }); // operand with index 4 ORed with 2
-    add_mnemonic_code("VFAEZH", "VFAE", { { 3, 1 } }); // operand with index 4 ORed with 2
-    add_mnemonic_code("VFAEZF", "VFAE", { { 3, 2 } }); // operand with index 4 ORed with 2
-    add_mnemonic_code("VFAEZBS", "VFAE", { { 3, 0 } }); // operand with index 4 ORed with 3
-    add_mnemonic_code("VFAEZHS", "VFAE", { { 3, 1 } }); // operand with index 4 ORed with 3
-    add_mnemonic_code("VFAEZFS", "VFAE", { { 3, 2 } }); // operand with index 4 ORed with 3
-    add_mnemonic_code("VSTRCBS", "VSTRC", { { 4, 0 } }); // operand with index 5 ORed with 1
-    add_mnemonic_code("VSTRCHS", "VSTRC", { { 4, 1 } }); // operand with index 5 ORed with 1
-    add_mnemonic_code("VSTRCFS", "VSTRC", { { 4, 2 } }); // operand with index 5 ORed with 1
-    add_mnemonic_code("VSTRCZB", "VSTRC", { { 4, 0 } }); // operand with index 5 ORed with 2
-    add_mnemonic_code("VSTRCZH", "VSTRC", { { 4, 1 } }); // operand with index 5 ORed with 2
-    add_mnemonic_code("VSTRCZF", "VSTRC", { { 4, 2 } }); // operand with index 5 ORed with 2
-    add_mnemonic_code("VSTRCZBS", "VSTRC", { { 4, 0 } }); // operand with index 5 ORed with 3
-    add_mnemonic_code("VSTRCZHS", "VSTRC", { { 4, 1 } }); // operand with index 5 ORed with 3
-    add_mnemonic_code("VSTRCZFS", "VSTRC", { { 4, 2 } }); // operand with index 5 ORed
-                                                          // with 3 always OR
-    add_mnemonic_code("WFISB", "VFI", { { 2, 2 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WFIDB", "VFI", { { 2, 3 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WFIXB", "VFI", { { 2, 4 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WCDLGB", "VCFPL", { { 2, 3 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WCGDB", "VCSFP", { { 2, 3 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WCELFB", "VCFPL", { { 2, 2 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WCLFEB", "VCLFP", { { 2, 2 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WCEFB", "VCFPS", { { 2, 2 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WCDGB", "VCFPS", { { 2, 3 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WCFEB", "VCSFP", { { 2, 2 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WCLGDB", "VCLGD", { { 2, 3 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WLEDB", "VFLR", { { 2, 3 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WFLRD", "VFLR", { { 2, 3 } }); // operand with index 3 ORed with 8
-    add_mnemonic_code("WFLRX", "VFLR", { { 2, 4 } }); // operand with index 3 ORed with 8
-
-    // mnemonics not in principles
-    add_mnemonic_code("CIJE", "CIJ", { { 2, 8 } });
-    add_mnemonic_code("CIJH", "CIJ", { { 2, 2 } });
-    add_mnemonic_code("CIJL", "CIJ", { { 2, 4 } });
-    add_mnemonic_code("CIJNE", "CIJ", { { 2, 6 } });
-    add_mnemonic_code("CIJNH", "CIJ", { { 2, 12 } });
-    add_mnemonic_code("CIJNL", "CIJ", { { 2, 10 } });
-    add_mnemonic_code("CGIBE", "CGIB", { { 2, 8 } });
-    add_mnemonic_code("CGIBH", "CGIB", { { 2, 2 } });
-    add_mnemonic_code("CGIBL", "CGIB", { { 2, 4 } });
-    add_mnemonic_code("CGIBNE", "CGIB", { { 2, 6 } });
-    add_mnemonic_code("CGIBNH", "CGIB", { { 2, 12 } });
-    add_mnemonic_code("CGIBNL", "CGIB", { { 2, 10 } });
-    add_mnemonic_code("CGIJE", "CGIJ", { { 2, 8 } });
-    add_mnemonic_code("CGIJH", "CGIJ", { { 2, 2 } });
-    add_mnemonic_code("CGIJL", "CGIJ", { { 2, 4 } });
-    add_mnemonic_code("CGIJNE", "CGIJ", { { 2, 6 } });
-    add_mnemonic_code("CGIJNH", "CGIJ", { { 2, 12 } });
-    add_mnemonic_code("CGIJNL", "CGIJ", { { 2, 10 } });
-    add_mnemonic_code("CGITE", "CGIT", { { 2, 8 } });
-    add_mnemonic_code("CGITH", "CGIT", { { 2, 2 } });
-    add_mnemonic_code("CGITL", "CGIT", { { 2, 4 } });
-    add_mnemonic_code("CGITNE", "CGIT", { { 2, 6 } });
-    add_mnemonic_code("CGITNH", "CGIT", { { 2, 12 } });
-    add_mnemonic_code("CGITNL", "CGIT", { { 2, 10 } });
-    add_mnemonic_code("CGRBE", "CGRB", { { 2, 8 } });
-    add_mnemonic_code("CGRBH", "CGRB", { { 2, 2 } });
-    add_mnemonic_code("CGRBL", "CGRB", { { 2, 4 } });
-    add_mnemonic_code("CGRBNE", "CGRB", { { 2, 6 } });
-    add_mnemonic_code("CGRBNH", "CGRB", { { 2, 12 } });
-    add_mnemonic_code("CGRBNL", "CGRB", { { 2, 10 } });
-    add_mnemonic_code("CGRJE", "CGRJ", { { 2, 8 } });
-    add_mnemonic_code("CGRJH", "CGRJ", { { 2, 2 } });
-    add_mnemonic_code("CGRJL", "CGRJ", { { 2, 4 } });
-    add_mnemonic_code("CGRJNE", "CGRJ", { { 2, 6 } });
-    add_mnemonic_code("CGRJNH", "CGRJ", { { 2, 12 } });
-    add_mnemonic_code("CGRJNL", "CGRJ", { { 2, 10 } });
-    add_mnemonic_code("CGRTE", "CGRT", { { 2, 8 } });
-    add_mnemonic_code("CGRTH", "CGRT", { { 2, 2 } });
-    add_mnemonic_code("CGRTL", "CGRT", { { 2, 4 } });
-    add_mnemonic_code("CGRTNE", "CGRT", { { 2, 6 } });
-    add_mnemonic_code("CGRTNH", "CGRT", { { 2, 12 } });
-    add_mnemonic_code("CGRTNL", "CGRT", { { 2, 10 } });
-    add_mnemonic_code("CIBE", "CIB", { { 2, 8 } });
-    add_mnemonic_code("CIBH", "CIB", { { 2, 2 } });
-    add_mnemonic_code("CIBL", "CIB", { { 2, 4 } });
-    add_mnemonic_code("CIBNE", "CIB", { { 2, 6 } });
-    add_mnemonic_code("CIBNH", "CIB", { { 2, 12 } });
-    add_mnemonic_code("CIBNL", "CIB", { { 2, 10 } });
-    add_mnemonic_code("CITE", "CIT", { { 2, 8 } });
-    add_mnemonic_code("CITH", "CIT", { { 2, 2 } });
-    add_mnemonic_code("CITL", "CIT", { { 2, 4 } });
-    add_mnemonic_code("CITNE", "CIT", { { 2, 6 } });
-    add_mnemonic_code("CITNH", "CIT", { { 2, 12 } });
-    add_mnemonic_code("CITNL", "CIT", { { 2, 10 } });
-    add_mnemonic_code("CLFITE", "CLFIT", { { 2, 8 } });
-    add_mnemonic_code("CLFITH", "CLFIT", { { 2, 2 } });
-    add_mnemonic_code("CLFITL", "CLFIT", { { 2, 4 } });
-    add_mnemonic_code("CLFITNE", "CLFIT", { { 2, 6 } });
-    add_mnemonic_code("CLFITNH", "CLFIT", { { 2, 12 } });
-    add_mnemonic_code("CLFITNL", "CLFIT", { { 2, 10 } });
-    add_mnemonic_code("CLGIBE", "CLGIB", { { 2, 8 } });
-    add_mnemonic_code("CLGIBH", "CLGIB", { { 2, 2 } });
-    add_mnemonic_code("CLGIBL", "CLGIB", { { 2, 4 } });
-    add_mnemonic_code("CLGIBNE", "CLGIB", { { 2, 6 } });
-    add_mnemonic_code("CLGIBNH", "CLGIB", { { 2, 12 } });
-    add_mnemonic_code("CLGIBNL", "CLGIB", { { 2, 10 } });
-    add_mnemonic_code("CLGIJE", "CLGIJ", { { 2, 8 } });
-    add_mnemonic_code("CLGIJH", "CLGIJ", { { 2, 2 } });
-    add_mnemonic_code("CLGIJL", "CLGIJ", { { 2, 4 } });
-    add_mnemonic_code("CLGIJNE", "CLGIJ", { { 2, 6 } });
-    add_mnemonic_code("CLGIJNH", "CLGIJ", { { 2, 12 } });
-    add_mnemonic_code("CLGIJNL", "CLGIJ", { { 2, 10 } });
-    add_mnemonic_code("CLGITE", "CLGIT", { { 2, 8 } });
-    add_mnemonic_code("CLGITH", "CLGIT", { { 2, 2 } });
-    add_mnemonic_code("CLGITL", "CLGIT", { { 2, 4 } });
-    add_mnemonic_code("CLGITNE", "CLGIT", { { 2, 6 } });
-    add_mnemonic_code("CLGITNH", "CLGIT", { { 2, 12 } });
-    add_mnemonic_code("CLGITNL", "CLGIT", { { 2, 10 } });
-    add_mnemonic_code("CLGRBE", "CLGRB", { { 2, 8 } });
-    add_mnemonic_code("CLGRBH", "CLGRB", { { 2, 2 } });
-    add_mnemonic_code("CLGRBL", "CLGRB", { { 2, 4 } });
-    add_mnemonic_code("CLGRBNE", "CLGRB", { { 2, 6 } });
-    add_mnemonic_code("CLGRBNH", "CLGRB", { { 2, 12 } });
-    add_mnemonic_code("CLGRBNL", "CLGRB", { { 2, 10 } });
-    add_mnemonic_code("CLGRJE", "CLGRJ", { { 2, 8 } });
-    add_mnemonic_code("CLGRJH", "CLGRJ", { { 2, 2 } });
-    add_mnemonic_code("CLGRJL", "CLGRJ", { { 2, 4 } });
-    add_mnemonic_code("CLGRJNE", "CLGRJ", { { 2, 6 } });
-    add_mnemonic_code("CLGRJNH", "CLGRJ", { { 2, 12 } });
-    add_mnemonic_code("CLGRJNL", "CLGRJ", { { 2, 10 } });
-    add_mnemonic_code("CLGRTE", "CLGRT", { { 2, 8 } });
-    add_mnemonic_code("CLGRTH", "CLGRT", { { 2, 2 } });
-    add_mnemonic_code("CLGRTL", "CLGRT", { { 2, 4 } });
-    add_mnemonic_code("CLGRTNE", "CLGRT", { { 2, 6 } });
-    add_mnemonic_code("CLGRTNH", "CLGRT", { { 2, 12 } });
-    add_mnemonic_code("CLGRTNL", "CLGRT", { { 2, 10 } });
-    add_mnemonic_code("CLGTE", "CLGT", { { 1, 8 } });
-    add_mnemonic_code("CLGTH", "CLGT", { { 1, 2 } });
-    add_mnemonic_code("CLGTL", "CLGT", { { 1, 4 } });
-    add_mnemonic_code("CLGTNE", "CLGT", { { 1, 6 } });
-    add_mnemonic_code("CLGTNH", "CLGT", { { 1, 12 } });
-    add_mnemonic_code("CLGTNL", "CLGT", { { 1, 10 } });
-    add_mnemonic_code("CLIBE", "CLIB", { { 2, 8 } });
-    add_mnemonic_code("CLIBH", "CLIB", { { 2, 2 } });
-    add_mnemonic_code("CLIBL", "CLIB", { { 2, 4 } });
-    add_mnemonic_code("CLIBNE", "CLIB", { { 2, 6 } });
-    add_mnemonic_code("CLIBNH", "CLIB", { { 2, 12 } });
-    add_mnemonic_code("CLIBNL", "CLIB", { { 2, 10 } });
-    add_mnemonic_code("CLIJE", "CLIJ", { { 2, 8 } });
-    add_mnemonic_code("CLIJH", "CLIJ", { { 2, 2 } });
-    add_mnemonic_code("CLIJL", "CLIJ", { { 2, 4 } });
-    add_mnemonic_code("CLIJNE", "CLIJ", { { 2, 6 } });
-    add_mnemonic_code("CLIJNH", "CLIJ", { { 2, 12 } });
-    add_mnemonic_code("CLIJNL", "CLIJ", { { 2, 10 } });
-    add_mnemonic_code("CLRBE", "CLRB", { { 2, 8 } });
-    add_mnemonic_code("CLRBH", "CLRB", { { 2, 2 } });
-    add_mnemonic_code("CLRBL", "CLRB", { { 2, 4 } });
-    add_mnemonic_code("CLRBNE", "CLRB", { { 2, 6 } });
-    add_mnemonic_code("CLRBNH", "CLRB", { { 2, 12 } });
-    add_mnemonic_code("CLRBNL", "CLRB", { { 2, 10 } });
-    add_mnemonic_code("CLRJE", "CLRJ", { { 2, 8 } });
-    add_mnemonic_code("CLRJH", "CLRJ", { { 2, 2 } });
-    add_mnemonic_code("CLRJL", "CLRJ", { { 2, 4 } });
-    add_mnemonic_code("CLRJNE", "CLRJ", { { 2, 6 } });
-    add_mnemonic_code("CLRJNH", "CLRJ", { { 2, 12 } });
-    add_mnemonic_code("CLRJNL", "CLRJ", { { 2, 10 } });
-    add_mnemonic_code("CLRTE", "CLRT", { { 2, 8 } });
-    add_mnemonic_code("CLRTH", "CLRT", { { 2, 2 } });
-    add_mnemonic_code("CLRTL", "CLRT", { { 2, 4 } });
-    add_mnemonic_code("CLRTNE", "CLRT", { { 2, 6 } });
-    add_mnemonic_code("CLRTNH", "CLRT", { { 2, 12 } });
-    add_mnemonic_code("CLRTNL", "CLRT", { { 2, 10 } });
-    add_mnemonic_code("CLTE", "CLT", { { 1, 8 } });
-    add_mnemonic_code("CLTH", "CLT", { { 1, 2 } });
-    add_mnemonic_code("CLTL", "CLT", { { 1, 4 } });
-    add_mnemonic_code("CLTNE", "CLT", { { 1, 6 } });
-    add_mnemonic_code("CLTNH", "CLT", { { 1, 12 } });
-    add_mnemonic_code("CLTNL", "CLT", { { 1, 10 } });
-    add_mnemonic_code("CRBE", "CRB", { { 2, 8 } });
-    add_mnemonic_code("CRBH", "CRB", { { 2, 2 } });
-    add_mnemonic_code("CRBL", "CRB", { { 2, 4 } });
-    add_mnemonic_code("CRBNE", "CRB", { { 2, 6 } });
-    add_mnemonic_code("CRBNH", "CRB", { { 2, 12 } });
-    add_mnemonic_code("CRBNL", "CRB", { { 2, 10 } });
-    add_mnemonic_code("CRJE", "CRJ", { { 2, 8 } });
-    add_mnemonic_code("CRJH", "CRJ", { { 2, 2 } });
-    add_mnemonic_code("CRJL", "CRJ", { { 2, 4 } });
-    add_mnemonic_code("CRJNE", "CRJ", { { 2, 6 } });
-    add_mnemonic_code("CRJNH", "CRJ", { { 2, 12 } });
-    add_mnemonic_code("CRJNL", "CRJ", { { 2, 10 } });
-    add_mnemonic_code("CRTE", "CRT", { { 2, 8 } });
-    add_mnemonic_code("CRTH", "CRT", { { 2, 2 } });
-    add_mnemonic_code("CRTL", "CRT", { { 2, 4 } });
-    add_mnemonic_code("CRTNE", "CRT", { { 2, 6 } });
-    add_mnemonic_code("CRTNH", "CRT", { { 2, 12 } });
-    add_mnemonic_code("CRTNL", "CRT", { { 2, 10 } });
-    // operand with index 2 was omitted for the below instruction
-    add_mnemonic_code("NOTR", "NORK", { { 2, 0 } });
-    // operand with index 2 was omitted for the below instruction
-    add_mnemonic_code("NOTGR", "NOGRK", { { 2, 0 } });
-    add_mnemonic_code("LOCGE", "LOCG", { { 2, 8 } });
-    add_mnemonic_code("LOCGH", "LOCG", { { 2, 2 } });
-    add_mnemonic_code("LOCGL", "LOCG", { { 2, 4 } });
-    add_mnemonic_code("LOCGNE", "LOCG", { { 2, 6 } });
-    add_mnemonic_code("LOCGNH", "LOCG", { { 2, 12 } });
-    add_mnemonic_code("LOCGNL", "LOCG", { { 2, 10 } });
-    add_mnemonic_code("LOCRE", "LOCR", { { 2, 8 } });
-    add_mnemonic_code("LOCRH", "LOCR", { { 2, 2 } });
-    add_mnemonic_code("LOCRL", "LOCR", { { 2, 4 } });
-    add_mnemonic_code("LOCRNE", "LOCR", { { 2, 6 } });
-    add_mnemonic_code("LOCRNH", "LOCR", { { 2, 12 } });
-    add_mnemonic_code("LOCRNL", "LOCR", { { 2, 10 } });
-    add_mnemonic_code("LOCGRE", "LOCGR", { { 2, 8 } });
-    add_mnemonic_code("LOCGRH", "LOCGR", { { 2, 2 } });
-    add_mnemonic_code("LOCGRL", "LOCGR", { { 2, 4 } });
-    add_mnemonic_code("LOCGRNE", "LOCGR", { { 2, 6 } });
-    add_mnemonic_code("LOCGRNH", "LOCGR", { { 2, 12 } });
-    add_mnemonic_code("LOCGRNL", "LOCGR", { { 2, 10 } });
-    add_mnemonic_code("LOCE", "LOC", { { 2, 8 } });
-    add_mnemonic_code("LOCH", "LOC", { { 2, 2 } });
-    add_mnemonic_code("LOCL", "LOC", { { 2, 4 } });
-    add_mnemonic_code("LOCNE", "LOC", { { 2, 6 } });
-    add_mnemonic_code("LOCNH", "LOC", { { 2, 12 } });
-    add_mnemonic_code("LOCNL", "LOC", { { 2, 10 } });
-    add_mnemonic_code("STOCGE", "STOCG", { { 2, 8 } });
-    add_mnemonic_code("STOCGH", "STOCG", { { 2, 2 } });
-    add_mnemonic_code("STOCGL", "STOCG", { { 2, 4 } });
-    add_mnemonic_code("STOCGNE", "STOCG", { { 2, 6 } });
-    add_mnemonic_code("STOCGNH", "STOCG", { { 2, 12 } });
-    add_mnemonic_code("STOCGNL", "STOCG", { { 2, 10 } });
-    add_mnemonic_code("STOCE", "STOC", { { 2, 8 } });
-    add_mnemonic_code("STOCH", "STOC", { { 2, 2 } });
-    add_mnemonic_code("STOCL", "STOC", { { 2, 4 } });
-    add_mnemonic_code("STOCNE", "STOC", { { 2, 6 } });
-    add_mnemonic_code("STOCNH", "STOC", { { 2, 12 } });
-    add_mnemonic_code("STOCNL", "STOC", { { 2, 10 } });
-    // VNO V1,V2,V2        (operand with index 2 replaced with 0 )
-    add_mnemonic_code("VNOT", "VNO", { { 2, 0 } });
-    return result;
+    auto it = std::ranges::lower_bound(machine_instructions, name, {}, &machine_instruction::name);
+    assert(it != std::ranges::end(machine_instructions) && it->name() == name);
+    return &*it;
 }
+constexpr auto mi_BC = find_mi("BC");
+constexpr auto mi_BCR = find_mi("BCR");
+constexpr auto mi_BIC = find_mi("BIC");
+constexpr auto mi_BRAS = find_mi("BRAS");
+constexpr auto mi_BRASL = find_mi("BRASL");
+constexpr auto mi_BRC = find_mi("BRC");
+constexpr auto mi_BRCL = find_mi("BRCL");
+constexpr auto mi_BRCT = find_mi("BRCT");
+constexpr auto mi_BRCTG = find_mi("BRCTG");
+constexpr auto mi_BRXH = find_mi("BRXH");
+constexpr auto mi_BRXHG = find_mi("BRXHG");
+constexpr auto mi_BRXLE = find_mi("BRXLE");
+constexpr auto mi_BRXLG = find_mi("BRXLG");
+constexpr auto mi_CGIB = find_mi("CGIB");
+constexpr auto mi_CGIJ = find_mi("CGIJ");
+constexpr auto mi_CGIT = find_mi("CGIT");
+constexpr auto mi_CGRB = find_mi("CGRB");
+constexpr auto mi_CGRJ = find_mi("CGRJ");
+constexpr auto mi_CGRT = find_mi("CGRT");
+constexpr auto mi_CIB = find_mi("CIB");
+constexpr auto mi_CIJ = find_mi("CIJ");
+constexpr auto mi_CIT = find_mi("CIT");
+constexpr auto mi_CLFIT = find_mi("CLFIT");
+constexpr auto mi_CLGIB = find_mi("CLGIB");
+constexpr auto mi_CLGIJ = find_mi("CLGIJ");
+constexpr auto mi_CLGIT = find_mi("CLGIT");
+constexpr auto mi_CLGRB = find_mi("CLGRB");
+constexpr auto mi_CLGRJ = find_mi("CLGRJ");
+constexpr auto mi_CLGRT = find_mi("CLGRT");
+constexpr auto mi_CLGT = find_mi("CLGT");
+constexpr auto mi_CLIB = find_mi("CLIB");
+constexpr auto mi_CLIJ = find_mi("CLIJ");
+constexpr auto mi_CLRB = find_mi("CLRB");
+constexpr auto mi_CLRJ = find_mi("CLRJ");
+constexpr auto mi_CLRT = find_mi("CLRT");
+constexpr auto mi_CLT = find_mi("CLT");
+constexpr auto mi_CRB = find_mi("CRB");
+constexpr auto mi_CRJ = find_mi("CRJ");
+constexpr auto mi_CRT = find_mi("CRT");
+constexpr auto mi_LOC = find_mi("LOC");
+constexpr auto mi_LOCFH = find_mi("LOCFH");
+constexpr auto mi_LOCFHR = find_mi("LOCFHR");
+constexpr auto mi_LOCG = find_mi("LOCG");
+constexpr auto mi_LOCGHI = find_mi("LOCGHI");
+constexpr auto mi_LOCGR = find_mi("LOCGR");
+constexpr auto mi_LOCHHI = find_mi("LOCHHI");
+constexpr auto mi_LOCHI = find_mi("LOCHI");
+constexpr auto mi_LOCR = find_mi("LOCR");
+constexpr auto mi_NOGRK = find_mi("NOGRK");
+constexpr auto mi_NORK = find_mi("NORK");
+constexpr auto mi_RISBHGZ = find_mi("RISBHGZ");
+constexpr auto mi_RISBLGZ = find_mi("RISBLGZ");
+constexpr auto mi_RNSBG = find_mi("RNSBG");
+constexpr auto mi_ROSBG = find_mi("ROSBG");
+constexpr auto mi_RXSBG = find_mi("RXSBG");
+constexpr auto mi_SELFHR = find_mi("SELFHR");
+constexpr auto mi_SELGR = find_mi("SELGR");
+constexpr auto mi_SELR = find_mi("SELR");
+constexpr auto mi_STOC = find_mi("STOC");
+constexpr auto mi_STOCFH = find_mi("STOCFH");
+constexpr auto mi_STOCG = find_mi("STOCG");
+constexpr auto mi_VA = find_mi("VA");
+constexpr auto mi_VAC = find_mi("VAC");
+constexpr auto mi_VACC = find_mi("VACC");
+constexpr auto mi_VACCC = find_mi("VACCC");
+constexpr auto mi_VAVG = find_mi("VAVG");
+constexpr auto mi_VAVGL = find_mi("VAVGL");
+constexpr auto mi_VCEQ = find_mi("VCEQ");
+constexpr auto mi_VCFPL = find_mi("VCFPL");
+constexpr auto mi_VCFPS = find_mi("VCFPS");
+constexpr auto mi_VCH = find_mi("VCH");
+constexpr auto mi_VCHL = find_mi("VCHL");
+constexpr auto mi_VCLFP = find_mi("VCLFP");
+constexpr auto mi_VCLGD = find_mi("VCLGD");
+constexpr auto mi_VCLZ = find_mi("VCLZ");
+constexpr auto mi_VCSFP = find_mi("VCSFP");
+constexpr auto mi_VEC = find_mi("VEC");
+constexpr auto mi_VECL = find_mi("VECL");
+constexpr auto mi_VERIM = find_mi("VERIM");
+constexpr auto mi_VERLL = find_mi("VERLL");
+constexpr auto mi_VERLLV = find_mi("VERLLV");
+constexpr auto mi_VESL = find_mi("VESL");
+constexpr auto mi_VESLV = find_mi("VESLV");
+constexpr auto mi_VESRA = find_mi("VESRA");
+constexpr auto mi_VESRAV = find_mi("VESRAV");
+constexpr auto mi_VESRL = find_mi("VESRL");
+constexpr auto mi_VESRLV = find_mi("VESRLV");
+constexpr auto mi_VFA = find_mi("VFA");
+constexpr auto mi_VFAE = find_mi("VFAE");
+constexpr auto mi_VFCE = find_mi("VFCE");
+constexpr auto mi_VFCH = find_mi("VFCH");
+constexpr auto mi_VFCHE = find_mi("VFCHE");
+constexpr auto mi_VFD = find_mi("VFD");
+constexpr auto mi_VFEE = find_mi("VFEE");
+constexpr auto mi_VFENE = find_mi("VFENE");
+constexpr auto mi_VFI = find_mi("VFI");
+constexpr auto mi_VFLL = find_mi("VFLL");
+constexpr auto mi_VFLR = find_mi("VFLR");
+constexpr auto mi_VFM = find_mi("VFM");
+constexpr auto mi_VFMA = find_mi("VFMA");
+constexpr auto mi_VFMAX = find_mi("VFMAX");
+constexpr auto mi_VFMIN = find_mi("VFMIN");
+constexpr auto mi_VFMS = find_mi("VFMS");
+constexpr auto mi_VFNMA = find_mi("VFNMA");
+constexpr auto mi_VFNMS = find_mi("VFNMS");
+constexpr auto mi_VFPSO = find_mi("VFPSO");
+constexpr auto mi_VFS = find_mi("VFS");
+constexpr auto mi_VFSQ = find_mi("VFSQ");
+constexpr auto mi_VFTCI = find_mi("VFTCI");
+constexpr auto mi_VGBM = find_mi("VGBM");
+constexpr auto mi_VGFM = find_mi("VGFM");
+constexpr auto mi_VGFMA = find_mi("VGFMA");
+constexpr auto mi_VGM = find_mi("VGM");
+constexpr auto mi_VISTR = find_mi("VISTR");
+constexpr auto mi_VLBR = find_mi("VLBR");
+constexpr auto mi_VLBRREP = find_mi("VLBRREP");
+constexpr auto mi_VLC = find_mi("VLC");
+constexpr auto mi_VLER = find_mi("VLER");
+constexpr auto mi_VLGV = find_mi("VLGV");
+constexpr auto mi_VLLEBRZ = find_mi("VLLEBRZ");
+constexpr auto mi_VLLEZ = find_mi("VLLEZ");
+constexpr auto mi_VLP = find_mi("VLP");
+constexpr auto mi_VLREP = find_mi("VLREP");
+constexpr auto mi_VLVG = find_mi("VLVG");
+constexpr auto mi_VMAE = find_mi("VMAE");
+constexpr auto mi_VMAH = find_mi("VMAH");
+constexpr auto mi_VMAL = find_mi("VMAL");
+constexpr auto mi_VMALE = find_mi("VMALE");
+constexpr auto mi_VMALH = find_mi("VMALH");
+constexpr auto mi_VMALO = find_mi("VMALO");
+constexpr auto mi_VMAO = find_mi("VMAO");
+constexpr auto mi_VME = find_mi("VME");
+constexpr auto mi_VMH = find_mi("VMH");
+constexpr auto mi_VML = find_mi("VML");
+constexpr auto mi_VMLE = find_mi("VMLE");
+constexpr auto mi_VMLH = find_mi("VMLH");
+constexpr auto mi_VMLO = find_mi("VMLO");
+constexpr auto mi_VMN = find_mi("VMN");
+constexpr auto mi_VMNL = find_mi("VMNL");
+constexpr auto mi_VMO = find_mi("VMO");
+constexpr auto mi_VMRH = find_mi("VMRH");
+constexpr auto mi_VMRL = find_mi("VMRL");
+constexpr auto mi_VMSL = find_mi("VMSL");
+constexpr auto mi_VMX = find_mi("VMX");
+constexpr auto mi_VMXL = find_mi("VMXL");
+constexpr auto mi_VNO = find_mi("VNO");
+constexpr auto mi_VPK = find_mi("VPK");
+constexpr auto mi_VPKLS = find_mi("VPKLS");
+constexpr auto mi_VPKS = find_mi("VPKS");
+constexpr auto mi_VPOPCT = find_mi("VPOPCT");
+constexpr auto mi_VREP = find_mi("VREP");
+constexpr auto mi_VREPI = find_mi("VREPI");
+constexpr auto mi_VS = find_mi("VS");
+constexpr auto mi_VSBCBI = find_mi("VSBCBI");
+constexpr auto mi_VSBI = find_mi("VSBI");
+constexpr auto mi_VSCBI = find_mi("VSCBI");
+constexpr auto mi_VSEG = find_mi("VSEG");
+constexpr auto mi_VSTBR = find_mi("VSTBR");
+constexpr auto mi_VSTEBRF = find_mi("VSTEBRF");
+constexpr auto mi_VSTEBRG = find_mi("VSTEBRG");
+constexpr auto mi_VSTER = find_mi("VSTER");
+constexpr auto mi_VSTRC = find_mi("VSTRC");
+constexpr auto mi_VSTRS = find_mi("VSTRS");
+constexpr auto mi_VSUM = find_mi("VSUM");
+constexpr auto mi_VSUMG = find_mi("VSUMG");
+constexpr auto mi_VSUMQ = find_mi("VSUMQ");
+constexpr auto mi_VUPH = find_mi("VUPH");
+constexpr auto mi_VUPL = find_mi("VUPL");
+constexpr auto mi_VUPLH = find_mi("VUPLH");
+constexpr auto mi_VUPLL = find_mi("VUPLL");
+constexpr auto mi_WFC = find_mi("WFC");
+constexpr auto mi_WFK = find_mi("WFK");
 
-const std::map<std::string_view, mnemonic_code>* const mnemonic_codes = &instruction::all_mnemonic_codes();
+constexpr mnemonic_code mnemonic_codes[] = {
+    { "B", mi_BC, { { 0, 15 } } },
+    { "BE", mi_BC, { { 0, 8 } } },
+    { "BER", mi_BCR, { { 0, 8 } } },
+    { "BH", mi_BC, { { 0, 2 } } },
+    { "BHR", mi_BCR, { { 0, 2 } } },
+    { "BI", mi_BIC, { { 0, 15 } } },
+    { "BIE", mi_BIC, { { 0, 8 } } },
+    { "BIH", mi_BIC, { { 0, 2 } } },
+    { "BIL", mi_BIC, { { 0, 4 } } },
+    { "BIM", mi_BIC, { { 0, 4 } } },
+    { "BINE", mi_BIC, { { 0, 7 } } },
+    { "BINH", mi_BIC, { { 0, 13 } } },
+    { "BINL", mi_BIC, { { 0, 11 } } },
+    { "BINM", mi_BIC, { { 0, 11 } } },
+    { "BINO", mi_BIC, { { 0, 14 } } },
+    { "BINP", mi_BIC, { { 0, 13 } } },
+    { "BINZ", mi_BIC, { { 0, 7 } } },
+    { "BIO", mi_BIC, { { 0, 1 } } },
+    { "BIP", mi_BIC, { { 0, 2 } } },
+    { "BIZ", mi_BIC, { { 0, 8 } } },
+    { "BL", mi_BC, { { 0, 4 } } },
+    { "BLR", mi_BCR, { { 0, 4 } } },
+    { "BM", mi_BC, { { 0, 4 } } },
+    { "BMR", mi_BCR, { { 0, 4 } } },
+    { "BNE", mi_BC, { { 0, 7 } } },
+    { "BNER", mi_BCR, { { 0, 7 } } },
+    { "BNH", mi_BC, { { 0, 13 } } },
+    { "BNHR", mi_BCR, { { 0, 13 } } },
+    { "BNL", mi_BC, { { 0, 11 } } },
+    { "BNLR", mi_BCR, { { 0, 11 } } },
+    { "BNM", mi_BC, { { 0, 11 } } },
+    { "BNMR", mi_BCR, { { 0, 11 } } },
+    { "BNO", mi_BC, { { 0, 14 } } },
+    { "BNOR", mi_BCR, { { 0, 14 } } },
+    { "BNP", mi_BC, { { 0, 13 } } },
+    { "BNPR", mi_BCR, { { 0, 13 } } },
+    { "BNZ", mi_BC, { { 0, 7 } } },
+    { "BNZR", mi_BCR, { { 0, 7 } } },
+    { "BO", mi_BC, { { 0, 1 } } },
+    { "BOR", mi_BCR, { { 0, 1 } } },
+    { "BP", mi_BC, { { 0, 2 } } },
+    { "BPR", mi_BCR, { { 0, 2 } } },
+    { "BR", mi_BCR, { { 0, 15 } } },
+    { "BRE", mi_BRC, { { 0, 8 } } },
+    { "BREL", mi_BRCL, { { 0, 8 } } },
+    { "BRH", mi_BRC, { { 0, 2 } } },
+    { "BRHL", mi_BRCL, { { 0, 2 } } },
+    { "BRL", mi_BRC, { { 0, 4 } } },
+    { "BRLL", mi_BRCL, { { 0, 4 } } },
+    { "BRM", mi_BRC, { { 0, 4 } } },
+    { "BRML", mi_BRCL, { { 0, 4 } } },
+    { "BRNE", mi_BRC, { { 0, 7 } } },
+    { "BRNEL", mi_BRCL, { { 0, 7 } } },
+    { "BRNH", mi_BRC, { { 0, 13 } } },
+    { "BRNHL", mi_BRCL, { { 0, 13 } } },
+    { "BRNL", mi_BRC, { { 0, 11 } } },
+    { "BRNLL", mi_BRCL, { { 0, 11 } } },
+    { "BRNM", mi_BRC, { { 0, 11 } } },
+    { "BRNML", mi_BRCL, { { 0, 11 } } },
+    { "BRNO", mi_BRC, { { 0, 14 } } },
+    { "BRNOL", mi_BRCL, { { 0, 14 } } },
+    { "BRNP", mi_BRC, { { 0, 13 } } },
+    { "BRNPL", mi_BRCL, { { 0, 13 } } },
+    { "BRNZ", mi_BRC, { { 0, 7 } } },
+    { "BRNZL", mi_BRCL, { { 0, 7 } } },
+    { "BRO", mi_BRC, { { 0, 1 } } },
+    { "BROL", mi_BRCL, { { 0, 1 } } },
+    { "BRP", mi_BRC, { { 0, 2 } } },
+    { "BRPL", mi_BRCL, { { 0, 2 } } },
+    { "BRU", mi_BRC, { { 0, 15 } } },
+    { "BRUL", mi_BRCL, { { 0, 15 } } },
+    { "BRZ", mi_BRC, { { 0, 8 } } },
+    { "BRZL", mi_BRCL, { { 0, 8 } } },
+    { "BZ", mi_BC, { { 0, 8 } } },
+    { "BZR", mi_BCR, { { 0, 8 } } },
+    { "CGIBE", mi_CGIB, { { 2, 8 } } },
+    { "CGIBH", mi_CGIB, { { 2, 2 } } },
+    { "CGIBL", mi_CGIB, { { 2, 4 } } },
+    { "CGIBNE", mi_CGIB, { { 2, 6 } } },
+    { "CGIBNH", mi_CGIB, { { 2, 12 } } },
+    { "CGIBNL", mi_CGIB, { { 2, 10 } } },
+    { "CGIJE", mi_CGIJ, { { 2, 8 } } },
+    { "CGIJH", mi_CGIJ, { { 2, 2 } } },
+    { "CGIJL", mi_CGIJ, { { 2, 4 } } },
+    { "CGIJNE", mi_CGIJ, { { 2, 6 } } },
+    { "CGIJNH", mi_CGIJ, { { 2, 12 } } },
+    { "CGIJNL", mi_CGIJ, { { 2, 10 } } },
+    { "CGITE", mi_CGIT, { { 2, 8 } } },
+    { "CGITH", mi_CGIT, { { 2, 2 } } },
+    { "CGITL", mi_CGIT, { { 2, 4 } } },
+    { "CGITNE", mi_CGIT, { { 2, 6 } } },
+    { "CGITNH", mi_CGIT, { { 2, 12 } } },
+    { "CGITNL", mi_CGIT, { { 2, 10 } } },
+    { "CGRBE", mi_CGRB, { { 2, 8 } } },
+    { "CGRBH", mi_CGRB, { { 2, 2 } } },
+    { "CGRBL", mi_CGRB, { { 2, 4 } } },
+    { "CGRBNE", mi_CGRB, { { 2, 6 } } },
+    { "CGRBNH", mi_CGRB, { { 2, 12 } } },
+    { "CGRBNL", mi_CGRB, { { 2, 10 } } },
+    { "CGRJE", mi_CGRJ, { { 2, 8 } } },
+    { "CGRJH", mi_CGRJ, { { 2, 2 } } },
+    { "CGRJL", mi_CGRJ, { { 2, 4 } } },
+    { "CGRJNE", mi_CGRJ, { { 2, 6 } } },
+    { "CGRJNH", mi_CGRJ, { { 2, 12 } } },
+    { "CGRJNL", mi_CGRJ, { { 2, 10 } } },
+    { "CGRTE", mi_CGRT, { { 2, 8 } } },
+    { "CGRTH", mi_CGRT, { { 2, 2 } } },
+    { "CGRTL", mi_CGRT, { { 2, 4 } } },
+    { "CGRTNE", mi_CGRT, { { 2, 6 } } },
+    { "CGRTNH", mi_CGRT, { { 2, 12 } } },
+    { "CGRTNL", mi_CGRT, { { 2, 10 } } },
+    { "CIBE", mi_CIB, { { 2, 8 } } },
+    { "CIBH", mi_CIB, { { 2, 2 } } },
+    { "CIBL", mi_CIB, { { 2, 4 } } },
+    { "CIBNE", mi_CIB, { { 2, 6 } } },
+    { "CIBNH", mi_CIB, { { 2, 12 } } },
+    { "CIBNL", mi_CIB, { { 2, 10 } } },
+    { "CIJE", mi_CIJ, { { 2, 8 } } },
+    { "CIJH", mi_CIJ, { { 2, 2 } } },
+    { "CIJL", mi_CIJ, { { 2, 4 } } },
+    { "CIJNE", mi_CIJ, { { 2, 6 } } },
+    { "CIJNH", mi_CIJ, { { 2, 12 } } },
+    { "CIJNL", mi_CIJ, { { 2, 10 } } },
+    { "CITE", mi_CIT, { { 2, 8 } } },
+    { "CITH", mi_CIT, { { 2, 2 } } },
+    { "CITL", mi_CIT, { { 2, 4 } } },
+    { "CITNE", mi_CIT, { { 2, 6 } } },
+    { "CITNH", mi_CIT, { { 2, 12 } } },
+    { "CITNL", mi_CIT, { { 2, 10 } } },
+    { "CLFITE", mi_CLFIT, { { 2, 8 } } },
+    { "CLFITH", mi_CLFIT, { { 2, 2 } } },
+    { "CLFITL", mi_CLFIT, { { 2, 4 } } },
+    { "CLFITNE", mi_CLFIT, { { 2, 6 } } },
+    { "CLFITNH", mi_CLFIT, { { 2, 12 } } },
+    { "CLFITNL", mi_CLFIT, { { 2, 10 } } },
+    { "CLGIBE", mi_CLGIB, { { 2, 8 } } },
+    { "CLGIBH", mi_CLGIB, { { 2, 2 } } },
+    { "CLGIBL", mi_CLGIB, { { 2, 4 } } },
+    { "CLGIBNE", mi_CLGIB, { { 2, 6 } } },
+    { "CLGIBNH", mi_CLGIB, { { 2, 12 } } },
+    { "CLGIBNL", mi_CLGIB, { { 2, 10 } } },
+    { "CLGIJE", mi_CLGIJ, { { 2, 8 } } },
+    { "CLGIJH", mi_CLGIJ, { { 2, 2 } } },
+    { "CLGIJL", mi_CLGIJ, { { 2, 4 } } },
+    { "CLGIJNE", mi_CLGIJ, { { 2, 6 } } },
+    { "CLGIJNH", mi_CLGIJ, { { 2, 12 } } },
+    { "CLGIJNL", mi_CLGIJ, { { 2, 10 } } },
+    { "CLGITE", mi_CLGIT, { { 2, 8 } } },
+    { "CLGITH", mi_CLGIT, { { 2, 2 } } },
+    { "CLGITL", mi_CLGIT, { { 2, 4 } } },
+    { "CLGITNE", mi_CLGIT, { { 2, 6 } } },
+    { "CLGITNH", mi_CLGIT, { { 2, 12 } } },
+    { "CLGITNL", mi_CLGIT, { { 2, 10 } } },
+    { "CLGRBE", mi_CLGRB, { { 2, 8 } } },
+    { "CLGRBH", mi_CLGRB, { { 2, 2 } } },
+    { "CLGRBL", mi_CLGRB, { { 2, 4 } } },
+    { "CLGRBNE", mi_CLGRB, { { 2, 6 } } },
+    { "CLGRBNH", mi_CLGRB, { { 2, 12 } } },
+    { "CLGRBNL", mi_CLGRB, { { 2, 10 } } },
+    { "CLGRJE", mi_CLGRJ, { { 2, 8 } } },
+    { "CLGRJH", mi_CLGRJ, { { 2, 2 } } },
+    { "CLGRJL", mi_CLGRJ, { { 2, 4 } } },
+    { "CLGRJNE", mi_CLGRJ, { { 2, 6 } } },
+    { "CLGRJNH", mi_CLGRJ, { { 2, 12 } } },
+    { "CLGRJNL", mi_CLGRJ, { { 2, 10 } } },
+    { "CLGRTE", mi_CLGRT, { { 2, 8 } } },
+    { "CLGRTH", mi_CLGRT, { { 2, 2 } } },
+    { "CLGRTL", mi_CLGRT, { { 2, 4 } } },
+    { "CLGRTNE", mi_CLGRT, { { 2, 6 } } },
+    { "CLGRTNH", mi_CLGRT, { { 2, 12 } } },
+    { "CLGRTNL", mi_CLGRT, { { 2, 10 } } },
+    { "CLGTE", mi_CLGT, { { 1, 8 } } },
+    { "CLGTH", mi_CLGT, { { 1, 2 } } },
+    { "CLGTL", mi_CLGT, { { 1, 4 } } },
+    { "CLGTNE", mi_CLGT, { { 1, 6 } } },
+    { "CLGTNH", mi_CLGT, { { 1, 12 } } },
+    { "CLGTNL", mi_CLGT, { { 1, 10 } } },
+    { "CLIBE", mi_CLIB, { { 2, 8 } } },
+    { "CLIBH", mi_CLIB, { { 2, 2 } } },
+    { "CLIBL", mi_CLIB, { { 2, 4 } } },
+    { "CLIBNE", mi_CLIB, { { 2, 6 } } },
+    { "CLIBNH", mi_CLIB, { { 2, 12 } } },
+    { "CLIBNL", mi_CLIB, { { 2, 10 } } },
+    { "CLIJE", mi_CLIJ, { { 2, 8 } } },
+    { "CLIJH", mi_CLIJ, { { 2, 2 } } },
+    { "CLIJL", mi_CLIJ, { { 2, 4 } } },
+    { "CLIJNE", mi_CLIJ, { { 2, 6 } } },
+    { "CLIJNH", mi_CLIJ, { { 2, 12 } } },
+    { "CLIJNL", mi_CLIJ, { { 2, 10 } } },
+    { "CLRBE", mi_CLRB, { { 2, 8 } } },
+    { "CLRBH", mi_CLRB, { { 2, 2 } } },
+    { "CLRBL", mi_CLRB, { { 2, 4 } } },
+    { "CLRBNE", mi_CLRB, { { 2, 6 } } },
+    { "CLRBNH", mi_CLRB, { { 2, 12 } } },
+    { "CLRBNL", mi_CLRB, { { 2, 10 } } },
+    { "CLRJE", mi_CLRJ, { { 2, 8 } } },
+    { "CLRJH", mi_CLRJ, { { 2, 2 } } },
+    { "CLRJL", mi_CLRJ, { { 2, 4 } } },
+    { "CLRJNE", mi_CLRJ, { { 2, 6 } } },
+    { "CLRJNH", mi_CLRJ, { { 2, 12 } } },
+    { "CLRJNL", mi_CLRJ, { { 2, 10 } } },
+    { "CLRTE", mi_CLRT, { { 2, 8 } } },
+    { "CLRTH", mi_CLRT, { { 2, 2 } } },
+    { "CLRTL", mi_CLRT, { { 2, 4 } } },
+    { "CLRTNE", mi_CLRT, { { 2, 6 } } },
+    { "CLRTNH", mi_CLRT, { { 2, 12 } } },
+    { "CLRTNL", mi_CLRT, { { 2, 10 } } },
+    { "CLTE", mi_CLT, { { 1, 8 } } },
+    { "CLTH", mi_CLT, { { 1, 2 } } },
+    { "CLTL", mi_CLT, { { 1, 4 } } },
+    { "CLTNE", mi_CLT, { { 1, 6 } } },
+    { "CLTNH", mi_CLT, { { 1, 12 } } },
+    { "CLTNL", mi_CLT, { { 1, 10 } } },
+    { "CRBE", mi_CRB, { { 2, 8 } } },
+    { "CRBH", mi_CRB, { { 2, 2 } } },
+    { "CRBL", mi_CRB, { { 2, 4 } } },
+    { "CRBNE", mi_CRB, { { 2, 6 } } },
+    { "CRBNH", mi_CRB, { { 2, 12 } } },
+    { "CRBNL", mi_CRB, { { 2, 10 } } },
+    { "CRJE", mi_CRJ, { { 2, 8 } } },
+    { "CRJH", mi_CRJ, { { 2, 2 } } },
+    { "CRJL", mi_CRJ, { { 2, 4 } } },
+    { "CRJNE", mi_CRJ, { { 2, 6 } } },
+    { "CRJNH", mi_CRJ, { { 2, 12 } } },
+    { "CRJNL", mi_CRJ, { { 2, 10 } } },
+    { "CRTE", mi_CRT, { { 2, 8 } } },
+    { "CRTH", mi_CRT, { { 2, 2 } } },
+    { "CRTL", mi_CRT, { { 2, 4 } } },
+    { "CRTNE", mi_CRT, { { 2, 6 } } },
+    { "CRTNH", mi_CRT, { { 2, 12 } } },
+    { "CRTNL", mi_CRT, { { 2, 10 } } },
+    { "J", mi_BRC, { { 0, 15 } } },
+    { "JAS", mi_BRAS, {} },
+    { "JASL", mi_BRASL, {} },
+    { "JC", mi_BRC, {} },
+    { "JCT", mi_BRCT, {} },
+    { "JCTG", mi_BRCTG, {} },
+    { "JE", mi_BRC, { { 0, 8 } } },
+    { "JH", mi_BRC, { { 0, 2 } } },
+    { "JL", mi_BRC, { { 0, 4 } } },
+    { "JLE", mi_BRCL, { { 0, 8 } } },
+    { "JLH", mi_BRCL, { { 0, 2 } } },
+    { "JLL", mi_BRCL, { { 0, 4 } } },
+    { "JLM", mi_BRCL, { { 0, 4 } } },
+    { "JLNE", mi_BRCL, { { 0, 7 } } },
+    { "JLNH", mi_BRCL, { { 0, 13 } } },
+    { "JLNL", mi_BRCL, { { 0, 11 } } },
+    { "JLNM", mi_BRCL, { { 0, 11 } } },
+    { "JLNO", mi_BRCL, { { 0, 14 } } },
+    { "JLNOP", mi_BRCL, { { 0, 0 } } },
+    { "JLNP", mi_BRCL, { { 0, 13 } } },
+    { "JLNZ", mi_BRCL, { { 0, 7 } } },
+    { "JLO", mi_BRCL, { { 0, 1 } } },
+    { "JLP", mi_BRCL, { { 0, 2 } } },
+    { "JLU", mi_BRCL, { { 0, 15 } } },
+    { "JLZ", mi_BRCL, { { 0, 8 } } },
+    { "JM", mi_BRC, { { 0, 4 } } },
+    { "JNE", mi_BRC, { { 0, 7 } } },
+    { "JNH", mi_BRC, { { 0, 13 } } },
+    { "JNL", mi_BRC, { { 0, 11 } } },
+    { "JNM", mi_BRC, { { 0, 11 } } },
+    { "JNO", mi_BRC, { { 0, 14 } } },
+    { "JNOP", mi_BRC, { { 0, 0 } } },
+    { "JNP", mi_BRC, { { 0, 13 } } },
+    { "JNZ", mi_BRC, { { 0, 7 } } },
+    { "JO", mi_BRC, { { 0, 1 } } },
+    { "JP", mi_BRC, { { 0, 2 } } },
+    { "JXH", mi_BRXH, {} },
+    { "JXHG", mi_BRXHG, {} },
+    { "JXLE", mi_BRXLE, {} },
+    { "JXLEG", mi_BRXLG, {} },
+    { "JZ", mi_BRC, { { 0, 8 } } },
+    { "LDRV", mi_VLLEBRZ, { { 2, 3 } } },
+    { "LERV", mi_VLLEBRZ, { { 2, 6 } } },
+    { "LHHR", mi_RISBHGZ, { { 2, 0 }, { 3, 31 } } },
+    { "LHLR", mi_RISBHGZ, { { 2, 0 }, { 3, 31 }, { 4, 32 } } },
+    { "LLCHHR", mi_RISBHGZ, { { 2, 24 }, { 3, 31 } } },
+    { "LLCHLR", mi_RISBHGZ, { { 2, 24 }, { 3, 31 }, { 4, 32 } } },
+    { "LLCLHR", mi_RISBLGZ, { { 2, 24 }, { 3, 31 }, { 4, 32 } } },
+    { "LLHFR", mi_RISBLGZ, { { 2, 0 }, { 3, 31 }, { 4, 32 } } },
+    { "LLHHHR", mi_RISBHGZ, { { 2, 16 }, { 3, 31 } } },
+    { "LLHHLR", mi_RISBHGZ, { { 2, 16 }, { 3, 31 }, { 4, 32 } } },
+    { "LLHLHR", mi_RISBLGZ, { { 2, 16 }, { 3, 31 }, { 4, 32 } } },
+    { "LOCE", mi_LOC, { { 2, 8 } } },
+    { "LOCFHE", mi_LOCFH, { { 2, 8 } } },
+    { "LOCFHH", mi_LOCFH, { { 2, 2 } } },
+    { "LOCFHL", mi_LOCFH, { { 2, 4 } } },
+    { "LOCFHNE", mi_LOCFH, { { 2, 7 } } },
+    { "LOCFHNH", mi_LOCFH, { { 2, 13 } } },
+    { "LOCFHNL", mi_LOCFH, { { 2, 11 } } },
+    { "LOCFHNO", mi_LOCFH, { { 2, 14 } } },
+    { "LOCFHO", mi_LOCFH, { { 2, 1 } } },
+    { "LOCFHRE", mi_LOCFHR, { { 2, 8 } } },
+    { "LOCFHRH", mi_LOCFHR, { { 2, 2 } } },
+    { "LOCFHRL", mi_LOCFHR, { { 2, 4 } } },
+    { "LOCFHRNE", mi_LOCFHR, { { 2, 7 } } },
+    { "LOCFHRNH", mi_LOCFHR, { { 2, 13 } } },
+    { "LOCFHRNL", mi_LOCFHR, { { 2, 11 } } },
+    { "LOCFHRNO", mi_LOCFHR, { { 2, 14 } } },
+    { "LOCFHRO", mi_LOCFHR, { { 2, 1 } } },
+    { "LOCGE", mi_LOCG, { { 2, 8 } } },
+    { "LOCGH", mi_LOCG, { { 2, 2 } } },
+    { "LOCGHIE", mi_LOCGHI, { { 2, 8 } } },
+    { "LOCGHIH", mi_LOCGHI, { { 2, 2 } } },
+    { "LOCGHIL", mi_LOCGHI, { { 2, 4 } } },
+    { "LOCGHINE", mi_LOCGHI, { { 2, 7 } } },
+    { "LOCGHINH", mi_LOCGHI, { { 2, 13 } } },
+    { "LOCGHINL", mi_LOCGHI, { { 2, 11 } } },
+    { "LOCGHINO", mi_LOCGHI, { { 2, 14 } } },
+    { "LOCGHIO", mi_LOCGHI, { { 2, 1 } } },
+    { "LOCGL", mi_LOCG, { { 2, 4 } } },
+    { "LOCGNE", mi_LOCG, { { 2, 6 } } },
+    { "LOCGNH", mi_LOCG, { { 2, 12 } } },
+    { "LOCGNL", mi_LOCG, { { 2, 10 } } },
+    { "LOCGNO", mi_LOCG, { { 2, 14 } } },
+    { "LOCGO", mi_LOCG, { { 2, 1 } } },
+    { "LOCGRE", mi_LOCGR, { { 2, 8 } } },
+    { "LOCGRH", mi_LOCGR, { { 2, 2 } } },
+    { "LOCGRL", mi_LOCGR, { { 2, 4 } } },
+    { "LOCGRNE", mi_LOCGR, { { 2, 6 } } },
+    { "LOCGRNH", mi_LOCGR, { { 2, 12 } } },
+    { "LOCGRNL", mi_LOCGR, { { 2, 10 } } },
+    { "LOCGRNO", mi_LOCGR, { { 2, 14 } } },
+    { "LOCGRO", mi_LOCGR, { { 2, 1 } } },
+    { "LOCH", mi_LOC, { { 2, 2 } } },
+    { "LOCHHIE", mi_LOCHHI, { { 2, 8 } } },
+    { "LOCHHIH", mi_LOCHHI, { { 2, 2 } } },
+    { "LOCHHIL", mi_LOCHHI, { { 2, 4 } } },
+    { "LOCHHINE", mi_LOCHHI, { { 2, 7 } } },
+    { "LOCHHINH", mi_LOCHHI, { { 2, 13 } } },
+    { "LOCHHINL", mi_LOCHHI, { { 2, 11 } } },
+    { "LOCHHINO", mi_LOCHHI, { { 2, 14 } } },
+    { "LOCHHIO", mi_LOCHHI, { { 2, 1 } } },
+    { "LOCHIE", mi_LOCHI, { { 2, 8 } } },
+    { "LOCHIH", mi_LOCHI, { { 2, 2 } } },
+    { "LOCHIL", mi_LOCHI, { { 2, 4 } } },
+    { "LOCHINE", mi_LOCHI, { { 2, 7 } } },
+    { "LOCHINH", mi_LOCHI, { { 2, 13 } } },
+    { "LOCHINL", mi_LOCHI, { { 2, 11 } } },
+    { "LOCHINO", mi_LOCHI, { { 2, 14 } } },
+    { "LOCHIO", mi_LOCHI, { { 2, 1 } } },
+    { "LOCL", mi_LOC, { { 2, 4 } } },
+    { "LOCNE", mi_LOC, { { 2, 6 } } },
+    { "LOCNH", mi_LOC, { { 2, 12 } } },
+    { "LOCNL", mi_LOC, { { 2, 10 } } },
+    { "LOCNO", mi_LOC, { { 2, 14 } } },
+    { "LOCO", mi_LOC, { { 2, 1 } } },
+    { "LOCRE", mi_LOCR, { { 2, 8 } } },
+    { "LOCRH", mi_LOCR, { { 2, 2 } } },
+    { "LOCRL", mi_LOCR, { { 2, 4 } } },
+    { "LOCRNE", mi_LOCR, { { 2, 6 } } },
+    { "LOCRNH", mi_LOCR, { { 2, 12 } } },
+    { "LOCRNL", mi_LOCR, { { 2, 10 } } },
+    { "LOCRNO", mi_LOCR, { { 2, 14 } } },
+    { "LOCRO", mi_LOCR, { { 2, 1 } } },
+    { "NHHR", mi_RNSBG, { { 2, 0 }, { 3, 31 } } },
+    { "NHLR", mi_RNSBG, { { 2, 0 }, { 3, 31 }, { 4, 32 } } },
+    { "NLHR", mi_RNSBG, { { 2, 32 }, { 3, 63 }, { 4, 32 } } },
+    { "NOP", mi_BC, { { 0, 0 } } },
+    { "NOPR", mi_BCR, { { 0, 0 } } },
+    { "NOTGR", mi_NOGRK, { { 2, 0 } } }, // operand with index 2 was omitted
+    { "NOTR", mi_NORK, { { 2, 0 } } }, // operand with index 2 was omitted
+    { "OHHR", mi_ROSBG, { { 2, 0 }, { 3, 31 } } },
+    { "OHLR", mi_ROSBG, { { 2, 0 }, { 3, 31 }, { 4, 32 } } },
+    { "OLHR", mi_ROSBG, { { 2, 32 }, { 3, 63 }, { 4, 32 } } },
+    { "SELFHRE", mi_SELFHR, { { 3, 8 } } },
+    { "SELFHRH", mi_SELFHR, { { 3, 2 } } },
+    { "SELFHRL", mi_SELFHR, { { 3, 4 } } },
+    { "SELFHRNE", mi_SELFHR, { { 3, 7 } } },
+    { "SELFHRNH", mi_SELFHR, { { 3, 13 } } },
+    { "SELFHRNL", mi_SELFHR, { { 3, 11 } } },
+    { "SELFHRNO", mi_SELFHR, { { 3, 14 } } },
+    { "SELFHRO", mi_SELFHR, { { 3, 1 } } },
+    { "SELGRE", mi_SELGR, { { 3, 8 } } },
+    { "SELGRH", mi_SELGR, { { 3, 2 } } },
+    { "SELGRL", mi_SELGR, { { 3, 4 } } },
+    { "SELGRNE", mi_SELGR, { { 3, 7 } } },
+    { "SELGRNH", mi_SELGR, { { 3, 13 } } },
+    { "SELGRNL", mi_SELGR, { { 3, 11 } } },
+    { "SELGRNO", mi_SELGR, { { 3, 14 } } },
+    { "SELGRO", mi_SELGR, { { 3, 1 } } },
+    { "SELRE", mi_SELR, { { 3, 8 } } },
+    { "SELRH", mi_SELR, { { 3, 2 } } },
+    { "SELRL", mi_SELR, { { 3, 4 } } },
+    { "SELRNE", mi_SELR, { { 3, 7 } } },
+    { "SELRNH", mi_SELR, { { 3, 13 } } },
+    { "SELRNL", mi_SELR, { { 3, 11 } } },
+    { "SELRNO", mi_SELR, { { 3, 14 } } },
+    { "SELRO", mi_SELR, { { 3, 1 } } },
+    { "STDRV", mi_VSTEBRG, { { 2, 0 } } },
+    { "STERV", mi_VSTEBRF, { { 2, 0 } } },
+    { "STOCE", mi_STOC, { { 2, 8 } } },
+    { "STOCFHE", mi_STOCFH, { { 2, 8 } } },
+    { "STOCFHH", mi_STOCFH, { { 2, 2 } } },
+    { "STOCFHL", mi_STOCFH, { { 2, 4 } } },
+    { "STOCFHNE", mi_STOCFH, { { 2, 7 } } },
+    { "STOCFHNH", mi_STOCFH, { { 2, 13 } } },
+    { "STOCFHNL", mi_STOCFH, { { 2, 11 } } },
+    { "STOCFHNO", mi_STOCFH, { { 2, 14 } } },
+    { "STOCFHO", mi_STOCFH, { { 2, 1 } } },
+    { "STOCGE", mi_STOCG, { { 2, 8 } } },
+    { "STOCGH", mi_STOCG, { { 2, 2 } } },
+    { "STOCGL", mi_STOCG, { { 2, 4 } } },
+    { "STOCGNE", mi_STOCG, { { 2, 6 } } },
+    { "STOCGNH", mi_STOCG, { { 2, 12 } } },
+    { "STOCGNL", mi_STOCG, { { 2, 10 } } },
+    { "STOCGNO", mi_STOCG, { { 2, 14 } } },
+    { "STOCGO", mi_STOCG, { { 2, 1 } } },
+    { "STOCH", mi_STOC, { { 2, 2 } } },
+    { "STOCL", mi_STOC, { { 2, 4 } } },
+    { "STOCNE", mi_STOC, { { 2, 6 } } },
+    { "STOCNH", mi_STOC, { { 2, 12 } } },
+    { "STOCNL", mi_STOC, { { 2, 10 } } },
+    { "STOCNO", mi_STOC, { { 2, 14 } } },
+    { "STOCO", mi_STOC, { { 2, 1 } } },
+    { "VAB", mi_VA, { { 3, 0 } } },
+    { "VACCB", mi_VACC, { { 3, 0 } } },
+    { "VACCCQ", mi_VACCC, { { 3, 4 } } },
+    { "VACCF", mi_VACC, { { 3, 2 } } },
+    { "VACCG", mi_VACC, { { 3, 3 } } },
+    { "VACCH", mi_VACC, { { 3, 1 } } },
+    { "VACCQ", mi_VACC, { { 3, 4 } } },
+    { "VACQ", mi_VAC, { { 3, 4 } } },
+    { "VAF", mi_VA, { { 3, 2 } } },
+    { "VAG", mi_VA, { { 3, 3 } } },
+    { "VAH", mi_VA, { { 3, 1 } } },
+    { "VAQ", mi_VA, { { 3, 4 } } },
+    { "VAVGB", mi_VAVG, { { 3, 0 } } },
+    { "VAVGF", mi_VAVG, { { 3, 2 } } },
+    { "VAVGG", mi_VAVG, { { 3, 3 } } },
+    { "VAVGH", mi_VAVG, { { 3, 1 } } },
+    { "VAVGLB", mi_VAVGL, { { 3, 0 } } },
+    { "VAVGLF", mi_VAVGL, { { 3, 2 } } },
+    { "VAVGLG", mi_VAVGL, { { 3, 3 } } },
+    { "VAVGLH", mi_VAVGL, { { 3, 1 } } },
+    { "VCDG", mi_VCFPS, {} },
+    { "VCDGB", mi_VCFPS, { { 2, 3 } } },
+    { "VCDLG", mi_VCFPL, {} },
+    { "VCDLGB", mi_VCFPL, { { 2, 3 } } },
+    { "VCEFB", mi_VCFPS, { { 2, 0 } } },
+    { "VCELFB", mi_VCFPL, { { 2, 0 } } },
+    { "VCEQB", mi_VCEQ, { { 3, 0 }, { 4, 0 } } },
+    { "VCEQBS", mi_VCEQ, { { 3, 0 }, { 4, 1 } } },
+    { "VCEQF", mi_VCEQ, { { 3, 2 }, { 4, 0 } } },
+    { "VCEQFS", mi_VCEQ, { { 3, 2 }, { 4, 1 } } },
+    { "VCEQG", mi_VCEQ, { { 3, 3 }, { 4, 0 } } },
+    { "VCEQGS", mi_VCEQ, { { 3, 3 }, { 4, 1 } } },
+    { "VCEQH", mi_VCEQ, { { 3, 1 }, { 4, 0 } } },
+    { "VCEQHS", mi_VCEQ, { { 3, 1 }, { 4, 1 } } },
+    { "VCFEB", mi_VCSFP, { { 2, 2 } } },
+    { "VCGD", mi_VCSFP, {} },
+    { "VCGDB", mi_VCSFP, { { 2, 3 } } },
+    { "VCHB", mi_VCH, { { 3, 0 }, { 4, 0 } } },
+    { "VCHBS", mi_VCH, { { 3, 0 }, { 4, 1 } } },
+    { "VCHF", mi_VCH, { { 3, 2 }, { 4, 0 } } },
+    { "VCHFS", mi_VCH, { { 3, 2 }, { 4, 1 } } },
+    { "VCHG", mi_VCH, { { 3, 3 }, { 4, 0 } } },
+    { "VCHGS", mi_VCH, { { 3, 3 }, { 4, 1 } } },
+    { "VCHH", mi_VCH, { { 3, 1 }, { 4, 0 } } },
+    { "VCHHS", mi_VCH, { { 3, 1 }, { 4, 1 } } },
+    { "VCHLB", mi_VCHL, { { 3, 0 }, { 4, 0 } } },
+    { "VCHLBS", mi_VCHL, { { 3, 0 }, { 4, 1 } } },
+    { "VCHLF", mi_VCHL, { { 3, 2 }, { 4, 0 } } },
+    { "VCHLFS", mi_VCHL, { { 3, 2 }, { 4, 1 } } },
+    { "VCHLG", mi_VCHL, { { 3, 3 }, { 4, 0 } } },
+    { "VCHLGS", mi_VCHL, { { 3, 3 }, { 4, 1 } } },
+    { "VCHLH", mi_VCHL, { { 3, 1 }, { 4, 0 } } },
+    { "VCHLHS", mi_VCHL, { { 3, 1 }, { 4, 1 } } },
+    { "VCLFEB", mi_VCLFP, { { 2, 0 } } },
+    { "VCLGDB", mi_VCLGD, { { 2, 3 } } },
+    { "VCLZB", mi_VCLZ, { { 2, 0 } } },
+    { "VCLZF", mi_VCLZ, { { 2, 2 } } },
+    { "VCLZG", mi_VCLZ, { { 2, 3 } } },
+    { "VCLZH", mi_VCLZ, { { 2, 1 } } },
+    { "VECB", mi_VEC, { { 2, 0 } } },
+    { "VECF", mi_VEC, { { 2, 2 } } },
+    { "VECG", mi_VEC, { { 2, 3 } } },
+    { "VECH", mi_VEC, { { 2, 1 } } },
+    { "VECLB", mi_VECL, { { 2, 0 } } },
+    { "VECLF", mi_VECL, { { 2, 2 } } },
+    { "VECLG", mi_VECL, { { 2, 3 } } },
+    { "VECLH", mi_VECL, { { 2, 1 } } },
+    { "VERIMB", mi_VERIM, { { 4, 0 } } },
+    { "VERIMF", mi_VERIM, { { 4, 2 } } },
+    { "VERIMG", mi_VERIM, { { 4, 3 } } },
+    { "VERIMH", mi_VERIM, { { 4, 1 } } },
+    { "VERLLB", mi_VERLL, { { 3, 0 } } },
+    { "VERLLF", mi_VERLL, { { 3, 2 } } },
+    { "VERLLG", mi_VERLL, { { 3, 3 } } },
+    { "VERLLH", mi_VERLL, { { 3, 1 } } },
+    { "VERLLVB", mi_VERLLV, { { 3, 0 } } },
+    { "VERLLVF", mi_VERLLV, { { 3, 2 } } },
+    { "VERLLVG", mi_VERLLV, { { 3, 3 } } },
+    { "VERLLVH", mi_VERLLV, { { 3, 1 } } },
+    { "VESLB", mi_VESL, { { 3, 0 } } },
+    { "VESLF", mi_VESL, { { 3, 2 } } },
+    { "VESLG", mi_VESL, { { 3, 3 } } },
+    { "VESLH", mi_VESL, { { 3, 1 } } },
+    { "VESLVB", mi_VESLV, { { 3, 0 } } },
+    { "VESLVF", mi_VESLV, { { 3, 2 } } },
+    { "VESLVG", mi_VESLV, { { 3, 3 } } },
+    { "VESLVH", mi_VESLV, { { 3, 1 } } },
+    { "VESRAB", mi_VESRA, { { 3, 0 } } },
+    { "VESRAF", mi_VESRA, { { 3, 2 } } },
+    { "VESRAG", mi_VESRA, { { 3, 3 } } },
+    { "VESRAH", mi_VESRA, { { 3, 1 } } },
+    { "VESRAVB", mi_VESRAV, { { 3, 0 } } },
+    { "VESRAVF", mi_VESRAV, { { 3, 2 } } },
+    { "VESRAVG", mi_VESRAV, { { 3, 3 } } },
+    { "VESRAVH", mi_VESRAV, { { 3, 1 } } },
+    { "VESRLB", mi_VESRL, { { 3, 0 } } },
+    { "VESRLF", mi_VESRL, { { 3, 2 } } },
+    { "VESRLG", mi_VESRL, { { 3, 3 } } },
+    { "VESRLH", mi_VESRL, { { 3, 1 } } },
+    { "VESRLVB", mi_VESRLV, { { 3, 0 } } },
+    { "VESRLVF", mi_VESRLV, { { 3, 2 } } },
+    { "VESRLVG", mi_VESRLV, { { 3, 3 } } },
+    { "VESRLVH", mi_VESRLV, { { 3, 1 } } },
+    { "VFADB", mi_VFA, { { 3, 3 }, { 4, 0 } } },
+    { "VFAEB", mi_VFAE, { { 3, 0 } } },
+    { "VFAEBS", mi_VFAE, { { 3, 0 } } }, // operand with index 4 ORed with 1
+    { "VFAEF", mi_VFAE, { { 3, 2 } } },
+    { "VFAEFS", mi_VFAE, { { 3, 2 } } }, // operand with index 4 ORed with 1
+    { "VFAEH", mi_VFAE, { { 3, 1 } } },
+    { "VFAEHS", mi_VFAE, { { 3, 1 } } }, // operand with index 4 ORed with 1
+    { "VFAEZB", mi_VFAE, { { 3, 0 } } }, // operand with index 4 ORed with 2
+    { "VFAEZBS", mi_VFAE, { { 3, 0 } } }, // operand with index 4 ORed with 3
+    { "VFAEZF", mi_VFAE, { { 3, 2 } } }, // operand with index 4 ORed with 2
+    { "VFAEZFS", mi_VFAE, { { 3, 2 } } }, // operand with index 4 ORed with 3
+    { "VFAEZH", mi_VFAE, { { 3, 1 } } }, // operand with index 4 ORed with 2
+    { "VFAEZHS", mi_VFAE, { { 3, 1 } } }, // operand with index 4 ORed with 3
+    { "VFASB", mi_VFA, { { 3, 2 }, { 4, 0 } } },
+    { "VFCEDB", mi_VFCE, { { 3, 3 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCEDBS", mi_VFCE, { { 3, 3 }, { 4, 0 }, { 5, 1 } } },
+    { "VFCESB", mi_VFCE, { { 3, 2 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCESBS", mi_VFCE, { { 3, 2 }, { 4, 0 }, { 5, 1 } } },
+    { "VFCHDB", mi_VFCH, { { 3, 3 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCHDBS", mi_VFCH, { { 3, 3 }, { 4, 0 }, { 5, 1 } } },
+    { "VFCHEDB", mi_VFCHE, { { 3, 3 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCHEDBS", mi_VFCHE, { { 3, 3 }, { 4, 0 }, { 5, 1 } } },
+    { "VFCHESB", mi_VFCHE, { { 3, 2 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCHESBS", mi_VFCHE, { { 3, 2 }, { 4, 0 }, { 5, 1 } } },
+    { "VFCHSB", mi_VFCH, { { 3, 2 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCHSBS", mi_VFCH, { { 3, 2 }, { 4, 0 }, { 5, 1 } } },
+    { "VFDDB", mi_VFD, { { 3, 3 }, { 4, 0 } } },
+    { "VFDSB", mi_VFD, { { 3, 2 }, { 4, 0 } } },
+    { "VFEEB", mi_VFEE, { { 3, 0 } } },
+    { "VFEEBS", mi_VFEE, { { 3, 0 }, { 4, 1 } } },
+    { "VFEEF", mi_VFEE, { { 3, 2 } } },
+    { "VFEEFS", mi_VFEE, { { 3, 2 }, { 4, 1 } } },
+    { "VFEEGS", mi_VFEE, { { 3, 1 }, { 4, 1 } } },
+    { "VFEEH", mi_VFEE, { { 3, 1 } } },
+    { "VFEEZB", mi_VFEE, { { 3, 0 }, { 4, 2 } } },
+    { "VFEEZBS", mi_VFEE, { { 3, 0 }, { 4, 3 } } },
+    { "VFEEZF", mi_VFEE, { { 3, 2 }, { 4, 2 } } },
+    { "VFEEZFS", mi_VFEE, { { 3, 2 }, { 4, 3 } } },
+    { "VFEEZH", mi_VFEE, { { 3, 1 }, { 4, 2 } } },
+    { "VFEEZHS", mi_VFEE, { { 3, 1 }, { 4, 3 } } },
+    { "VFENEB", mi_VFENE, { { 3, 0 } } },
+    { "VFENEBS", mi_VFENE, { { 3, 0 }, { 4, 1 } } },
+    { "VFENEF", mi_VFENE, { { 3, 2 } } },
+    { "VFENEFS", mi_VFENE, { { 3, 2 }, { 4, 1 } } },
+    { "VFENEH", mi_VFENE, { { 3, 1 } } },
+    { "VFENEHS", mi_VFENE, { { 3, 1 }, { 4, 1 } } },
+    { "VFENEZB", mi_VFENE, { { 3, 0 }, { 4, 2 } } },
+    { "VFENEZBS", mi_VFENE, { { 3, 0 }, { 4, 3 } } },
+    { "VFENEZF", mi_VFENE, { { 3, 2 }, { 4, 2 } } },
+    { "VFENEZFS", mi_VFENE, { { 3, 2 }, { 4, 3 } } },
+    { "VFENEZH", mi_VFENE, { { 3, 1 }, { 4, 2 } } },
+    { "VFENEZHS", mi_VFENE, { { 3, 1 }, { 4, 3 } } },
+    { "VFIDB", mi_VFI, { { 2, 3 } } },
+    { "VFISB", mi_VFI, { { 2, 2 } } },
+    { "VFKEDB", mi_VFCE, { { 3, 3 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKEDBS", mi_VFCE, { { 3, 3 }, { 4, 4 }, { 5, 1 } } },
+    { "VFKESB", mi_VFCE, { { 3, 2 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKESBS", mi_VFCE, { { 3, 2 }, { 4, 4 }, { 5, 1 } } },
+    { "VFKHDB", mi_VFCH, { { 3, 3 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKHDBS", mi_VFCH, { { 3, 3 }, { 4, 4 }, { 5, 1 } } },
+    { "VFKHEDB", mi_VFCHE, { { 3, 3 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKHEDBS", mi_VFCHE, { { 3, 3 }, { 4, 4 }, { 5, 1 } } },
+    { "VFKHESB", mi_VFCHE, { { 3, 2 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKHESBS", mi_VFCHE, { { 3, 2 }, { 4, 4 }, { 5, 1 } } },
+    { "VFKHSB", mi_VFCH, { { 3, 2 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKHSBS", mi_VFCH, { { 3, 2 }, { 4, 4 }, { 5, 1 } } },
+    { "VFLCDB", mi_VFPSO, { { 2, 3 }, { 3, 0 }, { 4, 0 } } },
+    { "VFLCSB", mi_VFPSO, { { 2, 2 }, { 3, 0 }, { 4, 0 } } },
+    { "VFLLS", mi_VFLL, { { 2, 2 }, { 3, 0 } } },
+    { "VFLNDB", mi_VFPSO, { { 2, 3 }, { 3, 0 }, { 4, 1 } } },
+    { "VFLNSB", mi_VFPSO, { { 2, 2 }, { 3, 0 }, { 4, 1 } } },
+    { "VFLPDB", mi_VFPSO, { { 2, 3 }, { 3, 0 }, { 4, 2 } } },
+    { "VFLPSB", mi_VFPSO, { { 2, 2 }, { 3, 0 }, { 4, 2 } } },
+    { "VFLRD", mi_VFLR, { { 2, 3 } } },
+    { "VFMADB", mi_VFMA, { { 4, 0 }, { 5, 3 } } },
+    { "VFMASB", mi_VFMA, { { 4, 0 }, { 5, 2 } } },
+    { "VFMAXDB", mi_VFMAX, { { 3, 3 }, { 4, 0 } } },
+    { "VFMAXSB", mi_VFMAX, { { 3, 2 }, { 4, 0 } } },
+    { "VFMDB", mi_VFM, { { 3, 3 }, { 4, 0 } } },
+    { "VFMINDB", mi_VFMIN, { { 3, 3 }, { 4, 0 } } },
+    { "VFMINSB", mi_VFMIN, { { 3, 2 }, { 4, 0 } } },
+    { "VFMSB", mi_VFM, { { 3, 2 }, { 4, 0 } } },
+    { "VFMSDB", mi_VFMS, { { 4, 0 }, { 5, 3 } } },
+    { "VFMSSB", mi_VFMS, { { 4, 0 }, { 5, 2 } } },
+    { "VFNMADB", mi_VFNMA, { { 4, 0 }, { 5, 3 } } },
+    { "VFNMASB", mi_VFNMA, { { 4, 0 }, { 5, 2 } } },
+    { "VFNMSDB", mi_VFNMS, { { 4, 0 }, { 5, 3 } } },
+    { "VFNMSSB", mi_VFNMS, { { 4, 0 }, { 5, 2 } } },
+    { "VFPSODB", mi_VFPSO, { { 2, 3 }, { 3, 0 } } },
+    { "VFPSOSB", mi_VFPSO, { { 2, 2 }, { 3, 0 } } },
+    { "VFSDB", mi_VFS, { { 2, 3 }, { 3, 0 } } },
+    { "VFSQDB", mi_VFSQ, { { 2, 3 }, { 3, 0 } } },
+    { "VFSQSB", mi_VFSQ, { { 2, 2 }, { 3, 0 } } },
+    { "VFSSB", mi_VFS, { { 2, 2 }, { 3, 0 } } },
+    { "VFTCIDB", mi_VFTCI, { { 3, 3 }, { 4, 0 } } },
+    { "VFTCISB", mi_VFTCI, { { 3, 2 }, { 4, 0 } } },
+    { "VGFMAB", mi_VGFMA, { { 4, 0 } } },
+    { "VGFMAF", mi_VGFMA, { { 4, 2 } } },
+    { "VGFMAG", mi_VGFMA, { { 4, 3 } } },
+    { "VGFMAH", mi_VGFMA, { { 4, 1 } } },
+    { "VGFMB", mi_VGFM, { { 3, 0 } } },
+    { "VGFMF", mi_VGFM, { { 3, 2 } } },
+    { "VGFMG", mi_VGFM, { { 3, 3 } } },
+    { "VGFMH", mi_VGFM, { { 3, 1 } } },
+    { "VGMB", mi_VGM, { { 3, 0 } } },
+    { "VGMF", mi_VGM, { { 3, 2 } } },
+    { "VGMG", mi_VGM, { { 3, 3 } } },
+    { "VGMH", mi_VGM, { { 3, 1 } } },
+    { "VISTRB", mi_VISTR, { { 3, 0 } } },
+    { "VISTRBS", mi_VISTR, { { 3, 0 }, { 4, 1 } } },
+    { "VISTRF", mi_VISTR, { { 3, 2 } } },
+    { "VISTRFS", mi_VISTR, { { 3, 2 }, { 4, 1 } } },
+    { "VISTRH", mi_VISTR, { { 3, 1 } } },
+    { "VISTRHS", mi_VISTR, { { 3, 1 }, { 4, 1 } } },
+    { "VLBRF", mi_VLBR, { { 2, 2 } } },
+    { "VLBRG", mi_VLBR, { { 2, 3 } } },
+    { "VLBRH", mi_VLBR, { { 2, 1 } } },
+    { "VLBRQ", mi_VLBR, { { 2, 4 } } },
+    { "VLBRREPF", mi_VLBRREP, { { 2, 2 } } },
+    { "VLBRREPG", mi_VLBRREP, { { 2, 3 } } },
+    { "VLBRREPH", mi_VLBRREP, { { 2, 1 } } },
+    { "VLCB", mi_VLC, { { 2, 0 } } },
+    { "VLCF", mi_VLC, { { 2, 2 } } },
+    { "VLCG", mi_VLC, { { 2, 3 } } },
+    { "VLCH", mi_VLC, { { 2, 1 } } },
+    { "VLDE", mi_VFLL, {} },
+    { "VLDEB", mi_VFLL, { { 2, 2 }, { 3, 0 } } },
+    { "VLED", mi_VFLR, {} },
+    { "VLEDB", mi_VFLR, { { 2, 3 } } },
+    { "VLERF", mi_VLER, { { 2, 2 } } },
+    { "VLERG", mi_VLER, { { 2, 3 } } },
+    { "VLERH", mi_VLER, { { 2, 1 } } },
+    { "VLGVB", mi_VLGV, { { 3, 0 } } },
+    { "VLGVF", mi_VLGV, { { 3, 2 } } },
+    { "VLGVG", mi_VLGV, { { 3, 3 } } },
+    { "VLGVH", mi_VLGV, { { 3, 1 } } },
+    { "VLLEBRZE", mi_VLLEBRZ, { { 2, 6 } } },
+    { "VLLEBRZE", mi_VLLEBRZ, { { 2, 6 } } },
+    { "VLLEBRZF", mi_VLLEBRZ, { { 2, 2 } } },
+    { "VLLEBRZF", mi_VLLEBRZ, { { 2, 2 } } },
+    { "VLLEBRZG", mi_VLLEBRZ, { { 2, 3 } } },
+    { "VLLEBRZG", mi_VLLEBRZ, { { 2, 3 } } },
+    { "VLLEBRZH", mi_VLLEBRZ, { { 2, 1 } } },
+    { "VLLEBRZH", mi_VLLEBRZ, { { 2, 1 } } },
+    { "VLLEZB", mi_VLLEZ, { { 2, 0 } } },
+    { "VLLEZF", mi_VLLEZ, { { 2, 2 } } },
+    { "VLLEZG", mi_VLLEZ, { { 2, 3 } } },
+    { "VLLEZH", mi_VLLEZ, { { 2, 1 } } },
+    { "VLLEZLF", mi_VLLEZ, { { 2, 6 } } },
+    { "VLPB", mi_VLP, { { 2, 0 } } },
+    { "VLPF", mi_VLP, { { 2, 2 } } },
+    { "VLPG", mi_VLP, { { 2, 3 } } },
+    { "VLPH", mi_VLP, { { 2, 1 } } },
+    { "VLREPB", mi_VLREP, { { 2, 0 } } },
+    { "VLREPF", mi_VLREP, { { 2, 2 } } },
+    { "VLREPG", mi_VLREP, { { 2, 3 } } },
+    { "VLREPH", mi_VLREP, { { 2, 1 } } },
+    { "VLVGB", mi_VLVG, { { 3, 0 } } },
+    { "VLVGF", mi_VLVG, { { 3, 2 } } },
+    { "VLVGG", mi_VLVG, { { 3, 3 } } },
+    { "VLVGH", mi_VLVG, { { 3, 1 } } },
+    { "VMAEB", mi_VMAE, { { 4, 0 } } },
+    { "VMAEF", mi_VMAE, { { 4, 2 } } },
+    { "VMAEH", mi_VMAE, { { 4, 1 } } },
+    { "VMAHB", mi_VMAH, { { 4, 0 } } },
+    { "VMAHF", mi_VMAH, { { 4, 2 } } },
+    { "VMAHH", mi_VMAH, { { 4, 1 } } },
+    { "VMALB", mi_VMAL, { { 4, 0 } } },
+    { "VMALEB", mi_VMALE, { { 4, 0 } } },
+    { "VMALEF", mi_VMALE, { { 4, 2 } } },
+    { "VMALEH", mi_VMALE, { { 4, 1 } } },
+    { "VMALF", mi_VMAL, { { 4, 2 } } },
+    { "VMALHB", mi_VMALH, { { 4, 0 } } },
+    { "VMALHF", mi_VMALH, { { 4, 2 } } },
+    { "VMALHH", mi_VMALH, { { 4, 1 } } },
+    { "VMALHW", mi_VMAL, { { 4, 1 } } },
+    { "VMALOB", mi_VMALO, { { 4, 0 } } },
+    { "VMALOF", mi_VMALO, { { 4, 2 } } },
+    { "VMALOH", mi_VMALO, { { 4, 1 } } },
+    { "VMAOB", mi_VMAO, { { 4, 0 } } },
+    { "VMAOF", mi_VMAO, { { 4, 2 } } },
+    { "VMAOH", mi_VMAO, { { 4, 1 } } },
+    { "VMEB", mi_VME, { { 3, 0 } } },
+    { "VMEF", mi_VME, { { 3, 2 } } },
+    { "VMEH", mi_VME, { { 3, 1 } } },
+    { "VMHB", mi_VMH, { { 3, 0 } } },
+    { "VMHF", mi_VMH, { { 3, 2 } } },
+    { "VMHH", mi_VMH, { { 3, 1 } } },
+    { "VMLB", mi_VML, { { 3, 0 } } },
+    { "VMLEB", mi_VMLE, { { 3, 0 } } },
+    { "VMLEF", mi_VMLE, { { 3, 2 } } },
+    { "VMLEH", mi_VMLE, { { 3, 1 } } },
+    { "VMLF", mi_VML, { { 3, 2 } } },
+    { "VMLHB", mi_VMLH, { { 3, 0 } } },
+    { "VMLHF", mi_VMLH, { { 3, 2 } } },
+    { "VMLHH", mi_VMLH, { { 3, 1 } } },
+    { "VMLHW", mi_VML, { { 3, 1 } } },
+    { "VMLOB", mi_VMLO, { { 3, 0 } } },
+    { "VMLOF", mi_VMLO, { { 3, 2 } } },
+    { "VMLOH", mi_VMLO, { { 3, 1 } } },
+    { "VMNB", mi_VMN, { { 3, 0 } } },
+    { "VMNF", mi_VMN, { { 3, 2 } } },
+    { "VMNG", mi_VMN, { { 3, 3 } } },
+    { "VMNH", mi_VMN, { { 3, 1 } } },
+    { "VMNLB", mi_VMNL, { { 3, 0 } } },
+    { "VMNLF", mi_VMNL, { { 3, 2 } } },
+    { "VMNLG", mi_VMNL, { { 3, 3 } } },
+    { "VMNLH", mi_VMNL, { { 3, 1 } } },
+    { "VMOB", mi_VMO, { { 3, 0 } } },
+    { "VMOF", mi_VMO, { { 3, 2 } } },
+    { "VMOH", mi_VMO, { { 3, 1 } } },
+    { "VMRHB", mi_VMRH, { { 3, 0 } } },
+    { "VMRHF", mi_VMRH, { { 3, 2 } } },
+    { "VMRHG", mi_VMRH, { { 3, 3 } } },
+    { "VMRHH", mi_VMRH, { { 3, 1 } } },
+    { "VMRLB", mi_VMRL, { { 3, 0 } } },
+    { "VMRLF", mi_VMRL, { { 3, 2 } } },
+    { "VMRLG", mi_VMRL, { { 3, 3 } } },
+    { "VMRLH", mi_VMRL, { { 3, 1 } } },
+    { "VMSLG", mi_VMSL, { { 4, 3 } } },
+    { "VMXB", mi_VMX, { { 3, 0 } } },
+    { "VMXF", mi_VMX, { { 3, 2 } } },
+    { "VMXG", mi_VMX, { { 3, 3 } } },
+    { "VMXH", mi_VMX, { { 3, 1 } } },
+    { "VMXLB", mi_VMXL, { { 3, 0 } } },
+    { "VMXLF", mi_VMXL, { { 3, 2 } } },
+    { "VMXLG", mi_VMXL, { { 3, 3 } } },
+    { "VMXLH", mi_VMXL, { { 3, 1 } } },
+    { "VNOT", mi_VNO, { { 2, 0 } } }, // VNO V1,V2,V2        (operand with index 2 replaced with 0 )
+    { "VONE", mi_VGBM, { { 1, 65535 } } },
+    { "VPKF", mi_VPK, { { 3, 2 } } },
+    { "VPKG", mi_VPK, { { 3, 3 } } },
+    { "VPKH", mi_VPK, { { 3, 1 } } },
+    { "VPKLSF", mi_VPKLS, { { 3, 2 }, { 4, 0 } } },
+    { "VPKLSFS", mi_VPKLS, { { 3, 2 }, { 4, 1 } } },
+    { "VPKLSG", mi_VPKLS, { { 3, 3 }, { 4, 0 } } },
+    { "VPKLSGS", mi_VPKLS, { { 3, 3 }, { 4, 1 } } },
+    { "VPKLSH", mi_VPKLS, { { 3, 1 }, { 4, 0 } } },
+    { "VPKLSHS", mi_VPKLS, { { 3, 1 }, { 4, 1 } } },
+    { "VPKSF", mi_VPKS, { { 3, 2 }, { 4, 0 } } },
+    { "VPKSFS", mi_VPKS, { { 3, 2 }, { 4, 1 } } },
+    { "VPKSG", mi_VPKS, { { 3, 3 }, { 4, 0 } } },
+    { "VPKSGS", mi_VPKS, { { 3, 3 }, { 4, 1 } } },
+    { "VPKSH", mi_VPKS, { { 3, 1 }, { 4, 0 } } },
+    { "VPKSHS", mi_VPKS, { { 3, 1 }, { 4, 1 } } },
+    { "VPOPCTB", mi_VPOPCT, { { 2, 0 } } },
+    { "VPOPCTF", mi_VPOPCT, { { 2, 2 } } },
+    { "VPOPCTG", mi_VPOPCT, { { 2, 3 } } },
+    { "VPOPCTH", mi_VPOPCT, { { 2, 1 } } },
+    { "VREPB", mi_VREP, { { 3, 0 } } },
+    { "VREPF", mi_VREP, { { 3, 2 } } },
+    { "VREPG", mi_VREP, { { 3, 3 } } },
+    { "VREPH", mi_VREP, { { 3, 1 } } },
+    { "VREPIB", mi_VREPI, { { 2, 0 } } },
+    { "VREPIF", mi_VREPI, { { 2, 2 } } },
+    { "VREPIG", mi_VREPI, { { 2, 3 } } },
+    { "VREPIH", mi_VREPI, { { 2, 1 } } },
+    { "VSB", mi_VS, { { 3, 0 } } },
+    { "VSBCBIQ", mi_VSBCBI, { { 4, 4 } } },
+    { "VSBIQ", mi_VSBI, { { 4, 4 } } },
+    { "VSCBIB", mi_VSCBI, { { 3, 0 } } },
+    { "VSCBIF", mi_VSCBI, { { 3, 2 } } },
+    { "VSCBIG", mi_VSCBI, { { 3, 3 } } },
+    { "VSCBIH", mi_VSCBI, { { 3, 1 } } },
+    { "VSCBIQ", mi_VSCBI, { { 3, 4 } } },
+    { "VSEGB", mi_VSEG, { { 2, 0 } } },
+    { "VSEGF", mi_VSEG, { { 2, 2 } } },
+    { "VSEGH", mi_VSEG, { { 2, 1 } } },
+    { "VSF", mi_VS, { { 3, 2 } } },
+    { "VSG", mi_VS, { { 3, 3 } } },
+    { "VSH", mi_VS, { { 3, 1 } } },
+    { "VSQ", mi_VS, { { 3, 4 } } },
+    { "VSTBRF", mi_VSTBR, { { 2, 2 } } },
+    { "VSTBRG", mi_VSTBR, { { 2, 3 } } },
+    { "VSTBRH", mi_VSTBR, { { 2, 1 } } },
+    { "VSTBRQ", mi_VSTBR, { { 2, 4 } } },
+    { "VSTERF", mi_VSTER, { { 2, 2 } } },
+    { "VSTERG", mi_VSTER, { { 2, 3 } } },
+    { "VSTERH", mi_VSTER, { { 2, 1 } } },
+    { "VSTRCB", mi_VSTRC, { { 4, 0 } } },
+    { "VSTRCBS", mi_VSTRC, { { 4, 0 } } }, // operand with index 5 ORed with 1
+    { "VSTRCF", mi_VSTRC, { { 4, 2 } } },
+    { "VSTRCFS", mi_VSTRC, { { 4, 2 } } }, // operand with index 5 ORed with 1
+    { "VSTRCH", mi_VSTRC, { { 4, 1 } } },
+    { "VSTRCHS", mi_VSTRC, { { 4, 1 } } }, // operand with index 5 ORed with 1
+    { "VSTRCZB", mi_VSTRC, { { 4, 0 } } }, // operand with index 5 ORed with 2
+    { "VSTRCZBS", mi_VSTRC, { { 4, 0 } } }, // operand with index 5 ORed with 3
+    { "VSTRCZF", mi_VSTRC, { { 4, 2 } } }, // operand with index 5 ORed with 2
+    { "VSTRCZFS", mi_VSTRC, { { 4, 2 } } }, // operand with index 5 ORed with 3 always OR
+    { "VSTRCZH", mi_VSTRC, { { 4, 1 } } }, // operand with index 5 ORed with 2
+    { "VSTRCZHS", mi_VSTRC, { { 4, 1 } } }, // operand with index 5 ORed with 3
+    { "VSTRSB", mi_VSTRS, { { 4, 0 } } },
+    { "VSTRSF", mi_VSTRS, { { 4, 2 } } },
+    { "VSTRSH", mi_VSTRS, { { 4, 1 } } },
+    { "VSTRSZB", mi_VSTRS, { { 4, 0 }, { 5, 2 } } },
+    { "VSUMB", mi_VSUM, { { 3, 0 } } },
+    { "VSUMGF", mi_VSUMG, { { 3, 2 } } },
+    { "VSUMGH", mi_VSUMG, { { 3, 1 } } },
+    { "VSUMH", mi_VSUM, { { 3, 1 } } },
+    { "VSUMQF", mi_VSUMQ, { { 3, 2 } } },
+    { "VSUMQG", mi_VSUMQ, { { 3, 3 } } },
+    { "VUPHB", mi_VUPH, { { 2, 0 } } },
+    { "VUPHF", mi_VUPH, { { 2, 2 } } },
+    { "VUPHH", mi_VUPH, { { 2, 1 } } },
+    { "VUPLB", mi_VUPL, { { 2, 0 } } },
+    { "VUPLF", mi_VUPL, { { 2, 2 } } },
+    { "VUPLHB", mi_VUPLH, { { 2, 0 } } },
+    { "VUPLHF", mi_VUPLH, { { 2, 2 } } },
+    { "VUPLHG", mi_VUPLH, { { 2, 1 } } },
+    { "VUPLHW", mi_VUPL, { { 2, 1 } } },
+    { "VUPLLB", mi_VUPLL, { { 2, 0 } } },
+    { "VUPLLF", mi_VUPLL, { { 2, 2 } } },
+    { "VUPLLH", mi_VUPLL, { { 2, 1 } } },
+    { "VZERO", mi_VGBM, { { 0, 1 } } },
+    { "WCDGB", mi_VCFPS, { { 2, 2 } } },
+    { "WCDGB", mi_VCFPS, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WCDLGB", mi_VCFPL, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WCEFB", mi_VCFPS, { { 2, 2 } } }, // operand with index 3 ORed with 8
+    { "WCELFB", mi_VCFPL, { { 2, 2 } } }, // operand with index 3 ORed with 8
+    { "WCFEB", mi_VCSFP, { { 2, 2 } } }, // operand with index 3 ORed with 8
+    { "WCGDB", mi_VCSFP, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WCLFEB", mi_VCLFP, { { 2, 2 } } }, // operand with index 3 ORed with 8
+    { "WCLGDB", mi_VCLGD, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WFADB", mi_VFA, { { 3, 3 }, { 4, 8 } } },
+    { "WFASB", mi_VFA, { { 3, 2 }, { 4, 8 } } },
+    { "WFAXB", mi_VFA, { { 3, 4 }, { 4, 8 } } },
+    { "WFCDB", mi_WFC, { { 3, 3 }, { 4, 0 } } },
+    { "WFCEDB", mi_VFCE, { { 3, 3 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCEDBS", mi_VFCE, { { 3, 3 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCESB", mi_VFCE, { { 3, 2 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCESBS", mi_VFCE, { { 3, 2 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCEXB", mi_VFCE, { { 3, 4 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCEXBS", mi_VFCE, { { 3, 4 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHDB", mi_VFCH, { { 3, 3 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHDBS", mi_VFCH, { { 3, 3 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHEDB", mi_VFCHE, { { 3, 3 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHEDBS", mi_VFCHE, { { 3, 3 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHESB", mi_VFCHE, { { 3, 2 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHESBS", mi_VFCHE, { { 3, 2 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHEXB", mi_VFCHE, { { 3, 4 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHEXBS", mi_VFCHE, { { 3, 4 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHSB", mi_VFCH, { { 3, 2 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHSBS", mi_VFCH, { { 3, 2 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHXB", mi_VFCH, { { 3, 4 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHXBS", mi_VFCH, { { 3, 4 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCSB", mi_WFC, { { 3, 2 }, { 4, 0 } } },
+    { "WFCXB", mi_WFC, { { 3, 4 }, { 4, 0 } } },
+    { "WFDDB", mi_VFD, { { 3, 3 }, { 4, 8 } } },
+    { "WFDSB", mi_VFD, { { 3, 2 }, { 4, 8 } } },
+    { "WFDXB", mi_VFD, { { 3, 4 }, { 4, 8 } } },
+    { "WFIDB", mi_VFI, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WFISB", mi_VFI, { { 2, 2 } } }, // operand with index 3 ORed with 8
+    { "WFIXB", mi_VFI, { { 2, 4 } } }, // operand with index 3 ORed with 8
+    { "WFKDB", mi_WFK, { { 3, 3 }, { 4, 0 } } },
+    { "WFKEDB", mi_VFCE, { { 3, 3 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKEDBS", mi_VFCE, { { 3, 3 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKESB", mi_VFCE, { { 3, 2 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKESBS", mi_VFCE, { { 3, 2 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKEXB", mi_VFCE, { { 3, 4 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKEXBS", mi_VFCE, { { 3, 4 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHDB", mi_VFCH, { { 3, 3 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHDBS", mi_VFCH, { { 3, 3 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHEDB", mi_VFCHE, { { 3, 3 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHEDBS", mi_VFCHE, { { 3, 3 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHESB", mi_VFCHE, { { 3, 2 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHESBS", mi_VFCHE, { { 3, 2 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHEXB", mi_VFCHE, { { 3, 4 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHEXBS", mi_VFCHE, { { 3, 4 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHSB", mi_VFCH, { { 3, 2 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHSBS", mi_VFCH, { { 3, 2 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHXB", mi_VFCH, { { 3, 4 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHXBS", mi_VFCH, { { 3, 4 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKSB", mi_WFK, { { 3, 2 }, { 4, 0 } } },
+    { "WFKXB", mi_WFK, { { 3, 4 }, { 4, 0 } } },
+    { "WFLCDB", mi_VFPSO, { { 2, 3 }, { 3, 8 }, { 4, 0 } } },
+    { "WFLCSB", mi_VFPSO, { { 2, 2 }, { 3, 8 }, { 4, 0 } } },
+    { "WFLCXB", mi_VFPSO, { { 2, 4 }, { 3, 8 }, { 4, 0 } } },
+    { "WFLLD", mi_VFLL, { { 2, 3 }, { 3, 8 } } },
+    { "WFLLS", mi_VFLL, { { 2, 2 }, { 3, 8 } } },
+    { "WFLNDB", mi_VFPSO, { { 2, 3 }, { 3, 8 }, { 4, 1 } } },
+    { "WFLNSB", mi_VFPSO, { { 2, 2 }, { 3, 8 }, { 4, 1 } } },
+    { "WFLNXB", mi_VFPSO, { { 2, 4 }, { 3, 8 }, { 4, 1 } } },
+    { "WFLPDB", mi_VFPSO, { { 2, 3 }, { 3, 8 }, { 4, 2 } } },
+    { "WFLPSB", mi_VFPSO, { { 2, 2 }, { 3, 8 }, { 4, 2 } } },
+    { "WFLPXB", mi_VFPSO, { { 2, 4 }, { 3, 8 }, { 4, 2 } } },
+    { "WFLRD", mi_VFLR, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WFLRX", mi_VFLR, { { 2, 4 } } }, // operand with index 3 ORed with 8
+    { "WFMADB", mi_VFMA, { { 4, 8 }, { 5, 3 } } },
+    { "WFMASB", mi_VFMA, { { 4, 8 }, { 5, 2 } } },
+    { "WFMAXB", mi_VFMA, { { 4, 8 }, { 5, 4 } } },
+    { "WFMAXDB", mi_VFMAX, { { 3, 3 }, { 4, 8 } } },
+    { "WFMAXSB", mi_VFMAX, { { 3, 2 }, { 4, 8 } } },
+    { "WFMAXXB", mi_VFMAX, { { 3, 4 }, { 4, 8 } } },
+    { "WFMDB", mi_VFM, { { 3, 3 }, { 4, 8 } } },
+    { "WFMINDB", mi_VFMIN, { { 3, 3 }, { 4, 8 } } },
+    { "WFMINSB", mi_VFMIN, { { 3, 2 }, { 4, 8 } } },
+    { "WFMINXB", mi_VFMIN, { { 3, 4 }, { 4, 8 } } },
+    { "WFMSB", mi_VFM, { { 3, 2 }, { 4, 8 } } },
+    { "WFMSDB", mi_VFMS, { { 4, 8 }, { 5, 3 } } },
+    { "WFMSSB", mi_VFMS, { { 4, 8 }, { 5, 2 } } },
+    { "WFMSXB", mi_VFMS, { { 4, 8 }, { 5, 4 } } },
+    { "WFMXB", mi_VFM, { { 3, 4 }, { 4, 8 } } },
+    { "WFNMADB", mi_VFNMA, { { 4, 8 }, { 5, 3 } } },
+    { "WFNMASB", mi_VFNMA, { { 4, 8 }, { 5, 2 } } },
+    { "WFNMAXB", mi_VFNMA, { { 4, 8 }, { 5, 4 } } },
+    { "WFNMSDB", mi_VFNMS, { { 4, 8 }, { 5, 3 } } },
+    { "WFNMSSB", mi_VFNMS, { { 4, 8 }, { 5, 2 } } },
+    { "WFNMSXB", mi_VFNMS, { { 4, 8 }, { 5, 4 } } },
+    { "WFPSODB", mi_VFPSO, { { 2, 3 }, { 3, 8 } } },
+    { "WFPSOSB", mi_VFPSO, { { 2, 2 }, { 3, 8 } } },
+    { "WFPSOXB", mi_VFPSO, { { 2, 4 }, { 3, 8 } } },
+    { "WFSDB", mi_VFS, { { 2, 3 }, { 3, 8 } } },
+    { "WFSQDB", mi_VFSQ, { { 2, 3 }, { 3, 8 } } },
+    { "WFSQSB", mi_VFSQ, { { 2, 2 }, { 3, 8 } } },
+    { "WFSQXB", mi_VFSQ, { { 2, 4 }, { 3, 8 } } },
+    { "WFSSB", mi_VFS, { { 2, 2 }, { 3, 8 } } },
+    { "WFSXB", mi_VFS, { { 2, 4 }, { 3, 8 } } },
+    { "WFTCIDB", mi_VFTCI, { { 3, 3 }, { 4, 8 } } },
+    { "WFTCISB", mi_VFTCI, { { 3, 2 }, { 4, 8 } } },
+    { "WFTCIXB", mi_VFTCI, { { 3, 4 }, { 4, 8 } } },
+    { "WLDEB", mi_VFLL, { { 2, 2 }, { 3, 8 } } },
+    { "WLEDB", mi_VFLR, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "XHHR", mi_RXSBG, { { 2, 0 }, { 3, 31 } } },
+    { "XHHR", mi_RXSBG, { { 2, 0 }, { 3, 31 } } },
+    { "XHLR", mi_RXSBG, { { 2, 0 }, { 3, 31 }, { 4, 32 } } },
+    { "XLHR", mi_RXSBG, { { 2, 32 }, { 3, 63 }, { 4, 32 } } },
+    { "XLHR", mi_RXSBG, { { 2, 32 }, { 3, 63 }, { 4, 32 } } },
+};
+
+static_assert(std::ranges::is_sorted(mnemonic_codes, {}, &mnemonic_code::name));
 
 const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name)
 {
-    auto it = mnemonic_codes->find(name);
-    if (it == mnemonic_codes->end())
+    auto it = std::ranges::lower_bound(mnemonic_codes, name, {}, &mnemonic_code::name);
+    if (it == std::ranges::end(mnemonic_codes) || it->name() != name)
         return nullptr;
-    return &it->second;
+    return &*it;
 }
 const mnemonic_code& instruction::get_mnemonic_codes(std::string_view name)
 {
@@ -2853,41 +2996,4 @@ const mnemonic_code& instruction::get_mnemonic_codes(std::string_view name)
     assert(result);
     return *result;
 }
-const std::map<std::string_view, mnemonic_code>& instruction::all_mnemonic_codes()
-{
-    if (mnemonic_codes)
-        return *mnemonic_codes;
-    static const std::map<std::string_view, mnemonic_code> mnemonic_codes_ = generate_mnemonic_codes();
-    return mnemonic_codes_;
-}
-
-// Generates a bitmask for an arbitrary mnemonit indicating which operands
-// are of the RI type (and therefore are modified by transform_reloc_imm_operands)
-unsigned char mnemonic_code::generate_reladdr_bitmask(
-    const machine_instruction* instruction, const std::vector<std::pair<size_t, size_t>>& replaced)
-{
-    unsigned char result = 0;
-
-    decltype(result) top_bit = 1 << (std::numeric_limits<decltype(result)>::digits - 1);
-
-    const std::pair<size_t, size_t>* replaced_b = replaced.data();
-    const std::pair<size_t, size_t>* const replaced_e = replaced.data() + replaced.size();
-
-    size_t position = 0;
-    for (const auto& op : instruction->operands())
-    {
-        if (replaced_b != replaced_e && position == replaced_b->first)
-        {
-            ++replaced_b;
-            ++position;
-            continue;
-        }
-
-        if (op.identifier.type == checking::machine_operand_type::RELOC_IMM)
-            result |= top_bit;
-        top_bit >>= 1;
-
-        ++position;
-    }
-    return result;
-}
+std::span<const mnemonic_code> instruction::all_mnemonic_codes() { return mnemonic_codes; }

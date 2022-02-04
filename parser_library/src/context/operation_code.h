@@ -21,10 +21,10 @@
 #include "macro.h"
 
 namespace hlasm_plugin::parser_library::context {
-struct ca_instruction;
-struct assembler_instruction;
+class ca_instruction;
+class assembler_instruction;
 class machine_instruction;
-struct mnemonic_code;
+class mnemonic_code;
 
 // structure that represents operation code of an instruction
 struct opcode_t

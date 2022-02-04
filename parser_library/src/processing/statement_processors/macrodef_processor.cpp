@@ -126,7 +126,7 @@ processing_status macrodef_processor::get_macro_processing_status(
         {
             processing_format format(processing_kind::MACRO,
                 processing_form::CA,
-                (*ca_instr)->operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT);
+                (*ca_instr)->operandless() ? operand_occurence::ABSENT : operand_occurence::PRESENT);
 
             return std::make_pair(format, op_code(code.opcode, context::instruction_type::CA));
         }

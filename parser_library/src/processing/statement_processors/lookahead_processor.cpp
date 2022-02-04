@@ -261,7 +261,7 @@ void lookahead_processor::assign_machine_attributes(context::id_index symbol_nam
 {
     const auto& instr = [](const std::string& opcode) {
         if (auto mnemonic = context::instruction::find_mnemonic_codes(opcode))
-            return *mnemonic->instruction;
+            return *mnemonic->instruction();
         else
             return context::instruction::get_machine_instructions(opcode);
     }(*statement.opcode_ref().value);
