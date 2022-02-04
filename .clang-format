@@ -41,7 +41,7 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 MaxEmptyLinesToKeep: 3
 
 SpaceAfterTemplateKeyword: false
-Standard: c++17
+Standard: c++20
 
 ColumnLimit: 120
 
