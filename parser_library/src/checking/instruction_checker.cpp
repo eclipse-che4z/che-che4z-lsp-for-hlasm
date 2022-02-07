@@ -41,13 +41,13 @@ struct instruction_adder
 {
     std::map<std::string_view, std::unique_ptr<assembler_instruction>>& target;
 
-    void add(std::string_view name, std::unique_ptr<assembler_instruction> value)
+    void add(std::string_view name, std::unique_ptr<assembler_instruction> value) const
     {
         target.try_emplace(name, std::move(value));
     }
 
     template<typename T, typename... Rest>
-    void add(std::string_view name, std::initializer_list<label_types> labels, Rest&&... rest)
+    void add(std::string_view name, std::initializer_list<label_types> labels, Rest&&... rest) const
     {
         add(name, std::make_unique<T>(std::vector<label_types>(labels), name, std::forward<Rest>(rest)...));
     };

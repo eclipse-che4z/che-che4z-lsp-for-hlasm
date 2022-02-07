@@ -64,7 +64,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
-          export SONAR_SCANNER_VERSION=4.6.2.2472 &&
+          export SONAR_SCANNER_VERSION=4.2.0.1873 &&
           export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux &&
           rm -rf $SONAR_SCANNER_HOME &&
           mkdir -p $SONAR_SCANNER_HOME &&
