@@ -70,7 +70,7 @@ jobs:
   wasm-server-build:
     name: WASM language server
     runs-on: ubuntu-20.04
-    container: emscripten/emsdk:3.1.13
+    container: emscripten/emsdk:3.1.3
 
     steps:
       - uses: actions/checkout@v1
