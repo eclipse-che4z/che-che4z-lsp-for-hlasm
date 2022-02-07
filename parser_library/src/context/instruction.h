@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <array>
+#include <compare>
 #include <functional>
 #include <limits>
 #include <map>
@@ -312,8 +313,13 @@ public:
         , m_size_in_bits(get_length_by_format(format))
         , m_page_no(page_no)
         , m_reladdr_mask(generate_reladdr_bitmask(operands))
+#ifdef __cpp_lib_ranges
         , m_optional_op_count(
               (unsigned char)std::ranges::count(operands, true, &checking::machine_operand_format::optional))
+#else
+        , m_optional_op_count((unsigned char)std::count_if(
+              operands.begin(), operands.end(), [](const auto& op) { return op.optional; }))
+#endif
         , m_operand_len((unsigned char)operands.size())
         , m_operands(operands.data())
     {
