@@ -40,17 +40,6 @@ struct macro_cache_key
     std::vector<cached_opsyn_mnemo> opsyn_state;
 };
 
-
-
-bool inline operator<(const macro_cache_key& lhs, const macro_cache_key& rhs)
-{
-    const static auto tie_macro_cache_key = [](const macro_cache_key& key) {
-        return std::tie(key.data.proc_kind, key.data.library_member, key.opsyn_state);
-    };
-
-    return tie_macro_cache_key(lhs) < tie_macro_cache_key(rhs);
-}
-
 bool inline operator<(const cached_opsyn_mnemo& lhs, const cached_opsyn_mnemo& rhs)
 {
     const static auto tie_cached_opsyn_mnemo = [](const cached_opsyn_mnemo& item) {
@@ -62,6 +51,15 @@ bool inline operator<(const cached_opsyn_mnemo& lhs, const cached_opsyn_mnemo& r
 bool inline operator==(const cached_opsyn_mnemo& lhs, const cached_opsyn_mnemo& rhs)
 {
     return lhs.from_instr == rhs.from_instr && lhs.to_instr == rhs.to_instr && lhs.is_macro == rhs.is_macro;
+}
+
+bool inline operator<(const macro_cache_key& lhs, const macro_cache_key& rhs)
+{
+    const static auto tie_macro_cache_key = [](const macro_cache_key& key) {
+        return std::tie(key.data.proc_kind, key.data.library_member, key.opsyn_state);
+    };
+
+    return tie_macro_cache_key(lhs) < tie_macro_cache_key(rhs);
 }
 
 using version_stamp = std::unordered_map<std::string, version_t>;
