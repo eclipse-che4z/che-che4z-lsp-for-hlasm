@@ -84,8 +84,8 @@ class hlasm_context
     size_t m_ainsert_id = 0;
     bool m_end_reached = false;
 
-    void add_system_vars_to_scope();
-    void add_global_system_vars();
+    void add_system_vars_to_scope(code_scope& scope);
+    void add_global_system_vars(code_scope& scope);
 
     bool is_opcode(id_index symbol) const;
 
@@ -158,7 +158,7 @@ public:
 
     // return variable symbol in current scope
     // returns empty shared_ptr if there is none in the current scope
-    var_sym_ptr get_var_sym(id_index name);
+    var_sym_ptr get_var_sym(id_index name) const;
 
     // registers sequence symbol
     void add_sequence_symbol(sequence_symbol_ptr seq_sym);
@@ -231,21 +231,23 @@ public:
     template<typename T>
     set_sym_ptr create_global_variable(id_index id, bool is_scalar)
     {
-        auto tmp = curr_scope()->variables.find(id);
-        if (tmp != curr_scope()->variables.end())
+        auto* scope = curr_scope();
+
+        auto tmp = scope->variables.find(id);
+        if (tmp != scope->variables.end())
             return tmp->second;
 
         auto glob = globals_.find(id);
         if (glob != globals_.end())
         {
-            curr_scope()->variables.insert({ id, glob->second });
+            scope->variables.insert({ id, glob->second });
             return glob->second;
         }
 
         auto val = std::make_shared<set_symbol<T>>(id, is_scalar, true);
 
         globals_.insert({ id, val });
-        curr_scope()->variables.insert({ id, val });
+        scope->variables.insert({ id, val });
 
         return val;
     }
@@ -254,14 +256,16 @@ public:
     template<typename T>
     set_sym_ptr create_local_variable(id_index id, bool is_scalar)
     {
-        auto tmp = curr_scope()->variables.find(id);
-        if (tmp != curr_scope()->variables.end())
+        auto* scope = curr_scope();
+
+        auto tmp = scope->variables.find(id);
+        if (tmp != scope->variables.end())
             return tmp->second;
 
 
         set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar, false));
 
-        curr_scope()->variables.insert({ id, val });
+        scope->variables.insert({ id, val });
 
         return val;
     }

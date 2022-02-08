@@ -54,9 +54,9 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map()
     return instr_map;
 }
 
-void hlasm_context::add_system_vars_to_scope()
+void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 {
-    if (curr_scope()->is_in_macro())
+    if (scope.is_in_macro())
     {
         {
             auto SYSECT = ids().add("SYSECT");
@@ -64,7 +64,7 @@ void hlasm_context::add_system_vars_to_scope()
             auto val_sect = std::make_shared<set_symbol<C_t>>(SYSECT, true, false);
             auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_storage::empty_id;
             val_sect->set_value(*sect_name);
-            curr_scope()->variables.insert({ SYSECT, val_sect });
+            scope.variables.insert({ SYSECT, val_sect });
         }
 
         {
@@ -77,7 +77,7 @@ void hlasm_context::add_system_vars_to_scope()
                 value.insert(0, 4 - value_len, '0');
 
             val_ndx->set_value(std::move(value));
-            curr_scope()->variables.insert({ SYSNDX, val_ndx });
+            scope.variables.insert({ SYSNDX, val_ndx });
         }
 
         {
@@ -104,7 +104,7 @@ void hlasm_context::add_system_vars_to_scope()
                         break;
                 }
             }
-            curr_scope()->variables.insert({ SYSSTYP, val_styp });
+            scope.variables.insert({ SYSSTYP, val_styp });
         }
 
         {
@@ -116,7 +116,7 @@ void hlasm_context::add_system_vars_to_scope()
             {
                 var->set_value(*ord_ctx.current_section()->current_location_counter().name);
             }
-            curr_scope()->variables.insert({ SYSLOC, var });
+            scope.variables.insert({ SYSLOC, var });
         }
 
         {
@@ -126,7 +126,7 @@ void hlasm_context::add_system_vars_to_scope()
 
             var->set_value((context::A_t)scope_stack_.size() - 1);
 
-            curr_scope()->variables.insert({ SYSNEST, var });
+            scope.variables.insert({ SYSNEST, var });
         }
 
         {
@@ -148,13 +148,12 @@ void hlasm_context::add_system_vars_to_scope()
 
             sys_sym_ptr var = std::make_shared<system_variable_sysmac>(SYSMAC, std::move(mac_data), false);
 
-            curr_scope()->system_variables.insert({ SYSMAC, std::move(var) });
+            scope.system_variables.insert({ SYSMAC, std::move(var) });
         }
     }
-    add_global_system_vars();
 }
 
-void hlasm_context::add_global_system_vars()
+void hlasm_context::add_global_system_vars(code_scope& scope)
 {
     auto SYSDATC = ids().add("SYSDATC");
     auto SYSDATE = ids().add("SYSDATE");
@@ -242,17 +241,17 @@ void hlasm_context::add_global_system_vars()
     }
 
     auto glob = globals_.find(SYSDATC);
-    curr_scope()->variables.insert({ glob->second->id, glob->second });
+    scope.variables.insert({ glob->second->id, glob->second });
     glob = globals_.find(SYSDATE);
-    curr_scope()->variables.insert({ glob->second->id, glob->second });
+    scope.variables.insert({ glob->second->id, glob->second });
     glob = globals_.find(SYSTIME);
-    curr_scope()->variables.insert({ glob->second->id, glob->second });
+    scope.variables.insert({ glob->second->id, glob->second });
     glob = globals_.find(SYSPARM);
-    curr_scope()->variables.insert({ glob->second->id, glob->second });
+    scope.variables.insert({ glob->second->id, glob->second });
     glob = globals_.find(SYSOPT_RENT);
-    curr_scope()->variables.insert({ glob->second->id, glob->second });
+    scope.variables.insert({ glob->second->id, glob->second });
     glob = globals_.find(SYSTEM_ID);
-    curr_scope()->variables.insert({ glob->second->id, glob->second });
+    scope.variables.insert({ glob->second->id, glob->second });
 }
 
 bool hlasm_context::is_opcode(id_index symbol) const
@@ -267,10 +266,9 @@ hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, std:
     , instruction_map_(init_instruction_map())
     , ord_ctx(*ids_, *this)
 {
-    scope_stack_.emplace_back();
+    add_global_system_vars(scope_stack_.emplace_back());
     visited_files_.insert(file_name);
     push_statement_processing(processing::processing_kind::ORDINARY, std::move(file_name));
-    add_global_system_vars();
 }
 
 hlasm_context::~hlasm_context() = default;
@@ -454,20 +452,21 @@ void hlasm_context::fill_metrics_files() { metrics.files = visited_files_.size()
 
 const code_scope::set_sym_storage& hlasm_context::globals() const { return globals_; }
 
-var_sym_ptr hlasm_context::get_var_sym(id_index name)
+var_sym_ptr hlasm_context::get_var_sym(id_index name) const
 {
-    auto tmp = curr_scope()->variables.find(name);
-    if (tmp != curr_scope()->variables.end())
+    const auto* scope = curr_scope();
+    auto tmp = scope->variables.find(name);
+    if (tmp != scope->variables.end())
         return tmp->second;
 
-    auto s_tmp = curr_scope()->system_variables.find(name);
-    if (s_tmp != curr_scope()->system_variables.end())
+    auto s_tmp = scope->system_variables.find(name);
+    if (s_tmp != scope->system_variables.end())
         return s_tmp->second;
 
-    if (curr_scope()->is_in_macro())
+    if (scope->is_in_macro())
     {
-        auto m_tmp = curr_scope()->this_macro->named_params.find(name);
-        if (m_tmp != curr_scope()->this_macro->named_params.end())
+        auto m_tmp = scope->this_macro->named_params.find(name);
+        if (m_tmp != scope->this_macro->named_params.end())
             return m_tmp->second;
     }
 
@@ -482,17 +481,18 @@ void hlasm_context::add_sequence_symbol(sequence_symbol_ptr seq_sym)
 
 const sequence_symbol* hlasm_context::get_sequence_symbol(id_index name) const
 {
+    const auto* scope = curr_scope();
     label_storage::const_iterator found, end;
 
-    if (curr_scope()->is_in_macro())
+    if (scope->is_in_macro())
     {
-        found = curr_scope()->this_macro->labels.find(name);
-        end = curr_scope()->this_macro->labels.end();
+        found = scope->this_macro->labels.find(name);
+        end = scope->this_macro->labels.end();
     }
     else
     {
-        found = curr_scope()->sequence_symbols.find(name);
-        end = curr_scope()->sequence_symbols.end();
+        found = scope->sequence_symbols.find(name);
+        end = scope->sequence_symbols.end();
     }
 
     if (found != end)
@@ -754,8 +754,9 @@ macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_pa
     assert(macro_def);
 
     auto invo = macro_def->call(std::move(label_param_data), std::move(params), ids().add("SYSLIST"));
-    scope_stack_.emplace_back(invo, macro_def);
-    add_system_vars_to_scope();
+    auto& new_scope = scope_stack_.emplace_back(invo, macro_def);
+    add_system_vars_to_scope(new_scope);
+    add_global_system_vars(new_scope);
 
     visited_files_.insert(macro_def->definition_location.file);
 
