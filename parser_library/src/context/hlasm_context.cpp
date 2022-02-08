@@ -323,7 +323,6 @@ std::pair<source_position, source_snapshot> hlasm_context::get_end_snapshot() co
 
 void hlasm_context::push_statement_processing(const processing::processing_kind kind)
 {
-    assert(!proc_stack_.empty());
     proc_stack_.emplace_back(kind, false);
 }
 
@@ -336,6 +335,8 @@ void hlasm_context::push_statement_processing(const processing::processing_kind 
 
 void hlasm_context::pop_statement_processing()
 {
+    assert(!proc_stack_.empty());
+
     if (proc_stack_.back().owns_source)
         source_stack_.pop_back();
 

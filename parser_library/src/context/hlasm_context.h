@@ -59,8 +59,6 @@ class hlasm_context
     std::vector<processing_context> proc_stack_;
     // stack of processed source files
     std::vector<source_context> source_stack_;
-    // stack of nested copy member invocations
-    std::vector<copy_member_invocation> copy_stack_;
 
     // path to the opencode
     std::string opencode_file_name_;
