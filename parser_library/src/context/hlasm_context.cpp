@@ -29,27 +29,27 @@ code_scope* hlasm_context::curr_scope() { return &scope_stack_.back(); }
 
 const code_scope* hlasm_context::curr_scope() const { return &scope_stack_.back(); }
 
-hlasm_context::instruction_storage hlasm_context::init_instruction_map()
+hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storage& ids)
 {
     hlasm_context::instruction_storage instr_map;
     for (const auto& instr : instruction::all_machine_instructions())
     {
-        auto id = ids().add(std::string(instr.name()));
+        auto id = ids.add(std::string(instr.name()));
         instr_map.emplace(id, &instr);
     }
     for (const auto& instr : instruction::all_assembler_instructions())
     {
-        auto id = ids().add(std::string(instr.name()));
+        auto id = ids.add(std::string(instr.name()));
         instr_map.emplace(id, &instr);
     }
     for (const auto& instr : instruction::all_ca_instructions())
     {
-        auto id = ids().add(std::string(instr.name()));
+        auto id = ids.add(std::string(instr.name()));
         instr_map.emplace(id, &instr);
     }
     for (const auto& instr : instruction::all_mnemonic_codes())
     {
-        auto id = ids().add(std::string(instr.name()));
+        auto id = ids.add(std::string(instr.name()));
         instr_map.emplace(id, &instr);
     }
     return instr_map;
@@ -264,7 +264,7 @@ hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, std:
     : ids_(std::move(init_ids))
     , opencode_file_name_(file_name)
     , asm_options_(std::move(asm_options))
-    , instruction_map_(init_instruction_map())
+    , instruction_map_(init_instruction_map(*ids_))
     , ord_ctx(*ids_, *this)
 {
     add_global_system_vars(scope_stack_.emplace_back());
