@@ -18,7 +18,7 @@
 #include <limits>
 #include <variant>
 
-#include "../processing_context.h"
+#include "../source_context.h"
 #include "address.h"
 #include "location.h"
 #include "symbol_attributes.h"

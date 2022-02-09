@@ -17,7 +17,7 @@
 
 #include <vector>
 
-#include "context/processing_context.h"
+#include "context/source_context.h"
 #include "diagnostic.h"
 #include "protocol.h"
 

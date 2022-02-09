@@ -25,7 +25,7 @@
 #include "compiler_options.h"
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
-#include "processing_context.h"
+#include "source_context.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -55,8 +55,6 @@ class hlasm_context
     std::deque<code_scope> scope_stack_;
     code_scope* curr_scope();
     const code_scope* curr_scope() const;
-    // stack of statement processings
-    std::vector<processing_context> proc_stack_;
     // stack of processed source files
     std::vector<source_context> source_stack_;
 

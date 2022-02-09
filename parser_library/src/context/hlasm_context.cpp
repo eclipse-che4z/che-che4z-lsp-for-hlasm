@@ -15,6 +15,7 @@
 #include "hlasm_context.h"
 
 #include <ctime>
+#include <numeric>
 #include <stdexcept>
 
 #include "ebcdic_encoding.h"
@@ -323,24 +324,25 @@ std::pair<source_position, source_snapshot> hlasm_context::get_end_snapshot() co
 
 void hlasm_context::push_statement_processing(const processing::processing_kind kind)
 {
-    proc_stack_.emplace_back(kind, false);
+    assert(!source_stack_.empty());
+
+    source_stack_.back().proc_stack.emplace_back(kind);
 }
 
 void hlasm_context::push_statement_processing(const processing::processing_kind kind, std::string file_name)
 {
-    source_stack_.emplace_back(std::move(file_name));
-
-    proc_stack_.emplace_back(kind, true);
+    source_stack_.emplace_back(std::move(file_name), kind);
 }
 
 void hlasm_context::pop_statement_processing()
 {
-    assert(!proc_stack_.empty());
+    assert(!source_stack_.empty());
+    assert(!source_stack_.back().proc_stack.empty());
 
-    if (proc_stack_.back().owns_source)
+    source_stack_.back().proc_stack.pop_back();
+
+    if (source_stack_.back().proc_stack.empty())
         source_stack_.pop_back();
-
-    proc_stack_.pop_back();
 }
 
 id_storage& hlasm_context::ids() { return *ids_; }
@@ -434,8 +436,9 @@ void hlasm_plugin::parser_library::context::hlasm_context::end_reached()
 
     scope_stack_.erase(scope_stack_.begin() + 1, scope_stack_.end());
     source_stack_.erase(source_stack_.begin() + 1, source_stack_.end());
-    source_stack_.front().copy_stack.clear();
-    proc_stack_.erase(proc_stack_.begin() + 1, proc_stack_.end());
+    auto& opencode = source_stack_.front();
+    opencode.copy_stack.clear();
+    opencode.proc_stack.erase(opencode.proc_stack.begin() + 1, opencode.proc_stack.end());
 }
 
 std::vector<id_index> hlasm_context::whole_copy_stack() const
@@ -823,7 +826,12 @@ void hlasm_context::add_preprocessor_dependency(const std::string& file) { visit
 
 void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 {
-    assert(proc_stack_.size() == 1);
+    assert(std::transform_reduce(source_stack_.begin(),
+               source_stack_.end(),
+               (size_t)0,
+               std::plus {},
+               [](const auto& source) { return source.proc_stack.size(); })
+        == 1);
 
     source_stack_.back().current_instruction = std::move(snapshot.instruction);
     source_stack_.back().begin_index = snapshot.begin_index;
