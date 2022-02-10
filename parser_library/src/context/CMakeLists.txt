@@ -38,6 +38,8 @@ target_sources(parser_library PRIVATE
 	source_snapshot.h
 	statement_cache.cpp
 	statement_cache.h
+	using.cpp
+	using.h
 )
 
 add_subdirectory(ordinary_assembly)
