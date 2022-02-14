@@ -85,8 +85,21 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
 
     if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
         return value;
+    else if (symbol->kind() == context::symbol_value_kind::ABS && qualifier)
+    {
+        return context::dependency_collector(true);
+    }
     else if (symbol->kind() == context::symbol_value_kind::RELOC)
-        return symbol->value().get_reloc();
+    {
+        auto reloc_value = symbol->value().get_reloc();
+        if (qualifier)
+        {
+            if (!reloc_value.is_simple())
+                return context::dependency_collector(true);
+            reloc_value.bases().front().first.qualifier = qualifier;
+        }
+        return reloc_value;
+    }
     else
         return context::dependency_collector();
 }
@@ -98,7 +111,30 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(context::dependency_solve
     if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
         return context::symbol_value();
 
-    return symbol->value();
+    if (symbol->kind() == context::symbol_value_kind::ABS)
+    {
+        if (qualifier)
+        {
+            // TODO: diagnose
+        }
+        return symbol->value();
+    }
+    else if (symbol->kind() == context::symbol_value_kind::RELOC)
+    {
+        if (!qualifier)
+            return symbol->value();
+        auto reloc_value = symbol->value().get_reloc();
+        if (reloc_value.is_simple())
+            reloc_value.bases().front().first.qualifier = qualifier;
+        else
+        {
+            // TODO: diagnose
+        }
+        return reloc_value;
+    }
+
+    assert(false);
+    return context::symbol_value();
 }
 
 const mach_expression* mach_expr_symbol::leftmost_term() const { return this; }
