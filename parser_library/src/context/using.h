@@ -48,6 +48,7 @@ class dependency_solver;
 class using_collection
 {
     using mach_expression = expressions::mach_expression;
+    using qualified_id = std::pair<id_index, id_index>;
 
     struct using_entry_resolved;
     class using_drop_definition;
@@ -112,7 +113,8 @@ private:
             offset_t length,
             std::span<register_t> regs,
             offset_t reg_offset)
-            : label(label)
+            : parent(parent)
+            , label(label)
             , owner(owner)
             , begin(begin)
             , length(length)
@@ -159,8 +161,8 @@ private:
 
         static std::optional<std::pair<const section*, offset_t>> abs_or_reloc(
             using_collection& coll, const mach_expression* e, bool abs_is_register = false);
-        static std::variant<std::monostate, id_index, using_collection::register_t> abs_or_label(
-            using_collection& coll, const mach_expression* e);
+        static std::variant<std::monostate, qualified_id, using_collection::register_t> abs_or_label(
+            using_collection& coll, const mach_expression* e, bool allow_qualification);
 
     public:
         friend auto operator<=>(const using_drop_definition&, const using_drop_definition&) = default;
@@ -255,7 +257,7 @@ private:
         void compute_context(
             using_collection& coll, const drop_entry_resolved& d, diagnostic_consumer<diagnostic_op>& diag);
         size_t compute_context_drop(id_index d);
-        size_t compute_context_drop(register_t d, id_index label = nullptr);
+        size_t compute_context_drop(register_t d);
     };
 
     struct expression_hash

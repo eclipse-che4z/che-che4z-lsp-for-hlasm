@@ -121,10 +121,10 @@ class mach_expr_symbol final : public mach_expression
     bool do_is_similar(const mach_expression& expr) const override;
 
 public:
-    mach_expr_symbol(context::id_index value, range rng);
+    mach_expr_symbol(context::id_index value, context::id_index qualifier, range rng);
 
     context::id_index value;
-    mach_expr_data_attr len_expr;
+    context::id_index qualifier;
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 

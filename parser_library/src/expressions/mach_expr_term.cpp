@@ -73,10 +73,10 @@ size_t mach_expr_constant::hash() const
 }
 
 //***********  mach_expr_symbol ************
-mach_expr_symbol::mach_expr_symbol(context::id_index value, range rng)
+mach_expr_symbol::mach_expr_symbol(context::id_index value, context::id_index qualifier, range rng)
     : mach_expression(rng)
     , value(value)
-    , len_expr(value, context::data_attr_kind::L, rng, rng)
+    , qualifier(qualifier)
 {}
 
 context::dependency_collector mach_expr_symbol::get_dependencies(context::dependency_solver& solver) const

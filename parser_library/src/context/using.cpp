@@ -53,9 +53,15 @@ void using_collection::using_entry::compute_context(
 {
     duplicate_parent_context(coll, u.parent);
 
-    for (auto r : u.reg_set)
-        if (r != invalid_register)
-            compute_context_drop(r, u.label); // drop conflicting usings
+    // drop conflicting usings
+    if (u.label)
+        compute_context_drop(u.label);
+    else
+    {
+        for (auto r : u.reg_set)
+            if (r != invalid_register)
+                compute_context_drop(r);
+    }
 
     context.m_state.emplace_back(using_context::entry { u.label, u.owner, u.begin, u.length, u.reg_set, u.reg_offset });
 }
@@ -79,11 +85,11 @@ size_t using_collection::using_entry::compute_context_drop(id_index d)
     return std::erase_if(context.m_state, [d](const auto& e) { return e.label == d; });
 }
 
-size_t using_collection::using_entry::compute_context_drop(register_t d, id_index label)
+size_t using_collection::using_entry::compute_context_drop(register_t d)
 {
     size_t invalidated = 0;
     for (auto& e : context.m_state)
-        if (e.label == label)
+        if (e.label == nullptr)
             invalidated += std::exchange(e.regs[d], invalid_register) != invalid_register;
     std::erase_if(context.m_state, [](const auto& e) { return e.regs == invalid_register_set; });
 
@@ -115,14 +121,22 @@ auto using_collection::using_drop_definition::abs_or_reloc(
     // TODO: diagnose
     return std::nullopt;
 }
-std::variant<std::monostate, id_index, using_collection::register_t>
-using_collection::using_drop_definition::abs_or_label(using_collection& coll, const mach_expression* e)
+std::variant<std::monostate, using_collection::qualified_id, using_collection::register_t>
+using_collection::using_drop_definition::abs_or_label(
+    using_collection& coll, const mach_expression* e, bool allow_qualification)
 {
     if (!e)
         return std::monostate();
 
     if (auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(e); sym)
-        return sym->value;
+    {
+        if (sym->qualifier && !allow_qualification)
+        {
+            // TODO: diagnose
+            return std::monostate();
+        }
+        return std::pair(sym->qualifier, sym->value);
+    }
 
     const auto& res = coll.eval_expr(e);
 
@@ -150,7 +164,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     }
     const auto& ctx = coll.m_usings[m_parent.index].context;
 
-    auto v = ctx.evaluate(coll, m_label, b.first, b.second, false);
+    auto v = ctx.evaluate(coll, m_label, base.first, base.second, false);
 
     if (v.mapping_regs == invalid_register_set)
     {
@@ -158,7 +172,8 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
         return {};
     }
 
-    return using_entry_resolved(m_parent, m_label, b.first, b.second, v.length, v.mapping_regs, v.reg_offset);
+    return using_entry_resolved(
+        m_parent, m_label, b.first, b.second, std::min(len.value_or(v.length), v.length), v.mapping_regs, v.reg_offset);
 }
 
 using_collection::resolved_entry using_collection::using_drop_definition::resolve_using(
@@ -231,12 +246,12 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
             // TODO: diagnose
         }
         void operator()(register_t r) { args.emplace_back(r); }
-        void operator()(id_index id) { args.emplace_back(id); }
+        void operator()(qualified_id id) { args.emplace_back(id.second); }
 
     } transform { diag };
 
     for (const auto* expr : m_base)
-        std::visit(transform, abs_or_label(coll, expr));
+        std::visit(transform, abs_or_label(coll, expr, false));
 
     return drop_entry_resolved(m_parent, std::move(transform.args));
 }

@@ -188,7 +188,7 @@ self_def_term returns [self_def_t value]
 		$value = parse_self_def_term(opt, $string.value, provider.get_range($ORDSYMBOL,$string.ctx->getStop()));
 	};
 
-id returns [id_index name, id_index using_qualifier]
+id returns [id_index name = nullptr, id_index using_qualifier = nullptr]
 	: f=id_no_dot {$name = $f.name;} (dot s=id_no_dot {$name = $s.name; $using_qualifier = $f.name;})?;
 
 id_no_dot returns [id_index name = id_storage::empty_id] locals [std::string buffer]
