@@ -48,8 +48,6 @@ class dependency_solver;
 class using_collection
 {
     using mach_expression = expressions::mach_expression;
-    using qualified_id = std::pair<id_index, id_index>;
-
     struct using_entry_resolved;
     class using_drop_definition;
     struct using_entry;
@@ -90,6 +88,19 @@ public:
             assert(*this);
             return coll->m_usings[index];
         }
+    };
+
+    struct qualified_id
+    {
+        id_index qualifier;
+        id_index name;
+    };
+
+    struct qualified_address
+    {
+        id_index qualifier;
+        const section* sect;
+        offset_t offset;
     };
 
 private:
@@ -155,11 +166,11 @@ private:
         resolved_entry resolve_using_dep(using_collection& coll,
             const std::pair<const section*, offset_t>& b,
             std::optional<offset_t> len,
-            const std::pair<const section*, offset_t>& base,
+            const qualified_address& base,
             diagnostic_consumer<diagnostic_op>& diag) const;
         resolved_entry resolve_drop(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
 
-        static std::optional<std::pair<const section*, offset_t>> abs_or_reloc(
+        static std::optional<qualified_address> abs_or_reloc(
             using_collection& coll, const mach_expression* e, bool abs_is_register = false);
         static std::variant<std::monostate, qualified_id, using_collection::register_t> abs_or_label(
             using_collection& coll, const mach_expression* e, bool allow_qualification);

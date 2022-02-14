@@ -97,8 +97,7 @@ size_t using_collection::using_entry::compute_context_drop(register_t d)
 }
 
 auto using_collection::using_drop_definition::abs_or_reloc(
-    using_collection& coll, const mach_expression* e, bool abs_is_register)
-    -> std::optional<std::pair<const section*, offset_t>>
+    using_collection& coll, const mach_expression* e, bool abs_is_register) -> std::optional<qualified_address>
 {
     if (!e)
         return std::nullopt;
@@ -113,10 +112,13 @@ auto using_collection::using_drop_definition::abs_or_reloc(
             // TODO: diagnose
             return std::nullopt;
         }
-        return std::make_pair(nullptr, v);
+        return qualified_address(nullptr, nullptr, v);
     }
     if (res.value_kind() == symbol_value_kind::RELOC && res.get_reloc().is_simple())
-        return std::make_pair(res.get_reloc().bases().front().first.owner, res.get_reloc().offset());
+    {
+        const auto& base = res.get_reloc().bases().front().first;
+        return qualified_address(base.qualifier, base.owner, res.get_reloc().offset());
+    }
 
     // TODO: diagnose
     return std::nullopt;
@@ -135,7 +137,7 @@ using_collection::using_drop_definition::abs_or_label(
             // TODO: diagnose
             return std::monostate();
         }
-        return std::pair(sym->qualifier, sym->value);
+        return qualified_id { sym->qualifier, sym->value };
     }
 
     const auto& res = coll.eval_expr(e);
@@ -154,7 +156,7 @@ using_collection::using_drop_definition::abs_or_label(
 using_collection::resolved_entry using_collection::using_drop_definition::resolve_using_dep(using_collection& coll,
     const std::pair<const section*, offset_t>& b,
     std::optional<offset_t> len,
-    const std::pair<const section*, offset_t>& base,
+    const qualified_address& base,
     diagnostic_consumer<diagnostic_op>& diag) const
 {
     if (m_parent == index_t())
@@ -164,7 +166,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     }
     const auto& ctx = coll.m_usings[m_parent.index].context;
 
-    auto v = ctx.evaluate(coll, m_label, base.first, base.second, false);
+    auto v = ctx.evaluate(coll, base.qualifier, base.sect, base.offset, false);
 
     if (v.mapping_regs == invalid_register_set)
     {
@@ -187,9 +189,13 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
         // TODO: diagnose
         return {};
     }
+    if (b->qualifier)
+    {
+        // TODO: qualifier not allowed
+    }
     auto e = abs_or_reloc(coll, m_end);
 
-    std::array<std::optional<std::pair<const section*, offset_t>>, reg_set_size> bases_;
+    std::array<std::optional<qualified_address>, reg_set_size> bases_;
     const auto bases = std::span(bases_).first(
         std::count_if(m_base.begin(), m_base.end(), [](const auto* e) { return e != nullptr; }));
     std::transform(
@@ -198,25 +204,29 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     std::optional<offset_t> len;
     if (e.has_value())
     {
-        if (b->first != e->first)
+        if (e->qualifier)
+        {
+            // TODO: qualifier not allowed
+        }
+        if (b->sect != e->sect)
         {
             // TODO: diagnose
         }
-        else if (b->second <= e->second)
+        else if (b->offset >= e->offset)
         {
             // TODO: diagnose
         }
         else
-            len = e->second - b->second;
+            len = e->offset - b->offset;
     }
 
-    if (bases.size() == 1 && bases.front().has_value() && bases.front()->first != nullptr)
-        return resolve_using_dep(coll, b.value(), len, bases.front().value(), diag);
+    if (bases.size() == 1 && bases.front().has_value() && bases.front()->sect != nullptr)
+        return resolve_using_dep(coll, { b->sect, b->offset }, len, bases.front().value(), diag);
 
     // labeled/ordinary USING continues
     for (auto& base : bases)
     {
-        if (base.has_value() && base->first != nullptr)
+        if (base.has_value() && base->sect != nullptr)
         {
             // TODO: diagnose absolute value expected
             base.reset(); // drop the value
@@ -226,11 +236,10 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     register_set_t reg_set_;
     auto reg_set = std::span(reg_set_).first(bases.size());
     std::transform(bases.begin(), bases.end(), reg_set.begin(), [](const auto& r) {
-        return r ? (register_t)r->second : invalid_register;
+        return r ? (register_t)r->offset : invalid_register;
     });
 
-    return using_entry_resolved(
-        m_parent, m_label, b->first, b->second, len.value_or(0x1000 * bases.size()), reg_set, 0);
+    return using_entry_resolved(m_parent, m_label, b->sect, b->offset, len.value_or(0x1000 * bases.size()), reg_set, 0);
 }
 
 using_collection::resolved_entry using_collection::using_drop_definition::resolve_drop(
@@ -246,7 +255,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
             // TODO: diagnose
         }
         void operator()(register_t r) { args.emplace_back(r); }
-        void operator()(qualified_id id) { args.emplace_back(id.second); }
+        void operator()(qualified_id id) { args.emplace_back(id.name); }
 
     } transform { diag };
 

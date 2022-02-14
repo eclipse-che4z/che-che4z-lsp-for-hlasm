@@ -162,7 +162,7 @@ mach_expression::value_t mach_expr_location_counter::evaluate(context::dependenc
 {
     auto location_counter = mi.get_loctr();
     if (!location_counter.has_value())
-        return context::address({ nullptr }, 0, {});
+        return context::address(context::address::base {}, 0, {});
     else
         return *location_counter;
 }

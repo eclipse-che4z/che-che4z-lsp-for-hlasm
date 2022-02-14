@@ -40,7 +40,10 @@ struct address
 {
     struct base
     {
-        const section* owner;
+        const section* owner = nullptr;
+        id_index qualifier = nullptr;
+
+        friend auto operator<=>(const base&, const base&) = default;
     };
 
     std::string to_string() const;
