@@ -375,7 +375,7 @@ class mnemonic_code
 
     inline_string<9> m_name;
 
-    // Generates a bitmask for an arbitrary mnemonit indicating which operands
+    // Generates a bitmask for an arbitrary mnemonic indicating which operands
     // are of the RI type (and therefore are modified by transform_reloc_imm_operands)
     static constexpr unsigned char generate_reladdr_bitmask(const machine_instruction* instruction,
         std::initializer_list<const std::pair<unsigned char, unsigned char>> replaced)

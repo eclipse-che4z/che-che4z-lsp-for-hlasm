@@ -34,7 +34,7 @@ struct concat_helper
     template<typename T>
     std::enable_if_t<!std::is_convertible_v<T&&, std::string_view>, size_t> len(T&&) const
     {
-        return 8;
+        return 8; // arbitrary estimate for the length of the stringified argument (typically small numbers)
     }
 };
 

@@ -49,7 +49,7 @@ protected:
     std::vector<label_types> allowed_types;
     std::string_view name_of_instruction;
     int min_operands = 0;
-    int max_operands = 0; // maximum number of operands, if not specified, value is -1
+    int max_operands = 0; // maximum number of operands, -1 if upper bound is not defined
 
 public:
     virtual bool check(const std::vector<const asm_operand*>&, const range&, const diagnostic_collector&) const = 0;
