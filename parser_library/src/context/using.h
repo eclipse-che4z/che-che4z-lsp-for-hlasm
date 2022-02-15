@@ -77,17 +77,22 @@ public:
     };
     using offset_t = int32_t;
 
-    struct index_t
+    class index_t
     {
-        size_t index = (size_t)-1;
+        size_t index = 0;
+
+    public:
+        index_t(size_t i)
+            : index(i)
+        {
+            assert(i != 0);
+        }
+        index_t() = default;
 
         friend auto operator<=>(const index_t& l, const index_t& r) = default;
-        explicit operator bool() const { return index != (size_t)-1; }
-        const using_entry& operator()(const using_collection* coll)
-        {
-            assert(*this);
-            return coll->m_usings[index];
-        }
+        explicit operator bool() const { return index != 0; }
+
+        friend class using_collection;
     };
 
     struct qualified_id
@@ -101,6 +106,14 @@ public:
         id_index qualifier;
         const section* sect;
         offset_t offset;
+    };
+
+    struct evaluate_result
+    {
+        register_t reg;
+        offset_t reg_offset;
+
+        friend auto operator<=>(const evaluate_result&, const evaluate_result&) = default;
     };
 
 private:
@@ -198,17 +211,17 @@ private:
         resolved_entry resolve(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
     };
 
+
+    struct context_evaluate_result
+    {
+        register_set_t mapping_regs;
+        offset_t reg_offset;
+        offset_t length;
+
+        friend auto operator<=>(const evaluate_result&, const evaluate_result&) = default;
+    };
     class using_context
     {
-    public:
-        struct evaluate_result
-        {
-            register_set_t mapping_regs;
-            offset_t reg_offset;
-            offset_t length;
-        };
-
-    private:
         struct entry
         {
             id_index label;
@@ -221,19 +234,11 @@ private:
 
         std::vector<entry> m_state;
 
-        evaluate_result evaluate(const using_collection& coll,
-            id_index label,
-            const section* section,
-            long long offset,
-            int32_t min_disp,
-            int32_t max_disp) const;
+        context_evaluate_result evaluate(
+            id_index label, const section* section, long long offset, int32_t min_disp, int32_t max_disp) const;
 
-    public:
-        evaluate_result evaluate(const using_collection& coll,
-            id_index label,
-            const section* section,
-            offset_t offset,
-            bool long_offset) const;
+        context_evaluate_result evaluate(
+            id_index label, const section* section, offset_t offset, bool long_offset) const;
 
         constexpr using_context() = default;
 
@@ -293,6 +298,12 @@ private:
 
     const symbol_value& eval_expr(const mach_expression*) const;
 
+    const using_entry& get_using(index_t idx) const
+    {
+        assert(idx);
+        return m_usings[idx.index - 1];
+    }
+
 public:
     using_collection() = default;
     using_collection(using_collection&&) noexcept;
@@ -311,6 +322,9 @@ public:
         std::span<std::unique_ptr<mach_expression>> arguments,
         diagnostic_consumer<diagnostic_op>& diag);
     index_t remove_all() const { return index_t(); }
+
+    evaluate_result evaluate(
+        index_t context_id, id_index label, const section* section, offset_t offset, bool long_offset) const;
 };
 
 } // namespace hlasm_plugin::parser_library::context

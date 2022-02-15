@@ -39,7 +39,7 @@ void using_collection::using_entry::duplicate_parent_context(using_collection& c
 {
     if (!p)
         return;
-    context = coll.m_usings[p.index].context;
+    context = coll.get_using(p).context;
 }
 
 void using_collection::using_entry::compute_context(
@@ -56,12 +56,6 @@ void using_collection::using_entry::compute_context(
     // drop conflicting usings
     if (u.label)
         compute_context_drop(u.label);
-    else
-    {
-        for (auto r : u.reg_set)
-            if (r != invalid_register)
-                compute_context_drop(r);
-    }
 
     context.m_state.emplace_back(using_context::entry { u.label, u.owner, u.begin, u.length, u.reg_set, u.reg_offset });
 }
@@ -89,8 +83,13 @@ size_t using_collection::using_entry::compute_context_drop(register_t d)
 {
     size_t invalidated = 0;
     for (auto& e : context.m_state)
+    {
         if (e.label == nullptr)
-            invalidated += std::exchange(e.regs[d], invalid_register) != invalid_register;
+        {
+            invalidated += std::count(e.regs.begin(), e.regs.end(), d);
+            std::replace(e.regs.begin(), e.regs.end(), d, invalid_register);
+        }
+    }
     std::erase_if(context.m_state, [](const auto& e) { return e.regs == invalid_register_set; });
 
     return invalidated;
@@ -159,14 +158,14 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     const qualified_address& base,
     diagnostic_consumer<diagnostic_op>& diag) const
 {
-    if (m_parent == index_t())
+    if (!m_parent)
     {
         // TODO: diagnose dependent using without any active using
         return {};
     }
-    const auto& ctx = coll.m_usings[m_parent.index].context;
+    const auto& ctx = coll.get_using(m_parent).context;
 
-    auto v = ctx.evaluate(coll, base.qualifier, base.sect, base.offset, false);
+    auto v = ctx.evaluate(base.qualifier, base.sect, base.offset, false);
 
     if (v.mapping_regs == invalid_register_set)
     {
@@ -196,10 +195,9 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     auto e = abs_or_reloc(coll, m_end);
 
     std::array<std::optional<qualified_address>, reg_set_size> bases_;
-    const auto bases = std::span(bases_).first(
-        std::count_if(m_base.begin(), m_base.end(), [](const auto* e) { return e != nullptr; }));
     std::transform(
-        m_base.begin(), m_base.end(), bases.begin(), [&coll](auto e) { return abs_or_reloc(coll, e, true); });
+        m_base.begin(), m_base.end(), bases_.begin(), [&coll](auto e) { return abs_or_reloc(coll, e, true); });
+    const auto bases = std::span(bases_).first(std::find(m_base.begin(), m_base.end(), nullptr) - m_base.begin());
 
     std::optional<offset_t> len;
     if (e.has_value())
@@ -233,7 +231,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
         }
     }
 
-    register_set_t reg_set_;
+    register_set_t reg_set_ = invalid_register_set;
     auto reg_set = std::span(reg_set_).first(bases.size());
     std::transform(bases.begin(), bases.end(), reg_set.begin(), [](const auto& r) {
         return r ? (register_t)r->offset : invalid_register;
@@ -259,7 +257,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 
     } transform { diag };
 
-    for (const auto* expr : m_base)
+    for (const auto* expr : std::span(m_base.begin(), std::find(m_base.begin(), m_base.end(), nullptr)))
         std::visit(transform, abs_or_label(coll, expr, false));
 
     return drop_entry_resolved(m_parent, std::move(transform.args));
@@ -293,7 +291,7 @@ void using_collection::resolve_all(dependency_solver& solver, diagnostic_consume
 {
     for (auto& expr : m_expressions)
     {
-        expr.second = expr.first->resolve(solver);
+        expr.second = expr.first->evaluate(solver);
         expr.first->collect_diags();
         for (auto& d : expr.first->diags())
             diag.add_diagnostic(std::move(d));
@@ -342,6 +340,19 @@ using_collection::index_t using_collection::remove(
     return index_t(m_usings.size());
 }
 
+
+
+using_collection::evaluate_result using_collection::evaluate(
+    index_t context_id, id_index label, const section* section, offset_t offset, bool long_offset) const
+{
+    if (!context_id)
+        return evaluate_result { invalid_register, 0 };
+
+    auto tmp = get_using(context_id).context.evaluate(label, section, offset, long_offset);
+
+    return evaluate_result { tmp.mapping_regs[0], tmp.reg_offset };
+}
+
 size_t using_collection::expression_hash::operator()(const std::unique_ptr<mach_expression>& v) const
 {
     return v->hash();
@@ -375,52 +386,73 @@ R clamp(T value)
     return (R)value;
 }
 
-auto using_collection::using_context::evaluate(const using_collection& coll,
-    id_index label,
-    const section* section,
-    long long offset,
-    int32_t min_disp,
-    int32_t max_disp) const -> evaluate_result
+auto using_collection::using_context::evaluate(
+    id_index label, const section* section, long long offset, int32_t min_disp, int32_t max_disp) const
+    -> context_evaluate_result
 {
-    const entry* result_entry = nullptr;
-    ptrdiff_t result_reg = 0;
-    auto min_dist_abs = std::numeric_limits<long long>::max();
-    long long min_dist = 0;
-    long long min_dist_reg = -1;
+    struct result_candidate
+    {
+        const entry* result_entry = nullptr;
+        ptrdiff_t result_reg = 0;
+        long long min_dist_abs = std::numeric_limits<long long>::max();
+        long long min_dist = 0;
+        long long min_dist_reg = -1;
+    };
+    result_candidate positive;
+    result_candidate negative;
     for (const auto& s : m_state)
     {
         if (label != s.label || section != s.section)
             continue;
-        auto new_dist = (offset - s.offset) + s.reg_offset;
+        auto next_dist = (offset - s.offset) + s.reg_offset;
         for (const auto& reg : s.regs)
         {
-            if (new_dist < min_disp)
-                break;
+            const auto dist = next_dist;
+            next_dist -= 0x1000;
+
+            result_candidate& target = dist >= 0 ? positive : negative;
             if (reg != invalid_register)
             {
-                auto abs_dist = std::abs(new_dist);
-                if (abs_dist < min_dist_abs || abs_dist == min_dist_abs && reg > min_dist_reg)
+                auto abs_dist = std::abs(dist);
+                if (abs_dist < target.min_dist_abs || abs_dist == target.min_dist_abs && reg > target.min_dist_reg)
                 {
-                    min_dist_abs = abs_dist;
-                    min_dist_reg = reg;
-                    result_reg = &reg - s.regs.data();
-                    result_entry = &s;
-                    min_dist = new_dist;
+                    target.min_dist_abs = abs_dist;
+                    target.min_dist_reg = reg;
+                    target.result_reg = &reg - s.regs.data();
+                    target.result_entry = &s;
+                    target.min_dist = dist;
                 }
             }
-            new_dist -= 0x1000;
         }
     }
-    if (!result_entry)
-        return evaluate_result { invalid_register_set, 0, 0 };
 
-    evaluate_result result {
+    const auto& r = [min_disp, max_disp](const auto& p, const auto& n) {
+        if (p.result_entry && p.min_dist >= min_disp && p.min_dist <= max_disp)
+            return p;
+        if (n.result_entry && n.min_dist >= min_disp && n.min_dist <= max_disp)
+            return n;
+
+        if (p.min_dist_abs <= n.min_dist_abs)
+            return p;
+        else
+            return n;
+    }(positive, negative);
+
+    if (!r.result_entry)
+        return context_evaluate_result { invalid_register_set, 0, 0 };
+
+    context_evaluate_result result {
         invalid_register_set,
-        clamp<offset_t>(min_dist),
-        clamp<offset_t>(min_disp < 0 ? 0 : result_entry->length - (offset - result_entry->offset)),
+        clamp<offset_t>(r.min_dist),
+        clamp<offset_t>(min_disp < 0 ? 0 : r.result_entry->length - (offset - r.result_entry->offset)),
     };
+
     if (result.reg_offset >= min_disp && result.reg_offset <= max_disp)
-        std::copy(result_entry->regs.begin() + result_reg, result_entry->regs.end(), result.mapping_regs.begin());
+        std::copy(r.result_entry->regs.begin() + r.result_reg, r.result_entry->regs.end(), result.mapping_regs.begin());
+    else if (result.reg_offset < min_disp)
+        result.reg_offset -= min_disp;
+    else /* if (result.reg_offset > max_disp) */
+        result.reg_offset -= max_disp;
 
     return result;
 }
@@ -432,15 +464,12 @@ constexpr int32_t min_short = 0;
 constexpr int32_t max_short = (1 << 12) - 1;
 
 auto using_collection::using_context::evaluate(
-    const using_collection& coll, id_index label, const section* section, offset_t offset, bool long_offset) const
-    -> evaluate_result
+    id_index label, const section* section, offset_t offset, bool long_offset) const -> context_evaluate_result
 {
-    auto result = evaluate(coll, label, section, offset, min_short, max_short);
-
-    if (long_offset && result.mapping_regs == invalid_register_set)
-        result = evaluate(coll, label, section, offset, min_long, max_long);
-
-    return result;
+    if (long_offset)
+        return evaluate(label, section, offset, min_long, max_long);
+    else
+        return evaluate(label, section, offset, min_short, max_short);
 }
 
 } // namespace hlasm_plugin::parser_library::context
