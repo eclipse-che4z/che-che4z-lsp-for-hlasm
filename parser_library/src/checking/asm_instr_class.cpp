@@ -20,7 +20,7 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::checking;
 
 bool assembler_instruction::is_param_in_vector(
-    const std::string& parameter, const std::vector<std::string>& options) const
+    std::string_view parameter, const std::vector<std::string_view>& options) const
 {
     return std::find(options.cbegin(), options.cend(), parameter) != options.cend();
 }
@@ -46,11 +46,12 @@ bool assembler_instruction::operands_size_corresponding(const std::vector<const 
 
 // functions for checking complex operands
 bool assembler_instruction::check_compat_operands(const std::vector<std::unique_ptr<asm_operand>>& input,
-    const std::string& instr_name,
+    std::string_view instr_name,
     const diagnostic_collector& add_diagnostic) const
 {
     // vector of keywords that can be used in compat option
-    const static std::vector<std::string> keywords = { "NOCASE",
+    const static std::vector<std::string_view> keywords = {
+        "NOCASE",
         "NOLITTYPE",
         "NOMACROCASE",
         "NOSYSLIST",
@@ -67,7 +68,8 @@ bool assembler_instruction::check_compat_operands(const std::vector<std::unique_
         "LIT",
         "MC",
         "SYSL",
-        "TRS" };
+        "TRS",
+    };
     for (const auto& operand : input)
     {
         auto simple_op = get_simple_operand(operand.get());
@@ -81,10 +83,11 @@ bool assembler_instruction::check_compat_operands(const std::vector<std::unique_
 }
 
 bool assembler_instruction::check_flag_operand(
-    const one_operand* input, const std::string& instr_name, const diagnostic_collector& add_diagnostic) const
+    const one_operand* input, std::string_view instr_name, const diagnostic_collector& add_diagnostic) const
 {
     // vector of keywords that can be used in flag option
-    const static std::vector<std::string> flag_operands = { "NOALIGN",
+    const static std::vector<std::string_view> flag_operands = {
+        "NOALIGN",
         "NOCONT",
         "NOEXLITW",
         "NOIMPLEN",
@@ -103,7 +106,8 @@ bool assembler_instruction::check_flag_operand(
         "USING0",
         "AL",
         "SUB",
-        "US0" };
+        "US0",
+    };
     // either param can be in flag_operands vector or is an integer
     if (is_param_in_vector(input->operand_identifier, flag_operands))
         return true;
@@ -121,10 +125,10 @@ bool assembler_instruction::check_flag_operand(
 }
 
 bool assembler_instruction::check_process_flag_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-    const std::string& instr_name,
+    std::string_view instr_name,
     const diagnostic_collector& add_diagnostic) const
 {
-    const static std::vector<std::string> other_pair_options = {
+    const static std::vector<std::string_view> other_pair_options = {
         "NOPUSH", "NORECORD", "NOPU", "NORC", "PUSH", "RECORD", "PU", "RC"
     };
     for (size_t i = 0; i < input.size(); i++)
@@ -143,7 +147,7 @@ bool assembler_instruction::check_process_flag_parameters(const std::vector<std:
 }
 
 bool assembler_instruction::check_optable_operands(const std::vector<std::unique_ptr<asm_operand>>& input,
-    const std::string& instr_name,
+    std::string_view instr_name,
     const diagnostic_collector& add_diagnostic) const
 {
     assert(input.size() <= 2);
@@ -174,11 +178,11 @@ bool assembler_instruction::check_optable_operands(const std::vector<std::unique
 }
 
 bool assembler_instruction::check_typecheck_operands(const std::vector<std::unique_ptr<asm_operand>>& input,
-    const std::string& instr_name,
+    std::string_view instr_name,
     const std::string,
     const diagnostic_collector& add_diagnostic) const
 {
-    const static std::vector<std::string> typecheck_operands = {
+    const static std::vector<std::string_view> typecheck_operands = {
         "MAGNITUDE", "REGISTER", "MAG", "REG", "NOMAGNITUDE", "NOREGISTER", "NOMAG", "NOREG"
     };
     for (const auto& operand : input)
@@ -199,7 +203,7 @@ bool assembler_instruction::check_codepage_parameter(
     const one_operand& input, const diagnostic_collector& add_diagnostic) const
 {
     // hexa value
-    std::string input_str = input.operand_identifier;
+    const std::string& input_str = input.operand_identifier;
     if (input_str.front() == 'X')
     {
         if (input_str.size() < 3 || input_str[1] != '\'' || input_str.back() != '\'')
@@ -253,7 +257,7 @@ bool assembler_instruction::check_codepage_parameter(
 }
 
 bool assembler_instruction::check_fail_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-    const std::string& instr_name,
+    std::string_view instr_name,
     const diagnostic_collector& add_diagnostic) const
 {
     for (const auto& operand : input)
@@ -338,7 +342,8 @@ bool assembler_instruction::check_fail_parameters(const std::vector<std::unique_
 
 bool assembler_instruction::check_first_machine_operand(const std::string& input_str, const diagnostic_collector&) const
 {
-    const static std::vector<std::string> machine_operand_options = { "S370",
+    const static std::vector<std::string_view> machine_operand_options = {
+        "S370",
         "S370XA",
         "S370ESA",
         "S390",
@@ -358,15 +363,17 @@ bool assembler_instruction::check_first_machine_operand(const std::string& input
         "ZSERIES-7",
         "ZS-7",
         "ZSERIES-8",
-        "ZS-8" };
+        "ZS-8",
+    };
     return is_param_in_vector(input_str, machine_operand_options);
 }
 
 bool assembler_instruction::check_pcontrol_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-    const std::string& instr_name,
+    std::string_view instr_name,
     const diagnostic_collector& add_diagnostic) const
 {
-    const static std::vector<std::string> pcontrol_pair_options = { "DATA",
+    const static std::vector<std::string_view> pcontrol_pair_options = {
+        "DATA",
         "GEN",
         "MCALL",
         "MSOURCE",
@@ -381,7 +388,8 @@ bool assembler_instruction::check_pcontrol_parameters(const std::vector<std::uni
         "NOUHEAD",
         "NOMC",
         "NOMS",
-        "NOUHD" };
+        "NOUHD",
+    };
     for (const auto& operand : input)
     {
         auto simple = get_simple_operand(operand.get());
@@ -397,7 +405,7 @@ bool assembler_instruction::check_pcontrol_parameters(const std::vector<std::uni
 }
 
 bool assembler_instruction::check_using_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-    const std::string& instr_name,
+    std::string_view instr_name,
     const diagnostic_collector& add_diagnostic) const
 {
     for (const auto& operand : input)
@@ -498,7 +506,7 @@ bool assembler_instruction::check_using_parameters(const std::vector<std::unique
 }
 
 bool assembler_instruction::check_xref_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-    const std::string& instr_name,
+    std::string_view instr_name,
     const diagnostic_collector& add_diagnostic) const
 {
     auto first = get_simple_operand(input[0].get());
@@ -523,11 +531,11 @@ bool assembler_instruction::check_xref_parameters(const std::vector<std::unique_
 }
 
 bool assembler_instruction::check_suprwarn_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-    const std::string instr_name,
-    const std::string& op_name,
+    std::string_view instr_name,
+    std::string_view op_name,
     const diagnostic_collector& add_diagnostic) const
 {
-    std::string option;
+    std::string_view option;
     if (op_name == "NOSUP")
         option = "NOSUPRWARN";
     else if (op_name == "SUP")
@@ -557,7 +565,8 @@ bool assembler_instruction::check_assembler_process_operand(
     if (is_operand_simple(input)) // operand is simple
     {
         auto simple_op = get_simple_operand(input);
-        const static std::vector<std::string> assembler_pair_options = { "ALIGN",
+        const static std::vector<std::string_view> assembler_pair_options = {
+            "ALIGN",
             "BATCH",
             "DBCS",
             "DXREF",
@@ -612,8 +621,10 @@ bool assembler_instruction::check_assembler_process_operand(
             "NOTHR",
             "NOWORKFILE",
             "NOMXREF",
-            "NOMX" };
-        const static std::vector<std::string> other_simple_options = { "NOCOMPAT",
+            "NOMX",
+        };
+        const static std::vector<std::string_view> other_simple_options = {
+            "NOCOMPAT",
             "NOCPAT",
             "DISK",
             "DI",
@@ -628,7 +639,8 @@ bool assembler_instruction::check_assembler_process_operand(
             "PESTOP=YES",
             "PESTOP=NO",
             "NOSUPRWARN",
-            "NOSUP" };
+            "NOSUP",
+        };
         if (!is_param_in_vector(simple_op->operand_identifier, assembler_pair_options)
             && !is_param_in_vector(simple_op->operand_identifier, other_simple_options))
         {
@@ -640,11 +652,12 @@ bool assembler_instruction::check_assembler_process_operand(
     else if (is_operand_complex(input)) // operand is complex, check all possible complex operand names
     {
         complex_operand* current_operand = (complex_operand*)input;
-        const static std::vector<std::string> one_simple_param = {
+        const static std::vector<std::string_view> one_simple_param = {
             "CODEPAGE", "CP", "INFO", "MXREF", "MX", "SECTALGN", "PROFILE", "PROF"
         };
-        const static std::vector<std::string> two_simple_param = { "MACHINE", "MAC", "OPTABLE", "OP" };
-        const static std::vector<std::string> one_plus_simple_params = { "COMPAT",
+        const static std::vector<std::string_view> two_simple_param = { "MACHINE", "MAC", "OPTABLE", "OP" };
+        const static std::vector<std::string_view> one_plus_simple_params = {
+            "COMPAT",
             "CPAT",
             "FLAG",
             "PCONTROL",
@@ -655,8 +668,9 @@ bool assembler_instruction::check_assembler_process_operand(
             "NOSUPRWARN",
             "NOSUP",
             "TYPECHECK",
-            "TC" };
-        const static std::vector<std::string> complex_params = { "US", "FAIL", "USING" };
+            "TC",
+        };
+        const static std::vector<std::string_view> complex_params = { "US", "FAIL", "USING" };
         // check whether the identifier is ok
         if (!is_param_in_vector(current_operand->operand_identifier, one_simple_param)
             && !is_param_in_vector(current_operand->operand_identifier, one_plus_simple_params)

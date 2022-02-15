@@ -173,19 +173,19 @@ struct processing_status_visitor
     {
         const auto f = id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS") ? processing_form::DAT
                                                                                           : processing_form::ASM;
-        const auto o = i->max_operands == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT;
+        const auto o = i->max_operands() == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT;
         return return_value(f, o, context::instruction_type::ASM);
     }
     processing_status operator()(const context::machine_instruction* i) const
     {
         return return_value(processing_form::MACH,
-            i->operands.empty() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            i->operands().empty() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
             context::instruction_type::MACH);
     }
     processing_status operator()(const context::ca_instruction* i) const
     {
         return return_value(processing_form::CA,
-            i->operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            i->operandless() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
             context::instruction_type::CA);
     }
     processing_status operator()(const context::mnemonic_code* i) const

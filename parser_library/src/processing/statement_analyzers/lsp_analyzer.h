@@ -15,6 +15,8 @@
 #ifndef PROCESSING_LSP_ANALYZER_H
 #define PROCESSING_LSP_ANALYZER_H
 
+#include <array>
+
 #include "lsp/lsp_context.h"
 #include "occurence_collector.h"
 #include "processing/processing_format.h"

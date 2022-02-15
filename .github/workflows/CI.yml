@@ -70,7 +70,7 @@ jobs:
   wasm-server-build:
     name: WASM language server
     runs-on: ubuntu-20.04
-    container: emscripten/emsdk:2.0.12
+    container: emscripten/emsdk:3.1.3
 
     steps:
       - uses: actions/checkout@v1
@@ -79,8 +79,8 @@ jobs:
       - name: Configure
         run: >
           mkdir build && cd build && emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DDISCOVER_TESTS=Off
-          -DWITH_LIBCXX=Off -DWITH_STATIC_CRT=Off -DCMAKE_EXE_LINKER_FLAGS="-s NODERAWFS=1"
-          -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=8 -s TOTAL_MEMORY=268435456 -s PROXY_TO_PTHREAD=1 -fexceptions -s NODERAWFS=1 -s EXIT_RUNTIME=1 --bind"
+          -DWITH_LIBCXX=Off -DWITH_STATIC_CRT=Off -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -fexceptions"
+          -DCMAKE_EXE_LINKER_FLAGS="-s PTHREAD_POOL_SIZE=8 -s TOTAL_MEMORY=268435456 -s PROXY_TO_PTHREAD=1 -s NODERAWFS=1 -s EXIT_RUNTIME=1 --bind"
           -DCMAKE_CROSSCOMPILING_EMULATOR="node;--experimental-wasm-threads;--experimental-wasm-bulk-memory"
           -Dgtest_disable_pthreads=On -DBUILD_VSIX=Off ../
       - name: Build

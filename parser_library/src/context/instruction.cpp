@@ -21,186 +21,343 @@ using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;
 
-const std::map<mach_format, std::string> instruction::mach_format_to_string = {
-    { mach_format::E, "E" },
-    { mach_format::I, "I" },
-    { mach_format::IE, "IE" },
-    { mach_format::MII, "MII" },
-    { mach_format::RI_a, "RI-a" },
-    { mach_format::RI_b, "RI-b" },
-    { mach_format::RI_c, "RI-c" },
-    { mach_format::RIE_a, "RIE-a" },
-    { mach_format::RIE_b, "RIE-b" },
-    { mach_format::RIE_c, "RIE-c" },
-    { mach_format::RIE_d, "RIE-d" },
-    { mach_format::RIE_e, "RIE-e" },
-    { mach_format::RIE_f, "RIE-f" },
-    { mach_format::RIE_g, "RIE-g" },
-    { mach_format::RIL_a, "RIL-a" },
-    { mach_format::RIL_b, "RIL-b" },
-    { mach_format::RIL_c, "RIL-c" },
-    { mach_format::RIS, "RIS" },
-    { mach_format::RR, "RR" },
-    { mach_format::RRD, "RRD" },
-    { mach_format::RRE, "RRE" },
-    { mach_format::RRF_a, "RRF-a" },
-    { mach_format::RRF_b, "RRF-b" },
-    { mach_format::RRF_c, "RRF-c" },
-    { mach_format::RRF_d, "RRF-d" },
-    { mach_format::RRF_e, "RRF-e" },
-    { mach_format::RRS, "RRS" },
-    { mach_format::RS_a, "RS-a" },
-    { mach_format::RS_b, "RS-b" },
-    { mach_format::RSI, "RSI" },
-    { mach_format::RSL_a, "RSL-a" },
-    { mach_format::RSL_b, "RSL-b" },
-    { mach_format::RSY_a, "RSY-a" },
-    { mach_format::RSY_b, "RSY-b" },
-    { mach_format::RX_a, "RX-a" },
-    { mach_format::RX_b, "RX-b" },
-    { mach_format::RXE, "RXE" },
-    { mach_format::RXF, "RXF" },
-    { mach_format::RXY_a, "RXY-a" },
-    { mach_format::RXY_b, "RXY-b" },
-    { mach_format::S, "S" },
-    { mach_format::SI, "SI" },
-    { mach_format::SIL, "SIL" },
-    { mach_format::SIY, "SIY" },
-    { mach_format::SMI, "SMI" },
-    { mach_format::SS_a, "SS-a" },
-    { mach_format::SS_b, "SS-b" },
-    { mach_format::SS_c, "SS-c" },
-    { mach_format::SS_d, "SS-d" },
-    { mach_format::SS_e, "SS-e" },
-    { mach_format::SS_f, "SS-f" },
-    { mach_format::SSE, "SSE" },
-    { mach_format::SSF, "SSF" },
-    { mach_format::VRI_a, "VRI-a" },
-    { mach_format::VRI_b, "VRI-b" },
-    { mach_format::VRI_c, "VRI-c" },
-    { mach_format::VRI_d, "VRI-d" },
-    { mach_format::VRI_e, "VRI-e" },
-    { mach_format::VRI_f, "VRI-f" },
-    { mach_format::VRI_g, "VRI-g" },
-    { mach_format::VRI_h, "VRI-h" },
-    { mach_format::VRI_i, "VRI-i" },
-    { mach_format::VRR_a, "VRR-a" },
-    { mach_format::VRR_b, "VRR-b" },
-    { mach_format::VRR_c, "VRR-c" },
-    { mach_format::VRR_d, "VRR-d" },
-    { mach_format::VRR_e, "VRR-e" },
-    { mach_format::VRR_f, "VRR-f" },
-    { mach_format::VRR_g, "VRR-g" },
-    { mach_format::VRR_h, "VRR-h" },
-    { mach_format::VRR_i, "VRR-i" },
-    { mach_format::VRS_a, "VRS-a" },
-    { mach_format::VRS_b, "VRS-b" },
-    { mach_format::VRS_c, "VRS-c" },
-    { mach_format::VRS_d, "VRS-d" },
-    { mach_format::VSI, "VSI" },
-    { mach_format::VRV, "VRV" },
-    { mach_format::VRX, "VRX" },
-};
+std::string_view instruction::mach_format_to_string(mach_format f)
+{
+    switch (f)
+    {
+        case mach_format::E:
+            return "E";
+        case mach_format::I:
+            return "I";
+        case mach_format::IE:
+            return "IE";
+        case mach_format::MII:
+            return "MII";
+        case mach_format::RI_a:
+            return "RI-a";
+        case mach_format::RI_b:
+            return "RI-b";
+        case mach_format::RI_c:
+            return "RI-c";
+        case mach_format::RIE_a:
+            return "RIE-a";
+        case mach_format::RIE_b:
+            return "RIE-b";
+        case mach_format::RIE_c:
+            return "RIE-c";
+        case mach_format::RIE_d:
+            return "RIE-d";
+        case mach_format::RIE_e:
+            return "RIE-e";
+        case mach_format::RIE_f:
+            return "RIE-f";
+        case mach_format::RIE_g:
+            return "RIE-g";
+        case mach_format::RIL_a:
+            return "RIL-a";
+        case mach_format::RIL_b:
+            return "RIL-b";
+        case mach_format::RIL_c:
+            return "RIL-c";
+        case mach_format::RIS:
+            return "RIS";
+        case mach_format::RR:
+            return "RR";
+        case mach_format::RRD:
+            return "RRD";
+        case mach_format::RRE:
+            return "RRE";
+        case mach_format::RRF_a:
+            return "RRF-a";
+        case mach_format::RRF_b:
+            return "RRF-b";
+        case mach_format::RRF_c:
+            return "RRF-c";
+        case mach_format::RRF_d:
+            return "RRF-d";
+        case mach_format::RRF_e:
+            return "RRF-e";
+        case mach_format::RRS:
+            return "RRS";
+        case mach_format::RS_a:
+            return "RS-a";
+        case mach_format::RS_b:
+            return "RS-b";
+        case mach_format::RSI:
+            return "RSI";
+        case mach_format::RSL_a:
+            return "RSL-a";
+        case mach_format::RSL_b:
+            return "RSL-b";
+        case mach_format::RSY_a:
+            return "RSY-a";
+        case mach_format::RSY_b:
+            return "RSY-b";
+        case mach_format::RX_a:
+            return "RX-a";
+        case mach_format::RX_b:
+            return "RX-b";
+        case mach_format::RXE:
+            return "RXE";
+        case mach_format::RXF:
+            return "RXF";
+        case mach_format::RXY_a:
+            return "RXY-a";
+        case mach_format::RXY_b:
+            return "RXY-b";
+        case mach_format::S:
+            return "S";
+        case mach_format::SI:
+            return "SI";
+        case mach_format::SIL:
+            return "SIL";
+        case mach_format::SIY:
+            return "SIY";
+        case mach_format::SMI:
+            return "SMI";
+        case mach_format::SS_a:
+            return "SS-a";
+        case mach_format::SS_b:
+            return "SS-b";
+        case mach_format::SS_c:
+            return "SS-c";
+        case mach_format::SS_d:
+            return "SS-d";
+        case mach_format::SS_e:
+            return "SS-e";
+        case mach_format::SS_f:
+            return "SS-f";
+        case mach_format::SSE:
+            return "SSE";
+        case mach_format::SSF:
+            return "SSF";
+        case mach_format::VRI_a:
+            return "VRI-a";
+        case mach_format::VRI_b:
+            return "VRI-b";
+        case mach_format::VRI_c:
+            return "VRI-c";
+        case mach_format::VRI_d:
+            return "VRI-d";
+        case mach_format::VRI_e:
+            return "VRI-e";
+        case mach_format::VRI_f:
+            return "VRI-f";
+        case mach_format::VRI_g:
+            return "VRI-g";
+        case mach_format::VRI_h:
+            return "VRI-h";
+        case mach_format::VRI_i:
+            return "VRI-i";
+        case mach_format::VRR_a:
+            return "VRR-a";
+        case mach_format::VRR_b:
+            return "VRR-b";
+        case mach_format::VRR_c:
+            return "VRR-c";
+        case mach_format::VRR_d:
+            return "VRR-d";
+        case mach_format::VRR_e:
+            return "VRR-e";
+        case mach_format::VRR_f:
+            return "VRR-f";
+        case mach_format::VRR_g:
+            return "VRR-g";
+        case mach_format::VRR_h:
+            return "VRR-h";
+        case mach_format::VRR_i:
+            return "VRR-i";
+        case mach_format::VRS_a:
+            return "VRS-a";
+        case mach_format::VRS_b:
+            return "VRS-b";
+        case mach_format::VRS_c:
+            return "VRS-c";
+        case mach_format::VRS_d:
+            return "VRS-d";
+        case mach_format::VSI:
+            return "VSI";
+        case mach_format::VRV:
+            return "VRV";
+        case mach_format::VRX:
+            return "VRX";
+        default:
+            assert(false);
+            return "";
+    }
+}
 
-const std::vector<ca_instruction> instruction::ca_instructions = {
-    { "AIF", false },
-    { "AGO", false },
+constexpr ca_instruction ca_instructions[] = {
     { "ACTR", false },
-    { "SETA", false },
-    { "SETB", false },
-    { "SETC", false },
+    { "AEJECT", true },
+    { "AGO", false },
+    { "AIF", false },
     { "ANOP", true },
-    { "LCLA", false },
-    { "LCLB", false },
-    { "LCLC", false },
+    { "AREAD", false },
+    { "ASPACE", false },
     { "GBLA", false },
     { "GBLB", false },
     { "GBLC", false },
+    { "LCLA", false },
+    { "LCLB", false },
+    { "LCLC", false },
     { "MACRO", true },
     { "MEND", true },
     { "MEXIT", true },
     { "MHELP", false },
-    { "AEJECT", true },
-    { "AREAD", false },
-    { "ASPACE", false },
+    { "SETA", false },
+    { "SETB", false },
+    { "SETC", false },
 };
+#if __cpp_lib_ranges
+static_assert(std::ranges::is_sorted(ca_instructions, {}, &ca_instruction::name));
 
-const std::map<std::string, assembler_instruction> instruction::assembler_instructions = {
-    { "*PROCESS", assembler_instruction(1, -1, true, "") }, // TO DO
-    { "ACONTROL", assembler_instruction(1, -1, false, "<selection>+") },
-    { "ADATA", assembler_instruction(5, 5, false, "value1,value2,value3,value4,character_string") },
-    { "AINSERT", assembler_instruction(2, 2, false, "'record',BACK|FRONT") },
-    { "ALIAS", assembler_instruction(1, 1, false, "alias_string") },
-    { "AMODE", assembler_instruction(1, 1, false, "amode_option") },
-    { "CATTR", assembler_instruction(1, -1, false, "attribute+") },
-    { "CCW", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-    { "CCW0", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-    { "CCW1", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-    { "CEJECT", assembler_instruction(0, 1, true, "?number_of_lines") },
-    { "CNOP", assembler_instruction(2, 2, true, "byte,boundary") },
-    { "COM", assembler_instruction(0, 0, false, "") },
-    { "COPY", assembler_instruction(1, 1, false, "member") },
-    { "CSECT", assembler_instruction(0, 0, false, "") },
-    { "CXD", assembler_instruction(0, 0, false, "") },
-    { "DC", assembler_instruction(1, -1, true, "<operand>+") },
-    { "DROP", assembler_instruction(0, -1, true, "?<<base_register|label>+>") },
-    { "DS", assembler_instruction(1, -1, true, "<operand>+") },
-    { "DSECT", assembler_instruction(0, 0, false, "") },
-    { "DXD", assembler_instruction(1, -1, true, "<operand>+") },
-    { "EJECT", assembler_instruction(0, 0, false, "") },
-    { "END", assembler_instruction(0, 2, true, "?expression,?language") },
-    { "ENTRY", assembler_instruction(1, -1, true, "entry_point+") },
+const ca_instruction* instruction::find_ca_instructions(std::string_view name)
+{
+    auto it = std::ranges::lower_bound(ca_instructions, name, {}, &ca_instruction::name);
+
+    if (it == std::ranges::end(ca_instructions) || it->name() != name)
+        return nullptr;
+    return &*it;
+}
+#else
+static_assert(std::is_sorted(std::begin(ca_instructions), std::end(ca_instructions), [](const auto& l, const auto& r) {
+    return l.name() < r.name();
+}));
+
+const ca_instruction* instruction::find_ca_instructions(std::string_view name)
+{
+    auto it = std::lower_bound(
+        std::begin(ca_instructions), std::end(ca_instructions), name, [](const auto& l, const auto& r) {
+            return l.name() < r;
+        });
+
+    if (it == std::end(ca_instructions) || it->name() != name)
+        return nullptr;
+    return &*it;
+}
+#endif
+
+const ca_instruction& instruction::get_ca_instructions(std::string_view name)
+{
+    auto result = find_ca_instructions(name);
+    assert(result);
+    return *result;
+}
+
+std::span<const ca_instruction> instruction::all_ca_instructions() { return ca_instructions; }
+
+constexpr assembler_instruction assembler_instructions[] = {
+    { "*PROCESS", 1, -1, true, "" }, // TO DO
+    { "ACONTROL", 1, -1, false, "<selection>+" },
+    { "ADATA", 5, 5, false, "value1,value2,value3,value4,character_string" },
+    { "AINSERT", 2, 2, false, "'record',BACK|FRONT" },
+    { "ALIAS", 1, 1, false, "alias_string" },
+    { "AMODE", 1, 1, false, "amode_option" },
+    { "CATTR", 1, -1, false, "attribute+" },
+    { "CCW", 4, 4, true, "command_code,data_address,flags,data_count" },
+    { "CCW0", 4, 4, true, "command_code,data_address,flags,data_count" },
+    { "CCW1", 4, 4, true, "command_code,data_address,flags,data_count" },
+    { "CEJECT", 0, 1, true, "?number_of_lines" },
+    { "CNOP", 2, 2, true, "byte,boundary" },
+    { "COM", 0, 0, false, "" },
+    { "COPY", 1, 1, false, "member" },
+    { "CSECT", 0, 0, false, "" },
+    { "CXD", 0, 0, false, "" },
+    { "DC", 1, -1, true, "<operand>+" },
+    { "DROP", 0, -1, true, "?<<base_register|label>+>" },
+    { "DS", 1, -1, true, "<operand>+" },
+    { "DSECT", 0, 0, false, "" },
+    { "DXD", 1, -1, true, "<operand>+" },
+    { "EJECT", 0, 0, false, "" },
+    { "END", 0, 2, true, "?expression,?language" },
+    { "ENTRY", 1, -1, true, "entry_point+" },
     { "EQU",
-        assembler_instruction(1,
-            5,
-            true,
-            "value,?<length_attribute_value>,?<type_attribute_value>,?<program_type_value>,?<assembler_type_"
-            "value>") },
-    { "EXITCTL", assembler_instruction(2, 5, false, "exit_type,control_value+") },
-    { "EXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
-    { "ICTL", assembler_instruction(1, 3, false, "begin,?<end>,?<continue>") },
-    { "ISEQ", assembler_instruction(0, 2, false, "?<left,right>") },
-    { "LOCTR", assembler_instruction(0, 0, false, "") },
-    { "LTORG", assembler_instruction(0, 0, false, "") },
-    { "MNOTE", assembler_instruction(1, 2, false, "?<<severity|*|>,>message") },
-    { "OPSYN", assembler_instruction(0, 1, false, "?operation_code_2") },
-    { "ORG", assembler_instruction(0, 3, true, "expression?<,boundary?<,offset>>") },
-    { "POP", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
-    { "PRINT", assembler_instruction(1, -1, false, "operand+") },
-    { "PUNCH", assembler_instruction(1, 1, false, "string") },
-    { "PUSH", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
-    { "REPRO", assembler_instruction(0, 0, false, "") },
-    { "RMODE", assembler_instruction(1, 1, false, "rmode_option") },
-    { "RSECT", assembler_instruction(0, 0, false, "") },
-    { "SPACE", assembler_instruction(0, 1, true, "?number_of_lines") },
-    { "START", assembler_instruction(0, 1, true, "?expression") },
-    { "TITLE", assembler_instruction(1, 1, false, "title_string") },
-    { "USING", assembler_instruction(2, -1, true, "operand+") },
-    { "WXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
-    { "XATTR", assembler_instruction(1, -1, false, "attribute+") },
+        1,
+        5,
+        true,
+        "value,?<length_attribute_value>,?<type_attribute_value>,?<program_type_value>,?<assembler_type_value>" },
+    { "EXITCTL", 2, 5, false, "exit_type,control_value+" },
+    { "EXTRN", 1, -1, false, "<external_symbol>+|PART(<external_symbol>+" },
+    { "ICTL", 1, 3, false, "begin,?<end>,?<continue>" },
+    { "ISEQ", 0, 2, false, "?<left,right>" },
+    { "LOCTR", 0, 0, false, "" },
+    { "LTORG", 0, 0, false, "" },
+    { "MNOTE", 1, 2, false, "?<<severity|*|>,>message" },
+    { "OPSYN", 0, 1, false, "?operation_code_2" },
+    { "ORG", 0, 3, true, "expression?<,boundary?<,offset>>" },
+    { "POP", 1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT" },
+    { "PRINT", 1, -1, false, "operand+" },
+    { "PUNCH", 1, 1, false, "string" },
+    { "PUSH", 1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT" },
+    { "REPRO", 0, 0, false, "" },
+    { "RMODE", 1, 1, false, "rmode_option" },
+    { "RSECT", 0, 0, false, "" },
+    { "SPACE", 0, 1, true, "?number_of_lines" },
+    { "START", 0, 1, true, "?expression" },
+    { "TITLE", 1, 1, false, "title_string" },
+    { "USING", 2, -1, true, "operand+" },
+    { "WXTRN", 1, -1, false, "<external_symbol>+|PART(<external_symbol>+" },
+    { "XATTR", 1, -1, false, "attribute+" },
+
 };
+#ifdef __cpp_lib_ranges
+static_assert(std::ranges::is_sorted(assembler_instructions, {}, &assembler_instruction::name));
+
+const assembler_instruction* instruction::find_assembler_instructions(std::string_view instr)
+{
+    auto it = std::ranges::lower_bound(assembler_instructions, instr, {}, &assembler_instruction::name);
+    if (it == std::ranges::end(assembler_instructions) || it->name() != instr)
+        return nullptr;
+    return &*it;
+}
+#else
+static_assert(std::is_sorted(std::begin(assembler_instructions),
+    std::end(assembler_instructions),
+    [](const auto& l, const auto& r) { return l.name() < r.name(); }));
+
+const assembler_instruction* instruction::find_assembler_instructions(std::string_view instr)
+{
+    auto it = std::lower_bound(
+        std::begin(assembler_instructions), std::end(assembler_instructions), instr, [](const auto& l, const auto& r) {
+            return l.name() < r;
+        });
+    if (it == std::end(assembler_instructions) || it->name() != instr)
+        return nullptr;
+    return &*it;
+}
+#endif
+
+const assembler_instruction& instruction::get_assembler_instructions(std::string_view instr)
+{
+    auto result = find_assembler_instructions(instr);
+    assert(result);
+    return *result;
+}
+
+std::span<const assembler_instruction> instruction::all_assembler_instructions() { return assembler_instructions; }
 
 bool hlasm_plugin::parser_library::context::machine_instruction::check_nth_operand(
     size_t place, const checking::machine_operand* operand)
 {
     diagnostic_op diag;
     const range stmt_range = range();
-    if (operand->check(diag, operands[place], instr_name, stmt_range))
+    if (operand->check(diag, m_operands[place], m_name.to_string_view(), stmt_range))
         return true;
     return false;
 }
 
-bool hlasm_plugin::parser_library::context::machine_instruction::check(const std::string& name_of_instruction,
+bool hlasm_plugin::parser_library::context::machine_instruction::check(std::string_view name_of_instruction,
     const std::vector<const checking::machine_operand*> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
     // check size of operands
-    int diff = (int)operands.size() - (int)to_check.size();
-    if (diff > no_optional || diff < 0)
+    int diff = (int)m_operand_len - (int)to_check.size();
+    if (diff > m_optional_op_count || diff < 0)
     {
         add_diagnostic(diagnostic_op::error_optional_number_of_operands(
-            name_of_instruction, no_optional, (int)operands.size(), stmt_range));
+            name_of_instruction, m_optional_op_count, (int)m_operand_len, stmt_range));
         return false;
     }
     bool error = false;
@@ -208,7 +365,7 @@ bool hlasm_plugin::parser_library::context::machine_instruction::check(const std
     {
         assert(to_check[i] != nullptr);
         diagnostic_op diag;
-        if (!(*to_check[i]).check(diag, operands[i], name_of_instruction, stmt_range))
+        if (!(*to_check[i]).check(diag, m_operands[i], name_of_instruction, stmt_range))
         {
             add_diagnostic(diag);
             error = true;
@@ -217,2508 +374,2708 @@ bool hlasm_plugin::parser_library::context::machine_instruction::check(const std
     return (!error);
 }
 
-void add_machine_instr(std::map<std::string, machine_instruction>& result,
-    const std::string& instruction_name,
-    mach_format format,
-    std::vector<machine_operand_format> op_format,
-    size_t page_no)
+template<mach_format F, const machine_operand_format&... Ops>
+class instruction_format_definition_factory
 {
-    result.insert(std::pair<std::string, machine_instruction>(
-        instruction_name, machine_instruction(instruction_name, format, op_format, page_no)));
-}
-void add_machine_instr(std::map<std::string, machine_instruction>& result,
-    const std::string& instruction_name,
-    mach_format format,
-    std::vector<machine_operand_format> op_format,
-    int optional,
-    size_t page_no)
+    static constexpr std::array<machine_operand_format, sizeof...(Ops)> format = { Ops... };
+
+public:
+    static constexpr instruction_format_definition def() { return { { format.data(), sizeof...(Ops) }, F }; }
+};
+template<mach_format F>
+class instruction_format_definition_factory<F>
 {
-    result.insert(std::pair<std::string, machine_instruction>(
-        instruction_name, machine_instruction(instruction_name, format, std::move(op_format), optional, page_no)));
-}
+public:
+    static constexpr instruction_format_definition def() { return { {}, F }; }
+};
+
+// clang-format off
+constexpr auto E_0 = instruction_format_definition_factory<mach_format::E>::def();
+constexpr auto I_1 = instruction_format_definition_factory<mach_format::I, imm_8_U>::def();
+constexpr auto IE_2 = instruction_format_definition_factory<mach_format::IE, imm_4_U, imm_4_U>::def();
+constexpr auto MII_3 = instruction_format_definition_factory<mach_format::MII, mask_4_U, rel_addr_imm_12_S, rel_addr_imm_24_S>::def();
+constexpr auto RI_a_2_s = instruction_format_definition_factory<mach_format::RI_a, reg_4_U, imm_16_S>::def();
+constexpr auto RI_a_2_u = instruction_format_definition_factory<mach_format::RI_a, reg_4_U, imm_16_U>::def();
+constexpr auto RI_b_2 = instruction_format_definition_factory<mach_format::RI_b, reg_4_U, rel_addr_imm_16_S>::def();
+constexpr auto RI_c_2 = instruction_format_definition_factory<mach_format::RI_c, mask_4_U, rel_addr_imm_16_S>::def();
+constexpr auto RIE_a_3 = instruction_format_definition_factory<mach_format::RIE_a, reg_4_U, imm_16_S, mask_4_U>::def();
+constexpr auto RIE_b_4 = instruction_format_definition_factory<mach_format::RIE_b, reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S>::def();
+constexpr auto RIE_c_4 = instruction_format_definition_factory<mach_format::RIE_c, reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S>::def();
+constexpr auto RIE_d_3 = instruction_format_definition_factory<mach_format::RIE_d, reg_4_U, reg_4_U, imm_16_S>::def();
+constexpr auto RIE_e_3 = instruction_format_definition_factory<mach_format::RIE_e, reg_4_U, reg_4_U, rel_addr_imm_16_S>::def();
+constexpr auto RIE_f_5 = instruction_format_definition_factory<mach_format::RIE_f, reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S_opt>::def();
+constexpr auto RIE_g_3 = instruction_format_definition_factory<mach_format::RIE_g, reg_4_U, imm_16_S, mask_4_U>::def();
+constexpr auto RIL_a_2 = instruction_format_definition_factory<mach_format::RIL_a, reg_4_U, imm_32_S>::def();
+constexpr auto RIL_b_2 = instruction_format_definition_factory<mach_format::RIL_b, reg_4_U, rel_addr_imm_32_S>::def();
+constexpr auto RIL_c_2 = instruction_format_definition_factory<mach_format::RIL_c, mask_4_U, rel_addr_imm_32_S>::def();
+constexpr auto RIS_4 = instruction_format_definition_factory<mach_format::RIS, reg_4_U, imm_8_S, mask_4_U, db_12_4_U>::def();
+constexpr auto RR_1 = instruction_format_definition_factory<mach_format::RR, reg_4_U>::def();
+constexpr auto RR_2_m = instruction_format_definition_factory<mach_format::RR, mask_4_U, reg_4_U>::def();
+constexpr auto RR_2 = instruction_format_definition_factory<mach_format::RR, reg_4_U, reg_4_U>::def();
+constexpr auto RRD_3 = instruction_format_definition_factory<mach_format::RRD, reg_4_U, reg_4_U, reg_4_U>::def();
+constexpr auto RRE_0 = instruction_format_definition_factory<mach_format::RRE>::def();
+constexpr auto RRE_1 = instruction_format_definition_factory<mach_format::RRE, reg_4_U>::def();
+constexpr auto RRE_2 = instruction_format_definition_factory<mach_format::RRE, reg_4_U, reg_4_U>::def();
+constexpr auto RRF_a_3 = instruction_format_definition_factory<mach_format::RRF_a, reg_4_U, reg_4_U, reg_4_U>::def();
+constexpr auto RRF_a_4 = instruction_format_definition_factory<mach_format::RRF_a, reg_4_U, reg_4_U, reg_4_U, mask_4_U>::def();
+constexpr auto RRF_a_4_opt = instruction_format_definition_factory<mach_format::RRF_a, reg_4_U, reg_4_U, reg_4_U_opt, mask_4_U_opt>::def();
+constexpr auto RRF_b_3 = instruction_format_definition_factory<mach_format::RRF_b, reg_4_U, reg_4_U, reg_4_U>::def();
+constexpr auto RRF_b_4 = instruction_format_definition_factory<mach_format::RRF_b, reg_4_U, reg_4_U, reg_4_U, mask_4_U>::def();
+constexpr auto RRF_b_4_opt = instruction_format_definition_factory<mach_format::RRF_b, reg_4_U, reg_4_U, reg_4_U, mask_4_U_opt>::def();
+constexpr auto RRF_c_3 = instruction_format_definition_factory<mach_format::RRF_c, reg_4_U, reg_4_U, mask_4_U>::def();
+constexpr auto RRF_c_3_opt = instruction_format_definition_factory<mach_format::RRF_c, reg_4_U, reg_4_U, mask_4_U_opt>::def();
+constexpr auto RRF_d_3 = instruction_format_definition_factory<mach_format::RRF_d, reg_4_U, reg_4_U, mask_4_U>::def();
+constexpr auto RRF_e_3 = instruction_format_definition_factory<mach_format::RRF_e, reg_4_U, mask_4_U, reg_4_U>::def();
+constexpr auto RRF_e_4 = instruction_format_definition_factory<mach_format::RRF_e, reg_4_U, mask_4_U, reg_4_U, mask_4_U>::def();
+constexpr auto RRS_4 = instruction_format_definition_factory<mach_format::RRS, reg_4_U, reg_4_U, mask_4_U, db_12_4_U>::def();
+constexpr auto RS_a_2 = instruction_format_definition_factory<mach_format::RS_a, reg_4_U, db_12_4_U>::def();
+constexpr auto RS_a_3 = instruction_format_definition_factory<mach_format::RS_a, reg_4_U, reg_4_U, db_12_4_U>::def();
+constexpr auto RS_b_3 = instruction_format_definition_factory<mach_format::RS_b, reg_4_U, mask_4_U, db_12_4_U>::def();
+constexpr auto RSI_3 = instruction_format_definition_factory<mach_format::RSI, reg_4_U, reg_4_U, rel_addr_imm_16_S>::def();
+constexpr auto RSL_a_1 = instruction_format_definition_factory<mach_format::RSL_a, db_12_4x4L_U>::def();
+constexpr auto RSL_b_3 = instruction_format_definition_factory<mach_format::RSL_b, reg_4_U, db_12_8x4L_U, mask_4_U>::def();
+constexpr auto RSY_a_3 = instruction_format_definition_factory<mach_format::RSY_a, reg_4_U, reg_4_U, db_20_4_S>::def();
+constexpr auto RSY_b_3_su = instruction_format_definition_factory<mach_format::RSY_b, reg_4_U, db_20_4_S, mask_4_U>::def();
+constexpr auto RSY_b_3_us = instruction_format_definition_factory<mach_format::RSY_b, reg_4_U, mask_4_U, db_20_4_S>::def();
+constexpr auto RSY_b_3_ux = instruction_format_definition_factory<mach_format::RSY_b, reg_4_U, mask_4_U, dxb_20_4x4_S>::def();
+constexpr auto RX_a_2_ux = instruction_format_definition_factory<mach_format::RX_a, reg_4_U, dxb_12_4x4_U>::def();
+constexpr auto RX_a_2 = instruction_format_definition_factory<mach_format::RX_a, reg_4_U, reg_4_U>::def();
+constexpr auto RX_b_2 = instruction_format_definition_factory<mach_format::RX_b, mask_4_U, dxb_12_4x4_U>::def();
+constexpr auto RXE_2 = instruction_format_definition_factory<mach_format::RXE, reg_4_U, dxb_12_4x4_U>::def();
+constexpr auto RXE_3_xm = instruction_format_definition_factory<mach_format::RXE, reg_4_U, dxb_12_4x4_U, mask_4_U>::def();
+constexpr auto RXF_3_x = instruction_format_definition_factory<mach_format::RXF, reg_4_U, reg_4_U, dxb_12_4x4_U>::def();
+constexpr auto RXY_a_2 = instruction_format_definition_factory<mach_format::RXY_a, reg_4_U, dxb_20_4x4_S>::def();
+constexpr auto RXY_b_2 = instruction_format_definition_factory<mach_format::RXY_b, mask_4_U, dxb_20_4x4_S>::def();
+constexpr auto S_0 = instruction_format_definition_factory<mach_format::S>::def();
+constexpr auto S_1_u = instruction_format_definition_factory<mach_format::S, db_12_4_U>::def();
+constexpr auto S_1_s = instruction_format_definition_factory<mach_format::S, db_20_4_S>::def();
+constexpr auto SI_1 = instruction_format_definition_factory<mach_format::SI, db_12_4_U>::def();
+constexpr auto SI_2_s = instruction_format_definition_factory<mach_format::SI, db_12_4_U, imm_8_S>::def();
+constexpr auto SI_2_u = instruction_format_definition_factory<mach_format::SI, db_12_4_U, imm_8_U>::def();
+constexpr auto SIL_2_s = instruction_format_definition_factory<mach_format::SIL, db_12_4_U, imm_16_S>::def();
+constexpr auto SIL_2_u = instruction_format_definition_factory<mach_format::SIL, db_12_4_U, imm_16_U>::def();
+constexpr auto SIY_2_uu = instruction_format_definition_factory<mach_format::SIY, db_12_4_U, imm_8_U>::def();
+constexpr auto SIY_2_ss = instruction_format_definition_factory<mach_format::SIY, db_20_4_S, imm_8_S>::def();
+constexpr auto SIY_2_su = instruction_format_definition_factory<mach_format::SIY, db_20_4_S, imm_8_U>::def();
+constexpr auto SMI_3 = instruction_format_definition_factory<mach_format::SMI, mask_4_U, rel_addr_imm_16_S, db_12_4_U>::def();
+constexpr auto SS_a_2_u = instruction_format_definition_factory<mach_format::SS_a, db_12_8x4L_U, db_12_4_U>::def();
+constexpr auto SS_a_2_s = instruction_format_definition_factory<mach_format::SS_a, db_12_8x4L_U, db_20_4_S>::def();
+constexpr auto SS_b_2 = instruction_format_definition_factory<mach_format::SS_b, db_12_4x4L_U, db_12_4x4L_U>::def();
+constexpr auto SS_c_3 = instruction_format_definition_factory<mach_format::SS_c, db_12_4x4L_U, db_12_4_U, imm_4_U>::def();
+constexpr auto SS_d_3 = instruction_format_definition_factory<mach_format::SS_d, drb_12_4x4_U, db_12_4_U, reg_4_U>::def();
+constexpr auto SS_e_4_br = instruction_format_definition_factory<mach_format::SS_e, reg_4_U, db_12_4_U, reg_4_U, db_12_4_U>::def();
+constexpr auto SS_e_4_rb = instruction_format_definition_factory<mach_format::SS_e, reg_4_U, reg_4_U, db_12_4_U, db_12_4_U>::def();
+constexpr auto SS_f_2 = instruction_format_definition_factory<mach_format::SS_f, db_12_4_U, db_12_8x4L_U>::def();
+constexpr auto SSE_2 = instruction_format_definition_factory<mach_format::SSE, db_12_4_U, db_12_4_U>::def();
+constexpr auto SSF_3_dr = instruction_format_definition_factory<mach_format::SSF, db_12_4_U, db_12_4_U, reg_4_U>::def();
+constexpr auto SSF_3_rd = instruction_format_definition_factory<mach_format::SSF, reg_4_U, db_12_4_U, db_12_4_U>::def();
+constexpr auto VRI_a_2 = instruction_format_definition_factory<mach_format::VRI_a, vec_reg_5_U, imm_16_U>::def();
+constexpr auto VRI_a_3 = instruction_format_definition_factory<mach_format::VRI_a, vec_reg_5_U, imm_16_S, mask_4_U>::def();
+constexpr auto VRI_b_4 = instruction_format_definition_factory<mach_format::VRI_b, vec_reg_5_U, imm_8_U, imm_8_U, mask_4_U>::def();
+constexpr auto VRI_c_4 = instruction_format_definition_factory<mach_format::VRI_c, vec_reg_5_U, vec_reg_5_U, imm_16_U, mask_4_U>::def();
+constexpr auto VRI_d_4 = instruction_format_definition_factory<mach_format::VRI_d, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U>::def();
+constexpr auto VRI_d_5 = instruction_format_definition_factory<mach_format::VRI_d, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U>::def();
+constexpr auto VRI_e_5 = instruction_format_definition_factory<mach_format::VRI_e, vec_reg_5_U, vec_reg_5_U, imm_12_S, mask_4_U, mask_4_U>::def();
+constexpr auto VRI_f_5 = instruction_format_definition_factory<mach_format::VRI_f, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U>::def();
+constexpr auto VRI_g_5_s = instruction_format_definition_factory<mach_format::VRI_g, vec_reg_5_U, vec_reg_5_U, imm_8_U, imm_8_S, mask_4_U>::def();
+constexpr auto VRI_g_5_u = instruction_format_definition_factory<mach_format::VRI_g, vec_reg_5_U, vec_reg_5_U, imm_8_U, imm_8_U, mask_4_U>::def();
+constexpr auto VRI_h_3 = instruction_format_definition_factory<mach_format::VRI_h, vec_reg_5_U, imm_16_S, imm_4_U>::def();
+constexpr auto VRI_i_4 = instruction_format_definition_factory<mach_format::VRI_i, vec_reg_5_U, reg_4_U, imm_8_S, mask_4_U>::def();
+constexpr auto VRR_a_2 = instruction_format_definition_factory<mach_format::VRR_a, vec_reg_5_U, vec_reg_5_U>::def();
+constexpr auto VRR_a_3 = instruction_format_definition_factory<mach_format::VRR_a, vec_reg_5_U, vec_reg_5_U, mask_4_U>::def();
+constexpr auto VRR_a_4 = instruction_format_definition_factory<mach_format::VRR_a, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U>::def();
+constexpr auto VRR_a_4_opt = instruction_format_definition_factory<mach_format::VRR_a, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt>::def();
+constexpr auto VRR_a_5 = instruction_format_definition_factory<mach_format::VRR_a, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U>::def();
+constexpr auto VRR_b_5 = instruction_format_definition_factory<mach_format::VRR_b, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U>::def();
+constexpr auto VRR_b_5_opt = instruction_format_definition_factory<mach_format::VRR_b, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt>::def();
+constexpr auto VRR_c_3 = instruction_format_definition_factory<mach_format::VRR_c, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U>::def();
+constexpr auto VRR_c_4 = instruction_format_definition_factory<mach_format::VRR_c, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U>::def();
+constexpr auto VRR_c_5 = instruction_format_definition_factory<mach_format::VRR_c, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U>::def();
+constexpr auto VRR_c_6 = instruction_format_definition_factory<mach_format::VRR_c, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U>::def();
+constexpr auto VRR_d_5 = instruction_format_definition_factory<mach_format::VRR_d, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U>::def();
+constexpr auto VRR_d_6 = instruction_format_definition_factory<mach_format::VRR_d, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U>::def();
+constexpr auto VRR_d_6_opt = instruction_format_definition_factory<mach_format::VRR_d, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U_opt>::def();
+constexpr auto VRR_e_4 = instruction_format_definition_factory<mach_format::VRR_e, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U>::def();
+constexpr auto VRR_e_6 = instruction_format_definition_factory<mach_format::VRR_e, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U>::def();
+constexpr auto VRR_f_3 = instruction_format_definition_factory<mach_format::VRR_f, vec_reg_5_U, reg_4_U, reg_4_U>::def();
+constexpr auto VRR_g_1 = instruction_format_definition_factory<mach_format::VRR_g, vec_reg_5_U>::def();
+constexpr auto VRR_h_3 = instruction_format_definition_factory<mach_format::VRR_h, vec_reg_5_U, vec_reg_5_U, mask_4_U>::def();
+constexpr auto VRR_i_3 = instruction_format_definition_factory<mach_format::VRR_i, reg_4_U, vec_reg_5_U, mask_4_U>::def();
+constexpr auto VRS_a_4 = instruction_format_definition_factory<mach_format::VRS_a, vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U>::def();
+constexpr auto VRS_a_4_opt = instruction_format_definition_factory<mach_format::VRS_a, vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U_opt>::def();
+constexpr auto VRS_b_3 = instruction_format_definition_factory<mach_format::VRS_b, vec_reg_5_U, reg_4_U, db_12_4_U>::def();
+constexpr auto VRS_b_4 = instruction_format_definition_factory<mach_format::VRS_b, vec_reg_5_U, reg_4_U, db_12_4_U, mask_4_U>::def();
+constexpr auto VRS_c_4 = instruction_format_definition_factory<mach_format::VRS_c, reg_4_U, vec_reg_5_U, db_12_4_U, mask_4_U>::def();
+constexpr auto VRS_d_3 = instruction_format_definition_factory<mach_format::VRS_d, vec_reg_5_U, reg_4_U, db_12_4_U>::def();
+constexpr auto VRV_3 = instruction_format_definition_factory<mach_format::VRV, vec_reg_5_U, dvb_12_5x4_U, mask_4_U>::def();
+constexpr auto VRX_3 = instruction_format_definition_factory<mach_format::VRX, vec_reg_5_U, dxb_12_4x4_U, mask_4_U>::def();
+constexpr auto VRX_3_opt = instruction_format_definition_factory<mach_format::VRX, vec_reg_5_U, dxb_12_4x4_U, mask_4_U_opt>::def();
+constexpr auto VSI_3 = instruction_format_definition_factory<mach_format::VSI, vec_reg_5_U, db_12_4_U, imm_8_U>::def();
+// clang-format on
 
 
-std::map<std::string, machine_instruction>
-hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
+constexpr machine_instruction machine_instructions[] = {
+    { "A", RX_a_2_ux, 510 },
+    { "AD", RX_a_2_ux, 1412 },
+    { "ADB", RXE_2, 1445 },
+    { "ADBR", RRE_2, 1445 },
+    { "ADDFRR", RRE_2, 7 },
+    { "ADR", RR_2, 1412 },
+    { "ADTR", RRF_a_3, 1491 },
+    { "ADTRA", RRF_a_4, 1491 },
+    { "AE", RX_a_2_ux, 1412 },
+    { "AEB", RXE_2, 1445 },
+    { "AEBR", RRE_2, 1445 },
+    { "AER", RR_2, 1412 },
+    { "AFI", RIL_a_2, 511 },
+    { "AG", RXY_a_2, 511 },
+    { "AGF", RXY_a_2, 511 },
+    { "AGFI", RIL_a_2, 511 },
+    { "AGFR", RRE_2, 510 },
+    { "AGH", RXY_a_2, 512 },
+    { "AGHI", RI_a_2_s, 513 },
+    { "AGHIK", RIE_d_3, 511 },
+    { "AGR", RRE_2, 510 },
+    { "AGRK", RRF_a_3, 510 },
+    { "AGSI", SIY_2_ss, 511 },
+    { "AH", RX_a_2_ux, 512 },
+    { "AHHHR", RRF_a_3, 513 },
+    { "AHHLR", RRF_a_3, 513 },
+    { "AHI", RI_a_2_s, 512 },
+    { "AHIK", RIE_d_3, 511 },
+    { "AHY", RXY_a_2, 512 },
+    { "AIH", RIL_a_2, 513 },
+    { "AL", RX_a_2_ux, 514 },
+    { "ALC", RXY_a_2, 515 },
+    { "ALCG", RXY_a_2, 515 },
+    { "ALCGR", RRE_2, 515 },
+    { "ALCR", RRE_2, 515 },
+    { "ALFI", RIL_a_2, 514 },
+    { "ALG", RXY_a_2, 514 },
+    { "ALGF", RXY_a_2, 514 },
+    { "ALGFI", RIL_a_2, 514 },
+    { "ALGFR", RRE_2, 514 },
+    { "ALGHSIK", RIE_d_3, 516 },
+    { "ALGR", RRE_2, 514 },
+    { "ALGRK", RRF_a_3, 514 },
+    { "ALGSI", SIY_2_ss, 516 },
+    { "ALHHHR", RRF_a_3, 515 },
+    { "ALHHLR", RRF_a_3, 515 },
+    { "ALHSIK", RIE_d_3, 516 },
+    { "ALR", RR_2, 514 },
+    { "ALRK", RRF_a_3, 514 },
+    { "ALSI", SIY_2_ss, 516 },
+    { "ALSIH", RIL_a_2, 517 },
+    { "ALSIHN", RIL_a_2, 517 },
+    { "ALY", RXY_a_2, 514 },
+    { "AP", SS_b_2, 920 },
+    { "AR", RR_2, 510 },
+    { "ARK", RRF_a_3, 510 },
+    { "ASI", SIY_2_ss, 511 },
+    { "AU", RX_a_2_ux, 1413 },
+    { "AUR", RR_2, 1413 },
+    { "AW", RX_a_2_ux, 1413 },
+    { "AWR", RR_2, 1413 },
+    { "AXBR", RRE_2, 1445 },
+    { "AXR", RR_2, 1412 },
+    { "AXTR", RRF_a_3, 1491 },
+    { "AXTRA", RRF_a_4, 1491 },
+    { "AY", RXY_a_2, 511 },
+    { "BAKR", RRE_2, 993 },
+    { "BAL", RX_a_2_ux, 519 },
+    { "BALR", RR_2, 519 },
+    { "BAS", RX_a_2_ux, 520 },
+    { "BASR", RR_2, 520 },
+    { "BASSM", RX_a_2, 520 },
+    { "BC", RX_b_2, 524 },
+    { "BCR", RR_2_m, 524 },
+    { "BCT", RX_a_2_ux, 525 },
+    { "BCTG", RXY_a_2, 525 },
+    { "BCTGR", RRE_2, 525 },
+    { "BCTR", RR_2, 525 },
+    { "BIC", RXY_b_2, 523 },
+    { "BPP", SMI_3, 527 },
+    { "BPRP", MII_3, 527 },
+    { "BRAS", RI_b_2, 530 },
+    { "BRASL", RIL_b_2, 530 },
+    { "BRC", RI_c_2, 530 },
+    { "BRCL", RIL_c_2, 530 },
+    { "BRCT", RI_b_2, 531 },
+    { "BRCTG", RI_b_2, 531 },
+    { "BRCTH", RIL_b_2, 531 },
+    { "BRXH", RSI_3, 532 },
+    { "BRXHG", RIE_e_3, 532 },
+    { "BRXLE", RSI_3, 532 },
+    { "BRXLG", RIE_e_3, 532 },
+    { "BSA", RRE_2, 989 },
+    { "BSG", RRE_2, 995 },
+    { "BSM", RR_2, 522 },
+    { "BXH", RS_a_3, 526 },
+    { "BXHG", RSY_a_3, 526 },
+    { "BXLE", RS_a_3, 526 },
+    { "BXLEG", RSY_a_3, 526 },
+    { "C", RX_a_2_ux, 618 },
+    { "CD", RX_a_2_ux, 1414 },
+    { "CDB", RXE_2, 1447 },
+    { "CDBR", RRE_2, 1447 },
+    { "CDFBR", RRE_2, 1449 },
+    { "CDFBRA", RRF_e_4, 1449 },
+    { "CDFR", RRE_2, 1415 },
+    { "CDFTR", RRF_e_4, 1496 },
+    { "CDGBR", RRE_2, 1449 },
+    { "CDGBRA", RRF_e_4, 1449 },
+    { "CDGR", RRE_2, 1415 },
+    { "CDGTR", RRE_2, 1496 },
+    { "CDGTRA", RRF_e_4, 1496 },
+    { "CDLFBR", RRF_e_4, 1451 },
+    { "CDLFTR", RRF_e_4, 1497 },
+    { "CDLGBR", RRF_e_4, 1451 },
+    { "CDLGTR", RRF_e_4, 1497 },
+    { "CDPT", RSL_b_3, 1498 },
+    { "CDR", RR_2, 1414 },
+    { "CDS", RS_a_3, 628 },
+    { "CDSG", RSY_a_3, 628 },
+    { "CDSTR", RRE_2, 1500 },
+    { "CDSY", RSY_a_3, 628 },
+    { "CDTR", RRE_2, 1494 },
+    { "CDUTR", RRE_2, 1500 },
+    { "CDZT", RSL_b_3, 1501 },
+    { "CE", RX_a_2_ux, 1414 },
+    { "CEB", RXE_2, 1447 },
+    { "CEBR", RRE_2, 1447 },
+    { "CEDTR", RRE_2, 1495 },
+    { "CEFBR", RRE_2, 1449 },
+    { "CEFBRA", RRF_e_4, 1449 },
+    { "CEFR", RRE_2, 1415 },
+    { "CEGBR", RRE_2, 1449 },
+    { "CEGBRA", RRF_e_4, 1449 },
+    { "CEGR", RRE_2, 1415 },
+    { "CELFBR", RRF_e_4, 1451 },
+    { "CELGBR", RRF_e_4, 1451 },
+    { "CER", RR_2, 1414 },
+    { "CEXTR", RRE_2, 1495 },
+    { "CFC", S_1_u, 621 },
+    { "CFDBR", RRF_e_3, 1452 },
+    { "CFDBRA", RRF_e_4, 1452 },
+    { "CFDR", RRF_e_3, 1415 },
+    { "CFDTR", RRF_e_4, 1502 },
+    { "CFEBR", RRF_e_3, 1452 },
+    { "CFEBRA", RRF_e_4, 1452 },
+    { "CFER", RRF_e_3, 1415 },
+    { "CFI", RIL_a_2, 618 },
+    { "CFXBR", RRF_e_3, 1452 },
+    { "CFXBRA", RRF_e_4, 1452 },
+    { "CFXR", RRF_e_3, 1415 },
+    { "CFXTR", RRF_e_4, 1502 },
+    { "CG", RXY_a_2, 618 },
+    { "CGDBR", RRF_e_3, 1452 },
+    { "CGDBRA", RRF_e_4, 1452 },
+    { "CGDR", RRF_e_3, 1415 },
+    { "CGDTR", RRF_e_3, 1501 },
+    { "CGDTRA", RRF_e_4, 1502 },
+    { "CGEBR", RRF_e_3, 1452 },
+    { "CGEBRA", RRF_e_4, 1452 },
+    { "CGER", RRF_e_3, 1415 },
+    { "CGF", RXY_a_2, 618 },
+    { "CGFI", RIL_a_2, 619 },
+    { "CGFR", RRE_2, 618 },
+    { "CGFRL", RIL_b_2, 619 },
+    { "CGH", RXY_a_2, 634 },
+    { "CGHI", RI_a_2_s, 634 },
+    { "CGHRL", RIL_b_2, 634 },
+    { "CGHSI", SIL_2_s, 634 },
+    { "CGIB", RIS_4, 620 },
+    { "CGIJ", RIE_c_4, 620 },
+    { "CGIT", RIE_a_3, 633 },
+    { "CGR", RRE_2, 618 },
+    { "CGRB", RRS_4, 619 },
+    { "CGRJ", RIE_b_4, 620 },
+    { "CGRL", RIL_b_2, 619 },
+    { "CGRT", RRF_c_3, 633 },
+    { "CGXBR", RRF_e_3, 1452 },
+    { "CGXBRA", RRF_e_4, 1452 },
+    { "CGXR", RRF_e_3, 1415 },
+    { "CGXTR", RRF_e_3, 1501 },
+    { "CGXTRA", RRF_e_4, 1502 },
+    { "CH", RX_a_2_ux, 634 },
+    { "CHF", RXY_a_2, 635 },
+    { "CHHR", RRE_2, 635 },
+    { "CHHSI", SIL_2_s, 634 },
+    { "CHI", RI_a_2_s, 634 },
+    { "CHLR", RRE_2, 635 },
+    { "CHRL", RIL_b_2, 634 },
+    { "CHSI", SIL_2_s, 634 },
+    { "CHY", RXY_a_2, 634 },
+    { "CIB", RIS_4, 620 },
+    { "CIH", RIL_a_2, 635 },
+    { "CIJ", RIE_c_4, 620 },
+    { "CIT", RIE_a_3, 633 },
+    { "CKSM", RRE_2, 533 },
+    { "CL", RX_a_2_ux, 636 },
+    { "CLC", SS_a_2_u, 636 },
+    { "CLCL", RR_2, 642 },
+    { "CLCLE", RS_a_3, 644 },
+    { "CLCLU", RSY_a_3, 647 },
+    { "CLFDBR", RRF_e_4, 1455 },
+    { "CLFDTR", RRF_e_4, 1504 },
+    { "CLFEBR", RRF_e_4, 1455 },
+    { "CLFHSI", SIL_2_u, 636 },
+    { "CLFI", RIL_a_2, 636 },
+    { "CLFIT", RIE_a_3, 640 },
+    { "CLFXBR", RRF_e_4, 1455 },
+    { "CLFXTR", RRF_e_4, 1504 },
+    { "CLG", RXY_a_2, 636 },
+    { "CLGDBR", RRF_e_4, 1455 },
+    { "CLGDTR", RRF_e_4, 1504 },
+    { "CLGEBR", RRF_e_4, 1455 },
+    { "CLGF", RXY_a_2, 636 },
+    { "CLGFI", RIL_a_2, 636 },
+    { "CLGFR", RRE_2, 636 },
+    { "CLGFRL", RIL_b_2, 637 },
+    { "CLGHRL", RIL_b_2, 637 },
+    { "CLGHSI", SIL_2_u, 636 },
+    { "CLGIB", RIS_4, 638 },
+    { "CLGIJ", RIE_c_4, 638 },
+    { "CLGIT", RIE_a_3, 640 },
+    { "CLGR", RRE_2, 636 },
+    { "CLGRB", RRS_4, 638 },
+    { "CLGRJ", RIE_b_4, 638 },
+    { "CLGRL", RIL_b_2, 637 },
+    { "CLGRT", RRF_c_3, 639 },
+    { "CLGT", RSY_b_3_ux, 639 },
+    { "CLGXBR", RRF_e_4, 1455 },
+    { "CLGXTR", RRF_e_4, 1504 },
+    { "CLHF", RXY_a_2, 641 },
+    { "CLHHR", RRE_2, 641 },
+    { "CLHHSI", SIL_2_u, 636 },
+    { "CLHLR", RRE_2, 641 },
+    { "CLHRL", RIL_b_2, 637 },
+    { "CLI", SI_2_u, 636 },
+    { "CLIB", RIS_4, 638 },
+    { "CLIH", RIL_a_2, 642 },
+    { "CLIJ", RIE_c_4, 638 },
+    { "CLIY", SIY_2_uu, 636 },
+    { "CLM", RS_b_3, 641 },
+    { "CLMH", RSY_b_3_us, 641 },
+    { "CLMY", RSY_b_3_us, 641 },
+    { "CLR", RR_2, 636 },
+    { "CLRB", RRS_4, 638 },
+    { "CLRCH", S_1_u, 367 },
+    { "CLRIO", S_1_u, 368 },
+    { "CLRJ", RIE_b_4, 638 },
+    { "CLRL", RIL_b_2, 637 },
+    { "CLRT", RRF_c_3, 639 },
+    { "CLST", RRE_2, 650 },
+    { "CLT", RSY_b_3_ux, 639 },
+    { "CLY", RXY_a_2, 636 },
+    { "CMPSC", RRE_2, 654 },
+    { "CONCS", S_1_u, 263 },
+    { "CP", SS_b_2, 921 },
+    { "CPDT", RSL_b_3, 1505 },
+    { "CPSDR", RRF_b_3, 958 },
+    { "CPXT", RSL_b_3, 1505 },
+    { "CPYA", RRE_2, 736 },
+    { "CR", RR_2, 618 },
+    { "CRB", RRS_4, 619 },
+    { "CRDTE", RRF_b_4_opt, 999 },
+    { "CRJ", RIE_b_4, 619 },
+    { "CRL", RIL_b_2, 619 },
+    { "CRT", RRF_c_3, 633 },
+    { "CS", RS_a_3, 628 },
+    { "CSCH", S_0, 1217 },
+    { "CSDTR", RRF_d_3, 1507 },
+    { "CSG", RSY_a_3, 628 },
+    { "CSP", RRE_2, 1003 },
+    { "CSPG", RRE_2, 1003 },
+    { "CSST", SSF_3_dr, 630 },
+    { "CSXTR", RRF_d_3, 1507 },
+    { "CSY", RSY_a_3, 628 },
+    { "CU12", RRF_c_3_opt, 728 },
+    { "CU14", RRF_c_3_opt, 732 },
+    { "CU21", RRF_c_3_opt, 718 },
+    { "CU24", RRF_c_3_opt, 715 },
+    { "CU41", RRE_2, 725 },
+    { "CU42", RRE_2, 722 },
+    { "CUDTR", RRE_2, 1507 },
+    { "CUSE", RRE_2, 651 },
+    { "CUTFU", RRF_c_3_opt, 728 },
+    { "CUUTF", RRF_c_3_opt, 718 },
+    { "CUXTR", RRE_2, 1507 },
+    { "CVB", RX_a_2_ux, 714 },
+    { "CVBG", RXY_a_2, 714 },
+    { "CVBY", RXY_a_2, 714 },
+    { "CVD", RX_a_2_ux, 715 },
+    { "CVDG", RXY_a_2, 715 },
+    { "CVDY", RXY_a_2, 715 },
+    { "CXBR", RRE_2, 1447 },
+    { "CXFBR", RRE_2, 1449 },
+    { "CXFBRA", RRF_e_4, 1449 },
+    { "CXFR", RRE_2, 1415 },
+    { "CXFTR", RRF_e_4, 1496 },
+    { "CXGBR", RRE_2, 1449 },
+    { "CXGBRA", RRF_e_4, 1449 },
+    { "CXGR", RRE_2, 1415 },
+    { "CXGTR", RRE_2, 1496 },
+    { "CXGTRA", RRF_e_4, 1496 },
+    { "CXLFBR", RRF_e_4, 1451 },
+    { "CXLFTR", RRF_e_4, 1497 },
+    { "CXLGBR", RRF_e_4, 1451 },
+    { "CXLGTR", RRF_e_4, 1497 },
+    { "CXPT", RSL_b_3, 1498 },
+    { "CXR", RRE_2, 1414 },
+    { "CXSTR", RRE_2, 1500 },
+    { "CXTR", RRE_2, 1494 },
+    { "CXUTR", RRE_2, 1500 },
+    { "CXZT", RSL_b_3, 1501 },
+    { "CY", RXY_a_2, 618 },
+    { "CZDT", RSL_b_3, 1508 },
+    { "CZXT", RSL_b_3, 1508 },
+    { "D", RX_a_2_ux, 736 },
+    { "DD", RX_a_2_ux, 1416 },
+    { "DDB", RXE_2, 1457 },
+    { "DDBR", RRE_2, 1457 },
+    { "DDR", RR_2, 1416 },
+    { "DDTR", RRF_a_3, 1509 },
+    { "DDTRA", RRF_a_4, 1509 },
+    { "DE", RX_a_2_ux, 1416 },
+    { "DEB", RXE_2, 1457 },
+    { "DEBR", RRE_2, 1457 },
+    { "DER", RR_2, 1416 },
+    { "DFLTCC", RRF_a_3, 1714 },
+    { "DIDBR", RRF_b_4, 1458 },
+    { "DIEBR", RRF_b_4, 1458 },
+    { "DISCS", S_1_u, 265 },
+    { "DL", RXY_a_2, 737 },
+    { "DLG", RXY_a_2, 737 },
+    { "DLGR", RRE_2, 737 },
+    { "DLR", RRE_2, 737 },
+    { "DP", SS_b_2, 921 },
+    { "DR", RR_2, 736 },
+    { "DSG", RXY_a_2, 738 },
+    { "DSGF", RXY_a_2, 738 },
+    { "DSGFR", RRE_2, 738 },
+    { "DSGR", RRE_2, 738 },
+    { "DXBR", RRE_2, 1457 },
+    { "DXR", RRE_2, 1416 },
+    { "DXTR", RRF_a_3, 1509 },
+    { "DXTRA", RRF_a_4, 1509 },
+    { "EAR", RRE_2, 741 },
+    { "ECAG", RSY_a_3, 741 },
+    { "ECCTR", RRE_2, 39 },
+    { "ECPGA", RRE_2, 39 },
+    { "ECTG", SSF_3_dr, 744 },
+    { "ED", SS_a_2_u, 922 },
+    { "EDMK", SS_a_2_u, 925 },
+    { "EEDTR", RRE_2, 1511 },
+    { "EEXTR", RRE_2, 1511 },
+    { "EFPC", RRE_1, 958 },
+    { "EPAIR", RRE_1, 1006 },
+    { "EPAR", RRE_1, 1006 },
+    { "EPCTR", RRE_2, 39 },
+    { "EPSW", RRE_2, 745 },
+    { "EREG", RRE_2, 1007 },
+    { "EREGG", RRE_2, 1007 },
+    { "ESAIR", RRE_1, 1007 },
+    { "ESAR", RRE_1, 1006 },
+    { "ESDTR", RRE_2, 1511 },
+    { "ESEA", RRE_1, 1006 },
+    { "ESTA", RRE_2, 1008 },
+    { "ESXTR", RRE_2, 1511 },
+    { "ETND", RRE_1, 745 },
+    { "EX", RX_a_2_ux, 740 },
+    { "EXRL", RIL_b_2, 740 },
+    { "FIDBR", RRF_e_3, 1462 },
+    { "FIDBRA", RRF_e_4, 1462 },
+    { "FIDR", RRE_2, 1419 },
+    { "FIDTR", RRF_e_4, 1514 },
+    { "FIEBR", RRF_e_3, 1462 },
+    { "FIEBRA", RRF_e_4, 1462 },
+    { "FIER", RRE_2, 1419 },
+    { "FIXBR", RRF_e_3, 1462 },
+    { "FIXBRA", RRF_e_4, 1462 },
+    { "FIXR", RRE_2, 1419 },
+    { "FIXTR", RRF_e_4, 1514 },
+    { "FLOGR", RRE_2, 746 },
+    { "HDR", RR_2, 1417 },
+    { "HDV", S_1_u, 129 },
+    { "HER", RR_2, 1417 },
+    { "HIO", S_1_u, 129 },
+    { "HSCH", S_0, 1218 },
+    { "IAC", RRE_1, 1011 },
+    { "IC", RX_a_2_ux, 746 },
+    { "ICM", RS_b_3, 746 },
+    { "ICMH", RSY_b_3_us, 746 },
+    { "ICMY", RSY_b_3_us, 746 },
+    { "ICY", RXY_a_2, 746 },
+    { "IDTE", RRF_b_4_opt, 1014 },
+    { "IEDTR", RRF_b_3, 1512 },
+    { "IEXTR", RRF_b_3, 1512 },
+    { "IIHF", RIL_a_2, 747 },
+    { "IIHH", RI_a_2_u, 747 },
+    { "IIHL", RI_a_2_u, 747 },
+    { "IILF", RIL_a_2, 747 },
+    { "IILH", RI_a_2_u, 747 },
+    { "IILL", RI_a_2_u, 747 },
+    { "IPK", S_0, 1012 },
+    { "IPM", RRE_1, 748 },
+    { "IPTE", RRF_a_4_opt, 1019 },
+    { "IRBM", RRE_2, 1012 },
+    { "ISK", RR_2, 268 },
+    { "ISKE", RRE_2, 1012 },
+    { "IVSK", RRE_2, 1013 },
+    { "KDB", RXE_2, 1448 },
+    { "KDBR", RRE_2, 1448 },
+    { "KDSA", RRE_2, 1700 },
+    { "KDTR", RRE_2, 1495 },
+    { "KEB", RXE_2, 1448 },
+    { "KEBR", RRE_2, 1448 },
+    { "KIMD", RRE_2, 672 },
+    { "KLMD", RRE_2, 685 },
+    { "KM", RRE_2, 537 },
+    { "KMA", RRF_b_3, 562 },
+    { "KMAC", RRE_2, 703 },
+    { "KMC", RRE_2, 537 },
+    { "KMCTR", RRF_b_3, 591 },
+    { "KMF", RRE_2, 576 },
+    { "KMO", RRE_2, 604 },
+    { "KXBR", RRE_2, 1448 },
+    { "KXTR", RRE_2, 1495 },
+    { "L", RX_a_2_ux, 748 },
+    { "LA", RX_a_2_ux, 750 },
+    { "LAA", RSY_a_3, 752 },
+    { "LAAG", RSY_a_3, 752 },
+    { "LAAL", RSY_a_3, 752 },
+    { "LAALG", RSY_a_3, 752 },
+    { "LAE", RX_a_2_ux, 750 },
+    { "LAEY", RXY_a_2, 750 },
+    { "LAM", RS_a_3, 749 },
+    { "LAMY", RSY_a_3, 749 },
+    { "LAN", RSY_a_3, 753 },
+    { "LANG", RSY_a_3, 753 },
+    { "LAO", RSY_a_3, 754 },
+    { "LAOG", RSY_a_3, 754 },
+    { "LARL", RIL_b_2, 751 },
+    { "LASP", SSE_2, 1023 },
+    { "LAT", RXY_a_2, 755 },
+    { "LAX", RSY_a_3, 753 },
+    { "LAXG", RSY_a_3, 753 },
+    { "LAY", RXY_a_2, 750 },
+    { "LB", RXY_a_2, 756 },
+    { "LBH", RXY_a_2, 756 },
+    { "LBR", RRE_2, 756 },
+    { "LCBB", RXE_3_xm, 757 },
+    { "LCCTL", S_1_u, 40 },
+    { "LCDBR", RRE_2, 1461 },
+    { "LCDFR", RRE_2, 959 },
+    { "LCDR", RR_2, 1418 },
+    { "LCEBR", RRE_2, 1461 },
+    { "LCER", RR_2, 1418 },
+    { "LCGFR", RRE_2, 757 },
+    { "LCGR", RRE_2, 757 },
+    { "LCR", RR_2, 756 },
+    { "LCTL", RS_a_3, 1032 },
+    { "LCTLG", RSY_a_3, 1032 },
+    { "LCXBR", RRE_2, 1461 },
+    { "LCXR", RRE_2, 1418 },
+    { "LD", RX_a_2_ux, 959 },
+    { "LDE", RXE_2, 1419 },
+    { "LDEB", RRE_2, 1464 },
+    { "LDEBR", RRE_2, 1463 },
+    { "LDER", RRE_2, 1419 },
+    { "LDETR", RRF_d_3, 1517 },
+    { "LDGR", RRE_2, 962 },
+    { "LDR", RR_2, 959 },
+    { "LDXBR", RRE_2, 1465 },
+    { "LDXBRA", RRF_e_4, 1465 },
+    { "LDXR", RR_2, 1421 },
+    { "LDXTR", RRF_e_4, 1518 },
+    { "LDY", RXY_a_2, 959 },
+    { "LE", RX_a_2_ux, 959 },
+    { "LEDBR", RRE_2, 1465 },
+    { "LEDBRA", RRF_e_4, 1465 },
+    { "LEDR", RR_2, 1421 },
+    { "LEDTR", RRF_e_4, 1518 },
+    { "LER", RR_2, 959 },
+    { "LEXBR", RRE_2, 1465 },
+    { "LEXBRA", RRF_e_4, 1465 },
+    { "LEXR", RRE_2, 1421 },
+    { "LEY", RXY_a_2, 959 },
+    { "LFAS", S_1_u, 960 },
+    { "LFH", RXY_a_2, 762 },
+    { "LFHAT", RXY_a_2, 762 },
+    { "LFPC", S_1_u, 959 },
+    { "LG", RXY_a_2, 748 },
+    { "LGAT", RXY_a_2, 755 },
+    { "LGB", RXY_a_2, 756 },
+    { "LGBR", RRE_2, 756 },
+    { "LGDR", RRE_2, 962 },
+    { "LGF", RXY_a_2, 748 },
+    { "LGFI", RIL_a_2, 748 },
+    { "LGFR", RRE_2, 748 },
+    { "LGFRL", RIL_b_2, 748 },
+    { "LGG", RXY_a_2, 758 },
+    { "LGH", RXY_a_2, 760 },
+    { "LGHI", RI_a_2_s, 760 },
+    { "LGHR", RRE_2, 760 },
+    { "LGHRL", RIL_b_2, 760 },
+    { "LGR", RRE_2, 748 },
+    { "LGRL", RIL_b_2, 748 },
+    { "LGSC", RXY_a_2, 759 },
+    { "LH", RX_a_2_ux, 760 },
+    { "LHH", RXY_a_2, 761 },
+    { "LHI", RI_a_2_s, 760 },
+    { "LHR", RRE_2, 760 },
+    { "LHRL", RIL_b_2, 760 },
+    { "LHY", RXY_a_2, 760 },
+    { "LLC", RXY_a_2, 763 },
+    { "LLCH", RXY_a_2, 764 },
+    { "LLCR", RRE_2, 763 },
+    { "LLGC", RXY_a_2, 763 },
+    { "LLGCR", RRE_2, 763 },
+    { "LLGF", RXY_a_2, 762 },
+    { "LLGFAT", RXY_a_2, 763 },
+    { "LLGFR", RRE_2, 762 },
+    { "LLGFRL", RIL_b_2, 762 },
+    { "LLGFSG", RXY_a_2, 758 },
+    { "LLGH", RXY_a_2, 764 },
+    { "LLGHR", RRE_2, 764 },
+    { "LLGHRL", RIL_b_2, 764 },
+    { "LLGT", RXY_a_2, 766 },
+    { "LLGTAT", RXY_a_2, 766 },
+    { "LLGTR", RRE_2, 765 },
+    { "LLH", RXY_a_2, 764 },
+    { "LLHH", RXY_a_2, 765 },
+    { "LLHR", RRE_2, 764 },
+    { "LLHRL", RIL_b_2, 764 },
+    { "LLIHF", RIL_a_2, 765 },
+    { "LLIHH", RI_a_2_u, 765 },
+    { "LLIHL", RI_a_2_u, 765 },
+    { "LLILF", RIL_a_2, 765 },
+    { "LLILH", RI_a_2_u, 765 },
+    { "LLILL", RI_a_2_u, 765 },
+    { "LLZRGF", RXY_a_2, 763 },
+    { "LM", RS_a_3, 766 },
+    { "LMD", SS_e_4_rb, 767 },
+    { "LMG", RSY_a_3, 766 },
+    { "LMH", RSY_a_3, 767 },
+    { "LMY", RSY_a_3, 766 },
+    { "LNDBR", RRE_2, 1464 },
+    { "LNDFR", RRE_2, 962 },
+    { "LNDR", RR_2, 1420 },
+    { "LNEBR", RRE_2, 1464 },
+    { "LNER", RR_2, 1420 },
+    { "LNGFR", RRE_2, 768 },
+    { "LNGR", RRE_2, 767 },
+    { "LNR", RR_2, 767 },
+    { "LNXBR", RRE_2, 1464 },
+    { "LNXR", RRE_2, 1420 },
+    { "LOC", RSY_b_3_su, 768 },
+    { "LOCFH", RSY_b_3_su, 768 },
+    { "LOCFHR", RRF_c_3, 768 },
+    { "LOCG", RSY_b_3_su, 768 },
+    { "LOCGHI", RIE_g_3, 761 },
+    { "LOCGR", RRF_c_3, 768 },
+    { "LOCHHI", RIE_g_3, 761 },
+    { "LOCHI", RIE_g_3, 761 },
+    { "LOCR", RRF_c_3, 768 },
+    { "LPCTL", S_1_u, 41 },
+    { "LPD", SSF_3_rd, 769 },
+    { "LPDBR", RRE_2, 1465 },
+    { "LPDFR", RRE_2, 962 },
+    { "LPDG", SSF_3_rd, 769 },
+    { "LPDR", RR_2, 1420 },
+    { "LPEBR", RRE_2, 1465 },
+    { "LPER", RR_2, 1420 },
+    { "LPGFR", RRE_2, 771 },
+    { "LPGR", RRE_2, 771 },
+    { "LPP", S_1_u, 11 },
+    { "LPQ", RXY_a_2, 770 },
+    { "LPR", RR_2, 771 },
+    { "LPSW", SI_1, 1036 },
+    { "LPSWE", S_1_u, 1037 },
+    { "LPTEA", RRF_b_4, 1032 },
+    { "LPXBR", RRE_2, 1465 },
+    { "LPXR", RRE_2, 1420 },
+    { "LR", RR_2, 748 },
+    { "LRA", RX_a_2_ux, 1038 },
+    { "LRAG", RXY_a_2, 1038 },
+    { "LRAY", RXY_a_2, 1038 },
+    { "LRDR", RR_2, 1421 },
+    { "LRER", RR_2, 1421 },
+    { "LRL", RIL_b_2, 748 },
+    { "LRV", RXY_a_2, 771 },
+    { "LRVG", RXY_a_2, 771 },
+    { "LRVGR", RRE_2, 771 },
+    { "LRVH", RXY_a_2, 771 },
+    { "LRVR", RRE_2, 771 },
+    { "LSCTL", S_1_u, 42 },
+    { "LT", RXY_a_2, 755 },
+    { "LTDBR", RRE_2, 1461 },
+    { "LTDR", RR_2, 1417 },
+    { "LTDTR", RRE_2, 1513 },
+    { "LTEBR", RRE_2, 1461 },
+    { "LTER", RR_2, 1417 },
+    { "LTG", RXY_a_2, 755 },
+    { "LTGF", RXY_a_2, 755 },
+    { "LTGFR", RRE_2, 754 },
+    { "LTGR", RRE_2, 754 },
+    { "LTR", RR_2, 754 },
+    { "LTXBR", RRE_2, 1461 },
+    { "LTXR", RRE_2, 1418 },
+    { "LTXTR", RRE_2, 1513 },
+    { "LURA", RRE_2, 1042 },
+    { "LURAG", RRE_2, 1042 },
+    { "LXD", RXE_2, 1419 },
+    { "LXDB", RRE_2, 1464 },
+    { "LXDBR", RRE_2, 1463 },
+    { "LXDR", RRE_2, 1419 },
+    { "LXDTR", RRF_d_3, 1517 },
+    { "LXE", RXE_2, 1419 },
+    { "LXEB", RRE_2, 1464 },
+    { "LXEBR", RRE_2, 1463 },
+    { "LXER", RRE_2, 1419 },
+    { "LXR", RRE_2, 959 },
+    { "LY", RXY_a_2, 748 },
+    { "LZDR", RRE_1, 963 },
+    { "LZER", RRE_1, 963 },
+    { "LZRF", RXY_a_2, 755 },
+    { "LZRG", RXY_a_2, 755 },
+    { "LZXR", RRE_1, 963 },
+    { "M", RX_a_2_ux, 788 },
+    { "MAD", RXF_3_x, 1423 },
+    { "MADB", RXF_3_x, 1468 },
+    { "MADBR", RRD_3, 1468 },
+    { "MADR", RRD_3, 1423 },
+    { "MAE", RXF_3_x, 1423 },
+    { "MAEB", RXF_3_x, 1468 },
+    { "MAEBR", RRD_3, 1468 },
+    { "MAER", RRD_3, 1423 },
+    { "MAY", RXF_3_x, 1424 },
+    { "MAYH", RXF_3_x, 1424 },
+    { "MAYHR", RRD_3, 1424 },
+    { "MAYL", RXF_3_x, 1424 },
+    { "MAYLR", RRD_3, 1424 },
+    { "MAYR", RRD_3, 1424 },
+    { "MC", SI_2_s, 772 },
+    { "MD", RX_a_2_ux, 1422 },
+    { "MDB", RXE_2, 1467 },
+    { "MDBR", RRE_2, 1467 },
+    { "MDE", RX_a_2_ux, 1422 },
+    { "MDEB", RXE_2, 1467 },
+    { "MDEBR", RRE_2, 1467 },
+    { "MDER", RR_2, 1421 },
+    { "MDR", RR_2, 1421 },
+    { "MDTR", RRF_a_3, 1519 },
+    { "MDTRA", RRF_a_4, 1520 },
+    { "ME", RX_a_2_ux, 1422 },
+    { "MEE", RXE_2, 1422 },
+    { "MEEB", RXE_2, 1467 },
+    { "MEEBR", RRE_2, 1467 },
+    { "MEER", RRE_2, 1421 },
+    { "MER", RR_2, 1421 },
+    { "MFY", RXY_a_2, 788 },
+    { "MG", RXY_a_2, 788 },
+    { "MGH", RXY_a_2, 789 },
+    { "MGHI", RI_a_2_s, 789 },
+    { "MGRK", RRF_a_3, 788 },
+    { "MH", RX_a_2_ux, 789 },
+    { "MHI", RI_a_2_s, 789 },
+    { "MHY", RXY_a_2, 789 },
+    { "ML", RXY_a_2, 790 },
+    { "MLG", RXY_a_2, 790 },
+    { "MLGR", RRE_2, 790 },
+    { "MLR", RRE_2, 790 },
+    { "MP", SS_b_2, 926 },
+    { "MR", RR_2, 788 },
+    { "MS", RX_a_2_ux, 791 },
+    { "MSC", RXY_a_2, 791 },
+    { "MSCH", S_1_u, 1219 },
+    { "MSD", RXF_3_x, 1423 },
+    { "MSDB", RXF_3_x, 1468 },
+    { "MSDBR", RRD_3, 1468 },
+    { "MSDR", RRD_3, 1423 },
+    { "MSE", RXF_3_x, 1423 },
+    { "MSEB", RXF_3_x, 1468 },
+    { "MSEBR", RRD_3, 1468 },
+    { "MSER", RRD_3, 1423 },
+    { "MSFI", RIL_a_2, 791 },
+    { "MSG", RXY_a_2, 791 },
+    { "MSGC", RXY_a_2, 791 },
+    { "MSGF", RXY_a_2, 791 },
+    { "MSGFI", RIL_a_2, 791 },
+    { "MSGFR", RRE_2, 791 },
+    { "MSGR", RRE_2, 791 },
+    { "MSGRKC", RRF_a_3, 791 },
+    { "MSR", RRE_2, 791 },
+    { "MSRKC", RRF_a_3, 791 },
+    { "MSTA", RRE_1, 1043 },
+    { "MSY", RXY_a_2, 791 },
+    { "MVC", SS_a_2_u, 773 },
+    { "MVCDK", SSE_2, 1048 },
+    { "MVCIN", SS_a_2_u, 774 },
+    { "MVCK", SS_d_3, 1049 },
+    { "MVCL", RR_2, 774 },
+    { "MVCLE", RS_a_3, 778 },
+    { "MVCLU", RSY_a_3, 781 },
+    { "MVCOS", SSF_3_dr, 1050 },
+    { "MVCP", SS_d_3, 1046 },
+    { "MVCRL", SSE_2, 788 },
+    { "MVCS", SS_d_3, 1046 },
+    { "MVCSK", SSE_2, 1053 },
+    { "MVGHI", SIL_2_s, 773 },
+    { "MVHHI", SIL_2_s, 773 },
+    { "MVHI", SIL_2_s, 773 },
+    { "MVI", SI_2_u, 773 },
+    { "MVIY", SIY_2_uu, 773 },
+    { "MVN", SS_a_2_u, 785 },
+    { "MVO", SS_b_2, 786 },
+    { "MVPG", RRE_2, 1044 },
+    { "MVST", RRE_2, 785 },
+    { "MVZ", SS_a_2_u, 787 },
+    { "MXBR", RRE_2, 1467 },
+    { "MXD", RX_a_2_ux, 1422 },
+    { "MXDB", RXE_2, 1467 },
+    { "MXDBR", RRE_2, 1467 },
+    { "MXDR", RR_2, 1421 },
+    { "MXR", RR_2, 1421 },
+    { "MXTR", RRF_a_3, 1519 },
+    { "MXTRA", RRF_a_4, 1520 },
+    { "MY", RXF_3_x, 1426 },
+    { "MYH", RXF_3_x, 1426 },
+    { "MYHR", RRD_3, 1426 },
+    { "MYL", RXF_3_x, 1426 },
+    { "MYLR", RRD_3, 1426 },
+    { "MYR", RRD_3, 1426 },
+    { "N", RX_a_2_ux, 517 },
+    { "NC", SS_a_2_u, 518 },
+    { "NCGRK", RRF_a_3, 522 },
+    { "NCRK", RRF_a_3, 522 },
+    { "NG", RXY_a_2, 517 },
+    { "NGR", RRE_2, 517 },
+    { "NGRK", RRF_a_3, 517 },
+    { "NI", SI_2_u, 517 },
+    { "NIAI", IE_2, 792 },
+    { "NIHF", RIL_a_2, 518 },
+    { "NIHH", RI_a_2_u, 518 },
+    { "NIHL", RI_a_2_u, 518 },
+    { "NILF", RIL_a_2, 519 },
+    { "NILH", RI_a_2_u, 519 },
+    { "NILL", RI_a_2_u, 519 },
+    { "NIY", SIY_2_su, 518 },
+    { "NNGRK", RRF_a_3, 796 },
+    { "NNRK", RRF_a_3, 796 },
+    { "NOGRK", RRF_a_3, 799 },
+    { "NORK", RRF_a_3, 799 },
+    { "NR", RR_2, 517 },
+    { "NRK", RRF_a_3, 517 },
+    { "NTSTG", RXY_a_2, 794 },
+    { "NXGRK", RRF_a_3, 799 },
+    { "NXRK", RRF_a_3, 799 },
+    { "NY", RXY_a_2, 517 },
+    { "O", RX_a_2_ux, 794 },
+    { "OC", SS_a_2_u, 795 },
+    { "OCGRK", RRF_a_3, 802 },
+    { "OCRK", RRF_a_3, 802 },
+    { "OG", RXY_a_2, 795 },
+    { "OGR", RRE_2, 794 },
+    { "OGRK", RRF_a_3, 794 },
+    { "OI", SI_2_u, 795 },
+    { "OIHF", RIL_a_2, 796 },
+    { "OIHH", RI_a_2_u, 796 },
+    { "OIHL", RI_a_2_u, 796 },
+    { "OILF", RIL_a_2, 796 },
+    { "OILH", RI_a_2_u, 796 },
+    { "OILL", RI_a_2_u, 796 },
+    { "OIY", SIY_2_su, 795 },
+    { "OR", RR_2, 794 },
+    { "ORK", RRF_a_3, 794 },
+    { "OY", RXY_a_2, 794 },
+    { "PACK", SS_b_2, 796 },
+    { "PALB", RRE_0, 1098 },
+    { "PC", S_1_u, 1072 },
+    { "PCC", RRE_0, 799 },
+    { "PCKMO", RRE_0, 1056 },
+    { "PFD", RXY_b_2, 843 },
+    { "PFDRL", RIL_c_2, 843 },
+    { "PFMF", RRE_2, 1059 },
+    { "PFPO", E_0, 963 },
+    { "PGIN", RRE_2, 1054 },
+    { "PGOUT", RRE_2, 1055 },
+    { "PKA", SS_f_2, 797 },
+    { "PKU", SS_f_2, 798 },
+    { "PLO", SS_e_4_br, 815 },
+    { "POPCNT", RRF_c_3_opt, 853 },
+    { "PPA", RRF_c_3, 829 },
+    { "PPNO", RRE_2, 830 },
+    { "PR", E_0, 1085 },
+    { "PRNO", RRE_2, 830 },
+    { "PT", RRE_2, 1089 },
+    { "PTF", RRE_1, 1071 },
+    { "PTFF", E_0, 1063 },
+    { "PTI", RRE_2, 1089 },
+    { "PTLB", S_0, 1098 },
+    { "QADTR", RRF_b_4, 1521 },
+    { "QAXTR", RRF_b_4, 1521 },
+    { "QCTRI", S_1_u, 43 },
+    { "QSI", S_1_u, 45 },
+    { "RCHP", S_0, 1221 },
+    { "RISBG", RIE_f_5, 847 },
+    { "RISBGN", RIE_f_5, 847 },
+    { "RISBGNZ", RIE_f_5, 860 },
+    { "RISBGZ", RIE_f_5, 858 },
+    { "RISBHG", RIE_f_5, 848 },
+    { "RISBHGZ", RIE_f_5, 860 },
+    { "RISBLG", RIE_f_5, 849 },
+    { "RISBLGZ", RIE_f_5, 860 },
+    { "RLL", RSY_a_3, 845 },
+    { "RLLG", RSY_a_3, 845 },
+    { "RNSBG", RIE_f_5, 845 },
+    { "RNSBGT", RIE_f_5, 845 },
+    { "ROSBG", RIE_f_5, 846 },
+    { "ROSBGT", RIE_f_5, 858 },
+    { "RP", S_1_u, 1099 },
+    { "RRB", S_1_u, 295 },
+    { "RRBE", RRE_2, 1098 },
+    { "RRBM", RRE_2, 1099 },
+    { "RRDTR", RRF_b_4, 1524 },
+    { "RRXTR", RRF_b_4, 1524 },
+    { "RSCH", S_0, 1222 },
+    { "RXSBG", RIE_f_5, 846 },
+    { "RXSBGT", RIE_f_5, 846 },
+    { "S", RX_a_2_ux, 872 },
+    { "SAC", S_1_u, 1102 },
+    { "SACF", S_1_u, 1102 },
+    { "SAL", S_0, 1224 },
+    { "SAM24", E_0, 854 },
+    { "SAM31", E_0, 854 },
+    { "SAM64", E_0, 854 },
+    { "SAR", RRE_2, 854 },
+    { "SCCTR", RRE_2, 46 },
+    { "SCHM", S_0, 1225 },
+    { "SCK", S_1_u, 1103 },
+    { "SCKC", S_1_u, 1104 },
+    { "SCKPF", E_0, 1105 },
+    { "SD", RX_a_2_ux, 1428 },
+    { "SDB", RXE_2, 1470 },
+    { "SDBR", RRE_2, 1470 },
+    { "SDR", RR_2, 1428 },
+    { "SDTR", RRF_a_3, 1527 },
+    { "SDTRA", RRF_a_4, 1527 },
+    { "SE", RX_a_2_ux, 1428 },
+    { "SEB", RXE_2, 1470 },
+    { "SEBR", RRE_2, 1470 },
+    { "SELFHR", RRF_a_4, 864 },
+    { "SELGR", RRF_a_4, 864 },
+    { "SELR", RRF_a_4, 864 },
+    { "SER", RR_2, 1428 },
+    { "SFASR", RRE_1, 976 },
+    { "SFPC", RRE_1, 975 },
+    { "SG", RXY_a_2, 872 },
+    { "SGF", RXY_a_2, 872 },
+    { "SGFR", RRE_2, 871 },
+    { "SGH", RXY_a_2, 872 },
+    { "SGR", RRE_2, 871 },
+    { "SGRK", RRF_a_3, 872 },
+    { "SH", RX_a_2_ux, 872 },
+    { "SHHHR", RRF_a_3, 873 },
+    { "SHHLR", RRF_a_3, 873 },
+    { "SHY", RXY_a_2, 872 },
+    { "SIE", S_1_u, 7 },
+    { "SIGP", RS_a_3, 1115 },
+    { "SIO", S_1_u, 129 },
+    { "SIOF", S_1_u, 129 },
+    { "SL", RX_a_2_ux, 874 },
+    { "SLA", RS_a_2, 856 },
+    { "SLAG", RSY_a_3, 856 },
+    { "SLAK", RSY_a_3, 856 },
+    { "SLB", RXY_a_2, 875 },
+    { "SLBG", RXY_a_2, 875 },
+    { "SLBGR", RRE_2, 875 },
+    { "SLBR", RRE_2, 875 },
+    { "SLDA", RS_a_2, 855 },
+    { "SLDL", RS_a_2, 856 },
+    { "SLDT", RXF_3_x, 1526 },
+    { "SLFI", RIL_a_2, 874 },
+    { "SLG", RXY_a_2, 874 },
+    { "SLGF", RXY_a_2, 874 },
+    { "SLGFI", RIL_a_2, 874 },
+    { "SLGFR", RRE_2, 873 },
+    { "SLGR", RRE_2, 873 },
+    { "SLGRK", RRF_a_3, 873 },
+    { "SLHHHR", RRF_a_3, 875 },
+    { "SLHHLR", RRF_a_3, 875 },
+    { "SLL", RS_a_2, 857 },
+    { "SLLG", RSY_a_3, 857 },
+    { "SLLK", RSY_a_3, 857 },
+    { "SLR", RR_2, 873 },
+    { "SLRK", RRF_a_3, 873 },
+    { "SLXT", RXF_3_x, 1526 },
+    { "SLY", RXY_a_2, 874 },
+    { "SORTL", RRE_2, 19 },
+    { "SP", SS_b_2, 927 },
+    { "SPCTR", RRE_2, 47 },
+    { "SPKA", S_1_u, 1106 },
+    { "SPM", RR_1, 855 },
+    { "SPT", S_1_u, 1105 },
+    { "SPX", S_1_u, 1105 },
+    { "SQD", RXE_2, 1427 },
+    { "SQDB", RXE_2, 1470 },
+    { "SQDBR", RRE_2, 1470 },
+    { "SQDR", RRE_2, 1427 },
+    { "SQE", RXE_2, 1427 },
+    { "SQEB", RXE_2, 1470 },
+    { "SQEBR", RRE_2, 1470 },
+    { "SQER", RRE_2, 1427 },
+    { "SQXBR", RRE_2, 1470 },
+    { "SQXR", RRE_2, 1427 },
+    { "SR", RR_2, 871 },
+    { "SRA", RS_a_2, 859 },
+    { "SRAG", RSY_a_3, 859 },
+    { "SRAK", RSY_a_3, 859 },
+    { "SRDA", RS_a_2, 858 },
+    { "SRDL", RS_a_2, 858 },
+    { "SRDT", RXF_3_x, 1526 },
+    { "SRK", RRF_a_3, 871 },
+    { "SRL", RS_a_2, 860 },
+    { "SRLG", RSY_a_3, 860 },
+    { "SRLK", RSY_a_3, 860 },
+    { "SRNM", S_1_u, 975 },
+    { "SRNMB", S_1_u, 975 },
+    { "SRNMT", S_1_u, 975 },
+    { "SRP", SS_c_3, 926 },
+    { "SRST", RRE_2, 850 },
+    { "SRSTU", RRE_2, 852 },
+    { "SRXT", RXF_3_x, 1526 },
+    { "SSAIR", RRE_1, 1107 },
+    { "SSAR", RRE_1, 1107 },
+    { "SSCH", S_1_u, 1227 },
+    { "SSK", RR_2, 304 },
+    { "SSKE", RRF_c_3_opt, 1112 },
+    { "SSM", SI_1, 1115 },
+    { "ST", RX_a_2_ux, 860 },
+    { "STAM", RS_a_3, 861 },
+    { "STAMY", RSY_a_3, 861 },
+    { "STAP", S_1_u, 1118 },
+    { "STC", RX_a_2_ux, 862 },
+    { "STCH", RXY_a_2, 862 },
+    { "STCK", S_1_u, 863 },
+    { "STCKC", S_1_u, 1117 },
+    { "STCKE", S_1_u, 864 },
+    { "STCKF", S_1_u, 863 },
+    { "STCM", RS_b_3, 862 },
+    { "STCMH", RSY_b_3_us, 862 },
+    { "STCMY", RSY_b_3_us, 862 },
+    { "STCPS", S_1_u, 1228 },
+    { "STCRW", S_1_u, 1229 },
+    { "STCTG", RSY_a_3, 1117 },
+    { "STCTL", RS_a_3, 1117 },
+    { "STCY", RXY_a_2, 862 },
+    { "STD", RX_a_2_ux, 976 },
+    { "STDY", RXY_a_2, 977 },
+    { "STE", RX_a_2_ux, 976 },
+    { "STEY", RXY_a_2, 977 },
+    { "STFH", RXY_a_2, 868 },
+    { "STFL", S_1_u, 1120 },
+    { "STFLE", S_1_s, 866 },
+    { "STFPC", S_1_u, 977 },
+    { "STG", RXY_a_2, 861 },
+    { "STGRL", RIL_b_2, 861 },
+    { "STGSC", RXY_a_2, 867 },
+    { "STH", RX_a_2_ux, 867 },
+    { "STHH", RXY_a_2, 868 },
+    { "STHRL", RIL_b_2, 868 },
+    { "STHY", RXY_a_2, 868 },
+    { "STIDC", S_1_u, 129 },
+    { "STIDP", S_1_u, 1118 },
+    { "STM", RS_a_3, 869 },
+    { "STMG", RSY_a_3, 869 },
+    { "STMH", RSY_a_3, 869 },
+    { "STMY", RSY_a_3, 869 },
+    { "STNSM", SI_2_u, 1146 },
+    { "STOC", RSY_b_3_su, 869 },
+    { "STOCFH", RSY_b_3_su, 870 },
+    { "STOCG", RSY_b_3_su, 869 },
+    { "STOSM", SI_2_u, 1146 },
+    { "STPQ", RXY_a_2, 870 },
+    { "STPT", S_1_u, 1120 },
+    { "STPX", S_1_u, 1121 },
+    { "STRAG", SSE_2, 1121 },
+    { "STRL", RIL_b_2, 861 },
+    { "STRV", RXY_a_2, 871 },
+    { "STRVG", RXY_a_2, 871 },
+    { "STRVH", RXY_a_2, 871 },
+    { "STSCH", S_1_u, 1230 },
+    { "STSI", S_1_u, 1122 },
+    { "STURA", RRE_2, 1147 },
+    { "STURG", RRE_2, 1147 },
+    { "STY", RXY_a_2, 861 },
+    { "SU", RX_a_2_ux, 1429 },
+    { "SUR", RR_2, 1429 },
+    { "SVC", I_1, 876 },
+    { "SW", RX_a_2_ux, 1429 },
+    { "SWR", RR_2, 1429 },
+    { "SXBR", RRE_2, 1470 },
+    { "SXR", RR_2, 1428 },
+    { "SXTR", RRF_a_3, 1527 },
+    { "SXTRA", RRF_a_4, 1527 },
+    { "SY", RXY_a_2, 872 },
+    { "TABORT", S_1_u, 878 },
+    { "TAM", E_0, 876 },
+    { "TAR", RRE_2, 1147 },
+    { "TB", RRE_2, 1149 },
+    { "TBDR", RRF_e_3, 956 },
+    { "TBEDR", RRF_e_3, 956 },
+    { "TBEGIN", SIL_2_s, 879 },
+    { "TBEGINC", SIL_2_s, 883 },
+    { "TCDB", RXE_2, 1471 },
+    { "TCEB", RXE_2, 1471 },
+    { "TCH", S_1_u, 384 },
+    { "TCXB", RXE_2, 1471 },
+    { "TDCDT", RXE_2, 1528 },
+    { "TDCET", RXE_2, 1528 },
+    { "TDCXT", RXE_2, 1528 },
+    { "TDGDT", RXE_2, 1529 },
+    { "TDGET", RXE_2, 1529 },
+    { "TDGXT", RXE_2, 1529 },
+    { "TEND", S_0, 885 },
+    { "THDER", RRE_2, 955 },
+    { "THDR", RRE_2, 955 },
+    { "TIO", S_1_u, 385 },
+    { "TM", SI_2_u, 877 },
+    { "TMH", RI_a_2_u, 877 },
+    { "TMHH", RI_a_2_u, 877 },
+    { "TMHL", RI_a_2_u, 877 },
+    { "TML", RI_a_2_u, 877 },
+    { "TMLH", RI_a_2_u, 877 },
+    { "TMLL", RI_a_2_u, 877 },
+    { "TMY", SIY_2_su, 877 },
+    { "TP", RSL_a_1, 928 },
+    { "TPEI", RRE_2, 1151 },
+    { "TPI", S_1_u, 1231 },
+    { "TPROT", SSE_2, 1152 },
+    { "TR", SS_a_2_u, 886 },
+    { "TRACE", RS_a_3, 1155 },
+    { "TRACG", RSY_a_3, 1155 },
+    { "TRAP2", E_0, 1156 },
+    { "TRAP4", S_1_u, 1156 },
+    { "TRE", RRE_2, 893 },
+    { "TROO", RRF_c_3_opt, 895 },
+    { "TROT", RRF_c_3_opt, 895 },
+    { "TRT", SS_a_2_u, 887 },
+    { "TRTE", RRF_c_3_opt, 887 },
+    { "TRTO", RRF_c_3_opt, 895 },
+    { "TRTR", SS_a_2_u, 892 },
+    { "TRTRE", RRF_c_3_opt, 888 },
+    { "TRTT", RRF_c_3_opt, 895 },
+    { "TS", SI_1, 876 },
+    { "TSCH", S_1_u, 1232 },
+    { "UNPK", SS_b_2, 900 },
+    { "UNPKA", SS_a_2_u, 901 },
+    { "UNPKU", SS_a_2_u, 902 },
+    { "UPT", E_0, 903 },
+    { "VA", VRR_c_4, 1557 },
+    { "VAC", VRR_d_5, 1558 },
+    { "VACC", VRR_c_4, 1558 },
+    { "VACCC", VRR_d_5, 1559 },
+    { "VACD", RI_a_2_u, 0 },
+    { "VACE", RI_a_2_u, 0 },
+    { "VACRS", RRE_2, 0 },
+    { "VACSV", RRE_2, 0 },
+    { "VAD", RI_a_2_u, 0 },
+    { "VADS", RI_a_2_u, 0 },
+    { "VAE", RI_a_2_u, 0 },
+    { "VAES", RI_a_2_u, 0 },
+    { "VAP", VRI_f_5, 1643 },
+    { "VAS", RI_a_2_u, 0 },
+    { "VAVG", VRR_c_4, 1560 },
+    { "VAVGL", VRR_c_4, 1560 },
+    { "VBPERM", VRR_c_3, 1536 },
+    { "VC", RI_a_2_u, 0 },
+    { "VCD", RI_a_2_u, 0 },
+    { "VCDS", RI_a_2_u, 0 },
+    { "VCE", RI_a_2_u, 0 },
+    { "VCEQ", VRR_b_5, 1561 },
+    { "VCES", RI_a_2_u, 0 },
+    { "VCFPL", VRR_a_5, 1643 },
+    { "VCFPS", VRR_a_5, 1641 },
+    { "VCFPS", VRR_a_5, 1607 },
+    { "VCH", VRR_b_5, 1562 },
+    { "VCHL", VRR_b_5, 1563 },
+    { "VCKSM", VRR_c_3, 1560 },
+    { "VCLFP", VRR_a_5, 1611 },
+    { "VCLGD", VRR_a_5, 1611 },
+    { "VCLZ", VRR_a_3, 1564 },
+    { "VCOVM", RRE_2, 0 },
+    { "VCP", VRR_h_3, 1644 },
+    { "VCS", RI_a_2_u, 0 },
+    { "VCSFP", VRR_a_5, 1644 },
+    { "VCTZ", VRR_a_3, 1564 },
+    { "VCVB", VRR_i_3, 1645 },
+    { "VCVBG", VRR_i_3, 1645 },
+    { "VCVD", VRI_i_4, 1646 },
+    { "VCVDG", VRI_i_4, 1646 },
+    { "VCVM", RRE_2, 0 },
+    { "VCZVM", RRE_2, 0 },
+    { "VDD", RI_a_2_u, 0 },
+    { "VDDS", RI_a_2_u, 0 },
+    { "VDDS", RI_a_2_u, 0 },
+    { "VDE", RI_a_2_u, 0 },
+    { "VDES", RI_a_2_u, 0 },
+    { "VDP", VRI_f_5, 1648 },
+    { "VEC", VRR_a_3, 1561 },
+    { "VECL", VRR_a_3, 1561 },
+    { "VERIM", VRI_d_5, 1576 },
+    { "VERLL", VRS_a_4, 1575 },
+    { "VERLLV", VRR_c_4, 1575 },
+    { "VESL", VRS_a_4, 1577 },
+    { "VESLV", VRR_c_4, 1577 },
+    { "VESRA", VRS_a_4, 1577 },
+    { "VESRAV", VRR_c_4, 1577 },
+    { "VESRL", VRS_a_4, 1578 },
+    { "VESRLV", VRR_c_4, 1578 },
+    { "VFA", VRR_c_5, 1595 },
+    { "VFAE", VRR_b_5_opt, 1585 },
+    { "VFCE", VRR_c_6, 1601 },
+    { "VFCH", VRR_c_6, 1603 },
+    { "VFCHE", VRR_c_6, 1605 },
+    { "VFD", VRR_c_5, 1613 },
+    { "VFEE", VRR_b_5_opt, 1587 },
+    { "VFENE", VRR_b_5_opt, 1588 },
+    { "VFI", VRR_a_5, 1615 },
+    { "VFLL", VRR_a_4, 1617 },
+    { "VFLR", VRR_a_5, 1618 },
+    { "VFM", VRR_c_5, 1631 },
+    { "VFMA", VRR_e_6, 1633 },
+    { "VFMAX", VRR_c_6, 1619 },
+    { "VFMIN", VRR_c_6, 1625 },
+    { "VFMS", VRR_e_6, 1633 },
+    { "VFNMA", VRR_e_6, 1633 },
+    { "VFNMS", VRR_e_6, 1633 },
+    { "VFPSO", VRR_a_5, 1635 },
+    { "VFS", VRR_c_5, 1637 },
+    { "VFSQ", VRR_a_4, 1636 },
+    { "VFTCI", VRI_e_5, 1638 },
+    { "VGBM", VRI_a_2, 1537 },
+    { "VGEF", VRV_3, 1536 },
+    { "VGEG", VRV_3, 1536 },
+    { "VGFM", VRR_c_4, 1565 },
+    { "VGFMA", VRR_d_5, 1566 },
+    { "VGM", VRI_b_4, 1537 },
+    { "VISTR", VRR_a_4_opt, 1589 },
+    { "VL", VRX_3_opt, 1538 },
+    { "VLBB", VRX_3, 1542 },
+    { "VLBIX", RRE_2, 0 },
+    { "VLBR", VRX_3, 1563 },
+    { "VLBRREP", VRX_3, 1562 },
+    { "VLC", VRR_a_3, 1566 },
+    { "VLCVM", RRE_2, 0 },
+    { "VLD", RI_a_2_u, 0 },
+    { "VLEB", VRX_3, 1538 },
+    { "VLEBRG", VRX_3, 1561 },
+    { "VLEBRH", VRX_3, 1561 },
+    { "VLEF", VRX_3, 1539 },
+    { "VLEG", VRX_3, 1539 },
+    { "VLEH", VRX_3, 1539 },
+    { "VLEIB", VRI_a_3, 1539 },
+    { "VLEIF", VRI_a_3, 1539 },
+    { "VLEIG", VRI_a_3, 1539 },
+    { "VLEIH", VRI_a_3, 1539 },
+    { "VLELD", RRE_2, 0 },
+    { "VLELE", RRE_2, 0 },
+    { "VLER", VRX_3, 1564 },
+    { "VLGV", VRS_c_4, 1539 },
+    { "VLH", RI_a_2_u, 0 },
+    { "VLI", RRE_2, 0 },
+    { "VLID", RRE_2, 0 },
+    { "VLINT", RI_a_2_u, 0 },
+    { "VLIP", VRI_h_3, 1649 },
+    { "VLL", VRS_b_3, 1543 },
+    { "VLLEBRZ", VRX_3, 1562 },
+    { "VLLEZ", VRX_3, 1540 },
+    { "VLM", VRS_a_4_opt, 1541 },
+    { "VLMD", RI_a_2_u, 0 },
+    { "VLP", VRR_a_3, 1566 },
+    { "VLR", VRR_a_2, 1538 },
+    { "VLREP", VRX_3, 1538 },
+    { "VLRL", VSI_3, 1541 },
+    { "VLRLR", VRS_d_3, 1541 },
+    { "VLVCA", RRE_2, 0 },
+    { "VLVCU", RRE_2, 0 },
+    { "VLVG", VRS_b_4, 1543 },
+    { "VLVGP", VRR_f_3, 1543 },
+    { "VLVM", RRE_2, 0 },
+    { "VLY", RI_a_2_u, 0 },
+    { "VLYD", RI_a_2_u, 0 },
+    { "VM", RI_a_2_u, 0 },
+    { "VMAD", RI_a_2_u, 0 },
+    { "VMADS", RI_a_2_u, 0 },
+    { "VMAE", VRR_d_5, 1569 },
+    { "VMAES", RI_a_2_u, 0 },
+    { "VMAH", VRR_d_5, 1569 },
+    { "VMAL", VRR_d_5, 1568 },
+    { "VMALE", VRR_d_5, 1569 },
+    { "VMALH", VRR_d_5, 1569 },
+    { "VMALO", VRR_d_5, 1570 },
+    { "VMAO", VRR_d_5, 1570 },
+    { "VMCD", RI_a_2_u, 0 },
+    { "VMCE", RI_a_2_u, 0 },
+    { "VMD", RI_a_2_u, 0 },
+    { "VMD", RI_a_2_u, 0 },
+    { "VMDS", RI_a_2_u, 0 },
+    { "VME", VRR_c_4, 1572 },
+    { "VMES", RI_a_2_u, 0 },
+    { "VMH", VRR_c_4, 1570 },
+    { "VML", VRR_c_4, 1571 },
+    { "VMLE", VRR_c_4, 1572 },
+    { "VMLH", VRR_c_4, 1571 },
+    { "VMLO", VRR_c_4, 1572 },
+    { "VMN", VRR_c_4, 1567 },
+    { "VMNL", VRR_c_4, 1568 },
+    { "VMNSD", RRE_2, 0 },
+    { "VMNSE", RRE_2, 0 },
+    { "VMO", VRR_c_4, 1572 },
+    { "VMP", VRI_f_5, 1650 },
+    { "VMRH", VRR_c_4, 1544 },
+    { "VMRL", VRR_c_4, 1544 },
+    { "VMRRS", RRE_2, 0 },
+    { "VMRSV", RRE_2, 0 },
+    { "VMS", RI_a_2_u, 0 },
+    { "VMSD", RI_a_2_u, 0 },
+    { "VMSDS", RI_a_2_u, 0 },
+    { "VMSE", RI_a_2_u, 0 },
+    { "VMSES", RI_a_2_u, 0 },
+    { "VMSL", VRR_d_6, 1573 },
+    { "VMSP", VRI_f_5, 1651 },
+    { "VMX", VRR_c_4, 1567 },
+    { "VMXAD", RRE_2, 0 },
+    { "VMXAE", RRE_2, 0 },
+    { "VMXL", VRR_c_4, 1567 },
+    { "VMXSE", RRE_2, 0 },
+    { "VN", VRR_c_3, 1559 },
+    { "VNC", VRR_c_3, 1559 },
+    { "VNN", VRR_c_3, 1574 },
+    { "VNO", VRR_c_3, 1574 },
+    { "VNS", RI_a_2_u, 0 },
+    { "VNVM", RRE_2, 0 },
+    { "VNX", VRR_c_3, 1574 },
+    { "VO", VRR_c_3, 1574 },
+    { "VOC", VRR_c_3, 1575 },
+    { "VOS", RI_a_2_u, 0 },
+    { "VOVM", RRE_2, 0 },
+    { "VOVM", RRE_2, 0 },
+    { "VPDI", VRR_c_4, 1547 },
+    { "VPERM", VRR_e_4, 1547 },
+    { "VPK", VRR_c_4, 1545 },
+    { "VPKLS", VRR_b_5, 1546 },
+    { "VPKS", VRR_b_5, 1545 },
+    { "VPKZ", VSI_3, 1652 },
+    { "VPOPCT", VRR_a_3, 1575 },
+    { "VPSOP", VRI_g_5_u, 1653 },
+    { "VRCL", RRE_2, 0 },
+    { "VREP", VRI_c_4, 1547 },
+    { "VREPI", VRI_a_3, 1548 },
+    { "VRP", VRI_f_5, 1654 },
+    { "VRRS", RRE_2, 0 },
+    { "VRSV", RRE_2, 0 },
+    { "VRSVC", RRE_2, 0 },
+    { "VS", VRR_c_4, 1580 },
+    { "VSBCBI", VRR_d_5, 1582 },
+    { "VSBI", VRR_d_5, 1581 },
+    { "VSCBI", VRR_c_4, 1581 },
+    { "VSCEF", VRV_3, 1548 },
+    { "VSCEG", VRV_3, 1548 },
+    { "VSD", RI_a_2_u, 0 },
+    { "VSD", RI_a_2_u, 0 },
+    { "VSDP", VRI_f_5, 1656 },
+    { "VSDS", RI_a_2_u, 0 },
+    { "VSDS", RI_a_2_u, 0 },
+    { "VSE", RI_a_2_u, 0 },
+    { "VSEG", VRR_a_3, 1549 },
+    { "VSEL", VRR_e_4, 1549 },
+    { "VSES", RI_a_2_u, 0 },
+    { "VSL", VRR_c_3, 1579 },
+    { "VSLB", VRR_c_3, 1579 },
+    { "VSLD", VRI_d_4, 1607 },
+    { "VSLDB", VRI_d_4, 1579 },
+    { "VSLL", RRE_2, 0 },
+    { "VSP", VRI_f_5, 1658 },
+    { "VSPSD", RRE_2, 0 },
+    { "VSRA", VRR_c_3, 1579 },
+    { "VSRAB", VRR_c_3, 1580 },
+    { "VSRD", VRI_d_4, 1608 },
+    { "VSRL", VRR_c_3, 1580 },
+    { "VSRLB", VRR_c_3, 1580 },
+    { "VSRP", VRI_g_5_s, 1657 },
+    { "VSRRS", RRE_2, 0 },
+    { "VSRSV", RRE_2, 0 },
+    { "VSS", RI_a_2_u, 0 },
+    { "VST", VRX_3_opt, 1550 },
+    { "VSTBR", VRX_3, 1576 },
+    { "VSTD", RI_a_2_u, 0 },
+    { "VSTEB", VRX_3, 1550 },
+    { "VSTEBRF", VRX_3, 1576 },
+    { "VSTEBRG", VRX_3, 1576 },
+    { "VSTEBRH", VRX_3, 1576 },
+    { "VSTEF", VRX_3, 1550 },
+    { "VSTEG", VRX_3, 1550 },
+    { "VSTEH", VRX_3, 1550 },
+    { "VSTER", VRX_3, 1578 },
+    { "VSTH", RI_a_2_u, 0 },
+    { "VSTI", RRE_2, 0 },
+    { "VSTID", RRE_2, 0 },
+    { "VSTK", RI_a_2_u, 0 },
+    { "VSTKD", RI_a_2_u, 0 },
+    { "VSTL", VRS_b_3, 1552 },
+    { "VSTM", VRS_a_4_opt, 1551 },
+    { "VSTMD", RI_a_2_u, 0 },
+    { "VSTRC", VRR_d_6_opt, 1590 },
+    { "VSTRL", VSI_3, 1551 },
+    { "VSTRLR", VRS_d_3, 1551 },
+    { "VSTRS", VRR_d_6_opt, 1622 },
+    { "VSTVM", RRE_2, 0 },
+    { "VSTVP", RRE_2, 0 },
+    { "VSUM", VRR_c_4, 1583 },
+    { "VSUMG", VRR_c_4, 1582 },
+    { "VSUMQ", VRR_c_4, 1583 },
+    { "VSVMM", RRE_2, 0 },
+    { "VTM", VRR_a_2, 1584 },
+    { "VTP", VRR_g_1, 1660 },
+    { "VTVM", RRE_2, 0 },
+    { "VUPH", VRR_a_3, 1552 },
+    { "VUPKZ", VSI_3, 1660 },
+    { "VUPL", VRR_a_3, 1553 },
+    { "VUPLH", VRR_a_3, 1553 },
+    { "VUPLL", VRR_a_3, 1554 },
+    { "VX", VRR_c_3, 1565 },
+    { "VXELD", RRE_2, 0 },
+    { "VXELE", RRE_2, 0 },
+    { "VXS", RI_a_2_u, 0 },
+    { "VXVC", RRE_2, 0 },
+    { "VXVM", RRE_2, 0 },
+    { "VXVMM", RRE_2, 0 },
+    { "VZPSD", RRE_2, 0 },
+    { "WFC", VRR_a_4, 1599 },
+    { "WFK", VRR_a_4, 1600 },
+    { "X", RX_a_2_ux, 738 },
+    { "XC", SS_a_2_s, 739 },
+    { "XG", RXY_a_2, 738 },
+    { "XGR", RRE_2, 738 },
+    { "XGRK", RRF_a_3, 738 },
+    { "XI", SI_2_u, 739 },
+    { "XIHF", RIL_a_2, 740 },
+    { "XILF", RIL_a_2, 740 },
+    { "XIY", SIY_2_su, 739 },
+    { "XR", RR_2, 738 },
+    { "XRK", RRF_a_3, 738 },
+    { "XSCH", S_0, 1215 },
+    { "XY", RXY_a_2, 738 },
+    { "ZAP", SS_b_2, 928 },
+};
+#ifdef __cpp_lib_ranges
+static_assert(std::ranges::is_sorted(machine_instructions, {}, &machine_instruction::name));
+
+const machine_instruction* instruction::find_machine_instructions(std::string_view name)
 {
-    std::map<std::string, machine_instruction> result;
-    add_machine_instr(result, "AR", mach_format::RR, { reg_4_U, reg_4_U }, 510);
-    add_machine_instr(result, "ADDFRR", mach_format::RRE, { reg_4_U, reg_4_U }, 7);
-    add_machine_instr(result, "AGR", mach_format::RRE, { reg_4_U, reg_4_U }, 510);
-    add_machine_instr(result, "AGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 510);
-    add_machine_instr(result, "ARK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 510);
-    add_machine_instr(result, "AGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 510);
-    add_machine_instr(result, "A", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 510);
-    add_machine_instr(result, "AY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 511);
-    add_machine_instr(result, "AG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 511);
-    add_machine_instr(result, "AGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 511);
-    add_machine_instr(result, "AFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 511);
-    add_machine_instr(result, "AGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 511);
-    add_machine_instr(result, "AHIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 511);
-    add_machine_instr(result, "AGHIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 511);
-    add_machine_instr(result, "ASI", mach_format::SIY, { db_20_4_S, imm_8_S }, 511);
-    add_machine_instr(result, "AGSI", mach_format::SIY, { db_20_4_S, imm_8_S }, 511);
-    add_machine_instr(result, "AH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 512);
-    add_machine_instr(result, "AHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 512);
-    add_machine_instr(result, "AGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 512);
-    add_machine_instr(result, "AHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 512);
-    add_machine_instr(result, "AGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 513);
-    add_machine_instr(result, "AHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 513);
-    add_machine_instr(result, "AHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 513);
-    add_machine_instr(result, "AIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 513);
-    add_machine_instr(result, "ALR", mach_format::RR, { reg_4_U, reg_4_U }, 514);
-    add_machine_instr(result, "ALGR", mach_format::RRE, { reg_4_U, reg_4_U }, 514);
-    add_machine_instr(result, "ALGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 514);
-    add_machine_instr(result, "ALRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 514);
-    add_machine_instr(result, "ALGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 514);
-    add_machine_instr(result, "AL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 514);
-    add_machine_instr(result, "ALY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 514);
-    add_machine_instr(result, "ALG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 514);
-    add_machine_instr(result, "ALGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 514);
-    add_machine_instr(result, "ALFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 514);
-    add_machine_instr(result, "ALGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 514);
-    add_machine_instr(result, "ALHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 515);
-    add_machine_instr(result, "ALHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 515);
-    add_machine_instr(result, "ALCR", mach_format::RRE, { reg_4_U, reg_4_U }, 515);
-    add_machine_instr(result, "ALCGR", mach_format::RRE, { reg_4_U, reg_4_U }, 515);
-    add_machine_instr(result, "ALC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 515);
-    add_machine_instr(result, "ALCG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 515);
-    add_machine_instr(result, "ALSI", mach_format::SIY, { db_20_4_S, imm_8_S }, 516);
-    add_machine_instr(result, "ALGSI", mach_format::SIY, { db_20_4_S, imm_8_S }, 516);
-    add_machine_instr(result, "ALHSIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 516);
-    add_machine_instr(result, "ALGHSIK", mach_format::RIE_d, { reg_4_U, reg_4_U, imm_16_S }, 516);
-    add_machine_instr(result, "ALSIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 517);
-    add_machine_instr(result, "ALSIHN", mach_format::RIL_a, { reg_4_U, imm_32_S }, 517);
-    add_machine_instr(result, "NR", mach_format::RR, { reg_4_U, reg_4_U }, 517);
-    add_machine_instr(result, "NGR", mach_format::RRE, { reg_4_U, reg_4_U }, 517);
-    add_machine_instr(result, "NRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 517);
-    add_machine_instr(result, "NGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 517);
-    add_machine_instr(result, "N", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 517);
-    add_machine_instr(result, "NY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 517);
-    add_machine_instr(result, "NG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 517);
-    add_machine_instr(result, "NI", mach_format::SI, { db_12_4_U, imm_8_U }, 517);
-    add_machine_instr(result, "NIY", mach_format::SIY, { db_20_4_S, imm_8_U }, 518);
-    add_machine_instr(result, "NC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 518);
-    add_machine_instr(result, "NIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 518);
-    add_machine_instr(result, "NIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 518);
-    add_machine_instr(result, "NIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 518);
-    add_machine_instr(result, "NILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 519);
-    add_machine_instr(result, "NILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 519);
-    add_machine_instr(result, "NILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 519);
-    add_machine_instr(result, "BALR", mach_format::RR, { reg_4_U, reg_4_U }, 519);
-    add_machine_instr(result, "BAL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 519);
-    add_machine_instr(result, "BASR", mach_format::RR, { reg_4_U, reg_4_U }, 520);
-    add_machine_instr(result, "BAS", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 520);
-    add_machine_instr(result, "BASSM", mach_format::RX_a, { reg_4_U, reg_4_U }, 520);
-    add_machine_instr(result, "BSM", mach_format::RR, { reg_4_U, reg_4_U }, 522);
-    add_machine_instr(result, "BIC", mach_format::RXY_b, { mask_4_U, dxb_20_4x4_S }, 523);
-    add_machine_instr(result, "BCR", mach_format::RR, { mask_4_U, reg_4_U }, 524);
-    add_machine_instr(result, "BC", mach_format::RX_b, { mask_4_U, dxb_12_4x4_U }, 524);
-    add_machine_instr(result, "BCTR", mach_format::RR, { reg_4_U, reg_4_U }, 525);
-    add_machine_instr(result, "BCTGR", mach_format::RRE, { reg_4_U, reg_4_U }, 525);
-    add_machine_instr(result, "BCT", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 525);
-    add_machine_instr(result, "BCTG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 525);
-    add_machine_instr(result, "BXH", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 526);
-    add_machine_instr(result, "BXHG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 526);
-    add_machine_instr(result, "BXLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 526);
-    add_machine_instr(result, "BXLEG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 526);
-    add_machine_instr(result, "BPP", mach_format::SMI, { mask_4_U, rel_addr_imm_16_S, db_12_4_U }, 527);
-    add_machine_instr(result, "BPRP", mach_format::MII, { mask_4_U, rel_addr_imm_12_S, rel_addr_imm_24_S }, 527);
-    add_machine_instr(result, "BRAS", mach_format::RI_b, { reg_4_U, rel_addr_imm_16_S }, 530);
-    add_machine_instr(result, "BRASL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 530);
-    add_machine_instr(result, "BRC", mach_format::RI_c, { mask_4_U, rel_addr_imm_16_S }, 530);
-    add_machine_instr(result, "BRCL", mach_format::RIL_c, { mask_4_U, rel_addr_imm_32_S }, 530);
-    add_machine_instr(result, "BRCT", mach_format::RI_b, { reg_4_U, rel_addr_imm_16_S }, 531);
-    add_machine_instr(result, "BRCTG", mach_format::RI_b, { reg_4_U, rel_addr_imm_16_S }, 531);
-    add_machine_instr(result, "BRCTH", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 531);
-    add_machine_instr(result, "BRXH", mach_format::RSI, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532);
-    add_machine_instr(result, "BRXHG", mach_format::RIE_e, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532);
-    add_machine_instr(result, "BRXLE", mach_format::RSI, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532);
-    add_machine_instr(result, "BRXLG", mach_format::RIE_e, { reg_4_U, reg_4_U, rel_addr_imm_16_S }, 532);
-    add_machine_instr(result, "CKSM", mach_format::RRE, { reg_4_U, reg_4_U }, 533);
-    add_machine_instr(result, "KM", mach_format::RRE, { reg_4_U, reg_4_U }, 537);
-    add_machine_instr(result, "KMC", mach_format::RRE, { reg_4_U, reg_4_U }, 537);
-    add_machine_instr(result, "KMA", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 562);
-    add_machine_instr(result, "KMF", mach_format::RRE, { reg_4_U, reg_4_U }, 576);
-    add_machine_instr(result, "KMCTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 591);
-    add_machine_instr(result, "KMO", mach_format::RRE, { reg_4_U, reg_4_U }, 604);
-    add_machine_instr(result, "CR", mach_format::RR, { reg_4_U, reg_4_U }, 618);
-    add_machine_instr(result, "CGR", mach_format::RRE, { reg_4_U, reg_4_U }, 618);
-    add_machine_instr(result, "CGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 618);
-    add_machine_instr(result, "C", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 618);
-    add_machine_instr(result, "CY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 618);
-    add_machine_instr(result, "CG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 618);
-    add_machine_instr(result, "CGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 618);
-    add_machine_instr(result, "CFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 618);
-    add_machine_instr(result, "CGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 619);
-    add_machine_instr(result, "CRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 619);
-    add_machine_instr(result, "CGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 619);
-    add_machine_instr(result, "CGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 619);
-    add_machine_instr(result, "CRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 619);
-    add_machine_instr(result, "CGRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 619);
-    add_machine_instr(result, "CRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 619);
-    add_machine_instr(result, "CGRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 620);
-    add_machine_instr(result, "CIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 620);
-    add_machine_instr(result, "CGIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 620);
-    add_machine_instr(result, "CIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 620);
-    add_machine_instr(result, "CGIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 620);
-    add_machine_instr(result, "CFC", mach_format::S, { db_12_4_U }, 621);
-    add_machine_instr(result, "CS", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 628);
-    add_machine_instr(result, "CSY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628);
-    add_machine_instr(result, "CSG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628);
-    add_machine_instr(result, "CDS", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 628);
-    add_machine_instr(result, "CDSY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628);
-    add_machine_instr(result, "CDSG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628);
-    add_machine_instr(result, "CSST", mach_format::SSF, { db_12_4_U, db_12_4_U, reg_4_U }, 630);
-    add_machine_instr(result, "CRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 633);
-    add_machine_instr(result, "CGRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 633);
-    add_machine_instr(result, "CIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 633);
-    add_machine_instr(result, "CGIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 633);
-    add_machine_instr(result, "CH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 634);
-    add_machine_instr(result, "CHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 634);
-    add_machine_instr(result, "CGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 634);
-    add_machine_instr(result, "CHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 634);
-    add_machine_instr(result, "CGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 634);
-    add_machine_instr(result, "CHHSI", mach_format::SIL, { db_12_4_U, imm_16_S }, 634);
-    add_machine_instr(result, "CHSI", mach_format::SIL, { db_12_4_U, imm_16_S }, 634);
-    add_machine_instr(result, "CGHSI", mach_format::SIL, { db_12_4_U, imm_16_S }, 634);
-    add_machine_instr(result, "CHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 634);
-    add_machine_instr(result, "CGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 634);
-    add_machine_instr(result, "CHHR", mach_format::RRE, { reg_4_U, reg_4_U }, 635);
-    add_machine_instr(result, "CHLR", mach_format::RRE, { reg_4_U, reg_4_U }, 635);
-    add_machine_instr(result, "CHF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 635);
-    add_machine_instr(result, "CIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 635);
-    add_machine_instr(result, "CLR", mach_format::RR, { reg_4_U, reg_4_U }, 636);
-    add_machine_instr(result, "CLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 636);
-    add_machine_instr(result, "CLGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 636);
-    add_machine_instr(result, "CL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 636);
-    add_machine_instr(result, "CLY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636);
-    add_machine_instr(result, "CLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636);
-    add_machine_instr(result, "CLGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636);
-    add_machine_instr(result, "CLC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 636);
-    add_machine_instr(result, "CLFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 636);
-    add_machine_instr(result, "CLGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 636);
-    add_machine_instr(result, "CLI", mach_format::SI, { db_12_4_U, imm_8_U }, 636);
-    add_machine_instr(result, "CLIY", mach_format::SIY, { db_12_4_U, imm_8_U }, 636);
-    add_machine_instr(result, "CLFHSI", mach_format::SIL, { db_12_4_U, imm_16_U }, 636);
-    add_machine_instr(result, "CLGHSI", mach_format::SIL, { db_12_4_U, imm_16_U }, 636);
-    add_machine_instr(result, "CLHHSI", mach_format::SIL, { db_12_4_U, imm_16_U }, 636);
-    add_machine_instr(result, "CLRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637);
-    add_machine_instr(result, "CLGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637);
-    add_machine_instr(result, "CLGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637);
-    add_machine_instr(result, "CLHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637);
-    add_machine_instr(result, "CLGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 637);
-    add_machine_instr(result, "CLRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 638);
-    add_machine_instr(result, "CLGRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 638);
-    add_machine_instr(result, "CLRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 638);
-    add_machine_instr(result, "CLGRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 638);
-    add_machine_instr(result, "CLIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 638);
-    add_machine_instr(result, "CLGIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 638);
-    add_machine_instr(result, "CLIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 638);
-    add_machine_instr(result, "CLGIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 638);
-    add_machine_instr(result, "CLRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 639);
-    add_machine_instr(result, "CLGRT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 639);
-    add_machine_instr(result, "CLT", mach_format::RSY_b, { reg_4_U, mask_4_U, dxb_20_4x4_S }, 639);
-    add_machine_instr(result, "CLGT", mach_format::RSY_b, { reg_4_U, mask_4_U, dxb_20_4x4_S }, 639);
-    add_machine_instr(result, "CLFIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 640);
-    add_machine_instr(result, "CLGIT", mach_format::RIE_a, { reg_4_U, imm_16_S, mask_4_U }, 640);
-    add_machine_instr(result, "CLM", mach_format::RS_b, { reg_4_U, mask_4_U, db_12_4_U }, 641);
-    add_machine_instr(result, "CLMY", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 641);
-    add_machine_instr(result, "CLMH", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 641);
-    add_machine_instr(result, "CLHHR", mach_format::RRE, { reg_4_U, reg_4_U }, 641);
-    add_machine_instr(result, "CLHLR", mach_format::RRE, { reg_4_U, reg_4_U }, 641);
-    add_machine_instr(result, "CLHF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 641);
-    add_machine_instr(result, "CLCL", mach_format::RR, { reg_4_U, reg_4_U }, 642);
-    add_machine_instr(result, "CLIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 642);
-    add_machine_instr(result, "CLCLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 644);
-    add_machine_instr(result, "CLCLU", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 647);
-    add_machine_instr(result, "CLST", mach_format::RRE, { reg_4_U, reg_4_U }, 650);
-    add_machine_instr(result, "CUSE", mach_format::RRE, { reg_4_U, reg_4_U }, 651);
-    add_machine_instr(result, "CMPSC", mach_format::RRE, { reg_4_U, reg_4_U }, 654);
-    add_machine_instr(result, "KIMD", mach_format::RRE, { reg_4_U, reg_4_U }, 672);
-    add_machine_instr(result, "KLMD", mach_format::RRE, { reg_4_U, reg_4_U }, 685);
-    add_machine_instr(result, "KMAC", mach_format::RRE, { reg_4_U, reg_4_U }, 703);
-    add_machine_instr(result, "CVB", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 714);
-    add_machine_instr(result, "CVBY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 714);
-    add_machine_instr(result, "CVBG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 714);
-    add_machine_instr(result, "CVD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 715);
-    add_machine_instr(result, "CVDY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 715);
-    add_machine_instr(result, "CVDG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 715);
-    add_machine_instr(result, "CU24", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 715);
-    add_machine_instr(result, "CUUTF", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 718);
-    add_machine_instr(result, "CU21", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 718);
-    add_machine_instr(result, "CU42", mach_format::RRE, { reg_4_U, reg_4_U }, 722);
-    add_machine_instr(result, "CU41", mach_format::RRE, { reg_4_U, reg_4_U }, 725);
-    add_machine_instr(result, "CUTFU", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 728);
-    add_machine_instr(result, "CU12", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 728);
-    add_machine_instr(result, "CU14", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 732);
-    add_machine_instr(result, "CPYA", mach_format::RRE, { reg_4_U, reg_4_U }, 736);
-    add_machine_instr(result, "DR", mach_format::RR, { reg_4_U, reg_4_U }, 736);
-    add_machine_instr(result, "D", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 736);
-    add_machine_instr(result, "DLR", mach_format::RRE, { reg_4_U, reg_4_U }, 737);
-    add_machine_instr(result, "DLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 737);
-    add_machine_instr(result, "DL", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 737);
-    add_machine_instr(result, "DLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 737);
-    add_machine_instr(result, "DSGR", mach_format::RRE, { reg_4_U, reg_4_U }, 738);
-    add_machine_instr(result, "DSGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 738);
-    add_machine_instr(result, "DSG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
-    add_machine_instr(result, "DSGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
-    add_machine_instr(result, "HIO", mach_format::S, { db_12_4_U }, 129);
-    add_machine_instr(result, "HDV", mach_format::S, { db_12_4_U }, 129);
-    add_machine_instr(result, "SIO", mach_format::S, { db_12_4_U }, 129);
-    add_machine_instr(result, "SIOF", mach_format::S, { db_12_4_U }, 129);
-    add_machine_instr(result, "STIDC", mach_format::S, { db_12_4_U }, 129);
-    add_machine_instr(result, "CLRCH", mach_format::S, { db_12_4_U }, 367);
-    add_machine_instr(result, "CLRIO", mach_format::S, { db_12_4_U }, 368);
-    add_machine_instr(result, "TCH", mach_format::S, { db_12_4_U }, 384);
-    add_machine_instr(result, "TIO", mach_format::S, { db_12_4_U }, 385);
-    add_machine_instr(result, "RRB", mach_format::S, { db_12_4_U }, 295);
-    add_machine_instr(result, "CONCS", mach_format::S, { db_12_4_U }, 263);
-    add_machine_instr(result, "DISCS", mach_format::S, { db_12_4_U }, 265);
-    add_machine_instr(result, "XR", mach_format::RR, { reg_4_U, reg_4_U }, 738);
-    add_machine_instr(result, "XGR", mach_format::RRE, { reg_4_U, reg_4_U }, 738);
-    add_machine_instr(result, "XRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 738);
-    add_machine_instr(result, "XGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 738);
-    add_machine_instr(result, "X", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 738);
-    add_machine_instr(result, "XY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
-    add_machine_instr(result, "XG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
-    add_machine_instr(result, "XI", mach_format::SI, { db_12_4_U, imm_8_U }, 739);
-    add_machine_instr(result, "XIY", mach_format::SIY, { db_20_4_S, imm_8_U }, 739);
-    add_machine_instr(result, "XC", mach_format::SS_a, { db_12_8x4L_U, db_20_4_S }, 739);
-    add_machine_instr(result, "EX", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 740);
-    add_machine_instr(result, "XIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 740);
-    add_machine_instr(result, "XILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 740);
-    add_machine_instr(result, "EXRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 740);
-    add_machine_instr(result, "EAR", mach_format::RRE, { reg_4_U, reg_4_U }, 741);
-    add_machine_instr(result, "ECAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 741);
-    add_machine_instr(result, "ECTG", mach_format::SSF, { db_12_4_U, db_12_4_U, reg_4_U }, 744);
-    add_machine_instr(result, "EPSW", mach_format::RRE, { reg_4_U, reg_4_U }, 745);
-    add_machine_instr(result, "ETND", mach_format::RRE, { reg_4_U }, 745);
-    add_machine_instr(result, "FLOGR", mach_format::RRE, { reg_4_U, reg_4_U }, 746);
-    add_machine_instr(result, "IC", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 746);
-    add_machine_instr(result, "ICY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 746);
-    add_machine_instr(result, "ICM", mach_format::RS_b, { reg_4_U, mask_4_U, db_12_4_U }, 746);
-    add_machine_instr(result, "ICMY", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 746);
-    add_machine_instr(result, "ICMH", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 746);
-    add_machine_instr(result, "IIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 747);
-    add_machine_instr(result, "IIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 747);
-    add_machine_instr(result, "IIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 747);
-    add_machine_instr(result, "IILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 747);
-    add_machine_instr(result, "IILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 747);
-    add_machine_instr(result, "IILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 747);
-    add_machine_instr(result, "IPM", mach_format::RRE, { reg_4_U }, 748);
-    add_machine_instr(result, "LR", mach_format::RR, { reg_4_U, reg_4_U }, 748);
-    add_machine_instr(result, "LGR", mach_format::RRE, { reg_4_U, reg_4_U }, 748);
-    add_machine_instr(result, "LGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 748);
-    add_machine_instr(result, "L", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 748);
-    add_machine_instr(result, "LY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748);
-    add_machine_instr(result, "LG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748);
-    add_machine_instr(result, "LGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748);
-    add_machine_instr(result, "LGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 748);
-    add_machine_instr(result, "LRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 748);
-    add_machine_instr(result, "LGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 748);
-    add_machine_instr(result, "LGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 748);
-    add_machine_instr(result, "LAM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 749);
-    add_machine_instr(result, "LAMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 749);
-    add_machine_instr(result, "LA", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 750);
-    add_machine_instr(result, "LAY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 750);
-    add_machine_instr(result, "LAE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 750);
-    add_machine_instr(result, "LAEY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 750);
-    add_machine_instr(result, "LARL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 751);
-    add_machine_instr(result, "LAA", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752);
-    add_machine_instr(result, "LAAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752);
-    add_machine_instr(result, "LAAL", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752);
-    add_machine_instr(result, "LAALG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 752);
-    add_machine_instr(result, "LAN", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753);
-    add_machine_instr(result, "LANG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753);
-    add_machine_instr(result, "LAX", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753);
-    add_machine_instr(result, "LAXG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753);
-    add_machine_instr(result, "LAO", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 754);
-    add_machine_instr(result, "LAOG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 754);
-    add_machine_instr(result, "LTR", mach_format::RR, { reg_4_U, reg_4_U }, 754);
-    add_machine_instr(result, "LTGR", mach_format::RRE, { reg_4_U, reg_4_U }, 754);
-    add_machine_instr(result, "LTGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 754);
-    add_machine_instr(result, "LT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr(result, "LTG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr(result, "LTGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr(result, "LAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr(result, "LGAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr(result, "LZRF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr(result, "LZRG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
-    add_machine_instr(result, "LBR", mach_format::RRE, { reg_4_U, reg_4_U }, 756);
-    add_machine_instr(result, "LGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 756);
-    add_machine_instr(result, "LB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756);
-    add_machine_instr(result, "LGB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756);
-    add_machine_instr(result, "LBH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756);
-    add_machine_instr(result, "LCR", mach_format::RR, { reg_4_U, reg_4_U }, 756);
-    add_machine_instr(result, "LCGR", mach_format::RRE, { reg_4_U, reg_4_U }, 757);
-    add_machine_instr(result, "LCGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 757);
-    add_machine_instr(result, "LCBB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U, mask_4_U }, 757);
-    add_machine_instr(result, "LGG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 758);
-    add_machine_instr(result, "LLGFSG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 758);
-    add_machine_instr(result, "LGSC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 759);
-    add_machine_instr(result, "LHR", mach_format::RRE, { reg_4_U, reg_4_U }, 760);
-    add_machine_instr(result, "LGHR", mach_format::RRE, { reg_4_U, reg_4_U }, 760);
-    add_machine_instr(result, "LH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 760);
-    add_machine_instr(result, "LHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 760);
-    add_machine_instr(result, "LGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 760);
-    add_machine_instr(result, "LHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 760);
-    add_machine_instr(result, "LGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 760);
-    add_machine_instr(result, "LHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 760);
-    add_machine_instr(result, "LGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 760);
-    add_machine_instr(result, "LHH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 761);
-    add_machine_instr(result, "LOCHI", mach_format::RIE_g, { reg_4_U, imm_16_S, mask_4_U }, 761);
-    add_machine_instr(result, "LOCGHI", mach_format::RIE_g, { reg_4_U, imm_16_S, mask_4_U }, 761);
-    add_machine_instr(result, "LOCHHI", mach_format::RIE_g, { reg_4_U, imm_16_S, mask_4_U }, 761);
-    add_machine_instr(result, "LFH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 762);
-    add_machine_instr(result, "LFHAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 762);
-    add_machine_instr(result, "LLGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 762);
-    add_machine_instr(result, "LLGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 762);
-    add_machine_instr(result, "LLGFRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 762);
-    add_machine_instr(result, "LLGFAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763);
-    add_machine_instr(result, "LLCR", mach_format::RRE, { reg_4_U, reg_4_U }, 763);
-    add_machine_instr(result, "LLGCR", mach_format::RRE, { reg_4_U, reg_4_U }, 763);
-    add_machine_instr(result, "LLC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763);
-    add_machine_instr(result, "LLGC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763);
-    add_machine_instr(result, "LLZRGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 763);
-    add_machine_instr(result, "LLCH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 764);
-    add_machine_instr(result, "LLHR", mach_format::RRE, { reg_4_U, reg_4_U }, 764);
-    add_machine_instr(result, "LLGHR", mach_format::RRE, { reg_4_U, reg_4_U }, 764);
-    add_machine_instr(result, "LLH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 764);
-    add_machine_instr(result, "LLGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 764);
-    add_machine_instr(result, "LLHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 764);
-    add_machine_instr(result, "LLGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 764);
-    add_machine_instr(result, "LLHH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 765);
-    add_machine_instr(result, "LLIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 765);
-    add_machine_instr(result, "LLIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
-    add_machine_instr(result, "LLIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
-    add_machine_instr(result, "LLILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 765);
-    add_machine_instr(result, "LLILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
-    add_machine_instr(result, "LLILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
-    add_machine_instr(result, "LLGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 765);
-    add_machine_instr(result, "LLGT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 766);
-    add_machine_instr(result, "LLGTAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 766);
-    add_machine_instr(result, "LM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 766);
-    add_machine_instr(result, "LMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 766);
-    add_machine_instr(result, "LMG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 766);
-    add_machine_instr(result, "LMD", mach_format::SS_e, { reg_4_U, reg_4_U, db_12_4_U, db_12_4_U }, 767);
-    add_machine_instr(result, "LMH", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 767);
-    add_machine_instr(result, "LNR", mach_format::RR, { reg_4_U, reg_4_U }, 767);
-    add_machine_instr(result, "LNGR", mach_format::RRE, { reg_4_U, reg_4_U }, 767);
-    add_machine_instr(result, "LNGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 768);
-    add_machine_instr(result, "LOCFHR", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 768);
-    add_machine_instr(result, "LOCFH", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 768);
-    add_machine_instr(result, "LOCR", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 768);
-    add_machine_instr(result, "LOCGR", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 768);
-    add_machine_instr(result, "LOC", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 768);
-    add_machine_instr(result, "LOCG", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 768);
-    add_machine_instr(result, "LPD", mach_format::SSF, { reg_4_U, db_12_4_U, db_12_4_U }, 769);
-    add_machine_instr(result, "LPDG", mach_format::SSF, { reg_4_U, db_12_4_U, db_12_4_U }, 769);
-    add_machine_instr(result, "LPQ", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 770);
-    add_machine_instr(result, "LPR", mach_format::RR, { reg_4_U, reg_4_U }, 771);
-    add_machine_instr(result, "LPGR", mach_format::RRE, { reg_4_U, reg_4_U }, 771);
-    add_machine_instr(result, "LPGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 771);
-    add_machine_instr(result, "LRVR", mach_format::RRE, { reg_4_U, reg_4_U }, 771);
-    add_machine_instr(result, "LRVGR", mach_format::RRE, { reg_4_U, reg_4_U }, 771);
-    add_machine_instr(result, "LRVH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 771);
-    add_machine_instr(result, "LRV", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 771);
-    add_machine_instr(result, "LRVG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 771);
-    add_machine_instr(result, "MC", mach_format::SI, { db_12_4_U, imm_8_S }, 772);
-    add_machine_instr(result, "MVC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 773);
-    add_machine_instr(result, "MVCRL", mach_format::SSE, { db_12_4_U, db_12_4_U }, 788);
-    add_machine_instr(result, "MVHHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773);
-    add_machine_instr(result, "MVHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773);
-    add_machine_instr(result, "MVGHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773);
-    add_machine_instr(result, "MVI", mach_format::SI, { db_12_4_U, imm_8_U }, 773);
-    add_machine_instr(result, "MVIY", mach_format::SIY, { db_12_4_U, imm_8_U }, 773);
-    add_machine_instr(result, "MVCIN", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 774);
-    add_machine_instr(result, "MVCL", mach_format::RR, { reg_4_U, reg_4_U }, 774);
-    add_machine_instr(result, "MVCLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 778);
-    add_machine_instr(result, "MVCLU", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 781);
-    add_machine_instr(result, "MVN", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 785);
-    add_machine_instr(result, "MVST", mach_format::RRE, { reg_4_U, reg_4_U }, 785);
-    add_machine_instr(result, "MVO", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 786);
-    add_machine_instr(result, "MVZ", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 787);
-    add_machine_instr(result, "MR", mach_format::RR, { reg_4_U, reg_4_U }, 788);
-    add_machine_instr(result, "MGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 788);
-    add_machine_instr(result, "M", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 788);
-    add_machine_instr(result, "MFY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 788);
-    add_machine_instr(result, "MG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 788);
-    add_machine_instr(result, "MH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 789);
-    add_machine_instr(result, "MHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 789);
-    add_machine_instr(result, "MGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 789);
-    add_machine_instr(result, "MHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 789);
-    add_machine_instr(result, "MGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 789);
-    add_machine_instr(result, "MLR", mach_format::RRE, { reg_4_U, reg_4_U }, 790);
-    add_machine_instr(result, "MLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 790);
-    add_machine_instr(result, "ML", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 790);
-    add_machine_instr(result, "MLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 790);
-    add_machine_instr(result, "MSR", mach_format::RRE, { reg_4_U, reg_4_U }, 791);
-    add_machine_instr(result, "MSRKC", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 791);
-    add_machine_instr(result, "MSGR", mach_format::RRE, { reg_4_U, reg_4_U }, 791);
-    add_machine_instr(result, "MSGRKC", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 791);
-    add_machine_instr(result, "MSGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 791);
-    add_machine_instr(result, "MS", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 791);
-    add_machine_instr(result, "MSC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791);
-    add_machine_instr(result, "MSY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791);
-    add_machine_instr(result, "MSG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791);
-    add_machine_instr(result, "MSGC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791);
-    add_machine_instr(result, "MSGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 791);
-    add_machine_instr(result, "MSFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 791);
-    add_machine_instr(result, "MSGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 791);
-    add_machine_instr(result, "NIAI", mach_format::IE, { imm_4_U, imm_4_U }, 792);
-    add_machine_instr(result, "NTSTG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 794);
-    add_machine_instr(result, "NCGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 522);
-    add_machine_instr(result, "NCRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 522);
-    add_machine_instr(result, "NNRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 796);
-    add_machine_instr(result, "NNGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 796);
-    add_machine_instr(result, "NOGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr(result, "NORK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr(result, "NXRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr(result, "NXGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr(result, "OR", mach_format::RR, { reg_4_U, reg_4_U }, 794);
-    add_machine_instr(result, "OGR", mach_format::RRE, { reg_4_U, reg_4_U }, 794);
-    add_machine_instr(result, "ORK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 794);
-    add_machine_instr(result, "OCGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 802);
-    add_machine_instr(result, "OCRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 802);
-    add_machine_instr(result, "OGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 794);
-    add_machine_instr(result, "O", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 794);
-    add_machine_instr(result, "OY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 794);
-    add_machine_instr(result, "OG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 795);
-    add_machine_instr(result, "OI", mach_format::SI, { db_12_4_U, imm_8_U }, 795);
-    add_machine_instr(result, "OIY", mach_format::SIY, { db_20_4_S, imm_8_U }, 795);
-    add_machine_instr(result, "OC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 795);
-    add_machine_instr(result, "OIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 796);
-    add_machine_instr(result, "OIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 796);
-    add_machine_instr(result, "OIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 796);
-    add_machine_instr(result, "OILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 796);
-    add_machine_instr(result, "OILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 796);
-    add_machine_instr(result, "OILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 796);
-    add_machine_instr(result, "PACK", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 796);
-    add_machine_instr(result, "PKA", mach_format::SS_f, { db_12_4_U, db_12_8x4L_U }, 797);
-    add_machine_instr(result, "PKU", mach_format::SS_f, { db_12_4_U, db_12_8x4L_U }, 798);
-    add_machine_instr(result, "PCC", mach_format::RRE, {}, 799);
-    add_machine_instr(result, "PLO", mach_format::SS_e, { reg_4_U, db_12_4_U, reg_4_U, db_12_4_U }, 815);
-    add_machine_instr(result, "PPA", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 829);
-    add_machine_instr(result, "PRNO", mach_format::RRE, { reg_4_U, reg_4_U }, 830);
-    add_machine_instr(result, "PPNO", mach_format::RRE, { reg_4_U, reg_4_U }, 830);
-    add_machine_instr(result, "POPCNT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 853);
-    add_machine_instr(result, "PFD", mach_format::RXY_b, { mask_4_U, dxb_20_4x4_S }, 843);
-    add_machine_instr(result, "PFDRL", mach_format::RIL_c, { mask_4_U, rel_addr_imm_32_S }, 843);
-    add_machine_instr(result, "RLL", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 845);
-    add_machine_instr(result, "RLLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 845);
-    add_machine_instr(result, "RNSBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 845);
-    add_machine_instr(result, "RXSBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 846);
-    add_machine_instr(result, "ROSBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 846);
-    add_machine_instr(result, "RISBG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 847);
-    add_machine_instr(result, "RISBGN", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 847);
-    add_machine_instr(result, "RISBHG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 848);
-    add_machine_instr(result, "RISBLG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 849);
-    add_machine_instr(result, "RNSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 845);
-    add_machine_instr(result, "RXSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 846);
-    add_machine_instr(result, "ROSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 858);
-    add_machine_instr(result, "RISBGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 858);
-    add_machine_instr(result, "RISBGNZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 860);
-    add_machine_instr(result, "RISBHGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 860);
-    add_machine_instr(result, "RISBLGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 860);
-    add_machine_instr(result, "SRST", mach_format::RRE, { reg_4_U, reg_4_U }, 850);
-    add_machine_instr(result, "SRSTU", mach_format::RRE, { reg_4_U, reg_4_U }, 852);
-    add_machine_instr(result, "SAR", mach_format::RRE, { reg_4_U, reg_4_U }, 854);
-    add_machine_instr(result, "SAM24", mach_format::E, {}, 854);
-    add_machine_instr(result, "SAM31", mach_format::E, {}, 854);
-    add_machine_instr(result, "SAM64", mach_format::E, {}, 854);
-    add_machine_instr(result, "SPM", mach_format::RR, { reg_4_U }, 855);
-    add_machine_instr(result, "SLDA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 855);
-    add_machine_instr(result, "SLA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 856);
-    add_machine_instr(result, "SLAK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 856);
-    add_machine_instr(result, "SLAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 856);
-    add_machine_instr(result, "SLDL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 856);
-    add_machine_instr(result, "SLL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 857);
-    add_machine_instr(result, "SLLK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 857);
-    add_machine_instr(result, "SLLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 857);
-    add_machine_instr(result, "SRDA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 858);
-    add_machine_instr(result, "SRDL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 858);
-    add_machine_instr(result, "SRA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 859);
-    add_machine_instr(result, "SRAK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 859);
-    add_machine_instr(result, "SRAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 859);
-    add_machine_instr(result, "SRL", mach_format::RS_a, { reg_4_U, db_12_4_U }, 860);
-    add_machine_instr(result, "SRLK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 860);
-    add_machine_instr(result, "SRLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 860);
-    add_machine_instr(result, "ST", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 860);
-    add_machine_instr(result, "STY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 861);
-    add_machine_instr(result, "STG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 861);
-    add_machine_instr(result, "STRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 861);
-    add_machine_instr(result, "STGRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 861);
-    add_machine_instr(result, "STAM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 861);
-    add_machine_instr(result, "STAMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 861);
-    add_machine_instr(result, "STC", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 862);
-    add_machine_instr(result, "STCY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 862);
-    add_machine_instr(result, "STCH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 862);
-    add_machine_instr(result, "STCM", mach_format::RS_b, { reg_4_U, mask_4_U, db_12_4_U }, 862);
-    add_machine_instr(result, "STCMY", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 862);
-    add_machine_instr(result, "STCMH", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 862);
-    add_machine_instr(result, "STCK", mach_format::S, { db_12_4_U }, 863);
-    add_machine_instr(result, "STCKF", mach_format::S, { db_12_4_U }, 863);
-    add_machine_instr(result, "STCKE", mach_format::S, { db_12_4_U }, 864);
-    add_machine_instr(result, "STFLE", mach_format::S, { db_20_4_S }, 866);
-    add_machine_instr(result, "STGSC", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 867);
-    add_machine_instr(result, "STH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 867);
-    add_machine_instr(result, "STHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 868);
-    add_machine_instr(result, "STHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 868);
-    add_machine_instr(result, "STHH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 868);
-    add_machine_instr(result, "STFH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 868);
-    add_machine_instr(result, "STM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 869);
-    add_machine_instr(result, "STMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 869);
-    add_machine_instr(result, "STMG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 869);
-    add_machine_instr(result, "STMH", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 869);
-    add_machine_instr(result, "STOC", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 869);
-    add_machine_instr(result, "STOCG", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 869);
-    add_machine_instr(result, "STOCFH", mach_format::RSY_b, { reg_4_U, db_20_4_S, mask_4_U }, 870);
-    add_machine_instr(result, "STPQ", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 870);
-    add_machine_instr(result, "STRVH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871);
-    add_machine_instr(result, "STRV", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871);
-    add_machine_instr(result, "STRVG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871);
-    add_machine_instr(result, "SR", mach_format::RR, { reg_4_U, reg_4_U }, 871);
-    add_machine_instr(result, "SGR", mach_format::RRE, { reg_4_U, reg_4_U }, 871);
-    add_machine_instr(result, "SGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 871);
-    add_machine_instr(result, "SRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 871);
-    add_machine_instr(result, "SGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 872);
-    add_machine_instr(result, "S", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 872);
-    add_machine_instr(result, "SY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872);
-    add_machine_instr(result, "SG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872);
-    add_machine_instr(result, "SGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872);
-    add_machine_instr(result, "SH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 872);
-    add_machine_instr(result, "SHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872);
-    add_machine_instr(result, "SGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872);
-    add_machine_instr(result, "SHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873);
-    add_machine_instr(result, "SHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873);
-    add_machine_instr(result, "SLR", mach_format::RR, { reg_4_U, reg_4_U }, 873);
-    add_machine_instr(result, "SLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 873);
-    add_machine_instr(result, "SLGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 873);
-    add_machine_instr(result, "SLRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873);
-    add_machine_instr(result, "SLGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873);
-    add_machine_instr(result, "SL", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 874);
-    add_machine_instr(result, "SLY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 874);
-    add_machine_instr(result, "SLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 874);
-    add_machine_instr(result, "SLGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 874);
-    add_machine_instr(result, "SLFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 874);
-    add_machine_instr(result, "SLGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 874);
-    add_machine_instr(result, "SLHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 875);
-    add_machine_instr(result, "SLHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 875);
-    add_machine_instr(result, "SLBR", mach_format::RRE, { reg_4_U, reg_4_U }, 875);
-    add_machine_instr(result, "SLBGR", mach_format::RRE, { reg_4_U, reg_4_U }, 875);
-    add_machine_instr(result, "SLB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 875);
-    add_machine_instr(result, "SLBG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 875);
-    add_machine_instr(result, "SVC", mach_format::I, { imm_8_U }, 876);
-    add_machine_instr(result, "TS", mach_format::SI, { db_12_4_U }, 876);
-    add_machine_instr(result, "TAM", mach_format::E, {}, 876);
-    add_machine_instr(result, "TM", mach_format::SI, { db_12_4_U, imm_8_U }, 877);
-    add_machine_instr(result, "TMY", mach_format::SIY, { db_20_4_S, imm_8_U }, 877);
-    add_machine_instr(result, "TMHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr(result, "TMHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr(result, "TMH", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr(result, "TMLH", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr(result, "TML", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr(result, "TMLL", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
-    add_machine_instr(result, "TABORT", mach_format::S, { db_12_4_U }, 878);
-    add_machine_instr(result, "TBEGIN", mach_format::SIL, { db_12_4_U, imm_16_S }, 879);
-    add_machine_instr(result, "TBEGINC", mach_format::SIL, { db_12_4_U, imm_16_S }, 883);
-    add_machine_instr(result, "TEND", mach_format::S, {}, 885);
-    add_machine_instr(result, "TR", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 886);
-    add_machine_instr(result, "TRT", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 887);
-    add_machine_instr(result, "TRTE", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 887);
-    add_machine_instr(result, "TRTRE", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 888);
-    add_machine_instr(result, "TRTR", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 892);
-    add_machine_instr(result, "TRE", mach_format::RRE, { reg_4_U, reg_4_U }, 893);
-    add_machine_instr(result, "TROO", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 895);
-    add_machine_instr(result, "TROT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 895);
-    add_machine_instr(result, "TRTO", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 895);
-    add_machine_instr(result, "TRTT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 895);
-    add_machine_instr(result, "UNPK", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 900);
-    add_machine_instr(result, "UNPKA", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 901);
-    add_machine_instr(result, "UNPKU", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 902);
-    add_machine_instr(result, "UPT", mach_format::E, {}, 903);
-    add_machine_instr(result, "AP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 920);
-    add_machine_instr(result, "CP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 921);
-    add_machine_instr(result, "DP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 921);
-    add_machine_instr(result, "DFLTCC", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1714);
-    add_machine_instr(result, "ED", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 922);
-    add_machine_instr(result, "EDMK", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 925);
-    add_machine_instr(result, "SRP", mach_format::SS_c, { db_12_4x4L_U, db_12_4_U, imm_4_U }, 926);
-    add_machine_instr(result, "MP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 926);
-    add_machine_instr(result, "SP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 927);
-    add_machine_instr(result, "TP", mach_format::RSL_a, { db_12_4x4L_U }, 928);
-    add_machine_instr(result, "ZAP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 928);
-    add_machine_instr(result, "THDR", mach_format::RRE, { reg_4_U, reg_4_U }, 955);
-    add_machine_instr(result, "THDER", mach_format::RRE, { reg_4_U, reg_4_U }, 955);
-    add_machine_instr(result, "TBEDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 956);
-    add_machine_instr(result, "TBDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 956);
-    add_machine_instr(result, "CPSDR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 958);
-    add_machine_instr(result, "EFPC", mach_format::RRE, { reg_4_U }, 958);
-    add_machine_instr(result, "LER", mach_format::RR, { reg_4_U, reg_4_U }, 959);
-    add_machine_instr(result, "LDR", mach_format::RR, { reg_4_U, reg_4_U }, 959);
-    add_machine_instr(result, "LXR", mach_format::RRE, { reg_4_U, reg_4_U }, 959);
-    add_machine_instr(result, "LE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 959);
-    add_machine_instr(result, "LD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 959);
-    add_machine_instr(result, "LEY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 959);
-    add_machine_instr(result, "LDY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 959);
-    add_machine_instr(result, "LCDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 959);
-    add_machine_instr(result, "LFPC", mach_format::S, { db_12_4_U }, 959);
-    add_machine_instr(result, "LFAS", mach_format::S, { db_12_4_U }, 960);
-    add_machine_instr(result, "LDGR", mach_format::RRE, { reg_4_U, reg_4_U }, 962);
-    add_machine_instr(result, "LGDR", mach_format::RRE, { reg_4_U, reg_4_U }, 962);
-    add_machine_instr(result, "LNDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 962);
-    add_machine_instr(result, "LPDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 962);
-    add_machine_instr(result, "LZER", mach_format::RRE, { reg_4_U }, 963);
-    add_machine_instr(result, "LZXR", mach_format::RRE, { reg_4_U }, 963);
-    add_machine_instr(result, "LZDR", mach_format::RRE, { reg_4_U }, 963);
-    add_machine_instr(result, "PFPO", mach_format::E, {}, 963);
-    add_machine_instr(result, "SRNM", mach_format::S, { db_12_4_U }, 975);
-    add_machine_instr(result, "SRNMB", mach_format::S, { db_12_4_U }, 975);
-    add_machine_instr(result, "SRNMT", mach_format::S, { db_12_4_U }, 975);
-    add_machine_instr(result, "SFPC", mach_format::RRE, { reg_4_U }, 975);
-    add_machine_instr(result, "SFASR", mach_format::RRE, { reg_4_U }, 976);
-    add_machine_instr(result, "STE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 976);
-    add_machine_instr(result, "STD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 976);
-    add_machine_instr(result, "STDY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 977);
-    add_machine_instr(result, "STEY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 977);
-    add_machine_instr(result, "STFPC", mach_format::S, { db_12_4_U }, 977);
-    add_machine_instr(result, "BSA", mach_format::RRE, { reg_4_U, reg_4_U }, 989);
-    add_machine_instr(result, "BAKR", mach_format::RRE, { reg_4_U, reg_4_U }, 993);
-    add_machine_instr(result, "BSG", mach_format::RRE, { reg_4_U, reg_4_U }, 995);
-    add_machine_instr(result, "CRDTE", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1, 999);
-    add_machine_instr(result, "CSP", mach_format::RRE, { reg_4_U, reg_4_U }, 1003);
-    add_machine_instr(result, "CSPG", mach_format::RRE, { reg_4_U, reg_4_U }, 1003);
-    add_machine_instr(result, "ESEA", mach_format::RRE, { reg_4_U }, 1006);
-    add_machine_instr(result, "EPAR", mach_format::RRE, { reg_4_U }, 1006);
-    add_machine_instr(result, "EPAIR", mach_format::RRE, { reg_4_U }, 1006);
-    add_machine_instr(result, "ESAR", mach_format::RRE, { reg_4_U }, 1006);
-    add_machine_instr(result, "ESAIR", mach_format::RRE, { reg_4_U }, 1007);
-    add_machine_instr(result, "EREG", mach_format::RRE, { reg_4_U, reg_4_U }, 1007);
-    add_machine_instr(result, "EREGG", mach_format::RRE, { reg_4_U, reg_4_U }, 1007);
-    add_machine_instr(result, "ESTA", mach_format::RRE, { reg_4_U, reg_4_U }, 1008);
-    add_machine_instr(result, "IAC", mach_format::RRE, { reg_4_U }, 1011);
-    add_machine_instr(result, "IPK", mach_format::S, {}, 1012);
-    add_machine_instr(result, "IRBM", mach_format::RRE, { reg_4_U, reg_4_U }, 1012);
-    add_machine_instr(result, "ISK", mach_format::RR, { reg_4_U, reg_4_U }, 268);
-    add_machine_instr(result, "ISKE", mach_format::RRE, { reg_4_U, reg_4_U }, 1012);
-    add_machine_instr(result, "IVSK", mach_format::RRE, { reg_4_U, reg_4_U }, 1013);
-    add_machine_instr(result, "IDTE", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1, 1014);
-    add_machine_instr(result, "IPTE", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 2, 1019);
-    add_machine_instr(result, "LASP", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1023);
-    add_machine_instr(result, "LCTL", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1032);
-    add_machine_instr(result, "LCTLG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 1032);
-    add_machine_instr(result, "LPTEA", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1032);
-    add_machine_instr(result, "LPSW", mach_format::SI, { db_12_4_U }, 1036);
-    add_machine_instr(result, "LPSWE", mach_format::S, { db_12_4_U }, 1037);
-    add_machine_instr(result, "LRA", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1038);
-    add_machine_instr(result, "LRAY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 1038);
-    add_machine_instr(result, "LRAG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 1038);
-    add_machine_instr(result, "LURA", mach_format::RRE, { reg_4_U, reg_4_U }, 1042);
-    add_machine_instr(result, "LURAG", mach_format::RRE, { reg_4_U, reg_4_U }, 1042);
-    add_machine_instr(result, "MSTA", mach_format::RRE, { reg_4_U }, 1043);
-    add_machine_instr(result, "MVPG", mach_format::RRE, { reg_4_U, reg_4_U }, 1044);
-    add_machine_instr(result, "MVCP", mach_format::SS_d, { drb_12_4x4_U, db_12_4_U, reg_4_U }, 1046);
-    add_machine_instr(result, "MVCS", mach_format::SS_d, { drb_12_4x4_U, db_12_4_U, reg_4_U }, 1046);
-    add_machine_instr(result, "MVCDK", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1048);
-    add_machine_instr(result, "MVCK", mach_format::SS_d, { drb_12_4x4_U, db_12_4_U, reg_4_U }, 1049);
-    add_machine_instr(result, "MVCOS", mach_format::SSF, { db_12_4_U, db_12_4_U, reg_4_U }, 1050);
-    add_machine_instr(result, "MVCSK", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1053);
-    add_machine_instr(result, "PGIN", mach_format::RRE, { reg_4_U, reg_4_U }, 1054);
-    add_machine_instr(result, "PGOUT", mach_format::RRE, { reg_4_U, reg_4_U }, 1055);
-    add_machine_instr(result, "PCKMO", mach_format::RRE, {}, 1056);
-    add_machine_instr(result, "PFMF", mach_format::RRE, { reg_4_U, reg_4_U }, 1059);
-    add_machine_instr(result, "PTFF", mach_format::E, {}, 1063);
-    add_machine_instr(result, "PTF", mach_format::RRE, { reg_4_U }, 1071);
-    add_machine_instr(result, "PC", mach_format::S, { db_12_4_U }, 1072);
-    add_machine_instr(result, "PR", mach_format::E, {}, 1085);
-    add_machine_instr(result, "PTI", mach_format::RRE, { reg_4_U, reg_4_U }, 1089);
-    add_machine_instr(result, "PT", mach_format::RRE, { reg_4_U, reg_4_U }, 1089);
-    add_machine_instr(result, "PALB", mach_format::RRE, {}, 1098);
-    add_machine_instr(result, "PTLB", mach_format::S, {}, 1098);
-    add_machine_instr(result, "RRBE", mach_format::RRE, { reg_4_U, reg_4_U }, 1098);
-    add_machine_instr(result, "RRBM", mach_format::RRE, { reg_4_U, reg_4_U }, 1099);
-    add_machine_instr(result, "RP", mach_format::S, { db_12_4_U }, 1099);
-    add_machine_instr(result, "SAC", mach_format::S, { db_12_4_U }, 1102);
-    add_machine_instr(result, "SACF", mach_format::S, { db_12_4_U }, 1102);
-    add_machine_instr(result, "SCK", mach_format::S, { db_12_4_U }, 1103);
-    add_machine_instr(result, "SCKC", mach_format::S, { db_12_4_U }, 1104);
-    add_machine_instr(result, "SCKPF", mach_format::E, {}, 1105);
-    add_machine_instr(result, "SPX", mach_format::S, { db_12_4_U }, 1105);
-    add_machine_instr(result, "SPT", mach_format::S, { db_12_4_U }, 1105);
-    add_machine_instr(result, "SPKA", mach_format::S, { db_12_4_U }, 1106);
-    add_machine_instr(result, "SSAR", mach_format::RRE, { reg_4_U }, 1107);
-    add_machine_instr(result, "SSAIR", mach_format::RRE, { reg_4_U }, 1107);
-    add_machine_instr(result, "SSK", mach_format::RR, { reg_4_U, reg_4_U }, 304);
-    add_machine_instr(result, "SSKE", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 1112);
-    add_machine_instr(result, "SSM", mach_format::SI, { db_12_4_U }, 1115);
-    add_machine_instr(result, "SIGP", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1115);
-    add_machine_instr(result, "STCKC", mach_format::S, { db_12_4_U }, 1117);
-    add_machine_instr(result, "STCTL", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1117);
-    add_machine_instr(result, "STCTG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 1117);
-    add_machine_instr(result, "STAP", mach_format::S, { db_12_4_U }, 1118);
-    add_machine_instr(result, "STIDP", mach_format::S, { db_12_4_U }, 1118);
-    add_machine_instr(result, "STPT", mach_format::S, { db_12_4_U }, 1120);
-    add_machine_instr(result, "STFL", mach_format::S, { db_12_4_U }, 1120);
-    add_machine_instr(result, "STPX", mach_format::S, { db_12_4_U }, 1121);
-    add_machine_instr(result, "STRAG", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1121);
-    add_machine_instr(result, "STSI", mach_format::S, { db_12_4_U }, 1122);
-    add_machine_instr(result, "STOSM", mach_format::SI, { db_12_4_U, imm_8_U }, 1146);
-    add_machine_instr(result, "STNSM", mach_format::SI, { db_12_4_U, imm_8_U }, 1146);
-    add_machine_instr(result, "STURA", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
-    add_machine_instr(result, "STURG", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
-    add_machine_instr(result, "TAR", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
-    add_machine_instr(result, "TB", mach_format::RRE, { reg_4_U, reg_4_U }, 1149);
-    add_machine_instr(result, "TPEI", mach_format::RRE, { reg_4_U, reg_4_U }, 1151);
-    add_machine_instr(result, "TPROT", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1152);
-    add_machine_instr(result, "TRACE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1155);
-    add_machine_instr(result, "TRACG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 1155);
-    add_machine_instr(result, "TRAP2", mach_format::E, {}, 1156);
-    add_machine_instr(result, "TRAP4", mach_format::S, { db_12_4_U }, 1156);
-    add_machine_instr(result, "XSCH", mach_format::S, {}, 1215);
-    add_machine_instr(result, "CSCH", mach_format::S, {}, 1217);
-    add_machine_instr(result, "HSCH", mach_format::S, {}, 1218);
-    add_machine_instr(result, "MSCH", mach_format::S, { db_12_4_U }, 1219);
-    add_machine_instr(result, "RCHP", mach_format::S, {}, 1221);
-    add_machine_instr(result, "RSCH", mach_format::S, {}, 1222);
-    add_machine_instr(result, "SAL", mach_format::S, {}, 1224);
-    add_machine_instr(result, "SCHM", mach_format::S, {}, 1225);
-    add_machine_instr(result, "SSCH", mach_format::S, { db_12_4_U }, 1227);
-    add_machine_instr(result, "STCPS", mach_format::S, { db_12_4_U }, 1228);
-    add_machine_instr(result, "STCRW", mach_format::S, { db_12_4_U }, 1229);
-    add_machine_instr(result, "STSCH", mach_format::S, { db_12_4_U }, 1230);
-    add_machine_instr(result, "TPI", mach_format::S, { db_12_4_U }, 1231);
-    add_machine_instr(result, "TSCH", mach_format::S, { db_12_4_U }, 1232);
-
-    add_machine_instr(result, "AER", mach_format::RR, { reg_4_U, reg_4_U }, 1412);
-    add_machine_instr(result, "ADR", mach_format::RR, { reg_4_U, reg_4_U }, 1412);
-    add_machine_instr(result, "AXR", mach_format::RR, { reg_4_U, reg_4_U }, 1412);
-    add_machine_instr(result, "AE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1412);
-    add_machine_instr(result, "AD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1412);
-    add_machine_instr(result, "AWR", mach_format::RR, { reg_4_U, reg_4_U }, 1413);
-    add_machine_instr(result, "AUR", mach_format::RR, { reg_4_U, reg_4_U }, 1413);
-    add_machine_instr(result, "AU", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1413);
-    add_machine_instr(result, "AW", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1413);
-    add_machine_instr(result, "CER", mach_format::RR, { reg_4_U, reg_4_U }, 1414);
-    add_machine_instr(result, "CDR", mach_format::RR, { reg_4_U, reg_4_U }, 1414);
-    add_machine_instr(result, "CXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1414);
-    add_machine_instr(result, "CE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1414);
-    add_machine_instr(result, "CD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1414);
-    add_machine_instr(result, "CEFR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "CDFR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "CXFR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "CEGR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "CDGR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "CXGR", mach_format::RRE, { reg_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "CFER", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "CFDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "CFXR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "CGER", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "CGDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "CGXR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1415);
-    add_machine_instr(result, "DDR", mach_format::RR, { reg_4_U, reg_4_U }, 1416);
-    add_machine_instr(result, "DER", mach_format::RR, { reg_4_U, reg_4_U }, 1416);
-    add_machine_instr(result, "DXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1416);
-    add_machine_instr(result, "DD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1416);
-    add_machine_instr(result, "DE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1416);
-    add_machine_instr(result, "HDR", mach_format::RR, { reg_4_U, reg_4_U }, 1417);
-    add_machine_instr(result, "HER", mach_format::RR, { reg_4_U, reg_4_U }, 1417);
-    add_machine_instr(result, "LTER", mach_format::RR, { reg_4_U, reg_4_U }, 1417);
-    add_machine_instr(result, "LTDR", mach_format::RR, { reg_4_U, reg_4_U }, 1417);
-    add_machine_instr(result, "LTXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1418);
-    add_machine_instr(result, "LCER", mach_format::RR, { reg_4_U, reg_4_U }, 1418);
-    add_machine_instr(result, "LCDR", mach_format::RR, { reg_4_U, reg_4_U }, 1418);
-    add_machine_instr(result, "LCXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1418);
-    add_machine_instr(result, "FIER", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr(result, "FIDR", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr(result, "FIXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr(result, "LDER", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr(result, "LXDR", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr(result, "LXER", mach_format::RRE, { reg_4_U, reg_4_U }, 1419);
-    add_machine_instr(result, "LDE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1419);
-    add_machine_instr(result, "LXD", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1419);
-    add_machine_instr(result, "LXE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1419);
-    add_machine_instr(result, "LNDR", mach_format::RR, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr(result, "LNER", mach_format::RR, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr(result, "LPDR", mach_format::RR, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr(result, "LPER", mach_format::RR, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr(result, "LNXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr(result, "LPXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1420);
-    add_machine_instr(result, "LEDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr(result, "LDXR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr(result, "LRER", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr(result, "LRDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr(result, "LEXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr(result, "MEER", mach_format::RRE, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr(result, "MDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr(result, "MXR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr(result, "MDER", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr(result, "MER", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr(result, "MXDR", mach_format::RR, { reg_4_U, reg_4_U }, 1421);
-    add_machine_instr(result, "MEE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1422);
-    add_machine_instr(result, "MD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422);
-    add_machine_instr(result, "MDE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422);
-    add_machine_instr(result, "MXD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422);
-    add_machine_instr(result, "ME", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1422);
-    add_machine_instr(result, "MAER", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423);
-    add_machine_instr(result, "MADR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423);
-    add_machine_instr(result, "MAD", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423);
-    add_machine_instr(result, "MAE", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423);
-    add_machine_instr(result, "MSER", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423);
-    add_machine_instr(result, "MSDR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1423);
-    add_machine_instr(result, "MSE", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423);
-    add_machine_instr(result, "MSD", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1423);
-    add_machine_instr(result, "MAYR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1424);
-    add_machine_instr(result, "MAYHR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1424);
-    add_machine_instr(result, "MAYLR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1424);
-    add_machine_instr(result, "MAY", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1424);
-    add_machine_instr(result, "MAYH", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1424);
-    add_machine_instr(result, "MAYL", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1424);
-    add_machine_instr(result, "MYR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1426);
-    add_machine_instr(result, "MYHR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1426);
-    add_machine_instr(result, "MYLR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1426);
-    add_machine_instr(result, "MY", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426);
-    add_machine_instr(result, "MYH", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426);
-    add_machine_instr(result, "MYL", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426);
-    add_machine_instr(result, "SQER", mach_format::RRE, { reg_4_U, reg_4_U }, 1427);
-    add_machine_instr(result, "SQDR", mach_format::RRE, { reg_4_U, reg_4_U }, 1427);
-    add_machine_instr(result, "SQXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1427);
-    add_machine_instr(result, "SQE", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1427);
-    add_machine_instr(result, "SQD", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1427);
-    add_machine_instr(result, "SER", mach_format::RR, { reg_4_U, reg_4_U }, 1428);
-    add_machine_instr(result, "SDR", mach_format::RR, { reg_4_U, reg_4_U }, 1428);
-    add_machine_instr(result, "SXR", mach_format::RR, { reg_4_U, reg_4_U }, 1428);
-    add_machine_instr(result, "SE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1428);
-    add_machine_instr(result, "SD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1428);
-    add_machine_instr(result, "SUR", mach_format::RR, { reg_4_U, reg_4_U }, 1429);
-    add_machine_instr(result, "SWR", mach_format::RR, { reg_4_U, reg_4_U }, 1429);
-    add_machine_instr(result, "SU", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1429);
-    add_machine_instr(result, "SW", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 1429);
-    add_machine_instr(result, "AEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1445);
-    add_machine_instr(result, "ADBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1445);
-    add_machine_instr(result, "AXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1445);
-    add_machine_instr(result, "AEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1445);
-    add_machine_instr(result, "ADB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1445);
-    add_machine_instr(result, "CEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1447);
-    add_machine_instr(result, "CDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1447);
-    add_machine_instr(result, "CXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1447);
-    add_machine_instr(result, "CDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1447);
-    add_machine_instr(result, "CEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1447);
-    add_machine_instr(result, "KEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448);
-    add_machine_instr(result, "KDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448);
-    add_machine_instr(result, "KDSA", mach_format::RRE, { reg_4_U, reg_4_U }, 1700);
-    add_machine_instr(result, "KXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448);
-    add_machine_instr(result, "KDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1448);
-    add_machine_instr(result, "KEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1448);
-    add_machine_instr(result, "CEFBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr(result, "CDFBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr(result, "CXFBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr(result, "CEGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr(result, "CDGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr(result, "CXGBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
-    add_machine_instr(result, "CEFBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr(result, "CDFBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr(result, "CXFBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr(result, "CEGBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr(result, "CDGBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr(result, "CXGBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1449);
-    add_machine_instr(result, "CELFBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr(result, "CDLFBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr(result, "CXLFBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr(result, "CELGBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr(result, "CDLGBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr(result, "CXLGBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1451);
-    add_machine_instr(result, "CFEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr(result, "CFDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr(result, "CFXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr(result, "CGEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr(result, "CGDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr(result, "CGXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1452);
-    add_machine_instr(result, "CFEBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr(result, "CFDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr(result, "CFXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr(result, "CGEBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr(result, "CGDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr(result, "CGXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1452);
-    add_machine_instr(result, "CLFEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr(result, "CLFDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr(result, "CLFXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr(result, "CLGEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr(result, "CLGDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr(result, "CLGXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1455);
-    add_machine_instr(result, "DEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1457);
-    add_machine_instr(result, "DDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1457);
-    add_machine_instr(result, "DXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1457);
-    add_machine_instr(result, "DEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1457);
-    add_machine_instr(result, "DDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1457);
-    add_machine_instr(result, "DIEBR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1458);
-    add_machine_instr(result, "DIDBR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1458);
-    add_machine_instr(result, "LTEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr(result, "LTDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr(result, "LTXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr(result, "LCEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr(result, "LCDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr(result, "LCXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
-    add_machine_instr(result, "ECCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 39);
-    add_machine_instr(result, "EPCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 39);
-    add_machine_instr(result, "ECPGA", mach_format::RRE, { reg_4_U, reg_4_U }, 39);
-    add_machine_instr(result, "FIEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462);
-    add_machine_instr(result, "FIDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462);
-    add_machine_instr(result, "FIXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462);
-    add_machine_instr(result, "FIEBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462);
-    add_machine_instr(result, "FIDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462);
-    add_machine_instr(result, "FIXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462);
-    add_machine_instr(result, "LSCTL", mach_format::S, { db_12_4_U }, 42);
-    add_machine_instr(result, "LDEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463);
-    add_machine_instr(result, "LXDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463);
-    add_machine_instr(result, "LPCTL", mach_format::S, { db_12_4_U }, 41);
-    add_machine_instr(result, "LCCTL", mach_format::S, { db_12_4_U }, 40);
-    add_machine_instr(result, "LXEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463);
-    add_machine_instr(result, "LDEB", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr(result, "LXDB", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr(result, "LXEB", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr(result, "LNEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr(result, "LNDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr(result, "LNXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
-    add_machine_instr(result, "LPEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr(result, "LPDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr(result, "LPXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr(result, "LEDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr(result, "LDXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr(result, "LEXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1465);
-    add_machine_instr(result, "LEDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465);
-    add_machine_instr(result, "LDXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465);
-    add_machine_instr(result, "LEXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465);
-    add_machine_instr(result, "LPP", mach_format::S, { db_12_4_U }, 11);
-    add_machine_instr(result, "MEEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
-    add_machine_instr(result, "MDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
-    add_machine_instr(result, "MXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
-    add_machine_instr(result, "MDEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
-    add_machine_instr(result, "MXDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
-    add_machine_instr(result, "MEEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467);
-    add_machine_instr(result, "MDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467);
-    add_machine_instr(result, "MDEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467);
-    add_machine_instr(result, "MXDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1467);
-    add_machine_instr(result, "MADBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468);
-    add_machine_instr(result, "MAEBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468);
-    add_machine_instr(result, "MAEB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468);
-    add_machine_instr(result, "MADB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468);
-    add_machine_instr(result, "MSEBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468);
-    add_machine_instr(result, "MSDBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468);
-    add_machine_instr(result, "MSEB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468);
-    add_machine_instr(result, "MSDB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468);
-    add_machine_instr(result, "QCTRI", mach_format::S, { db_12_4_U }, 43);
-    add_machine_instr(result, "QSI", mach_format::S, { db_12_4_U }, 45);
-    add_machine_instr(result, "SCCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 46);
-    add_machine_instr(result, "SPCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 47);
-    add_machine_instr(result, "SQEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr(result, "SQDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr(result, "SQXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr(result, "SQEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470);
-    add_machine_instr(result, "SQDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470);
-    add_machine_instr(result, "SEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr(result, "SDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr(result, "SXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
-    add_machine_instr(result, "SEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470);
-    add_machine_instr(result, "SDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470);
-    add_machine_instr(result, "SORTL", mach_format::RRE, { reg_4_U, reg_4_U }, 19);
-    add_machine_instr(result, "TCEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471);
-    add_machine_instr(result, "TCDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471);
-    add_machine_instr(result, "TCXB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471);
-    add_machine_instr(result, "ADTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1491);
-    add_machine_instr(result, "AXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1491);
-    add_machine_instr(result, "ADTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1491);
-    add_machine_instr(result, "AXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1491);
-    add_machine_instr(result, "CDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1494);
-    add_machine_instr(result, "CXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1494);
-    add_machine_instr(result, "KDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495);
-    add_machine_instr(result, "KXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495);
-    add_machine_instr(result, "CEDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495);
-    add_machine_instr(result, "CEXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1495);
-    add_machine_instr(result, "CDGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1496);
-    add_machine_instr(result, "CXGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1496);
-    add_machine_instr(result, "CDGTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496);
-    add_machine_instr(result, "CXGTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496);
-    add_machine_instr(result, "CDFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496);
-    add_machine_instr(result, "CXFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1496);
-    add_machine_instr(result, "CDLGTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497);
-    add_machine_instr(result, "CXLGTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497);
-    add_machine_instr(result, "CDLFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497);
-    add_machine_instr(result, "CXLFTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1497);
-    add_machine_instr(result, "CDPT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1498);
-    add_machine_instr(result, "CXPT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1498);
-    add_machine_instr(result, "CDSTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500);
-    add_machine_instr(result, "CXSTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500);
-    add_machine_instr(result, "CDUTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500);
-    add_machine_instr(result, "CXUTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1500);
-    add_machine_instr(result, "CDZT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1501);
-    add_machine_instr(result, "CXZT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1501);
-    add_machine_instr(result, "CGDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1501);
-    add_machine_instr(result, "CGXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1501);
-    add_machine_instr(result, "CGDTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502);
-    add_machine_instr(result, "CGXTRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502);
-    add_machine_instr(result, "CFDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502);
-    add_machine_instr(result, "CFXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1502);
-    add_machine_instr(result, "CLGDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504);
-    add_machine_instr(result, "CLGXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504);
-    add_machine_instr(result, "CLFDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504);
-    add_machine_instr(result, "CLFXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1504);
-    add_machine_instr(result, "CPDT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1505);
-    add_machine_instr(result, "CPXT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1505);
-    add_machine_instr(result, "CSDTR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1507);
-    add_machine_instr(result, "CSXTR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1507);
-    add_machine_instr(result, "CUDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1507);
-    add_machine_instr(result, "CUXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1507);
-    add_machine_instr(result, "CZDT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1508);
-    add_machine_instr(result, "CZXT", mach_format::RSL_b, { reg_4_U, db_12_8x4L_U, mask_4_U }, 1508);
-    add_machine_instr(result, "DDTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1509);
-    add_machine_instr(result, "DXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1509);
-    add_machine_instr(result, "DDTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1509);
-    add_machine_instr(result, "DXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1509);
-    add_machine_instr(result, "EEXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511);
-    add_machine_instr(result, "EEDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511);
-    add_machine_instr(result, "ESDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511);
-    add_machine_instr(result, "ESXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1511);
-    add_machine_instr(result, "IEDTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 1512);
-    add_machine_instr(result, "IEXTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 1512);
-    add_machine_instr(result, "LTDTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1513);
-    add_machine_instr(result, "LTXTR", mach_format::RRE, { reg_4_U, reg_4_U }, 1513);
-    add_machine_instr(result, "FIDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1514);
-    add_machine_instr(result, "FIXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1514);
-    add_machine_instr(result, "LDETR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1517);
-    add_machine_instr(result, "LXDTR", mach_format::RRF_d, { reg_4_U, reg_4_U, mask_4_U }, 1517);
-    add_machine_instr(result, "LEDTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1518);
-    add_machine_instr(result, "LDXTR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1518);
-    add_machine_instr(result, "MDTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1519);
-    add_machine_instr(result, "MXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1519);
-    add_machine_instr(result, "MDTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1520);
-    add_machine_instr(result, "MXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1520);
-    add_machine_instr(result, "QADTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1521);
-    add_machine_instr(result, "QAXTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1521);
-    add_machine_instr(result, "RRDTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1524);
-    add_machine_instr(result, "RRXTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1524);
-    add_machine_instr(result, "SELFHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864);
-    add_machine_instr(result, "SELGR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864);
-    add_machine_instr(result, "SELR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864);
-    add_machine_instr(result, "SLDT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526);
-    add_machine_instr(result, "SLXT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526);
-    add_machine_instr(result, "SRDT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526);
-    add_machine_instr(result, "SRXT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526);
-    add_machine_instr(result, "SDTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1527);
-    add_machine_instr(result, "SXTR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1527);
-    add_machine_instr(result, "SDTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1527);
-    add_machine_instr(result, "SXTRA", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1527);
-    add_machine_instr(result, "TDCET", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1528);
-    add_machine_instr(result, "TDCDT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1528);
-    add_machine_instr(result, "TDCXT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1528);
-    add_machine_instr(result, "TDGET", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529);
-    add_machine_instr(result, "TDGDT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529);
-    add_machine_instr(result, "TDGXT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529);
-    add_machine_instr(result, "VBPERM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1536);
-    add_machine_instr(result, "VGEF", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1536);
-    add_machine_instr(
-        result, "VCFPS", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1641);
-    add_machine_instr(
-        result, "VCLFP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1611);
-    add_machine_instr(result, "VGEG", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1536);
-    add_machine_instr(result, "VGBM", mach_format::VRI_a, { vec_reg_5_U, imm_16_U }, 1537);
-    add_machine_instr(result, "VGM", mach_format::VRI_b, { vec_reg_5_U, imm_8_U, imm_8_U, mask_4_U }, 1537);
-    add_machine_instr(result, "VL", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1, 1538);
-    add_machine_instr(result, "VSTEBRF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VSTEBRG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VLLEBRZ", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1562);
-    add_machine_instr(result, "VLREP", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1538);
-    add_machine_instr(result, "VLR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U }, 1538);
-    add_machine_instr(result, "VLEB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1538);
-    add_machine_instr(result, "VLEBRH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1561);
-    add_machine_instr(result, "VLEBRG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1561);
-    add_machine_instr(result, "VLBRREP", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1562);
-    add_machine_instr(result, "VLER", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1564);
-    add_machine_instr(result, "VLBR", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1563);
-    add_machine_instr(result, "VLEH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEIH", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEIF", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEIG", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEIB", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr(result, "VLGV", mach_format::VRS_c, { reg_4_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1539);
-    add_machine_instr(result, "VLLEZ", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1540);
-    add_machine_instr(result, "VLM", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1, 1541);
-    add_machine_instr(result, "VLRLR", mach_format::VRS_d, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1541);
-    add_machine_instr(result, "VLRL", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1541);
-    add_machine_instr(result, "VLBB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1542);
-    add_machine_instr(result, "VLVG", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U, mask_4_U }, 1543);
-    add_machine_instr(result, "VLVGP", mach_format::VRR_f, { vec_reg_5_U, reg_4_U, reg_4_U }, 1543);
-    add_machine_instr(result, "VLL", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1543);
-    add_machine_instr(result, "VMRH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1544);
-    add_machine_instr(result, "VMRL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1544);
-    add_machine_instr(result, "VPK", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1545);
-    add_machine_instr(
-        result, "VPKS", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1545);
-    add_machine_instr(
-        result, "VPKLS", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1546);
-    add_machine_instr(
-        result, "VPERM", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1547);
-    add_machine_instr(result, "VPDI", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1547);
-    add_machine_instr(result, "VREP", mach_format::VRI_c, { vec_reg_5_U, vec_reg_5_U, imm_16_U, mask_4_U }, 1547);
-    add_machine_instr(result, "VREPI", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1548);
-    add_machine_instr(result, "VSCEF", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1548);
-    add_machine_instr(result, "VSCEG", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1548);
-    add_machine_instr(result, "VSEL", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1549);
-    add_machine_instr(result, "VSEG", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1549);
-    add_machine_instr(result, "VSTBR", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VST", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1, 1550);
-    add_machine_instr(result, "VSTEB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr(result, "VSTEBRH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VSTEH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr(result, "VSTEF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr(result, "VSTEG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr(result, "VSTER", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1578);
-    add_machine_instr(result, "VSTM", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1, 1551);
-    add_machine_instr(result, "VSTRLR", mach_format::VRS_d, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1551);
-    add_machine_instr(result, "VSTRL", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1551);
-    add_machine_instr(result, "VSTL", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1552);
-    add_machine_instr(result, "VUPH", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1552);
-    add_machine_instr(result, "VUPL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1553);
-    add_machine_instr(result, "VUPLH", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1553);
-    add_machine_instr(result, "VUPLL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1554);
-    add_machine_instr(result, "VA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1557);
-    add_machine_instr(result, "VACC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1558);
-    add_machine_instr(
-        result, "VAC", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1558);
-    add_machine_instr(
-        result, "VACCC", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1559);
-    add_machine_instr(result, "VN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1559);
-    add_machine_instr(result, "VNC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1559);
-    add_machine_instr(result, "VAVG", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1560);
-    add_machine_instr(result, "VAVGL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1560);
-    add_machine_instr(result, "VCKSM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1560);
-    add_machine_instr(result, "VEC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1561);
-    add_machine_instr(result, "VECL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1561);
-    add_machine_instr(
-        result, "VCEQ", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1561);
-    add_machine_instr(
-        result, "VCH", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1562);
-    add_machine_instr(
-        result, "VCHL", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1563);
-    add_machine_instr(result, "VCLZ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1564);
-    add_machine_instr(result, "VCTZ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1564);
-    add_machine_instr(result, "VGFM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1565);
-    add_machine_instr(result, "VX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1565);
-    add_machine_instr(result, "VLC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566);
-    add_machine_instr(
-        result, "VGFMA", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566);
-    add_machine_instr(result, "VLP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566);
-    add_machine_instr(result, "VMX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567);
-    add_machine_instr(result, "VMXL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567);
-    add_machine_instr(result, "VMN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567);
-    add_machine_instr(result, "VMNL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1568);
-    add_machine_instr(
-        result, "VMAL", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1568);
-    add_machine_instr(
-        result, "VMAH", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
-    add_machine_instr(
-        result, "VMALH", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
-    add_machine_instr(
-        result, "VMAE", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
-    add_machine_instr(
-        result, "VMALE", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
-    add_machine_instr(
-        result, "VMAO", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570);
-    add_machine_instr(
-        result, "VMALO", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570);
-    add_machine_instr(result, "VMH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570);
-    add_machine_instr(result, "VMLH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1571);
-    add_machine_instr(result, "VML", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1571);
-    add_machine_instr(result, "VME", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
-    add_machine_instr(result, "VMLE", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
-    add_machine_instr(result, "VMO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
-    add_machine_instr(result, "VMLO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
-    add_machine_instr(result,
-        "VMSL",
-        mach_format::VRR_d,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
-        1573);
-    add_machine_instr(result, "VNN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
-    add_machine_instr(result, "VNO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
-    add_machine_instr(result, "VNX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
-    add_machine_instr(result, "VO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
-    add_machine_instr(result, "VOC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1575);
-    add_machine_instr(result, "VPOPCT", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1575);
-    add_machine_instr(result, "VERLLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1575);
-    add_machine_instr(result, "VERLL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1575);
-    add_machine_instr(
-        result, "VERIM", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VESLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1577);
-    add_machine_instr(result, "VESL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1577);
-    add_machine_instr(result, "VESRAV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1577);
-    add_machine_instr(result, "VESRA", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1577);
-    add_machine_instr(result, "VESRLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1578);
-    add_machine_instr(result, "VESRL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1578);
-    add_machine_instr(result, "VSLD", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1607);
-    add_machine_instr(result, "VSRD", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1608);
-    add_machine_instr(result, "VSLDB", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1579);
-    add_machine_instr(result, "VSL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579);
-    add_machine_instr(result, "VSLB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579);
-    add_machine_instr(result, "VSRA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579);
-    add_machine_instr(result, "VSRAB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580);
-    add_machine_instr(result, "VSRL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580);
-    add_machine_instr(result, "VSRLB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580);
-    add_machine_instr(result, "VS", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1580);
-    add_machine_instr(result, "VSCBI", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1581);
-    add_machine_instr(
-        result, "VCSFP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1644);
-    add_machine_instr(
-        result, "VSBI", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1581);
-    add_machine_instr(
-        result, "VSBCBI", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1582);
-    add_machine_instr(result, "VSUMG", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1582);
-    add_machine_instr(result, "VSUMQ", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1583);
-    add_machine_instr(result, "VSUM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1583);
-    add_machine_instr(result, "VTM", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U }, 1584);
-    add_machine_instr(
-        result, "VFAE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1, 1585);
-    add_machine_instr(
-        result, "VFEE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1, 1587);
-    add_machine_instr(
-        result, "VFENE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1, 1588);
-    add_machine_instr(result, "VISTR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1, 1589);
-    add_machine_instr(result,
-        "VSTRC",
-        mach_format::VRR_d,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
-        1,
-        1590);
-    add_machine_instr(result,
-        "VSTRS",
-        mach_format::VRR_d,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
-        1,
-        1622);
-    add_machine_instr(
-        result, "VFA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1595);
-    add_machine_instr(result, "WFC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1599);
-    add_machine_instr(result, "WFK", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1600);
-    add_machine_instr(result,
-        "VFCE",
-        mach_format::VRR_c,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U },
-        1601);
-    add_machine_instr(result,
-        "VFCH",
-        mach_format::VRR_c,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U },
-        1603);
-    add_machine_instr(result,
-        "VFCHE",
-        mach_format::VRR_c,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U },
-        1605);
-    add_machine_instr(
-        result, "VCFPS", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1607);
-    add_machine_instr(
-        result, "VCFPL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1643);
-    add_machine_instr(
-        result, "VCLGD", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1611);
-    add_machine_instr(
-        result, "VFD", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1613);
-    add_machine_instr(
-        result, "VFI", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1615);
-    add_machine_instr(result, "VFLL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1617);
-    add_machine_instr(
-        result, "VFLR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1618);
-    add_machine_instr(result,
-        "VFMAX",
-        mach_format::VRR_c,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U },
-        1619);
-    add_machine_instr(result,
-        "VFMIN",
-        mach_format::VRR_c,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U },
-        1625);
-    add_machine_instr(
-        result, "VFM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1631);
-    add_machine_instr(result,
-        "VFMA",
-        mach_format::VRR_e,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
-        1633);
-    add_machine_instr(result,
-        "VFMS",
-        mach_format::VRR_e,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
-        1633);
-    add_machine_instr(result,
-        "VFNMA",
-        mach_format::VRR_e,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
-        1633);
-    add_machine_instr(result,
-        "VFNMS",
-        mach_format::VRR_e,
-        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
-        1633);
-    add_machine_instr(
-        result, "VFPSO", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1635);
-    add_machine_instr(result, "VFSQ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1636);
-    add_machine_instr(
-        result, "VFS", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1637);
-    add_machine_instr(
-        result, "VFTCI", mach_format::VRI_e, { vec_reg_5_U, vec_reg_5_U, imm_12_S, mask_4_U, mask_4_U }, 1638);
-    add_machine_instr(
-        result, "VAP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1643);
-    add_machine_instr(result, "VCP", mach_format::VRR_h, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1644);
-    add_machine_instr(result, "VCVB", mach_format::VRR_i, { reg_4_U, vec_reg_5_U, mask_4_U }, 1645);
-    add_machine_instr(result, "VCVBG", mach_format::VRR_i, { reg_4_U, vec_reg_5_U, mask_4_U }, 1645);
-    add_machine_instr(result, "VCVD", mach_format::VRI_i, { vec_reg_5_U, reg_4_U, imm_8_S, mask_4_U }, 1646);
-    add_machine_instr(result, "VCVDG", mach_format::VRI_i, { vec_reg_5_U, reg_4_U, imm_8_S, mask_4_U }, 1646);
-    add_machine_instr(
-        result, "VDP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1648);
-    add_machine_instr(
-        result, "VMP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1650);
-    add_machine_instr(
-        result, "VMSP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1651);
-    add_machine_instr(
-        result, "VRP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1654);
-    add_machine_instr(
-        result, "VSDP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1656);
-    add_machine_instr(
-        result, "VSP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1658);
-    add_machine_instr(result, "VLIP", mach_format::VRI_h, { vec_reg_5_U, imm_16_S, imm_4_U }, 1649);
-    add_machine_instr(result, "VPKZ", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1652);
-    add_machine_instr(
-        result, "VPSOP", mach_format::VRI_g, { vec_reg_5_U, vec_reg_5_U, imm_8_U, imm_8_U, mask_4_U }, 1653);
-    add_machine_instr(
-        result, "VSRP", mach_format::VRI_g, { vec_reg_5_U, vec_reg_5_U, imm_8_U, imm_8_S, mask_4_U }, 1657);
-    add_machine_instr(result, "SIE", mach_format::S, { db_12_4_U }, 7);
-    add_machine_instr(result, "VAD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VADS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VDDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMADS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VCDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VAS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VNS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VOS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VXS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VCS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMSE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMSES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VLINT", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VDD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VDDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VDE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VDES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMXAD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VMXAE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VMXSE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VNVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VOVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VLCVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VLELE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VLELD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VLI", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VLID", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VLBIX", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VLVCU", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VLVCA", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VLVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VMNSD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VMNSE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VMRRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VMRSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VACRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VACSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VSTVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VSTVP", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VSVMM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VTVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VXELE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VXELD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VXVC", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VXVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VXVMM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VSTI", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VSTID", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VRCL", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VRRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VRSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VRSVC", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VSLL", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VSPSD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VZPSD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VSRRS", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VSRSV", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VOVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VCVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VCZVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VCOVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VTP", mach_format::VRR_g, { vec_reg_5_U }, 1660);
-    add_machine_instr(result, "VUPKZ", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1660);
-    add_machine_instr(result, "VSTK", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSTD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSTKD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSTMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSTH", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VLD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VLH", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VLMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VLY", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VLYD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VM", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMAD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMAES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMCD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMCE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VACD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VACE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VAE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VAES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VC", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VCD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VCE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VCES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-
-    return result;
-}
-
-void add_mnemonic_code(std::map<std::string, mnemonic_code>& result, std::string instr, mnemonic_code code)
-{
-    assert(std::is_sorted(
-        code.replaced.begin(), code.replaced.end(), [](const auto& l, const auto& r) { return l.first < r.first; }));
-    result.insert(std::make_pair<std::string, mnemonic_code>(std::move(instr), std::move(code)));
-}
-
-std::map<std::string, mnemonic_code> hlasm_plugin::parser_library::context::instruction::get_mnemonic_codes(
-    const std::map<std::string, machine_instruction>& i)
-{
-    std::map<std::string, mnemonic_code> result;
-    add_mnemonic_code(result, "B", { &i.at("BC"), { { 0, 15 } } });
-    add_mnemonic_code(result, "BR", { &i.at("BCR"), { { 0, 15 } } });
-    add_mnemonic_code(result, "J", { &i.at("BRC"), { { 0, 15 } } });
-    add_mnemonic_code(result, "NOP", { &i.at("BC"), { { 0, 0 } } });
-    add_mnemonic_code(result, "NOPR", { &i.at("BCR"), { { 0, 0 } } });
-    add_mnemonic_code(result, "JNOP", { &i.at("BRC"), { { 0, 0 } } });
-    add_mnemonic_code(result, "BH", { &i.at("BC"), { { 0, 2 } } });
-    add_mnemonic_code(result, "BHR", { &i.at("BCR"), { { 0, 2 } } });
-    add_mnemonic_code(result, "JH", { &i.at("BRC"), { { 0, 2 } } });
-    add_mnemonic_code(result, "BL", { &i.at("BC"), { { 0, 4 } } });
-    add_mnemonic_code(result, "BLR", { &i.at("BCR"), { { 0, 4 } } });
-    add_mnemonic_code(result, "JL", { &i.at("BRC"), { { 0, 4 } } });
-    add_mnemonic_code(result, "BE", { &i.at("BC"), { { 0, 8 } } });
-    add_mnemonic_code(result, "BER", { &i.at("BCR"), { { 0, 8 } } });
-    add_mnemonic_code(result, "JE", { &i.at("BRC"), { { 0, 8 } } });
-    add_mnemonic_code(result, "BNH", { &i.at("BC"), { { 0, 13 } } });
-    add_mnemonic_code(result, "BNHR", { &i.at("BCR"), { { 0, 13 } } });
-    add_mnemonic_code(result, "JNH", { &i.at("BRC"), { { 0, 13 } } });
-    add_mnemonic_code(result, "BNL", { &i.at("BC"), { { 0, 11 } } });
-    add_mnemonic_code(result, "BNLR", { &i.at("BCR"), { { 0, 11 } } });
-    add_mnemonic_code(result, "JNL", { &i.at("BRC"), { { 0, 11 } } });
-    add_mnemonic_code(result, "BNE", { &i.at("BC"), { { 0, 7 } } });
-    add_mnemonic_code(result, "BNER", { &i.at("BCR"), { { 0, 7 } } });
-    add_mnemonic_code(result, "JNE", { &i.at("BRC"), { { 0, 7 } } });
-    add_mnemonic_code(result, "BP", { &i.at("BC"), { { 0, 2 } } });
-    add_mnemonic_code(result, "BPR", { &i.at("BCR"), { { 0, 2 } } });
-    add_mnemonic_code(result, "JP", { &i.at("BRC"), { { 0, 2 } } });
-    add_mnemonic_code(result, "JM", { &i.at("BRC"), { { 0, 4 } } });
-    add_mnemonic_code(result, "JZ", { &i.at("BRC"), { { 0, 8 } } });
-    add_mnemonic_code(result, "JO", { &i.at("BRC"), { { 0, 1 } } });
-    add_mnemonic_code(result, "BNP", { &i.at("BC"), { { 0, 13 } } });
-    add_mnemonic_code(result, "BNPR", { &i.at("BCR"), { { 0, 13 } } });
-    add_mnemonic_code(result, "JNP", { &i.at("BRC"), { { 0, 13 } } });
-    add_mnemonic_code(result, "BNM", { &i.at("BC"), { { 0, 11 } } });
-    add_mnemonic_code(result, "JNM", { &i.at("BRC"), { { 0, 11 } } });
-    add_mnemonic_code(result, "BNZ", { &i.at("BC"), { { 0, 7 } } });
-    add_mnemonic_code(result, "JNZ", { &i.at("BRC"), { { 0, 7 } } });
-    add_mnemonic_code(result, "BNO", { &i.at("BC"), { { 0, 14 } } });
-    add_mnemonic_code(result, "JNO", { &i.at("BRC"), { { 0, 14 } } });
-    add_mnemonic_code(result, "XHLR", { &i.at("RXSBG"), { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "XHHR", { &i.at("RXSBG"), { { 2, 0 }, { 3, 31 } } });
-    add_mnemonic_code(result, "XLHR", { &i.at("RXSBG"), { { 2, 32 }, { 3, 63 }, { 4, 32 } } });
-    add_mnemonic_code(result, "OHLR", { &i.at("ROSBG"), { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "OHHR", { &i.at("ROSBG"), { { 2, 0 }, { 3, 31 } } });
-    add_mnemonic_code(result, "OLHR", { &i.at("ROSBG"), { { 2, 32 }, { 3, 63 }, { 4, 32 } } });
-    add_mnemonic_code(result, "NHLR", { &i.at("RNSBG"), { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "NHHR", { &i.at("RNSBG"), { { 2, 0 }, { 3, 31 } } });
-    add_mnemonic_code(result, "NLHR", { &i.at("RNSBG"), { { 2, 32 }, { 3, 63 }, { 4, 32 } } });
-    add_mnemonic_code(result, "BO", { &i.at("BC"), { { 0, 1 } } });
-    add_mnemonic_code(result, "BOR", { &i.at("BCR"), { { 0, 1 } } });
-    add_mnemonic_code(result, "BM", { &i.at("BC"), { { 0, 4 } } });
-    add_mnemonic_code(result, "BMR", { &i.at("BCR"), { { 0, 4 } } });
-    add_mnemonic_code(result, "BZ", { &i.at("BC"), { { 0, 8 } } });
-    add_mnemonic_code(result, "BZR", { &i.at("BCR"), { { 0, 8 } } });
-    add_mnemonic_code(result, "BNOR", { &i.at("BCR"), { { 0, 14 } } });
-    add_mnemonic_code(result, "BNMR", { &i.at("BCR"), { { 0, 11 } } });
-    add_mnemonic_code(result, "BNZR", { &i.at("BCR"), { { 0, 7 } } });
-    add_mnemonic_code(result, "BRUL", { &i.at("BRCL"), { { 0, 15 } } });
-    add_mnemonic_code(result, "BRHL", { &i.at("BRCL"), { { 0, 2 } } });
-    add_mnemonic_code(result, "BRLL", { &i.at("BRCL"), { { 0, 4 } } });
-    add_mnemonic_code(result, "BREL", { &i.at("BRCL"), { { 0, 8 } } });
-    add_mnemonic_code(result, "BRNHL", { &i.at("BRCL"), { { 0, 13 } } });
-    add_mnemonic_code(result, "BRNLL", { &i.at("BRCL"), { { 0, 11 } } });
-    add_mnemonic_code(result, "BRNEL", { &i.at("BRCL"), { { 0, 7 } } });
-    add_mnemonic_code(result, "BRPL", { &i.at("BRCL"), { { 0, 2 } } });
-    add_mnemonic_code(result, "BRML", { &i.at("BRCL"), { { 0, 4 } } });
-    add_mnemonic_code(result, "BRZL", { &i.at("BRCL"), { { 0, 8 } } });
-    add_mnemonic_code(result, "BROL", { &i.at("BRCL"), { { 0, 1 } } });
-    add_mnemonic_code(result, "BRNPL", { &i.at("BRCL"), { { 0, 13 } } });
-    add_mnemonic_code(result, "BRNML", { &i.at("BRCL"), { { 0, 11 } } });
-    add_mnemonic_code(result, "BRNZL", { &i.at("BRCL"), { { 0, 7 } } });
-    add_mnemonic_code(result, "BRNOL", { &i.at("BRCL"), { { 0, 14 } } });
-    add_mnemonic_code(result, "BRO", { &i.at("BRC"), { { 0, 1 } } });
-    add_mnemonic_code(result, "BRP", { &i.at("BRC"), { { 0, 2 } } });
-    add_mnemonic_code(result, "BRH", { &i.at("BRC"), { { 0, 2 } } });
-    add_mnemonic_code(result, "BRL", { &i.at("BRC"), { { 0, 4 } } });
-    add_mnemonic_code(result, "BRM", { &i.at("BRC"), { { 0, 4 } } });
-    add_mnemonic_code(result, "BRNE", { &i.at("BRC"), { { 0, 7 } } });
-    add_mnemonic_code(result, "BRNZ", { &i.at("BRC"), { { 0, 7 } } });
-    add_mnemonic_code(result, "BRE", { &i.at("BRC"), { { 0, 8 } } });
-    add_mnemonic_code(result, "BRZ", { &i.at("BRC"), { { 0, 8 } } });
-    add_mnemonic_code(result, "BRNL", { &i.at("BRC"), { { 0, 11 } } });
-    add_mnemonic_code(result, "BRNM", { &i.at("BRC"), { { 0, 11 } } });
-    add_mnemonic_code(result, "BRNH", { &i.at("BRC"), { { 0, 13 } } });
-    add_mnemonic_code(result, "BRNP", { &i.at("BRC"), { { 0, 13 } } });
-    add_mnemonic_code(result, "BRNO", { &i.at("BRC"), { { 0, 14 } } });
-    add_mnemonic_code(result, "BRU", { &i.at("BRC"), { { 0, 15 } } });
-    add_mnemonic_code(result, "JLU", { &i.at("BRCL"), { { 0, 15 } } });
-    add_mnemonic_code(result, "JLNOP", { &i.at("BRCL"), { { 0, 0 } } });
-    add_mnemonic_code(result, "JLH", { &i.at("BRCL"), { { 0, 2 } } });
-    add_mnemonic_code(result, "JLL", { &i.at("BRCL"), { { 0, 4 } } });
-    add_mnemonic_code(result, "JLE", { &i.at("BRCL"), { { 0, 8 } } });
-    add_mnemonic_code(result, "JLNH", { &i.at("BRCL"), { { 0, 13 } } });
-    add_mnemonic_code(result, "JLNL", { &i.at("BRCL"), { { 0, 11 } } });
-    add_mnemonic_code(result, "JLNE", { &i.at("BRCL"), { { 0, 7 } } });
-    add_mnemonic_code(result, "JLP", { &i.at("BRCL"), { { 0, 2 } } });
-    add_mnemonic_code(result, "JLM", { &i.at("BRCL"), { { 0, 4 } } });
-    add_mnemonic_code(result, "JLZ", { &i.at("BRCL"), { { 0, 8 } } });
-    add_mnemonic_code(result, "JLO", { &i.at("BRCL"), { { 0, 1 } } });
-    add_mnemonic_code(result, "JLNP", { &i.at("BRCL"), { { 0, 13 } } });
-    add_mnemonic_code(result, "JLNM", { &i.at("BRCL"), { { 0, 11 } } });
-    add_mnemonic_code(result, "JLNZ", { &i.at("BRCL"), { { 0, 7 } } });
-    add_mnemonic_code(result, "JLNO", { &i.at("BRCL"), { { 0, 14 } } });
-    add_mnemonic_code(result, "JAS", { &i.at("BRAS"), {} });
-    add_mnemonic_code(result, "JASL", { &i.at("BRASL"), {} });
-    add_mnemonic_code(result, "JC", { &i.at("BRC"), {} });
-    add_mnemonic_code(result, "JCT", { &i.at("BRCT"), {} });
-    add_mnemonic_code(result, "JCTG", { &i.at("BRCTG"), {} });
-    add_mnemonic_code(result, "JXH", { &i.at("BRXH"), {} });
-    add_mnemonic_code(result, "JXHG", { &i.at("BRXHG"), {} });
-    add_mnemonic_code(result, "JXLE", { &i.at("BRXLE"), {} });
-    add_mnemonic_code(result, "JXLEG", { &i.at("BRXLG"), {} });
-    add_mnemonic_code(result, "VCDG", { &i.at("VCFPS"), {} });
-    add_mnemonic_code(result, "VCGD", { &i.at("VCSFP"), {} });
-    add_mnemonic_code(result, "BIO", { &i.at("BIC"), { { 0, 1 } } });
-    add_mnemonic_code(result, "BIP", { &i.at("BIC"), { { 0, 2 } } });
-    add_mnemonic_code(result, "BIH", { &i.at("BIC"), { { 0, 2 } } });
-    add_mnemonic_code(result, "BIM", { &i.at("BIC"), { { 0, 4 } } });
-    add_mnemonic_code(result, "BIL", { &i.at("BIC"), { { 0, 4 } } });
-    add_mnemonic_code(result, "BINZ", { &i.at("BIC"), { { 0, 7 } } });
-    add_mnemonic_code(result, "BINE", { &i.at("BIC"), { { 0, 7 } } });
-    add_mnemonic_code(result, "BIZ", { &i.at("BIC"), { { 0, 8 } } });
-    add_mnemonic_code(result, "BIE", { &i.at("BIC"), { { 0, 8 } } });
-    add_mnemonic_code(result, "BINM", { &i.at("BIC"), { { 0, 11 } } });
-    add_mnemonic_code(result, "BINL", { &i.at("BIC"), { { 0, 11 } } });
-    add_mnemonic_code(result, "BINP", { &i.at("BIC"), { { 0, 13 } } });
-    add_mnemonic_code(result, "BINH", { &i.at("BIC"), { { 0, 13 } } });
-    add_mnemonic_code(result, "BINO", { &i.at("BIC"), { { 0, 14 } } });
-    add_mnemonic_code(result, "BI", { &i.at("BIC"), { { 0, 15 } } });
-    add_mnemonic_code(result, "VSTBRH", { &i.at("VSTBR"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VSTBRF", { &i.at("VSTBR"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VSTBRG", { &i.at("VSTBR"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VSTBRQ", { &i.at("VSTBR"), { { 2, 4 } } });
-    add_mnemonic_code(result, "VSTERH", { &i.at("VSTER"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VSTERF", { &i.at("VSTER"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VSTERG", { &i.at("VSTER"), { { 2, 3 } } });
-    add_mnemonic_code(result, "STERV", { &i.at("VSTEBRF"), { { 2, 0 } } });
-    add_mnemonic_code(result, "STDRV", { &i.at("VSTEBRG"), { { 2, 0 } } });
-    add_mnemonic_code(result, "SELFHRE", { &i.at("SELFHR"), { { 3, 8 } } });
-    add_mnemonic_code(result, "SELFHRH", { &i.at("SELFHR"), { { 3, 2 } } });
-    add_mnemonic_code(result, "SELFHRL", { &i.at("SELFHR"), { { 3, 4 } } });
-    add_mnemonic_code(result, "SELFHRNE", { &i.at("SELFHR"), { { 3, 7 } } });
-    add_mnemonic_code(result, "SELFHRNH", { &i.at("SELFHR"), { { 3, 13 } } });
-    add_mnemonic_code(result, "SELFHRNL", { &i.at("SELFHR"), { { 3, 11 } } });
-    add_mnemonic_code(result, "SELFHRNO", { &i.at("SELFHR"), { { 3, 14 } } });
-    add_mnemonic_code(result, "SELFHRO", { &i.at("SELFHR"), { { 3, 1 } } });
-    add_mnemonic_code(result, "LHHR", { &i.at("RISBHGZ"), { { 2, 0 }, { 3, 31 } } });
-    add_mnemonic_code(result, "LHLR", { &i.at("RISBHGZ"), { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "LLHHHR", { &i.at("RISBHGZ"), { { 2, 16 }, { 3, 31 } } });
-    add_mnemonic_code(result, "LLHHLR", { &i.at("RISBHGZ"), { { 2, 16 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "LLCHHR", { &i.at("RISBHGZ"), { { 2, 24 }, { 3, 31 } } });
-    add_mnemonic_code(result, "LLCHLR", { &i.at("RISBHGZ"), { { 2, 24 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "LLHFR", { &i.at("RISBLGZ"), { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "LLHLHR", { &i.at("RISBLGZ"), { { 2, 16 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "LLCLHR", { &i.at("RISBLGZ"), { { 2, 24 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "LOCO", { &i.at("LOC"), { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCNO", { &i.at("LOC"), { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCGO", { &i.at("LOCG"), { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCGNO", { &i.at("LOCG"), { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCGHIH", { &i.at("LOCGHI"), { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCGHIL", { &i.at("LOCGHI"), { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCGHIE", { &i.at("LOCGHI"), { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCGHINE", { &i.at("LOCGHI"), { { 2, 7 } } });
-    add_mnemonic_code(result, "LOCGHINL", { &i.at("LOCGHI"), { { 2, 11 } } });
-    add_mnemonic_code(result, "LOCGHINH", { &i.at("LOCGHI"), { { 2, 13 } } });
-    add_mnemonic_code(result, "LOCGHINO", { &i.at("LOCGHI"), { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCGHIO", { &i.at("LOCGHI"), { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCGRO", { &i.at("LOCGR"), { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCGRNO", { &i.at("LOCGR"), { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCHHIE", { &i.at("LOCHHI"), { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCHHIH", { &i.at("LOCHHI"), { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCHHIL", { &i.at("LOCHHI"), { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCHHINE", { &i.at("LOCHHI"), { { 2, 7 } } });
-    add_mnemonic_code(result, "LOCHHINH", { &i.at("LOCHHI"), { { 2, 13 } } });
-    add_mnemonic_code(result, "LOCHHINL", { &i.at("LOCHHI"), { { 2, 11 } } });
-    add_mnemonic_code(result, "LOCHHINO", { &i.at("LOCHHI"), { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCHHIO", { &i.at("LOCHHI"), { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCHIE", { &i.at("LOCHI"), { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCHIH", { &i.at("LOCHI"), { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCHIL", { &i.at("LOCHI"), { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCHINE", { &i.at("LOCHI"), { { 2, 7 } } });
-    add_mnemonic_code(result, "LOCHINH", { &i.at("LOCHI"), { { 2, 13 } } });
-    add_mnemonic_code(result, "LOCHINL", { &i.at("LOCHI"), { { 2, 11 } } });
-    add_mnemonic_code(result, "LOCHINO", { &i.at("LOCHI"), { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCHIO", { &i.at("LOCHI"), { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCRNO", { &i.at("LOCR"), { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCRO", { &i.at("LOCR"), { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCFHE", { &i.at("LOCFH"), { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCFHH", { &i.at("LOCFH"), { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCFHL", { &i.at("LOCFH"), { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCFHNE", { &i.at("LOCFH"), { { 2, 7 } } });
-    add_mnemonic_code(result, "LOCFHNH", { &i.at("LOCFH"), { { 2, 13 } } });
-    add_mnemonic_code(result, "LOCFHNL", { &i.at("LOCFH"), { { 2, 11 } } });
-    add_mnemonic_code(result, "LOCFHNO", { &i.at("LOCFH"), { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCFHO", { &i.at("LOCFH"), { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCFHRH", { &i.at("LOCFHR"), { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCFHRL", { &i.at("LOCFHR"), { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCFHRE", { &i.at("LOCFHR"), { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCFHRNE", { &i.at("LOCFHR"), { { 2, 7 } } });
-    add_mnemonic_code(result, "LOCFHRNH", { &i.at("LOCFHR"), { { 2, 13 } } });
-    add_mnemonic_code(result, "LOCFHRNL", { &i.at("LOCFHR"), { { 2, 11 } } });
-    add_mnemonic_code(result, "LOCFHRNO", { &i.at("LOCFHR"), { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCFHRO", { &i.at("LOCFHR"), { { 2, 1 } } });
-    add_mnemonic_code(result, "STOCFHE", { &i.at("STOCFH"), { { 2, 8 } } });
-    add_mnemonic_code(result, "STOCFHH", { &i.at("STOCFH"), { { 2, 2 } } });
-    add_mnemonic_code(result, "STOCFHL", { &i.at("STOCFH"), { { 2, 4 } } });
-    add_mnemonic_code(result, "STOCFHNE", { &i.at("STOCFH"), { { 2, 7 } } });
-    add_mnemonic_code(result, "STOCFHNH", { &i.at("STOCFH"), { { 2, 13 } } });
-    add_mnemonic_code(result, "STOCFHNL", { &i.at("STOCFH"), { { 2, 11 } } });
-    add_mnemonic_code(result, "STOCFHNO", { &i.at("STOCFH"), { { 2, 14 } } });
-    add_mnemonic_code(result, "STOCFHO", { &i.at("STOCFH"), { { 2, 1 } } });
-    add_mnemonic_code(result, "STOCGNO", { &i.at("STOCG"), { { 2, 14 } } });
-    add_mnemonic_code(result, "STOCGO", { &i.at("STOCG"), { { 2, 1 } } });
-    add_mnemonic_code(result, "STOCNO", { &i.at("STOC"), { { 2, 14 } } });
-    add_mnemonic_code(result, "STOCO", { &i.at("STOC"), { { 2, 1 } } });
-    add_mnemonic_code(result, "SELGRE", { &i.at("SELGR"), { { 3, 8 } } });
-    add_mnemonic_code(result, "SELGRH", { &i.at("SELGR"), { { 3, 2 } } });
-    add_mnemonic_code(result, "SELGRL", { &i.at("SELGR"), { { 3, 4 } } });
-    add_mnemonic_code(result, "SELGRNE", { &i.at("SELGR"), { { 3, 7 } } });
-    add_mnemonic_code(result, "SELGRNH", { &i.at("SELGR"), { { 3, 13 } } });
-    add_mnemonic_code(result, "SELGRNL", { &i.at("SELGR"), { { 3, 11 } } });
-    add_mnemonic_code(result, "SELGRNO", { &i.at("SELGR"), { { 3, 14 } } });
-    add_mnemonic_code(result, "SELGRO", { &i.at("SELGR"), { { 3, 1 } } });
-    add_mnemonic_code(result, "SELRE", { &i.at("SELR"), { { 3, 8 } } });
-    add_mnemonic_code(result, "SELRH", { &i.at("SELR"), { { 3, 2 } } });
-    add_mnemonic_code(result, "SELRL", { &i.at("SELR"), { { 3, 4 } } });
-    add_mnemonic_code(result, "SELRNE", { &i.at("SELR"), { { 3, 7 } } });
-    add_mnemonic_code(result, "SELRNH", { &i.at("SELR"), { { 3, 13 } } });
-    add_mnemonic_code(result, "SELRNL", { &i.at("SELR"), { { 3, 11 } } });
-    add_mnemonic_code(result, "SELRNO", { &i.at("SELR"), { { 3, 14 } } });
-    add_mnemonic_code(result, "SELRO", { &i.at("SELR"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VZERO", { &i.at("VGBM"), { { 0, 1 } } });
-    add_mnemonic_code(result, "VONE", { &i.at("VGBM"), { { 1, 65535 } } });
-    add_mnemonic_code(result, "VGMB", { &i.at("VGM"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VGMH", { &i.at("VGM"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VGMF", { &i.at("VGM"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VGMG", { &i.at("VGM"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VLREPB", { &i.at("VLREP"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VLREPH", { &i.at("VLREP"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VLREPF", { &i.at("VLREP"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VLREPG", { &i.at("VLREP"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VLGVB", { &i.at("VLGV"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VLGVH", { &i.at("VLGV"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VLGVF", { &i.at("VLGV"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VLGVG", { &i.at("VLGV"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VLLEZB", { &i.at("VLLEZ"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VLLEZH", { &i.at("VLLEZ"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VLLEZF", { &i.at("VLLEZ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VLLEZG", { &i.at("VLLEZ"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VLLEZLF", { &i.at("VLLEZ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "VLLEBRZE", { &i.at("VLLEBRZ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "VLLEBRZG", { &i.at("VLLEBRZ"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VLLEBRZF", { &i.at("VLLEBRZ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VLLEBRZH", { &i.at("VLLEBRZ"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VLVGB", { &i.at("VLVG"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VLVGH", { &i.at("VLVG"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VLVGF", { &i.at("VLVG"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VLVGG", { &i.at("VLVG"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VMRHB", { &i.at("VMRH"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMRHH", { &i.at("VMRH"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMRHF", { &i.at("VMRH"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMRHG", { &i.at("VMRH"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VMRLB", { &i.at("VMRL"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMRLH", { &i.at("VMRL"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMRLF", { &i.at("VMRL"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMRLG", { &i.at("VMRL"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VPKSH", { &i.at("VPKS"), { { 3, 1 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VPKSF", { &i.at("VPKS"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VPKSG", { &i.at("VPKS"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VPKSHS", { &i.at("VPKS"), { { 3, 1 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VPKSFS", { &i.at("VPKS"), { { 3, 2 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VPKSGS", { &i.at("VPKS"), { { 3, 3 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VPKLSH", { &i.at("VPKLS"), { { 3, 1 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VPKLSF", { &i.at("VPKLS"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VPKLSG", { &i.at("VPKLS"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VPKLSHS", { &i.at("VPKLS"), { { 3, 1 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VPKLSFS", { &i.at("VPKLS"), { { 3, 2 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VPKLSGS", { &i.at("VPKLS"), { { 3, 3 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VREPB", { &i.at("VREP"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VREPH", { &i.at("VREP"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VREPF", { &i.at("VREP"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VREPG", { &i.at("VREP"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VREPIB", { &i.at("VREPI"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VREPIH", { &i.at("VREPI"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VREPIF", { &i.at("VREPI"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VREPIG", { &i.at("VREPI"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VSEGB", { &i.at("VSEG"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VSEGH", { &i.at("VSEG"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VSEGF", { &i.at("VSEG"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VUPHB", { &i.at("VUPH"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VUPHH", { &i.at("VUPH"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VUPHF", { &i.at("VUPH"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VUPLHB", { &i.at("VUPLH"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VUPLHG", { &i.at("VUPLH"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VUPLHF", { &i.at("VUPLH"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VUPLB", { &i.at("VUPL"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VUPLHW", { &i.at("VUPL"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VUPLF", { &i.at("VUPL"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VUPLLB", { &i.at("VUPLL"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VUPLLH", { &i.at("VUPLL"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VUPLLF", { &i.at("VUPLL"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VAB", { &i.at("VA"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VAH", { &i.at("VA"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VAF", { &i.at("VA"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VAG", { &i.at("VA"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VAQ", { &i.at("VA"), { { 3, 4 } } });
-    add_mnemonic_code(result, "VACCB", { &i.at("VACC"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VACCH", { &i.at("VACC"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VACCF", { &i.at("VACC"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VACCG", { &i.at("VACC"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VACCQ", { &i.at("VACC"), { { 3, 4 } } });
-    add_mnemonic_code(result, "VACQ", { &i.at("VAC"), { { 3, 4 } } });
-    add_mnemonic_code(result, "VACCCQ", { &i.at("VACCC"), { { 3, 4 } } });
-    add_mnemonic_code(result, "VAVGB", { &i.at("VAVG"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VAVGH", { &i.at("VAVG"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VAVGF", { &i.at("VAVG"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VAVGG", { &i.at("VAVG"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VAVGLB", { &i.at("VAVGL"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VAVGLH", { &i.at("VAVGL"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VAVGLF", { &i.at("VAVGL"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VAVGLG", { &i.at("VAVGL"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VECB", { &i.at("VEC"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VECH", { &i.at("VEC"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VECF", { &i.at("VEC"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VECG", { &i.at("VEC"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VECLB", { &i.at("VECL"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VECLH", { &i.at("VECL"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VECLF", { &i.at("VECL"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VECLG", { &i.at("VECL"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VCEQB", { &i.at("VCEQ"), { { 3, 0 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCEQH", { &i.at("VCEQ"), { { 3, 1 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCEQF", { &i.at("VCEQ"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCEQG", { &i.at("VCEQ"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCEQBS", { &i.at("VCEQ"), { { 3, 0 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCEQHS", { &i.at("VCEQ"), { { 3, 1 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCEQFS", { &i.at("VCEQ"), { { 3, 2 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCEQGS", { &i.at("VCEQ"), { { 3, 3 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCHB", { &i.at("VCH"), { { 3, 0 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCHH", { &i.at("VCH"), { { 3, 1 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCHF", { &i.at("VCH"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCHG", { &i.at("VCH"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCHBS", { &i.at("VCH"), { { 3, 0 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCHHS", { &i.at("VCH"), { { 3, 1 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCHFS", { &i.at("VCH"), { { 3, 2 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCHGS", { &i.at("VCH"), { { 3, 3 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCHLB", { &i.at("VCHL"), { { 3, 0 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCHLH", { &i.at("VCHL"), { { 3, 1 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCHLF", { &i.at("VCHL"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCHLG", { &i.at("VCHL"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCHLBS", { &i.at("VCHL"), { { 3, 0 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCHLHS", { &i.at("VCHL"), { { 3, 1 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCHLFS", { &i.at("VCHL"), { { 3, 2 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCHLGS", { &i.at("VCHL"), { { 3, 3 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCLZB", { &i.at("VCLZ"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VCLZH", { &i.at("VCLZ"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VCLZF", { &i.at("VCLZ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VCLZG", { &i.at("VCLZ"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VGFMB", { &i.at("VGFM"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VGFMH", { &i.at("VGFM"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VGFMF", { &i.at("VGFM"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VGFMG", { &i.at("VGFM"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VGFMAB", { &i.at("VGFMA"), { { 4, 0 } } });
-    add_mnemonic_code(result, "VGFMAH", { &i.at("VGFMA"), { { 4, 1 } } });
-    add_mnemonic_code(result, "VGFMAF", { &i.at("VGFMA"), { { 4, 2 } } });
-    add_mnemonic_code(result, "VGFMAG", { &i.at("VGFMA"), { { 4, 3 } } });
-    add_mnemonic_code(result, "VLCB", { &i.at("VLC"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VLCH", { &i.at("VLC"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VLCF", { &i.at("VLC"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VLCG", { &i.at("VLC"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VLPB", { &i.at("VLP"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VLPH", { &i.at("VLP"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VLPF", { &i.at("VLP"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VLPG", { &i.at("VLP"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VMXB", { &i.at("VMX"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMXH", { &i.at("VMX"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMXF", { &i.at("VMX"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMXG", { &i.at("VMX"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VMXLB", { &i.at("VMXL"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMXLH", { &i.at("VMXL"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMXLF", { &i.at("VMXL"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMXLG", { &i.at("VMXL"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VMNB", { &i.at("VMN"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMNH", { &i.at("VMN"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMNF", { &i.at("VMN"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMNG", { &i.at("VMN"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VMNLB", { &i.at("VMNL"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMNLH", { &i.at("VMNL"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMNLF", { &i.at("VMNL"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMNLG", { &i.at("VMNL"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VMALB", { &i.at("VMAL"), { { 4, 0 } } });
-    add_mnemonic_code(result, "VMALHW", { &i.at("VMAL"), { { 4, 1 } } });
-    add_mnemonic_code(result, "VMALF", { &i.at("VMAL"), { { 4, 2 } } });
-    add_mnemonic_code(result, "VMAHB", { &i.at("VMAH"), { { 4, 0 } } });
-    add_mnemonic_code(result, "VMAHH", { &i.at("VMAH"), { { 4, 1 } } });
-    add_mnemonic_code(result, "VMAHF", { &i.at("VMAH"), { { 4, 2 } } });
-    add_mnemonic_code(result, "VMALHB", { &i.at("VMALH"), { { 4, 0 } } });
-    add_mnemonic_code(result, "VMALHH", { &i.at("VMALH"), { { 4, 1 } } });
-    add_mnemonic_code(result, "VMALHF", { &i.at("VMALH"), { { 4, 2 } } });
-    add_mnemonic_code(result, "VMAEB", { &i.at("VMAE"), { { 4, 0 } } });
-    add_mnemonic_code(result, "VMAEH", { &i.at("VMAE"), { { 4, 1 } } });
-    add_mnemonic_code(result, "VMAEF", { &i.at("VMAE"), { { 4, 2 } } });
-    add_mnemonic_code(result, "VMALEB", { &i.at("VMALE"), { { 4, 0 } } });
-    add_mnemonic_code(result, "VMALEH", { &i.at("VMALE"), { { 4, 1 } } });
-    add_mnemonic_code(result, "VMALEF", { &i.at("VMALE"), { { 4, 2 } } });
-    add_mnemonic_code(result, "VMAOB", { &i.at("VMAO"), { { 4, 0 } } });
-    add_mnemonic_code(result, "VMAOH", { &i.at("VMAO"), { { 4, 1 } } });
-    add_mnemonic_code(result, "VMAOF", { &i.at("VMAO"), { { 4, 2 } } });
-    add_mnemonic_code(result, "VMALOB", { &i.at("VMALO"), { { 4, 0 } } });
-    add_mnemonic_code(result, "VMALOH", { &i.at("VMALO"), { { 4, 1 } } });
-    add_mnemonic_code(result, "VMALOF", { &i.at("VMALO"), { { 4, 2 } } });
-    add_mnemonic_code(result, "VMHB", { &i.at("VMH"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMHH", { &i.at("VMH"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMHF", { &i.at("VMH"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMLHB", { &i.at("VMLH"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMLHH", { &i.at("VMLH"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMLHF", { &i.at("VMLH"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMLB", { &i.at("VML"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMLHW", { &i.at("VML"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMLF", { &i.at("VML"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMEB", { &i.at("VME"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMEH", { &i.at("VME"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMEF", { &i.at("VME"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMLEB", { &i.at("VMLE"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMLEH", { &i.at("VMLE"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMLEF", { &i.at("VMLE"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMSLG", { &i.at("VMSL"), { { 4, 3 } } });
-    add_mnemonic_code(result, "VMOB", { &i.at("VMO"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMOH", { &i.at("VMO"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMOF", { &i.at("VMO"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VMLOB", { &i.at("VMLO"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VMLOH", { &i.at("VMLO"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VMLOF", { &i.at("VMLO"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VPOPCTB", { &i.at("VPOPCT"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VPOPCTH", { &i.at("VPOPCT"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VPOPCTF", { &i.at("VPOPCT"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VPOPCTG", { &i.at("VPOPCT"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VERLLVB", { &i.at("VERLLV"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VERLLVH", { &i.at("VERLLV"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VERLLVF", { &i.at("VERLLV"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VERLLVG", { &i.at("VERLLV"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VERLLB", { &i.at("VERLL"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VERLLH", { &i.at("VERLL"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VERLLF", { &i.at("VERLL"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VERLLG", { &i.at("VERLL"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VERIMB", { &i.at("VERIM"), { { 4, 0 } } });
-    add_mnemonic_code(result, "VERIMH", { &i.at("VERIM"), { { 4, 1 } } });
-    add_mnemonic_code(result, "VERIMF", { &i.at("VERIM"), { { 4, 2 } } });
-    add_mnemonic_code(result, "VERIMG", { &i.at("VERIM"), { { 4, 3 } } });
-    add_mnemonic_code(result, "VESLVB", { &i.at("VESLV"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VESLVH", { &i.at("VESLV"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VESLVF", { &i.at("VESLV"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VESLVG", { &i.at("VESLV"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VESLB", { &i.at("VESL"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VESLH", { &i.at("VESL"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VESLF", { &i.at("VESL"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VESLG", { &i.at("VESL"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VESRAVB", { &i.at("VESRAV"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VESRAVH", { &i.at("VESRAV"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VESRAVF", { &i.at("VESRAV"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VESRAVG", { &i.at("VESRAV"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VESRAB", { &i.at("VESRA"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VESRAH", { &i.at("VESRA"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VESRAF", { &i.at("VESRA"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VESRAG", { &i.at("VESRA"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VESRLVB", { &i.at("VESRLV"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VESRLVH", { &i.at("VESRLV"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VESRLVF", { &i.at("VESRLV"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VESRLVG", { &i.at("VESRLV"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VESRLB", { &i.at("VESRL"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VESRLH", { &i.at("VESRL"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VESRLF", { &i.at("VESRL"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VESRLG", { &i.at("VESRL"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VCEFB", { &i.at("VCFPS"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VSB", { &i.at("VS"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VSH", { &i.at("VS"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VSF", { &i.at("VS"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VSG", { &i.at("VS"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VSQ", { &i.at("VS"), { { 3, 4 } } });
-    add_mnemonic_code(result, "VLERH", { &i.at("VLER"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VLERF", { &i.at("VLER"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VLERG", { &i.at("VLER"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VSCBIB", { &i.at("VSCBI"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VCFEB", { &i.at("VCSFP"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VSCBIH", { &i.at("VSCBI"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VSCBIF", { &i.at("VSCBI"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VSCBIG", { &i.at("VSCBI"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VSCBIQ", { &i.at("VSCBI"), { { 3, 4 } } });
-    add_mnemonic_code(result, "VSBIQ", { &i.at("VSBI"), { { 4, 4 } } });
-    add_mnemonic_code(result, "VSBCBIQ", { &i.at("VSBCBI"), { { 4, 4 } } });
-    add_mnemonic_code(result, "VSUMQF", { &i.at("VSUMQ"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VSUMQG", { &i.at("VSUMQ"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VSUMGH", { &i.at("VSUMG"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VSUMGF", { &i.at("VSUMG"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VSUMB", { &i.at("VSUM"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VSUMH", { &i.at("VSUM"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VFAEB", { &i.at("VFAE"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VFAEH", { &i.at("VFAE"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VFAEF", { &i.at("VFAE"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VFEEB", { &i.at("VFEE"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VFEEH", { &i.at("VFEE"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VFEEF", { &i.at("VFEE"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VLBRH", { &i.at("VLBR"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VLBRF", { &i.at("VLBR"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VLBRG", { &i.at("VLBR"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VLBRQ", { &i.at("VLBR"), { { 2, 4 } } });
-    add_mnemonic_code(result, "VFEEBS", { &i.at("VFEE"), { { 3, 0 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VFEEGS", { &i.at("VFEE"), { { 3, 1 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VFEEFS", { &i.at("VFEE"), { { 3, 2 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VFEEZB", { &i.at("VFEE"), { { 3, 0 }, { 4, 2 } } });
-    add_mnemonic_code(result, "VFEEZH", { &i.at("VFEE"), { { 3, 1 }, { 4, 2 } } });
-    add_mnemonic_code(result, "VFEEZF", { &i.at("VFEE"), { { 3, 2 }, { 4, 2 } } });
-    add_mnemonic_code(result, "VFEEZBS", { &i.at("VFEE"), { { 3, 0 }, { 4, 3 } } });
-    add_mnemonic_code(result, "VFEEZHS", { &i.at("VFEE"), { { 3, 1 }, { 4, 3 } } });
-    add_mnemonic_code(result, "VFEEZFS", { &i.at("VFEE"), { { 3, 2 }, { 4, 3 } } });
-    add_mnemonic_code(result, "VFENEB", { &i.at("VFENE"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VFENEH", { &i.at("VFENE"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VFENEF", { &i.at("VFENE"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VFENEBS", { &i.at("VFENE"), { { 3, 0 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VFENEHS", { &i.at("VFENE"), { { 3, 1 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VFENEFS", { &i.at("VFENE"), { { 3, 2 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VFENEZB", { &i.at("VFENE"), { { 3, 0 }, { 4, 2 } } });
-    add_mnemonic_code(result, "VFENEZH", { &i.at("VFENE"), { { 3, 1 }, { 4, 2 } } });
-    add_mnemonic_code(result, "VFENEZF", { &i.at("VFENE"), { { 3, 2 }, { 4, 2 } } });
-    add_mnemonic_code(result, "VFENEZBS", { &i.at("VFENE"), { { 3, 0 }, { 4, 3 } } });
-    add_mnemonic_code(result, "VFENEZHS", { &i.at("VFENE"), { { 3, 1 }, { 4, 3 } } });
-    add_mnemonic_code(result, "VFENEZFS", { &i.at("VFENE"), { { 3, 2 }, { 4, 3 } } });
-    add_mnemonic_code(result, "VISTRB", { &i.at("VISTR"), { { 3, 0 } } });
-    add_mnemonic_code(result, "VISTRH", { &i.at("VISTR"), { { 3, 1 } } });
-    add_mnemonic_code(result, "VISTRF", { &i.at("VISTR"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VISTRBS", { &i.at("VISTR"), { { 3, 0 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VISTRHS", { &i.at("VISTR"), { { 3, 1 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VISTRFS", { &i.at("VISTR"), { { 3, 2 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VSTRCB", { &i.at("VSTRC"), { { 4, 0 } } });
-    add_mnemonic_code(result, "VSTRCH", { &i.at("VSTRC"), { { 4, 1 } } });
-    add_mnemonic_code(result, "VSTRCF", { &i.at("VSTRC"), { { 4, 2 } } });
-    add_mnemonic_code(result, "VLBRREPH", { &i.at("VLBRREP"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VLBRREPF", { &i.at("VLBRREP"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VLBRREPG", { &i.at("VLBRREP"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VFASB", { &i.at("VFA"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VFADB", { &i.at("VFA"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WCDGB", { &i.at("VCFPS"), { { 2, 2 } } });
-    add_mnemonic_code(result, "WFASB", { &i.at("VFA"), { { 3, 2 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFADB", { &i.at("VFA"), { { 3, 3 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFAXB", { &i.at("VFA"), { { 3, 4 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFCSB", { &i.at("WFC"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFCDB", { &i.at("WFC"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFCXB", { &i.at("WFC"), { { 3, 4 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFKSB", { &i.at("WFK"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFKDB", { &i.at("WFK"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFKXB", { &i.at("WFK"), { { 3, 4 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VFCESB", { &i.at("VFCE"), { { 3, 2 }, { 4, 0 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFCESBS", { &i.at("VFCE"), { { 3, 2 }, { 4, 0 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VFCEDB", { &i.at("VFCE"), { { 3, 3 }, { 4, 0 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFCEDBS", { &i.at("VFCE"), { { 3, 3 }, { 4, 0 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFCESB", { &i.at("VFCE"), { { 3, 2 }, { 4, 8 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFCESBS", { &i.at("VFCE"), { { 3, 2 }, { 4, 8 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFCEDB", { &i.at("VFCE"), { { 3, 3 }, { 4, 8 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFCEDBS", { &i.at("VFCE"), { { 3, 3 }, { 4, 8 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFCEXB", { &i.at("VFCE"), { { 3, 4 }, { 4, 8 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFCEXBS", { &i.at("VFCE"), { { 3, 4 }, { 4, 8 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VFKESB", { &i.at("VFCE"), { { 3, 2 }, { 4, 4 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFKESBS", { &i.at("VFCE"), { { 3, 2 }, { 4, 4 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VFKEDB", { &i.at("VFCE"), { { 3, 3 }, { 4, 4 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFKEDBS", { &i.at("VFCE"), { { 3, 3 }, { 4, 4 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFKESB", { &i.at("VFCE"), { { 3, 2 }, { 4, 12 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFKESBS", { &i.at("VFCE"), { { 3, 2 }, { 4, 12 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFKEDB", { &i.at("VFCE"), { { 3, 3 }, { 4, 12 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFKEDBS", { &i.at("VFCE"), { { 3, 3 }, { 4, 12 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFKEXB", { &i.at("VFCE"), { { 3, 4 }, { 4, 12 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFKEXBS", { &i.at("VFCE"), { { 3, 4 }, { 4, 12 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VSTRSB", { &i.at("VSTRS"), { { 4, 0 } } });
-    add_mnemonic_code(result, "VSTRSH", { &i.at("VSTRS"), { { 4, 1 } } });
-    add_mnemonic_code(result, "VSTRSF", { &i.at("VSTRS"), { { 4, 2 } } });
-    add_mnemonic_code(result, "VSTRSZB", { &i.at("VSTRS"), { { 4, 0 }, { 5, 2 } } });
-    add_mnemonic_code(result, "VFCHSB", { &i.at("VFCH"), { { 3, 2 }, { 4, 0 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFCHSBS", { &i.at("VFCH"), { { 3, 2 }, { 4, 0 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VFCHDB", { &i.at("VFCH"), { { 3, 3 }, { 4, 0 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFCHDBS", { &i.at("VFCH"), { { 3, 3 }, { 4, 0 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFCHSB", { &i.at("VFCH"), { { 3, 2 }, { 4, 8 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFCHSBS", { &i.at("VFCH"), { { 3, 2 }, { 4, 8 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFCHDB", { &i.at("VFCH"), { { 3, 3 }, { 4, 8 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFCHDBS", { &i.at("VFCH"), { { 3, 3 }, { 4, 8 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFCHXB", { &i.at("VFCH"), { { 3, 4 }, { 4, 8 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFCHXBS", { &i.at("VFCH"), { { 3, 4 }, { 4, 8 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VFKHSB", { &i.at("VFCH"), { { 3, 2 }, { 4, 4 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFKHSBS", { &i.at("VFCH"), { { 3, 2 }, { 4, 4 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VFKHDB", { &i.at("VFCH"), { { 3, 3 }, { 4, 4 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFKHDBS", { &i.at("VFCH"), { { 3, 3 }, { 4, 4 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFKHSB", { &i.at("VFCH"), { { 3, 2 }, { 4, 12 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFKHSBS", { &i.at("VFCH"), { { 3, 2 }, { 4, 12 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFKHDB", { &i.at("VFCH"), { { 3, 3 }, { 4, 12 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFKHDBS", { &i.at("VFCH"), { { 3, 3 }, { 4, 12 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFKHXB", { &i.at("VFCH"), { { 3, 4 }, { 4, 12 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFKHXBS", { &i.at("VFCH"), { { 3, 4 }, { 4, 12 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VFCHESB", { &i.at("VFCHE"), { { 3, 2 }, { 4, 0 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFCHESBS", { &i.at("VFCHE"), { { 3, 2 }, { 4, 0 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VFCHEDB", { &i.at("VFCHE"), { { 3, 3 }, { 4, 0 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFCHEDBS", { &i.at("VFCHE"), { { 3, 3 }, { 4, 0 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFCHESB", { &i.at("VFCHE"), { { 3, 2 }, { 4, 8 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFCHESBS", { &i.at("VFCHE"), { { 3, 2 }, { 4, 8 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFCHEDB", { &i.at("VFCHE"), { { 3, 3 }, { 4, 8 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFCHEDBS", { &i.at("VFCHE"), { { 3, 3 }, { 4, 8 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFCHEXB", { &i.at("VFCHE"), { { 3, 4 }, { 4, 8 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFCHEXBS", { &i.at("VFCHE"), { { 3, 4 }, { 4, 8 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VFKHESB", { &i.at("VFCHE"), { { 3, 2 }, { 4, 4 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFKHESBS", { &i.at("VFCHE"), { { 3, 2 }, { 4, 4 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VFKHEDB", { &i.at("VFCHE"), { { 3, 3 }, { 4, 4 }, { 5, 0 } } });
-    add_mnemonic_code(result, "VFKHEDBS", { &i.at("VFCHE"), { { 3, 3 }, { 4, 4 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFKHESB", { &i.at("VFCHE"), { { 3, 2 }, { 4, 12 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFKHESBS", { &i.at("VFCHE"), { { 3, 2 }, { 4, 12 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFKHEDB", { &i.at("VFCHE"), { { 3, 3 }, { 4, 12 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFKHEDBS", { &i.at("VFCHE"), { { 3, 3 }, { 4, 12 }, { 5, 1 } } });
-    add_mnemonic_code(result, "WFKHEXB", { &i.at("VFCHE"), { { 3, 4 }, { 4, 12 }, { 5, 0 } } });
-    add_mnemonic_code(result, "WFKHEXBS", { &i.at("VFCHE"), { { 3, 4 }, { 4, 12 }, { 5, 1 } } });
-    add_mnemonic_code(result, "VCDGB", { &i.at("VCFPS"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VCDLG", { &i.at("VCFPL"), {} });
-    add_mnemonic_code(result, "VCDLGB", { &i.at("VCFPL"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VCGDB", { &i.at("VCSFP"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VCLGDB", { &i.at("VCLGD"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VCLFEB", { &i.at("VCLFP"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VFDSB", { &i.at("VFD"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFDSB", { &i.at("VFD"), { { 3, 2 }, { 4, 8 } } });
-    add_mnemonic_code(result, "VFDDB", { &i.at("VFD"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFDDB", { &i.at("VFD"), { { 3, 3 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFDXB", { &i.at("VFD"), { { 3, 4 }, { 4, 8 } } });
-    add_mnemonic_code(result, "VFISB", { &i.at("VFI"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VFIDB", { &i.at("VFI"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VLDE", { &i.at("VFLL"), {} });
-    add_mnemonic_code(result, "VLDEB", { &i.at("VFLL"), { { 2, 2 }, { 3, 0 } } });
-    add_mnemonic_code(result, "WLDEB", { &i.at("VFLL"), { { 2, 2 }, { 3, 8 } } });
-    add_mnemonic_code(result, "VFLLS", { &i.at("VFLL"), { { 2, 2 }, { 3, 0 } } });
-    add_mnemonic_code(result, "WFLLS", { &i.at("VFLL"), { { 2, 2 }, { 3, 8 } } });
-    add_mnemonic_code(result, "WFLLD", { &i.at("VFLL"), { { 2, 3 }, { 3, 8 } } });
-    add_mnemonic_code(result, "VLED", { &i.at("VFLR"), {} });
-    add_mnemonic_code(result, "VLEDB", { &i.at("VFLR"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VFLRD", { &i.at("VFLR"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VFMAXSB", { &i.at("VFMAX"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VFMAXDB", { &i.at("VFMAX"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFMAXSB", { &i.at("VFMAX"), { { 3, 2 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFMAXDB", { &i.at("VFMAX"), { { 3, 3 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFMAXXB", { &i.at("VFMAX"), { { 3, 4 }, { 4, 8 } } });
-    add_mnemonic_code(result, "VFMINSB", { &i.at("VFMIN"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VFMINDB", { &i.at("VFMIN"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFMINSB", { &i.at("VFMIN"), { { 3, 2 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFMINDB", { &i.at("VFMIN"), { { 3, 3 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFMINXB", { &i.at("VFMIN"), { { 3, 4 }, { 4, 8 } } });
-    add_mnemonic_code(result, "VFMSB", { &i.at("VFM"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VFMDB", { &i.at("VFM"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFMSB", { &i.at("VFM"), { { 3, 2 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFMDB", { &i.at("VFM"), { { 3, 3 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFMXB", { &i.at("VFM"), { { 3, 4 }, { 4, 8 } } });
-    add_mnemonic_code(result, "VFMASB", { &i.at("VFMA"), { { 4, 0 }, { 5, 2 } } });
-    add_mnemonic_code(result, "VFMADB", { &i.at("VFMA"), { { 4, 0 }, { 5, 3 } } });
-    add_mnemonic_code(result, "WFMASB", { &i.at("VFMA"), { { 4, 8 }, { 5, 2 } } });
-    add_mnemonic_code(result, "WFMADB", { &i.at("VFMA"), { { 4, 8 }, { 5, 3 } } });
-    add_mnemonic_code(result, "WFMAXB", { &i.at("VFMA"), { { 4, 8 }, { 5, 4 } } });
-    add_mnemonic_code(result, "VFMSSB", { &i.at("VFMS"), { { 4, 0 }, { 5, 2 } } });
-    add_mnemonic_code(result, "VFMSDB", { &i.at("VFMS"), { { 4, 0 }, { 5, 3 } } });
-    add_mnemonic_code(result, "WFMSSB", { &i.at("VFMS"), { { 4, 8 }, { 5, 2 } } });
-    add_mnemonic_code(result, "WFMSDB", { &i.at("VFMS"), { { 4, 8 }, { 5, 3 } } });
-    add_mnemonic_code(result, "WFMSXB", { &i.at("VFMS"), { { 4, 8 }, { 5, 4 } } });
-    add_mnemonic_code(result, "VFNMASB", { &i.at("VFNMA"), { { 4, 0 }, { 5, 2 } } });
-    add_mnemonic_code(result, "VFNMADB", { &i.at("VFNMA"), { { 4, 0 }, { 5, 3 } } });
-    add_mnemonic_code(result, "WFNMASB", { &i.at("VFNMA"), { { 4, 8 }, { 5, 2 } } });
-    add_mnemonic_code(result, "WFNMADB", { &i.at("VFNMA"), { { 4, 8 }, { 5, 3 } } });
-    add_mnemonic_code(result, "WFNMAXB", { &i.at("VFNMA"), { { 4, 8 }, { 5, 4 } } });
-    add_mnemonic_code(result, "VFNMSSB", { &i.at("VFNMS"), { { 4, 0 }, { 5, 2 } } });
-    add_mnemonic_code(result, "VFNMSDB", { &i.at("VFNMS"), { { 4, 0 }, { 5, 3 } } });
-    add_mnemonic_code(result, "WFNMSSB", { &i.at("VFNMS"), { { 4, 8 }, { 5, 2 } } });
-    add_mnemonic_code(result, "WFNMSDB", { &i.at("VFNMS"), { { 4, 8 }, { 5, 3 } } });
-    add_mnemonic_code(result, "WFNMSXB", { &i.at("VFNMS"), { { 4, 8 }, { 5, 4 } } });
-    add_mnemonic_code(result, "VFPSOSB", { &i.at("VFPSO"), { { 2, 2 }, { 3, 0 } } });
-    add_mnemonic_code(result, "WFPSOSB", { &i.at("VFPSO"), { { 2, 2 }, { 3, 8 } } });
-    add_mnemonic_code(result, "VFLCSB", { &i.at("VFPSO"), { { 2, 2 }, { 3, 0 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCELFB", { &i.at("VCFPL"), { { 2, 0 } } });
-    add_mnemonic_code(result, "VLLEBRZH", { &i.at("VLLEBRZ"), { { 2, 1 } } });
-    add_mnemonic_code(result, "VLLEBRZF", { &i.at("VLLEBRZ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "VLLEBRZG", { &i.at("VLLEBRZ"), { { 2, 3 } } });
-    add_mnemonic_code(result, "VLLEBRZE", { &i.at("VLLEBRZ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "LDRV", { &i.at("VLLEBRZ"), { { 2, 3 } } });
-    add_mnemonic_code(result, "LERV", { &i.at("VLLEBRZ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "VPKF", { &i.at("VPK"), { { 3, 2 } } });
-    add_mnemonic_code(result, "VPKG", { &i.at("VPK"), { { 3, 3 } } });
-    add_mnemonic_code(result, "VPKH", { &i.at("VPK"), { { 3, 1 } } });
-    add_mnemonic_code(result, "WFLCSB", { &i.at("VFPSO"), { { 2, 2 }, { 3, 8 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VFLNSB", { &i.at("VFPSO"), { { 2, 2 }, { 3, 0 }, { 4, 1 } } });
-    add_mnemonic_code(result, "WFLNSB", { &i.at("VFPSO"), { { 2, 2 }, { 3, 8 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VFLPSB", { &i.at("VFPSO"), { { 2, 2 }, { 3, 0 }, { 4, 2 } } });
-    add_mnemonic_code(result, "WFLPSB", { &i.at("VFPSO"), { { 2, 2 }, { 3, 8 }, { 4, 2 } } });
-    add_mnemonic_code(result, "VFPSODB", { &i.at("VFPSO"), { { 2, 3 }, { 3, 0 } } });
-    add_mnemonic_code(result, "WFPSODB", { &i.at("VFPSO"), { { 2, 3 }, { 3, 8 } } });
-    add_mnemonic_code(result, "VFLCDB", { &i.at("VFPSO"), { { 2, 3 }, { 3, 0 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFLCDB", { &i.at("VFPSO"), { { 2, 3 }, { 3, 8 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VFLNDB", { &i.at("VFPSO"), { { 2, 3 }, { 3, 0 }, { 4, 1 } } });
-    add_mnemonic_code(result, "WFLNDB", { &i.at("VFPSO"), { { 2, 3 }, { 3, 8 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VFLPDB", { &i.at("VFPSO"), { { 2, 3 }, { 3, 0 }, { 4, 2 } } });
-    add_mnemonic_code(result, "WFLPDB", { &i.at("VFPSO"), { { 2, 3 }, { 3, 8 }, { 4, 2 } } });
-    add_mnemonic_code(result, "WFPSOXB", { &i.at("VFPSO"), { { 2, 4 }, { 3, 8 } } });
-    add_mnemonic_code(result, "WFLCXB", { &i.at("VFPSO"), { { 2, 4 }, { 3, 8 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFLNXB", { &i.at("VFPSO"), { { 2, 4 }, { 3, 8 }, { 4, 1 } } });
-    add_mnemonic_code(result, "WFLPXB", { &i.at("VFPSO"), { { 2, 4 }, { 3, 8 }, { 4, 2 } } });
-    add_mnemonic_code(result, "VFSQSB", { &i.at("VFSQ"), { { 2, 2 }, { 3, 0 } } });
-    add_mnemonic_code(result, "VFSQDB", { &i.at("VFSQ"), { { 2, 3 }, { 3, 0 } } });
-    add_mnemonic_code(result, "WFSQSB", { &i.at("VFSQ"), { { 2, 2 }, { 3, 8 } } });
-    add_mnemonic_code(result, "WFSQDB", { &i.at("VFSQ"), { { 2, 3 }, { 3, 8 } } });
-    add_mnemonic_code(result, "WFSQXB", { &i.at("VFSQ"), { { 2, 4 }, { 3, 8 } } });
-    add_mnemonic_code(result, "VFSSB", { &i.at("VFS"), { { 2, 2 }, { 3, 0 } } });
-    add_mnemonic_code(result, "VFSDB", { &i.at("VFS"), { { 2, 3 }, { 3, 0 } } });
-    add_mnemonic_code(result, "WFSSB", { &i.at("VFS"), { { 2, 2 }, { 3, 8 } } });
-    add_mnemonic_code(result, "WFSDB", { &i.at("VFS"), { { 2, 3 }, { 3, 8 } } });
-    add_mnemonic_code(result, "WFSXB", { &i.at("VFS"), { { 2, 4 }, { 3, 8 } } });
-    add_mnemonic_code(result, "VFTCISB", { &i.at("VFTCI"), { { 3, 2 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VFTCIDB", { &i.at("VFTCI"), { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFTCISB", { &i.at("VFTCI"), { { 3, 2 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFTCIDB", { &i.at("VFTCI"), { { 3, 3 }, { 4, 8 } } });
-    add_mnemonic_code(result, "WFTCIXB", { &i.at("VFTCI"), { { 3, 4 }, { 4, 8 } } });
-    add_mnemonic_code(result, "XHHR", { &i.at("RXSBG"), { { 2, 0 }, { 3, 31 } } });
-    add_mnemonic_code(result, "XLHR", { &i.at("RXSBG"), { { 2, 32 }, { 3, 63 }, { 4, 32 } } });
-    // instruction under this position contain an OR operation not marked in this list
-
-    // in case the operand is ommited, the OR number should be assigned to the value of the ommited operand
-    add_mnemonic_code(result, "VFAEBS", { &i.at("VFAE"), { { 3, 0 } } }); // operand with index 4 ORed with 1
-    add_mnemonic_code(result, "VFAEHS", { &i.at("VFAE"), { { 3, 1 } } }); // operand with index 4 ORed with 1
-    add_mnemonic_code(result, "VFAEFS", { &i.at("VFAE"), { { 3, 2 } } }); // operand with index 4 ORed with 1
-    add_mnemonic_code(result, "VFAEZB", { &i.at("VFAE"), { { 3, 0 } } }); // operand with index 4 ORed with 2
-    add_mnemonic_code(result, "VFAEZH", { &i.at("VFAE"), { { 3, 1 } } }); // operand with index 4 ORed with 2
-    add_mnemonic_code(result, "VFAEZF", { &i.at("VFAE"), { { 3, 2 } } }); // operand with index 4 ORed with 2
-    add_mnemonic_code(result, "VFAEZBS", { &i.at("VFAE"), { { 3, 0 } } }); // operand with index 4 ORed with 3
-    add_mnemonic_code(result, "VFAEZHS", { &i.at("VFAE"), { { 3, 1 } } }); // operand with index 4 ORed with 3
-    add_mnemonic_code(result, "VFAEZFS", { &i.at("VFAE"), { { 3, 2 } } }); // operand with index 4 ORed with 3
-    add_mnemonic_code(result, "VSTRCBS", { &i.at("VSTRC"), { { 4, 0 } } }); // operand with index 5 ORed with 1
-    add_mnemonic_code(result, "VSTRCHS", { &i.at("VSTRC"), { { 4, 1 } } }); // operand with index 5 ORed with 1
-    add_mnemonic_code(result, "VSTRCFS", { &i.at("VSTRC"), { { 4, 2 } } }); // operand with index 5 ORed with 1
-    add_mnemonic_code(result, "VSTRCZB", { &i.at("VSTRC"), { { 4, 0 } } }); // operand with index 5 ORed with 2
-    add_mnemonic_code(result, "VSTRCZH", { &i.at("VSTRC"), { { 4, 1 } } }); // operand with index 5 ORed with 2
-    add_mnemonic_code(result, "VSTRCZF", { &i.at("VSTRC"), { { 4, 2 } } }); // operand with index 5 ORed with 2
-    add_mnemonic_code(result, "VSTRCZBS", { &i.at("VSTRC"), { { 4, 0 } } }); // operand with index 5 ORed with 3
-    add_mnemonic_code(result, "VSTRCZHS", { &i.at("VSTRC"), { { 4, 1 } } }); // operand with index 5 ORed with 3
-    add_mnemonic_code(result, "VSTRCZFS", { &i.at("VSTRC"), { { 4, 2 } } }); // operand with index 5 ORed
-                                                                             // with 3 always OR
-    add_mnemonic_code(result, "WFISB", { &i.at("VFI"), { { 2, 2 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WFIDB", { &i.at("VFI"), { { 2, 3 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WFIXB", { &i.at("VFI"), { { 2, 4 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCDLGB", { &i.at("VCFPL"), { { 2, 3 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCGDB", { &i.at("VCSFP"), { { 2, 3 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCELFB", { &i.at("VCFPL"), { { 2, 2 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCLFEB", { &i.at("VCLFP"), { { 2, 2 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCEFB", { &i.at("VCFPS"), { { 2, 2 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCDGB", { &i.at("VCFPS"), { { 2, 3 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCFEB", { &i.at("VCSFP"), { { 2, 2 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCLGDB", { &i.at("VCLGD"), { { 2, 3 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WLEDB", { &i.at("VFLR"), { { 2, 3 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WFLRD", { &i.at("VFLR"), { { 2, 3 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WFLRX", { &i.at("VFLR"), { { 2, 4 } } }); // operand with index 3 ORed with 8
-
-    // mnemonics not in principles
-    add_mnemonic_code(result, "CIJE", { &i.at("CIJ"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CIJH", { &i.at("CIJ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CIJL", { &i.at("CIJ"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CIJNE", { &i.at("CIJ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CIJNH", { &i.at("CIJ"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CIJNL", { &i.at("CIJ"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CGIBE", { &i.at("CGIB"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CGIBH", { &i.at("CGIB"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CGIBL", { &i.at("CGIB"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CGIBNE", { &i.at("CGIB"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CGIBNH", { &i.at("CGIB"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CGIBNL", { &i.at("CGIB"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CGIJE", { &i.at("CGIJ"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CGIJH", { &i.at("CGIJ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CGIJL", { &i.at("CGIJ"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CGIJNE", { &i.at("CGIJ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CGIJNH", { &i.at("CGIJ"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CGIJNL", { &i.at("CGIJ"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CGITE", { &i.at("CGIT"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CGITH", { &i.at("CGIT"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CGITL", { &i.at("CGIT"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CGITNE", { &i.at("CGIT"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CGITNH", { &i.at("CGIT"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CGITNL", { &i.at("CGIT"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CGRBE", { &i.at("CGRB"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CGRBH", { &i.at("CGRB"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CGRBL", { &i.at("CGRB"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CGRBNE", { &i.at("CGRB"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CGRBNH", { &i.at("CGRB"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CGRBNL", { &i.at("CGRB"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CGRJE", { &i.at("CGRJ"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CGRJH", { &i.at("CGRJ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CGRJL", { &i.at("CGRJ"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CGRJNE", { &i.at("CGRJ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CGRJNH", { &i.at("CGRJ"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CGRJNL", { &i.at("CGRJ"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CGRTE", { &i.at("CGRT"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CGRTH", { &i.at("CGRT"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CGRTL", { &i.at("CGRT"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CGRTNE", { &i.at("CGRT"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CGRTNH", { &i.at("CGRT"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CGRTNL", { &i.at("CGRT"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CIBE", { &i.at("CIB"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CIBH", { &i.at("CIB"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CIBL", { &i.at("CIB"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CIBNE", { &i.at("CIB"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CIBNH", { &i.at("CIB"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CIBNL", { &i.at("CIB"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CITE", { &i.at("CIT"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CITH", { &i.at("CIT"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CITL", { &i.at("CIT"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CITNE", { &i.at("CIT"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CITNH", { &i.at("CIT"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CITNL", { &i.at("CIT"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLFITE", { &i.at("CLFIT"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLFITH", { &i.at("CLFIT"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLFITL", { &i.at("CLFIT"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLFITNE", { &i.at("CLFIT"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLFITNH", { &i.at("CLFIT"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLFITNL", { &i.at("CLFIT"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLGIBE", { &i.at("CLGIB"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLGIBH", { &i.at("CLGIB"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLGIBL", { &i.at("CLGIB"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLGIBNE", { &i.at("CLGIB"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLGIBNH", { &i.at("CLGIB"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLGIBNL", { &i.at("CLGIB"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLGIJE", { &i.at("CLGIJ"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLGIJH", { &i.at("CLGIJ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLGIJL", { &i.at("CLGIJ"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLGIJNE", { &i.at("CLGIJ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLGIJNH", { &i.at("CLGIJ"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLGIJNL", { &i.at("CLGIJ"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLGITE", { &i.at("CLGIT"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLGITH", { &i.at("CLGIT"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLGITL", { &i.at("CLGIT"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLGITNE", { &i.at("CLGIT"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLGITNH", { &i.at("CLGIT"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLGITNL", { &i.at("CLGIT"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLGRBE", { &i.at("CLGRB"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLGRBH", { &i.at("CLGRB"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLGRBL", { &i.at("CLGRB"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLGRBNE", { &i.at("CLGRB"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLGRBNH", { &i.at("CLGRB"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLGRBNL", { &i.at("CLGRB"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLGRJE", { &i.at("CLGRJ"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLGRJH", { &i.at("CLGRJ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLGRJL", { &i.at("CLGRJ"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLGRJNE", { &i.at("CLGRJ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLGRJNH", { &i.at("CLGRJ"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLGRJNL", { &i.at("CLGRJ"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLGRTE", { &i.at("CLGRT"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLGRTH", { &i.at("CLGRT"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLGRTL", { &i.at("CLGRT"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLGRTNE", { &i.at("CLGRT"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLGRTNH", { &i.at("CLGRT"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLGRTNL", { &i.at("CLGRT"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLGTE", { &i.at("CLGT"), { { 1, 8 } } });
-    add_mnemonic_code(result, "CLGTH", { &i.at("CLGT"), { { 1, 2 } } });
-    add_mnemonic_code(result, "CLGTL", { &i.at("CLGT"), { { 1, 4 } } });
-    add_mnemonic_code(result, "CLGTNE", { &i.at("CLGT"), { { 1, 6 } } });
-    add_mnemonic_code(result, "CLGTNH", { &i.at("CLGT"), { { 1, 12 } } });
-    add_mnemonic_code(result, "CLGTNL", { &i.at("CLGT"), { { 1, 10 } } });
-    add_mnemonic_code(result, "CLIBE", { &i.at("CLIB"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLIBH", { &i.at("CLIB"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLIBL", { &i.at("CLIB"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLIBNE", { &i.at("CLIB"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLIBNH", { &i.at("CLIB"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLIBNL", { &i.at("CLIB"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLIJE", { &i.at("CLIJ"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLIJH", { &i.at("CLIJ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLIJL", { &i.at("CLIJ"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLIJNE", { &i.at("CLIJ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLIJNH", { &i.at("CLIJ"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLIJNL", { &i.at("CLIJ"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLRBE", { &i.at("CLRB"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLRBH", { &i.at("CLRB"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLRBL", { &i.at("CLRB"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLRBNE", { &i.at("CLRB"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLRBNH", { &i.at("CLRB"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLRBNL", { &i.at("CLRB"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLRJE", { &i.at("CLRJ"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLRJH", { &i.at("CLRJ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLRJL", { &i.at("CLRJ"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLRJNE", { &i.at("CLRJ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLRJNH", { &i.at("CLRJ"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLRJNL", { &i.at("CLRJ"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLRTE", { &i.at("CLRT"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CLRTH", { &i.at("CLRT"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CLRTL", { &i.at("CLRT"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CLRTNE", { &i.at("CLRT"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CLRTNH", { &i.at("CLRT"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CLRTNL", { &i.at("CLRT"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CLTE", { &i.at("CLT"), { { 1, 8 } } });
-    add_mnemonic_code(result, "CLTH", { &i.at("CLT"), { { 1, 2 } } });
-    add_mnemonic_code(result, "CLTL", { &i.at("CLT"), { { 1, 4 } } });
-    add_mnemonic_code(result, "CLTNE", { &i.at("CLT"), { { 1, 6 } } });
-    add_mnemonic_code(result, "CLTNH", { &i.at("CLT"), { { 1, 12 } } });
-    add_mnemonic_code(result, "CLTNL", { &i.at("CLT"), { { 1, 10 } } });
-    add_mnemonic_code(result, "CRBE", { &i.at("CRB"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CRBH", { &i.at("CRB"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CRBL", { &i.at("CRB"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CRBNE", { &i.at("CRB"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CRBNH", { &i.at("CRB"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CRBNL", { &i.at("CRB"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CRJE", { &i.at("CRJ"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CRJH", { &i.at("CRJ"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CRJL", { &i.at("CRJ"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CRJNE", { &i.at("CRJ"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CRJNH", { &i.at("CRJ"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CRJNL", { &i.at("CRJ"), { { 2, 10 } } });
-    add_mnemonic_code(result, "CRTE", { &i.at("CRT"), { { 2, 8 } } });
-    add_mnemonic_code(result, "CRTH", { &i.at("CRT"), { { 2, 2 } } });
-    add_mnemonic_code(result, "CRTL", { &i.at("CRT"), { { 2, 4 } } });
-    add_mnemonic_code(result, "CRTNE", { &i.at("CRT"), { { 2, 6 } } });
-    add_mnemonic_code(result, "CRTNH", { &i.at("CRT"), { { 2, 12 } } });
-    add_mnemonic_code(result, "CRTNL", { &i.at("CRT"), { { 2, 10 } } });
-    // operand with index 2 was omitted for the below instruction
-    add_mnemonic_code(result, "NOTR", { &i.at("NORK"), { { 2, 0 } } });
-    // operand with index 2 was omitted for the below instruction
-    add_mnemonic_code(result, "NOTGR", { &i.at("NOGRK"), { { 2, 0 } } });
-    add_mnemonic_code(result, "LOCGE", { &i.at("LOCG"), { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCGH", { &i.at("LOCG"), { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCGL", { &i.at("LOCG"), { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCGNE", { &i.at("LOCG"), { { 2, 6 } } });
-    add_mnemonic_code(result, "LOCGNH", { &i.at("LOCG"), { { 2, 12 } } });
-    add_mnemonic_code(result, "LOCGNL", { &i.at("LOCG"), { { 2, 10 } } });
-    add_mnemonic_code(result, "LOCRE", { &i.at("LOCR"), { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCRH", { &i.at("LOCR"), { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCRL", { &i.at("LOCR"), { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCRNE", { &i.at("LOCR"), { { 2, 6 } } });
-    add_mnemonic_code(result, "LOCRNH", { &i.at("LOCR"), { { 2, 12 } } });
-    add_mnemonic_code(result, "LOCRNL", { &i.at("LOCR"), { { 2, 10 } } });
-    add_mnemonic_code(result, "LOCGRE", { &i.at("LOCGR"), { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCGRH", { &i.at("LOCGR"), { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCGRL", { &i.at("LOCGR"), { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCGRNE", { &i.at("LOCGR"), { { 2, 6 } } });
-    add_mnemonic_code(result, "LOCGRNH", { &i.at("LOCGR"), { { 2, 12 } } });
-    add_mnemonic_code(result, "LOCGRNL", { &i.at("LOCGR"), { { 2, 10 } } });
-    add_mnemonic_code(result, "LOCE", { &i.at("LOC"), { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCH", { &i.at("LOC"), { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCL", { &i.at("LOC"), { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCNE", { &i.at("LOC"), { { 2, 6 } } });
-    add_mnemonic_code(result, "LOCNH", { &i.at("LOC"), { { 2, 12 } } });
-    add_mnemonic_code(result, "LOCNL", { &i.at("LOC"), { { 2, 10 } } });
-    add_mnemonic_code(result, "STOCGE", { &i.at("STOCG"), { { 2, 8 } } });
-    add_mnemonic_code(result, "STOCGH", { &i.at("STOCG"), { { 2, 2 } } });
-    add_mnemonic_code(result, "STOCGL", { &i.at("STOCG"), { { 2, 4 } } });
-    add_mnemonic_code(result, "STOCGNE", { &i.at("STOCG"), { { 2, 6 } } });
-    add_mnemonic_code(result, "STOCGNH", { &i.at("STOCG"), { { 2, 12 } } });
-    add_mnemonic_code(result, "STOCGNL", { &i.at("STOCG"), { { 2, 10 } } });
-    add_mnemonic_code(result, "STOCE", { &i.at("STOC"), { { 2, 8 } } });
-    add_mnemonic_code(result, "STOCH", { &i.at("STOC"), { { 2, 2 } } });
-    add_mnemonic_code(result, "STOCL", { &i.at("STOC"), { { 2, 4 } } });
-    add_mnemonic_code(result, "STOCNE", { &i.at("STOC"), { { 2, 6 } } });
-    add_mnemonic_code(result, "STOCNH", { &i.at("STOC"), { { 2, 12 } } });
-    add_mnemonic_code(result, "STOCNL", { &i.at("STOC"), { { 2, 10 } } });
-    // VNO V1,V2,V2        (operand with index 2 replaced with 0 )
-    add_mnemonic_code(result, "VNOT", { &i.at("VNO"), { { 2, 0 } } });
-    return result;
+    auto it = std::ranges::lower_bound(machine_instructions, name, {}, &machine_instruction::name);
+    if (it == std::ranges::end(machine_instructions) || it->name() != name)
+        return nullptr;
+    return &*it;
 }
 
-const std::map<std::string, machine_instruction> instruction::machine_instructions =
-    instruction::get_machine_instructions();
-
-const std::map<std::string, mnemonic_code> instruction::mnemonic_codes =
-    instruction::get_mnemonic_codes(machine_instructions);
-
-// Generates a bitmask for an arbitrary machine instruction indicating which operands
-// are of the RI type (and therefore are modified by transform_reloc_imm_operands)
-unsigned char machine_instruction::generate_reladdr_bitmask(
-    const std::vector<checking::machine_operand_format>& operands)
+constexpr const machine_instruction* find_mi(std::string_view name)
 {
-    unsigned char result = 0;
+    auto it = std::ranges::lower_bound(machine_instructions, name, {}, &machine_instruction::name);
+    assert(it != std::ranges::end(machine_instructions) && it->name() == name);
+    return &*it;
+}
+#else
+static_assert(std::is_sorted(std::begin(machine_instructions),
+    std::end(machine_instructions),
+    [](const auto& l, const auto& r) { return l.name() < r.name(); }));
 
-    assert(operands.size() <= std::numeric_limits<decltype(result)>::digits);
-
-    decltype(result) top_bit = 1 << (std::numeric_limits<decltype(result)>::digits - 1);
-
-    for (const auto& op : operands)
-    {
-        if (op.identifier.type == checking::machine_operand_type::RELOC_IMM)
-            result |= top_bit;
-        top_bit >>= 1;
-    }
-
-    return result;
+const machine_instruction* instruction::find_machine_instructions(std::string_view name)
+{
+    auto it = std::lower_bound(
+        std::begin(machine_instructions), std::end(machine_instructions), name, [](const auto& l, const auto& r) {
+            return l.name() < r;
+        });
+    if (it == std::end(machine_instructions) || it->name() != name)
+        return nullptr;
+    return &*it;
 }
 
-// Generates a bitmask for an arbitrary mnemonit indicating which operands
-// are of the RI type (and therefore are modified by transform_reloc_imm_operands)
-unsigned char mnemonic_code::generate_reladdr_bitmask(
-    const machine_instruction* instruction, const std::vector<std::pair<size_t, size_t>>& replaced)
+constexpr const machine_instruction* find_mi(std::string_view name)
 {
-    unsigned char result = 0;
-
-    decltype(result) top_bit = 1 << (std::numeric_limits<decltype(result)>::digits - 1);
-
-    const std::pair<size_t, size_t>* replaced_b = replaced.data();
-    const std::pair<size_t, size_t>* const replaced_e = replaced.data() + replaced.size();
-
-    size_t position = 0;
-    for (const auto& op : instruction->operands)
-    {
-        if (replaced_b != replaced_e && position == replaced_b->first)
-        {
-            ++replaced_b;
-            ++position;
-            continue;
-        }
-
-        if (op.identifier.type == checking::machine_operand_type::RELOC_IMM)
-            result |= top_bit;
-        top_bit >>= 1;
-
-        ++position;
-    }
-    return result;
+    auto it = std::lower_bound(
+        std::begin(machine_instructions), std::end(machine_instructions), name, [](const auto& l, const auto& r) {
+            return l.name() < r;
+        });
+    assert(it != std::end(machine_instructions) && it->name() == name);
+    return &*it;
 }
+#endif
+
+const machine_instruction& instruction::get_machine_instructions(std::string_view name)
+{
+    auto mi = find_machine_instructions(name);
+    assert(mi);
+    return *mi;
+}
+
+std::span<const machine_instruction> instruction::all_machine_instructions() { return machine_instructions; }
+
+constexpr auto mi_BC = find_mi("BC");
+constexpr auto mi_BCR = find_mi("BCR");
+constexpr auto mi_BIC = find_mi("BIC");
+constexpr auto mi_BRAS = find_mi("BRAS");
+constexpr auto mi_BRASL = find_mi("BRASL");
+constexpr auto mi_BRC = find_mi("BRC");
+constexpr auto mi_BRCL = find_mi("BRCL");
+constexpr auto mi_BRCT = find_mi("BRCT");
+constexpr auto mi_BRCTG = find_mi("BRCTG");
+constexpr auto mi_BRXH = find_mi("BRXH");
+constexpr auto mi_BRXHG = find_mi("BRXHG");
+constexpr auto mi_BRXLE = find_mi("BRXLE");
+constexpr auto mi_BRXLG = find_mi("BRXLG");
+constexpr auto mi_CGIB = find_mi("CGIB");
+constexpr auto mi_CGIJ = find_mi("CGIJ");
+constexpr auto mi_CGIT = find_mi("CGIT");
+constexpr auto mi_CGRB = find_mi("CGRB");
+constexpr auto mi_CGRJ = find_mi("CGRJ");
+constexpr auto mi_CGRT = find_mi("CGRT");
+constexpr auto mi_CIB = find_mi("CIB");
+constexpr auto mi_CIJ = find_mi("CIJ");
+constexpr auto mi_CIT = find_mi("CIT");
+constexpr auto mi_CLFIT = find_mi("CLFIT");
+constexpr auto mi_CLGIB = find_mi("CLGIB");
+constexpr auto mi_CLGIJ = find_mi("CLGIJ");
+constexpr auto mi_CLGIT = find_mi("CLGIT");
+constexpr auto mi_CLGRB = find_mi("CLGRB");
+constexpr auto mi_CLGRJ = find_mi("CLGRJ");
+constexpr auto mi_CLGRT = find_mi("CLGRT");
+constexpr auto mi_CLGT = find_mi("CLGT");
+constexpr auto mi_CLIB = find_mi("CLIB");
+constexpr auto mi_CLIJ = find_mi("CLIJ");
+constexpr auto mi_CLRB = find_mi("CLRB");
+constexpr auto mi_CLRJ = find_mi("CLRJ");
+constexpr auto mi_CLRT = find_mi("CLRT");
+constexpr auto mi_CLT = find_mi("CLT");
+constexpr auto mi_CRB = find_mi("CRB");
+constexpr auto mi_CRJ = find_mi("CRJ");
+constexpr auto mi_CRT = find_mi("CRT");
+constexpr auto mi_LOC = find_mi("LOC");
+constexpr auto mi_LOCFH = find_mi("LOCFH");
+constexpr auto mi_LOCFHR = find_mi("LOCFHR");
+constexpr auto mi_LOCG = find_mi("LOCG");
+constexpr auto mi_LOCGHI = find_mi("LOCGHI");
+constexpr auto mi_LOCGR = find_mi("LOCGR");
+constexpr auto mi_LOCHHI = find_mi("LOCHHI");
+constexpr auto mi_LOCHI = find_mi("LOCHI");
+constexpr auto mi_LOCR = find_mi("LOCR");
+constexpr auto mi_NOGRK = find_mi("NOGRK");
+constexpr auto mi_NORK = find_mi("NORK");
+constexpr auto mi_RISBHGZ = find_mi("RISBHGZ");
+constexpr auto mi_RISBLGZ = find_mi("RISBLGZ");
+constexpr auto mi_RNSBG = find_mi("RNSBG");
+constexpr auto mi_ROSBG = find_mi("ROSBG");
+constexpr auto mi_RXSBG = find_mi("RXSBG");
+constexpr auto mi_SELFHR = find_mi("SELFHR");
+constexpr auto mi_SELGR = find_mi("SELGR");
+constexpr auto mi_SELR = find_mi("SELR");
+constexpr auto mi_STOC = find_mi("STOC");
+constexpr auto mi_STOCFH = find_mi("STOCFH");
+constexpr auto mi_STOCG = find_mi("STOCG");
+constexpr auto mi_VA = find_mi("VA");
+constexpr auto mi_VAC = find_mi("VAC");
+constexpr auto mi_VACC = find_mi("VACC");
+constexpr auto mi_VACCC = find_mi("VACCC");
+constexpr auto mi_VAVG = find_mi("VAVG");
+constexpr auto mi_VAVGL = find_mi("VAVGL");
+constexpr auto mi_VCEQ = find_mi("VCEQ");
+constexpr auto mi_VCFPL = find_mi("VCFPL");
+constexpr auto mi_VCFPS = find_mi("VCFPS");
+constexpr auto mi_VCH = find_mi("VCH");
+constexpr auto mi_VCHL = find_mi("VCHL");
+constexpr auto mi_VCLFP = find_mi("VCLFP");
+constexpr auto mi_VCLGD = find_mi("VCLGD");
+constexpr auto mi_VCLZ = find_mi("VCLZ");
+constexpr auto mi_VCSFP = find_mi("VCSFP");
+constexpr auto mi_VEC = find_mi("VEC");
+constexpr auto mi_VECL = find_mi("VECL");
+constexpr auto mi_VERIM = find_mi("VERIM");
+constexpr auto mi_VERLL = find_mi("VERLL");
+constexpr auto mi_VERLLV = find_mi("VERLLV");
+constexpr auto mi_VESL = find_mi("VESL");
+constexpr auto mi_VESLV = find_mi("VESLV");
+constexpr auto mi_VESRA = find_mi("VESRA");
+constexpr auto mi_VESRAV = find_mi("VESRAV");
+constexpr auto mi_VESRL = find_mi("VESRL");
+constexpr auto mi_VESRLV = find_mi("VESRLV");
+constexpr auto mi_VFA = find_mi("VFA");
+constexpr auto mi_VFAE = find_mi("VFAE");
+constexpr auto mi_VFCE = find_mi("VFCE");
+constexpr auto mi_VFCH = find_mi("VFCH");
+constexpr auto mi_VFCHE = find_mi("VFCHE");
+constexpr auto mi_VFD = find_mi("VFD");
+constexpr auto mi_VFEE = find_mi("VFEE");
+constexpr auto mi_VFENE = find_mi("VFENE");
+constexpr auto mi_VFI = find_mi("VFI");
+constexpr auto mi_VFLL = find_mi("VFLL");
+constexpr auto mi_VFLR = find_mi("VFLR");
+constexpr auto mi_VFM = find_mi("VFM");
+constexpr auto mi_VFMA = find_mi("VFMA");
+constexpr auto mi_VFMAX = find_mi("VFMAX");
+constexpr auto mi_VFMIN = find_mi("VFMIN");
+constexpr auto mi_VFMS = find_mi("VFMS");
+constexpr auto mi_VFNMA = find_mi("VFNMA");
+constexpr auto mi_VFNMS = find_mi("VFNMS");
+constexpr auto mi_VFPSO = find_mi("VFPSO");
+constexpr auto mi_VFS = find_mi("VFS");
+constexpr auto mi_VFSQ = find_mi("VFSQ");
+constexpr auto mi_VFTCI = find_mi("VFTCI");
+constexpr auto mi_VGBM = find_mi("VGBM");
+constexpr auto mi_VGFM = find_mi("VGFM");
+constexpr auto mi_VGFMA = find_mi("VGFMA");
+constexpr auto mi_VGM = find_mi("VGM");
+constexpr auto mi_VISTR = find_mi("VISTR");
+constexpr auto mi_VLBR = find_mi("VLBR");
+constexpr auto mi_VLBRREP = find_mi("VLBRREP");
+constexpr auto mi_VLC = find_mi("VLC");
+constexpr auto mi_VLER = find_mi("VLER");
+constexpr auto mi_VLGV = find_mi("VLGV");
+constexpr auto mi_VLLEBRZ = find_mi("VLLEBRZ");
+constexpr auto mi_VLLEZ = find_mi("VLLEZ");
+constexpr auto mi_VLP = find_mi("VLP");
+constexpr auto mi_VLREP = find_mi("VLREP");
+constexpr auto mi_VLVG = find_mi("VLVG");
+constexpr auto mi_VMAE = find_mi("VMAE");
+constexpr auto mi_VMAH = find_mi("VMAH");
+constexpr auto mi_VMAL = find_mi("VMAL");
+constexpr auto mi_VMALE = find_mi("VMALE");
+constexpr auto mi_VMALH = find_mi("VMALH");
+constexpr auto mi_VMALO = find_mi("VMALO");
+constexpr auto mi_VMAO = find_mi("VMAO");
+constexpr auto mi_VME = find_mi("VME");
+constexpr auto mi_VMH = find_mi("VMH");
+constexpr auto mi_VML = find_mi("VML");
+constexpr auto mi_VMLE = find_mi("VMLE");
+constexpr auto mi_VMLH = find_mi("VMLH");
+constexpr auto mi_VMLO = find_mi("VMLO");
+constexpr auto mi_VMN = find_mi("VMN");
+constexpr auto mi_VMNL = find_mi("VMNL");
+constexpr auto mi_VMO = find_mi("VMO");
+constexpr auto mi_VMRH = find_mi("VMRH");
+constexpr auto mi_VMRL = find_mi("VMRL");
+constexpr auto mi_VMSL = find_mi("VMSL");
+constexpr auto mi_VMX = find_mi("VMX");
+constexpr auto mi_VMXL = find_mi("VMXL");
+constexpr auto mi_VNO = find_mi("VNO");
+constexpr auto mi_VPK = find_mi("VPK");
+constexpr auto mi_VPKLS = find_mi("VPKLS");
+constexpr auto mi_VPKS = find_mi("VPKS");
+constexpr auto mi_VPOPCT = find_mi("VPOPCT");
+constexpr auto mi_VREP = find_mi("VREP");
+constexpr auto mi_VREPI = find_mi("VREPI");
+constexpr auto mi_VS = find_mi("VS");
+constexpr auto mi_VSBCBI = find_mi("VSBCBI");
+constexpr auto mi_VSBI = find_mi("VSBI");
+constexpr auto mi_VSCBI = find_mi("VSCBI");
+constexpr auto mi_VSEG = find_mi("VSEG");
+constexpr auto mi_VSTBR = find_mi("VSTBR");
+constexpr auto mi_VSTEBRF = find_mi("VSTEBRF");
+constexpr auto mi_VSTEBRG = find_mi("VSTEBRG");
+constexpr auto mi_VSTER = find_mi("VSTER");
+constexpr auto mi_VSTRC = find_mi("VSTRC");
+constexpr auto mi_VSTRS = find_mi("VSTRS");
+constexpr auto mi_VSUM = find_mi("VSUM");
+constexpr auto mi_VSUMG = find_mi("VSUMG");
+constexpr auto mi_VSUMQ = find_mi("VSUMQ");
+constexpr auto mi_VUPH = find_mi("VUPH");
+constexpr auto mi_VUPL = find_mi("VUPL");
+constexpr auto mi_VUPLH = find_mi("VUPLH");
+constexpr auto mi_VUPLL = find_mi("VUPLL");
+constexpr auto mi_WFC = find_mi("WFC");
+constexpr auto mi_WFK = find_mi("WFK");
+
+constexpr mnemonic_code mnemonic_codes[] = {
+    { "B", mi_BC, { { 0, 15 } } },
+    { "BE", mi_BC, { { 0, 8 } } },
+    { "BER", mi_BCR, { { 0, 8 } } },
+    { "BH", mi_BC, { { 0, 2 } } },
+    { "BHR", mi_BCR, { { 0, 2 } } },
+    { "BI", mi_BIC, { { 0, 15 } } },
+    { "BIE", mi_BIC, { { 0, 8 } } },
+    { "BIH", mi_BIC, { { 0, 2 } } },
+    { "BIL", mi_BIC, { { 0, 4 } } },
+    { "BIM", mi_BIC, { { 0, 4 } } },
+    { "BINE", mi_BIC, { { 0, 7 } } },
+    { "BINH", mi_BIC, { { 0, 13 } } },
+    { "BINL", mi_BIC, { { 0, 11 } } },
+    { "BINM", mi_BIC, { { 0, 11 } } },
+    { "BINO", mi_BIC, { { 0, 14 } } },
+    { "BINP", mi_BIC, { { 0, 13 } } },
+    { "BINZ", mi_BIC, { { 0, 7 } } },
+    { "BIO", mi_BIC, { { 0, 1 } } },
+    { "BIP", mi_BIC, { { 0, 2 } } },
+    { "BIZ", mi_BIC, { { 0, 8 } } },
+    { "BL", mi_BC, { { 0, 4 } } },
+    { "BLR", mi_BCR, { { 0, 4 } } },
+    { "BM", mi_BC, { { 0, 4 } } },
+    { "BMR", mi_BCR, { { 0, 4 } } },
+    { "BNE", mi_BC, { { 0, 7 } } },
+    { "BNER", mi_BCR, { { 0, 7 } } },
+    { "BNH", mi_BC, { { 0, 13 } } },
+    { "BNHR", mi_BCR, { { 0, 13 } } },
+    { "BNL", mi_BC, { { 0, 11 } } },
+    { "BNLR", mi_BCR, { { 0, 11 } } },
+    { "BNM", mi_BC, { { 0, 11 } } },
+    { "BNMR", mi_BCR, { { 0, 11 } } },
+    { "BNO", mi_BC, { { 0, 14 } } },
+    { "BNOR", mi_BCR, { { 0, 14 } } },
+    { "BNP", mi_BC, { { 0, 13 } } },
+    { "BNPR", mi_BCR, { { 0, 13 } } },
+    { "BNZ", mi_BC, { { 0, 7 } } },
+    { "BNZR", mi_BCR, { { 0, 7 } } },
+    { "BO", mi_BC, { { 0, 1 } } },
+    { "BOR", mi_BCR, { { 0, 1 } } },
+    { "BP", mi_BC, { { 0, 2 } } },
+    { "BPR", mi_BCR, { { 0, 2 } } },
+    { "BR", mi_BCR, { { 0, 15 } } },
+    { "BRE", mi_BRC, { { 0, 8 } } },
+    { "BREL", mi_BRCL, { { 0, 8 } } },
+    { "BRH", mi_BRC, { { 0, 2 } } },
+    { "BRHL", mi_BRCL, { { 0, 2 } } },
+    { "BRL", mi_BRC, { { 0, 4 } } },
+    { "BRLL", mi_BRCL, { { 0, 4 } } },
+    { "BRM", mi_BRC, { { 0, 4 } } },
+    { "BRML", mi_BRCL, { { 0, 4 } } },
+    { "BRNE", mi_BRC, { { 0, 7 } } },
+    { "BRNEL", mi_BRCL, { { 0, 7 } } },
+    { "BRNH", mi_BRC, { { 0, 13 } } },
+    { "BRNHL", mi_BRCL, { { 0, 13 } } },
+    { "BRNL", mi_BRC, { { 0, 11 } } },
+    { "BRNLL", mi_BRCL, { { 0, 11 } } },
+    { "BRNM", mi_BRC, { { 0, 11 } } },
+    { "BRNML", mi_BRCL, { { 0, 11 } } },
+    { "BRNO", mi_BRC, { { 0, 14 } } },
+    { "BRNOL", mi_BRCL, { { 0, 14 } } },
+    { "BRNP", mi_BRC, { { 0, 13 } } },
+    { "BRNPL", mi_BRCL, { { 0, 13 } } },
+    { "BRNZ", mi_BRC, { { 0, 7 } } },
+    { "BRNZL", mi_BRCL, { { 0, 7 } } },
+    { "BRO", mi_BRC, { { 0, 1 } } },
+    { "BROL", mi_BRCL, { { 0, 1 } } },
+    { "BRP", mi_BRC, { { 0, 2 } } },
+    { "BRPL", mi_BRCL, { { 0, 2 } } },
+    { "BRU", mi_BRC, { { 0, 15 } } },
+    { "BRUL", mi_BRCL, { { 0, 15 } } },
+    { "BRZ", mi_BRC, { { 0, 8 } } },
+    { "BRZL", mi_BRCL, { { 0, 8 } } },
+    { "BZ", mi_BC, { { 0, 8 } } },
+    { "BZR", mi_BCR, { { 0, 8 } } },
+    { "CGIBE", mi_CGIB, { { 2, 8 } } },
+    { "CGIBH", mi_CGIB, { { 2, 2 } } },
+    { "CGIBL", mi_CGIB, { { 2, 4 } } },
+    { "CGIBNE", mi_CGIB, { { 2, 6 } } },
+    { "CGIBNH", mi_CGIB, { { 2, 12 } } },
+    { "CGIBNL", mi_CGIB, { { 2, 10 } } },
+    { "CGIJE", mi_CGIJ, { { 2, 8 } } },
+    { "CGIJH", mi_CGIJ, { { 2, 2 } } },
+    { "CGIJL", mi_CGIJ, { { 2, 4 } } },
+    { "CGIJNE", mi_CGIJ, { { 2, 6 } } },
+    { "CGIJNH", mi_CGIJ, { { 2, 12 } } },
+    { "CGIJNL", mi_CGIJ, { { 2, 10 } } },
+    { "CGITE", mi_CGIT, { { 2, 8 } } },
+    { "CGITH", mi_CGIT, { { 2, 2 } } },
+    { "CGITL", mi_CGIT, { { 2, 4 } } },
+    { "CGITNE", mi_CGIT, { { 2, 6 } } },
+    { "CGITNH", mi_CGIT, { { 2, 12 } } },
+    { "CGITNL", mi_CGIT, { { 2, 10 } } },
+    { "CGRBE", mi_CGRB, { { 2, 8 } } },
+    { "CGRBH", mi_CGRB, { { 2, 2 } } },
+    { "CGRBL", mi_CGRB, { { 2, 4 } } },
+    { "CGRBNE", mi_CGRB, { { 2, 6 } } },
+    { "CGRBNH", mi_CGRB, { { 2, 12 } } },
+    { "CGRBNL", mi_CGRB, { { 2, 10 } } },
+    { "CGRJE", mi_CGRJ, { { 2, 8 } } },
+    { "CGRJH", mi_CGRJ, { { 2, 2 } } },
+    { "CGRJL", mi_CGRJ, { { 2, 4 } } },
+    { "CGRJNE", mi_CGRJ, { { 2, 6 } } },
+    { "CGRJNH", mi_CGRJ, { { 2, 12 } } },
+    { "CGRJNL", mi_CGRJ, { { 2, 10 } } },
+    { "CGRTE", mi_CGRT, { { 2, 8 } } },
+    { "CGRTH", mi_CGRT, { { 2, 2 } } },
+    { "CGRTL", mi_CGRT, { { 2, 4 } } },
+    { "CGRTNE", mi_CGRT, { { 2, 6 } } },
+    { "CGRTNH", mi_CGRT, { { 2, 12 } } },
+    { "CGRTNL", mi_CGRT, { { 2, 10 } } },
+    { "CIBE", mi_CIB, { { 2, 8 } } },
+    { "CIBH", mi_CIB, { { 2, 2 } } },
+    { "CIBL", mi_CIB, { { 2, 4 } } },
+    { "CIBNE", mi_CIB, { { 2, 6 } } },
+    { "CIBNH", mi_CIB, { { 2, 12 } } },
+    { "CIBNL", mi_CIB, { { 2, 10 } } },
+    { "CIJE", mi_CIJ, { { 2, 8 } } },
+    { "CIJH", mi_CIJ, { { 2, 2 } } },
+    { "CIJL", mi_CIJ, { { 2, 4 } } },
+    { "CIJNE", mi_CIJ, { { 2, 6 } } },
+    { "CIJNH", mi_CIJ, { { 2, 12 } } },
+    { "CIJNL", mi_CIJ, { { 2, 10 } } },
+    { "CITE", mi_CIT, { { 2, 8 } } },
+    { "CITH", mi_CIT, { { 2, 2 } } },
+    { "CITL", mi_CIT, { { 2, 4 } } },
+    { "CITNE", mi_CIT, { { 2, 6 } } },
+    { "CITNH", mi_CIT, { { 2, 12 } } },
+    { "CITNL", mi_CIT, { { 2, 10 } } },
+    { "CLFITE", mi_CLFIT, { { 2, 8 } } },
+    { "CLFITH", mi_CLFIT, { { 2, 2 } } },
+    { "CLFITL", mi_CLFIT, { { 2, 4 } } },
+    { "CLFITNE", mi_CLFIT, { { 2, 6 } } },
+    { "CLFITNH", mi_CLFIT, { { 2, 12 } } },
+    { "CLFITNL", mi_CLFIT, { { 2, 10 } } },
+    { "CLGIBE", mi_CLGIB, { { 2, 8 } } },
+    { "CLGIBH", mi_CLGIB, { { 2, 2 } } },
+    { "CLGIBL", mi_CLGIB, { { 2, 4 } } },
+    { "CLGIBNE", mi_CLGIB, { { 2, 6 } } },
+    { "CLGIBNH", mi_CLGIB, { { 2, 12 } } },
+    { "CLGIBNL", mi_CLGIB, { { 2, 10 } } },
+    { "CLGIJE", mi_CLGIJ, { { 2, 8 } } },
+    { "CLGIJH", mi_CLGIJ, { { 2, 2 } } },
+    { "CLGIJL", mi_CLGIJ, { { 2, 4 } } },
+    { "CLGIJNE", mi_CLGIJ, { { 2, 6 } } },
+    { "CLGIJNH", mi_CLGIJ, { { 2, 12 } } },
+    { "CLGIJNL", mi_CLGIJ, { { 2, 10 } } },
+    { "CLGITE", mi_CLGIT, { { 2, 8 } } },
+    { "CLGITH", mi_CLGIT, { { 2, 2 } } },
+    { "CLGITL", mi_CLGIT, { { 2, 4 } } },
+    { "CLGITNE", mi_CLGIT, { { 2, 6 } } },
+    { "CLGITNH", mi_CLGIT, { { 2, 12 } } },
+    { "CLGITNL", mi_CLGIT, { { 2, 10 } } },
+    { "CLGRBE", mi_CLGRB, { { 2, 8 } } },
+    { "CLGRBH", mi_CLGRB, { { 2, 2 } } },
+    { "CLGRBL", mi_CLGRB, { { 2, 4 } } },
+    { "CLGRBNE", mi_CLGRB, { { 2, 6 } } },
+    { "CLGRBNH", mi_CLGRB, { { 2, 12 } } },
+    { "CLGRBNL", mi_CLGRB, { { 2, 10 } } },
+    { "CLGRJE", mi_CLGRJ, { { 2, 8 } } },
+    { "CLGRJH", mi_CLGRJ, { { 2, 2 } } },
+    { "CLGRJL", mi_CLGRJ, { { 2, 4 } } },
+    { "CLGRJNE", mi_CLGRJ, { { 2, 6 } } },
+    { "CLGRJNH", mi_CLGRJ, { { 2, 12 } } },
+    { "CLGRJNL", mi_CLGRJ, { { 2, 10 } } },
+    { "CLGRTE", mi_CLGRT, { { 2, 8 } } },
+    { "CLGRTH", mi_CLGRT, { { 2, 2 } } },
+    { "CLGRTL", mi_CLGRT, { { 2, 4 } } },
+    { "CLGRTNE", mi_CLGRT, { { 2, 6 } } },
+    { "CLGRTNH", mi_CLGRT, { { 2, 12 } } },
+    { "CLGRTNL", mi_CLGRT, { { 2, 10 } } },
+    { "CLGTE", mi_CLGT, { { 1, 8 } } },
+    { "CLGTH", mi_CLGT, { { 1, 2 } } },
+    { "CLGTL", mi_CLGT, { { 1, 4 } } },
+    { "CLGTNE", mi_CLGT, { { 1, 6 } } },
+    { "CLGTNH", mi_CLGT, { { 1, 12 } } },
+    { "CLGTNL", mi_CLGT, { { 1, 10 } } },
+    { "CLIBE", mi_CLIB, { { 2, 8 } } },
+    { "CLIBH", mi_CLIB, { { 2, 2 } } },
+    { "CLIBL", mi_CLIB, { { 2, 4 } } },
+    { "CLIBNE", mi_CLIB, { { 2, 6 } } },
+    { "CLIBNH", mi_CLIB, { { 2, 12 } } },
+    { "CLIBNL", mi_CLIB, { { 2, 10 } } },
+    { "CLIJE", mi_CLIJ, { { 2, 8 } } },
+    { "CLIJH", mi_CLIJ, { { 2, 2 } } },
+    { "CLIJL", mi_CLIJ, { { 2, 4 } } },
+    { "CLIJNE", mi_CLIJ, { { 2, 6 } } },
+    { "CLIJNH", mi_CLIJ, { { 2, 12 } } },
+    { "CLIJNL", mi_CLIJ, { { 2, 10 } } },
+    { "CLRBE", mi_CLRB, { { 2, 8 } } },
+    { "CLRBH", mi_CLRB, { { 2, 2 } } },
+    { "CLRBL", mi_CLRB, { { 2, 4 } } },
+    { "CLRBNE", mi_CLRB, { { 2, 6 } } },
+    { "CLRBNH", mi_CLRB, { { 2, 12 } } },
+    { "CLRBNL", mi_CLRB, { { 2, 10 } } },
+    { "CLRJE", mi_CLRJ, { { 2, 8 } } },
+    { "CLRJH", mi_CLRJ, { { 2, 2 } } },
+    { "CLRJL", mi_CLRJ, { { 2, 4 } } },
+    { "CLRJNE", mi_CLRJ, { { 2, 6 } } },
+    { "CLRJNH", mi_CLRJ, { { 2, 12 } } },
+    { "CLRJNL", mi_CLRJ, { { 2, 10 } } },
+    { "CLRTE", mi_CLRT, { { 2, 8 } } },
+    { "CLRTH", mi_CLRT, { { 2, 2 } } },
+    { "CLRTL", mi_CLRT, { { 2, 4 } } },
+    { "CLRTNE", mi_CLRT, { { 2, 6 } } },
+    { "CLRTNH", mi_CLRT, { { 2, 12 } } },
+    { "CLRTNL", mi_CLRT, { { 2, 10 } } },
+    { "CLTE", mi_CLT, { { 1, 8 } } },
+    { "CLTH", mi_CLT, { { 1, 2 } } },
+    { "CLTL", mi_CLT, { { 1, 4 } } },
+    { "CLTNE", mi_CLT, { { 1, 6 } } },
+    { "CLTNH", mi_CLT, { { 1, 12 } } },
+    { "CLTNL", mi_CLT, { { 1, 10 } } },
+    { "CRBE", mi_CRB, { { 2, 8 } } },
+    { "CRBH", mi_CRB, { { 2, 2 } } },
+    { "CRBL", mi_CRB, { { 2, 4 } } },
+    { "CRBNE", mi_CRB, { { 2, 6 } } },
+    { "CRBNH", mi_CRB, { { 2, 12 } } },
+    { "CRBNL", mi_CRB, { { 2, 10 } } },
+    { "CRJE", mi_CRJ, { { 2, 8 } } },
+    { "CRJH", mi_CRJ, { { 2, 2 } } },
+    { "CRJL", mi_CRJ, { { 2, 4 } } },
+    { "CRJNE", mi_CRJ, { { 2, 6 } } },
+    { "CRJNH", mi_CRJ, { { 2, 12 } } },
+    { "CRJNL", mi_CRJ, { { 2, 10 } } },
+    { "CRTE", mi_CRT, { { 2, 8 } } },
+    { "CRTH", mi_CRT, { { 2, 2 } } },
+    { "CRTL", mi_CRT, { { 2, 4 } } },
+    { "CRTNE", mi_CRT, { { 2, 6 } } },
+    { "CRTNH", mi_CRT, { { 2, 12 } } },
+    { "CRTNL", mi_CRT, { { 2, 10 } } },
+    { "J", mi_BRC, { { 0, 15 } } },
+    { "JAS", mi_BRAS, {} },
+    { "JASL", mi_BRASL, {} },
+    { "JC", mi_BRC, {} },
+    { "JCT", mi_BRCT, {} },
+    { "JCTG", mi_BRCTG, {} },
+    { "JE", mi_BRC, { { 0, 8 } } },
+    { "JH", mi_BRC, { { 0, 2 } } },
+    { "JL", mi_BRC, { { 0, 4 } } },
+    { "JLE", mi_BRCL, { { 0, 8 } } },
+    { "JLH", mi_BRCL, { { 0, 2 } } },
+    { "JLL", mi_BRCL, { { 0, 4 } } },
+    { "JLM", mi_BRCL, { { 0, 4 } } },
+    { "JLNE", mi_BRCL, { { 0, 7 } } },
+    { "JLNH", mi_BRCL, { { 0, 13 } } },
+    { "JLNL", mi_BRCL, { { 0, 11 } } },
+    { "JLNM", mi_BRCL, { { 0, 11 } } },
+    { "JLNO", mi_BRCL, { { 0, 14 } } },
+    { "JLNOP", mi_BRCL, { { 0, 0 } } },
+    { "JLNP", mi_BRCL, { { 0, 13 } } },
+    { "JLNZ", mi_BRCL, { { 0, 7 } } },
+    { "JLO", mi_BRCL, { { 0, 1 } } },
+    { "JLP", mi_BRCL, { { 0, 2 } } },
+    { "JLU", mi_BRCL, { { 0, 15 } } },
+    { "JLZ", mi_BRCL, { { 0, 8 } } },
+    { "JM", mi_BRC, { { 0, 4 } } },
+    { "JNE", mi_BRC, { { 0, 7 } } },
+    { "JNH", mi_BRC, { { 0, 13 } } },
+    { "JNL", mi_BRC, { { 0, 11 } } },
+    { "JNM", mi_BRC, { { 0, 11 } } },
+    { "JNO", mi_BRC, { { 0, 14 } } },
+    { "JNOP", mi_BRC, { { 0, 0 } } },
+    { "JNP", mi_BRC, { { 0, 13 } } },
+    { "JNZ", mi_BRC, { { 0, 7 } } },
+    { "JO", mi_BRC, { { 0, 1 } } },
+    { "JP", mi_BRC, { { 0, 2 } } },
+    { "JXH", mi_BRXH, {} },
+    { "JXHG", mi_BRXHG, {} },
+    { "JXLE", mi_BRXLE, {} },
+    { "JXLEG", mi_BRXLG, {} },
+    { "JZ", mi_BRC, { { 0, 8 } } },
+    { "LDRV", mi_VLLEBRZ, { { 2, 3 } } },
+    { "LERV", mi_VLLEBRZ, { { 2, 6 } } },
+    { "LHHR", mi_RISBHGZ, { { 2, 0 }, { 3, 31 } } },
+    { "LHLR", mi_RISBHGZ, { { 2, 0 }, { 3, 31 }, { 4, 32 } } },
+    { "LLCHHR", mi_RISBHGZ, { { 2, 24 }, { 3, 31 } } },
+    { "LLCHLR", mi_RISBHGZ, { { 2, 24 }, { 3, 31 }, { 4, 32 } } },
+    { "LLCLHR", mi_RISBLGZ, { { 2, 24 }, { 3, 31 }, { 4, 32 } } },
+    { "LLHFR", mi_RISBLGZ, { { 2, 0 }, { 3, 31 }, { 4, 32 } } },
+    { "LLHHHR", mi_RISBHGZ, { { 2, 16 }, { 3, 31 } } },
+    { "LLHHLR", mi_RISBHGZ, { { 2, 16 }, { 3, 31 }, { 4, 32 } } },
+    { "LLHLHR", mi_RISBLGZ, { { 2, 16 }, { 3, 31 }, { 4, 32 } } },
+    { "LOCE", mi_LOC, { { 2, 8 } } },
+    { "LOCFHE", mi_LOCFH, { { 2, 8 } } },
+    { "LOCFHH", mi_LOCFH, { { 2, 2 } } },
+    { "LOCFHL", mi_LOCFH, { { 2, 4 } } },
+    { "LOCFHNE", mi_LOCFH, { { 2, 7 } } },
+    { "LOCFHNH", mi_LOCFH, { { 2, 13 } } },
+    { "LOCFHNL", mi_LOCFH, { { 2, 11 } } },
+    { "LOCFHNO", mi_LOCFH, { { 2, 14 } } },
+    { "LOCFHO", mi_LOCFH, { { 2, 1 } } },
+    { "LOCFHRE", mi_LOCFHR, { { 2, 8 } } },
+    { "LOCFHRH", mi_LOCFHR, { { 2, 2 } } },
+    { "LOCFHRL", mi_LOCFHR, { { 2, 4 } } },
+    { "LOCFHRNE", mi_LOCFHR, { { 2, 7 } } },
+    { "LOCFHRNH", mi_LOCFHR, { { 2, 13 } } },
+    { "LOCFHRNL", mi_LOCFHR, { { 2, 11 } } },
+    { "LOCFHRNO", mi_LOCFHR, { { 2, 14 } } },
+    { "LOCFHRO", mi_LOCFHR, { { 2, 1 } } },
+    { "LOCGE", mi_LOCG, { { 2, 8 } } },
+    { "LOCGH", mi_LOCG, { { 2, 2 } } },
+    { "LOCGHIE", mi_LOCGHI, { { 2, 8 } } },
+    { "LOCGHIH", mi_LOCGHI, { { 2, 2 } } },
+    { "LOCGHIL", mi_LOCGHI, { { 2, 4 } } },
+    { "LOCGHINE", mi_LOCGHI, { { 2, 7 } } },
+    { "LOCGHINH", mi_LOCGHI, { { 2, 13 } } },
+    { "LOCGHINL", mi_LOCGHI, { { 2, 11 } } },
+    { "LOCGHINO", mi_LOCGHI, { { 2, 14 } } },
+    { "LOCGHIO", mi_LOCGHI, { { 2, 1 } } },
+    { "LOCGL", mi_LOCG, { { 2, 4 } } },
+    { "LOCGNE", mi_LOCG, { { 2, 6 } } },
+    { "LOCGNH", mi_LOCG, { { 2, 12 } } },
+    { "LOCGNL", mi_LOCG, { { 2, 10 } } },
+    { "LOCGNO", mi_LOCG, { { 2, 14 } } },
+    { "LOCGO", mi_LOCG, { { 2, 1 } } },
+    { "LOCGRE", mi_LOCGR, { { 2, 8 } } },
+    { "LOCGRH", mi_LOCGR, { { 2, 2 } } },
+    { "LOCGRL", mi_LOCGR, { { 2, 4 } } },
+    { "LOCGRNE", mi_LOCGR, { { 2, 6 } } },
+    { "LOCGRNH", mi_LOCGR, { { 2, 12 } } },
+    { "LOCGRNL", mi_LOCGR, { { 2, 10 } } },
+    { "LOCGRNO", mi_LOCGR, { { 2, 14 } } },
+    { "LOCGRO", mi_LOCGR, { { 2, 1 } } },
+    { "LOCH", mi_LOC, { { 2, 2 } } },
+    { "LOCHHIE", mi_LOCHHI, { { 2, 8 } } },
+    { "LOCHHIH", mi_LOCHHI, { { 2, 2 } } },
+    { "LOCHHIL", mi_LOCHHI, { { 2, 4 } } },
+    { "LOCHHINE", mi_LOCHHI, { { 2, 7 } } },
+    { "LOCHHINH", mi_LOCHHI, { { 2, 13 } } },
+    { "LOCHHINL", mi_LOCHHI, { { 2, 11 } } },
+    { "LOCHHINO", mi_LOCHHI, { { 2, 14 } } },
+    { "LOCHHIO", mi_LOCHHI, { { 2, 1 } } },
+    { "LOCHIE", mi_LOCHI, { { 2, 8 } } },
+    { "LOCHIH", mi_LOCHI, { { 2, 2 } } },
+    { "LOCHIL", mi_LOCHI, { { 2, 4 } } },
+    { "LOCHINE", mi_LOCHI, { { 2, 7 } } },
+    { "LOCHINH", mi_LOCHI, { { 2, 13 } } },
+    { "LOCHINL", mi_LOCHI, { { 2, 11 } } },
+    { "LOCHINO", mi_LOCHI, { { 2, 14 } } },
+    { "LOCHIO", mi_LOCHI, { { 2, 1 } } },
+    { "LOCL", mi_LOC, { { 2, 4 } } },
+    { "LOCNE", mi_LOC, { { 2, 6 } } },
+    { "LOCNH", mi_LOC, { { 2, 12 } } },
+    { "LOCNL", mi_LOC, { { 2, 10 } } },
+    { "LOCNO", mi_LOC, { { 2, 14 } } },
+    { "LOCO", mi_LOC, { { 2, 1 } } },
+    { "LOCRE", mi_LOCR, { { 2, 8 } } },
+    { "LOCRH", mi_LOCR, { { 2, 2 } } },
+    { "LOCRL", mi_LOCR, { { 2, 4 } } },
+    { "LOCRNE", mi_LOCR, { { 2, 6 } } },
+    { "LOCRNH", mi_LOCR, { { 2, 12 } } },
+    { "LOCRNL", mi_LOCR, { { 2, 10 } } },
+    { "LOCRNO", mi_LOCR, { { 2, 14 } } },
+    { "LOCRO", mi_LOCR, { { 2, 1 } } },
+    { "NHHR", mi_RNSBG, { { 2, 0 }, { 3, 31 } } },
+    { "NHLR", mi_RNSBG, { { 2, 0 }, { 3, 31 }, { 4, 32 } } },
+    { "NLHR", mi_RNSBG, { { 2, 32 }, { 3, 63 }, { 4, 32 } } },
+    { "NOP", mi_BC, { { 0, 0 } } },
+    { "NOPR", mi_BCR, { { 0, 0 } } },
+    { "NOTGR", mi_NOGRK, { { 2, 0 } } }, // operand with index 2 was omitted
+    { "NOTR", mi_NORK, { { 2, 0 } } }, // operand with index 2 was omitted
+    { "OHHR", mi_ROSBG, { { 2, 0 }, { 3, 31 } } },
+    { "OHLR", mi_ROSBG, { { 2, 0 }, { 3, 31 }, { 4, 32 } } },
+    { "OLHR", mi_ROSBG, { { 2, 32 }, { 3, 63 }, { 4, 32 } } },
+    { "SELFHRE", mi_SELFHR, { { 3, 8 } } },
+    { "SELFHRH", mi_SELFHR, { { 3, 2 } } },
+    { "SELFHRL", mi_SELFHR, { { 3, 4 } } },
+    { "SELFHRNE", mi_SELFHR, { { 3, 7 } } },
+    { "SELFHRNH", mi_SELFHR, { { 3, 13 } } },
+    { "SELFHRNL", mi_SELFHR, { { 3, 11 } } },
+    { "SELFHRNO", mi_SELFHR, { { 3, 14 } } },
+    { "SELFHRO", mi_SELFHR, { { 3, 1 } } },
+    { "SELGRE", mi_SELGR, { { 3, 8 } } },
+    { "SELGRH", mi_SELGR, { { 3, 2 } } },
+    { "SELGRL", mi_SELGR, { { 3, 4 } } },
+    { "SELGRNE", mi_SELGR, { { 3, 7 } } },
+    { "SELGRNH", mi_SELGR, { { 3, 13 } } },
+    { "SELGRNL", mi_SELGR, { { 3, 11 } } },
+    { "SELGRNO", mi_SELGR, { { 3, 14 } } },
+    { "SELGRO", mi_SELGR, { { 3, 1 } } },
+    { "SELRE", mi_SELR, { { 3, 8 } } },
+    { "SELRH", mi_SELR, { { 3, 2 } } },
+    { "SELRL", mi_SELR, { { 3, 4 } } },
+    { "SELRNE", mi_SELR, { { 3, 7 } } },
+    { "SELRNH", mi_SELR, { { 3, 13 } } },
+    { "SELRNL", mi_SELR, { { 3, 11 } } },
+    { "SELRNO", mi_SELR, { { 3, 14 } } },
+    { "SELRO", mi_SELR, { { 3, 1 } } },
+    { "STDRV", mi_VSTEBRG, { { 2, 0 } } },
+    { "STERV", mi_VSTEBRF, { { 2, 0 } } },
+    { "STOCE", mi_STOC, { { 2, 8 } } },
+    { "STOCFHE", mi_STOCFH, { { 2, 8 } } },
+    { "STOCFHH", mi_STOCFH, { { 2, 2 } } },
+    { "STOCFHL", mi_STOCFH, { { 2, 4 } } },
+    { "STOCFHNE", mi_STOCFH, { { 2, 7 } } },
+    { "STOCFHNH", mi_STOCFH, { { 2, 13 } } },
+    { "STOCFHNL", mi_STOCFH, { { 2, 11 } } },
+    { "STOCFHNO", mi_STOCFH, { { 2, 14 } } },
+    { "STOCFHO", mi_STOCFH, { { 2, 1 } } },
+    { "STOCGE", mi_STOCG, { { 2, 8 } } },
+    { "STOCGH", mi_STOCG, { { 2, 2 } } },
+    { "STOCGL", mi_STOCG, { { 2, 4 } } },
+    { "STOCGNE", mi_STOCG, { { 2, 6 } } },
+    { "STOCGNH", mi_STOCG, { { 2, 12 } } },
+    { "STOCGNL", mi_STOCG, { { 2, 10 } } },
+    { "STOCGNO", mi_STOCG, { { 2, 14 } } },
+    { "STOCGO", mi_STOCG, { { 2, 1 } } },
+    { "STOCH", mi_STOC, { { 2, 2 } } },
+    { "STOCL", mi_STOC, { { 2, 4 } } },
+    { "STOCNE", mi_STOC, { { 2, 6 } } },
+    { "STOCNH", mi_STOC, { { 2, 12 } } },
+    { "STOCNL", mi_STOC, { { 2, 10 } } },
+    { "STOCNO", mi_STOC, { { 2, 14 } } },
+    { "STOCO", mi_STOC, { { 2, 1 } } },
+    { "VAB", mi_VA, { { 3, 0 } } },
+    { "VACCB", mi_VACC, { { 3, 0 } } },
+    { "VACCCQ", mi_VACCC, { { 3, 4 } } },
+    { "VACCF", mi_VACC, { { 3, 2 } } },
+    { "VACCG", mi_VACC, { { 3, 3 } } },
+    { "VACCH", mi_VACC, { { 3, 1 } } },
+    { "VACCQ", mi_VACC, { { 3, 4 } } },
+    { "VACQ", mi_VAC, { { 3, 4 } } },
+    { "VAF", mi_VA, { { 3, 2 } } },
+    { "VAG", mi_VA, { { 3, 3 } } },
+    { "VAH", mi_VA, { { 3, 1 } } },
+    { "VAQ", mi_VA, { { 3, 4 } } },
+    { "VAVGB", mi_VAVG, { { 3, 0 } } },
+    { "VAVGF", mi_VAVG, { { 3, 2 } } },
+    { "VAVGG", mi_VAVG, { { 3, 3 } } },
+    { "VAVGH", mi_VAVG, { { 3, 1 } } },
+    { "VAVGLB", mi_VAVGL, { { 3, 0 } } },
+    { "VAVGLF", mi_VAVGL, { { 3, 2 } } },
+    { "VAVGLG", mi_VAVGL, { { 3, 3 } } },
+    { "VAVGLH", mi_VAVGL, { { 3, 1 } } },
+    { "VCDG", mi_VCFPS, {} },
+    { "VCDGB", mi_VCFPS, { { 2, 3 } } },
+    { "VCDLG", mi_VCFPL, {} },
+    { "VCDLGB", mi_VCFPL, { { 2, 3 } } },
+    { "VCEFB", mi_VCFPS, { { 2, 0 } } },
+    { "VCELFB", mi_VCFPL, { { 2, 0 } } },
+    { "VCEQB", mi_VCEQ, { { 3, 0 }, { 4, 0 } } },
+    { "VCEQBS", mi_VCEQ, { { 3, 0 }, { 4, 1 } } },
+    { "VCEQF", mi_VCEQ, { { 3, 2 }, { 4, 0 } } },
+    { "VCEQFS", mi_VCEQ, { { 3, 2 }, { 4, 1 } } },
+    { "VCEQG", mi_VCEQ, { { 3, 3 }, { 4, 0 } } },
+    { "VCEQGS", mi_VCEQ, { { 3, 3 }, { 4, 1 } } },
+    { "VCEQH", mi_VCEQ, { { 3, 1 }, { 4, 0 } } },
+    { "VCEQHS", mi_VCEQ, { { 3, 1 }, { 4, 1 } } },
+    { "VCFEB", mi_VCSFP, { { 2, 2 } } },
+    { "VCGD", mi_VCSFP, {} },
+    { "VCGDB", mi_VCSFP, { { 2, 3 } } },
+    { "VCHB", mi_VCH, { { 3, 0 }, { 4, 0 } } },
+    { "VCHBS", mi_VCH, { { 3, 0 }, { 4, 1 } } },
+    { "VCHF", mi_VCH, { { 3, 2 }, { 4, 0 } } },
+    { "VCHFS", mi_VCH, { { 3, 2 }, { 4, 1 } } },
+    { "VCHG", mi_VCH, { { 3, 3 }, { 4, 0 } } },
+    { "VCHGS", mi_VCH, { { 3, 3 }, { 4, 1 } } },
+    { "VCHH", mi_VCH, { { 3, 1 }, { 4, 0 } } },
+    { "VCHHS", mi_VCH, { { 3, 1 }, { 4, 1 } } },
+    { "VCHLB", mi_VCHL, { { 3, 0 }, { 4, 0 } } },
+    { "VCHLBS", mi_VCHL, { { 3, 0 }, { 4, 1 } } },
+    { "VCHLF", mi_VCHL, { { 3, 2 }, { 4, 0 } } },
+    { "VCHLFS", mi_VCHL, { { 3, 2 }, { 4, 1 } } },
+    { "VCHLG", mi_VCHL, { { 3, 3 }, { 4, 0 } } },
+    { "VCHLGS", mi_VCHL, { { 3, 3 }, { 4, 1 } } },
+    { "VCHLH", mi_VCHL, { { 3, 1 }, { 4, 0 } } },
+    { "VCHLHS", mi_VCHL, { { 3, 1 }, { 4, 1 } } },
+    { "VCLFEB", mi_VCLFP, { { 2, 0 } } },
+    { "VCLGDB", mi_VCLGD, { { 2, 3 } } },
+    { "VCLZB", mi_VCLZ, { { 2, 0 } } },
+    { "VCLZF", mi_VCLZ, { { 2, 2 } } },
+    { "VCLZG", mi_VCLZ, { { 2, 3 } } },
+    { "VCLZH", mi_VCLZ, { { 2, 1 } } },
+    { "VECB", mi_VEC, { { 2, 0 } } },
+    { "VECF", mi_VEC, { { 2, 2 } } },
+    { "VECG", mi_VEC, { { 2, 3 } } },
+    { "VECH", mi_VEC, { { 2, 1 } } },
+    { "VECLB", mi_VECL, { { 2, 0 } } },
+    { "VECLF", mi_VECL, { { 2, 2 } } },
+    { "VECLG", mi_VECL, { { 2, 3 } } },
+    { "VECLH", mi_VECL, { { 2, 1 } } },
+    { "VERIMB", mi_VERIM, { { 4, 0 } } },
+    { "VERIMF", mi_VERIM, { { 4, 2 } } },
+    { "VERIMG", mi_VERIM, { { 4, 3 } } },
+    { "VERIMH", mi_VERIM, { { 4, 1 } } },
+    { "VERLLB", mi_VERLL, { { 3, 0 } } },
+    { "VERLLF", mi_VERLL, { { 3, 2 } } },
+    { "VERLLG", mi_VERLL, { { 3, 3 } } },
+    { "VERLLH", mi_VERLL, { { 3, 1 } } },
+    { "VERLLVB", mi_VERLLV, { { 3, 0 } } },
+    { "VERLLVF", mi_VERLLV, { { 3, 2 } } },
+    { "VERLLVG", mi_VERLLV, { { 3, 3 } } },
+    { "VERLLVH", mi_VERLLV, { { 3, 1 } } },
+    { "VESLB", mi_VESL, { { 3, 0 } } },
+    { "VESLF", mi_VESL, { { 3, 2 } } },
+    { "VESLG", mi_VESL, { { 3, 3 } } },
+    { "VESLH", mi_VESL, { { 3, 1 } } },
+    { "VESLVB", mi_VESLV, { { 3, 0 } } },
+    { "VESLVF", mi_VESLV, { { 3, 2 } } },
+    { "VESLVG", mi_VESLV, { { 3, 3 } } },
+    { "VESLVH", mi_VESLV, { { 3, 1 } } },
+    { "VESRAB", mi_VESRA, { { 3, 0 } } },
+    { "VESRAF", mi_VESRA, { { 3, 2 } } },
+    { "VESRAG", mi_VESRA, { { 3, 3 } } },
+    { "VESRAH", mi_VESRA, { { 3, 1 } } },
+    { "VESRAVB", mi_VESRAV, { { 3, 0 } } },
+    { "VESRAVF", mi_VESRAV, { { 3, 2 } } },
+    { "VESRAVG", mi_VESRAV, { { 3, 3 } } },
+    { "VESRAVH", mi_VESRAV, { { 3, 1 } } },
+    { "VESRLB", mi_VESRL, { { 3, 0 } } },
+    { "VESRLF", mi_VESRL, { { 3, 2 } } },
+    { "VESRLG", mi_VESRL, { { 3, 3 } } },
+    { "VESRLH", mi_VESRL, { { 3, 1 } } },
+    { "VESRLVB", mi_VESRLV, { { 3, 0 } } },
+    { "VESRLVF", mi_VESRLV, { { 3, 2 } } },
+    { "VESRLVG", mi_VESRLV, { { 3, 3 } } },
+    { "VESRLVH", mi_VESRLV, { { 3, 1 } } },
+    { "VFADB", mi_VFA, { { 3, 3 }, { 4, 0 } } },
+    { "VFAEB", mi_VFAE, { { 3, 0 } } },
+    { "VFAEBS", mi_VFAE, { { 3, 0 } } }, // operand with index 4 ORed with 1
+    { "VFAEF", mi_VFAE, { { 3, 2 } } },
+    { "VFAEFS", mi_VFAE, { { 3, 2 } } }, // operand with index 4 ORed with 1
+    { "VFAEH", mi_VFAE, { { 3, 1 } } },
+    { "VFAEHS", mi_VFAE, { { 3, 1 } } }, // operand with index 4 ORed with 1
+    { "VFAEZB", mi_VFAE, { { 3, 0 } } }, // operand with index 4 ORed with 2
+    { "VFAEZBS", mi_VFAE, { { 3, 0 } } }, // operand with index 4 ORed with 3
+    { "VFAEZF", mi_VFAE, { { 3, 2 } } }, // operand with index 4 ORed with 2
+    { "VFAEZFS", mi_VFAE, { { 3, 2 } } }, // operand with index 4 ORed with 3
+    { "VFAEZH", mi_VFAE, { { 3, 1 } } }, // operand with index 4 ORed with 2
+    { "VFAEZHS", mi_VFAE, { { 3, 1 } } }, // operand with index 4 ORed with 3
+    { "VFASB", mi_VFA, { { 3, 2 }, { 4, 0 } } },
+    { "VFCEDB", mi_VFCE, { { 3, 3 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCEDBS", mi_VFCE, { { 3, 3 }, { 4, 0 }, { 5, 1 } } },
+    { "VFCESB", mi_VFCE, { { 3, 2 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCESBS", mi_VFCE, { { 3, 2 }, { 4, 0 }, { 5, 1 } } },
+    { "VFCHDB", mi_VFCH, { { 3, 3 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCHDBS", mi_VFCH, { { 3, 3 }, { 4, 0 }, { 5, 1 } } },
+    { "VFCHEDB", mi_VFCHE, { { 3, 3 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCHEDBS", mi_VFCHE, { { 3, 3 }, { 4, 0 }, { 5, 1 } } },
+    { "VFCHESB", mi_VFCHE, { { 3, 2 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCHESBS", mi_VFCHE, { { 3, 2 }, { 4, 0 }, { 5, 1 } } },
+    { "VFCHSB", mi_VFCH, { { 3, 2 }, { 4, 0 }, { 5, 0 } } },
+    { "VFCHSBS", mi_VFCH, { { 3, 2 }, { 4, 0 }, { 5, 1 } } },
+    { "VFDDB", mi_VFD, { { 3, 3 }, { 4, 0 } } },
+    { "VFDSB", mi_VFD, { { 3, 2 }, { 4, 0 } } },
+    { "VFEEB", mi_VFEE, { { 3, 0 } } },
+    { "VFEEBS", mi_VFEE, { { 3, 0 }, { 4, 1 } } },
+    { "VFEEF", mi_VFEE, { { 3, 2 } } },
+    { "VFEEFS", mi_VFEE, { { 3, 2 }, { 4, 1 } } },
+    { "VFEEGS", mi_VFEE, { { 3, 1 }, { 4, 1 } } },
+    { "VFEEH", mi_VFEE, { { 3, 1 } } },
+    { "VFEEZB", mi_VFEE, { { 3, 0 }, { 4, 2 } } },
+    { "VFEEZBS", mi_VFEE, { { 3, 0 }, { 4, 3 } } },
+    { "VFEEZF", mi_VFEE, { { 3, 2 }, { 4, 2 } } },
+    { "VFEEZFS", mi_VFEE, { { 3, 2 }, { 4, 3 } } },
+    { "VFEEZH", mi_VFEE, { { 3, 1 }, { 4, 2 } } },
+    { "VFEEZHS", mi_VFEE, { { 3, 1 }, { 4, 3 } } },
+    { "VFENEB", mi_VFENE, { { 3, 0 } } },
+    { "VFENEBS", mi_VFENE, { { 3, 0 }, { 4, 1 } } },
+    { "VFENEF", mi_VFENE, { { 3, 2 } } },
+    { "VFENEFS", mi_VFENE, { { 3, 2 }, { 4, 1 } } },
+    { "VFENEH", mi_VFENE, { { 3, 1 } } },
+    { "VFENEHS", mi_VFENE, { { 3, 1 }, { 4, 1 } } },
+    { "VFENEZB", mi_VFENE, { { 3, 0 }, { 4, 2 } } },
+    { "VFENEZBS", mi_VFENE, { { 3, 0 }, { 4, 3 } } },
+    { "VFENEZF", mi_VFENE, { { 3, 2 }, { 4, 2 } } },
+    { "VFENEZFS", mi_VFENE, { { 3, 2 }, { 4, 3 } } },
+    { "VFENEZH", mi_VFENE, { { 3, 1 }, { 4, 2 } } },
+    { "VFENEZHS", mi_VFENE, { { 3, 1 }, { 4, 3 } } },
+    { "VFIDB", mi_VFI, { { 2, 3 } } },
+    { "VFISB", mi_VFI, { { 2, 2 } } },
+    { "VFKEDB", mi_VFCE, { { 3, 3 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKEDBS", mi_VFCE, { { 3, 3 }, { 4, 4 }, { 5, 1 } } },
+    { "VFKESB", mi_VFCE, { { 3, 2 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKESBS", mi_VFCE, { { 3, 2 }, { 4, 4 }, { 5, 1 } } },
+    { "VFKHDB", mi_VFCH, { { 3, 3 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKHDBS", mi_VFCH, { { 3, 3 }, { 4, 4 }, { 5, 1 } } },
+    { "VFKHEDB", mi_VFCHE, { { 3, 3 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKHEDBS", mi_VFCHE, { { 3, 3 }, { 4, 4 }, { 5, 1 } } },
+    { "VFKHESB", mi_VFCHE, { { 3, 2 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKHESBS", mi_VFCHE, { { 3, 2 }, { 4, 4 }, { 5, 1 } } },
+    { "VFKHSB", mi_VFCH, { { 3, 2 }, { 4, 4 }, { 5, 0 } } },
+    { "VFKHSBS", mi_VFCH, { { 3, 2 }, { 4, 4 }, { 5, 1 } } },
+    { "VFLCDB", mi_VFPSO, { { 2, 3 }, { 3, 0 }, { 4, 0 } } },
+    { "VFLCSB", mi_VFPSO, { { 2, 2 }, { 3, 0 }, { 4, 0 } } },
+    { "VFLLS", mi_VFLL, { { 2, 2 }, { 3, 0 } } },
+    { "VFLNDB", mi_VFPSO, { { 2, 3 }, { 3, 0 }, { 4, 1 } } },
+    { "VFLNSB", mi_VFPSO, { { 2, 2 }, { 3, 0 }, { 4, 1 } } },
+    { "VFLPDB", mi_VFPSO, { { 2, 3 }, { 3, 0 }, { 4, 2 } } },
+    { "VFLPSB", mi_VFPSO, { { 2, 2 }, { 3, 0 }, { 4, 2 } } },
+    { "VFLRD", mi_VFLR, { { 2, 3 } } },
+    { "VFMADB", mi_VFMA, { { 4, 0 }, { 5, 3 } } },
+    { "VFMASB", mi_VFMA, { { 4, 0 }, { 5, 2 } } },
+    { "VFMAXDB", mi_VFMAX, { { 3, 3 }, { 4, 0 } } },
+    { "VFMAXSB", mi_VFMAX, { { 3, 2 }, { 4, 0 } } },
+    { "VFMDB", mi_VFM, { { 3, 3 }, { 4, 0 } } },
+    { "VFMINDB", mi_VFMIN, { { 3, 3 }, { 4, 0 } } },
+    { "VFMINSB", mi_VFMIN, { { 3, 2 }, { 4, 0 } } },
+    { "VFMSB", mi_VFM, { { 3, 2 }, { 4, 0 } } },
+    { "VFMSDB", mi_VFMS, { { 4, 0 }, { 5, 3 } } },
+    { "VFMSSB", mi_VFMS, { { 4, 0 }, { 5, 2 } } },
+    { "VFNMADB", mi_VFNMA, { { 4, 0 }, { 5, 3 } } },
+    { "VFNMASB", mi_VFNMA, { { 4, 0 }, { 5, 2 } } },
+    { "VFNMSDB", mi_VFNMS, { { 4, 0 }, { 5, 3 } } },
+    { "VFNMSSB", mi_VFNMS, { { 4, 0 }, { 5, 2 } } },
+    { "VFPSODB", mi_VFPSO, { { 2, 3 }, { 3, 0 } } },
+    { "VFPSOSB", mi_VFPSO, { { 2, 2 }, { 3, 0 } } },
+    { "VFSDB", mi_VFS, { { 2, 3 }, { 3, 0 } } },
+    { "VFSQDB", mi_VFSQ, { { 2, 3 }, { 3, 0 } } },
+    { "VFSQSB", mi_VFSQ, { { 2, 2 }, { 3, 0 } } },
+    { "VFSSB", mi_VFS, { { 2, 2 }, { 3, 0 } } },
+    { "VFTCIDB", mi_VFTCI, { { 3, 3 }, { 4, 0 } } },
+    { "VFTCISB", mi_VFTCI, { { 3, 2 }, { 4, 0 } } },
+    { "VGFMAB", mi_VGFMA, { { 4, 0 } } },
+    { "VGFMAF", mi_VGFMA, { { 4, 2 } } },
+    { "VGFMAG", mi_VGFMA, { { 4, 3 } } },
+    { "VGFMAH", mi_VGFMA, { { 4, 1 } } },
+    { "VGFMB", mi_VGFM, { { 3, 0 } } },
+    { "VGFMF", mi_VGFM, { { 3, 2 } } },
+    { "VGFMG", mi_VGFM, { { 3, 3 } } },
+    { "VGFMH", mi_VGFM, { { 3, 1 } } },
+    { "VGMB", mi_VGM, { { 3, 0 } } },
+    { "VGMF", mi_VGM, { { 3, 2 } } },
+    { "VGMG", mi_VGM, { { 3, 3 } } },
+    { "VGMH", mi_VGM, { { 3, 1 } } },
+    { "VISTRB", mi_VISTR, { { 3, 0 } } },
+    { "VISTRBS", mi_VISTR, { { 3, 0 }, { 4, 1 } } },
+    { "VISTRF", mi_VISTR, { { 3, 2 } } },
+    { "VISTRFS", mi_VISTR, { { 3, 2 }, { 4, 1 } } },
+    { "VISTRH", mi_VISTR, { { 3, 1 } } },
+    { "VISTRHS", mi_VISTR, { { 3, 1 }, { 4, 1 } } },
+    { "VLBRF", mi_VLBR, { { 2, 2 } } },
+    { "VLBRG", mi_VLBR, { { 2, 3 } } },
+    { "VLBRH", mi_VLBR, { { 2, 1 } } },
+    { "VLBRQ", mi_VLBR, { { 2, 4 } } },
+    { "VLBRREPF", mi_VLBRREP, { { 2, 2 } } },
+    { "VLBRREPG", mi_VLBRREP, { { 2, 3 } } },
+    { "VLBRREPH", mi_VLBRREP, { { 2, 1 } } },
+    { "VLCB", mi_VLC, { { 2, 0 } } },
+    { "VLCF", mi_VLC, { { 2, 2 } } },
+    { "VLCG", mi_VLC, { { 2, 3 } } },
+    { "VLCH", mi_VLC, { { 2, 1 } } },
+    { "VLDE", mi_VFLL, {} },
+    { "VLDEB", mi_VFLL, { { 2, 2 }, { 3, 0 } } },
+    { "VLED", mi_VFLR, {} },
+    { "VLEDB", mi_VFLR, { { 2, 3 } } },
+    { "VLERF", mi_VLER, { { 2, 2 } } },
+    { "VLERG", mi_VLER, { { 2, 3 } } },
+    { "VLERH", mi_VLER, { { 2, 1 } } },
+    { "VLGVB", mi_VLGV, { { 3, 0 } } },
+    { "VLGVF", mi_VLGV, { { 3, 2 } } },
+    { "VLGVG", mi_VLGV, { { 3, 3 } } },
+    { "VLGVH", mi_VLGV, { { 3, 1 } } },
+    { "VLLEBRZE", mi_VLLEBRZ, { { 2, 6 } } },
+    { "VLLEBRZE", mi_VLLEBRZ, { { 2, 6 } } },
+    { "VLLEBRZF", mi_VLLEBRZ, { { 2, 2 } } },
+    { "VLLEBRZF", mi_VLLEBRZ, { { 2, 2 } } },
+    { "VLLEBRZG", mi_VLLEBRZ, { { 2, 3 } } },
+    { "VLLEBRZG", mi_VLLEBRZ, { { 2, 3 } } },
+    { "VLLEBRZH", mi_VLLEBRZ, { { 2, 1 } } },
+    { "VLLEBRZH", mi_VLLEBRZ, { { 2, 1 } } },
+    { "VLLEZB", mi_VLLEZ, { { 2, 0 } } },
+    { "VLLEZF", mi_VLLEZ, { { 2, 2 } } },
+    { "VLLEZG", mi_VLLEZ, { { 2, 3 } } },
+    { "VLLEZH", mi_VLLEZ, { { 2, 1 } } },
+    { "VLLEZLF", mi_VLLEZ, { { 2, 6 } } },
+    { "VLPB", mi_VLP, { { 2, 0 } } },
+    { "VLPF", mi_VLP, { { 2, 2 } } },
+    { "VLPG", mi_VLP, { { 2, 3 } } },
+    { "VLPH", mi_VLP, { { 2, 1 } } },
+    { "VLREPB", mi_VLREP, { { 2, 0 } } },
+    { "VLREPF", mi_VLREP, { { 2, 2 } } },
+    { "VLREPG", mi_VLREP, { { 2, 3 } } },
+    { "VLREPH", mi_VLREP, { { 2, 1 } } },
+    { "VLVGB", mi_VLVG, { { 3, 0 } } },
+    { "VLVGF", mi_VLVG, { { 3, 2 } } },
+    { "VLVGG", mi_VLVG, { { 3, 3 } } },
+    { "VLVGH", mi_VLVG, { { 3, 1 } } },
+    { "VMAEB", mi_VMAE, { { 4, 0 } } },
+    { "VMAEF", mi_VMAE, { { 4, 2 } } },
+    { "VMAEH", mi_VMAE, { { 4, 1 } } },
+    { "VMAHB", mi_VMAH, { { 4, 0 } } },
+    { "VMAHF", mi_VMAH, { { 4, 2 } } },
+    { "VMAHH", mi_VMAH, { { 4, 1 } } },
+    { "VMALB", mi_VMAL, { { 4, 0 } } },
+    { "VMALEB", mi_VMALE, { { 4, 0 } } },
+    { "VMALEF", mi_VMALE, { { 4, 2 } } },
+    { "VMALEH", mi_VMALE, { { 4, 1 } } },
+    { "VMALF", mi_VMAL, { { 4, 2 } } },
+    { "VMALHB", mi_VMALH, { { 4, 0 } } },
+    { "VMALHF", mi_VMALH, { { 4, 2 } } },
+    { "VMALHH", mi_VMALH, { { 4, 1 } } },
+    { "VMALHW", mi_VMAL, { { 4, 1 } } },
+    { "VMALOB", mi_VMALO, { { 4, 0 } } },
+    { "VMALOF", mi_VMALO, { { 4, 2 } } },
+    { "VMALOH", mi_VMALO, { { 4, 1 } } },
+    { "VMAOB", mi_VMAO, { { 4, 0 } } },
+    { "VMAOF", mi_VMAO, { { 4, 2 } } },
+    { "VMAOH", mi_VMAO, { { 4, 1 } } },
+    { "VMEB", mi_VME, { { 3, 0 } } },
+    { "VMEF", mi_VME, { { 3, 2 } } },
+    { "VMEH", mi_VME, { { 3, 1 } } },
+    { "VMHB", mi_VMH, { { 3, 0 } } },
+    { "VMHF", mi_VMH, { { 3, 2 } } },
+    { "VMHH", mi_VMH, { { 3, 1 } } },
+    { "VMLB", mi_VML, { { 3, 0 } } },
+    { "VMLEB", mi_VMLE, { { 3, 0 } } },
+    { "VMLEF", mi_VMLE, { { 3, 2 } } },
+    { "VMLEH", mi_VMLE, { { 3, 1 } } },
+    { "VMLF", mi_VML, { { 3, 2 } } },
+    { "VMLHB", mi_VMLH, { { 3, 0 } } },
+    { "VMLHF", mi_VMLH, { { 3, 2 } } },
+    { "VMLHH", mi_VMLH, { { 3, 1 } } },
+    { "VMLHW", mi_VML, { { 3, 1 } } },
+    { "VMLOB", mi_VMLO, { { 3, 0 } } },
+    { "VMLOF", mi_VMLO, { { 3, 2 } } },
+    { "VMLOH", mi_VMLO, { { 3, 1 } } },
+    { "VMNB", mi_VMN, { { 3, 0 } } },
+    { "VMNF", mi_VMN, { { 3, 2 } } },
+    { "VMNG", mi_VMN, { { 3, 3 } } },
+    { "VMNH", mi_VMN, { { 3, 1 } } },
+    { "VMNLB", mi_VMNL, { { 3, 0 } } },
+    { "VMNLF", mi_VMNL, { { 3, 2 } } },
+    { "VMNLG", mi_VMNL, { { 3, 3 } } },
+    { "VMNLH", mi_VMNL, { { 3, 1 } } },
+    { "VMOB", mi_VMO, { { 3, 0 } } },
+    { "VMOF", mi_VMO, { { 3, 2 } } },
+    { "VMOH", mi_VMO, { { 3, 1 } } },
+    { "VMRHB", mi_VMRH, { { 3, 0 } } },
+    { "VMRHF", mi_VMRH, { { 3, 2 } } },
+    { "VMRHG", mi_VMRH, { { 3, 3 } } },
+    { "VMRHH", mi_VMRH, { { 3, 1 } } },
+    { "VMRLB", mi_VMRL, { { 3, 0 } } },
+    { "VMRLF", mi_VMRL, { { 3, 2 } } },
+    { "VMRLG", mi_VMRL, { { 3, 3 } } },
+    { "VMRLH", mi_VMRL, { { 3, 1 } } },
+    { "VMSLG", mi_VMSL, { { 4, 3 } } },
+    { "VMXB", mi_VMX, { { 3, 0 } } },
+    { "VMXF", mi_VMX, { { 3, 2 } } },
+    { "VMXG", mi_VMX, { { 3, 3 } } },
+    { "VMXH", mi_VMX, { { 3, 1 } } },
+    { "VMXLB", mi_VMXL, { { 3, 0 } } },
+    { "VMXLF", mi_VMXL, { { 3, 2 } } },
+    { "VMXLG", mi_VMXL, { { 3, 3 } } },
+    { "VMXLH", mi_VMXL, { { 3, 1 } } },
+    { "VNOT", mi_VNO, { { 2, 0 } } }, // VNO V1,V2,V2        (operand with index 2 replaced with 0 )
+    { "VONE", mi_VGBM, { { 1, 65535 } } },
+    { "VPKF", mi_VPK, { { 3, 2 } } },
+    { "VPKG", mi_VPK, { { 3, 3 } } },
+    { "VPKH", mi_VPK, { { 3, 1 } } },
+    { "VPKLSF", mi_VPKLS, { { 3, 2 }, { 4, 0 } } },
+    { "VPKLSFS", mi_VPKLS, { { 3, 2 }, { 4, 1 } } },
+    { "VPKLSG", mi_VPKLS, { { 3, 3 }, { 4, 0 } } },
+    { "VPKLSGS", mi_VPKLS, { { 3, 3 }, { 4, 1 } } },
+    { "VPKLSH", mi_VPKLS, { { 3, 1 }, { 4, 0 } } },
+    { "VPKLSHS", mi_VPKLS, { { 3, 1 }, { 4, 1 } } },
+    { "VPKSF", mi_VPKS, { { 3, 2 }, { 4, 0 } } },
+    { "VPKSFS", mi_VPKS, { { 3, 2 }, { 4, 1 } } },
+    { "VPKSG", mi_VPKS, { { 3, 3 }, { 4, 0 } } },
+    { "VPKSGS", mi_VPKS, { { 3, 3 }, { 4, 1 } } },
+    { "VPKSH", mi_VPKS, { { 3, 1 }, { 4, 0 } } },
+    { "VPKSHS", mi_VPKS, { { 3, 1 }, { 4, 1 } } },
+    { "VPOPCTB", mi_VPOPCT, { { 2, 0 } } },
+    { "VPOPCTF", mi_VPOPCT, { { 2, 2 } } },
+    { "VPOPCTG", mi_VPOPCT, { { 2, 3 } } },
+    { "VPOPCTH", mi_VPOPCT, { { 2, 1 } } },
+    { "VREPB", mi_VREP, { { 3, 0 } } },
+    { "VREPF", mi_VREP, { { 3, 2 } } },
+    { "VREPG", mi_VREP, { { 3, 3 } } },
+    { "VREPH", mi_VREP, { { 3, 1 } } },
+    { "VREPIB", mi_VREPI, { { 2, 0 } } },
+    { "VREPIF", mi_VREPI, { { 2, 2 } } },
+    { "VREPIG", mi_VREPI, { { 2, 3 } } },
+    { "VREPIH", mi_VREPI, { { 2, 1 } } },
+    { "VSB", mi_VS, { { 3, 0 } } },
+    { "VSBCBIQ", mi_VSBCBI, { { 4, 4 } } },
+    { "VSBIQ", mi_VSBI, { { 4, 4 } } },
+    { "VSCBIB", mi_VSCBI, { { 3, 0 } } },
+    { "VSCBIF", mi_VSCBI, { { 3, 2 } } },
+    { "VSCBIG", mi_VSCBI, { { 3, 3 } } },
+    { "VSCBIH", mi_VSCBI, { { 3, 1 } } },
+    { "VSCBIQ", mi_VSCBI, { { 3, 4 } } },
+    { "VSEGB", mi_VSEG, { { 2, 0 } } },
+    { "VSEGF", mi_VSEG, { { 2, 2 } } },
+    { "VSEGH", mi_VSEG, { { 2, 1 } } },
+    { "VSF", mi_VS, { { 3, 2 } } },
+    { "VSG", mi_VS, { { 3, 3 } } },
+    { "VSH", mi_VS, { { 3, 1 } } },
+    { "VSQ", mi_VS, { { 3, 4 } } },
+    { "VSTBRF", mi_VSTBR, { { 2, 2 } } },
+    { "VSTBRG", mi_VSTBR, { { 2, 3 } } },
+    { "VSTBRH", mi_VSTBR, { { 2, 1 } } },
+    { "VSTBRQ", mi_VSTBR, { { 2, 4 } } },
+    { "VSTERF", mi_VSTER, { { 2, 2 } } },
+    { "VSTERG", mi_VSTER, { { 2, 3 } } },
+    { "VSTERH", mi_VSTER, { { 2, 1 } } },
+    { "VSTRCB", mi_VSTRC, { { 4, 0 } } },
+    { "VSTRCBS", mi_VSTRC, { { 4, 0 } } }, // operand with index 5 ORed with 1
+    { "VSTRCF", mi_VSTRC, { { 4, 2 } } },
+    { "VSTRCFS", mi_VSTRC, { { 4, 2 } } }, // operand with index 5 ORed with 1
+    { "VSTRCH", mi_VSTRC, { { 4, 1 } } },
+    { "VSTRCHS", mi_VSTRC, { { 4, 1 } } }, // operand with index 5 ORed with 1
+    { "VSTRCZB", mi_VSTRC, { { 4, 0 } } }, // operand with index 5 ORed with 2
+    { "VSTRCZBS", mi_VSTRC, { { 4, 0 } } }, // operand with index 5 ORed with 3
+    { "VSTRCZF", mi_VSTRC, { { 4, 2 } } }, // operand with index 5 ORed with 2
+    { "VSTRCZFS", mi_VSTRC, { { 4, 2 } } }, // operand with index 5 ORed with 3 always OR
+    { "VSTRCZH", mi_VSTRC, { { 4, 1 } } }, // operand with index 5 ORed with 2
+    { "VSTRCZHS", mi_VSTRC, { { 4, 1 } } }, // operand with index 5 ORed with 3
+    { "VSTRSB", mi_VSTRS, { { 4, 0 } } },
+    { "VSTRSF", mi_VSTRS, { { 4, 2 } } },
+    { "VSTRSH", mi_VSTRS, { { 4, 1 } } },
+    { "VSTRSZB", mi_VSTRS, { { 4, 0 }, { 5, 2 } } },
+    { "VSUMB", mi_VSUM, { { 3, 0 } } },
+    { "VSUMGF", mi_VSUMG, { { 3, 2 } } },
+    { "VSUMGH", mi_VSUMG, { { 3, 1 } } },
+    { "VSUMH", mi_VSUM, { { 3, 1 } } },
+    { "VSUMQF", mi_VSUMQ, { { 3, 2 } } },
+    { "VSUMQG", mi_VSUMQ, { { 3, 3 } } },
+    { "VUPHB", mi_VUPH, { { 2, 0 } } },
+    { "VUPHF", mi_VUPH, { { 2, 2 } } },
+    { "VUPHH", mi_VUPH, { { 2, 1 } } },
+    { "VUPLB", mi_VUPL, { { 2, 0 } } },
+    { "VUPLF", mi_VUPL, { { 2, 2 } } },
+    { "VUPLHB", mi_VUPLH, { { 2, 0 } } },
+    { "VUPLHF", mi_VUPLH, { { 2, 2 } } },
+    { "VUPLHG", mi_VUPLH, { { 2, 1 } } },
+    { "VUPLHW", mi_VUPL, { { 2, 1 } } },
+    { "VUPLLB", mi_VUPLL, { { 2, 0 } } },
+    { "VUPLLF", mi_VUPLL, { { 2, 2 } } },
+    { "VUPLLH", mi_VUPLL, { { 2, 1 } } },
+    { "VZERO", mi_VGBM, { { 0, 1 } } },
+    { "WCDGB", mi_VCFPS, { { 2, 2 } } },
+    { "WCDGB", mi_VCFPS, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WCDLGB", mi_VCFPL, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WCEFB", mi_VCFPS, { { 2, 2 } } }, // operand with index 3 ORed with 8
+    { "WCELFB", mi_VCFPL, { { 2, 2 } } }, // operand with index 3 ORed with 8
+    { "WCFEB", mi_VCSFP, { { 2, 2 } } }, // operand with index 3 ORed with 8
+    { "WCGDB", mi_VCSFP, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WCLFEB", mi_VCLFP, { { 2, 2 } } }, // operand with index 3 ORed with 8
+    { "WCLGDB", mi_VCLGD, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WFADB", mi_VFA, { { 3, 3 }, { 4, 8 } } },
+    { "WFASB", mi_VFA, { { 3, 2 }, { 4, 8 } } },
+    { "WFAXB", mi_VFA, { { 3, 4 }, { 4, 8 } } },
+    { "WFCDB", mi_WFC, { { 3, 3 }, { 4, 0 } } },
+    { "WFCEDB", mi_VFCE, { { 3, 3 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCEDBS", mi_VFCE, { { 3, 3 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCESB", mi_VFCE, { { 3, 2 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCESBS", mi_VFCE, { { 3, 2 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCEXB", mi_VFCE, { { 3, 4 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCEXBS", mi_VFCE, { { 3, 4 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHDB", mi_VFCH, { { 3, 3 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHDBS", mi_VFCH, { { 3, 3 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHEDB", mi_VFCHE, { { 3, 3 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHEDBS", mi_VFCHE, { { 3, 3 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHESB", mi_VFCHE, { { 3, 2 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHESBS", mi_VFCHE, { { 3, 2 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHEXB", mi_VFCHE, { { 3, 4 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHEXBS", mi_VFCHE, { { 3, 4 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHSB", mi_VFCH, { { 3, 2 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHSBS", mi_VFCH, { { 3, 2 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCHXB", mi_VFCH, { { 3, 4 }, { 4, 8 }, { 5, 0 } } },
+    { "WFCHXBS", mi_VFCH, { { 3, 4 }, { 4, 8 }, { 5, 1 } } },
+    { "WFCSB", mi_WFC, { { 3, 2 }, { 4, 0 } } },
+    { "WFCXB", mi_WFC, { { 3, 4 }, { 4, 0 } } },
+    { "WFDDB", mi_VFD, { { 3, 3 }, { 4, 8 } } },
+    { "WFDSB", mi_VFD, { { 3, 2 }, { 4, 8 } } },
+    { "WFDXB", mi_VFD, { { 3, 4 }, { 4, 8 } } },
+    { "WFIDB", mi_VFI, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WFISB", mi_VFI, { { 2, 2 } } }, // operand with index 3 ORed with 8
+    { "WFIXB", mi_VFI, { { 2, 4 } } }, // operand with index 3 ORed with 8
+    { "WFKDB", mi_WFK, { { 3, 3 }, { 4, 0 } } },
+    { "WFKEDB", mi_VFCE, { { 3, 3 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKEDBS", mi_VFCE, { { 3, 3 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKESB", mi_VFCE, { { 3, 2 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKESBS", mi_VFCE, { { 3, 2 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKEXB", mi_VFCE, { { 3, 4 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKEXBS", mi_VFCE, { { 3, 4 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHDB", mi_VFCH, { { 3, 3 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHDBS", mi_VFCH, { { 3, 3 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHEDB", mi_VFCHE, { { 3, 3 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHEDBS", mi_VFCHE, { { 3, 3 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHESB", mi_VFCHE, { { 3, 2 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHESBS", mi_VFCHE, { { 3, 2 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHEXB", mi_VFCHE, { { 3, 4 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHEXBS", mi_VFCHE, { { 3, 4 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHSB", mi_VFCH, { { 3, 2 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHSBS", mi_VFCH, { { 3, 2 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKHXB", mi_VFCH, { { 3, 4 }, { 4, 12 }, { 5, 0 } } },
+    { "WFKHXBS", mi_VFCH, { { 3, 4 }, { 4, 12 }, { 5, 1 } } },
+    { "WFKSB", mi_WFK, { { 3, 2 }, { 4, 0 } } },
+    { "WFKXB", mi_WFK, { { 3, 4 }, { 4, 0 } } },
+    { "WFLCDB", mi_VFPSO, { { 2, 3 }, { 3, 8 }, { 4, 0 } } },
+    { "WFLCSB", mi_VFPSO, { { 2, 2 }, { 3, 8 }, { 4, 0 } } },
+    { "WFLCXB", mi_VFPSO, { { 2, 4 }, { 3, 8 }, { 4, 0 } } },
+    { "WFLLD", mi_VFLL, { { 2, 3 }, { 3, 8 } } },
+    { "WFLLS", mi_VFLL, { { 2, 2 }, { 3, 8 } } },
+    { "WFLNDB", mi_VFPSO, { { 2, 3 }, { 3, 8 }, { 4, 1 } } },
+    { "WFLNSB", mi_VFPSO, { { 2, 2 }, { 3, 8 }, { 4, 1 } } },
+    { "WFLNXB", mi_VFPSO, { { 2, 4 }, { 3, 8 }, { 4, 1 } } },
+    { "WFLPDB", mi_VFPSO, { { 2, 3 }, { 3, 8 }, { 4, 2 } } },
+    { "WFLPSB", mi_VFPSO, { { 2, 2 }, { 3, 8 }, { 4, 2 } } },
+    { "WFLPXB", mi_VFPSO, { { 2, 4 }, { 3, 8 }, { 4, 2 } } },
+    { "WFLRD", mi_VFLR, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "WFLRX", mi_VFLR, { { 2, 4 } } }, // operand with index 3 ORed with 8
+    { "WFMADB", mi_VFMA, { { 4, 8 }, { 5, 3 } } },
+    { "WFMASB", mi_VFMA, { { 4, 8 }, { 5, 2 } } },
+    { "WFMAXB", mi_VFMA, { { 4, 8 }, { 5, 4 } } },
+    { "WFMAXDB", mi_VFMAX, { { 3, 3 }, { 4, 8 } } },
+    { "WFMAXSB", mi_VFMAX, { { 3, 2 }, { 4, 8 } } },
+    { "WFMAXXB", mi_VFMAX, { { 3, 4 }, { 4, 8 } } },
+    { "WFMDB", mi_VFM, { { 3, 3 }, { 4, 8 } } },
+    { "WFMINDB", mi_VFMIN, { { 3, 3 }, { 4, 8 } } },
+    { "WFMINSB", mi_VFMIN, { { 3, 2 }, { 4, 8 } } },
+    { "WFMINXB", mi_VFMIN, { { 3, 4 }, { 4, 8 } } },
+    { "WFMSB", mi_VFM, { { 3, 2 }, { 4, 8 } } },
+    { "WFMSDB", mi_VFMS, { { 4, 8 }, { 5, 3 } } },
+    { "WFMSSB", mi_VFMS, { { 4, 8 }, { 5, 2 } } },
+    { "WFMSXB", mi_VFMS, { { 4, 8 }, { 5, 4 } } },
+    { "WFMXB", mi_VFM, { { 3, 4 }, { 4, 8 } } },
+    { "WFNMADB", mi_VFNMA, { { 4, 8 }, { 5, 3 } } },
+    { "WFNMASB", mi_VFNMA, { { 4, 8 }, { 5, 2 } } },
+    { "WFNMAXB", mi_VFNMA, { { 4, 8 }, { 5, 4 } } },
+    { "WFNMSDB", mi_VFNMS, { { 4, 8 }, { 5, 3 } } },
+    { "WFNMSSB", mi_VFNMS, { { 4, 8 }, { 5, 2 } } },
+    { "WFNMSXB", mi_VFNMS, { { 4, 8 }, { 5, 4 } } },
+    { "WFPSODB", mi_VFPSO, { { 2, 3 }, { 3, 8 } } },
+    { "WFPSOSB", mi_VFPSO, { { 2, 2 }, { 3, 8 } } },
+    { "WFPSOXB", mi_VFPSO, { { 2, 4 }, { 3, 8 } } },
+    { "WFSDB", mi_VFS, { { 2, 3 }, { 3, 8 } } },
+    { "WFSQDB", mi_VFSQ, { { 2, 3 }, { 3, 8 } } },
+    { "WFSQSB", mi_VFSQ, { { 2, 2 }, { 3, 8 } } },
+    { "WFSQXB", mi_VFSQ, { { 2, 4 }, { 3, 8 } } },
+    { "WFSSB", mi_VFS, { { 2, 2 }, { 3, 8 } } },
+    { "WFSXB", mi_VFS, { { 2, 4 }, { 3, 8 } } },
+    { "WFTCIDB", mi_VFTCI, { { 3, 3 }, { 4, 8 } } },
+    { "WFTCISB", mi_VFTCI, { { 3, 2 }, { 4, 8 } } },
+    { "WFTCIXB", mi_VFTCI, { { 3, 4 }, { 4, 8 } } },
+    { "WLDEB", mi_VFLL, { { 2, 2 }, { 3, 8 } } },
+    { "WLEDB", mi_VFLR, { { 2, 3 } } }, // operand with index 3 ORed with 8
+    { "XHHR", mi_RXSBG, { { 2, 0 }, { 3, 31 } } },
+    { "XHHR", mi_RXSBG, { { 2, 0 }, { 3, 31 } } },
+    { "XHLR", mi_RXSBG, { { 2, 0 }, { 3, 31 }, { 4, 32 } } },
+    { "XLHR", mi_RXSBG, { { 2, 32 }, { 3, 63 }, { 4, 32 } } },
+    { "XLHR", mi_RXSBG, { { 2, 32 }, { 3, 63 }, { 4, 32 } } },
+};
+
+#ifdef __cpp_lib_ranges
+static_assert(std::ranges::is_sorted(mnemonic_codes, {}, &mnemonic_code::name));
+
+const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name)
+{
+    auto it = std::ranges::lower_bound(mnemonic_codes, name, {}, &mnemonic_code::name);
+    if (it == std::ranges::end(mnemonic_codes) || it->name() != name)
+        return nullptr;
+    return &*it;
+}
+#else
+static_assert(std::is_sorted(std::begin(mnemonic_codes), std::end(mnemonic_codes), [](const auto& l, const auto& r) {
+    return l.name() < r.name();
+}));
+
+const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name)
+{
+    auto it =
+        std::lower_bound(std::begin(mnemonic_codes), std::end(mnemonic_codes), name, [](const auto& l, const auto& r) {
+            return l.name() < r;
+        });
+    if (it == std::end(mnemonic_codes) || it->name() != name)
+        return nullptr;
+    return &*it;
+}
+#endif
+
+const mnemonic_code& instruction::get_mnemonic_codes(std::string_view name)
+{
+    auto result = find_mnemonic_codes(name);
+    assert(result);
+    return *result;
+}
+std::span<const mnemonic_code> instruction::all_mnemonic_codes() { return mnemonic_codes; }

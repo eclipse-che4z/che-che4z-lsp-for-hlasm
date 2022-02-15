@@ -25,7 +25,7 @@ using namespace hlasm_plugin::parser_library;
 
 
 
-data::data(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+data::data(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1)
 {}
 
@@ -68,7 +68,7 @@ bool data::check_data(const std::vector<const asm_operand*>& to_check,
     return ret;
 }
 
-dc::dc(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+dc::dc(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : data(allowed_types, name_of_instruction)
 {}
 
@@ -79,7 +79,7 @@ bool dc::check(const std::vector<const asm_operand*>& to_check,
     return check_data<data_instr_type::DC>(to_check, stmt_range, add_diagnostic);
 }
 
-ds_dxd::ds_dxd(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+ds_dxd::ds_dxd(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : data(allowed_types, name_of_instruction) {};
 
 bool ds_dxd::check(const std::vector<const asm_operand*>& to_check,
