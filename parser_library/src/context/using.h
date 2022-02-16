@@ -34,6 +34,7 @@ namespace hlasm_plugin::parser_library {
 template<typename T>
 class diagnostic_consumer;
 struct diagnostic_op;
+class diagnostic_s;
 
 namespace expressions {
 class mach_expression;
@@ -56,9 +57,10 @@ class using_collection
     struct using_entry_resolved;
     struct drop_entry_resolved;
 
+    struct expression_value;
+    struct instruction_context;
     class using_drop_definition;
     struct using_entry;
-    struct expression_value;
 
 public:
     using register_t = unsigned char;
@@ -170,9 +172,10 @@ private:
     struct drop_entry_resolved
     {
         index_t<using_collection> parent;
-        std::vector<std::variant<id_index, register_t>> drop;
+        std::vector<std::pair<std::variant<id_index, register_t>, range>> drop;
 
-        drop_entry_resolved(index_t<using_collection> parent, std::vector<std::variant<id_index, register_t>> drop)
+        drop_entry_resolved(
+            index_t<using_collection> parent, std::vector<std::pair<std::variant<id_index, register_t>, range>> drop)
             : parent(parent)
             , drop(std::move(drop))
         {}
@@ -195,13 +198,19 @@ private:
             const std::pair<const section*, offset_t>& b,
             std::optional<offset_t> len,
             const qualified_address& base,
+            const range& rng,
             diagnostic_consumer<diagnostic_op>& diag) const;
         resolved_entry resolve_drop(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
 
-        static std::optional<qualified_address> abs_or_reloc(
-            using_collection& coll, index_t<mach_expression> e, bool abs_is_register = false);
-        static std::variant<std::monostate, qualified_id, using_collection::register_t> abs_or_label(
-            using_collection& coll, index_t<mach_expression> e, bool allow_qualification);
+        static std::pair<std::optional<qualified_address>, range> abs_or_reloc(using_collection& coll,
+            index_t<mach_expression> e,
+            bool abs_is_register,
+            diagnostic_consumer<diagnostic_op>& diag);
+        static std::pair<std::variant<std::monostate, qualified_id, using_collection::register_t>, range> reg_or_label(
+            using_collection& coll,
+            index_t<mach_expression> e,
+            bool allow_qualification,
+            diagnostic_consumer<diagnostic_op>& diag);
 
     public:
         friend bool operator==(const using_drop_definition&, const using_drop_definition&) = default;
@@ -263,19 +272,25 @@ private:
         using_drop_definition definition;
         resolved_entry resolved;
         using_context context;
+        index_t<instruction_context> instruction_ctx;
 
         void resolve(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag);
         void compute_context(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag);
 
         using_entry(index_t<using_collection> parent,
+            index_t<instruction_context> instruction_ctx,
             index_t<mach_expression> begin,
             std::vector<index_t<mach_expression>> base,
             id_index label = nullptr,
             index_t<mach_expression> end = {})
             : definition(parent, begin, base, label, end)
+            , instruction_ctx(instruction_ctx)
         {}
-        using_entry(index_t<using_collection> parent, std::vector<index_t<mach_expression>> base)
+        using_entry(index_t<using_collection> parent,
+            index_t<instruction_context> instruction_ctx,
+            std::vector<index_t<mach_expression>> base)
             : definition(parent, {}, std::move(base))
+            , instruction_ctx(instruction_ctx)
         {}
 
     private:
@@ -348,7 +363,7 @@ public:
     using_collection& operator=(using_collection&&) noexcept;
     ~using_collection();
 
-    void resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_op>& diag);
+    void resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag);
 
     index_t<using_collection> add(index_t<using_collection> current,
         id_index label,

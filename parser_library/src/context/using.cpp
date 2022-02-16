@@ -16,12 +16,15 @@
 
 #include <limits>
 
+#include "diagnosable_ctx.h"
 #include "diagnostic_consumer.h"
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expression.h"
 #include "ordinary_assembly/dependable.h"
 #include "ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "utils/similar.h"
+
+constexpr std::string_view USING = "USING";
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -53,22 +56,24 @@ void using_collection::using_entry::compute_context_correction(
 {
     // drop conflicting usings
     if (u.label)
-        compute_context_drop(u.label);
+        compute_context_drop(u.label); // not diagnosed, but maybe we should warn
 
     context.m_state.emplace_back(using_context::entry { u.label, u.owner, u.begin, u.length, u.reg_set, u.reg_offset });
 }
 
+std::string_view convert_diag(id_index id) { return *id; }
+int convert_diag(unsigned char c) { return c; }
+
 void using_collection::using_entry::compute_context_correction(
     const drop_entry_resolved& d, diagnostic_consumer<diagnostic_op>& diag)
 {
-    size_t invalidated = 0;
-    for (const auto& drop : d.drop)
-        invalidated += std::visit([this](auto value) { return compute_context_drop(value); }, drop);
-
-    if (invalidated == 0)
-    {
-        // TODO: warning no impact???
-    }
+    for (const auto& [drop, rng] : d.drop)
+        std::visit(
+            [this, &diag, &rng](auto value) {
+                if (compute_context_drop(value) == 0)
+                    diag.add_diagnostic(diagnostic_op::warn_U0001_drop_had_no_effect(rng, convert_diag(value)));
+            },
+            drop);
 }
 
 size_t using_collection::using_entry::compute_context_drop(id_index d)
@@ -93,71 +98,79 @@ size_t using_collection::using_entry::compute_context_drop(register_t d)
 }
 
 auto using_collection::using_drop_definition::abs_or_reloc(
-    using_collection& coll, index_t<mach_expression> e, bool abs_is_register) -> std::optional<qualified_address>
+    using_collection& coll, index_t<mach_expression> e, bool abs_is_register, diagnostic_consumer<diagnostic_op>& diag)
+    -> std::pair<std::optional<qualified_address>, range>
 {
     if (!e)
-        return std::nullopt;
+        return { std::nullopt, range() };
 
-    const auto& value = coll.get(e).value;
+    const auto& expr = coll.get(e);
+    const auto& value = expr.value;
+    auto rng = expr.expression->get_range();
 
     if (value.value_kind() == symbol_value_kind::ABS)
     {
         auto v = value.get_abs();
         if (abs_is_register && (v < 0 || v >= reg_set_size))
         {
-            // TODO: diagnose
-            return std::nullopt;
+            diag.add_diagnostic(diagnostic_op::error_M120(USING, rng));
+            return { std::nullopt, rng };
         }
-        return qualified_address(nullptr, nullptr, v);
+        return { qualified_address(nullptr, nullptr, v), rng };
     }
     if (value.value_kind() == symbol_value_kind::RELOC && value.get_reloc().is_simple())
     {
         const auto& base = value.get_reloc().bases().front().first;
-        return qualified_address(base.qualifier, base.owner, value.get_reloc().offset());
+        return { qualified_address(base.qualifier, base.owner, value.get_reloc().offset()), rng };
     }
 
-    // TODO: diagnose
-    return std::nullopt;
+    diag.add_diagnostic(diagnostic_op::error_M113(USING, expr.expression->get_range()));
+    return { std::nullopt, rng };
 }
-std::variant<std::monostate, using_collection::qualified_id, using_collection::register_t>
-using_collection::using_drop_definition::abs_or_label(
-    using_collection& coll, index_t<mach_expression> e, bool allow_qualification)
+auto using_collection::using_drop_definition::reg_or_label(using_collection& coll,
+    index_t<mach_expression> e,
+    bool allow_qualification,
+    diagnostic_consumer<diagnostic_op>& diag)
+    -> std::pair<std::variant<std::monostate, qualified_id, register_t>, range>
 {
     if (!e)
-        return std::monostate();
+        return { std::monostate(), range() };
 
     const auto& expr = coll.get(e);
+    auto rng = expr.expression->get_range();
 
     if (auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(expr.expression); sym)
     {
         if (sym->qualifier && !allow_qualification)
         {
-            // TODO: diagnose
-            return std::monostate();
+            diag.add_diagnostic(diagnostic_op::error_U0002_label_not_allowed(rng));
+            return { std::monostate(), rng };
         }
-        return qualified_id { sym->qualifier, sym->value };
+        return { qualified_id { sym->qualifier, sym->value }, rng };
     }
 
     if (expr.value.value_kind() == symbol_value_kind::ABS)
     {
         if (auto v = expr.value.get_abs(); v >= 0 && v < reg_set_size)
-            return (unsigned char)v;
-        // TODO: diagnose
+            return { (unsigned char)v, rng };
+        diag.add_diagnostic(diagnostic_op::error_M120(USING, rng));
     }
-    // TODO: diagnose
+    else
+        diag.add_diagnostic(diagnostic_op::error_U0003_drop_label_or_reg(rng));
 
-    return std::monostate();
+    return { std::monostate(), rng };
 }
 
 using_collection::resolved_entry using_collection::using_drop_definition::resolve_using_dep(using_collection& coll,
     const std::pair<const section*, offset_t>& b,
     std::optional<offset_t> len,
     const qualified_address& base,
+    const range& rng,
     diagnostic_consumer<diagnostic_op>& diag) const
 {
     if (!m_parent)
     {
-        // TODO: diagnose dependent using without any active using
+        diag.add_diagnostic(diagnostic_op::error_U0004_no_active_using(rng));
         return {};
     }
     const auto& ctx = coll.get(m_parent).context;
@@ -166,7 +179,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 
     if (v.mapping_regs == invalid_register_set)
     {
-        // TODO: diagnose no matching using
+        diag.add_diagnostic(diagnostic_op::error_U0004_no_active_using(rng));
         return {};
     }
 
@@ -179,21 +192,23 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 {
     assert(!m_base.empty() && m_base.size() <= reg_set_size);
 
-    auto b = abs_or_reloc(coll, m_begin);
+    auto [b, b_rng] = abs_or_reloc(coll, m_begin, false, diag);
     if (!b.has_value())
     {
-        // TODO: diagnose
+        diag.add_diagnostic(diagnostic_op::error_M113(USING, b_rng));
         return {};
     }
     if (b->qualifier)
     {
-        // TODO: qualifier not allowed
+        // diagnose and ignore
+        diag.add_diagnostic(diagnostic_op::error_U0002_label_not_allowed(b_rng));
     }
-    auto e = abs_or_reloc(coll, m_end);
+    auto [e, e_rng] = abs_or_reloc(coll, m_end, false, diag);
 
-    std::array<std::optional<qualified_address>, reg_set_size> bases_;
-    std::transform(
-        m_base.begin(), m_base.end(), bases_.begin(), [&coll](auto e) { return abs_or_reloc(coll, e, true); });
+    std::array<std::pair<std::optional<qualified_address>, range>, reg_set_size> bases_;
+    std::transform(m_base.begin(), m_base.end(), bases_.begin(), [&coll, &diag](auto e) {
+        return abs_or_reloc(coll, e, true, diag);
+    });
     const auto bases =
         std::span(bases_).first(std::find(m_base.begin(), m_base.end(), index_t<mach_expression>()) - m_base.begin());
 
@@ -202,37 +217,42 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     {
         if (e->qualifier)
         {
-            // TODO: qualifier not allowed
+            // diagnose and ignore
+            diag.add_diagnostic(diagnostic_op::error_U0002_label_not_allowed(e_rng));
         }
-        if (b->sect != e->sect)
+        if (b->sect != e->sect || b->offset >= e->offset)
         {
-            // TODO: diagnose
-        }
-        else if (b->offset >= e->offset)
-        {
-            // TODO: diagnose
+            constexpr auto section_name = [](const section* s) {
+                if (s)
+                    return std::string_view(*s->name);
+                else
+                    return std::string_view();
+            };
+            diag.add_diagnostic(diagnostic_op::error_U0005_invalid_range(
+                b_rng, e_rng, section_name(b->sect), b->offset, section_name(e->sect), e->offset));
         }
         else
             len = e->offset - b->offset;
     }
 
-    if (bases.size() == 1 && bases.front().has_value() && bases.front()->sect != nullptr)
-        return resolve_using_dep(coll, { b->sect, b->offset }, len, bases.front().value(), diag);
+    if (bases.size() == 1 && bases.front().first.has_value() && bases.front().first->sect != nullptr)
+        return resolve_using_dep(
+            coll, { b->sect, b->offset }, len, bases.front().first.value(), bases.front().second, diag);
 
     // labeled/ordinary USING continues
-    for (auto& base : bases)
+    for (auto& [base, base_rng] : bases)
     {
         if (base.has_value() && base->sect != nullptr)
         {
-            // TODO: diagnose absolute value expected
-            base.reset(); // drop the value
+            diag.add_diagnostic(diagnostic_op::error_M120(USING, base_rng));
+            base.reset(); // ignore the value
         }
     }
 
     register_set_t reg_set_ = invalid_register_set;
     auto reg_set = std::span(reg_set_).first(bases.size());
     std::transform(bases.begin(), bases.end(), reg_set.begin(), [](const auto& r) {
-        return r ? (register_t)r->offset : invalid_register;
+        return r.first ? (register_t)r.first->offset : invalid_register;
     });
 
     return using_entry_resolved(m_parent, m_label, b->sect, b->offset, len.value_or(0x1000 * bases.size()), reg_set, 0);
@@ -244,20 +264,24 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     struct
     {
         diagnostic_consumer<diagnostic_op>& diag;
-        std::vector<std::variant<id_index, register_t>> args;
+        std::vector<std::pair<std::variant<id_index, register_t>, range>> args;
 
-        void operator()(std::monostate)
+        void operator()(std::monostate, range rng)
         {
-            // TODO: diagnose
+            diag.add_diagnostic(diagnostic_op::error_U0003_drop_label_or_reg(rng));
         }
-        void operator()(register_t r) { args.emplace_back(r); }
-        void operator()(qualified_id id) { args.emplace_back(id.name); }
+        void operator()(register_t r, range rng) { args.emplace_back(r, rng); }
+        void operator()(qualified_id id, range rng) { args.emplace_back(id.name, rng); }
 
     } transform { diag };
 
-    for (const auto& expr :
-        std::span(m_base.begin(), std::find(m_base.begin(), m_base.end(), index_t<mach_expression>())))
-        std::visit(transform, abs_or_label(coll, expr, false));
+    constexpr index_t<mach_expression> empty;
+
+    for (const auto& expr : std::span(m_base.begin(), std::find(m_base.begin(), m_base.end(), empty)))
+    {
+        auto [v, rng] = reg_or_label(coll, expr, false, diag);
+        std::visit([&transform, &diag, &rng](auto v) { transform(v, rng); }, v);
+    }
 
     return drop_entry_resolved(m_parent, std::move(transform.args));
 }
@@ -279,7 +303,7 @@ using_collection::using_collection(using_collection&&) noexcept = default;
 using_collection& using_collection::operator=(using_collection&&) noexcept = default;
 using_collection::~using_collection() = default;
 
-void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_op>& diag)
+void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag)
 {
     for (auto& expr : m_expr_values)
     {
@@ -288,14 +312,17 @@ void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagn
         expr.value = expr.expression->evaluate(solver);
         expr.expression->collect_diags();
         for (auto& d : expr.expression->diags())
-            diag.add_diagnostic(std::move(d));
+            diag.add_diagnostic(add_stack_details(std::move(d), get(expr.context).stack));
         expr.expression->diags().clear();
     }
 
     for (auto& u : m_usings)
     {
-        u.resolve(*this, diag);
-        u.compute_context(*this, diag);
+        diagnostic_consumer_transform t([this, &diag, &u](diagnostic_op d) {
+            return add_stack_details(std::move(d), get(u.instruction_ctx).stack);
+        });
+        u.resolve(*this, t);
+        u.compute_context(*this, t);
     }
 }
 
@@ -323,7 +350,10 @@ using_collection::index_t<using_collection> using_collection::add(index_t<using_
     processing_stack_t stack,
     diagnostic_consumer<diagnostic_op>& diag)
 {
-    assert(args.size() <= reg_set_size);
+    if (args.size() > reg_set_size)
+    {
+        return current;
+    }
 
     index_t<instruction_context> ctx_id = add(std::move(eval_ctx), std::move(stack));
 
@@ -337,7 +367,7 @@ using_collection::index_t<using_collection> using_collection::add(index_t<using_
         return add(m_expressions.emplace(std::move(a)).first->get(), ctx_id);
     });
 
-    m_usings.emplace_back(current, b, base, label, e);
+    m_usings.emplace_back(current, ctx_id, b, base, label, e);
     return index_t<using_collection>(m_usings.size());
 }
 
@@ -355,7 +385,7 @@ using_collection::index_t<using_collection> using_collection::remove(index_t<usi
     std::transform(args.begin(), args.end(), std::back_inserter(base), [this, ctx_id](auto& a) {
         return add(m_expressions.emplace(std::move(a)).first->get(), ctx_id);
     });
-    m_usings.emplace_back(current, std::move(base));
+    m_usings.emplace_back(current, ctx_id, std::move(base));
 
     return index_t<using_collection>(m_usings.size());
 }

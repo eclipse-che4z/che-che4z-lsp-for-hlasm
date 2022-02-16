@@ -93,6 +93,7 @@ TEST(using, basic)
     using_collection coll;
     using_collection::index_t<using_collection> current;
     diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
 
     std::array mapping { c.number(1) };
     auto sect = c.section("SECT");
@@ -101,9 +102,9 @@ TEST(using, basic)
 
     EXPECT_TRUE(d.diags.empty());
 
-    coll.resolve_all(c.asm_ctx, d);
+    coll.resolve_all(c.asm_ctx, d_s);
 
-    EXPECT_TRUE(d.diags.empty());
+    EXPECT_TRUE(d_s.diags.empty());
 
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(1, 0));
     EXPECT_EQ(coll.evaluate(with_sect, c.id("LABEL"), sect, 0, false), evaluate_result(invalid_register, 0));
@@ -121,6 +122,7 @@ TEST(using, multiple_registers)
     using_collection coll;
     using_collection::index_t<using_collection> current;
     diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
 
     std::array mapping { c.number(2), c.number(1) };
     auto sect = c.section("SECT");
@@ -129,9 +131,9 @@ TEST(using, multiple_registers)
 
     EXPECT_TRUE(d.diags.empty());
 
-    coll.resolve_all(c.asm_ctx, d);
+    coll.resolve_all(c.asm_ctx, d_s);
 
-    EXPECT_TRUE(d.diags.empty());
+    EXPECT_TRUE(d_s.diags.empty());
 
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(2, 0));
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4096, false), evaluate_result(1, 0));
@@ -151,6 +153,7 @@ TEST(using, with_offset)
     using_collection coll;
     using_collection::index_t<using_collection> current;
     diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
 
     std::array mapping { c.number(2) };
     auto sect = c.section("SECT");
@@ -159,9 +162,9 @@ TEST(using, with_offset)
 
     EXPECT_TRUE(d.diags.empty());
 
-    coll.resolve_all(c.asm_ctx, d);
+    coll.resolve_all(c.asm_ctx, d_s);
 
-    EXPECT_TRUE(d.diags.empty());
+    EXPECT_TRUE(d_s.diags.empty());
 
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(invalid_register, -10));
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 10, false), evaluate_result(2, 0));
@@ -177,6 +180,7 @@ TEST(using, with_negative_offset)
     using_collection coll;
     using_collection::index_t<using_collection> current;
     diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
 
     std::array mapping { c.number(2) };
     auto sect = c.section("SECT");
@@ -185,9 +189,9 @@ TEST(using, with_negative_offset)
 
     EXPECT_TRUE(d.diags.empty());
 
-    coll.resolve_all(c.asm_ctx, d);
+    coll.resolve_all(c.asm_ctx, d_s);
 
-    EXPECT_TRUE(d.diags.empty());
+    EXPECT_TRUE(d_s.diags.empty());
 
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, -20, false), evaluate_result(invalid_register, -10));
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, -10, false), evaluate_result(2, 0));
@@ -208,6 +212,7 @@ TEST(using, dependent_using)
     using_collection coll;
     using_collection::index_t<using_collection> current;
     diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
 
     std::array mapping { c.number(12) };
     auto sect = c.section("SECT");
@@ -223,9 +228,9 @@ TEST(using, dependent_using)
 
     EXPECT_TRUE(d.diags.empty());
 
-    coll.resolve_all(c.asm_ctx, d);
+    coll.resolve_all(c.asm_ctx, d_s);
 
-    EXPECT_TRUE(d.diags.empty());
+    EXPECT_TRUE(d_s.diags.empty());
 
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 10, false), evaluate_result(12, 0));
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 20, false), evaluate_result(12, 10));
@@ -248,6 +253,7 @@ TEST(using, labeled)
     using_collection coll;
     using_collection::index_t<using_collection> current;
     diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
 
     std::array mapping { c.number(1) };
     auto sect = c.section("SECT");
@@ -257,9 +263,9 @@ TEST(using, labeled)
 
     EXPECT_TRUE(d.diags.empty());
 
-    coll.resolve_all(c.asm_ctx, d);
+    coll.resolve_all(c.asm_ctx, d_s);
 
-    EXPECT_TRUE(d.diags.empty());
+    EXPECT_TRUE(d_s.diags.empty());
 
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(invalid_register, 0));
     EXPECT_EQ(coll.evaluate(with_sect, label, sect, 0, false), evaluate_result(1, 0));
@@ -278,6 +284,7 @@ TEST(using, drop_one)
     using_collection coll;
     using_collection::index_t<using_collection> current;
     diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
 
     std::array mapping { c.number(2), c.number(1) };
     auto sect = c.section("SECT");
@@ -289,9 +296,9 @@ TEST(using, drop_one)
 
     EXPECT_TRUE(d.diags.empty());
 
-    coll.resolve_all(c.asm_ctx, d);
+    coll.resolve_all(c.asm_ctx, d_s);
 
-    EXPECT_TRUE(d.diags.empty());
+    EXPECT_TRUE(d_s.diags.empty());
 
     EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 0, false), evaluate_result(invalid_register, -4096));
     EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 4096, false), evaluate_result(1, 0));
@@ -311,6 +318,7 @@ TEST(using, drop_dependent)
     using_collection coll;
     using_collection::index_t<using_collection> current;
     diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
 
     std::array mapping { c.number(2) };
     auto sect = c.section("SECT");
@@ -325,9 +333,9 @@ TEST(using, drop_dependent)
 
     EXPECT_TRUE(d.diags.empty());
 
-    coll.resolve_all(c.asm_ctx, d);
+    coll.resolve_all(c.asm_ctx, d_s);
 
-    EXPECT_TRUE(d.diags.empty());
+    EXPECT_TRUE(d_s.diags.empty());
 
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(2, 0));
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect2, 0, false), evaluate_result(invalid_register, 0));
@@ -345,6 +353,7 @@ TEST(using, override_label)
     using_collection coll;
     using_collection::index_t<using_collection> current;
     diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
 
     std::array mapping { c.number(1) };
     auto sect = c.section("SECT");
@@ -357,9 +366,9 @@ TEST(using, override_label)
 
     EXPECT_TRUE(d.diags.empty());
 
-    coll.resolve_all(c.asm_ctx, d);
+    coll.resolve_all(c.asm_ctx, d_s);
 
-    EXPECT_TRUE(d.diags.empty());
+    EXPECT_TRUE(d_s.diags.empty());
 
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(invalid_register, 0));
     EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect, 0, false), evaluate_result(invalid_register, 0));
@@ -379,6 +388,7 @@ TEST(using, drop_reg_with_labeled_dependent)
     using_collection coll;
     using_collection::index_t<using_collection> current;
     diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
 
     auto label = c.id("LABEL");
     std::array mapping { c.number(2) };
@@ -394,9 +404,9 @@ TEST(using, drop_reg_with_labeled_dependent)
 
     EXPECT_TRUE(d.diags.empty());
 
-    coll.resolve_all(c.asm_ctx, d);
+    coll.resolve_all(c.asm_ctx, d_s);
 
-    EXPECT_TRUE(d.diags.empty());
+    EXPECT_TRUE(d_s.diags.empty());
 
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(2, 0));
     EXPECT_EQ(coll.evaluate(with_sect, label, sect, 0, false), evaluate_result(invalid_register, 0));

@@ -1439,7 +1439,7 @@ diagnostic_op diagnostic_op::error_M124(std::string_view instr_name, const range
     return diagnostic_op(diagnostic_severity::error,
         "M124",
         concat(
-            "Error at ", instr_name, " instruction: vector register operand absolute value must be between 0 and 15"),
+            "Error at ", instr_name, " instruction: vector register operand absolute value must be between 0 and 31"),
         range);
 }
 
@@ -2248,6 +2248,51 @@ diagnostic_op diagnostic_op::warn_CIC002(const range& range)
         "CIC002",
         std::string("CICS preprocessor - DFHRESP argument cannot be NULL"),
         range);
+}
+
+diagnostic_op diagnostic_op::warn_U0001_drop_had_no_effect(const range& range, std::string_view arg)
+{
+    return diagnostic_op(
+        diagnostic_severity::warning, "U0001", concat("USING - label '", arg, "' currently not used."), range);
+}
+
+diagnostic_op diagnostic_op::warn_U0001_drop_had_no_effect(const range& range, int arg)
+{
+    return diagnostic_op(
+        diagnostic_severity::warning, "U0001", concat("USING - register ", arg, " currently not used."), range);
+}
+
+diagnostic_op diagnostic_op::error_U0002_label_not_allowed(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "U0002", "USING - label is not allowed in this context", range);
+}
+
+diagnostic_op diagnostic_op::error_U0003_drop_label_or_reg(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "U0003", "DROP - label or register expected", range);
+}
+
+diagnostic_op diagnostic_op::error_U0004_no_active_using(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "U0004", "No active USING found.", range);
+}
+
+diagnostic_op diagnostic_op::error_U0005_invalid_range(
+    const range& s_range, const range& e_range, std::string_view s_sect, int s_off, std::string_view e_sect, int e_off)
+{
+    using namespace std::string_view_literals;
+    return diagnostic_op(diagnostic_severity::error,
+        "U0005",
+        concat("USING - expression (",
+            s_sect,
+            s_sect.empty() ? ""sv : "+"sv,
+            s_off,
+            ",",
+            e_sect,
+            e_sect.empty() ? ""sv : "+"sv,
+            e_off,
+            ") is not a valid non-empty range."),
+        union_range(s_range, e_range));
 }
 
 diagnostic_s diagnostic_s::error_W002(std::string_view ws_uri, std::string_view ws_name)
