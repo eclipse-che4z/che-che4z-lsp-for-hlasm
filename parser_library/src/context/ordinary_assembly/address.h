@@ -15,6 +15,7 @@
 #ifndef CONTEXT_ADDRESS_H
 #define CONTEXT_ADDRESS_H
 
+#include <compare>
 #include <memory>
 #include <utility>
 #include <variant>

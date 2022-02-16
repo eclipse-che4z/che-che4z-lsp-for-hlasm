@@ -20,6 +20,7 @@
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expression.h"
 #include "ordinary_assembly/dependable.h"
+#include "ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::context {
@@ -35,15 +36,15 @@ void using_collection::using_entry::compute_context(using_collection& coll, diag
 }
 
 
-void using_collection::using_entry::duplicate_parent_context(using_collection& coll, index_t p)
+void using_collection::using_entry::duplicate_parent_context(using_collection& coll, index_t<using_collection> p)
 {
     if (!p)
         return;
-    context = coll.get_using(p).context;
+    context = coll.get(p).context;
 }
 
 void using_collection::using_entry::compute_context(
-    using_collection& coll, index_t parent, diagnostic_consumer<diagnostic_op>&)
+    using_collection& coll, index_t<using_collection> parent, diagnostic_consumer<diagnostic_op>&)
 {
     duplicate_parent_context(coll, parent); // just duplicate previous state on error
 }
@@ -96,16 +97,16 @@ size_t using_collection::using_entry::compute_context_drop(register_t d)
 }
 
 auto using_collection::using_drop_definition::abs_or_reloc(
-    using_collection& coll, const mach_expression* e, bool abs_is_register) -> std::optional<qualified_address>
+    using_collection& coll, index_t<mach_expression> e, bool abs_is_register) -> std::optional<qualified_address>
 {
     if (!e)
         return std::nullopt;
 
-    const auto& res = coll.eval_expr(e);
+    const auto& value = coll.get(e).value;
 
-    if (res.value_kind() == symbol_value_kind::ABS)
+    if (value.value_kind() == symbol_value_kind::ABS)
     {
-        auto v = res.get_abs();
+        auto v = value.get_abs();
         if (abs_is_register && (v < 0 || v >= reg_set_size))
         {
             // TODO: diagnose
@@ -113,10 +114,10 @@ auto using_collection::using_drop_definition::abs_or_reloc(
         }
         return qualified_address(nullptr, nullptr, v);
     }
-    if (res.value_kind() == symbol_value_kind::RELOC && res.get_reloc().is_simple())
+    if (value.value_kind() == symbol_value_kind::RELOC && value.get_reloc().is_simple())
     {
-        const auto& base = res.get_reloc().bases().front().first;
-        return qualified_address(base.qualifier, base.owner, res.get_reloc().offset());
+        const auto& base = value.get_reloc().bases().front().first;
+        return qualified_address(base.qualifier, base.owner, value.get_reloc().offset());
     }
 
     // TODO: diagnose
@@ -124,12 +125,14 @@ auto using_collection::using_drop_definition::abs_or_reloc(
 }
 std::variant<std::monostate, using_collection::qualified_id, using_collection::register_t>
 using_collection::using_drop_definition::abs_or_label(
-    using_collection& coll, const mach_expression* e, bool allow_qualification)
+    using_collection& coll, index_t<mach_expression> e, bool allow_qualification)
 {
     if (!e)
         return std::monostate();
 
-    if (auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(e); sym)
+    const auto& expr = coll.get(e);
+
+    if (auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(expr.expression); sym)
     {
         if (sym->qualifier && !allow_qualification)
         {
@@ -139,11 +142,9 @@ using_collection::using_drop_definition::abs_or_label(
         return qualified_id { sym->qualifier, sym->value };
     }
 
-    const auto& res = coll.eval_expr(e);
-
-    if (res.value_kind() == symbol_value_kind::ABS)
+    if (expr.value.value_kind() == symbol_value_kind::ABS)
     {
-        if (auto v = res.get_abs(); v >= 0 && v < reg_set_size)
+        if (auto v = expr.value.get_abs(); v >= 0 && v < reg_set_size)
             return (unsigned char)v;
         // TODO: diagnose
     }
@@ -163,7 +164,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
         // TODO: diagnose dependent using without any active using
         return {};
     }
-    const auto& ctx = coll.get_using(m_parent).context;
+    const auto& ctx = coll.get(m_parent).context;
 
     auto v = ctx.evaluate(base.qualifier, base.sect, base.offset, false);
 
@@ -197,7 +198,8 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     std::array<std::optional<qualified_address>, reg_set_size> bases_;
     std::transform(
         m_base.begin(), m_base.end(), bases_.begin(), [&coll](auto e) { return abs_or_reloc(coll, e, true); });
-    const auto bases = std::span(bases_).first(std::find(m_base.begin(), m_base.end(), nullptr) - m_base.begin());
+    const auto bases =
+        std::span(bases_).first(std::find(m_base.begin(), m_base.end(), index_t<mach_expression>()) - m_base.begin());
 
     std::optional<offset_t> len;
     if (e.has_value())
@@ -257,7 +259,8 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 
     } transform { diag };
 
-    for (const auto* expr : std::span(m_base.begin(), std::find(m_base.begin(), m_base.end(), nullptr)))
+    for (const auto& expr :
+        std::span(m_base.begin(), std::find(m_base.begin(), m_base.end(), index_t<mach_expression>())))
         std::visit(transform, abs_or_label(coll, expr, false));
 
     return drop_entry_resolved(m_parent, std::move(transform.args));
@@ -273,28 +276,23 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     else
         assert(false);
 
-    return index_t {};
-}
-
-const symbol_value& using_collection::eval_expr(const mach_expression* e) const
-{
-    auto it = m_expressions.find(e);
-    assert(it != m_expressions.end());
-    return it->second;
+    return index_t<using_collection>();
 }
 
 using_collection::using_collection(using_collection&&) noexcept = default;
 using_collection& using_collection::operator=(using_collection&&) noexcept = default;
 using_collection::~using_collection() = default;
 
-void using_collection::resolve_all(dependency_solver& solver, diagnostic_consumer<diagnostic_op>& diag)
+void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_op>& diag)
 {
-    for (auto& expr : m_expressions)
+    for (auto& expr : m_expr_values)
     {
-        expr.second = expr.first->evaluate(solver);
-        expr.first->collect_diags();
-        for (auto& d : expr.first->diags())
+        ordinary_assembly_dependency_solver solver(ord_context, get(expr.context).evaluation_ctx);
+        expr.value = expr.expression->evaluate(solver);
+        expr.expression->collect_diags();
+        for (auto& d : expr.expression->diags())
             diag.add_diagnostic(std::move(d));
+        expr.expression->diags().clear();
     }
 
     for (auto& u : m_usings)
@@ -304,51 +302,79 @@ void using_collection::resolve_all(dependency_solver& solver, diagnostic_consume
     }
 }
 
-using_collection::index_t using_collection::add(index_t current,
+using_collection::index_t<using_collection::instruction_context> using_collection::add(
+    dependency_evaluation_context ctx, processing_stack_t stack)
+{
+    m_instruction_contexts.push_back({ std::move(ctx), std::move(stack) });
+    return index_t<instruction_context>(m_instruction_contexts.size());
+}
+
+using_collection::index_t<using_collection::mach_expression> using_collection::add(
+    const mach_expression* expr, index_t<instruction_context> ctx)
+{
+    m_expr_values.push_back({ expr, ctx });
+    return index_t<mach_expression>(m_expr_values.size());
+}
+
+
+using_collection::index_t<using_collection> using_collection::add(index_t<using_collection> current,
     id_index label,
     std::unique_ptr<mach_expression> begin,
     std::unique_ptr<mach_expression> end,
     std::span<std::unique_ptr<mach_expression>> args,
+    dependency_evaluation_context eval_ctx,
+    processing_stack_t stack,
     diagnostic_consumer<diagnostic_op>& diag)
 {
     assert(args.size() <= reg_set_size);
 
-    auto b = m_expressions.try_emplace(std::move(begin)).first->first.get();
-    auto e = end ? m_expressions.try_emplace(std::move(end)).first->first.get() : nullptr;
+    index_t<instruction_context> ctx_id = add(std::move(eval_ctx), std::move(stack));
 
-    std::array<const mach_expression*, reg_set_size> base_;
-    const auto base = std::span(base_).first(args.size());
+    auto b = add(m_expressions.emplace(std::move(begin)).first->get(), ctx_id);
+    auto e = end ? add(m_expressions.emplace(std::move(end)).first->get(), ctx_id) : index_t<mach_expression>();
 
-    std::transform(args.begin(), args.end(), base.begin(), [this](auto& a) {
-        return m_expressions.try_emplace(std::move(a)).first->first.get();
+    std::vector<index_t<mach_expression>> base;
+    base.reserve(args.size());
+
+    std::transform(args.begin(), args.end(), std::back_inserter(base), [this, ctx_id](auto& a) {
+        return add(m_expressions.emplace(std::move(a)).first->get(), ctx_id);
     });
+
     m_usings.emplace_back(current, b, base, label, e);
-    return index_t(m_usings.size());
+    return index_t<using_collection>(m_usings.size());
 }
 
-using_collection::index_t using_collection::remove(
-    index_t current, std::span<std::unique_ptr<mach_expression>> args, diagnostic_consumer<diagnostic_op>& diag)
+using_collection::index_t<using_collection> using_collection::remove(index_t<using_collection> current,
+    std::span<std::unique_ptr<mach_expression>> args,
+    dependency_evaluation_context eval_ctx,
+    processing_stack_t stack,
+    diagnostic_consumer<diagnostic_op>& diag)
 {
-    std::array<const mach_expression*, reg_set_size> base_;
-    const auto base = std::span(base_).first(args.size());
+    index_t<instruction_context> ctx_id = add(std::move(eval_ctx), std::move(stack));
 
-    std::transform(args.begin(), args.end(), base.begin(), [this](auto& a) {
-        return m_expressions.try_emplace(std::move(a)).first->first.get();
+    std::vector<index_t<mach_expression>> base;
+    base.reserve(args.size());
+
+    std::transform(args.begin(), args.end(), std::back_inserter(base), [this, ctx_id](auto& a) {
+        return add(m_expressions.emplace(std::move(a)).first->get(), ctx_id);
     });
-    m_usings.emplace_back(current, base);
+    m_usings.emplace_back(current, std::move(base));
 
-    return index_t(m_usings.size());
+    return index_t<using_collection>(m_usings.size());
 }
 
 
 
-using_collection::evaluate_result using_collection::evaluate(
-    index_t context_id, id_index label, const section* section, offset_t offset, bool long_offset) const
+using_collection::evaluate_result using_collection::evaluate(index_t<using_collection> context_id,
+    id_index label,
+    const section* section,
+    offset_t offset,
+    bool long_offset) const
 {
     if (!context_id)
         return evaluate_result { invalid_register, 0 };
 
-    auto tmp = get_using(context_id).context.evaluate(label, section, offset, long_offset);
+    auto tmp = get(context_id).context.evaluate(label, section, offset, long_offset);
 
     return evaluate_result { tmp.mapping_regs[0], tmp.reg_offset };
 }

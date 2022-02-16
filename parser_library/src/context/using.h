@@ -23,10 +23,12 @@
 #include <memory>
 #include <optional>
 #include <span>
-#include <unordered_map>
+#include <unordered_set>
 
 #include "id_storage.h"
+#include "ordinary_assembly/symbol_dependency_tables.h"
 #include "ordinary_assembly/symbol_value.h"
+#include "source_context.h"
 
 namespace hlasm_plugin::parser_library {
 template<typename T>
@@ -41,16 +43,19 @@ class mach_expression;
 
 namespace hlasm_plugin::parser_library::context {
 
-class using_context;
-class section;
 class dependency_solver;
+class ordinary_assembly_context;
+class section;
+class using_context;
 
 class using_collection
 {
     using mach_expression = expressions::mach_expression;
     struct using_entry_resolved;
+    struct drop_entry_resolved;
     class using_drop_definition;
     struct using_entry;
+    struct expression_value;
 
 public:
     using register_t = unsigned char;
@@ -77,12 +82,13 @@ public:
     };
     using offset_t = int32_t;
 
+    template<typename Tag>
     class index_t
     {
         size_t index = 0;
 
     public:
-        index_t(size_t i)
+        constexpr index_t(size_t i)
             : index(i)
         {
             assert(i != 0);
@@ -90,7 +96,7 @@ public:
         index_t() = default;
 
         friend auto operator<=>(const index_t& l, const index_t& r) = default;
-        explicit operator bool() const { return index != 0; }
+        constexpr explicit operator bool() const { return index != 0; }
 
         friend class using_collection;
     };
@@ -117,9 +123,11 @@ public:
     };
 
 private:
+    using resolved_entry = std::variant<index_t<using_collection>, using_entry_resolved, drop_entry_resolved>;
+
     struct using_entry_resolved
     {
-        index_t parent;
+        index_t<using_collection> parent;
 
         id_index label = nullptr;
 
@@ -130,7 +138,7 @@ private:
         register_set_t reg_set = invalid_register_set;
         offset_t reg_offset = 0;
 
-        constexpr using_entry_resolved(index_t parent,
+        constexpr using_entry_resolved(index_t<using_collection> parent,
             id_index label,
             const section* owner,
             offset_t begin,
@@ -152,16 +160,15 @@ private:
 
     struct drop_entry_resolved
     {
-        index_t parent;
+        index_t<using_collection> parent;
         std::vector<std::variant<id_index, register_t>> drop;
 
-        constexpr drop_entry_resolved(index_t parent, std::vector<std::variant<id_index, register_t>> drop)
+        constexpr drop_entry_resolved(
+            index_t<using_collection> parent, std::vector<std::variant<id_index, register_t>> drop)
             : parent(parent)
             , drop(std::move(drop))
         {}
     };
-
-    using resolved_entry = std::variant<index_t, using_entry_resolved, drop_entry_resolved>;
 
 
     //<label> USING begin,b                    m_begin != nullptr, m_end == nullptr
@@ -169,11 +176,11 @@ private:
     //        DROP  x                          m_begin, m_end == nullptr, m_base = x
     class using_drop_definition
     {
-        index_t m_parent;
+        index_t<using_collection> m_parent;
         id_index m_label;
-        const mach_expression* m_begin;
-        const mach_expression* m_end;
-        std::array<const mach_expression*, reg_set_size> m_base = {};
+        index_t<mach_expression> m_begin;
+        index_t<mach_expression> m_end;
+        std::vector<index_t<mach_expression>> m_base;
 
         resolved_entry resolve_using(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
         resolved_entry resolve_using_dep(using_collection& coll,
@@ -184,33 +191,30 @@ private:
         resolved_entry resolve_drop(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
 
         static std::optional<qualified_address> abs_or_reloc(
-            using_collection& coll, const mach_expression* e, bool abs_is_register = false);
+            using_collection& coll, index_t<mach_expression> e, bool abs_is_register = false);
         static std::variant<std::monostate, qualified_id, using_collection::register_t> abs_or_label(
-            using_collection& coll, const mach_expression* e, bool allow_qualification);
+            using_collection& coll, index_t<mach_expression> e, bool allow_qualification);
 
     public:
         friend auto operator<=>(const using_drop_definition&, const using_drop_definition&) = default;
 
-        constexpr using_drop_definition(index_t parent,
-            const mach_expression* begin,
-            std::span<const mach_expression*> base,
+        constexpr using_drop_definition(index_t<using_collection> parent,
+            index_t<mach_expression> begin,
+            std::vector<index_t<mach_expression>> base,
             id_index label = nullptr,
-            const mach_expression* end = nullptr)
+            index_t<mach_expression> end = {})
             : m_parent(parent)
             , m_label(label)
             , m_begin(begin)
             , m_end(end)
-        {
-            assert(base.size() <= m_base.size());
-            std::copy(base.begin(), base.end(), m_base.begin());
-        }
+            , m_base(std::move(base))
+        {}
 
-        constexpr bool is_using() const { return m_begin != nullptr; }
-        constexpr bool is_drop() const { return m_begin == nullptr; }
+        constexpr bool is_using() const { return !!m_begin; }
+        constexpr bool is_drop() const { return !m_begin; }
 
         resolved_entry resolve(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
     };
-
 
     struct context_evaluate_result
     {
@@ -254,20 +258,21 @@ private:
         void resolve(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag);
         void compute_context(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag);
 
-        constexpr using_entry(index_t parent,
-            const mach_expression* begin,
-            std::span<const mach_expression*> base,
+        constexpr using_entry(index_t<using_collection> parent,
+            index_t<mach_expression> begin,
+            std::vector<index_t<mach_expression>> base,
             id_index label = nullptr,
-            const mach_expression* end = nullptr)
+            index_t<mach_expression> end = {})
             : definition(parent, begin, base, label, end)
         {}
-        constexpr using_entry(index_t parent, std::span<const mach_expression*> base)
-            : definition(parent, nullptr, base)
+        constexpr using_entry(index_t<using_collection> parent, std::vector<index_t<mach_expression>> base)
+            : definition(parent, {}, std::move(base))
         {}
 
     private:
-        void duplicate_parent_context(using_collection& coll, index_t parent);
-        void compute_context(using_collection& coll, index_t parent, diagnostic_consumer<diagnostic_op>& diag);
+        void duplicate_parent_context(using_collection& coll, index_t<using_collection> parent);
+        void compute_context(
+            using_collection& coll, index_t<using_collection> parent, diagnostic_consumer<diagnostic_op>& diag);
         void compute_context(
             using_collection& coll, const using_entry_resolved& u, diagnostic_consumer<diagnostic_op>& diag);
         void compute_context(
@@ -293,16 +298,44 @@ private:
         bool operator()(const std::unique_ptr<mach_expression>& l, const mach_expression* r) const;
     };
 
-    std::unordered_map<std::unique_ptr<mach_expression>, symbol_value, expression_hash, expression_equal> m_expressions;
+    struct instruction_context
+    {
+        dependency_evaluation_context evaluation_ctx;
+        processing_stack_t stack;
+    };
+
+    struct expression_value
+    {
+        const mach_expression* expression;
+        index_t<instruction_context> context;
+        symbol_value value;
+    };
+
+    std::unordered_set<std::unique_ptr<mach_expression>, expression_hash, expression_equal> m_expressions;
     std::vector<using_entry> m_usings;
+    std::vector<expression_value> m_expr_values;
+    std::vector<instruction_context> m_instruction_contexts;
 
-    const symbol_value& eval_expr(const mach_expression*) const;
-
-    const using_entry& get_using(index_t idx) const
+    const auto& get(index_t<using_collection> idx) const
     {
         assert(idx);
         return m_usings[idx.index - 1];
     }
+
+    const auto& get(index_t<mach_expression> idx) const
+    {
+        assert(idx);
+        return m_expr_values[idx.index - 1];
+    }
+
+    const auto& get(index_t<instruction_context> idx) const
+    {
+        assert(idx);
+        return m_instruction_contexts[idx.index - 1];
+    }
+
+    index_t<instruction_context> add(dependency_evaluation_context ctx, processing_stack_t stack);
+    index_t<mach_expression> add(const mach_expression* expr, index_t<instruction_context> ctx);
 
 public:
     using_collection() = default;
@@ -310,21 +343,28 @@ public:
     using_collection& operator=(using_collection&&) noexcept;
     ~using_collection();
 
-    void resolve_all(dependency_solver& solver, diagnostic_consumer<diagnostic_op>& diag);
+    void resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_op>& diag);
 
-    index_t add(index_t current,
+    index_t<using_collection> add(index_t<using_collection> current,
         id_index label,
         std::unique_ptr<mach_expression> begin,
         std::unique_ptr<mach_expression> end,
         std::span<std::unique_ptr<mach_expression>> arguments,
+        dependency_evaluation_context eval_ctx,
+        processing_stack_t stack,
         diagnostic_consumer<diagnostic_op>& diag);
-    index_t remove(index_t current,
+    index_t<using_collection> remove(index_t<using_collection> current,
         std::span<std::unique_ptr<mach_expression>> arguments,
+        dependency_evaluation_context eval_ctx,
+        processing_stack_t stack,
         diagnostic_consumer<diagnostic_op>& diag);
-    index_t remove_all() const { return index_t(); }
+    index_t<using_collection> remove_all() const { return index_t<using_collection>(); }
 
-    evaluate_result evaluate(
-        index_t context_id, id_index label, const section* section, offset_t offset, bool long_offset) const;
+    evaluate_result evaluate(index_t<using_collection> context_id,
+        id_index label,
+        const section* section,
+        offset_t offset,
+        bool long_offset) const;
 };
 
 } // namespace hlasm_plugin::parser_library::context
