@@ -34,28 +34,22 @@ void using_collection::using_entry::compute_context(using_collection& coll, diag
 {
     std::visit(
         [&coll, &diag, this](const auto& e) {
-            duplicate_parent_context(coll, e.parent);
-            compute_context_correction(coll, e, diag);
+            if (e.parent)
+                context = coll.get(e.parent).context;
+
+            compute_context_correction(e, diag);
         },
         resolved);
 }
 
-
-void using_collection::using_entry::duplicate_parent_context(using_collection& coll, index_t<using_collection> p)
-{
-    if (!p)
-        return;
-    context = coll.get(p).context;
-}
-
 void using_collection::using_entry::compute_context_correction(
-    using_collection& coll, const failed_entry_resolved& f, diagnostic_consumer<diagnostic_op>&)
+    const failed_entry_resolved&, diagnostic_consumer<diagnostic_op>&)
 {
     // just keep the duplicated previous state on error
 }
 
 void using_collection::using_entry::compute_context_correction(
-    using_collection& coll, const using_entry_resolved& u, diagnostic_consumer<diagnostic_op>& diag)
+    const using_entry_resolved& u, diagnostic_consumer<diagnostic_op>&)
 {
     // drop conflicting usings
     if (u.label)
@@ -65,7 +59,7 @@ void using_collection::using_entry::compute_context_correction(
 }
 
 void using_collection::using_entry::compute_context_correction(
-    using_collection& coll, const drop_entry_resolved& d, diagnostic_consumer<diagnostic_op>& diag)
+    const drop_entry_resolved& d, diagnostic_consumer<diagnostic_op>& diag)
 {
     size_t invalidated = 0;
     for (const auto& drop : d.drop)
@@ -290,6 +284,7 @@ void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagn
     for (auto& expr : m_expr_values)
     {
         ordinary_assembly_dependency_solver solver(ord_context, get(expr.context).evaluation_ctx);
+
         expr.value = expr.expression->evaluate(solver);
         expr.expression->collect_diags();
         for (auto& d : expr.expression->diags())

@@ -147,7 +147,7 @@ private:
         register_set_t reg_set = invalid_register_set;
         offset_t reg_offset = 0;
 
-        constexpr using_entry_resolved(index_t<using_collection> parent,
+        using_entry_resolved(index_t<using_collection> parent,
             id_index label,
             const section* owner,
             offset_t begin,
@@ -172,8 +172,7 @@ private:
         index_t<using_collection> parent;
         std::vector<std::variant<id_index, register_t>> drop;
 
-        constexpr drop_entry_resolved(
-            index_t<using_collection> parent, std::vector<std::variant<id_index, register_t>> drop)
+        drop_entry_resolved(index_t<using_collection> parent, std::vector<std::variant<id_index, register_t>> drop)
             : parent(parent)
             , drop(std::move(drop))
         {}
@@ -207,7 +206,7 @@ private:
     public:
         friend bool operator==(const using_drop_definition&, const using_drop_definition&) = default;
 
-        constexpr using_drop_definition(index_t<using_collection> parent,
+        using_drop_definition(index_t<using_collection> parent,
             index_t<mach_expression> begin,
             std::vector<index_t<mach_expression>> base,
             id_index label = nullptr,
@@ -219,8 +218,8 @@ private:
             , m_base(std::move(base))
         {}
 
-        constexpr bool is_using() const { return !!m_begin; }
-        constexpr bool is_drop() const { return !m_begin; }
+        bool is_using() const { return !!m_begin; }
+        bool is_drop() const { return !m_begin; }
 
         resolved_entry resolve(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
     };
@@ -254,7 +253,7 @@ private:
         context_evaluate_result evaluate(
             id_index label, const section* section, offset_t offset, bool long_offset) const;
 
-        constexpr using_context() = default;
+        using_context() = default;
 
         friend class using_collection;
     };
@@ -268,25 +267,21 @@ private:
         void resolve(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag);
         void compute_context(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag);
 
-        constexpr using_entry(index_t<using_collection> parent,
+        using_entry(index_t<using_collection> parent,
             index_t<mach_expression> begin,
             std::vector<index_t<mach_expression>> base,
             id_index label = nullptr,
             index_t<mach_expression> end = {})
             : definition(parent, begin, base, label, end)
         {}
-        constexpr using_entry(index_t<using_collection> parent, std::vector<index_t<mach_expression>> base)
+        using_entry(index_t<using_collection> parent, std::vector<index_t<mach_expression>> base)
             : definition(parent, {}, std::move(base))
         {}
 
     private:
-        void duplicate_parent_context(using_collection& coll, index_t<using_collection> parent);
-        void compute_context_correction(
-            using_collection& coll, const failed_entry_resolved& f, diagnostic_consumer<diagnostic_op>& diag);
-        void compute_context_correction(
-            using_collection& coll, const using_entry_resolved& u, diagnostic_consumer<diagnostic_op>& diag);
-        void compute_context_correction(
-            using_collection& coll, const drop_entry_resolved& d, diagnostic_consumer<diagnostic_op>& diag);
+        void compute_context_correction(const failed_entry_resolved& f, diagnostic_consumer<diagnostic_op>& diag);
+        void compute_context_correction(const using_entry_resolved& u, diagnostic_consumer<diagnostic_op>& diag);
+        void compute_context_correction(const drop_entry_resolved& d, diagnostic_consumer<diagnostic_op>& diag);
         size_t compute_context_drop(id_index d);
         size_t compute_context_drop(register_t d);
     };
