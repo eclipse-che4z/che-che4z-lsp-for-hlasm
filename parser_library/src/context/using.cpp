@@ -32,7 +32,12 @@ void using_collection::using_entry::resolve(using_collection& coll, diagnostic_c
 
 void using_collection::using_entry::compute_context(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag)
 {
-    std::visit([&coll, &diag, this](const auto& e) { compute_context(coll, e, diag); }, resolved);
+    std::visit(
+        [&coll, &diag, this](const auto& e) {
+            duplicate_parent_context(coll, e.parent);
+            compute_context_correction(coll, e, diag);
+        },
+        resolved);
 }
 
 
@@ -43,17 +48,15 @@ void using_collection::using_entry::duplicate_parent_context(using_collection& c
     context = coll.get(p).context;
 }
 
-void using_collection::using_entry::compute_context(
-    using_collection& coll, index_t<using_collection> parent, diagnostic_consumer<diagnostic_op>&)
+void using_collection::using_entry::compute_context_correction(
+    using_collection& coll, const failed_entry_resolved& f, diagnostic_consumer<diagnostic_op>&)
 {
-    duplicate_parent_context(coll, parent); // just duplicate previous state on error
+    // just keep the duplicated previous state on error
 }
 
-void using_collection::using_entry::compute_context(
+void using_collection::using_entry::compute_context_correction(
     using_collection& coll, const using_entry_resolved& u, diagnostic_consumer<diagnostic_op>& diag)
 {
-    duplicate_parent_context(coll, u.parent);
-
     // drop conflicting usings
     if (u.label)
         compute_context_drop(u.label);
@@ -61,11 +64,10 @@ void using_collection::using_entry::compute_context(
     context.m_state.emplace_back(using_context::entry { u.label, u.owner, u.begin, u.length, u.reg_set, u.reg_offset });
 }
 
-void using_collection::using_entry::compute_context(
+void using_collection::using_entry::compute_context_correction(
     using_collection& coll, const drop_entry_resolved& d, diagnostic_consumer<diagnostic_op>& diag)
 {
     size_t invalidated = 0;
-    duplicate_parent_context(coll, d.parent);
     for (const auto& drop : d.drop)
         invalidated += std::visit([this](auto value) { return compute_context_drop(value); }, drop);
 
@@ -276,7 +278,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     else
         assert(false);
 
-    return index_t<using_collection>();
+    return failed_entry_resolved();
 }
 
 using_collection::using_collection(using_collection&&) noexcept = default;

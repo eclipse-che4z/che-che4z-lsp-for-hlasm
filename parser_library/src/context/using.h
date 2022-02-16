@@ -51,17 +51,50 @@ class using_context;
 class using_collection
 {
     using mach_expression = expressions::mach_expression;
+
+    struct failed_entry_resolved;
     struct using_entry_resolved;
     struct drop_entry_resolved;
+
     class using_drop_definition;
     struct using_entry;
     struct expression_value;
 
 public:
     using register_t = unsigned char;
+    static constexpr register_t invalid_register = (unsigned char)-1;
+    using offset_t = int32_t;
+
+    template<typename Tag>
+    class index_t
+    {
+        size_t index = 0;
+
+    public:
+        constexpr index_t(size_t i)
+            : index(i)
+        {
+            assert(i != 0);
+        }
+        index_t() = default;
+
+        friend auto operator<=>(index_t l, index_t r) = default;
+        constexpr explicit operator bool() const { return index != 0; }
+
+        friend class using_collection;
+    };
+
+    struct evaluate_result
+    {
+        register_t reg;
+        offset_t reg_offset;
+
+        friend auto operator<=>(const evaluate_result&, const evaluate_result&) = default;
+    };
+
+private:
     static constexpr size_t reg_set_size = 16;
     using register_set_t = std::array<register_t, reg_set_size>;
-    static constexpr register_t invalid_register = (unsigned char)-1;
     static constexpr register_set_t invalid_register_set = {
         invalid_register,
         invalid_register,
@@ -80,26 +113,6 @@ public:
         invalid_register,
         invalid_register,
     };
-    using offset_t = int32_t;
-
-    template<typename Tag>
-    class index_t
-    {
-        size_t index = 0;
-
-    public:
-        constexpr index_t(size_t i)
-            : index(i)
-        {
-            assert(i != 0);
-        }
-        index_t() = default;
-
-        friend auto operator<=>(const index_t& l, const index_t& r) = default;
-        constexpr explicit operator bool() const { return index != 0; }
-
-        friend class using_collection;
-    };
 
     struct qualified_id
     {
@@ -114,16 +127,12 @@ public:
         offset_t offset;
     };
 
-    struct evaluate_result
+    using resolved_entry = std::variant<failed_entry_resolved, using_entry_resolved, drop_entry_resolved>;
+
+    struct failed_entry_resolved
     {
-        register_t reg;
-        offset_t reg_offset;
-
-        friend auto operator<=>(const evaluate_result&, const evaluate_result&) = default;
+        index_t<using_collection> parent;
     };
-
-private:
-    using resolved_entry = std::variant<index_t<using_collection>, using_entry_resolved, drop_entry_resolved>;
 
     struct using_entry_resolved
     {
@@ -222,8 +231,9 @@ private:
         offset_t reg_offset;
         offset_t length;
 
-        friend auto operator<=>(const evaluate_result&, const evaluate_result&) = default;
+        friend auto operator<=>(const context_evaluate_result&, const context_evaluate_result&) = default;
     };
+
     class using_context
     {
         struct entry
@@ -271,11 +281,11 @@ private:
 
     private:
         void duplicate_parent_context(using_collection& coll, index_t<using_collection> parent);
-        void compute_context(
-            using_collection& coll, index_t<using_collection> parent, diagnostic_consumer<diagnostic_op>& diag);
-        void compute_context(
+        void compute_context_correction(
+            using_collection& coll, const failed_entry_resolved& f, diagnostic_consumer<diagnostic_op>& diag);
+        void compute_context_correction(
             using_collection& coll, const using_entry_resolved& u, diagnostic_consumer<diagnostic_op>& diag);
-        void compute_context(
+        void compute_context_correction(
             using_collection& coll, const drop_entry_resolved& d, diagnostic_consumer<diagnostic_op>& diag);
         size_t compute_context_drop(id_index d);
         size_t compute_context_drop(register_t d);
