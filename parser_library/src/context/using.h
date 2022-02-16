@@ -78,7 +78,7 @@ public:
         }
         index_t() = default;
 
-        friend auto operator<=>(index_t l, index_t r) = default;
+        friend bool operator==(index_t l, index_t r) = default;
         constexpr explicit operator bool() const { return index != 0; }
 
         friend class using_collection;
@@ -89,7 +89,7 @@ public:
         register_t reg;
         offset_t reg_offset;
 
-        friend auto operator<=>(const evaluate_result&, const evaluate_result&) = default;
+        friend bool operator==(evaluate_result, evaluate_result) = default;
     };
 
 private:
@@ -205,7 +205,7 @@ private:
             using_collection& coll, index_t<mach_expression> e, bool allow_qualification);
 
     public:
-        friend auto operator<=>(const using_drop_definition&, const using_drop_definition&) = default;
+        friend bool operator==(const using_drop_definition&, const using_drop_definition&) = default;
 
         constexpr using_drop_definition(index_t<using_collection> parent,
             index_t<mach_expression> begin,
@@ -231,7 +231,7 @@ private:
         offset_t reg_offset;
         offset_t length;
 
-        friend auto operator<=>(const context_evaluate_result&, const context_evaluate_result&) = default;
+        friend bool operator==(const context_evaluate_result&, const context_evaluate_result&) = default;
     };
 
     class using_context

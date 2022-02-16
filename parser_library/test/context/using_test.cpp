@@ -35,7 +35,7 @@ struct test_context : public dependency_solver
     std::map<id_index, symbol> m_symbols;
     std::optional<address> m_loctr;
 
-    id_index id(const std::string& s) { return s.empty() ? nullptr : hlasm_ctx.ids().add(s); }
+    id_index id(const std::string& s) { return hlasm_ctx.ids().add(s); }
     const section* section(const std::string& s)
     {
         asm_ctx.set_section(id(s), section_kind::COMMON, location());
@@ -52,7 +52,7 @@ struct test_context : public dependency_solver
 
     std::unique_ptr<mach_expression> symbol(const std::string& n, const std::string& q = "")
     {
-        return std::make_unique<mach_expr_symbol>(id(n), id(q), range());
+        return std::make_unique<mach_expr_symbol>(id(n), q.empty() ? nullptr : id(q), range());
     }
 
     std::unique_ptr<mach_expression> number(int n) const { return std::make_unique<mach_expr_constant>(n, range()); }

@@ -278,7 +278,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     else
         assert(false);
 
-    return failed_entry_resolved();
+    return {};
 }
 
 using_collection::using_collection(using_collection&&) noexcept = default;
