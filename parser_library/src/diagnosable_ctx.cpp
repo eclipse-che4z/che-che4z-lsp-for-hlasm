@@ -31,6 +31,9 @@ void diagnosable_ctx::add_diagnostic(diagnostic_op diagnostic) const
 
 diagnostic_s add_stack_details(diagnostic_op diagnostic, context::processing_stack_t stack)
 {
+    if (stack.empty())
+        return diagnostic_s(std::move(diagnostic));
+
     diagnostic_s diag(std::move(stack.back().proc_location.file), std::move(diagnostic));
 
     diag.related.reserve(stack.size() - 1);

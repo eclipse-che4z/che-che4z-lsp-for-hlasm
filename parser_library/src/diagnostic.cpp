@@ -2250,39 +2250,39 @@ diagnostic_op diagnostic_op::warn_CIC002(const range& range)
         range);
 }
 
-diagnostic_op diagnostic_op::warn_U0001_drop_had_no_effect(const range& range, std::string_view arg)
+diagnostic_op diagnostic_op::warn_U001_drop_had_no_effect(const range& range, std::string_view arg)
 {
     return diagnostic_op(
-        diagnostic_severity::warning, "U0001", concat("USING - label '", arg, "' currently not used."), range);
+        diagnostic_severity::warning, "U001", concat("USING - label '", arg, "' currently not used."), range);
 }
 
-diagnostic_op diagnostic_op::warn_U0001_drop_had_no_effect(const range& range, int arg)
+diagnostic_op diagnostic_op::warn_U001_drop_had_no_effect(const range& range, int arg)
 {
     return diagnostic_op(
-        diagnostic_severity::warning, "U0001", concat("USING - register ", arg, " currently not used."), range);
+        diagnostic_severity::warning, "U001", concat("USING - register ", arg, " currently not used."), range);
 }
 
-diagnostic_op diagnostic_op::error_U0002_label_not_allowed(const range& range)
+diagnostic_op diagnostic_op::error_U002_label_not_allowed(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "U0002", "USING - label is not allowed in this context", range);
+    return diagnostic_op(diagnostic_severity::error, "U002", "USING - label is not allowed in this context", range);
 }
 
-diagnostic_op diagnostic_op::error_U0003_drop_label_or_reg(const range& range)
+diagnostic_op diagnostic_op::error_U003_drop_label_or_reg(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "U0003", "DROP - label or register expected", range);
+    return diagnostic_op(diagnostic_severity::error, "U003", "DROP - label or register expected", range);
 }
 
-diagnostic_op diagnostic_op::error_U0004_no_active_using(const range& range)
+diagnostic_op diagnostic_op::error_U004_no_active_using(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "U0004", "No active USING found.", range);
+    return diagnostic_op(diagnostic_severity::error, "U004", "No active USING found.", range);
 }
 
-diagnostic_op diagnostic_op::error_U0005_invalid_range(
+diagnostic_op diagnostic_op::error_U005_invalid_range(
     const range& s_range, const range& e_range, std::string_view s_sect, int s_off, std::string_view e_sect, int e_off)
 {
     using namespace std::string_view_literals;
     return diagnostic_op(diagnostic_severity::error,
-        "U0005",
+        "U005",
         concat("USING - expression (",
             s_sect,
             s_sect.empty() ? ""sv : "+"sv,
@@ -2293,6 +2293,16 @@ diagnostic_op diagnostic_op::error_U0005_invalid_range(
             e_off,
             ") is not a valid non-empty range."),
         union_range(s_range, e_range));
+}
+
+diagnostic_op diagnostic_op::error_U006_wrong_base_count(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "U006", "Number of bases must be between 1 and 16.", range);
+}
+
+diagnostic_op diagnostic_op::error_U007_duplicate_base_specified(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "U007", "Base registers must be distinct.", range);
 }
 
 diagnostic_s diagnostic_s::error_W002(std::string_view ws_uri, std::string_view ws_name)

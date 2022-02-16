@@ -14,6 +14,7 @@
 
 #include "using.h"
 
+#include <bitset>
 #include <limits>
 
 #include "diagnosable_ctx.h"
@@ -71,7 +72,13 @@ void using_collection::using_entry::compute_context_correction(
         std::visit(
             [this, &diag, &rng](auto value) {
                 if (compute_context_drop(value) == 0)
-                    diag.add_diagnostic(diagnostic_op::warn_U0001_drop_had_no_effect(rng, convert_diag(value)));
+                {
+                    // assembler assumes that if no label was active then the value should have been an absolute symbol
+                    if constexpr (std::is_same_v<decltype(value), id_index>)
+                        diag.add_diagnostic(diagnostic_op::error_U003_drop_label_or_reg(rng));
+                    else
+                        diag.add_diagnostic(diagnostic_op::warn_U001_drop_had_no_effect(rng, convert_diag(value)));
+                }
             },
             drop);
 }
@@ -98,7 +105,7 @@ size_t using_collection::using_entry::compute_context_drop(register_t d)
 }
 
 auto using_collection::using_drop_definition::abs_or_reloc(
-    using_collection& coll, index_t<mach_expression> e, bool abs_is_register, diagnostic_consumer<diagnostic_op>& diag)
+    using_collection& coll, index_t<mach_expression> e, bool abs_is_register)
     -> std::pair<std::optional<qualified_address>, range>
 {
     if (!e)
@@ -113,7 +120,6 @@ auto using_collection::using_drop_definition::abs_or_reloc(
         auto v = value.get_abs();
         if (abs_is_register && (v < 0 || v >= reg_set_size))
         {
-            diag.add_diagnostic(diagnostic_op::error_M120(USING, rng));
             return { std::nullopt, rng };
         }
         return { qualified_address(nullptr, nullptr, v), rng };
@@ -124,13 +130,9 @@ auto using_collection::using_drop_definition::abs_or_reloc(
         return { qualified_address(base.qualifier, base.owner, value.get_reloc().offset()), rng };
     }
 
-    diag.add_diagnostic(diagnostic_op::error_M113(USING, expr.expression->get_range()));
     return { std::nullopt, rng };
 }
-auto using_collection::using_drop_definition::reg_or_label(using_collection& coll,
-    index_t<mach_expression> e,
-    bool allow_qualification,
-    diagnostic_consumer<diagnostic_op>& diag)
+auto using_collection::using_drop_definition::reg_or_label(using_collection& coll, index_t<mach_expression> e)
     -> std::pair<std::variant<std::monostate, qualified_id, register_t>, range>
 {
     if (!e)
@@ -141,11 +143,6 @@ auto using_collection::using_drop_definition::reg_or_label(using_collection& col
 
     if (auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(expr.expression); sym)
     {
-        if (sym->qualifier && !allow_qualification)
-        {
-            diag.add_diagnostic(diagnostic_op::error_U0002_label_not_allowed(rng));
-            return { std::monostate(), rng };
-        }
         return { qualified_id { sym->qualifier, sym->value }, rng };
     }
 
@@ -153,10 +150,7 @@ auto using_collection::using_drop_definition::reg_or_label(using_collection& col
     {
         if (auto v = expr.value.get_abs(); v >= 0 && v < reg_set_size)
             return { (unsigned char)v, rng };
-        diag.add_diagnostic(diagnostic_op::error_M120(USING, rng));
     }
-    else
-        diag.add_diagnostic(diagnostic_op::error_U0003_drop_label_or_reg(rng));
 
     return { std::monostate(), rng };
 }
@@ -170,7 +164,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 {
     if (!m_parent)
     {
-        diag.add_diagnostic(diagnostic_op::error_U0004_no_active_using(rng));
+        diag.add_diagnostic(diagnostic_op::error_U004_no_active_using(rng));
         return {};
     }
     const auto& ctx = coll.get(m_parent).context;
@@ -179,7 +173,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 
     if (v.mapping_regs == invalid_register_set)
     {
-        diag.add_diagnostic(diagnostic_op::error_U0004_no_active_using(rng));
+        diag.add_diagnostic(diagnostic_op::error_U004_no_active_using(rng));
         return {};
     }
 
@@ -192,7 +186,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 {
     assert(!m_base.empty() && m_base.size() <= reg_set_size);
 
-    auto [b, b_rng] = abs_or_reloc(coll, m_begin, false, diag);
+    auto [b, b_rng] = abs_or_reloc(coll, m_begin, false);
     if (!b.has_value())
     {
         diag.add_diagnostic(diagnostic_op::error_M113(USING, b_rng));
@@ -201,14 +195,13 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     if (b->qualifier)
     {
         // diagnose and ignore
-        diag.add_diagnostic(diagnostic_op::error_U0002_label_not_allowed(b_rng));
+        diag.add_diagnostic(diagnostic_op::error_U002_label_not_allowed(b_rng));
     }
-    auto [e, e_rng] = abs_or_reloc(coll, m_end, false, diag);
+    auto [e, e_rng] = abs_or_reloc(coll, m_end, false);
 
     std::array<std::pair<std::optional<qualified_address>, range>, reg_set_size> bases_;
-    std::transform(m_base.begin(), m_base.end(), bases_.begin(), [&coll, &diag](auto e) {
-        return abs_or_reloc(coll, e, true, diag);
-    });
+    std::transform(
+        m_base.begin(), m_base.end(), bases_.begin(), [&coll, &diag](auto e) { return abs_or_reloc(coll, e, true); });
     const auto bases =
         std::span(bases_).first(std::find(m_base.begin(), m_base.end(), index_t<mach_expression>()) - m_base.begin());
 
@@ -218,7 +211,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
         if (e->qualifier)
         {
             // diagnose and ignore
-            diag.add_diagnostic(diagnostic_op::error_U0002_label_not_allowed(e_rng));
+            diag.add_diagnostic(diagnostic_op::error_U002_label_not_allowed(e_rng));
         }
         if (b->sect != e->sect || b->offset >= e->offset)
         {
@@ -228,12 +221,14 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
                 else
                     return std::string_view();
             };
-            diag.add_diagnostic(diagnostic_op::error_U0005_invalid_range(
+            diag.add_diagnostic(diagnostic_op::error_U005_invalid_range(
                 b_rng, e_rng, section_name(b->sect), b->offset, section_name(e->sect), e->offset));
         }
         else
             len = e->offset - b->offset;
     }
+    else if (m_end)
+        diag.add_diagnostic(diagnostic_op::error_M113(USING, e_rng));
 
     if (bases.size() == 1 && bases.front().first.has_value() && bases.front().first->sect != nullptr)
         return resolve_using_dep(
@@ -242,7 +237,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     // labeled/ordinary USING continues
     for (auto& [base, base_rng] : bases)
     {
-        if (base.has_value() && base->sect != nullptr)
+        if (!base.has_value() || base->sect != nullptr)
         {
             diag.add_diagnostic(diagnostic_op::error_M120(USING, base_rng));
             base.reset(); // ignore the value
@@ -254,6 +249,19 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     std::transform(bases.begin(), bases.end(), reg_set.begin(), [](const auto& r) {
         return r.first ? (register_t)r.first->offset : invalid_register;
     });
+    std::bitset<reg_set_size> test_regs;
+    for (size_t i = 0; i < reg_set.size(); ++i)
+    {
+        auto r = reg_set[i];
+        if (r == invalid_register)
+            continue;
+        if (test_regs.test(r))
+        {
+            diag.add_diagnostic(diagnostic_op::error_U007_duplicate_base_specified(bases[i].second));
+            break;
+        }
+        test_regs.set(r);
+    }
 
     return using_entry_resolved(m_parent, m_label, b->sect, b->offset, len.value_or(0x1000 * bases.size()), reg_set, 0);
 }
@@ -268,10 +276,15 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 
         void operator()(std::monostate, range rng)
         {
-            diag.add_diagnostic(diagnostic_op::error_U0003_drop_label_or_reg(rng));
+            diag.add_diagnostic(diagnostic_op::error_U003_drop_label_or_reg(rng));
         }
         void operator()(register_t r, range rng) { args.emplace_back(r, rng); }
-        void operator()(qualified_id id, range rng) { args.emplace_back(id.name, rng); }
+        void operator()(qualified_id id, range rng)
+        {
+            if (id.qualifier)
+                diag.add_diagnostic(diagnostic_op::error_U002_label_not_allowed(rng));
+            args.emplace_back(id.name, rng);
+        }
 
     } transform { diag };
 
@@ -279,7 +292,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 
     for (const auto& expr : std::span(m_base.begin(), std::find(m_base.begin(), m_base.end(), empty)))
     {
-        auto [v, rng] = reg_or_label(coll, expr, false, diag);
+        auto [v, rng] = reg_or_label(coll, expr);
         std::visit([&transform, &diag, &rng](auto v) { transform(v, rng); }, v);
     }
 
@@ -319,7 +332,7 @@ void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagn
     for (auto& u : m_usings)
     {
         diagnostic_consumer_transform t([this, &diag, &u](diagnostic_op d) {
-            return add_stack_details(std::move(d), get(u.instruction_ctx).stack);
+            return diag.add_diagnostic(add_stack_details(std::move(d), get(u.instruction_ctx).stack));
         });
         u.resolve(*this, t);
         u.compute_context(*this, t);
@@ -348,10 +361,12 @@ using_collection::index_t<using_collection> using_collection::add(index_t<using_
     std::span<std::unique_ptr<mach_expression>> args,
     dependency_evaluation_context eval_ctx,
     processing_stack_t stack,
+    const range& rng,
     diagnostic_consumer<diagnostic_op>& diag)
 {
-    if (args.size() > reg_set_size)
+    if (args.empty() || args.size() > reg_set_size)
     {
+        diag.add_diagnostic(diagnostic_op::error_U006_wrong_base_count(rng));
         return current;
     }
 
@@ -375,7 +390,7 @@ using_collection::index_t<using_collection> using_collection::remove(index_t<usi
     std::span<std::unique_ptr<mach_expression>> args,
     dependency_evaluation_context eval_ctx,
     processing_stack_t stack,
-    diagnostic_consumer<diagnostic_op>& diag)
+    diagnostic_consumer<diagnostic_op>&)
 {
     index_t<instruction_context> ctx_id = add(std::move(eval_ctx), std::move(stack));
 
@@ -403,7 +418,10 @@ using_collection::evaluate_result using_collection::evaluate(index_t<using_colle
 
     auto tmp = get(context_id).context.evaluate(label, section, offset, long_offset);
 
-    return evaluate_result { tmp.mapping_regs[0], tmp.reg_offset };
+    if (tmp.length < 0)
+        return evaluate_result { invalid_register, 1 - tmp.length };
+    else
+        return evaluate_result { tmp.mapping_regs[0], tmp.reg_offset };
 }
 
 size_t using_collection::expression_hash::operator()(const std::unique_ptr<mach_expression>& v) const
@@ -439,9 +457,12 @@ R clamp(T value)
     return (R)value;
 }
 
-auto using_collection::using_context::evaluate(
-    id_index label, const section* section, long long offset, int32_t min_disp, int32_t max_disp) const
-    -> context_evaluate_result
+auto using_collection::using_context::evaluate(id_index label,
+    const section* section,
+    long long offset,
+    int32_t min_disp,
+    int32_t max_disp,
+    bool ignore_length) const -> context_evaluate_result
 {
     struct result_candidate
     {
@@ -497,7 +518,7 @@ auto using_collection::using_context::evaluate(
     context_evaluate_result result {
         invalid_register_set,
         clamp<offset_t>(r.min_dist),
-        clamp<offset_t>(min_disp < 0 ? 0 : r.result_entry->length - (offset - r.result_entry->offset)),
+        clamp<offset_t>(ignore_length ? 0 : r.result_entry->length - (offset - r.result_entry->offset)),
     };
 
     if (result.reg_offset >= min_disp && result.reg_offset <= max_disp)
@@ -520,9 +541,9 @@ auto using_collection::using_context::evaluate(
     id_index label, const section* section, offset_t offset, bool long_offset) const -> context_evaluate_result
 {
     if (long_offset)
-        return evaluate(label, section, offset, min_long, max_long);
+        return evaluate(label, section, offset, min_long, max_long, true);
     else
-        return evaluate(label, section, offset, min_short, max_short);
+        return evaluate(label, section, offset, min_short, max_short, false);
 }
 
 } // namespace hlasm_plugin::parser_library::context

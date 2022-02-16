@@ -202,15 +202,10 @@ private:
             diagnostic_consumer<diagnostic_op>& diag) const;
         resolved_entry resolve_drop(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
 
-        static std::pair<std::optional<qualified_address>, range> abs_or_reloc(using_collection& coll,
-            index_t<mach_expression> e,
-            bool abs_is_register,
-            diagnostic_consumer<diagnostic_op>& diag);
+        static std::pair<std::optional<qualified_address>, range> abs_or_reloc(
+            using_collection& coll, index_t<mach_expression> e, bool abs_is_register);
         static std::pair<std::variant<std::monostate, qualified_id, using_collection::register_t>, range> reg_or_label(
-            using_collection& coll,
-            index_t<mach_expression> e,
-            bool allow_qualification,
-            diagnostic_consumer<diagnostic_op>& diag);
+            using_collection& coll, index_t<mach_expression> e);
 
     public:
         friend bool operator==(const using_drop_definition&, const using_drop_definition&) = default;
@@ -256,8 +251,12 @@ private:
 
         std::vector<entry> m_state;
 
-        context_evaluate_result evaluate(
-            id_index label, const section* section, long long offset, int32_t min_disp, int32_t max_disp) const;
+        context_evaluate_result evaluate(id_index label,
+            const section* section,
+            long long offset,
+            int32_t min_disp,
+            int32_t max_disp,
+            bool ignore_length) const;
 
         context_evaluate_result evaluate(
             id_index label, const section* section, offset_t offset, bool long_offset) const;
@@ -372,6 +371,7 @@ public:
         std::span<std::unique_ptr<mach_expression>> arguments,
         dependency_evaluation_context eval_ctx,
         processing_stack_t stack,
+        const range& rng,
         diagnostic_consumer<diagnostic_op>& diag);
     index_t<using_collection> remove(index_t<using_collection> current,
         std::span<std::unique_ptr<mach_expression>> arguments,

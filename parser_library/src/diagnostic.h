@@ -658,21 +658,25 @@ struct diagnostic_op
 
     static diagnostic_op warn_CIC002(const range& range);
 
-    static diagnostic_op warn_U0001_drop_had_no_effect(const range& range, std::string_view arg);
-    static diagnostic_op warn_U0001_drop_had_no_effect(const range& range, int);
+    static diagnostic_op warn_U001_drop_had_no_effect(const range& range, std::string_view arg);
+    static diagnostic_op warn_U001_drop_had_no_effect(const range& range, int);
 
-    static diagnostic_op error_U0002_label_not_allowed(const range& range);
+    static diagnostic_op error_U002_label_not_allowed(const range& range);
 
-    static diagnostic_op error_U0003_drop_label_or_reg(const range& range);
+    static diagnostic_op error_U003_drop_label_or_reg(const range& range);
 
-    static diagnostic_op error_U0004_no_active_using(const range& range);
+    static diagnostic_op error_U004_no_active_using(const range& range);
 
-    static diagnostic_op error_U0005_invalid_range(const range& s_range,
+    static diagnostic_op error_U005_invalid_range(const range& s_range,
         const range& e_range,
         std::string_view s_sect,
         int s_off,
         std::string_view e_sect,
         int e_off);
+
+    static diagnostic_op error_U006_wrong_base_count(const range& range);
+
+    static diagnostic_op error_U007_duplicate_base_specified(const range& range);
 };
 
 struct range_uri_s
