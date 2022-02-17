@@ -68,10 +68,8 @@ struct test_context : public dependency_solver
     // Inherited via dependency_solver
     virtual const context::symbol* get_symbol(id_index name) const override { return &m_symbols.at(name); }
     virtual std::optional<address> get_loctr() const override { return m_loctr; }
-    virtual id_index get_literal_id(const std::string&,
-        const std::shared_ptr<const expressions::data_definition>&,
-        const range& r,
-        bool align_on_halfword) override
+    virtual id_index get_literal_id(
+        const std::string&, const std::shared_ptr<const expressions::data_definition>&, const range&, bool) override
     {
         assert(false);
         return id_index();
@@ -104,7 +102,7 @@ TEST(using, basic)
     std::array mapping { c.number(1) };
     auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -133,7 +131,7 @@ TEST(using, multiple_registers)
     std::array mapping { c.number(2), c.number(1) };
     auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -164,7 +162,8 @@ TEST(using, with_offset)
     std::array mapping { c.number(2) };
     auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT") + c.number(10), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.symbol("SECT") + c.number(10), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -191,7 +190,8 @@ TEST(using, with_negative_offset)
     std::array mapping { c.number(2) };
     auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT") - c.number(10), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.symbol("SECT") - c.number(10), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -229,8 +229,10 @@ TEST(using, dependent_using)
      * USING SECT2+5,SECT+20
      */
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT") + c.number(10), nullptr, mapping, {}, {}, {}, d);
-    auto with_sect2 = coll.add(with_sect, nullptr, c.symbol("SECT2") + c.number(5), nullptr, mapping2, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.symbol("SECT") + c.number(10), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect2 =
+        coll.add(with_sect, nullptr, c.symbol("SECT2") + c.number(5), nullptr, mapping2, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -265,7 +267,7 @@ TEST(using, labeled)
     auto sect = c.section("SECT");
     auto label = c.id("LABEL");
 
-    auto with_sect = coll.add(current, label, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, label, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -295,10 +297,10 @@ TEST(using, drop_one)
     std::array mapping { c.number(2), c.number(1) };
     auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
 
     std::array drop { c.number(2) };
-    auto after_drop2 = coll.remove(with_sect, drop, {}, {}, d);
+    [[maybe_unused]] auto after_drop2 = coll.remove(with_sect, drop, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -331,11 +333,11 @@ TEST(using, drop_dependent)
     std::array dep { c.symbol("SECT") };
     auto sect2 = c.section("SECT2");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
-    auto with_sect2 = coll.add(with_sect, nullptr, c.symbol("SECT2"), nullptr, dep, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect2 = coll.add(with_sect, nullptr, c.symbol("SECT2"), nullptr, dep, {}, {}, {}, d);
 
     std::array drop { c.number(2) };
-    auto after_drop2 = coll.remove(with_sect2, drop, {}, {}, d);
+    [[maybe_unused]] auto after_drop2 = coll.remove(with_sect2, drop, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -367,8 +369,8 @@ TEST(using, override_label)
     auto sect2 = c.section("SECT2");
     auto label = c.id("LABEL");
 
-    auto with_sect = coll.add(current, label, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
-    auto with_sect2 = coll.add(with_sect, label, c.symbol("SECT2"), nullptr, mapping2, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, label, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect2 = coll.add(with_sect, label, c.symbol("SECT2"), nullptr, mapping2, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -402,11 +404,11 @@ TEST(using, drop_reg_with_labeled_dependent)
     std::array dep { c.symbol("SECT") };
     auto sect2 = c.section("SECT2");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
-    auto with_sect2 = coll.add(with_sect, label, c.symbol("SECT2"), nullptr, dep, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect2 = coll.add(with_sect, label, c.symbol("SECT2"), nullptr, dep, {}, {}, {}, d);
 
     std::array drop { c.number(2) };
-    auto after_drop2 = coll.remove(with_sect2, drop, {}, {}, d);
+    [[maybe_unused]] auto after_drop2 = coll.remove(with_sect2, drop, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -437,7 +439,7 @@ TEST(using, no_drop_warning)
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     std::array drop { c.number(2) };
-    auto after_drop2 = coll.remove(current, drop, {}, {}, d);
+    [[maybe_unused]] auto after_drop2 = coll.remove(current, drop, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -458,7 +460,7 @@ TEST(using, use_reg_16)
     std::array mapping { c.number(16) };
     [[maybe_unused]] auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -478,7 +480,7 @@ TEST(using, use_non_simple_reloc)
 
     std::array mapping { c.symbol("LABEL") + c.symbol("LABEL") };
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -499,9 +501,10 @@ TEST(using, drop_qualified_label)
     std::array mapping { c.number(1) };
     [[maybe_unused]] auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, c.label("LABEL"), c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, c.label("LABEL"), c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
     std::array drop { c.symbol("LABEL", "LABEL") };
-    auto after_drop2 = coll.remove(with_sect, drop, {}, {}, d);
+    [[maybe_unused]] auto after_drop2 = coll.remove(with_sect, drop, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -521,7 +524,7 @@ TEST(using, drop_reg_16)
 
     std::array drop { c.number(16) };
 
-    auto after_drop2 = coll.remove(current, drop, {}, {}, d);
+    [[maybe_unused]] auto after_drop2 = coll.remove(current, drop, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -541,7 +544,7 @@ TEST(using, drop_reloc)
 
     std::array drop { c.symbol("LABEL") + c.symbol("LABEL") };
     [[maybe_unused]] auto sect = c.section("LABEL");
-    auto after_drop2 = coll.remove(current, drop, {}, {}, d);
+    [[maybe_unused]] auto after_drop2 = coll.remove(current, drop, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -563,7 +566,8 @@ TEST(using, dependent_no_active_using)
     [[maybe_unused]] auto sect = c.section("SECT");
     [[maybe_unused]] auto sect2 = c.section("SECT2");
 
-    auto with_sect2 = coll.add(current, nullptr, c.symbol("SECT2") + c.number(5), nullptr, mapping2, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect2 =
+        coll.add(current, nullptr, c.symbol("SECT2") + c.number(5), nullptr, mapping2, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -591,8 +595,10 @@ TEST(using, dependent_no_active_matching_using)
      * USING SECT2+5,SECT+20
      */
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT") + c.number(10), nullptr, mapping, {}, {}, {}, d);
-    auto with_sect2 = coll.add(with_sect, nullptr, c.symbol("SECT2") + c.number(5), nullptr, mapping2, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.symbol("SECT") + c.number(10), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect2 =
+        coll.add(with_sect, nullptr, c.symbol("SECT2") + c.number(5), nullptr, mapping2, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -612,7 +618,7 @@ TEST(using, using_undefined_begin)
 
     std::array mapping { c.number(1) };
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -633,7 +639,8 @@ TEST(using, using_qualified_begin)
     std::array mapping { c.number(1) };
     [[maybe_unused]] auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT", "LABEL"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.symbol("SECT", "LABEL"), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -654,7 +661,8 @@ TEST(using, using_undefined_end)
     std::array mapping { c.number(1) };
     [[maybe_unused]] auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT_END"), mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT_END"), mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -675,7 +683,7 @@ TEST(using, using_qualified_end)
     std::array mapping { c.number(1) };
     [[maybe_unused]] auto sect = c.section("SECT");
 
-    auto with_sect =
+    [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT", "LABEL") + c.number(1), mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
@@ -699,8 +707,10 @@ TEST(using, using_bad_range)
     std::array mapping2 { c.number(1) };
     [[maybe_unused]] auto sect2 = c.section("SECT2");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT"), mapping, {}, {}, {}, d);
-    auto with_sect2 = coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT2"), mapping2, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT"), mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect2 =
+        coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT2"), mapping2, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -724,7 +734,7 @@ TEST(using, use_complex_reloc)
     std::array mapping { c.symbol("S1") + c.symbol("S2") };
     [[maybe_unused]] auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -743,7 +753,7 @@ TEST(using, drop_invalid)
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     std::array drop { c.symbol("LABEL") };
-    auto after_drop2 = coll.remove(current, drop, {}, {}, d);
+    [[maybe_unused]] auto after_drop2 = coll.remove(current, drop, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -764,7 +774,7 @@ TEST(using, drop_inactive)
     [[maybe_unused]] auto label = c.label("LABEL");
 
     std::array drop { c.symbol("LABEL") };
-    auto after_drop2 = coll.remove(current, drop, {}, {}, d);
+    [[maybe_unused]] auto after_drop2 = coll.remove(current, drop, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
@@ -784,7 +794,7 @@ TEST(using, no_bases)
 
     [[maybe_unused]] auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, {}, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, {}, {}, {}, {}, d);
 
     EXPECT_TRUE(matches_message_codes(d.diags, { "U006" }));
 
@@ -823,7 +833,7 @@ TEST(using, too_many_bases)
     };
     [[maybe_unused]] auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(matches_message_codes(d.diags, { "U006" }));
 
@@ -844,7 +854,7 @@ TEST(using, basic_with_limit)
     std::array mapping { c.number(1) };
     auto sect = c.section("SECT");
 
-    auto with_sect =
+    [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT") + c.number(10), mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
@@ -873,11 +883,36 @@ TEST(using, duplicate_base)
     };
     [[maybe_unused]] auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
 
     EXPECT_TRUE(d.diags.empty());
 
     coll.resolve_all(c.asm_ctx, d_s);
 
     EXPECT_TRUE(matches_message_codes(d_s.diags, { "U007" }));
+}
+
+TEST(using, absolute)
+{
+    test_context c;
+
+    using_collection coll;
+    using_collection::index_t<using_collection> current;
+    diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
+
+    std::array mapping { c.number(1) };
+
+    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.number(128), nullptr, mapping, {}, {}, {}, d);
+
+    EXPECT_TRUE(d.diags.empty());
+
+    coll.resolve_all(c.asm_ctx, d_s);
+
+    EXPECT_TRUE(d_s.diags.empty());
+
+    EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 0, false), evaluate_result(0, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 10, false), evaluate_result(0, 10));
+    EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 128, false), evaluate_result(1, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 256, false), evaluate_result(1, 128));
 }
