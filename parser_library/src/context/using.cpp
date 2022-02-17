@@ -73,11 +73,7 @@ void using_collection::using_entry::compute_context_correction(
             [this, &diag, &rng](auto value) {
                 if (compute_context_drop(value) == 0)
                 {
-                    // assembler assumes that if no label was active then the value should have been an absolute symbol
-                    if constexpr (std::is_same_v<decltype(value), id_index>)
-                        diag.add_diagnostic(diagnostic_op::error_U003_drop_label_or_reg(rng));
-                    else
-                        diag.add_diagnostic(diagnostic_op::warn_U001_drop_had_no_effect(rng, convert_diag(value)));
+                    diag.add_diagnostic(diagnostic_op::warn_U001_drop_had_no_effect(rng, convert_diag(value)));
                 }
             },
             drop);
@@ -141,9 +137,9 @@ auto using_collection::using_drop_definition::reg_or_label(using_collection& col
     const auto& expr = coll.get(e);
     auto rng = expr.expression->get_range();
 
-    if (auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(expr.expression); sym)
+    if (expr.label)
     {
-        return { qualified_id { sym->qualifier, sym->value }, rng };
+        return { qualified_id { nullptr, expr.label }, rng };
     }
 
     if (expr.value.value_kind() == symbol_value_kind::ABS)
@@ -316,6 +312,17 @@ using_collection::using_collection(using_collection&&) noexcept = default;
 using_collection& using_collection::operator=(using_collection&&) noexcept = default;
 using_collection::~using_collection() = default;
 
+namespace {
+id_index identify_label(ordinary_assembly_context& ord_context, const expressions::mach_expression* expression)
+{
+    if (auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(expression);
+        sym && sym->qualifier == nullptr && ord_context.is_using_label(sym->value))
+        return sym->value;
+
+    return nullptr;
+}
+} // namespace
+
 void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag)
 {
     for (auto& expr : m_expr_values)
@@ -323,9 +330,15 @@ void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagn
         ordinary_assembly_dependency_solver solver(ord_context, get(expr.context).evaluation_ctx);
 
         expr.value = expr.expression->evaluate(solver);
+        if (expr.value.value_kind() == symbol_value_kind::UNDEF)
+            expr.label = identify_label(ord_context, expr.expression);
+
         expr.expression->collect_diags();
-        for (auto& d : expr.expression->diags())
-            diag.add_diagnostic(add_stack_details(std::move(d), get(expr.context).stack));
+        if (expr.label == nullptr)
+        {
+            for (auto& d : expr.expression->diags())
+                diag.add_diagnostic(add_stack_details(std::move(d), get(expr.context).stack));
+        }
         expr.expression->diags().clear();
     }
 

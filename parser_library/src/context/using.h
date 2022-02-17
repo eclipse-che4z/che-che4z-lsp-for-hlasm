@@ -328,6 +328,7 @@ private:
         const mach_expression* expression;
         index_t<instruction_context> context;
         symbol_value value;
+        id_index label;
     };
 
     std::unordered_set<std::unique_ptr<mach_expression>, expression_hash, expression_equal> m_expressions;
@@ -355,6 +356,8 @@ private:
 
     index_t<instruction_context> add(dependency_evaluation_context ctx, processing_stack_t stack);
     index_t<mach_expression> add(const mach_expression* expr, index_t<instruction_context> ctx);
+
+
 
 public:
     using_collection() = default;

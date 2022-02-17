@@ -36,6 +36,12 @@ struct test_context : public dependency_solver
     std::optional<address> m_loctr;
 
     id_index id(const std::string& s) { return hlasm_ctx.ids().add(s); }
+    id_index label(const std::string& s)
+    {
+        auto label = hlasm_ctx.ids().add(s);
+        asm_ctx.register_using_label(label);
+        return label;
+    }
     const section* section(const std::string& s)
     {
         asm_ctx.set_section(id(s), section_kind::COMMON, location());
@@ -493,7 +499,7 @@ TEST(using, drop_qualified_label)
     std::array mapping { c.number(1) };
     [[maybe_unused]] auto sect = c.section("SECT");
 
-    auto with_sect = coll.add(current, c.id("LABEL"), c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
+    auto with_sect = coll.add(current, c.label("LABEL"), c.symbol("SECT"), nullptr, mapping, {}, {}, {}, d);
     std::array drop { c.symbol("LABEL", "LABEL") };
     auto after_drop2 = coll.remove(with_sect, drop, {}, {}, d);
 
@@ -501,7 +507,7 @@ TEST(using, drop_qualified_label)
 
     coll.resolve_all(c.asm_ctx, d_s);
 
-    EXPECT_TRUE(matches_message_codes(d_s.diags, { "U002" }));
+    EXPECT_TRUE(matches_message_codes(d_s.diags, { "U003" }));
 }
 
 TEST(using, drop_reg_16)
@@ -744,6 +750,27 @@ TEST(using, drop_invalid)
     coll.resolve_all(c.asm_ctx, d_s);
 
     EXPECT_TRUE(matches_message_codes(d_s.diags, { "U003" }));
+}
+
+TEST(using, drop_inactive)
+{
+    test_context c;
+
+    using_collection coll;
+    using_collection::index_t<using_collection> current;
+    diagnostic_op_consumer_container d;
+    diagnostic_consumer_container<diagnostic_s> d_s;
+
+    [[maybe_unused]] auto label = c.label("LABEL");
+
+    std::array drop { c.symbol("LABEL") };
+    auto after_drop2 = coll.remove(current, drop, {}, {}, d);
+
+    EXPECT_TRUE(d.diags.empty());
+
+    coll.resolve_all(c.asm_ctx, d_s);
+
+    EXPECT_TRUE(matches_message_codes(d_s.diags, { "U001" }));
 }
 
 TEST(using, no_bases)

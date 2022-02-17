@@ -16,6 +16,7 @@
 #define CONTEXT_ORDINARY_ASSEMBLY_CONTEXT_H
 
 #include <unordered_map>
+#include <variant>
 
 #include "alignment.h"
 #include "dependable.h"
@@ -38,6 +39,9 @@ namespace hlasm_plugin::parser_library::context {
 class hlasm_context;
 class literal_pool;
 
+struct label_tag
+{};
+
 // class holding complete information about the 'ordinary assembly' (assembler and machine instructions)
 // it contains 'sections' ordinary 'symbols' and all dependencies between them
 class ordinary_assembly_context
@@ -45,7 +49,7 @@ class ordinary_assembly_context
     // list of visited sections
     std::vector<std::unique_ptr<section>> sections_;
     // list of visited symbols
-    std::unordered_map<id_index, symbol> symbols_;
+    std::unordered_map<id_index, std::variant<symbol, label_tag>> symbols_;
     // list of lookaheaded symbols
     std::unordered_map<id_index, symbol> symbol_refs_;
 
@@ -65,7 +69,7 @@ public:
     const std::vector<std::unique_ptr<section>>& sections() const;
 
     // access symbols
-    const std::unordered_map<id_index, symbol>& symbols() const;
+    const std::unordered_map<id_index, std::variant<symbol, label_tag>>& symbols() const;
 
     // access symbol dependency table
     symbol_dependency_tables symbol_dependencies;
@@ -141,8 +145,6 @@ public:
     // creates layout of every section
     void finish_module_layout(loctr_dependency_resolver* resolver);
 
-    const std::unordered_map<id_index, symbol>& get_all_symbols();
-
     size_t current_literal_pool_generation() const;
     size_t next_unique_id() { return m_statement_unique_id++; }
 
@@ -155,6 +157,9 @@ public:
 
         return &first_control_section_->current_location_counter();
     }
+
+    bool is_using_label(id_index name) const;
+    void register_using_label(id_index name);
 
 private:
     void create_private_section();
