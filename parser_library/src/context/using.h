@@ -73,12 +73,12 @@ public:
         size_t index = 0;
 
     public:
-        constexpr index_t(size_t i)
+        constexpr index_t(size_t i) noexcept
             : index(i)
         {
             assert(i != 0);
         }
-        index_t() = default;
+        constexpr index_t() noexcept {} // GCC+CLANG workaround Bug 88165
 
         friend bool operator==(index_t l, index_t r) = default;
         constexpr explicit operator bool() const { return index != 0; }
@@ -90,6 +90,11 @@ public:
     {
         register_t reg;
         offset_t reg_offset;
+
+        constexpr evaluate_result(register_t reg, offset_t reg_offset) noexcept
+            : reg(reg)
+            , reg_offset(reg_offset)
+        {}
 
         friend bool operator==(evaluate_result, evaluate_result) = default;
     };
@@ -127,6 +132,12 @@ private:
         id_index qualifier;
         const section* sect;
         offset_t offset;
+
+        constexpr qualified_address(id_index qualifier, const section* sect, offset_t offset) noexcept
+            : qualifier(qualifier)
+            , sect(sect)
+            , offset(offset)
+        {}
     };
 
     using resolved_entry = std::variant<failed_entry_resolved, using_entry_resolved, drop_entry_resolved>;

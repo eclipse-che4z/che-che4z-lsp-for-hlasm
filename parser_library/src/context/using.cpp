@@ -70,7 +70,7 @@ void using_collection::using_entry::compute_context_correction(
 {
     for (const auto& [drop, rng] : d.drop)
         std::visit(
-            [this, &diag, &rng](auto value) {
+            [this, &diag, &rng = rng](auto value) {
                 if (compute_context_drop(value) == 0)
                 {
                     diag.add_diagnostic(diagnostic_op::warn_U001_drop_had_no_effect(rng, convert_diag(value)));
@@ -289,7 +289,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     for (const auto& expr : std::span(m_base.begin(), std::find(m_base.begin(), m_base.end(), empty)))
     {
         auto [v, rng] = reg_or_label(coll, expr);
-        std::visit([&transform, &diag, &rng](auto v) { transform(v, rng); }, v);
+        std::visit([&transform, &rng = rng](auto v) { transform(v, rng); }, v);
     }
 
     return drop_entry_resolved(m_parent, std::move(transform.args));
