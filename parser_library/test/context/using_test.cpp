@@ -915,4 +915,5 @@ TEST(using, absolute)
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 10, false), evaluate_result(0, 10));
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 128, false), evaluate_result(1, 0));
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 256, false), evaluate_result(1, 128));
+    EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, -100, true), evaluate_result(0, -100));
 }

@@ -487,6 +487,25 @@ auto using_collection::using_context::evaluate(id_index label,
     };
     result_candidate positive;
     result_candidate negative;
+
+    if (section == nullptr && min_disp <= offset && offset <= max_disp)
+    {
+        // implicit 0 mapping
+        static constexpr entry zero_entry {
+            nullptr,
+            nullptr,
+            0,
+            0x1000,
+            []() {
+                register_set_t zero_reg = invalid_register_set;
+                zero_reg[0] = 0;
+                return zero_reg;
+            }(),
+            0,
+        };
+        (offset >= 0 ? positive : negative) = result_candidate { &zero_entry, 0, std::abs(offset), offset, 0 };
+    }
+
     for (const auto& s : m_state)
     {
         if (label != s.label || section != s.section)
