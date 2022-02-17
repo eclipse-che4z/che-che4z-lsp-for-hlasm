@@ -282,6 +282,8 @@ struct diagnostic_op
 
     static diagnostic_op error_A163_ALIAS_mandatory_label(const range& range);
 
+    static diagnostic_op error_A164_USING_mapping_format(const range& range);
+
     // operand parameters
 
     static diagnostic_op error_A200_SCOPE_param(std::string_view instr_name, const range& range);
@@ -674,9 +676,7 @@ struct diagnostic_op
         std::string_view e_sect,
         int e_off);
 
-    static diagnostic_op error_U006_wrong_base_count(const range& range);
-
-    static diagnostic_op error_U007_duplicate_base_specified(const range& range);
+    static diagnostic_op error_U006_duplicate_base_specified(const range& range);
 };
 
 struct range_uri_s

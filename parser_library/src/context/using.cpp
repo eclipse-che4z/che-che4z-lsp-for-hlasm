@@ -253,7 +253,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
             continue;
         if (test_regs.test(r))
         {
-            diag.add_diagnostic(diagnostic_op::error_U007_duplicate_base_specified(bases[i].second));
+            diag.add_diagnostic(diagnostic_op::error_U006_duplicate_base_specified(bases[i].second));
             break;
         }
         test_regs.set(r);
@@ -371,17 +371,11 @@ using_collection::index_t<using_collection> using_collection::add(index_t<using_
     id_index label,
     std::unique_ptr<mach_expression> begin,
     std::unique_ptr<mach_expression> end,
-    std::span<std::unique_ptr<mach_expression>> args,
+    std::vector<std::unique_ptr<mach_expression>> args,
     dependency_evaluation_context eval_ctx,
-    processing_stack_t stack,
-    const range& rng,
-    diagnostic_consumer<diagnostic_op>& diag)
+    processing_stack_t stack)
 {
-    if (args.empty() || args.size() > reg_set_size)
-    {
-        diag.add_diagnostic(diagnostic_op::error_U006_wrong_base_count(rng));
-        return current;
-    }
+    assert(!args.empty() && args.size() <= reg_set_size);
 
     index_t<instruction_context> ctx_id = add(std::move(eval_ctx), std::move(stack));
 
@@ -400,10 +394,9 @@ using_collection::index_t<using_collection> using_collection::add(index_t<using_
 }
 
 using_collection::index_t<using_collection> using_collection::remove(index_t<using_collection> current,
-    std::span<std::unique_ptr<mach_expression>> args,
+    std::vector<std::unique_ptr<mach_expression>> args,
     dependency_evaluation_context eval_ctx,
-    processing_stack_t stack,
-    diagnostic_consumer<diagnostic_op>&)
+    processing_stack_t stack)
 {
     index_t<instruction_context> ctx_id = add(std::move(eval_ctx), std::move(stack));
 

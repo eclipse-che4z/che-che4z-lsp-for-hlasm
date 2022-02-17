@@ -24,6 +24,7 @@
 #include <optional>
 #include <span>
 #include <unordered_set>
+#include <vector>
 
 #include "id_storage.h"
 #include "ordinary_assembly/symbol_dependency_tables.h"
@@ -382,16 +383,13 @@ public:
         id_index label,
         std::unique_ptr<mach_expression> begin,
         std::unique_ptr<mach_expression> end,
-        std::span<std::unique_ptr<mach_expression>> arguments,
+        std::vector<std::unique_ptr<mach_expression>> arguments,
         dependency_evaluation_context eval_ctx,
-        processing_stack_t stack,
-        const range& rng,
-        diagnostic_consumer<diagnostic_op>& diag);
+        processing_stack_t stack);
     index_t<using_collection> remove(index_t<using_collection> current,
-        std::span<std::unique_ptr<mach_expression>> arguments,
+        std::vector<std::unique_ptr<mach_expression>> arguments,
         dependency_evaluation_context eval_ctx,
-        processing_stack_t stack,
-        diagnostic_consumer<diagnostic_op>& diag);
+        processing_stack_t stack);
     index_t<using_collection> remove_all() const { return index_t<using_collection>(); }
 
     evaluate_result evaluate(index_t<using_collection> context_id,

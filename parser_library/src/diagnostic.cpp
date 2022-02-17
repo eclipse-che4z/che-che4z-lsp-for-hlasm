@@ -258,7 +258,7 @@ diagnostic_op diagnostic_op::error_A104_USING_first_format(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "A104",
-        "Error at USING instruction: first operand format must either be an absolute base value, or must be in a form "
+        "Error at USING instruction: first operand format must either be a base expression, or must be in a form "
         "(base,end)",
         range);
 }
@@ -760,6 +760,14 @@ diagnostic_op diagnostic_op::error_A162_PROCESS_uknown_option(std::string_view o
 diagnostic_op diagnostic_op::error_A163_ALIAS_mandatory_label(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "A163", "Label not provided on ALIAS instruction", range);
+}
+
+diagnostic_op diagnostic_op::error_A164_USING_mapping_format(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "A163",
+        "Error at USING instruction: Register number or expression expected.",
+        range);
 }
 
 diagnostic_op diagnostic_op::error_A200_SCOPE_param(std::string_view instr_name, const range& range)
@@ -2295,14 +2303,9 @@ diagnostic_op diagnostic_op::error_U005_invalid_range(
         union_range(s_range, e_range));
 }
 
-diagnostic_op diagnostic_op::error_U006_wrong_base_count(const range& range)
+diagnostic_op diagnostic_op::error_U006_duplicate_base_specified(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "U006", "Number of bases must be between 1 and 16.", range);
-}
-
-diagnostic_op diagnostic_op::error_U007_duplicate_base_specified(const range& range)
-{
-    return diagnostic_op(diagnostic_severity::error, "U007", "Base registers must be distinct.", range);
+    return diagnostic_op(diagnostic_severity::error, "U006", "Base registers must be distinct.", range);
 }
 
 diagnostic_s diagnostic_s::error_W002(std::string_view ws_uri, std::string_view ws_name)
