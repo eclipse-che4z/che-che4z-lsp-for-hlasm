@@ -26,7 +26,14 @@
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "source_context.h"
-#include "using.h"
+#include "tagged_index.h"
+
+namespace hlasm_plugin::parser_library::expressions {
+class mach_expression;
+} // namespace hlasm_plugin::parser_library::expressions
+namespace hlasm_plugin::parser_library::context {
+class using_collection;
+} // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -86,8 +93,8 @@ class hlasm_context
 
     bool is_opcode(id_index symbol) const;
 
-    using_collection m_usings;
-    std::vector<using_collection::index_t<using_collection>> m_active_usings;
+    std::unique_ptr<using_collection> m_usings;
+    std::vector<index_t<using_collection>> m_active_usings;
 
 public:
     hlasm_context(std::string file_name = "",

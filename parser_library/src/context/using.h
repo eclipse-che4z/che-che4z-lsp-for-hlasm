@@ -30,6 +30,7 @@
 #include "ordinary_assembly/symbol_dependency_tables.h"
 #include "ordinary_assembly/symbol_value.h"
 #include "source_context.h"
+#include "tagged_index.h"
 
 namespace hlasm_plugin::parser_library {
 template<typename T>
@@ -67,25 +68,6 @@ public:
     using register_t = unsigned char;
     static constexpr register_t invalid_register = (unsigned char)-1;
     using offset_t = int32_t;
-
-    template<typename Tag>
-    class index_t
-    {
-        size_t index = 0;
-
-    public:
-        constexpr index_t(size_t i) noexcept
-            : index(i)
-        {
-            assert(i != 0);
-        }
-        constexpr index_t() noexcept {} // GCC+CLANG workaround Bug 88165
-
-        friend bool operator==(index_t l, index_t r) = default;
-        constexpr explicit operator bool() const { return index != 0; }
-
-        friend class using_collection;
-    };
 
     struct evaluate_result
     {
@@ -254,7 +236,7 @@ private:
         struct entry
         {
             id_index label;
-            const section* section;
+            const section* owner;
             offset_t offset;
             offset_t length;
             register_set_t regs;
@@ -264,14 +246,13 @@ private:
         std::vector<entry> m_state;
 
         context_evaluate_result evaluate(id_index label,
-            const section* section,
+            const section* owner,
             long long offset,
             int32_t min_disp,
             int32_t max_disp,
             bool ignore_length) const;
 
-        context_evaluate_result evaluate(
-            id_index label, const section* section, offset_t offset, bool long_offset) const;
+        context_evaluate_result evaluate(id_index label, const section* owner, offset_t offset, bool long_offset) const;
 
         using_context() = default;
 
@@ -351,19 +332,19 @@ private:
     const auto& get(index_t<using_collection> idx) const
     {
         assert(idx);
-        return m_usings[idx.index - 1];
+        return m_usings[idx.value() - 1];
     }
 
     const auto& get(index_t<mach_expression> idx) const
     {
         assert(idx);
-        return m_expr_values[idx.index - 1];
+        return m_expr_values[idx.value() - 1];
     }
 
     const auto& get(index_t<instruction_context> idx) const
     {
         assert(idx);
-        return m_instruction_contexts[idx.index - 1];
+        return m_instruction_contexts[idx.value() - 1];
     }
 
     index_t<instruction_context> add(dependency_evaluation_context ctx, processing_stack_t stack);
@@ -394,7 +375,7 @@ public:
 
     evaluate_result evaluate(index_t<using_collection> context_id,
         id_index label,
-        const section* section,
+        const section* owner,
         offset_t offset,
         bool long_offset) const;
 };

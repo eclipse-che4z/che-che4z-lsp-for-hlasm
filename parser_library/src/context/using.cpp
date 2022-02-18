@@ -352,14 +352,14 @@ void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagn
     }
 }
 
-using_collection::index_t<using_collection::instruction_context> using_collection::add(
+index_t<using_collection::instruction_context> using_collection::add(
     dependency_evaluation_context ctx, processing_stack_t stack)
 {
     m_instruction_contexts.push_back({ std::move(ctx), std::move(stack) });
     return index_t<instruction_context>(m_instruction_contexts.size());
 }
 
-using_collection::index_t<using_collection::mach_expression> using_collection::add(
+index_t<using_collection::mach_expression> using_collection::add(
     const mach_expression* expr, index_t<instruction_context> ctx)
 {
     m_expr_values.push_back({ expr, ctx });
@@ -367,7 +367,7 @@ using_collection::index_t<using_collection::mach_expression> using_collection::a
 }
 
 
-using_collection::index_t<using_collection> using_collection::add(index_t<using_collection> current,
+index_t<using_collection> using_collection::add(index_t<using_collection> current,
     id_index label,
     std::unique_ptr<mach_expression> begin,
     std::unique_ptr<mach_expression> end,
@@ -393,7 +393,7 @@ using_collection::index_t<using_collection> using_collection::add(index_t<using_
     return index_t<using_collection>(m_usings.size());
 }
 
-using_collection::index_t<using_collection> using_collection::remove(index_t<using_collection> current,
+index_t<using_collection> using_collection::remove(index_t<using_collection> current,
     std::vector<std::unique_ptr<mach_expression>> args,
     dependency_evaluation_context eval_ctx,
     processing_stack_t stack)
@@ -413,16 +413,13 @@ using_collection::index_t<using_collection> using_collection::remove(index_t<usi
 
 
 
-using_collection::evaluate_result using_collection::evaluate(index_t<using_collection> context_id,
-    id_index label,
-    const section* section,
-    offset_t offset,
-    bool long_offset) const
+using_collection::evaluate_result using_collection::evaluate(
+    index_t<using_collection> context_id, id_index label, const section* owner, offset_t offset, bool long_offset) const
 {
     if (!context_id)
         return evaluate_result { invalid_register, 0 };
 
-    auto tmp = get(context_id).context.evaluate(label, section, offset, long_offset);
+    auto tmp = get(context_id).context.evaluate(label, owner, offset, long_offset);
 
     if (tmp.length < 0)
         return evaluate_result { invalid_register, 1 - tmp.length };
@@ -464,7 +461,7 @@ R clamp(T value)
 }
 
 auto using_collection::using_context::evaluate(id_index label,
-    const section* section,
+    const section* owner,
     long long offset,
     int32_t min_disp,
     int32_t max_disp,
@@ -481,7 +478,7 @@ auto using_collection::using_context::evaluate(id_index label,
     result_candidate positive;
     result_candidate negative;
 
-    if (section == nullptr && min_disp <= offset && offset <= max_disp)
+    if (owner == nullptr && min_disp <= offset && offset <= max_disp)
     {
         // implicit 0 mapping
         static constexpr entry zero_entry {
@@ -501,7 +498,7 @@ auto using_collection::using_context::evaluate(id_index label,
 
     for (const auto& s : m_state)
     {
-        if (label != s.label || section != s.section)
+        if (label != s.label || owner != s.owner)
             continue;
         auto next_dist = (offset - s.offset) + s.reg_offset;
         for (const auto& reg : s.regs)
@@ -563,12 +560,12 @@ constexpr int32_t min_short = 0;
 constexpr int32_t max_short = (1 << 12) - 1;
 
 auto using_collection::using_context::evaluate(
-    id_index label, const section* section, offset_t offset, bool long_offset) const -> context_evaluate_result
+    id_index label, const section* owner, offset_t offset, bool long_offset) const -> context_evaluate_result
 {
     if (long_offset)
-        return evaluate(label, section, offset, min_long, max_long, true);
+        return evaluate(label, owner, offset, min_long, max_long, true);
     else
-        return evaluate(label, section, offset, min_short, max_short, false);
+        return evaluate(label, owner, offset, min_short, max_short, false);
 }
 
 } // namespace hlasm_plugin::parser_library::context

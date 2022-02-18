@@ -42,7 +42,7 @@ struct test_context : public dependency_solver
         asm_ctx.register_using_label(label);
         return label;
     }
-    const section* section(const std::string& s)
+    const section* create_section(const std::string& s)
     {
         asm_ctx.set_section(id(s), section_kind::COMMON, location());
         return asm_ctx.current_section();
@@ -50,7 +50,7 @@ struct test_context : public dependency_solver
 
     address addr(const std::string& name, const std::string& sect, int offset)
     {
-        address result({ section(sect) }, offset, {});
+        address result({ create_section(sect) }, offset, {});
         m_symbols.try_emplace(
             id(name), id(name), result, symbol_attributes(symbol_origin::EQU), location(), processing_stack_t());
         return result;
@@ -104,10 +104,10 @@ TEST(using, basic)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    auto sect = c.section("SECT");
+    auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(1)), {}, {});
 
@@ -129,10 +129,10 @@ TEST(using, multiple_registers)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    auto sect = c.section("SECT");
+    auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(2), c.number(1)), {}, {});
@@ -157,10 +157,10 @@ TEST(using, with_offset)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    auto sect = c.section("SECT");
+    auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT") + c.number(10), nullptr, args(c.number(2)), {}, {});
@@ -181,10 +181,10 @@ TEST(using, with_negative_offset)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    auto sect = c.section("SECT");
+    auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT") - c.number(10), nullptr, args(c.number(2)), {}, {});
@@ -210,11 +210,11 @@ TEST(using, dependent_using)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    auto sect = c.section("SECT");
-    auto sect2 = c.section("SECT2");
+    auto sect = c.create_section("SECT");
+    auto sect2 = c.create_section("SECT2");
     /*
      * USING SECT+10,12
      * USING SECT2+5,SECT+20
@@ -248,10 +248,10 @@ TEST(using, labeled)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    auto sect = c.section("SECT");
+    auto sect = c.create_section("SECT");
     auto label = c.id("LABEL");
 
     [[maybe_unused]] auto with_sect = coll.add(current, label, c.symbol("SECT"), nullptr, args(c.number(1)), {}, {});
@@ -275,10 +275,10 @@ TEST(using, drop_one)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    auto sect = c.section("SECT");
+    auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(2), c.number(1)), {}, {});
@@ -305,11 +305,11 @@ TEST(using, drop_dependent)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    auto sect = c.section("SECT");
-    auto sect2 = c.section("SECT2");
+    auto sect = c.create_section("SECT");
+    auto sect2 = c.create_section("SECT2");
 
     [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(2)), {}, {});
     [[maybe_unused]] auto with_sect2 =
@@ -335,11 +335,11 @@ TEST(using, override_label)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    auto sect = c.section("SECT");
-    auto sect2 = c.section("SECT2");
+    auto sect = c.create_section("SECT");
+    auto sect2 = c.create_section("SECT2");
     auto label = c.id("LABEL");
 
     [[maybe_unused]] auto with_sect = coll.add(current, label, c.symbol("SECT"), nullptr, args(c.number(1)), {}, {});
@@ -366,12 +366,12 @@ TEST(using, drop_reg_with_labeled_dependent)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     auto label = c.id("LABEL");
-    auto sect = c.section("SECT");
-    auto sect2 = c.section("SECT2");
+    auto sect = c.create_section("SECT");
+    auto sect2 = c.create_section("SECT2");
 
     [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(2)), {}, {});
     [[maybe_unused]] auto with_sect2 =
@@ -401,7 +401,7 @@ TEST(using, no_drop_warning)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     [[maybe_unused]] auto after_drop2 = coll.remove(current, args(c.number(2)), {}, {});
@@ -416,10 +416,10 @@ TEST(using, use_reg_16)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto sect = c.section("SECT");
+    [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(16)), {}, {});
 
@@ -433,7 +433,7 @@ TEST(using, use_non_simple_reloc)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     [[maybe_unused]] auto with_sect =
@@ -449,10 +449,10 @@ TEST(using, drop_qualified_label)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto sect = c.section("SECT");
+    [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
         coll.add(current, c.label("LABEL"), c.symbol("SECT"), nullptr, args(c.number(1)), {}, {});
@@ -469,7 +469,7 @@ TEST(using, drop_reg_16)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     [[maybe_unused]] auto after_drop2 = coll.remove(current, args(c.number(16)), {}, {});
@@ -484,10 +484,10 @@ TEST(using, drop_reloc)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto sect = c.section("LABEL");
+    [[maybe_unused]] auto sect = c.create_section("LABEL");
     [[maybe_unused]] auto after_drop2 = coll.remove(current, args(c.symbol("LABEL") + c.symbol("LABEL")), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
@@ -500,11 +500,11 @@ TEST(using, dependent_no_active_using)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto sect = c.section("SECT");
-    [[maybe_unused]] auto sect2 = c.section("SECT2");
+    [[maybe_unused]] auto sect = c.create_section("SECT");
+    [[maybe_unused]] auto sect2 = c.create_section("SECT2");
 
     [[maybe_unused]] auto with_sect2 = coll.add(
         current, nullptr, c.symbol("SECT2") + c.number(5), nullptr, args(c.symbol("SECT") + c.number(20)), {}, {});
@@ -519,12 +519,12 @@ TEST(using, dependent_no_active_matching_using)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto sect = c.section("SECT");
-    [[maybe_unused]] auto sect2 = c.section("SECT2");
-    [[maybe_unused]] auto sect3 = c.section("SECT3");
+    [[maybe_unused]] auto sect = c.create_section("SECT");
+    [[maybe_unused]] auto sect2 = c.create_section("SECT2");
+    [[maybe_unused]] auto sect3 = c.create_section("SECT3");
     /*
      * USING SECT+10,12
      * USING SECT2+5,SECT+20
@@ -545,7 +545,7 @@ TEST(using, using_undefined_begin)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(1)), {}, {});
@@ -560,10 +560,10 @@ TEST(using, using_qualified_begin)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto sect = c.section("SECT");
+    [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT", "LABEL"), nullptr, args(c.number(1)), {}, {});
@@ -578,10 +578,10 @@ TEST(using, using_undefined_end)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto sect = c.section("SECT");
+    [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT_END"), args(c.number(1)), {}, {});
@@ -596,10 +596,10 @@ TEST(using, using_qualified_end)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto sect = c.section("SECT");
+    [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(
         current, nullptr, c.symbol("SECT"), c.symbol("SECT", "LABEL") + c.number(1), args(c.number(1)), {}, {});
@@ -614,11 +614,11 @@ TEST(using, using_bad_range)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto sect = c.section("SECT");
-    [[maybe_unused]] auto sect2 = c.section("SECT2");
+    [[maybe_unused]] auto sect = c.create_section("SECT");
+    [[maybe_unused]] auto sect2 = c.create_section("SECT2");
 
     [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT"), args(c.number(1)), {}, {});
@@ -636,12 +636,12 @@ TEST(using, use_complex_reloc)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto s1 = c.section("S1");
-    [[maybe_unused]] auto s2 = c.section("S2");
-    [[maybe_unused]] auto sect = c.section("SECT");
+    [[maybe_unused]] auto s1 = c.create_section("S1");
+    [[maybe_unused]] auto s2 = c.create_section("S2");
+    [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.symbol("S1") + c.symbol("S2")), {}, {});
@@ -656,7 +656,7 @@ TEST(using, drop_invalid)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     [[maybe_unused]] auto after_drop2 = coll.remove(current, args(c.symbol("LABEL")), {}, {});
@@ -671,7 +671,7 @@ TEST(using, drop_inactive)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     [[maybe_unused]] auto label = c.label("LABEL");
@@ -688,10 +688,10 @@ TEST(using, basic_with_limit)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    auto sect = c.section("SECT");
+    auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT") + c.number(10), args(c.number(1)), {}, {});
@@ -710,10 +710,10 @@ TEST(using, duplicate_base)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto sect = c.section("SECT");
+    [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
         coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(1), c.number(1)), {}, {});
@@ -728,7 +728,7 @@ TEST(using, absolute)
     test_context c;
 
     using_collection coll;
-    using_collection::index_t<using_collection> current;
+    index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.number(128), nullptr, args(c.number(1)), {}, {});
