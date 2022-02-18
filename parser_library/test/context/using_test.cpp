@@ -823,3 +823,30 @@ LABEL USING 1,(1,1)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A164" }));
 }
+
+TEST(using, push_pop)
+{
+    std::string input = R"(
+    PUSH USING
+    POP  USING
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, pop_empty)
+{
+    std::string input = R"(
+    POP  USING
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A165" }));
+}

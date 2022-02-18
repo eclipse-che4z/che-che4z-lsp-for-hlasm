@@ -303,6 +303,7 @@ public:
     void using_push();
     bool using_pop();
     void using_resolve(diagnostic_s_consumer&);
+    index_t<using_collection> using_current() const;
 };
 
 } // namespace hlasm_plugin::parser_library::context

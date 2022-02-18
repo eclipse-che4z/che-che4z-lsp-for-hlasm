@@ -770,6 +770,11 @@ diagnostic_op diagnostic_op::error_A164_USING_mapping_format(const range& range)
         range);
 }
 
+diagnostic_op diagnostic_op::error_A165_POP_USING(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "A165", "Illegal POP USING - stack is empty.", range);
+}
+
 diagnostic_op diagnostic_op::error_A200_SCOPE_param(std::string_view instr_name, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,

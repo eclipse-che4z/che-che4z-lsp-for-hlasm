@@ -711,6 +711,8 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("LTORG"), [this](rebuilt_statement stmt) { process_LTORG(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("USING"), [this](rebuilt_statement stmt) { process_USING(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("DROP"), [this](rebuilt_statement stmt) { process_DROP(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("PUSH"), [this](rebuilt_statement stmt) { process_PUSH(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("POP"), [this](rebuilt_statement stmt) { process_POP(std::move(stmt)); });
 
     return table;
 }
@@ -1067,6 +1069,51 @@ void asm_processor::process_DROP(rebuilt_statement stmt)
 
     hlasm_ctx.using_remove(
         std::move(bases), dep_solver.derive_current_dependency_evaluation_context(), std::move(stack));
+}
+
+void asm_processor::process_PUSH(rebuilt_statement stmt)
+{
+    (void)find_sequence_symbol(stmt);
+
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
+    auto stack = hlasm_ctx.processing_stack();
+    if (!check(stmt, stack, dep_solver, checker_, *this))
+        return;
+
+    const auto& ops = stmt.operands_ref().value;
+    if (std::none_of(ops.begin(), ops.end(), [](const auto& op) {
+            auto asm_op = op->access_asm();
+            if (!asm_op)
+                return false;
+            auto expr = asm_op->access_expr();
+            return expr && expr->get_value() == "USING";
+        }))
+        return;
+
+    hlasm_ctx.using_push();
+}
+
+void asm_processor::process_POP(rebuilt_statement stmt)
+{
+    (void)find_sequence_symbol(stmt);
+
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
+    auto stack = hlasm_ctx.processing_stack();
+    if (!check(stmt, stack, dep_solver, checker_, *this))
+        return;
+
+    const auto& ops = stmt.operands_ref().value;
+    if (std::none_of(ops.begin(), ops.end(), [](const auto& op) {
+            auto asm_op = op->access_asm();
+            if (!asm_op)
+                return false;
+            auto expr = asm_op->access_expr();
+            return expr && expr->get_value() == "USING";
+        }))
+        return;
+
+    if (!hlasm_ctx.using_pop())
+        add_diagnostic(diagnostic_op::error_A165_POP_USING(stmt.stmt_range_ref()));
 }
 
 } // namespace hlasm_plugin::parser_library::processing

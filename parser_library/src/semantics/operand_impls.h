@@ -194,6 +194,8 @@ public:
 
     void apply(operand_visitor& visitor) const override;
 
+    const std::string& get_value() const { return value_; }
+
 private:
     std::unique_ptr<checking::operand> get_operand_value_inner(
         context::dependency_solver& info, bool can_have_ordsym) const;

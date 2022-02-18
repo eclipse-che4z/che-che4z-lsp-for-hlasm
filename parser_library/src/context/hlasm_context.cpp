@@ -893,4 +893,6 @@ bool hlasm_context::using_pop()
 
 void hlasm_context::using_resolve(diagnostic_s_consumer& diag) { m_usings->resolve_all(ord_ctx, diag); }
 
+index_t<using_collection> hlasm_context::using_current() const { return m_active_usings.back(); }
+
 } // namespace hlasm_plugin::parser_library::context

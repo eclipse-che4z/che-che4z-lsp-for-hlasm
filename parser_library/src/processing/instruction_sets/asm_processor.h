@@ -69,6 +69,8 @@ private:
     void process_LTORG(rebuilt_statement stmt);
     void process_USING(rebuilt_statement stmt);
     void process_DROP(rebuilt_statement stmt);
+    void process_PUSH(rebuilt_statement stmt);
+    void process_POP(rebuilt_statement stmt);
 
     template<checking::data_instr_type instr_type>
     void process_data_instruction(rebuilt_statement stmt);

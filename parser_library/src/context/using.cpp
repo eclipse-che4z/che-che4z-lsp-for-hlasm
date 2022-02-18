@@ -411,8 +411,6 @@ index_t<using_collection> using_collection::remove(index_t<using_collection> cur
     return index_t<using_collection>(m_usings.size() - 1);
 }
 
-
-
 using_collection::evaluate_result using_collection::evaluate(
     index_t<using_collection> context_id, id_index label, const section* owner, offset_t offset, bool long_offset) const
 {
