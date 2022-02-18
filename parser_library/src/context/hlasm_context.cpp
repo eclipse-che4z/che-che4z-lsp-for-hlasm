@@ -70,14 +70,15 @@ void hlasm_context::add_system_vars_to_scope()
         {
             auto SYSNDX = ids().add("SYSNDX");
 
-            auto val_ndx = std::make_shared<set_symbol<C_t>>(SYSNDX, true, false);
-
             std::string value = std::to_string(SYSNDX_);
             if (auto value_len = value.size(); value_len < 4)
                 value.insert(0, 4 - value_len, '0');
 
-            val_ndx->set_value(std::move(value));
-            curr_scope()->variables.insert({ SYSNDX, val_ndx });
+            macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(std::move(value));
+
+            sys_sym_ptr var = std::make_shared<system_variable_sysmac>(SYSNDX, std::move(mac_data), false);
+
+            curr_scope()->system_variables.insert({ SYSNDX, std::move(var) });
         }
 
         {
