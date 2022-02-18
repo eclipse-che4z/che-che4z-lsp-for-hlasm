@@ -19,6 +19,7 @@
 #include "checking/instruction_checker.h"
 #include "context/literal_pool.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
+#include "diagnostic_consumer.h"
 #include "ebcdic_encoding.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
 
@@ -142,7 +143,10 @@ void ordinary_processor::end_processing()
 
     hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
 
-    hlasm_ctx.using_resolve(*this);
+    // do not replace stack trace in the messages - it is already provided
+    diagnostic_consumer_transform using_diags(
+        [this](diagnostic_s d) { diagnosable_impl::add_diagnostic(std::move(d)); });
+    hlasm_ctx.using_resolve(using_diags);
 
     check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
 

@@ -345,7 +345,7 @@ void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagn
     for (auto& u : m_usings)
     {
         diagnostic_consumer_transform t([this, &diag, &u](diagnostic_op d) {
-            return diag.add_diagnostic(add_stack_details(std::move(d), get(u.instruction_ctx).stack));
+            diag.add_diagnostic(add_stack_details(std::move(d), get(u.instruction_ctx).stack));
         });
         u.resolve(*this, t);
         u.compute_context(*this, t);

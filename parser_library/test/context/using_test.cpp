@@ -897,3 +897,28 @@ R1    EQU   1
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E031" }));
 }
+
+TEST(using, nested_diagnostics)
+{
+    std::string input = R"(
+      MACRO
+      MAC
+      USING TEST,0-1
+      MEND
+
+TEST  CSECT
+      MAC
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    auto& diags = a.diags();
+
+    ASSERT_EQ(diags.size(), 1);
+
+    const auto& d = diags.front();
+
+    EXPECT_FALSE(d.related.empty());
+}
