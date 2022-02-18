@@ -332,19 +332,19 @@ private:
     const auto& get(index_t<using_collection> idx) const
     {
         assert(idx);
-        return m_usings[idx.value() - 1];
+        return m_usings[idx.value()];
     }
 
     const auto& get(index_t<mach_expression> idx) const
     {
         assert(idx);
-        return m_expr_values[idx.value() - 1];
+        return m_expr_values[idx.value()];
     }
 
     const auto& get(index_t<instruction_context> idx) const
     {
         assert(idx);
-        return m_instruction_contexts[idx.value() - 1];
+        return m_instruction_contexts[idx.value()];
     }
 
     index_t<instruction_context> add(dependency_evaluation_context ctx, processing_stack_t stack);

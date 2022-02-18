@@ -22,23 +22,24 @@ namespace hlasm_plugin::parser_library {
 template<typename Tag>
 class index_t
 {
-    std::size_t index = 0;
+    static constexpr std::size_t invalid_index = (std::size_t)-1;
+    std::size_t index = invalid_index;
 
 public:
     index_t() = default;
     constexpr index_t(std::size_t i) noexcept
         : index(i)
     {
-        assert(i != 0);
+        assert(i != invalid_index);
     }
 
     friend bool operator==(index_t l, index_t r) = default;
 
-    constexpr explicit operator bool() const { return index != 0; }
+    constexpr explicit operator bool() const { return index != invalid_index; }
 
     constexpr std::size_t value() const
     {
-        assert(index != 0);
+        assert(index != invalid_index);
         return index;
     }
 };

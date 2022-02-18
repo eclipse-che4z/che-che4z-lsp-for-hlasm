@@ -356,14 +356,14 @@ index_t<using_collection::instruction_context> using_collection::add(
     dependency_evaluation_context ctx, processing_stack_t stack)
 {
     m_instruction_contexts.push_back({ std::move(ctx), std::move(stack) });
-    return index_t<instruction_context>(m_instruction_contexts.size());
+    return index_t<instruction_context>(m_instruction_contexts.size() - 1);
 }
 
 index_t<using_collection::mach_expression> using_collection::add(
     const mach_expression* expr, index_t<instruction_context> ctx)
 {
     m_expr_values.push_back({ expr, ctx });
-    return index_t<mach_expression>(m_expr_values.size());
+    return index_t<mach_expression>(m_expr_values.size() - 1);
 }
 
 
@@ -390,7 +390,7 @@ index_t<using_collection> using_collection::add(index_t<using_collection> curren
     });
 
     m_usings.emplace_back(current, ctx_id, b, base, label, e);
-    return index_t<using_collection>(m_usings.size());
+    return index_t<using_collection>(m_usings.size() - 1);
 }
 
 index_t<using_collection> using_collection::remove(index_t<using_collection> current,
@@ -408,7 +408,7 @@ index_t<using_collection> using_collection::remove(index_t<using_collection> cur
     });
     m_usings.emplace_back(current, ctx_id, std::move(base));
 
-    return index_t<using_collection>(m_usings.size());
+    return index_t<using_collection>(m_usings.size() - 1);
 }
 
 
