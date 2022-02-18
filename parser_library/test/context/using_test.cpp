@@ -56,7 +56,7 @@ struct test_context : public dependency_solver
         return result;
     }
 
-    std::unique_ptr<mach_expression> symbol(const std::string& n, const std::string& q = "")
+    std::unique_ptr<mach_expression> create_symbol(const std::string& n, const std::string& q = "")
     {
         return std::make_unique<mach_expr_symbol>(id(n), q.empty() ? nullptr : id(q), range());
     }
@@ -109,7 +109,8 @@ TEST(using, basic)
 
     auto sect = c.create_section("SECT");
 
-    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(1)), {}, {});
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.create_symbol("SECT"), nullptr, args(c.number(1)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -135,7 +136,7 @@ TEST(using, multiple_registers)
     auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(2), c.number(1)), {}, {});
+        coll.add(current, nullptr, c.create_symbol("SECT"), nullptr, args(c.number(2), c.number(1)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -163,7 +164,7 @@ TEST(using, with_offset)
     auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT") + c.number(10), nullptr, args(c.number(2)), {}, {});
+        coll.add(current, nullptr, c.create_symbol("SECT") + c.number(10), nullptr, args(c.number(2)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -187,7 +188,7 @@ TEST(using, with_negative_offset)
     auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT") - c.number(10), nullptr, args(c.number(2)), {}, {});
+        coll.add(current, nullptr, c.create_symbol("SECT") - c.number(10), nullptr, args(c.number(2)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -221,9 +222,14 @@ TEST(using, dependent_using)
      */
 
     [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT") + c.number(10), nullptr, args(c.number(12)), {}, {});
-    [[maybe_unused]] auto with_sect2 = coll.add(
-        with_sect, nullptr, c.symbol("SECT2") + c.number(5), nullptr, args(c.symbol("SECT") + c.number(20)), {}, {});
+        coll.add(current, nullptr, c.create_symbol("SECT") + c.number(10), nullptr, args(c.number(12)), {}, {});
+    [[maybe_unused]] auto with_sect2 = coll.add(with_sect,
+        nullptr,
+        c.create_symbol("SECT2") + c.number(5),
+        nullptr,
+        args(c.create_symbol("SECT") + c.number(20)),
+        {},
+        {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -254,7 +260,8 @@ TEST(using, labeled)
     auto sect = c.create_section("SECT");
     auto label = c.id("LABEL");
 
-    [[maybe_unused]] auto with_sect = coll.add(current, label, c.symbol("SECT"), nullptr, args(c.number(1)), {}, {});
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, label, c.create_symbol("SECT"), nullptr, args(c.number(1)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -281,7 +288,7 @@ TEST(using, drop_one)
     auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(2), c.number(1)), {}, {});
+        coll.add(current, nullptr, c.create_symbol("SECT"), nullptr, args(c.number(2), c.number(1)), {}, {});
 
     [[maybe_unused]] auto after_drop2 = coll.remove(with_sect, args(c.number(2)), {}, {});
 
@@ -311,9 +318,10 @@ TEST(using, drop_dependent)
     auto sect = c.create_section("SECT");
     auto sect2 = c.create_section("SECT2");
 
-    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(2)), {}, {});
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.create_symbol("SECT"), nullptr, args(c.number(2)), {}, {});
     [[maybe_unused]] auto with_sect2 =
-        coll.add(with_sect, nullptr, c.symbol("SECT2"), nullptr, args(c.symbol("SECT")), {}, {});
+        coll.add(with_sect, nullptr, c.create_symbol("SECT2"), nullptr, args(c.create_symbol("SECT")), {}, {});
 
     [[maybe_unused]] auto after_drop2 = coll.remove(with_sect2, args(c.number(2)), {}, {});
 
@@ -342,9 +350,10 @@ TEST(using, override_label)
     auto sect2 = c.create_section("SECT2");
     auto label = c.id("LABEL");
 
-    [[maybe_unused]] auto with_sect = coll.add(current, label, c.symbol("SECT"), nullptr, args(c.number(1)), {}, {});
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, label, c.create_symbol("SECT"), nullptr, args(c.number(1)), {}, {});
     [[maybe_unused]] auto with_sect2 =
-        coll.add(with_sect, label, c.symbol("SECT2"), nullptr, args(c.number(1)), {}, {});
+        coll.add(with_sect, label, c.create_symbol("SECT2"), nullptr, args(c.number(1)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -373,9 +382,10 @@ TEST(using, drop_reg_with_labeled_dependent)
     auto sect = c.create_section("SECT");
     auto sect2 = c.create_section("SECT2");
 
-    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(2)), {}, {});
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.create_symbol("SECT"), nullptr, args(c.number(2)), {}, {});
     [[maybe_unused]] auto with_sect2 =
-        coll.add(with_sect, label, c.symbol("SECT2"), nullptr, args(c.symbol("SECT")), {}, {});
+        coll.add(with_sect, label, c.create_symbol("SECT2"), nullptr, args(c.create_symbol("SECT")), {}, {});
 
     [[maybe_unused]] auto after_drop2 = coll.remove(with_sect2, args(c.number(2)), {}, {});
 
@@ -421,7 +431,8 @@ TEST(using, use_reg_16)
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
-    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(16)), {}, {});
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.create_symbol("SECT"), nullptr, args(c.number(16)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -436,8 +447,13 @@ TEST(using, use_non_simple_reloc)
     index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.symbol("LABEL") + c.symbol("LABEL")), {}, {});
+    [[maybe_unused]] auto with_sect = coll.add(current,
+        nullptr,
+        c.create_symbol("SECT"),
+        nullptr,
+        args(c.create_symbol("LABEL") + c.create_symbol("LABEL")),
+        {},
+        {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -455,9 +471,9 @@ TEST(using, drop_qualified_label)
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
-        coll.add(current, c.label("LABEL"), c.symbol("SECT"), nullptr, args(c.number(1)), {}, {});
+        coll.add(current, c.label("LABEL"), c.create_symbol("SECT"), nullptr, args(c.number(1)), {}, {});
 
-    [[maybe_unused]] auto after_drop2 = coll.remove(with_sect, args(c.symbol("LABEL", "LABEL")), {}, {});
+    [[maybe_unused]] auto after_drop2 = coll.remove(with_sect, args(c.create_symbol("LABEL", "LABEL")), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -488,7 +504,8 @@ TEST(using, drop_reloc)
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("LABEL");
-    [[maybe_unused]] auto after_drop2 = coll.remove(current, args(c.symbol("LABEL") + c.symbol("LABEL")), {}, {});
+    [[maybe_unused]] auto after_drop2 =
+        coll.remove(current, args(c.create_symbol("LABEL") + c.create_symbol("LABEL")), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -506,8 +523,13 @@ TEST(using, dependent_no_active_using)
     [[maybe_unused]] auto sect = c.create_section("SECT");
     [[maybe_unused]] auto sect2 = c.create_section("SECT2");
 
-    [[maybe_unused]] auto with_sect2 = coll.add(
-        current, nullptr, c.symbol("SECT2") + c.number(5), nullptr, args(c.symbol("SECT") + c.number(20)), {}, {});
+    [[maybe_unused]] auto with_sect2 = coll.add(current,
+        nullptr,
+        c.create_symbol("SECT2") + c.number(5),
+        nullptr,
+        args(c.create_symbol("SECT") + c.number(20)),
+        {},
+        {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -531,9 +553,14 @@ TEST(using, dependent_no_active_matching_using)
      */
 
     [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT") + c.number(10), nullptr, args(c.number(12)), {}, {});
-    [[maybe_unused]] auto with_sect2 = coll.add(
-        with_sect, nullptr, c.symbol("SECT2") + c.number(5), nullptr, args(c.symbol("SECT3") + c.number(20)), {}, {});
+        coll.add(current, nullptr, c.create_symbol("SECT") + c.number(10), nullptr, args(c.number(12)), {}, {});
+    [[maybe_unused]] auto with_sect2 = coll.add(with_sect,
+        nullptr,
+        c.create_symbol("SECT2") + c.number(5),
+        nullptr,
+        args(c.create_symbol("SECT3") + c.number(20)),
+        {},
+        {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -548,7 +575,8 @@ TEST(using, using_undefined_begin)
     index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto with_sect = coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(1)), {}, {});
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.create_symbol("SECT"), nullptr, args(c.number(1)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -566,7 +594,7 @@ TEST(using, using_qualified_begin)
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT", "LABEL"), nullptr, args(c.number(1)), {}, {});
+        coll.add(current, nullptr, c.create_symbol("SECT", "LABEL"), nullptr, args(c.number(1)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -584,7 +612,7 @@ TEST(using, using_undefined_end)
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT_END"), args(c.number(1)), {}, {});
+        coll.add(current, nullptr, c.create_symbol("SECT"), c.create_symbol("SECT_END"), args(c.number(1)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -601,8 +629,13 @@ TEST(using, using_qualified_end)
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
-    [[maybe_unused]] auto with_sect = coll.add(
-        current, nullptr, c.symbol("SECT"), c.symbol("SECT", "LABEL") + c.number(1), args(c.number(1)), {}, {});
+    [[maybe_unused]] auto with_sect = coll.add(current,
+        nullptr,
+        c.create_symbol("SECT"),
+        c.create_symbol("SECT", "LABEL") + c.number(1),
+        args(c.number(1)),
+        {},
+        {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -621,9 +654,9 @@ TEST(using, using_bad_range)
     [[maybe_unused]] auto sect2 = c.create_section("SECT2");
 
     [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT"), args(c.number(1)), {}, {});
+        coll.add(current, nullptr, c.create_symbol("SECT"), c.create_symbol("SECT"), args(c.number(1)), {}, {});
     [[maybe_unused]] auto with_sect2 =
-        coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT2"), args(c.number(1)), {}, {});
+        coll.add(current, nullptr, c.create_symbol("SECT"), c.create_symbol("SECT2"), args(c.number(1)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -643,8 +676,13 @@ TEST(using, use_complex_reloc)
     [[maybe_unused]] auto s2 = c.create_section("S2");
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
-    [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.symbol("S1") + c.symbol("S2")), {}, {});
+    [[maybe_unused]] auto with_sect = coll.add(current,
+        nullptr,
+        c.create_symbol("SECT"),
+        nullptr,
+        args(c.create_symbol("S1") + c.create_symbol("S2")),
+        {},
+        {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -659,7 +697,7 @@ TEST(using, drop_invalid)
     index_t<using_collection> current;
     diagnostic_consumer_container<diagnostic_s> d_s;
 
-    [[maybe_unused]] auto after_drop2 = coll.remove(current, args(c.symbol("LABEL")), {}, {});
+    [[maybe_unused]] auto after_drop2 = coll.remove(current, args(c.create_symbol("LABEL")), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -676,7 +714,7 @@ TEST(using, drop_inactive)
 
     [[maybe_unused]] auto label = c.label("LABEL");
 
-    [[maybe_unused]] auto after_drop2 = coll.remove(current, args(c.symbol("LABEL")), {}, {});
+    [[maybe_unused]] auto after_drop2 = coll.remove(current, args(c.create_symbol("LABEL")), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -693,8 +731,8 @@ TEST(using, basic_with_limit)
 
     auto sect = c.create_section("SECT");
 
-    [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT"), c.symbol("SECT") + c.number(10), args(c.number(1)), {}, {});
+    [[maybe_unused]] auto with_sect = coll.add(
+        current, nullptr, c.create_symbol("SECT"), c.create_symbol("SECT") + c.number(10), args(c.number(1)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
@@ -716,7 +754,7 @@ TEST(using, duplicate_base)
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect =
-        coll.add(current, nullptr, c.symbol("SECT"), nullptr, args(c.number(1), c.number(1)), {}, {});
+        coll.add(current, nullptr, c.create_symbol("SECT"), nullptr, args(c.number(1), c.number(1)), {}, {});
 
     coll.resolve_all(c.asm_ctx, d_s);
 
