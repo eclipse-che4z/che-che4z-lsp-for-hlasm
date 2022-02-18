@@ -72,6 +72,11 @@ size_t mach_expr_constant::hash() const
     return result;
 }
 
+mach_expr_ptr mach_expr_constant::clone() const
+{
+    return std::make_unique<mach_expr_constant>(value_.get_abs(), get_range());
+}
+
 //***********  mach_expr_symbol ************
 mach_expr_symbol::mach_expr_symbol(context::id_index value, context::id_index qualifier, range rng)
     : mach_expression(rng)
@@ -147,6 +152,10 @@ size_t mach_expr_symbol::hash() const
         result = hash_combine(result, (uintptr_t)value);
     return result;
 }
+mach_expr_ptr mach_expr_symbol::clone() const
+{
+    return std::make_unique<mach_expr_symbol>(value, qualifier, get_range());
+}
 bool mach_expr_symbol::do_is_similar(const mach_expression& expr) const
 {
     const auto& e = static_cast<const mach_expr_symbol&>(expr);
@@ -157,6 +166,13 @@ bool mach_expr_self_def::do_is_similar(const mach_expression& expr) const
 {
     const auto& e = static_cast<const mach_expr_self_def&>(expr);
     return value_.get_abs() == e.value_.get_abs();
+}
+
+mach_expr_self_def::mach_expr_self_def(value_t value, range rng, private_t)
+    : mach_expression(rng)
+    , value_(std::move(value))
+{
+    // TODO: diagnostics are not copied and they should not be there in the first place
 }
 
 mach_expr_self_def::mach_expr_self_def(std::string option, std::string value, range rng)
@@ -178,6 +194,11 @@ const mach_expression* mach_expr_self_def::leftmost_term() const { return this; 
 void mach_expr_self_def::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
 size_t mach_expr_self_def::hash() const { return hash_combine((size_t)0x038d7ea26932b75b, value_.get_abs()); }
+
+mach_expr_ptr mach_expr_self_def::clone() const
+{
+    return std::make_unique<mach_expr_self_def>(value_, get_range(), private_t());
+}
 
 bool mach_expr_location_counter::do_is_similar(const mach_expression&) const { return true; }
 
@@ -209,6 +230,11 @@ void mach_expr_location_counter::apply(mach_expr_visitor& visitor) const { visit
 
 size_t mach_expr_location_counter::hash() const { return (size_t)0x0009459ca772d69b; }
 
+mach_expr_ptr mach_expr_location_counter::clone() const
+{
+    return std::make_unique<mach_expr_location_counter>(get_range());
+}
+
 bool mach_expr_default::do_is_similar(const mach_expression&) const { return true; }
 
 mach_expr_default::mach_expr_default(range rng)
@@ -230,6 +256,8 @@ void mach_expr_default::collect_diags() const {}
 
 size_t mach_expr_default::hash() const { return (size_t)0xd11a22d1aa4016e0; }
 
+mach_expr_ptr mach_expr_default::clone() const { return std::make_unique<mach_expr_default>(get_range()); }
+
 bool mach_expr_data_attr::do_is_similar(const mach_expression& expr) const
 {
     const auto& e = static_cast<const mach_expr_data_attr&>(expr);
@@ -238,19 +266,25 @@ bool mach_expr_data_attr::do_is_similar(const mach_expression& expr) const
 
 mach_expr_data_attr::mach_expr_data_attr(
     context::id_index value, context::data_attr_kind attribute, range rng, range symbol_rng)
-    : mach_expression(rng)
-    , value(value)
-    , attribute(attribute)
-    , symbol_range(symbol_rng)
+    : mach_expr_data_attr(value, attribute, rng, symbol_rng, nullptr, private_t())
 {}
 
 mach_expr_data_attr::mach_expr_data_attr(
     std::unique_ptr<mach_expr_literal> value, context::data_attr_kind attribute, range whole_rng, range symbol_rng)
+    : mach_expr_data_attr(nullptr, attribute, whole_rng, symbol_rng, std::move(value), private_t())
+{}
+
+mach_expr_data_attr::mach_expr_data_attr(context::id_index value,
+    context::data_attr_kind attribute,
+    range whole_rng,
+    range symbol_rng,
+    std::unique_ptr<mach_expr_literal> lit,
+    private_t)
     : mach_expression(whole_rng)
-    , value(nullptr)
+    , value(value)
     , attribute(attribute)
     , symbol_range(symbol_rng)
-    , lit(std::move(value))
+    , lit(std::move(lit))
 {}
 
 context::dependency_collector mach_expr_data_attr::get_dependencies(context::dependency_solver& solver) const
@@ -338,6 +372,16 @@ size_t mach_expr_data_attr::hash() const
     return result;
 }
 
+mach_expr_ptr mach_expr_data_attr::clone() const
+{
+    return std::make_unique<mach_expr_data_attr>(value,
+        attribute,
+        get_range(),
+        symbol_range,
+        std::unique_ptr<mach_expr_literal>(lit ? static_cast<mach_expr_literal*>(lit->clone().release()) : nullptr),
+        private_t());
+}
+
 bool mach_expr_literal::do_is_similar(const mach_expression& expr) const
 {
     const auto& e = static_cast<const mach_expr_literal&>(expr);
@@ -345,8 +389,12 @@ bool mach_expr_literal::do_is_similar(const mach_expression& expr) const
 }
 
 mach_expr_literal::mach_expr_literal(range rng, data_definition dd, std::string dd_text)
+    : mach_expr_literal(rng, std::make_shared<literal_data>(std::move(dd)), std::move(dd_text), private_t())
+{}
+
+mach_expr_literal::mach_expr_literal(range rng, std::shared_ptr<literal_data> dd_shared, std::string dd_text, private_t)
     : mach_expression(rng)
-    , m_literal_data(std::make_shared<literal_data>(std::move(dd)))
+    , m_literal_data(dd_shared)
     , m_dd_text(std::move(dd_text))
 {}
 
@@ -387,6 +435,11 @@ void mach_expr_literal::apply(mach_expr_visitor& visitor) const { visitor.visit(
 void mach_expr_literal::collect_diags() const { collect_diags_from_child(m_literal_data->dd); }
 
 size_t mach_expr_literal::hash() const { return m_literal_data->dd.hash(); }
+
+mach_expr_ptr mach_expr_literal::clone() const
+{
+    return std::make_unique<mach_expr_literal>(get_range(), m_literal_data, m_dd_text, private_t());
+}
 
 const data_definition& mach_expr_literal::get_data_definition() const { return m_literal_data->dd; }
 

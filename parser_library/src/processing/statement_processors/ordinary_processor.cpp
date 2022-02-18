@@ -142,6 +142,8 @@ void ordinary_processor::end_processing()
 
     hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
 
+    hlasm_ctx.using_resolve(*this);
+
     check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
 
     hlasm_ctx.pop_statement_processing();

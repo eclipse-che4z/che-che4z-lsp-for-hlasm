@@ -265,7 +265,7 @@ constexpr assembler_instruction assembler_instructions[] = {
     { "CSECT", 0, 0, false, "" },
     { "CXD", 0, 0, false, "" },
     { "DC", 1, -1, true, "<operand>+" },
-    { "DROP", 0, -1, true, "?<<base_register|label>+>" },
+    { "DROP", 0, -1, true, "?<<base_register|label>+>", true },
     { "DS", 1, -1, true, "<operand>+" },
     { "DSECT", 0, 0, false, "" },
     { "DXD", 1, -1, true, "<operand>+" },
@@ -296,7 +296,7 @@ constexpr assembler_instruction assembler_instructions[] = {
     { "SPACE", 0, 1, true, "?number_of_lines" },
     { "START", 0, 1, true, "?expression" },
     { "TITLE", 1, 1, false, "title_string" },
-    { "USING", 2, -1, true, "operand+" },
+    { "USING", 2, 17, true, "operand+", true },
     { "WXTRN", 1, -1, false, "<external_symbol>+|PART(<external_symbol>+" },
     { "XATTR", 1, -1, false, "attribute+" },
 

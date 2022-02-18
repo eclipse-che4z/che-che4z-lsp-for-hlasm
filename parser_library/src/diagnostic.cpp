@@ -765,7 +765,7 @@ diagnostic_op diagnostic_op::error_A163_ALIAS_mandatory_label(const range& range
 diagnostic_op diagnostic_op::error_A164_USING_mapping_format(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
-        "A163",
+        "A164",
         "Error at USING instruction: Register number or expression expected.",
         range);
 }

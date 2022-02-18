@@ -204,8 +204,11 @@ private:
 // USING instruction operand
 struct using_instr_assembler_operand final : assembler_operand
 {
-    using_instr_assembler_operand(
-        expressions::mach_expr_ptr base, expressions::mach_expr_ptr end, const range operand_range);
+    using_instr_assembler_operand(expressions::mach_expr_ptr base,
+        expressions::mach_expr_ptr end,
+        std::string base_text,
+        std::string end_text,
+        const range operand_range);
 
     bool has_dependencies(context::dependency_solver& info) const override;
 
@@ -215,6 +218,8 @@ struct using_instr_assembler_operand final : assembler_operand
 
     expressions::mach_expr_ptr base;
     expressions::mach_expr_ptr end;
+    std::string base_text;
+    std::string end_text;
 
     void collect_diags() const override;
 

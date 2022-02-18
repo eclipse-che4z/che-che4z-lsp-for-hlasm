@@ -61,6 +61,11 @@ public:
     }
 
     size_t hash() const override;
+
+    mach_expr_ptr clone() const override
+    {
+        return std::make_unique<mach_expr_binary<T>>(left_->clone(), right_->clone(), get_range());
+    }
 };
 
 // Represents a unart operator in machine expression. Holds its
@@ -92,6 +97,8 @@ public:
     void collect_diags() const override { collect_diags_from_child(*child_); }
 
     size_t hash() const override;
+
+    mach_expr_ptr clone() const override { return std::make_unique<mach_expr_unary<T>>(child_->clone(), get_range()); }
 };
 
 struct add

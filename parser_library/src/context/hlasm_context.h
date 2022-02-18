@@ -26,6 +26,7 @@
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "source_context.h"
+#include "using.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -84,6 +85,9 @@ class hlasm_context
     void add_global_system_vars(code_scope& scope);
 
     bool is_opcode(id_index symbol) const;
+
+    using_collection m_usings;
+    std::vector<using_collection::index_t<using_collection>> m_active_usings;
 
 public:
     hlasm_context(std::string file_name = "",
@@ -279,6 +283,19 @@ public:
 
     size_t current_ainsert_id() const { return m_ainsert_id; }
     size_t obtain_ainsert_id() { return ++m_ainsert_id; }
+
+    void using_add(id_index label,
+        std::unique_ptr<expressions::mach_expression> begin,
+        std::unique_ptr<expressions::mach_expression> end,
+        std::vector<std::unique_ptr<expressions::mach_expression>> arguments,
+        dependency_evaluation_context eval_ctx,
+        processing_stack_t stack);
+    void using_remove(std::vector<std::unique_ptr<expressions::mach_expression>> arguments,
+        dependency_evaluation_context eval_ctx,
+        processing_stack_t stack);
+    void using_push();
+    bool using_pop();
+    void using_resolve(diagnostic_s_consumer&);
 };
 
 } // namespace hlasm_plugin::parser_library::context

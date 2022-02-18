@@ -743,3 +743,45 @@ TEST(using, absolute)
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 256, false), evaluate_result(1, 128));
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, -100, true), evaluate_result(0, -100));
 }
+
+TEST(using, simple_using)
+{
+    std::string input = R"(
+TEST  CSECT
+LABEL USING TEST,1
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, empty_operands)
+{
+    std::string input = R"(
+TEST  CSECT
+LABEL USING 1,
+LABEL USING ,
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A164", "A104" }));
+}
+
+TEST(using, wrong_operands)
+{
+    std::string input = R"(
+LABEL USING 1,(1,1)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A164" }));
+}

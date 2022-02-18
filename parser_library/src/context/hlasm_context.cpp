@@ -265,6 +265,7 @@ hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, std:
     , opencode_file_name_(file_name)
     , asm_options_(std::move(asm_options))
     , instruction_map_(init_instruction_map(*ids_))
+    , m_active_usings(1, m_usings.remove_all())
     , ord_ctx(*ids_, *this)
 {
     add_global_system_vars(scope_stack_.emplace_back());
@@ -849,5 +850,45 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 }
 
 const code_scope& hlasm_context::current_scope() const { return *curr_scope(); }
+
+
+
+void hlasm_context::using_add(id_index label,
+    std::unique_ptr<expressions::mach_expression> begin,
+    std::unique_ptr<expressions::mach_expression> end,
+    std::vector<std::unique_ptr<expressions::mach_expression>> bases,
+    dependency_evaluation_context eval_ctx,
+    processing_stack_t stack)
+{
+    m_active_usings.back() = m_usings.add(m_active_usings.back(),
+        label,
+        std::move(begin),
+        std::move(end),
+        std::move(bases),
+        std::move(eval_ctx),
+        std::move(stack));
+}
+
+void hlasm_context::using_remove(std::vector<std::unique_ptr<expressions::mach_expression>> bases,
+    dependency_evaluation_context eval_ctx,
+    processing_stack_t stack)
+{
+    m_active_usings.back() = bases.empty()
+        ? m_usings.remove_all()
+        : m_usings.remove(m_active_usings.back(), std::move(bases), std::move(eval_ctx), std::move(stack));
+}
+
+void hlasm_context::using_push() { m_active_usings.push_back(m_active_usings.back()); }
+
+bool hlasm_context::using_pop()
+{
+    if (m_active_usings.size() == 1)
+        return false;
+
+    m_active_usings.pop_back();
+    return true;
+}
+
+void hlasm_context::using_resolve(diagnostic_s_consumer& diag) { m_usings.resolve_all(ord_ctx, diag); }
 
 } // namespace hlasm_plugin::parser_library::context

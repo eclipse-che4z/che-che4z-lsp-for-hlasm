@@ -43,6 +43,8 @@ public:
     void collect_diags() const override {}
 
     size_t hash() const override;
+
+    mach_expr_ptr clone() const override;
 };
 
 // Represents a literal expression (e.g. =C'text')
@@ -63,7 +65,11 @@ class mach_expr_literal final : public mach_expression
     std::shared_ptr<literal_data> m_literal_data;
     std::string m_dd_text;
 
+    struct private_t
+    {};
+
 public:
+    mach_expr_literal(range rng, std::shared_ptr<literal_data> dd_shared, std::string text, private_t);
     mach_expr_literal(range rng, data_definition dd, std::string text);
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
@@ -77,6 +83,8 @@ public:
     void collect_diags() const override;
 
     size_t hash() const override;
+
+    mach_expr_ptr clone() const override;
 
     const data_definition& get_data_definition() const;
 
@@ -92,7 +100,16 @@ class mach_expr_data_attr final : public mach_expression
 {
     bool do_is_similar(const mach_expression& expr) const override;
 
+    struct private_t
+    {};
+
 public:
+    mach_expr_data_attr(context::id_index value,
+        context::data_attr_kind attribute,
+        range whole_rng,
+        range symbol_rng,
+        std::unique_ptr<mach_expr_literal> lit,
+        private_t);
     mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range whole_rng, range symbol_rng);
     mach_expr_data_attr(
         std::unique_ptr<mach_expr_literal> value, context::data_attr_kind attribute, range whole_rng, range symbol_rng);
@@ -113,6 +130,8 @@ public:
     void collect_diags() const override;
 
     size_t hash() const override;
+
+    mach_expr_ptr clone() const override;
 };
 
 // Represents an ordinary symbol in machine expressions.
@@ -137,6 +156,8 @@ public:
     void collect_diags() const override {}
 
     size_t hash() const override;
+
+    mach_expr_ptr clone() const override;
 };
 
 // Represents a location counter written in a machine expression (the character *)
@@ -158,6 +179,8 @@ public:
     void collect_diags() const override {}
 
     size_t hash() const override;
+
+    mach_expr_ptr clone() const override;
 };
 
 // Represents a self defining term (e.g. X'4A')
@@ -167,7 +190,11 @@ class mach_expr_self_def final : public mach_expression
 
     value_t value_;
 
+    struct private_t
+    {};
+
 public:
+    mach_expr_self_def(value_t value, range rng, private_t);
     mach_expr_self_def(std::string option, std::string value, range rng);
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
@@ -181,6 +208,8 @@ public:
     void collect_diags() const override {}
 
     size_t hash() const override;
+
+    mach_expr_ptr clone() const override;
 };
 
 // Represents an "empty" term that is used when parsing of a machine expression fails
@@ -203,6 +232,8 @@ public:
     void collect_diags() const override;
 
     size_t hash() const override;
+
+    mach_expr_ptr clone() const override;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions
