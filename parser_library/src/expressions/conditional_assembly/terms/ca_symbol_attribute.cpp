@@ -87,12 +87,12 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evalua
         if (undef_syms.empty() && context::symbol_attributes::is_ordinary_attribute(attribute))
         {
             context::SET_t substituted_name = vs->evaluate(eval_ctx);
-            processing::context_manager mngr(&eval_ctx);
 
             if (substituted_name.type != context::SET_t_enum::C_TYPE)
                 return {};
 
-            auto [valid, ord_name] = mngr.try_get_symbol_name(try_extract_leading_symbol(substituted_name.access_c()));
+            auto [valid, ord_name] =
+                eval_ctx.hlasm_ctx.try_get_symbol_name(try_extract_leading_symbol(substituted_name.access_c()));
 
             if (!valid)
                 return {};
@@ -354,7 +354,8 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
-    auto [valid, ord_name] = mngr.try_get_symbol_name(try_extract_leading_symbol(substituted_name.access_c()));
+    auto [valid, ord_name] =
+        eval_ctx.hlasm_ctx.try_get_symbol_name(try_extract_leading_symbol(substituted_name.access_c()));
 
     if (!valid)
     {

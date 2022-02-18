@@ -22,6 +22,7 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "instruction.h"
+#include "lexing/lexer.h"
 #include "using.h"
 
 namespace hlasm_plugin::parser_library::context {
@@ -894,5 +895,17 @@ bool hlasm_context::using_pop()
 void hlasm_context::using_resolve(diagnostic_s_consumer& diag) { m_usings->resolve_all(ord_ctx, diag); }
 
 index_t<using_collection> hlasm_context::using_current() const { return m_active_usings.back(); }
+
+hlasm_context::name_result hlasm_context::try_get_symbol_name(const std::string& symbol)
+{
+    if (symbol.empty() || symbol.size() > 63 || isdigit((unsigned char)symbol.front()))
+        return std::make_pair(false, context::id_storage::empty_id);
+
+    for (const auto& c : symbol)
+        if (!lexing::lexer::ord_char(c))
+            return std::make_pair(false, context::id_storage::empty_id);
+
+    return std::make_pair(true, ids().add(symbol));
+}
 
 } // namespace hlasm_plugin::parser_library::context

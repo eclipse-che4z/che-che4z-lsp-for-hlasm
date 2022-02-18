@@ -304,6 +304,9 @@ public:
     bool using_pop();
     void using_resolve(diagnostic_s_consumer&);
     index_t<using_collection> using_current() const;
+
+    using name_result = std::pair<bool, context::id_index>;
+    name_result try_get_symbol_name(const std::string& symbol);
 };
 
 } // namespace hlasm_plugin::parser_library::context

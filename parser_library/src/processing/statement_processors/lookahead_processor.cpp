@@ -306,7 +306,7 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
         return;
 
     auto name = std::get<semantics::ord_symbol_string>(statement.label_ref().value).symbol;
-    auto [valid, id] = context_manager(hlasm_ctx).try_get_symbol_name(*name);
+    auto [valid, id] = hlasm_ctx.try_get_symbol_name(*name);
     if (!valid)
         return;
 

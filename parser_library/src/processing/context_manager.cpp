@@ -15,7 +15,6 @@
 #include "context_manager.h"
 
 #include "context/variables/system_variable.h"
-#include "lexing/lexer.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -90,22 +89,10 @@ context::SET_t context_manager::get_var_sym_value(
 
 context::id_index context_manager::get_symbol_name(const std::string& symbol, range symbol_range) const
 {
-    auto tmp = try_get_symbol_name(symbol);
+    auto tmp = hlasm_ctx.try_get_symbol_name(symbol);
     if (!tmp.first)
         add_diagnostic(diagnostic_op::error_E065(symbol_range));
     return tmp.second;
-}
-
-context_manager::name_result context_manager::try_get_symbol_name(const std::string& symbol) const
-{
-    if (symbol.empty() || symbol.size() > 63 || isdigit((unsigned char)symbol.front()))
-        return std::make_pair(false, context::id_storage::empty_id);
-
-    for (const auto& c : symbol)
-        if (!lexing::lexer::ord_char(c))
-            return std::make_pair(false, context::id_storage::empty_id);
-
-    return std::make_pair(true, hlasm_ctx.ids().add(symbol));
 }
 
 bool context_manager::test_symbol_for_read(

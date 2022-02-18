@@ -51,6 +51,19 @@ context::id_index low_language_processor::find_label_symbol(const rebuilt_statem
         return context::id_storage::empty_id;
 }
 
+context::id_index low_language_processor::find_using_label(const rebuilt_statement& stmt) const
+{
+    if (const auto& label = stmt.label_ref(); label.type == semantics::label_si_type::ORD)
+    {
+        if (auto ret = hlasm_ctx.try_get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol);
+            ret.first)
+            return ret.second;
+
+        add_diagnostic(diagnostic_op::error_E065(label.field_range));
+    }
+    return nullptr;
+}
+
 bool low_language_processor::create_symbol(
     range err_range, context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes)
 {

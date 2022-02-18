@@ -958,19 +958,24 @@ void asm_processor::process_USING(rebuilt_statement stmt)
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
 
     (void)find_sequence_symbol(stmt);
-    auto label = find_label_symbol(stmt);
+    auto label = find_using_label(stmt);
 
     auto stack = hlasm_ctx.processing_stack();
     if (!check(stmt, stack, dep_solver, checker_, *this))
         return;
 
-    if (label != context::id_storage::empty_id && hlasm_ctx.ord_ctx.symbol_defined(label)
-        && !hlasm_ctx.ord_ctx.is_using_label(label))
+    if (label)
     {
-        add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
-        return;
+        if (!hlasm_ctx.ord_ctx.symbol_defined(label))
+        {
+            hlasm_ctx.ord_ctx.register_using_label(label);
+        }
+        else if (!hlasm_ctx.ord_ctx.is_using_label(label))
+        {
+            add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+            return;
+        }
     }
-
     mach_expr_ptr b;
     mach_expr_ptr e;
     std::vector<mach_expr_ptr> bases;

@@ -850,3 +850,50 @@ TEST(using, pop_empty)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A165" }));
 }
+
+TEST(using, register_alias)
+{
+    std::string input = R"(
+TEST  CSECT
+      USING TEST,R1
+R1    EQU   1
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, label_conflict_1)
+{
+    std::string input = R"(
+TEST  CSECT
+LABEL USING TEST,R1
+R1    EQU   1
+LABEL DS    F
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E031" }));
+}
+
+TEST(using, label_conflict_2)
+{
+    std::string input = R"(
+LABEL DS    F
+TEST  CSECT
+LABEL USING TEST,R1
+R1    EQU   1
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E031" }));
+}
