@@ -874,30 +874,16 @@ drop::drop(const std::vector<label_types>& allowed_types, std::string_view name_
 bool drop::check(
     const std::vector<const asm_operand*>& to_check, const range&, const diagnostic_collector& add_diagnostic) const
 {
+    // TODO: at this point the check is more or less redundant to the one performed in the process_DROP function
     if (has_one_comma(to_check))
         return true;
     for (const auto& operand : to_check)
     {
-        auto simple = get_simple_operand(operand);
-        if (simple == nullptr)
+        if (!is_operand_simple(operand))
         {
             add_diagnostic(diagnostic_op::error_A141_DROP_op_format(operand->operand_range));
             return false;
         }
-        if (!simple->is_default)
-        {
-            // base register must be specified
-            if (is_byte_value(simple->value))
-                continue;
-        }
-        else
-        {
-            // label must be specified
-            if (is_ord_symbol(simple->operand_identifier) || is_var_symbol(simple->operand_identifier))
-                continue;
-        }
-        add_diagnostic(diagnostic_op::error_A141_DROP_op_format(operand->operand_range));
-        return false;
     }
     return true;
 }
