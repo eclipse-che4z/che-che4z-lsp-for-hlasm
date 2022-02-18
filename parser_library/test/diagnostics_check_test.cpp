@@ -328,3 +328,41 @@ PRINT EQU *
 
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(diagnostics, system_variable_with_subscripts_valid_1)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNDX(1)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(diagnostics, system_variable_with_subscripts_valid_1_1)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNDX(1,1)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+}
