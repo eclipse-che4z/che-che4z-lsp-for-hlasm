@@ -12,7 +12,9 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include <assert.h>
+#include <algorithm>
+#include <cassert>
+#include <numeric>
 
 #include "symbol.h"
 
@@ -130,3 +132,56 @@ const symbol_value::abs_value_t& symbol_value::get_abs() const { return std::get
 const symbol_value::reloc_value_t& symbol_value::get_reloc() const { return std::get<reloc_value_t>(value_); }
 
 symbol_value_kind symbol_value::value_kind() const { return static_cast<symbol_value_kind>(value_.index()); }
+
+template<typename It, typename Equal, typename Accumulate>
+It aggregate(It begin, It end, Equal eq, Accumulate a)
+{
+    begin = std::adjacent_find(begin, end, eq); // identify first non-trivial group
+
+    auto group_start = begin;
+    while (group_start != end)
+    {
+        if (begin != group_start)
+            *begin = std::move(*group_start);
+
+        auto next_group = std::next(group_start);
+        while (next_group != end)
+        {
+            if (!eq(*begin, *next_group))
+                break;
+            a(*begin, *next_group);
+            ++next_group;
+        }
+
+        group_start = next_group;
+        ++begin;
+    }
+    return begin;
+}
+
+symbol_value symbol_value::ignore_qualification() const
+{
+    if (value_kind() != symbol_value_kind::RELOC)
+        return *this;
+
+    auto result = get_reloc();
+    auto& bases = result.bases();
+
+    std::for_each(bases.begin(), bases.end(), [](auto& e) { e.first.qualifier = nullptr; });
+
+    std::sort(bases.begin(), bases.end(), [](const auto& l, const auto& r) { return l.first.owner < r.first.owner; });
+
+    bases.erase(aggregate(
+                    bases.begin(),
+                    bases.end(),
+                    [](const auto& l, const auto& r) { return l.first.owner == r.first.owner; },
+                    [](auto& t, const auto& e) { t.second += e.second; }),
+        bases.end());
+
+    std::erase_if(bases, [](const auto& e) { return e.second == 0; });
+
+    if (bases.empty() && !result.has_unresolved_space())
+        return result.offset();
+    else
+        return std::move(result);
+}

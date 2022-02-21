@@ -50,6 +50,8 @@ struct symbol_value
 
     symbol_value_kind value_kind() const;
 
+    symbol_value ignore_qualification() const;
+
 private:
     std::variant<std::monostate, abs_value_t, reloc_value_t> value_;
 };

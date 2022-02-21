@@ -280,3 +280,35 @@ A   DS    0H
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(mach_instr_processing, relimm_qualified)
+{
+    std::string input(
+        R"(
+Q     USING *,12
+      J     Q.LABEL
+LABEL DS    0H
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_TRUE(a.diags().empty());
+}
+
+// TODO: should work after operand checking with USING is implemented
+// TEST(mach_instr_processing, relimm_qualified_bad)
+// {
+//     std::string input(
+//         R"(
+//       J     Q.LABEL
+// LABEL DS    0H
+// )");
+//
+//     analyzer a(input);
+//     a.analyze();
+//     a.collect_diags();
+//
+//     ASSERT_FALSE(a.diags().empty());
+// }
