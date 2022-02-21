@@ -978,10 +978,8 @@ void asm_processor::process_USING(rebuilt_statement stmt)
     }
     mach_expr_ptr b;
     mach_expr_ptr e;
-    std::vector<mach_expr_ptr> bases;
 
     const auto& ops = stmt.operands_ref().value;
-    bases.reserve(ops.size() - 1);
 
     switch (auto asm_op = ops.front()->access_asm(); asm_op->kind)
     {
@@ -996,12 +994,22 @@ void asm_processor::process_USING(rebuilt_statement stmt)
             break;
         }
         default:
-            assert(false);
+            add_diagnostic(diagnostic_op::error_A104_USING_first_format(asm_op->operand_range));
             return;
     }
 
+    std::vector<mach_expr_ptr> bases;
+    bases.reserve(ops.size() - 1);
     for (const auto& expr : std::span(ops).subspan(1))
-        bases.push_back(expr->access_asm()->access_expr()->expression->clone());
+    {
+        if (auto asm_expr = expr->access_asm()->access_expr())
+            bases.push_back(asm_expr->expression->clone());
+        else
+        {
+            add_diagnostic(diagnostic_op::error_A164_USING_mapping_format(expr->operand_range));
+            return;
+        }
+    }
 
     // TODO: this needs to be reworked
     const auto register_literals = [&dep_solver](const mach_expr_ptr& e) {

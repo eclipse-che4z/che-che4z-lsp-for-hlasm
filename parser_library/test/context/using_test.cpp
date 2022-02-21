@@ -815,13 +815,15 @@ TEST(using, wrong_operands)
 {
     std::string input = R"(
 LABEL USING 1,(1,1)
+LABEL USING 1,'FAIL'
+LABEL USING 'FAIL',1
 )";
 
     analyzer a(input);
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "A164" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A164", "A164", "A104" }));
 }
 
 TEST(using, push_pop)
@@ -921,4 +923,63 @@ TEST  CSECT
     const auto& d = diags.front();
 
     EXPECT_FALSE(d.related.empty());
+}
+
+TEST(using, macro_model)
+{
+    std::string input = R"(
+      MACRO
+&L    MAC   &N
+&L    USING &N,1
+&L._  USING TEST2,&L..&N
+      MEND
+
+TEST1 CSECT
+TEST2 CSECT
+LABEL MAC    TEST1
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, weird_constructs)
+{
+    std::string input = R"(
+TEST  CSECT
+      USING TEST,0
+      DROP  =A(0)-=A(0)
+      LTORG ,
+TESTL EQU   *-TEST
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TESTL"), 4);
+}
+
+TEST(using, weird_constructs_2)
+{
+    std::string input = R"(
+TEST  CSECT
+      USING TEST,12
+      DROP  8-(=A(0)-=A(4))
+      LTORG ,
+TESTL EQU   *-TEST
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TESTL"), 8);
 }

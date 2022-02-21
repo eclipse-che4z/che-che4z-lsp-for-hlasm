@@ -150,6 +150,8 @@ size_t mach_expr_symbol::hash() const
 
     if (value)
         result = hash_combine(result, (uintptr_t)value);
+    if (qualifier)
+        result = hash_combine(result, (uintptr_t)qualifier);
     return result;
 }
 mach_expr_ptr mach_expr_symbol::clone() const
@@ -159,7 +161,7 @@ mach_expr_ptr mach_expr_symbol::clone() const
 bool mach_expr_symbol::do_is_similar(const mach_expression& expr) const
 {
     const auto& e = static_cast<const mach_expr_symbol&>(expr);
-    return value == e.value;
+    return value == e.value && qualifier == e.qualifier;
 }
 //***********  mach_expr_self_def ************
 bool mach_expr_self_def::do_is_similar(const mach_expression& expr) const

@@ -154,7 +154,9 @@ bool using_instr::check(const std::vector<const asm_operand*>& to_check,
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
 
+    // TODO: at this point the check is more or less redundant to the one performed in the process_USING function
     // perform just the minimal validation - counts and forms
+    // detailed validation perform in the processing routine
     if (auto first_operand = get_complex_operand(to_check[0]); first_operand)
     {
         // first operand must be therefore in the form of (base, end)
