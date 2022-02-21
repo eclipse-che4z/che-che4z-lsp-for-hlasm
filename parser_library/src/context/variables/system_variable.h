@@ -64,6 +64,15 @@ public:
     const macro_param_data_component* get_data(const std::vector<size_t>& offset) const override;
 };
 
+// SYSLIST extras
+class system_variable_syslist final : public system_variable
+{
+public:
+    using system_variable::system_variable;
+
+    const macro_param_data_component* get_data(const std::vector<size_t>& offset) const override;
+};
+
 } // namespace hlasm_plugin::parser_library::context
 
 #endif
