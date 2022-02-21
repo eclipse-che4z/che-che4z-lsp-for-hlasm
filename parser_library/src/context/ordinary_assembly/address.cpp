@@ -229,9 +229,9 @@ std::vector<T> merge_entries(const std::vector<T>& lhs, const std::vector<T>& rh
         {
             int count;
             if (operation == op::ADD)
-                count = (*it)->second + entry.second;
+                count = entry.second + (*it)->second; // L + R
             else
-                count = (*it)->second - entry.second;
+                count = entry.second - (*it)->second; // L - R
 
             if (count != 0)
                 res.emplace_back(entry.first, count);

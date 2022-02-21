@@ -983,3 +983,18 @@ TESTL EQU   *-TEST
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TESTL"), 8);
 }
+
+TEST(using, self_mapping)
+{
+    std::string input = R"(
+LABEL1 DS    0H
+       USING LABEL2+*-LABEL1,1
+LABEL2 DS    0H
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
