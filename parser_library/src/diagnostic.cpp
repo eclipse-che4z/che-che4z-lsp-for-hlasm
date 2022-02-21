@@ -2059,6 +2059,12 @@ diagnostic_op diagnostic_op::error_E073(const range& range)
         diagnostic_severity::error, "E073", "Illegal START instruction - CSECT already exists.", range);
 }
 
+diagnostic_op diagnostic_op::error_E074(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "E074", "Generated operation code is null.", range);
+}
+
 diagnostic_op diagnostic_op::warning_W010(std::string_view message, const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning, "W010", concat(message, " not expected"), range);
