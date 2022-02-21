@@ -426,7 +426,7 @@ TEST(diagnostics, system_variable_with_subscript_0_null_opcode)
     a.collect_diags();
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
-    //EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" })); // todo - Find/add diag for "ASMA087S"
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E012" }));
 }
 
 TEST(diagnostics, system_variable_with_subscripts_1_0_null_opcode)
@@ -446,7 +446,7 @@ TEST(diagnostics, system_variable_with_subscripts_1_0_null_opcode)
     a.collect_diags();
 
     ASSERT_EQ(a.diags().size(), (size_t)0);
-    // EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" })); // todo - Find/add diag for "ASMA087S"
+     EXPECT_TRUE(matches_message_codes(a.diags(), { "E012" }));
 }
 
 TEST(diagnostics, system_variable_with_subscripts_1_1_0_null_opcode)
@@ -466,7 +466,7 @@ TEST(diagnostics, system_variable_with_subscripts_1_1_0_null_opcode)
     a.collect_diags();
 
     ASSERT_EQ(a.diags().size(), (size_t)0);
-    // EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" })); // todo - Find/add diag for "ASMA087S"
+     EXPECT_TRUE(matches_message_codes(a.diags(), { "E012" }));
 }
 
 TEST(diagnostics, system_variable_with_subscript_2_null_opcode)
