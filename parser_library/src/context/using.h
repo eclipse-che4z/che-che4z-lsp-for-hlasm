@@ -293,23 +293,6 @@ private:
         size_t compute_context_drop(register_t d);
     };
 
-    struct expression_hash
-    {
-        using is_transparent = void;
-
-        size_t operator()(const std::unique_ptr<mach_expression>& v) const;
-        size_t operator()(const mach_expression* v) const;
-    };
-
-    struct expression_equal
-    {
-        using is_transparent = void;
-
-        bool operator()(const std::unique_ptr<mach_expression>& l, const std::unique_ptr<mach_expression>& r) const;
-        bool operator()(const mach_expression* l, const std::unique_ptr<mach_expression>& r) const;
-        bool operator()(const std::unique_ptr<mach_expression>& l, const mach_expression* r) const;
-    };
-
     struct instruction_context
     {
         dependency_evaluation_context evaluation_ctx;
@@ -318,13 +301,12 @@ private:
 
     struct expression_value
     {
-        const mach_expression* expression;
+        std::unique_ptr<const mach_expression> expression;
         index_t<instruction_context> context;
         symbol_value value;
         id_index label;
     };
 
-    std::unordered_set<std::unique_ptr<mach_expression>, expression_hash, expression_equal> m_expressions;
     std::vector<using_entry> m_usings;
     std::vector<expression_value> m_expr_values;
     std::vector<instruction_context> m_instruction_contexts;
@@ -348,9 +330,7 @@ private:
     }
 
     index_t<instruction_context> add(dependency_evaluation_context ctx, processing_stack_t stack);
-    index_t<mach_expression> add(const mach_expression* expr, index_t<instruction_context> ctx);
-
-
+    index_t<mach_expression> add(std::unique_ptr<const mach_expression> expr, index_t<instruction_context> ctx);
 
 public:
     using_collection() = default;

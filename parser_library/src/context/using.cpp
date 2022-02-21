@@ -331,7 +331,7 @@ void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagn
 
         expr.value = expr.expression->evaluate(solver);
         if (expr.value.value_kind() == symbol_value_kind::UNDEF)
-            expr.label = identify_label(ord_context, expr.expression);
+            expr.label = identify_label(ord_context, expr.expression.get());
 
         expr.expression->collect_diags();
         if (expr.label == nullptr)
@@ -360,9 +360,9 @@ index_t<using_collection::instruction_context> using_collection::add(
 }
 
 index_t<using_collection::mach_expression> using_collection::add(
-    const mach_expression* expr, index_t<instruction_context> ctx)
+    std::unique_ptr<const mach_expression> expr, index_t<instruction_context> ctx)
 {
-    m_expr_values.push_back({ expr, ctx });
+    m_expr_values.push_back({ std::move(expr), ctx });
     return index_t<mach_expression>(m_expr_values.size() - 1);
 }
 
@@ -379,14 +379,14 @@ index_t<using_collection> using_collection::add(index_t<using_collection> curren
 
     index_t<instruction_context> ctx_id = add(std::move(eval_ctx), std::move(stack));
 
-    auto b = add(m_expressions.emplace(std::move(begin)).first->get(), ctx_id);
-    auto e = end ? add(m_expressions.emplace(std::move(end)).first->get(), ctx_id) : index_t<mach_expression>();
+    auto b = add(std::move(begin), ctx_id);
+    auto e = end ? add(std::move(end), ctx_id) : index_t<mach_expression>();
 
     std::vector<index_t<mach_expression>> base;
     base.reserve(args.size());
 
     std::transform(args.begin(), args.end(), std::back_inserter(base), [this, ctx_id](auto& a) {
-        return add(m_expressions.emplace(std::move(a)).first->get(), ctx_id);
+        return add(std::move(a), ctx_id);
     });
 
     m_usings.emplace_back(current, ctx_id, b, base, label, e);
@@ -404,7 +404,7 @@ index_t<using_collection> using_collection::remove(index_t<using_collection> cur
     base.reserve(args.size());
 
     std::transform(args.begin(), args.end(), std::back_inserter(base), [this, ctx_id](auto& a) {
-        return add(m_expressions.emplace(std::move(a)).first->get(), ctx_id);
+        return add(std::move(a), ctx_id);
     });
     m_usings.emplace_back(current, ctx_id, std::move(base));
 
@@ -423,28 +423,6 @@ using_collection::evaluate_result using_collection::evaluate(
         return evaluate_result { invalid_register, 1 - tmp.length };
     else
         return evaluate_result { tmp.mapping_regs[0], tmp.reg_offset };
-}
-
-size_t using_collection::expression_hash::operator()(const std::unique_ptr<mach_expression>& v) const
-{
-    return v->hash();
-}
-size_t using_collection::expression_hash::operator()(const mach_expression* v) const { return v->hash(); }
-
-bool using_collection::expression_equal::operator()(
-    const std::unique_ptr<mach_expression>& l, const std::unique_ptr<mach_expression>& r) const
-{
-    return utils::is_similar(*l, *r);
-}
-bool using_collection::expression_equal::operator()(
-    const mach_expression* l, const std::unique_ptr<mach_expression>& r) const
-{
-    return utils::is_similar(*l, *r);
-}
-bool using_collection::expression_equal::operator()(
-    const std::unique_ptr<mach_expression>& l, const mach_expression* r) const
-{
-    return utils::is_similar(*l, *r);
 }
 
 template</* std::integral */ typename R, /* std::integral */ typename T>
