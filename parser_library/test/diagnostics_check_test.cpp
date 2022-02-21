@@ -385,7 +385,7 @@ TEST(diagnostics, system_variable_with_subscripts_1_1_invalid_opcode)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
 
@@ -405,7 +405,7 @@ TEST(diagnostics, system_variable_with_subscripts_1_1_1_invalid_opcode)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
 
@@ -445,7 +445,7 @@ TEST(diagnostics, system_variable_with_subscripts_1_0_null_opcode)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
      EXPECT_TRUE(matches_message_codes(a.diags(), { "E012" }));
 }
 
@@ -465,7 +465,7 @@ TEST(diagnostics, system_variable_with_subscripts_1_1_0_null_opcode)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
      EXPECT_TRUE(matches_message_codes(a.diags(), { "E012" }));
 }
 
@@ -505,7 +505,7 @@ TEST(diagnostics, system_variable_with_subscripts_2_0_null_opcode)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
     // EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" })); // todo - Find/add diag for "ASMA087S"
 }
 
@@ -525,7 +525,7 @@ TEST(diagnostics, system_variable_with_subscripts_2_1_null_opcode)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
     // EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" })); // todo - Find/add diag for "ASMA087S"
 }
 
@@ -545,6 +545,6 @@ TEST(diagnostics, system_variable_with_subscripts_2_2_2_null_opcode)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
     // EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" })); // todo - Find/add diag for "ASMA087S"
 }
