@@ -79,7 +79,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 
             macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(std::move(value));
 
-            sys_sym_ptr var = std::make_shared<system_variable_sysmac>(SYSNDX, std::move(mac_data), false);
+            sys_sym_ptr var = std::make_shared<system_variable>(SYSNDX, std::move(mac_data), false);
 
             curr_scope()->system_variables.insert({ SYSNDX, std::move(var) });
         }
