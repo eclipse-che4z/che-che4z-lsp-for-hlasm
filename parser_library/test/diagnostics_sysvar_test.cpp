@@ -34,6 +34,7 @@ struct diagnostics_sysvar_params
             + subscript + R"(
  MEND 
  
+TEST CSECT
  MAC
 )";
 
