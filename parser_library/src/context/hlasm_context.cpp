@@ -123,11 +123,14 @@ void hlasm_context::add_system_vars_to_scope()
         {
             auto SYSNEST = ids().add("SYSNEST");
 
-            auto var = std::make_shared<set_symbol<A_t>>(SYSNEST, true, false);
+            std::string value = std::to_string(scope_stack_.size() - 1);
 
-            var->set_value((context::A_t)scope_stack_.size() - 1);
+            macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(std::move(value));
 
-            curr_scope()->variables.insert({ SYSNEST, var });
+            sys_sym_ptr var = std::make_shared<system_variable>(SYSNEST, std::move(mac_data), false);
+
+            curr_scope()->system_variables.insert({ SYSNEST, var });
+
         }
 
         {
