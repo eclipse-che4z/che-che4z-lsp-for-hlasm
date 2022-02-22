@@ -16,6 +16,7 @@
 
 #include <bitset>
 #include <limits>
+#include <span>
 
 #include "diagnosable_ctx.h"
 #include "diagnostic_consumer.h"
