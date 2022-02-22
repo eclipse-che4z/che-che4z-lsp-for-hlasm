@@ -87,16 +87,24 @@ size_t mach_expr_unary<par>::hash() const
     return hash_combine((size_t)0xe45af0e42cda6037, child_->hash());
 }
 
+// !!! DO NOT CHANGE THE CODE INTO return l->evaluate/get... (op) r->evaluate/get... !!!
+// function arguments evaluation order is unspecified.
+// TODO: once literal registration is re-worked, this could be possibly changed back.
+
 template<>
 mach_expression::value_t mach_expr_binary<add>::evaluate(context::dependency_solver& info) const
 {
-    return left_->evaluate(info) + right_->evaluate(info);
+    auto l = left_->evaluate(info);
+    auto r = right_->evaluate(info);
+    return std::move(l) + std::move(r);
 }
 
 template<>
 mach_expression::value_t mach_expr_binary<sub>::evaluate(context::dependency_solver& info) const
 {
-    return left_->evaluate(info) - right_->evaluate(info);
+    auto l = left_->evaluate(info);
+    auto r = right_->evaluate(info);
+    return std::move(l) - std::move(r);
 }
 
 template<>
@@ -172,31 +180,41 @@ mach_expression::value_t mach_expr_unary<par>::evaluate(context::dependency_solv
 template<>
 context::dependency_collector mach_expr_binary<add>::get_dependencies(context::dependency_solver& info) const
 {
-    return left_->get_dependencies(info) + right_->get_dependencies(info);
+    auto l = left_->get_dependencies(info);
+    auto r = right_->get_dependencies(info);
+    return std::move(l) + std::move(r);
 }
 
 template<>
 context::dependency_collector mach_expr_binary<sub>::get_dependencies(context::dependency_solver& info) const
 {
-    return left_->get_dependencies(info) - right_->get_dependencies(info);
+    auto l = left_->get_dependencies(info);
+    auto r = right_->get_dependencies(info);
+    return std::move(l) - std::move(r);
 }
 
 template<>
 context::dependency_collector mach_expr_binary<rel_addr>::get_dependencies(context::dependency_solver& info) const
 {
-    return left_->get_dependencies(info) - right_->get_dependencies(info);
+    auto l = left_->get_dependencies(info);
+    auto r = right_->get_dependencies(info);
+    return std::move(l) - std::move(r);
 }
 
 template<>
 context::dependency_collector mach_expr_binary<mul>::get_dependencies(context::dependency_solver& info) const
 {
-    return left_->get_dependencies(info) * right_->get_dependencies(info);
+    auto l = left_->get_dependencies(info);
+    auto r = right_->get_dependencies(info);
+    return std::move(l) * std::move(r);
 }
 
 template<>
 context::dependency_collector mach_expr_binary<div>::get_dependencies(context::dependency_solver& info) const
 {
-    return left_->get_dependencies(info) / right_->get_dependencies(info);
+    auto l = left_->get_dependencies(info);
+    auto r = right_->get_dependencies(info);
+    return std::move(l) / std::move(r);
 }
 
 template<>
