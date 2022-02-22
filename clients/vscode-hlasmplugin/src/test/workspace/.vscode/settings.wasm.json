@@ -1,5 +1,6 @@
 {
     "hlasm.continuationHandling": true,
     "hlasm.useAutodetection": true,
-    "hlasm.serverVariant": "wasm"
+    "hlasm.serverVariant": "wasm",
+    "workbench.editor.languageDetection": false
 }
