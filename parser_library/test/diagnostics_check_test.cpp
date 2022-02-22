@@ -329,7 +329,7 @@ PRINT EQU *
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
-TEST(diagnostics, system_variable_without_subscript_invalid_opcode)
+TEST(diagnostics, sysvar_SYSNDX_without_subscript_invalid_opcode)
 {
     std::string input(
         R"( 
@@ -349,7 +349,7 @@ TEST(diagnostics, system_variable_without_subscript_invalid_opcode)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
 
-TEST(diagnostics, system_variable_with_subscript_1_invalid_opcode)
+TEST(diagnostics, sysvar_SYSNDX_with_subscript_1_invalid_opcode)
 {
     std::string input(
         R"( 
@@ -369,7 +369,7 @@ TEST(diagnostics, system_variable_with_subscript_1_invalid_opcode)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
 
-TEST(diagnostics, system_variable_with_subscripts_1_1_invalid_opcode)
+TEST(diagnostics, sysvar_SYSNDX_with_subscripts_1_1_invalid_opcode)
 {
     std::string input(
         R"( 
@@ -389,7 +389,7 @@ TEST(diagnostics, system_variable_with_subscripts_1_1_invalid_opcode)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
 
-TEST(diagnostics, system_variable_with_subscripts_1_1_1_invalid_opcode)
+TEST(diagnostics, sysvar_SYSNDX_with_subscripts_1_1_1_invalid_opcode)
 {
     std::string input(
         R"( 
@@ -409,7 +409,7 @@ TEST(diagnostics, system_variable_with_subscripts_1_1_1_invalid_opcode)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
 
-TEST(diagnostics, system_variable_with_subscript_0_null_opcode)
+TEST(diagnostics, sysvar_SYSNDX_with_subscript_0_null_opcode)
 {
     std::string input(
         R"( 
@@ -429,7 +429,7 @@ TEST(diagnostics, system_variable_with_subscript_0_null_opcode)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E012", "E074" }));
 }
 
-TEST(diagnostics, system_variable_with_subscripts_1_0_null_opcode)
+TEST(diagnostics, sysvar_SYSNDX_with_subscripts_1_0_null_opcode)
 {
     std::string input(
         R"( 
@@ -449,7 +449,7 @@ TEST(diagnostics, system_variable_with_subscripts_1_0_null_opcode)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E012", "E074" }));
 }
 
-TEST(diagnostics, system_variable_with_subscripts_1_1_0_null_opcode)
+TEST(diagnostics, sysvar_SYSNDX_with_subscripts_1_1_0_null_opcode)
 {
     std::string input(
         R"( 
@@ -469,7 +469,7 @@ TEST(diagnostics, system_variable_with_subscripts_1_1_0_null_opcode)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E012", "E074" }));
 }
 
-TEST(diagnostics, system_variable_with_subscript_2_null_opcode)
+TEST(diagnostics, sysvar_SYSNDX_with_subscript_2_null_opcode)
 {
     std::string input(
         R"( 
@@ -489,7 +489,7 @@ TEST(diagnostics, system_variable_with_subscript_2_null_opcode)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E074" }));
 }
 
-TEST(diagnostics, system_variable_with_subscripts_2_0_null_opcode)
+TEST(diagnostics, sysvar_SYSNDX_with_subscripts_2_0_null_opcode)
 {
     std::string input(
         R"( 
@@ -509,7 +509,7 @@ TEST(diagnostics, system_variable_with_subscripts_2_0_null_opcode)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E074" }));
 }
 
-TEST(diagnostics, system_variable_with_subscripts_2_1_null_opcode)
+TEST(diagnostics, sysvar_SYSNDX_with_subscripts_2_1_null_opcode)
 {
     std::string input(
         R"( 
@@ -529,13 +529,233 @@ TEST(diagnostics, system_variable_with_subscripts_2_1_null_opcode)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E074" }));
 }
 
-TEST(diagnostics, system_variable_with_subscripts_2_2_2_null_opcode)
+TEST(diagnostics, sysvar_SYSNDX_with_subscripts_2_2_2_null_opcode)
 {
     std::string input(
         R"( 
  MACRO
  MAC
  &SYSNDX(2,2,2)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E074" }));
+}
+
+TEST(diagnostics, sysvar_SYSNEST_without_subscript_invalid_opcode)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNEST
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
+}
+
+TEST(diagnostics, sysvar_SYSNEST_with_subscript_1_invalid_opcode)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNEST(1)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
+}
+
+TEST(diagnostics, sysvar_SYSNEST_with_subscripts_1_1_invalid_opcode)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNEST(1,1)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
+}
+
+TEST(diagnostics, sysvar_SYSNEST_with_subscripts_1_1_1_invalid_opcode)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNEST(1,1,1)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
+}
+
+TEST(diagnostics, sysvar_SYSNEST_with_subscript_0_null_opcode)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNEST(0)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E012", "E074" }));
+}
+
+TEST(diagnostics, sysvar_SYSNEST_with_subscripts_1_0_null_opcode)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNEST(1,0)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E012", "E074" }));
+}
+
+TEST(diagnostics, sysvar_SYSNEST_with_subscripts_1_1_0_null_opcode)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNEST(1,1,0)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E012", "E074" }));
+}
+
+TEST(diagnostics, sysvar_SYSNEST_with_subscript_2_null_opcode)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNEST(2)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E074" }));
+}
+
+TEST(diagnostics, sysvar_SYSNEST_with_subscripts_2_0_null_opcode)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNEST(2,0)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E074" }));
+}
+
+TEST(diagnostics, sysvar_SYSNEST_with_subscripts_2_1_null_opcode)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNEST(2,1)
+ MEND 
+ 
+ MAC
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E074" }));
+}
+
+TEST(diagnostics, sysvar_SYSNEST_with_subscripts_2_2_2_null_opcode)
+{
+    std::string input(
+        R"( 
+ MACRO
+ MAC
+ &SYSNEST(2,2,2)
  MEND 
  
  MAC
