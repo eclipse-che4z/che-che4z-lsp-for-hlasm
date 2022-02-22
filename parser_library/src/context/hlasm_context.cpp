@@ -64,10 +64,13 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
         {
             auto SYSECT = ids().add("SYSECT");
 
-            auto val_sect = std::make_shared<set_symbol<C_t>>(SYSECT, true, false);
             auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_storage::empty_id;
-            val_sect->set_value(*sect_name);
-            scope.variables.insert({ SYSECT, val_sect });
+
+            macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(*sect_name);
+
+            sys_sym_ptr var = std::make_shared<system_variable>(SYSECT, std::move(mac_data), false);
+
+            scope.variables.insert({ SYSECT, std::move(var)});
         }
 
         {
@@ -112,6 +115,8 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
         }
 
         {
+            //auto SYSLOC = ids().add("SYSLOC");
+
             auto SYSLOC = ids().add("SYSLOC");
 
             auto var = std::make_shared<set_symbol<C_t>>(SYSLOC, true, false);
