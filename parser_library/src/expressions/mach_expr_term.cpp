@@ -14,6 +14,7 @@
 
 #include "mach_expr_term.h"
 
+#include <charconv>
 #include <stdexcept>
 
 #include "checking/checker_helper.h"
@@ -39,14 +40,13 @@ bool mach_expr_constant::do_is_similar(const mach_expression& expr) const
 mach_expr_constant::mach_expr_constant(std::string value_text, range rng)
     : mach_expression(rng)
 {
-    try
-    {
-        value_ = std::stoi(value_text);
-    }
-    catch (std::out_of_range&)
-    {
-        add_diagnostic(diagnostic_op::error_ME001(get_range()));
-    }
+    int32_t v = 0;
+
+    const auto* b = value_text.data();
+    const auto* e = b + value_text.size();
+
+    if (auto ec = std::from_chars(b, e, v); ec.ec == std::errc {} && ec.ptr == e)
+        value_ = value_t(v);
 }
 mach_expr_constant::mach_expr_constant(int value, range rng)
     : mach_expression(rng)
@@ -58,7 +58,13 @@ context::dependency_collector mach_expr_constant::get_dependencies(context::depe
     return context::dependency_collector();
 }
 
-mach_expr_constant::value_t mach_expr_constant::evaluate(context::dependency_solver&) const { return value_; }
+mach_expr_constant::value_t mach_expr_constant::evaluate(
+    context::dependency_solver&, diagnostic_op_consumer& diags) const
+{
+    if (value_.value_kind() == context::symbol_value_kind::UNDEF)
+        diags.add_diagnostic(diagnostic_op::error_ME001(get_range()));
+    return value_;
+}
 
 const mach_expression* mach_expr_constant::leftmost_term() const { return this; }
 
@@ -109,7 +115,8 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
         return context::dependency_collector();
 }
 
-mach_expr_constant::value_t mach_expr_symbol::evaluate(context::dependency_solver& info) const
+mach_expr_constant::value_t mach_expr_symbol::evaluate(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
     auto symbol = info.get_symbol(value);
 
@@ -180,8 +187,12 @@ mach_expr_self_def::mach_expr_self_def(value_t value, range rng, private_t)
 mach_expr_self_def::mach_expr_self_def(std::string option, std::string value, range rng)
     : mach_expression(rng)
 {
-    diagnostic_adder add_diagnostic(*this, rng);
-    value_ = ca_constant::self_defining_term(option, value, add_diagnostic);
+    bool error_occured = false;
+    diagnostic_consumer_transform tmp([&error_occured](diagnostic_op) { error_occured = true; });
+    diagnostic_adder add_diagnostic(tmp, rng);
+    auto v = ca_constant::self_defining_term(option, value, add_diagnostic);
+    if (!error_occured)
+        value_ = value_t(v);
 }
 
 context::dependency_collector mach_expr_self_def::get_dependencies(context::dependency_solver&) const
@@ -189,7 +200,13 @@ context::dependency_collector mach_expr_self_def::get_dependencies(context::depe
     return context::dependency_collector();
 }
 
-mach_expr_self_def::value_t mach_expr_self_def::evaluate(context::dependency_solver&) const { return value_; }
+mach_expr_self_def::value_t mach_expr_self_def::evaluate(
+    context::dependency_solver&, diagnostic_op_consumer& diags) const
+{
+    if (value_.value_kind() == context::symbol_value_kind::UNDEF)
+        diags.add_diagnostic(diagnostic_op::error_CE007(get_range()));
+    return value_;
+}
 
 const mach_expression* mach_expr_self_def::leftmost_term() const { return this; }
 
@@ -217,7 +234,8 @@ context::dependency_collector mach_expr_location_counter::get_dependencies(conte
         return context::dependency_collector(*location_counter);
 }
 
-mach_expression::value_t mach_expr_location_counter::evaluate(context::dependency_solver& mi) const
+mach_expression::value_t mach_expr_location_counter::evaluate(
+    context::dependency_solver& mi, diagnostic_op_consumer& diags) const
 {
     auto location_counter = mi.get_loctr();
     if (!location_counter.has_value())
@@ -248,13 +266,14 @@ context::dependency_collector mach_expr_default::get_dependencies(context::depen
     return context::dependency_collector();
 }
 
-mach_expression::value_t mach_expr_default::evaluate(context::dependency_solver&) const { return value_t(); }
+mach_expression::value_t mach_expr_default::evaluate(context::dependency_solver&, diagnostic_op_consumer& diags) const
+{
+    return value_t();
+}
 
 const mach_expression* mach_expr_default::leftmost_term() const { return this; }
 
 void mach_expr_default::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
-
-void mach_expr_default::collect_diags() const {}
 
 size_t mach_expr_default::hash() const { return (size_t)0xd11a22d1aa4016e0; }
 
@@ -308,7 +327,8 @@ context::dependency_collector mach_expr_data_attr::get_dependencies(context::dep
     return context::dependency_collector(true);
 }
 
-mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solver& solver) const
+mach_expression::value_t mach_expr_data_attr::evaluate(
+    context::dependency_solver& solver, diagnostic_op_consumer& diags) const
 {
     if (value)
     {
@@ -321,7 +341,7 @@ mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solve
         else if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
             && !symbol->attributes().can_have_SI_attr())
         {
-            add_diagnostic(diagnostic_op::warning_W011(get_range()));
+            diags.add_diagnostic(diagnostic_op::warning_W011(get_range()));
             return 0;
         }
         else if (symbol->attributes().is_defined(attribute))
@@ -333,7 +353,7 @@ mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solve
     }
     else if (lit)
     {
-        (void)lit->evaluate(solver);
+        (void)lit->evaluate(solver, diags);
 
         auto& dd = lit->get_data_definition();
         context::symbol_attributes attrs(context::symbol_origin::DAT,
@@ -344,7 +364,7 @@ mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solve
         if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
             && !attrs.can_have_SI_attr())
         {
-            add_diagnostic(diagnostic_op::warning_W011(get_range()));
+            diags.add_diagnostic(diagnostic_op::warning_W011(get_range()));
             return 0;
         }
         return attrs.get_attribute_value(attribute);
@@ -355,12 +375,6 @@ mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solve
 const mach_expression* mach_expr_data_attr::leftmost_term() const { return this; }
 
 void mach_expr_data_attr::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
-
-void mach_expr_data_attr::collect_diags() const
-{
-    if (lit)
-        collect_diags_from_child(*lit);
-}
 
 size_t mach_expr_data_attr::hash() const
 {
@@ -420,8 +434,12 @@ context::dependency_collector mach_expr_literal::get_dependencies(context::depen
     }
 }
 
-mach_expression::value_t mach_expr_literal::evaluate(context::dependency_solver& solver) const
+mach_expression::value_t mach_expr_literal::evaluate(
+    context::dependency_solver& solver, diagnostic_op_consumer& diags) const
 {
+    for (const auto& d : m_literal_data->dd.diags())
+        diags.add_diagnostic(d);
+
     auto symbol = solver.get_symbol(get_literal_id(solver));
 
     if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
@@ -433,8 +451,6 @@ mach_expression::value_t mach_expr_literal::evaluate(context::dependency_solver&
 const mach_expression* mach_expr_literal::leftmost_term() const { return this; }
 
 void mach_expr_literal::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
-
-void mach_expr_literal::collect_diags() const { collect_diags_from_child(m_literal_data->dd); }
 
 size_t mach_expr_literal::hash() const { return m_literal_data->dd.hash(); }
 

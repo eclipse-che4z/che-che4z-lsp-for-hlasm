@@ -140,28 +140,31 @@ char data_definition::get_type_attribute() const
 
 int32_t data_definition::get_scale_attribute(context::dependency_solver& info) const
 {
+    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     auto def_type = access_data_def_type();
     if (def_type)
-        return def_type->get_scale_attribute(evaluate_scale(info), evaluate_nominal_value(info));
+        return def_type->get_scale_attribute(evaluate_scale(info, diags), evaluate_nominal_value(info, diags));
     else
         return 0;
 }
 
 uint32_t data_definition::get_length_attribute(context::dependency_solver& info) const
 {
+    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     auto def_type = access_data_def_type();
     if (def_type)
-        return def_type->get_length_attribute(evaluate_length(info), evaluate_nominal_value(info));
+        return def_type->get_length_attribute(evaluate_length(info, diags), evaluate_nominal_value(info, diags));
     else
         return 0;
 }
 
 int32_t data_definition::get_integer_attribute(context::dependency_solver& info) const
 {
+    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     auto def_type = access_data_def_type();
     if (def_type)
         return def_type->get_integer_attribute(
-            evaluate_length(info), evaluate_scale(info), evaluate_nominal_value(info));
+            evaluate_length(info, diags), evaluate_scale(info, diags), evaluate_nominal_value(info, diags));
     else
         return 0;
 }
@@ -221,39 +224,10 @@ std::vector<context::id_index> data_definition::get_single_symbol_names() const
     return symbols;
 }
 
-void data_definition::collect_diags() const
-{
-    if (dupl_factor)
-        collect_diags_from_child(*dupl_factor);
-    if (program_type)
-        collect_diags_from_child(*program_type);
-    if (length)
-        collect_diags_from_child(*length);
-    if (scale)
-        collect_diags_from_child(*scale);
-    if (exponent)
-        collect_diags_from_child(*exponent);
-
-    if (nominal_value && nominal_value->access_exprs())
-    {
-        for (const auto& val : nominal_value->access_exprs()->exprs)
-        {
-            if (std::holds_alternative<expressions::mach_expr_ptr>(val))
-                collect_diags_from_child(*std::get<expressions::mach_expr_ptr>(val));
-            else
-            {
-                const auto& addr = std::get<expressions::address_nominal>(val);
-                if (addr.base)
-                    collect_diags_from_child(*addr.base);
-                if (addr.displacement)
-                    collect_diags_from_child(*addr.displacement);
-            }
-        }
-    }
-}
+void data_definition::collect_diags() const {}
 
 checking::data_def_field<int32_t> set_data_def_field(
-    const expressions::mach_expression* e, context::dependency_solver& info)
+    const expressions::mach_expression* e, context::dependency_solver& info, diagnostic_op_consumer& diags)
 {
     using namespace checking;
     data_def_field<int32_t> field;
@@ -263,39 +237,43 @@ checking::data_def_field<int32_t> set_data_def_field(
     {
         field.rng = e->get_range();
         // TODO get_reloc get_abs
-        auto ret(e->evaluate(info));
+        auto ret(e->evaluate(info, diags));
         if (ret.value_kind() == context::symbol_value_kind::ABS)
-            field.value = e->evaluate(info).get_abs();
+            field.value = e->evaluate(info, diags).get_abs();
     }
     return field;
 }
 
-checking::dupl_factor_modifier_t data_definition::evaluate_dupl_factor(context::dependency_solver& info) const
+checking::dupl_factor_modifier_t data_definition::evaluate_dupl_factor(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    return dupl_factor ? set_data_def_field(dupl_factor.get(), info) : checking::data_def_field<int32_t>(1);
+    return dupl_factor ? set_data_def_field(dupl_factor.get(), info, diags) : checking::data_def_field<int32_t>(1);
 }
 
-checking::data_def_length_t data_definition::evaluate_length(context::dependency_solver& info) const
+checking::data_def_length_t data_definition::evaluate_length(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    checking::data_def_length_t len(set_data_def_field(length.get(), info));
+    checking::data_def_length_t len(set_data_def_field(length.get(), info, diags));
     len.len_type = length_type == expressions::data_definition::length_type::BIT ? checking::data_def_length_t::BIT
                                                                                  : checking::data_def_length_t::BYTE;
     return len;
 }
 
-checking::scale_modifier_t data_definition::evaluate_scale(context::dependency_solver& info) const
+checking::scale_modifier_t data_definition::evaluate_scale(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    auto common = set_data_def_field(scale.get(), info);
+    auto common = set_data_def_field(scale.get(), info, diags);
     return checking::scale_modifier_t(common.present, (int16_t)common.value, common.rng);
 }
 
-checking::exponent_modifier_t data_definition::evaluate_exponent(context::dependency_solver& info) const
+checking::exponent_modifier_t data_definition::evaluate_exponent(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    return set_data_def_field(exponent.get(), info);
+    return set_data_def_field(exponent.get(), info, diags);
 }
 
 inline checking::nominal_value_expressions extract_nominal_value_expressions(
-    const expr_or_address_list& exprs, context::dependency_solver& info)
+    const expr_or_address_list& exprs, context::dependency_solver& info, diagnostic_op_consumer& diags)
 {
     checking::nominal_value_expressions values;
     for (const auto& e_or_a : exprs)
@@ -305,7 +283,7 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(
             const expressions::mach_expr_ptr& e = std::get<expressions::mach_expr_ptr>(e_or_a);
             auto deps = e->get_dependencies(info);
             bool ignored = deps.has_error || deps.contains_dependencies(); // ignore values with dependencies
-            auto ev = e->evaluate(info);
+            auto ev = e->evaluate(info, diags);
             auto kind = ev.value_kind();
             if (kind == context::symbol_value_kind::ABS)
             {
@@ -342,8 +320,8 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(
             const auto& a = std::get<expressions::address_nominal>(e_or_a);
             checking::data_def_address ch_adr;
 
-            ch_adr.base = set_data_def_field(a.base.get(), info);
-            ch_adr.displacement = set_data_def_field(a.displacement.get(), info);
+            ch_adr.base = set_data_def_field(a.base.get(), info, diags);
+            ch_adr.displacement = set_data_def_field(a.displacement.get(), info, diags);
             ch_adr.ignored = !ch_adr.base.present || !ch_adr.displacement.present; // ignore value with dependencies
             values.push_back(ch_adr);
         }
@@ -351,7 +329,8 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(
     return values;
 }
 
-checking::nominal_value_t data_definition::evaluate_nominal_value(context::dependency_solver& info) const
+checking::nominal_value_t data_definition::evaluate_nominal_value(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
     if (!nominal_value)
         return {};
@@ -365,7 +344,7 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(context::depen
     }
     else if (nominal_value->access_exprs())
     {
-        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs, info);
+        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs, info, diags);
     }
     else
         assert(false);

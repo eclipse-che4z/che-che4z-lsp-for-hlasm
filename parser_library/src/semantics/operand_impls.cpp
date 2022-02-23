@@ -87,9 +87,9 @@ address_machine_operand* machine_operand::access_address()
 }
 
 std::unique_ptr<checking::operand> make_check_operand(
-    context::dependency_solver& info, const expressions::mach_expression& expr)
+    context::dependency_solver& info, const expressions::mach_expression& expr, diagnostic_op_consumer& diags)
 {
-    auto res = expr.evaluate(info);
+    auto res = expr.evaluate(info, diags);
     if (res.value_kind() == context::symbol_value_kind::ABS)
     {
         return std::make_unique<checking::one_operand>(res.get_abs());
@@ -102,9 +102,9 @@ std::unique_ptr<checking::operand> make_check_operand(
 }
 
 std::unique_ptr<checking::operand> make_rel_imm_operand(
-    context::dependency_solver& info, const expressions::mach_expression& expr)
+    context::dependency_solver& info, const expressions::mach_expression& expr, diagnostic_op_consumer& diags)
 {
-    auto res = expr.evaluate(info);
+    auto res = expr.evaluate(info, diags);
     if (res.value_kind() == context::symbol_value_kind::ABS)
     {
         return std::make_unique<checking::one_operand>(std::to_string(res.get_abs()), res.get_abs());
@@ -125,17 +125,19 @@ expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression
 
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(context::dependency_solver& info) const
 {
-    return make_check_operand(info, *expression);
+    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
+    return make_check_operand(info, *expression, diags);
 }
 
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
     context::dependency_solver& info, checking::machine_operand_type type_hint) const
 {
+    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     if (type_hint == checking::machine_operand_type::RELOC_IMM)
     {
-        return make_rel_imm_operand(info, *expression);
+        return make_rel_imm_operand(info, *expression, diags);
     }
-    return make_check_operand(info, *expression);
+    return make_check_operand(info, *expression, diags);
 }
 
 // suppress MSVC warning 'inherits via dominance'
@@ -150,7 +152,7 @@ bool expr_machine_operand::has_error(context::dependency_solver& info) const
     return simple_expr_operand::has_error(info);
 }
 
-void expr_machine_operand::collect_diags() const { collect_diags_from_child(*expression); }
+void expr_machine_operand::collect_diags() const {}
 
 void expr_machine_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
@@ -203,19 +205,20 @@ bool address_machine_operand::has_error(context::dependency_solver& info) const
 
 std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(context::dependency_solver& info) const
 {
+    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     context::symbol_value displ, first, second;
     context::symbol_value::abs_value_t displ_v, first_v, second_v;
 
-    displ = displacement->evaluate(info);
+    displ = displacement->evaluate(info, diags);
     displ_v = displ.value_kind() == context::symbol_value_kind::ABS ? displ.get_abs() : 0;
     if (first_par)
     {
-        first = first_par->evaluate(info);
+        first = first_par->evaluate(info, diags);
         first_v = first.value_kind() == context::symbol_value_kind::ABS ? first.get_abs() : 0;
     }
     if (second_par)
     {
-        second = second_par->evaluate(info);
+        second = second_par->evaluate(info, diags);
         second_v = second.value_kind() == context::symbol_value_kind::ABS ? second.get_abs() : 0;
     }
 
@@ -237,14 +240,7 @@ std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
     return get_operand_value(info);
 }
 
-void address_machine_operand::collect_diags() const
-{
-    collect_diags_from_child(*displacement);
-    if (first_par)
-        collect_diags_from_child(*first_par);
-    if (second_par)
-        collect_diags_from_child(*second_par);
-}
+void address_machine_operand::collect_diags() const {}
 
 void address_machine_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
@@ -299,7 +295,8 @@ std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inn
     if (!can_have_ordsym && dynamic_cast<expressions::mach_expr_symbol*>(expression.get()))
         return std::make_unique<checking::one_operand>(value_);
 
-    auto res = expression->evaluate(info);
+    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
+    auto res = expression->evaluate(info, diags);
     switch (res.value_kind())
     {
         case context::symbol_value_kind::UNDEF:
@@ -326,7 +323,7 @@ bool expr_assembler_operand::has_error(context::dependency_solver& info) const
     return simple_expr_operand::has_error(info);
 }
 
-void expr_assembler_operand::collect_diags() const { collect_diags_from_child(*expression); }
+void expr_assembler_operand::collect_diags() const {}
 
 void expr_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
@@ -355,20 +352,20 @@ bool using_instr_assembler_operand::has_error(context::dependency_solver& info) 
     return base->get_dependencies(info).has_error || end->get_dependencies(info).has_error;
 }
 
-std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(context::dependency_solver&) const
+std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(
+    context::dependency_solver& info) const
 {
     std::vector<std::unique_ptr<checking::asm_operand>> pair;
     // this is just for the form
+    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
+    (void)base->evaluate(info, diags);
+    (void)end->evaluate(info, diags);
     pair.push_back(std::make_unique<checking::one_operand>(base_text));
     pair.push_back(std::make_unique<checking::one_operand>(end_text));
     return std::make_unique<checking::complex_operand>("", std::move(pair));
 }
 
-void using_instr_assembler_operand::collect_diags() const
-{
-    collect_diags_from_child(*base);
-    collect_diags_from_child(*end);
-}
+void using_instr_assembler_operand::collect_diags() const {}
 
 void using_instr_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
@@ -566,25 +563,26 @@ std::vector<const context::resolvable*> resolvable_list(const args&... expr)
 
 std::unique_ptr<checking::operand> data_def_operand::get_operand_value(context::dependency_solver& info) const
 {
-    return std::make_unique<checking::data_definition_operand>(get_operand_value(*value, info));
+    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
+    return std::make_unique<checking::data_definition_operand>(get_operand_value(*value, info, diags));
 }
 
 checking::data_definition_operand data_def_operand::get_operand_value(
-    const expressions::data_definition& dd, context::dependency_solver& info)
+    const expressions::data_definition& dd, context::dependency_solver& info, diagnostic_op_consumer& diags)
 {
     checking::data_definition_operand op;
 
-    op.dupl_factor = dd.evaluate_dupl_factor(info);
+    op.dupl_factor = dd.evaluate_dupl_factor(info, diags);
     op.type.value = dd.type;
     op.type.rng = dd.type_range;
     op.extension.present = dd.extension != '\0';
     op.extension.value = dd.extension;
     op.extension.rng = dd.extension_range;
-    op.length = dd.evaluate_length(info);
-    op.scale = dd.evaluate_scale(info);
-    op.exponent = dd.evaluate_exponent(info);
+    op.length = dd.evaluate_length(info, diags);
+    op.scale = dd.evaluate_scale(info, diags);
+    op.exponent = dd.evaluate_exponent(info, diags);
 
-    op.nominal_value = dd.evaluate_nominal_value(info);
+    op.nominal_value = dd.evaluate_nominal_value(info, diags);
 
     return op;
 }

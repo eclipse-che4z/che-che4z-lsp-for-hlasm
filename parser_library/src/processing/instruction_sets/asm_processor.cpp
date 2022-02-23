@@ -24,7 +24,33 @@
 #include "postponed_statement_impl.h"
 #include "processing/context_manager.h"
 
+
 namespace hlasm_plugin::parser_library::processing {
+
+namespace {
+diagnostic_consumer_transform drop_diags([](diagnostic_op d) {});
+
+std::optional<context::A_t> try_get_abs_value(
+    const semantics::simple_expr_operand* op, context::dependency_solver& dep_solver)
+{
+    if (op->has_dependencies(dep_solver))
+        return std::nullopt;
+
+    auto val = op->expression->evaluate(dep_solver, drop_diags);
+
+    if (val.value_kind() != context::symbol_value_kind::ABS)
+        return std::nullopt;
+    return val.get_abs();
+}
+
+std::optional<context::A_t> try_get_abs_value(const semantics::operand* op, context::dependency_solver& dep_solver)
+{
+    auto expr_op = dynamic_cast<const semantics::simple_expr_operand*>(op);
+    if (!expr_op)
+        return std::nullopt;
+    return try_get_abs_value(expr_op, dep_solver);
+}
+} // namespace
 
 void asm_processor::process_sect(const context::section_kind kind, rebuilt_statement stmt)
 {
@@ -110,7 +136,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
         if (expr_op && !expr_op->has_dependencies(dep_solver))
         {
-            auto t_value = expr_op->expression->resolve(dep_solver);
+            auto t_value = expr_op->expression->evaluate(dep_solver, *this);
             if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
                 && t_value.get_abs() <= 255)
                 t_attr = (context::symbol_attributes::type_attr)t_value.get_abs();
@@ -130,7 +156,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
         if (expr_op && !expr_op->has_dependencies(dep_solver))
         {
-            auto length_value = expr_op->expression->resolve(dep_solver);
+            auto length_value = expr_op->expression->evaluate(dep_solver, *this);
             if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0
                 && length_value.get_abs() <= 65535)
                 length_attr = (context::symbol_attributes::len_attr)length_value.get_abs();
@@ -171,7 +197,8 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
             if (!holder.contains_dependencies())
             {
-                create_symbol(stmt.stmt_range_ref(), symbol_name, expr_op->expression->resolve(dep_solver), attrs);
+                create_symbol(
+                    stmt.stmt_range_ref(), symbol_name, expr_op->expression->evaluate(dep_solver, *this), attrs);
             }
             else
             {
@@ -435,28 +462,6 @@ void asm_processor::process_external(rebuilt_statement stmt, external_type t)
     }
 }
 
-std::optional<context::A_t> asm_processor::try_get_abs_value(
-    const semantics::operand* op, context::dependency_solver& dep_solver) const
-{
-    auto expr_op = dynamic_cast<const semantics::simple_expr_operand*>(op);
-    if (!expr_op)
-        return std::nullopt;
-    return try_get_abs_value(expr_op, dep_solver);
-}
-
-std::optional<context::A_t> asm_processor::try_get_abs_value(
-    const semantics::simple_expr_operand* op, context::dependency_solver& dep_solver) const
-{
-    if (op->has_dependencies(dep_solver))
-        return std::nullopt;
-
-    auto val = op->expression->evaluate(dep_solver);
-
-    if (val.value_kind() != context::symbol_value_kind::ABS)
-        return std::nullopt;
-    return val.get_abs();
-}
-
 void asm_processor::process_ORG(rebuilt_statement stmt)
 {
     find_sequence_symbol(stmt);
@@ -533,7 +538,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
     if (reloc_expr)
     {
         auto reloc_val = !undefined_absolute_part
-            ? reloc_expr->expression->evaluate(dep_solver).get_reloc()
+            ? reloc_expr->expression->evaluate(dep_solver, drop_diags).get_reloc()
             : *reloc_expr->expression->get_dependencies(dep_solver).unresolved_address;
 
         if (!check_address_for_ORG(stmt.stmt_range_ref(), reloc_val, loctr, boundary, offset))
@@ -898,8 +903,8 @@ void asm_processor::process_END(rebuilt_statement stmt)
         if (stmt.operands_ref().value[0]->access_asm() != nullptr
             && stmt.operands_ref().value[0]->access_asm()->kind == semantics::asm_kind::EXPR)
         {
-            auto symbol =
-                stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get()->evaluate(dep_solver);
+            auto symbol = stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get()->evaluate(
+                dep_solver, drop_diags);
 
             if (symbol.value_kind() == context::symbol_value_kind::ABS)
             {

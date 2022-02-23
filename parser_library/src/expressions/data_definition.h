@@ -88,14 +88,17 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
 
     // When any of the evaluated expressions have dependencies, resulting modifier will have data_def_field::present set
     // to false
-    checking::dupl_factor_modifier_t evaluate_dupl_factor(context::dependency_solver& info) const;
-    checking::data_def_length_t evaluate_length(context::dependency_solver& info) const;
-    checking::scale_modifier_t evaluate_scale(context::dependency_solver& info) const;
-    checking::exponent_modifier_t evaluate_exponent(context::dependency_solver& info) const;
+    checking::dupl_factor_modifier_t evaluate_dupl_factor(
+        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    checking::data_def_length_t evaluate_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    checking::scale_modifier_t evaluate_scale(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    checking::exponent_modifier_t evaluate_exponent(
+        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 
     // When any of the evaluated expressions have dependencies, resulting modifier will have
     // data_def_expr::ignored or data_def_address::ignored set to false
-    checking::nominal_value_t evaluate_nominal_value(context::dependency_solver& info) const;
+    checking::nominal_value_t evaluate_nominal_value(
+        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 
     void apply(mach_expr_visitor& visitor) const;
 

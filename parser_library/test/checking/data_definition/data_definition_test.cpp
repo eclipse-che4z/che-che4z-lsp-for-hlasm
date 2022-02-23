@@ -192,8 +192,9 @@ TEST(data_definition, duplication_factor)
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+    diagnostic_op_consumer_container diags;
 
-    auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
+    auto dup_f = parsed.dupl_factor->evaluate(dep_solver, diags).get_abs();
     EXPECT_EQ(dup_f, 13);
 }
 
@@ -207,8 +208,9 @@ TEST(data_definition, duplication_factor_expr)
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+    diagnostic_op_consumer_container diags;
 
-    auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
+    auto dup_f = parsed.dupl_factor->evaluate(dep_solver, diags).get_abs();
     EXPECT_EQ(dup_f, 26);
 }
 
@@ -250,15 +252,16 @@ TEST(data_definition, all_fields)
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+    diagnostic_op_consumer_container diags;
 
-    auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
+    auto dup_f = parsed.dupl_factor->evaluate(dep_solver, diags).get_abs();
     EXPECT_EQ(dup_f, 8);
 
-    EXPECT_EQ(parsed.program_type->evaluate(dep_solver).get_abs(), 123);
-    EXPECT_EQ(parsed.length->evaluate(dep_solver).get_abs(), 2);
+    EXPECT_EQ(parsed.program_type->evaluate(dep_solver, diags).get_abs(), 123);
+    EXPECT_EQ(parsed.length->evaluate(dep_solver, diags).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BYTE);
-    EXPECT_EQ(parsed.scale->evaluate(dep_solver).get_abs(), 8);
-    EXPECT_EQ(parsed.exponent->evaluate(dep_solver).get_abs(), -24);
+    EXPECT_EQ(parsed.scale->evaluate(dep_solver, diags).get_abs(), 8);
+    EXPECT_EQ(parsed.exponent->evaluate(dep_solver, diags).get_abs(), -24);
     ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
     EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
 }
@@ -273,10 +276,11 @@ TEST(data_definition, no_nominal)
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+    diagnostic_op_consumer_container diags;
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 0);
+    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver, diags).get_abs(), 0);
     EXPECT_EQ(parsed.program_type, nullptr);
-    EXPECT_EQ(parsed.length->evaluate(dep_solver).get_abs(), 2);
+    EXPECT_EQ(parsed.length->evaluate(dep_solver, diags).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BYTE);
     EXPECT_EQ(parsed.scale, nullptr);
     EXPECT_EQ(parsed.exponent, nullptr);
@@ -293,10 +297,11 @@ TEST(data_definition, no_nominal_expr)
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+    diagnostic_op_consumer_container diags;
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 0);
+    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver, diags).get_abs(), 0);
     EXPECT_EQ(parsed.program_type, nullptr);
-    EXPECT_EQ(parsed.length->evaluate(dep_solver).get_abs(), 4);
+    EXPECT_EQ(parsed.length->evaluate(dep_solver, diags).get_abs(), 4);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BYTE);
     EXPECT_EQ(parsed.scale, nullptr);
     EXPECT_EQ(parsed.exponent, nullptr);
@@ -313,14 +318,15 @@ TEST(data_definition, bit_length)
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+    diagnostic_op_consumer_container diags;
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 8);
+    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver, diags).get_abs(), 8);
 
-    EXPECT_EQ(parsed.program_type->evaluate(dep_solver).get_abs(), 123);
-    EXPECT_EQ(parsed.length->evaluate(dep_solver).get_abs(), 2);
+    EXPECT_EQ(parsed.program_type->evaluate(dep_solver, diags).get_abs(), 123);
+    EXPECT_EQ(parsed.length->evaluate(dep_solver, diags).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BIT);
-    EXPECT_EQ(parsed.scale->evaluate(dep_solver).get_abs(), -8);
-    EXPECT_EQ(parsed.exponent->evaluate(dep_solver).get_abs(), -24);
+    EXPECT_EQ(parsed.scale->evaluate(dep_solver, diags).get_abs(), -8);
+    EXPECT_EQ(parsed.exponent->evaluate(dep_solver, diags).get_abs(), -24);
     ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
     EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
 }
@@ -335,11 +341,12 @@ TEST(data_definition, unexpected_dot)
     EXPECT_GT(parsed.diags().size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+    diagnostic_op_consumer_container diags;
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 8);
+    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver, diags).get_abs(), 8);
 
     EXPECT_EQ(parsed.program_type, nullptr);
-    EXPECT_EQ(parsed.length->evaluate(dep_solver).get_abs(), 2);
+    EXPECT_EQ(parsed.length->evaluate(dep_solver, diags).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BIT);
     EXPECT_FALSE(parsed.scale);
     EXPECT_FALSE(parsed.exponent);

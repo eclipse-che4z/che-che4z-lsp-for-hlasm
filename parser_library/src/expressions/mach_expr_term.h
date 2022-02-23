@@ -34,13 +34,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override {}
 
     size_t hash() const override;
 
@@ -74,13 +72,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override;
 
     size_t hash() const override;
 
@@ -121,13 +117,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override;
 
     size_t hash() const override;
 
@@ -147,13 +141,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override {}
 
     size_t hash() const override;
 
@@ -170,13 +162,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override {}
 
     size_t hash() const override;
 
@@ -199,13 +189,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override {}
 
     size_t hash() const override;
 
@@ -223,13 +211,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override;
 
     size_t hash() const override;
 

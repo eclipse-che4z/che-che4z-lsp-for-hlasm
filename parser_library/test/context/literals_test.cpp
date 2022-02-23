@@ -516,3 +516,15 @@ TEST(literals, part_of_expression)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(literals, propagate_error_from_literals)
+{
+    std::string input = R"(
+    LARL 0,=AL(0)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D003" }));
+}

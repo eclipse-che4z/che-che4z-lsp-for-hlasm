@@ -346,7 +346,7 @@ struct data_def_operand final : evaluable_operand
 
     std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info) const override;
     static checking::data_definition_operand get_operand_value(
-        const expressions::data_definition& dd, context::dependency_solver& info);
+        const expressions::data_definition& dd, context::dependency_solver& info, diagnostic_op_consumer& diags);
 
     void collect_diags() const override;
 

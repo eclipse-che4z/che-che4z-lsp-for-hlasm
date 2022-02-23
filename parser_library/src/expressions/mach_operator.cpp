@@ -92,29 +92,32 @@ size_t mach_expr_unary<par>::hash() const
 // TODO: once literal registration is re-worked, this could be possibly changed back.
 
 template<>
-mach_expression::value_t mach_expr_binary<add>::evaluate(context::dependency_solver& info) const
+mach_expression::value_t mach_expr_binary<add>::evaluate(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    auto l = left_->evaluate(info);
-    auto r = right_->evaluate(info);
+    auto l = left_->evaluate(info, diags);
+    auto r = right_->evaluate(info, diags);
     return std::move(l) + std::move(r);
 }
 
 template<>
-mach_expression::value_t mach_expr_binary<sub>::evaluate(context::dependency_solver& info) const
+mach_expression::value_t mach_expr_binary<sub>::evaluate(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    auto l = left_->evaluate(info);
-    auto r = right_->evaluate(info);
+    auto l = left_->evaluate(info, diags);
+    auto r = right_->evaluate(info, diags);
     return std::move(l) - std::move(r);
 }
 
 template<>
-mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(context::dependency_solver& info) const
+mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    auto location = left_->evaluate(info);
-    auto target = right_->evaluate(info);
+    auto location = left_->evaluate(info, diags);
+    auto target = right_->evaluate(info, diags);
     if (target.value_kind() == context::symbol_value_kind::ABS)
     {
-        add_diagnostic(diagnostic_op::warn_D032(get_range(), std::to_string(target.get_abs())));
+        diags.add_diagnostic(diagnostic_op::warn_D032(get_range(), std::to_string(target.get_abs())));
         return target;
     }
 
@@ -122,59 +125,64 @@ mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(context::dependenc
     if (result.value_kind() == context::symbol_value_kind::ABS)
     {
         if (result.get_abs() % 2 != 0)
-            add_diagnostic(diagnostic_op::error_ME003(get_range()));
+            diags.add_diagnostic(diagnostic_op::error_ME003(get_range()));
         result = mach_expression::value_t(result.get_abs() / 2);
     }
     return result;
 }
 
 template<>
-mach_expression::value_t mach_expr_binary<mul>::evaluate(context::dependency_solver& info) const
+mach_expression::value_t mach_expr_binary<mul>::evaluate(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    auto left_res = left_->evaluate(info);
-    auto right_res = right_->evaluate(info);
+    auto left_res = left_->evaluate(info, diags);
+    auto right_res = right_->evaluate(info, diags);
 
     if (!(left_res.value_kind() == context::symbol_value_kind::ABS
             && right_res.value_kind() == context::symbol_value_kind::ABS)
         && left_res.value_kind() != context::symbol_value_kind::UNDEF
         && right_res.value_kind() != context::symbol_value_kind::UNDEF)
-        add_diagnostic(diagnostic_op::error_ME002(get_range()));
+        diags.add_diagnostic(diagnostic_op::error_ME002(get_range()));
 
 
     return left_res * right_res;
 }
 
 template<>
-mach_expression::value_t mach_expr_binary<div>::evaluate(context::dependency_solver& info) const
+mach_expression::value_t mach_expr_binary<div>::evaluate(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    auto left_res = left_->evaluate(info);
-    auto right_res = right_->evaluate(info);
+    auto left_res = left_->evaluate(info, diags);
+    auto right_res = right_->evaluate(info, diags);
 
     if (!(left_res.value_kind() == context::symbol_value_kind::ABS
             && right_res.value_kind() == context::symbol_value_kind::ABS)
         && left_res.value_kind() != context::symbol_value_kind::UNDEF
         && right_res.value_kind() != context::symbol_value_kind::UNDEF)
-        add_diagnostic(diagnostic_op::error_ME002(get_range()));
+        diags.add_diagnostic(diagnostic_op::error_ME002(get_range()));
 
     return left_res / right_res;
 }
 
 template<>
-mach_expression::value_t mach_expr_unary<add>::evaluate(context::dependency_solver& info) const
+mach_expression::value_t mach_expr_unary<add>::evaluate(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    return child_->evaluate(info);
+    return child_->evaluate(info, diags);
 }
 
 template<>
-mach_expression::value_t mach_expr_unary<sub>::evaluate(context::dependency_solver& info) const
+mach_expression::value_t mach_expr_unary<sub>::evaluate(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    return -child_->evaluate(info);
+    return -child_->evaluate(info, diags);
 }
 
 template<>
-mach_expression::value_t mach_expr_unary<par>::evaluate(context::dependency_solver& info) const
+mach_expression::value_t mach_expr_unary<par>::evaluate(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    return child_->evaluate(info);
+    return child_->evaluate(info, diags);
 }
 
 template<>

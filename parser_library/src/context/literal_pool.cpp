@@ -105,7 +105,7 @@ const semantics::instruction_si literal_pool::literal_postponed_statement::empty
 const processing::processing_format literal_pool::literal_postponed_statement::dc_format(
     processing::processing_kind::ORDINARY, processing::processing_form::ASM, processing::operand_occurence::PRESENT);
 
-void literal_pool::generate_pool(dependency_solver& solver, const diagnosable_ctx& diags)
+void literal_pool::generate_pool(dependency_solver& solver, diagnosable_ctx& diags)
 {
     ordinary_assembly_context& ord_ctx = hlasm_ctx.ord_ctx;
 
@@ -118,7 +118,7 @@ void literal_pool::generate_pool(dependency_solver& solver, const diagnosable_ct
         if (!lit->access_data_def_type()) // unknown type
             continue;
 
-        size = (semantics::data_def_operand::get_operand_value(*lit, solver).get_length() + 7) / 8;
+        size = (semantics::data_def_operand::get_operand_value(*lit, solver, diags).get_length() + 7) / 8;
         if (size == 0)
             continue;
 
@@ -175,7 +175,7 @@ void literal_pool::generate_pool(dependency_solver& solver, const diagnosable_ct
             if (!ddt) // unknown type
                 continue;
 
-            auto ddo = semantics::data_def_operand::get_operand_value(*lit, solver);
+            auto ddo = semantics::data_def_operand::get_operand_value(*lit, solver, diags);
             ddt->check_DC(ddo, diagnostic_collector(&diags, lit_val.stack));
         }
     }

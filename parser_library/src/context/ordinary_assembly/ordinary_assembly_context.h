@@ -149,7 +149,7 @@ public:
     size_t next_unique_id() { return m_statement_unique_id++; }
 
     const literal_pool& literals() const { return *m_literals; }
-    void generate_pool(dependency_solver& solver, const diagnosable_ctx& diags) const;
+    void generate_pool(dependency_solver& solver, diagnosable_ctx& diags) const;
     location_counter* implicit_ltorg_target()
     {
         if (!first_control_section_)

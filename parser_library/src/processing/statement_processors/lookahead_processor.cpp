@@ -152,6 +152,7 @@ lookahead_processor::process_table_t lookahead_processor::create_table(context::
 
 void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
+    diagnostic_consumer_transform drop_diags([](diagnostic_op d) {});
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     // type attribute operand
     context::symbol_attributes::type_attr t_attr = context::symbol_attributes::undef_type;
@@ -163,7 +164,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
 
         if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver))
         {
-            auto t_value = expr_op->expression->resolve(dep_solver);
+            auto t_value = expr_op->expression->evaluate(dep_solver, drop_diags);
             if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
                 && t_value.get_abs() <= 255)
                 t_attr = (context::symbol_attributes::type_attr)t_value.get_abs();
@@ -180,7 +181,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
 
         if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver))
         {
-            auto length_value = expr_op->expression->resolve(dep_solver);
+            auto length_value = expr_op->expression->evaluate(dep_solver, drop_diags);
             if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0
                 && length_value.get_abs() <= 65535)
                 length_attr = (context::symbol_attributes::len_attr)length_value.get_abs();
