@@ -252,8 +252,8 @@ void hlasm_context::add_global_system_vars()
         macro_data_ptr mac_data_date = std::make_unique<macro_param_data_single>(std::move(date_val));
         sys_sym_ptr date = std::make_shared<system_variable>(SYSDATE, std::move(mac_data_date), true);
 
-        globals_.variables.insert({ SYSDATC, datc });
-        globals_.variables.insert({ SYSDATE, date });
+        globals_.system_variables.insert({ SYSDATC, datc });
+        globals_.system_variables.insert({ SYSDATE, date });
 
         std::string time_val;
         if (now->tm_hour < 10)
@@ -265,43 +265,43 @@ void hlasm_context::add_global_system_vars()
         time_val.append(std::to_string(now->tm_min));
 
         macro_data_ptr mac_data_time = std::make_unique<macro_param_data_single>(std::move(time_val));
-        sys_sym_ptr time = std::make_shared<system_variable>(SYSDATE, std::move(mac_data_date), true);
+        sys_sym_ptr time = std::make_shared<system_variable>(SYSTIME, std::move(mac_data_time), true);
         //time->set_value(std::move(time_val));
-        globals_.insert({ SYSTIME, time });
+        globals_.system_variables.insert({ SYSTIME, time });
         {
             macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(asm_options_.sysparm);
 
             sys_sym_ptr var = std::make_shared<system_variable>(SYSPARM, std::move(mac_data), true);
 
-            globals_.insert({ SYSPARM, std::move(var) });
+            globals_.system_variables.insert({ SYSPARM, std::move(var) });
         }
         {
             macro_data_ptr mac_data = std::make_unique<macro_param_data_single>("");
 
             sys_sym_ptr var = std::make_shared<system_variable>(SYSOPT_RENT, std::move(mac_data), true);
 
-            globals_.insert({ SYSOPT_RENT, std::move(var) });
+            globals_.system_variables.insert({ SYSOPT_RENT, std::move(var) });
         }
         {
             macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(asm_options_.system_id);
 
             sys_sym_ptr var = std::make_shared<system_variable>(SYSTEM_ID, std::move(mac_data), true);
 
-            globals_.insert({ SYSTEM_ID, std::move(var) });
+            globals_.system_variables.insert({ SYSTEM_ID, std::move(var) });
         }
     }
 
-    auto glob = globals_.find(SYSDATC);
+    auto glob = globals_.system_variables.find(SYSDATC);
     curr_scope()->system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSDATE);
+    glob = globals_.system_variables.find(SYSDATE);
     curr_scope()->system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSTIME);
+    glob = globals_.system_variables.find(SYSTIME);
     curr_scope()->system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSPARM);
+    glob = globals_.system_variables.find(SYSPARM);
     curr_scope()->system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSOPT_RENT);
+    glob = globals_.system_variables.find(SYSOPT_RENT);
     curr_scope()->system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSTEM_ID);
+    glob = globals_.system_variables.find(SYSTEM_ID);
     curr_scope()->system_variables.insert({ glob->second->id, glob->second });
 }
 

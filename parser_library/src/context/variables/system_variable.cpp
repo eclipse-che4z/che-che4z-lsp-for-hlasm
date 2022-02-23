@@ -55,7 +55,7 @@ A_t system_variable::number(std::vector<size_t> offset) const
 A_t system_variable::count(std::vector<size_t> offset) const
 {
     if (offset.empty())
-        return (A_t)data_->get_ith(1)->get_value().size();
+        return (A_t)data_->get_ith(0)->get_value().size();
 
     const macro_param_data_component* tmp = real_data();
     for (size_t i = 0; i < offset.size(); ++i)
