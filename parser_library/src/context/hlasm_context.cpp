@@ -88,61 +88,36 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
         }
 
         {
-            // auto SYSSTYP = ids().add("SYSSTYP");
-
-            // macro_data_ptr mac_data = nullptr;
-
-            // if (ord_ctx.current_section())
-            //{
-            //     switch (ord_ctx.current_section()->kind)
-            //     {
-            //         case context::section_kind::COMMON:
-            //             mac_data = std::make_unique<macro_param_data_single>("COM");
-            //             break;
-            //         case context::section_kind::DUMMY:
-            //             mac_data = std::make_unique<macro_param_data_single>("DSECT");
-            //             break;
-            //         case context::section_kind::READONLY:
-            //             mac_data = std::make_unique<macro_param_data_single>("RSECT");
-            //             break;
-            //         case context::section_kind::EXECUTABLE:
-            //             mac_data = std::make_unique<macro_param_data_single>("CSECT");
-            //             break;
-            //         default:
-            //             break;
-            //     }
-            // }
-
-            // sys_sym_ptr var = std::make_shared<system_variable>(SYSSTYP, std::move(mac_data), false);
-
-            // curr_scope()->system_variables.insert({ SYSSTYP, std::move(var) });
-            //  TODO uncomment when tests are prepared
-
-
              auto SYSSTYP = ids().add("SYSSTYP");
 
-             auto val_styp = std::make_shared<set_symbol<C_t>>(SYSSTYP, true, false);
+             std::string value = "";
+
              if (ord_ctx.current_section())
             {
                  switch (ord_ctx.current_section()->kind)
                  {
                      case context::section_kind::COMMON:
-                         val_styp->set_value("COM");
+                         value = "COM";
                          break;
                      case context::section_kind::DUMMY:
-                         val_styp->set_value("DSECT");
+                         value = "DSECT";
                          break;
                      case context::section_kind::READONLY:
-                         val_styp->set_value("RSECT");
+                         value = "RSECT";
                          break;
                      case context::section_kind::EXECUTABLE:
-                         val_styp->set_value("CSECT");
+                         value = "CSECT";
                          break;
                      default:
                          break;
                  }
              }
-             scope.variables.insert({ SYSSTYP, val_styp });
+
+             macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(value);
+
+             sys_sym_ptr var = std::make_shared<system_variable>(SYSSTYP, std::move(mac_data), false);
+
+             scope.system_variables.insert({ SYSSTYP, std::move(var) });
         }
 
         {
