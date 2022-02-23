@@ -186,13 +186,15 @@ TEST(data_definition, duplication_factor)
 {
     std::string input = "13C'A'";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_EQ(parsed.diags().size(), (size_t)0);
+    EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
-    diagnostic_op_consumer_container diags;
+    diags.diags.clear();
 
     auto dup_f = parsed.dupl_factor->evaluate(dep_solver, diags).get_abs();
     EXPECT_EQ(dup_f, 13);
@@ -202,13 +204,15 @@ TEST(data_definition, duplication_factor_expr)
 {
     std::string input = "(13*2)C'A'";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_EQ(parsed.diags().size(), (size_t)0);
+    EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
-    diagnostic_op_consumer_container diags;
+    diags.diags.clear();
 
     auto dup_f = parsed.dupl_factor->evaluate(dep_solver, diags).get_abs();
     EXPECT_EQ(dup_f, 26);
@@ -218,10 +222,12 @@ TEST(data_definition, duplication_factor_out_of_range)
 {
     std::string input = "1231312123123123123C'A'";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_GT(parsed.diags().size(), (size_t)0);
+    EXPECT_GT(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
@@ -232,10 +238,12 @@ TEST(data_definition, duplication_factor_invalid_number)
 {
     std::string input = "-C'A'";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_GT(parsed.diags().size() + a.diags().size(), (size_t)0);
+    EXPECT_GT(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
@@ -246,13 +254,15 @@ TEST(data_definition, all_fields)
 {
     std::string input = "(1*8)FDP(123)L2S(2*4)E(-12*2)'2.25'";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_EQ(parsed.diags().size(), (size_t)0);
+    EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
-    diagnostic_op_consumer_container diags;
+    diags.diags.clear();
 
     auto dup_f = parsed.dupl_factor->evaluate(dep_solver, diags).get_abs();
     EXPECT_EQ(dup_f, 8);
@@ -270,13 +280,15 @@ TEST(data_definition, no_nominal)
 {
     std::string input = "0FDL2";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_EQ(parsed.diags().size(), (size_t)0);
+    EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
-    diagnostic_op_consumer_container diags;
+    diags.diags.clear();
 
     EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver, diags).get_abs(), 0);
     EXPECT_EQ(parsed.program_type, nullptr);
@@ -291,13 +303,15 @@ TEST(data_definition, no_nominal_expr)
 {
     std::string input = "0FDL(2+2)";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_EQ(parsed.diags().size(), (size_t)0);
+    EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
-    diagnostic_op_consumer_container diags;
+    diags.diags.clear();
 
     EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver, diags).get_abs(), 0);
     EXPECT_EQ(parsed.program_type, nullptr);
@@ -312,13 +326,15 @@ TEST(data_definition, bit_length)
 {
     std::string input = "(1*8)FDP(123)L.2S-8E(-12*2)'2.25'";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_EQ(parsed.diags().size(), (size_t)0);
+    EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
-    diagnostic_op_consumer_container diags;
+    diags.diags.clear();
 
     EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver, diags).get_abs(), 8);
 
@@ -335,13 +351,15 @@ TEST(data_definition, unexpected_dot)
 {
     std::string input = "(1*8)FDL.2S.-8E(-12*2)'2.25'";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_GT(parsed.diags().size(), (size_t)0);
+    EXPECT_GT(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
-    diagnostic_op_consumer_container diags;
+    diags.diags.clear();
 
     EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver, diags).get_abs(), 8);
 
@@ -357,20 +375,25 @@ TEST(data_definition, unexpected_minus)
 {
     std::string input = "(1*8)FDL.2S.-E(-12*2)'2.25'";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_GT(parsed.diags().size(), (size_t)0);
+
+    EXPECT_GT(diags.diags.size(), (size_t)0);
 }
 
 TEST(data_definition, wrong_modifier_order)
 {
     std::string input = "1HL-12P(123)S1'1.25'";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_GT(parsed.diags().size(), (size_t)0);
+    EXPECT_GT(diags.diags.size(), (size_t)0);
 }
 
 TEST(data_definition, B_wrong_nominal_value)
@@ -381,6 +404,39 @@ TEST(data_definition, B_wrong_nominal_value)
 
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
+}
+
+TEST(data_definition, suppres_syntax_errors_in_macro)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+    DC AL(0)
+    MEND
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(data_definition, syntax_error_for_each_call)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+    DS AL
+    MEND
+
+    MAC
+    MAC
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D003", "D003" }));
 }
 
 TEST(data_definition, trim_labels)
@@ -504,10 +560,12 @@ TEST(data_definition, no_loctr_ref)
 {
     std::string input = "(2*2)ADL(2*2)(2*2)";
     analyzer a(input);
+    diagnostic_op_consumer_container diags;
+    a.parser().set_diagnoser(&diags);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
-    EXPECT_EQ(parsed.diags().size(), (size_t)0);
+    EXPECT_EQ(diags.diags.size(), (size_t)0);
     EXPECT_FALSE(parsed.references_loctr);
 }
 
@@ -516,10 +574,12 @@ TEST(data_definition, loctr_ref)
     for (std::string input : { "(*-*)ADL(2*2)(2*2)", "(2*2)ADL(*-*)(2*2)", "(2*2)ADL(2*2)(*-*)" })
     {
         analyzer a(input);
+        diagnostic_op_consumer_container diags;
+        a.parser().set_diagnoser(&diags);
         auto res = a.parser().data_def();
 
         auto parsed = std::move(res->value);
-        EXPECT_EQ(parsed.diags().size(), (size_t)0);
+        EXPECT_EQ(diags.diags.size(), (size_t)0);
         EXPECT_TRUE(parsed.references_loctr);
     }
 }

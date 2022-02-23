@@ -132,11 +132,6 @@ void ca_symbol_attribute::collect_diags() const
         for (const auto& expr : sym->subscript)
             collect_diags_from_child(*expr);
     }
-    else if (std::holds_alternative<ca_literal_def>(symbol))
-    {
-        const auto& lit = std::get<ca_literal_def>(symbol);
-        collect_diags_from_child(*lit.dd);
-    }
 }
 
 bool ca_symbol_attribute::is_character_expression(character_expression_purpose) const
@@ -272,11 +267,12 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
     }
     else
     {
+        diagnostic_consumer_transform diags([&eval_ctx](diagnostic_op d) { eval_ctx.add_diagnostic(std::move(d)); });
         context::symbol_attributes attrs(context::symbol_origin::DAT,
             ebcdic_encoding::a2e[(unsigned char)lit.dd->get_type_attribute()],
-            lit.dd->get_length_attribute(solver),
-            lit.dd->get_scale_attribute(solver),
-            lit.dd->get_integer_attribute(solver));
+            lit.dd->get_length_attribute(solver, diags),
+            lit.dd->get_scale_attribute(solver, diags),
+            lit.dd->get_integer_attribute(solver, diags));
         if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
             && !attrs.can_have_SI_attr())
         {

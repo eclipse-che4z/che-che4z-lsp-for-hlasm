@@ -138,9 +138,8 @@ char data_definition::get_type_attribute() const
     return 'U';
 }
 
-int32_t data_definition::get_scale_attribute(context::dependency_solver& info) const
+int32_t data_definition::get_scale_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     auto def_type = access_data_def_type();
     if (def_type)
         return def_type->get_scale_attribute(evaluate_scale(info, diags), evaluate_nominal_value(info, diags));
@@ -148,9 +147,8 @@ int32_t data_definition::get_scale_attribute(context::dependency_solver& info) c
         return 0;
 }
 
-uint32_t data_definition::get_length_attribute(context::dependency_solver& info) const
+uint32_t data_definition::get_length_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     auto def_type = access_data_def_type();
     if (def_type)
         return def_type->get_length_attribute(evaluate_length(info, diags), evaluate_nominal_value(info, diags));
@@ -158,9 +156,8 @@ uint32_t data_definition::get_length_attribute(context::dependency_solver& info)
         return 0;
 }
 
-int32_t data_definition::get_integer_attribute(context::dependency_solver& info) const
+int32_t data_definition::get_integer_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     auto def_type = access_data_def_type();
     if (def_type)
         return def_type->get_integer_attribute(
@@ -223,8 +220,6 @@ std::vector<context::id_index> data_definition::get_single_symbol_names() const
     }
     return symbols;
 }
-
-void data_definition::collect_diags() const {}
 
 checking::data_def_field<int32_t> set_data_def_field(
     const expressions::mach_expression* e, context::dependency_solver& info, diagnostic_op_consumer& diags)
@@ -509,14 +504,14 @@ std::optional<std::pair<int, range>> data_definition_parser::parse_number(std::s
     }
     if (!parsed_one)
     {
-        m_result.add_diagnostic(diagnostic_op::error_D002({ range_start.start, r.start }));
+        m_errors.push_back(diagnostic_op::error_D002({ range_start.start, r.start }));
         return std::nullopt;
     }
     if (negative)
         result = -result;
     if (result < min_l || result > max_l)
     {
-        m_result.add_diagnostic(diagnostic_op::error_D001({ range_start.start, r.start }));
+        m_errors.push_back(diagnostic_op::error_D001({ range_start.start, r.start }));
         return std::nullopt;
     }
     m_collector->add_hl_symbol(token_info(range(range_start.start, r.start), semantics::hl_scopes::number));
@@ -739,7 +734,7 @@ void data_definition_parser::push(push_arg v, range r)
 
             case state::too_much_text:
                 m_state = {};
-                m_result.add_diagnostic(diagnostic_op::error_D006(r));
+                m_errors.push_back(diagnostic_op::error_D006(r));
                 return;
 
             default:
@@ -749,16 +744,16 @@ void data_definition_parser::push(push_arg v, range r)
 }
 void data_definition_parser::push(nominal_value_ptr n) { m_result.nominal_value = std::move(n); }
 
-data_definition data_definition_parser::take_result()
+std::pair<data_definition, std::vector<diagnostic_op>> data_definition_parser::take_result()
 {
     if (m_state.expecting_next.has_value())
-        m_result.add_diagnostic(diagnostic_op::error_D003(range(m_state.expecting_next.value())));
+        m_errors.push_back(diagnostic_op::error_D003(range(m_state.expecting_next.value())));
 
     loctr_reference_visitor v;
     m_result.apply(v);
     m_result.references_loctr = v.found_loctr_reference;
 
-    return std::move(m_result);
+    return std::make_pair(std::move(m_result), std::move(m_errors));
 }
 
 bool is_similar(const data_definition& l, const data_definition& r) noexcept

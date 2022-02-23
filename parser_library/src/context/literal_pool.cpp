@@ -148,7 +148,7 @@ void literal_pool::generate_pool(dependency_solver& solver, diagnosable_ctx& dia
             ord_ctx.align(lit_val.align_on_halfword ? halfword : no_align),
             symbol_attributes(symbol_origin::DAT,
                 ebcdic_encoding::a2e[(unsigned char)lit->get_type_attribute()],
-                lit->get_length_attribute(solver)),
+                lit->get_length_attribute(solver, diags)),
             {});
 
         if (size == 0)

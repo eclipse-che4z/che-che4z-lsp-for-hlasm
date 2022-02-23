@@ -220,8 +220,13 @@ antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
 void parser_impl::add_diagnostic(
     diagnostic_severity severity, std::string code, std::string message, range diag_range) const
 {
+    add_diagnostic(diagnostic_op(severity, std::move(code), std::move(message), diag_range));
+}
+
+void parser_impl::add_diagnostic(diagnostic_op d) const
+{
     if (diagnoser_)
-        diagnoser_->add_diagnostic(diagnostic_op(severity, std::move(code), std::move(message), diag_range));
+        diagnoser_->add_diagnostic(std::move(d));
 }
 
 parser_holder::~parser_holder() = default;

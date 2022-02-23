@@ -587,7 +587,7 @@ checking::data_definition_operand data_def_operand::get_operand_value(
     return op;
 }
 
-void data_def_operand::collect_diags() const { collect_diags_from_child(*value); }
+void data_def_operand::collect_diags() const {}
 
 void data_def_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 

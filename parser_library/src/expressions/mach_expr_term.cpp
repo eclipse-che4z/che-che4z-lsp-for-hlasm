@@ -358,9 +358,9 @@ mach_expression::value_t mach_expr_data_attr::evaluate(
         auto& dd = lit->get_data_definition();
         context::symbol_attributes attrs(context::symbol_origin::DAT,
             ebcdic_encoding::a2e[(unsigned char)dd.get_type_attribute()],
-            dd.get_length_attribute(solver),
-            dd.get_scale_attribute(solver),
-            dd.get_integer_attribute(solver));
+            dd.get_length_attribute(solver, diags),
+            dd.get_scale_attribute(solver, diags),
+            dd.get_integer_attribute(solver, diags));
         if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
             && !attrs.can_have_SI_attr())
         {
@@ -437,9 +437,6 @@ context::dependency_collector mach_expr_literal::get_dependencies(context::depen
 mach_expression::value_t mach_expr_literal::evaluate(
     context::dependency_solver& solver, diagnostic_op_consumer& diags) const
 {
-    for (const auto& d : m_literal_data->dd.diags())
-        diags.add_diagnostic(d);
-
     auto symbol = solver.get_symbol(get_literal_id(solver));
 
     if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
