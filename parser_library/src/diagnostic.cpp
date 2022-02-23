@@ -1298,6 +1298,11 @@ diagnostic_op diagnostic_op::error_A250_absolute_with_known_symbols(const range&
         range);
 }
 
+diagnostic_op diagnostic_op::warn_A251_unexpected_label(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning, "A251", "Unexpected label", range);
+}
+
 diagnostic_op diagnostic_op::warning_A300_op_apostrophes_missing(std::string_view instr_name, const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning,

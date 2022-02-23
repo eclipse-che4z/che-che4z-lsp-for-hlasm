@@ -65,8 +65,8 @@ class using_collection
     struct using_entry;
 
 public:
-    using register_t = unsigned char;
-    static constexpr register_t invalid_register = (unsigned char)-1;
+    using register_t = signed char;
+    static constexpr register_t invalid_register = -1;
     using offset_t = int32_t;
 
     struct evaluate_result
@@ -187,19 +187,19 @@ private:
         index_t<mach_expression> m_end;
         std::vector<index_t<mach_expression>> m_base;
 
-        resolved_entry resolve_using(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
-        resolved_entry resolve_using_dep(using_collection& coll,
+        resolved_entry resolve_using(const using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
+        resolved_entry resolve_using_dep(const using_collection& coll,
             const std::pair<const section*, offset_t>& b,
             std::optional<offset_t> len,
             const qualified_address& base,
             const range& rng,
             diagnostic_consumer<diagnostic_op>& diag) const;
-        resolved_entry resolve_drop(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
+        resolved_entry resolve_drop(const using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
 
         static std::pair<std::optional<qualified_address>, range> abs_or_reloc(
-            using_collection& coll, index_t<mach_expression> e, bool abs_is_register);
+            const using_collection& coll, index_t<mach_expression> e, bool abs_is_register);
         static std::pair<std::variant<std::monostate, qualified_id, using_collection::register_t>, range> reg_or_label(
-            using_collection& coll, index_t<mach_expression> e);
+            const using_collection& coll, index_t<mach_expression> e);
 
     public:
         friend bool operator==(const using_drop_definition&, const using_drop_definition&) = default;
@@ -275,7 +275,7 @@ private:
             std::vector<index_t<mach_expression>> base,
             id_index label = nullptr,
             index_t<mach_expression> end = {})
-            : definition(parent, begin, base, label, end)
+            : definition(parent, begin, std::move(base), label, end)
             , instruction_ctx(instruction_ctx)
         {}
         using_entry(index_t<using_collection> parent,

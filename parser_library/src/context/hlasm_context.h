@@ -240,12 +240,10 @@ public:
     {
         auto* scope = curr_scope();
 
-        auto tmp = scope->variables.find(id);
-        if (tmp != scope->variables.end())
+        if (auto tmp = scope->variables.find(id); tmp != scope->variables.end())
             return tmp->second;
 
-        auto glob = globals_.find(id);
-        if (glob != globals_.end())
+        if (auto glob = globals_.find(id); glob != globals_.end())
         {
             scope->variables.insert({ id, glob->second });
             return glob->second;

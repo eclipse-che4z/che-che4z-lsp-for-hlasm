@@ -395,6 +395,8 @@ struct diagnostic_op
 
     static diagnostic_op error_A250_absolute_with_known_symbols(const range& range);
 
+    static diagnostic_op warn_A251_unexpected_label(const range& range);
+
     // other
 
     static diagnostic_op warning_A300_op_apostrophes_missing(std::string_view instr_name, const range& range);

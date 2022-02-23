@@ -89,10 +89,10 @@ context::SET_t context_manager::get_var_sym_value(
 
 context::id_index context_manager::get_symbol_name(const std::string& symbol, range symbol_range) const
 {
-    auto tmp = hlasm_ctx.try_get_symbol_name(symbol);
-    if (!tmp.first)
+    auto [valid, id] = hlasm_ctx.try_get_symbol_name(symbol);
+    if (!valid)
         add_diagnostic(diagnostic_op::error_E065(symbol_range));
-    return tmp.second;
+    return id;
 }
 
 bool context_manager::test_symbol_for_read(

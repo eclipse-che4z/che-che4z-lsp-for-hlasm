@@ -27,7 +27,7 @@ class index_t
 
 public:
     index_t() = default;
-    constexpr index_t(std::size_t i) noexcept
+    explicit constexpr index_t(std::size_t i) noexcept
         : index(i)
     {
         assert(i != invalid_index);

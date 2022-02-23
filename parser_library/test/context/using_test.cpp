@@ -998,3 +998,16 @@ LABEL2 DS    0H
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(using, drop_with_label)
+{
+    std::string input = R"(
+LABEL DROP
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A251" }));
+}

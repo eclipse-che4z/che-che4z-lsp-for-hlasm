@@ -55,9 +55,10 @@ context::id_index low_language_processor::find_using_label(const rebuilt_stateme
 {
     if (const auto& label = stmt.label_ref(); label.type == semantics::label_si_type::ORD)
     {
-        if (auto ret = hlasm_ctx.try_get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol);
-            ret.first)
-            return ret.second;
+        if (auto [valid, id] =
+                hlasm_ctx.try_get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol);
+            valid)
+            return id;
 
         add_diagnostic(diagnostic_op::error_E065(label.field_range));
     }

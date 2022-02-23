@@ -957,7 +957,6 @@ void asm_processor::process_USING(rebuilt_statement stmt)
     auto loctr = hlasm_ctx.ord_ctx.align(context::no_align);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
 
-    (void)find_sequence_symbol(stmt);
     auto label = find_using_label(stmt);
 
     auto stack = hlasm_ctx.processing_stack();
@@ -1012,10 +1011,10 @@ void asm_processor::process_USING(rebuilt_statement stmt)
     }
 
     // TODO: this needs to be reworked
-    const auto register_literals = [&dep_solver](const mach_expr_ptr& e) {
-        if (!e)
+    const auto register_literals = [&dep_solver](const mach_expr_ptr& expr) {
+        if (!expr)
             return;
-        (void)e->get_dependencies(dep_solver);
+        (void)expr->get_dependencies(dep_solver);
     };
     register_literals(b);
     register_literals(e);
@@ -1037,7 +1036,6 @@ void asm_processor::process_DROP(rebuilt_statement stmt)
     auto loctr = hlasm_ctx.ord_ctx.align(context::no_align);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
 
-    (void)find_sequence_symbol(stmt);
     if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
     {
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
@@ -1046,7 +1044,7 @@ void asm_processor::process_DROP(rebuilt_statement stmt)
         }
         else
         {
-            // TODO: this is unexpected (and warned upon), but supported
+            add_diagnostic(diagnostic_op::warn_A251_unexpected_label(stmt.label_ref().field_range));
             create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes(context::symbol_origin::EQU));
         }
     }
@@ -1084,23 +1082,26 @@ void asm_processor::process_DROP(rebuilt_statement stmt)
         std::move(bases), dep_solver.derive_current_dependency_evaluation_context(), std::move(stack));
 }
 
+namespace {
+bool asm_expr_quals(const semantics::operand_ptr& op, std::string_view value)
+{
+    auto asm_op = op->access_asm();
+    if (!asm_op)
+        return false;
+    auto expr = asm_op->access_expr();
+    return expr && expr->get_value() == value;
+}
+} // namespace
+
 void asm_processor::process_PUSH(rebuilt_statement stmt)
 {
-    (void)find_sequence_symbol(stmt);
-
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     auto stack = hlasm_ctx.processing_stack();
     if (!check(stmt, stack, dep_solver, checker_, *this))
         return;
 
     const auto& ops = stmt.operands_ref().value;
-    if (std::none_of(ops.begin(), ops.end(), [](const auto& op) {
-            auto asm_op = op->access_asm();
-            if (!asm_op)
-                return false;
-            auto expr = asm_op->access_expr();
-            return expr && expr->get_value() == "USING";
-        }))
+    if (std::none_of(ops.begin(), ops.end(), [](const auto& op) { return asm_expr_quals(op, "USING"); }))
         return;
 
     hlasm_ctx.using_push();
@@ -1108,21 +1109,13 @@ void asm_processor::process_PUSH(rebuilt_statement stmt)
 
 void asm_processor::process_POP(rebuilt_statement stmt)
 {
-    (void)find_sequence_symbol(stmt);
-
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     auto stack = hlasm_ctx.processing_stack();
     if (!check(stmt, stack, dep_solver, checker_, *this))
         return;
 
     const auto& ops = stmt.operands_ref().value;
-    if (std::none_of(ops.begin(), ops.end(), [](const auto& op) {
-            auto asm_op = op->access_asm();
-            if (!asm_op)
-                return false;
-            auto expr = asm_op->access_expr();
-            return expr && expr->get_value() == "USING";
-        }))
+    if (std::none_of(ops.begin(), ops.end(), [](const auto& op) { return asm_expr_quals(op, "USING"); }))
         return;
 
     if (!hlasm_ctx.using_pop())

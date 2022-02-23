@@ -463,12 +463,10 @@ const code_scope::set_sym_storage& hlasm_context::globals() const { return globa
 var_sym_ptr hlasm_context::get_var_sym(id_index name) const
 {
     const auto* scope = curr_scope();
-    auto tmp = scope->variables.find(name);
-    if (tmp != scope->variables.end())
+    if (auto tmp = scope->variables.find(name); tmp != scope->variables.end())
         return tmp->second;
 
-    auto s_tmp = scope->system_variables.find(name);
-    if (s_tmp != scope->system_variables.end())
+    if (auto s_tmp = scope->system_variables.find(name); s_tmp != scope->system_variables.end())
         return s_tmp->second;
 
     if (scope->is_in_macro())

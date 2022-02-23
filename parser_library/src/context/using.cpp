@@ -64,7 +64,7 @@ void using_collection::using_entry::compute_context_correction(
 }
 
 std::string_view convert_diag(id_index id) { return *id; }
-int convert_diag(unsigned char c) { return c; }
+int convert_diag(using_collection::register_t c) { return c; }
 
 void using_collection::using_entry::compute_context_correction(
     const drop_entry_resolved& d, diagnostic_consumer<diagnostic_op>& diag)
@@ -102,7 +102,7 @@ size_t using_collection::using_entry::compute_context_drop(register_t d)
 }
 
 auto using_collection::using_drop_definition::abs_or_reloc(
-    using_collection& coll, index_t<mach_expression> e, bool abs_is_register)
+    const using_collection& coll, index_t<mach_expression> e, bool abs_is_register)
     -> std::pair<std::optional<qualified_address>, range>
 {
     if (!e)
@@ -129,7 +129,7 @@ auto using_collection::using_drop_definition::abs_or_reloc(
 
     return { std::nullopt, rng };
 }
-auto using_collection::using_drop_definition::reg_or_label(using_collection& coll, index_t<mach_expression> e)
+auto using_collection::using_drop_definition::reg_or_label(const using_collection& coll, index_t<mach_expression> e)
     -> std::pair<std::variant<std::monostate, qualified_id, register_t>, range>
 {
     if (!e)
@@ -146,13 +146,14 @@ auto using_collection::using_drop_definition::reg_or_label(using_collection& col
     if (expr.value.value_kind() == symbol_value_kind::ABS)
     {
         if (auto v = expr.value.get_abs(); v >= 0 && v < reg_set_size)
-            return { (unsigned char)v, rng };
+            return { (register_t)v, rng };
     }
 
     return { std::monostate(), rng };
 }
 
-using_collection::resolved_entry using_collection::using_drop_definition::resolve_using_dep(using_collection& coll,
+using_collection::resolved_entry using_collection::using_drop_definition::resolve_using_dep(
+    const using_collection& coll,
     const std::pair<const section*, offset_t>& b,
     std::optional<offset_t> len,
     const qualified_address& base,
@@ -179,7 +180,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 }
 
 using_collection::resolved_entry using_collection::using_drop_definition::resolve_using(
-    using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const
+    const using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const
 {
     assert(!m_base.empty() && m_base.size() <= reg_set_size);
 
@@ -197,8 +198,9 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     auto [e, e_rng] = abs_or_reloc(coll, m_end, false);
 
     std::array<std::pair<std::optional<qualified_address>, range>, reg_set_size> bases_;
-    std::transform(
-        m_base.begin(), m_base.end(), bases_.begin(), [&coll, &diag](auto e) { return abs_or_reloc(coll, e, true); });
+    std::transform(m_base.begin(), m_base.end(), bases_.begin(), [&coll, &diag](auto base) {
+        return abs_or_reloc(coll, base, true);
+    });
     const auto bases =
         std::span(bases_).first(std::find(m_base.begin(), m_base.end(), index_t<mach_expression>()) - m_base.begin());
 
@@ -264,7 +266,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 }
 
 using_collection::resolved_entry using_collection::using_drop_definition::resolve_drop(
-    using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const
+    const using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const
 {
     struct
     {
@@ -291,7 +293,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     for (const auto& expr : std::span(m_base.data(), std::find(m_base.begin(), m_base.end(), empty) - m_base.begin()))
     {
         auto [v, rng] = reg_or_label(coll, expr);
-        std::visit([&transform, &rng = rng](auto v) { transform(v, rng); }, v);
+        std::visit([&transform, &rng = rng](auto value) { transform(value, rng); }, v);
     }
 
     return drop_entry_resolved(m_parent, std::move(transform.args));
@@ -315,7 +317,7 @@ using_collection& using_collection::operator=(using_collection&&) noexcept = def
 using_collection::~using_collection() = default;
 
 namespace {
-id_index identify_label(ordinary_assembly_context& ord_context, const expressions::mach_expression* expression)
+id_index identify_label(const ordinary_assembly_context& ord_context, const expressions::mach_expression* expression)
 {
     if (auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(expression);
         sym && sym->qualifier == nullptr && ord_context.is_using_label(sym->value))
@@ -451,7 +453,7 @@ auto using_collection::using_context::evaluate(id_index label,
         ptrdiff_t result_reg = 0;
         long long min_dist_abs = std::numeric_limits<long long>::max();
         long long min_dist = 0;
-        long long min_dist_reg = -1;
+        int min_dist_reg = -1;
     };
     result_candidate positive;
     result_candidate negative;
@@ -484,18 +486,18 @@ auto using_collection::using_context::evaluate(id_index label,
             const auto dist = next_dist;
             next_dist -= 0x1000;
 
+            if (reg == invalid_register)
+                continue;
+
             result_candidate& target = dist >= 0 ? positive : negative;
-            if (reg != invalid_register)
+            auto abs_dist = std::abs(dist);
+            if (abs_dist < target.min_dist_abs || abs_dist == target.min_dist_abs && reg > target.min_dist_reg)
             {
-                auto abs_dist = std::abs(dist);
-                if (abs_dist < target.min_dist_abs || abs_dist == target.min_dist_abs && reg > target.min_dist_reg)
-                {
-                    target.min_dist_abs = abs_dist;
-                    target.min_dist_reg = reg;
-                    target.result_reg = &reg - s.regs.data();
-                    target.result_entry = &s;
-                    target.min_dist = dist;
-                }
+                target.min_dist_abs = abs_dist;
+                target.min_dist_reg = reg;
+                target.result_reg = &reg - s.regs.data();
+                target.result_entry = &s;
+                target.min_dist = dist;
             }
         }
     }
