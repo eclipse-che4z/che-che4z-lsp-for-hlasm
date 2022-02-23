@@ -209,10 +209,6 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
 
     if (!is_in_macro())
     {
-        //auto datc = std::make_shared<set_symbol<C_t>>(SYSDATC, true, true);
-        //auto date = std::make_shared<set_symbol<C_t>>(SYSDATE, true, true);
-        //auto time = std::make_shared<set_symbol<C_t>>(SYSTIME, true, true);
-
         auto tmp_now = std::time(0);
         auto now = std::localtime(&tmp_now);
 
@@ -247,10 +243,9 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
 
         macro_data_ptr mac_data_datc = std::make_unique<macro_param_data_single>(std::move(datc_val));
         sys_sym_ptr datc = std::make_shared<system_variable>(SYSDATC, std::move(mac_data_datc), true);
-        //datc->set_value(std::move(datc_val));
 
         date_val.append(year.c_str() + 2);
-        //date->set_value(std::move(date_val));
+
         macro_data_ptr mac_data_date = std::make_unique<macro_param_data_single>(std::move(date_val));
         sys_sym_ptr date = std::make_shared<system_variable>(SYSDATE, std::move(mac_data_date), true);
 
@@ -268,8 +263,8 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
 
         macro_data_ptr mac_data_time = std::make_unique<macro_param_data_single>(std::move(time_val));
         sys_sym_ptr time = std::make_shared<system_variable>(SYSTIME, std::move(mac_data_time), true);
-        //time->set_value(std::move(time_val));
         globals_.system_variables.insert({ SYSTIME, time });
+
         {
             macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(asm_options_.sysparm);
 
