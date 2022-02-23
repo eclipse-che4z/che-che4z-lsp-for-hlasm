@@ -52,6 +52,9 @@ class diagnostics_sysvar_null_opcode_invalid_subscript_fixture
 class diagnostics_sysvar_null_opcode_fixture : public ::testing::TestWithParam<diagnostics_sysvar_params>
 {};
 
+class diagnostics_sysvar_non_alpha_char_fixture : public ::testing::TestWithParam<diagnostics_sysvar_params>
+{};
+
 } // namespace
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
@@ -87,6 +90,9 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSDATC", "(0)"),
         diagnostics_sysvar_params::create_input("SYSDATC", "(1,0)"),
         diagnostics_sysvar_params::create_input("SYSDATC", "(1,1,0)"),
+        diagnostics_sysvar_params::create_input("SYSDATE", "(0)"),
+        diagnostics_sysvar_params::create_input("SYSDATE", "(1,0)"),
+        diagnostics_sysvar_params::create_input("SYSDATE", "(1,1,0)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(0)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(1,0)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(1,1,0)"),
@@ -110,6 +116,10 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSDATC", "(2,0)"),
         diagnostics_sysvar_params::create_input("SYSDATC", "(2,1)"),
         diagnostics_sysvar_params::create_input("SYSDATC", "(2,2,2)"),
+        diagnostics_sysvar_params::create_input("SYSDATE", "(2)"),
+        diagnostics_sysvar_params::create_input("SYSDATE", "(2,0)"),
+        diagnostics_sysvar_params::create_input("SYSDATE", "(2,1)"),
+        diagnostics_sysvar_params::create_input("SYSDATE", "(2,2,2)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(2)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(2,0)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(2,1)"),
@@ -131,6 +141,14 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(2,1)"),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(2,2,2)")
         ));
+
+INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
+    diagnostics_sysvar_non_alpha_char_fixture,
+    ::testing::Values(
+        diagnostics_sysvar_params::create_input("SYSDATE", ""),
+        diagnostics_sysvar_params::create_input("SYSDATE", "(1)"),
+        diagnostics_sysvar_params::create_input("SYSDATE", "(1,1)"),
+        diagnostics_sysvar_params::create_input("SYSDATE", "(1,1,1)")));
 
 
 
@@ -168,4 +186,16 @@ TEST_P(diagnostics_sysvar_null_opcode_fixture, null_opcode)
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E074" }));
+}
+
+TEST_P(diagnostics_sysvar_non_alpha_char_fixture, non_alpha_char)
+{
+    std::string input(GetParam().input);
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E075" }));
 }
