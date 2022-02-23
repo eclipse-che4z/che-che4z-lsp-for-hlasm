@@ -248,8 +248,8 @@ void hlasm_context::add_global_system_vars()
         date_val.append(year.c_str() + 2);
         date->set_value(std::move(date_val));
 
-        globals_.insert({ SYSDATC, datc });
-        globals_.insert({ SYSDATE, date });
+        globals_.variables.insert({ SYSDATC, datc });
+        globals_.variables.insert({ SYSDATE, date });
 
         std::string time_val;
         if (now->tm_hour < 10)
@@ -261,39 +261,39 @@ void hlasm_context::add_global_system_vars()
         time_val.append(std::to_string(now->tm_min));
 
         time->set_value(std::move(time_val));
-        globals_.insert({ SYSTIME, time });
+        globals_.variables.insert({ SYSTIME, time });
 
         {
             auto val = std::make_shared<set_symbol<C_t>>(SYSPARM, true, true);
 
             val->set_value(asm_options_.sysparm);
 
-            globals_.insert({ SYSPARM, std::move(val) });
+            globals_.variables.insert({ SYSPARM, std::move(val) });
         }
         {
             auto val = std::make_shared<set_symbol<B_t>>(SYSOPT_RENT, true, true);
-            globals_.insert({ SYSOPT_RENT, std::move(val) });
+            globals_.variables.insert({ SYSOPT_RENT, std::move(val) });
         }
         {
             auto val = std::make_shared<set_symbol<C_t>>(SYSTEM_ID, true, true);
 
             val->set_value(asm_options_.system_id);
 
-            globals_.insert({ SYSTEM_ID, std::move(val) });
+            globals_.variables.insert({ SYSTEM_ID, std::move(val) });
         }
     }
 
-    auto glob = globals_.find(SYSDATC);
+    auto glob = globals_.variables.find(SYSDATC);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSDATE);
+    glob = globals_.variables.find(SYSDATE);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSTIME);
+    glob = globals_.variables.find(SYSTIME);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSPARM);
+    glob = globals_.variables.find(SYSPARM);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSOPT_RENT);
+    glob = globals_.variables.find(SYSOPT_RENT);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSTEM_ID);
+    glob = globals_.variables.find(SYSTEM_ID);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
 }
 
@@ -494,7 +494,7 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
 
 void hlasm_context::fill_metrics_files() { metrics.files = visited_files_.size(); }
 
-const code_scope::set_sym_storage& hlasm_context::globals() const { return globals_; }
+const code_scope::set_sym_storage& hlasm_context::globals() const { return globals_.variables; }
 
 var_sym_ptr hlasm_context::get_var_sym(id_index name)
 {

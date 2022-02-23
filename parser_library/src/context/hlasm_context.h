@@ -40,7 +40,7 @@ class hlasm_context
     using opcode_map = std::unordered_map<id_index, opcode_t>;
 
     // storage of global variables
-    code_scope::set_sym_storage globals_;
+    code_scope globals_;
     // storage of defined macros
     macro_storage macros_;
     // storage of copy members
@@ -234,8 +234,8 @@ public:
         if (tmp != curr_scope()->variables.end())
             return tmp->second;
 
-        auto glob = globals_.find(id);
-        if (glob != globals_.end())
+        auto glob = globals_.variables.find(id);
+        if (glob != globals_.variables.end())
         {
             curr_scope()->variables.insert({ id, glob->second });
             return glob->second;
@@ -243,7 +243,7 @@ public:
 
         auto val = std::make_shared<set_symbol<T>>(id, is_scalar, true);
 
-        globals_.insert({ id, val });
+        globals_.variables.insert({ id, val });
         curr_scope()->variables.insert({ id, val });
 
         return val;
