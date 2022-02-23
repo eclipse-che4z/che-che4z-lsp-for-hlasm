@@ -86,8 +86,7 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_null_opcode_invalid_subscript_fixture,
-    ::testing::Values(
-        diagnostics_sysvar_params::create_input("SYSDATC", "(0)"),
+    ::testing::Values(diagnostics_sysvar_params::create_input("SYSDATC", "(0)"),
         diagnostics_sysvar_params::create_input("SYSDATC", "(1,0)"),
         diagnostics_sysvar_params::create_input("SYSDATC", "(1,1,0)"),
         diagnostics_sysvar_params::create_input("SYSDATE", "(0)"),
@@ -107,12 +106,25 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSNEST", "(1,1,0)"),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(0)"),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,0)"),
-        diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1,0)")));
+        diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1,0)"),
+        diagnostics_sysvar_params::create_input("SYSPARM", "(0)"),
+        diagnostics_sysvar_params::create_input("SYSPARM", "(1,0)"),
+        diagnostics_sysvar_params::create_input("SYSPARM", "(1,1,0)"),
+        diagnostics_sysvar_params::create_input("SYSSTYP", "(0)"),
+        diagnostics_sysvar_params::create_input("SYSSTYP", "(1,0)"),
+        diagnostics_sysvar_params::create_input("SYSSTYP", "(1,1,0)"),
+        diagnostics_sysvar_params::create_input("SYSTEM_ID", "(0)"),
+        diagnostics_sysvar_params::create_input("SYSTEM_ID", "(1,0)"),
+        diagnostics_sysvar_params::create_input("SYSTEM_ID", "(1,1,0)"),
+        diagnostics_sysvar_params::create_input("SYSTIME", "(0)"),
+        diagnostics_sysvar_params::create_input("SYSTIME", "(1,0)"),
+        diagnostics_sysvar_params::create_input("SYSTIME", "(1,1,0)")
+
+            ));
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_null_opcode_fixture,
-    ::testing::Values(
-        diagnostics_sysvar_params::create_input("SYSDATC", "(2)"),
+    ::testing::Values(diagnostics_sysvar_params::create_input("SYSDATC", "(2)"),
         diagnostics_sysvar_params::create_input("SYSDATC", "(2,0)"),
         diagnostics_sysvar_params::create_input("SYSDATC", "(2,1)"),
         diagnostics_sysvar_params::create_input("SYSDATC", "(2,2,2)"),
@@ -139,16 +151,42 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(2)"),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(2,0)"),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(2,1)"),
-        diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(2,2,2)")
-        ));
+        diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(2,2,2)"),
+        diagnostics_sysvar_params::create_input("SYSPARM", ""),
+        diagnostics_sysvar_params::create_input("SYSPARM", "(1)"),
+        diagnostics_sysvar_params::create_input("SYSPARM", "(1,1)"),
+        diagnostics_sysvar_params::create_input("SYSPARM", "(1,1,1)"),
+        diagnostics_sysvar_params::create_input("SYSPARM", "(2)"),
+        diagnostics_sysvar_params::create_input("SYSPARM", "(2,0)"),
+        diagnostics_sysvar_params::create_input("SYSPARM", "(2,1)"),
+        diagnostics_sysvar_params::create_input("SYSPARM", "(2,2,2)"),
+        diagnostics_sysvar_params::create_input("SYSSTYP", "(2)"),
+        diagnostics_sysvar_params::create_input("SYSSTYP", "(2,0)"),
+        diagnostics_sysvar_params::create_input("SYSSTYP", "(2,1)"),
+        diagnostics_sysvar_params::create_input("SYSSTYP", "(2,2,2)"),
+        diagnostics_sysvar_params::create_input("SYSTEM_ID", "(2)"),
+        diagnostics_sysvar_params::create_input("SYSTEM_ID", "(2,0)"),
+        diagnostics_sysvar_params::create_input("SYSTEM_ID", "(2,1)"),
+        diagnostics_sysvar_params::create_input("SYSTEM_ID", "(2,2,2)"),
+        diagnostics_sysvar_params::create_input("SYSTIME", "(2)"),
+        diagnostics_sysvar_params::create_input("SYSTIME", "(2,0)"),
+        diagnostics_sysvar_params::create_input("SYSTIME", "(2,1)"),
+        diagnostics_sysvar_params::create_input("SYSTIME", "(2,2,2)")));
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_non_alpha_char_fixture,
-    ::testing::Values(
-        diagnostics_sysvar_params::create_input("SYSDATE", ""),
+    ::testing::Values(diagnostics_sysvar_params::create_input("SYSDATE", ""),
         diagnostics_sysvar_params::create_input("SYSDATE", "(1)"),
         diagnostics_sysvar_params::create_input("SYSDATE", "(1,1)"),
-        diagnostics_sysvar_params::create_input("SYSDATE", "(1,1,1)")));
+        diagnostics_sysvar_params::create_input("SYSDATE", "(1,1,1)"),
+        diagnostics_sysvar_params::create_input("SYSTEM_ID", ""),
+        diagnostics_sysvar_params::create_input("SYSTEM_ID", "(1)"),
+        diagnostics_sysvar_params::create_input("SYSTEM_ID", "(1,1)"),
+        diagnostics_sysvar_params::create_input("SYSTEM_ID", "(1,1,1)"),
+        diagnostics_sysvar_params::create_input("SYSTIME", ""),
+        diagnostics_sysvar_params::create_input("SYSTIME", "(1)"),
+        diagnostics_sysvar_params::create_input("SYSTIME", "(1,1)"),
+        diagnostics_sysvar_params::create_input("SYSTIME", "(1,1,1)")));
 
 
 
