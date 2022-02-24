@@ -142,16 +142,11 @@ bool context_manager::test_symbol_for_read(
     }
     else if (auto mac_par = var->access_macro_param_base())
     {
-        if (dynamic_cast<context::system_variable_syslist*>(mac_par)
-            || dynamic_cast<context::system_variable_sysmac*>(mac_par))
+        if (dynamic_cast<context::system_variable_syslist*>(mac_par))
         {
-            if (dynamic_cast<context::system_variable_syslist*>(mac_par))
+            if (0 == subscript.size())
             {
-                if (0 == subscript.size())
-                {
-                    add_diagnostic(diagnostic_op::warning_W016(
-                        symbol_range)); // error - SYSLIST is not subscripted
-                }
+                add_diagnostic(diagnostic_op::warning_W016(symbol_range)); // error - SYSLIST is not subscripted
             }
 
             for (size_t i = 0; i < subscript.size(); ++i)
@@ -168,9 +163,9 @@ bool context_manager::test_symbol_for_read(
                 }
             }
         }
-        else if (0 < subscript.size())
+        else if (0 < subscript.size() && !dynamic_cast<context::system_variable_sysmac*>(mac_par))
         {
-            if (0 == subscript[0]) 
+            if (0 == subscript[0])
             {
                 add_diagnostic(diagnostic_op::error_E012(
                     "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
@@ -189,7 +184,6 @@ bool context_manager::test_symbol_for_read(
                 }
             }
         }
-
     }
 
     return true;
