@@ -107,7 +107,8 @@ const macro_param_data_component* system_variable_syslist::get_data(const std::v
 {
     const macro_param_data_component* tmp = real_data();
 
-    if (offset.empty()) {
+    if (offset.empty())
+    {
         tmp = tmp->get_ith(1);
     }
     else

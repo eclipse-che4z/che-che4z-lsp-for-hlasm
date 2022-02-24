@@ -85,36 +85,36 @@ void hlasm_context::add_system_vars_to_scope()
         }
 
         {
-             auto SYSSTYP = ids().add("SYSSTYP");
+            auto SYSSTYP = ids().add("SYSSTYP");
 
-             std::string value = "";
+            std::string value = "";
 
-             if (ord_ctx.current_section())
+            if (ord_ctx.current_section())
             {
-                 switch (ord_ctx.current_section()->kind)
-                 {
-                     case context::section_kind::COMMON:
-                         value = "COM";
-                         break;
-                     case context::section_kind::DUMMY:
-                         value = "DSECT";
-                         break;
-                     case context::section_kind::READONLY:
-                         value = "RSECT";
-                         break;
-                     case context::section_kind::EXECUTABLE:
-                         value = "CSECT";
-                         break;
-                     default:
-                         break;
-                 }
-             }
+                switch (ord_ctx.current_section()->kind)
+                {
+                    case context::section_kind::COMMON:
+                        value = "COM";
+                        break;
+                    case context::section_kind::DUMMY:
+                        value = "DSECT";
+                        break;
+                    case context::section_kind::READONLY:
+                        value = "RSECT";
+                        break;
+                    case context::section_kind::EXECUTABLE:
+                        value = "CSECT";
+                        break;
+                    default:
+                        break;
+                }
+            }
 
-             macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(value);
+            macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(value);
 
-             sys_sym_ptr var = std::make_shared<system_variable>(SYSSTYP, std::move(mac_data), false);
+            sys_sym_ptr var = std::make_shared<system_variable>(SYSSTYP, std::move(mac_data), false);
 
-             curr_scope()->system_variables.insert({ SYSSTYP, std::move(var) });
+            curr_scope()->system_variables.insert({ SYSSTYP, std::move(var) });
         }
 
         {
