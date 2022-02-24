@@ -95,11 +95,14 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSNEST", ""),
         diagnostics_sysvar_params::create_input("SYSNEST", "(1)"),
         diagnostics_sysvar_params::create_input("SYSNEST", "(1,1)"),
-        diagnostics_sysvar_params::create_input("SYSNEST", "(1,1,1)"),
+        diagnostics_sysvar_params::create_input("SYSNEST", "(1,1,1)")
+        /* TODO Uncomment this when support for SYSOPT_RENT is added
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", ""),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1)"),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1)"),
-        diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1,1)")));
+        diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1,1)")
+        */
+    ));
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_null_opcode_invalid_subscript_fixture,
