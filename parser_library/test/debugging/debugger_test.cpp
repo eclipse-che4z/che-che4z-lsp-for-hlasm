@@ -347,14 +347,7 @@ TEST(debugger, test)
             },
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
-                {
-                    "&SYSLIST",
-                    test_var_value("(10,13)",
-                        list {
-                            { "0", std::make_shared<test_var_value>("10") },
-                            { "1", std::make_shared<test_var_value>("13") },
-                        }),
-                },
+                { "&SYSLIST", "13" },
                 { "&SYSECT", "" },
                 { "&SYSNDX", "0001" },
                 { "&SYSSTYP", "" },

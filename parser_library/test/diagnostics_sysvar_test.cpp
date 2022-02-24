@@ -35,7 +35,7 @@ struct diagnostics_sysvar_params
  MEND 
  
 TEST CSECT
- MAC
+NAME MAC ONE,TWO,,(3,(4,5,6),,8),,TEN,()
 )";
 
         return result;
@@ -55,6 +55,10 @@ class diagnostics_sysvar_null_opcode_fixture : public ::testing::TestWithParam<d
 class diagnostics_sysvar_non_alpha_char_fixture : public ::testing::TestWithParam<diagnostics_sysvar_params>
 {};
 
+class diagnostics_sysvar_unsubscripted_syslist_invalid_opcode_fixture
+    : public ::testing::TestWithParam<diagnostics_sysvar_params>
+{};
+
 } // namespace
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
@@ -67,6 +71,12 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSECT", "(1)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(1,1)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(1,1,1)"),
+        diagnostics_sysvar_params::create_input("SYSLIST", "(0)"),
+        diagnostics_sysvar_params::create_input("SYSLIST", "(1)"),
+        diagnostics_sysvar_params::create_input("SYSLIST", "(1,1)"),
+        diagnostics_sysvar_params::create_input("SYSLIST", "(1,1,1)"),
+        diagnostics_sysvar_params::create_input("SYSLIST", "(2)"),
+        diagnostics_sysvar_params::create_input("SYSLIST", "(2,1)"),
         diagnostics_sysvar_params::create_input("SYSLOC", ""),
         diagnostics_sysvar_params::create_input("SYSLOC", "(1)"),
         diagnostics_sysvar_params::create_input("SYSLOC", "(1,1)"),
@@ -95,6 +105,9 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSECT", "(0)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(1,0)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(1,1,0)"),
+        diagnostics_sysvar_params::create_input("SYSLIST", "(1,0)"),
+        diagnostics_sysvar_params::create_input("SYSLIST", "(1,1,0)"),
+        diagnostics_sysvar_params::create_input("SYSLIST", "(2,0)"),
         diagnostics_sysvar_params::create_input("SYSLOC", "(0)"),
         diagnostics_sysvar_params::create_input("SYSLOC", "(1,0)"),
         diagnostics_sysvar_params::create_input("SYSLOC", "(1,1,0)"),
@@ -136,6 +149,7 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSECT", "(2,0)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(2,1)"),
         diagnostics_sysvar_params::create_input("SYSECT", "(2,2,2)"),
+        diagnostics_sysvar_params::create_input("SYSLIST", "(2,2,2)"),
         diagnostics_sysvar_params::create_input("SYSLOC", "(2)"),
         diagnostics_sysvar_params::create_input("SYSLOC", "(2,0)"),
         diagnostics_sysvar_params::create_input("SYSLOC", "(2,1)"),
@@ -179,6 +193,7 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSDATE", "(1)"),
         diagnostics_sysvar_params::create_input("SYSDATE", "(1,1)"),
         diagnostics_sysvar_params::create_input("SYSDATE", "(1,1,1)"),
+        diagnostics_sysvar_params::create_input("SYSLIST", "(7)"),
         diagnostics_sysvar_params::create_input("SYSTEM_ID", ""),
         diagnostics_sysvar_params::create_input("SYSTEM_ID", "(1)"),
         diagnostics_sysvar_params::create_input("SYSTEM_ID", "(1,1)"),
@@ -187,6 +202,10 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSTIME", "(1)"),
         diagnostics_sysvar_params::create_input("SYSTIME", "(1,1)"),
         diagnostics_sysvar_params::create_input("SYSTIME", "(1,1,1)")));
+
+INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
+    diagnostics_sysvar_unsubscripted_syslist_invalid_opcode_fixture,
+    ::testing::Values(diagnostics_sysvar_params::create_input("SYSLIST", "")));
 
 
 
@@ -236,4 +255,16 @@ TEST_P(diagnostics_sysvar_non_alpha_char_fixture, non_alpha_char)
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E075" }));
+}
+
+TEST_P(diagnostics_sysvar_unsubscripted_syslist_invalid_opcode_fixture, unsubscripted_syslist)
+{
+    std::string input(GetParam().input);
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W016", "E049" }));
 }
