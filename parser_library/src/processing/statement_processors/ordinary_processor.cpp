@@ -338,7 +338,6 @@ context::id_index ordinary_processor::resolve_instruction(
         return context::id_storage::empty_id;
     }
 
-
     return hlasm_ctx.ids().add(std::move(tmp));
 }
 
