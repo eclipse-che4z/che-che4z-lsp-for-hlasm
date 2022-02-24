@@ -52,10 +52,17 @@ class diagnostics_sysvar_null_opcode_invalid_subscript_fixture
 class diagnostics_sysvar_null_opcode_fixture : public ::testing::TestWithParam<diagnostics_sysvar_params>
 {};
 
+class diagnostics_sysvar_bad_symbol_fixture : public ::testing::TestWithParam<diagnostics_sysvar_params>
+{};
+
 class diagnostics_sysvar_non_alpha_char_fixture : public ::testing::TestWithParam<diagnostics_sysvar_params>
 {};
 
 class diagnostics_sysvar_unsubscripted_syslist_invalid_opcode_fixture
+    : public ::testing::TestWithParam<diagnostics_sysvar_params>
+{};
+
+class diagnostics_sysvar_too_many_nested_macro_calls_fixture
     : public ::testing::TestWithParam<diagnostics_sysvar_params>
 {};
 
@@ -81,17 +88,6 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSLOC", "(1)"),
         diagnostics_sysvar_params::create_input("SYSLOC", "(1,1)"),
         diagnostics_sysvar_params::create_input("SYSLOC", "(1,1,1)"),
-        diagnostics_sysvar_params::create_input("SYSMAC", ""),
-        diagnostics_sysvar_params::create_input("SYSMAC", "(0)"),
-        diagnostics_sysvar_params::create_input("SYSMAC", "(0,1)"),
-        diagnostics_sysvar_params::create_input("SYSMAC", "(0,0,1)"),
-        diagnostics_sysvar_params::create_input("SYSMAC", "(1)"),
-        diagnostics_sysvar_params::create_input("SYSMAC", "(1,0)"),
-        diagnostics_sysvar_params::create_input("SYSMAC", "(1,1)"),
-        diagnostics_sysvar_params::create_input("SYSMAC", "(1,1,0)"),
-        diagnostics_sysvar_params::create_input("SYSMAC", "(1,1,1)"),
-        diagnostics_sysvar_params::create_input("SYSMAC", "(2,0)"),
-        diagnostics_sysvar_params::create_input("SYSMAC", "(2,1)"),
         diagnostics_sysvar_params::create_input("SYSNDX", ""),
         diagnostics_sysvar_params::create_input("SYSNDX", "(1)"),
         diagnostics_sysvar_params::create_input("SYSNDX", "(1,1)"),
@@ -203,6 +199,16 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSTIME", "(2,2,2)")));
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
+    diagnostics_sysvar_bad_symbol_fixture,
+    ::testing::Values(
+        diagnostics_sysvar_params::create_input("SYSMAC", "(0,1)"),
+        diagnostics_sysvar_params::create_input("SYSMAC", "(0,0,1)"),
+        diagnostics_sysvar_params::create_input("SYSMAC", "(1)"),
+        diagnostics_sysvar_params::create_input("SYSMAC", "(1,1)"),
+        diagnostics_sysvar_params::create_input("SYSMAC", "(1,1,1)"),
+        diagnostics_sysvar_params::create_input("SYSMAC", "(2,1)")));
+
+INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_non_alpha_char_fixture,
     ::testing::Values(diagnostics_sysvar_params::create_input("SYSDATE", ""),
         diagnostics_sysvar_params::create_input("SYSDATE", "(1)"),
@@ -222,7 +228,14 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_unsubscripted_syslist_invalid_opcode_fixture,
     ::testing::Values(diagnostics_sysvar_params::create_input("SYSLIST", "")));
 
-
+INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
+    diagnostics_sysvar_too_many_nested_macro_calls_fixture,
+    ::testing::Values(diagnostics_sysvar_params::create_input("SYSMAC", ""),
+        diagnostics_sysvar_params::create_input("SYSMAC", "(0)"),
+        diagnostics_sysvar_params::create_input("SYSMAC", "(1,0)"),
+        diagnostics_sysvar_params::create_input("SYSMAC", "(1,1,0)"),
+        diagnostics_sysvar_params::create_input("SYSMAC", "(2,0)")
+    ));
 
 TEST_P(diagnostics_sysvar_invalid_opcode_fixture, invalid_opcode)
 {
@@ -260,6 +273,18 @@ TEST_P(diagnostics_sysvar_null_opcode_fixture, null_opcode)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E074" }));
 }
 
+TEST_P(diagnostics_sysvar_bad_symbol_fixture, bad_symbol)
+{
+    std::string input(GetParam().input);
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E067" }));
+}
+
 TEST_P(diagnostics_sysvar_non_alpha_char_fixture, non_alpha_char)
 {
     std::string input(GetParam().input);
@@ -283,3 +308,16 @@ TEST_P(diagnostics_sysvar_unsubscripted_syslist_invalid_opcode_fixture, unsubscr
     ASSERT_EQ(a.diags().size(), (size_t)2);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W016", "E049" }));
 }
+
+TEST_P(diagnostics_sysvar_too_many_nested_macro_calls_fixture, too_many_macro_calls)
+{
+    std::string input(GetParam().input);
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E055" }));
+}
+
