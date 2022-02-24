@@ -145,7 +145,7 @@ bool xattr::check(const std::vector<const asm_operand*>& to_check,
 };
 
 using_instr::using_instr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
-    : assembler_instruction(allowed_types, name_of_instruction, 2, -1) {};
+    : assembler_instruction(allowed_types, name_of_instruction, 2, 17) {};
 
 bool using_instr::check(const std::vector<const asm_operand*>& to_check,
     const range& stmt_range,
@@ -153,82 +153,42 @@ bool using_instr::check(const std::vector<const asm_operand*>& to_check,
 {
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
-    /*
-    // check first operand
-    // TO DO, waiting for the evaluation of relocatable expressions, symbols can be used
-    if (auto first_operand = get_complex_operand(to_check[0]); first_operand) //first operand must be therefore in the
-    form of (base, end)
+
+    // TODO: at this point the check is more or less redundant to the one performed in the process_USING function
+    // perform just the minimal validation - counts and forms
+    // detailed validation perform in the processing routine
+    if (auto first_operand = get_complex_operand(to_check[0]); first_operand)
     {
-            if (first_operand->operand_identifier != "" ||
-    is_operand_complex(first_operand->operand_parameters[0].get()) ||
-    is_operand_complex(first_operand->operand_parameters[1].get())
-                    || first_operand->operand_parameters.size() != 2)
-            {
-                    add_diagnostic(diagnostic_op::error_A104_USING_first_format());
-                    return false;
-            }
-            if (!is_positive_value(get_simple_operand(first_operand->operand_parameters[0].get())->operand_identifier))
-            {
-                    add_diagnostic(diagnostic_op::error_A101_USING_base_val());
-                    return false;
-            }
-            if (!is_positive_value(get_simple_operand(first_operand->operand_parameters[1].get())->operand_identifier))
-            {
-                    add_diagnostic(diagnostic_op::error_A102_USING_end_val());
-                    return false;
-            }
-            if (std::stoi(get_simple_operand(first_operand->operand_parameters[1].get())->operand_identifier)
-                    <= std::stoi(get_simple_operand(first_operand->operand_parameters[0].get())->operand_identifier))
-            {
-                    add_diagnostic(diagnostic_op::error_A103_USING_end_exceed());
-                    return false;
-            }
+        // first operand must be therefore in the form of (base, end)
+        if (first_operand->operand_identifier != "" || first_operand->operand_parameters.size() != 2
+            || !is_operand_simple(first_operand->operand_parameters[0].get())
+            || !is_operand_simple(first_operand->operand_parameters[1].get()))
+        {
+            add_diagnostic(diagnostic_op::error_A104_USING_first_format(first_operand->operand_range));
+            return false;
+        }
     }
-    else if (auto simple_op = get_simple_operand(to_check[0]); simple_op)//first operand specifies only base
+    else if (auto simple_op = get_simple_operand(to_check[0]); simple_op) // first operand specifies only base
     {
-            if (!is_positive_value(simple_op->operand_identifier))
-            {
-                    add_diagnostic(diagnostic_op::error_A101_USING_base_val());
-                    return false;
-            }
+        // simple operand is acceptable
     }
     else
-            assert(false);
-    //check other operands
-    if (to_check.size() == 2) //therefore there can be either address or one base register
     {
-            auto simple_op = get_simple_operand(to_check[1]);
-            if (simple_op == nullptr)
-            {
-                    add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
-                    return false;
-            }
-            // can also be address, maybe TO DO
-            return true;
-
-            if (!is_base_register(simple_op->operand_identifier) || !is_positive_value(simple_op->operand_identifier))
-            {
-                    add_diagnostic(diagnostic_op::error_I020_format(name_of_instruction, true));
-                    return false;
-            }
+        // empty operand
+        add_diagnostic(diagnostic_op::error_A104_USING_first_format(to_check[0]->operand_range));
+        return false;
     }
-    else //all other parameters are base registers
+
+    for (size_t i = 1; i < to_check.size(); i++)
     {
-            for (size_t i = 1; i < to_check.size(); i++)
-            {
-                    auto simple_op = get_simple_operand(to_check[i]);
-                    if (simple_op == nullptr)
-                    {
-                            add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
-                            return false;
-                    }
-                    if (!is_base_register(simple_op->operand_identifier))
-                    {
-                            add_diagnostic(diagnostic_op::error_A105_USING_base_register_val());
-                            return false;
-                    }
-            }
-    }*/
+        const auto& op = to_check[i];
+        if (!is_operand_simple(op))
+        {
+            add_diagnostic(diagnostic_op::error_A164_USING_mapping_format(op->operand_range));
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -916,30 +876,16 @@ drop::drop(const std::vector<label_types>& allowed_types, std::string_view name_
 bool drop::check(
     const std::vector<const asm_operand*>& to_check, const range&, const diagnostic_collector& add_diagnostic) const
 {
+    // TODO: at this point the check is more or less redundant to the one performed in the process_DROP function
     if (has_one_comma(to_check))
         return true;
     for (const auto& operand : to_check)
     {
-        auto simple = get_simple_operand(operand);
-        if (simple == nullptr)
+        if (!is_operand_simple(operand))
         {
             add_diagnostic(diagnostic_op::error_A141_DROP_op_format(operand->operand_range));
             return false;
         }
-        if (!simple->is_default)
-        {
-            // base register must be specified
-            if (is_byte_value(simple->value))
-                continue;
-        }
-        else
-        {
-            // label must be specified
-            if (is_ord_symbol(simple->operand_identifier) || is_var_symbol(simple->operand_identifier))
-                continue;
-        }
-        add_diagnostic(diagnostic_op::error_A141_DROP_op_format(operand->operand_range));
-        return false;
     }
     return true;
 }

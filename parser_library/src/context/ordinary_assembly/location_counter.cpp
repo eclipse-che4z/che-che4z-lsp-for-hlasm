@@ -43,7 +43,7 @@ location_counter::location_counter(id_index name, const section& owner, const lo
 
 address location_counter::current_address()
 {
-    return address({ &owner }, (int)curr_data().storage, curr_data().spaces());
+    return address({ &owner, nullptr }, (int)curr_data().storage, curr_data().spaces());
 }
 
 aligned_addr location_counter::reserve_storage_area(size_t length, alignment a)
@@ -61,7 +61,7 @@ aligned_addr location_counter::reserve_storage_area(size_t length, alignment a)
 
     check_available_value();
 
-    return std::make_pair(address({ &owner }, (int)curr_data().storage, curr_data().spaces()), sp);
+    return std::make_pair(address({ &owner, nullptr }, (int)curr_data().storage, curr_data().spaces()), sp);
 }
 
 aligned_addr location_counter::align(alignment align) { return reserve_storage_area(0, align); }
@@ -139,7 +139,7 @@ std::pair<space_ptr, std::vector<address>> location_counter::set_available_value
     std::vector<address> addr_arr;
 
     for (auto& entry : org_data_)
-        addr_arr.emplace_back(address::base { &owner }, entry.storage, entry.spaces());
+        addr_arr.emplace_back(address::base { &owner, nullptr }, entry.storage, entry.spaces());
 
     space_ptr loctr_start = nullptr;
     if (kind == loctr_kind::NONSTARTING)

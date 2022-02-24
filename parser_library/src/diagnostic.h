@@ -282,6 +282,10 @@ struct diagnostic_op
 
     static diagnostic_op error_A163_ALIAS_mandatory_label(const range& range);
 
+    static diagnostic_op error_A164_USING_mapping_format(const range& range);
+
+    static diagnostic_op error_A165_POP_USING(const range& range);
+
     // operand parameters
 
     static diagnostic_op error_A200_SCOPE_param(std::string_view instr_name, const range& range);
@@ -390,6 +394,8 @@ struct diagnostic_op
     static diagnostic_op warning_A249_sequence_symbol_expected(const range& range);
 
     static diagnostic_op error_A250_absolute_with_known_symbols(const range& range);
+
+    static diagnostic_op warn_A251_unexpected_label(const range& range);
 
     // other
 
@@ -657,6 +663,24 @@ struct diagnostic_op
     static diagnostic_op warn_CIC001(const range& range);
 
     static diagnostic_op warn_CIC002(const range& range);
+
+    static diagnostic_op warn_U001_drop_had_no_effect(const range& range, std::string_view arg);
+    static diagnostic_op warn_U001_drop_had_no_effect(const range& range, int);
+
+    static diagnostic_op error_U002_label_not_allowed(const range& range);
+
+    static diagnostic_op error_U003_drop_label_or_reg(const range& range);
+
+    static diagnostic_op error_U004_no_active_using(const range& range);
+
+    static diagnostic_op error_U005_invalid_range(const range& s_range,
+        const range& e_range,
+        std::string_view s_sect,
+        int s_off,
+        std::string_view e_sect,
+        int e_off);
+
+    static diagnostic_op error_U006_duplicate_base_specified(const range& range);
 };
 
 struct range_uri_s

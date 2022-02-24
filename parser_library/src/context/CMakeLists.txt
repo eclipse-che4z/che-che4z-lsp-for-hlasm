@@ -31,13 +31,15 @@ target_sources(parser_library PRIVATE
 	macro_param_data.cpp
 	macro_param_data.h
 	operation_code.h
-	processing_context.cpp
-	processing_context.h
 	sequence_symbol.cpp
 	sequence_symbol.h
+	source_context.cpp
+	source_context.h
 	source_snapshot.h
 	statement_cache.cpp
 	statement_cache.h
+	using.cpp
+	using.h
 )
 
 add_subdirectory(ordinary_assembly)

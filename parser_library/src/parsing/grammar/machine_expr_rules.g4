@@ -94,7 +94,7 @@ mach_term returns [mach_expr_ptr m_e]
 	| id
 	{
 		collector.add_hl_symbol(token_info(provider.get_range( $id.ctx),hl_scopes::ordinary_symbol));
-		$m_e = std::make_unique<mach_expr_symbol>($id.name, provider.get_range( $id.ctx));
+		$m_e = std::make_unique<mach_expr_symbol>($id.name, $id.using_qualifier, provider.get_range( $id.ctx));
 	}
 	| num
 	{

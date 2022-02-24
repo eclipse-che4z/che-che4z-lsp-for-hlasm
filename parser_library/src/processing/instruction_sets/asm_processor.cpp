@@ -684,23 +684,23 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
 {
     process_table_t table;
     table.emplace(h_ctx.ids().add("CSECT"),
-        std::bind(&asm_processor::process_sect, this, context::section_kind::EXECUTABLE, std::placeholders::_1));
+        [this](rebuilt_statement stmt) { process_sect(context::section_kind::EXECUTABLE, std::move(stmt)); });
     table.emplace(h_ctx.ids().add("DSECT"),
-        std::bind(&asm_processor::process_sect, this, context::section_kind::DUMMY, std::placeholders::_1));
+        [this](rebuilt_statement stmt) { process_sect(context::section_kind::DUMMY, std::move(stmt)); });
     table.emplace(h_ctx.ids().add("RSECT"),
-        std::bind(&asm_processor::process_sect, this, context::section_kind::READONLY, std::placeholders::_1));
+        [this](rebuilt_statement stmt) { process_sect(context::section_kind::READONLY, std::move(stmt)); });
     table.emplace(h_ctx.ids().add("COM"),
-        std::bind(&asm_processor::process_sect, this, context::section_kind::COMMON, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("LOCTR"), std::bind(&asm_processor::process_LOCTR, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("EQU"), std::bind(&asm_processor::process_EQU, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("DC"), std::bind(&asm_processor::process_DC, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("DS"), std::bind(&asm_processor::process_DS, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().well_known.COPY, std::bind(&asm_processor::process_COPY, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("EXTRN"), std::bind(&asm_processor::process_EXTRN, this, std::placeholders::_1));
+        [this](rebuilt_statement stmt) { process_sect(context::section_kind::COMMON, std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("LOCTR"), [this](rebuilt_statement stmt) { process_LOCTR(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("EQU"), [this](rebuilt_statement stmt) { process_EQU(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("DC"), [this](rebuilt_statement stmt) { process_DC(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("DS"), [this](rebuilt_statement stmt) { process_DS(std::move(stmt)); });
+    table.emplace(h_ctx.ids().well_known.COPY, [this](rebuilt_statement stmt) { process_COPY(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("EXTRN"), [this](rebuilt_statement stmt) { process_EXTRN(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("WXTRN"), [this](rebuilt_statement stmt) { process_WXTRN(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("ORG"), std::bind(&asm_processor::process_ORG, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("OPSYN"), std::bind(&asm_processor::process_OPSYN, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("AINSERT"), std::bind(&asm_processor::process_AINSERT, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("ORG"), [this](rebuilt_statement stmt) { process_ORG(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("OPSYN"), [this](rebuilt_statement stmt) { process_OPSYN(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("AINSERT"), [this](rebuilt_statement stmt) { process_AINSERT(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("CCW"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("CCW0"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("CCW1"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
@@ -709,6 +709,10 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("ALIAS"), [this](rebuilt_statement stmt) { process_ALIAS(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("END"), [this](rebuilt_statement stmt) { process_END(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("LTORG"), [this](rebuilt_statement stmt) { process_LTORG(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("USING"), [this](rebuilt_statement stmt) { process_USING(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("DROP"), [this](rebuilt_statement stmt) { process_DROP(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("PUSH"), [this](rebuilt_statement stmt) { process_PUSH(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("POP"), [this](rebuilt_statement stmt) { process_POP(std::move(stmt)); });
 
     return table;
 }
@@ -944,6 +948,178 @@ void asm_processor::process_LTORG(rebuilt_statement stmt)
     }
 
     hlasm_ctx.ord_ctx.generate_pool(dep_solver, *this);
+}
+
+void asm_processor::process_USING(rebuilt_statement stmt)
+{
+    using namespace expressions;
+
+    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
+
+    auto label = find_using_label(stmt);
+
+    auto stack = hlasm_ctx.processing_stack();
+    if (!check(stmt, stack, dep_solver, checker_, *this))
+        return;
+
+    if (label)
+    {
+        if (!hlasm_ctx.ord_ctx.symbol_defined(label))
+        {
+            hlasm_ctx.ord_ctx.register_using_label(label);
+        }
+        else if (!hlasm_ctx.ord_ctx.is_using_label(label))
+        {
+            add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+            return;
+        }
+    }
+    mach_expr_ptr b;
+    mach_expr_ptr e;
+
+    const auto& ops = stmt.operands_ref().value;
+
+    switch (auto asm_op = ops.front()->access_asm(); asm_op->kind)
+    {
+        case hlasm_plugin::parser_library::semantics::asm_kind::EXPR:
+            b = asm_op->access_expr()->expression->clone();
+            break;
+
+        case hlasm_plugin::parser_library::semantics::asm_kind::BASE_END: {
+            auto using_op = asm_op->access_base_end();
+            b = using_op->base->clone();
+            e = using_op->end->clone();
+            break;
+        }
+        default:
+            add_diagnostic(diagnostic_op::error_A104_USING_first_format(asm_op->operand_range));
+            return;
+    }
+
+    std::vector<mach_expr_ptr> bases;
+    bases.reserve(ops.size() - 1);
+    for (const auto& expr : std::span(ops).subspan(1))
+    {
+        if (auto asm_expr = expr->access_asm()->access_expr())
+            bases.push_back(asm_expr->expression->clone());
+        else
+        {
+            add_diagnostic(diagnostic_op::error_A164_USING_mapping_format(expr->operand_range));
+            return;
+        }
+    }
+
+    // TODO: this needs to be reworked
+    const auto register_literals = [&dep_solver](const mach_expr_ptr& expr) {
+        if (!expr)
+            return;
+        (void)expr->get_dependencies(dep_solver);
+    };
+    register_literals(b);
+    register_literals(e);
+    for (const auto& base : bases)
+        register_literals(base);
+
+    hlasm_ctx.using_add(label,
+        std::move(b),
+        std::move(e),
+        std::move(bases),
+        dep_solver.derive_current_dependency_evaluation_context(),
+        std::move(stack));
+}
+
+void asm_processor::process_DROP(rebuilt_statement stmt)
+{
+    using namespace expressions;
+
+    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
+
+    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
+    {
+        if (hlasm_ctx.ord_ctx.symbol_defined(label))
+        {
+            add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+        }
+        else
+        {
+            add_diagnostic(diagnostic_op::warn_A251_unexpected_label(stmt.label_ref().field_range));
+            create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes(context::symbol_origin::EQU));
+        }
+    }
+
+    auto stack = hlasm_ctx.processing_stack();
+    if (!check(stmt, stack, dep_solver, checker_, *this))
+        return;
+
+    const auto& ops = stmt.operands_ref().value;
+
+    std::vector<mach_expr_ptr> bases;
+    if (!ops.empty()
+        && !(ops.size() == 2 && ops[0]->type == semantics::operand_type::EMPTY
+            && ops[1]->type == semantics::operand_type::EMPTY))
+    {
+        bases.reserve(ops.size());
+        for (const auto& op : ops)
+        {
+            if (auto expr = op->access_asm()->access_expr())
+            {
+                bases.push_back(expr->expression->clone());
+            }
+            else
+            {
+                add_diagnostic(diagnostic_op::error_A141_DROP_op_format(op->operand_range));
+            }
+        }
+    }
+
+    // TODO: this needs to be reworked
+    for (const auto& base : bases)
+        base->get_dependencies(dep_solver); // register literals
+
+    hlasm_ctx.using_remove(
+        std::move(bases), dep_solver.derive_current_dependency_evaluation_context(), std::move(stack));
+}
+
+namespace {
+bool asm_expr_quals(const semantics::operand_ptr& op, std::string_view value)
+{
+    auto asm_op = op->access_asm();
+    if (!asm_op)
+        return false;
+    auto expr = asm_op->access_expr();
+    return expr && expr->get_value() == value;
+}
+} // namespace
+
+void asm_processor::process_PUSH(rebuilt_statement stmt)
+{
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
+    auto stack = hlasm_ctx.processing_stack();
+    if (!check(stmt, stack, dep_solver, checker_, *this))
+        return;
+
+    const auto& ops = stmt.operands_ref().value;
+    if (std::none_of(ops.begin(), ops.end(), [](const auto& op) { return asm_expr_quals(op, "USING"); }))
+        return;
+
+    hlasm_ctx.using_push();
+}
+
+void asm_processor::process_POP(rebuilt_statement stmt)
+{
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
+    auto stack = hlasm_ctx.processing_stack();
+    if (!check(stmt, stack, dep_solver, checker_, *this))
+        return;
+
+    const auto& ops = stmt.operands_ref().value;
+    if (std::none_of(ops.begin(), ops.end(), [](const auto& op) { return asm_expr_quals(op, "USING"); }))
+        return;
+
+    if (!hlasm_ctx.using_pop())
+        add_diagnostic(diagnostic_op::error_A165_POP_USING(stmt.stmt_range_ref()));
 }
 
 } // namespace hlasm_plugin::parser_library::processing

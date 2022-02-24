@@ -51,6 +51,8 @@ asm_op returns [operand_ptr op]
 		$op = std::make_unique<using_instr_assembler_operand>(
 			std::move($base.m_e), 
 			std::move($end.m_e),
+			$base.text,
+			$end.text,
 			provider.get_range($lpar.ctx->getStart(),$rpar.ctx->getStop())
 		);
 	}

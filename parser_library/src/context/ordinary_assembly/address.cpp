@@ -111,6 +111,8 @@ std::string address::to_string() const
             continue;
         if (b.second > 1)
             ss << b.second << "*";
+        if (b.first.qualifier)
+            ss << *b.first.qualifier << ".";
         ss << *b.first.owner->name << " + ";
     }
     ss << std::to_string(offset());
@@ -210,17 +212,6 @@ enum class op
 };
 
 template<typename T>
-bool compare(const T& lhs, const T& rhs)
-{
-    return lhs == rhs;
-}
-template<>
-bool compare<address::base>(const address::base& lhs, const address::base& rhs)
-{
-    return lhs.owner == rhs.owner;
-}
-
-template<typename T>
 std::vector<T> merge_entries(const std::vector<T>& lhs, const std::vector<T>& rhs, const op operation)
 {
     std::vector<T> res;
@@ -232,16 +223,15 @@ std::vector<T> merge_entries(const std::vector<T>& lhs, const std::vector<T>& rh
 
     for (auto& entry : lhs)
     {
-        auto it =
-            std::find_if(prhs.begin(), prhs.end(), [&](auto e) { return e ? compare(entry.first, e->first) : false; });
+        auto it = std::find_if(prhs.begin(), prhs.end(), [&](auto e) { return e ? entry.first == e->first : false; });
 
         if (it != prhs.end())
         {
             int count;
             if (operation == op::ADD)
-                count = (*it)->second + entry.second;
+                count = entry.second + (*it)->second; // L + R
             else
-                count = (*it)->second - entry.second;
+                count = entry.second - (*it)->second; // L - R
 
             if (count != 0)
                 res.emplace_back(entry.first, count);
@@ -297,7 +287,7 @@ bool address::in_same_loctr(const address& addr) const
     if (!is_simple() || !addr.is_simple())
         return false;
 
-    if (addr.bases_[0].first.owner != bases_[0].first.owner)
+    if (addr.bases_[0].first != bases_[0].first)
         return false;
 
     bool this_has_loctr_begin = spaces_.size() && spaces_[0].first->kind == space_kind::LOCTR_BEGIN;

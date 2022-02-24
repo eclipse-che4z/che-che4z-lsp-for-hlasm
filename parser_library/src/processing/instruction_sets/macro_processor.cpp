@@ -210,7 +210,7 @@ bool is_keyword(const semantics::concat_chain& chain, const context_manager& mng
 {
     return chain.size() >= 2 && chain[0]->type == semantics::concat_type::STR
         && chain[1]->type == semantics::concat_type::EQU
-        && mngr.try_get_symbol_name(chain[0]->access_str()->value).first;
+        && mngr.hlasm_ctx.try_get_symbol_name(chain[0]->access_str()->value).first;
 }
 
 std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved_statement& statement) const
@@ -258,7 +258,7 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
 {
     context_manager mngr(hlasm_ctx);
 
-    auto id = mngr.try_get_symbol_name(chain[0]->access_str()->value).second;
+    auto id = hlasm_ctx.try_get_symbol_name(chain[0]->access_str()->value).second;
     assert(id != context::id_storage::empty_id);
 
     auto named = hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().find(id);

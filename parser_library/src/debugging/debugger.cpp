@@ -343,8 +343,9 @@ public:
             // fetch all vars
         }
 
-        for (const auto& it : ctx_->ord_ctx.get_all_symbols())
-            ordinary_symbols.push_back(std::make_unique<ordinary_symbol_variable>(it.second));
+        for (const auto& it : ctx_->ord_ctx.symbols())
+            if (const auto* sym = std::get_if<context::symbol>(&it.second))
+                ordinary_symbols.push_back(std::make_unique<ordinary_symbol_variable>(*sym));
 
 
 

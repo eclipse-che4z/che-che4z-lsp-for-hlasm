@@ -194,6 +194,8 @@ public:
 
     void apply(operand_visitor& visitor) const override;
 
+    const std::string& get_value() const { return value_; }
+
 private:
     std::unique_ptr<checking::operand> get_operand_value_inner(
         context::dependency_solver& info, bool can_have_ordsym) const;
@@ -204,8 +206,11 @@ private:
 // USING instruction operand
 struct using_instr_assembler_operand final : assembler_operand
 {
-    using_instr_assembler_operand(
-        expressions::mach_expr_ptr base, expressions::mach_expr_ptr end, const range operand_range);
+    using_instr_assembler_operand(expressions::mach_expr_ptr base,
+        expressions::mach_expr_ptr end,
+        std::string base_text,
+        std::string end_text,
+        const range operand_range);
 
     bool has_dependencies(context::dependency_solver& info) const override;
 
@@ -215,6 +220,8 @@ struct using_instr_assembler_operand final : assembler_operand
 
     expressions::mach_expr_ptr base;
     expressions::mach_expr_ptr end;
+    std::string base_text;
+    std::string end_text;
 
     void collect_diags() const override;
 

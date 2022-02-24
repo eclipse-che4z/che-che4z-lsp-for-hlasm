@@ -33,6 +33,7 @@ target_sources(parser_library PRIVATE
 	location.h
 	preprocessor_options.h
 	protocol.cpp
+	tagged_index.h
 	workspace_manager.cpp
 	workspace_manager_impl.h
 )

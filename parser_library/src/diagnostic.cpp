@@ -258,7 +258,7 @@ diagnostic_op diagnostic_op::error_A104_USING_first_format(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "A104",
-        "Error at USING instruction: first operand format must either be an absolute base value, or must be in a form "
+        "Error at USING instruction: first operand format must either be a base expression, or must be in a form "
         "(base,end)",
         range);
 }
@@ -760,6 +760,19 @@ diagnostic_op diagnostic_op::error_A162_PROCESS_uknown_option(std::string_view o
 diagnostic_op diagnostic_op::error_A163_ALIAS_mandatory_label(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "A163", "Label not provided on ALIAS instruction", range);
+}
+
+diagnostic_op diagnostic_op::error_A164_USING_mapping_format(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "A164",
+        "Error at USING instruction: Register number or expression expected.",
+        range);
+}
+
+diagnostic_op diagnostic_op::error_A165_POP_USING(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "A165", "Illegal POP USING - stack is empty.", range);
 }
 
 diagnostic_op diagnostic_op::error_A200_SCOPE_param(std::string_view instr_name, const range& range)
@@ -1285,6 +1298,11 @@ diagnostic_op diagnostic_op::error_A250_absolute_with_known_symbols(const range&
         range);
 }
 
+diagnostic_op diagnostic_op::warn_A251_unexpected_label(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning, "A251", "Unexpected label", range);
+}
+
 diagnostic_op diagnostic_op::warning_A300_op_apostrophes_missing(std::string_view instr_name, const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning,
@@ -1439,7 +1457,7 @@ diagnostic_op diagnostic_op::error_M124(std::string_view instr_name, const range
     return diagnostic_op(diagnostic_severity::error,
         "M124",
         concat(
-            "Error at ", instr_name, " instruction: vector register operand absolute value must be between 0 and 15"),
+            "Error at ", instr_name, " instruction: vector register operand absolute value must be between 0 and 31"),
         range);
 }
 
@@ -2248,6 +2266,56 @@ diagnostic_op diagnostic_op::warn_CIC002(const range& range)
         "CIC002",
         std::string("CICS preprocessor - DFHRESP argument cannot be NULL"),
         range);
+}
+
+diagnostic_op diagnostic_op::warn_U001_drop_had_no_effect(const range& range, std::string_view arg)
+{
+    return diagnostic_op(
+        diagnostic_severity::warning, "U001", concat("USING - label '", arg, "' currently not used."), range);
+}
+
+diagnostic_op diagnostic_op::warn_U001_drop_had_no_effect(const range& range, int arg)
+{
+    return diagnostic_op(
+        diagnostic_severity::warning, "U001", concat("USING - register ", arg, " currently not used."), range);
+}
+
+diagnostic_op diagnostic_op::error_U002_label_not_allowed(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "U002", "USING - label is not allowed in this context", range);
+}
+
+diagnostic_op diagnostic_op::error_U003_drop_label_or_reg(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "U003", "DROP - label or register expected", range);
+}
+
+diagnostic_op diagnostic_op::error_U004_no_active_using(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "U004", "No active USING found.", range);
+}
+
+diagnostic_op diagnostic_op::error_U005_invalid_range(
+    const range& s_range, const range& e_range, std::string_view s_sect, int s_off, std::string_view e_sect, int e_off)
+{
+    using namespace std::string_view_literals;
+    return diagnostic_op(diagnostic_severity::error,
+        "U005",
+        concat("USING - expression (",
+            s_sect,
+            s_sect.empty() ? ""sv : "+"sv,
+            s_off,
+            ",",
+            e_sect,
+            e_sect.empty() ? ""sv : "+"sv,
+            e_off,
+            ") is not a valid non-empty range."),
+        union_range(s_range, e_range));
+}
+
+diagnostic_op diagnostic_op::error_U006_duplicate_base_specified(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "U006", "Base registers must be distinct.", range);
 }
 
 diagnostic_s diagnostic_s::error_W002(std::string_view ws_uri, std::string_view ws_name)

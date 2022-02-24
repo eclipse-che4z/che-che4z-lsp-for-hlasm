@@ -23,7 +23,6 @@
 #include "context/literal_pool.h"
 
 namespace hlasm_plugin::parser_library::context {
-
 void ordinary_assembly_context::create_private_section()
 {
     curr_section_ = create_section(id_storage::empty_id, section_kind::EXECUTABLE);
@@ -31,7 +30,10 @@ void ordinary_assembly_context::create_private_section()
 
 const std::vector<std::unique_ptr<section>>& ordinary_assembly_context::sections() const { return sections_; }
 
-const std::unordered_map<id_index, symbol>& ordinary_assembly_context::symbols() const { return symbols_; }
+const std::unordered_map<id_index, std::variant<symbol, label_tag>>& ordinary_assembly_context::symbols() const
+{
+    return symbols_;
+}
 
 ordinary_assembly_context::ordinary_assembly_context(id_storage& storage, hlasm_context& hlasm_ctx)
     : curr_section_(nullptr)
@@ -46,10 +48,15 @@ ordinary_assembly_context::~ordinary_assembly_context() = default;
 bool ordinary_assembly_context::create_symbol(
     id_index name, symbol_value value, symbol_attributes attributes, location symbol_location)
 {
-    auto res =
-        symbols_.try_emplace(name, name, value, attributes, std::move(symbol_location), hlasm_ctx_.processing_stack());
+    auto [_, inserted] = symbols_.try_emplace(name,
+        std::in_place_type_t<symbol>(),
+        name,
+        value,
+        attributes,
+        std::move(symbol_location),
+        hlasm_ctx_.processing_stack());
 
-    if (!res.second)
+    if (!inserted)
         throw std::runtime_error("symbol name in use");
 
     bool ok = true;
@@ -76,7 +83,7 @@ symbol* ordinary_assembly_context::get_symbol(id_index name)
 {
     auto tmp = symbols_.find(name);
 
-    return tmp == symbols_.end() ? nullptr : &tmp->second;
+    return tmp == symbols_.end() ? nullptr : std::get_if<symbol>(&tmp->second);
 }
 
 section* ordinary_assembly_context::get_section(id_index name)
@@ -110,6 +117,7 @@ void ordinary_assembly_context::set_section(id_index name, section_kind kind, lo
 
         auto tmp_addr = curr_section_->current_location_counter().current_address();
         symbols_.try_emplace(name,
+            std::in_place_type_t<symbol>(),
             name,
             tmp_addr,
             symbol_attributes::make_section_attrs(),
@@ -135,6 +143,7 @@ void ordinary_assembly_context::create_external_section(
 
     if (!symbols_
              .try_emplace(name,
+                 std::in_place_type_t<symbol>(),
                  name,
                  create_section(name, kind)->current_location_counter().current_address(),
                  attrs,
@@ -166,13 +175,14 @@ void ordinary_assembly_context::set_location_counter(id_index name, location sym
     {
         auto tmp_addr = curr_section_->current_location_counter().current_address();
 
-        auto sym_tmp = symbols_.try_emplace(name,
+        auto [_, inserted] = symbols_.try_emplace(name,
+            std::in_place_type_t<symbol>(),
             name,
             tmp_addr,
             symbol_attributes::make_section_attrs(),
             std::move(symbol_location),
             hlasm_ctx_.processing_stack());
-        if (!sym_tmp.second)
+        if (!inserted)
             throw std::invalid_argument("symbol already defined");
     }
 }
@@ -317,8 +327,6 @@ void ordinary_assembly_context::finish_module_layout(loctr_dependency_resolver* 
     }
 }
 
-const std::unordered_map<id_index, symbol>& ordinary_assembly_context::get_all_symbols() { return symbols_; }
-
 std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_space(
     size_t length, alignment align, const dependency_evaluation_context& dep_ctx)
 {
@@ -353,5 +361,19 @@ void ordinary_assembly_context::generate_pool(dependency_solver& solver, const d
 {
     m_literals->generate_pool(solver, diags);
 }
+bool ordinary_assembly_context::is_using_label(id_index name) const
+{
+    auto it = symbols_.find(name);
+    return it != symbols_.end() && std::holds_alternative<label_tag>(it->second);
+}
+
+void ordinary_assembly_context::register_using_label(id_index name)
+{
+    auto [_, inserted] = symbols_.try_emplace(name, std::in_place_type_t<label_tag>());
+
+    if (!inserted)
+        throw std::runtime_error("symbol name in use");
+}
+
 
 } // namespace hlasm_plugin::parser_library::context

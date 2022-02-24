@@ -126,7 +126,7 @@ TEST(operand, access_operand)
     expr_assembler_operand eao(nullptr, "", range());
     EXPECT_TRUE(access_asm_op(asm_kind::EXPR, &eao));
     // base end
-    using_instr_assembler_operand uao(nullptr, nullptr, range());
+    using_instr_assembler_operand uao(nullptr, nullptr, "", "", range());
     EXPECT_TRUE(access_asm_op(asm_kind::BASE_END, &uao));
     // complex
     complex_assembler_operand cao("", {}, range());

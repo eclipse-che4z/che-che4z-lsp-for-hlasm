@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef CONTEXT_PROCESSING_CONTEXT_H
-#define CONTEXT_PROCESSING_CONTEXT_H
+#ifndef CONTEXT_SOURCE_CONTEXT_H
+#define CONTEXT_SOURCE_CONTEXT_H
 
 #include "copy_member.h"
 #include "processing/processing_format.h"
@@ -33,22 +33,12 @@ struct source_context
 
     // stack of copy nests
     std::vector<copy_member_invocation> copy_stack;
+    // stack of statement processings
+    std::vector<processing::processing_kind> proc_stack;
 
-    source_context(std::string source_name);
+    source_context(std::string source_name, processing::processing_kind initial);
 
     source_snapshot create_snapshot() const;
-};
-
-// structure holding information about current processing kind
-struct processing_context
-{
-    // current processing kind
-    processing::processing_kind proc_kind;
-
-    // flag whether this context has owner relation to the current source
-    bool owns_source;
-
-    processing_context(processing::processing_kind proc_kind, bool owns_source);
 };
 
 enum class file_processing_type

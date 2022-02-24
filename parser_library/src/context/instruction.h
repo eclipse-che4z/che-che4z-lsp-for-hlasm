@@ -439,22 +439,28 @@ public:
 class assembler_instruction
 {
     inline_string<11> m_name;
-    bool m_has_ord_symbols;
+    bool m_has_ord_symbols : 1, m_postpone_dependencies : 1;
     int m_min_operands;
     int m_max_operands; // -1 in case there is no max value
     std::string_view m_description; // used only for hover and completion
 
 public:
-    constexpr assembler_instruction(
-        std::string_view name, int min_operands, int max_operands, bool has_ord_symbols, std::string_view description)
+    constexpr assembler_instruction(std::string_view name,
+        int min_operands,
+        int max_operands,
+        bool has_ord_symbols,
+        std::string_view description,
+        bool postpone_dependencies = false)
         : m_name(name)
         , m_has_ord_symbols(has_ord_symbols)
+        , m_postpone_dependencies(postpone_dependencies)
         , m_min_operands(min_operands)
         , m_max_operands(max_operands)
         , m_description(std::move(description)) {};
 
     constexpr auto name() const { return m_name.to_string_view(); }
     constexpr auto has_ord_symbols() const { return m_has_ord_symbols; }
+    constexpr auto postpone_dependencies() const { return m_postpone_dependencies; }
     constexpr auto min_operands() const { return m_min_operands; }
     constexpr auto max_operands() const { return m_max_operands; }
     constexpr auto description() const { return m_description; }

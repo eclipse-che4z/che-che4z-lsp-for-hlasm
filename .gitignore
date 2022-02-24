@@ -56,3 +56,5 @@ parser_library/test/res/output/tokens/correctness.output
 !/.vscode/extensions.json
 
 parser_library/jni/generated/
+
+.npmrc
