@@ -16,7 +16,7 @@
 
 #include "ca_constant.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
-#include "processing/context_manager.h"
+#include "expressions/evaluation_context.h"
 #include "semantics/concatenation_term.h"
 
 namespace hlasm_plugin::parser_library::expressions {

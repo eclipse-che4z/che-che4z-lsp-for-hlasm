@@ -21,7 +21,6 @@
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 #include "lexing/lexer.h"
-#include "processing/context_manager.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -285,8 +284,6 @@ std::vector<size_t> transform(const std::vector<context::A_t>& v)
 context::SET_t ca_symbol_attribute::evaluate_varsym(
     const semantics::vs_ptr& vs, const evaluation_context& eval_ctx) const
 {
-    processing::context_manager mngr(&eval_ctx);
-
     auto [var_name, expr_subscript] = vs->evaluate_symbol(eval_ctx);
 
     // get symbol
@@ -305,7 +302,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
     }
     else if (attribute == context::data_attr_kind::T)
     {
-        if (!mngr.test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
+        if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
             return std::string("U");
 
         context::SET_t value =
@@ -319,7 +316,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
     else
     {
         if (attribute == context::data_attr_kind::K
-            && !mngr.test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
+            && !test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
             return context::symbol_attributes::default_ca_value(attribute);
         return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, var_symbol, transform(expr_subscript));
     }
@@ -330,9 +327,8 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
     range var_range,
     const evaluation_context& eval_ctx) const
 {
-    processing::context_manager mngr(&eval_ctx);
-
-    context::SET_t substituted_name = mngr.get_var_sym_value(var_name, expr_subscript, var_range, eval_ctx.diags);
+    context::SET_t substituted_name =
+        get_var_sym_value(eval_ctx.hlasm_ctx, var_name, expr_subscript, var_range, eval_ctx.diags);
 
     if (substituted_name.type != context::SET_t_enum::C_TYPE)
     {

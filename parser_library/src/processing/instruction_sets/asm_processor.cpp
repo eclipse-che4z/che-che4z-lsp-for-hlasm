@@ -22,7 +22,6 @@
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expr_visitor.h"
 #include "postponed_statement_impl.h"
-#include "processing/context_manager.h"
 
 
 namespace hlasm_plugin::parser_library::processing {

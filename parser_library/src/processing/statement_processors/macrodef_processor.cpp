@@ -14,7 +14,6 @@
 
 #include "macrodef_processor.h"
 
-#include "processing/context_manager.h"
 #include "processing/instruction_sets/asm_processor.h"
 #include "processing/instruction_sets/macro_processor.h"
 

@@ -16,7 +16,6 @@
 
 #include <optional>
 
-#include "processing/context_manager.h"
 #include "processing/statement_processors/ordinary_processor.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -42,11 +41,11 @@ context::id_index low_language_processor::find_label_symbol(const rebuilt_statem
 {
     if (const auto& label = stmt.label_ref(); label.type == semantics::label_si_type::ORD)
     {
-        context_manager mngr(hlasm_ctx);
         diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
-        auto ret =
-            mngr.get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol, label.field_range, diags);
-        return ret;
+        auto [valid, id] = hlasm_ctx.try_get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol);
+        if (!valid)
+            diags.add_diagnostic(diagnostic_op::error_E065(label.field_range));
+        return id;
     }
     else
         return context::id_storage::empty_id;

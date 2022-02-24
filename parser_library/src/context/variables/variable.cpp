@@ -41,6 +41,4 @@ variable_symbol::variable_symbol(variable_kind var_kind, id_index name, bool is_
     , var_kind(var_kind)
 {}
 
-
-
 } // namespace hlasm_plugin::parser_library::context

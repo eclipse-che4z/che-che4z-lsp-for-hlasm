@@ -92,14 +92,13 @@ TEST(var_subs, set_to_var)
     a.analyze();
 
     auto& ctx = a.hlasm_ctx();
-    processing::context_manager m(a.hlasm_ctx());
 
     auto it = ctx.ids().find("var");
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
     diagnostic_op_consumer_container diags;
-    int tmp = m.get_var_sym_value(it, std::vector<int> {}, {}, diags).access_a();
+    int tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_a();
     EXPECT_EQ(tmp, 3);
 }
 
@@ -110,7 +109,6 @@ TEST(var_subs, set_to_var_idx)
     a.analyze();
 
     auto& ctx = a.hlasm_ctx();
-    processing::context_manager m(a.hlasm_ctx());
     diagnostic_op_consumer_container diags;
 
     auto it = ctx.ids().find("var");
@@ -118,7 +116,7 @@ TEST(var_subs, set_to_var_idx)
     ASSERT_TRUE(ctx.get_var_sym(it));
     std::vector<A_t> subscript1;
     subscript1.push_back(2);
-    int tmp = m.get_var_sym_value(it, std::move(subscript1), {}, diags).access_a();
+    int tmp = get_var_sym_value(ctx, it, std::move(subscript1), {}, diags).access_a();
     EXPECT_EQ(tmp, 3);
 }
 
@@ -136,7 +134,6 @@ TEST(var_subs, set_to_var_idx_many)
     a.analyze();
 
     auto& ctx = a.hlasm_ctx();
-    processing::context_manager m(a.hlasm_ctx());
     diagnostic_op_consumer_container diags;
 
     auto it = ctx.ids().find("var");
@@ -146,15 +143,15 @@ TEST(var_subs, set_to_var_idx_many)
     int tmp;
     std::vector<A_t> subscript1;
     subscript1.push_back(2);
-    tmp = m.get_var_sym_value(it, std::move(subscript1), {}, diags).access_a();
+    tmp = get_var_sym_value(ctx, it, std::move(subscript1), {}, diags).access_a();
     EXPECT_EQ(tmp, 3);
     std::vector<A_t> subscript2;
     subscript2.push_back(3);
-    tmp = m.get_var_sym_value(it, std::move(subscript2), {}, diags).access_a();
+    tmp = get_var_sym_value(ctx, it, std::move(subscript2), {}, diags).access_a();
     EXPECT_EQ(tmp, 4);
     std::vector<A_t> subscript3;
     subscript3.push_back(4);
-    tmp = m.get_var_sym_value(it, std::move(subscript3), {}, diags).access_a();
+    tmp = get_var_sym_value(ctx, it, std::move(subscript3), {}, diags).access_a();
     EXPECT_EQ(tmp, 5);
 }
 
@@ -165,14 +162,13 @@ TEST(var_subs, var_sym_reset)
     a.analyze();
 
     auto& ctx = a.hlasm_ctx();
-    processing::context_manager m(a.hlasm_ctx());
     diagnostic_op_consumer_container diags;
 
     auto it = ctx.ids().find("var");
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    std::string tmp = m.get_var_sym_value(it, std::vector<int> {}, {}, diags).access_c();
+    std::string tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_c();
     EXPECT_EQ(tmp, "XXX");
 }
 
@@ -183,14 +179,13 @@ TEST(var_subs, created_set_sym)
     a.analyze();
 
     auto& ctx = a.hlasm_ctx();
-    processing::context_manager m(a.hlasm_ctx());
     diagnostic_op_consumer_container diags;
 
     auto it = ctx.ids().find("abavccd0");
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}, diags).access_a();
+    auto tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_a();
     EXPECT_EQ(tmp, 11);
 }
 
@@ -225,14 +220,13 @@ TEST(var_concatenation, concatenated_string_dot_last)
     a.analyze();
 
     auto& ctx = a.hlasm_ctx();
-    processing::context_manager m(a.hlasm_ctx());
     diagnostic_op_consumer_container diags;
 
     auto it = ctx.ids().find("var2");
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}, diags).access_c();
+    auto tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_c();
     EXPECT_EQ(tmp, "avc");
 }
 
@@ -243,14 +237,13 @@ TEST(var_concatenation, concatenated_string_dot)
     a.analyze();
 
     auto& ctx = a.hlasm_ctx();
-    processing::context_manager m(a.hlasm_ctx());
     diagnostic_op_consumer_container diags;
 
     auto it = ctx.ids().find("var2");
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}, diags).access_c();
+    auto tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_c();
     EXPECT_EQ(tmp, "avc-get");
 }
 
@@ -261,14 +254,13 @@ TEST(var_concatenation, concatenated_string_double_dot)
     a.analyze();
 
     auto& ctx = a.hlasm_ctx();
-    processing::context_manager m(a.hlasm_ctx());
     diagnostic_op_consumer_container diags;
 
     auto it = ctx.ids().find("var2");
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}, diags).access_c();
+    auto tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_c();
     EXPECT_EQ(tmp, "avc.");
 }
 

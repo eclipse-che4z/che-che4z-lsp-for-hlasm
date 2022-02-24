@@ -14,8 +14,6 @@
 
 #include "occurence_collector.h"
 
-#include "processing/context_manager.h"
-
 namespace hlasm_plugin::parser_library::processing {
 
 occurence_collector::occurence_collector(

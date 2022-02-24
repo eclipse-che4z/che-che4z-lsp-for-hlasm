@@ -22,7 +22,6 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
-#include "processing/context_manager.h"
 #include "processing/op_code.h"
 
 namespace hlasm_plugin::parser_library::parsing {
