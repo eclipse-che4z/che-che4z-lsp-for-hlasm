@@ -46,12 +46,13 @@ TEST(ca_expr_list, unknown_function_to_operator)
 
     //   function  =>    operator
     // ((1)AND(1)) => ((1) AND (1))
-    expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE);
+    diagnostic_op_consumer_container diags;
+    expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE, diags);
     auto res = expr_list.evaluate(eval_ctx);
 
-    ASSERT_TRUE(expr_list.diags().empty());
-    ASSERT_TRUE(eval_ctx.diags().empty());
-    ASSERT_EQ(res.access_b(), true);
+    EXPECT_TRUE(diags.diags.empty());
+    EXPECT_TRUE(eval_ctx.diags().empty());
+    EXPECT_EQ(res.access_b(), true);
 }
 
 TEST(ca_expr_list, resolve_C_type)
@@ -70,13 +71,14 @@ TEST(ca_expr_list, resolve_C_type)
     list.emplace_back(std::move(sym));
     list.emplace_back(std::move(str));
     // (UPPER 'low')
+    diagnostic_op_consumer_container diags;
     ca_expr_list expr_list(std::move(list), range());
-    expr_list.resolve_expression_tree(context::SET_t_enum::C_TYPE);
+    expr_list.resolve_expression_tree(context::SET_t_enum::C_TYPE, diags);
     auto res = expr_list.evaluate(eval_ctx);
 
-    ASSERT_TRUE(expr_list.diags().empty());
-    ASSERT_TRUE(eval_ctx.diags().empty());
-    ASSERT_EQ(res.access_c(), "LOW");
+    EXPECT_TRUE(diags.diags.empty());
+    EXPECT_TRUE(eval_ctx.diags().empty());
+    EXPECT_EQ(res.access_c(), "LOW");
 }
 
 TEST(ca_expr_list, get_undefined_attributed_symbols)
@@ -120,13 +122,15 @@ TEST(ca_expr_list, unfinished_expressions)
 {
     // ()
     {
+        diagnostic_op_consumer_container diags;
         ca_expr_list expr_list({}, range());
-        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE);
+        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE, diags);
 
-        ASSERT_FALSE(expr_list.diags().empty());
+        EXPECT_FALSE(diags.diags.empty());
     }
     // (NOT)
     {
+        diagnostic_op_consumer_container diags;
         std::string name = "NOT";
         auto sym = std::make_unique<ca_symbol>(&name, range());
 
@@ -134,12 +138,13 @@ TEST(ca_expr_list, unfinished_expressions)
         list.emplace_back(std::move(sym));
 
         ca_expr_list expr_list(std::move(list), range());
-        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE);
+        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE, diags);
 
-        ASSERT_FALSE(expr_list.diags().empty());
+        EXPECT_FALSE(diags.diags.empty());
     }
     // (1 AND)
     {
+        diagnostic_op_consumer_container diags;
         auto c = std::make_unique<ca_constant>(1, range());
 
         std::string name = "AND";
@@ -150,12 +155,13 @@ TEST(ca_expr_list, unfinished_expressions)
         list.emplace_back(std::move(sym));
 
         ca_expr_list expr_list(std::move(list), range());
-        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE);
+        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE, diags);
 
-        ASSERT_FALSE(expr_list.diags().empty());
+        EXPECT_FALSE(diags.diags.empty());
     }
     // (1 AND 1 EQ)
     {
+        diagnostic_op_consumer_container diags;
         auto c = std::make_unique<ca_constant>(1, range());
         auto c2 = std::make_unique<ca_constant>(1, range());
 
@@ -171,8 +177,8 @@ TEST(ca_expr_list, unfinished_expressions)
         list.emplace_back(std::move(eq_sym));
 
         ca_expr_list expr_list(std::move(list), range());
-        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE);
+        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE, diags);
 
-        ASSERT_FALSE(expr_list.diags().empty());
+        EXPECT_FALSE(diags.diags.empty());
     }
 }

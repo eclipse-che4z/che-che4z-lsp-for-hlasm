@@ -116,22 +116,12 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evalua
     }
 }
 
-void ca_symbol_attribute::resolve_expression_tree(context::SET_t_enum kind)
+void ca_symbol_attribute::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     if (kind == context::SET_t_enum::C_TYPE && kind != expr_kind)
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
+        diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else if (std::holds_alternative<semantics::vs_ptr>(symbol))
         ca_var_sym::resolve_expression_tree_vs(std::get<semantics::vs_ptr>(symbol));
-}
-
-void ca_symbol_attribute::collect_diags() const
-{
-    if (std::holds_alternative<semantics::vs_ptr>(symbol))
-    {
-        const auto& sym = std::get<semantics::vs_ptr>(symbol);
-        for (const auto& expr : sym->subscript)
-            collect_diags_from_child(*expr);
-    }
 }
 
 bool ca_symbol_attribute::is_character_expression(character_expression_purpose) const
@@ -276,7 +266,7 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
         if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
             && !attrs.can_have_SI_attr())
         {
-            add_diagnostic(diagnostic_op::warning_W011(symbol_range));
+            eval_ctx.add_diagnostic(diagnostic_op::warning_W011(symbol_range));
             return 0;
         }
         return attrs.get_attribute_value(attribute);

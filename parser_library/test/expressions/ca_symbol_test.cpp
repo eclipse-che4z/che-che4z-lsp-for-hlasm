@@ -40,10 +40,11 @@ TEST(ca_symbol, resolve_expr_tree)
     diagnostic_adder add_diags;
 
     ca_symbol sym(nullptr, range());
+    diagnostic_op_consumer_container diags;
 
-    sym.resolve_expression_tree(context::SET_t_enum::C_TYPE);
+    sym.resolve_expression_tree(context::SET_t_enum::C_TYPE, diags);
 
-    ASSERT_NE(sym.diags().size(), 0U);
+    EXPECT_FALSE(diags.diags.empty());
 }
 
 TEST(ca_symbol, is_char)

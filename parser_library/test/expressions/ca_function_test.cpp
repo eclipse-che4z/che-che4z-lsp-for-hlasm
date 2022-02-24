@@ -63,15 +63,13 @@ public:
 
     undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override { return {}; };
 
-    void resolve_expression_tree(context::SET_t_enum) override {}
+    void resolve_expression_tree(context::SET_t_enum, diagnostic_op_consumer& diags) override {}
 
     bool is_character_expression(character_expression_purpose) const override { return false; }
 
     void apply(ca_expr_visitor&) const override {}
 
     context::SET_t evaluate(const evaluation_context&) const override { return value; }
-
-    void collect_diags() const override {}
 };
 
 class ca_func : public ::testing::TestWithParam<func_test_param>

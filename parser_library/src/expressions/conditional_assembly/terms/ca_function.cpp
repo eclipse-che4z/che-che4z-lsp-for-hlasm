@@ -56,41 +56,33 @@ undef_sym_set ca_function::get_undefined_attributed_symbols(const evaluation_con
     return ret;
 }
 
-void ca_function::resolve_expression_tree(context::SET_t_enum kind)
+void ca_function::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     if (kind != expr_kind && !(kind == context::SET_t_enum::A_TYPE && expr_kind == context::SET_t_enum::B_TYPE))
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
+        diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else if (duplication_factor && expr_kind != context::SET_t_enum::C_TYPE)
-        add_diagnostic(diagnostic_op::error_CE005(duplication_factor->expr_range));
+        diags.add_diagnostic(diagnostic_op::error_CE005(duplication_factor->expr_range));
     else
     {
         auto [param_size, param_kind] = ca_common_expr_policy::get_function_param_info(function, expr_kind);
         if (parameters.size() != param_size)
-            add_diagnostic(diagnostic_op::error_CE006(expr_range));
+            diags.add_diagnostic(diagnostic_op::error_CE006(expr_range));
         else
         {
             for (auto&& expr : parameters)
             {
-                expr->resolve_expression_tree(param_kind);
+                expr->resolve_expression_tree(param_kind, diags);
 
                 // TODO: other parameter types?
                 if (param_kind == context::SET_t_enum::C_TYPE)
                 {
                     if (!expr->is_character_expression(character_expression_purpose::function_parameter))
-                        expr->add_diagnostic(
+                        diags.add_diagnostic(
                             diagnostic_op::error_CE017_character_expression_expected(expr->expr_range));
                 }
             }
         }
     }
-}
-
-void ca_function::collect_diags() const
-{
-    for (auto&& expr : parameters)
-        collect_diags_from_child(*expr);
-    if (duplication_factor)
-        collect_diags_from_child(*duplication_factor);
 }
 
 bool ca_function::is_character_expression(character_expression_purpose purpose) const

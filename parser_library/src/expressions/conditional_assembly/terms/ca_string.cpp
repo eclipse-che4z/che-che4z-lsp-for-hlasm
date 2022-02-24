@@ -45,20 +45,10 @@ undef_sym_set ca_string::get_undefined_attributed_symbols(const evaluation_conte
     return tmp;
 }
 
-void ca_string::resolve_expression_tree(context::SET_t_enum kind)
+void ca_string::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     if (expr_kind != kind)
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
-}
-
-void ca_string::collect_diags() const
-{
-    if (duplication_factor)
-        collect_diags_from_child(*duplication_factor);
-    if (substring.start)
-        collect_diags_from_child(*substring.start);
-    if (substring.count)
-        collect_diags_from_child(*substring.count);
+        diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
 bool ca_string::is_character_expression(character_expression_purpose) const { return true; }

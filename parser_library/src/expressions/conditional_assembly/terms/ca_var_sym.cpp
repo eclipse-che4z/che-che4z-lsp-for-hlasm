@@ -53,16 +53,10 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const evaluation_cont
     return get_undefined_attributed_symbols_vs(symbol, eval_ctx);
 }
 
-void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind)
+void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     expr_kind = kind;
     resolve_expression_tree_vs(symbol);
-}
-
-void ca_var_sym::collect_diags() const
-{
-    for (auto&& expr : symbol->subscript)
-        collect_diags_from_child(*expr);
 }
 
 bool ca_var_sym::is_character_expression(character_expression_purpose) const { return false; }

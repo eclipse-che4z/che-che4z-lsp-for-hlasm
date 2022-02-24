@@ -37,21 +37,15 @@ undef_sym_set ca_binary_operator::get_undefined_attributed_symbols(const evaluat
     return tmp;
 }
 
-void ca_binary_operator::resolve_expression_tree(context::SET_t_enum kind)
+void ca_binary_operator::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     if (expr_kind != kind)
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
+        diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else
     {
-        left_expr->resolve_expression_tree(kind);
-        right_expr->resolve_expression_tree(kind);
+        left_expr->resolve_expression_tree(kind, diags);
+        right_expr->resolve_expression_tree(kind, diags);
     }
-}
-
-void ca_binary_operator::collect_diags() const
-{
-    collect_diags_from_child(*left_expr);
-    collect_diags_from_child(*right_expr);
 }
 
 bool ca_binary_operator::is_character_expression(character_expression_purpose purpose) const
@@ -79,13 +73,13 @@ ca_function_binary_operator::ca_function_binary_operator(ca_expr_ptr left_expr,
     , function(function)
 {}
 
-void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum kind)
+void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     if (expr_kind != kind)
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
+        diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else if ((function == ca_expr_ops::FIND || function == ca_expr_ops::INDEX)
         && !left_expr->is_character_expression(character_expression_purpose::function_parameter))
-        add_diagnostic(diagnostic_op::error_CE004(left_expr->expr_range));
+        diags.add_diagnostic(diagnostic_op::error_CE004(left_expr->expr_range));
     else
     {
         context::SET_t_enum operands_kind;
@@ -101,8 +95,8 @@ void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum ki
         else
             operands_kind = ca_common_expr_policy::get_operands_type(function, kind);
 
-        left_expr->resolve_expression_tree(operands_kind);
-        right_expr->resolve_expression_tree(operands_kind);
+        left_expr->resolve_expression_tree(operands_kind, diags);
+        right_expr->resolve_expression_tree(operands_kind, diags);
     }
 }
 

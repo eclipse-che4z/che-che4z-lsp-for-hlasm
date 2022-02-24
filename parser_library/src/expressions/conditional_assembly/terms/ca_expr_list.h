@@ -32,9 +32,7 @@ public:
 
     undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 
-    void resolve_expression_tree(context::SET_t_enum kind) override;
-
-    void collect_diags() const override;
+    void resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags) override;
 
     bool is_character_expression(character_expression_purpose purpose) const override;
 
@@ -58,16 +56,16 @@ private:
     // in a loop it tries to retrieve first term, binary operator, second term
     // each loop iteration it pastes them together and continue until list is exhausted
     template<typename T>
-    void resolve();
+    void resolve(diagnostic_op_consumer& diags);
     // retrieves single term with possible unary operators before it
     // also checks for following binary operator,
     // if it has higher prio than the current one, recursively calls retrieve_term for the second term for the higher
     // priority operator
     template<typename EXPR_POLICY>
-    ca_expr_ptr retrieve_term(size_t& it, int priority);
+    ca_expr_ptr retrieve_term(size_t& it, int priority, diagnostic_op_consumer& diags);
     // retrieves following binary operator with its priority
     template<typename EXPR_POLICY>
-    std::pair<int, ca_expr_ops> retrieve_binary_operator(size_t& it, bool& err);
+    std::pair<int, ca_expr_ops> retrieve_binary_operator(size_t& it, bool& err, diagnostic_op_consumer& diags);
 };
 
 } // namespace hlasm_plugin::parser_library::expressions
