@@ -32,8 +32,10 @@ const macro_param_data_component* system_variable::get_data(const std::vector<si
 {
     const macro_param_data_component* tmp = data_.get();
 
-    for (size_t i = 0; i < offset.size(); ++i) {
-        if (1 != offset[i]) {
+    for (size_t i = 0; i < offset.size(); ++i)
+    {
+        if (1 != offset[i])
+        {
             return tmp->get_ith(1);
         }
     }
@@ -103,13 +105,18 @@ const macro_param_data_component* system_variable_sysmac::get_data(const std::ve
 
 const macro_param_data_component* system_variable_syslist::get_data(const std::vector<size_t>& offset) const
 {
-
     const macro_param_data_component* tmp = real_data();
 
-     for (size_t i = 0; i < offset.size(); ++i)
+    if (offset.empty()) {
+        tmp = tmp->get_ith(1);
+    }
+    else
     {
-         tmp = tmp->get_ith(offset[i] - (i == 0 ? 0 : 1));
-     }
+        for (size_t i = 0; i < offset.size(); ++i)
+        {
+            tmp = tmp->get_ith(offset[i] - (i == 0 ? 0 : 1));
+        }
+    }
 
-     return tmp;
+    return tmp;
 }

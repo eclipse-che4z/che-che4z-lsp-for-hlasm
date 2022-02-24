@@ -142,32 +142,18 @@ bool context_manager::test_symbol_for_read(
     }
     else if (auto mac_par = var->access_macro_param_base())
     {
-        //for (size_t i = 0; i < subscript.size(); ++i) {
-        //    if ((subscript[0] == 0 || subscript[0] == 1 && subscript[i] == 0) && dynamic_cast<context::system_variable*>(mac_par))
-        //    {
-        //        add_diagnostic(diagnostic_op::error_E012(
-        //            "subscript value has to be 1 or more", symbol_range)); // error - subsequent subscript is less than 1
-        //        return false;
-        //    }
-        //}
-
-        //for (size_t i = 0; i < subscript.size(); ++i)
-        //{
-        //    if (subscript[i] < 1)
-        //    {
-        //        // if syslist and subscript = 0, ok
-        //        if (i == 0 && subscript[i] == 0 && dynamic_cast<context::system_variable*>(mac_par))
-        //            continue;
-
-        //        add_diagnostic(diagnostic_op::error_E012(
-        //            "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
-        //        return false;
-        //    }
-        //}
-
         if (dynamic_cast<context::system_variable_syslist*>(mac_par)
             || dynamic_cast<context::system_variable_sysmac*>(mac_par))
         {
+            if (dynamic_cast<context::system_variable_syslist*>(mac_par))
+            {
+                if (0 == subscript.size())
+                {
+                    add_diagnostic(diagnostic_op::warning_W016(
+                        symbol_range)); // error - SYSLIST is not subscripted
+                }
+            }
+
             for (size_t i = 0; i < subscript.size(); ++i)
             {
                 if (subscript[i] < 1)
