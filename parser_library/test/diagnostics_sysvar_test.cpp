@@ -102,7 +102,7 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1)"),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1,1)")
         */
-    ));
+        ));
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_null_opcode_invalid_subscript_fixture,
@@ -203,8 +203,7 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_bad_symbol_fixture,
-    ::testing::Values(
-        diagnostics_sysvar_params::create_input("SYSMAC", "(0,1)"),
+    ::testing::Values(diagnostics_sysvar_params::create_input("SYSMAC", "(0,1)"),
         diagnostics_sysvar_params::create_input("SYSMAC", "(0,0,1)"),
         diagnostics_sysvar_params::create_input("SYSMAC", "(1)"),
         diagnostics_sysvar_params::create_input("SYSMAC", "(1,1)"),
@@ -237,8 +236,7 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSMAC", "(0)"),
         diagnostics_sysvar_params::create_input("SYSMAC", "(1,0)"),
         diagnostics_sysvar_params::create_input("SYSMAC", "(1,1,0)"),
-        diagnostics_sysvar_params::create_input("SYSMAC", "(2,0)")
-    ));
+        diagnostics_sysvar_params::create_input("SYSMAC", "(2,0)")));
 
 TEST_P(diagnostics_sysvar_invalid_opcode_fixture, invalid_opcode)
 {
@@ -323,4 +321,3 @@ TEST_P(diagnostics_sysvar_too_many_nested_macro_calls_fixture, too_many_macro_ca
     ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E055" }));
 }
-

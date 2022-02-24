@@ -2061,8 +2061,7 @@ diagnostic_op diagnostic_op::error_E073(const range& range)
 
 diagnostic_op diagnostic_op::error_E074(const range& range)
 {
-    return diagnostic_op(
-        diagnostic_severity::error, "E074", "Generated operation code is null.", range);
+    return diagnostic_op(diagnostic_severity::error, "E074", "Generated operation code is null.", range);
 }
 
 diagnostic_op diagnostic_op::error_E075(const std::string& message, const range& range)
@@ -2115,8 +2114,7 @@ diagnostic_op diagnostic_op::warning_W015(const range& range)
 
 diagnostic_op diagnostic_op::warning_W016(const range& range)
 {
-    return diagnostic_op(
-        diagnostic_severity::warning, "W016", "Unsubscripted SYSLIST; default=SYSLIST(1)", range);
+    return diagnostic_op(diagnostic_severity::warning, "W016", "Unsubscripted SYSLIST; default=SYSLIST(1)", range);
 }
 
 diagnostic_op diagnostic_op::error_EQU1(const range& range)
