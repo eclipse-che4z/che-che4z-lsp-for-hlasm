@@ -48,8 +48,16 @@ class hlasm_context
     using instruction_storage = std::unordered_map<id_index, opcode_t::opcode_variant>;
     using opcode_map = std::unordered_map<id_index, opcode_t>;
 
+    struct global_variables
+    {
+        // global variables
+        code_scope::set_sym_storage variables;
+        // global system variables
+        code_scope::sys_sym_storage system_variables;
+    };
+
     // storage of global variables
-    code_scope globals_;
+    global_variables globals_;
     // storage of defined macros
     macro_storage macros_;
     // storage of copy members
