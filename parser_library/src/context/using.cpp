@@ -220,6 +220,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
                 else
                     return std::string_view();
             };
+            // diagnose and ignore
             diag.add_diagnostic(diagnostic_op::error_U005_invalid_range(
                 b_rng, e_rng, section_name(b->sect), b->offset, section_name(e->sect), e->offset));
         }
@@ -227,7 +228,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
             len = e->offset - b->offset;
     }
     else if (m_end)
-        diag.add_diagnostic(diagnostic_op::error_M113(USING, e_rng));
+        diag.add_diagnostic(diagnostic_op::error_M113(USING, e_rng)); // diagnose and ignore
 
     if (bases.size() == 1 && bases.front().first.has_value() && bases.front().first->sect != nullptr)
         return resolve_using_dep(
