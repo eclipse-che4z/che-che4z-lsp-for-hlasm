@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "../common_testing.h"
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
@@ -25,8 +26,9 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_symbol_attr, undefined_attributes)
 {
+    diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
@@ -51,19 +53,20 @@ ca_symbol_attribute create_var_sym_attr(context::data_attr_kind kind, context::i
 
 TEST(ca_symbol_attr, evaluate_undef_varsym)
 {
+    diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     auto res = create_var_sym_attr(context::data_attr_kind::D, ctx.ids().add("n")).evaluate(eval_ctx);
 
-    ASSERT_EQ(eval_ctx.diags().size(), 1U);
-    EXPECT_EQ(eval_ctx.diags().front().code, "E010");
+    EXPECT_TRUE(matches_message_codes(diags.diags, { "E010" }));
 }
 
 TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)
 {
+    diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     auto name = ctx.ids().add("n");
 
@@ -72,14 +75,14 @@ TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)
 
     auto res = create_var_sym_attr(context::data_attr_kind::L, name).evaluate(eval_ctx);
 
-    ASSERT_EQ(eval_ctx.diags().size(), 1U);
-    EXPECT_EQ(eval_ctx.diags().front().code, "E066");
+    EXPECT_TRUE(matches_message_codes(diags.diags, { "E066" }));
 }
 
 TEST(ca_symbol_attr, evaluate_substituted_varsym_char_not_sym)
 {
+    diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     auto name = ctx.ids().add("n");
 
@@ -88,8 +91,7 @@ TEST(ca_symbol_attr, evaluate_substituted_varsym_char_not_sym)
 
     auto res = create_var_sym_attr(context::data_attr_kind::L, name).evaluate(eval_ctx);
 
-    ASSERT_EQ(eval_ctx.diags().size(), 1U);
-    EXPECT_EQ(eval_ctx.diags().front().code, "E065");
+    EXPECT_TRUE(matches_message_codes(diags.diags, { "E065" }));
 }
 
 struct attr_test_param
@@ -115,7 +117,8 @@ class ca_attr : public ::testing::TestWithParam<attr_test_param>
 {
 protected:
     std::shared_ptr<context::hlasm_context> hlasm_ctx = std::make_shared<context::hlasm_context>();
-    evaluation_context eval_ctx { *hlasm_ctx, workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { *hlasm_ctx, workspaces::empty_parse_lib_provider::instance, diags };
 };
 
 INSTANTIATE_TEST_SUITE_P(ca_attr_suite,

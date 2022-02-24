@@ -29,13 +29,13 @@ namespace hlasm_plugin::parser_library {
 
 class diagnostic_adder
 {
-    const diagnostic_op_consumer* op_diagnoser_ = nullptr;
+    diagnostic_op_consumer* op_diagnoser_ = nullptr;
     range diag_range_;
 
 public:
     bool diagnostics_present = false;
 
-    diagnostic_adder(const diagnostic_op_consumer& diagnoser, range diag_range)
+    diagnostic_adder(diagnostic_op_consumer& diagnoser, range diag_range)
         : op_diagnoser_(&diagnoser)
         , diag_range_(diag_range) {};
 

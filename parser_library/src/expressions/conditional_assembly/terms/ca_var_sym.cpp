@@ -73,7 +73,7 @@ context::SET_t ca_var_sym::convert_return_types(
 {
     if (retval.type == context::SET_t_enum::C_TYPE)
     {
-        diagnostic_adder add_diags(eval_ctx, expr_range);
+        diagnostic_adder add_diags(eval_ctx.diags, expr_range);
         switch (type)
         {
             case context::SET_t_enum::A_TYPE:

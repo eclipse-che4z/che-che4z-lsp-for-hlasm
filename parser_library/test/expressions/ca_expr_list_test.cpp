@@ -30,7 +30,8 @@ using namespace hlasm_plugin::parser_library;
 TEST(ca_expr_list, unknown_function_to_operator)
 {
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     std::string name = "AND";
     auto c = std::make_unique<ca_constant>(1, range());
@@ -46,19 +47,18 @@ TEST(ca_expr_list, unknown_function_to_operator)
 
     //   function  =>    operator
     // ((1)AND(1)) => ((1) AND (1))
-    diagnostic_op_consumer_container diags;
     expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE, diags);
     auto res = expr_list.evaluate(eval_ctx);
 
     EXPECT_TRUE(diags.diags.empty());
-    EXPECT_TRUE(eval_ctx.diags().empty());
     EXPECT_EQ(res.access_b(), true);
 }
 
 TEST(ca_expr_list, resolve_C_type)
 {
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     std::string name = "UPPER";
     auto sym = std::make_unique<ca_symbol>(&name, range());
@@ -71,13 +71,11 @@ TEST(ca_expr_list, resolve_C_type)
     list.emplace_back(std::move(sym));
     list.emplace_back(std::move(str));
     // (UPPER 'low')
-    diagnostic_op_consumer_container diags;
     ca_expr_list expr_list(std::move(list), range());
     expr_list.resolve_expression_tree(context::SET_t_enum::C_TYPE, diags);
     auto res = expr_list.evaluate(eval_ctx);
 
     EXPECT_TRUE(diags.diags.empty());
-    EXPECT_TRUE(eval_ctx.diags().empty());
     EXPECT_EQ(res.access_c(), "LOW");
 }
 
@@ -97,7 +95,8 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
     ca_expr_list expr_list(std::move(list), range());
 
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
     auto res = expr_list.get_undefined_attributed_symbols(eval_ctx);
 
     ASSERT_TRUE(res.size());

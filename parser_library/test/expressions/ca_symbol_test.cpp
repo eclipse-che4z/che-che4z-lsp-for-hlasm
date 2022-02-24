@@ -25,7 +25,8 @@ using namespace hlasm_plugin::parser_library;
 TEST(ca_symbol, undefined_attributes)
 {
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
     std::string name = "n";
 
     ca_symbol sym(&name, range());

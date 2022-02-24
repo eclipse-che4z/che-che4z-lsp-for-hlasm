@@ -262,12 +262,12 @@ context::A_t overflow_transform(std::int64_t val, range expr_range, const evalua
 {
     if (val > std::numeric_limits<context::A_t>::max())
     {
-        eval_ctx.add_diagnostic(diagnostic_op::error_CE013(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE013(expr_range));
         return 0;
     }
     else if (val < std::numeric_limits<context::A_t>::min())
     {
-        eval_ctx.add_diagnostic(diagnostic_op::error_CE014(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE014(expr_range));
         return 0;
     }
     else
@@ -305,7 +305,7 @@ context::SET_t ca_conc::operation(
 {
     if (lhs.access_c().size() + rhs.access_c().size() > ca_string::MAX_STR_SIZE)
     {
-        eval_ctx.add_diagnostic(diagnostic_op::error_CE011(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE011(expr_range));
         return context::object_traits<context::C_t>::default_v();
     }
     auto& ret = lhs.access_c();

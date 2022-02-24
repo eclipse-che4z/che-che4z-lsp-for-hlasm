@@ -193,20 +193,20 @@ context::SET_t ca_symbol_attribute::retrieve_value(
 
     if (!ord_symbol)
     {
-        eval_ctx.add_diagnostic(diagnostic_op::warning_W013(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::warning_W013(expr_range));
         return context::symbol_attributes::default_value(attribute);
     }
 
     if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
         && !ord_symbol->attributes().can_have_SI_attr())
     {
-        eval_ctx.add_diagnostic(diagnostic_op::error_E066(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_E066(expr_range));
         return context::symbol_attributes::default_value(attribute);
     }
 
     if (!ord_symbol->attributes().is_defined(attribute))
     {
-        eval_ctx.add_diagnostic(diagnostic_op::warning_W013(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::warning_W013(expr_range));
         return context::symbol_attributes::default_value(attribute);
     }
 
@@ -232,7 +232,7 @@ context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, cons
     }
     else
     {
-        eval_ctx.add_diagnostic(diagnostic_op::error_E066(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_E066(expr_range));
         return context::symbol_attributes::default_ca_value(attribute);
     }
 }
@@ -248,7 +248,7 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
         return false;
     else if (attribute == context::data_attr_kind::O)
     {
-        eval_ctx.add_diagnostic(diagnostic_op::error_E066(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_E066(expr_range));
         return {};
     }
     else if (attribute == context::data_attr_kind::T)
@@ -257,7 +257,8 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
     }
     else
     {
-        diagnostic_consumer_transform diags([&eval_ctx](diagnostic_op d) { eval_ctx.add_diagnostic(std::move(d)); });
+        diagnostic_consumer_transform diags(
+            [&eval_ctx](diagnostic_op d) { eval_ctx.diags.add_diagnostic(std::move(d)); });
         context::symbol_attributes attrs(context::symbol_origin::DAT,
             ebcdic_encoding::a2e[(unsigned char)lit.dd->get_type_attribute()],
             lit.dd->get_length_attribute(solver, diags),
@@ -266,7 +267,7 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
         if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
             && !attrs.can_have_SI_attr())
         {
-            eval_ctx.add_diagnostic(diagnostic_op::warning_W011(symbol_range));
+            eval_ctx.diags.add_diagnostic(diagnostic_op::warning_W011(symbol_range));
             return 0;
         }
         return attrs.get_attribute_value(attribute);
@@ -293,7 +294,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
 
     if (!var_symbol)
     {
-        eval_ctx.add_diagnostic(diagnostic_op::error_E010("variable", vs->symbol_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_E010("variable", vs->symbol_range));
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
@@ -304,7 +305,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
     }
     else if (attribute == context::data_attr_kind::T)
     {
-        if (!mngr.test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range))
+        if (!mngr.test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
             return std::string("U");
 
         context::SET_t value =
@@ -318,7 +319,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
     else
     {
         if (attribute == context::data_attr_kind::K
-            && !mngr.test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range))
+            && !mngr.test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
             return context::symbol_attributes::default_ca_value(attribute);
         return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, var_symbol, transform(expr_subscript));
     }
@@ -331,12 +332,12 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
 {
     processing::context_manager mngr(&eval_ctx);
 
-    context::SET_t substituted_name = mngr.get_var_sym_value(var_name, expr_subscript, var_range);
+    context::SET_t substituted_name = mngr.get_var_sym_value(var_name, expr_subscript, var_range, eval_ctx.diags);
 
     if (substituted_name.type != context::SET_t_enum::C_TYPE)
     {
         if (attribute != context::data_attr_kind::O && attribute != context::data_attr_kind::T)
-            eval_ctx.add_diagnostic(diagnostic_op::error_E066(expr_range));
+            eval_ctx.diags.add_diagnostic(diagnostic_op::error_E066(expr_range));
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
@@ -346,7 +347,7 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
     if (!valid)
     {
         if (attribute != context::data_attr_kind::O && attribute != context::data_attr_kind::T)
-            eval_ctx.add_diagnostic(diagnostic_op::error_E065(expr_range));
+            eval_ctx.diags.add_diagnostic(diagnostic_op::error_E065(expr_range));
         return context::symbol_attributes::default_ca_value(attribute);
     }
     else

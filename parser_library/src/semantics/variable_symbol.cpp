@@ -39,7 +39,7 @@ context::id_index created_variable_symbol::evaluate_name(const expressions::eval
 
     auto mngr = processing::context_manager(&eval_ctx);
 
-    return mngr.get_symbol_name(str_name, symbol_range);
+    return mngr.get_symbol_name(str_name, symbol_range, eval_ctx.diags);
 }
 
 basic_variable_symbol* variable_symbol::access_basic()
@@ -85,7 +85,7 @@ context::SET_t variable_symbol::evaluate(const expressions::evaluation_context& 
 
     processing::context_manager mngr(&eval_ctx);
 
-    auto val = mngr.get_var_sym_value(name, evaluated_subscript, symbol_range);
+    auto val = mngr.get_var_sym_value(name, evaluated_subscript, symbol_range, eval_ctx.diags);
 
     return val;
 }

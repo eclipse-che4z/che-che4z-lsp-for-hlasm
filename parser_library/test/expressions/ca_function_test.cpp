@@ -76,7 +76,8 @@ class ca_func : public ::testing::TestWithParam<func_test_param>
 {
 protected:
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     context::SET_t get_result()
     {
@@ -293,7 +294,7 @@ TEST_P(ca_func, test)
 {
     auto result = get_result();
 
-    ASSERT_EQ(eval_ctx.diags().size(), GetParam().erroneous);
+    EXPECT_EQ(diags.diags.size(), GetParam().erroneous);
 
     if (!GetParam().erroneous)
     {

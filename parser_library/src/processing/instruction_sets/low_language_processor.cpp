@@ -43,8 +43,9 @@ context::id_index low_language_processor::find_label_symbol(const rebuilt_statem
     if (const auto& label = stmt.label_ref(); label.type == semantics::label_si_type::ORD)
     {
         context_manager mngr(hlasm_ctx);
-        auto ret = mngr.get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol, label.field_range);
-        collect_diags_from_child(mngr);
+        diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
+        auto ret =
+            mngr.get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol, label.field_range, diags);
         return ret;
     }
     else
