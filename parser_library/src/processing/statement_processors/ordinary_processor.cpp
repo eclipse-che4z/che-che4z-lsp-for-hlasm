@@ -320,7 +320,7 @@ context::id_index ordinary_processor::resolve_instruction(
         ;
     tmp.erase(0U, i);
 
-    static const std::regex regex(R"([\$_#@a-zA-Z0-9]*)");
+    static const std::regex regex(R"([ \$_#@a-zA-Z0-9]*)");
 
     if (tmp.empty())
     {
@@ -337,6 +337,7 @@ context::id_index ordinary_processor::resolve_instruction(
         add_diagnostic(diagnostic_op::error_E067(instruction_range));
         return context::id_storage::empty_id;
     }
+
 
     return hlasm_ctx.ids().add(std::move(tmp));
 }
