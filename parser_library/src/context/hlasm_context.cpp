@@ -70,7 +70,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 
             sys_sym_ptr var = std::make_shared<system_variable>(SYSECT, std::move(mac_data), false);
 
-            scope.variables.insert({ SYSECT, std::move(var)});
+            scope.system_variables.insert({ SYSECT, std::move(var) });
         }
 
         {
@@ -84,7 +84,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 
             sys_sym_ptr var = std::make_shared<system_variable>(SYSNDX, std::move(mac_data), false);
 
-            curr_scope()->system_variables.insert({ SYSNDX, std::move(var) });
+            scope.system_variables.insert({ SYSNDX, std::move(var) });
         }
 
         {
@@ -134,7 +134,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 
             sys_sym_ptr var = std::make_shared<system_variable>(SYSLOC, std::move(mac_data), false);
 
-            scope.variables.insert({ SYSLOC, std::move(var) });
+            scope.system_variables.insert({ SYSLOC, std::move(var) });
         }
 
         {
@@ -146,7 +146,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 
             sys_sym_ptr var = std::make_shared<system_variable>(SYSNEST, std::move(mac_data), false);
 
-            scope.variables.insert({ SYSNEST, var });
+            scope.system_variables.insert({ SYSNEST, var });
         }
 
         {
@@ -263,17 +263,17 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         }
     }
 
-    auto glob = globals_.find(SYSDATC);
+    auto glob = globals_.system_variables.find(SYSDATC);
     scope.system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSDATE);
+    glob = globals_.system_variables.find(SYSDATE);
     scope.system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSTIME);
+    glob = globals_.system_variables.find(SYSTIME);
     scope.system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSPARM);
+    glob = globals_.system_variables.find(SYSPARM);
     scope.system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSOPT_RENT);
+    glob = globals_.system_variables.find(SYSOPT_RENT);
     scope.system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSTEM_ID);
+    glob = globals_.system_variables.find(SYSTEM_ID);
     scope.system_variables.insert({ glob->second->id, glob->second });
 }
 
