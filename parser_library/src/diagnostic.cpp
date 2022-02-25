@@ -2064,13 +2064,14 @@ diagnostic_op diagnostic_op::error_E074(const range& range)
     return diagnostic_op(diagnostic_severity::error, "E074", "Generated operation code is null.", range);
 }
 
-diagnostic_op diagnostic_op::error_E075(const std::string& message, const range& range)
+diagnostic_op diagnostic_op::error_E075(std::string_view message, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "E075",
-        "The name field contains a non-alphanumeric character, that is, a character other than A to Z, 0 to 9, $, #, "
-        "@, or _. - "
-            + message,
+        concat("The name field contains a non-alphanumeric character, that is, a character other than A to Z, 0 to 9, "
+               "$, #, "
+               "@, or _. - ",
+            message),
         range);
 }
 

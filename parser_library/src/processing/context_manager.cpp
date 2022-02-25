@@ -113,7 +113,7 @@ bool context_manager::test_symbol_for_read(
             return false;
         }
 
-        if ((set_sym->is_scalar && subscript.size() == 1) || (!set_sym->is_scalar && subscript.size() == 0))
+        if ((set_sym->is_scalar && subscript.size() == 1) || (!set_sym->is_scalar && subscript.empty()))
         {
             add_diagnostic(
                 diagnostic_op::error_E013("subscript error", symbol_range)); // error - inconsistent format of subcript
@@ -131,7 +131,7 @@ bool context_manager::test_symbol_for_read(
     {
         if (dynamic_cast<context::system_variable_syslist*>(mac_par))
         {
-            if (0 == subscript.size())
+            if (subscript.empty())
             {
                 add_diagnostic(diagnostic_op::warning_W016(symbol_range)); // warn - SYSLIST is not subscripted
             }
@@ -150,7 +150,7 @@ bool context_manager::test_symbol_for_read(
                 }
             }
         }
-        else if (0 < subscript.size() && !dynamic_cast<context::system_variable_sysmac*>(mac_par))
+        else if (!subscript.empty() && !dynamic_cast<context::system_variable_sysmac*>(mac_par))
         {
             if (0 == subscript[0])
             {
