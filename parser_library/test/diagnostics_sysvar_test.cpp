@@ -246,7 +246,6 @@ TEST_P(diagnostics_sysvar_invalid_opcode_fixture, invalid_opcode)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
 
@@ -258,7 +257,6 @@ TEST_P(diagnostics_sysvar_null_opcode_invalid_subscript_fixture, null_opcode_inv
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)2);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E012", "E074" }));
 }
 
@@ -270,7 +268,6 @@ TEST_P(diagnostics_sysvar_null_opcode_fixture, null_opcode)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E074" }));
 }
 
@@ -282,7 +279,6 @@ TEST_P(diagnostics_sysvar_bad_symbol_fixture, bad_symbol)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E067" }));
 }
 
@@ -294,7 +290,6 @@ TEST_P(diagnostics_sysvar_non_alpha_char_fixture, non_alpha_char)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E075" }));
 }
 
@@ -306,7 +301,6 @@ TEST_P(diagnostics_sysvar_unsubscripted_syslist_invalid_opcode_fixture, unsubscr
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)2);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W016", "E049" }));
 }
 
@@ -318,6 +312,5 @@ TEST_P(diagnostics_sysvar_too_many_nested_macro_calls_fixture, too_many_macro_ca
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E055" }));
 }
