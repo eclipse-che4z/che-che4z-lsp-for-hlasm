@@ -87,6 +87,10 @@ const C_t& system_variable_sysmac::get_value(const std::vector<size_t>& offset) 
         return get_data({ 0 })->get_value();
 }
 
+const C_t& system_variable_sysmac::get_value(size_t idx) const { return system_variable::get_value(idx); }
+
+const C_t& system_variable_sysmac::get_value() const { return system_variable::get_value(); }
+
 const macro_param_data_component* system_variable_sysmac::get_data(const std::vector<size_t>& offset) const
 {
     const macro_param_data_component* tmp = real_data();
