@@ -732,3 +732,37 @@ C    EQU  L'*
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 1);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C"), 1);
 }
+
+TEST(data_attributes, sysstmt)
+{
+    std::string input = R"(
+&VAR    SETA 2
+&BOOL   SETB (&VAR EQ 2)
+&STR    SETC 'SOMETHING'
+        GBLC &NDXNUM
+&STMTA  SETC &SYSSTMT
+
+        MACRO
+        MAC &VAR
+        LR 1,1
+&STMTC  SETC &SYSSTMT
+
+        MEND
+
+&STMTB  SETC &SYSSTMT
+10      MAC 13
+        LR 1,2
+&STMTD  SETC &SYSSTMT
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTA"), "00000007");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000016");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000020");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000023");
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+}
