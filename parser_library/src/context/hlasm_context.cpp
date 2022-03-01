@@ -186,6 +186,7 @@ void hlasm_context::add_global_system_var_to_scope(id_storage& ids, const std::s
 
 void hlasm_context::add_global_system_vars(code_scope& scope)
 {
+
     if (!is_in_macro())
     {
         {
