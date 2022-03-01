@@ -57,39 +57,56 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
     return instr_map;
 }
 
+template<typename system_variable_type>
+std::pair<id_index, sys_sym_ptr> hlasm_context::create_system_variable(
+    std::string name, std::variant<std::string, std::vector<std::string>> value, bool is_global)
+{
+    auto id_storage = ids().add(name);
+
+    macro_data_ptr mac_data = std::visit(
+        [](auto& v) -> macro_data_ptr {
+            if constexpr (std::is_same_v<decltype(v), std::string&>)
+                return std::make_unique<macro_param_data_single>(std::move(v));
+            else
+            {
+                std::vector<macro_data_ptr> data;
+                for (auto& single_data : v)
+                {
+                    data.push_back(std::make_unique<macro_param_data_single>(std::move(single_data)));
+                }
+                return std::make_unique<macro_param_data_composite>(std::move(data));
+            }
+        },
+        value);
+
+    sys_sym_ptr var = std::make_shared<system_variable_type>(id_storage, std::move(mac_data), is_global);
+
+    return { id_storage, var };
+}
+
 void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 {
     if (scope.is_in_macro())
     {
         {
-            auto SYSECT = ids().add("SYSECT");
-
             auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_storage::empty_id;
 
-            macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(*sect_name);
+            auto sysvar = create_system_variable<system_variable>("SYSECT", *sect_name, false);
 
-            sys_sym_ptr var = std::make_shared<system_variable>(SYSECT, std::move(mac_data), false);
-
-            scope.system_variables.insert({ SYSECT, std::move(var) });
+            scope.system_variables.insert(sysvar);
         }
 
         {
-            auto SYSNDX = ids().add("SYSNDX");
-
             std::string value = std::to_string(SYSNDX_);
             if (auto value_len = value.size(); value_len < 4)
                 value.insert(0, 4 - value_len, '0');
 
-            macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(std::move(value));
+            auto sysvar = create_system_variable<system_variable>("SYSNDX", std::move(value), false);
 
-            sys_sym_ptr var = std::make_shared<system_variable>(SYSNDX, std::move(mac_data), false);
-
-            scope.system_variables.insert({ SYSNDX, std::move(var) });
+            scope.system_variables.insert(sysvar);
         }
 
         {
-            auto SYSSTYP = ids().add("SYSSTYP");
-
             std::string value = "";
 
             if (ord_ctx.current_section())
@@ -113,16 +130,12 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
                 }
             }
 
-            macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(value);
+            auto sysvar = create_system_variable<system_variable>("SYSSTYP", std::move(value), false);
 
-            sys_sym_ptr var = std::make_shared<system_variable>(SYSSTYP, std::move(mac_data), false);
-
-            scope.system_variables.insert({ SYSSTYP, std::move(var) });
+            scope.system_variables.insert(sysvar);
         }
 
         {
-            auto SYSLOC = ids().add("SYSLOC");
-
             std::string location_counter_name = "";
 
             if (ord_ctx.current_section())
@@ -130,29 +143,23 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
                 location_counter_name = *ord_ctx.current_section()->current_location_counter().name;
             }
 
-            macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(location_counter_name);
+            auto sysvar = create_system_variable<system_variable>("SYSLOC", std::move(location_counter_name), false);
 
-            sys_sym_ptr var = std::make_shared<system_variable>(SYSLOC, std::move(mac_data), false);
-
-            scope.system_variables.insert({ SYSLOC, std::move(var) });
+            scope.system_variables.insert(sysvar);
         }
 
         {
-            auto SYSNEST = ids().add("SYSNEST");
-
             std::string value = std::to_string(scope_stack_.size() - 1);
 
-            macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(std::move(value));
+            auto sysvar = create_system_variable<system_variable>("SYSNEST", std::move(value), false);
 
-            sys_sym_ptr var = std::make_shared<system_variable>(SYSNEST, std::move(mac_data), false);
-
-            scope.system_variables.insert({ SYSNEST, var });
+            scope.system_variables.insert(sysvar);
         }
 
         {
             auto SYSMAC = ids().add("SYSMAC");
 
-            std::vector<macro_data_ptr> data;
+            std::vector<std::string> data;
 
             for (auto it = scope_stack_.rbegin(); it != scope_stack_.rend(); ++it)
             {
@@ -161,14 +168,12 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
                     tmp = *it->this_macro->id;
                 else
                     tmp = "OPEN CODE";
-                data.push_back(std::make_unique<macro_param_data_single>(std::move(tmp)));
+                data.push_back(std::move(tmp));
             }
 
-            macro_data_ptr mac_data = std::make_unique<macro_param_data_composite>(std::move(data));
+            auto sysvar = create_system_variable<system_variable_sysmac>("SYSMAC", std::move(data), false);
 
-            sys_sym_ptr var = std::make_shared<system_variable_sysmac>(SYSMAC, std::move(mac_data), false);
-
-            scope.system_variables.insert({ SYSMAC, std::move(var) });
+            scope.system_variables.insert(sysvar);
         }
     }
 }

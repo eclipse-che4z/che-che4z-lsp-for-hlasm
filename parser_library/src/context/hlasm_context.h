@@ -96,6 +96,10 @@ class hlasm_context
     size_t m_ainsert_id = 0;
     bool m_end_reached = false;
 
+    template<typename T>
+    std::pair<id_index, sys_sym_ptr> create_system_variable(
+        std::string name, std::variant<std::string, std::vector<std::string>>, bool is_global);
+
     void add_system_vars_to_scope(code_scope& scope);
     void add_global_system_vars(code_scope& scope);
 
