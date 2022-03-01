@@ -181,6 +181,8 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
     auto SYSPARM = ids().add("SYSPARM");
     auto SYSOPT_RENT = ids().add("SYSOPT_RENT");
     auto SYSTEM_ID = ids().add("SYSTEM_ID");
+    auto SYSSTMT = ids().add("SYSSTMT");
+
 
     if (!is_in_macro())
     {
@@ -261,6 +263,20 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
 
             globals_.system_variables.insert({ SYSTEM_ID, std::move(var) });
         }
+    }
+
+    {
+        std::string value = std::to_string(SYSSTMT_);
+        constexpr const size_t sysstmt_len = 8;
+
+        if (auto value_len = value.size(); value_len < sysstmt_len)
+            value.insert(0, sysstmt_len - value_len, '0');
+
+        macro_data_ptr mac_data = std::make_unique<macro_param_data_single>(std::move(value));
+
+        sys_sym_ptr var = std::make_shared<system_variable>(SYSSTMT, std::move(mac_data), true);
+
+        globals_.system_variables.insert({ SYSSTMT, std::move(var) });
     }
 
     auto glob = globals_.system_variables.find(SYSDATC);
