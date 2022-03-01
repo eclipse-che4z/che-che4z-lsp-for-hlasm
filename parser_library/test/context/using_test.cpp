@@ -68,8 +68,7 @@ struct test_context : public dependency_solver
     // Inherited via dependency_solver
     virtual const context::symbol* get_symbol(id_index name) const override { return &m_symbols.at(name); }
     virtual std::optional<address> get_loctr() const override { return m_loctr; }
-    virtual id_index get_literal_id(
-        const std::string&, const std::shared_ptr<const expressions::data_definition>&, const range&, bool) override
+    virtual id_index get_literal_id(const std::shared_ptr<const expressions::data_definition>&) override
     {
         assert(false);
         return id_index();

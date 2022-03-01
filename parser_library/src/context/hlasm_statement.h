@@ -35,12 +35,6 @@ struct resolved_statement;
 
 namespace hlasm_plugin::parser_library::context {
 
-struct hlasm_statement;
-
-using shared_stmt_ptr = std::shared_ptr<const hlasm_statement>;
-
-using statement_block = std::vector<shared_stmt_ptr>;
-
 enum class statement_kind
 {
     RESOLVED,
@@ -68,6 +62,10 @@ struct hlasm_statement
 protected:
     hlasm_statement(const statement_kind kind);
 };
+
+using shared_stmt_ptr = std::shared_ptr<const hlasm_statement>;
+
+using statement_block = std::vector<shared_stmt_ptr>;
 
 
 } // namespace hlasm_plugin::parser_library::context

@@ -118,12 +118,10 @@ std::optional<context::address> data_def_dependency_solver::get_loctr() const
     return std::nullopt;
 }
 
-context::id_index data_def_dependency_solver::get_literal_id(const std::string& text,
-    const std::shared_ptr<const expressions::data_definition>& dd,
-    const range& r,
-    bool align_on_halfword)
+context::id_index data_def_dependency_solver::get_literal_id(
+    const std::shared_ptr<const expressions::data_definition>& dd)
 {
-    return base.get_literal_id(text, dd, r, align_on_halfword);
+    return base.get_literal_id(dd);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

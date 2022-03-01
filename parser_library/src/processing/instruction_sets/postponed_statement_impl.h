@@ -39,6 +39,7 @@ struct postponed_statement_impl : public context::postponed_statement, public re
     const semantics::instruction_si& instruction_ref() const override { return stmt.instruction_ref(); }
     const semantics::operands_si& operands_ref() const override { return stmt.operands_ref(); }
     const semantics::remarks_si& remarks_ref() const override { return stmt.remarks_ref(); }
+    std::span<const semantics::literal_si> literals() const override { return stmt.literals(); }
     const range& stmt_range_ref() const override { return stmt.stmt_range_ref(); }
     const op_code& opcode_ref() const override { return stmt.opcode_ref(); }
     processing_format format_ref() const override { return stmt.format_ref(); }

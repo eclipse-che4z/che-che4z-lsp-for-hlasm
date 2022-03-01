@@ -33,8 +33,8 @@ low_language_processor::low_language_processor(analyzing_context ctx,
 rebuilt_statement low_language_processor::preprocess(std::shared_ptr<const processing::resolved_statement> statement)
 {
     auto stmt = std::static_pointer_cast<const resolved_statement>(statement);
-    auto [label, ops] = preprocess_inner(*stmt);
-    return rebuilt_statement(std::move(stmt), std::move(label), std::move(ops));
+    auto [label, ops, literals] = preprocess_inner(*stmt);
+    return rebuilt_statement(std::move(stmt), std::move(label), std::move(ops), std::move(literals));
 }
 
 context::id_index low_language_processor::find_label_symbol(const rebuilt_statement& stmt) const
@@ -97,8 +97,7 @@ bool trim_right(std::string& s)
 low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement& stmt)
 {
     using namespace semantics;
-    std::optional<label_si> label;
-    std::optional<operands_si> operands;
+    preprocessed_part result;
 
     std::string new_label;
     // label
@@ -107,21 +106,21 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
         case label_si_type::CONC:
             new_label = concatenation_point::evaluate(std::get<concat_chain>(label_ref.value), eval_ctx);
             if (!trim_right(new_label))
-                label.emplace(label_ref.field_range);
+                result.label.emplace(label_ref.field_range);
             else
             {
                 auto ord_id = hlasm_ctx.ids().add(new_label);
-                label.emplace(label_ref.field_range, ord_symbol_string { ord_id, std::move(new_label) });
+                result.label.emplace(label_ref.field_range, ord_symbol_string { ord_id, std::move(new_label) });
             }
             break;
         case label_si_type::VAR:
             new_label = var_sym_conc::evaluate(std::get<vs_ptr>(label_ref.value)->evaluate(eval_ctx));
             if (!trim_right(new_label))
-                label.emplace(label_ref.field_range);
+                result.label.emplace(label_ref.field_range);
             else
             {
                 auto ord_id = hlasm_ctx.ids().add(new_label);
-                label.emplace(label_ref.field_range, ord_symbol_string { ord_id, std::move(new_label) });
+                result.label.emplace(label_ref.field_range, ord_symbol_string { ord_id, std::move(new_label) });
             }
             break;
         case label_si_type::MAC:
@@ -141,16 +140,16 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
     {
         assert(operands_ref.value.size() == 1);
         std::string field(concatenation_point::evaluate(operands_ref.value[0]->access_model()->chain, eval_ctx));
-        operands.emplace(parser
-                             .parse_operand_field(std::move(field),
-                                 true,
-                                 range_provider(operands_ref.value[0]->operand_range, adjusting_state::SUBSTITUTION),
-                                 processing_status(stmt.format_ref(), stmt.opcode_ref()),
-                                 *this)
-                             .first);
+        auto [operands, _, literals] = parser.parse_operand_field(std::move(field),
+            true,
+            range_provider(operands_ref.value[0]->operand_range, adjusting_state::SUBSTITUTION),
+            processing_status(stmt.format_ref(), stmt.opcode_ref()),
+            *this);
+        result.operands.emplace(std::move(operands));
+        result.literals.emplace(std::move(literals));
     }
 
-    return std::make_pair(std::move(label), std::move(operands));
+    return result;
 }
 
 bool low_language_processor::check_address_for_ORG(range err_range,

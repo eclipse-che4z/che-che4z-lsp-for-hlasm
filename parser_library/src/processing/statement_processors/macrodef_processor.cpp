@@ -382,7 +382,8 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
         semantics::label_si(statement.stmt_range_ref()),
         semantics::instruction_si(statement.stmt_range_ref()),
         semantics::operands_si(statement.stmt_range_ref(), {}),
-        semantics::remarks_si(statement.stmt_range_ref(), {}));
+        semantics::remarks_si(statement.stmt_range_ref(), {}),
+        std::vector<semantics::literal_si>());
 
     auto empty = std::make_unique<resolved_statement_impl>(std::move(empty_sem),
         processing_status(processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT),

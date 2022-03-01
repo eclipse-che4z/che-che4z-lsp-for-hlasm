@@ -33,6 +33,9 @@ mach_processor::mach_processor(analyzing_context ctx,
 void mach_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
     auto rebuilt_stmt = preprocess(stmt);
+
+    register_literals(rebuilt_stmt, context::halfword, hlasm_ctx.ord_ctx.next_unique_id());
+
     auto loctr = hlasm_ctx.ord_ctx.align(context::halfword);
 
     const auto& mach_instr = [](const std::string& name) {

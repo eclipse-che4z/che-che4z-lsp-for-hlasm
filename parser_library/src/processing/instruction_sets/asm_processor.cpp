@@ -613,6 +613,8 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
 {
     auto rebuilt_stmt = preprocess(stmt);
 
+    register_literals(rebuilt_stmt, context::no_align, hlasm_ctx.ord_ctx.next_unique_id());
+
     auto it = table_.find(rebuilt_stmt.opcode_ref().value);
     if (it != table_.end())
     {
@@ -934,10 +936,9 @@ void asm_processor::process_LTORG(rebuilt_statement stmt)
     constexpr size_t sectalgn = 8;
     auto loctr = hlasm_ctx.ord_ctx.align(context::alignment { 0, sectalgn });
 
-    context::ordinary_assembly_dependency_solver dep_solver(
-        hlasm_ctx.ord_ctx, context::ordinary_assembly_dependency_solver::no_new_literals {});
     find_sequence_symbol(stmt);
 
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
 
     if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
@@ -951,7 +952,7 @@ void asm_processor::process_LTORG(rebuilt_statement stmt)
                 context::symbol_attributes(context::symbol_origin::EQU, ebcdic_encoding::to_ebcdic('U'), 1));
     }
 
-    hlasm_ctx.ord_ctx.generate_pool(dep_solver, *this);
+    hlasm_ctx.ord_ctx.generate_pool(*this);
 }
 
 void asm_processor::process_USING(rebuilt_statement stmt)
@@ -1014,17 +1015,6 @@ void asm_processor::process_USING(rebuilt_statement stmt)
         }
     }
 
-    // TODO: this needs to be reworked
-    const auto register_literals = [&dep_solver](const mach_expr_ptr& expr) {
-        if (!expr)
-            return;
-        (void)expr->get_dependencies(dep_solver);
-    };
-    register_literals(b);
-    register_literals(e);
-    for (const auto& base : bases)
-        register_literals(base);
-
     hlasm_ctx.using_add(label,
         std::move(b),
         std::move(e),
@@ -1077,10 +1067,6 @@ void asm_processor::process_DROP(rebuilt_statement stmt)
             }
         }
     }
-
-    // TODO: this needs to be reworked
-    for (const auto& base : bases)
-        base->get_dependencies(dep_solver); // register literals
 
     hlasm_ctx.using_remove(
         std::move(bases), dep_solver.derive_current_dependency_evaluation_context(), std::move(stack));

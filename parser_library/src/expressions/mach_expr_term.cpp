@@ -352,8 +352,6 @@ mach_expression::value_t mach_expr_data_attr::evaluate(
     }
     else if (lit)
     {
-        (void)lit->evaluate(solver, diags);
-
         auto& dd = lit->get_data_definition();
         context::symbol_attributes attrs(context::symbol_origin::DAT,
             ebcdic_encoding::a2e[(unsigned char)dd.get_type_attribute()],
@@ -400,22 +398,17 @@ mach_expr_ptr mach_expr_data_attr::clone() const
 bool mach_expr_literal::do_is_similar(const mach_expression& expr) const
 {
     const auto& e = static_cast<const mach_expr_literal&>(expr);
-    return utils::is_similar(m_literal_data->dd, e.m_literal_data->dd);
+    return utils::is_similar(m_literal_data->get_dd(), e.m_literal_data->get_dd());
 }
 
-mach_expr_literal::mach_expr_literal(range rng, data_definition dd, std::string dd_text)
-    : mach_expr_literal(rng, std::make_shared<literal_data>(std::move(dd)), std::move(dd_text), private_t())
-{}
-
-mach_expr_literal::mach_expr_literal(range rng, std::shared_ptr<literal_data> dd_shared, std::string dd_text, private_t)
+mach_expr_literal::mach_expr_literal(range rng, semantics::literal_si lit)
     : mach_expression(rng)
-    , m_literal_data(dd_shared)
-    , m_dd_text(std::move(dd_text))
+    , m_literal_data(std::move(lit))
 {}
 
 context::dependency_collector mach_expr_literal::get_dependencies(context::dependency_solver& solver) const
 {
-    auto length_deps = m_literal_data->dd.get_length_dependencies(solver);
+    auto length_deps = m_literal_data->get_dd().get_length_dependencies(solver);
     // literal size has to be evaluable at the definition point (ASMA151E)
     if (length_deps.has_error || length_deps.contains_dependencies())
         return context::dependency_collector(true);
@@ -447,21 +440,19 @@ const mach_expression* mach_expr_literal::leftmost_term() const { return this; }
 
 void mach_expr_literal::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
-size_t mach_expr_literal::hash() const { return m_literal_data->dd.hash(); }
+size_t mach_expr_literal::hash() const { return m_literal_data->get_dd().hash(); }
 
 mach_expr_ptr mach_expr_literal::clone() const
 {
-    return std::make_unique<mach_expr_literal>(get_range(), m_literal_data, m_dd_text, private_t());
+    return std::make_unique<mach_expr_literal>(get_range(), m_literal_data);
 }
 
-const data_definition& mach_expr_literal::get_data_definition() const { return m_literal_data->dd; }
+const data_definition& mach_expr_literal::get_data_definition() const { return m_literal_data->get_dd(); }
 
 context::id_index mach_expr_literal::get_literal_id(context::dependency_solver& solver) const
 {
-    return solver.get_literal_id(m_dd_text,
-        std::shared_ptr<const data_definition>(m_literal_data, &m_literal_data->dd),
-        get_range(),
-        m_literal_data->referenced_by_reladdr);
+    return solver.get_literal_id(
+        std::shared_ptr<const expressions::data_definition>(m_literal_data, &m_literal_data->get_dd()));
 }
 
 } // namespace hlasm_plugin::parser_library::expressions

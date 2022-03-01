@@ -132,9 +132,7 @@ void ordinary_processor::end_processing()
         hlasm_ctx.ord_ctx.set_location_counter(ltorg->name, {});
         hlasm_ctx.ord_ctx.set_available_location_counter_value(0, 0);
 
-        context::ordinary_assembly_dependency_solver dep_solver(
-            hlasm_ctx.ord_ctx, context::ordinary_assembly_dependency_solver::no_new_literals {});
-        hlasm_ctx.ord_ctx.generate_pool(dep_solver, *this);
+        hlasm_ctx.ord_ctx.generate_pool(*this);
     }
 
     hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);

@@ -352,14 +352,10 @@ bool using_instr_assembler_operand::has_error(context::dependency_solver& info) 
     return base->get_dependencies(info).has_error || end->get_dependencies(info).has_error;
 }
 
-std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(
-    context::dependency_solver& info) const
+std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(context::dependency_solver&) const
 {
     std::vector<std::unique_ptr<checking::asm_operand>> pair;
     // this is just for the form
-    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
-    (void)base->evaluate(info, diags);
-    (void)end->evaluate(info, diags);
     pair.push_back(std::make_unique<checking::one_operand>(base_text));
     pair.push_back(std::make_unique<checking::one_operand>(end_text));
     return std::make_unique<checking::complex_operand>("", std::move(pair));

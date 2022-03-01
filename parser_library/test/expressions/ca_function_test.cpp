@@ -63,7 +63,7 @@ public:
 
     undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override { return {}; };
 
-    void resolve_expression_tree(context::SET_t_enum, diagnostic_op_consumer& diags) override {}
+    void resolve_expression_tree(context::SET_t_enum, diagnostic_op_consumer&) override {}
 
     bool is_character_expression(character_expression_purpose) const override { return false; }
 

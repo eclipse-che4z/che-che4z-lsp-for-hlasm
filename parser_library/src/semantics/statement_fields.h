@@ -19,6 +19,7 @@
 #include <variant>
 
 #include "context/id_storage.h"
+#include "expressions/data_definition.h"
 #include "operand.h"
 #include "variable_symbol.h"
 
@@ -166,6 +167,31 @@ struct remarks_si
 
     std::vector<range> value;
 };
+
+class literal_si_data
+{
+    std::string m_text;
+    expressions::data_definition m_dd;
+    range m_range;
+    bool m_referenced_by_reladdr = false;
+
+public:
+    literal_si_data(std::string text, expressions::data_definition dd, range r)
+        : m_text(std::move(text))
+        , m_dd(std::move(dd))
+        , m_range(r)
+    {}
+
+    void set_referenced_by_reladdr() { m_referenced_by_reladdr = true; }
+    bool get_referenced_by_reladdr() { return m_referenced_by_reladdr; }
+
+    const std::string& get_text() const { return m_text; }
+    const expressions::data_definition& get_dd() const { return m_dd; }
+
+    const range& get_range() const { return m_range; }
+};
+
+using literal_si = std::shared_ptr<literal_si_data>;
 
 } // namespace hlasm_plugin::parser_library::semantics
 #endif

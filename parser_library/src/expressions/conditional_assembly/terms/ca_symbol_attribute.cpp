@@ -21,6 +21,7 @@
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 #include "lexing/lexer.h"
+#include "semantics/statement_fields.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -60,7 +61,7 @@ ca_symbol_attribute::ca_symbol_attribute(
 {}
 
 ca_symbol_attribute::ca_symbol_attribute(
-    ca_literal_def lit, context::data_attr_kind attribute, range expr_range, range symbol_rng)
+    semantics::literal_si lit, context::data_attr_kind attribute, range expr_range, range symbol_rng)
     : ca_expression(get_attribute_type(attribute), std::move(expr_range))
     , attribute(attribute)
     , symbol(std::move(lit))
@@ -103,7 +104,7 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evalua
         }
         return undef_syms;
     }
-    else if (std::holds_alternative<ca_literal_def>(symbol))
+    else if (std::holds_alternative<semantics::literal_si>(symbol))
     {
         // everything needs to be defined
         return undef_sym_set();
@@ -142,9 +143,9 @@ context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx)
         return evaluate_varsym(std::get<semantics::vs_ptr>(symbol), eval_ctx);
     }
 
-    if (std::holds_alternative<ca_literal_def>(symbol))
+    if (std::holds_alternative<semantics::literal_si>(symbol))
     {
-        return evaluate_literal(std::get<ca_literal_def>(symbol), eval_ctx);
+        return evaluate_literal(std::get<semantics::literal_si>(symbol), eval_ctx);
     }
 
     return context::SET_t(expr_kind);
@@ -237,11 +238,10 @@ context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, cons
 }
 
 context::SET_t ca_symbol_attribute::evaluate_literal(
-    const ca_literal_def& lit, const evaluation_context& eval_ctx) const
+    const semantics::literal_si& lit, const evaluation_context& eval_ctx) const
 {
     context::ordinary_assembly_dependency_solver solver(
         eval_ctx.hlasm_ctx.ord_ctx, eval_ctx.hlasm_ctx.ord_ctx.align(context::no_align));
-    (void)solver.get_literal_id(lit.text, lit.dd, expr_range, false);
 
     if (attribute == context::data_attr_kind::D)
         return false;
@@ -259,10 +259,10 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
         diagnostic_consumer_transform diags(
             [&eval_ctx](diagnostic_op d) { eval_ctx.diags.add_diagnostic(std::move(d)); });
         context::symbol_attributes attrs(context::symbol_origin::DAT,
-            ebcdic_encoding::a2e[(unsigned char)lit.dd->get_type_attribute()],
-            lit.dd->get_length_attribute(solver, diags),
-            lit.dd->get_scale_attribute(solver, diags),
-            lit.dd->get_integer_attribute(solver, diags));
+            ebcdic_encoding::a2e[(unsigned char)lit->get_dd().get_type_attribute()],
+            lit->get_dd().get_length_attribute(solver, diags),
+            lit->get_dd().get_scale_attribute(solver, diags),
+            lit->get_dd().get_integer_attribute(solver, diags));
         if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
             && !attrs.can_have_SI_attr())
         {

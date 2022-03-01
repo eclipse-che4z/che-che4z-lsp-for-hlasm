@@ -35,6 +35,8 @@ ca_processor::ca_processor(analyzing_context ctx,
 
 void ca_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
+    register_literals(*stmt, context::no_align, hlasm_ctx.ord_ctx.next_unique_id());
+
     auto& func = table_.at(stmt->opcode_ref().value);
     func(*stmt);
 }

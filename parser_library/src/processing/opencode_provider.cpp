@@ -283,6 +283,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                             to_parse, *m_ctx->hlasm_ctx, diags, std::move(tmp_provider), r, proc_status, true);
 
                         line.operands = std::move(h_second.parser->macro_ops()->list);
+                        h.parser->get_collector().set_literals(h_second.parser->get_collector().take_literals());
                     }
 
                     h.parser->get_collector().set_operand_remark_field(

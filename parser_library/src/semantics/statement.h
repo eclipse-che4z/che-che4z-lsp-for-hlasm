@@ -38,6 +38,7 @@ struct complete_statement : public core_statement
 {
     virtual const operands_si& operands_ref() const = 0;
     virtual const remarks_si& remarks_ref() const = 0;
+    virtual std::span<const literal_si> literals() const = 0;
 };
 
 // statement with deferred operand and remark field
@@ -91,12 +92,18 @@ struct statement_si_deferred : public deferred_statement
 // struct holding full semantic information (si) about whole instruction statement, whole logical line
 struct statement_si : public complete_statement
 {
-    statement_si(range stmt_range, label_si label, instruction_si instruction, operands_si operands, remarks_si remarks)
+    statement_si(range stmt_range,
+        label_si label,
+        instruction_si instruction,
+        operands_si operands,
+        remarks_si remarks,
+        std::vector<semantics::literal_si> collected_literals)
         : stmt_range(std::move(stmt_range))
         , label(std::move(label))
         , instruction(std::move(instruction))
         , operands(std::move(operands))
         , remarks(std::move(remarks))
+        , collected_literals(std::move(collected_literals))
     {}
 
     range stmt_range;
@@ -105,10 +112,12 @@ struct statement_si : public complete_statement
     instruction_si instruction;
     operands_si operands;
     remarks_si remarks;
+    std::vector<semantics::literal_si> collected_literals;
 
     const label_si& label_ref() const override { return label; }
     const instruction_si& instruction_ref() const override { return instruction; }
     const operands_si& operands_ref() const override { return operands; }
+    std::span<const semantics::literal_si> literals() const override { return collected_literals; }
     const remarks_si& remarks_ref() const override { return remarks; }
     const range& stmt_range_ref() const override { return stmt_range; }
 };
@@ -116,21 +125,26 @@ struct statement_si : public complete_statement
 // structure holding deferred statement that is now complete
 struct statement_si_defer_done : public complete_statement
 {
-    statement_si_defer_done(
-        std::shared_ptr<const deferred_statement> deferred_stmt, operands_si operands, remarks_si remarks)
+    statement_si_defer_done(std::shared_ptr<const deferred_statement> deferred_stmt,
+        operands_si operands,
+        remarks_si remarks,
+        std::vector<semantics::literal_si> collected_literals)
         : deferred_stmt(deferred_stmt)
         , operands(std::move(operands))
         , remarks(std::move(remarks))
+        , collected_literals(std::move(collected_literals))
     {}
 
     std::shared_ptr<const deferred_statement> deferred_stmt;
 
     operands_si operands;
     remarks_si remarks;
+    std::vector<semantics::literal_si> collected_literals;
 
     const label_si& label_ref() const override { return deferred_stmt->label_ref(); }
     const instruction_si& instruction_ref() const override { return deferred_stmt->instruction_ref(); }
     const operands_si& operands_ref() const override { return operands; }
+    std::span<const semantics::literal_si> literals() const override { return collected_literals; }
     const remarks_si& remarks_ref() const override { return remarks; }
     const range& stmt_range_ref() const override { return deferred_stmt->stmt_range_ref(); }
 };

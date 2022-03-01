@@ -25,27 +25,19 @@ class ordinary_assembly_dependency_solver final : public dependency_solver
     std::optional<context::address> loctr_addr;
     size_t literal_pool_generation = (size_t)-1;
     size_t unique_id = 0;
-    bool allow_adding_literals = false;
 
 public:
-    explicit ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context)
+    ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context)
         : ord_context(ord_context)
         , literal_pool_generation(ord_context.current_literal_pool_generation())
-        , unique_id(ord_context.next_unique_id())
-        , allow_adding_literals(true)
-    {}
-    struct no_new_literals
-    {};
-    ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context, no_new_literals)
-        : ord_context(ord_context)
+        , unique_id(ord_context.current_unique_id())
     {}
 
     ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context, context::address loctr_addr)
         : ord_context(ord_context)
         , loctr_addr(std::move(loctr_addr))
         , literal_pool_generation(ord_context.current_literal_pool_generation())
-        , unique_id(ord_context.next_unique_id())
-        , allow_adding_literals(true)
+        , unique_id(ord_context.current_unique_id())
     {}
 
     ordinary_assembly_dependency_solver(
@@ -58,10 +50,7 @@ public:
 
     const symbol* get_symbol(id_index name) const override;
     std::optional<address> get_loctr() const override;
-    id_index get_literal_id(const std::string& text,
-        const std::shared_ptr<const expressions::data_definition>& lit,
-        const range& r,
-        bool align_on_halfword) override;
+    id_index get_literal_id(const std::shared_ptr<const expressions::data_definition>& lit) override;
 
     dependency_evaluation_context derive_current_dependency_evaluation_context() const;
 };

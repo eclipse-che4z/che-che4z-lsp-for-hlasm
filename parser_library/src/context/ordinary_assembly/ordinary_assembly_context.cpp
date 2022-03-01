@@ -357,10 +357,7 @@ section* ordinary_assembly_context::create_section(id_index name, section_kind k
 
 size_t ordinary_assembly_context::current_literal_pool_generation() const { return m_literals->current_generation(); }
 
-void ordinary_assembly_context::generate_pool(dependency_solver& solver, diagnosable_ctx& diags) const
-{
-    m_literals->generate_pool(solver, diags);
-}
+void ordinary_assembly_context::generate_pool(diagnosable_ctx& diags) const { m_literals->generate_pool(diags); }
 bool ordinary_assembly_context::is_using_label(id_index name) const
 {
     auto it = symbols_.find(name);

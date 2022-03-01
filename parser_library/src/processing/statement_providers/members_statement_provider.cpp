@@ -107,21 +107,21 @@ void members_statement_provider::fill_cache(
         semantics::operands_si op(def_stmt.deferred_ref().field_range, semantics::operand_list());
         semantics::remarks_si rem(def_stmt.deferred_ref().field_range, {});
 
-        reparsed_stmt.stmt =
-            std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));
+        reparsed_stmt.stmt = std::make_shared<semantics::statement_si_defer_done>(
+            def_impl, std::move(op), std::move(rem), std::vector<semantics::literal_si>());
     }
     else
     {
         diagnostic_consumer_transform diag_consumer(
             [&reparsed_stmt](diagnostic_op diag) { reparsed_stmt.diags.push_back(std::move(diag)); });
-        auto [op, rem] = parser.parse_operand_field(def_stmt.deferred_ref().value,
+        auto [op, rem, lits] = parser.parse_operand_field(def_stmt.deferred_ref().value,
             false,
             semantics::range_provider(def_stmt.deferred_ref().field_range, semantics::adjusting_state::NONE),
             status,
             diag_consumer);
 
-        reparsed_stmt.stmt =
-            std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));
+        reparsed_stmt.stmt = std::make_shared<semantics::statement_si_defer_done>(
+            def_impl, std::move(op), std::move(rem), std::move(lits));
     }
     cache.insert(processing_status_cache_key(status), std::move(reparsed_stmt));
 }
