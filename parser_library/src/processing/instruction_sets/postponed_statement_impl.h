@@ -44,7 +44,7 @@ struct postponed_statement_impl : public context::postponed_statement, public re
     processing_format format_ref() const override { return stmt.format_ref(); }
 
     const context::processing_stack_t& location_stack() const override { return stmt_location_stack; }
-    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override { return stmt.diagnostics(); }
+    std::span<const diagnostic_op> diagnostics() const override { return stmt.diagnostics(); }
 };
 
 } // namespace hlasm_plugin::parser_library::processing

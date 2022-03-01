@@ -16,6 +16,7 @@
 #define CONTEXT_HLASM_STATEMENT_H
 
 #include <memory>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -60,7 +61,7 @@ struct hlasm_statement
 
     virtual position statement_position() const = 0;
 
-    virtual std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const = 0;
+    virtual std::span<const diagnostic_op> diagnostics() const = 0;
 
     virtual ~hlasm_statement() = default;
 

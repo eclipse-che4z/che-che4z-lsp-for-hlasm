@@ -20,7 +20,7 @@ namespace hlasm_plugin::parser_library::processing {
 
 position error_statement::statement_position() const { return m_range.start; }
 
-std::pair<const diagnostic_op*, const diagnostic_op*> error_statement::diagnostics() const
+std::span<const diagnostic_op> error_statement::diagnostics() const
 {
     return { m_errors.data(), m_errors.data() + m_errors.size() };
 }

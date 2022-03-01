@@ -53,7 +53,7 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const evaluation_cont
     return get_undefined_attributed_symbols_vs(symbol, eval_ctx);
 }
 
-void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
+void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer&)
 {
     expr_kind = kind;
     resolve_expression_tree_vs(symbol);

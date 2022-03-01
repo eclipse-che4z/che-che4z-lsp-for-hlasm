@@ -97,7 +97,7 @@ public:
     const range& stmt_range_ref() const override { return details->r; }
     const semantics::label_si& label_ref() const override { return empty_label; }
     const semantics::instruction_si& instruction_ref() const override { return empty_instr; }
-    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override { return {}; };
+    std::span<const diagnostic_op> diagnostics() const override { return {}; };
 };
 const semantics::remarks_si literal_pool::literal_postponed_statement::empty_remarks({}, {});
 const semantics::label_si literal_pool::literal_postponed_statement::empty_label(range {});

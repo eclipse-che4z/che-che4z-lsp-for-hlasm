@@ -63,7 +63,7 @@ struct resolved_statement_impl : public resolved_statement
     const range& stmt_range_ref() const override { return base_stmt->stmt_range_ref(); }
     const op_code& opcode_ref() const override { return status.second; }
     processing_format format_ref() const override { return status.first; }
-    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override
+    std::span<const diagnostic_op> diagnostics() const override
     {
         return { statement_diagnostics.data(), statement_diagnostics.data() + statement_diagnostics.size() };
     }
@@ -99,10 +99,7 @@ struct rebuilt_statement : public resolved_statement
     processing_format format_ref() const override { return base_stmt->format_ref(); }
 
 
-    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override
-    {
-        return base_stmt->diagnostics();
-    }
+    std::span<const diagnostic_op> diagnostics() const override { return base_stmt->diagnostics(); }
 };
 
 } // namespace hlasm_plugin::parser_library::processing

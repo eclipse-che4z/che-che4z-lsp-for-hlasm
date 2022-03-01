@@ -98,9 +98,8 @@ void members_statement_provider::fill_cache(
     // TODO: what if it fails?
     auto def_impl = std::dynamic_pointer_cast<const semantics::statement_si_deferred>(cache.get_base());
 
-    auto diags = def_impl->diagnostics();
-    for (auto i = diags.first; i != diags.second; ++i)
-        reparsed_stmt.diags.push_back(*i);
+    for (const auto& d : def_impl->diagnostics())
+        reparsed_stmt.diags.push_back(d);
 
     if (status.first.occurence == operand_occurence::ABSENT || status.first.form == processing_form::UNKNOWN
         || status.first.form == processing_form::IGNORED)

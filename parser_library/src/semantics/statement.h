@@ -82,7 +82,7 @@ struct statement_si_deferred : public deferred_statement
     const deferred_operands_si& deferred_ref() const override { return deferred_operands; }
     const range& stmt_range_ref() const override { return stmt_range; }
 
-    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override
+    std::span<const diagnostic_op> diagnostics() const override
     {
         return { statement_diagnostics.data(), statement_diagnostics.data() + statement_diagnostics.size() };
     }

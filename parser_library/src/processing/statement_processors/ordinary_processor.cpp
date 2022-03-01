@@ -77,9 +77,8 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
 
 void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 {
-    auto diags = s->diagnostics();
-    for (auto it = diags.first; it != diags.second; ++it)
-        add_diagnostic(*it);
+    for (const auto& d : s->diagnostics())
+        add_diagnostic(d);
 
     bool fatal = check_fatals(range(s->statement_position()));
     if (fatal)

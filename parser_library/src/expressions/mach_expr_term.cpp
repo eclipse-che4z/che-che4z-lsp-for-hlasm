@@ -115,8 +115,7 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
         return context::dependency_collector();
 }
 
-mach_expr_constant::value_t mach_expr_symbol::evaluate(
-    context::dependency_solver& info, diagnostic_op_consumer& diags) const
+mach_expr_constant::value_t mach_expr_symbol::evaluate(context::dependency_solver& info, diagnostic_op_consumer&) const
 {
     auto symbol = info.get_symbol(value);
 
@@ -235,7 +234,7 @@ context::dependency_collector mach_expr_location_counter::get_dependencies(conte
 }
 
 mach_expression::value_t mach_expr_location_counter::evaluate(
-    context::dependency_solver& mi, diagnostic_op_consumer& diags) const
+    context::dependency_solver& mi, diagnostic_op_consumer&) const
 {
     auto location_counter = mi.get_loctr();
     if (!location_counter.has_value())
@@ -266,7 +265,7 @@ context::dependency_collector mach_expr_default::get_dependencies(context::depen
     return context::dependency_collector();
 }
 
-mach_expression::value_t mach_expr_default::evaluate(context::dependency_solver&, diagnostic_op_consumer& diags) const
+mach_expression::value_t mach_expr_default::evaluate(context::dependency_solver&, diagnostic_op_consumer&) const
 {
     return value_t();
 }
@@ -434,8 +433,7 @@ context::dependency_collector mach_expr_literal::get_dependencies(context::depen
     }
 }
 
-mach_expression::value_t mach_expr_literal::evaluate(
-    context::dependency_solver& solver, diagnostic_op_consumer& diags) const
+mach_expression::value_t mach_expr_literal::evaluate(context::dependency_solver& solver, diagnostic_op_consumer&) const
 {
     auto symbol = solver.get_symbol(get_literal_id(solver));
 
