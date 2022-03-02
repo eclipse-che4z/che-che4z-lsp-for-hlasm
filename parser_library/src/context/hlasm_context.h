@@ -106,6 +106,8 @@ class hlasm_context
         std::variant<std::string, std::vector<std::string>> value,
         bool is_global);
 
+    void add_global_system_var_to_scope(id_index& id, code_scope& scope);
+
     void add_system_vars_to_scope(code_scope& scope);
     void add_global_system_vars(code_scope& scope);
 

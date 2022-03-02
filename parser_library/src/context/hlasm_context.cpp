@@ -190,6 +190,12 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
     }
 }
 
+void hlasm_context::add_global_system_var_to_scope(id_index& id, code_scope& scope)
+{
+    auto glob = globals_.system_variables.find(id);
+    scope.system_variables.insert({ glob->second->id, glob->second });
+}
+
 void hlasm_context::add_global_system_vars(code_scope& scope)
 {
     auto SYSDATC = ids().add("SYSDATC");
@@ -275,18 +281,12 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         }
     }
 
-    auto glob = globals_.system_variables.find(SYSDATC);
-    scope.system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.system_variables.find(SYSDATE);
-    scope.system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.system_variables.find(SYSTIME);
-    scope.system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.system_variables.find(SYSPARM);
-    scope.system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.system_variables.find(SYSOPT_RENT);
-    scope.system_variables.insert({ glob->second->id, glob->second });
-    glob = globals_.system_variables.find(SYSTEM_ID);
-    scope.system_variables.insert({ glob->second->id, glob->second });
+    add_global_system_var_to_scope(SYSDATC, scope);
+    add_global_system_var_to_scope(SYSDATE, scope);
+    add_global_system_var_to_scope(SYSTIME, scope);
+    add_global_system_var_to_scope(SYSPARM, scope);
+    add_global_system_var_to_scope(SYSOPT_RENT, scope);
+    add_global_system_var_to_scope(SYSTEM_ID, scope);
 }
 
 bool hlasm_context::is_opcode(id_index symbol) const
