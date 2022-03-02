@@ -47,19 +47,10 @@ class hlasm_context
     using copy_member_storage = std::unordered_map<id_index, copy_member_ptr>;
     using instruction_storage = std::unordered_map<id_index, opcode_t::opcode_variant>;
     using opcode_map = std::unordered_map<id_index, opcode_t>;
-    using global_variables_temp = std::unordered_map<id_index, var_sym_ptr>;
-
-    struct global_variables
-    {
-        // global variables
-        code_scope::set_sym_storage variables;
-        // global system variables
-        code_scope::sys_sym_storage system_variables;
-    };
+    using global_variable_storage = std::unordered_map<id_index, var_sym_ptr>;
 
     // storage of global variables
-    global_variables globals_;
-    global_variables_temp globals_temp_;
+    global_variable_storage globals_;
 
     // storage of defined macros
     macro_storage macros_;
@@ -104,7 +95,7 @@ class hlasm_context
         id_index& id, std::variant<std::string, std::vector<std::string>> value, bool is_global) const;
 
     template<typename system_variable_type>
-    void create_and_store_system_variable2(std::variant<global_variables_temp*, code_scope::sys_sym_storage*> storage,
+    void create_and_store_system_variable(std::variant<global_variable_storage*, code_scope::sys_sym_storage*> storage,
         id_index& id,
         std::variant<std::string, std::vector<std::string>> value,
         bool is_global); // todo add consts
@@ -184,7 +175,7 @@ public:
 
     void fill_metrics_files();
     // return map of global set vars
-    const global_variables_temp& globals() const;
+    const global_variable_storage& globals() const;
 
     // return variable symbol in current scope
     // returns empty shared_ptr if there is none in the current scope
@@ -266,15 +257,16 @@ public:
         if (auto tmp = scope->variables.find(id); tmp != scope->variables.end())
             return tmp->second;
 
-        if (auto glob = globals_.variables.find(id); glob != globals_.variables.end())
+        if (auto glob = globals_.find(id); glob != globals_.end())
         {
-            scope->variables.insert({ id, glob->second });
-            return glob->second;
+            set_sym_ptr var = std::dynamic_pointer_cast<set_symbol<T>>(glob->second);
+            scope->variables.insert({ id, var });
+            return var;
         }
 
         auto val = std::make_shared<set_symbol<T>>(id, is_scalar, true);
 
-        globals_.variables.insert({ id, val });
+        globals_.insert({ id, val });
         scope->variables.insert({ id, val });
 
         return val;
