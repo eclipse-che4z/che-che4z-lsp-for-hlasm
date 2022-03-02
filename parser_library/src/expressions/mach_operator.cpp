@@ -188,41 +188,41 @@ mach_expression::value_t mach_expr_unary<par>::evaluate(
 template<>
 context::dependency_collector mach_expr_binary<add>::get_dependencies(context::dependency_solver& info) const
 {
-    auto l = left_->get_dependencies(info);
-    auto r = right_->get_dependencies(info);
-    return std::move(l) + std::move(r);
+    auto result = left_->get_dependencies(info);
+    result += right_->get_dependencies(info);
+    return result;
 }
 
 template<>
 context::dependency_collector mach_expr_binary<sub>::get_dependencies(context::dependency_solver& info) const
 {
-    auto l = left_->get_dependencies(info);
-    auto r = right_->get_dependencies(info);
-    return std::move(l) - std::move(r);
+    auto result = left_->get_dependencies(info);
+    result -= right_->get_dependencies(info);
+    return result;
 }
 
 template<>
 context::dependency_collector mach_expr_binary<rel_addr>::get_dependencies(context::dependency_solver& info) const
 {
-    auto l = left_->get_dependencies(info);
-    auto r = right_->get_dependencies(info);
-    return std::move(l) - std::move(r);
+    auto result = left_->get_dependencies(info);
+    result -= right_->get_dependencies(info);
+    return result;
 }
 
 template<>
 context::dependency_collector mach_expr_binary<mul>::get_dependencies(context::dependency_solver& info) const
 {
-    auto l = left_->get_dependencies(info);
-    auto r = right_->get_dependencies(info);
-    return std::move(l) * std::move(r);
+    auto result = left_->get_dependencies(info);
+    result *= right_->get_dependencies(info);
+    return result;
 }
 
 template<>
 context::dependency_collector mach_expr_binary<div>::get_dependencies(context::dependency_solver& info) const
 {
-    auto l = left_->get_dependencies(info);
-    auto r = right_->get_dependencies(info);
-    return std::move(l) / std::move(r);
+    auto result = left_->get_dependencies(info);
+    result /= right_->get_dependencies(info);
+    return result;
 }
 
 template<>
@@ -234,7 +234,9 @@ context::dependency_collector mach_expr_unary<add>::get_dependencies(context::de
 template<>
 context::dependency_collector mach_expr_unary<sub>::get_dependencies(context::dependency_solver& info) const
 {
-    return context::dependency_collector() - child_->get_dependencies(info);
+    context::dependency_collector result;
+    result -= child_->get_dependencies(info);
+    return result;
 }
 
 template<>

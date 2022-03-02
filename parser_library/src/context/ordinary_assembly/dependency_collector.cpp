@@ -18,42 +18,46 @@
 
 using namespace hlasm_plugin::parser_library::context;
 
-dependency_collector::dependency_collector(bool has_error)
-    : has_error(has_error)
+dependency_collector::dependency_collector() = default;
+
+dependency_collector::dependency_collector(error)
+    : has_error(true)
 {}
 
-dependency_collector::dependency_collector(id_index undefined_symbol)
-    : has_error(false)
-{
-    undefined_symbols.insert(undefined_symbol);
-}
+dependency_collector::dependency_collector(id_index undefined_symbol) { undefined_symbols.insert(undefined_symbol); }
 
-dependency_collector::dependency_collector(address unresolved_address)
-    : has_error(false)
-    , unresolved_address(std::move(unresolved_address))
+dependency_collector::dependency_collector(address u_a)
+    : unresolved_address(std::move(u_a))
 {
-    this->unresolved_address->normalize();
+    unresolved_address->normalize();
 }
 
 dependency_collector::dependency_collector(attr_ref attribute_reference)
-    : has_error(false)
 {
     undefined_attr_refs.insert(std::move(attribute_reference));
 }
 
-dependency_collector& dependency_collector::operator+(const dependency_collector& holder)
+dependency_collector& dependency_collector::operator+=(const dependency_collector& holder)
 {
     return add_sub(holder, true);
 }
 
-dependency_collector& dependency_collector::operator-(const dependency_collector& holder)
+dependency_collector& dependency_collector::operator-=(const dependency_collector& holder)
 {
     return add_sub(holder, false);
 }
 
-dependency_collector& dependency_collector::operator*(const dependency_collector& holder) { return div_mul(holder); }
+dependency_collector& dependency_collector::operator*=(const dependency_collector& holder) { return div_mul(holder); }
 
-dependency_collector& dependency_collector::operator/(const dependency_collector& holder) { return div_mul(holder); }
+dependency_collector& dependency_collector::operator/=(const dependency_collector& holder) { return div_mul(holder); }
+
+dependency_collector& hlasm_plugin::parser_library::context::dependency_collector::merge(const dependency_collector& dc)
+{
+    // TODO: this is not correct
+    operator+=(dc);
+
+    return *this;
+}
 
 bool dependency_collector::is_address() const
 {

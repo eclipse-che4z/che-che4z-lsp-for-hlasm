@@ -98,7 +98,7 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
         return value;
     else if (symbol->kind() == context::symbol_value_kind::ABS && qualifier)
     {
-        return context::dependency_collector(true);
+        return context::dependency_collector::error();
     }
     else if (symbol->kind() == context::symbol_value_kind::RELOC)
     {
@@ -106,7 +106,7 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
         if (qualifier)
         {
             if (!reloc_value.is_simple())
-                return context::dependency_collector(true);
+                return context::dependency_collector::error();
             reloc_value.bases().front().first.qualifier = qualifier;
         }
         return reloc_value;
@@ -228,7 +228,7 @@ context::dependency_collector mach_expr_location_counter::get_dependencies(conte
 {
     auto location_counter = mi.get_loctr();
     if (!location_counter.has_value())
-        return context::dependency_collector(true);
+        return context::dependency_collector::error();
     else
         return context::dependency_collector(*location_counter);
 }
@@ -323,7 +323,7 @@ context::dependency_collector mach_expr_data_attr::get_dependencies(context::dep
         return lit->get_data_definition().get_dependencies(solver);
     }
 
-    return context::dependency_collector(true);
+    return context::dependency_collector::error();
 }
 
 mach_expression::value_t mach_expr_data_attr::evaluate(
@@ -411,7 +411,7 @@ context::dependency_collector mach_expr_literal::get_dependencies(context::depen
     auto length_deps = m_literal_data->get_dd().get_length_dependencies(solver);
     // literal size has to be evaluable at the definition point (ASMA151E)
     if (length_deps.has_error || length_deps.contains_dependencies())
-        return context::dependency_collector(true);
+        return context::dependency_collector::error();
     else
     {
         auto symbol_id = get_literal_id(solver);

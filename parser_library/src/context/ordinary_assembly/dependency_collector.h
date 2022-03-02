@@ -27,8 +27,11 @@ namespace hlasm_plugin::parser_library::context {
 struct dependency_collector
 {
     using attr_ref = std::pair<data_attr_kind, id_index>;
+    struct error
+    {};
+
     // errorous holder
-    bool has_error;
+    bool has_error = false;
     // dependent address
     std::optional<address> unresolved_address;
     // dependent symbol
@@ -39,15 +42,18 @@ struct dependency_collector
     // nonempty when address without base but with spaces is multiplied or divided
     std::set<space_ptr> unresolved_spaces;
 
-    explicit dependency_collector(bool has_error = false);
+    dependency_collector();
+    dependency_collector(error);
     dependency_collector(id_index undefined_symbol);
     dependency_collector(address unresolved_address);
     dependency_collector(attr_ref attribute_reference);
 
-    dependency_collector& operator+(const dependency_collector& holder);
-    dependency_collector& operator-(const dependency_collector& holder);
-    dependency_collector& operator*(const dependency_collector& holder);
-    dependency_collector& operator/(const dependency_collector& holder);
+    dependency_collector& operator+=(const dependency_collector& holder);
+    dependency_collector& operator-=(const dependency_collector& holder);
+    dependency_collector& operator*=(const dependency_collector& holder);
+    dependency_collector& operator/=(const dependency_collector& holder);
+
+    dependency_collector& merge(const dependency_collector& dc);
 
     bool is_address() const;
 

@@ -29,35 +29,30 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
-static void insert_deps(
-    context::dependency_collector& into, context::dependency_solver& solver, const context::dependable* from)
-{
-    if (from)
-        into = into + from->get_dependencies(solver);
-}
-
 constexpr char V_type = 'V';
 
 context::dependency_collector data_definition::get_dependencies(context::dependency_solver& solver) const
 {
-    context::dependency_collector conjuction;
+    context::dependency_collector conjuction = get_length_dependencies(solver);
+
+    if (scale)
+        conjuction.merge(scale->get_dependencies(solver));
+    if (exponent)
+        conjuction.merge(exponent->get_dependencies(solver));
+
     // In V type, the symbols are external, it is not defined in current program and does not
     // have any dependencies.
-    if (type != V_type)
-        insert_deps(conjuction, solver, nominal_value.get());
-    insert_deps(conjuction, solver, dupl_factor.get());
-    insert_deps(conjuction, solver, length.get());
-    insert_deps(conjuction, solver, scale.get());
-    insert_deps(conjuction, solver, exponent.get());
+    if (type != V_type && nominal_value)
+        conjuction.merge(nominal_value->get_dependencies(solver));
+
     return conjuction;
 }
 
 context::dependency_collector data_definition::get_length_dependencies(context::dependency_solver& solver) const
 {
-    context::dependency_collector conjuction;
-    insert_deps(conjuction, solver, dupl_factor.get());
-    insert_deps(conjuction, solver, length.get());
-    return conjuction;
+    auto result = dupl_factor ? dupl_factor->get_dependencies(solver) : context::dependency_collector();
+    result *= length ? length->get_dependencies(solver) : context::dependency_collector();
+    return result;
 }
 
 const checking::data_def_type* data_definition::access_data_def_type() const

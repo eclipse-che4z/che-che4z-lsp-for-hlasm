@@ -40,7 +40,7 @@ context::dependency_collector data_def_dependency<instr_type>::get_dependencies(
         const auto& op = *it;
         if (op->type == semantics::operand_type::EMPTY)
             continue;
-        conjunction = conjunction + op->access_data_def()->get_length_dependencies(solver);
+        conjunction.merge(op->access_data_def()->get_length_dependencies(solver));
     }
     return conjunction;
 }
