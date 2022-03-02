@@ -59,7 +59,7 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
 
 template<typename system_variable_type>
 std::pair<id_index, sys_sym_ptr> hlasm_context::create_system_variable(
-    id_storage::const_pointer id, std::variant<std::string, std::vector<std::string>> value, bool is_global)
+    id_index& id, std::variant<std::string, std::vector<std::string>> value, bool is_global)
 {
     macro_data_ptr mac_data = std::visit(
         [](auto& v) -> macro_data_ptr {
@@ -197,72 +197,72 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
 
     if (!is_in_macro())
     {
-        auto tmp_now = std::time(0);
-        auto now = std::localtime(&tmp_now);
-
-        std::string datc_val;
-        std::string date_val;
-        datc_val.reserve(8);
-        date_val.reserve(8);
-        auto year = std::to_string(now->tm_year + 1900);
-        datc_val.append(year);
-
-        if (now->tm_mon + 1 < 10)
         {
-            datc_val.push_back('0');
-            date_val.push_back('0');
-        }
+            auto tmp_now = std::time(0);
+            auto now = std::localtime(&tmp_now);
 
-        datc_val.append(std::to_string(now->tm_mon + 1));
+            std::string datc_val;
+            std::string date_val;
+            datc_val.reserve(8);
+            date_val.reserve(8);
+            auto year = std::to_string(now->tm_year + 1900);
+            datc_val.append(year);
 
-        date_val.append(std::to_string(now->tm_mon + 1));
-        date_val.push_back('/');
+            if (now->tm_mon + 1 < 10)
+            {
+                datc_val.push_back('0');
+                date_val.push_back('0');
+            }
 
-        if (now->tm_mday < 10)
-        {
-            datc_val.push_back('0');
-            date_val.push_back('0');
-        }
+            datc_val.append(std::to_string(now->tm_mon + 1));
 
-        datc_val.append(std::to_string(now->tm_mday));
+            date_val.append(std::to_string(now->tm_mon + 1));
+            date_val.push_back('/');
 
-        date_val.append(std::to_string(now->tm_mday));
-        date_val.push_back('/');
+            if (now->tm_mday < 10)
+            {
+                datc_val.push_back('0');
+                date_val.push_back('0');
+            }
 
-        {
-            auto sysvar = create_system_variable<system_variable>(SYSDATC, std::move(datc_val), true);
+            datc_val.append(std::to_string(now->tm_mday));
 
-            globals_.system_variables.insert(sysvar);
-        }
+            date_val.append(std::to_string(now->tm_mday));
+            date_val.push_back('/');
+            date_val.append(year.c_str() + 2);
 
-        date_val.append(year.c_str() + 2);
+            {
+                auto sysvar = create_system_variable<system_variable>(SYSDATC, std::move(datc_val), true);
 
-        {
-            auto sysvar = create_system_variable<system_variable>(SYSDATE, std::move(date_val), true);
+                globals_.system_variables.insert(sysvar);
+            }
 
-            globals_.system_variables.insert(sysvar);
-        }
+            {
+                auto sysvar = create_system_variable<system_variable>(SYSDATE, std::move(date_val), true);
 
-        std::string time_val;
-        if (now->tm_hour < 10)
-            time_val.push_back('0');
-        time_val.append(std::to_string(now->tm_hour));
-        time_val.push_back(':');
-        if (now->tm_min < 10)
-            time_val.push_back('0');
-        time_val.append(std::to_string(now->tm_min));
+                globals_.system_variables.insert(sysvar);
+            }
 
-        {
-            auto sysvar = create_system_variable<system_variable>(SYSTIME, std::move(time_val), true);
+            {
+                std::string value;
+                if (now->tm_hour < 10)
+                    value.push_back('0');
+                value.append(std::to_string(now->tm_hour));
+                value.push_back(':');
+                if (now->tm_min < 10)
+                    value.push_back('0');
+                value.append(std::to_string(now->tm_min));
 
-            globals_.system_variables.insert(sysvar);
+                auto sysvar = create_system_variable<system_variable>(SYSTIME, std::move(value), true);
+
+                globals_.system_variables.insert(sysvar);
+            }
         }
 
         {
             auto sysvar = create_system_variable<system_variable>(SYSPARM, asm_options_.sysparm, true);
 
             globals_.system_variables.insert(sysvar);
-
         }
 
         {
