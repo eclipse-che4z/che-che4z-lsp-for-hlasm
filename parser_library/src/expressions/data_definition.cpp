@@ -33,19 +33,19 @@ constexpr char V_type = 'V';
 
 context::dependency_collector data_definition::get_dependencies(context::dependency_solver& solver) const
 {
-    context::dependency_collector conjuction = get_length_dependencies(solver);
+    context::dependency_collector deps = get_length_dependencies(solver);
 
     if (scale)
-        conjuction.merge(scale->get_dependencies(solver));
+        deps.merge(scale->get_dependencies(solver));
     if (exponent)
-        conjuction.merge(exponent->get_dependencies(solver));
+        deps.merge(exponent->get_dependencies(solver));
 
     // In V type, the symbols are external, it is not defined in current program and does not
     // have any dependencies.
     if (type != V_type && nominal_value)
-        conjuction.merge(nominal_value->get_dependencies(solver));
+        deps.merge(nominal_value->get_dependencies(solver));
 
-    return conjuction;
+    return deps;
 }
 
 context::dependency_collector data_definition::get_length_dependencies(context::dependency_solver& solver) const

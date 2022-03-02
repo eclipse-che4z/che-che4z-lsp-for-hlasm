@@ -17,8 +17,3 @@
 #include <cassert>
 
 using namespace hlasm_plugin::parser_library::context;
-
-bool attr_ref::operator==(const attr_ref& oth) const
-{
-    return attribute == oth.attribute && symbol_id == oth.symbol_id;
-}

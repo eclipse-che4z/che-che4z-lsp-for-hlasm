@@ -15,6 +15,8 @@
 #ifndef CONTEXT_DEPENDABLE_H
 #define CONTEXT_DEPENDABLE_H
 
+#include <optional>
+
 #include "dependency_collector.h"
 #include "symbol.h"
 

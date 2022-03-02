@@ -19,6 +19,7 @@
 #include <set>
 
 #include "address.h"
+#include "dependant.h"
 #include "symbol_attributes.h"
 
 namespace hlasm_plugin::parser_library::context {
@@ -26,7 +27,6 @@ namespace hlasm_plugin::parser_library::context {
 // helper structure that holds dependencies throughout whole process of getting dependencies
 struct dependency_collector
 {
-    using attr_ref = std::pair<data_attr_kind, id_index>;
     struct error
     {};
 
@@ -62,9 +62,9 @@ struct dependency_collector
 private:
     bool merge_undef(const dependency_collector& holder);
 
-    dependency_collector& add_sub(const dependency_collector& holder, bool add);
+    void add_sub(const dependency_collector& holder, bool add);
 
-    dependency_collector& div_mul(const dependency_collector& holder);
+    void div_mul(const dependency_collector& holder);
 
     static void adjust_address(address& addr);
 };

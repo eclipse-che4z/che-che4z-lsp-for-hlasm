@@ -34,15 +34,15 @@ context::dependency_collector data_def_dependency<instr_type>::get_dependencies(
     context::dependency_solver& _solver) const
 {
     data_def_dependency_solver solver(_solver, &m_loctr);
-    context::dependency_collector conjunction;
+    context::dependency_collector deps;
     for (auto it = m_begin; it != m_end; ++it)
     {
         const auto& op = *it;
         if (op->type == semantics::operand_type::EMPTY)
             continue;
-        conjunction.merge(op->access_data_def()->get_length_dependencies(solver));
+        deps.merge(op->access_data_def()->get_length_dependencies(solver));
     }
-    return conjunction;
+    return deps;
 }
 
 template<checking::data_instr_type instr_type>
