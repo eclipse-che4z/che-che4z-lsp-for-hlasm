@@ -98,7 +98,7 @@ class hlasm_context
 
     template<typename T>
     std::pair<id_index, sys_sym_ptr> create_system_variable(
-        std::string name, std::variant<std::string, std::vector<std::string>>, bool is_global);
+        id_storage::const_pointer id, std::variant<std::string, std::vector<std::string>>, bool is_global);
 
     void add_system_vars_to_scope(code_scope& scope);
     void add_global_system_vars(code_scope& scope);
