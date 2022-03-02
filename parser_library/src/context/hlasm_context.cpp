@@ -57,25 +57,32 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
     return instr_map;
 }
 
+struct create_macro_data_visitor
+{
+    macro_data_ptr& mac_data;
+
+    macro_data_ptr operator()(std::string& value)
+    {
+        return std::make_unique<macro_param_data_single>(std::move(value));
+    }
+
+    macro_data_ptr operator()(std::vector<std::string>& value)
+    {
+        std::vector<macro_data_ptr> data;
+        for (auto& single_data : value)
+        {
+            data.push_back(std::make_unique<macro_param_data_single>(std::move(single_data)));
+        }
+
+        return std::make_unique<macro_param_data_composite>(std::move(data));
+    }
+};
+
 template<typename system_variable_type>
 std::pair<id_index, sys_sym_ptr> hlasm_context::create_system_variable(
     id_index& id, std::variant<std::string, std::vector<std::string>> value, bool is_global) const
 {
-    macro_data_ptr mac_data = std::visit(
-        [](auto& v) -> macro_data_ptr {
-            if constexpr (std::is_same_v<decltype(v), std::string&>)
-                return std::make_unique<macro_param_data_single>(std::move(v));
-            else
-            {
-                std::vector<macro_data_ptr> data;
-                for (auto& single_data : v)
-                {
-                    data.push_back(std::make_unique<macro_param_data_single>(std::move(single_data)));
-                }
-                return std::make_unique<macro_param_data_composite>(std::move(data));
-            }
-        },
-        value);
+    macro_data_ptr mac_data = std::visit(create_macro_data_visitor { mac_data }, value);
 
     sys_sym_ptr var = std::make_shared<system_variable_type>(id, std::move(mac_data), is_global);
 
