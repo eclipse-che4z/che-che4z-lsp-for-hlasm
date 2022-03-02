@@ -17,6 +17,7 @@ target_sources(library_test PRIVATE
 	common_testing.h
 	diagnosable_ctx_test.cpp
 	diagnostics_check_test.cpp
+	diagnostics_sysvar_test.cpp
 	gtest_stringers.h
 	message_consumer_mock.h
 	metrics_test.cpp
@@ -24,7 +25,6 @@ target_sources(library_test PRIVATE
 	stability_test.cpp
 	utf_conv_test.cpp
 	workspace_manager_test.cpp
-    diagnostics_sysvar_test.cpp
 )
 
 add_subdirectory(checking)
