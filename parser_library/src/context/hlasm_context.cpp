@@ -84,7 +84,7 @@ std::pair<id_index, sys_sym_ptr> hlasm_context::create_system_variable(
 {
     macro_data_ptr mac_data = std::visit(create_macro_data_visitor { mac_data }, value);
 
-    sys_sym_ptr var = std::make_shared<system_variable_type>(id, std::move(mac_data), is_global);
+    auto var = std::make_shared<system_variable_type>(id, std::move(mac_data), is_global);
 
     return { id, var };
 }
@@ -205,7 +205,7 @@ void hlasm_context::add_global_system_var_to_scope(id_index& id, code_scope& sco
 
     sys_sym_ptr temp = std::dynamic_pointer_cast<system_variable>(glob->second);
 
-    scope.system_variables.insert({ glob->second->id, temp });
+    scope.system_variables.try_emplace(glob->second->id, temp);
 }
 
 void hlasm_context::add_global_system_vars(code_scope& scope)
