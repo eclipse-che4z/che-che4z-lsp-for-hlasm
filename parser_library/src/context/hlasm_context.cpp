@@ -88,7 +88,7 @@ void hlasm_context::create_and_store_system_variable(
         storage,
     id_index& id,
     std::variant<std::string, std::vector<std::string>> value,
-    bool is_global) // todo add consts
+    bool is_global) const
 {
     auto sysvar = create_system_variable<system_variable_type>(id, std::move(value), is_global);
 
@@ -192,7 +192,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
     }
 }
 
-void hlasm_context::add_global_system_var_to_scope(id_index& id, code_scope& scope)
+void hlasm_context::add_global_system_var_to_scope(id_index& id, code_scope& scope) const
 {
     auto glob = globals_.find(id);
 

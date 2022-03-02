@@ -99,9 +99,9 @@ class hlasm_context
         std::variant<std::reference_wrapper<global_variable_storage>, std::reference_wrapper<code_scope::sys_sym_storage>> storage,
         id_index& id,
         std::variant<std::string, std::vector<std::string>> value,
-        bool is_global); // todo add consts
+        bool is_global) const;
 
-    void add_global_system_var_to_scope(id_index& id, code_scope& scope);
+    void add_global_system_var_to_scope(id_index& id, code_scope& scope) const;
 
     void add_system_vars_to_scope(code_scope& scope);
     void add_global_system_vars(code_scope& scope);
