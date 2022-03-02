@@ -95,7 +95,8 @@ class hlasm_context
         id_index& id, std::variant<std::string, std::vector<std::string>> value, bool is_global) const;
 
     template<typename system_variable_type>
-    void create_and_store_system_variable(std::variant<global_variable_storage*, code_scope::sys_sym_storage*> storage,
+    void create_and_store_system_variable(
+        std::variant<std::reference_wrapper<global_variable_storage>, std::reference_wrapper<code_scope::sys_sym_storage>> storage,
         id_index& id,
         std::variant<std::string, std::vector<std::string>> value,
         bool is_global); // todo add consts
