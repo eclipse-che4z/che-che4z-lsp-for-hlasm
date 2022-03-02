@@ -76,7 +76,23 @@ TEST(context, create_global_var)
 
 
     ASSERT_TRUE(glob == found);
-    ASSERT_TRUE(glob == ctx.globals().find(idx)->second);
+    ASSERT_TRUE(ctx.globals().find(idx) != ctx.globals().end());
+    EXPECT_TRUE(glob.get() == ctx.globals().find(idx)->second->access_set_symbol_base());
+    EXPECT_TRUE(glob == ctx.globals().find(idx)->second);
+}
+
+TEST(context, find_global_system_var)
+{
+    hlasm_context ctx;
+
+
+    auto idx = ctx.ids().find("SYSDATC");
+
+    auto scope_var_ptr = ctx.get_var_sym(idx);
+
+
+    EXPECT_TRUE(scope_var_ptr);
+    EXPECT_TRUE(ctx.globals().find(idx) != ctx.globals().end());
 }
 
 TEST(context, create_local_var)

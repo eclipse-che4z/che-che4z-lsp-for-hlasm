@@ -59,7 +59,7 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
 
 template<typename system_variable_type>
 std::pair<id_index, sys_sym_ptr> hlasm_context::create_system_variable(
-    id_index& id, std::variant<std::string, std::vector<std::string>> value, bool is_global)
+    id_index& id, std::variant<std::string, std::vector<std::string>> value, bool is_global) const
 {
     macro_data_ptr mac_data = std::visit(
         [](auto& v) -> macro_data_ptr {
@@ -83,14 +83,15 @@ std::pair<id_index, sys_sym_ptr> hlasm_context::create_system_variable(
 }
 
 template<typename system_variable_type>
-void hlasm_context::create_and_store_system_variable(code_scope::sys_sym_storage& storage,
+void hlasm_context::create_and_store_system_variable2(
+    std::variant<global_variables_temp*, code_scope::sys_sym_storage*> storage,
     id_index& id,
     std::variant<std::string, std::vector<std::string>> value,
-    bool is_global)
+    bool is_global) // todo add consts
 {
     auto sysvar = create_system_variable<system_variable_type>(id, std::move(value), is_global);
 
-    storage.insert(sysvar);
+    std::visit([&sysvar](auto& v) { v->insert(sysvar); }, storage);
 }
 
 void hlasm_context::add_system_vars_to_scope(code_scope& scope)
@@ -102,7 +103,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 
             auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_storage::empty_id;
 
-            create_and_store_system_variable<system_variable>(scope.system_variables, id_storage, *sect_name, false);
+            create_and_store_system_variable2<system_variable>(&scope.system_variables, id_storage, *sect_name, false);
         }
 
         {
@@ -112,8 +113,8 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
             if (auto value_len = value.size(); value_len < 4)
                 value.insert(0, 4 - value_len, '0');
 
-            create_and_store_system_variable<system_variable>(
-                scope.system_variables, id_storage, std::move(value), false);
+            create_and_store_system_variable2<system_variable>(
+                &scope.system_variables, id_storage, std::move(value), false);
         }
 
         {
@@ -142,8 +143,8 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
                 }
             }
 
-            create_and_store_system_variable<system_variable>(
-                scope.system_variables, id_storage, std::move(value), false);
+            create_and_store_system_variable2<system_variable>(
+                &scope.system_variables, id_storage, std::move(value), false);
         }
 
         {
@@ -156,8 +157,8 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
                 location_counter_name = *ord_ctx.current_section()->current_location_counter().name;
             }
 
-            create_and_store_system_variable<system_variable>(
-                scope.system_variables, id_storage, std::move(location_counter_name), false);
+            create_and_store_system_variable2<system_variable>(
+                &scope.system_variables, id_storage, std::move(location_counter_name), false);
         }
 
         {
@@ -165,8 +166,8 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 
             std::string value = std::to_string(scope_stack_.size() - 1);
 
-            create_and_store_system_variable<system_variable>(
-                scope.system_variables, id_storage, std::move(value), false);
+            create_and_store_system_variable2<system_variable>(
+                &scope.system_variables, id_storage, std::move(value), false);
         }
 
         {
@@ -184,16 +185,19 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
                 data.push_back(std::move(tmp));
             }
 
-            create_and_store_system_variable<system_variable_sysmac>(
-                scope.system_variables, id_storage, std::move(data), false);
+            create_and_store_system_variable2<system_variable_sysmac>(
+                &scope.system_variables, id_storage, std::move(data), false);
         }
     }
 }
 
 void hlasm_context::add_global_system_var_to_scope(id_index& id, code_scope& scope)
 {
-    auto glob = globals_.system_variables.find(id);
-    scope.system_variables.insert({ glob->second->id, glob->second });
+    auto glob = globals_temp_.find(id);
+
+    sys_sym_ptr temp = std::dynamic_pointer_cast<system_variable>(glob->second);
+
+    scope.system_variables.insert({ glob->second->id, temp });
 }
 
 void hlasm_context::add_global_system_vars(code_scope& scope)
@@ -242,13 +246,11 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
             date_val.append(year.c_str() + 2);
 
             {
-                create_and_store_system_variable<system_variable>(
-                    globals_.system_variables, SYSDATC, std::move(datc_val), true);
+                create_and_store_system_variable2<system_variable>(&globals_temp_, SYSDATC, std::move(datc_val), true);
             }
 
             {
-                create_and_store_system_variable<system_variable>(
-                    globals_.system_variables, SYSDATE, std::move(date_val), true);
+                create_and_store_system_variable2<system_variable>(&globals_temp_, SYSDATE, std::move(date_val), true);
             }
 
             {
@@ -261,23 +263,20 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
                     value.push_back('0');
                 value.append(std::to_string(now->tm_min));
 
-                create_and_store_system_variable<system_variable>(
-                    globals_.system_variables, SYSTIME, std::move(value), true);
+                create_and_store_system_variable2<system_variable>(&globals_temp_, SYSTIME, std::move(value), true);
             }
         }
 
         {
-            create_and_store_system_variable<system_variable>(
-                globals_.system_variables, SYSPARM, asm_options_.sysparm, true);
+            create_and_store_system_variable2<system_variable>(&globals_temp_, SYSPARM, asm_options_.sysparm, true);
         }
 
         {
-            create_and_store_system_variable<system_variable>(globals_.system_variables, SYSOPT_RENT, "", true);
+            create_and_store_system_variable2<system_variable>(&globals_temp_, SYSOPT_RENT, "", true);
         }
 
         {
-            create_and_store_system_variable<system_variable>(
-                globals_.system_variables, SYSTEM_ID, asm_options_.system_id, true);
+            create_and_store_system_variable2<system_variable>(&globals_temp_, SYSTEM_ID, asm_options_.system_id, true);
         }
     }
 
@@ -490,7 +489,7 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
 
 void hlasm_context::fill_metrics_files() { metrics.files = visited_files_.size(); }
 
-const code_scope::set_sym_storage& hlasm_context::globals() const { return globals_.variables; }
+const hlasm_context::global_variables_temp& hlasm_context::globals() const { return globals_temp_; }
 
 var_sym_ptr hlasm_context::get_var_sym(id_index name) const
 {

@@ -47,6 +47,7 @@ class hlasm_context
     using copy_member_storage = std::unordered_map<id_index, copy_member_ptr>;
     using instruction_storage = std::unordered_map<id_index, opcode_t::opcode_variant>;
     using opcode_map = std::unordered_map<id_index, opcode_t>;
+    using global_variables_temp = std::unordered_map<id_index, var_sym_ptr>;
 
     struct global_variables
     {
@@ -58,6 +59,8 @@ class hlasm_context
 
     // storage of global variables
     global_variables globals_;
+    global_variables_temp globals_temp_;
+
     // storage of defined macros
     macro_storage macros_;
     // storage of copy members
@@ -98,13 +101,13 @@ class hlasm_context
 
     template<typename system_variable_type>
     std::pair<id_index, sys_sym_ptr> create_system_variable(
-        id_index& id, std::variant<std::string, std::vector<std::string>> value, bool is_global);
+        id_index& id, std::variant<std::string, std::vector<std::string>> value, bool is_global) const;
 
     template<typename system_variable_type>
-    void create_and_store_system_variable(code_scope::sys_sym_storage& storage,
+    void create_and_store_system_variable2(std::variant<global_variables_temp*, code_scope::sys_sym_storage*> storage,
         id_index& id,
         std::variant<std::string, std::vector<std::string>> value,
-        bool is_global);
+        bool is_global); // todo add consts
 
     void add_global_system_var_to_scope(id_index& id, code_scope& scope);
 
@@ -181,7 +184,7 @@ public:
 
     void fill_metrics_files();
     // return map of global set vars
-    const code_scope::set_sym_storage& globals() const;
+    const global_variables_temp& globals() const;
 
     // return variable symbol in current scope
     // returns empty shared_ptr if there is none in the current scope
