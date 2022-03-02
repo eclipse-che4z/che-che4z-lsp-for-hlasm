@@ -87,26 +87,18 @@ size_t mach_expr_unary<par>::hash() const
     return hash_combine((size_t)0xe45af0e42cda6037, child_->hash());
 }
 
-// !!! DO NOT CHANGE THE CODE INTO return l->evaluate/get... (op) r->evaluate/get... !!!
-// function arguments evaluation order is unspecified.
-// TODO: once literal registration is re-worked, this could be possibly changed back.
-
 template<>
 mach_expression::value_t mach_expr_binary<add>::evaluate(
     context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    auto l = left_->evaluate(info, diags);
-    auto r = right_->evaluate(info, diags);
-    return std::move(l) + std::move(r);
+    return left_->evaluate(info, diags) + right_->evaluate(info, diags);
 }
 
 template<>
 mach_expression::value_t mach_expr_binary<sub>::evaluate(
     context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    auto l = left_->evaluate(info, diags);
-    auto r = right_->evaluate(info, diags);
-    return std::move(l) - std::move(r);
+    return left_->evaluate(info, diags) - right_->evaluate(info, diags);
 }
 
 template<>
