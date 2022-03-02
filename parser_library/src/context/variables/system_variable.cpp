@@ -30,9 +30,9 @@ const C_t& system_variable::get_value() const { return macro_param_base::get_val
 
 const macro_param_data_component* system_variable::get_data(const std::vector<size_t>& offset) const
 {
-    for (size_t i = 0; i < offset.size(); ++i)
+    for (auto subscript : offset)
     {
-        if (1 != offset[i])
+        if (1 != subscript)
         {
             return macro_param_data_component::dummy.get();
         }
