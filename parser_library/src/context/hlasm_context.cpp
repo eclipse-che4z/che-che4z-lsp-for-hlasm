@@ -280,7 +280,8 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         }
 
         {
-            create_and_store_system_variable<system_variable>(globals_, SYSOPT_RENT, std::to_string(asm_options_.sysopt_rent), true);
+            create_and_store_system_variable<system_variable>(
+                globals_, SYSOPT_RENT, std::to_string(asm_options_.sysopt_rent), true);
         }
 
         {
