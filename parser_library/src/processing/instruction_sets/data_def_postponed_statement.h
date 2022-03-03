@@ -38,6 +38,7 @@ public:
     static int32_t get_operands_length(const semantics::operand_ptr* b,
         const semantics::operand_ptr* e,
         context::dependency_solver& _solver,
+        diagnostic_op_consumer& diags,
         const context::address* loctr = nullptr);
 
     // Inherited via resolvable

@@ -41,8 +41,8 @@ range mach_expression::get_range() const { return expr_range_; }
 context::symbol_value hlasm_plugin::parser_library::expressions::mach_expression::resolve(
     context::dependency_solver& solver) const
 {
-    diagnostic_consumer_transform dummy([](diagnostic_op) {});
-    auto tmp_val = evaluate(solver, dummy);
+    diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
+    auto tmp_val = evaluate(solver, drop_diags);
     if (tmp_val.value_kind() == context::symbol_value_kind::UNDEF)
         return 0;
     else

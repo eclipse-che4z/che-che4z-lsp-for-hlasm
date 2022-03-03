@@ -123,16 +123,15 @@ expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression
     , simple_expr_operand(std::move(expression))
 {}
 
-std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(context::dependency_solver& info) const
+std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     return make_check_operand(info, *expression, diags);
 }
 
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
-    context::dependency_solver& info, checking::machine_operand_type type_hint) const
+    context::dependency_solver& info, checking::machine_operand_type type_hint, diagnostic_op_consumer& diags) const
 {
-    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     if (type_hint == checking::machine_operand_type::RELOC_IMM)
     {
         return make_rel_imm_operand(info, *expression, diags);
@@ -151,8 +150,6 @@ bool expr_machine_operand::has_error(context::dependency_solver& info) const
 {
     return simple_expr_operand::has_error(info);
 }
-
-void expr_machine_operand::collect_diags() const {}
 
 void expr_machine_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
@@ -203,9 +200,9 @@ bool address_machine_operand::has_error(context::dependency_solver& info) const
         return displacement->get_dependencies(info).has_error || second_par->get_dependencies(info).has_error; // D(,B)
 }
 
-std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(context::dependency_solver& info) const
+std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     context::symbol_value displ, first, second;
     context::symbol_value::abs_value_t displ_v, first_v, second_v;
 
@@ -235,12 +232,10 @@ std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(co
 }
 
 std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
-    context::dependency_solver& info, checking::machine_operand_type) const
+    context::dependency_solver& info, checking::machine_operand_type, diagnostic_op_consumer& diags) const
 {
-    return get_operand_value(info);
+    return get_operand_value(info, diags);
 }
-
-void address_machine_operand::collect_diags() const {}
 
 void address_machine_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
@@ -278,24 +273,24 @@ expr_assembler_operand::expr_assembler_operand(
     , value_(std::move(string_value))
 {}
 
-std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(context::dependency_solver& info) const
+std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    return get_operand_value_inner(info, true);
+    return get_operand_value_inner(info, true, diags);
 }
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(
-    context::dependency_solver& info, bool can_have_ordsym) const
+    context::dependency_solver& info, bool can_have_ordsym, diagnostic_op_consumer& diags) const
 {
-    return get_operand_value_inner(info, can_have_ordsym);
+    return get_operand_value_inner(info, can_have_ordsym, diags);
 }
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inner(
-    context::dependency_solver& info, bool can_have_ordsym) const
+    context::dependency_solver& info, bool can_have_ordsym, diagnostic_op_consumer& diags) const
 {
     if (!can_have_ordsym && dynamic_cast<expressions::mach_expr_symbol*>(expression.get()))
         return std::make_unique<checking::one_operand>(value_);
 
-    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     auto res = expression->evaluate(info, diags);
     switch (res.value_kind())
     {
@@ -322,8 +317,6 @@ bool expr_assembler_operand::has_error(context::dependency_solver& info) const
 {
     return simple_expr_operand::has_error(info);
 }
-
-void expr_assembler_operand::collect_diags() const {}
 
 void expr_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
@@ -352,7 +345,8 @@ bool using_instr_assembler_operand::has_error(context::dependency_solver& info) 
     return base->get_dependencies(info).has_error || end->get_dependencies(info).has_error;
 }
 
-std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(context::dependency_solver&) const
+std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(
+    context::dependency_solver&, diagnostic_op_consumer&) const
 {
     std::vector<std::unique_ptr<checking::asm_operand>> pair;
     // this is just for the form
@@ -360,8 +354,6 @@ std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_va
     pair.push_back(std::make_unique<checking::one_operand>(end_text));
     return std::make_unique<checking::complex_operand>("", std::move(pair));
 }
-
-void using_instr_assembler_operand::collect_diags() const {}
 
 void using_instr_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
@@ -377,14 +369,10 @@ bool complex_assembler_operand::has_dependencies(context::dependency_solver&) co
 
 bool complex_assembler_operand::has_error(context::dependency_solver&) const { return false; }
 
-std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(context::dependency_solver&) const
+std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(
+    context::dependency_solver&, diagnostic_op_consumer&) const
 {
     return value.create_operand();
-}
-
-void complex_assembler_operand::collect_diags() const
-{
-    // There are no object to collect diags from.
 }
 
 void complex_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
@@ -557,9 +545,9 @@ std::vector<const context::resolvable*> resolvable_list(const args&... expr)
     return list;
 }
 
-std::unique_ptr<checking::operand> data_def_operand::get_operand_value(context::dependency_solver& info) const
+std::unique_ptr<checking::operand> data_def_operand::get_operand_value(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
     return std::make_unique<checking::data_definition_operand>(get_operand_value(*value, info, diags));
 }
 
@@ -583,8 +571,6 @@ checking::data_definition_operand data_def_operand::get_operand_value(
     return op;
 }
 
-void data_def_operand::collect_diags() const {}
-
 void data_def_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
 string_assembler_operand::string_assembler_operand(std::string value, range operand_range)
@@ -597,14 +583,10 @@ bool string_assembler_operand::has_dependencies(context::dependency_solver&) con
 
 bool string_assembler_operand::has_error(context::dependency_solver&) const { return false; }
 
-std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(context::dependency_solver&) const
+std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(
+    context::dependency_solver&, diagnostic_op_consumer&) const
 {
     return std::make_unique<checking::one_operand>("'" + value + "'");
-}
-
-void string_assembler_operand::collect_diags() const
-{
-    // There are no object to collect diags from.
 }
 
 void string_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }

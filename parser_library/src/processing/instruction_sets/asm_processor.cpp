@@ -257,7 +257,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
             context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
             context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 
-            auto tmp = data_op->get_operand_value(dep_solver);
+            auto tmp = data_op->get_operand_value(dep_solver, drop_diags);
             auto& value = dynamic_cast<checking::data_definition_operand&>(*tmp);
 
             if (!data_op->value->length
@@ -352,7 +352,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         }
         else
         {
-            auto length = data_def_dependency<instr_type>::get_operands_length(b, e, op_solver);
+            auto length = data_def_dependency<instr_type>::get_operands_length(b, e, op_solver, drop_diags);
             hlasm_ctx.ord_ctx.reserve_storage_area(length, context::no_align);
         }
     }

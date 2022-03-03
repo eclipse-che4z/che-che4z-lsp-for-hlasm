@@ -314,6 +314,8 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     size_t op_position,
     const context::mnemonic_code* mnemonic)
 {
+    diagnostic_consumer_transform diags([&add_diagnostic](diagnostic_op d) { add_diagnostic(std::move(d)); });
+
     const auto& ev_op = dynamic_cast<const semantics::evaluable_operand&>(*op);
 
     auto tmp = context::instruction::find_assembler_instructions(*stmt.opcode_ref().value);
@@ -335,24 +337,19 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
         if (op_position < instr->operands().size())
         {
             auto type = instr->operands()[op_position].identifier.type;
-            uniq = mach_op->get_operand_value(dep_solver, type);
+            uniq = mach_op->get_operand_value(dep_solver, type, diags);
         }
         else
-            uniq = ev_op.get_operand_value(dep_solver);
+            uniq = ev_op.get_operand_value(dep_solver, diags);
     }
     else if (auto expr_op = dynamic_cast<const semantics::expr_assembler_operand*>(&ev_op))
     {
-        uniq = expr_op->get_operand_value(dep_solver, can_have_ord_syms);
+        uniq = expr_op->get_operand_value(dep_solver, can_have_ord_syms, diags);
     }
     else
     {
-        uniq = ev_op.get_operand_value(dep_solver);
+        uniq = ev_op.get_operand_value(dep_solver, diags);
     }
-
-    ev_op.collect_diags();
-    for (auto& diag : ev_op.diags())
-        add_diagnostic(std::move(diag));
-    ev_op.diags().clear();
 
     return uniq;
 }

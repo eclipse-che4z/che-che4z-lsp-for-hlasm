@@ -256,13 +256,11 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
     }
     else
     {
-        diagnostic_consumer_transform diags(
-            [&eval_ctx](diagnostic_op d) { eval_ctx.diags.add_diagnostic(std::move(d)); });
         context::symbol_attributes attrs(context::symbol_origin::DAT,
             ebcdic_encoding::a2e[(unsigned char)lit->get_dd().get_type_attribute()],
-            lit->get_dd().get_length_attribute(solver, diags),
-            lit->get_dd().get_scale_attribute(solver, diags),
-            lit->get_dd().get_integer_attribute(solver, diags));
+            lit->get_dd().get_length_attribute(solver, eval_ctx.diags),
+            lit->get_dd().get_scale_attribute(solver, eval_ctx.diags),
+            lit->get_dd().get_integer_attribute(solver, eval_ctx.diags));
         if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
             && !attrs.can_have_SI_attr())
         {
