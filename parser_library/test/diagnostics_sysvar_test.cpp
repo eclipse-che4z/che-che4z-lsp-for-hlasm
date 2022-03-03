@@ -35,7 +35,7 @@ struct diagnostics_sysvar_params
  MEND 
  
 TEST CSECT
-NAME MAC ONE,TWO,,(3,(4,5,6),,8),,TEN,()
+NNN   MAC WW,XX,(A,,B,,(AA,,BB,CC,,DD),8,,()),,YY,,(),,,ZZ
 )";
 
         return result;
@@ -95,14 +95,11 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSNEST", ""),
         diagnostics_sysvar_params::create_input("SYSNEST", "(1)"),
         diagnostics_sysvar_params::create_input("SYSNEST", "(1,1)"),
-        diagnostics_sysvar_params::create_input("SYSNEST", "(1,1,1)")
-        /* TODO Uncomment this when support for SYSOPT_RENT is added
+        diagnostics_sysvar_params::create_input("SYSNEST", "(1,1,1)"),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", ""),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1)"),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1)"),
-        diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1,1)")
-        */
-        ));
+        diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1,1)")));
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_null_opcode_invalid_subscript_fixture,
