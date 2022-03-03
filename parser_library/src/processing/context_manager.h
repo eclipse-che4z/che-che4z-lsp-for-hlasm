@@ -30,6 +30,12 @@ class context_manager : public diagnosable_ctx
 {
     const expressions::evaluation_context* eval_ctx_;
 
+    bool test_set_symbol_for_read(
+        const context::set_symbol_base* set_sym, const std::vector<context::A_t>& subscript, range symbol_range) const;
+
+    bool test_macro_param_for_read(
+        const context::macro_param_base* mac_par, const std::vector<context::A_t>& subscript, range symbol_range) const;
+
 public:
     // wrapped context
     context::hlasm_context& hlasm_ctx;
