@@ -19,6 +19,7 @@
 namespace {
 
 std::vector<std::string> subscripts_default = { "", "(1)", "(1,1)", "(1,1,1)", "(2)", "(2,2)", "(3)" };
+std::vector<std::string> subscripts_sysmac = { "", "(0)", "(1)", "(1,1)", "(1,1,1)", "(2)", "(2,2)", "(3)" };
 std::vector<std::string> subscripts_syslist = { "",
     "(0)",
     "(1)",
@@ -100,33 +101,6 @@ TEST CSECT
 NNN   MAC WW,XX,(A,,B,,(AA,,BB,CC,,DD),8,,()),,YY,,(),,,ZZ
 )";
 
-        //        params.input =
-        //            R"(
-        //      MACRO
-        //      MAC
-        //      GBLC A,B,C,D,E,F,G
-        //&A    SETC '&)" + system_variable
-        //            + R"('
-        //&B    SETC '&)" + system_variable
-        //            + R"((1)'
-        //&C    SETC '&)" + system_variable
-        //            + R"((1,1)'
-        //&D    SETC '&)" + system_variable
-        //            + R"((1,1,1)'
-        //&E    SETC '&)" + system_variable
-        //            + R"((2)'
-        //&F    SETC '&)" + system_variable
-        //            + R"((2,2)'
-        //&G    SETC '&)" + system_variable
-        //            + R"((3)'
-        // MEND
-        //
-        // TEST  CSECT
-        //      GBLC A,B,C,D,E,F,G
-        // NAME  MAC ONE,TWO,,(3,(4,5,6),,8),,TEN,()
-        //)";
-
-
         params.exp_results = std::move(expected_results);
 
         return params;
@@ -136,63 +110,58 @@ NNN   MAC WW,XX,(A,,B,,(AA,,BB,CC,,DD),8,,()),,YY,,(),,,ZZ
 class system_variable_standard_behavior_fixture : public ::testing::TestWithParam<system_variable_params>
 {};
 
-class system_variable_syslist_behavior_fixture : public ::testing::TestWithParam<system_variable_params>
-{};
-
 } // namespace
 
 INSTANTIATE_TEST_SUITE_P(system_variable,
     system_variable_standard_behavior_fixture,
     ::testing::Values(system_variable_params::create_input("SYSECT", { "TEST", "TEST", "TEST", "TEST", "", "", "" }),
         system_variable_params::create_input("SYSLOC", { "TEST", "TEST", "TEST", "TEST", "", "", "" }),
+        system_variable_params::create_input(
+            "SYSMAC", { "MAC", "MAC", "OPEN CODE", "OPEN CODE", "OPEN CODE", "", "", "" }, subscripts_sysmac),
         system_variable_params::create_input("SYSNDX", { "0001", "0001", "0001", "0001", "", "", "" }),
         system_variable_params::create_input("SYSNEST", { "1", "1", "1", "1", "", "", "" }),
         system_variable_params::create_input("SYSOPT_RENT", { "0", "0", "0", "0", "", "", "" }),
         system_variable_params::create_input("SYSPARM", { "PAR", "PAR", "PAR", "PAR", "", "", "" }),
         system_variable_params::create_input("SYSSTYP", { "CSECT", "CSECT", "CSECT", "CSECT", "", "", "" }),
         system_variable_params::create_input(
-            "SYSTEM_ID", { "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "", "", "" })));
-
-INSTANTIATE_TEST_SUITE_P(system_variable,
-    system_variable_syslist_behavior_fixture,
-    ::testing::Values(system_variable_params::create_input("SYSLIST",
-        { "WW",
-            "NNN",
-            "WW",
-            "",
-            "WW",
-            "WW",
-            "XX",
-            "",
-            "",
-            "(A,,B,,(AA,,BB,CC,,DD),8,,())",
-            "A",
-            "A",
-            "",
-            "B",
-            "",
-            "",
-            "(AA,,BB,CC,,DD)",
-            "AA",
-            "AA",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "YY",
-            "",
-            "YY",
-            "()",
-            "",
-            "",
-            "",
-            "",
-            "ZZ",
-            "",
-            "" },
-        subscripts_syslist)));
-
+            "SYSTEM_ID", { "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "", "", "" }),
+        system_variable_params::create_input("SYSLIST",
+            { "WW",
+                "NNN",
+                "WW",
+                "",
+                "WW",
+                "WW",
+                "XX",
+                "",
+                "",
+                "(A,,B,,(AA,,BB,CC,,DD),8,,())",
+                "A",
+                "A",
+                "",
+                "B",
+                "",
+                "",
+                "(AA,,BB,CC,,DD)",
+                "AA",
+                "AA",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "YY",
+                "",
+                "YY",
+                "()",
+                "",
+                "",
+                "",
+                "",
+                "ZZ",
+                "",
+                "" },
+            subscripts_syslist)));
 
 TEST_P(system_variable_standard_behavior_fixture, standard_behavior)
 {
@@ -203,27 +172,9 @@ TEST_P(system_variable_standard_behavior_fixture, standard_behavior)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
-
     for (size_t i = 0; i < exp_behavior.size(); ++i)
     {
         EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "A" + std::to_string(i)), exp_behavior[i])
             << "for i = " << i;
-    }
-}
-
-TEST_P(system_variable_syslist_behavior_fixture, syslist_behavior)
-{
-    std::string input(GetParam().input);
-    std::vector<std::string> exp_behavior(GetParam().exp_results);
-
-    analyzer a(input);
-    a.analyze();
-    a.collect_diags();
-
-    for (size_t i = 0; i < exp_behavior.size(); ++i)
-    {
-        EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "A" + std::to_string(i)), exp_behavior[i])
-            << "for i = " << i << " with subscript = " << subscripts_syslist[i];
     }
 }
