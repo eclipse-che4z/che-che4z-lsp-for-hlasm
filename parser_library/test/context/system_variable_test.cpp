@@ -63,7 +63,7 @@ struct system_variable_params
 
     static system_variable_params create_input(std::string system_variable,
         std::vector<std::string> expected_results,
-        std::vector<std::string> subscripts = subscripts_default)
+        std::vector<std::string>& subscripts = subscripts_default)
     {
         assert(subscripts.size() == expected_results.size());
 
