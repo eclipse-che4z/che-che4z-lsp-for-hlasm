@@ -148,43 +148,72 @@ bool context_manager::test_macro_param_for_read(
 {
     if (dynamic_cast<const context::system_variable_syslist*>(mac_par))
     {
-        if (subscript.empty())
-        {
-            add_diagnostic(diagnostic_op::error_E076(symbol_range)); // error - SYSLIST is not subscripted
-        }
-
-        for (size_t i = 0; i < subscript.size(); ++i)
-        {
-            if (subscript[i] < 1)
-            {
-                // if subscript = 0, ok
-                if (i == 0 && subscript[i] == 0)
-                    continue;
-
-                add_diagnostic(diagnostic_op::error_E012(
-                    "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
-                return false;
-            }
-        }
+        return test_syslist_for_read(subscript, symbol_range);
     }
-    else if (!subscript.empty() && !dynamic_cast<const context::system_variable_sysmac*>(mac_par))
+    else if (dynamic_cast<const context::system_variable_sysmac*>(mac_par))
     {
-        if (0 == subscript[0])
+        return test_sysmac_for_read(subscript, symbol_range);
+    }
+    else
+    {
+        return test_general_system_variable_for_read(subscript, symbol_range);
+    }
+
+    return true;
+}
+
+bool context_manager::test_syslist_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const
+{
+    if (subscript.empty())
+    {
+        add_diagnostic(diagnostic_op::error_E076(symbol_range)); // error - SYSLIST is not subscripted
+    }
+
+    for (size_t i = 0; i < subscript.size(); ++i)
+    {
+        if (subscript[i] < 1)
         {
+            // if subscript = 0, ok
+            if (i == 0 && subscript[i] == 0)
+                continue;
+
             add_diagnostic(diagnostic_op::error_E012(
                 "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
             return false;
         }
-        else if (1 == subscript[0])
+    }
+
+    return true;
+}
+
+bool context_manager::test_sysmac_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const
+{
+    return true;
+}
+
+bool context_manager::test_general_system_variable_for_read(
+    const std::vector<context::A_t>& subscript, range& symbol_range) const
+{
+    if (subscript.empty())
+    {
+        return true;
+    }
+
+    if (0 == subscript[0])
+    {
+        add_diagnostic(diagnostic_op::error_E012(
+            "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
+        return false;
+    }
+    else if (1 == subscript[0])
+    {
+        for (size_t i = 1; i < subscript.size(); ++i)
         {
-            for (size_t i = 1; i < subscript.size(); ++i)
+            if (0 == subscript[i])
             {
-                if (0 == subscript[i])
-                {
-                    add_diagnostic(diagnostic_op::error_E012(
-                        "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
-                    return false;
-                }
+                add_diagnostic(diagnostic_op::error_E012(
+                    "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
+                return false;
             }
         }
     }
