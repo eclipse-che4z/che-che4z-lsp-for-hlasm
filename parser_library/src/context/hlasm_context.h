@@ -252,14 +252,14 @@ public:
             set_sym_ptr var = std::dynamic_pointer_cast<set_symbol<T>>(glob->second);
             assert(var);
 
-            scope->variables.insert({ id, var });
+            scope->variables.try_emplace(id, var);
             return var;
         }
 
         auto val = std::make_shared<set_symbol<T>>(id, is_scalar, true);
 
-        globals_.insert({ id, val });
-        scope->variables.insert({ id, val });
+        globals_.try_emplace(id, val);
+        scope->variables.try_emplace(id, val);
 
         return val;
     }
@@ -277,7 +277,7 @@ public:
 
         set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar, false));
 
-        scope->variables.insert({ id, val });
+        scope->variables.try_emplace(id, val);
 
         return val;
     }
