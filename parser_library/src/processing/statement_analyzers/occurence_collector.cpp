@@ -155,8 +155,6 @@ void occurence_collector::visit(const expressions::mach_expr_symbol& expr)
 
 void occurence_collector::visit(const expressions::mach_expr_location_counter&) {}
 
-void occurence_collector::visit(const expressions::mach_expr_self_def&) {}
-
 void occurence_collector::visit(const expressions::mach_expr_default&) {}
 
 void occurence_collector::visit(const expressions::mach_expr_literal& lit) { lit.get_data_definition().apply(*this); }

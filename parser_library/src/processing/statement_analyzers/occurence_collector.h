@@ -62,7 +62,6 @@ private:
     void visit(const expressions::mach_expr_data_attr& expr) override;
     void visit(const expressions::mach_expr_symbol& expr) override;
     void visit(const expressions::mach_expr_location_counter& expr) override;
-    void visit(const expressions::mach_expr_self_def& expr) override;
     void visit(const expressions::mach_expr_default& expr) override;
     void visit(const expressions::mach_expr_literal& expr) override;
 

@@ -156,33 +156,6 @@ public:
     mach_expr_ptr clone() const override;
 };
 
-// Represents a self defining term (e.g. X'4A')
-class mach_expr_self_def final : public mach_expression
-{
-    bool do_is_similar(const mach_expression& expr) const override;
-
-    value_t value_;
-
-    struct private_t
-    {};
-
-public:
-    mach_expr_self_def(value_t value, range rng, private_t);
-    mach_expr_self_def(std::string option, std::string value, range rng);
-
-    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
-
-    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
-
-    const mach_expression* leftmost_term() const override;
-
-    void apply(mach_expr_visitor& visitor) const override;
-
-    size_t hash() const override;
-
-    mach_expr_ptr clone() const override;
-};
-
 // Represents an "empty" term that is used when parsing of a machine expression fails
 //(the user writes invalid expression)
 class mach_expr_default final : public mach_expression

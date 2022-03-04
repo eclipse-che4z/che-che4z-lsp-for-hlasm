@@ -169,55 +169,6 @@ bool mach_expr_symbol::do_is_similar(const mach_expression& expr) const
     const auto& e = static_cast<const mach_expr_symbol&>(expr);
     return value == e.value && qualifier == e.qualifier;
 }
-//***********  mach_expr_self_def ************
-bool mach_expr_self_def::do_is_similar(const mach_expression& expr) const
-{
-    const auto& e = static_cast<const mach_expr_self_def&>(expr);
-    return value_.get_abs() == e.value_.get_abs();
-}
-
-mach_expr_self_def::mach_expr_self_def(value_t value, range rng, private_t)
-    : mach_expression(rng)
-    , value_(std::move(value))
-{
-    // TODO: diagnostics are not copied and they should not be there in the first place
-}
-
-mach_expr_self_def::mach_expr_self_def(std::string option, std::string value, range rng)
-    : mach_expression(rng)
-{
-    bool error_occured = false;
-    diagnostic_consumer_transform tmp([&error_occured](diagnostic_op) { error_occured = true; });
-    diagnostic_adder add_diagnostic(tmp, rng);
-    auto v = ca_constant::self_defining_term(option, value, add_diagnostic);
-    if (!error_occured)
-        value_ = value_t(v);
-}
-
-context::dependency_collector mach_expr_self_def::get_dependencies(context::dependency_solver&) const
-{
-    return context::dependency_collector();
-}
-
-mach_expr_self_def::value_t mach_expr_self_def::evaluate(
-    context::dependency_solver&, diagnostic_op_consumer& diags) const
-{
-    if (value_.value_kind() == context::symbol_value_kind::UNDEF)
-        diags.add_diagnostic(diagnostic_op::error_CE007(get_range()));
-    return value_;
-}
-
-const mach_expression* mach_expr_self_def::leftmost_term() const { return this; }
-
-void mach_expr_self_def::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
-
-size_t mach_expr_self_def::hash() const { return hash_combine((size_t)0x038d7ea26932b75b, value_.get_abs()); }
-
-mach_expr_ptr mach_expr_self_def::clone() const
-{
-    return std::make_unique<mach_expr_self_def>(value_, get_range(), private_t());
-}
-
 bool mach_expr_location_counter::do_is_similar(const mach_expression&) const { return true; }
 
 mach_expr_location_counter::mach_expr_location_counter(range rng)

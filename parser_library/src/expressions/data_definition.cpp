@@ -405,7 +405,6 @@ struct loctr_reference_visitor final : public mach_expr_visitor
     void visit(const mach_expr_data_attr&) override {}
     void visit(const mach_expr_symbol&) override {}
     void visit(const mach_expr_location_counter&) override { found_loctr_reference = true; }
-    void visit(const mach_expr_self_def&) override {}
     void visit(const mach_expr_default&) override {}
     void visit(const mach_expr_literal& expr) override { expr.get_data_definition().apply(*this); }
 };

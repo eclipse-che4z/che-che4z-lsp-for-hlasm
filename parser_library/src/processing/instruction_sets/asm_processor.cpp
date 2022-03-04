@@ -749,7 +749,6 @@ public:
     void visit(const expressions::mach_expr_data_attr&) override {}
     void visit(const expressions::mach_expr_symbol& expr) override { value = expr.value; }
     void visit(const expressions::mach_expr_location_counter&) override {}
-    void visit(const expressions::mach_expr_self_def&) override {}
     void visit(const expressions::mach_expr_default&) override {}
     void visit(const expressions::mach_expr_literal&) override {}
 
