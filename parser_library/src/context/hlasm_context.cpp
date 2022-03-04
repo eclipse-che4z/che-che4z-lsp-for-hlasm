@@ -57,77 +57,57 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
     return instr_map;
 }
 
-struct create_macro_data_visitor
+namespace {
+macro_data_ptr create_macro_data(std::string value)
 {
-    macro_data_ptr& mac_data;
+    return std::make_unique<macro_param_data_single>(std::move(value));
+}
 
-    macro_data_ptr operator()(std::string& value)
+macro_data_ptr create_macro_data(std::vector<std::string> value)
+{
+    std::vector<macro_data_ptr> data;
+    for (auto& single_data : value)
     {
-        return std::make_unique<macro_param_data_single>(std::move(value));
+        data.push_back(std::make_unique<macro_param_data_single>(std::move(single_data)));
     }
 
-    macro_data_ptr operator()(std::vector<std::string>& value)
-    {
-        std::vector<macro_data_ptr> data;
-        for (auto& single_data : value)
-        {
-            data.push_back(std::make_unique<macro_param_data_single>(std::move(single_data)));
-        }
+    return std::make_unique<macro_param_data_composite>(std::move(data));
+}
 
-        return std::make_unique<macro_param_data_composite>(std::move(data));
-    }
-};
-
-template<typename system_variable_type>
-std::pair<id_index, sys_sym_ptr> hlasm_context::create_system_variable(
-    id_index& id, std::variant<std::string, std::vector<std::string>> value, bool is_global) const
+template<typename SYSTEM_VARIABLE_TYPE, typename DATA>
+std::pair<id_index, sys_sym_ptr> create_system_variable(
+    id_storage& ids, std::string name, DATA mac_data, bool is_global)
 {
-    macro_data_ptr mac_data = std::visit(create_macro_data_visitor { mac_data }, value);
+    auto id = ids.add(std::move(name));
 
-    auto var = std::make_shared<system_variable_type>(id, std::move(mac_data), is_global);
+    auto var = std::make_shared<SYSTEM_VARIABLE_TYPE>(id, create_macro_data(std::move(mac_data)), is_global);
 
     return { id, var };
 }
 
-template<typename system_variable_type>
-void hlasm_context::create_and_store_system_variable(
-    std::variant<std::reference_wrapper<global_variable_storage>, std::reference_wrapper<code_scope::sys_sym_storage>>
-        storage,
-    id_index& id,
-    std::variant<std::string, std::vector<std::string>> value,
-    bool is_global) const
-{
-    auto sysvar = create_system_variable<system_variable_type>(id, std::move(value), is_global);
-
-    std::visit([&sysvar](auto& v) { v.get().insert(sysvar); }, storage);
-}
+} // namespace
 
 void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 {
     if (scope.is_in_macro())
     {
         {
-            auto id_storage = ids().add("SYSECT");
-
             auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_storage::empty_id;
 
-            create_and_store_system_variable<system_variable>(scope.system_variables, id_storage, *sect_name, false);
+            scope.system_variables.insert(
+                create_system_variable<system_variable, std::string>(ids(), "SYSECT", *sect_name, false));
         }
 
         {
-            auto id_storage = ids().add("SYSNDX");
-
             std::string value = std::to_string(SYSNDX_);
             if (auto value_len = value.size(); value_len < 4)
                 value.insert(0, 4 - value_len, '0');
 
-            create_and_store_system_variable<system_variable>(
-                scope.system_variables, id_storage, std::move(value), false);
+            scope.system_variables.insert(
+                create_system_variable<system_variable>(ids(), "SYSNDX", std::move(value), false));
         }
 
         {
-            auto id_storage = ids().add("SYSSTYP");
-
             std::string value = "";
 
             if (ord_ctx.current_section())
@@ -151,13 +131,11 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
                 }
             }
 
-            create_and_store_system_variable<system_variable>(
-                scope.system_variables, id_storage, std::move(value), false);
+            scope.system_variables.insert(
+                create_system_variable<system_variable>(ids(), "SYSSTYP", std::move(value), false));
         }
 
         {
-            auto id_storage = ids().add("SYSLOC");
-
             std::string location_counter_name = "";
 
             if (ord_ctx.current_section())
@@ -165,22 +143,18 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
                 location_counter_name = *ord_ctx.current_section()->current_location_counter().name;
             }
 
-            create_and_store_system_variable<system_variable>(
-                scope.system_variables, id_storage, std::move(location_counter_name), false);
+            scope.system_variables.insert(
+                create_system_variable<system_variable>(ids(), "SYSLOC", std::move(location_counter_name), false));
         }
 
         {
-            auto id_storage = ids().add("SYSNEST");
-
             std::string value = std::to_string(scope_stack_.size() - 1);
 
-            create_and_store_system_variable<system_variable>(
-                scope.system_variables, id_storage, std::move(value), false);
+            scope.system_variables.insert(
+                create_system_variable<system_variable>(ids(), "SYSNEST", std::move(value), false));
         }
 
         {
-            auto id_storage = ids().add("SYSMAC");
-
             std::vector<std::string> data;
 
             for (auto it = scope_stack_.rbegin(); it != scope_stack_.rend(); ++it)
@@ -193,14 +167,21 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
                 data.push_back(std::move(tmp));
             }
 
-            create_and_store_system_variable<system_variable_sysmac>(
-                scope.system_variables, id_storage, std::move(data), false);
+            scope.system_variables.insert(
+                create_system_variable<system_variable_sysmac>(ids(), "SYSMAC", std::move(data), false));
         }
     }
 }
 
-void hlasm_context::add_global_system_var_to_scope(id_index& id, code_scope& scope) const
+void hlasm_context::add_global_system_var_to_scope(id_storage& ids, std::string name, code_scope& scope) const
 {
+    auto id = ids.find(name);
+
+    if (!id)
+    {
+        id = ids.add(name);
+    }
+
     auto glob = globals_.find(id);
 
     sys_sym_ptr temp = std::dynamic_pointer_cast<system_variable>(glob->second);
@@ -210,13 +191,6 @@ void hlasm_context::add_global_system_var_to_scope(id_index& id, code_scope& sco
 
 void hlasm_context::add_global_system_vars(code_scope& scope)
 {
-    auto SYSDATC = ids().add("SYSDATC");
-    auto SYSDATE = ids().add("SYSDATE");
-    auto SYSTIME = ids().add("SYSTIME");
-    auto SYSPARM = ids().add("SYSPARM");
-    auto SYSOPT_RENT = ids().add("SYSOPT_RENT");
-    auto SYSTEM_ID = ids().add("SYSTEM_ID");
-
     if (!is_in_macro())
     {
         {
@@ -254,11 +228,11 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
             date_val.append(year.c_str() + 2);
 
             {
-                create_and_store_system_variable<system_variable>(globals_, SYSDATC, std::move(datc_val), true);
+                globals_.insert(create_system_variable<system_variable>(ids(), "SYSDATC", std::move(datc_val), true));
             }
 
             {
-                create_and_store_system_variable<system_variable>(globals_, SYSDATE, std::move(date_val), true);
+                globals_.insert(create_system_variable<system_variable>(ids(), "SYSDATE", std::move(date_val), true));
             }
 
             {
@@ -271,30 +245,30 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
                     value.push_back('0');
                 value.append(std::to_string(now->tm_min));
 
-                create_and_store_system_variable<system_variable>(globals_, SYSTIME, std::move(value), true);
+                globals_.insert(create_system_variable<system_variable>(ids(), "SYSTIME", std::move(value), true));
             }
         }
 
         {
-            create_and_store_system_variable<system_variable>(globals_, SYSPARM, asm_options_.sysparm, true);
+            globals_.insert(create_system_variable<system_variable>(ids(), "SYSPARM", asm_options_.sysparm, true));
         }
 
         {
-            create_and_store_system_variable<system_variable>(
-                globals_, SYSOPT_RENT, std::to_string(asm_options_.sysopt_rent), true);
+            globals_.insert(create_system_variable<system_variable>(
+                ids(), "SYSOPT_RENT", std::to_string(asm_options_.sysopt_rent), true));
         }
 
         {
-            create_and_store_system_variable<system_variable>(globals_, SYSTEM_ID, asm_options_.system_id, true);
+            globals_.insert(create_system_variable<system_variable>(ids(), "SYSTEM_ID", asm_options_.system_id, true));
         }
     }
 
-    add_global_system_var_to_scope(SYSDATC, scope);
-    add_global_system_var_to_scope(SYSDATE, scope);
-    add_global_system_var_to_scope(SYSTIME, scope);
-    add_global_system_var_to_scope(SYSPARM, scope);
-    add_global_system_var_to_scope(SYSOPT_RENT, scope);
-    add_global_system_var_to_scope(SYSTEM_ID, scope);
+    add_global_system_var_to_scope(ids(), "SYSDATC", scope);
+    add_global_system_var_to_scope(ids(), "SYSDATE", scope);
+    add_global_system_var_to_scope(ids(), "SYSTIME", scope);
+    add_global_system_var_to_scope(ids(), "SYSPARM", scope);
+    add_global_system_var_to_scope(ids(), "SYSOPT_RENT", scope);
+    add_global_system_var_to_scope(ids(), "SYSTEM_ID", scope);
 }
 
 bool hlasm_context::is_opcode(id_index symbol) const
