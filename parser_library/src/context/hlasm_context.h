@@ -90,18 +90,7 @@ class hlasm_context
     size_t m_ainsert_id = 0;
     bool m_end_reached = false;
 
-    template<typename system_variable_type>
-    std::pair<id_index, sys_sym_ptr> create_system_variable(
-        id_index& id, std::variant<std::string, std::vector<std::string>> value, bool is_global) const;
-
-    template<typename system_variable_type>
-    void create_and_store_system_variable(std::variant<std::reference_wrapper<global_variable_storage>,
-                                              std::reference_wrapper<code_scope::sys_sym_storage>> storage,
-        id_index& id,
-        std::variant<std::string, std::vector<std::string>> value,
-        bool is_global) const;
-
-    void add_global_system_var_to_scope(id_index& id, code_scope& scope) const;
+    void add_global_system_var_to_scope(id_storage& ids, std::string name, code_scope& scope) const;
 
     void add_system_vars_to_scope(code_scope& scope);
     void add_global_system_vars(code_scope& scope);
@@ -261,14 +250,16 @@ public:
         if (auto glob = globals_.find(id); glob != globals_.end())
         {
             set_sym_ptr var = std::dynamic_pointer_cast<set_symbol<T>>(glob->second);
-            scope->variables.insert({ id, var });
+            assert(var);
+
+            scope->variables.try_emplace(id, var);
             return var;
         }
 
         auto val = std::make_shared<set_symbol<T>>(id, is_scalar, true);
 
-        globals_.insert({ id, val });
-        scope->variables.insert({ id, val });
+        globals_.try_emplace(id, val);
+        scope->variables.try_emplace(id, val);
 
         return val;
     }
@@ -286,7 +277,7 @@ public:
 
         set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar, false));
 
-        scope->variables.insert({ id, val });
+        scope->variables.try_emplace(id, val);
 
         return val;
     }

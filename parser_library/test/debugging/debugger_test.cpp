@@ -131,9 +131,9 @@ public:
         if (ignore_)
             return true;
 
-        if (has_children(var))
+        if (has_children(var) && !check_children(d, var))
         {
-            return check_children(d, var);
+            return false;
         }
 
         if (data_)
@@ -358,7 +358,7 @@ TEST(debugger, test)
                 // macro locals
                 {
                     "&SYSLIST",
-                    test_var_value("(10,13)",
+                    test_var_value("13",
                         list {
                             { "0", std::make_shared<test_var_value>("10") },
                             { "1", std::make_shared<test_var_value>("13") },

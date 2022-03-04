@@ -298,7 +298,7 @@ TEST_P(diagnostics_sysvar_unsubscripted_syslist_invalid_opcode_fixture, unsubscr
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "W016", "E049" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E049", "E076" }));
 }
 
 TEST_P(diagnostics_sysvar_too_many_nested_macro_calls_fixture, too_many_macro_calls)
