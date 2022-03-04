@@ -2077,7 +2077,7 @@ diagnostic_op diagnostic_op::error_E075(std::string_view message, const range& r
 diagnostic_op diagnostic_op::error_E076(const range& range)
 {
     return diagnostic_op(
-        diagnostic_severity::error, "E076", "SYSLIST should be subscripted; default subscript is 1", range);
+        diagnostic_severity::error, "E076", "SYSLIST must be subscripted; using default subscript is 1", range);
 }
 
 diagnostic_op diagnostic_op::warning_W010(std::string_view message, const range& range)
