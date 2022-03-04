@@ -59,8 +59,6 @@ private:
 
     bool test_syslist_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const;
 
-    bool test_sysmac_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const;
-
     bool test_general_system_variable_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const;
 };
 

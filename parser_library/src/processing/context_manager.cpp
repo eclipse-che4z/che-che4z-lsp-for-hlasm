@@ -152,14 +152,12 @@ bool context_manager::test_macro_param_for_read(
     }
     else if (dynamic_cast<const context::system_variable_sysmac*>(mac_par))
     {
-        return test_sysmac_for_read(subscript, symbol_range);
+        return true;
     }
     else
     {
         return test_general_system_variable_for_read(subscript, symbol_range);
     }
-
-    return true;
 }
 
 bool context_manager::test_syslist_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const
@@ -183,11 +181,6 @@ bool context_manager::test_syslist_for_read(const std::vector<context::A_t>& sub
         }
     }
 
-    return true;
-}
-
-bool context_manager::test_sysmac_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const
-{
     return true;
 }
 
