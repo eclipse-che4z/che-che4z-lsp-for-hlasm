@@ -150,7 +150,7 @@ bool context_manager::test_macro_param_for_read(
     {
         if (subscript.empty())
         {
-            add_diagnostic(diagnostic_op::warning_W016(symbol_range)); // warn - SYSLIST is not subscripted
+            add_diagnostic(diagnostic_op::error_E076(symbol_range)); // error - SYSLIST is not subscripted
         }
 
         for (size_t i = 0; i < subscript.size(); ++i)
