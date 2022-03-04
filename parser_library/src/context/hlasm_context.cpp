@@ -82,7 +82,7 @@ std::pair<id_index, sys_sym_ptr> create_system_variable(
 
     auto var = std::make_shared<SYSTEM_VARIABLE_TYPE>(id, create_macro_data(std::move(mac_data)), is_global);
 
-    return { id, var };
+    return { id, std::move(var) };
 }
 
 } // namespace
@@ -175,12 +175,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 
 void hlasm_context::add_global_system_var_to_scope(id_storage& ids, std::string name, code_scope& scope) const
 {
-    auto id = ids.find(name);
-
-    if (!id)
-    {
-        id = ids.add(name);
-    }
+    auto id = ids.add(name);
 
     auto glob = globals_.find(id);
 
