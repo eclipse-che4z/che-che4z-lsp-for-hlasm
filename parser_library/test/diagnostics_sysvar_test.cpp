@@ -99,7 +99,11 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", ""),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1)"),
         diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1)"),
-        diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1,1)")));
+        diagnostics_sysvar_params::create_input("SYSOPT_RENT", "(1,1,1)"),
+        diagnostics_sysvar_params::create_input("SYSSTMT", ""),
+        diagnostics_sysvar_params::create_input("SYSSTMT", "(1)"),
+        diagnostics_sysvar_params::create_input("SYSSTMT", "(1,1)"),
+        diagnostics_sysvar_params::create_input("SYSSTMT", "(1,1,1)")));
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_null_opcode_invalid_subscript_fixture,
@@ -130,6 +134,9 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSPARM", "(0)"),
         diagnostics_sysvar_params::create_input("SYSPARM", "(1,0)"),
         diagnostics_sysvar_params::create_input("SYSPARM", "(1,1,0)"),
+        diagnostics_sysvar_params::create_input("SYSSTMT", "(0)"),
+        diagnostics_sysvar_params::create_input("SYSSTMT", "(1,0)"),
+        diagnostics_sysvar_params::create_input("SYSSTMT", "(1,1,0)"),
         diagnostics_sysvar_params::create_input("SYSSTYP", "(0)"),
         diagnostics_sysvar_params::create_input("SYSSTYP", "(1,0)"),
         diagnostics_sysvar_params::create_input("SYSSTYP", "(1,1,0)"),
@@ -138,9 +145,7 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSTEM_ID", "(1,1,0)"),
         diagnostics_sysvar_params::create_input("SYSTIME", "(0)"),
         diagnostics_sysvar_params::create_input("SYSTIME", "(1,0)"),
-        diagnostics_sysvar_params::create_input("SYSTIME", "(1,1,0)")
-
-            ));
+        diagnostics_sysvar_params::create_input("SYSTIME", "(1,1,0)")));
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_null_opcode_fixture,
@@ -185,6 +190,10 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSPARM", "(2,0)"),
         diagnostics_sysvar_params::create_input("SYSPARM", "(2,1)"),
         diagnostics_sysvar_params::create_input("SYSPARM", "(2,2,2)"),
+        diagnostics_sysvar_params::create_input("SYSSTMT", "(2)"),
+        diagnostics_sysvar_params::create_input("SYSSTMT", "(2,0)"),
+        diagnostics_sysvar_params::create_input("SYSSTMT", "(2,1)"),
+        diagnostics_sysvar_params::create_input("SYSSTMT", "(2,2,2)"),
         diagnostics_sysvar_params::create_input("SYSSTYP", "(2)"),
         diagnostics_sysvar_params::create_input("SYSSTYP", "(2,0)"),
         diagnostics_sysvar_params::create_input("SYSSTYP", "(2,1)"),
@@ -310,38 +319,4 @@ TEST_P(diagnostics_sysvar_too_many_nested_macro_calls_fixture, too_many_macro_ca
     a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E055" }));
-}
-
-TEST(diagnostics_sysvar, sysstmt)
-{
-    std::string input = R"(
-&VAR    SETA 2
-&BOOL   SETB (&VAR EQ 2)
-&STR    SETC 'SOMETHING'
-        GBLC &NDXNUM
-&STMTA  SETC &SYSSTMT
-
-        MACRO
-        MAC &VAR
-        LR 1,1
-&STMTC  SETC &SYSSTMT
-
-        MEND
-
-&STMTB  SETC &SYSSTMT
-10      MAC 13
-        LR 1,2
-&STMTD  SETC &SYSSTMT
-)";
-
-    analyzer a(input);
-    a.analyze();
-
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTA"), "00000007");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000016");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000020");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000024");
-
-    a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
 }

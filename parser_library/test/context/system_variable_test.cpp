@@ -122,6 +122,7 @@ INSTANTIATE_TEST_SUITE_P(system_variable,
         system_variable_params::create_input("SYSNEST", { "1", "1", "1", "1", "", "", "" }),
         system_variable_params::create_input("SYSOPT_RENT", { "0", "0", "0", "0", "", "", "" }),
         system_variable_params::create_input("SYSPARM", { "PAR", "PAR", "PAR", "PAR", "", "", "" }),
+        system_variable_params::create_input("SYSSTMT", { "24", "25", "26", "27", "", "", "" }),
         system_variable_params::create_input("SYSSTYP", { "CSECT", "CSECT", "CSECT", "CSECT", "", "", "" }),
         system_variable_params::create_input(
             "SYSTEM_ID", { "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "", "", "" }),
@@ -177,4 +178,38 @@ TEST_P(system_variable_standard_behavior_fixture, standard_behavior)
         EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "A" + std::to_string(i)), exp_behavior[i])
             << "for i = " << i;
     }
+}
+
+TEST(system_variable_standard_behavior_fixture, sysstmt)
+{
+    std::string input = R"(
+&VAR    SETA 2
+&BOOL   SETB (&VAR EQ 2)
+&STR    SETC 'SOMETHING'
+        GBLC &NDXNUM
+&STMTA  SETC &SYSSTMT
+
+        MACRO
+        MAC &VAR
+        LR 1,1
+&STMTC  SETC &SYSSTMT
+
+        MEND
+
+&STMTB  SETC &SYSSTMT
+10      MAC 13
+        LR 1,2
+&STMTD  SETC &SYSSTMT
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTA"), "00000007");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000016");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000020");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000024");
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
