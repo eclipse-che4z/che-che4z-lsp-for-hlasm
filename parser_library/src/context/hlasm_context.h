@@ -86,9 +86,6 @@ class hlasm_context
     static constexpr unsigned long SYSNDX_limit_max = 9999999UL;
     unsigned long SYSNDX_limit = SYSNDX_limit_max;
 
-    // value of system variable SYSSTMT
-    unsigned long SYSSTMT_ = 1;
-
     // last AINSERT virtual file id
     size_t m_ainsert_id = 0;
     bool m_end_reached = false;
