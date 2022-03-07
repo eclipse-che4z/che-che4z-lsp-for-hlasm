@@ -173,7 +173,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
     }
 }
 
-void hlasm_context::add_global_system_var_to_scope(id_storage& ids, std::string name, code_scope& scope) const
+void hlasm_context::add_global_system_var_to_scope(id_storage& ids, const std::string& name, code_scope& scope) const
 {
     auto id = ids.add(name);
 

@@ -31,7 +31,7 @@ context_manager::context_manager(const expressions::evaluation_context* eval_ctx
 {}
 
 context::SET_t context_manager::get_var_sym_value(
-    context::id_index name, const std::vector<context::A_t>& subscript, range symbol_range) const
+    context::id_index name, const std::vector<context::A_t>& subscript, const range& symbol_range) const
 {
     auto var = hlasm_ctx.get_var_sym(name);
 
@@ -87,7 +87,7 @@ context::SET_t context_manager::get_var_sym_value(
     return context::SET_t();
 }
 
-context::id_index context_manager::get_symbol_name(const std::string& symbol, range symbol_range) const
+context::id_index context_manager::get_symbol_name(const std::string& symbol, const range& symbol_range) const
 {
     auto [valid, id] = hlasm_ctx.try_get_symbol_name(symbol);
     if (!valid)
@@ -96,7 +96,7 @@ context::id_index context_manager::get_symbol_name(const std::string& symbol, ra
 }
 
 bool context_manager::test_symbol_for_read(
-    const context::var_sym_ptr& var, const std::vector<context::A_t>& subscript, range symbol_range) const
+    const context::var_sym_ptr& var, const std::vector<context::A_t>& subscript, const range& symbol_range) const
 {
     if (!var)
     {
@@ -116,8 +116,9 @@ bool context_manager::test_symbol_for_read(
     return true;
 }
 
-bool context_manager::test_set_symbol_for_read(
-    const context::set_symbol_base* set_sym, const std::vector<context::A_t>& subscript, range& symbol_range) const
+bool context_manager::test_set_symbol_for_read(const context::set_symbol_base* set_sym,
+    const std::vector<context::A_t>& subscript,
+    const range& symbol_range) const
 {
     if (subscript.size() > 1)
     {
@@ -143,8 +144,9 @@ bool context_manager::test_set_symbol_for_read(
     return true;
 }
 
-bool context_manager::test_macro_param_for_read(
-    const context::macro_param_base* mac_par, const std::vector<context::A_t>& subscript, range& symbol_range) const
+bool context_manager::test_macro_param_for_read(const context::macro_param_base* mac_par,
+    const std::vector<context::A_t>& subscript,
+    const range& symbol_range) const
 {
     if (dynamic_cast<const context::system_variable_syslist*>(mac_par))
     {
@@ -152,17 +154,15 @@ bool context_manager::test_macro_param_for_read(
     }
     else if (dynamic_cast<const context::system_variable_sysmac*>(mac_par))
     {
-        return test_sysmac_for_read(subscript, symbol_range);
+        return true;
     }
     else
     {
         return test_general_system_variable_for_read(subscript, symbol_range);
     }
-
-    return true;
 }
 
-bool context_manager::test_syslist_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const
+bool context_manager::test_syslist_for_read(const std::vector<context::A_t>& subscript, const range& symbol_range) const
 {
     if (subscript.empty())
     {
@@ -186,13 +186,8 @@ bool context_manager::test_syslist_for_read(const std::vector<context::A_t>& sub
     return true;
 }
 
-bool context_manager::test_sysmac_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const
-{
-    return true;
-}
-
 bool context_manager::test_general_system_variable_for_read(
-    const std::vector<context::A_t>& subscript, range& symbol_range) const
+    const std::vector<context::A_t>& subscript, const range& symbol_range) const
 {
     if (subscript.empty())
     {

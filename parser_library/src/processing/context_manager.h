@@ -38,30 +38,30 @@ public:
     explicit context_manager(const expressions::evaluation_context* eval_ctx);
 
     context::SET_t get_var_sym_value(
-        context::id_index name, const std::vector<context::A_t>& subscript, range symbol_range) const;
+        context::id_index name, const std::vector<context::A_t>& subscript, const range& symbol_range) const;
 
-    context::id_index get_symbol_name(const std::string& symbol, range symbol_range) const;
+    context::id_index get_symbol_name(const std::string& symbol, const range& symbol_range) const;
 
     bool test_symbol_for_read(
-        const context::var_sym_ptr& var, const std::vector<context::A_t>& subscript, range symbol_range) const;
+        const context::var_sym_ptr& var, const std::vector<context::A_t>& subscript, const range& symbol_range) const;
 
     void collect_diags() const override;
 
 private:
     void add_diagnostic(diagnostic_s diagnostic) const override;
 
-    bool test_set_symbol_for_read(
-        const context::set_symbol_base* set_sym, const std::vector<context::A_t>& subscript, range& symbol_range) const;
+    bool test_set_symbol_for_read(const context::set_symbol_base* set_sym,
+        const std::vector<context::A_t>& subscript,
+        const range& symbol_range) const;
 
     bool test_macro_param_for_read(const context::macro_param_base* mac_par,
         const std::vector<context::A_t>& subscript,
-        range& symbol_range) const;
+        const range& symbol_range) const;
 
-    bool test_syslist_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const;
+    bool test_syslist_for_read(const std::vector<context::A_t>& subscript, const range& symbol_range) const;
 
-    bool test_sysmac_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const;
-
-    bool test_general_system_variable_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const;
+    bool test_general_system_variable_for_read(
+        const std::vector<context::A_t>& subscript, const range& symbol_range) const;
 };
 
 } // namespace hlasm_plugin::parser_library::processing
