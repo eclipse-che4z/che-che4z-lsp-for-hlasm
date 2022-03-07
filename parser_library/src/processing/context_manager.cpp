@@ -116,8 +116,9 @@ bool context_manager::test_symbol_for_read(
     return true;
 }
 
-bool context_manager::test_set_symbol_for_read(
-    const context::set_symbol_base* set_sym, const std::vector<context::A_t>& subscript, range& symbol_range) const
+bool context_manager::test_set_symbol_for_read(const context::set_symbol_base* set_sym,
+    const std::vector<context::A_t>& subscript,
+    const range& symbol_range) const
 {
     if (subscript.size() > 1)
     {
@@ -143,8 +144,9 @@ bool context_manager::test_set_symbol_for_read(
     return true;
 }
 
-bool context_manager::test_macro_param_for_read(
-    const context::macro_param_base* mac_par, const std::vector<context::A_t>& subscript, range& symbol_range) const
+bool context_manager::test_macro_param_for_read(const context::macro_param_base* mac_par,
+    const std::vector<context::A_t>& subscript,
+    const range& symbol_range) const
 {
     if (dynamic_cast<const context::system_variable_syslist*>(mac_par))
     {
@@ -160,7 +162,7 @@ bool context_manager::test_macro_param_for_read(
     }
 }
 
-bool context_manager::test_syslist_for_read(const std::vector<context::A_t>& subscript, range& symbol_range) const
+bool context_manager::test_syslist_for_read(const std::vector<context::A_t>& subscript, const range& symbol_range) const
 {
     if (subscript.empty())
     {
@@ -185,7 +187,7 @@ bool context_manager::test_syslist_for_read(const std::vector<context::A_t>& sub
 }
 
 bool context_manager::test_general_system_variable_for_read(
-    const std::vector<context::A_t>& subscript, range& symbol_range) const
+    const std::vector<context::A_t>& subscript, const range& symbol_range) const
 {
     if (subscript.empty())
     {
