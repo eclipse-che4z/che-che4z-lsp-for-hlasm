@@ -186,7 +186,6 @@ void hlasm_context::add_global_system_var_to_scope(id_storage& ids, const std::s
 
 void hlasm_context::add_global_system_vars(code_scope& scope)
 {
-
     if (!is_in_macro())
     {
         {
@@ -246,12 +245,24 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         }
 
         {
+            globals_.insert(create_system_variable<system_variable>(
+                ids(), "SYSOPT_RENT", std::to_string(asm_options_.sysopt_rent), true));
+        }
+
+        {
             globals_.insert(create_system_variable<system_variable>(ids(), "SYSPARM", asm_options_.sysparm, true));
         }
 
         {
-            globals_.insert(create_system_variable<system_variable>(
-                ids(), "SYSOPT_RENT", std::to_string(asm_options_.sysopt_rent), true));
+            int sysstmt = 0; // todo connect this to something real
+
+            std::string value = std::to_string(sysstmt);
+            constexpr const size_t sysstmt_len = 8;
+
+            if (auto value_len = value.size(); value_len < sysstmt_len)
+                value.insert(0, sysstmt_len - value_len, '0');
+
+            globals_.insert(create_system_variable<system_variable>(ids(), "SYSSTMT", std::move(value), true));
         }
 
         {
@@ -262,8 +273,9 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
     add_global_system_var_to_scope(ids(), "SYSDATC", scope);
     add_global_system_var_to_scope(ids(), "SYSDATE", scope);
     add_global_system_var_to_scope(ids(), "SYSTIME", scope);
-    add_global_system_var_to_scope(ids(), "SYSPARM", scope);
     add_global_system_var_to_scope(ids(), "SYSOPT_RENT", scope);
+    add_global_system_var_to_scope(ids(), "SYSPARM", scope);
+    add_global_system_var_to_scope(ids(), "SYSSTMT", scope);
     add_global_system_var_to_scope(ids(), "SYSTEM_ID", scope);
 }
 
