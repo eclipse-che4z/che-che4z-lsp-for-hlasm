@@ -38,12 +38,12 @@ public:
     explicit context_manager(const expressions::evaluation_context* eval_ctx);
 
     context::SET_t get_var_sym_value(
-        context::id_index name, const std::vector<context::A_t>& subscript, range symbol_range) const;
+        context::id_index name, const std::vector<context::A_t>& subscript, const range& symbol_range) const;
 
-    context::id_index get_symbol_name(const std::string& symbol, range symbol_range) const;
+    context::id_index get_symbol_name(const std::string& symbol, const range& symbol_range) const;
 
     bool test_symbol_for_read(
-        const context::var_sym_ptr& var, const std::vector<context::A_t>& subscript, range symbol_range) const;
+        const context::var_sym_ptr& var, const std::vector<context::A_t>& subscript, const range& symbol_range) const;
 
     void collect_diags() const override;
 
@@ -55,7 +55,6 @@ private:
         const range& symbol_range) const;
 
     bool test_macro_param_for_read(const context::macro_param_base* mac_par,
-
         const std::vector<context::A_t>& subscript,
         const range& symbol_range) const;
 
