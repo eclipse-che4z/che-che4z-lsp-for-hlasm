@@ -101,26 +101,16 @@ public:
     macro_param_data_composite(std::vector<macro_data_ptr> value);
 };
 
-class macro_param_data_single_dynamic : public macro_param_data_component
+// class representing data of macro parameters holding only single dynamic string (=C_t)
+class macro_param_data_single_dynamic : public macro_param_data_single
 {
-protected:
-    // const C_t data_;
-    virtual const C_t& get_dynamic_value() const = 0;
-
-
 public:
     // returns whole data, here the only string
     virtual const C_t& get_value() const override = 0;
 
-    // gets value of the idx-th value, when exceeds size of data, returns default value
-    // get_ith(0) returns this to mimic HLASM
-    virtual const macro_param_data_component* get_ith(size_t idx) const override = 0;
-
-    virtual size_t size() const override = 0;
-
     macro_param_data_single_dynamic()
-        : macro_param_data_component(0)
-    {} // TODO
+        : macro_param_data_single("")
+    {}
 };
 
 } // namespace hlasm_plugin::parser_library::context

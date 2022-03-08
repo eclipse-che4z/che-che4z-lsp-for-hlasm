@@ -58,16 +58,16 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
 }
 
 namespace {
-
 class sysstmt_data : public macro_param_data_single_dynamic
 {
 protected:
     const performance_metrics& metrics;
     mutable C_t data_;
 
-    const C_t& get_dynamic_value() const override
+public:
+    const C_t& get_value() const override
     {
-        size_t sysstmt = metrics.lines + metrics.macro_statements + 1; // todo connect this to something real
+        size_t sysstmt = metrics.lines + metrics.macro_statements + 1;
 
         C_t value = std::to_string(sysstmt);
         constexpr const size_t sysstmt_len = 8;
@@ -80,23 +80,12 @@ protected:
         return data_;
     };
 
-public:
-    const C_t& get_value() const override { return get_dynamic_value(); };
-
-    // gets value of the idx-th value, when exceeds size of data, returns default value
-    // get_ith(0) returns this to mimic HLASM
-    const macro_param_data_component* get_ith(size_t idx) const override { return this; }; // TODO idx
-
-    size_t size() const override { return 0; };
-
     sysstmt_data(const performance_metrics& metrics)
         : macro_param_data_single_dynamic()
         , metrics(metrics)
         , data_() {};
 };
-} // namespace
 
-namespace {
 macro_data_ptr create_macro_data(std::string value)
 {
     return std::make_unique<macro_param_data_single>(std::move(value));
@@ -125,7 +114,6 @@ std::pair<id_index, sys_sym_ptr> create_system_variable(
 
     return { id, std::move(var) };
 }
-
 } // namespace
 
 void hlasm_context::add_system_vars_to_scope(code_scope& scope)
