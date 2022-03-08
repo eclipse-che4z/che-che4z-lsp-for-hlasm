@@ -4,6 +4,7 @@
 
 #### Added
 - USING and DROP support
+- SYSSTMT support
 
 #### Fixed
 - Behavior of currently supported subscripted system variables corrected
