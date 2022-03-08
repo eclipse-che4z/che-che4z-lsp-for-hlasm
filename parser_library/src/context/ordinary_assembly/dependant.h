@@ -29,7 +29,7 @@ struct attr_ref
     data_attr_kind attribute;
     id_index symbol_id;
 
-    friend auto operator<=>(const attr_ref&, const attr_ref&) = default;
+    auto operator<=>(const attr_ref&) const = default;
 };
 
 // structure representing objects with dependencies
