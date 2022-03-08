@@ -171,7 +171,6 @@ TEST_P(system_variable_standard_behavior_fixture, standard_behavior)
 
     analyzer a(input, analyzer_options { asm_option { "PAR" } });
     a.analyze();
-    a.collect_diags();
 
     for (size_t i = 0; i < exp_behavior.size(); ++i)
     {
@@ -180,36 +179,38 @@ TEST_P(system_variable_standard_behavior_fixture, standard_behavior)
     }
 }
 
-TEST(system_variable_standard_behavior_fixture, sysstmt)
+TEST(system_variable, sysstmt)
 {
     std::string input = R"(
 &VAR    SETA 2
 &BOOL   SETB (&VAR EQ 2)
 &STR    SETC 'SOMETHING'
-        GBLC &NDXNUM
-&STMTA  SETC &SYSSTMT
+        GBLC &STMTC
+&STMTA  SETC '&SYSSTMT'
 
         MACRO
         MAC &VAR
+        GBLC &STMTC
         LR 1,1
-&STMTC  SETC &SYSSTMT
+&STMTC  SETC '&SYSSTMT'
 
         MEND
 
-&STMTB  SETC &SYSSTMT
+&STMTB  SETC '&SYSSTMT'
 10      MAC 13
         LR 1,2
-&STMTD  SETC &SYSSTMT
+&STMTD  SETC '&SYSSTMT'
+&STMTE  SETA &SYSSTMT
 )";
 
     analyzer a(input);
     a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTA"), "00000007");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000016");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000020");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000024");
-
-    a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000017");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000021");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000025");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "STMTE"), 26);
 }
