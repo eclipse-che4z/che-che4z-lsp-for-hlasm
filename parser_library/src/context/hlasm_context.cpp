@@ -975,109 +975,6 @@ context::SET_t get_var_sym_value(context::hlasm_context& hlasm_ctx,
     return context::SET_t();
 }
 
-bool test_set_symbol_for_read(const context::set_symbol_base* set_sym,
-    const std::vector<context::A_t>& subscript,
-    range symbol_range,
-    diagnostic_op_consumer& diags)
-{
-    if (subscript.size() > 1)
-    {
-        diags.add_diagnostic(
-            diagnostic_op::error_E020("variable symbol subscript", symbol_range)); // error - too many operands
-        return false;
-    }
-
-    if ((set_sym->is_scalar && subscript.size() == 1) || (!set_sym->is_scalar && subscript.empty()))
-    {
-        diags.add_diagnostic(
-            diagnostic_op::error_E013("subscript error", symbol_range)); // error - inconsistent format of subcript
-        return false;
-    }
-
-    if (!set_sym->is_scalar && (subscript.front() < 1))
-    {
-        diags.add_diagnostic(diagnostic_op::error_E012(
-            "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
-        return false;
-    }
-
-    return true;
-}
-
-bool test_syslist_for_read(
-    const std::vector<context::A_t>& subscript, range symbol_range, diagnostic_op_consumer& diags)
-{
-    if (subscript.empty())
-    {
-        diags.add_diagnostic(diagnostic_op::error_E076(symbol_range)); // error - SYSLIST is not subscripted
-    }
-
-    for (size_t i = 0; i < subscript.size(); ++i)
-    {
-        if (subscript[i] < 1)
-        {
-            // if subscript = 0, ok
-            if (i == 0 && subscript[i] == 0)
-                continue;
-
-            diags.add_diagnostic(diagnostic_op::error_E012(
-                "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool test_general_system_variable_for_read(
-    const std::vector<context::A_t>& subscript, range symbol_range, diagnostic_op_consumer& diags)
-{
-    if (subscript.empty())
-    {
-        return true;
-    }
-
-    if (0 == subscript[0])
-    {
-        diags.add_diagnostic(diagnostic_op::error_E012(
-            "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
-        return false;
-    }
-    else if (1 == subscript[0])
-    {
-        for (size_t i = 1; i < subscript.size(); ++i)
-        {
-            if (0 == subscript[i])
-            {
-                diags.add_diagnostic(diagnostic_op::error_E012(
-                    "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool test_macro_param_for_read(const context::macro_param_base* mac_par,
-    const std::vector<context::A_t>& subscript,
-    range symbol_range,
-    diagnostic_op_consumer& diags)
-{
-    if (dynamic_cast<const context::system_variable_syslist*>(mac_par))
-    {
-        return test_syslist_for_read(subscript, symbol_range, diags);
-    }
-    else if (dynamic_cast<const context::system_variable_sysmac*>(mac_par))
-    {
-        return true;
-    }
-    else
-    {
-        return test_general_system_variable_for_read(subscript, symbol_range, diags);
-    }
-}
-
 bool test_symbol_for_read(const context::var_sym_ptr& var,
     const std::vector<context::A_t>& subscript,
     range symbol_range,
@@ -1089,15 +986,6 @@ bool test_symbol_for_read(const context::var_sym_ptr& var,
         return false;
     }
 
-    if (auto set_sym = var->access_set_symbol_base())
-    {
-        return test_set_symbol_for_read(set_sym, subscript, symbol_range, diags);
-    }
-    else if (auto mac_par = var->access_macro_param_base())
-    {
-        return test_macro_param_for_read(mac_par, subscript, symbol_range, diags);
-    }
-
-    return true;
+    return var->can_read(subscript, symbol_range, diags);
 }
 } // namespace hlasm_plugin::parser_library::context
