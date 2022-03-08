@@ -108,9 +108,8 @@ public:
     // returns whole data, here the only string
     virtual const C_t& get_value() const override = 0;
 
-    macro_param_data_single_dynamic()
-        : macro_param_data_single("")
-    {}
+protected:
+    macro_param_data_single_dynamic();
 };
 
 } // namespace hlasm_plugin::parser_library::context

@@ -86,4 +86,8 @@ macro_param_data_composite::macro_param_data_composite(std::vector<macro_data_pt
     , data_(move(value))
 {}
 
+macro_param_data_single_dynamic::macro_param_data_single_dynamic()
+    : macro_param_data_single("")
+{}
+
 } // namespace hlasm_plugin::parser_library::context
