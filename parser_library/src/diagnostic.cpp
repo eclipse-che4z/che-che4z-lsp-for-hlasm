@@ -2059,6 +2059,27 @@ diagnostic_op diagnostic_op::error_E073(const range& range)
         diagnostic_severity::error, "E073", "Illegal START instruction - CSECT already exists.", range);
 }
 
+diagnostic_op diagnostic_op::error_E074(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E074", "NULL operation code has been generated.", range);
+}
+
+diagnostic_op diagnostic_op::error_E075(std::string_view message, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "E075",
+        concat("The name field ",
+            message,
+            " contains unexpected characters. Valid characters are A-Z, 0-9, $, #, @ and _"),
+        range);
+}
+
+diagnostic_op diagnostic_op::error_E076(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "E076", "SYSLIST must be subscripted; using default subscript is 1", range);
+}
+
 diagnostic_op diagnostic_op::warning_W010(std::string_view message, const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning, "W010", concat(message, " not expected"), range);

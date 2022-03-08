@@ -131,31 +131,40 @@ public:
         if (ignore_)
             return true;
 
-        if (!children_.empty())
+        if (has_children(var) && !check_children(d, var))
         {
-            auto child_vars = var.variable_reference;
-            if (!child_vars)
-                return false;
-            auto actual_children = d.variables(child_vars);
-            if (actual_children.size() != children_.size())
-                return false;
-            for (auto actual_ch : actual_children)
-            {
-                std::string actual_ch_name(actual_ch.name);
-                auto found = children_.find(actual_ch_name);
-                if (found == children_.end())
-                    return false;
-                if (found->first != actual_ch_name)
-                    return false;
-                if (!found->second->check(d, actual_ch))
-                    return false;
-            }
+            return false;
         }
 
         if (data_)
             return *data_ == std::string_view(var.value);
         else
             return var.value.size() == 0;
+    }
+
+    bool has_children(const hlasm_plugin::parser_library::variable& var) const { return var.variable_reference; }
+
+    bool check_children(debugger& d, const hlasm_plugin::parser_library::variable& var) const
+    {
+        auto child_vars = var.variable_reference;
+        if (!child_vars)
+            return false;
+        auto actual_children = d.variables(child_vars);
+        if (actual_children.size() != children_.size())
+            return false;
+        for (auto actual_ch : actual_children)
+        {
+            std::string actual_ch_name(actual_ch.name);
+            auto found = children_.find(actual_ch_name);
+            if (found == children_.end())
+                return false;
+            if (found->first != actual_ch_name)
+                return false;
+            if (!found->second->check(d, actual_ch))
+                return false;
+        }
+
+        return true;
     }
 
 private:
@@ -349,7 +358,7 @@ TEST(debugger, test)
                 // macro locals
                 {
                     "&SYSLIST",
-                    test_var_value("(10,13)",
+                    test_var_value("13",
                         list {
                             { "0", std::make_shared<test_var_value>("10") },
                             { "1", std::make_shared<test_var_value>("13") },

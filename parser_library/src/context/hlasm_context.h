@@ -47,9 +47,11 @@ class hlasm_context
     using copy_member_storage = std::unordered_map<id_index, copy_member_ptr>;
     using instruction_storage = std::unordered_map<id_index, opcode_t::opcode_variant>;
     using opcode_map = std::unordered_map<id_index, opcode_t>;
+    using global_variable_storage = std::unordered_map<id_index, var_sym_ptr>;
 
     // storage of global variables
-    code_scope::set_sym_storage globals_;
+    global_variable_storage globals_;
+
     // storage of defined macros
     macro_storage macros_;
     // storage of copy members
@@ -87,6 +89,8 @@ class hlasm_context
     // last AINSERT virtual file id
     size_t m_ainsert_id = 0;
     bool m_end_reached = false;
+
+    void add_global_system_var_to_scope(id_storage& ids, const std::string& name, code_scope& scope) const;
 
     void add_system_vars_to_scope(code_scope& scope);
     void add_global_system_vars(code_scope& scope);
@@ -161,7 +165,7 @@ public:
 
     void fill_metrics_files();
     // return map of global set vars
-    const code_scope::set_sym_storage& globals() const;
+    const global_variable_storage& globals() const;
 
     // return variable symbol in current scope
     // returns empty shared_ptr if there is none in the current scope
@@ -245,14 +249,17 @@ public:
 
         if (auto glob = globals_.find(id); glob != globals_.end())
         {
-            scope->variables.insert({ id, glob->second });
-            return glob->second;
+            set_sym_ptr var = std::dynamic_pointer_cast<set_symbol<T>>(glob->second);
+            assert(var);
+
+            scope->variables.try_emplace(id, var);
+            return var;
         }
 
         auto val = std::make_shared<set_symbol<T>>(id, is_scalar, true);
 
-        globals_.insert({ id, val });
-        scope->variables.insert({ id, val });
+        globals_.try_emplace(id, val);
+        scope->variables.try_emplace(id, val);
 
         return val;
     }
@@ -270,7 +277,7 @@ public:
 
         set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar, false));
 
-        scope->variables.insert({ id, val });
+        scope->variables.try_emplace(id, val);
 
         return val;
     }

@@ -49,7 +49,7 @@ const C_t& macro_param_base::get_value(const std::vector<size_t>& offset) const
     return tmp->get_value();
 }
 
-const C_t& macro_param_base::get_value(size_t idx) const { return real_data()->get_ith(idx - 1)->get_value(); }
+const C_t& macro_param_base::get_value(size_t idx) const { return real_data()->get_ith(idx)->get_value(); }
 
 const C_t& macro_param_base::get_value() const { return real_data()->get_value(); }
 

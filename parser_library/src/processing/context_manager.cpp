@@ -31,7 +31,7 @@ context_manager::context_manager(const expressions::evaluation_context* eval_ctx
 {}
 
 context::SET_t context_manager::get_var_sym_value(
-    context::id_index name, const std::vector<context::A_t>& subscript, range symbol_range) const
+    context::id_index name, const std::vector<context::A_t>& subscript, const range& symbol_range) const
 {
     auto var = hlasm_ctx.get_var_sym(name);
 
@@ -87,7 +87,7 @@ context::SET_t context_manager::get_var_sym_value(
     return context::SET_t();
 }
 
-context::id_index context_manager::get_symbol_name(const std::string& symbol, range symbol_range) const
+context::id_index context_manager::get_symbol_name(const std::string& symbol, const range& symbol_range) const
 {
     auto [valid, id] = hlasm_ctx.try_get_symbol_name(symbol);
     if (!valid)
@@ -96,7 +96,7 @@ context::id_index context_manager::get_symbol_name(const std::string& symbol, ra
 }
 
 bool context_manager::test_symbol_for_read(
-    const context::var_sym_ptr& var, const std::vector<context::A_t>& subscript, range symbol_range) const
+    const context::var_sym_ptr& var, const std::vector<context::A_t>& subscript, const range& symbol_range) const
 {
     if (!var)
     {
@@ -106,37 +106,106 @@ bool context_manager::test_symbol_for_read(
 
     if (auto set_sym = var->access_set_symbol_base())
     {
-        if (subscript.size() > 1)
-        {
-            add_diagnostic(
-                diagnostic_op::error_E020("variable symbol subscript", symbol_range)); // error - too many operands
-            return false;
-        }
+        return test_set_symbol_for_read(set_sym, subscript, symbol_range);
+    }
+    else if (auto mac_par = var->access_macro_param_base())
+    {
+        return test_macro_param_for_read(mac_par, subscript, symbol_range);
+    }
 
-        if ((set_sym->is_scalar && subscript.size() == 1) || (!set_sym->is_scalar && subscript.size() == 0))
-        {
-            add_diagnostic(
-                diagnostic_op::error_E013("subscript error", symbol_range)); // error - inconsistent format of subcript
-            return false;
-        }
+    return true;
+}
 
-        if (!set_sym->is_scalar && (subscript.front() < 1))
+bool context_manager::test_set_symbol_for_read(const context::set_symbol_base* set_sym,
+    const std::vector<context::A_t>& subscript,
+    const range& symbol_range) const
+{
+    if (subscript.size() > 1)
+    {
+        add_diagnostic(
+            diagnostic_op::error_E020("variable symbol subscript", symbol_range)); // error - too many operands
+        return false;
+    }
+
+    if ((set_sym->is_scalar && subscript.size() == 1) || (!set_sym->is_scalar && subscript.empty()))
+    {
+        add_diagnostic(
+            diagnostic_op::error_E013("subscript error", symbol_range)); // error - inconsistent format of subcript
+        return false;
+    }
+
+    if (!set_sym->is_scalar && (subscript.front() < 1))
+    {
+        add_diagnostic(diagnostic_op::error_E012(
+            "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
+        return false;
+    }
+
+    return true;
+}
+
+bool context_manager::test_macro_param_for_read(const context::macro_param_base* mac_par,
+    const std::vector<context::A_t>& subscript,
+    const range& symbol_range) const
+{
+    if (dynamic_cast<const context::system_variable_syslist*>(mac_par))
+    {
+        return test_syslist_for_read(subscript, symbol_range);
+    }
+    else if (dynamic_cast<const context::system_variable_sysmac*>(mac_par))
+    {
+        return true;
+    }
+    else
+    {
+        return test_general_system_variable_for_read(subscript, symbol_range);
+    }
+}
+
+bool context_manager::test_syslist_for_read(const std::vector<context::A_t>& subscript, const range& symbol_range) const
+{
+    if (subscript.empty())
+    {
+        add_diagnostic(diagnostic_op::error_E076(symbol_range)); // error - SYSLIST is not subscripted
+    }
+
+    for (size_t i = 0; i < subscript.size(); ++i)
+    {
+        if (subscript[i] < 1)
         {
+            // if subscript = 0, ok
+            if (i == 0 && subscript[i] == 0)
+                continue;
+
             add_diagnostic(diagnostic_op::error_E012(
                 "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
             return false;
         }
     }
-    else if (auto mac_par = var->access_macro_param_base())
-    {
-        for (size_t i = 0; i < subscript.size(); ++i)
-        {
-            if (subscript[i] < 1)
-            {
-                // if syslist and subscript = 0, ok
-                if (i == 0 && subscript[i] == 0 && dynamic_cast<context::system_variable*>(mac_par))
-                    continue;
 
+    return true;
+}
+
+bool context_manager::test_general_system_variable_for_read(
+    const std::vector<context::A_t>& subscript, const range& symbol_range) const
+{
+    if (subscript.empty())
+    {
+        return true;
+    }
+
+    if (0 == subscript[0])
+    {
+        add_diagnostic(diagnostic_op::error_E012(
+            "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
+        return false;
+    }
+    else if (1 == subscript[0])
+    {
+        for (size_t i = 1; i < subscript.size(); ++i)
+        {
+            if (0 == subscript[i])
+            {
                 add_diagnostic(diagnostic_op::error_E012(
                     "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
                 return false;

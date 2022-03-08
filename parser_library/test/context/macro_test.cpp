@@ -483,7 +483,7 @@ TEST(macro, arguments_concatenation)
 
     ASSERT_NE(it, a.hlasm_ctx().globals().end());
 
-    EXPECT_EQ(it->second->access_set_symbol<C_t>()->get_value(), "(B-C)+(A-D)");
+    EXPECT_EQ(it->second->access_set_symbol_base()->access_set_symbol<C_t>()->get_value(), "(B-C)+(A-D)");
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
@@ -514,8 +514,8 @@ TEST(macro, arguments_continuation)
     ASSERT_NE(Q, a.hlasm_ctx().globals().end());
     ASSERT_NE(W, a.hlasm_ctx().globals().end());
 
-    EXPECT_EQ(Q->second->access_set_symbol<C_t>()->get_value(), "X");
-    EXPECT_EQ(W->second->access_set_symbol<C_t>()->get_value(), "Y");
+    EXPECT_EQ(Q->second->access_set_symbol_base()->access_set_symbol<C_t>()->get_value(), "X");
+    EXPECT_EQ(W->second->access_set_symbol_base()->access_set_symbol<C_t>()->get_value(), "Y");
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);

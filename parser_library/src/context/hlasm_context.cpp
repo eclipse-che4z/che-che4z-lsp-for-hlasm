@@ -57,85 +57,105 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
     return instr_map;
 }
 
+namespace {
+macro_data_ptr create_macro_data(std::string value)
+{
+    return std::make_unique<macro_param_data_single>(std::move(value));
+}
+
+macro_data_ptr create_macro_data(std::vector<std::string> value)
+{
+    std::vector<macro_data_ptr> data;
+    for (auto& single_data : value)
+    {
+        data.push_back(std::make_unique<macro_param_data_single>(std::move(single_data)));
+    }
+
+    return std::make_unique<macro_param_data_composite>(std::move(data));
+}
+
+template<typename SYSTEM_VARIABLE_TYPE, typename DATA>
+std::pair<id_index, sys_sym_ptr> create_system_variable(
+    id_storage& ids, std::string name, DATA mac_data, bool is_global)
+{
+    auto id = ids.add(std::move(name));
+
+    auto var = std::make_shared<SYSTEM_VARIABLE_TYPE>(id, create_macro_data(std::move(mac_data)), is_global);
+
+    return { id, std::move(var) };
+}
+
+} // namespace
+
 void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 {
     if (scope.is_in_macro())
     {
         {
-            auto SYSECT = ids().add("SYSECT");
-
-            auto val_sect = std::make_shared<set_symbol<C_t>>(SYSECT, true, false);
             auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_storage::empty_id;
-            val_sect->set_value(*sect_name);
-            scope.variables.insert({ SYSECT, val_sect });
+
+            scope.system_variables.insert(
+                create_system_variable<system_variable, std::string>(ids(), "SYSECT", *sect_name, false));
         }
 
         {
-            auto SYSNDX = ids().add("SYSNDX");
-
-            auto val_ndx = std::make_shared<set_symbol<C_t>>(SYSNDX, true, false);
-
             std::string value = std::to_string(SYSNDX_);
             if (auto value_len = value.size(); value_len < 4)
                 value.insert(0, 4 - value_len, '0');
 
-            val_ndx->set_value(std::move(value));
-            scope.variables.insert({ SYSNDX, val_ndx });
+            scope.system_variables.insert(
+                create_system_variable<system_variable>(ids(), "SYSNDX", std::move(value), false));
         }
 
         {
-            auto SYSSTYP = ids().add("SYSSTYP");
+            std::string value = "";
 
-            auto val_styp = std::make_shared<set_symbol<C_t>>(SYSSTYP, true, false);
             if (ord_ctx.current_section())
             {
                 switch (ord_ctx.current_section()->kind)
                 {
                     case context::section_kind::COMMON:
-                        val_styp->set_value("COM");
+                        value = "COM";
                         break;
                     case context::section_kind::DUMMY:
-                        val_styp->set_value("DSECT");
+                        value = "DSECT";
                         break;
                     case context::section_kind::READONLY:
-                        val_styp->set_value("RSECT");
+                        value = "RSECT";
                         break;
                     case context::section_kind::EXECUTABLE:
-                        val_styp->set_value("CSECT");
+                        value = "CSECT";
                         break;
                     default:
                         break;
                 }
             }
-            scope.variables.insert({ SYSSTYP, val_styp });
+
+            scope.system_variables.insert(
+                create_system_variable<system_variable>(ids(), "SYSSTYP", std::move(value), false));
         }
 
         {
-            auto SYSLOC = ids().add("SYSLOC");
-
-            auto var = std::make_shared<set_symbol<C_t>>(SYSLOC, true, false);
+            std::string location_counter_name = "";
 
             if (ord_ctx.current_section())
             {
-                var->set_value(*ord_ctx.current_section()->current_location_counter().name);
+                location_counter_name = *ord_ctx.current_section()->current_location_counter().name;
             }
-            scope.variables.insert({ SYSLOC, var });
+
+            scope.system_variables.insert(
+                create_system_variable<system_variable>(ids(), "SYSLOC", std::move(location_counter_name), false));
         }
 
         {
-            auto SYSNEST = ids().add("SYSNEST");
+            std::string value = std::to_string(scope_stack_.size() - 1);
 
-            auto var = std::make_shared<set_symbol<A_t>>(SYSNEST, true, false);
-
-            var->set_value((context::A_t)scope_stack_.size() - 1);
-
-            scope.variables.insert({ SYSNEST, var });
+            scope.system_variables.insert(
+                create_system_variable<system_variable>(ids(), "SYSNEST", std::move(value), false));
         }
 
         {
-            auto SYSMAC = ids().add("SYSMAC");
-
-            std::vector<macro_data_ptr> data;
+            std::vector<std::string> data;
 
             for (auto it = scope_stack_.rbegin(); it != scope_stack_.rend(); ++it)
             {
@@ -144,117 +164,106 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
                     tmp = *it->this_macro->id;
                 else
                     tmp = "OPEN CODE";
-                data.push_back(std::make_unique<macro_param_data_single>(std::move(tmp)));
+                data.push_back(std::move(tmp));
             }
 
-            macro_data_ptr mac_data = std::make_unique<macro_param_data_composite>(std::move(data));
-
-            sys_sym_ptr var = std::make_shared<system_variable_sysmac>(SYSMAC, std::move(mac_data), false);
-
-            scope.system_variables.insert({ SYSMAC, std::move(var) });
+            scope.system_variables.insert(
+                create_system_variable<system_variable_sysmac>(ids(), "SYSMAC", std::move(data), false));
         }
     }
 }
 
+void hlasm_context::add_global_system_var_to_scope(id_storage& ids, const std::string& name, code_scope& scope) const
+{
+    auto id = ids.add(name);
+
+    auto glob = globals_.find(id);
+
+    sys_sym_ptr temp = std::dynamic_pointer_cast<system_variable>(glob->second);
+
+    scope.system_variables.try_emplace(glob->second->id, temp);
+}
+
 void hlasm_context::add_global_system_vars(code_scope& scope)
 {
-    auto SYSDATC = ids().add("SYSDATC");
-    auto SYSDATE = ids().add("SYSDATE");
-    auto SYSTIME = ids().add("SYSTIME");
-    auto SYSPARM = ids().add("SYSPARM");
-    auto SYSOPT_RENT = ids().add("SYSOPT_RENT");
-    auto SYSTEM_ID = ids().add("SYSTEM_ID");
-
     if (!is_in_macro())
     {
-        auto datc = std::make_shared<set_symbol<C_t>>(SYSDATC, true, true);
-        auto date = std::make_shared<set_symbol<C_t>>(SYSDATE, true, true);
-        auto time = std::make_shared<set_symbol<C_t>>(SYSTIME, true, true);
-
-        auto tmp_now = std::time(0);
-        auto now = std::localtime(&tmp_now);
-
-        std::string datc_val;
-        std::string date_val;
-        datc_val.reserve(8);
-        date_val.reserve(8);
-        auto year = std::to_string(now->tm_year + 1900);
-        datc_val.append(year);
-
-        if (now->tm_mon + 1 < 10)
         {
-            datc_val.push_back('0');
-            date_val.push_back('0');
+            auto tmp_now = std::time(0);
+            auto now = std::localtime(&tmp_now);
+
+            std::string datc_val;
+            std::string date_val;
+            datc_val.reserve(8);
+            date_val.reserve(8);
+            auto year = std::to_string(now->tm_year + 1900);
+            datc_val.append(year);
+
+            if (now->tm_mon + 1 < 10)
+            {
+                datc_val.push_back('0');
+                date_val.push_back('0');
+            }
+
+            datc_val.append(std::to_string(now->tm_mon + 1));
+
+            date_val.append(std::to_string(now->tm_mon + 1));
+            date_val.push_back('/');
+
+            if (now->tm_mday < 10)
+            {
+                datc_val.push_back('0');
+                date_val.push_back('0');
+            }
+
+            datc_val.append(std::to_string(now->tm_mday));
+
+            date_val.append(std::to_string(now->tm_mday));
+            date_val.push_back('/');
+            date_val.append(year.c_str() + 2);
+
+            {
+                globals_.insert(create_system_variable<system_variable>(ids(), "SYSDATC", std::move(datc_val), true));
+            }
+
+            {
+                globals_.insert(create_system_variable<system_variable>(ids(), "SYSDATE", std::move(date_val), true));
+            }
+
+            {
+                std::string value;
+                if (now->tm_hour < 10)
+                    value.push_back('0');
+                value.append(std::to_string(now->tm_hour));
+                value.push_back(':');
+                if (now->tm_min < 10)
+                    value.push_back('0');
+                value.append(std::to_string(now->tm_min));
+
+                globals_.insert(create_system_variable<system_variable>(ids(), "SYSTIME", std::move(value), true));
+            }
         }
 
-        datc_val.append(std::to_string(now->tm_mon + 1));
-
-        date_val.append(std::to_string(now->tm_mon + 1));
-        date_val.push_back('/');
-
-        if (now->tm_mday < 10)
         {
-            datc_val.push_back('0');
-            date_val.push_back('0');
+            globals_.insert(create_system_variable<system_variable>(ids(), "SYSPARM", asm_options_.sysparm, true));
         }
 
-        datc_val.append(std::to_string(now->tm_mday));
-
-        date_val.append(std::to_string(now->tm_mday));
-        date_val.push_back('/');
-
-        datc->set_value(std::move(datc_val));
-
-        date_val.append(year.c_str() + 2);
-        date->set_value(std::move(date_val));
-
-        globals_.insert({ SYSDATC, datc });
-        globals_.insert({ SYSDATE, date });
-
-        std::string time_val;
-        if (now->tm_hour < 10)
-            time_val.push_back('0');
-        time_val.append(std::to_string(now->tm_hour));
-        time_val.push_back(':');
-        if (now->tm_min < 10)
-            time_val.push_back('0');
-        time_val.append(std::to_string(now->tm_min));
-
-        time->set_value(std::move(time_val));
-        globals_.insert({ SYSTIME, time });
-
         {
-            auto val = std::make_shared<set_symbol<C_t>>(SYSPARM, true, true);
-
-            val->set_value(asm_options_.sysparm);
-
-            globals_.insert({ SYSPARM, std::move(val) });
+            globals_.insert(create_system_variable<system_variable>(
+                ids(), "SYSOPT_RENT", std::to_string(asm_options_.sysopt_rent), true));
         }
-        {
-            auto val = std::make_shared<set_symbol<B_t>>(SYSOPT_RENT, true, true);
-            globals_.insert({ SYSOPT_RENT, std::move(val) });
-        }
-        {
-            auto val = std::make_shared<set_symbol<C_t>>(SYSTEM_ID, true, true);
 
-            val->set_value(asm_options_.system_id);
-
-            globals_.insert({ SYSTEM_ID, std::move(val) });
+        {
+            globals_.insert(create_system_variable<system_variable>(ids(), "SYSTEM_ID", asm_options_.system_id, true));
         }
     }
 
-    auto glob = globals_.find(SYSDATC);
-    scope.variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSDATE);
-    scope.variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSTIME);
-    scope.variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSPARM);
-    scope.variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSOPT_RENT);
-    scope.variables.insert({ glob->second->id, glob->second });
-    glob = globals_.find(SYSTEM_ID);
-    scope.variables.insert({ glob->second->id, glob->second });
+    add_global_system_var_to_scope(ids(), "SYSDATC", scope);
+    add_global_system_var_to_scope(ids(), "SYSDATE", scope);
+    add_global_system_var_to_scope(ids(), "SYSTIME", scope);
+    add_global_system_var_to_scope(ids(), "SYSPARM", scope);
+    add_global_system_var_to_scope(ids(), "SYSOPT_RENT", scope);
+    add_global_system_var_to_scope(ids(), "SYSTEM_ID", scope);
 }
 
 bool hlasm_context::is_opcode(id_index symbol) const
@@ -458,7 +467,7 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
 
 void hlasm_context::fill_metrics_files() { metrics.files = visited_files_.size(); }
 
-const code_scope::set_sym_storage& hlasm_context::globals() const { return globals_; }
+const hlasm_context::global_variable_storage& hlasm_context::globals() const { return globals_; }
 
 var_sym_ptr hlasm_context::get_var_sym(id_index name) const
 {
