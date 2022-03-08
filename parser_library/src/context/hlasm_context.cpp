@@ -58,7 +58,7 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
 }
 
 namespace {
-class sysstmt_data : public macro_param_data_single_dynamic
+class sysstmt_macro_param_data : public macro_param_data_single_dynamic
 {
 protected:
     const performance_metrics& metrics;
@@ -80,7 +80,7 @@ public:
         return data_;
     };
 
-    sysstmt_data(const performance_metrics& metrics)
+    sysstmt_macro_param_data(const performance_metrics& metrics)
         : macro_param_data_single_dynamic()
         , metrics(metrics)
         , data_() {};
@@ -283,7 +283,7 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         }
 
         {
-            auto value = std::make_unique<sysstmt_data>(metrics);
+            auto value = std::make_unique<sysstmt_macro_param_data>(metrics);
 
             globals_.insert(create_system_variable<system_variable>(ids(), "SYSSTMT", std::move(value), true));
         }
