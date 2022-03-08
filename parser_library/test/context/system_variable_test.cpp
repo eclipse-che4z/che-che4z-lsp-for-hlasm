@@ -122,7 +122,7 @@ INSTANTIATE_TEST_SUITE_P(system_variable,
         system_variable_params::create_input("SYSNEST", { "1", "1", "1", "1", "", "", "" }),
         system_variable_params::create_input("SYSOPT_RENT", { "0", "0", "0", "0", "", "", "" }),
         system_variable_params::create_input("SYSPARM", { "PAR", "PAR", "PAR", "PAR", "", "", "" }),
-        system_variable_params::create_input("SYSSTMT", { "24", "25", "26", "27", "", "", "" }),
+        system_variable_params::create_input("SYSSTMT", { "00000039", "00000040", "00000041", "00000042", "", "", "" }),
         system_variable_params::create_input("SYSSTYP", { "CSECT", "CSECT", "CSECT", "CSECT", "", "", "" }),
         system_variable_params::create_input(
             "SYSTEM_ID", { "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "", "", "" }),
