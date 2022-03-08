@@ -39,16 +39,17 @@ TEST(dependency_collector, uresolved_addresses)
         name2, symbol_value(std::move(addr2)), symbol_attributes(symbol_origin::UNKNOWN), location());
 
     // ((SYM2-SYM1)/(SYM2-SYM1))+SYM2
-    mach_expr_binary<add> expr(
-        std::make_unique<mach_expr_binary<expressions::div>>(
-            std::make_unique<mach_expr_binary<expressions::sub>>(std::make_unique<mach_expr_symbol>(name2, range()),
-                std::make_unique<mach_expr_symbol>(name1, range()),
-                range()),
-            std::make_unique<mach_expr_binary<expressions::sub>>(std::make_unique<mach_expr_symbol>(name2, range()),
-                std::make_unique<mach_expr_symbol>(name1, range()),
-                range()),
-            range()),
-        std::make_unique<mach_expr_symbol>(name2, range()),
+    mach_expr_binary<add> expr(std::make_unique<mach_expr_binary<expressions::div>>(
+                                   std::make_unique<mach_expr_binary<expressions::sub>>(
+                                       std::make_unique<mach_expr_symbol>(name2, nullptr, range()),
+                                       std::make_unique<mach_expr_symbol>(name1, nullptr, range()),
+                                       range()),
+                                   std::make_unique<mach_expr_binary<expressions::sub>>(
+                                       std::make_unique<mach_expr_symbol>(name2, nullptr, range()),
+                                       std::make_unique<mach_expr_symbol>(name1, nullptr, range()),
+                                       range()),
+                                   range()),
+        std::make_unique<mach_expr_symbol>(name2, nullptr, range()),
         range());
 
     context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx);

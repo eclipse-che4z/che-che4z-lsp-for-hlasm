@@ -18,10 +18,13 @@
 #include <variant>
 
 #include "id_storage.h"
-#include "instruction.h"
 #include "macro.h"
 
 namespace hlasm_plugin::parser_library::context {
+class ca_instruction;
+class assembler_instruction;
+class machine_instruction;
+class mnemonic_code;
 
 // structure that represents operation code of an instruction
 struct opcode_t

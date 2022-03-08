@@ -127,6 +127,14 @@ std::optional<std::vector<T>> get_var_vector(hlasm_context& ctx, std::string nam
     return result;
 }
 
+inline bool matches_message_codes(const std::vector<diagnostic_op>& d, std::initializer_list<std::string> m)
+{
+    std::vector<std::string> codes;
+    std::transform(d.begin(), d.end(), std::back_inserter(codes), [](const auto& d) { return d.code; });
+
+    return std::is_permutation(codes.begin(), codes.end(), m.begin(), m.end());
+}
+
 inline bool matches_message_codes(const std::vector<diagnostic_s>& d, std::initializer_list<std::string> m)
 {
     std::vector<std::string> codes;

@@ -18,5 +18,7 @@ target_sources(library_test PRIVATE
 	literals_test.cpp
 	macro_test.cpp
 	ord_sym_test.cpp
+	system_variable_test.cpp
+	using_test.cpp
 )
 

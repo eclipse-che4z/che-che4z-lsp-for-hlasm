@@ -45,29 +45,27 @@ enum label_types
 // serves as a ancestor class for specific assembler instructions
 class assembler_instruction
 {
+protected:
+    std::vector<label_types> allowed_types;
+    std::string_view name_of_instruction;
+    int min_operands = 0;
+    int max_operands = 0; // maximum number of operands, -1 if upper bound is not defined
+
 public:
-    const std::vector<label_types> allowed_types;
-    const std::string name_of_instruction;
-    int min_operands;
-    int max_operands; // maximum number of operands, if not specified, value is -1
-    virtual bool check(const std::vector<const asm_operand*>& to_check, const range&, const diagnostic_collector&) const
-    {
-        (void)to_check;
-        return true;
-    };
-    assembler_instruction(
-        std::vector<label_types> allowed_types, std::string name_of_instruction, int min_operands, int max_operands)
-        : allowed_types(allowed_types)
+    virtual bool check(const std::vector<const asm_operand*>&, const range&, const diagnostic_collector&) const = 0;
+
+    assembler_instruction(std::vector<label_types> allowed_types,
+        std::string_view name_of_instruction,
+        int min_operands,
+        int max_operands)
+        : allowed_types(std::move(allowed_types))
         , name_of_instruction(name_of_instruction)
         , min_operands(min_operands)
         , max_operands(max_operands) {};
-    assembler_instruction()
-        : min_operands(0)
-        , max_operands(0) {};
-    virtual ~assembler_instruction() {};
+    virtual ~assembler_instruction() = default;
 
 protected:
-    bool is_param_in_vector(const std::string& parameter, const std::vector<std::string>& options) const;
+    bool is_param_in_vector(std::string_view parameter, const std::vector<std::string_view>& options) const;
 
     bool operands_size_corresponding(const std::vector<const asm_operand*>& to_check,
         const range& stmt_range,
@@ -75,22 +73,22 @@ protected:
 
     // functions for checking complex operands
     bool check_compat_operands(const std::vector<std::unique_ptr<asm_operand>>& input,
-        const std::string& instr_name,
+        std::string_view instr_name,
         const diagnostic_collector& add_diagnostic) const;
 
     bool check_flag_operand(
-        const one_operand* input, const std::string& instr_name, const diagnostic_collector& add_diagnostic) const;
+        const one_operand* input, std::string_view instr_name, const diagnostic_collector& add_diagnostic) const;
 
     bool check_process_flag_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-        const std::string& instr_name,
+        std::string_view instr_name,
         const diagnostic_collector& add_diagnostic) const;
 
     bool check_optable_operands(const std::vector<std::unique_ptr<asm_operand>>& input,
-        const std::string& instr_name,
+        std::string_view instr_name,
         const diagnostic_collector& add_diagnostic) const;
 
     bool check_typecheck_operands(const std::vector<std::unique_ptr<asm_operand>>& input,
-        const std::string& instr_name,
+        std::string_view instr_name,
         const std::string op_name,
         const diagnostic_collector& add_diagnostic) const;
 
@@ -98,26 +96,26 @@ protected:
     bool check_codepage_parameter(const one_operand& input, const diagnostic_collector& add_diagnostic) const;
 
     bool check_fail_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-        const std::string& instr_name,
+        std::string_view instr_name,
         const diagnostic_collector& add_diagnostic) const;
 
     bool check_first_machine_operand(const std::string& input_str, const diagnostic_collector& add_diagnostic) const;
 
     bool check_pcontrol_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-        const std::string& instr_name,
+        std::string_view instr_name,
         const diagnostic_collector& add_diagnostic) const;
 
     bool check_using_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-        const std::string& instr_name,
+        std::string_view instr_name,
         const diagnostic_collector& add_diagnostic) const;
 
     bool check_xref_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-        const std::string& instr_name,
+        std::string_view instr_name,
         const diagnostic_collector& add_diagnostic) const;
 
     bool check_suprwarn_parameters(const std::vector<std::unique_ptr<asm_operand>>& input,
-        const std::string instr_name,
-        const std::string& op_name,
+        std::string_view instr_name,
+        std::string_view op_name,
         const diagnostic_collector& add_diagnostic) const;
 
     bool check_assembler_process_operand(const asm_operand* input, const diagnostic_collector& add_diagnostic) const;

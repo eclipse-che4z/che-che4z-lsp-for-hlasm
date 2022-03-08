@@ -21,12 +21,12 @@
 #include "context/common_types.h"
 
 namespace {
-const std::vector<std::string> rmode_options = { "24", "31", "64", "ANY" };
+const std::vector<std::string_view> rmode_options = { "24", "31", "64", "ANY" };
 }
 
 namespace hlasm_plugin::parser_library::checking {
 
-xattr::xattr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+xattr::xattr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
 bool xattr::check(const std::vector<const asm_operand*>& to_check,
@@ -44,7 +44,7 @@ bool xattr::check(const std::vector<const asm_operand*>& to_check,
             add_diagnostic(diagnostic_op::error_A001_complex_op_expected(name_of_instruction, operand->operand_range));
             return false;
         }
-        const static std::vector<std::string> possible_identifiers = {
+        const static std::vector<std::string_view> possible_identifiers = {
             "ATTRIBUTES", "ATTR", "LINK", "LINKAGE", "SCOPE", "PSECT", "REFERENCE", "REF"
         };
         if (!is_param_in_vector(current_operand->operand_identifier, possible_identifiers))
@@ -66,7 +66,7 @@ bool xattr::check(const std::vector<const asm_operand*>& to_check,
             auto param = get_simple_operand(current_operand->operand_parameters[0].get());
             if (current_operand->operand_identifier == "SCOPE")
             {
-                const static std::vector<std::string> scope_operands = {
+                const static std::vector<std::string_view> scope_operands = {
                     "SECTION", "MODULE", "LIBRARY", "IMPORT", "EXPORT", "S", "M", "L", "X"
                 };
                 if (param == nullptr || !is_param_in_vector(param->operand_identifier, scope_operands))
@@ -144,8 +144,8 @@ bool xattr::check(const std::vector<const asm_operand*>& to_check,
     return true;
 };
 
-using_instr::using_instr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
-    : assembler_instruction(allowed_types, name_of_instruction, 2, -1) {};
+using_instr::using_instr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
+    : assembler_instruction(allowed_types, name_of_instruction, 2, 17) {};
 
 bool using_instr::check(const std::vector<const asm_operand*>& to_check,
     const range& stmt_range,
@@ -153,86 +153,46 @@ bool using_instr::check(const std::vector<const asm_operand*>& to_check,
 {
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
-    /*
-    // check first operand
-    // TO DO, waiting for the evaluation of relocatable expressions, symbols can be used
-    if (auto first_operand = get_complex_operand(to_check[0]); first_operand) //first operand must be therefore in the
-    form of (base, end)
+
+    // TODO: at this point the check is more or less redundant to the one performed in the process_USING function
+    // perform just the minimal validation - counts and forms
+    // detailed validation perform in the processing routine
+    if (auto first_operand = get_complex_operand(to_check[0]); first_operand)
     {
-            if (first_operand->operand_identifier != "" ||
-    is_operand_complex(first_operand->operand_parameters[0].get()) ||
-    is_operand_complex(first_operand->operand_parameters[1].get())
-                    || first_operand->operand_parameters.size() != 2)
-            {
-                    add_diagnostic(diagnostic_op::error_A104_USING_first_format());
-                    return false;
-            }
-            if (!is_positive_value(get_simple_operand(first_operand->operand_parameters[0].get())->operand_identifier))
-            {
-                    add_diagnostic(diagnostic_op::error_A101_USING_base_val());
-                    return false;
-            }
-            if (!is_positive_value(get_simple_operand(first_operand->operand_parameters[1].get())->operand_identifier))
-            {
-                    add_diagnostic(diagnostic_op::error_A102_USING_end_val());
-                    return false;
-            }
-            if (std::stoi(get_simple_operand(first_operand->operand_parameters[1].get())->operand_identifier)
-                    <= std::stoi(get_simple_operand(first_operand->operand_parameters[0].get())->operand_identifier))
-            {
-                    add_diagnostic(diagnostic_op::error_A103_USING_end_exceed());
-                    return false;
-            }
+        // first operand must be therefore in the form of (base, end)
+        if (first_operand->operand_identifier != "" || first_operand->operand_parameters.size() != 2
+            || !is_operand_simple(first_operand->operand_parameters[0].get())
+            || !is_operand_simple(first_operand->operand_parameters[1].get()))
+        {
+            add_diagnostic(diagnostic_op::error_A104_USING_first_format(first_operand->operand_range));
+            return false;
+        }
     }
-    else if (auto simple_op = get_simple_operand(to_check[0]); simple_op)//first operand specifies only base
+    else if (auto simple_op = get_simple_operand(to_check[0]); simple_op) // first operand specifies only base
     {
-            if (!is_positive_value(simple_op->operand_identifier))
-            {
-                    add_diagnostic(diagnostic_op::error_A101_USING_base_val());
-                    return false;
-            }
+        // simple operand is acceptable
     }
     else
-            assert(false);
-    //check other operands
-    if (to_check.size() == 2) //therefore there can be either address or one base register
     {
-            auto simple_op = get_simple_operand(to_check[1]);
-            if (simple_op == nullptr)
-            {
-                    add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
-                    return false;
-            }
-            // can also be address, maybe TO DO
-            return true;
-
-            if (!is_base_register(simple_op->operand_identifier) || !is_positive_value(simple_op->operand_identifier))
-            {
-                    add_diagnostic(diagnostic_op::error_I020_format(name_of_instruction, true));
-                    return false;
-            }
+        // empty operand
+        add_diagnostic(diagnostic_op::error_A104_USING_first_format(to_check[0]->operand_range));
+        return false;
     }
-    else //all other parameters are base registers
+
+    for (size_t i = 1; i < to_check.size(); i++)
     {
-            for (size_t i = 1; i < to_check.size(); i++)
-            {
-                    auto simple_op = get_simple_operand(to_check[i]);
-                    if (simple_op == nullptr)
-                    {
-                            add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
-                            return false;
-                    }
-                    if (!is_base_register(simple_op->operand_identifier))
-                    {
-                            add_diagnostic(diagnostic_op::error_A105_USING_base_register_val());
-                            return false;
-                    }
-            }
-    }*/
+        const auto& op = to_check[i];
+        if (!is_operand_simple(op))
+        {
+            add_diagnostic(diagnostic_op::error_A164_USING_mapping_format(op->operand_range));
+            return false;
+        }
+    }
+
     return true;
 }
 
-title::title(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+title::title(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
 bool title::check(const std::vector<const asm_operand*>& to_check,
@@ -262,7 +222,7 @@ bool title::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-rmode::rmode(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+rmode::rmode(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
 bool rmode::check(const std::vector<const asm_operand*>& to_check,
@@ -280,7 +240,7 @@ bool rmode::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-punch::punch(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+punch::punch(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
 bool punch::check(const std::vector<const asm_operand*>& to_check,
@@ -318,7 +278,7 @@ bool punch::check(const std::vector<const asm_operand*>& to_check,
     return false;
 }
 
-print::print(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+print::print(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
 bool print::check(const std::vector<const asm_operand*>& to_check,
@@ -327,10 +287,10 @@ bool print::check(const std::vector<const asm_operand*>& to_check,
 {
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
-    const static std::vector<std::string> print_pair_operands = {
+    const static std::vector<std::string_view> print_pair_operands = {
         "GEN", "DATA", "MCALL", "MSOURCE", "UHEAD", "NOGEN", "NODATA", "NOMCALL", "NOMSOURCE", "NOUHEAD"
     };
-    const static std::vector<std::string> print_other_operands = { "ON", "OFF", "NOPRINT" };
+    const static std::vector<std::string_view> print_other_operands = { "ON", "OFF", "NOPRINT" };
     for (const auto& operand : to_check)
     {
         auto simple = get_simple_operand(operand);
@@ -345,7 +305,7 @@ bool print::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-stack_instr::stack_instr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+stack_instr::stack_instr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 4) {};
 
 bool stack_instr::check(const std::vector<const asm_operand*>& to_check,
@@ -435,7 +395,7 @@ bool stack_instr::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-org::org(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+org::org(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 3) {};
 
 bool org::check(const std::vector<const asm_operand*>& to_check,
@@ -492,7 +452,7 @@ bool org::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-opsyn::opsyn(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+opsyn::opsyn(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 1) {};
 
 bool opsyn::check(const std::vector<const asm_operand*>& to_check,
@@ -516,7 +476,7 @@ bool opsyn::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-mnote::mnote(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+mnote::mnote(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 2) {};
 
 bool mnote::check(const std::vector<const asm_operand*>& to_check,
@@ -579,7 +539,7 @@ bool mnote::check(const std::vector<const asm_operand*>& to_check,
     return false;
 }
 
-iseq::iseq(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+iseq::iseq(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 2) {};
 
 bool iseq::check(const std::vector<const asm_operand*>& to_check,
@@ -616,7 +576,7 @@ bool iseq::check(const std::vector<const asm_operand*>& to_check,
     return false;
 }
 
-ictl::ictl(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+ictl::ictl(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 3) {};
 
 bool ictl::check(const std::vector<const asm_operand*>& to_check,
@@ -686,7 +646,7 @@ bool ictl::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-external::external(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+external::external(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
 static bool is_valid_symbol_name(std::string_view s, bool extended_names_allowed = true)
@@ -759,7 +719,7 @@ bool external::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-exitctl::exitctl(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+exitctl::exitctl(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 2, 5) {};
 
 bool exitctl::check(const std::vector<const asm_operand*>& to_check,
@@ -769,7 +729,7 @@ bool exitctl::check(const std::vector<const asm_operand*>& to_check,
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
     // check first operand representing exit type
-    const static std::vector<std::string> exit_type = {
+    const static std::vector<std::string_view> exit_type = {
         "SOURCE", "LIBRARY", "LISTING", "PUNCH", "ADATA", "TERM", "OBJECT"
     };
     auto first = get_simple_operand(to_check[0]);
@@ -799,7 +759,7 @@ bool exitctl::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-equ::equ(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+equ::equ(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 5) {};
 
 bool equ::check(const std::vector<const asm_operand*>&, const range&, const diagnostic_collector&) const
@@ -807,7 +767,7 @@ bool equ::check(const std::vector<const asm_operand*>&, const range&, const diag
     return true;
 }
 
-entry::entry(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+entry::entry(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
 bool entry::check(const std::vector<const asm_operand*>& to_check,
@@ -833,7 +793,7 @@ bool entry::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-end::end(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+end::end(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 2) {};
 
 bool end::check(const std::vector<const asm_operand*>& to_check,
@@ -910,41 +870,27 @@ bool end::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-drop::drop(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+drop::drop(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, -1) {};
 
 bool drop::check(
     const std::vector<const asm_operand*>& to_check, const range&, const diagnostic_collector& add_diagnostic) const
 {
+    // TODO: at this point the check is more or less redundant to the one performed in the process_DROP function
     if (has_one_comma(to_check))
         return true;
     for (const auto& operand : to_check)
     {
-        auto simple = get_simple_operand(operand);
-        if (simple == nullptr)
+        if (!is_operand_simple(operand))
         {
             add_diagnostic(diagnostic_op::error_A141_DROP_op_format(operand->operand_range));
             return false;
         }
-        if (!simple->is_default)
-        {
-            // base register must be specified
-            if (is_byte_value(simple->value))
-                continue;
-        }
-        else
-        {
-            // label must be specified
-            if (is_ord_symbol(simple->operand_identifier) || is_var_symbol(simple->operand_identifier))
-                continue;
-        }
-        add_diagnostic(diagnostic_op::error_A141_DROP_op_format(operand->operand_range));
-        return false;
     }
     return true;
 }
 
-copy::copy(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+copy::copy(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
 bool copy::check(const std::vector<const asm_operand*>& to_check,
@@ -965,7 +911,7 @@ bool copy::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-cnop::cnop(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+cnop::cnop(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 2, 2) {};
 
 bool cnop::check(const std::vector<const asm_operand*>& to_check,
@@ -1009,7 +955,7 @@ bool cnop::check(const std::vector<const asm_operand*>& to_check,
 }
 
 
-ccw::ccw(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction, CCW_variant variant)
+ccw::ccw(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction, CCW_variant variant)
     : assembler_instruction(allowed_types, name_of_instruction, 4, 4)
     , variant_(variant) {};
 
@@ -1061,7 +1007,7 @@ bool ccw::check(const std::vector<const asm_operand*>& to_check,
 // instructions like SPACE, CEJECT, START
 
 expression_instruction::expression_instruction(
-    const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+    const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 1) {};
 
 bool expression_instruction::check(const std::vector<const asm_operand*>& to_check,
@@ -1089,7 +1035,7 @@ bool expression_instruction::check(const std::vector<const asm_operand*>& to_che
     return true;
 }
 
-cattr::cattr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+cattr::cattr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
 bool cattr::check(const std::vector<const asm_operand*>& to_check,
@@ -1098,7 +1044,8 @@ bool cattr::check(const std::vector<const asm_operand*>& to_check,
 {
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
-    const static std::vector<std::string> simple_operands = { "DEFLOAD",
+    const static std::vector<std::string_view> simple_operands = {
+        "DEFLOAD",
         "EXECUTABLE",
         "MOVABLE",
         "NOLOAD",
@@ -1108,7 +1055,8 @@ bool cattr::check(const std::vector<const asm_operand*>& to_check,
         "REFR",
         "REMOVABLE",
         "RENT",
-        "REUS" };
+        "REUS",
+    };
     for (const auto& operand : to_check)
     {
         if (auto simple_op = get_simple_operand(operand); simple_op)
@@ -1123,7 +1071,9 @@ bool cattr::check(const std::vector<const asm_operand*>& to_check,
         else if (auto complex_op = get_complex_operand(operand); complex_op)
         {
             // operand is complex
-            const static std::vector<std::string> complex_operands = { "RMODE", "ALIGN", "FILL", "PART", "PRIORITY" };
+            const static std::vector<std::string_view> complex_operands = {
+                "RMODE", "ALIGN", "FILL", "PART", "PRIORITY"
+            };
             if (!is_param_in_vector(complex_op->operand_identifier, complex_operands))
             {
                 add_diagnostic(diagnostic_op::error_A149_CATTR_identifier_format(complex_op->operand_range));
@@ -1148,7 +1098,7 @@ bool cattr::check(const std::vector<const asm_operand*>& to_check,
             else if (complex_op->operand_identifier
                 == "ALIGN") // upon sending, an empty operand has to come in a vector (not an empty vector)
             {
-                const static std::vector<std::string> align_options = { "0", "1", "2", "3", "4", "12" };
+                const static std::vector<std::string_view> align_options = { "0", "1", "2", "3", "4", "12" };
                 if (parameter == nullptr || !is_param_in_vector(parameter->operand_identifier, align_options))
                 {
                     add_diagnostic(diagnostic_op::error_A205_ALIGN_param_format(
@@ -1196,7 +1146,7 @@ bool cattr::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-amode::amode(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+amode::amode(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
 bool amode::check(const std::vector<const asm_operand*>& to_check,
@@ -1206,7 +1156,7 @@ bool amode::check(const std::vector<const asm_operand*>& to_check,
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
     auto first = get_simple_operand(to_check[0]);
-    const static std::vector<std::string> amode_options = { "24", "31", "64", "ANY", "ANY31", "ANY64" };
+    const static std::vector<std::string_view> amode_options = { "24", "31", "64", "ANY", "ANY31", "ANY64" };
     if (first == nullptr || !is_param_in_vector(first->operand_identifier, amode_options))
     {
         add_diagnostic(diagnostic_op::error_A150_AMODE_op_format(to_check[0]->operand_range));
@@ -1215,7 +1165,7 @@ bool amode::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-alias::alias(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+alias::alias(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
 bool alias::check(const std::vector<const asm_operand*>& to_check,
@@ -1287,7 +1237,7 @@ bool alias::check(const std::vector<const asm_operand*>& to_check,
     return false;
 }
 
-ainsert::ainsert(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+ainsert::ainsert(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 2, 2) {};
 
 bool ainsert::check(const std::vector<const asm_operand*>& to_check,
@@ -1325,7 +1275,7 @@ bool ainsert::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-adata::adata(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+adata::adata(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 5, 5) {};
 
 bool adata::check(const std::vector<const asm_operand*>& to_check,
@@ -1368,7 +1318,7 @@ bool adata::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-no_operands::no_operands(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+no_operands::no_operands(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 0) {};
 
 bool no_operands::check(const std::vector<const asm_operand*>& to_check,
@@ -1378,7 +1328,7 @@ bool no_operands::check(const std::vector<const asm_operand*>& to_check,
     return operands_size_corresponding(to_check, stmt_range, add_diagnostic);
 }
 
-process::process(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+process::process(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
 bool process::check(const std::vector<const asm_operand*>& to_check,
@@ -1403,7 +1353,7 @@ bool process::check(const std::vector<const asm_operand*>& to_check,
     });
 }
 
-acontrol::acontrol(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+acontrol::acontrol(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
 bool acontrol::check(const std::vector<const asm_operand*>& to_check,
@@ -1419,7 +1369,7 @@ bool acontrol::check(const std::vector<const asm_operand*>& to_check,
         if (simple_op != nullptr) // checking simple operands
         {
             // possible simple operands to check, need to also check for NOCOMPAT and NOTYPECHECK
-            const static std::vector<std::string> pair_option_vector = {
+            const static std::vector<std::string_view> pair_option_vector = {
                 "AFPR", "LIBMAC", "RA2", "LMAC", "NOAFPR", "NOLIBMAC", "NORA2", "NOLMAC"
             };
             if (is_param_in_vector(simple_op->operand_identifier, pair_option_vector)
@@ -1431,7 +1381,7 @@ bool acontrol::check(const std::vector<const asm_operand*>& to_check,
         }
         else if (complex_op != nullptr) // checking complex operands
         {
-            const static std::vector<std::string> complex_op_id = {
+            const static std::vector<std::string_view> complex_op_id = {
                 "CPAT", "COMPAT", "FLAG", "TC", "TYPECHECK", "OPTABLE"
             };
             if (!is_param_in_vector(complex_op->operand_identifier, complex_op_id))

@@ -1,4 +1,5 @@
 {
     "hlasm.continuationHandling": true,
-    "hlasm.useAutodetection": true
+    "hlasm.useAutodetection": true,
+    "workbench.editor.languageDetection": false
 }

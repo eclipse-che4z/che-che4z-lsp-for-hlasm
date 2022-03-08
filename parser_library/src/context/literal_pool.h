@@ -21,7 +21,7 @@
 #include "expressions/data_definition.h"
 #include "id_storage.h"
 #include "location.h"
-#include "processing_context.h"
+#include "source_context.h"
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::context {

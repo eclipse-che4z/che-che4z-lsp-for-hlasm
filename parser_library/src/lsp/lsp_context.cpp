@@ -328,9 +328,10 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
 {
     const auto& symbol_list = hlasm_ctx_->ord_ctx.symbols();
     std::map<const context::section*, document_symbol_list_s> children_of_sects;
-    for (const auto& [id, sym] : symbol_list)
+    for (const auto& [id, sym_var] : symbol_list)
     {
-        if (sym.attributes().origin == context::symbol_origin::SECT)
+        const auto* sym = std::get_if<context::symbol>(&sym_var);
+        if (sym && sym->attributes().origin == context::symbol_origin::SECT)
         {
             if (auto sect = hlasm_ctx_->ord_ctx.get_section(id))
             {
@@ -340,10 +341,13 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
         }
     }
 
-    for (const auto& [id, sym] : symbol_list)
+    for (const auto& [id, sym_var] : symbol_list)
     {
         if (limit <= 0)
             break;
+        if (!std::holds_alternative<context::symbol>(sym_var))
+            continue;
+        const auto& sym = std::get<context::symbol>(sym_var);
         if (sym.attributes().origin == context::symbol_origin::SECT)
             continue;
 
@@ -764,7 +768,8 @@ std::string lsp_context::get_macro_documentation(const macro_info& m) const
 
 completion_list_s lsp_context::complete_instr(const file_info&, position) const
 {
-    completion_list_s result = completion_item_s::instruction_completion_items_;
+    completion_list_s result(completion_item_s::instruction_completion_items_.begin(),
+        completion_item_s::instruction_completion_items_.end());
 
     for (const auto& [_, macro_i] : macros_)
     {
@@ -902,9 +907,7 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
             }
             else
             {
-                auto it = std::find_if(completion_item_s::instruction_completion_items_.begin(),
-                    completion_item_s::instruction_completion_items_.end(),
-                    [&occ](const auto& item) { return item.label == *occ.name; });
+                auto it = completion_item_s::instruction_completion_items_.find(*occ.name);
                 if (it == completion_item_s::instruction_completion_items_.end())
                     return "";
                 return it->detail + "  \n" + it->documentation;

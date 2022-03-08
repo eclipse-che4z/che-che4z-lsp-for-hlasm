@@ -15,6 +15,7 @@
 #ifndef CONTEXT_ADDRESS_H
 #define CONTEXT_ADDRESS_H
 
+#include <compare>
 #include <memory>
 #include <utility>
 #include <variant>
@@ -40,7 +41,10 @@ struct address
 {
     struct base
     {
-        const section* owner;
+        const section* owner = nullptr;
+        id_index qualifier = nullptr;
+
+        friend bool operator==(const base&, const base&) = default;
     };
 
     std::string to_string() const;

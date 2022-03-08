@@ -21,6 +21,7 @@
 
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "protocol.h"
@@ -112,45 +113,45 @@ struct diagnostic_op
         , message(std::move(message))
         , diag_range(std::move(diag_range)) {};
 
-    static diagnostic_op error_I999(const std::string& instr_name, const range& range);
+    static diagnostic_op error_I999(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A001_complex_op_expected(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A001_complex_op_expected(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_A004_data_def_expected();
 
-    static diagnostic_op error_A010_minimum(const std::string& instr_name, size_t min_params, const range& range);
+    static diagnostic_op error_A010_minimum(std::string_view instr_name, size_t min_params, const range& range);
 
-    static diagnostic_op error_A011_exact(const std::string& instr_name, size_t number_of_params, const range& range);
+    static diagnostic_op error_A011_exact(std::string_view instr_name, size_t number_of_params, const range& range);
 
     static diagnostic_op error_A012_from_to(
-        const std::string& instr_name, size_t number_from, size_t number_to, const range& range);
+        std::string_view instr_name, size_t number_from, size_t number_to, const range& range);
 
     static diagnostic_op error_A013_either(
-        const std::string& instr_name, int option_one, int option_two, const range& range);
+        std::string_view instr_name, int option_one, int option_two, const range& range);
 
-    static diagnostic_op error_A014_lower_than(const std::string& instr_name, size_t number, const range& range);
+    static diagnostic_op error_A014_lower_than(std::string_view instr_name, size_t number, const range& range);
 
     static diagnostic_op error_A015_minimum(
-        const std::string& instr_name, const std::string& op_name, size_t min_params, const range& range);
+        std::string_view instr_name, std::string_view op_name, size_t min_params, const range& range);
 
     static diagnostic_op error_A016_exact(
-        const std::string& instr_name, const std::string& op_name, size_t number_of_params, const range& range);
+        std::string_view instr_name, std::string_view op_name, size_t number_of_params, const range& range);
 
-    static diagnostic_op error_A017_from_to(const std::string& instr_name,
-        const std::string& op_name,
+    static diagnostic_op error_A017_from_to(std::string_view instr_name,
+        std::string_view op_name,
         size_t number_from,
         size_t number_to,
         const range& range);
 
     static diagnostic_op error_A018_either(
-        const std::string& instr_name, const std::string& op_name, int option_one, int option_two, const range& range);
+        std::string_view instr_name, std::string_view op_name, int option_one, int option_two, const range& range);
 
     static diagnostic_op error_A019_lower_than(
-        const std::string& instr_name, const std::string& op_name, size_t number, const range& range);
+        std::string_view instr_name, std::string_view op_name, size_t number, const range& range);
 
-    static diagnostic_op error_A020_absolute_val_or_empty_expected(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A020_absolute_val_or_empty_expected(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A021_cannot_be_empty(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A021_cannot_be_empty(std::string_view instr_name, const range& range);
 
     // operands
 
@@ -174,16 +175,16 @@ struct diagnostic_op
 
     static diagnostic_op error_A109_PRINT_op_format(const range& range);
 
-    static diagnostic_op error_A110_STACK_last_op_format_val(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A110_STACK_last_op_format_val(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A111_STACK_other_op_format_val(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A111_STACK_other_op_format_val(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_A112_STACK_option_specified(
-        const std::string& instr_name, const std::string& op_name, const range& range);
+        std::string_view instr_name, std::string_view op_name, const range& range);
 
-    static diagnostic_op error_A113_STACK_NOPRINT_end(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A113_STACK_NOPRINT_end(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A114_STACK_NOPRINT_solo(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A114_STACK_NOPRINT_solo(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_A115_ORG_op_format(const range& range);
 
@@ -239,7 +240,7 @@ struct diagnostic_op
 
     static diagnostic_op error_A142_COPY_op_format(const range& range);
 
-    static diagnostic_op error_A143_must_be_absolute_expr(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A143_must_be_absolute_expr(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_A144_CNOP_byte_size(const range& range);
 
@@ -247,9 +248,9 @@ struct diagnostic_op
 
     static diagnostic_op error_A146_CNOP_byte_GT_boundary(const range& range);
 
-    static diagnostic_op error_A147_CCW_op_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A147_CCW_op_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A148_EXPR_op_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A148_EXPR_op_format(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_A149_CATTR_identifier_format(const range& range);
 
@@ -277,100 +278,104 @@ struct diagnostic_op
 
     static diagnostic_op error_A161_ACONTROL_op_format(const range& range);
 
-    static diagnostic_op error_A162_PROCESS_uknown_option(const std::string& option, const range& range);
+    static diagnostic_op error_A162_PROCESS_uknown_option(std::string_view option, const range& range);
 
     static diagnostic_op error_A163_ALIAS_mandatory_label(const range& range);
 
+    static diagnostic_op error_A164_USING_mapping_format(const range& range);
+
+    static diagnostic_op error_A165_POP_USING(const range& range);
+
     // operand parameters
 
-    static diagnostic_op error_A200_SCOPE_param(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A200_SCOPE_param(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A201_LINKAGE_param(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A201_LINKAGE_param(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A202_REF_direct(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A202_REF_direct(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A203_REF_data(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A203_REF_data(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A204_RMODE_param_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A204_RMODE_param_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A205_ALIGN_param_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A205_ALIGN_param_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A206_FILL_param_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A206_FILL_param_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A207_PART_param_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A207_PART_param_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A208_PRIORITY_param_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A208_PRIORITY_param_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A209_COMPAT_param_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A209_COMPAT_param_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A210_FLAG_integer_size(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A210_FLAG_integer_size(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A211_FLAG_op_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A211_FLAG_op_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A212_OPTABLE_first_op(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A212_OPTABLE_first_op(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A213_OPTABLE_second_op(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A213_OPTABLE_second_op(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A214_TYPECHECK_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A214_TYPECHECK_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A215_CODEPAGE_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A215_CODEPAGE_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A216_CODEPAGE_value(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A216_CODEPAGE_value(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A217_INFO_value(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A217_INFO_value(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A218_MXREF_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A218_MXREF_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A219_SECTALGN_par_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A219_SECTALGN_par_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A220_SECTALGN_par_value(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A220_SECTALGN_par_value(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A221_MACH_second_par_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A221_MACH_second_par_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A222_MACH_first_par_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A222_MACH_first_par_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A223_PCONTROL_par_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A223_PCONTROL_par_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A224_XREF_par_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A224_XREF_par_format(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_A225_SUPRWARN_par_format(
-        const std::string& instr_name, const std::string& op_name, const range& range);
+        std::string_view instr_name, std::string_view op_name, const range& range);
 
     static diagnostic_op error_A226_SUPRWARN_par_size(
-        const std::string& instr_name, const std::string& op_name, const range& range);
+        std::string_view instr_name, std::string_view op_name, const range& range);
 
-    static diagnostic_op error_A227_USING_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A227_USING_format(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_A228_USING_complex_param_no(
-        const std::string& instr_name, const std::string& param_name, const range& range);
+        std::string_view instr_name, std::string_view param_name, const range& range);
 
-    static diagnostic_op error_A229_USING_WARN_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A229_USING_WARN_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A230_USING_LIMIT_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A230_USING_LIMIT_format(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A231_USING_LIMIT_decimal(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A231_USING_LIMIT_decimal(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A232_USING_LIMIT_hexa(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A232_USING_LIMIT_hexa(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A233_FAIL_param_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A233_FAIL_param_format(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_A234_FAIL_complex_param_no(
-        const std::string& instr_name, const std::string& param_name, const range& range);
+        std::string_view instr_name, std::string_view param_name, const range& range);
 
     static diagnostic_op error_A235_FAIL_param_number_format(
-        const std::string& instr_name, const std::string& op_name, const range& range);
+        std::string_view instr_name, std::string_view op_name, const range& range);
 
     static diagnostic_op error_A236_FAIL_MAXXERS_value(
-        const std::string& instr_name, const std::string& op_name, const range& range);
+        std::string_view instr_name, std::string_view op_name, const range& range);
 
     static diagnostic_op error_A237_FAIL_severity_message(
-        const std::string& instr_name, const std::string& op_name, const range& range);
+        std::string_view instr_name, std::string_view op_name, const range& range);
 
-    static diagnostic_op error_A238_REF_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A238_REF_format(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_A239_ADATA_char_string_format(const range& range);
 
-    static diagnostic_op error_A240_expression_format(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A240_expression_format(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_A242_ICTL_op_format_second_third(const range& range);
 
@@ -382,7 +387,7 @@ struct diagnostic_op
 
     static diagnostic_op error_A246_OPSYN(const range& range);
 
-    static diagnostic_op error_A247_must_be_rel_abs_expr(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A247_must_be_rel_abs_expr(std::string_view instr_name, const range& range);
 
     static diagnostic_op warning_A248_END_lang_char_sequence(const range& range);
 
@@ -390,29 +395,31 @@ struct diagnostic_op
 
     static diagnostic_op error_A250_absolute_with_known_symbols(const range& range);
 
+    static diagnostic_op warn_A251_unexpected_label(const range& range);
+
     // other
 
-    static diagnostic_op warning_A300_op_apostrophes_missing(const std::string& instr_name, const range& range);
+    static diagnostic_op warning_A300_op_apostrophes_missing(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A301_op_apostrophes_missing(const std::string& instr_name, const range& range);
+    static diagnostic_op error_A301_op_apostrophes_missing(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_NOERR(const range& range);
 
     static bool is_error(const diagnostic_op& diag);
 
-    static diagnostic_op error_M000(const std::string& instr_name, int number, const range& range);
+    static diagnostic_op error_M000(std::string_view instr_name, int number, const range& range);
 
-    static diagnostic_op error_M001(const std::string& instr_name, int one, int two, const range& range);
+    static diagnostic_op error_M001(std::string_view instr_name, int one, int two, const range& range);
 
-    static diagnostic_op error_M002(const std::string& instr_name, int one, int two, const range& range);
+    static diagnostic_op error_M002(std::string_view instr_name, int one, int two, const range& range);
 
-    static diagnostic_op error_M003(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M003(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M004(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M004(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M100(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M100(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M101(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M101(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_D001(const range& range);
     static diagnostic_op error_D002(const range& range);
@@ -420,102 +427,102 @@ struct diagnostic_op
     // static diagnostic_op error_D004(const range& range);
     // static diagnostic_op error_D005(const range& range);
     static diagnostic_op error_D006(const range& range);
-    static diagnostic_op error_D007(const range& range, const std::string& type);
+    static diagnostic_op error_D007(const range& range, std::string_view type);
     static diagnostic_op error_D008(
-        const range& range, const std::string& type, const std::string& modifier, int min, int max);
-    static diagnostic_op error_D009(const range& range, const std::string& type, const std::string& modifier);
-    static diagnostic_op error_D010(const range& range, const std::string& type);
+        const range& range, std::string_view type, std::string_view modifier, int min, int max);
+    static diagnostic_op error_D009(const range& range, std::string_view type, std::string_view modifier);
+    static diagnostic_op error_D010(const range& range, std::string_view type);
     static diagnostic_op error_D011(const range& range);
     static diagnostic_op error_D012(const range& range);
-    static diagnostic_op error_D013(const range& range, const std::string& type);
-    static diagnostic_op error_D014(const range& range, const std::string& type);
-    static diagnostic_op error_D015(const range& range, const std::string& type);
+    static diagnostic_op error_D013(const range& range, std::string_view type);
+    static diagnostic_op error_D014(const range& range, std::string_view type);
+    static diagnostic_op error_D015(const range& range, std::string_view type);
     static diagnostic_op error_D016(const range& range);
-    static diagnostic_op error_D017(const range& range, const std::string& type);
-    static diagnostic_op error_D018(const range& range, const std::string& type);
+    static diagnostic_op error_D017(const range& range, std::string_view type);
+    static diagnostic_op error_D018(const range& range, std::string_view type);
     static diagnostic_op error_D019(const range& range);
-    static diagnostic_op error_D020(const range& range, const std::string& type);
-    static diagnostic_op error_D021(const range& range, const std::string& type);
+    static diagnostic_op error_D020(const range& range, std::string_view type);
+    static diagnostic_op error_D021(const range& range, std::string_view type);
     static diagnostic_op error_D022(const range& range);
     static diagnostic_op error_D023(const range& range);
-    static diagnostic_op error_D024(const range& range, const std::string& type);
-    static diagnostic_op warn_D025(const range& range, const std::string& type, const std::string& modifier);
+    static diagnostic_op error_D024(const range& range, std::string_view type);
+    static diagnostic_op warn_D025(const range& range, std::string_view type, std::string_view modifier);
     static diagnostic_op error_D026(const range& range);
     static diagnostic_op error_D027(const range& range);
     static diagnostic_op error_D028(const range& range);
     static diagnostic_op error_D029(const range& range);
-    static diagnostic_op error_D030(const range& range, const std::string& type);
+    static diagnostic_op error_D030(const range& range, std::string_view type);
     static diagnostic_op error_D031(const range& range);
-    static diagnostic_op warn_D032(const range& range, const std::string& modifier);
+    static diagnostic_op warn_D032(const range& range, std::string_view modifier);
 
-    static diagnostic_op error_M102(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M102(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M103(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M103(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M104(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M104(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M110(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M110(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M111(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M111(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M112(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M112(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M113(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M113(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M114(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M114(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M120(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M120(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M121(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M121(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M122(const std::string& instr_name, long long from, long long to, const range& range);
+    static diagnostic_op error_M122(std::string_view instr_name, long long from, long long to, const range& range);
 
-    static diagnostic_op error_M123(const std::string& instr_name, long long from, long long to, const range& range);
+    static diagnostic_op error_M123(std::string_view instr_name, long long from, long long to, const range& range);
 
-    static diagnostic_op error_M124(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M124(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M130(const std::string& instr_name, long long from, long long to, const range& range);
+    static diagnostic_op error_M130(std::string_view instr_name, long long from, long long to, const range& range);
 
-    static diagnostic_op error_M131(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M131(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M132(const std::string& instr_name, long long from, long long to, const range& range);
+    static diagnostic_op error_M132(std::string_view instr_name, long long from, long long to, const range& range);
 
-    static diagnostic_op error_M133(const std::string& instr_name, long long from, long long to, const range& range);
+    static diagnostic_op error_M133(std::string_view instr_name, long long from, long long to, const range& range);
 
-    static diagnostic_op error_M134(const std::string& instr_name, long long from, long long to, const range& range);
+    static diagnostic_op error_M134(std::string_view instr_name, long long from, long long to, const range& range);
 
-    static diagnostic_op error_M135(const std::string& instr_name, long long from, long long to, const range& range);
+    static diagnostic_op error_M135(std::string_view instr_name, long long from, long long to, const range& range);
 
     static diagnostic_op error_optional_number_of_operands(
-        const std::string& instr_name, int optional_no, int operands_no, const range& range);
+        std::string_view instr_name, int optional_no, int operands_no, const range& range);
 
-    static diagnostic_op error_M010(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M010(std::string_view instr_name, const range& range);
 
-    static diagnostic_op warning_M041(const std::string& instr_name, const range& range);
+    static diagnostic_op warning_M041(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_M200(const std::string& instr_name, const range& range);
+    static diagnostic_op error_M200(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_E001(const range& range);
 
-    static diagnostic_op error_E010(const std::string& message, const range& range);
+    static diagnostic_op error_E010(std::string_view message, const range& range);
 
-    static diagnostic_op error_E011(const std::string& message, const range& range);
+    static diagnostic_op error_E011(std::string_view message, const range& range);
 
-    static diagnostic_op error_E012(const std::string& message, const range& range);
+    static diagnostic_op error_E012(std::string_view message, const range& range);
 
-    static diagnostic_op error_E013(const std::string& message, const range& range);
+    static diagnostic_op error_E013(std::string_view message, const range& range);
 
-    static diagnostic_op error_E020(const std::string& message, const range& range);
+    static diagnostic_op error_E020(std::string_view message, const range& range);
 
-    static diagnostic_op error_E021(const std::string& message, const range& range);
+    static diagnostic_op error_E021(std::string_view message, const range& range);
 
-    static diagnostic_op error_E022(const std::string& message, const range& range);
+    static diagnostic_op error_E022(std::string_view message, const range& range);
 
-    static diagnostic_op error_E030(const std::string& message, const range& range);
+    static diagnostic_op error_E030(std::string_view message, const range& range);
 
-    static diagnostic_op error_E031(const std::string& message, const range& range);
+    static diagnostic_op error_E031(std::string_view message, const range& range);
 
-    static diagnostic_op error_E032(const std::string& message, const range& range);
+    static diagnostic_op error_E032(std::string_view message, const range& range);
 
     static diagnostic_op error_E033(const range& range);
 
@@ -525,21 +532,21 @@ struct diagnostic_op
 
     static diagnostic_op error_E044(const range& range);
 
-    static diagnostic_op error_E045(const std::string& message, const range& range);
+    static diagnostic_op error_E045(std::string_view message, const range& range);
 
-    static diagnostic_op error_E046(const std::string& message, const range& range);
+    static diagnostic_op error_E046(std::string_view message, const range& range);
 
-    static diagnostic_op error_E047(const std::string& message, const range& range);
+    static diagnostic_op error_E047(std::string_view message, const range& range);
 
-    static diagnostic_op error_E048(const std::string& message, const range& range);
+    static diagnostic_op error_E048(std::string_view message, const range& range);
 
-    static diagnostic_op error_E049(const std::string& message, const range& range);
+    static diagnostic_op error_E049(std::string_view message, const range& range);
 
     static diagnostic_op error_E050(const range& range);
 
-    static diagnostic_op error_E051(const std::string& message, const range& range);
+    static diagnostic_op error_E051(std::string_view message, const range& range);
 
-    static diagnostic_op error_E052(const std::string& message, const range& range);
+    static diagnostic_op error_E052(std::string_view message, const range& range);
 
     static diagnostic_op error_E053(const range& range);
 
@@ -553,11 +560,11 @@ struct diagnostic_op
 
     static diagnostic_op error_E058(const range& range);
 
-    static diagnostic_op error_E059(const std::string& message, const range& range);
+    static diagnostic_op error_E059(std::string_view message, const range& range);
 
-    static diagnostic_op error_E060(const std::string& message, const range& range);
+    static diagnostic_op error_E060(std::string_view message, const range& range);
 
-    static diagnostic_op error_E061(const std::string& message, const range& range);
+    static diagnostic_op error_E061(std::string_view message, const range& range);
 
     static diagnostic_op error_E062(const range& range);
 
@@ -585,7 +592,11 @@ struct diagnostic_op
 
     static diagnostic_op error_E074(const range& range);
 
-    static diagnostic_op warning_W010(const std::string& message, const range& range);
+    static diagnostic_op error_E075(std::string_view message, const range& range);
+
+    static diagnostic_op error_E076(const range& range);
+
+    static diagnostic_op warning_W010(std::string_view message, const range& range);
 
     static diagnostic_op warning_W011(const range& range);
 
@@ -609,7 +620,7 @@ struct diagnostic_op
 
     static diagnostic_op error_CE001(const range& range);
 
-    static diagnostic_op error_CE002(const std::string& message, const range& range);
+    static diagnostic_op error_CE002(std::string_view message, const range& range);
 
     static diagnostic_op error_CE003(const range& range);
 
@@ -643,7 +654,7 @@ struct diagnostic_op
 
     static diagnostic_op error_CW001(const range& range);
 
-    static diagnostic_op error_S100(const std::string& message, const range& range);
+    static diagnostic_op error_S100(std::string_view message, const range& range);
 
     static diagnostic_op error_DB001(const range& range);
 
@@ -658,6 +669,24 @@ struct diagnostic_op
     static diagnostic_op warn_CIC001(const range& range);
 
     static diagnostic_op warn_CIC002(const range& range);
+
+    static diagnostic_op warn_U001_drop_had_no_effect(const range& range, std::string_view arg);
+    static diagnostic_op warn_U001_drop_had_no_effect(const range& range, int);
+
+    static diagnostic_op error_U002_label_not_allowed(const range& range);
+
+    static diagnostic_op error_U003_drop_label_or_reg(const range& range);
+
+    static diagnostic_op error_U004_no_active_using(const range& range);
+
+    static diagnostic_op error_U005_invalid_range(const range& s_range,
+        const range& e_range,
+        std::string_view s_sect,
+        int s_off,
+        std::string_view e_sect,
+        int e_off);
+
+    static diagnostic_op error_U006_duplicate_base_specified(const range& range);
 };
 
 struct range_uri_s
@@ -745,23 +774,23 @@ public:
     - L0003 - Deprecated file extension specification was used
     - L0004 - Macro with multiple definitions
     */
-    static diagnostic_s error_L0001(const std::string& path);
+    static diagnostic_s error_L0001(std::string_view path);
 
-    static diagnostic_s error_L0002(const std::string& path);
+    static diagnostic_s error_L0002(std::string_view path);
 
-    static diagnostic_s warning_L0003(const std::string& path);
+    static diagnostic_s warning_L0003(std::string_view path);
 
-    static diagnostic_s warning_L0004(const std::string& path, const std::string& macro_name);
+    static diagnostic_s warning_L0004(std::string_view path, std::string_view macro_name);
 
-    static diagnostic_s warning_L0005(const std::string& pattern, size_t limit);
+    static diagnostic_s warning_L0005(std::string_view pattern, size_t limit);
 
-    static diagnostic_s error_W002(const std::string& file_name, const std::string& ws_name);
+    static diagnostic_s error_W002(std::string_view file_name, std::string_view ws_name);
 
-    static diagnostic_s error_W003(const std::string& file_name, const std::string& ws_name);
+    static diagnostic_s error_W003(std::string_view file_name, std::string_view ws_name);
 
-    static diagnostic_s error_W004(const std::string& file_name, const std::string& ws_name);
+    static diagnostic_s error_W004(std::string_view file_name, std::string_view ws_name);
 
-    static diagnostic_s error_W005(const std::string& file_name, const std::string& proc_group);
+    static diagnostic_s error_W005(std::string_view file_name, std::string_view proc_group);
 
     /*
     E01x - wrong format

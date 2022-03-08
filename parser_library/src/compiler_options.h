@@ -27,6 +27,9 @@ struct asm_option
 
     static const std::string system_id_default;
     std::string system_id = system_id_default;
+
+    static const unsigned int sysopt_rent_default = 0;
+    unsigned int sysopt_rent = sysopt_rent_default;
 };
 } // namespace hlasm_plugin::parser_library
 #endif

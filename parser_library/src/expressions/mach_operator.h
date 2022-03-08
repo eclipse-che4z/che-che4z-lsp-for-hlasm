@@ -61,6 +61,11 @@ public:
     }
 
     size_t hash() const override;
+
+    mach_expr_ptr clone() const override
+    {
+        return std::make_unique<mach_expr_binary<T>>(left_->clone(), right_->clone(), get_range());
+    }
 };
 
 // Represents a unart operator in machine expression. Holds its
@@ -92,6 +97,8 @@ public:
     void collect_diags() const override { collect_diags_from_child(*child_); }
 
     size_t hash() const override;
+
+    mach_expr_ptr clone() const override { return std::make_unique<mach_expr_unary<T>>(child_->clone(), get_range()); }
 };
 
 struct add
@@ -130,139 +137,6 @@ struct par
     static std::string sign_char_begin() { return "("; }
     static std::string sign_char_end() { return ")"; }
 };
-
-
-
-template<>
-inline mach_expression::value_t mach_expr_binary<add>::evaluate(context::dependency_solver& info) const
-{
-    return left_->evaluate(info) + right_->evaluate(info);
-}
-
-template<>
-inline mach_expression::value_t mach_expr_binary<sub>::evaluate(context::dependency_solver& info) const
-{
-    return left_->evaluate(info) - right_->evaluate(info);
-}
-
-template<>
-inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(context::dependency_solver& info) const
-{
-    auto location = left_->evaluate(info);
-    auto target = right_->evaluate(info);
-    if (target.value_kind() == context::symbol_value_kind::ABS)
-    {
-        add_diagnostic(diagnostic_op::warn_D032(get_range(), std::to_string(target.get_abs())));
-        return target;
-    }
-
-    auto result = target - location;
-    if (result.value_kind() == context::symbol_value_kind::ABS)
-    {
-        if (result.get_abs() % 2 != 0)
-            add_diagnostic(diagnostic_op::error_ME003(get_range()));
-        result = mach_expression::value_t(result.get_abs() / 2);
-    }
-    return result;
-}
-
-template<>
-inline mach_expression::value_t mach_expr_binary<mul>::evaluate(context::dependency_solver& info) const
-{
-    auto left_res = left_->evaluate(info);
-    auto right_res = right_->evaluate(info);
-
-    if (!(left_res.value_kind() == context::symbol_value_kind::ABS
-            && right_res.value_kind() == context::symbol_value_kind::ABS)
-        && left_res.value_kind() != context::symbol_value_kind::UNDEF
-        && right_res.value_kind() != context::symbol_value_kind::UNDEF)
-        add_diagnostic(diagnostic_op::error_ME002(get_range()));
-
-
-    return left_res * right_res;
-}
-
-template<>
-inline mach_expression::value_t mach_expr_binary<div>::evaluate(context::dependency_solver& info) const
-{
-    auto left_res = left_->evaluate(info);
-    auto right_res = right_->evaluate(info);
-
-    if (!(left_res.value_kind() == context::symbol_value_kind::ABS
-            && right_res.value_kind() == context::symbol_value_kind::ABS)
-        && left_res.value_kind() != context::symbol_value_kind::UNDEF
-        && right_res.value_kind() != context::symbol_value_kind::UNDEF)
-        add_diagnostic(diagnostic_op::error_ME002(get_range()));
-
-    return left_res / right_res;
-}
-
-template<>
-inline mach_expression::value_t mach_expr_unary<add>::evaluate(context::dependency_solver& info) const
-{
-    return child_->evaluate(info);
-}
-
-template<>
-inline mach_expression::value_t mach_expr_unary<sub>::evaluate(context::dependency_solver& info) const
-{
-    return -child_->evaluate(info);
-}
-
-template<>
-inline mach_expression::value_t mach_expr_unary<par>::evaluate(context::dependency_solver& info) const
-{
-    return child_->evaluate(info);
-}
-
-template<>
-inline context::dependency_collector mach_expr_binary<add>::get_dependencies(context::dependency_solver& info) const
-{
-    return left_->get_dependencies(info) + right_->get_dependencies(info);
-}
-
-template<>
-inline context::dependency_collector mach_expr_binary<sub>::get_dependencies(context::dependency_solver& info) const
-{
-    return left_->get_dependencies(info) - right_->get_dependencies(info);
-}
-
-template<>
-inline context::dependency_collector mach_expr_binary<rel_addr>::get_dependencies(
-    context::dependency_solver& info) const
-{
-    return left_->get_dependencies(info) - right_->get_dependencies(info);
-}
-
-template<>
-inline context::dependency_collector mach_expr_binary<mul>::get_dependencies(context::dependency_solver& info) const
-{
-    return left_->get_dependencies(info) * right_->get_dependencies(info);
-}
-
-template<>
-inline context::dependency_collector mach_expr_binary<div>::get_dependencies(context::dependency_solver& info) const
-{
-    return left_->get_dependencies(info) / right_->get_dependencies(info);
-}
-
-template<>
-inline context::dependency_collector mach_expr_unary<add>::get_dependencies(context::dependency_solver& info) const
-{
-    return child_->get_dependencies(info);
-}
-
-template<>
-inline context::dependency_collector mach_expr_unary<sub>::get_dependencies(context::dependency_solver& info) const
-{
-    return context::dependency_collector() - child_->get_dependencies(info);
-}
-
-template<>
-inline context::dependency_collector mach_expr_unary<par>::get_dependencies(context::dependency_solver& info) const
-{
-    return child_->get_dependencies(info);
-}
 
 } // namespace hlasm_plugin::parser_library::expressions
 

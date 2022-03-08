@@ -22,7 +22,7 @@ const symbol* ordinary_assembly_dependency_solver::get_symbol(id_index name) con
 {
     auto tmp = ord_context.symbols_.find(name);
 
-    return tmp == ord_context.symbols_.end() ? nullptr : &tmp->second;
+    return tmp == ord_context.symbols_.end() ? nullptr : std::get_if<symbol>(&tmp->second);
 }
 
 std::optional<address> ordinary_assembly_dependency_solver::get_loctr() const { return loctr_addr; }

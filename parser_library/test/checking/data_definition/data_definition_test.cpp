@@ -548,3 +548,18 @@ LEN EQU   *-X
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 24);
 }
+
+TEST(data_definition, tolerate_qualifier)
+{
+    std::string input = R"(
+C   CSECT
+Q   USING C,1
+    DC    A(Q.L-C)
+L   EQU   *
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}

@@ -32,9 +32,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-10-dev libc++abi-10-dev
+        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-12-dev libc++abi-12-dev
       - name: Configure
-        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined" ../
+        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-12 -DCMAKE_CXX_COMPILER=clang++-12 -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined" ../
       - name: Build
         run: cd build && cmake --build .
       - name: Test
@@ -47,9 +47,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-10-dev libc++abi-10-dev
+        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-12-dev libc++abi-12-dev
       - name: Configure
-        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_CXX_FLAGS="-fsanitize=thread" ../
+        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-12 -DCMAKE_CXX_COMPILER=clang++-12 -DCMAKE_CXX_FLAGS="-fsanitize=thread" ../
       - name: Build
         run: cd build && cmake --build .
       - name: Test
@@ -62,9 +62,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Requirements install
-        run: sudo apt-get install -y clang-format-10
+        run: sudo apt-get install -y clang-format-12
       - name: Run clang-format
-        run: clang-format-10 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
+        run: clang-format-12 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
       - name: Upload clang-format-output.txt
         uses: actions/upload-artifact@v1
         with:

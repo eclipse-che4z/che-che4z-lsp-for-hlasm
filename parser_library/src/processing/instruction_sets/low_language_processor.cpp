@@ -51,6 +51,20 @@ context::id_index low_language_processor::find_label_symbol(const rebuilt_statem
         return context::id_storage::empty_id;
 }
 
+context::id_index low_language_processor::find_using_label(const rebuilt_statement& stmt) const
+{
+    if (const auto& label = stmt.label_ref(); label.type == semantics::label_si_type::ORD)
+    {
+        if (auto [valid, id] =
+                hlasm_ctx.try_get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol);
+            valid)
+            return id;
+
+        add_diagnostic(diagnostic_op::error_E065(label.field_range));
+    }
+    return nullptr;
+}
+
 bool low_language_processor::create_symbol(
     range err_range, context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes)
 {
@@ -211,19 +225,21 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     // the name of the instruction (mnemonic) obtained from the user
     auto instr_name = *stmt.opcode_ref().value;
     // the associated mnemonic structure with the given name
-    auto mnemonic = context::instruction::mnemonic_codes.at(instr_name);
+    auto mnemonic = context::instruction::get_mnemonic_codes(instr_name);
     // the machine instruction structure associated with the given instruction name
-    auto curr_instr = mnemonic.instruction;
+    auto curr_instr = mnemonic.instruction();
+
+    auto replaced = mnemonic.replaced_operands();
 
     // check whether substituted mnemonic values are ok
 
     // check size of mnemonic operands
-    int diff = (int)curr_instr->operands.size() - (int)operands.size() - (int)mnemonic.replaced.size();
-    if (std::abs(diff) > curr_instr->no_optional)
+    int diff = (int)curr_instr->operands().size() - (int)operands.size() - (int)replaced.size();
+    if (std::abs(diff) > curr_instr->optional_operand_count())
     {
         auto curr_diag = diagnostic_op::error_optional_number_of_operands(instr_name,
-            curr_instr->no_optional,
-            (int)curr_instr->operands.size() - (int)mnemonic.replaced.size(),
+            curr_instr->optional_operand_count(),
+            (int)curr_instr->operands().size() - (int)replaced.size(),
             stmt.stmt_range_ref());
 
         add_diagnostic(curr_diag);
@@ -231,16 +247,16 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     }
 
     std::vector<checking::check_op_ptr> substituted_mnems;
-    for (auto mnem : mnemonic.replaced)
+    for (auto mnem : replaced)
         substituted_mnems.push_back(std::make_unique<checking::one_operand>((int)mnem.second));
 
     std::vector<checking::check_op_ptr> operand_vector;
     // create vector of empty operands
-    for (size_t i = 0; i < curr_instr->operands.size() + curr_instr->no_optional; i++)
+    for (size_t i = 0; i < curr_instr->operands().size() + curr_instr->optional_operand_count(); i++)
         operand_vector.push_back(nullptr);
     // add substituted
-    for (size_t i = 0; i < mnemonic.replaced.size(); i++)
-        operand_vector[mnemonic.replaced[i].first] = std::move(substituted_mnems[i]);
+    for (size_t i = 0; i < replaced.size(); i++)
+        operand_vector[replaced[i].first] = std::move(substituted_mnems[i]);
     // add other
     size_t real_op_idx = 0;
     for (size_t j = 0; j < operand_vector.size() && real_op_idx < operands.size(); j++)
@@ -301,11 +317,11 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 {
     const auto& ev_op = dynamic_cast<const semantics::evaluable_operand&>(*op);
 
-    auto tmp = context::instruction::assembler_instructions.find(*stmt.opcode_ref().value);
-    bool can_have_ord_syms =
-        tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
+    auto tmp = context::instruction::find_assembler_instructions(*stmt.opcode_ref().value);
+    const bool can_have_ord_syms = tmp ? tmp->has_ord_symbols() : true;
+    const bool postpone_dependencies = tmp ? tmp->postpone_dependencies() : false;
 
-    if (can_have_ord_syms && ev_op.has_dependencies(dep_solver))
+    if (can_have_ord_syms && !postpone_dependencies && ev_op.has_dependencies(dep_solver))
     {
         add_diagnostic(diagnostic_op::error_E010("ordinary symbol", ev_op.operand_range));
         return nullptr;
@@ -315,11 +331,11 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 
     if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(&ev_op))
     {
-        const auto* instr =
-            mnemonic ? mnemonic->instruction : &context::instruction::machine_instructions.at(*stmt.opcode_ref().value);
-        if (instr->operands.size() > op_position)
+        const auto* instr = mnemonic ? mnemonic->instruction()
+                                     : &context::instruction::get_machine_instructions(*stmt.opcode_ref().value);
+        if (op_position < instr->operands().size())
         {
-            auto type = instr->operands[op_position].identifier.type;
+            auto type = instr->operands()[op_position].identifier.type;
             uniq = mach_op->get_operand_value(dep_solver, type);
         }
         else
@@ -353,19 +369,15 @@ bool low_language_processor::check(const resolved_statement& stmt,
     std::vector<const checking::operand*> operand_ptr_vector;
     transform_result operand_vector;
 
-    auto mnem_tmp = context::instruction::mnemonic_codes.find(*stmt.opcode_ref().value);
-    const std::string* instruction_name;
+    std::string_view instruction_name = *stmt.opcode_ref().value;
 
-    if (mnem_tmp != context::instruction::mnemonic_codes.end())
+    if (auto mnem_tmp = context::instruction::find_mnemonic_codes(instruction_name))
     {
         operand_vector = transform_mnemonic(stmt, dep_solver, collector);
-        // save the actual mnemonic name
-        instruction_name = &mnem_tmp->first;
     }
     else
     {
         operand_vector = transform_default(stmt, dep_solver, collector);
-        instruction_name = stmt.opcode_ref().value;
     }
 
     if (!operand_vector)
@@ -374,5 +386,5 @@ bool low_language_processor::check(const resolved_statement& stmt,
     for (const auto& op : *operand_vector)
         operand_ptr_vector.push_back(op.get());
 
-    return checker.check(*instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
+    return checker.check(instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
 }

@@ -27,6 +27,8 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
+      - name: Requirements install
+        run: sudo apt-get update && sudo apt-get install libc++-12-dev libc++abi-12-dev
       - name: 'Download build output'
         uses: actions/github-script@v3.1.0
         with:

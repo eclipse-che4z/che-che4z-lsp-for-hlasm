@@ -17,7 +17,7 @@
 
 #include <optional>
 
-#include "context/processing_context.h"
+#include "context/source_context.h"
 
 namespace hlasm_plugin::parser_library::processing {
 struct postponed_statement_impl;

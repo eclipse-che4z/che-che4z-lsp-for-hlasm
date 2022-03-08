@@ -332,12 +332,17 @@ void expr_assembler_operand::apply(operand_visitor& visitor) const { visitor.vis
 
 //***************** end_instr_machine_operand *********************
 
-using_instr_assembler_operand::using_instr_assembler_operand(
-    expressions::mach_expr_ptr base, expressions::mach_expr_ptr end, range operand_range)
+using_instr_assembler_operand::using_instr_assembler_operand(expressions::mach_expr_ptr base,
+    expressions::mach_expr_ptr end,
+    std::string base_text,
+    std::string end_text,
+    range operand_range)
     : evaluable_operand(operand_type::ASM, std::move(operand_range))
     , assembler_operand(asm_kind::BASE_END)
     , base(std::move(base))
     , end(std::move(end))
+    , base_text(std::move(base_text))
+    , end_text(std::move(end_text))
 {}
 
 bool using_instr_assembler_operand::has_dependencies(context::dependency_solver& info) const
@@ -350,13 +355,12 @@ bool using_instr_assembler_operand::has_error(context::dependency_solver& info) 
     return base->get_dependencies(info).has_error || end->get_dependencies(info).has_error;
 }
 
-std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(
-    context::dependency_solver& info) const
+std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(context::dependency_solver&) const
 {
-    (void)info;
     std::vector<std::unique_ptr<checking::asm_operand>> pair;
-    // pair.push_back(make_check_operand(info, *base));
-    // pair.push_back(make_check_operand(info, *end));
+    // this is just for the form
+    pair.push_back(std::make_unique<checking::one_operand>(base_text));
+    pair.push_back(std::make_unique<checking::one_operand>(end_text));
     return std::make_unique<checking::complex_operand>("", std::move(pair));
 }
 
@@ -684,11 +688,10 @@ void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_
     unsigned char mask = 0;
     decltype(mask) top_bit = 1 << (std::numeric_limits<decltype(mask)>::digits - 1);
 
-    if (auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
-        mnem_tmp != context::instruction::mnemonic_codes.end())
-        mask = mnem_tmp->second.reladdr_mask.mask();
+    if (auto mnem_tmp = context::instruction::find_mnemonic_codes(*instruction))
+        mask = mnem_tmp->reladdr_mask().mask();
     else
-        mask = context::instruction::machine_instructions.at(*instruction).reladdr_mask.mask();
+        mask = context::instruction::get_machine_instructions(*instruction).reladdr_mask().mask();
 
     for (const auto& operand : op_list)
     {

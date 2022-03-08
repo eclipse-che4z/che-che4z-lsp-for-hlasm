@@ -52,6 +52,8 @@ public:
 
     virtual size_t hash() const = 0;
 
+    virtual mach_expr_ptr clone() const = 0;
+
     range get_range() const;
     virtual ~mach_expression() {}
 

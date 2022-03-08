@@ -24,21 +24,21 @@ system_variable::system_variable(id_index name, macro_data_ptr value, bool is_gl
 
 const C_t& system_variable::get_value(const std::vector<size_t>& offset) const { return get_data(offset)->get_value(); }
 
-const C_t& system_variable::get_value(size_t idx) const { return macro_param_base::get_value(idx + 1); }
+const C_t& system_variable::get_value(size_t idx) const { return macro_param_base::get_value(idx); }
 
 const C_t& system_variable::get_value() const { return macro_param_base::get_value(0); }
 
 const macro_param_data_component* system_variable::get_data(const std::vector<size_t>& offset) const
 {
-    const macro_param_data_component* tmp = data_.get();
-
-    for (size_t i = 0; i < offset.size(); ++i) {
-        if (1 != offset[i]) {
-            return tmp->get_ith(1);
+    for (auto subscript : offset)
+    {
+        if (1 != subscript)
+        {
+            return macro_param_data_component::dummy.get();
         }
     }
 
-    return tmp->get_ith(0);
+    return data_->get_ith(0);
 }
 
 A_t system_variable::number(std::vector<size_t> offset) const
@@ -55,7 +55,7 @@ A_t system_variable::number(std::vector<size_t> offset) const
 A_t system_variable::count(std::vector<size_t> offset) const
 {
     if (offset.empty())
-        return (A_t)data_->get_ith(1)->get_value().size();
+        return (A_t)data_->get_ith(0)->get_value().size();
 
     const macro_param_data_component* tmp = real_data();
     for (size_t i = 0; i < offset.size(); ++i)
@@ -87,9 +87,9 @@ const C_t& system_variable_sysmac::get_value(const std::vector<size_t>& offset) 
         return get_data({ 0 })->get_value();
 }
 
-const C_t& system_variable_sysmac::get_value(size_t idx) const { return get_data({ idx })->get_value(); }
+const C_t& system_variable_sysmac::get_value(size_t idx) const { return system_variable::get_value(idx); }
 
-const C_t& system_variable_sysmac::get_value() const { return get_data({ 0 })->get_value(); }
+const C_t& system_variable_sysmac::get_value() const { return system_variable::get_value(); }
 
 const macro_param_data_component* system_variable_sysmac::get_data(const std::vector<size_t>& offset) const
 {
@@ -103,13 +103,19 @@ const macro_param_data_component* system_variable_sysmac::get_data(const std::ve
 
 const macro_param_data_component* system_variable_syslist::get_data(const std::vector<size_t>& offset) const
 {
-
     const macro_param_data_component* tmp = real_data();
 
-     for (size_t i = 0; i < offset.size(); ++i)
+    if (offset.empty())
     {
-         tmp = tmp->get_ith(offset[i] - (i == 0 ? 0 : 1));
-     }
+        tmp = tmp->get_ith(1);
+    }
+    else
+    {
+        for (size_t i = 0; i < offset.size(); ++i)
+        {
+            tmp = tmp->get_ith(offset[i] - (i == 0 ? 0 : 1));
+        }
+    }
 
-     return tmp;
+    return tmp;
 }

@@ -15,6 +15,7 @@
 #ifndef LSP_COMPLETION_ITEM_H
 #define LSP_COMPLETION_ITEM_H
 
+#include <set>
 #include <string>
 #include <vector>
 
@@ -42,7 +43,24 @@ public:
     std::string documentation;
     completion_item_kind kind;
 
-    static const std::vector<completion_item_s> instruction_completion_items_;
+    struct label_comparer
+    {
+        using is_transparent = void;
+
+        bool operator()(const completion_item_s& l, const completion_item_s& r) const { return l.label < r.label; }
+        template<typename L>
+        bool operator()(const L& l, const completion_item_s& r) const
+        {
+            return l < r.label;
+        }
+        template<typename R>
+        bool operator()(const completion_item_s& l, const R& r) const
+        {
+            return l.label < r;
+        }
+    };
+
+    static const std::set<completion_item_s, label_comparer> instruction_completion_items_;
 };
 
 bool operator==(const completion_item_s& lhs, const completion_item_s& rhs);

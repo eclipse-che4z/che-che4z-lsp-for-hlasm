@@ -162,8 +162,6 @@ public:
         test_drop_true_one.push_back(&op_val_11);
         test_drop_true_one.push_back(&first_val);
         test_drop_true_two.push_back(&second_val);
-        test_drop_false.push_back(&first_val);
-        test_drop_false.push_back(&drop_lorem_val);
 
         // end
         auto end_lang_one_vector = std::vector<std::unique_ptr<asm_operand>> {};
@@ -773,7 +771,6 @@ protected:
     std::vector<const checking::operand*> test_data_true_two = std::vector<const checking::operand*>();
     std::vector<const checking::operand*> test_drop_true_one = std::vector<const checking::operand*>();
     std::vector<const checking::operand*> test_drop_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_drop_false = std::vector<const checking::operand*>();
     std::vector<const checking::operand*> test_end_true_one = std::vector<const checking::operand*>();
     std::vector<const checking::operand*> test_end_true_two = std::vector<const checking::operand*>();
     std::vector<const checking::operand*> test_end_false = std::vector<const checking::operand*>();
@@ -947,7 +944,6 @@ TEST_F(instruction_test, drop)
     EXPECT_TRUE(checker.check("DROP", test_no_operand_true, range(), collector));
     EXPECT_TRUE(checker.check("DROP", test_drop_true_one, range(), collector));
     EXPECT_TRUE(checker.check("DROP", test_drop_true_two, range(), collector));
-    EXPECT_FALSE(checker.check("DROP", test_drop_false, range(), collector));
     EXPECT_FALSE(checker.check("DROP", test_acontrol_true, range(), collector));
 }
 

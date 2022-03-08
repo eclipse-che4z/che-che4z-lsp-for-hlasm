@@ -117,8 +117,7 @@ void occurence_collector::get_occurence(const semantics::concat_chain& chain)
             case semantics::concat_type::STR:
                 if (collector_kind == lsp::occurence_kind::ORD)
                 {
-                    auto [valid, name] =
-                        processing::context_manager(hlasm_ctx).try_get_symbol_name(point->access_str()->value);
+                    auto [valid, name] = hlasm_ctx.try_get_symbol_name(point->access_str()->value);
                     if (valid)
                         occurences.emplace_back(lsp::occurence_kind::ORD, name, point->access_str()->conc_range);
                 }

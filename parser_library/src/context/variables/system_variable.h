@@ -70,6 +70,7 @@ class system_variable_syslist final : public system_variable
 public:
     using system_variable::system_variable;
 
+    // SYSLIST special behavior
     const macro_param_data_component* get_data(const std::vector<size_t>& offset) const override;
 };
 

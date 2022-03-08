@@ -15,6 +15,8 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "context/instruction.h"
+
 TEST(mach_instr_processing, reloc_imm_expected)
 {
     std::string input(
@@ -239,7 +241,7 @@ TEST(mach_instr_processing, rel_addr_bitmask)
              { "BPRP", 0x60 },
          })
     {
-        EXPECT_EQ(context::instruction::machine_instructions.at(instr).reladdr_mask.mask(), expected) << instr;
+        EXPECT_EQ(context::instruction::get_machine_instructions(instr).reladdr_mask().mask(), expected) << instr;
     }
 
     for (const auto& [instr, expected] : std::initializer_list<std::pair<std::string, int>> {
@@ -248,7 +250,7 @@ TEST(mach_instr_processing, rel_addr_bitmask)
              { "JNE", 0x80 },
          })
     {
-        EXPECT_EQ(context::instruction::mnemonic_codes.at(instr).reladdr_mask.mask(), expected) << instr;
+        EXPECT_EQ(context::instruction::get_mnemonic_codes(instr).reladdr_mask().mask(), expected) << instr;
     }
 }
 
@@ -278,3 +280,35 @@ A   DS    0H
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(mach_instr_processing, relimm_qualified)
+{
+    std::string input(
+        R"(
+Q     USING *,12
+      J     Q.LABEL
+LABEL DS    0H
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_TRUE(a.diags().empty());
+}
+
+// TODO: should work after operand checking with USING is implemented
+// TEST(mach_instr_processing, relimm_qualified_bad)
+// {
+//     std::string input(
+//         R"(
+//       J     Q.LABEL
+// LABEL DS    0H
+// )");
+//
+//     analyzer a(input);
+//     a.analyze();
+//     a.collect_diags();
+//
+//     ASSERT_FALSE(a.diags().empty());
+// }

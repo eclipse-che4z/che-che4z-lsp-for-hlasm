@@ -40,5 +40,7 @@ target_sources(parser_library PRIVATE
 	symbol_attributes.h
 	symbol_dependency_tables.cpp
 	symbol_dependency_tables.h
+	symbol_value.cpp
+	symbol_value.h
 )
 

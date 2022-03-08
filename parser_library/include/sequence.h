@@ -153,7 +153,7 @@ private:
     size_t size_ = 0;
 };
 template<class T>
-explicit sequence(T &&) -> sequence<std::decay_t<decltype(*std::declval<T>().data())>, void>;
+explicit sequence(T&&) -> sequence<std::decay_t<decltype(*std::declval<T>().data())>, void>;
 
 } // namespace hlasm_plugin::parser_library
 

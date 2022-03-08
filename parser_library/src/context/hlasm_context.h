@@ -15,6 +15,7 @@
 #ifndef CONTEXT_HLASM_CONTEXT_H
 #define CONTEXT_HLASM_CONTEXT_H
 
+#include <cassert>
 #include <deque>
 #include <memory>
 #include <set>
@@ -24,7 +25,15 @@
 #include "compiler_options.h"
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
-#include "processing_context.h"
+#include "source_context.h"
+#include "tagged_index.h"
+
+namespace hlasm_plugin::parser_library::expressions {
+class mach_expression;
+} // namespace hlasm_plugin::parser_library::expressions
+namespace hlasm_plugin::parser_library::context {
+class using_collection;
+} // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -38,9 +47,11 @@ class hlasm_context
     using copy_member_storage = std::unordered_map<id_index, copy_member_ptr>;
     using instruction_storage = std::unordered_map<id_index, opcode_t::opcode_variant>;
     using opcode_map = std::unordered_map<id_index, opcode_t>;
+    using global_variable_storage = std::unordered_map<id_index, var_sym_ptr>;
 
     // storage of global variables
-    code_scope::set_sym_storage globals_;
+    global_variable_storage globals_;
+
     // storage of defined macros
     macro_storage macros_;
     // storage of copy members
@@ -54,12 +65,8 @@ class hlasm_context
     std::deque<code_scope> scope_stack_;
     code_scope* curr_scope();
     const code_scope* curr_scope() const;
-    // stack of statement processings
-    std::vector<processing_context> proc_stack_;
     // stack of processed source files
     std::vector<source_context> source_stack_;
-    // stack of nested copy member invocations
-    std::vector<copy_member_invocation> copy_stack_;
 
     // path to the opencode
     std::string opencode_file_name_;
@@ -72,7 +79,7 @@ class hlasm_context
 
     // map of all instruction in HLASM
     const instruction_storage instruction_map_;
-    instruction_storage init_instruction_map();
+    static instruction_storage init_instruction_map(id_storage& ids);
 
     // value of system variable SYSNDX
     unsigned long SYSNDX_ = 1;
@@ -83,10 +90,15 @@ class hlasm_context
     size_t m_ainsert_id = 0;
     bool m_end_reached = false;
 
-    void add_system_vars_to_scope();
-    void add_global_system_vars();
+    void add_global_system_var_to_scope(id_storage& ids, const std::string& name, code_scope& scope) const;
+
+    void add_system_vars_to_scope(code_scope& scope);
+    void add_global_system_vars(code_scope& scope);
 
     bool is_opcode(id_index symbol) const;
+
+    std::unique_ptr<using_collection> m_usings;
+    std::vector<index_t<using_collection>> m_active_usings;
 
 public:
     hlasm_context(std::string file_name = "",
@@ -153,11 +165,11 @@ public:
 
     void fill_metrics_files();
     // return map of global set vars
-    const code_scope::set_sym_storage& globals() const;
+    const global_variable_storage& globals() const;
 
     // return variable symbol in current scope
     // returns empty shared_ptr if there is none in the current scope
-    var_sym_ptr get_var_sym(id_index name);
+    var_sym_ptr get_var_sym(id_index name) const;
 
     // registers sequence symbol
     void add_sequence_symbol(sequence_symbol_ptr seq_sym);
@@ -230,21 +242,24 @@ public:
     template<typename T>
     set_sym_ptr create_global_variable(id_index id, bool is_scalar)
     {
-        auto tmp = curr_scope()->variables.find(id);
-        if (tmp != curr_scope()->variables.end())
+        auto* scope = curr_scope();
+
+        if (auto tmp = scope->variables.find(id); tmp != scope->variables.end())
             return tmp->second;
 
-        auto glob = globals_.find(id);
-        if (glob != globals_.end())
+        if (auto glob = globals_.find(id); glob != globals_.end())
         {
-            curr_scope()->variables.insert({ id, glob->second });
-            return glob->second;
+            set_sym_ptr var = std::dynamic_pointer_cast<set_symbol<T>>(glob->second);
+            assert(var);
+
+            scope->variables.try_emplace(id, var);
+            return var;
         }
 
         auto val = std::make_shared<set_symbol<T>>(id, is_scalar, true);
 
-        globals_.insert({ id, val });
-        curr_scope()->variables.insert({ id, val });
+        globals_.try_emplace(id, val);
+        scope->variables.try_emplace(id, val);
 
         return val;
     }
@@ -253,14 +268,16 @@ public:
     template<typename T>
     set_sym_ptr create_local_variable(id_index id, bool is_scalar)
     {
-        auto tmp = curr_scope()->variables.find(id);
-        if (tmp != curr_scope()->variables.end())
+        auto* scope = curr_scope();
+
+        auto tmp = scope->variables.find(id);
+        if (tmp != scope->variables.end())
             return tmp->second;
 
 
         set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar, false));
 
-        curr_scope()->variables.insert({ id, val });
+        scope->variables.try_emplace(id, val);
 
         return val;
     }
@@ -278,6 +295,23 @@ public:
 
     size_t current_ainsert_id() const { return m_ainsert_id; }
     size_t obtain_ainsert_id() { return ++m_ainsert_id; }
+
+    void using_add(id_index label,
+        std::unique_ptr<expressions::mach_expression> begin,
+        std::unique_ptr<expressions::mach_expression> end,
+        std::vector<std::unique_ptr<expressions::mach_expression>> arguments,
+        dependency_evaluation_context eval_ctx,
+        processing_stack_t stack);
+    void using_remove(std::vector<std::unique_ptr<expressions::mach_expression>> arguments,
+        dependency_evaluation_context eval_ctx,
+        processing_stack_t stack);
+    void using_push();
+    bool using_pop();
+    void using_resolve(diagnostic_s_consumer&);
+    index_t<using_collection> using_current() const;
+
+    using name_result = std::pair<bool, context::id_index>;
+    name_result try_get_symbol_name(const std::string& symbol);
 };
 
 } // namespace hlasm_plugin::parser_library::context

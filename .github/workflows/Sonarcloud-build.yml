@@ -34,13 +34,13 @@ jobs:
       - name: Get version
         run: echo "VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")" >> $GITHUB_ENV
       - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-10-dev libc++abi-10-dev
+        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-12-dev libc++abi-12-dev
       - name: Configure
         run: >
           mkdir build && cd build &&
           cmake -DCMAKE_BUILD_TYPE=Debug
-          -DCMAKE_C_COMPILER=clang-10
-          -DCMAKE_CXX_COMPILER=clang++-10
+          -DCMAKE_C_COMPILER=clang-12
+          -DCMAKE_CXX_COMPILER=clang++-12
           -DCMAKE_CXX_FLAGS="-fprofile-instr-generate -fcoverage-mapping"
           ../
       - name: Sonar build wrapper download
@@ -61,9 +61,9 @@ jobs:
         with:
           run: npm --prefix clients/vscode-hlasmplugin test
       - name: Merge raw profiles
-        run: cd build/bin && llvm-profdata-10 merge -o hlasm_profile library.rawprof server.rawprof
+        run: cd build/bin && llvm-profdata-12 merge -o hlasm_profile library.rawprof server.rawprof
       - name: Generate lcov coverage
-        run: cd build/bin && llvm-cov-10 show -instr-profile hlasm_profile library_test -object server_test > ../coverage.txt
+        run: cd build/bin && llvm-cov-12 show -instr-profile hlasm_profile library_test -object server_test > ../coverage.txt
       - name: Pull request event info
         if: github.event_name == 'pull_request'
         run: |

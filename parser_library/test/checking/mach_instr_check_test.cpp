@@ -21,7 +21,10 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::checking;
 
 namespace {
-const auto& mi = hlasm_plugin::parser_library::context::instruction::machine_instructions;
+const auto& get_mi(std::string_view arg)
+{
+    return hlasm_plugin::parser_library::context::instruction::get_machine_instructions(arg);
+}
 one_operand op_val_0 { 0 };
 one_operand op_val_1 { 1 };
 one_operand op_val_2 { 2 };
@@ -39,7 +42,7 @@ TEST(machine_instr_check_test, BALR_test)
     diagnostic_collector collector;
     std::string balr_name = "BALR";
     std::vector<const checking::machine_operand*> operands { &op_val_14, &op_val_15 };
-    EXPECT_TRUE(mi.at(balr_name).check(balr_name, operands, range(), collector));
+    EXPECT_TRUE(get_mi(balr_name).check(balr_name, operands, range(), collector));
 }
 
 TEST(machine_instr_check_test, BAL_test)
@@ -48,7 +51,7 @@ TEST(machine_instr_check_test, BAL_test)
     std::string bal_name = "BAL";
     address_operand valid_op = address_operand(address_state::RES_VALID, 1, 1, 111);
     std::vector<const checking::machine_operand*> operands { &op_val_2, &valid_op };
-    EXPECT_TRUE(mi.at(bal_name).check(bal_name, operands, range(), collector));
+    EXPECT_TRUE(get_mi(bal_name).check(bal_name, operands, range(), collector));
 }
 
 TEST(machine_instr_check_test, LR_test)
@@ -56,7 +59,7 @@ TEST(machine_instr_check_test, LR_test)
     diagnostic_collector collector;
     std::string lr_name = "LR";
     std::vector<const checking::machine_operand*> operands { &op_val_0, &op_val_2 };
-    EXPECT_TRUE(mi.at(lr_name).check(lr_name, operands, range(), collector));
+    EXPECT_TRUE(get_mi(lr_name).check(lr_name, operands, range(), collector));
 }
 
 TEST(machine_instr_check_test, MVCL_test)
@@ -64,7 +67,7 @@ TEST(machine_instr_check_test, MVCL_test)
     diagnostic_collector collector;
     std::string mvcl_name = "MVCL";
     std::vector<const checking::machine_operand*> operands { &op_val_4, &op_val_0 };
-    EXPECT_TRUE(mi.at(mvcl_name).check(mvcl_name, operands, range(), collector));
+    EXPECT_TRUE(get_mi(mvcl_name).check(mvcl_name, operands, range(), collector));
 }
 
 TEST(machine_instr_check_test, XR_test)
@@ -72,7 +75,7 @@ TEST(machine_instr_check_test, XR_test)
     diagnostic_collector collector;
     std::string xr_name = "XR";
     std::vector<const checking::machine_operand*> operands { &op_val_15, &op_val_15 };
-    EXPECT_TRUE(mi.at(xr_name).check(xr_name, operands, range(), collector));
+    EXPECT_TRUE(get_mi(xr_name).check(xr_name, operands, range(), collector));
 }
 TEST(machine_instr_check_test, CLC_test)
 {
@@ -80,7 +83,7 @@ TEST(machine_instr_check_test, CLC_test)
     std::string clc_name = "CLC";
     address_operand length_one = address_operand(address_state::UNRES, 1, 2, 4);
     std::vector<const checking::machine_operand*> operands { &length_one, &op_val_2 };
-    EXPECT_TRUE(mi.at(clc_name).check(clc_name, operands, range(), collector));
+    EXPECT_TRUE(get_mi(clc_name).check(clc_name, operands, range(), collector));
 }
 TEST(machine_instr_check_test, a_test_invalid)
 {
@@ -89,7 +92,7 @@ TEST(machine_instr_check_test, a_test_invalid)
 
     address_operand invalid_op = address_operand(address_state::RES_INVALID, 1, 1, 1);
     std::vector<const checking::machine_operand*> operands { &op_val_4, &invalid_op };
-    EXPECT_FALSE(mi.at(a_name).check(a_name, operands, range(), collector));
+    EXPECT_FALSE(get_mi(a_name).check(a_name, operands, range(), collector));
 }
 
 TEST(machine_instr_check_test, second_par_omitted)

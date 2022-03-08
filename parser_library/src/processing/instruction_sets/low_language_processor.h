@@ -59,6 +59,8 @@ protected:
 
     // finds symbol in the label field
     context::id_index find_label_symbol(const rebuilt_statement& stmt) const;
+    // finds using label in the label field
+    context::id_index find_using_label(const rebuilt_statement& stmt) const;
 
     // helper method to create symbol
     bool create_symbol(range err_range,

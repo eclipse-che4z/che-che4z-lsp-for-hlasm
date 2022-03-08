@@ -14,11 +14,13 @@
 
 #include "ordinary_processor.h"
 
+#include <regex>
 #include <stdexcept>
 
 #include "checking/instruction_checker.h"
 #include "context/literal_pool.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
+#include "diagnostic_consumer.h"
 #include "ebcdic_encoding.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
 
@@ -142,6 +144,11 @@ void ordinary_processor::end_processing()
 
     hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
 
+    // do not replace stack trace in the messages - it is already provided
+    diagnostic_consumer_transform using_diags(
+        [this](diagnostic_s d) { diagnosable_impl::add_diagnostic(std::move(d)); });
+    hlasm_ctx.using_resolve(using_diags);
+
     check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
 
     hlasm_ctx.pop_statement_processing();
@@ -173,19 +180,19 @@ struct processing_status_visitor
     {
         const auto f = id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS") ? processing_form::DAT
                                                                                           : processing_form::ASM;
-        const auto o = i->max_operands == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT;
+        const auto o = i->max_operands() == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT;
         return return_value(f, o, context::instruction_type::ASM);
     }
     processing_status operator()(const context::machine_instruction* i) const
     {
         return return_value(processing_form::MACH,
-            i->operands.empty() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            i->operands().empty() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
             context::instruction_type::MACH);
     }
     processing_status operator()(const context::ca_instruction* i) const
     {
         return return_value(processing_form::CA,
-            i->operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            i->operandless() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
             context::instruction_type::CA);
     }
     processing_status operator()(const context::mnemonic_code* i) const
@@ -313,7 +320,19 @@ context::id_index ordinary_processor::resolve_instruction(
         ;
     tmp.erase(0U, i);
 
-    if (tmp.find(' ') != std::string::npos)
+    static const std::regex regex(R"([ \$_#@a-zA-Z0-9]*)");
+
+    if (tmp.empty())
+    {
+        add_diagnostic(diagnostic_op::error_E074(instruction_range));
+        return context::id_storage::empty_id;
+    }
+    else if (!std::regex_match(tmp, regex))
+    {
+        add_diagnostic(diagnostic_op::error_E075(tmp, instruction_range));
+        return context::id_storage::empty_id;
+    }
+    else if (tmp.find(' ') != std::string::npos)
     {
         add_diagnostic(diagnostic_op::error_E067(instruction_range));
         return context::id_storage::empty_id;

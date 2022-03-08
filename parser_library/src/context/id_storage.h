@@ -44,7 +44,7 @@ public:
 
     const_pointer find(std::string val) const;
 
-    const_pointer add(std::string value, bool is_uri = false);
+    const_pointer add(std::string value);
 
     struct well_known_strings
     {
