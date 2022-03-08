@@ -171,6 +171,7 @@ TEST_P(system_variable_standard_behavior_fixture, standard_behavior)
 
     analyzer a(input, analyzer_options { asm_option { "PAR" } });
     a.analyze();
+    a.collect_diags();
 
     for (size_t i = 0; i < exp_behavior.size(); ++i)
     {
