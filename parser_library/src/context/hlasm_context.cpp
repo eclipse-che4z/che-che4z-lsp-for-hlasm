@@ -58,6 +58,16 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
 }
 
 namespace {
+template<typename DATA>
+std::string make_string_with_leading_zeros(DATA data, size_t max_number_of_leading_zeros)
+{
+    std::string value = std::to_string(data);
+    if (auto value_len = value.size(); value_len < max_number_of_leading_zeros)
+        value.insert(0, max_number_of_leading_zeros - value_len, '0');
+
+    return value;
+}
+
 class sysstmt_macro_param_data : public macro_param_data_single_dynamic
 {
 protected:
@@ -68,12 +78,7 @@ public:
     const C_t& get_value() const override
     {
         size_t sysstmt = metrics.lines + metrics.macro_statements + 1;
-
-        C_t value = std::to_string(sysstmt);
-        constexpr const size_t sysstmt_len = 8;
-
-        if (auto value_len = value.size(); value_len < sysstmt_len)
-            value.insert(0, sysstmt_len - value_len, '0');
+        C_t value = make_string_with_leading_zeros(sysstmt, 8);
 
         data_ = std::move(value);
 
@@ -128,9 +133,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
         }
 
         {
-            std::string value = std::to_string(SYSNDX_);
-            if (auto value_len = value.size(); value_len < 4)
-                value.insert(0, 4 - value_len, '0');
+            std::string value = make_string_with_leading_zeros(SYSNDX_, 4);
 
             scope.system_variables.insert(
                 create_system_variable<system_variable>(ids(), "SYSNDX", std::move(value), false));
