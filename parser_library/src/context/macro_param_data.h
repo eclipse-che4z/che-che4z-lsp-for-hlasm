@@ -106,9 +106,12 @@ class macro_param_data_single_dynamic : public macro_param_data_single
 {
 public:
     // returns whole data, here the only string
-    virtual const C_t& get_value() const override = 0;
+    const C_t& get_value() const override;
 
 protected:
+    // returns dynamically constructed value
+    virtual const C_t& get_dynamic_value() const = 0;
+
     macro_param_data_single_dynamic();
 };
 
