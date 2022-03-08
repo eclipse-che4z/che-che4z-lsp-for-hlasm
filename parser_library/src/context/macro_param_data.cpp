@@ -86,6 +86,8 @@ macro_param_data_composite::macro_param_data_composite(std::vector<macro_data_pt
     , data_(move(value))
 {}
 
+const C_t& macro_param_data_single_dynamic::get_value() const { return get_dynamic_value(); }
+
 macro_param_data_single_dynamic::macro_param_data_single_dynamic()
     : macro_param_data_single("")
 {}

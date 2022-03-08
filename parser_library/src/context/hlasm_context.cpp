@@ -70,12 +70,11 @@ std::string make_string_with_leading_zeros(DATA data, size_t max_number_of_leadi
 
 class sysstmt_macro_param_data : public macro_param_data_single_dynamic
 {
-protected:
     const performance_metrics& metrics;
-    mutable C_t data_;
+    mutable C_t data_ = "";
 
 public:
-    const C_t& get_value() const override
+    const C_t& get_dynamic_value() const override
     {
         size_t sysstmt = metrics.lines + metrics.macro_statements + 1;
         C_t value = make_string_with_leading_zeros(sysstmt, 8);
@@ -85,10 +84,9 @@ public:
         return data_;
     };
 
-    sysstmt_macro_param_data(const performance_metrics& metrics)
+    explicit sysstmt_macro_param_data(const performance_metrics& metrics)
         : macro_param_data_single_dynamic()
-        , metrics(metrics)
-        , data_() {};
+        , metrics(metrics) {};
 };
 
 macro_data_ptr create_macro_data(std::string value)
