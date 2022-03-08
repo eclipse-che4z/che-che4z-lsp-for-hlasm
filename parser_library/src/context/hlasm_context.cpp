@@ -58,6 +58,45 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
 }
 
 namespace {
+
+class sysstmt_data : public macro_param_data_single_dynamic
+{
+protected:
+    const performance_metrics& metrics;
+    mutable C_t data_;
+
+    const C_t& get_dynamic_value() const override
+    {
+        size_t sysstmt = metrics.lines + metrics.macro_statements + 1; // todo connect this to something real
+
+        C_t value = std::to_string(sysstmt);
+        constexpr const size_t sysstmt_len = 8;
+
+        if (auto value_len = value.size(); value_len < sysstmt_len)
+            value.insert(0, sysstmt_len - value_len, '0');
+
+        data_ = std::move(value);
+
+        return data_;
+    };
+
+public:
+    const C_t& get_value() const override { return get_dynamic_value(); };
+
+    // gets value of the idx-th value, when exceeds size of data, returns default value
+    // get_ith(0) returns this to mimic HLASM
+    const macro_param_data_component* get_ith(size_t idx) const override { return this; }; // TODO idx
+
+    size_t size() const override { return 0; };
+
+    sysstmt_data(const performance_metrics& metrics)
+        : macro_param_data_single_dynamic()
+        , metrics(metrics)
+        , data_() {};
+};
+} // namespace
+
+namespace {
 macro_data_ptr create_macro_data(std::string value)
 {
     return std::make_unique<macro_param_data_single>(std::move(value));
@@ -73,6 +112,8 @@ macro_data_ptr create_macro_data(std::vector<std::string> value)
 
     return std::make_unique<macro_param_data_composite>(std::move(data));
 }
+
+macro_data_ptr create_macro_data(std::unique_ptr<macro_param_data_single_dynamic> value) { return value; }
 
 template<typename SYSTEM_VARIABLE_TYPE, typename DATA>
 std::pair<id_index, sys_sym_ptr> create_system_variable(
@@ -186,7 +227,6 @@ void hlasm_context::add_global_system_var_to_scope(id_storage& ids, const std::s
 
 void hlasm_context::add_global_system_vars(code_scope& scope)
 {
-
     if (!is_in_macro())
     {
         {
@@ -255,13 +295,7 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         }
 
         {
-            int sysstmt = 0; // todo connect this to something real
-
-            std::string value = std::to_string(sysstmt);
-            constexpr const size_t sysstmt_len = 8;
-
-            if (auto value_len = value.size(); value_len < sysstmt_len)
-                value.insert(0, sysstmt_len - value_len, '0');
+            auto value = std::make_unique<sysstmt_data>(metrics);
 
             globals_.insert(create_system_variable<system_variable>(ids(), "SYSSTMT", std::move(value), true));
         }
