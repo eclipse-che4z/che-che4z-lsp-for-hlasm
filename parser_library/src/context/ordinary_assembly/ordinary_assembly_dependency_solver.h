@@ -27,7 +27,7 @@ class ordinary_assembly_dependency_solver final : public dependency_solver
     size_t unique_id = 0;
 
 public:
-    ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context)
+    explicit ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context)
         : ord_context(ord_context)
         , literal_pool_generation(ord_context.current_literal_pool_generation())
         , unique_id(ord_context.current_unique_id())

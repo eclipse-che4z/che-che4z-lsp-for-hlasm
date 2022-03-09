@@ -32,7 +32,7 @@ members_statement_provider::members_statement_provider(const statement_provider_
 
 context::shared_stmt_ptr members_statement_provider::get_next(const statement_processor& processor)
 {
-    diagnostic_consumer_transform drop_diags([](diagnostic_op d) {});
+    diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
 
     if (finished())
         throw std::runtime_error("provider already finished");

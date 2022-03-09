@@ -96,7 +96,7 @@ int32_t data_def_dependency<instr_type>::get_operands_length(const semantics::op
 template<checking::data_instr_type instr_type>
 context::symbol_value data_def_dependency<instr_type>::resolve(context::dependency_solver& solver) const
 {
-    diagnostic_consumer_transform drop_diags([](diagnostic_op d) {});
+    diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
     return get_operands_length(m_begin, m_end, solver, drop_diags, &m_loctr);
 }
 

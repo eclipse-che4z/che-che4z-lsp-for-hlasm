@@ -27,7 +27,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 namespace {
-diagnostic_consumer_transform drop_diags([](diagnostic_op d) {});
+diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
 
 std::optional<context::A_t> try_get_abs_value(
     const semantics::simple_expr_operand* op, context::dependency_solver& dep_solver)

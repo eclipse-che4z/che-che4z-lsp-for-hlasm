@@ -238,7 +238,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     const range& op_range,
     diagnostic_op_consumer* diags)
 {
-    diagnostic_consumer_transform drop_diags([](diagnostic_op d) {});
+    diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
 
     if (proc.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(

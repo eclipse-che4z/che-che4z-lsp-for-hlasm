@@ -915,18 +915,15 @@ hlasm_context::name_result hlasm_context::try_get_symbol_name(const std::string&
     return std::make_pair(true, ids().add(symbol));
 }
 
-context::SET_t get_var_sym_value(context::hlasm_context& hlasm_ctx,
-    context::id_index name,
-    const std::vector<context::A_t>& subscript,
+SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
+    id_index name,
+    const std::vector<A_t>& subscript,
     range symbol_range,
     diagnostic_op_consumer& diags)
 {
     auto var = hlasm_ctx.get_var_sym(name);
-
-    bool ok = test_symbol_for_read(var, subscript, symbol_range, diags);
-
-    if (!ok)
-        return context::SET_t();
+    if (!test_symbol_for_read(var, subscript, symbol_range, diags))
+        return SET_t();
 
     if (auto set_sym = var->access_set_symbol_base())
     {
@@ -936,14 +933,14 @@ context::SET_t get_var_sym_value(context::hlasm_context& hlasm_ctx,
         {
             switch (set_sym->type)
             {
-                case context::SET_t_enum::A_TYPE:
-                    return set_sym->access_set_symbol<context::A_t>()->get_value();
-                case context::SET_t_enum::B_TYPE:
-                    return set_sym->access_set_symbol<context::B_t>()->get_value();
-                case context::SET_t_enum::C_TYPE:
-                    return set_sym->access_set_symbol<context::C_t>()->get_value();
+                case SET_t_enum::A_TYPE:
+                    return set_sym->access_set_symbol<A_t>()->get_value();
+                case SET_t_enum::B_TYPE:
+                    return set_sym->access_set_symbol<B_t>()->get_value();
+                case SET_t_enum::C_TYPE:
+                    return set_sym->access_set_symbol<C_t>()->get_value();
                 default:
-                    return context::SET_t();
+                    return SET_t();
             }
         }
         else
@@ -952,14 +949,14 @@ context::SET_t get_var_sym_value(context::hlasm_context& hlasm_ctx,
 
             switch (set_sym->type)
             {
-                case context::SET_t_enum::A_TYPE:
-                    return set_sym->access_set_symbol<context::A_t>()->get_value(idx);
-                case context::SET_t_enum::B_TYPE:
-                    return set_sym->access_set_symbol<context::B_t>()->get_value(idx);
-                case context::SET_t_enum::C_TYPE:
-                    return set_sym->access_set_symbol<context::C_t>()->get_value(idx);
+                case SET_t_enum::A_TYPE:
+                    return set_sym->access_set_symbol<A_t>()->get_value(idx);
+                case SET_t_enum::B_TYPE:
+                    return set_sym->access_set_symbol<B_t>()->get_value(idx);
+                case SET_t_enum::C_TYPE:
+                    return set_sym->access_set_symbol<C_t>()->get_value(idx);
                 default:
-                    return context::SET_t();
+                    return SET_t();
             }
         }
     }
@@ -972,13 +969,11 @@ context::SET_t get_var_sym_value(context::hlasm_context& hlasm_ctx,
         }
         return mac_par->get_value(tmp);
     }
-    return context::SET_t();
+    return SET_t();
 }
 
-bool test_symbol_for_read(const context::var_sym_ptr& var,
-    const std::vector<context::A_t>& subscript,
-    range symbol_range,
-    diagnostic_op_consumer& diags)
+bool test_symbol_for_read(
+    const var_sym_ptr& var, const std::vector<A_t>& subscript, range symbol_range, diagnostic_op_consumer& diags)
 {
     if (!var)
     {

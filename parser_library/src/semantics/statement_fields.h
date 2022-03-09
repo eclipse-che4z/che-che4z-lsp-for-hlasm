@@ -183,7 +183,7 @@ public:
     {}
 
     void set_referenced_by_reladdr() { m_referenced_by_reladdr = true; }
-    bool get_referenced_by_reladdr() { return m_referenced_by_reladdr; }
+    bool get_referenced_by_reladdr() const { return m_referenced_by_reladdr; }
 
     const std::string& get_text() const { return m_text; }
     const expressions::data_definition& get_dd() const { return m_dd; }

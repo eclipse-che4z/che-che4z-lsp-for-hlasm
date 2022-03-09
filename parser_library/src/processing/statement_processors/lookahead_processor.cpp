@@ -152,7 +152,7 @@ lookahead_processor::process_table_t lookahead_processor::create_table(context::
 
 void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
-    diagnostic_consumer_transform drop_diags([](diagnostic_op d) {});
+    diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     // type attribute operand
     context::symbol_attributes::type_attr t_attr = context::symbol_attributes::undef_type;
@@ -238,7 +238,7 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
     context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
-    diagnostic_consumer_transform drop_diags([](diagnostic_op d) {});
+    diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
     auto tmp = data_op->get_operand_value(dep_solver, drop_diags);
     auto& value = dynamic_cast<checking::data_definition_operand&>(*tmp);
 
