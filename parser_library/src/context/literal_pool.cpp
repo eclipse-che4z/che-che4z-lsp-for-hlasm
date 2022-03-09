@@ -107,7 +107,7 @@ const semantics::instruction_si literal_pool::literal_postponed_statement::empty
 const processing::processing_format literal_pool::literal_postponed_statement::dc_format(
     processing::processing_kind::ORDINARY, processing::processing_form::ASM, processing::operand_occurence::PRESENT);
 
-void literal_pool::generate_pool(diagnosable_ctx& diags)
+void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using)
 {
     ordinary_assembly_context& ord_ctx = hlasm_ctx.ord_ctx;
 
@@ -125,6 +125,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags)
                 it->second.loctr,
                 it->first.generation,
                 it->first.unique_id,
+                active_using,
             });
         auto bit_length = lit->evaluate_total_length(solver, diags);
         if (bit_length < 0)
@@ -155,6 +156,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags)
                 lit_val.loctr,
                 lit_key.generation,
                 lit_key.unique_id,
+                active_using,
             });
 
         if (!lit->access_data_def_type()) // unknown type
@@ -183,7 +185,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags)
         {
             auto adder = ord_ctx.symbol_dependencies.add_dependencies(
                 std::make_unique<literal_postponed_statement>(lit, lit_val, hlasm_ctx.ids()),
-                { lit_val.loctr, lit_key.generation, lit_key.unique_id });
+                { lit_val.loctr, lit_key.generation, lit_key.unique_id, active_using });
             adder.add_dependency();
             adder.finish();
         }

@@ -22,10 +22,12 @@
 #include "id_storage.h"
 #include "location.h"
 #include "source_context.h"
+#include "tagged_index.h"
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::context {
 class hlasm_context;
+class using_collection;
 
 class literal_pool
 {
@@ -111,7 +113,7 @@ public:
     id_index get_literal(
         size_t generation, const std::shared_ptr<const expressions::data_definition>& dd, size_t unique_id) const;
 
-    void generate_pool(diagnosable_ctx& diags);
+    void generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using);
     size_t current_generation() const { return m_current_literal_pool_generation; }
 
     // testing

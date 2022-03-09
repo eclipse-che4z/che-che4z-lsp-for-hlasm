@@ -124,4 +124,10 @@ context::id_index data_def_dependency_solver::get_literal_id(
     return base.get_literal_id(dd);
 }
 
+context::using_label_active_result data_def_dependency_solver::using_label_active(
+    context::id_index label, const context::section* sect) const
+{
+    return base.using_label_active(label, sect);
+}
+
 } // namespace hlasm_plugin::parser_library::processing

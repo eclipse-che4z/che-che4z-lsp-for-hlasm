@@ -66,12 +66,17 @@ struct test_context : public dependency_solver
     std::unique_ptr<mach_expression> loctr() const { return std::make_unique<mach_expr_location_counter>(range()); }
 
     // Inherited via dependency_solver
-    virtual const context::symbol* get_symbol(id_index name) const override { return &m_symbols.at(name); }
-    virtual std::optional<address> get_loctr() const override { return m_loctr; }
-    virtual id_index get_literal_id(const std::shared_ptr<const expressions::data_definition>&) override
+    const context::symbol* get_symbol(id_index name) const override { return &m_symbols.at(name); }
+    std::optional<address> get_loctr() const override { return m_loctr; }
+    id_index get_literal_id(const std::shared_ptr<const expressions::data_definition>&) override
     {
         assert(false);
         return id_index();
+    }
+    using_label_active_result using_label_active(id_index label, const section* sect) const override
+    {
+        assert(false);
+        return using_label_active_result::do_not_know;
     }
 };
 
@@ -1009,4 +1014,38 @@ LABEL DROP
     a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A251" }));
+}
+
+TEST(using, label_not_allowed_in_abs_space)
+{
+    std::string input = R"(
+A     EQU    10
+L     USING  A,1
+      LA     0,L.A
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    // EXPECT_TRUE(matches_message_codes(a.diags(), { "TODO" })); // TODO:
+}
+
+TEST(using, diag_complex_reloc)
+{
+    std::string input = R"(
+TEST1 DSECT
+TEST2 DSECT
+A     EQU    TEST1+TEST2
+      CSECT
+L     USING  TEST1,1
+      USING  TEST2,2
+      LA     0,L.A
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    // EXPECT_TRUE(matches_message_codes(a.diags(), { "TODO" })); // TODO:
 }

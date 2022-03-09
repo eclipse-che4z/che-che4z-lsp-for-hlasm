@@ -14,7 +14,9 @@
 
 #include "ordinary_assembly_dependency_solver.h"
 
+#include "context/hlasm_context.h"
 #include "context/literal_pool.h"
+#include "context/using.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -40,7 +42,14 @@ dependency_evaluation_context ordinary_assembly_dependency_solver::derive_curren
         loctr_addr,
         literal_pool_generation,
         unique_id,
+        active_using,
     };
+}
+
+using_label_active_result ordinary_assembly_dependency_solver::using_label_active(
+    id_index label, const section* sect) const
+{
+    return ord_context.using_label_active(active_using, label, sect);
 }
 
 } // namespace hlasm_plugin::parser_library::context

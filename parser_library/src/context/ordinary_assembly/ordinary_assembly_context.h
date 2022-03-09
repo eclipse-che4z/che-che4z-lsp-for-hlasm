@@ -125,9 +125,9 @@ public:
     void set_available_location_counter_value(size_t boundary, int offset);
 
     // check whether symbol is already defined
-    bool symbol_defined(id_index name);
+    bool symbol_defined(id_index name) const;
     // check whether section is already defined
-    bool section_defined(id_index name, section_kind kind);
+    bool section_defined(id_index name, section_kind kind) const;
     // check whether location counter is already defined
     bool counter_defined(id_index name);
 
@@ -151,7 +151,7 @@ public:
 
     literal_pool& literals() { return *m_literals; }
     const literal_pool& literals() const { return *m_literals; }
-    void generate_pool(diagnosable_ctx& diags) const;
+    void generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using) const;
     location_counter* implicit_ltorg_target()
     {
         if (!first_control_section_)
@@ -162,6 +162,10 @@ public:
 
     bool is_using_label(id_index name) const;
     void register_using_label(id_index name);
+
+    index_t<using_collection> current_using() const;
+    using_label_active_result using_label_active(
+        index_t<using_collection> context_id, id_index label, const section* sect) const;
 
 private:
     void create_private_section();

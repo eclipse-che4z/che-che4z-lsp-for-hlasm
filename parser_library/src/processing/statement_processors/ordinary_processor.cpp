@@ -132,7 +132,7 @@ void ordinary_processor::end_processing()
         hlasm_ctx.ord_ctx.set_location_counter(ltorg->name, {});
         hlasm_ctx.ord_ctx.set_available_location_counter_value(0, 0);
 
-        hlasm_ctx.ord_ctx.generate_pool(*this);
+        hlasm_ctx.ord_ctx.generate_pool(*this, hlasm_ctx.using_current());
     }
 
     hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);

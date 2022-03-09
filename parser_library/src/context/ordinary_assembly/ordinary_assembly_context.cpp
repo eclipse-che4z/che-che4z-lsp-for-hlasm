@@ -21,6 +21,7 @@
 #include "alignment.h"
 #include "context/hlasm_context.h"
 #include "context/literal_pool.h"
+#include "context/using.h"
 
 namespace hlasm_plugin::parser_library::context {
 void ordinary_assembly_context::create_private_section()
@@ -259,9 +260,9 @@ void ordinary_assembly_context::set_available_location_counter_value(size_t boun
     set_available_location_counter_value(boundary, offset, dependency_evaluation_context {});
 }
 
-bool ordinary_assembly_context::symbol_defined(id_index name) { return symbols_.find(name) != symbols_.end(); }
+bool ordinary_assembly_context::symbol_defined(id_index name) const { return symbols_.find(name) != symbols_.end(); }
 
-bool ordinary_assembly_context::section_defined(id_index name, section_kind kind)
+bool ordinary_assembly_context::section_defined(id_index name, section_kind kind) const
 {
     return std::find_if(sections_.begin(), sections_.end(), [name, kind](const auto& sect) {
         return sect->name == name && sect->kind == kind;
@@ -357,7 +358,10 @@ section* ordinary_assembly_context::create_section(id_index name, section_kind k
 
 size_t ordinary_assembly_context::current_literal_pool_generation() const { return m_literals->current_generation(); }
 
-void ordinary_assembly_context::generate_pool(diagnosable_ctx& diags) const { m_literals->generate_pool(diags); }
+void ordinary_assembly_context::generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using) const
+{
+    m_literals->generate_pool(diags, active_using);
+}
 bool ordinary_assembly_context::is_using_label(id_index name) const
 {
     auto it = symbols_.find(name);
@@ -372,5 +376,25 @@ void ordinary_assembly_context::register_using_label(id_index name)
         throw std::runtime_error("symbol name in use");
 }
 
+index_t<using_collection> ordinary_assembly_context::current_using() const { return hlasm_ctx_.using_current(); }
+
+using_label_active_result ordinary_assembly_context::using_label_active(
+    index_t<using_collection> context_id, id_index label, const section* sect) const
+{
+    if (!symbol_defined(label))
+        return using_label_active_result::do_not_know;
+    if (!is_using_label(label))
+        return using_label_active_result::no;
+
+    const auto& usings = hlasm_ctx_.usings();
+
+    if (!usings.resolved())
+        return using_label_active_result::do_not_know;
+
+    if (usings.is_label_mapping_section(context_id, label, sect))
+        return using_label_active_result::yes;
+    else
+        return using_label_active_result::no;
+}
 
 } // namespace hlasm_plugin::parser_library::context

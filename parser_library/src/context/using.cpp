@@ -330,9 +330,11 @@ id_index identify_label(const ordinary_assembly_context& ord_context, const expr
 
 void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag)
 {
-    for (auto& expr : m_expr_values)
-    {
-        if (!(expr.label = identify_label(ord_context, expr.expression.get())))
+    assert(!m_resolved);
+
+    const auto evaluate_expression = [&ord_context, &diag, this](expression_value& expr) {
+        expr.label = identify_label(ord_context, expr.expression.get());
+        if (!expr.label)
         {
             const auto& expr_context = get(expr.context);
             ordinary_assembly_dependency_solver solver(ord_context, expr_context.evaluation_ctx);
@@ -342,16 +344,24 @@ void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagn
 
             expr.value = expr.expression->evaluate(solver, diag_collector);
         }
-    }
+    };
 
+    size_t expr_id = 0;
     for (auto& u : m_usings)
     {
+        assert(u.expression_used_limit);
+
+        for (; expr_id != u.expression_used_limit.value(); ++expr_id)
+            evaluate_expression(m_expr_values[expr_id]);
+
         diagnostic_consumer_transform t([this, &diag, &u](diagnostic_op d) {
             diag.add_diagnostic(add_stack_details(std::move(d), get(u.instruction_ctx).stack));
         });
         u.resolve(*this, t);
         u.compute_context(*this, t);
     }
+
+    m_resolved = true;
 }
 
 index_t<using_collection::instruction_context> using_collection::add(
@@ -391,7 +401,7 @@ index_t<using_collection> using_collection::add(index_t<using_collection> curren
         return add(std::move(a), ctx_id);
     });
 
-    m_usings.emplace_back(current, ctx_id, b, base, label, e);
+    m_usings.emplace_back(current, index_t<mach_expression>(m_expr_values.size()), ctx_id, b, base, label, e);
     return index_t<using_collection>(m_usings.size() - 1);
 }
 
@@ -400,6 +410,7 @@ index_t<using_collection> using_collection::remove(index_t<using_collection> cur
     dependency_evaluation_context eval_ctx,
     processing_stack_t stack)
 {
+    assert(!args.empty());
     index_t<instruction_context> ctx_id = add(std::move(eval_ctx), std::move(stack));
 
     std::vector<index_t<mach_expression>> base;
@@ -408,7 +419,7 @@ index_t<using_collection> using_collection::remove(index_t<using_collection> cur
     std::transform(args.begin(), args.end(), std::back_inserter(base), [this, ctx_id](auto& a) {
         return add(std::move(a), ctx_id);
     });
-    m_usings.emplace_back(current, ctx_id, std::move(base));
+    m_usings.emplace_back(current, index_t<mach_expression>(m_expr_values.size()), ctx_id, std::move(base));
 
     return index_t<using_collection>(m_usings.size() - 1);
 }
@@ -425,6 +436,20 @@ using_collection::evaluate_result using_collection::evaluate(
         return evaluate_result { invalid_register, 1 - tmp.length };
     else
         return evaluate_result { tmp.mapping_regs[0], tmp.reg_offset };
+}
+
+bool hlasm_plugin::parser_library::context::using_collection::is_label_mapping_section(
+    index_t<using_collection> context_id, id_index label, const section* owner) const
+{
+    assert(m_resolved);
+
+    if (!context_id)
+        return false;
+
+    const auto& state = get(context_id).context.m_state;
+
+    return std::any_of(
+        state.begin(), state.end(), [label, owner](const auto& s) { return s.label == label && s.owner == owner; });
 }
 
 template</* std::integral */ typename R, /* std::integral */ typename T>

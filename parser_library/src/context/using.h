@@ -265,11 +265,13 @@ private:
         resolved_entry resolved;
         using_context context;
         index_t<instruction_context> instruction_ctx;
+        index_t<mach_expression> expression_used_limit;
 
         void resolve(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag);
         void compute_context(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag);
 
         using_entry(index_t<using_collection> parent,
+            index_t<mach_expression> expression_used_limit,
             index_t<instruction_context> instruction_ctx,
             index_t<mach_expression> begin,
             std::vector<index_t<mach_expression>> base,
@@ -277,12 +279,15 @@ private:
             index_t<mach_expression> end = {})
             : definition(parent, begin, std::move(base), label, end)
             , instruction_ctx(instruction_ctx)
+            , expression_used_limit(expression_used_limit)
         {}
         using_entry(index_t<using_collection> parent,
+            index_t<mach_expression> expression_used_limit,
             index_t<instruction_context> instruction_ctx,
             std::vector<index_t<mach_expression>> base)
             : definition(parent, {}, std::move(base))
             , instruction_ctx(instruction_ctx)
+            , expression_used_limit(expression_used_limit)
         {}
 
     private:
@@ -310,6 +315,7 @@ private:
     std::vector<using_entry> m_usings;
     std::vector<expression_value> m_expr_values;
     std::vector<instruction_context> m_instruction_contexts;
+    bool m_resolved = false;
 
     const auto& get(index_t<using_collection> idx) const
     {
@@ -340,6 +346,8 @@ public:
 
     void resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag);
 
+    bool resolved() const { return m_resolved; }
+
     index_t<using_collection> add(index_t<using_collection> current,
         id_index label,
         std::unique_ptr<mach_expression> begin,
@@ -358,6 +366,8 @@ public:
         const section* owner,
         offset_t offset,
         bool long_offset) const;
+
+    bool is_label_mapping_section(index_t<using_collection> context_id, id_index label, const section* owner) const;
 };
 
 } // namespace hlasm_plugin::parser_library::context

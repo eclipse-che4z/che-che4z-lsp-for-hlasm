@@ -74,6 +74,8 @@ struct data_def_dependency_solver final : public context::dependency_solver
     const context::symbol* get_symbol(context::id_index name) const override;
     std::optional<context::address> get_loctr() const override;
     context::id_index get_literal_id(const std::shared_ptr<const expressions::data_definition>& dd) override;
+    context::using_label_active_result using_label_active(
+        context::id_index label, const context::section* sect) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

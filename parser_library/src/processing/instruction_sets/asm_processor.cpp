@@ -954,7 +954,7 @@ void asm_processor::process_LTORG(rebuilt_statement stmt)
                 context::symbol_attributes(context::symbol_origin::EQU, ebcdic_encoding::to_ebcdic('U'), 1));
     }
 
-    hlasm_ctx.ord_ctx.generate_pool(*this);
+    hlasm_ctx.ord_ctx.generate_pool(*this, hlasm_ctx.using_current());
 }
 
 void asm_processor::process_USING(rebuilt_statement stmt)
