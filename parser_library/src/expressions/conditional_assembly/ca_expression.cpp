@@ -34,7 +34,7 @@ context::SET_t ca_expression::convert_return_types(
         if (retval.type == context::SET_t_enum::B_TYPE && type == context::SET_t_enum::A_TYPE)
             return (context::A_t)retval.access_b();
 
-        eval_ctx.add_diagnostic(diagnostic_op::error_CE004(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
         return context::SET_t(expr_kind);
     }
     return retval;

@@ -45,20 +45,10 @@ undef_sym_set ca_string::get_undefined_attributed_symbols(const evaluation_conte
     return tmp;
 }
 
-void ca_string::resolve_expression_tree(context::SET_t_enum kind)
+void ca_string::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     if (expr_kind != kind)
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
-}
-
-void ca_string::collect_diags() const
-{
-    if (duplication_factor)
-        collect_diags_from_child(*duplication_factor);
-    if (substring.start)
-        collect_diags_from_child(*substring.start);
-    if (substring.count)
-        collect_diags_from_child(*substring.count);
+        diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
 bool ca_string::is_character_expression(character_expression_purpose) const { return true; }
@@ -71,7 +61,7 @@ context::SET_t ca_string::evaluate(const evaluation_context& eval_ctx) const
 
     if (str.size() > MAX_STR_SIZE)
     {
-        eval_ctx.add_diagnostic(diagnostic_op::error_CE011(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE011(expr_range));
         return context::object_traits<context::C_t>::default_v();
     }
 
@@ -88,17 +78,17 @@ context::SET_t ca_string::evaluate(const evaluation_context& eval_ctx) const
         }
         else if (start < 0 || count < 0 || (start == 0 && count > 0))
         {
-            eval_ctx.add_diagnostic(diagnostic_op::error_CE008(substring.substring_range));
+            eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE008(substring.substring_range));
             return context::object_traits<context::C_t>::default_v();
         }
         else if (start > (context::A_t)str.size())
         {
-            eval_ctx.add_diagnostic(diagnostic_op::error_CE009(substring.start->expr_range));
+            eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE009(substring.start->expr_range));
             return context::object_traits<context::C_t>::default_v();
         }
         /* TODO uncomment when assembler options will be implemented
         if (start + count - 1 > (int)str.size())
-            eval_ctx.add_diagnostic(diagnostic_op::error_CW001(substring.count->expr_range));
+            eval_ctx.diags.add_diagnostic(diagnostic_op::error_CW001(substring.count->expr_range));
         */
         else
             str = str.substr(start - 1, count);
@@ -116,13 +106,13 @@ std::string ca_string::duplicate(
 
         if (dupl < 0)
         {
-            eval_ctx.add_diagnostic(diagnostic_op::error_CE010(dupl_factor->expr_range));
+            eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE010(dupl_factor->expr_range));
             return "";
         }
 
         if (value.size() * dupl > MAX_STR_SIZE)
         {
-            eval_ctx.add_diagnostic(diagnostic_op::error_CE011(expr_range));
+            eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE011(expr_range));
             return "";
         }
 

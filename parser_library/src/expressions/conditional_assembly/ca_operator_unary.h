@@ -29,9 +29,7 @@ public:
 
     undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 
-    void resolve_expression_tree(context::SET_t_enum kind) override;
-
-    void collect_diags() const override;
+    void resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags) override;
 
     bool is_character_expression(character_expression_purpose purpose) const override;
 
@@ -63,7 +61,7 @@ class ca_par_operator : public ca_unary_operator
 public:
     ca_par_operator(ca_expr_ptr expr, range expr_range);
 
-    void resolve_expression_tree(context::SET_t_enum kind) override;
+    void resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags) override;
 
     context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const override;
 };
@@ -76,7 +74,7 @@ public:
 
     ca_function_unary_operator(ca_expr_ptr expr, ca_expr_ops function, context::SET_t_enum expr_kind, range expr_range);
 
-    void resolve_expression_tree(context::SET_t_enum kind) override;
+    void resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags) override;
 
     context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const override;
 };

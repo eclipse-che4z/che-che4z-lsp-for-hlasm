@@ -26,8 +26,9 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_string, undefined_attributes)
 {
+    diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     concat_chain value;
     value.push_back(std::make_unique<char_str_conc>("gfds", range()));
@@ -80,12 +81,13 @@ TEST(ca_string, test)
 
     ca_string s(std::move(value), std::move(dupl), ca_string::substring_t(), range());
 
+    diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     auto res = s.evaluate(eval_ctx);
 
-    ASSERT_EQ(eval_ctx.diags().size(), 0U);
+    EXPECT_TRUE(diags.diags.empty());
 
     EXPECT_EQ(res.access_c(), "");
 }
@@ -99,12 +101,13 @@ TEST_P(ca_string_suite, dupl)
 
     ca_string s(std::move(value), std::move(dupl), ca_string::substring_t(), range());
 
+    diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     auto res = s.evaluate(eval_ctx);
 
-    ASSERT_EQ(eval_ctx.diags().size(), GetParam().error);
+    EXPECT_EQ(diags.diags.size(), GetParam().error);
 
     if (!GetParam().error)
         EXPECT_EQ(res.access_c(), GetParam().result);

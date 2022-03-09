@@ -16,7 +16,7 @@
 
 #include "ca_constant.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
-#include "processing/context_manager.h"
+#include "expressions/evaluation_context.h"
 #include "semantics/concatenation_term.h"
 
 namespace hlasm_plugin::parser_library::expressions {
@@ -53,16 +53,10 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const evaluation_cont
     return get_undefined_attributed_symbols_vs(symbol, eval_ctx);
 }
 
-void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind)
+void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer&)
 {
     expr_kind = kind;
     resolve_expression_tree_vs(symbol);
-}
-
-void ca_var_sym::collect_diags() const
-{
-    for (auto&& expr : symbol->subscript)
-        collect_diags_from_child(*expr);
 }
 
 bool ca_var_sym::is_character_expression(character_expression_purpose) const { return false; }
@@ -79,7 +73,7 @@ context::SET_t ca_var_sym::convert_return_types(
 {
     if (retval.type == context::SET_t_enum::C_TYPE)
     {
-        diagnostic_adder add_diags(eval_ctx, expr_range);
+        diagnostic_adder add_diags(eval_ctx.diags, expr_range);
         switch (type)
         {
             case context::SET_t_enum::A_TYPE:

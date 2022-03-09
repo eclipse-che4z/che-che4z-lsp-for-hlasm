@@ -283,12 +283,11 @@ A   DS    0H
 
 TEST(mach_instr_processing, relimm_qualified)
 {
-    std::string input(
-        R"(
+    std::string input = R"(
 Q     USING *,12
       J     Q.LABEL
 LABEL DS    0H
-)");
+)";
 
     analyzer a(input);
     a.analyze();
@@ -300,11 +299,10 @@ LABEL DS    0H
 // TODO: should work after operand checking with USING is implemented
 // TEST(mach_instr_processing, relimm_qualified_bad)
 // {
-//     std::string input(
-//         R"(
+//     std::string input = R"(
 //       J     Q.LABEL
 // LABEL DS    0H
-// )");
+// )";
 //
 //     analyzer a(input);
 //     a.analyze();
@@ -312,3 +310,16 @@ LABEL DS    0H
 //
 //     ASSERT_FALSE(a.diags().empty());
 // }
+
+TEST(mach_instr_processing, literals_with_index_register)
+{
+    std::string input(R"(
+    L   0,=A(0)(1)
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_TRUE(a.diags().empty());
+}

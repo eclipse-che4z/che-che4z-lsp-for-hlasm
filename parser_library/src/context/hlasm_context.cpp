@@ -915,4 +915,72 @@ hlasm_context::name_result hlasm_context::try_get_symbol_name(const std::string&
     return std::make_pair(true, ids().add(symbol));
 }
 
+SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
+    id_index name,
+    const std::vector<A_t>& subscript,
+    range symbol_range,
+    diagnostic_op_consumer& diags)
+{
+    auto var = hlasm_ctx.get_var_sym(name);
+    if (!test_symbol_for_read(var, subscript, symbol_range, diags))
+        return SET_t();
+
+    if (auto set_sym = var->access_set_symbol_base())
+    {
+        size_t idx = 0;
+
+        if (subscript.empty())
+        {
+            switch (set_sym->type)
+            {
+                case SET_t_enum::A_TYPE:
+                    return set_sym->access_set_symbol<A_t>()->get_value();
+                case SET_t_enum::B_TYPE:
+                    return set_sym->access_set_symbol<B_t>()->get_value();
+                case SET_t_enum::C_TYPE:
+                    return set_sym->access_set_symbol<C_t>()->get_value();
+                default:
+                    return SET_t();
+            }
+        }
+        else
+        {
+            idx = (size_t)(subscript.front() - 1);
+
+            switch (set_sym->type)
+            {
+                case SET_t_enum::A_TYPE:
+                    return set_sym->access_set_symbol<A_t>()->get_value(idx);
+                case SET_t_enum::B_TYPE:
+                    return set_sym->access_set_symbol<B_t>()->get_value(idx);
+                case SET_t_enum::C_TYPE:
+                    return set_sym->access_set_symbol<C_t>()->get_value(idx);
+                default:
+                    return SET_t();
+            }
+        }
+    }
+    else if (auto mac_par = var->access_macro_param_base())
+    {
+        std::vector<size_t> tmp;
+        for (auto& v : subscript)
+        {
+            tmp.push_back((size_t)v);
+        }
+        return mac_par->get_value(tmp);
+    }
+    return SET_t();
+}
+
+bool test_symbol_for_read(
+    const var_sym_ptr& var, const std::vector<A_t>& subscript, range symbol_range, diagnostic_op_consumer& diags)
+{
+    if (!var)
+    {
+        diags.add_diagnostic(diagnostic_op::error_E010("variable", symbol_range)); // error - unknown name of variable
+        return false;
+    }
+
+    return var->can_read(subscript, symbol_range, diags);
+}
 } // namespace hlasm_plugin::parser_library::context

@@ -229,7 +229,7 @@ var_symbol returns [vs_ptr vs]
 	}
 	| created_set_symbol 									{$vs = std::move($created_set_symbol.vs);};
 
-data_attribute returns [context::data_attr_kind attribute, std::variant<context::id_index, semantics::vs_ptr, expressions::ca_literal_def> value, range value_range]
+data_attribute returns [context::data_attr_kind attribute, std::variant<context::id_index, semantics::vs_ptr, semantics::literal_si> value, range value_range]
 	: ORDSYMBOL (attr|apostrophe_as_attr) data_attribute_value
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::data_attr_type));
@@ -238,11 +238,11 @@ data_attribute returns [context::data_attr_kind attribute, std::variant<context:
 		$value_range = provider.get_range( $data_attribute_value.ctx);
 	};
 
-data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr, expressions::ca_literal_def> value]
+data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr, semantics::literal_si> value]
 	: literal
 	{
-		if ($literal.value.has_value())
-			$value = expressions::ca_literal_def {$literal.text, std::make_shared<expressions::data_definition>(std::move($literal.value.value()))};
+		if (auto& lv = $literal.value; lv)
+			$value = std::move(lv);
 	}
 	| var_symbol DOT?
 	{

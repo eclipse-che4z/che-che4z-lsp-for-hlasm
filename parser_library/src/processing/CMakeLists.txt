@@ -12,8 +12,6 @@
 
 target_sources(parser_library PRIVATE
 	branching_provider.h
-	context_manager.cpp
-	context_manager.h
 	error_statement.cpp
 	error_statement.h
 	op_code.cpp

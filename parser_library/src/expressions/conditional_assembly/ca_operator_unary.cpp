@@ -32,15 +32,13 @@ undef_sym_set ca_unary_operator::get_undefined_attributed_symbols(const evaluati
     return expr->get_undefined_attributed_symbols(eval_ctx);
 }
 
-void ca_unary_operator::resolve_expression_tree(context::SET_t_enum kind)
+void ca_unary_operator::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     if (expr_kind != kind)
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
+        diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else
-        expr->resolve_expression_tree(kind);
+        expr->resolve_expression_tree(kind, diags);
 }
-
-void ca_unary_operator::collect_diags() const { collect_diags_from_child(*expr); }
 
 bool ca_unary_operator::is_character_expression(character_expression_purpose purpose) const
 {
@@ -60,19 +58,19 @@ ca_function_unary_operator::ca_function_unary_operator(
     , function(function)
 {}
 
-void ca_function_unary_operator::resolve_expression_tree(context::SET_t_enum kind)
+void ca_function_unary_operator::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     if (expr_kind != kind)
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
+        diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else
     {
         auto param_type = ca_common_expr_policy::get_operands_type(function, kind);
-        expr->resolve_expression_tree(param_type);
+        expr->resolve_expression_tree(param_type, diags);
 
         // TODO: additional types?
         if (param_type == context::SET_t_enum::C_TYPE
             && !expr->is_character_expression(character_expression_purpose::function_parameter))
-            expr->add_diagnostic(diagnostic_op::error_CE017_character_expression_expected(expr->expr_range));
+            diags.add_diagnostic(diagnostic_op::error_CE017_character_expression_expected(expr->expr_range));
     }
 }
 
@@ -90,7 +88,7 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand, con
     }
     else if (expr_kind == context::SET_t_enum::C_TYPE)
     {
-        diagnostic_adder add_diagnostic(eval_ctx, expr_range);
+        diagnostic_adder add_diagnostic(eval_ctx.diags, expr_range);
         switch (function)
         {
             case ca_expr_ops::BYTE:
@@ -132,9 +130,9 @@ ca_par_operator::ca_par_operator(ca_expr_ptr expr, range expr_range)
     : ca_unary_operator(std::move(expr), context::SET_t_enum::UNDEF_TYPE, std::move(expr_range))
 {}
 
-void ca_par_operator::resolve_expression_tree(context::SET_t_enum kind)
+void ca_par_operator::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
-    expr->resolve_expression_tree(kind);
+    expr->resolve_expression_tree(kind, diags);
     expr_kind = expr->expr_kind;
 }
 

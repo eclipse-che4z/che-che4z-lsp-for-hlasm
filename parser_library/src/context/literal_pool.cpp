@@ -18,6 +18,7 @@
 #include <functional>
 
 #include "context/ordinary_assembly/ordinary_assembly_context.h"
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/ordinary_assembly/postponed_statement.h"
 #include "diagnosable_ctx.h"
 #include "ebcdic_encoding.h"
@@ -93,11 +94,12 @@ public:
     const processing::op_code& opcode_ref() const override { return op_code; }
     processing::processing_format format_ref() const override { return dc_format; }
     const semantics::operands_si& operands_ref() const override { return op; }
+    std::span<const semantics::literal_si> literals() const override { return {}; }
     const semantics::remarks_si& remarks_ref() const override { return empty_remarks; }
     const range& stmt_range_ref() const override { return details->r; }
     const semantics::label_si& label_ref() const override { return empty_label; }
     const semantics::instruction_si& instruction_ref() const override { return empty_instr; }
-    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override { return {}; };
+    std::span<const diagnostic_op> diagnostics() const override { return {}; };
 };
 const semantics::remarks_si literal_pool::literal_postponed_statement::empty_remarks({}, {});
 const semantics::label_si literal_pool::literal_postponed_statement::empty_label(range {});
@@ -105,7 +107,7 @@ const semantics::instruction_si literal_pool::literal_postponed_statement::empty
 const processing::processing_format literal_pool::literal_postponed_statement::dc_format(
     processing::processing_kind::ORDINARY, processing::processing_form::ASM, processing::operand_occurence::PRESENT);
 
-void literal_pool::generate_pool(dependency_solver& solver, const diagnosable_ctx& diags)
+void literal_pool::generate_pool(diagnosable_ctx& diags)
 {
     ordinary_assembly_context& ord_ctx = hlasm_ctx.ord_ctx;
 
@@ -118,7 +120,13 @@ void literal_pool::generate_pool(dependency_solver& solver, const diagnosable_ct
         if (!lit->access_data_def_type()) // unknown type
             continue;
 
-        size = (semantics::data_def_operand::get_operand_value(*lit, solver).get_length() + 7) / 8;
+        ordinary_assembly_dependency_solver solver(ord_ctx,
+            dependency_evaluation_context {
+                it->second.loctr,
+                it->first.generation,
+                it->first.unique_id,
+            });
+        size = (semantics::data_def_operand::get_operand_value(*lit, solver, diags).get_length() + 7) / 8;
         if (size == 0)
             continue;
 
@@ -139,6 +147,13 @@ void literal_pool::generate_pool(dependency_solver& solver, const diagnosable_ct
         const auto& lit = lit_key.lit;
         const auto& lit_val = it->second;
 
+        ordinary_assembly_dependency_solver solver(ord_ctx,
+            dependency_evaluation_context {
+                lit_val.loctr,
+                lit_key.generation,
+                lit_key.unique_id,
+            });
+
         if (!lit->access_data_def_type()) // unknown type
             continue;
 
@@ -148,7 +163,7 @@ void literal_pool::generate_pool(dependency_solver& solver, const diagnosable_ct
             ord_ctx.align(lit_val.align_on_halfword ? halfword : no_align),
             symbol_attributes(symbol_origin::DAT,
                 ebcdic_encoding::a2e[(unsigned char)lit->get_type_attribute()],
-                lit->get_length_attribute(solver)),
+                lit->get_length_attribute(solver, diags)),
             {});
 
         if (size == 0)
@@ -175,7 +190,7 @@ void literal_pool::generate_pool(dependency_solver& solver, const diagnosable_ct
             if (!ddt) // unknown type
                 continue;
 
-            auto ddo = semantics::data_def_operand::get_operand_value(*lit, solver);
+            auto ddo = semantics::data_def_operand::get_operand_value(*lit, solver, diags);
             ddt->check_DC(ddo, diagnostic_collector(&diags, lit_val.stack));
         }
     }

@@ -16,6 +16,7 @@
 #define CONTEXT_HLASM_STATEMENT_H
 
 #include <memory>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -33,12 +34,6 @@ struct resolved_statement;
 } // namespace hlasm_plugin::parser_library::processing
 
 namespace hlasm_plugin::parser_library::context {
-
-struct hlasm_statement;
-
-using shared_stmt_ptr = std::shared_ptr<const hlasm_statement>;
-
-using statement_block = std::vector<shared_stmt_ptr>;
 
 enum class statement_kind
 {
@@ -60,13 +55,17 @@ struct hlasm_statement
 
     virtual position statement_position() const = 0;
 
-    virtual std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const = 0;
+    virtual std::span<const diagnostic_op> diagnostics() const = 0;
 
     virtual ~hlasm_statement() = default;
 
 protected:
     hlasm_statement(const statement_kind kind);
 };
+
+using shared_stmt_ptr = std::shared_ptr<const hlasm_statement>;
+
+using statement_block = std::vector<shared_stmt_ptr>;
 
 
 } // namespace hlasm_plugin::parser_library::context

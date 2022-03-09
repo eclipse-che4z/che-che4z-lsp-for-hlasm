@@ -314,6 +314,15 @@ public:
     name_result try_get_symbol_name(const std::string& symbol);
 };
 
+bool test_symbol_for_read(
+    const var_sym_ptr& var, const std::vector<A_t>& subscript, range symbol_range, diagnostic_op_consumer& diags);
+
+SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
+    id_index name,
+    const std::vector<A_t>& subscript,
+    range symbol_range,
+    diagnostic_op_consumer& diags);
+
 } // namespace hlasm_plugin::parser_library::context
 
 #endif

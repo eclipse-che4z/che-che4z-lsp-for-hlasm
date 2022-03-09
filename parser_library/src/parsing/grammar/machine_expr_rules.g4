@@ -104,14 +104,21 @@ mach_term returns [mach_expr_ptr m_e]
 	| literal
 	{
 		auto rng = provider.get_range($literal.ctx);
-		if (auto& lv = $literal.value; lv.has_value())
-			$m_e = std::make_unique<mach_expr_literal>(rng, std::move(lv.value()), $literal.text);
+		if (auto& lv = $literal.value; lv)
+			$m_e = std::make_unique<mach_expr_literal>(rng, std::move(lv));
 		else
 			$m_e = std::make_unique<mach_expr_default>(rng);
 	};
 
 
-literal returns [std::optional<data_definition> value]
+literal returns [literal_si value]
+	: literal_internal
+	{
+		if (auto& v = $literal_internal.value; v.has_value())
+			$value = collector.add_literal($literal_internal.text, std::move(v.value()), provider.get_range($literal_internal.ctx));
+	};
+
+literal_internal returns [std::optional<data_definition> value]
 	: equals
 	{
 		bool lit_allowed = allow_literals();
@@ -120,7 +127,7 @@ literal returns [std::optional<data_definition> value]
 	data_def_with_nominal
 	{
 		if (lit_allowed)
-			$value = std::move($data_def_with_nominal.value);
+			$value.emplace(std::move($data_def_with_nominal.value));
 		else
 			add_diagnostic(diagnostic_severity::error, "S0013", "Invalid literal usage", provider.get_range($equals.ctx));
 	};
@@ -148,8 +155,8 @@ mach_data_attribute_value returns [std::variant<std::monostate, id_index, std::u
 	: literal
 	{
 		auto rng = provider.get_range($literal.ctx);
-		if (auto& lv = $literal.value; lv.has_value())
-			$data = std::make_unique<mach_expr_literal>(rng, std::move(lv.value()), $literal.text);
+		if (auto& lv = $literal.value; lv)
+			$data = std::make_unique<mach_expr_literal>(rng, std::move(lv));
 	}
 	| id
 	{
