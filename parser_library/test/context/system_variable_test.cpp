@@ -186,14 +186,20 @@ TEST(system_variable, sysstmt)
 &VAR    SETA 2
 &BOOL   SETB (&VAR EQ 2)
 &STR    SETC 'SOMETHING'
-        GBLC &STMTC
+        GBLC &STMTC,&STMTN
 &STMTA  SETC '&SYSSTMT'
 
         MACRO
         MAC &VAR
-        GBLC &STMTC
+        GBLC &STMTC,&STMTN
         LR 1,1
 &STMTC  SETC '&SYSSTMT'
+        MACRO
+        NESTED
+        GBLC &STMTN
+&STMTN  SETC '&SYSSTMT'
+        MEND
+        NESTED
 
         MEND
 
@@ -210,8 +216,9 @@ TEST(system_variable, sysstmt)
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTA"), "00000007");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000017");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000021");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000025");
-    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "STMTE"), 26);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000023");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000027");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000040");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "STMTE"), 41);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTN"), "00000035");
 }
