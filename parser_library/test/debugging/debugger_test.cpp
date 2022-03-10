@@ -152,7 +152,7 @@ public:
         auto actual_children = d.variables(child_vars);
         if (actual_children.size() != children_.size())
             return false;
-        for (auto actual_ch : actual_children)
+        for (const auto& actual_ch : actual_children)
         {
             std::string actual_ch_name(actual_ch.name);
             auto found = children_.find(actual_ch_name);
