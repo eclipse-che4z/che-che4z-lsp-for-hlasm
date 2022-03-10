@@ -33,6 +33,7 @@ public:
     virtual const symbol* get_symbol(id_index name) const = 0;
     virtual std::optional<address> get_loctr() const = 0;
     virtual id_index get_literal_id(const std::shared_ptr<const expressions::data_definition>&) = 0;
+    virtual bool using_active(id_index label, const section* sect) = 0;
 
 protected:
     ~dependency_solver() = default;

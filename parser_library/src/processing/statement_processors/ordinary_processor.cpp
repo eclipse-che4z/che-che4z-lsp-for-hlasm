@@ -175,8 +175,10 @@ struct processing_status_visitor
 
     processing_status operator()(const context::assembler_instruction* i) const
     {
-        const auto f = id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS") ? processing_form::DAT
-                                                                                          : processing_form::ASM;
+        const auto f =
+            id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS") || id == hlasm_ctx.ids().add("DXD")
+            ? processing_form::DAT
+            : processing_form::ASM;
         const auto o = i->max_operands() == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT;
         return return_value(f, o, context::instruction_type::ASM);
     }

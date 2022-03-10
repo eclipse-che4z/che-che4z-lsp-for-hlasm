@@ -17,11 +17,55 @@
 #include <limits>
 
 #include "context/instruction.h"
+#include "context/ordinary_assembly/section.h"
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expr_visitor.h"
 #include "expressions/mach_operator.h"
 #include "operand_visitor.h"
+
+namespace hlasm_plugin::parser_library {
+namespace {
+class using_label_checker final : public expressions::mach_expr_visitor, diagnostic_consumer<diagnostic_op>
+{
+    context::dependency_solver& solver;
+    diagnostic_consumer<diagnostic_op>& diags;
+
+    void add_diagnostic(diagnostic_op) const override {}
+
+public:
+    using_label_checker(context::dependency_solver& solver, diagnostic_consumer<diagnostic_op>& diags)
+        : solver(solver)
+        , diags(diags)
+    {}
+
+    // Inherited via mach_expr_visitor
+    void visit(const expressions::mach_expr_constant&) override {}
+    void visit(const expressions::mach_expr_data_attr& attr) override
+    {
+        if (attr.lit)
+            attr.lit->get_data_definition().apply(*this);
+    }
+    void visit(const expressions::mach_expr_symbol& expr) override
+    {
+        if (!expr.qualifier)
+            return;
+        auto value = expr.evaluate(solver, *this);
+        if (value.value_kind() != context::symbol_value_kind::RELOC)
+            return;
+        const auto& reloc = value.get_reloc();
+        if (!reloc.is_simple())
+            return;
+        const auto* section = reloc.bases().front().first.owner;
+        if (!solver.using_active(expr.qualifier, section))
+            diags.add_diagnostic(diagnostic_op::error_ME005(*expr.qualifier, *section->name, expr.get_range()));
+    }
+    void visit(const expressions::mach_expr_location_counter&) override {}
+    void visit(const expressions::mach_expr_default&) override {}
+    void visit(const expressions::mach_expr_literal& l) override { l.get_data_definition().apply(*this); }
+};
+} // namespace
+} // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::semantics {
 
@@ -132,6 +176,9 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
     context::dependency_solver& info, checking::machine_operand_type type_hint, diagnostic_op_consumer& diags) const
 {
+    using_label_checker lc(info, diags);
+    expression->apply(lc);
+
     if (type_hint == checking::machine_operand_type::RELOC_IMM)
     {
         return make_rel_imm_operand(info, *expression, diags);
@@ -290,6 +337,9 @@ std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inn
 {
     if (!can_have_ordsym && dynamic_cast<expressions::mach_expr_symbol*>(expression.get()))
         return std::make_unique<checking::one_operand>(value_);
+
+    using_label_checker lc(info, diags);
+    expression->apply(lc);
 
     auto res = expression->evaluate(info, diags);
     switch (res.value_kind())

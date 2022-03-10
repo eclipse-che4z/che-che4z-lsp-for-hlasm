@@ -73,6 +73,11 @@ struct test_context : public dependency_solver
         assert(false);
         return id_index();
     }
+    bool using_active(id_index label, const section* sect) override
+    {
+        assert(false);
+        return false;
+    }
 };
 
 std::unique_ptr<mach_expression> operator+(std::unique_ptr<mach_expression> l, std::unique_ptr<mach_expression> r)

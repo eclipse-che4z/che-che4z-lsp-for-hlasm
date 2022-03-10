@@ -46,4 +46,9 @@ dependency_evaluation_context ordinary_assembly_dependency_solver::derive_curren
     };
 }
 
+bool ordinary_assembly_dependency_solver::using_active(id_index label, const section* sect)
+{
+    return ord_context.using_label_active(active_using, label, sect);
+}
+
 } // namespace hlasm_plugin::parser_library::context
