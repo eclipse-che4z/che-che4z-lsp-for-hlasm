@@ -33,13 +33,11 @@ public:
     std::vector<variable_ptr> values() const override;
     size_t size() const override;
 
-protected:
-    std::string get_string_value() const override;
-    const std::string& get_string_name() const override;
-
 private:
     const context::macro_param_base& macro_param_;
     std::vector<size_t> index_;
+    std::string name_;
+    std::string value_;
 };
 
 

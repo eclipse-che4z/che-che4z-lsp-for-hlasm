@@ -37,10 +37,6 @@ public:
     std::vector<variable_ptr> values() const override;
     size_t size() const override;
 
-protected:
-    std::string get_string_value() const override;
-    const std::string& get_string_name() const override;
-
 private:
     template<typename T>
     T get_value() const;
@@ -49,6 +45,9 @@ private:
 
     const context::set_symbol_base& set_symbol_;
     const std::optional<int> index_;
+
+    std::string name_;
+    std::string value_;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

@@ -46,11 +46,10 @@ public:
     virtual ~variable() = default;
 
 protected:
-    virtual std::string get_string_value() const = 0;
-    virtual const std::string& get_string_name() const = 0;
+    variable(const std::string& name, const std::string& value);
 
-    std::optional<std::string> name_;
-    std::optional<std::string> value_;
+    const std::string& name_;
+    const std::string& value_;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging
