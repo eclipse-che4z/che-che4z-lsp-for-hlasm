@@ -16,7 +16,7 @@
 
 using namespace hlasm_plugin::parser_library::debugging;
 
-std::string variable::get_value() const
+const std::string& variable::get_value() const
 {
     if (value_)
         return *value_;

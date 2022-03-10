@@ -28,6 +28,8 @@ void set_symbol_variable::fill_string_value()
         value_.emplace(std::to_string(get_value<context::A_t>()));
     else if (type() == set_type::B_TYPE)
         value_.emplace(get_value<context::B_t>() ? "TRUE" : "FALSE");
+    else
+        value_ = get_value<std::string>();
 }
 
 
@@ -47,7 +49,10 @@ set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym
     fill_string_value();
 }
 
-std::string set_symbol_variable::get_string_value() const { return get_value<std::string>(); }
+std::string set_symbol_variable::get_string_value() const
+{
+    throw std::runtime_error("Function set_symbol_variable::get_string_value should never be called!");
+}
 
 
 set_type set_symbol_variable::type() const { return (set_type)set_symbol_.type; }

@@ -31,7 +31,7 @@ using variable_ptr = std::unique_ptr<variable>;
 class variable
 {
 public:
-    std::string get_value() const;
+    const std::string& get_value() const;
     const std::string& get_name() const;
 
     virtual set_type type() const = 0;

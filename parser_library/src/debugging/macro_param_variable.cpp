@@ -28,9 +28,14 @@ macro_param_variable::macro_param_variable(const context::macro_param_base& para
         name_.emplace(std::to_string(index_.back()));
     else
         name_.emplace("&" + *macro_param_.id);
+
+    value_ = macro_param_.get_value(index_);
 }
 
-std::string macro_param_variable::get_string_value() const { return macro_param_.get_value(index_); };
+std::string macro_param_variable::get_string_value() const
+{
+    throw std::runtime_error("Function macro_param_variable::get_string_value should never be called!");
+};
 
 set_type macro_param_variable::type() const { return set_type::C_TYPE; }
 
