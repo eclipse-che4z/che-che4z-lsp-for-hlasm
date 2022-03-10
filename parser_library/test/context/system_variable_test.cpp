@@ -186,18 +186,18 @@ TEST(system_variable, sysstmt)
 &VAR    SETA 2
 &BOOL   SETB (&VAR EQ 2)
 &STR    SETC 'SOMETHING'
-        GBLC &STMTC,&STMTN
+        GBLC &STMTC,&STMTD
 &STMTA  SETC '&SYSSTMT'
 
         MACRO
         MAC &VAR
-        GBLC &STMTC,&STMTN
+        GBLC &STMTC,&STMTD
         LR 1,1
 &STMTC  SETC '&SYSSTMT'
         MACRO
         NESTED
-        GBLC &STMTN
-&STMTN  SETC '&SYSSTMT'
+        GBLC &STMTD
+&STMTD  SETC '&SYSSTMT'
         MEND
         NESTED
 
@@ -206,8 +206,8 @@ TEST(system_variable, sysstmt)
 &STMTB  SETC '&SYSSTMT'
 10      MAC 13
         LR 1,2
-&STMTD  SETC '&SYSSTMT'
-&STMTE  SETA &SYSSTMT
+&STMTE  SETC '&SYSSTMT'
+&STMTF  SETA &SYSSTMT
 )";
 
     analyzer a(input);
@@ -218,7 +218,7 @@ TEST(system_variable, sysstmt)
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTA"), "00000007");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000023");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000026");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000040");
-    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "STMTE"), 41);
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTN"), "00000034");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000034");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTE"), "00000040");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "STMTF"), 41);
 }
