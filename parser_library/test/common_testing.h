@@ -28,7 +28,6 @@
 #include "hlasmparser.h"
 #include "lexing/input_source.h"
 #include "lexing/token_stream.h"
-#include "processing/context_manager.h"
 #include "processing/instruction_sets/macro_processor.h"
 
 

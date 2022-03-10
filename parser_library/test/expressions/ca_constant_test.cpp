@@ -23,12 +23,13 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_constant, undefined_attributes)
 {
+    diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     ca_constant c(1, range());
 
-    ASSERT_EQ(c.get_undefined_attributed_symbols(eval_ctx).size(), 0U);
+    EXPECT_EQ(c.get_undefined_attributed_symbols(eval_ctx).size(), 0U);
 }
 
 class collectable_mock : public diagnosable_op_impl

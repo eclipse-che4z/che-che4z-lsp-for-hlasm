@@ -15,6 +15,7 @@
 #ifndef CONTEXT_DEPENDANT_H
 #define CONTEXT_DEPENDANT_H
 
+#include <compare>
 #include <variant>
 
 #include "address.h"
@@ -28,7 +29,7 @@ struct attr_ref
     data_attr_kind attribute;
     id_index symbol_id;
 
-    bool operator==(const attr_ref& oth) const;
+    auto operator<=>(const attr_ref&) const = default;
 };
 
 // structure representing objects with dependencies

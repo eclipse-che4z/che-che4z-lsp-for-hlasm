@@ -38,12 +38,12 @@ public:
     size_t size() const override;
 
 protected:
-    const std::string& get_string_value() const override;
+    std::string get_string_value() const override;
     const std::string& get_string_name() const override;
 
 private:
     template<typename T>
-    const T& get_value() const;
+    T get_value() const;
 
     void fill_string_value();
 

@@ -122,7 +122,7 @@ INSTANTIATE_TEST_SUITE_P(system_variable,
         system_variable_params::create_input("SYSNEST", { "1", "1", "1", "1", "", "", "" }),
         system_variable_params::create_input("SYSOPT_RENT", { "0", "0", "0", "0", "", "", "" }),
         system_variable_params::create_input("SYSPARM", { "PAR", "PAR", "PAR", "PAR", "", "", "" }),
-        system_variable_params::create_input("SYSSTMT", { "00000039", "00000040", "00000041", "00000042", "", "", "" }),
+        system_variable_params::create_input("SYSSTMT", { "00000038", "00000039", "00000040", "00000041", "", "", "" }),
         system_variable_params::create_input("SYSSTYP", { "CSECT", "CSECT", "CSECT", "CSECT", "", "", "" }),
         system_variable_params::create_input(
             "SYSTEM_ID", { "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "", "", "" }),
@@ -186,22 +186,28 @@ TEST(system_variable, sysstmt)
 &VAR    SETA 2
 &BOOL   SETB (&VAR EQ 2)
 &STR    SETC 'SOMETHING'
-        GBLC &STMTC
+        GBLC &STMTC,&STMTD
 &STMTA  SETC '&SYSSTMT'
 
         MACRO
         MAC &VAR
-        GBLC &STMTC
+        GBLC &STMTC,&STMTD
         LR 1,1
 &STMTC  SETC '&SYSSTMT'
+        MACRO
+        NESTED
+        GBLC &STMTD
+&STMTD  SETC '&SYSSTMT'
+        MEND
+        NESTED
 
         MEND
 
 &STMTB  SETC '&SYSSTMT'
 10      MAC 13
         LR 1,2
-&STMTD  SETC '&SYSSTMT'
-&STMTE  SETA &SYSSTMT
+&STMTE  SETC '&SYSSTMT'
+&STMTF  SETA &SYSSTMT
 )";
 
     analyzer a(input);
@@ -210,8 +216,9 @@ TEST(system_variable, sysstmt)
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTA"), "00000007");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000017");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000021");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000025");
-    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "STMTE"), 26);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000023");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000026");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000034");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTE"), "00000040");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "STMTF"), 41);
 }

@@ -14,6 +14,9 @@
 
 #include "macro_param.h"
 
+#include "diagnostic.h"
+#include "diagnostic_consumer.h"
+#include "range.h"
 #include "system_variable.h"
 
 using namespace hlasm_plugin::parser_library::context;
@@ -38,7 +41,7 @@ macro_param_base::macro_param_base(macro_param_type param_type, id_index name, b
     , param_type(param_type)
 {}
 
-const C_t& macro_param_base::get_value(const std::vector<size_t>& offset) const
+C_t macro_param_base::get_value(const std::vector<size_t>& offset) const
 {
     const macro_param_data_component* tmp = real_data();
 
@@ -49,9 +52,9 @@ const C_t& macro_param_base::get_value(const std::vector<size_t>& offset) const
     return tmp->get_value();
 }
 
-const C_t& macro_param_base::get_value(size_t idx) const { return real_data()->get_ith(idx)->get_value(); }
+C_t macro_param_base::get_value(size_t idx) const { return real_data()->get_ith(idx)->get_value(); }
 
-const C_t& macro_param_base::get_value() const { return real_data()->get_value(); }
+C_t macro_param_base::get_value() const { return real_data()->get_value(); }
 
 const macro_param_data_component* macro_param_base::get_data(const std::vector<size_t>& offset) const
 {
@@ -83,6 +86,36 @@ A_t macro_param_base::count(std::vector<size_t> offset) const
         tmp = tmp->get_ith(idx - 1);
     }
     return (A_t)tmp->get_value().size();
+}
+
+bool macro_param_base::can_read(
+    const std::vector<context::A_t>& subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const
+{
+    if (subscript.empty())
+    {
+        return true;
+    }
+
+    if (0 == subscript[0])
+    {
+        diags.add_diagnostic(diagnostic_op::error_E012(
+            "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
+        return false;
+    }
+    else if (1 == subscript[0])
+    {
+        for (size_t i = 1; i < subscript.size(); ++i)
+        {
+            if (0 == subscript[i])
+            {
+                diags.add_diagnostic(diagnostic_op::error_E012(
+                    "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 size_t macro_param_base::size(std::vector<size_t> offset) const

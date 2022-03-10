@@ -53,6 +53,10 @@ public:
     virtual std::vector<size_t> keys() const = 0;
     virtual size_t size() const = 0;
 
+    bool can_read(const std::vector<context::A_t>& subscript,
+        range symbol_range,
+        diagnostic_consumer<diagnostic_op>& diags) const override;
+
 protected:
     set_symbol_base(id_index name, bool is_scalar, bool is_global, SET_t_enum type);
 };
@@ -74,7 +78,7 @@ public:
 
     // gets value from non scalar set symbol
     // if data at idx is not set or it does not exists, default is returned
-    const T& get_value(size_t idx) const
+    T get_value(size_t idx) const
     {
         if (is_scalar)
             return object_traits<T>::default_v();
@@ -86,7 +90,7 @@ public:
     }
 
     // gets value from scalar set symbol
-    const T& get_value() const
+    T get_value() const
     {
         if (!is_scalar)
             return object_traits<T>::default_v();

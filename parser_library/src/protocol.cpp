@@ -180,7 +180,7 @@ scope sequence<scope, const debugging::scope*>::item(size_t index) const
 
 variable::variable(const debugging::variable& impl)
     : name(impl.get_name())
-    , value(impl.get_value())
+    , value(std::move(impl.get_value()))
     , variable_reference(impl.var_reference)
     , type(impl.type())
 {}

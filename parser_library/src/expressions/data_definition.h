@@ -37,7 +37,7 @@ class mach_expr_visitor;
 
 // Represents data definition operand as it was written into source code.
 // Uses machine expressions to represent all modifiers and nominal value.
-struct data_definition final : public diagnosable_op_impl, public context::dependable
+struct data_definition final : public context::dependable
 {
     enum class length_type : unsigned char
     {
@@ -71,9 +71,9 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
 
     char get_type_attribute() const;
     // Expects, that scale does not have unresolved dependencies
-    int32_t get_scale_attribute(context::dependency_solver& info) const;
-    uint32_t get_length_attribute(context::dependency_solver& info) const;
-    int32_t get_integer_attribute(context::dependency_solver& info) const;
+    int32_t get_scale_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    uint32_t get_length_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    int32_t get_integer_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 
     // Returns true, if this data definition has one of the types, that take expressions consisting of only one symbol
     // (like V or R)
@@ -84,18 +84,19 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
     // Expects that check_single_symbol_ok returned true.
     std::vector<context::id_index> get_single_symbol_names() const;
 
-    void collect_diags() const override;
-
     // When any of the evaluated expressions have dependencies, resulting modifier will have data_def_field::present set
     // to false
-    checking::dupl_factor_modifier_t evaluate_dupl_factor(context::dependency_solver& info) const;
-    checking::data_def_length_t evaluate_length(context::dependency_solver& info) const;
-    checking::scale_modifier_t evaluate_scale(context::dependency_solver& info) const;
-    checking::exponent_modifier_t evaluate_exponent(context::dependency_solver& info) const;
+    checking::dupl_factor_modifier_t evaluate_dupl_factor(
+        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    checking::data_def_length_t evaluate_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    checking::scale_modifier_t evaluate_scale(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    checking::exponent_modifier_t evaluate_exponent(
+        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 
     // When any of the evaluated expressions have dependencies, resulting modifier will have
     // data_def_expr::ignored or data_def_address::ignored set to false
-    checking::nominal_value_t evaluate_nominal_value(context::dependency_solver& info) const;
+    checking::nominal_value_t evaluate_nominal_value(
+        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 
     void apply(mach_expr_visitor& visitor) const;
 
@@ -123,7 +124,7 @@ public:
     void push(push_arg v, range r);
     void push(nominal_value_ptr n);
 
-    data_definition take_result();
+    std::pair<data_definition, std::vector<diagnostic_op>> take_result();
 
     void set_collector(semantics::collector& collector) { m_collector = &collector; }
 
@@ -133,6 +134,7 @@ private:
     mach_expr_ptr read_number(std::string_view& v, range& r);
 
     data_definition m_result;
+    std::vector<diagnostic_op> m_errors;
 
     semantics::collector* m_collector = nullptr;
 

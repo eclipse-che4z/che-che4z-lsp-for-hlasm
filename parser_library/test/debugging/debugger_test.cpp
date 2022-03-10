@@ -137,7 +137,7 @@ public:
         }
 
         if (data_)
-            return *data_ == std::string_view(var.value);
+            return *data_ == var.value;
         else
             return var.value.size() == 0;
     }
@@ -152,7 +152,7 @@ public:
         auto actual_children = d.variables(child_vars);
         if (actual_children.size() != children_.size())
             return false;
-        for (auto actual_ch : actual_children)
+        for (const auto& actual_ch : actual_children)
         {
             std::string actual_ch_name(actual_ch.name);
             auto found = children_.find(actual_ch_name);
@@ -201,7 +201,7 @@ bool check_vars(debugger& d,
 {
     if (vars.size() != exp_vars.size())
         return false;
-    for (auto var : vars)
+    for (auto& var : vars)
     {
         auto it = exp_vars.find(std::string(var.name));
         if (it == exp_vars.end())
@@ -240,13 +240,13 @@ bool check_step(
         if (sc.size() != 3U)
             return false;
         using variables = std::vector<hlasm_plugin::parser_library::variable>;
-        variables globs(d.variables(sc.item(0).variable_reference));
+        variables globs(std::move(d.variables(sc.item(0).variable_reference)));
         if (!check_vars(d, globs, exp_frame_vars[i].globals))
             return false;
-        variables locs(d.variables(sc.item(1).variable_reference));
+        variables locs(std::move(d.variables(sc.item(1).variable_reference)));
         if (!check_vars(d, locs, exp_frame_vars[i].locals))
             return false;
-        variables ords(d.variables(sc.item(2).variable_reference));
+        variables ords(std::move(d.variables(sc.item(2).variable_reference)));
         if (!check_vars(d, ords, exp_frame_vars[i].ord_syms))
             return false;
     }

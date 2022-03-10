@@ -34,7 +34,7 @@ public:
     size_t size() const override;
 
 protected:
-    const std::string& get_string_value() const override;
+    std::string get_string_value() const override;
     const std::string& get_string_name() const override;
 
 private:

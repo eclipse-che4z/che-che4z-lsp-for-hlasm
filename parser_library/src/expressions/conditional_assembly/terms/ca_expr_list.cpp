@@ -41,7 +41,7 @@ bool is_symbol(const ca_expr_ptr& expr) { return dynamic_cast<const ca_symbol*>(
 
 const std::string& get_symbol(const ca_expr_ptr& expr) { return *dynamic_cast<const ca_symbol&>(*expr).symbol; }
 
-void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind)
+void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     expr_kind = kind;
 
@@ -49,19 +49,13 @@ void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind)
         unknown_functions_to_operators();
 
     if (kind == context::SET_t_enum::A_TYPE)
-        resolve<context::A_t>();
+        resolve<context::A_t>(diags);
     else if (kind == context::SET_t_enum::B_TYPE)
-        resolve<context::B_t>();
+        resolve<context::B_t>(diags);
     else if (kind == context::SET_t_enum::C_TYPE)
-        resolve<context::C_t>();
+        resolve<context::C_t>(diags);
     else
         assert(false);
-}
-
-void ca_expr_list::collect_diags() const
-{
-    for (auto&& expr : expr_list)
-        collect_diags_from_child(*expr);
 }
 
 bool ca_expr_list::is_character_expression(character_expression_purpose purpose) const
@@ -117,27 +111,27 @@ void ca_expr_list::unknown_functions_to_operators()
 }
 
 template<typename T>
-void ca_expr_list::resolve()
+void ca_expr_list::resolve(diagnostic_op_consumer& diags)
 {
     if (expr_list.empty())
     {
-        add_diagnostic(diagnostic_op::error_CE003(expr_range));
+        diags.add_diagnostic(diagnostic_op::error_CE003(expr_range));
         return;
     }
 
     size_t it = 0;
     bool err = false;
 
-    ca_expr_ptr final_expr = retrieve_term<typename ca_expr_traits<T>::policy_t>(it, 0);
+    ca_expr_ptr final_expr = retrieve_term<typename ca_expr_traits<T>::policy_t>(it, 0, diags);
     err |= final_expr == nullptr;
 
     while (it != expr_list.size() && !err)
     {
         auto op_range = expr_list[it]->expr_range;
 
-        auto [prio, op_type] = retrieve_binary_operator<typename ca_expr_traits<T>::policy_t>(it, err);
+        auto [prio, op_type] = retrieve_binary_operator<typename ca_expr_traits<T>::policy_t>(it, err, diags);
 
-        auto r_expr = retrieve_term<typename ca_expr_traits<T>::policy_t>(++it, prio);
+        auto r_expr = retrieve_term<typename ca_expr_traits<T>::policy_t>(++it, prio, diags);
         err |= r_expr == nullptr;
 
         final_expr = std::make_unique<ca_function_binary_operator>(
@@ -151,7 +145,7 @@ void ca_expr_list::resolve()
     }
 
     // resolve created tree
-    final_expr->resolve_expression_tree(context::object_traits<T>::type_enum);
+    final_expr->resolve_expression_tree(context::object_traits<T>::type_enum, diags);
 
     // move resolved tree to the front of the array
     expr_list.clear();
@@ -159,7 +153,7 @@ void ca_expr_list::resolve()
 }
 
 template<typename EXPR_POLICY>
-ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
+ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority, diagnostic_op_consumer& diags)
 {
     // list is exhausted
     if (it == expr_list.size())
@@ -167,7 +161,7 @@ ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
         auto r = expr_list[it - 1]->expr_range;
         r.start = r.end;
         r.end.column++;
-        add_diagnostic(diagnostic_op::error_CE003(r));
+        diags.add_diagnostic(diagnostic_op::error_CE003(r));
         return nullptr;
     }
 
@@ -179,7 +173,7 @@ ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
     {
         if (auto op_type = EXPR_POLICY::get_operator(get_symbol(curr_expr)); EXPR_POLICY::is_unary(op_type))
         {
-            auto new_expr = retrieve_term<EXPR_POLICY>(++it, EXPR_POLICY::get_priority(op_type));
+            auto new_expr = retrieve_term<EXPR_POLICY>(++it, EXPR_POLICY::get_priority(op_type), diags);
             if (!new_expr)
                 return nullptr;
 
@@ -197,7 +191,7 @@ ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
     auto op_range = expr_list[op_it]->expr_range;
     bool err = false;
 
-    auto [op_prio, op_type] = retrieve_binary_operator<EXPR_POLICY>(op_it, err);
+    auto [op_prio, op_type] = retrieve_binary_operator<EXPR_POLICY>(op_it, err, diags);
     if (err)
         return nullptr;
 
@@ -207,7 +201,7 @@ ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
     else
         it = op_it;
 
-    auto right_expr = retrieve_term<EXPR_POLICY>(++it, op_prio);
+    auto right_expr = retrieve_term<EXPR_POLICY>(++it, op_prio, diags);
     if (!right_expr)
         return nullptr;
 
@@ -216,19 +210,19 @@ ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
 }
 
 template<typename EXPR_POLICY>
-std::pair<int, ca_expr_ops> ca_expr_list::retrieve_binary_operator(size_t& it, bool& err)
+std::pair<int, ca_expr_ops> ca_expr_list::retrieve_binary_operator(size_t& it, bool& err, diagnostic_op_consumer& diags)
 {
     const auto& op = expr_list[it];
 
     if (!is_symbol(op))
     {
-        add_diagnostic(diagnostic_op::error_CE001(expr_range));
+        diags.add_diagnostic(diagnostic_op::error_CE001(expr_range));
         err = true;
         return std::make_pair(0, ca_expr_ops::UNKNOWN);
     }
     else if (!EXPR_POLICY::is_operator(EXPR_POLICY::get_operator(get_symbol(op))))
     {
-        add_diagnostic(diagnostic_op::error_CE002(get_symbol(op), expr_range));
+        diags.add_diagnostic(diagnostic_op::error_CE002(get_symbol(op), expr_range));
         err = true;
         return std::make_pair(0, ca_expr_ops::UNKNOWN);
     }

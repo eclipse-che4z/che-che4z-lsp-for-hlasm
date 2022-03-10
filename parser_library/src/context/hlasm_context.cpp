@@ -58,35 +58,40 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
 }
 
 namespace {
-template<typename DATA>
-std::string make_string_with_leading_zeros(DATA data, size_t max_number_of_leading_zeros)
+std::string left_pad(std::string s, size_t len, char c = ' ')
 {
-    std::string value = std::to_string(data);
-    if (auto value_len = value.size(); value_len < max_number_of_leading_zeros)
-        value.insert(0, max_number_of_leading_zeros - value_len, '0');
+    if (auto string_len = s.length(); string_len < len)
+        s.insert(0, len - string_len, c);
 
-    return value;
+    return s;
 }
 
 class sysstmt_macro_param_data : public macro_param_data_single_dynamic
 {
     const performance_metrics& metrics;
-    mutable C_t data_ = "";
+    const std::deque<code_scope>& scope_stack;
 
 public:
-    const C_t& get_dynamic_value() const override
+    C_t get_dynamic_value() const override
     {
-        size_t sysstmt = metrics.lines + metrics.macro_statements + 1;
-        C_t value = make_string_with_leading_zeros(sysstmt, 8);
+        size_t adjustment = 0;
 
-        data_ = std::move(value);
+        if (scope_stack.size() - 1 == 0)
+        {
+            // This is OPEN CODE -> add one
+            adjustment = 1;
+        }
 
-        return data_;
+        size_t sysstmt =
+            metrics.macro_def_statements + metrics.macro_statements + metrics.open_code_statements + adjustment;
+
+        return left_pad(std::to_string(sysstmt), 8, '0');
     };
 
-    explicit sysstmt_macro_param_data(const performance_metrics& metrics)
+    explicit sysstmt_macro_param_data(const performance_metrics& metrics, std::deque<code_scope>& scope_stack)
         : macro_param_data_single_dynamic()
-        , metrics(metrics) {};
+        , metrics(metrics)
+        , scope_stack(scope_stack) {};
 };
 
 macro_data_ptr create_macro_data(std::string value)
@@ -131,7 +136,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
         }
 
         {
-            std::string value = make_string_with_leading_zeros(SYSNDX_, 4);
+            std::string value = left_pad(std::to_string(SYSNDX_), 4, '0');
 
             scope.system_variables.insert(
                 create_system_variable<system_variable>(ids(), "SYSNDX", std::move(value), false));
@@ -284,7 +289,7 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         }
 
         {
-            auto value = std::make_unique<sysstmt_macro_param_data>(metrics);
+            auto value = std::make_unique<sysstmt_macro_param_data>(metrics, scope_stack_);
 
             globals_.insert(create_system_variable<system_variable>(ids(), "SYSSTMT", std::move(value), true));
         }
@@ -952,4 +957,72 @@ hlasm_context::name_result hlasm_context::try_get_symbol_name(const std::string&
     return std::make_pair(true, ids().add(symbol));
 }
 
+SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
+    id_index name,
+    const std::vector<A_t>& subscript,
+    range symbol_range,
+    diagnostic_op_consumer& diags)
+{
+    auto var = hlasm_ctx.get_var_sym(name);
+    if (!test_symbol_for_read(var, subscript, symbol_range, diags))
+        return SET_t();
+
+    if (auto set_sym = var->access_set_symbol_base())
+    {
+        size_t idx = 0;
+
+        if (subscript.empty())
+        {
+            switch (set_sym->type)
+            {
+                case SET_t_enum::A_TYPE:
+                    return set_sym->access_set_symbol<A_t>()->get_value();
+                case SET_t_enum::B_TYPE:
+                    return set_sym->access_set_symbol<B_t>()->get_value();
+                case SET_t_enum::C_TYPE:
+                    return set_sym->access_set_symbol<C_t>()->get_value();
+                default:
+                    return SET_t();
+            }
+        }
+        else
+        {
+            idx = (size_t)(subscript.front() - 1);
+
+            switch (set_sym->type)
+            {
+                case SET_t_enum::A_TYPE:
+                    return set_sym->access_set_symbol<A_t>()->get_value(idx);
+                case SET_t_enum::B_TYPE:
+                    return set_sym->access_set_symbol<B_t>()->get_value(idx);
+                case SET_t_enum::C_TYPE:
+                    return set_sym->access_set_symbol<C_t>()->get_value(idx);
+                default:
+                    return SET_t();
+            }
+        }
+    }
+    else if (auto mac_par = var->access_macro_param_base())
+    {
+        std::vector<size_t> tmp;
+        for (auto& v : subscript)
+        {
+            tmp.push_back((size_t)v);
+        }
+        return mac_par->get_value(tmp);
+    }
+    return SET_t();
+}
+
+bool test_symbol_for_read(
+    const var_sym_ptr& var, const std::vector<A_t>& subscript, range symbol_range, diagnostic_op_consumer& diags)
+{
+    if (!var)
+    {
+        diags.add_diagnostic(diagnostic_op::error_E010("variable", symbol_range)); // error - unknown name of variable
+        return false;
+    }
+
+    return var->can_read(subscript, symbol_range, diags);
+}
 } // namespace hlasm_plugin::parser_library::context

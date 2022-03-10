@@ -25,7 +25,8 @@ using namespace hlasm_plugin::parser_library;
 TEST(ca_symbol, undefined_attributes)
 {
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
     std::string name = "n";
 
     ca_symbol sym(&name, range());
@@ -40,10 +41,11 @@ TEST(ca_symbol, resolve_expr_tree)
     diagnostic_adder add_diags;
 
     ca_symbol sym(nullptr, range());
+    diagnostic_op_consumer_container diags;
 
-    sym.resolve_expression_tree(context::SET_t_enum::C_TYPE);
+    sym.resolve_expression_tree(context::SET_t_enum::C_TYPE, diags);
 
-    ASSERT_NE(sym.diags().size(), 0U);
+    EXPECT_FALSE(diags.diags.empty());
 }
 
 TEST(ca_symbol, is_char)

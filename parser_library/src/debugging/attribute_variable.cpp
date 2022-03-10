@@ -34,7 +34,7 @@ std::vector<variable_ptr> attribute_variable::values() const { return std::vecto
 
 size_t attribute_variable::size() const { return 0; }
 
-const std::string& attribute_variable::get_string_value() const
+std::string attribute_variable::get_string_value() const
 {
     throw std::runtime_error("Function ord_sym_attribute::get_string_value should never be called!");
 }

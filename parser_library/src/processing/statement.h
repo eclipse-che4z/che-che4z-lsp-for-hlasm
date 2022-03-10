@@ -61,9 +61,10 @@ struct resolved_statement_impl : public resolved_statement
     const semantics::operands_si& operands_ref() const override { return base_stmt->operands_ref(); }
     const semantics::remarks_si& remarks_ref() const override { return base_stmt->remarks_ref(); }
     const range& stmt_range_ref() const override { return base_stmt->stmt_range_ref(); }
+    std::span<const semantics::literal_si> literals() const override { return base_stmt->literals(); }
     const op_code& opcode_ref() const override { return status.second; }
     processing_format format_ref() const override { return status.first; }
-    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override
+    std::span<const diagnostic_op> diagnostics() const override
     {
         return { statement_diagnostics.data(), statement_diagnostics.data() + statement_diagnostics.size() };
     }
@@ -74,15 +75,18 @@ struct rebuilt_statement : public resolved_statement
 {
     rebuilt_statement(std::shared_ptr<const resolved_statement> base_stmt,
         std::optional<semantics::label_si> label,
-        std::optional<semantics::operands_si> operands)
+        std::optional<semantics::operands_si> operands,
+        std::optional<std::vector<semantics::literal_si>> literals)
         : base_stmt(base_stmt)
         , rebuilt_label(std::move(label))
         , rebuilt_operands(std::move(operands))
+        , rebuilt_literals(std::move(literals))
     {}
 
     std::shared_ptr<const resolved_statement> base_stmt;
     std::optional<semantics::label_si> rebuilt_label;
     std::optional<semantics::operands_si> rebuilt_operands;
+    std::optional<std::vector<semantics::literal_si>> rebuilt_literals;
 
     const semantics::label_si& label_ref() const override
     {
@@ -93,16 +97,17 @@ struct rebuilt_statement : public resolved_statement
     {
         return rebuilt_operands ? *rebuilt_operands : base_stmt->operands_ref();
     }
+    std::span<const semantics::literal_si> literals() const override
+    {
+        return rebuilt_literals ? *rebuilt_literals : base_stmt->literals();
+    }
     const semantics::remarks_si& remarks_ref() const override { return base_stmt->remarks_ref(); }
     const range& stmt_range_ref() const override { return base_stmt->stmt_range_ref(); }
     const op_code& opcode_ref() const override { return base_stmt->opcode_ref(); }
     processing_format format_ref() const override { return base_stmt->format_ref(); }
 
 
-    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override
-    {
-        return base_stmt->diagnostics();
-    }
+    std::span<const diagnostic_op> diagnostics() const override { return base_stmt->diagnostics(); }
 };
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -516,3 +516,30 @@ TEST(literals, part_of_expression)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(literals, propagate_error_from_literals)
+{
+    std::string input = R"(
+    LARL 0,=AL(0)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D003" }));
+}
+
+TEST(literals, everywhere)
+{
+    std::string input = R"(
+L   LAY   0,=A(0)-=A(1)(=A(0)-=A(0),=A(0)-=A(0))
+    LTORG ,
+LEN EQU   *-L
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 16);
+}

@@ -32,6 +32,8 @@ members_statement_provider::members_statement_provider(const statement_provider_
 
 context::shared_stmt_ptr members_statement_provider::get_next(const statement_processor& processor)
 {
+    diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
+
     if (finished())
         throw std::runtime_error("provider already finished");
 
@@ -44,7 +46,7 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
     {
         if (const auto* instr = retrieve_instruction(*cache))
         {
-            if (try_trigger_attribute_lookahead(*instr, { *ctx.hlasm_ctx, lib_provider }, listener))
+            if (try_trigger_attribute_lookahead(*instr, { *ctx.hlasm_ctx, lib_provider, drop_diags }, listener))
                 return nullptr;
         }
     }
@@ -67,7 +69,7 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
     }
 
     if (processor.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(*stmt, { *ctx.hlasm_ctx, lib_provider }, listener))
+        && try_trigger_attribute_lookahead(*stmt, { *ctx.hlasm_ctx, lib_provider, drop_diags }, listener))
         return nullptr;
 
     return stmt;
@@ -96,9 +98,8 @@ void members_statement_provider::fill_cache(
     // TODO: what if it fails?
     auto def_impl = std::dynamic_pointer_cast<const semantics::statement_si_deferred>(cache.get_base());
 
-    auto diags = def_impl->diagnostics();
-    for (auto i = diags.first; i != diags.second; ++i)
-        reparsed_stmt.diags.push_back(*i);
+    for (const auto& d : def_impl->diagnostics())
+        reparsed_stmt.diags.push_back(d);
 
     if (status.first.occurence == operand_occurence::ABSENT || status.first.form == processing_form::UNKNOWN
         || status.first.form == processing_form::IGNORED)
@@ -106,21 +107,21 @@ void members_statement_provider::fill_cache(
         semantics::operands_si op(def_stmt.deferred_ref().field_range, semantics::operand_list());
         semantics::remarks_si rem(def_stmt.deferred_ref().field_range, {});
 
-        reparsed_stmt.stmt =
-            std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));
+        reparsed_stmt.stmt = std::make_shared<semantics::statement_si_defer_done>(
+            def_impl, std::move(op), std::move(rem), std::vector<semantics::literal_si>());
     }
     else
     {
         diagnostic_consumer_transform diag_consumer(
             [&reparsed_stmt](diagnostic_op diag) { reparsed_stmt.diags.push_back(std::move(diag)); });
-        auto [op, rem] = parser.parse_operand_field(def_stmt.deferred_ref().value,
+        auto [op, rem, lits] = parser.parse_operand_field(def_stmt.deferred_ref().value,
             false,
             semantics::range_provider(def_stmt.deferred_ref().field_range, semantics::adjusting_state::NONE),
             status,
             diag_consumer);
 
-        reparsed_stmt.stmt =
-            std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));
+        reparsed_stmt.stmt = std::make_shared<semantics::statement_si_defer_done>(
+            def_impl, std::move(op), std::move(rem), std::move(lits));
     }
     cache.insert(processing_status_cache_key(status), std::move(reparsed_stmt));
 }

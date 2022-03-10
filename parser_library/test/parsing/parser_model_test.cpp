@@ -43,10 +43,11 @@ TEST(parser, parse_model)
 {
     {
         range r(position(0, 4), position(0, 10));
-        auto [op, rem] = parse_model("&var,1", r);
+        auto [op, rem, lit] = parse_model("&var,1", r);
 
         ASSERT_EQ(op.value.size(), (size_t)1);
         ASSERT_EQ(rem.value.size(), (size_t)0);
+        EXPECT_TRUE(lit.empty());
 
         EXPECT_EQ(op.field_range, r);
         EXPECT_EQ(rem.field_range, range(position(0, 10)));
@@ -54,10 +55,11 @@ TEST(parser, parse_model)
     }
     {
         range r(position(0, 4), position(0, 8));
-        auto [op, rem] = parse_model("&var", r);
+        auto [op, rem, lit] = parse_model("&var", r);
 
         ASSERT_EQ(op.value.size(), (size_t)1);
         ASSERT_EQ(rem.value.size(), (size_t)0);
+        EXPECT_TRUE(lit.empty());
 
         EXPECT_EQ(op.field_range, r);
         EXPECT_EQ(rem.field_range, range(position(0, 8)));
@@ -68,10 +70,11 @@ TEST(parser, parse_model)
 TEST(parser, parse_model_with_remark_alone)
 {
     range r(position(0, 4), position(0, 18));
-    auto [op, rem] = parse_model("&var rem,. ???", r);
+    auto [op, rem, lit] = parse_model("&var rem,. ???", r);
 
     ASSERT_EQ(op.value.size(), (size_t)1);
     ASSERT_EQ(rem.value.size(), (size_t)1);
+    EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 8)));
     EXPECT_EQ(rem.field_range, range(position(0, 9), position(0, 18)));
@@ -81,10 +84,11 @@ TEST(parser, parse_model_with_remark_alone)
 TEST(parser, parse_model_with_remark_before)
 {
     range r(position(0, 4), position(0, 20));
-    auto [op, rem] = parse_model("1,&var rem,. ???", r);
+    auto [op, rem, lit] = parse_model("1,&var rem,. ???", r);
 
     ASSERT_EQ(op.value.size(), (size_t)1);
     ASSERT_EQ(rem.value.size(), (size_t)1);
+    EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 10)));
     EXPECT_EQ(rem.field_range, range(position(0, 11), position(0, 20)));
@@ -94,10 +98,11 @@ TEST(parser, parse_model_with_remark_before)
 TEST(parser, parse_model_with_remark_after)
 {
     range r(position(0, 4), position(0, 20));
-    auto [op, rem] = parse_model("&var,1 rem,. ???", r);
+    auto [op, rem, lit] = parse_model("&var,1 rem,. ???", r);
 
     ASSERT_EQ(op.value.size(), (size_t)1);
     ASSERT_EQ(rem.value.size(), (size_t)1);
+    EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 10)));
     EXPECT_EQ(rem.field_range, range(position(0, 11), position(0, 20)));
@@ -107,10 +112,11 @@ TEST(parser, parse_model_with_remark_after)
 TEST(parser, parse_model_with_remark_before_after)
 {
     range r(position(0, 4), position(0, 26));
-    auto [op, rem] = parse_model("1,&var,'&v'4 rem,. ???", r);
+    auto [op, rem, lit] = parse_model("1,&var,'&v'4 rem,. ???", r);
 
     ASSERT_EQ(op.value.size(), (size_t)1);
     ASSERT_EQ(rem.value.size(), (size_t)1);
+    EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 16)));
     EXPECT_EQ(rem.field_range, range(position(0, 17), position(0, 26)));
@@ -120,10 +126,11 @@ TEST(parser, parse_model_with_remark_before_after)
 TEST(parser, parse_model_with_remark_string)
 {
     range r(position(0, 4), position(0, 26));
-    auto [op, rem] = parse_model("1,'&var',h,. rem,. ???", r);
+    auto [op, rem, lit] = parse_model("1,'&var',h,. rem,. ???", r);
 
     ASSERT_EQ(op.value.size(), (size_t)1);
     ASSERT_EQ(rem.value.size(), (size_t)1);
+    EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 16)));
     EXPECT_EQ(rem.field_range, range(position(0, 17), position(0, 26)));
@@ -133,10 +140,11 @@ TEST(parser, parse_model_with_remark_string)
 TEST(parser, parse_model_with_apostrophe_escaping)
 {
     range r(position(0, 4), position(0, 26));
-    auto [op, rem] = parse_model("*,'%GEN=''''&CFARG '''", r);
+    auto [op, rem, lit] = parse_model("*,'%GEN=''''&CFARG '''", r);
 
     ASSERT_EQ(op.value.size(), (size_t)1);
     ASSERT_EQ(rem.value.size(), (size_t)0);
+    EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 26)));
     EXPECT_TRUE(op.value[0]->access_model());
@@ -147,10 +155,11 @@ TEST(parser, parse_bad_model)
     diagnostic_op_consumer_container diag_container;
 
     range r(position(0, 4), position(0, 5));
-    auto [op, rem] = parse_model("'", r, true, &diag_container);
+    auto [op, rem, lit] = parse_model("'", r, true, &diag_container);
 
     ASSERT_EQ(op.value.size(), 0U);
     ASSERT_EQ(rem.value.size(), 0U);
+    EXPECT_TRUE(lit.empty());
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
 
@@ -166,7 +175,7 @@ TEST(parser, parse_bad_model_no_substitution)
     diagnostic_op_consumer_container diag_container;
 
     range r(position(0, 4), position(0, 5));
-    auto [op, rem] = parse_model("'", r, false, &diag_container);
+    auto [op, rem, lit] = parse_model("'", r, false, &diag_container);
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
     ASSERT_EQ(diags.size(), 1U);
@@ -180,7 +189,7 @@ TEST(parser, invalid_self_def)
     diagnostic_op_consumer_container diag_container;
 
     range r(position(0, 5), position(0, 12));
-    auto [op, rem] = parse_model("1,A'10'", r, false, &diag_container);
+    auto [op, rem, lit] = parse_model("1,A'10'", r, false, &diag_container);
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
     ASSERT_EQ(diags.size(), 1U);
@@ -197,7 +206,7 @@ TEST(parser, invalid_macro_param_alternative)
     range r(position(0, 3), position(0, 16));
     std::string input = R"(op1,   remark                                                       X
                ()";
-    auto [op, rem] = parse_model(input, r, false, &diag_container, processing_form::MAC);
+    auto [op, rem, lit] = parse_model(input, r, false, &diag_container, processing_form::MAC);
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
     ASSERT_EQ(diags.size(), 1U);
@@ -213,7 +222,8 @@ TEST(parser, parse_single_apostrophe_string)
     hlasm_context context;
 
     range r(position(0, 10), position(0, 20));
-    auto [op, rem] = parse_model("&VAR,C''''", r, false, &diag_container, processing::processing_form::MACH, &context);
+    auto [op, rem, lit] =
+        parse_model("&VAR,C''''", r, false, &diag_container, processing::processing_form::MACH, &context);
 
     EXPECT_TRUE(diag_container.diags.empty());
 
@@ -230,7 +240,8 @@ TEST(parser, parse_single_apostrophe_literal)
     hlasm_context context;
 
     range r(position(0, 10), position(0, 21));
-    auto [op, rem] = parse_model("&VAR,=C''''", r, false, &diag_container, processing::processing_form::MACH, &context);
+    auto [op, rem, lit] =
+        parse_model("&VAR,=C''''", r, false, &diag_container, processing::processing_form::MACH, &context);
 
     EXPECT_TRUE(diag_container.diags.empty());
 
@@ -246,7 +257,7 @@ TEST(parser, sanitize_message_content_replace)
     diagnostic_op_consumer_container diag_container;
 
     range r(position(0, 10), position(0, 15));
-    auto [op, rem] = parse_model("=C'\xC2'", r, true, &diag_container);
+    auto [op, rem, lit] = parse_model("=C'\xC2'", r, true, &diag_container);
 
     ASSERT_EQ(diag_container.diags.size(), 1);
 
@@ -261,7 +272,7 @@ TEST(parser, sanitize_message_content_valid_multibyte)
 
     range r(position(0, 10), position(0, 14));
     std::string line = "=C'\xC2\x80";
-    auto [op, rem] = parse_model(line, r, true, &diag_container);
+    auto [op, rem, lit] = parse_model(line, r, true, &diag_container);
 
     ASSERT_EQ(diag_container.diags.size(), 1);
 

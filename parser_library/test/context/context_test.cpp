@@ -20,7 +20,6 @@
 #include "analyzer.h"
 #include "context/hlasm_context.h"
 #include "context/variables/system_variable.h"
-#include "processing/context_manager.h"
 
 // tests for hlasm_ctx class:
 // id_storage
