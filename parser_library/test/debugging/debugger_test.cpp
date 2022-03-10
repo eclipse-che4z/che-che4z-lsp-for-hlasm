@@ -137,7 +137,7 @@ public:
         }
 
         if (data_)
-            return *data_ == std::string_view(var.value);
+            return *data_ == std::string_view(var.value.data());
         else
             return var.value.size() == 0;
     }
@@ -154,7 +154,7 @@ public:
             return false;
         for (auto actual_ch : actual_children)
         {
-            std::string actual_ch_name(actual_ch.name);
+            std::string actual_ch_name(actual_ch.name.data());
             auto found = children_.find(actual_ch_name);
             if (found == children_.end())
                 return false;
@@ -201,9 +201,9 @@ bool check_vars(debugger& d,
 {
     if (vars.size() != exp_vars.size())
         return false;
-    for (auto var : vars)
+    for (auto& var : vars)
     {
-        auto it = exp_vars.find(std::string(var.name));
+        auto it = exp_vars.find(std::string(var.name.data()));
         if (it == exp_vars.end())
             return false;
         if (!it->second.check(d, var))

@@ -26,7 +26,7 @@ macro_param_data_component::macro_param_data_component(size_t number)
     : number(number)
 {}
 
-const C_t& macro_param_data_single::get_value() const { return data_; }
+C_t macro_param_data_single::get_value() const { return data_; }
 
 const macro_data_shared_ptr macro_param_data_component::dummy(new macro_param_data_dummy());
 
@@ -34,7 +34,7 @@ macro_param_data_dummy::macro_param_data_dummy()
     : macro_param_data_component((size_t)0)
 {}
 
-const C_t& macro_param_data_dummy::get_value() const { return object_traits<C_t>::default_v(); }
+C_t macro_param_data_dummy::get_value() const { return object_traits<C_t>::default_v(); }
 
 const macro_param_data_component* macro_param_data_dummy::get_ith(size_t) const { return this; }
 
@@ -55,7 +55,7 @@ macro_param_data_single::macro_param_data_single(C_t value)
 {}
 
 
-const C_t& macro_param_data_composite::get_value() const
+C_t macro_param_data_composite::get_value() const
 {
     if (value_.empty())
     {
@@ -86,7 +86,7 @@ macro_param_data_composite::macro_param_data_composite(std::vector<macro_data_pt
     , data_(move(value))
 {}
 
-const C_t& macro_param_data_single_dynamic::get_value() const { return get_dynamic_value(); }
+C_t macro_param_data_single_dynamic::get_value() const { return get_dynamic_value(); }
 
 macro_param_data_single_dynamic::macro_param_data_single_dynamic()
     : macro_param_data_single("")

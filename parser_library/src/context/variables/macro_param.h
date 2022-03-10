@@ -36,11 +36,11 @@ public:
     const system_variable* access_system_variable() const;
 
     // gets value of data where parameter is list of nested data offsets
-    virtual const C_t& get_value(const std::vector<size_t>& offset) const;
+    virtual C_t get_value(const std::vector<size_t>& offset) const;
     // gets value of data where parameter is offset to data field
-    virtual const C_t& get_value(size_t idx) const;
+    virtual C_t get_value(size_t idx) const;
     // gets value of whole macro parameter
-    virtual const C_t& get_value() const;
+    virtual C_t get_value() const;
 
     // gets param struct
     virtual const macro_param_data_component* get_data(const std::vector<size_t>& offset) const;

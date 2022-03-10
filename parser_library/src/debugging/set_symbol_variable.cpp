@@ -47,7 +47,7 @@ set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym
     fill_string_value();
 }
 
-const std::string& set_symbol_variable::get_string_value() const { return get_value<std::string>(); }
+std::string set_symbol_variable::get_string_value() const { return get_value<std::string>(); }
 
 
 set_type set_symbol_variable::type() const { return (set_type)set_symbol_.type; }
@@ -80,7 +80,7 @@ std::vector<variable_ptr> set_symbol_variable::values() const
 size_t set_symbol_variable::size() const { return set_symbol_.size(); }
 
 template<typename T>
-inline const T& set_symbol_variable::get_value() const
+inline T set_symbol_variable::get_value() const
 {
     if (set_symbol_.is_scalar)
         return set_symbol_.access_set_symbol<T>()->get_value();

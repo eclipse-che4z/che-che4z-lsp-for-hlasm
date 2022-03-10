@@ -31,11 +31,11 @@ public:
     system_variable(id_index name, macro_data_ptr value, bool is_global);
 
     // gets value of data where parameter is list of nested data offsets
-    const C_t& get_value(const std::vector<size_t>& offset) const override;
+    C_t get_value(const std::vector<size_t>& offset) const override;
     // gets value of data where parameter is offset to data field
-    const C_t& get_value(size_t idx) const override;
+    C_t get_value(size_t idx) const override;
     // gets value of whole macro parameter
-    const C_t& get_value() const override;
+    C_t get_value() const override;
 
     // gets param struct
     const macro_param_data_component* get_data(const std::vector<size_t>& offset) const override;
@@ -58,9 +58,9 @@ public:
     using system_variable::system_variable;
 
     // SYSMAC special behavior
-    const C_t& get_value(const std::vector<size_t>& offset) const override;
-    const C_t& get_value(size_t idx) const override;
-    const C_t& get_value() const override;
+    C_t get_value(const std::vector<size_t>& offset) const override;
+    C_t get_value(size_t idx) const override;
+    C_t get_value() const override;
     const macro_param_data_component* get_data(const std::vector<size_t>& offset) const override;
 };
 

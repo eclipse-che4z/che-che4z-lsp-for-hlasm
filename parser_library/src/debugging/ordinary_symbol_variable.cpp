@@ -35,7 +35,7 @@ ordinary_symbol_variable::ordinary_symbol_variable(const context::symbol& symbol
         value_.emplace(std::to_string(symbol_.value().get_abs()));
 }
 
-const std::string& ordinary_symbol_variable::get_string_value() const
+std::string ordinary_symbol_variable::get_string_value() const
 {
     switch (symbol_.kind())
     {

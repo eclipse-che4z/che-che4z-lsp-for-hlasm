@@ -30,7 +30,7 @@ macro_param_variable::macro_param_variable(const context::macro_param_base& para
         name_.emplace("&" + *macro_param_.id);
 }
 
-const std::string& macro_param_variable::get_string_value() const { return macro_param_.get_value(index_); };
+std::string macro_param_variable::get_string_value() const { return macro_param_.get_value(index_); };
 
 set_type macro_param_variable::type() const { return set_type::C_TYPE; }
 
