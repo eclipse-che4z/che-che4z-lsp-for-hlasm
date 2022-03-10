@@ -160,18 +160,22 @@ class sequence<c_type, std::string>
 public:
     sequence() = default;
     sequence(std::string s)
-        : data_(std::move(s))
+        : s(std::move(s))
     {}
 
-    [[nodiscard]] c_type item(size_t index) const { return data_[index]; }
-    [[nodiscard]] size_t size() const { return data_.size(); }
-    [[nodiscard]] const c_type* data() const { return data_.data(); }
+    sequence(const sequence& seq)
+        : s(std::move(seq.s))
+    {}
 
-    [[nodiscard]] const c_type* begin() const { return data_.begin(); }
-    [[nodiscard]] const c_type* end() const { return data_.end(); }
+    [[nodiscard]] c_type item(size_t index) const { return s[index]; }
+    [[nodiscard]] size_t size() const { return s.size(); }
+    [[nodiscard]] const c_type* data() const { return s.data(); }
+
+    [[nodiscard]] const c_type* begin() const { return s.begin(); }
+    [[nodiscard]] const c_type* end() const { return s.end(); }
 
 private:
-    const std::string data_;
+    const std::string s;
 };
 template<class T>
 explicit sequence(T&&) -> sequence<std::decay_t<decltype(*std::declval<T>().data())>, void>;
