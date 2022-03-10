@@ -26,15 +26,10 @@ ca_constant::ca_constant(context::A_t value, range expr_range)
 
 undef_sym_set ca_constant::get_undefined_attributed_symbols(const evaluation_context&) const { return undef_sym_set(); }
 
-void ca_constant::resolve_expression_tree(context::SET_t_enum kind)
+void ca_constant::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     if (kind == context::SET_t_enum::C_TYPE)
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
-}
-
-void ca_constant::collect_diags() const
-{
-    // nothing to collect
+        diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
 bool ca_constant::is_character_expression(character_expression_purpose) const { return false; }

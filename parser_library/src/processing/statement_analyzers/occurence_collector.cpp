@@ -14,8 +14,6 @@
 
 #include "occurence_collector.h"
 
-#include "processing/context_manager.h"
-
 namespace hlasm_plugin::parser_library::processing {
 
 occurence_collector::occurence_collector(
@@ -135,11 +133,11 @@ void occurence_collector::get_occurence(const semantics::concat_chain& chain)
         }
     }
 }
-void occurence_collector::get_occurence(const expressions::ca_literal_def& lit)
+void occurence_collector::get_occurence(const semantics::literal_si& lit)
 {
     if (collector_kind == lsp::occurence_kind::ORD)
     {
-        lit.dd->apply(*this);
+        lit->get_dd().apply(*this);
     }
 }
 
@@ -156,8 +154,6 @@ void occurence_collector::visit(const expressions::mach_expr_symbol& expr)
 }
 
 void occurence_collector::visit(const expressions::mach_expr_location_counter&) {}
-
-void occurence_collector::visit(const expressions::mach_expr_self_def&) {}
 
 void occurence_collector::visit(const expressions::mach_expr_default&) {}
 
@@ -193,8 +189,8 @@ void occurence_collector::visit(const expressions::ca_symbol_attribute& expr)
         get_occurence(std::get<context::id_index>(expr.symbol), expr.symbol_range);
     else if (std::holds_alternative<semantics::vs_ptr>(expr.symbol))
         get_occurence(*std::get<semantics::vs_ptr>(expr.symbol));
-    else if (std::holds_alternative<expressions::ca_literal_def>(expr.symbol))
-        get_occurence(std::get<expressions::ca_literal_def>(expr.symbol));
+    else if (std::holds_alternative<semantics::literal_si>(expr.symbol))
+        get_occurence(std::get<semantics::literal_si>(expr.symbol));
 }
 
 void occurence_collector::visit(const expressions::ca_var_sym& expr) { get_occurence(*expr.symbol); }

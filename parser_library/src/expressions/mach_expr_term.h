@@ -16,8 +16,8 @@
 #define HLASMPLUGIN_PARSERLIBRARY_EXPRESSIONS_MACH_EXPR_TERM_H
 
 #include "context/id_storage.h"
-#include "expressions/data_definition.h"
 #include "mach_expression.h"
+#include "semantics/statement_fields.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -34,13 +34,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override {}
 
     size_t hash() const override;
 
@@ -52,35 +50,18 @@ class mach_expr_literal final : public mach_expression
 {
     bool do_is_similar(const mach_expression& expr) const override;
 
-    struct literal_data
-    {
-        const data_definition dd;
-        bool referenced_by_reladdr = false;
-
-        explicit literal_data(data_definition dd)
-            : dd(std::move(dd))
-        {}
-    };
-
-    std::shared_ptr<literal_data> m_literal_data;
-    std::string m_dd_text;
-
-    struct private_t
-    {};
+    semantics::literal_si m_literal_data;
 
 public:
-    mach_expr_literal(range rng, std::shared_ptr<literal_data> dd_shared, std::string text, private_t);
-    mach_expr_literal(range rng, data_definition dd, std::string text);
+    mach_expr_literal(range rng, semantics::literal_si dd);
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override;
 
     size_t hash() const override;
 
@@ -88,11 +69,9 @@ public:
 
     const data_definition& get_data_definition() const;
 
-    const std::string& get_data_definition_text() const { return m_dd_text; }
-
     context::id_index get_literal_id(context::dependency_solver& solver) const;
 
-    void referenced_by_reladdr() const { m_literal_data->referenced_by_reladdr = true; }
+    void referenced_by_reladdr() const { m_literal_data->set_referenced_by_reladdr(); }
 };
 
 // Represents an attribute of a symbol written in machine expressions (e.g. L'SYMBOL)
@@ -121,13 +100,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override;
 
     size_t hash() const override;
 
@@ -147,13 +124,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override {}
 
     size_t hash() const override;
 
@@ -170,42 +145,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override {}
-
-    size_t hash() const override;
-
-    mach_expr_ptr clone() const override;
-};
-
-// Represents a self defining term (e.g. X'4A')
-class mach_expr_self_def final : public mach_expression
-{
-    bool do_is_similar(const mach_expression& expr) const override;
-
-    value_t value_;
-
-    struct private_t
-    {};
-
-public:
-    mach_expr_self_def(value_t value, range rng, private_t);
-    mach_expr_self_def(std::string option, std::string value, range rng);
-
-    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
-
-    value_t evaluate(context::dependency_solver& info) const override;
-
-    const mach_expression* leftmost_term() const override;
-
-    void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override {}
 
     size_t hash() const override;
 
@@ -223,13 +167,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override;
 
     size_t hash() const override;
 

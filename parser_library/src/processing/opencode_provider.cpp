@@ -238,9 +238,11 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     const range& op_range,
     diagnostic_op_consumer* diags)
 {
+    diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
+
     if (proc.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(
-            collector.current_instruction(), { *m_ctx->hlasm_ctx, *m_lib_provider }, *m_state_listener))
+            collector.current_instruction(), { *m_ctx->hlasm_ctx, *m_lib_provider, drop_diags }, *m_state_listener))
         return nullptr;
 
     m_ctx->hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
@@ -281,6 +283,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                             to_parse, *m_ctx->hlasm_ctx, diags, std::move(tmp_provider), r, proc_status, true);
 
                         line.operands = std::move(h_second.parser->macro_ops()->list);
+                        h.parser->get_collector().set_literals(h_second.parser->get_collector().take_literals());
                     }
 
                     h.parser->get_collector().set_operand_remark_field(
@@ -312,7 +315,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     auto result = collector.extract_statement(proc_status, statement_range);
 
     if (proc.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(*result, { *m_ctx->hlasm_ctx, *m_lib_provider }, *m_state_listener))
+        && try_trigger_attribute_lookahead(
+            *result, { *m_ctx->hlasm_ctx, *m_lib_provider, drop_diags }, *m_state_listener))
         return nullptr;
 
     if (m_current_logical_line.segments.size() > 1)

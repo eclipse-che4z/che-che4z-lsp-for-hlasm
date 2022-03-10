@@ -22,7 +22,6 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
-#include "processing/context_manager.h"
 #include "processing/op_code.h"
 
 namespace hlasm_plugin::parser_library::parsing {
@@ -133,12 +132,11 @@ bool parser_impl::loctr_len_allowed(const std::string& attr) const
 
 void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const
 {
-    expr->resolve_expression_tree(type);
-    expr->collect_diags();
-    if (diagnoser_)
-        for (auto& d : expr->diags())
+    diagnostic_consumer_transform diags([this](diagnostic_op d) {
+        if (diagnoser_)
             diagnoser_->add_diagnostic(std::move(d));
-    expr->diags().clear();
+    });
+    expr->resolve_expression_tree(type, diags);
 }
 
 void parser_impl::resolve_expression(std::vector<expressions::ca_expr_ptr>& expr_list, context::SET_t_enum type) const
@@ -149,6 +147,10 @@ void parser_impl::resolve_expression(std::vector<expressions::ca_expr_ptr>& expr
 
 void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
 {
+    diagnostic_consumer_transform diags([this](diagnostic_op d) {
+        if (diagnoser_)
+            diagnoser_->add_diagnostic(std::move(d));
+    });
     auto [_, opcode] = *proc_status;
     const auto& wk = hlasm_ctx->ids().well_known;
     if (opcode.value == wk.SETA || opcode.value == wk.ACTR || opcode.value == wk.ASPACE || opcode.value == wk.AGO
@@ -157,22 +159,22 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
     else if (opcode.value == wk.SETB)
     {
         if (!expr->is_compatible(ca_expression_compatibility::setb))
-            expr->add_diagnostic(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
+            diags.add_diagnostic(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
 
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     }
     else if (opcode.value == wk.AIF)
     {
         if (!expr->is_compatible(ca_expression_compatibility::aif))
-            expr->add_diagnostic(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
+            diags.add_diagnostic(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
 
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     }
     else if (opcode.value == wk.SETC)
     {
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
-        if (!expr->is_character_expression(character_expression_purpose::assignment) && diagnoser_)
-            diagnoser_->add_diagnostic(diagnostic_op::error_CE017_character_expression_expected(expr->expr_range));
+        if (!expr->is_character_expression(character_expression_purpose::assignment))
+            diags.add_diagnostic(diagnostic_op::error_CE017_character_expression_expected(expr->expr_range));
     }
     else if (opcode.value == wk.AREAD)
     {
@@ -220,8 +222,13 @@ antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
 void parser_impl::add_diagnostic(
     diagnostic_severity severity, std::string code, std::string message, range diag_range) const
 {
+    add_diagnostic(diagnostic_op(severity, std::move(code), std::move(message), diag_range));
+}
+
+void parser_impl::add_diagnostic(diagnostic_op d) const
+{
     if (diagnoser_)
-        diagnoser_->add_diagnostic(diagnostic_op(severity, std::move(code), std::move(message), diag_range));
+        diagnoser_->add_diagnostic(std::move(d));
 }
 
 parser_holder::~parser_holder() = default;

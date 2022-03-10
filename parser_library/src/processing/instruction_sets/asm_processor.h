@@ -75,11 +75,6 @@ private:
     template<checking::data_instr_type instr_type>
     void process_data_instruction(rebuilt_statement stmt);
 
-    std::optional<context::A_t> try_get_abs_value(
-        const semantics::operand* op, context::dependency_solver& dep_solver) const;
-    std::optional<context::A_t> try_get_abs_value(
-        const semantics::simple_expr_operand* op, context::dependency_solver& dep_solver) const;
-
     enum class external_type
     {
         strong,

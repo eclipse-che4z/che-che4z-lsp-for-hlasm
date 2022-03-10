@@ -33,7 +33,7 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
     statement_fields_parser& parser,
     opencode_provider& open_code)
     : statement_processor(processing_kind::ORDINARY, ctx)
-    , eval_ctx { *ctx.hlasm_ctx, lib_provider }
+    , eval_ctx { *ctx.hlasm_ctx, lib_provider, *this }
     , ca_proc_(ctx, branch_provider, lib_provider, state_listener, open_code)
     , mac_proc_(ctx, branch_provider, lib_provider)
     , asm_proc_(ctx, branch_provider, lib_provider, parser, open_code)
@@ -77,9 +77,8 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
 
 void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 {
-    auto diags = s->diagnostics();
-    for (auto it = diags.first; it != diags.second; ++it)
-        add_diagnostic(*it);
+    for (const auto& d : s->diagnostics())
+        add_diagnostic(d);
 
     bool fatal = check_fatals(range(s->statement_position()));
     if (fatal)
@@ -133,9 +132,7 @@ void ordinary_processor::end_processing()
         hlasm_ctx.ord_ctx.set_location_counter(ltorg->name, {});
         hlasm_ctx.ord_ctx.set_available_location_counter_value(0, 0);
 
-        context::ordinary_assembly_dependency_solver dep_solver(
-            hlasm_ctx.ord_ctx, context::ordinary_assembly_dependency_solver::no_new_literals {});
-        hlasm_ctx.ord_ctx.generate_pool(dep_solver, *this);
+        hlasm_ctx.ord_ctx.generate_pool(*this);
     }
 
     hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);
@@ -239,7 +236,6 @@ void ordinary_processor::collect_diags() const
     collect_diags_from_child(asm_proc_);
     collect_diags_from_child(mac_proc_);
     collect_diags_from_child(mach_proc_);
-    collect_diags_from_child(eval_ctx);
 }
 
 void ordinary_processor::check_postponed_statements(

@@ -50,7 +50,7 @@ using arg0_t = decltype(arg0(std::function(std::declval<T>())));
 } // namespace transform_traits
 
 template<typename F, typename T = typename transform_traits::arg0_t<F>>
-class diagnostic_consumer_transform : public diagnostic_consumer<T>
+class diagnostic_consumer_transform final : public diagnostic_consumer<T>
 {
     F consumer;
 
@@ -62,7 +62,7 @@ public:
 };
 
 template<typename T>
-class diagnostic_consumer_container : public diagnostic_consumer<T>
+class diagnostic_consumer_container final : public diagnostic_consumer<T>
 {
 public:
     mutable std::vector<T> diags;

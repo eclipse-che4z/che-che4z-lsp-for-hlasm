@@ -14,6 +14,10 @@
 
 #include "system_variable.h"
 
+#include "diagnostic.h"
+#include "diagnostic_consumer.h"
+#include "range.h"
+
 using namespace hlasm_plugin::parser_library::context;
 
 
@@ -101,6 +105,12 @@ const macro_param_data_component* system_variable_sysmac::get_data(const std::ve
     return tmp;
 }
 
+bool system_variable_sysmac::can_read(
+    const std::vector<context::A_t>&, range, diagnostic_consumer<diagnostic_op>&) const
+{
+    return true;
+}
+
 const macro_param_data_component* system_variable_syslist::get_data(const std::vector<size_t>& offset) const
 {
     const macro_param_data_component* tmp = real_data();
@@ -118,4 +128,29 @@ const macro_param_data_component* system_variable_syslist::get_data(const std::v
     }
 
     return tmp;
+}
+
+bool system_variable_syslist::can_read(
+    const std::vector<context::A_t>& subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const
+{
+    if (subscript.empty())
+    {
+        diags.add_diagnostic(diagnostic_op::error_E076(symbol_range)); // error - SYSLIST is not subscripted
+    }
+
+    for (size_t i = 0; i < subscript.size(); ++i)
+    {
+        if (subscript[i] < 1)
+        {
+            // if subscript = 0, ok
+            if (i == 0 && subscript[i] == 0)
+                continue;
+
+            diags.add_diagnostic(diagnostic_op::error_E012(
+                "subscript value has to be 1 or more", symbol_range)); // error - subscript is less than 1
+            return false;
+        }
+    }
+
+    return true;
 }

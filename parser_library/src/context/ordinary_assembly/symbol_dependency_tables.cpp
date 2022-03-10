@@ -198,8 +198,9 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(
     if (!ret.empty())
         return ret;
 
-    for (auto& attr_r : deps.undefined_attr_refs)
-        ret.push_back(attr_ref { attr_r.first, attr_r.second });
+    ret.insert(ret.end(),
+        std::make_move_iterator(deps.undefined_attr_refs.begin()),
+        std::make_move_iterator(deps.undefined_attr_refs.end()));
 
     if (deps.unresolved_address)
         for (auto& [space_id, count] : deps.unresolved_address->normalized_spaces())

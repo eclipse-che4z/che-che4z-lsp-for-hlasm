@@ -32,7 +32,7 @@ class instruction_processor : public diagnosable_ctx
 {
     virtual void process(std::shared_ptr<const processing::resolved_statement> stmt) = 0;
 
-    void collect_diags() const override { collect_diags_from_child(eval_ctx); }
+    void collect_diags() const override {}
 
 protected:
     analyzing_context ctx;
@@ -49,8 +49,11 @@ protected:
         , hlasm_ctx(*ctx.hlasm_ctx)
         , branch_provider(branch_provider)
         , lib_provider(lib_provider)
-        , eval_ctx { *ctx.hlasm_ctx, lib_provider }
+        , eval_ctx { *ctx.hlasm_ctx, lib_provider, *this }
     {}
+
+    void register_literals(
+        const semantics::complete_statement& stmt, context::alignment loctr_alignment, size_t unique_id);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

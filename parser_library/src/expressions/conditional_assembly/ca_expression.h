@@ -45,7 +45,7 @@ enum class character_expression_purpose
 };
 
 // base class for conditional assembly expressions
-class ca_expression : public diagnosable_op_impl
+class ca_expression
 {
 public:
     range expr_range;
@@ -57,7 +57,7 @@ public:
     virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const = 0;
 
     // builds parts of the expression tree that could not be built during parsing
-    virtual void resolve_expression_tree(context::SET_t_enum kind) = 0;
+    virtual void resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags) = 0;
 
     virtual bool is_character_expression(character_expression_purpose purpose) const = 0;
 

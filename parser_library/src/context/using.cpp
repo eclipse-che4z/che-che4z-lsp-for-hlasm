@@ -332,19 +332,16 @@ void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagn
 {
     for (auto& expr : m_expr_values)
     {
-        ordinary_assembly_dependency_solver solver(ord_context, get(expr.context).evaluation_ctx);
-
-        expr.value = expr.expression->evaluate(solver);
-        if (expr.value.value_kind() == symbol_value_kind::UNDEF)
-            expr.label = identify_label(ord_context, expr.expression.get());
-
-        expr.expression->collect_diags();
-        if (expr.label == nullptr)
+        if (!(expr.label = identify_label(ord_context, expr.expression.get())))
         {
-            for (auto& d : expr.expression->diags())
-                diag.add_diagnostic(add_stack_details(std::move(d), get(expr.context).stack));
+            const auto& expr_context = get(expr.context);
+            ordinary_assembly_dependency_solver solver(ord_context, expr_context.evaluation_ctx);
+            diagnostic_consumer_transform diag_collector([&diag, &expr_context](diagnostic_op d) {
+                diag.add_diagnostic(add_stack_details(std::move(d), expr_context.stack));
+            });
+
+            expr.value = expr.expression->evaluate(solver, diag_collector);
         }
-        expr.expression->diags().clear();
     }
 
     for (auto& u : m_usings)

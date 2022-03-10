@@ -17,6 +17,7 @@ target_sources(parser_library PRIVATE
 	ca_processor.h
 	data_def_postponed_statement.cpp
 	data_def_postponed_statement.h
+	instruction_processor.cpp
 	instruction_processor.h
 	low_language_processor.cpp
 	low_language_processor.h

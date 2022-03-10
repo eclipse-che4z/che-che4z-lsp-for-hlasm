@@ -43,7 +43,12 @@ class statement_fields_parser final : public diagnosable_impl
         diagnostic_op_consumer& add_diag);
 
 public:
-    using parse_result = std::pair<semantics::operands_si, semantics::remarks_si>;
+    struct parse_result
+    {
+        semantics::operands_si operands;
+        semantics::remarks_si remarks;
+        std::vector<semantics::literal_si> literals;
+    };
 
     parse_result parse_operand_field(std::string field,
         bool after_substitution,

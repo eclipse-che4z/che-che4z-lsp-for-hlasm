@@ -29,35 +29,30 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
-static void insert_deps(
-    context::dependency_collector& into, context::dependency_solver& solver, const context::dependable* from)
-{
-    if (from)
-        into = into + from->get_dependencies(solver);
-}
-
 constexpr char V_type = 'V';
 
 context::dependency_collector data_definition::get_dependencies(context::dependency_solver& solver) const
 {
-    context::dependency_collector conjuction;
+    context::dependency_collector deps = get_length_dependencies(solver);
+
+    if (scale)
+        deps.merge(scale->get_dependencies(solver));
+    if (exponent)
+        deps.merge(exponent->get_dependencies(solver));
+
     // In V type, the symbols are external, it is not defined in current program and does not
     // have any dependencies.
-    if (type != V_type)
-        insert_deps(conjuction, solver, nominal_value.get());
-    insert_deps(conjuction, solver, dupl_factor.get());
-    insert_deps(conjuction, solver, length.get());
-    insert_deps(conjuction, solver, scale.get());
-    insert_deps(conjuction, solver, exponent.get());
-    return conjuction;
+    if (type != V_type && nominal_value)
+        deps.merge(nominal_value->get_dependencies(solver));
+
+    return deps;
 }
 
 context::dependency_collector data_definition::get_length_dependencies(context::dependency_solver& solver) const
 {
-    context::dependency_collector conjuction;
-    insert_deps(conjuction, solver, dupl_factor.get());
-    insert_deps(conjuction, solver, length.get());
-    return conjuction;
+    auto result = dupl_factor ? dupl_factor->get_dependencies(solver) : context::dependency_collector();
+    result *= length ? length->get_dependencies(solver) : context::dependency_collector();
+    return result;
 }
 
 const checking::data_def_type* data_definition::access_data_def_type() const
@@ -138,30 +133,30 @@ char data_definition::get_type_attribute() const
     return 'U';
 }
 
-int32_t data_definition::get_scale_attribute(context::dependency_solver& info) const
+int32_t data_definition::get_scale_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
     auto def_type = access_data_def_type();
     if (def_type)
-        return def_type->get_scale_attribute(evaluate_scale(info), evaluate_nominal_value(info));
+        return def_type->get_scale_attribute(evaluate_scale(info, diags), evaluate_nominal_value(info, diags));
     else
         return 0;
 }
 
-uint32_t data_definition::get_length_attribute(context::dependency_solver& info) const
+uint32_t data_definition::get_length_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
     auto def_type = access_data_def_type();
     if (def_type)
-        return def_type->get_length_attribute(evaluate_length(info), evaluate_nominal_value(info));
+        return def_type->get_length_attribute(evaluate_length(info, diags), evaluate_nominal_value(info, diags));
     else
         return 0;
 }
 
-int32_t data_definition::get_integer_attribute(context::dependency_solver& info) const
+int32_t data_definition::get_integer_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
     auto def_type = access_data_def_type();
     if (def_type)
         return def_type->get_integer_attribute(
-            evaluate_length(info), evaluate_scale(info), evaluate_nominal_value(info));
+            evaluate_length(info, diags), evaluate_scale(info, diags), evaluate_nominal_value(info, diags));
     else
         return 0;
 }
@@ -221,39 +216,8 @@ std::vector<context::id_index> data_definition::get_single_symbol_names() const
     return symbols;
 }
 
-void data_definition::collect_diags() const
-{
-    if (dupl_factor)
-        collect_diags_from_child(*dupl_factor);
-    if (program_type)
-        collect_diags_from_child(*program_type);
-    if (length)
-        collect_diags_from_child(*length);
-    if (scale)
-        collect_diags_from_child(*scale);
-    if (exponent)
-        collect_diags_from_child(*exponent);
-
-    if (nominal_value && nominal_value->access_exprs())
-    {
-        for (const auto& val : nominal_value->access_exprs()->exprs)
-        {
-            if (std::holds_alternative<expressions::mach_expr_ptr>(val))
-                collect_diags_from_child(*std::get<expressions::mach_expr_ptr>(val));
-            else
-            {
-                const auto& addr = std::get<expressions::address_nominal>(val);
-                if (addr.base)
-                    collect_diags_from_child(*addr.base);
-                if (addr.displacement)
-                    collect_diags_from_child(*addr.displacement);
-            }
-        }
-    }
-}
-
 checking::data_def_field<int32_t> set_data_def_field(
-    const expressions::mach_expression* e, context::dependency_solver& info)
+    const expressions::mach_expression* e, context::dependency_solver& info, diagnostic_op_consumer& diags)
 {
     using namespace checking;
     data_def_field<int32_t> field;
@@ -263,39 +227,43 @@ checking::data_def_field<int32_t> set_data_def_field(
     {
         field.rng = e->get_range();
         // TODO get_reloc get_abs
-        auto ret(e->evaluate(info));
+        auto ret(e->evaluate(info, diags));
         if (ret.value_kind() == context::symbol_value_kind::ABS)
-            field.value = e->evaluate(info).get_abs();
+            field.value = e->evaluate(info, diags).get_abs();
     }
     return field;
 }
 
-checking::dupl_factor_modifier_t data_definition::evaluate_dupl_factor(context::dependency_solver& info) const
+checking::dupl_factor_modifier_t data_definition::evaluate_dupl_factor(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    return dupl_factor ? set_data_def_field(dupl_factor.get(), info) : checking::data_def_field<int32_t>(1);
+    return dupl_factor ? set_data_def_field(dupl_factor.get(), info, diags) : checking::data_def_field<int32_t>(1);
 }
 
-checking::data_def_length_t data_definition::evaluate_length(context::dependency_solver& info) const
+checking::data_def_length_t data_definition::evaluate_length(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    checking::data_def_length_t len(set_data_def_field(length.get(), info));
+    checking::data_def_length_t len(set_data_def_field(length.get(), info, diags));
     len.len_type = length_type == expressions::data_definition::length_type::BIT ? checking::data_def_length_t::BIT
                                                                                  : checking::data_def_length_t::BYTE;
     return len;
 }
 
-checking::scale_modifier_t data_definition::evaluate_scale(context::dependency_solver& info) const
+checking::scale_modifier_t data_definition::evaluate_scale(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    auto common = set_data_def_field(scale.get(), info);
+    auto common = set_data_def_field(scale.get(), info, diags);
     return checking::scale_modifier_t(common.present, (int16_t)common.value, common.rng);
 }
 
-checking::exponent_modifier_t data_definition::evaluate_exponent(context::dependency_solver& info) const
+checking::exponent_modifier_t data_definition::evaluate_exponent(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    return set_data_def_field(exponent.get(), info);
+    return set_data_def_field(exponent.get(), info, diags);
 }
 
 inline checking::nominal_value_expressions extract_nominal_value_expressions(
-    const expr_or_address_list& exprs, context::dependency_solver& info)
+    const expr_or_address_list& exprs, context::dependency_solver& info, diagnostic_op_consumer& diags)
 {
     checking::nominal_value_expressions values;
     for (const auto& e_or_a : exprs)
@@ -305,7 +273,7 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(
             const expressions::mach_expr_ptr& e = std::get<expressions::mach_expr_ptr>(e_or_a);
             auto deps = e->get_dependencies(info);
             bool ignored = deps.has_error || deps.contains_dependencies(); // ignore values with dependencies
-            auto ev = e->evaluate(info);
+            auto ev = e->evaluate(info, diags);
             auto kind = ev.value_kind();
             if (kind == context::symbol_value_kind::ABS)
             {
@@ -342,8 +310,8 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(
             const auto& a = std::get<expressions::address_nominal>(e_or_a);
             checking::data_def_address ch_adr;
 
-            ch_adr.base = set_data_def_field(a.base.get(), info);
-            ch_adr.displacement = set_data_def_field(a.displacement.get(), info);
+            ch_adr.base = set_data_def_field(a.base.get(), info, diags);
+            ch_adr.displacement = set_data_def_field(a.displacement.get(), info, diags);
             ch_adr.ignored = !ch_adr.base.present || !ch_adr.displacement.present; // ignore value with dependencies
             values.push_back(ch_adr);
         }
@@ -351,7 +319,8 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(
     return values;
 }
 
-checking::nominal_value_t data_definition::evaluate_nominal_value(context::dependency_solver& info) const
+checking::nominal_value_t data_definition::evaluate_nominal_value(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
     if (!nominal_value)
         return {};
@@ -365,7 +334,7 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(context::depen
     }
     else if (nominal_value->access_exprs())
     {
-        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs, info);
+        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs, info, diags);
     }
     else
         assert(false);
@@ -436,7 +405,6 @@ struct loctr_reference_visitor final : public mach_expr_visitor
     void visit(const mach_expr_data_attr&) override {}
     void visit(const mach_expr_symbol&) override {}
     void visit(const mach_expr_location_counter&) override { found_loctr_reference = true; }
-    void visit(const mach_expr_self_def&) override {}
     void visit(const mach_expr_default&) override {}
     void visit(const mach_expr_literal& expr) override { expr.get_data_definition().apply(*this); }
 };
@@ -530,14 +498,14 @@ std::optional<std::pair<int, range>> data_definition_parser::parse_number(std::s
     }
     if (!parsed_one)
     {
-        m_result.add_diagnostic(diagnostic_op::error_D002({ range_start.start, r.start }));
+        m_errors.push_back(diagnostic_op::error_D002({ range_start.start, r.start }));
         return std::nullopt;
     }
     if (negative)
         result = -result;
     if (result < min_l || result > max_l)
     {
-        m_result.add_diagnostic(diagnostic_op::error_D001({ range_start.start, r.start }));
+        m_errors.push_back(diagnostic_op::error_D001({ range_start.start, r.start }));
         return std::nullopt;
     }
     m_collector->add_hl_symbol(token_info(range(range_start.start, r.start), semantics::hl_scopes::number));
@@ -760,7 +728,7 @@ void data_definition_parser::push(push_arg v, range r)
 
             case state::too_much_text:
                 m_state = {};
-                m_result.add_diagnostic(diagnostic_op::error_D006(r));
+                m_errors.push_back(diagnostic_op::error_D006(r));
                 return;
 
             default:
@@ -770,16 +738,16 @@ void data_definition_parser::push(push_arg v, range r)
 }
 void data_definition_parser::push(nominal_value_ptr n) { m_result.nominal_value = std::move(n); }
 
-data_definition data_definition_parser::take_result()
+std::pair<data_definition, std::vector<diagnostic_op>> data_definition_parser::take_result()
 {
     if (m_state.expecting_next.has_value())
-        m_result.add_diagnostic(diagnostic_op::error_D003(range(m_state.expecting_next.value())));
+        m_errors.push_back(diagnostic_op::error_D003(range(m_state.expecting_next.value())));
 
     loctr_reference_visitor v;
     m_result.apply(v);
     m_result.references_loctr = v.found_loctr_reference;
 
-    return std::move(m_result);
+    return std::make_pair(std::move(m_result), std::move(m_errors));
 }
 
 bool is_similar(const data_definition& l, const data_definition& r) noexcept

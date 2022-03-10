@@ -23,6 +23,10 @@
 #include "source_info_processor.h"
 #include "statement.h"
 
+namespace hlasm_plugin::parser_library::expressions {
+struct data_definition;
+} // namespace hlasm_plugin::parser_library::expressions
+
 namespace hlasm_plugin::parser_library::semantics {
 
 // class containing methods for collecting parsed statement fields
@@ -68,11 +72,16 @@ public:
     diagnostic_op_consumer* diag_collector() { return &statement_diagnostics; }
     diagnostic_op_consumer_container& diag_container() { return statement_diagnostics; }
 
+    std::shared_ptr<literal_si_data> add_literal(std::string text, expressions::data_definition dd, range r);
+    std::vector<literal_si> take_literals();
+    void set_literals(std::vector<literal_si> lit);
+
 private:
     std::optional<label_si> lbl_;
     std::optional<instruction_si> instr_;
     std::optional<operands_si> op_;
     std::optional<remarks_si> rem_;
+    std::vector<literal_si> lit_;
     std::optional<deferred_operands_si> def_;
     std::vector<token_info> hl_symbols_;
     bool lsp_symbols_extracted_;

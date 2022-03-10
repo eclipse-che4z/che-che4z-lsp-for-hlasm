@@ -14,6 +14,7 @@
 
 #include "collector.h"
 
+#include "expressions/data_definition.h"
 #include "lexing/lexer.h"
 #include "operand_impls.h"
 #include "processing/statement.h"
@@ -183,6 +184,8 @@ void collector::append_operand_field(collector&& c)
     statement_diagnostics.diags.insert(statement_diagnostics.diags.end(),
         std::make_move_iterator(c.statement_diagnostics.diags.begin()),
         std::make_move_iterator(c.statement_diagnostics.diags.end()));
+
+    lit_.insert(lit_.end(), std::make_move_iterator(c.lit_.begin()), std::make_move_iterator(c.lit_.end()));
 }
 
 const instruction_si& collector::peek_instruction() { return *instr_; }
@@ -202,6 +205,7 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
 
     if (deferred_hint)
     {
+        assert(lit_.empty());
         if (!def_)
             def_.emplace(instr_->field_range, "", std::vector<vs_ptr>());
         return std::make_shared<statement_si_deferred>(union_range(lbl_->field_range, def_->field_range),
@@ -224,7 +228,7 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
 
         statement_range = union_range(lbl_->field_range, op_->field_range);
         auto stmt_si = std::make_shared<statement_si>(
-            statement_range, std::move(*lbl_), std::move(*instr_), std::move(*op_), std::move(*rem_));
+            statement_range, std::move(*lbl_), std::move(*instr_), std::move(*op_), std::move(*rem_), std::move(lit_));
         return std::make_shared<processing::resolved_statement_impl>(
             std::move(stmt_si), std::move(status), std::move(statement_diagnostics.diags));
     }
@@ -245,6 +249,7 @@ void collector::prepare_for_next_statement()
     instr_.reset();
     op_.reset();
     rem_.reset();
+    lit_.clear();
     def_.reset();
 
     hl_symbols_.clear();
@@ -252,4 +257,16 @@ void collector::prepare_for_next_statement()
     hl_symbols_extracted_ = false;
 
     statement_diagnostics.diags.clear();
+}
+
+std::shared_ptr<literal_si_data> collector::add_literal(std::string text, expressions::data_definition dd, range r)
+{
+    return lit_.emplace_back(std::make_shared<literal_si_data>(std::move(text), std::move(dd), r));
+}
+
+std::vector<literal_si> hlasm_plugin::parser_library::semantics::collector::take_literals() { return std::move(lit_); }
+
+void hlasm_plugin::parser_library::semantics::collector::set_literals(std::vector<literal_si> lit)
+{
+    lit_ = std::move(lit);
 }

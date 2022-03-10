@@ -50,6 +50,10 @@ public:
     // K' attribute of the symbol
     A_t count(std::vector<size_t> offset) const override;
 
+    bool can_read(const std::vector<context::A_t>& subscript,
+        range symbol_range,
+        diagnostic_consumer<diagnostic_op>& diags) const override;
+
     virtual size_t size(std::vector<size_t> offset) const;
 
 protected:

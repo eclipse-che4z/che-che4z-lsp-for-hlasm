@@ -44,7 +44,7 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& info) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     void apply(mach_expr_visitor& visitor) const override
     {
@@ -53,12 +53,6 @@ public:
     }
 
     const mach_expression* leftmost_term() const override { return left_->leftmost_term(); }
-
-    void collect_diags() const override
-    {
-        collect_diags_from_child(*left_);
-        collect_diags_from_child(*right_);
-    }
 
     size_t hash() const override;
 
@@ -88,13 +82,11 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& info) const override;
 
-    value_t evaluate(context::dependency_solver& info) const override;
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
 
     void apply(mach_expr_visitor& visitor) const override { child_->apply(visitor); }
 
     const mach_expression* leftmost_term() const override { return child_->leftmost_term(); }
-
-    void collect_diags() const override { collect_diags_from_child(*child_); }
 
     size_t hash() const override;
 

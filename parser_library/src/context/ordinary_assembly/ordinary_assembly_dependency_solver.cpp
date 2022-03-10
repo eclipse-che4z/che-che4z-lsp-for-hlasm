@@ -27,15 +27,10 @@ const symbol* ordinary_assembly_dependency_solver::get_symbol(id_index name) con
 
 std::optional<address> ordinary_assembly_dependency_solver::get_loctr() const { return loctr_addr; }
 
-id_index ordinary_assembly_dependency_solver::get_literal_id(const std::string& text,
-    const std::shared_ptr<const expressions::data_definition>& lit,
-    const range& r,
-    bool align_on_halfword)
+id_index ordinary_assembly_dependency_solver::get_literal_id(
+    const std::shared_ptr<const expressions::data_definition>& lit)
 {
-    if (allow_adding_literals)
-        return ord_context.m_literals->add_literal(text, lit, r, unique_id, get_loctr(), align_on_halfword);
-    else
-        return ord_context.m_literals->get_literal(literal_pool_generation, lit, unique_id);
+    return ord_context.m_literals->get_literal(literal_pool_generation, lit, unique_id);
 }
 
 

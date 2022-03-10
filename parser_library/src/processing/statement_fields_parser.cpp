@@ -100,7 +100,7 @@ std::string decorate_message(const std::string& field, const std::string& messag
     return result;
 }
 
-std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser::parse_operand_field(std::string field,
+statement_fields_parser::parse_result statement_fields_parser::parse_operand_field(std::string field,
     bool after_substitution,
     semantics::range_provider field_range,
     processing::processing_status status,
@@ -118,6 +118,8 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
     const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, add_diag_subst);
 
     semantics::op_rem line;
+    std::vector<semantics::literal_si> literals;
+
     const auto& [format, opcode] = status;
     if (format.occurence == processing::operand_occurence::ABSENT
         || format.form == processing::processing_form::UNKNOWN)
@@ -128,6 +130,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
         {
             case processing::processing_form::MAC:
                 line = std::move(h.parser->op_rem_body_mac_r()->line);
+                literals = h.parser->get_collector().take_literals();
 
                 if (line.operands.size())
                 {
@@ -139,17 +142,21 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
                     const auto& h_second = prepare_parser(to_parse, true, tmp_provider, status, add_diag_subst);
 
                     line.operands = std::move(h_second.parser->macro_ops()->list);
+                    literals = h.parser->get_collector().take_literals();
                 }
                 break;
             case processing::processing_form::ASM:
                 line = std::move(h.parser->op_rem_body_asm_r()->line);
+                literals = h.parser->get_collector().take_literals();
                 break;
             case processing::processing_form::MACH:
                 line = std::move(h.parser->op_rem_body_mach_r()->line);
                 transform_reloc_imm_operands(line.operands, opcode.value);
+                literals = h.parser->get_collector().take_literals();
                 break;
             case processing::processing_form::DAT:
                 line = std::move(h.parser->op_rem_body_dat_r()->line);
+                literals = h.parser->get_collector().take_literals();
                 break;
             default:
                 break;
@@ -174,8 +181,11 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
     range rem_range =
         line.remarks.empty() ? range(op_range.end) : union_range(line.remarks.front(), line.remarks.back());
 
-    return std::make_pair(semantics::operands_si(op_range, std::move(line.operands)),
-        semantics::remarks_si(rem_range, std::move(line.remarks)));
+    return parse_result {
+        semantics::operands_si(op_range, std::move(line.operands)),
+        semantics::remarks_si(rem_range, std::move(line.remarks)),
+        std::move(literals),
+    };
 }
 
 void statement_fields_parser::collect_diags() const {}
