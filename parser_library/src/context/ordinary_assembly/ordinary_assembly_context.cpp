@@ -378,23 +378,17 @@ void ordinary_assembly_context::register_using_label(id_index name)
 
 index_t<using_collection> ordinary_assembly_context::current_using() const { return hlasm_ctx_.using_current(); }
 
-using_label_active_result ordinary_assembly_context::using_label_active(
+bool ordinary_assembly_context::using_label_active(
     index_t<using_collection> context_id, id_index label, const section* sect) const
 {
-    if (!symbol_defined(label))
-        return using_label_active_result::do_not_know;
-    if (!is_using_label(label))
-        return using_label_active_result::no;
-
     const auto& usings = hlasm_ctx_.usings();
 
-    if (!usings.resolved())
-        return using_label_active_result::do_not_know;
+    assert(usings.resolved());
 
-    if (usings.is_label_mapping_section(context_id, label, sect))
-        return using_label_active_result::yes;
-    else
-        return using_label_active_result::no;
+    if (!is_using_label(label))
+        return false;
+
+    return usings.is_label_mapping_section(context_id, label, sect);
 }
 
 } // namespace hlasm_plugin::parser_library::context

@@ -107,16 +107,6 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
         {
             if (!reloc_value.is_simple())
                 return context::dependency_collector::error();
-            switch (solver.using_label_active(qualifier, reloc_value.bases().front().first.owner))
-            {
-                case context::using_label_active_result::no:
-                    return context::dependency_collector::error();
-                case context::using_label_active_result::do_not_know:
-                    return qualifier;
-
-                case context::using_label_active_result::yes:
-                    break;
-            }
             reloc_value.bases().front().first.qualifier = qualifier;
         }
         return reloc_value;
@@ -126,7 +116,7 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
 }
 
 mach_expr_constant::value_t mach_expr_symbol::evaluate(
-    context::dependency_solver& solver, diagnostic_op_consumer&) const
+    context::dependency_solver& solver, diagnostic_op_consumer& diags) const
 {
     auto symbol = solver.get_symbol(value);
 
@@ -137,7 +127,7 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(
     {
         if (qualifier)
         {
-            // TODO: diagnose
+            diags.add_diagnostic(diagnostic_op::error_ME004(get_range()));
         }
         return symbol->value();
     }
@@ -148,16 +138,11 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(
         auto reloc_value = symbol->value().get_reloc();
         if (reloc_value.is_simple())
         {
-            if (context::using_label_active_result::yes
-                == solver.using_label_active(qualifier, reloc_value.bases().front().first.owner))
-            {
-                // TODO: diagnose
-            }
             reloc_value.bases().front().first.qualifier = qualifier;
         }
         else
         {
-            // TODO: diagnose
+            diags.add_diagnostic(diagnostic_op::error_ME006(get_range()));
         }
         return reloc_value;
     }

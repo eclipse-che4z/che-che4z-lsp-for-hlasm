@@ -164,8 +164,7 @@ public:
     void register_using_label(id_index name);
 
     index_t<using_collection> current_using() const;
-    using_label_active_result using_label_active(
-        index_t<using_collection> context_id, id_index label, const section* sect) const;
+    bool using_label_active(index_t<using_collection> context_id, id_index label, const section* sect) const;
 
 private:
     void create_private_section();
