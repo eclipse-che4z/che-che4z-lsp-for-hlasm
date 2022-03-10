@@ -274,12 +274,12 @@ void dap_feature::on_variables(const json& request_seq, const json& args)
         if (type == "")
             var_json = json {
                 { "name", std::string_view(var.name.data()) },
-                { "value", std::string_view(var.value.data()) },
+                { "value", var.value },
                 { "variablesReference", var.variable_reference },
             };
         else
             var_json = json { { "name", std::string_view(var.name.data()) },
-                { "value", std::string_view(var.value.data()) },
+                { "value", var.value },
                 { "variablesReference", var.variable_reference },
                 { "type", type } };
 

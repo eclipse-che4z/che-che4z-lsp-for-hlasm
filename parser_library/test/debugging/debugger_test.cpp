@@ -137,7 +137,7 @@ public:
         }
 
         if (data_)
-            return *data_ == std::string_view(var.value.data());
+            return *data_ == var.value;
         else
             return var.value.size() == 0;
     }

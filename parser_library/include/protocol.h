@@ -361,7 +361,7 @@ struct PARSER_LIBRARY_EXPORT variable
     explicit variable(const debugging::variable& impl);
 
     sequence<char, std::string> name;
-    sequence<char, std::string> value;
+    std::string value;
     var_reference_t variable_reference;
     set_type type;
 };

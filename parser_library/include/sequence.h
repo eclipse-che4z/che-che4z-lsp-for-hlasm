@@ -152,31 +152,6 @@ private:
     const c_type* data_ = nullptr;
     size_t size_ = 0;
 };
-
-// Specialization for std::string
-template<typename c_type>
-class sequence<c_type, std::string>
-{
-public:
-    sequence() = default;
-    sequence(std::string s)
-        : s(std::move(s))
-    {}
-
-    sequence(const sequence& seq)
-        : s(std::move(seq.s))
-    {}
-
-    [[nodiscard]] c_type item(size_t index) const { return s[index]; }
-    [[nodiscard]] size_t size() const { return s.size(); }
-    [[nodiscard]] const c_type* data() const { return s.data(); }
-
-    [[nodiscard]] const c_type* begin() const { return s.begin(); }
-    [[nodiscard]] const c_type* end() const { return s.end(); }
-
-private:
-    const std::string s;
-};
 template<class T>
 explicit sequence(T&&) -> sequence<std::decay_t<decltype(*std::declval<T>().data())>, void>;
 
