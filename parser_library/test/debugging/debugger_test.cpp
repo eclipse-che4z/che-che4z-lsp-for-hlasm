@@ -154,7 +154,7 @@ public:
             return false;
         for (auto actual_ch : actual_children)
         {
-            std::string actual_ch_name(actual_ch.name.data());
+            std::string actual_ch_name(actual_ch.name);
             auto found = children_.find(actual_ch_name);
             if (found == children_.end())
                 return false;
@@ -203,7 +203,7 @@ bool check_vars(debugger& d,
         return false;
     for (auto& var : vars)
     {
-        auto it = exp_vars.find(std::string(var.name.data()));
+        auto it = exp_vars.find(std::string(var.name));
         if (it == exp_vars.end())
             return false;
         if (!it->second.check(d, var))
