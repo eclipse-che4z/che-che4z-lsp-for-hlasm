@@ -73,7 +73,7 @@ class sysstmt_macro_param_data : public macro_param_data_single_dynamic
 public:
     C_t get_dynamic_value() const override
     {
-        size_t sysstmt = metrics.lines + metrics.macro_statements + 1;
+        size_t sysstmt = metrics.macro_def_statements + metrics.macro_statements + metrics.open_code_statements + 1;
         return left_pad(std::to_string(sysstmt), 8, '0');
     };
 
