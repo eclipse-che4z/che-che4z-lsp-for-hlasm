@@ -193,11 +193,12 @@ TEST(attribute_lookahead, lookup_triggered)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance, diags };
 
     EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)1);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(diags.diags.size(), (size_t)0);
 }
 
 TEST(attribute_lookahead, nested_lookup_triggered)
@@ -206,7 +207,8 @@ TEST(attribute_lookahead, nested_lookup_triggered)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance, diags };
 
     auto v1 = a.hlasm_ctx().create_local_variable<context::C_t>(a.hlasm_ctx().ids().add("V1"), false);
     v1->access_set_symbol<context::C_t>()->set_value("A", 0);
@@ -236,7 +238,8 @@ TEST(attribute_lookahead, lookup_not_triggered)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance, diags };
 
     // define symbol with undefined length
     auto tmp = a.hlasm_ctx().ord_ctx.create_symbol(
@@ -255,7 +258,8 @@ TEST(attribute_lookahead, lookup_of_two_refs)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance, diags };
 
     EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)2);
 
@@ -268,7 +272,8 @@ TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance, diags };
 
     EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)1);
 

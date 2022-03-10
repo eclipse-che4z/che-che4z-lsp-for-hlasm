@@ -21,6 +21,13 @@
 #include "context/common_types.h"
 #include "context/id_storage.h"
 
+namespace hlasm_plugin::parser_library {
+struct diagnostic_op;
+template<typename T>
+class diagnostic_consumer;
+struct range;
+} // namespace hlasm_plugin::parser_library
+
 namespace hlasm_plugin::parser_library::context {
 
 class set_symbol_base;
@@ -52,6 +59,10 @@ public:
     virtual A_t number(std::vector<size_t> offset) const = 0;
     // K' attribute of the symbol
     virtual A_t count(std::vector<size_t> offset) const = 0;
+
+    virtual bool can_read(const std::vector<context::A_t>& subscript,
+        range symbol_range,
+        diagnostic_consumer<diagnostic_op>& diags) const = 0;
 
     virtual ~variable_symbol() = default;
 

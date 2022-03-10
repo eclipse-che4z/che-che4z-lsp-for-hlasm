@@ -25,8 +25,9 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_var_sym_basic, undefined_attributes)
 {
+    diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
@@ -45,7 +46,8 @@ TEST(ca_var_sym_basic, undefined_attributes)
 TEST(ca_var_sym_created, undefined_attributes)
 {
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     std::string name = "n";
     concat_chain created_name;

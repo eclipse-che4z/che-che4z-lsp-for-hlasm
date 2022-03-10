@@ -62,6 +62,9 @@ public:
     C_t get_value(size_t idx) const override;
     C_t get_value() const override;
     const macro_param_data_component* get_data(const std::vector<size_t>& offset) const override;
+    bool can_read(const std::vector<context::A_t>& subscript,
+        range symbol_range,
+        diagnostic_consumer<diagnostic_op>& diags) const override;
 };
 
 // SYSLIST extras
@@ -72,6 +75,9 @@ public:
 
     // SYSLIST special behavior
     const macro_param_data_component* get_data(const std::vector<size_t>& offset) const override;
+    bool can_read(const std::vector<context::A_t>& subscript,
+        range symbol_range,
+        diagnostic_consumer<diagnostic_op>& diags) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::context

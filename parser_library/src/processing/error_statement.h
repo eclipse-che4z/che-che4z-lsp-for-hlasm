@@ -34,7 +34,7 @@ public:
 
     position statement_position() const override;
 
-    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override;
+    std::span<const diagnostic_op> diagnostics() const override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

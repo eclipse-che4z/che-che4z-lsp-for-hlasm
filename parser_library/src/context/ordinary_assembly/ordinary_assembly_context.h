@@ -146,10 +146,12 @@ public:
     void finish_module_layout(loctr_dependency_resolver* resolver);
 
     size_t current_literal_pool_generation() const;
-    size_t next_unique_id() { return m_statement_unique_id++; }
+    size_t next_unique_id() { return ++m_statement_unique_id; }
+    size_t current_unique_id() const { return m_statement_unique_id; }
 
+    literal_pool& literals() { return *m_literals; }
     const literal_pool& literals() const { return *m_literals; }
-    void generate_pool(dependency_solver& solver, const diagnosable_ctx& diags) const;
+    void generate_pool(diagnosable_ctx& diags) const;
     location_counter* implicit_ltorg_target()
     {
         if (!first_control_section_)

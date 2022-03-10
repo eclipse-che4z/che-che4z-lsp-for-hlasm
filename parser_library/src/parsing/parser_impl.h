@@ -151,6 +151,7 @@ protected:
     bool ALIAS();
 
     void add_diagnostic(diagnostic_severity severity, std::string code, std::string message, range diag_range) const;
+    void add_diagnostic(diagnostic_op d) const;
 
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;

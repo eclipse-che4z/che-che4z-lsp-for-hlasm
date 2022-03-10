@@ -18,42 +18,76 @@
 
 using namespace hlasm_plugin::parser_library::context;
 
-dependency_collector::dependency_collector(bool has_error)
-    : has_error(has_error)
+dependency_collector::dependency_collector() = default;
+
+dependency_collector::dependency_collector(error)
+    : has_error(true)
 {}
 
-dependency_collector::dependency_collector(id_index undefined_symbol)
-    : has_error(false)
-{
-    undefined_symbols.insert(undefined_symbol);
-}
+dependency_collector::dependency_collector(id_index undefined_symbol) { undefined_symbols.insert(undefined_symbol); }
 
-dependency_collector::dependency_collector(address unresolved_address)
-    : has_error(false)
-    , unresolved_address(std::move(unresolved_address))
+dependency_collector::dependency_collector(address u_a)
+    : unresolved_address(std::move(u_a))
 {
-    this->unresolved_address->normalize();
+    unresolved_address->normalize();
 }
 
 dependency_collector::dependency_collector(attr_ref attribute_reference)
-    : has_error(false)
 {
     undefined_attr_refs.insert(std::move(attribute_reference));
 }
 
-dependency_collector& dependency_collector::operator+(const dependency_collector& holder)
+dependency_collector& dependency_collector::operator+=(const dependency_collector& holder)
 {
-    return add_sub(holder, true);
+    if (!merge_undef(holder))
+        add_sub(holder, true);
+
+    return *this;
 }
 
-dependency_collector& dependency_collector::operator-(const dependency_collector& holder)
+dependency_collector& dependency_collector::operator-=(const dependency_collector& holder)
 {
-    return add_sub(holder, false);
+    if (!merge_undef(holder))
+        add_sub(holder, false);
+
+    return *this;
 }
 
-dependency_collector& dependency_collector::operator*(const dependency_collector& holder) { return div_mul(holder); }
+dependency_collector& dependency_collector::operator*=(const dependency_collector& holder)
+{
+    if (!merge_undef(holder))
+        div_mul(holder);
 
-dependency_collector& dependency_collector::operator/(const dependency_collector& holder) { return div_mul(holder); }
+    return *this;
+}
+
+dependency_collector& dependency_collector::operator/=(const dependency_collector& holder)
+{
+    if (!merge_undef(holder))
+        div_mul(holder);
+
+    return *this;
+}
+
+dependency_collector& hlasm_plugin::parser_library::context::dependency_collector::merge(const dependency_collector& dc)
+{
+    merge_undef(dc);
+
+    if (unresolved_address)
+    {
+        for (const auto& [sp, c] : unresolved_address->spaces())
+            unresolved_spaces.insert(sp);
+        unresolved_address.reset();
+    }
+
+    if (dc.unresolved_address)
+    {
+        for (const auto& [sp, c] : dc.unresolved_address->spaces())
+            unresolved_spaces.insert(sp);
+    }
+
+    return *this;
+}
 
 bool dependency_collector::is_address() const
 {
@@ -68,10 +102,7 @@ bool dependency_collector::contains_dependencies() const
 
 bool dependency_collector::merge_undef(const dependency_collector& holder)
 {
-    has_error = holder.has_error;
-
-    if (has_error)
-        return true;
+    has_error |= holder.has_error;
 
     undefined_symbols.insert(holder.undefined_symbols.begin(), holder.undefined_symbols.end());
 
@@ -79,16 +110,11 @@ bool dependency_collector::merge_undef(const dependency_collector& holder)
 
     unresolved_spaces.insert(holder.unresolved_spaces.begin(), holder.unresolved_spaces.end());
 
-    return !undefined_symbols.empty();
+    return has_error || !undefined_symbols.empty();
 }
 
-dependency_collector& dependency_collector::add_sub(const dependency_collector& holder, bool add)
+void dependency_collector::add_sub(const dependency_collector& holder, bool add)
 {
-    bool finished = merge_undef(holder);
-
-    if (finished)
-        return *this;
-
     if (unresolved_address && holder.unresolved_address)
     {
         if (add)
@@ -104,17 +130,10 @@ dependency_collector& dependency_collector::add_sub(const dependency_collector& 
         else
             unresolved_address = -*holder.unresolved_address;
     }
-
-    return *this;
 }
 
-dependency_collector& dependency_collector::div_mul(const dependency_collector& holder)
+void dependency_collector::div_mul(const dependency_collector& holder)
 {
-    bool finished = merge_undef(holder);
-
-    if (finished)
-        return *this;
-
     if (is_address() || holder.is_address())
         has_error = true;
     else
@@ -126,8 +145,6 @@ dependency_collector& dependency_collector::div_mul(const dependency_collector& 
             for (const auto& [sp, c] : holder.unresolved_address->spaces())
                 unresolved_spaces.insert(sp);
     }
-
-    return *this;
 }
 
 void dependency_collector::adjust_address(address& addr)

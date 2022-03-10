@@ -26,15 +26,10 @@ ca_symbol::ca_symbol(context::id_index symbol, range expr_range)
 
 undef_sym_set ca_symbol::get_undefined_attributed_symbols(const evaluation_context&) const { return undef_sym_set(); }
 
-void ca_symbol::resolve_expression_tree(context::SET_t_enum kind)
+void ca_symbol::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
     if (kind == context::SET_t_enum::C_TYPE)
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
-}
-
-void ca_symbol::collect_diags() const
-{
-    // nothing to collect
+        diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
 bool ca_symbol::is_character_expression(character_expression_purpose) const { return false; }
@@ -49,7 +44,7 @@ context::SET_t ca_symbol::evaluate(const evaluation_context& eval_ctx) const
         return tmp_symbol->value().get_abs();
     else
     {
-        eval_ctx.add_diagnostic(diagnostic_op::error_CE012(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE012(expr_range));
         return context::object_traits<context::A_t>::default_v();
     }
 }

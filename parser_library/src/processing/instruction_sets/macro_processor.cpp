@@ -16,8 +16,8 @@
 
 #include <functional>
 #include <memory>
+#include <stack>
 
-#include "processing/context_manager.h"
 #include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -206,16 +206,15 @@ context::macro_data_ptr macro_processor::get_label_args(const resolved_statement
     }
 }
 
-bool is_keyword(const semantics::concat_chain& chain, const context_manager& mngr)
+bool is_keyword(const semantics::concat_chain& chain, context::hlasm_context& hlasm_ctx)
 {
     return chain.size() >= 2 && chain[0]->type == semantics::concat_type::STR
         && chain[1]->type == semantics::concat_type::EQU
-        && mngr.hlasm_ctx.try_get_symbol_name(chain[0]->access_str()->value).first;
+        && hlasm_ctx.try_get_symbol_name(chain[0]->access_str()->value).first;
 }
 
 std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved_statement& statement) const
 {
-    context_manager mngr(hlasm_ctx);
     std::vector<context::macro_arg> args;
     std::vector<context::id_index> keyword_params;
 
@@ -232,7 +231,7 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
 
         auto& tmp_chain = tmp->chain;
 
-        if (is_keyword(tmp_chain, mngr)) // keyword
+        if (is_keyword(tmp_chain, hlasm_ctx)) // keyword
         {
             get_keyword_arg(statement, tmp_chain, args, keyword_params, tmp->operand_range);
         }
@@ -256,8 +255,6 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
     std::vector<context::id_index>& keyword_params,
     range op_range) const
 {
-    context_manager mngr(hlasm_ctx);
-
     auto id = hlasm_ctx.try_get_symbol_name(chain[0]->access_str()->value).second;
     assert(id != context::id_storage::empty_id);
 

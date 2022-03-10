@@ -35,7 +35,7 @@ using mach_expr_list = std::vector<mach_expr_ptr>;
 // whole machine expression.
 // It can be evaluated using context::dependency_solver& that provides
 // information about values of ordinary symbols.
-class mach_expression : public diagnosable_op_impl, public context::resolvable
+class mach_expression : public context::resolvable
 {
     virtual bool do_is_similar(const mach_expression& expr) const = 0;
 
@@ -44,7 +44,7 @@ public:
 
     context::symbol_value resolve(context::dependency_solver& solver) const override;
 
-    virtual value_t evaluate(context::dependency_solver& info) const = 0;
+    virtual value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const = 0;
 
     virtual const mach_expression* leftmost_term() const = 0;
 

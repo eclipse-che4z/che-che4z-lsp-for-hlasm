@@ -63,22 +63,21 @@ public:
 
     undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override { return {}; };
 
-    void resolve_expression_tree(context::SET_t_enum) override {}
+    void resolve_expression_tree(context::SET_t_enum, diagnostic_op_consumer&) override {}
 
     bool is_character_expression(character_expression_purpose) const override { return false; }
 
     void apply(ca_expr_visitor&) const override {}
 
     context::SET_t evaluate(const evaluation_context&) const override { return value; }
-
-    void collect_diags() const override {}
 };
 
 class ca_func : public ::testing::TestWithParam<func_test_param>
 {
 protected:
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
 
     context::SET_t get_result()
     {
@@ -295,7 +294,7 @@ TEST_P(ca_func, test)
 {
     auto result = get_result();
 
-    ASSERT_EQ(eval_ctx.diags().size(), GetParam().erroneous);
+    EXPECT_EQ(diags.diags.size(), GetParam().erroneous);
 
     if (!GetParam().erroneous)
     {

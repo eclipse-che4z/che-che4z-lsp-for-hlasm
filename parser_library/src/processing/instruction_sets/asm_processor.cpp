@@ -22,9 +22,34 @@
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expr_visitor.h"
 #include "postponed_statement_impl.h"
-#include "processing/context_manager.h"
+
 
 namespace hlasm_plugin::parser_library::processing {
+
+namespace {
+diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
+
+std::optional<context::A_t> try_get_abs_value(
+    const semantics::simple_expr_operand* op, context::dependency_solver& dep_solver)
+{
+    if (op->has_dependencies(dep_solver))
+        return std::nullopt;
+
+    auto val = op->expression->evaluate(dep_solver, drop_diags);
+
+    if (val.value_kind() != context::symbol_value_kind::ABS)
+        return std::nullopt;
+    return val.get_abs();
+}
+
+std::optional<context::A_t> try_get_abs_value(const semantics::operand* op, context::dependency_solver& dep_solver)
+{
+    auto expr_op = dynamic_cast<const semantics::simple_expr_operand*>(op);
+    if (!expr_op)
+        return std::nullopt;
+    return try_get_abs_value(expr_op, dep_solver);
+}
+} // namespace
 
 void asm_processor::process_sect(const context::section_kind kind, rebuilt_statement stmt)
 {
@@ -110,7 +135,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
         if (expr_op && !expr_op->has_dependencies(dep_solver))
         {
-            auto t_value = expr_op->expression->resolve(dep_solver);
+            auto t_value = expr_op->expression->evaluate(dep_solver, *this);
             if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
                 && t_value.get_abs() <= 255)
                 t_attr = (context::symbol_attributes::type_attr)t_value.get_abs();
@@ -130,7 +155,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
         if (expr_op && !expr_op->has_dependencies(dep_solver))
         {
-            auto length_value = expr_op->expression->resolve(dep_solver);
+            auto length_value = expr_op->expression->evaluate(dep_solver, *this);
             if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0
                 && length_value.get_abs() <= 65535)
                 length_attr = (context::symbol_attributes::len_attr)length_value.get_abs();
@@ -171,7 +196,8 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
             if (!holder.contains_dependencies())
             {
-                create_symbol(stmt.stmt_range_ref(), symbol_name, expr_op->expression->resolve(dep_solver), attrs);
+                create_symbol(
+                    stmt.stmt_range_ref(), symbol_name, expr_op->expression->evaluate(dep_solver, *this), attrs);
             }
             else
             {
@@ -190,7 +216,10 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
                     }
                 }
                 else
-                    create_symbol(stmt.stmt_range_ref(), symbol_name, *holder.unresolved_address, attrs);
+                    create_symbol(stmt.stmt_range_ref(),
+                        symbol_name,
+                        *holder.unresolved_address,
+                        attrs); // TODO: this is almost certainly wrong - unresolved space_sp are ignored
             }
         }
     }
@@ -228,7 +257,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
             context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
             context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 
-            auto tmp = data_op->get_operand_value(dep_solver);
+            auto tmp = data_op->get_operand_value(dep_solver, drop_diags);
             auto& value = dynamic_cast<checking::data_definition_operand&>(*tmp);
 
             if (!data_op->value->length
@@ -323,7 +352,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         }
         else
         {
-            auto length = data_def_dependency<instr_type>::get_operands_length(b, e, op_solver);
+            auto length = data_def_dependency<instr_type>::get_operands_length(b, e, op_solver, drop_diags);
             hlasm_ctx.ord_ctx.reserve_storage_area(length, context::no_align);
         }
     }
@@ -435,28 +464,6 @@ void asm_processor::process_external(rebuilt_statement stmt, external_type t)
     }
 }
 
-std::optional<context::A_t> asm_processor::try_get_abs_value(
-    const semantics::operand* op, context::dependency_solver& dep_solver) const
-{
-    auto expr_op = dynamic_cast<const semantics::simple_expr_operand*>(op);
-    if (!expr_op)
-        return std::nullopt;
-    return try_get_abs_value(expr_op, dep_solver);
-}
-
-std::optional<context::A_t> asm_processor::try_get_abs_value(
-    const semantics::simple_expr_operand* op, context::dependency_solver& dep_solver) const
-{
-    if (op->has_dependencies(dep_solver))
-        return std::nullopt;
-
-    auto val = op->expression->evaluate(dep_solver);
-
-    if (val.value_kind() != context::symbol_value_kind::ABS)
-        return std::nullopt;
-    return val.get_abs();
-}
-
 void asm_processor::process_ORG(rebuilt_statement stmt)
 {
     find_sequence_symbol(stmt);
@@ -533,7 +540,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
     if (reloc_expr)
     {
         auto reloc_val = !undefined_absolute_part
-            ? reloc_expr->expression->evaluate(dep_solver).get_reloc()
+            ? reloc_expr->expression->evaluate(dep_solver, drop_diags).get_reloc()
             : *reloc_expr->expression->get_dependencies(dep_solver).unresolved_address;
 
         if (!check_address_for_ORG(stmt.stmt_range_ref(), reloc_val, loctr, boundary, offset))
@@ -608,6 +615,8 @@ asm_processor::asm_processor(analyzing_context ctx,
 void asm_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
     auto rebuilt_stmt = preprocess(stmt);
+
+    register_literals(rebuilt_stmt, context::no_align, hlasm_ctx.ord_ctx.next_unique_id());
 
     auto it = table_.find(rebuilt_stmt.opcode_ref().value);
     if (it != table_.end())
@@ -740,7 +749,6 @@ public:
     void visit(const expressions::mach_expr_data_attr&) override {}
     void visit(const expressions::mach_expr_symbol& expr) override { value = expr.value; }
     void visit(const expressions::mach_expr_location_counter&) override {}
-    void visit(const expressions::mach_expr_self_def&) override {}
     void visit(const expressions::mach_expr_default&) override {}
     void visit(const expressions::mach_expr_literal&) override {}
 
@@ -898,8 +906,8 @@ void asm_processor::process_END(rebuilt_statement stmt)
         if (stmt.operands_ref().value[0]->access_asm() != nullptr
             && stmt.operands_ref().value[0]->access_asm()->kind == semantics::asm_kind::EXPR)
         {
-            auto symbol =
-                stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get()->evaluate(dep_solver);
+            auto symbol = stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get()->evaluate(
+                dep_solver, drop_diags);
 
             if (symbol.value_kind() == context::symbol_value_kind::ABS)
             {
@@ -930,10 +938,9 @@ void asm_processor::process_LTORG(rebuilt_statement stmt)
     constexpr size_t sectalgn = 8;
     auto loctr = hlasm_ctx.ord_ctx.align(context::alignment { 0, sectalgn });
 
-    context::ordinary_assembly_dependency_solver dep_solver(
-        hlasm_ctx.ord_ctx, context::ordinary_assembly_dependency_solver::no_new_literals {});
     find_sequence_symbol(stmt);
 
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
 
     if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
@@ -947,7 +954,7 @@ void asm_processor::process_LTORG(rebuilt_statement stmt)
                 context::symbol_attributes(context::symbol_origin::EQU, ebcdic_encoding::to_ebcdic('U'), 1));
     }
 
-    hlasm_ctx.ord_ctx.generate_pool(dep_solver, *this);
+    hlasm_ctx.ord_ctx.generate_pool(*this);
 }
 
 void asm_processor::process_USING(rebuilt_statement stmt)
@@ -1010,17 +1017,6 @@ void asm_processor::process_USING(rebuilt_statement stmt)
         }
     }
 
-    // TODO: this needs to be reworked
-    const auto register_literals = [&dep_solver](const mach_expr_ptr& expr) {
-        if (!expr)
-            return;
-        (void)expr->get_dependencies(dep_solver);
-    };
-    register_literals(b);
-    register_literals(e);
-    for (const auto& base : bases)
-        register_literals(base);
-
     hlasm_ctx.using_add(label,
         std::move(b),
         std::move(e),
@@ -1073,10 +1069,6 @@ void asm_processor::process_DROP(rebuilt_statement stmt)
             }
         }
     }
-
-    // TODO: this needs to be reworked
-    for (const auto& base : bases)
-        base->get_dependencies(dep_solver); // register literals
 
     hlasm_ctx.using_remove(
         std::move(bases), dep_solver.derive_current_dependency_evaluation_context(), std::move(stack));

@@ -77,7 +77,12 @@ protected:
 
 
 private:
-    using preprocessed_part = std::pair<std::optional<semantics::label_si>, std::optional<semantics::operands_si>>;
+    struct preprocessed_part
+    {
+        std::optional<semantics::label_si> label;
+        std::optional<semantics::operands_si> operands;
+        std::optional<std::vector<semantics::literal_si>> literals;
+    };
     preprocessed_part preprocess_inner(const resolved_statement& stmt);
 
     using transform_result = std::optional<std::vector<checking::check_op_ptr>>;
