@@ -30,16 +30,15 @@ public:
     set_symbol_variable(const context::set_symbol_base& set_sym, int index);
     set_symbol_variable(const context::set_symbol_base& set_sym);
 
+    const std::string& get_name() const;
+    const std::string& get_value() const;
+
     set_type type() const override;
 
     bool is_scalar() const override;
 
     std::vector<variable_ptr> values() const override;
     size_t size() const override;
-
-protected:
-    std::string get_string_value() const override;
-    const std::string& get_string_name() const override;
 
 private:
     template<typename T>
@@ -49,6 +48,9 @@ private:
 
     const context::set_symbol_base& set_symbol_;
     const std::optional<int> index_;
+
+    std::string name_;
+    std::string value_;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

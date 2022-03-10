@@ -88,7 +88,7 @@ public:
         return left_pad(std::to_string(sysstmt), 8, '0');
     };
 
-    explicit sysstmt_macro_param_data(const performance_metrics& metrics, std::deque<code_scope>& scope_stack)
+    explicit sysstmt_macro_param_data(const performance_metrics& metrics, const std::deque<code_scope>& scope_stack)
         : macro_param_data_single_dynamic()
         , metrics(metrics)
         , scope_stack(scope_stack) {};

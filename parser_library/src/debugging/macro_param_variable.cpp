@@ -25,19 +25,18 @@ macro_param_variable::macro_param_variable(const context::macro_param_base& para
     , index_(std::move(index))
 {
     if (!index_.empty())
-        name_.emplace(std::to_string(index_.back()));
+        name_ = std::to_string(index_.back());
     else
-        name_.emplace("&" + *macro_param_.id);
+        name_ = "&" + *macro_param_.id;
+
+    value_ = macro_param_.get_value(index_);
 }
 
-std::string macro_param_variable::get_string_value() const { return macro_param_.get_value(index_); };
+const std::string& macro_param_variable::get_name() const { return name_; }
+
+const std::string& macro_param_variable::get_value() const { return value_; }
 
 set_type macro_param_variable::type() const { return set_type::C_TYPE; }
-
-const std::string& macro_param_variable::get_string_name() const
-{
-    throw std::runtime_error("Function macro_param_variable::get_string_name should never be called!");
-}
 
 bool macro_param_variable::is_scalar() const { return macro_param_.size(index_) == 0; }
 

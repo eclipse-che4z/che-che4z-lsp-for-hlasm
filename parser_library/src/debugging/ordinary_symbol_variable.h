@@ -27,6 +27,8 @@ class ordinary_symbol_variable : public variable
 public:
     ordinary_symbol_variable(const context::symbol& symbol);
 
+    const std::string& get_name() const;
+    const std::string& get_value() const;
 
     set_type type() const override;
 
@@ -35,12 +37,12 @@ public:
     std::vector<variable_ptr> values() const override;
     size_t size() const override;
 
-protected:
-    std::string get_string_value() const override;
-    const std::string& get_string_name() const override;
-
 private:
+    std::string get_string_value() const;
+
     const context::symbol& symbol_;
+    std::string value_;
+    std::string name_;
 };
 
 
