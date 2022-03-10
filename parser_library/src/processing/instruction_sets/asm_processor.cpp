@@ -297,9 +297,6 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     // TODO issue warning when alignment is bigger than section's alignment
     // hlasm_ctx.ord_ctx.current_section()->current_location_counter().
 
-    // dependency sources is list of all expressions in data def operand, that have some unresolved dependencies.
-    bool has_dependencies = false;
-
     std::vector<data_def_dependency<instr_type>> dependencies;
     std::vector<context::space_ptr> dependencies_spaces;
 
@@ -334,12 +331,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
                 break;
             current_alignment = op_align;
 
-            has_dependencies |= data_op->has_dependencies(op_solver);
-
             has_length_dependencies |= data_op->get_length_dependencies(op_solver).contains_dependencies();
-
-            // some types require operands that consist only of one symbol
-            (void)data_op->value->check_single_symbol_ok(diagnostic_collector(this));
         }
 
         const auto* b = &*start;
@@ -357,34 +349,29 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         }
     }
 
-    if (has_dependencies)
-    {
-        auto dep_stmt = std::make_unique<data_def_postponed_statement<instr_type>>(
-            std::move(stmt), hlasm_ctx.processing_stack(), std::move(dependencies));
-        const auto& deps = dep_stmt->get_dependencies();
+    auto dep_stmt = std::make_unique<data_def_postponed_statement<instr_type>>(
+        std::move(stmt), hlasm_ctx.processing_stack(), std::move(dependencies));
+    const auto& deps = dep_stmt->get_dependencies();
 
-        auto adder = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependencies(
-            std::move(dep_stmt), dep_solver.derive_current_dependency_evaluation_context());
-        adder.add_dependency();
+    auto adder = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependencies(
+        std::move(dep_stmt), dep_solver.derive_current_dependency_evaluation_context());
+    adder.add_dependency();
 
-        bool cycle_ok = true;
+    bool cycle_ok = true;
 
-        if (l_dep)
-            cycle_ok &= adder.add_dependency(label, context::data_attr_kind::L, l_dep);
-        if (s_dep)
-            cycle_ok &= adder.add_dependency(label, context::data_attr_kind::S, s_dep);
+    if (l_dep)
+        cycle_ok &= adder.add_dependency(label, context::data_attr_kind::L, l_dep);
+    if (s_dep)
+        cycle_ok &= adder.add_dependency(label, context::data_attr_kind::S, s_dep);
 
-        if (!cycle_ok)
-            add_diagnostic(diagnostic_op::error_E033(operands.front()->operand_range));
+    if (!cycle_ok)
+        add_diagnostic(diagnostic_op::error_E033(operands.front()->operand_range));
 
-        auto sp = dependencies_spaces.begin();
-        for (const auto& d : deps)
-            adder.add_dependency(std::move(*sp++), &d);
+    auto sp = dependencies_spaces.begin();
+    for (const auto& d : deps)
+        adder.add_dependency(std::move(*sp++), &d);
 
-        adder.finish();
-    }
-    else
-        check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
+    adder.finish();
 }
 
 void asm_processor::process_DC(rebuilt_statement stmt)
@@ -795,18 +782,9 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
 
     hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align);
 
-    bool has_dependencies = std::any_of(
-        stmt.operands_ref().value.begin(), stmt.operands_ref().value.end(), [this, &dep_solver](const auto& op) {
-            auto evaluable = dynamic_cast<semantics::evaluable_operand*>(op.get());
-            return evaluable && evaluable->has_dependencies(dep_solver);
-        });
-
-    if (has_dependencies)
-        hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
-            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-            dep_solver.derive_current_dependency_evaluation_context());
-    else
-        check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
+    hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
+        std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+        dep_solver.derive_current_dependency_evaluation_context());
 }
 
 void asm_processor::process_CNOP(rebuilt_statement stmt)
