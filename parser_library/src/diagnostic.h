@@ -620,6 +620,12 @@ struct diagnostic_op
 
     static diagnostic_op error_ME003(const range& range);
 
+    static diagnostic_op error_ME004(const range& range);
+
+    static diagnostic_op error_ME005(std::string_view label, std::string_view sect, const range& range);
+
+    static diagnostic_op error_ME006(const range& range);
+
     static diagnostic_op error_CE001(const range& range);
 
     static diagnostic_op error_CE002(std::string_view message, const range& range);

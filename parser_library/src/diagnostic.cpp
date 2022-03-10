@@ -2152,6 +2152,26 @@ diagnostic_op diagnostic_op::error_ME003(const range& range)
         diagnostic_severity::error, "ME003", "Relative Immediate operand must evaluate into an even offset.", range);
 }
 
+diagnostic_op diagnostic_op::error_ME004(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "ME004", "Absolute expression cannot be qualified with a label.", range);
+}
+
+diagnostic_op diagnostic_op::error_ME005(std::string_view label, std::string_view sect, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "ME005",
+        concat("Labeled USING '", label, "' does not map section '", sect, "'."),
+        range);
+}
+
+diagnostic_op diagnostic_op::error_ME006(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "ME006", "Complex relocatable expression cannot be qualified with a label.", range);
+}
+
 diagnostic_op diagnostic_op::error_CE001(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "CE001", "Operator expected", range);
