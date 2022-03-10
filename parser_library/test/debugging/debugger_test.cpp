@@ -137,7 +137,7 @@ public:
         }
 
         if (data_)
-            return *data_ == var.value;
+            return *data_ == std::string(var.value);
         else
             return var.value.size() == 0;
     }
