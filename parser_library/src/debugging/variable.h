@@ -31,8 +31,8 @@ using variable_ptr = std::unique_ptr<variable>;
 class variable
 {
 public:
-    const std::string& get_value() const;
-    const std::string& get_name() const;
+    virtual const std::string& get_name() const = 0;
+    virtual const std::string& get_value() const = 0;
 
     virtual set_type type() const = 0;
 
@@ -44,12 +44,6 @@ public:
     var_reference_t var_reference = 0;
 
     virtual ~variable() = default;
-
-protected:
-    variable(const std::string& name, const std::string& value);
-
-    const std::string& name_;
-    const std::string& value_;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

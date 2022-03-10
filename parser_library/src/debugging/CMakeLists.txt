@@ -22,7 +22,6 @@ target_sources(parser_library PRIVATE
 	ordinary_symbol_variable.h
 	set_symbol_variable.cpp
 	set_symbol_variable.h
-	variable.cpp
 	variable.h
 )
 

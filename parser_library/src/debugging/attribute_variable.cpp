@@ -21,10 +21,13 @@ using namespace hlasm_plugin::parser_library;
 using namespace debugging;
 
 attribute_variable::attribute_variable(std::string name, std::string value)
-    : variable(name_, value_)
-    , name_(std::move(name))
+    : name_(std::move(name))
     , value_(std::move(value))
 {}
+
+const std::string& attribute_variable::get_name() const { return name_; }
+
+const std::string& attribute_variable::get_value() const { return value_; }
 
 set_type attribute_variable::type() const { return set_type::UNDEF_TYPE; }
 

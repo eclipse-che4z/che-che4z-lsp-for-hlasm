@@ -30,6 +30,9 @@ public:
     set_symbol_variable(const context::set_symbol_base& set_sym, int index);
     set_symbol_variable(const context::set_symbol_base& set_sym);
 
+    const std::string& get_name() const;
+    const std::string& get_value() const;
+
     set_type type() const override;
 
     bool is_scalar() const override;

@@ -21,8 +21,7 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::debugging;
 
 macro_param_variable::macro_param_variable(const context::macro_param_base& param, std::vector<size_t> index)
-    : variable(name_, value_)
-    , macro_param_(param)
+    : macro_param_(param)
     , index_(std::move(index))
 {
     if (!index_.empty())
@@ -32,6 +31,10 @@ macro_param_variable::macro_param_variable(const context::macro_param_base& para
 
     value_ = macro_param_.get_value(index_);
 }
+
+const std::string& macro_param_variable::get_name() const { return name_; }
+
+const std::string& macro_param_variable::get_value() const { return value_; }
 
 set_type macro_param_variable::type() const { return set_type::C_TYPE; }
 

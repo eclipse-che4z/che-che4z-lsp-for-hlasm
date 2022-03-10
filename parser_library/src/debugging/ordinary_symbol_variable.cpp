@@ -29,8 +29,7 @@ static const std::string reloc_string = "RELOC";
 static const std::string complex_string = "COMPLEX";
 
 ordinary_symbol_variable::ordinary_symbol_variable(const context::symbol& symbol)
-    : variable(name_, value_)
-    , symbol_(symbol)
+    : symbol_(symbol)
     , name_(*symbol_.name)
 {
     value_ = get_string_value();
@@ -53,6 +52,10 @@ std::string ordinary_symbol_variable::get_string_value() const
             return empty_string;
     }
 }
+
+const std::string& ordinary_symbol_variable::get_name() const { return name_; }
+
+const std::string& ordinary_symbol_variable::get_value() const { return value_; }
 
 set_type ordinary_symbol_variable::type() const { return set_type::UNDEF_TYPE; }
 

@@ -32,10 +32,8 @@ void set_symbol_variable::fill_string_value()
         value_ = get_value<std::string>();
 }
 
-
 set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym, int index)
-    : variable(name_, value_)
-    , set_symbol_(set_sym)
+    : set_symbol_(set_sym)
     , index_(index)
 {
     name_ = std::to_string(index + 1);
@@ -43,13 +41,16 @@ set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym
 }
 
 set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym)
-    : variable(name_, value_)
-    , set_symbol_(set_sym)
+    : set_symbol_(set_sym)
     , index_()
 {
     name_ = "&" + *set_symbol_.id;
     fill_string_value();
 }
+
+const std::string& set_symbol_variable::get_name() const { return name_; }
+
+const std::string& set_symbol_variable::get_value() const { return value_; }
 
 set_type set_symbol_variable::type() const { return (set_type)set_symbol_.type; }
 

@@ -26,6 +26,10 @@ class macro_param_variable : public variable
 {
 public:
     macro_param_variable(const context::macro_param_base& param, std::vector<size_t> index);
+
+    const std::string& get_name() const;
+    const std::string& get_value() const;
+
     set_type type() const override;
 
     bool is_scalar() const override;

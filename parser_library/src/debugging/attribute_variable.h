@@ -26,6 +26,9 @@ class attribute_variable : public variable
 public:
     attribute_variable(std::string name, std::string value);
 
+    const std::string& get_name() const;
+    const std::string& get_value() const;
+
     set_type type() const override;
 
     bool is_scalar() const override;
