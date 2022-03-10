@@ -217,8 +217,8 @@ TEST(system_variable, sysstmt)
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTA"), "00000007");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000023");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000027");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000026");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000040");
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "STMTE"), 41);
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTN"), "00000035");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTN"), "00000034");
 }
