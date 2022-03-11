@@ -181,22 +181,13 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
 
         if (!cycle_ok)
             diags.add_diagnostic(diagnostic_op::error_E033(it->second.r));
-        else if (lit->get_dependencies(solver).contains_dependencies())
+        else
         {
             auto adder = ord_ctx.symbol_dependencies.add_dependencies(
                 std::make_unique<literal_postponed_statement>(lit, lit_val, hlasm_ctx.ids()),
                 { lit_val.loctr, lit_key.generation, lit_key.unique_id, active_using });
             adder.add_dependency();
             adder.finish();
-        }
-        else
-        {
-            auto ddt = lit->access_data_def_type();
-            if (!ddt) // unknown type
-                continue;
-
-            auto ddo = semantics::data_def_operand::get_operand_value(*lit, solver, diags);
-            ddt->check_DC(ddo, diagnostic_collector(&diags, lit_val.stack));
         }
     }
 

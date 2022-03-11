@@ -24,49 +24,6 @@
 #include "expressions/mach_operator.h"
 #include "operand_visitor.h"
 
-namespace hlasm_plugin::parser_library {
-namespace {
-class using_label_checker final : public expressions::mach_expr_visitor, diagnostic_consumer<diagnostic_op>
-{
-    context::dependency_solver& solver;
-    diagnostic_consumer<diagnostic_op>& diags;
-
-    void add_diagnostic(diagnostic_op) const override {}
-
-public:
-    using_label_checker(context::dependency_solver& solver, diagnostic_consumer<diagnostic_op>& diags)
-        : solver(solver)
-        , diags(diags)
-    {}
-
-    // Inherited via mach_expr_visitor
-    void visit(const expressions::mach_expr_constant&) override {}
-    void visit(const expressions::mach_expr_data_attr& attr) override
-    {
-        if (attr.lit)
-            attr.lit->get_data_definition().apply(*this);
-    }
-    void visit(const expressions::mach_expr_symbol& expr) override
-    {
-        if (!expr.qualifier)
-            return;
-        auto value = expr.evaluate(solver, *this);
-        if (value.value_kind() != context::symbol_value_kind::RELOC)
-            return;
-        const auto& reloc = value.get_reloc();
-        if (!reloc.is_simple())
-            return;
-        const auto* section = reloc.bases().front().first.owner;
-        if (!solver.using_active(expr.qualifier, section))
-            diags.add_diagnostic(diagnostic_op::error_ME005(*expr.qualifier, *section->name, expr.get_range()));
-    }
-    void visit(const expressions::mach_expr_location_counter&) override {}
-    void visit(const expressions::mach_expr_default&) override {}
-    void visit(const expressions::mach_expr_literal& l) override { l.get_data_definition().apply(*this); }
-};
-} // namespace
-} // namespace hlasm_plugin::parser_library
-
 namespace hlasm_plugin::parser_library::semantics {
 
 
@@ -176,9 +133,6 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
     context::dependency_solver& info, checking::machine_operand_type type_hint, diagnostic_op_consumer& diags) const
 {
-    using_label_checker lc(info, diags);
-    expression->apply(lc);
-
     if (type_hint == checking::machine_operand_type::RELOC_IMM)
     {
         return make_rel_imm_operand(info, *expression, diags);
@@ -199,6 +153,12 @@ bool expr_machine_operand::has_error(context::dependency_solver& info) const
 }
 
 void expr_machine_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
+void expr_machine_operand::apply_mach_visitor(expressions::mach_expr_visitor& v) const
+{
+    if (expression)
+        expression->apply(v);
+}
 
 //***************** address_machine_operand *********************
 
@@ -286,6 +246,16 @@ std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
 
 void address_machine_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
+void address_machine_operand::apply_mach_visitor(expressions::mach_expr_visitor& v) const
+{
+    if (displacement)
+        displacement->apply(v);
+    if (first_par)
+        first_par->apply(v);
+    if (second_par)
+        second_par->apply(v);
+}
+
 assembler_operand::assembler_operand(const asm_kind kind)
     : kind(kind)
 {}
@@ -338,9 +308,6 @@ std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inn
     if (!can_have_ordsym && dynamic_cast<expressions::mach_expr_symbol*>(expression.get()))
         return std::make_unique<checking::one_operand>(value_);
 
-    using_label_checker lc(info, diags);
-    expression->apply(lc);
-
     auto res = expression->evaluate(info, diags);
     switch (res.value_kind())
     {
@@ -369,6 +336,12 @@ bool expr_assembler_operand::has_error(context::dependency_solver& info) const
 }
 
 void expr_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
+void expr_assembler_operand::apply_mach_visitor(expressions::mach_expr_visitor& v) const
+{
+    if (expression)
+        expression->apply(v);
+}
 
 //***************** end_instr_machine_operand *********************
 
@@ -407,6 +380,14 @@ std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_va
 
 void using_instr_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
+void using_instr_assembler_operand::apply_mach_visitor(expressions::mach_expr_visitor& v) const
+{
+    if (base)
+        base->apply(v);
+    if (end)
+        end->apply(v);
+};
+
 //***************** complex_assempler_operand *********************
 complex_assembler_operand::complex_assembler_operand(
     std::string identifier, std::vector<std::unique_ptr<component_value_t>> values, range operand_range)
@@ -426,6 +407,8 @@ std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(
 }
 
 void complex_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
+void complex_assembler_operand::apply_mach_visitor(expressions::mach_expr_visitor&) const {}
 
 //***************** ca_operand *********************
 ca_operand::ca_operand(const ca_kind kind, range operand_range)
@@ -623,6 +606,12 @@ checking::data_definition_operand data_def_operand::get_operand_value(
 
 void data_def_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
+void data_def_operand::apply_mach_visitor(expressions::mach_expr_visitor& v) const
+{
+    if (value)
+        value->apply(v);
+}
+
 long long data_def_operand::evaluate_total_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
     return value->evaluate_total_length(info, diags);
@@ -645,6 +634,7 @@ std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(
 }
 
 void string_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+void string_assembler_operand::apply_mach_visitor(expressions::mach_expr_visitor&) const {}
 
 macro_operand_string::macro_operand_string(std::string value, const range operand_range)
     : macro_operand(mac_kind::STRING, operand_range)

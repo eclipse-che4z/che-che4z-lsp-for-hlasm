@@ -16,6 +16,7 @@
 
 #include <optional>
 
+#include "checking/using_label_checker.h"
 #include "processing/statement_processors/ordinary_processor.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -329,6 +330,9 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     }
 
     checking::check_op_ptr uniq;
+
+    checking::using_label_checker lc(dep_solver, diags);
+    ev_op.apply_mach_visitor(lc);
 
     if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(&ev_op))
     {

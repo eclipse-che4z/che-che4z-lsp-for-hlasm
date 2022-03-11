@@ -61,6 +61,8 @@ struct evaluable_operand : operand
 
     virtual std::unique_ptr<checking::operand> get_operand_value(
         context::dependency_solver& info, diagnostic_op_consumer& diags) const = 0;
+
+    virtual void apply_mach_visitor(expressions::mach_expr_visitor&) const = 0;
 };
 
 
@@ -119,6 +121,8 @@ struct expr_machine_operand final : machine_operand, simple_expr_operand
     bool has_error(context::dependency_solver& info) const override;
 
     void apply(operand_visitor& visitor) const override;
+
+    void apply_mach_visitor(expressions::mach_expr_visitor&) const override;
 };
 
 
@@ -147,6 +151,8 @@ struct address_machine_operand final : machine_operand
         diagnostic_op_consumer& diags) const override;
 
     void apply(operand_visitor& visitor) const override;
+
+    void apply_mach_visitor(expressions::mach_expr_visitor&) const override;
 };
 
 
@@ -196,6 +202,8 @@ public:
 
     void apply(operand_visitor& visitor) const override;
 
+    void apply_mach_visitor(expressions::mach_expr_visitor&) const override;
+
     const std::string& get_value() const { return value_; }
 
 private:
@@ -227,6 +235,8 @@ struct using_instr_assembler_operand final : assembler_operand
     std::string end_text;
 
     void apply(operand_visitor& visitor) const override;
+
+    void apply_mach_visitor(expressions::mach_expr_visitor&) const override;
 };
 
 
@@ -306,12 +316,14 @@ struct complex_assembler_operand final : assembler_operand
     composite_value_t value;
 
     void apply(operand_visitor& visitor) const override;
+
+    void apply_mach_visitor(expressions::mach_expr_visitor&) const override;
 };
 
 
 
 // assembler string operand
-struct string_assembler_operand : assembler_operand
+struct string_assembler_operand final : assembler_operand
 {
     string_assembler_operand(std::string value, const range operand_range);
 
@@ -325,6 +337,8 @@ struct string_assembler_operand : assembler_operand
     std::string value;
 
     void apply(operand_visitor& visitor) const override;
+
+    void apply_mach_visitor(expressions::mach_expr_visitor&) const override;
 };
 
 // data definition operand
@@ -349,6 +363,8 @@ struct data_def_operand final : evaluable_operand
         const expressions::data_definition& dd, context::dependency_solver& info, diagnostic_op_consumer& diags);
 
     void apply(operand_visitor& visitor) const override;
+
+    void apply_mach_visitor(expressions::mach_expr_visitor&) const override;
 
     long long evaluate_total_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 };
