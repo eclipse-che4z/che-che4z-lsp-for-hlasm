@@ -1028,7 +1028,7 @@ L     USING  A,1
     a.analyze();
     a.collect_diags();
 
-    // EXPECT_TRUE(matches_message_codes(a.diags(), { "TODO" })); // TODO:
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME004" }));
 }
 
 TEST(using, diag_complex_reloc)
@@ -1047,5 +1047,102 @@ L     USING  TEST1,1
     a.analyze();
     a.collect_diags();
 
-    // EXPECT_TRUE(matches_message_codes(a.diags(), { "TODO" })); // TODO:
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME006" }));
+}
+
+TEST(using, recursive_operand_inspection)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      DROP   ,
+      LA     0,L.A-L.A
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005", "ME005" }));
+}
+
+TEST(using, recursive_operand_inspection_dc)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      DROP   ,
+      DC     A(L.A)
+      DC     S(L.A)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005", "ME005" }));
+}
+
+TEST(using, recursive_operand_inspection_literals_inactive)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      LARL   0,=A(L'=A(L.A))
+      DROP   ,
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005" }));
+}
+
+TEST(using, recursive_operand_inspection_literals_active)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      LARL   0,=A(L'=A(L.A))
+      LTORG  ,
+      DROP   ,
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, basic_operand_check)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      LA     0,L.A
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, basic_operand_check_dc)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      DC     A(L.A)
+      DC     S(L.A)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
 }
