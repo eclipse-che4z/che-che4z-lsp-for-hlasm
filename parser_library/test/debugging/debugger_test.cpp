@@ -240,13 +240,13 @@ bool check_step(
         if (sc.size() != 3U)
             return false;
         using variables = std::vector<hlasm_plugin::parser_library::variable>;
-        variables globs(std::move(d.variables(sc.item(0).variable_reference)));
+        variables globs(d.variables(sc.item(0).variable_reference));
         if (!check_vars(d, globs, exp_frame_vars[i].globals))
             return false;
-        variables locs(std::move(d.variables(sc.item(1).variable_reference)));
+        variables locs(d.variables(sc.item(1).variable_reference));
         if (!check_vars(d, locs, exp_frame_vars[i].locals))
             return false;
-        variables ords(std::move(d.variables(sc.item(2).variable_reference)));
+        variables ords(d.variables(sc.item(2).variable_reference));
         if (!check_vars(d, ords, exp_frame_vars[i].ord_syms))
             return false;
     }
