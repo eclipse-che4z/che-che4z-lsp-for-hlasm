@@ -50,6 +50,7 @@ class dependency_solver;
 class ordinary_assembly_context;
 class section;
 class using_context;
+struct using_evaluate_result;
 
 class using_collection
 {
@@ -69,18 +70,7 @@ public:
     static constexpr register_t invalid_register = -1;
     using offset_t = int32_t;
 
-    struct evaluate_result
-    {
-        register_t reg;
-        offset_t reg_offset;
-
-        constexpr evaluate_result(register_t reg, offset_t reg_offset) noexcept
-            : reg(reg)
-            , reg_offset(reg_offset)
-        {}
-
-        friend bool operator==(evaluate_result, evaluate_result) = default;
-    };
+    using evaluate_result = using_evaluate_result;
 
 private:
     static constexpr size_t reg_set_size = 16;
@@ -368,6 +358,19 @@ public:
         bool long_offset) const;
 
     bool is_label_mapping_section(index_t<using_collection> context_id, id_index label, const section* owner) const;
+};
+
+struct using_evaluate_result
+{
+    using_collection::register_t reg;
+    using_collection::offset_t reg_offset;
+
+    constexpr using_evaluate_result(using_collection::register_t reg, using_collection::offset_t reg_offset) noexcept
+        : reg(reg)
+        , reg_offset(reg_offset)
+    {}
+
+    friend bool operator==(using_evaluate_result, using_evaluate_result) = default;
 };
 
 } // namespace hlasm_plugin::parser_library::context

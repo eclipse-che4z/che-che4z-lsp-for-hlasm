@@ -2172,6 +2172,17 @@ diagnostic_op diagnostic_op::error_ME006(const range& range)
         diagnostic_severity::error, "ME006", "Complex relocatable expression cannot be qualified with a label.", range);
 }
 
+diagnostic_op diagnostic_op::error_ME007(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "ME007", "No active USING.", range);
+}
+
+diagnostic_op diagnostic_op::error_ME008(long missed_by, const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "ME008", concat("Beyond active USING range by ", missed_by, "."), range);
+}
+
 diagnostic_op diagnostic_op::error_CE001(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "CE001", "Operator expected", range);

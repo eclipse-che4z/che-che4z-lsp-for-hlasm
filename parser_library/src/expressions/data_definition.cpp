@@ -21,6 +21,7 @@
 
 #include "checking/data_definition/data_def_fields.h"
 #include "checking/data_definition/data_def_type_base.h"
+#include "context/using.h"
 #include "lexing/logical_line.h"
 #include "mach_expr_term.h"
 #include "mach_expr_visitor.h"
@@ -267,7 +268,7 @@ checking::exponent_modifier_t data_definition::evaluate_exponent(
 }
 
 inline checking::nominal_value_expressions extract_nominal_value_expressions(
-    const expr_or_address_list& exprs, context::dependency_solver& info, diagnostic_op_consumer& diags)
+    const expr_or_address_list& exprs, context::dependency_solver& info, diagnostic_op_consumer& diags, bool S_type)
 {
     checking::nominal_value_expressions values;
     for (const auto& e_or_a : exprs)
@@ -290,14 +291,39 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(
             }
             else if (kind == context::symbol_value_kind::RELOC)
             {
-                // TO DO value of the relocatable expression
-                // maybe push back data_def_addr?
-                values.push_back(checking::data_def_expr {
-                    0,
-                    ev.get_reloc().is_complex() ? checking::expr_type::COMPLEX : checking::expr_type::RELOC,
-                    e->get_range(),
-                    ignored,
-                });
+                const auto& addr = ev.get_reloc();
+                if (S_type && addr.is_simple())
+                {
+                    checking::data_def_address ch_adr;
+
+                    const auto& base = addr.bases().front().first;
+                    auto translated_addr = info.using_evaluate(base.qualifier, base.owner, addr.offset(), false);
+
+                    if (translated_addr.reg == context::using_collection::invalid_register)
+                    {
+                        if (translated_addr.reg_offset)
+                            diags.add_diagnostic(
+                                diagnostic_op::error_ME008(translated_addr.reg_offset, e->get_range()));
+                        else
+                            diags.add_diagnostic(diagnostic_op::error_ME007(e->get_range()));
+                    }
+                    else
+                    {
+                        ch_adr.displacement = translated_addr.reg_offset;
+                        ch_adr.base = translated_addr.reg;
+                    }
+
+                    values.push_back(ch_adr);
+                }
+                else
+                {
+                    values.push_back(checking::data_def_expr {
+                        0,
+                        addr.is_complex() ? checking::expr_type::COMPLEX : checking::expr_type::RELOC,
+                        e->get_range(),
+                        ignored,
+                    });
+                }
             }
             else if (kind == context::symbol_value_kind::UNDEF)
             {
@@ -316,7 +342,6 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(
 
             ch_adr.base = set_data_def_field(a.base.get(), info, diags);
             ch_adr.displacement = set_data_def_field(a.displacement.get(), info, diags);
-            ch_adr.ignored = !ch_adr.base.present || !ch_adr.displacement.present; // ignore value with dependencies
             values.push_back(ch_adr);
         }
     }
@@ -338,7 +363,7 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(
     }
     else if (nominal_value->access_exprs())
     {
-        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs, info, diags);
+        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs, info, diags, type == 'S');
     }
     else
         assert(false);

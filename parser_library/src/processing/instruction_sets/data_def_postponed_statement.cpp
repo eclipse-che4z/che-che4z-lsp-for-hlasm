@@ -16,6 +16,7 @@
 
 #include <limits>
 
+#include "context/using.h"
 #include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -124,9 +125,15 @@ context::id_index data_def_dependency_solver::get_literal_id(
     return base.get_literal_id(dd);
 }
 
-bool data_def_dependency_solver::using_active(context::id_index label, const context::section* sect)
+bool data_def_dependency_solver::using_active(context::id_index label, const context::section* sect) const
 {
     return base.using_active(label, sect);
+}
+
+context::using_evaluate_result data_def_dependency_solver::using_evaluate(
+    context::id_index label, const context::section* owner, int32_t offset, bool long_offset) const
+{
+    return base.using_evaluate(label, owner, offset, long_offset);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

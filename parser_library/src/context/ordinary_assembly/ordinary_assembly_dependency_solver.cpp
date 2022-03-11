@@ -46,9 +46,18 @@ dependency_evaluation_context ordinary_assembly_dependency_solver::derive_curren
     };
 }
 
-bool ordinary_assembly_dependency_solver::using_active(id_index label, const section* sect)
+bool ordinary_assembly_dependency_solver::using_active(id_index label, const section* sect) const
 {
     return ord_context.using_label_active(active_using, label, sect);
+}
+
+using_evaluate_result ordinary_assembly_dependency_solver::using_evaluate(
+    id_index label, const section* owner, int32_t offset, bool long_offset) const
+{
+    const auto& u = ord_context.hlasm_ctx_.usings();
+    assert(u.resolved());
+
+    return u.evaluate(active_using, label, owner, offset, long_offset);
 }
 
 } // namespace hlasm_plugin::parser_library::context

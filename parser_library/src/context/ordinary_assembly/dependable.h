@@ -26,6 +26,8 @@ struct data_definition;
 
 namespace hlasm_plugin::parser_library::context {
 
+struct using_evaluate_result;
+
 // interface for obtaining symbol from its name
 class dependency_solver
 {
@@ -33,7 +35,9 @@ public:
     virtual const symbol* get_symbol(id_index name) const = 0;
     virtual std::optional<address> get_loctr() const = 0;
     virtual id_index get_literal_id(const std::shared_ptr<const expressions::data_definition>&) = 0;
-    virtual bool using_active(id_index label, const section* sect) = 0;
+    virtual bool using_active(id_index label, const section* sect) const = 0;
+    virtual using_evaluate_result using_evaluate(
+        id_index label, const section* owner, int32_t offset, bool long_offset) const = 0;
 
 protected:
     ~dependency_solver() = default;

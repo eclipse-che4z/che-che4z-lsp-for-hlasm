@@ -57,7 +57,9 @@ public:
     const symbol* get_symbol(id_index name) const override;
     std::optional<address> get_loctr() const override;
     id_index get_literal_id(const std::shared_ptr<const expressions::data_definition>& lit) override;
-    bool using_active(id_index label, const section* sect) override;
+    bool using_active(id_index label, const section* sect) const override;
+    using_evaluate_result using_evaluate(
+        id_index label, const section* owner, int32_t offset, bool long_offset) const override;
 
     dependency_evaluation_context derive_current_dependency_evaluation_context() const;
 };

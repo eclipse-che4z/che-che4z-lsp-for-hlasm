@@ -73,10 +73,16 @@ struct test_context : public dependency_solver
         assert(false);
         return id_index();
     }
-    bool using_active(id_index label, const section* sect) override
+    bool using_active(id_index label, const section* sect) const override
     {
         assert(false);
         return false;
+    }
+    using_evaluate_result using_evaluate(
+        id_index label, const section* owner, int32_t offset, bool long_offset) const override
+    {
+        assert(false);
+        return { using_collection::invalid_register, 0 };
     }
 };
 
@@ -1197,6 +1203,8 @@ TEST(using, dc_s)
     std::string input = R"(
 A     CSECT
       USING  A,1
+      DC     S(0)
+      DC     S(1(1))
       DC     S(A+100)
 )";
 
@@ -1213,6 +1221,21 @@ TEST(using, dc_s_out_of_range)
 A     CSECT
       USING  (A,A+8192),1
       DC     S(A+5000)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_FALSE(a.diags().empty()); // TODO:
+}
+
+TEST(using, dc_s_invalid)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8192),1
+      DC     S(A(1))
 )";
 
     analyzer a(input);
