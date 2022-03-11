@@ -27,8 +27,8 @@ class ordinary_symbol_variable : public variable
 public:
     ordinary_symbol_variable(const context::symbol& symbol);
 
-    const std::string& get_name() const;
-    const std::string& get_value() const;
+    const std::string& get_name() const override;
+    const std::string& get_value() const override;
 
     set_type type() const override;
 
