@@ -146,11 +146,17 @@ void occurence_collector::visit(const expressions::mach_expr_constant&) {}
 void occurence_collector::visit(const expressions::mach_expr_data_attr& expr)
 {
     get_occurence(expr.value, expr.symbol_range);
+    if (expr.qualifier)
+        get_occurence(expr.qualifier, expr.symbol_range);
 }
+
+void occurence_collector::visit(const expressions::mach_expr_data_attr_literal& expr) { visit(*expr.lit); }
 
 void occurence_collector::visit(const expressions::mach_expr_symbol& expr)
 {
     get_occurence(expr.value, expr.get_range());
+    if (expr.qualifier)
+        get_occurence(expr.qualifier, expr.get_range());
 }
 
 void occurence_collector::visit(const expressions::mach_expr_location_counter&) {}

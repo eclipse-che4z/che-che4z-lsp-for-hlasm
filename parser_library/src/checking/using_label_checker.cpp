@@ -21,7 +21,21 @@ namespace hlasm_plugin::parser_library::checking {
 void using_label_checker::add_diagnostic(diagnostic_op) const {}
 
 void using_label_checker::visit(const expressions::mach_expr_constant&) {}
-void using_label_checker::visit(const expressions::mach_expr_data_attr& attr) {}
+void using_label_checker::visit(const expressions::mach_expr_data_attr& attr)
+{
+    if (!attr.value || !attr.qualifier)
+        return;
+    auto symbol = solver.get_symbol(attr.value);
+    if (symbol == nullptr || symbol->kind() != context::symbol_value_kind::RELOC)
+        return;
+    const auto& reloc = symbol->value().get_reloc();
+    if (!reloc.is_simple())
+        return;
+    const auto* section = reloc.bases().front().first.owner;
+    if (!solver.using_active(attr.qualifier, section))
+        diags.add_diagnostic(diagnostic_op::error_ME005(*attr.qualifier, *section->name, attr.get_range()));
+}
+void using_label_checker::visit(const expressions::mach_expr_data_attr_literal& attr) {}
 void using_label_checker::visit(const expressions::mach_expr_symbol& expr)
 {
     if (!expr.qualifier)

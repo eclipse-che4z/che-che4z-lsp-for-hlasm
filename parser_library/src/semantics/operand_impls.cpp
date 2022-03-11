@@ -694,6 +694,7 @@ struct request_halfword_alignment final : public expressions::mach_expr_visitor
     // Inherited via mach_expr_visitor
     void visit(const expressions::mach_expr_constant&) override {}
     void visit(const expressions::mach_expr_data_attr&) override {}
+    void visit(const expressions::mach_expr_data_attr_literal&) override {}
     void visit(const expressions::mach_expr_symbol&) override {}
     void visit(const expressions::mach_expr_location_counter&) override {}
     void visit(const expressions::mach_expr_default&) override {}

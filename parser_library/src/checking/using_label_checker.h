@@ -41,6 +41,7 @@ public:
     // Inherited via mach_expr_visitor
     void visit(const expressions::mach_expr_constant&) override;
     void visit(const expressions::mach_expr_data_attr& attr) override;
+    void visit(const expressions::mach_expr_data_attr_literal& attr) override;
     void visit(const expressions::mach_expr_symbol& expr) override;
     void visit(const expressions::mach_expr_location_counter&) override;
     void visit(const expressions::mach_expr_default&) override;
