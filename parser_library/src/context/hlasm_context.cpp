@@ -83,7 +83,7 @@ public:
         }
 
         size_t sysstmt =
-            metrics.macro_def_statements + metrics.macro_statements + metrics.open_code_statements + adjustment;
+            metrics.macro_def_statements + metrics.macro_statements + metrics.open_code_statements + metrics.copy_statements + adjustment;
 
         return left_pad(std::to_string(sysstmt), 8, '0');
     };
