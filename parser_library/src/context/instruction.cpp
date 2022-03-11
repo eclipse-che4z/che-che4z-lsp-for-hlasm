@@ -248,7 +248,7 @@ const ca_instruction& instruction::get_ca_instructions(std::string_view name)
 std::span<const ca_instruction> instruction::all_ca_instructions() { return ca_instructions; }
 
 constexpr assembler_instruction assembler_instructions[] = {
-    { "*PROCESS", 1, -1, true, "" }, // TO DO
+    { "*PROCESS", 1, -1, false, "" }, // TO DO
     { "ACONTROL", 1, -1, false, "<selection>+" },
     { "ADATA", 5, 5, false, "value1,value2,value3,value4,character_string" },
     { "AINSERT", 2, 2, false, "'record',BACK|FRONT" },
