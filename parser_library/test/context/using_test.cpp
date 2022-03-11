@@ -1146,3 +1146,78 @@ L     USING  A,1
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(using, out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      LA     0,L.A+4096
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_FALSE(a.diags().empty()); // TODO:
+}
+
+TEST(using, in_range_second_reg)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1,2
+      LA     0,L.A+4096
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, disp_out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8000),1
+      LA     0,A+5000
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_FALSE(a.diags().empty()); // TODO:
+}
+
+TEST(using, dc_s)
+{
+    std::string input = R"(
+A     CSECT
+      USING  A,1
+      DC     S(A+100)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, dc_s_out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8192),1
+      DC     S(A+5000)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_FALSE(a.diags().empty()); // TODO:
+}
