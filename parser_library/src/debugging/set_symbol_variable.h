@@ -30,8 +30,8 @@ public:
     set_symbol_variable(const context::set_symbol_base& set_sym, int index);
     set_symbol_variable(const context::set_symbol_base& set_sym);
 
-    const std::string& get_name() const;
-    const std::string& get_value() const;
+    const std::string& get_name() const override;
+    const std::string& get_value() const override;
 
     set_type type() const override;
 
