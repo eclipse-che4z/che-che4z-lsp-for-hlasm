@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 
 namespace {
 
@@ -183,16 +184,15 @@ TEST_P(system_variable_standard_behavior_fixture, standard_behavior)
 TEST(system_variable, sysstmt)
 {
     std::string input = R"(
-&VAR    SETA 2
-&BOOL   SETB (&VAR EQ 2)
-&STR    SETC 'SOMETHING'
-        GBLC &STMTC,&STMTD
+        GBLC &STMTC,&STMTD,&VAR2
 &STMTA  SETC '&SYSSTMT'
+        COPY COPY1
 
         MACRO
-        MAC &VAR
-        GBLC &STMTC,&STMTD
+        MAC
+        GBLC &STMTC,&STMTD,&VAR2
         LR 1,1
+        COPY COPY2
 &STMTC  SETC '&SYSSTMT'
         MACRO
         NESTED
@@ -210,15 +210,28 @@ TEST(system_variable, sysstmt)
 &STMTF  SETA &SYSSTMT
 )";
 
-    analyzer a(input);
+    std::string copy1_filename = "COPY1";
+    std::string copy1_source = R"(
+&VAR1   SETC '&SYSSTMT'
+)";
+
+    std::string copy2_filename = "COPY2";
+    std::string copy2_source = R"(
+&VAR2   SETC '&SYSSTMT'
+)";
+
+    mock_parse_lib_provider lib_prov_instance { { copy1_filename, copy1_source }, { copy2_filename, copy2_source } };
+    analyzer a(input, analyzer_options { "ipnut", &lib_prov_instance });
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTA"), "00000007");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000023");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000026");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000034");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTE"), "00000040");
-    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "STMTF"), 41);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTA"), "00000004");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR1"),  "00000007");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000026");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR2"),  "00000031");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000032");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000040");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTE"), "00000046");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "STMTF"), 47);
 }
