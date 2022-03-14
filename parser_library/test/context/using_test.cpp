@@ -1308,3 +1308,47 @@ A     CSECT
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D033" }));
 }
+
+TEST(using, mnemonic_check_in_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  *,1
+      B      *
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, mnemonic_check_missing_using)
+{
+    std::string input = R"(
+A     CSECT
+      B      *
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME007" }));
+}
+
+TEST(using, mnemonic_check_out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  *,1
+      B      *+4096
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
+}
