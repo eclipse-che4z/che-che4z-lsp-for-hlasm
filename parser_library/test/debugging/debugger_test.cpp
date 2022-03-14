@@ -348,13 +348,10 @@ TEST(debugger, test)
     m.wait_for_stopped();
     exp_frames.insert(exp_frames.begin(), debugging::stack_frame(7, 7, 1, "MACRO", filename));
     exp_frame_vars.insert(exp_frame_vars.begin(),
-        frame_vars(
-            std::unordered_map<std::string, test_var_value> {
-                {
-                    "&SYSPARM",
-                    test_var_value("SEVEN"),
-                },
-            },
+        frame_vars(std::unordered_map<std::string, test_var_value> { {
+                       "&SYSPARM",
+                       test_var_value("SEVEN"),
+                   } },
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
                 {
@@ -406,6 +403,50 @@ TEST(debugger, test)
     exp_frames.erase(exp_frames.begin());
     exp_frame_vars.erase(exp_frame_vars.begin());
     exp_frames[0].begin_line = exp_frames[0].end_line = 13;
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.disconnect();
+}
+
+TEST(debugger, test_sysstmt)
+{
+    using list = std::unordered_map<std::string, std::shared_ptr<test_var_value>>;
+
+    std::string open_code = R"(
+        LR 1,1
+        LR 1,1
+        LR 1,1
+)";
+
+    file_manager_impl file_manager;
+    workspace_mock lib_provider(file_manager);
+
+    debug_event_consumer_s_mock m;
+    debugger d;
+    d.set_event_consumer(&m);
+    std::string filename = "ws\\test";
+    file_manager.did_open_file(filename, 0, open_code);
+    d.launch(filename, lib_provider, true, &lib_provider);
+    m.wait_for_stopped();
+    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", filename } };
+    std::vector<frame_vars> exp_frame_vars { { { {
+                                                   "&SYSSTMT",
+                                                   "00000003",
+                                               } },
+        {},
+        {} } };
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.next();
+    m.wait_for_stopped();
+    exp_frame_vars[0].globals["&SYSSTMT"] = "00000004";
+    exp_frames[0].begin_line = exp_frames[0].end_line = 2;
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.next();
+    m.wait_for_stopped();
+    exp_frame_vars[0].globals["&SYSSTMT"] = "00000005";
+    exp_frames[0].begin_line = exp_frames[0].end_line = 3;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.disconnect();
