@@ -227,11 +227,67 @@ TEST(system_variable, sysstmt)
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTA"), "00000004");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR1"),  "00000007");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR1"), "00000007");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTB"), "00000026");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR2"),  "00000031");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR2"), "00000031");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTC"), "00000032");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTD"), "00000040");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STMTE"), "00000046");
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "STMTF"), 47);
+}
+
+TEST(system_variable, sysstmt_ainsert)
+{
+    std::string input = R"(
+    MACRO
+    MAC_AIN
+    AINSERT '       MACRO',BACK
+    AINSERT '       MAC',BACK
+    AINSERT '       GBLC &&A',BACK
+    AINSERT '&&A    SETC &&SYSSTMT',BACK
+    AINSERT '       MEND',BACK
+    AINSERT '&&B    SETC &&SYSSTMT',BACK
+    MEND
+    
+    GBLC &A
+    MAC_AIN
+    MAC
+    END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "00000029");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "00000027");
+}
+
+TEST(system_variable, sysstmt_ainsert_02)
+{
+    std::string input = R"(
+    MACRO
+    MAC_AIN
+    AINSERT '       MACRO',BACK
+    AINSERT '       MAC',BACK
+    AINSERT '       GBLC &&A',BACK
+    AINSERT '&&A    SETC ''&SYSSTMT''',BACK
+    AINSERT '       MEND',BACK
+    AINSERT '&&B    SETC ''&SYSSTMT''',BACK
+    MEND
+    
+    GBLC &A
+    MAC_AIN
+    MAC
+    END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "00000017");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "00000019");
 }
