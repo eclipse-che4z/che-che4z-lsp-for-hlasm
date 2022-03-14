@@ -319,6 +319,7 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(con
                                 diagnostic_op::error_ME008(translated_addr.reg_offset, e->get_range()));
                         else
                             diags.add_diagnostic(diagnostic_op::error_ME007(e->get_range()));
+                        ch_adr.ignored = true; // already diagnosed
                     }
                     else
                     {

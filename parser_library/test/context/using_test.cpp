@@ -1198,6 +1198,38 @@ A     CSECT
     EXPECT_FALSE(a.diags().empty()); // TODO:
 }
 
+TEST(using, dispy_out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8000),1
+      LAY    0,A+1000000
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_FALSE(a.diags().empty()); // TODO:
+}
+
+TEST(using, dispy_in_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8000),1
+      LAY    0,A+10000
+      LAY    0,A+5000
+      LAY    0,A-5000
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
 TEST(using, dc_s)
 {
     std::string input = R"(
@@ -1221,6 +1253,38 @@ TEST(using, dc_s_out_of_range)
 A     CSECT
       USING  (A,A+8192),1
       DC     S(A+5000)
+      DC     S(A-5000)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008", "ME008" }));
+}
+
+TEST(using, dc_sy_in_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8192),1
+      DC     SY(A+5000)
+      DC     SY(A-5000)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, dc_sy_out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8192),1
+      DC     SY(A+1000000)
 )";
 
     analyzer a(input);
@@ -1242,5 +1306,5 @@ A     CSECT
     a.analyze();
     a.collect_diags();
 
-    EXPECT_FALSE(a.diags().empty()); // TODO:
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D033" }));
 }

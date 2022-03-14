@@ -14,6 +14,8 @@
 
 #include "data_def_type_base.h"
 
+#include <optional>
+
 #include "checking/instr_operand.h"
 #include "data_def_types.h"
 
@@ -258,6 +260,28 @@ bool data_def_type::check_length(const data_def_length_t& length, const diagnost
     }
 }
 
+namespace {
+struct
+{
+    std::optional<range> operator()(const data_def_expr& e)
+    {
+        if (e.ignored)
+            return std::nullopt;
+        if (e.ex_kind != expr_type::ABS)
+            return e.rng;
+        return std::nullopt;
+    }
+    std::optional<range> operator()(const data_def_address& a)
+    {
+        if (a.ignored)
+            return std::nullopt;
+        if (!a.displacement.present || !a.base.present)
+            return a.total;
+        return std::nullopt;
+    }
+} abs_or_addr;
+} // namespace
+
 bool data_def_type::check_nominal_type(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const
 {
@@ -296,16 +320,9 @@ bool data_def_type::check_nominal_type(
             }
             for (const auto& p : std::get<nominal_value_expressions>(op.nominal_value.value))
             {
-                if (auto dde = std::get_if<data_def_expr>(&p); dde)
+                if (auto range_o = std::visit(abs_or_addr, p); range_o)
                 {
-                    add_diagnostic(diagnostic_op::error_D033(dde->rng));
-                    ret = false;
-                }
-                else if (auto dda = std::get_if<data_def_address>(&p); dda)
-                {
-                    if (dda->displacement.present && dda->base.present)
-                        continue;
-                    add_diagnostic(diagnostic_op::error_D033(dda->total));
+                    add_diagnostic(diagnostic_op::error_D033(*range_o));
                     ret = false;
                 }
             }

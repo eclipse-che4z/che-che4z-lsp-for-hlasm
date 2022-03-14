@@ -92,6 +92,7 @@ R EQU C-B
 TEST(DC, implicit_length_deferred_checking)
 {
     std::string input = R"(
+  USING *,12
 B DC S(C,-1)
 C LR 1,1
 
@@ -101,8 +102,8 @@ R EQU C-B
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.diags()[0].code, "D022");
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D022" }));
 }
 
 TEST(DC, simple_cycle)
