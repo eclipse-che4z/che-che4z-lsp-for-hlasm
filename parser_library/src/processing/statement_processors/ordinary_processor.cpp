@@ -332,9 +332,6 @@ context::id_index ordinary_processor::resolve_instruction(
     {
         add_diagnostic(diagnostic_op::error_E067(instruction_range));
         return context::id_storage::empty_id;
-    } else if (tmp.empty()) {
-        add_diagnostic(diagnostic_op::error_E074(instruction_range));
-        return context::id_storage::empty_id;
     }
 
     return hlasm_ctx.ids().add(std::move(tmp));
