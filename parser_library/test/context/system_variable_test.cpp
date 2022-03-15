@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 
 namespace {
 
@@ -122,6 +123,7 @@ INSTANTIATE_TEST_SUITE_P(system_variable,
         system_variable_params::create_input("SYSNEST", { "1", "1", "1", "1", "", "", "" }),
         system_variable_params::create_input("SYSOPT_RENT", { "0", "0", "0", "0", "", "", "" }),
         system_variable_params::create_input("SYSPARM", { "PAR", "PAR", "PAR", "PAR", "", "", "" }),
+        system_variable_params::create_input("SYSSTMT", { "00000038", "00000039", "00000040", "00000041", "", "", "" }),
         system_variable_params::create_input("SYSSTYP", { "CSECT", "CSECT", "CSECT", "CSECT", "", "", "" }),
         system_variable_params::create_input(
             "SYSTEM_ID", { "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "", "", "" }),
@@ -178,3 +180,164 @@ TEST_P(system_variable_standard_behavior_fixture, standard_behavior)
             << "for i = " << i;
     }
 }
+
+TEST(system_variable, sysstmt)
+{
+    std::string input = R"(
+&STRING SETC  '&SYSSTMT'
+&VAR    SETA   &SYSSTMT
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STRING"), "00000003");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR"), 4);
+}
+
+TEST(system_variable, sysstmt_macros)
+{
+    std::string input = R"(
+        GBLC &VAR1,&VAR2
+
+        MACRO
+        MAC
+        
+        MACRO
+        NESTED
+        GBLC &VAR2
+&VAR2   SETC '&SYSSTMT'
+        MEND
+
+        GBLC &VAR1,&VAR2
+&VAR1   SETC '&SYSSTMT'
+        NESTED
+        MEND
+        
+        MAC
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR1"), "00000027");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR2"), "00000030");
+}
+
+TEST(system_variable, sysstmt_copy)
+{
+    std::string input = R"(
+        GBLC &VAR2
+        COPY COPY1
+
+        MACRO
+        MAC
+        GBLC &VAR2
+        COPY COPY2
+        MEND
+        
+        MAC
+)";
+
+    std::string copy1_filename = "COPY1";
+    std::string copy1_source = R"(
+&VAR1   SETC '&SYSSTMT'
+)";
+
+    std::string copy2_filename = "COPY2";
+    std::string copy2_source = R"(
+&VAR2   SETC '&SYSSTMT'
+)";
+
+    mock_parse_lib_provider lib_prov_instance { { copy1_filename, copy1_source }, { copy2_filename, copy2_source } };
+    analyzer a(input, analyzer_options { "ipnut", &lib_prov_instance });
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR1"), "00000006");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR2"), "00000019");
+}
+
+TEST(system_variable, sysstmt_ainsert)
+{
+    std::string input = R"(
+    MACRO
+    MAC_AIN
+    AINSERT '       MACRO',BACK
+    AINSERT '       MAC',BACK
+    AINSERT '       GBLC &&A',BACK
+    AINSERT '&&A    SETC ''&&SYSSTMT''',BACK
+    AINSERT '       MEND',BACK
+    AINSERT '&&B    SETC ''&&SYSSTMT''',BACK
+    MEND
+    
+    GBLC &A
+    MAC_AIN
+    MAC
+    END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "00000029");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "00000027");
+}
+
+TEST(system_variable, sysstmt_aread)
+{
+    std::string input = R"(
+    MACRO
+    MAC_AREAD
+&AR AREAD
+    AINSERT '&AR',BACK
+    MEND
+    
+    MAC_AREAD
+&&A SETA &&SYSSTMT
+    END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 13);
+}
+
+// TODO uncomment when AINSERT grammer with apostrophes is fixed; Consider moving this to AINSERT test group
+// TEST(system_variable, sysstmt_ainsert_02)
+//{
+//    std::string input = R"(
+//    MACRO
+//    MAC_AIN
+//    AINSERT '       MACRO',BACK
+//    AINSERT '       MAC',BACK
+//    AINSERT '       GBLC &&A',BACK
+//    AINSERT '&&A    SETC ''&SYSSTMT''',BACK
+//    AINSERT '       MEND',BACK
+//    AINSERT '&&B    SETC ''&SYSSTMT''',BACK
+//    MEND
+//
+//    GBLC &A
+//    MAC_AIN
+//    MAC
+//    END
+//)";
+//
+//    analyzer a(input);
+//    a.analyze();
+//    a.collect_diags();
+//    EXPECT_EQ(a.diags().size(), (size_t)0);
+//
+//    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "00000017");
+//    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "00000019");
+//}

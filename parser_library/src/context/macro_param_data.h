@@ -32,7 +32,7 @@ class macro_param_data_component
 {
 public:
     // gets value of current data, composite or simple
-    virtual const C_t& get_value() const = 0;
+    virtual C_t get_value() const = 0;
     // gets value of the idx-th value, when exceeds size of data, returns default value
     virtual const macro_param_data_component* get_ith(size_t idx) const = 0;
 
@@ -57,7 +57,7 @@ public:
     macro_param_data_dummy();
 
     // gets default value ("")
-    const C_t& get_value() const override;
+    C_t get_value() const override;
 
     // gets this dummy
     const macro_param_data_component* get_ith(size_t idx) const override;
@@ -72,7 +72,7 @@ class macro_param_data_single : public macro_param_data_component
 
 public:
     // returns whole data, here the only string
-    const C_t& get_value() const override;
+    C_t get_value() const override;
 
     // gets value of the idx-th value, when exceeds size of data, returns default value
     // get_ith(0) returns this to mimic HLASM
@@ -87,11 +87,11 @@ public:
 class macro_param_data_composite : public macro_param_data_component
 {
     const std::vector<macro_data_ptr> data_;
-    mutable C_t value_;
+    C_t value_;
 
 public:
     // returns data of all nested classes in brackets separated by comma
-    const C_t& get_value() const override;
+    C_t get_value() const override;
 
     // gets value of the idx-th value, when exceeds size of data, returns default value
     const macro_param_data_component* get_ith(size_t idx) const override;
@@ -99,6 +99,20 @@ public:
     size_t size() const override;
 
     macro_param_data_composite(std::vector<macro_data_ptr> value);
+};
+
+// class representing data of macro parameters holding only single dynamic string (=C_t)
+class macro_param_data_single_dynamic : public macro_param_data_single
+{
+public:
+    // returns whole data, here the only string
+    C_t get_value() const override;
+
+protected:
+    // returns dynamically constructed value
+    virtual C_t get_dynamic_value() const = 0;
+
+    macro_param_data_single_dynamic();
 };
 
 } // namespace hlasm_plugin::parser_library::context

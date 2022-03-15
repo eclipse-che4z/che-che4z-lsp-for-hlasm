@@ -23,19 +23,20 @@ using namespace hlasm_plugin::parser_library::debugging;
 void set_symbol_variable::fill_string_value()
 {
     if (!is_scalar())
-        value_.emplace("");
+        value_ = "";
     else if (type() == set_type::A_TYPE)
-        value_.emplace(std::to_string(get_value<context::A_t>()));
+        value_ = std::to_string(get_value<context::A_t>());
     else if (type() == set_type::B_TYPE)
-        value_.emplace(get_value<context::B_t>() ? "TRUE" : "FALSE");
+        value_ = get_value<context::B_t>() ? "TRUE" : "FALSE";
+    else
+        value_ = get_value<std::string>();
 }
-
 
 set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym, int index)
     : set_symbol_(set_sym)
     , index_(index)
 {
-    name_.emplace(std::to_string(index + 1));
+    name_ = std::to_string(index + 1);
     fill_string_value();
 }
 
@@ -43,19 +44,15 @@ set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym
     : set_symbol_(set_sym)
     , index_()
 {
-    name_.emplace("&" + *set_symbol_.id);
+    name_ = "&" + *set_symbol_.id;
     fill_string_value();
 }
 
-const std::string& set_symbol_variable::get_string_value() const { return get_value<std::string>(); }
+const std::string& set_symbol_variable::get_name() const { return name_; }
 
+const std::string& set_symbol_variable::get_value() const { return value_; }
 
 set_type set_symbol_variable::type() const { return (set_type)set_symbol_.type; }
-
-const std::string& set_symbol_variable::get_string_name() const
-{
-    throw std::runtime_error("Function set_symbol_variable::get_string_name should never be called!");
-}
 
 bool set_symbol_variable::is_scalar() const
 {
@@ -80,7 +77,7 @@ std::vector<variable_ptr> set_symbol_variable::values() const
 size_t set_symbol_variable::size() const { return set_symbol_.size(); }
 
 template<typename T>
-inline const T& set_symbol_variable::get_value() const
+inline T set_symbol_variable::get_value() const
 {
     if (set_symbol_.is_scalar)
         return set_symbol_.access_set_symbol<T>()->get_value();

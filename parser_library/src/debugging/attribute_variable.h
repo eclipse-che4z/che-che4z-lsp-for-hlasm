@@ -26,6 +26,9 @@ class attribute_variable : public variable
 public:
     attribute_variable(std::string name, std::string value);
 
+    const std::string& get_name() const override;
+    const std::string& get_value() const override;
+
     set_type type() const override;
 
     bool is_scalar() const override;
@@ -33,13 +36,11 @@ public:
     std::vector<variable_ptr> values() const override;
     size_t size() const override;
 
-protected:
-    const std::string& get_string_value() const override;
-    const std::string& get_string_name() const override;
+private:
+    std::string name_;
+    std::string value_;
 };
 
-
 } // namespace hlasm_plugin::parser_library::debugging
-
 
 #endif // !HLASMPLUGIN_PARSERLIBRARY_DEBUGGING_MACRO_PARAM_VARIABLE_H
