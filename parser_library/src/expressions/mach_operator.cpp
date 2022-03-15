@@ -120,6 +120,20 @@ mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(
             diags.add_diagnostic(diagnostic_op::error_ME003(get_range()));
         result = mach_expression::value_t(result.get_abs() / 2);
     }
+    else if (result.value_kind() == context::symbol_value_kind::RELOC)
+    {
+        const auto& reloc = result.get_reloc();
+        constexpr bool GOFF = false; // TODO: fix when GOFF assembler option is available
+        if (target.value_kind() == context::symbol_value_kind::RELOC && target.get_reloc().is_simple())
+        {
+            auto offset = reloc.offset();
+            if (offset % 2 != 0)
+                diags.add_diagnostic(diagnostic_op::error_ME003(get_range()));
+            else if (!GOFF)
+                diags.add_diagnostic(diagnostic_op::warn_M136(get_range()));
+            result = mach_expression::value_t(offset / 2);
+        }
+    }
     return result;
 }
 

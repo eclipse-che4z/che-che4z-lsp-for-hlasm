@@ -1734,6 +1734,14 @@ diagnostic_op diagnostic_op::error_M135(std::string_view instr_name, long long f
         range);
 }
 
+diagnostic_op diagnostic_op::warn_M136(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "M136",
+        "Relative Immediate reference across sections used in non-GOFF object",
+        range);
+}
+
 diagnostic_op diagnostic_op::error_optional_number_of_operands(
     std::string_view instr_name, int optional_no, int operands_no, const range& range)
 {
