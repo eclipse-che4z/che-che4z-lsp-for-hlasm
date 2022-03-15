@@ -340,3 +340,79 @@ A     DS    0H
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(OPSYN, macro_replacement_1)
+{
+    std::string input = R"(
+BCT  OPSYN BCT
+BCT_ OPSYN BCT
+
+     MACRO
+     BCT   &A,&B
+     BRCT  &A,&B
+     MEND
+
+     BCT   0,*
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(OPSYN, macro_replacement_2)
+{
+    std::string input = R"(
+JCT  OPSYN JCT
+JCT_ OPSYN JCT
+
+     MACRO
+     JCT   &A,&B
+     BCT   &A,&B
+     MEND
+     JCT   0,*
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME007" }));
+}
+
+TEST(OPSYN, macro_replacement_3)
+{
+    std::string input = R"(
+     MACRO
+     BCT   &A,&B
+     BRCT  &A,&B
+     MEND
+
+     BCT   0,*
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(OPSYN, macro_replacement_4)
+{
+    std::string input = R"(
+     MACRO
+     JCT   &A,&B
+     BCT   &A,&B
+     MEND
+     JCT   0,*
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME007" }));
+}
