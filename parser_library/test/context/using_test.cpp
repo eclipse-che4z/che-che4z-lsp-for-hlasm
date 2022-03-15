@@ -1352,3 +1352,35 @@ A     CSECT
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
 }
+
+TEST(using, trigger_lookahead_with_known_nominal)
+{
+    std::string input = R"(
+L   DS    F
+    AIF   (L'A GT 0).T
+.T  ANOP  ,
+    USING *,10
+A   DC    S(L)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, literal_with_known_nominal)
+{
+    std::string input = R"(
+L   DS    F
+    USING *,10
+    LARL  0,=S(L)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
