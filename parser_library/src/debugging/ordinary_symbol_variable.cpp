@@ -30,18 +30,17 @@ static const std::string complex_string = "COMPLEX";
 
 ordinary_symbol_variable::ordinary_symbol_variable(const context::symbol& symbol)
     : symbol_(symbol)
+    , name_(*symbol_.name)
 {
-    if (symbol_.kind() == context::symbol_value_kind::ABS)
-        value_.emplace(std::to_string(symbol_.value().get_abs()));
+    value_ = get_string_value();
 }
 
-const std::string& ordinary_symbol_variable::get_string_value() const
+std::string ordinary_symbol_variable::get_string_value() const
 {
     switch (symbol_.kind())
     {
         case context::symbol_value_kind::ABS:
-            assert(false);
-            return empty_string;
+            return std::to_string(symbol_.value().get_abs());
         case context::symbol_value_kind::RELOC:
             if (symbol_.value().get_reloc().is_complex())
                 return complex_string;
@@ -54,9 +53,11 @@ const std::string& ordinary_symbol_variable::get_string_value() const
     }
 }
 
-set_type ordinary_symbol_variable::type() const { return set_type::UNDEF_TYPE; }
+const std::string& ordinary_symbol_variable::get_name() const { return name_; }
 
-const std::string& ordinary_symbol_variable::get_string_name() const { return *symbol_.name; }
+const std::string& ordinary_symbol_variable::get_value() const { return value_; }
+
+set_type ordinary_symbol_variable::type() const { return set_type::UNDEF_TYPE; }
 
 bool ordinary_symbol_variable::is_scalar() const
 {

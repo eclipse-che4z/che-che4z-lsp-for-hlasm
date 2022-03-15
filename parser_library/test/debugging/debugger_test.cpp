@@ -59,7 +59,7 @@ TEST(debugger, stopped_on_entry)
     EXPECT_EQ(std::string_view(sc.item(1).name), "Locals");
     EXPECT_EQ(std::string_view(sc.item(2).name), "Ordinary symbols");
     auto globs = d.variables(sc.item(0).variable_reference);
-    EXPECT_EQ(globs.size(), 6U);
+    EXPECT_EQ(globs.size(), 7U);
     auto locs = d.variables(sc.item(1).variable_reference);
     EXPECT_EQ(locs.size(), 0U);
 
@@ -137,7 +137,7 @@ public:
         }
 
         if (data_)
-            return *data_ == std::string_view(var.value);
+            return *data_ == std::string(var.value);
         else
             return var.value.size() == 0;
     }
@@ -152,7 +152,7 @@ public:
         auto actual_children = d.variables(child_vars);
         if (actual_children.size() != children_.size())
             return false;
-        for (auto actual_ch : actual_children)
+        for (const auto& actual_ch : actual_children)
         {
             std::string actual_ch_name(actual_ch.name);
             auto found = children_.find(actual_ch_name);
@@ -185,8 +185,9 @@ struct frame_vars
         this->globals["&SYSDATE"];
         this->globals["&SYSDATC"];
         this->globals["&SYSTIME"];
-        this->globals["&SYSPARM"];
         this->globals["&SYSOPT_RENT"];
+        this->globals["&SYSPARM"];
+        this->globals["&SYSSTMT"];
         this->globals["&SYSTEM_ID"];
     }
     std::unordered_map<std::string, test_var_value> globals;
@@ -200,7 +201,7 @@ bool check_vars(debugger& d,
 {
     if (vars.size() != exp_vars.size())
         return false;
-    for (auto var : vars)
+    for (auto& var : vars)
     {
         auto it = exp_vars.find(std::string(var.name));
         if (it == exp_vars.end())
@@ -347,13 +348,10 @@ TEST(debugger, test)
     m.wait_for_stopped();
     exp_frames.insert(exp_frames.begin(), debugging::stack_frame(7, 7, 1, "MACRO", filename));
     exp_frame_vars.insert(exp_frame_vars.begin(),
-        frame_vars(
-            std::unordered_map<std::string, test_var_value> {
-                {
-                    "&SYSPARM",
-                    test_var_value("SEVEN"),
-                },
-            },
+        frame_vars(std::unordered_map<std::string, test_var_value> { {
+                       "&SYSPARM",
+                       test_var_value("SEVEN"),
+                   } },
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
                 {
@@ -405,6 +403,50 @@ TEST(debugger, test)
     exp_frames.erase(exp_frames.begin());
     exp_frame_vars.erase(exp_frame_vars.begin());
     exp_frames[0].begin_line = exp_frames[0].end_line = 13;
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.disconnect();
+}
+
+TEST(debugger, test_sysstmt)
+{
+    using list = std::unordered_map<std::string, std::shared_ptr<test_var_value>>;
+
+    std::string open_code = R"(
+        LR 1,1
+        LR 1,1
+        LR 1,1
+)";
+
+    file_manager_impl file_manager;
+    workspace_mock lib_provider(file_manager);
+
+    debug_event_consumer_s_mock m;
+    debugger d;
+    d.set_event_consumer(&m);
+    std::string filename = "ws\\test";
+    file_manager.did_open_file(filename, 0, open_code);
+    d.launch(filename, lib_provider, true, &lib_provider);
+    m.wait_for_stopped();
+    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", filename } };
+    std::vector<frame_vars> exp_frame_vars { { { {
+                                                   "&SYSSTMT",
+                                                   "00000003",
+                                               } },
+        {},
+        {} } };
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.next();
+    m.wait_for_stopped();
+    exp_frame_vars[0].globals["&SYSSTMT"] = "00000004";
+    exp_frames[0].begin_line = exp_frames[0].end_line = 2;
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.next();
+    m.wait_for_stopped();
+    exp_frame_vars[0].globals["&SYSSTMT"] = "00000005";
+    exp_frames[0].begin_line = exp_frames[0].end_line = 3;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.disconnect();

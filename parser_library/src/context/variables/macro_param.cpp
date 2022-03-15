@@ -41,7 +41,7 @@ macro_param_base::macro_param_base(macro_param_type param_type, id_index name, b
     , param_type(param_type)
 {}
 
-const C_t& macro_param_base::get_value(const std::vector<size_t>& offset) const
+C_t macro_param_base::get_value(const std::vector<size_t>& offset) const
 {
     const macro_param_data_component* tmp = real_data();
 
@@ -52,9 +52,9 @@ const C_t& macro_param_base::get_value(const std::vector<size_t>& offset) const
     return tmp->get_value();
 }
 
-const C_t& macro_param_base::get_value(size_t idx) const { return real_data()->get_ith(idx)->get_value(); }
+C_t macro_param_base::get_value(size_t idx) const { return real_data()->get_ith(idx)->get_value(); }
 
-const C_t& macro_param_base::get_value() const { return real_data()->get_value(); }
+C_t macro_param_base::get_value() const { return real_data()->get_value(); }
 
 const macro_param_data_component* macro_param_base::get_data(const std::vector<size_t>& offset) const
 {

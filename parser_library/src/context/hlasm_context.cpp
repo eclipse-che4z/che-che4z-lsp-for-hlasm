@@ -58,6 +58,42 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map(id_storag
 }
 
 namespace {
+std::string left_pad(std::string s, size_t len, char c = ' ')
+{
+    if (auto string_len = s.length(); string_len < len)
+        s.insert(0, len - string_len, c);
+
+    return s;
+}
+
+class sysstmt_macro_param_data : public macro_param_data_single_dynamic
+{
+    const performance_metrics& metrics;
+    const std::deque<code_scope>& scope_stack;
+
+public:
+    C_t get_dynamic_value() const override
+    {
+        size_t adjustment = 0;
+
+        if (scope_stack.size() - 1 == 0)
+        {
+            // This is OPEN CODE -> add one
+            adjustment = 1;
+        }
+
+        size_t sysstmt = metrics.macro_def_statements + metrics.macro_statements + metrics.open_code_statements
+            + metrics.copy_statements + adjustment;
+
+        return left_pad(std::to_string(sysstmt), 8, '0');
+    };
+
+    explicit sysstmt_macro_param_data(const performance_metrics& metrics, const std::deque<code_scope>& scope_stack)
+        : macro_param_data_single_dynamic()
+        , metrics(metrics)
+        , scope_stack(scope_stack) {};
+};
+
 macro_data_ptr create_macro_data(std::string value)
 {
     return std::make_unique<macro_param_data_single>(std::move(value));
@@ -74,6 +110,8 @@ macro_data_ptr create_macro_data(std::vector<std::string> value)
     return std::make_unique<macro_param_data_composite>(std::move(data));
 }
 
+macro_data_ptr create_macro_data(std::unique_ptr<macro_param_data_single_dynamic> value) { return value; }
+
 template<typename SYSTEM_VARIABLE_TYPE, typename DATA>
 std::pair<id_index, sys_sym_ptr> create_system_variable(
     id_storage& ids, std::string name, DATA mac_data, bool is_global)
@@ -84,7 +122,6 @@ std::pair<id_index, sys_sym_ptr> create_system_variable(
 
     return { id, std::move(var) };
 }
-
 } // namespace
 
 void hlasm_context::add_system_vars_to_scope(code_scope& scope)
@@ -99,9 +136,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
         }
 
         {
-            std::string value = std::to_string(SYSNDX_);
-            if (auto value_len = value.size(); value_len < 4)
-                value.insert(0, 4 - value_len, '0');
+            std::string value = left_pad(std::to_string(SYSNDX_), 4, '0');
 
             scope.system_variables.insert(
                 create_system_variable<system_variable>(ids(), "SYSNDX", std::move(value), false));
@@ -245,12 +280,18 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         }
 
         {
+            globals_.insert(create_system_variable<system_variable>(
+                ids(), "SYSOPT_RENT", std::to_string(asm_options_.sysopt_rent), true));
+        }
+
+        {
             globals_.insert(create_system_variable<system_variable>(ids(), "SYSPARM", asm_options_.sysparm, true));
         }
 
         {
-            globals_.insert(create_system_variable<system_variable>(
-                ids(), "SYSOPT_RENT", std::to_string(asm_options_.sysopt_rent), true));
+            auto value = std::make_unique<sysstmt_macro_param_data>(metrics, scope_stack_);
+
+            globals_.insert(create_system_variable<system_variable>(ids(), "SYSSTMT", std::move(value), true));
         }
 
         {
@@ -261,8 +302,9 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
     add_global_system_var_to_scope(ids(), "SYSDATC", scope);
     add_global_system_var_to_scope(ids(), "SYSDATE", scope);
     add_global_system_var_to_scope(ids(), "SYSTIME", scope);
-    add_global_system_var_to_scope(ids(), "SYSPARM", scope);
     add_global_system_var_to_scope(ids(), "SYSOPT_RENT", scope);
+    add_global_system_var_to_scope(ids(), "SYSPARM", scope);
+    add_global_system_var_to_scope(ids(), "SYSSTMT", scope);
     add_global_system_var_to_scope(ids(), "SYSTEM_ID", scope);
 }
 

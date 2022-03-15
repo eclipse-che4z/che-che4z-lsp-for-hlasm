@@ -78,7 +78,7 @@ public:
 
     // gets value from non scalar set symbol
     // if data at idx is not set or it does not exists, default is returned
-    const T& get_value(size_t idx) const
+    T get_value(size_t idx) const
     {
         if (is_scalar)
             return object_traits<T>::default_v();
@@ -90,7 +90,7 @@ public:
     }
 
     // gets value from scalar set symbol
-    const T& get_value() const
+    T get_value() const
     {
         if (!is_scalar)
             return object_traits<T>::default_v();
