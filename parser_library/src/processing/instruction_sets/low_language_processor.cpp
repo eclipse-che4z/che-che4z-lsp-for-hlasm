@@ -336,12 +336,14 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 
     if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(&ev_op))
     {
+        // TODO: this is less than ideal, we should probably create operand structures
+        // with the correct "type" while parsing and reject incompatible arguments
+        // early when the syntax is incompatible
         const auto* instr = mnemonic ? mnemonic->instruction()
                                      : &context::instruction::get_machine_instructions(*stmt.opcode_ref().value);
         if (op_position < instr->operands().size())
         {
-            auto type = instr->operands()[op_position].identifier.type;
-            uniq = mach_op->get_operand_value(dep_solver, type, diags);
+            uniq = mach_op->get_operand_value(dep_solver, instr->operands()[op_position], diags);
         }
         else
             uniq = ev_op.get_operand_value(dep_solver, diags);

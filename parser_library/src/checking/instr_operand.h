@@ -86,6 +86,8 @@ struct parameter
 
     constexpr bool is_empty() const { return (!is_signed && type == machine_operand_type::NONE && size == 0); }
 
+    bool operator==(const parameter&) const = default;
+
     std::string to_string() const;
 };
 

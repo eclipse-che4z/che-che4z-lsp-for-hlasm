@@ -327,7 +327,9 @@ TEST(OPSYN, reladdr_caching)
       MEND
 
 INSTR OPSYN LA
+      USING *,12
       MAC
+      DROP  ,
 INSTR OPSYN LARL
       MAC
 A     DS    0H

@@ -1053,7 +1053,7 @@ L     USING  TEST1,1
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME006" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME006", "ME009" }));
 }
 
 TEST(using, recursive_operand_inspection)
@@ -1165,7 +1165,7 @@ L     USING  A,1
     a.analyze();
     a.collect_diags();
 
-    EXPECT_FALSE(a.diags().empty()); // TODO:
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
 }
 
 TEST(using, in_range_second_reg)
@@ -1195,7 +1195,7 @@ A     CSECT
     a.analyze();
     a.collect_diags();
 
-    EXPECT_FALSE(a.diags().empty()); // TODO:
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
 }
 
 TEST(using, dispy_out_of_range)
@@ -1210,7 +1210,7 @@ A     CSECT
     a.analyze();
     a.collect_diags();
 
-    EXPECT_FALSE(a.diags().empty()); // TODO:
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
 }
 
 TEST(using, dispy_in_range)
