@@ -792,6 +792,33 @@ TEST(using, absolute)
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, -100, true), evaluate_result(0, -100));
 }
 
+TEST(using, smaller_offset_but_invalid)
+{
+    test_context c;
+
+    using_collection coll;
+    index_t<using_collection> current;
+    diagnostic_consumer_container<diagnostic_s> d_s;
+
+    [[maybe_unused]] auto sect = c.create_section("SECT");
+
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.create_symbol("SECT"), nullptr, args(c.number(1)), {}, {});
+    [[maybe_unused]] auto with_sect2 = coll.add(with_sect,
+        nullptr,
+        c.create_symbol("SECT") + c.number(100),
+        c.create_symbol("SECT") + c.number(120),
+        args(c.number(2)),
+        {},
+        {});
+
+    coll.resolve_all(c.asm_ctx, d_s);
+
+    EXPECT_TRUE(d_s.diags.empty());
+
+    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect, 128, false), evaluate_result(1, 128));
+}
+
 TEST(using, simple_using)
 {
     std::string input = R"(
@@ -1356,10 +1383,10 @@ A     CSECT
 TEST(using, trigger_lookahead_with_known_nominal)
 {
     std::string input = R"(
+    USING *,10
 L   DS    F
     AIF   (L'A GT 0).T
 .T  ANOP  ,
-    USING *,10
 A   DC    S(L)
 )";
 
@@ -1373,9 +1400,24 @@ A   DC    S(L)
 TEST(using, literal_with_known_nominal)
 {
     std::string input = R"(
-L   DS    F
     USING *,10
+L   DS    F
     LARL  0,=S(L)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, simple_dc_with_known_nominal)
+{
+    std::string input = R"(
+L   DS    F
+    USING L,12
+    DC    S(L)
 )";
 
     analyzer a(input);

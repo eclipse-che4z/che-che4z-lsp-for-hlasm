@@ -470,13 +470,23 @@ auto using_collection::using_context::evaluate(id_index label,
     int32_t max_disp,
     bool ignore_length) const -> context_evaluate_result
 {
-    struct result_candidate
+    struct result_candidate_entry
     {
         const entry* result_entry = nullptr;
         ptrdiff_t result_reg = 0;
         long long min_dist_abs = std::numeric_limits<long long>::max();
         long long min_dist = 0;
         int min_dist_reg = -1;
+
+        bool is_better_candidate(long long new_abs_dist, register_t new_reg) const
+        {
+            return new_abs_dist < min_dist_abs || new_abs_dist == min_dist_abs && new_reg > min_dist_reg;
+        }
+    };
+    struct result_candidate
+    {
+        result_candidate_entry valid;
+        result_candidate_entry invalid;
     };
     result_candidate positive;
     result_candidate negative;
@@ -504,6 +514,7 @@ auto using_collection::using_context::evaluate(id_index label,
         if (label != s.label || owner != s.owner)
             continue;
         auto next_dist = (offset - s.offset) + s.reg_offset;
+        const bool fits_limit = next_dist < s.length;
         for (const auto& reg : s.regs)
         {
             const auto dist = next_dist;
@@ -514,27 +525,43 @@ auto using_collection::using_context::evaluate(id_index label,
 
             result_candidate& target = dist >= 0 ? positive : negative;
             auto abs_dist = std::abs(dist);
-            if (abs_dist < target.min_dist_abs || abs_dist == target.min_dist_abs && reg > target.min_dist_reg)
+            if (auto& t = target.invalid; t.is_better_candidate(abs_dist, reg))
             {
-                target.min_dist_abs = abs_dist;
-                target.min_dist_reg = reg;
-                target.result_reg = &reg - s.regs.data();
-                target.result_entry = &s;
-                target.min_dist = dist;
+                t.min_dist_abs = abs_dist;
+                t.min_dist_reg = reg;
+                t.result_reg = &reg - s.regs.data();
+                t.result_entry = &s;
+                t.min_dist = dist;
+            }
+            if (auto& t = target.valid; t.is_better_candidate(abs_dist, reg) && dist >= min_disp && dist <= max_disp
+                && (ignore_length || fits_limit))
+            {
+                t.min_dist_abs = abs_dist;
+                t.min_dist_reg = reg;
+                t.result_reg = &reg - s.regs.data();
+                t.result_entry = &s;
+                t.min_dist = dist;
             }
         }
     }
 
-    const auto& r = [min_disp, max_disp](const auto& p, const auto& n) {
-        if (p.result_entry && p.min_dist >= min_disp && p.min_dist <= max_disp)
-            return p;
-        if (n.result_entry && n.min_dist >= min_disp && n.min_dist <= max_disp)
-            return n;
+    const auto& r = [](const auto& p, const auto& n) {
+        if (p.valid.result_entry)
+            return p.valid;
+        if (n.valid.result_entry)
+            return n.valid;
 
-        if (p.min_dist_abs <= n.min_dist_abs)
-            return p;
+        if (p.invalid.result_entry && n.invalid.result_entry)
+        {
+            if (p.invalid.min_dist_abs <= n.invalid.min_dist_abs)
+                return p.invalid;
+            else
+                return n.invalid;
+        }
+        else if (p.invalid.result_entry)
+            return p.invalid;
         else
-            return n;
+            return n.invalid;
     }(positive, negative);
 
     if (!r.result_entry)
