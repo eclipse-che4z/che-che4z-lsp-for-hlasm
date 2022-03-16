@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <numeric>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
@@ -123,25 +124,15 @@ const std::vector<address::base_entry>& address::bases() const { return bases_; 
 
 std::vector<address::base_entry>& address::bases() { return bases_; }
 
-int get_space_offset(space_ptr sp)
+int get_space_offset(const std::vector<address::space_entry>& sp_vec)
 {
-    int offset = 0;
-    if (sp->resolved())
-    {
-        offset += sp->resolved_length;
-        for (const auto& s : sp->resolved_ptrs)
-            offset += get_space_offset(s.first);
-    }
-    return offset;
+    return std::transform_reduce(sp_vec.begin(), sp_vec.end(), 0, std::plus<>(), [](const auto& v) {
+        const auto& [sp, cnt] = v;
+        return sp->resolved() ? cnt * (sp->resolved_length + get_space_offset(sp->resolved_ptrs)) : 0;
+    });
 }
 
-int address::offset() const
-{
-    int offs = offset_;
-    for (const auto& s : spaces_)
-        offs += get_space_offset(s.first);
-    return offs;
-}
+int address::offset() const { return offset_ + get_space_offset(spaces_); }
 
 std::vector<address::space_entry>& address::spaces() { return spaces_; }
 
@@ -167,8 +158,9 @@ int get_unresolved_spaces(const std::vector<address::space_entry>& spaces,
     {
         if (sp.first->resolved())
         {
-            offset += sp.first->resolved_length;
-            offset += get_unresolved_spaces(sp.first->resolved_ptrs, normalized_map, normalized_spaces);
+            offset += sp.second
+                * (sp.first->resolved_length
+                    + get_unresolved_spaces(sp.first->resolved_ptrs, normalized_map, normalized_spaces));
         }
         else
             insert(sp, normalized_map, normalized_spaces);
