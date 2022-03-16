@@ -294,6 +294,24 @@ bool data_def_type::check_nominal_type(
                 add_diagnostic(diagnostic_op::error_D017(op.operand_range, type_str));
                 return false;
             }
+            for (const auto& p : std::get<nominal_value_expressions>(op.nominal_value.value))
+            {
+                if (auto dde = std::get_if<data_def_expr>(&p); dde)
+                {
+                    add_diagnostic(diagnostic_op::error_D033(dde->rng));
+                    ret = false;
+                }
+                else if (auto dda = std::get_if<data_def_address>(&p); dda)
+                {
+                    if (dda->displacement.present && dda->base.present)
+                        continue;
+                    add_diagnostic(diagnostic_op::error_D033(dda->total));
+                    ret = false;
+                }
+            }
+            if (!ret)
+                return false;
+
             break;
         default:
             assert(false);

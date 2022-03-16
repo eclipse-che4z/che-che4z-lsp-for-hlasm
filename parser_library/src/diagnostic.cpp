@@ -1720,6 +1720,14 @@ diagnostic_op diagnostic_op::warn_D032(const range& range, std::string_view oper
         range);
 }
 
+diagnostic_op diagnostic_op::error_D033(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "D033",
+        "Address in form D(B) or a simple relocatable expression resolvable by USING expected.",
+        range);
+}
+
 
 diagnostic_op diagnostic_op::error_M135(std::string_view instr_name, long long from, long long to, const range& range)
 {

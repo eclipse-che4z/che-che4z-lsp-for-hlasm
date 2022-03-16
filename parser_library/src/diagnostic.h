@@ -454,6 +454,7 @@ struct diagnostic_op
     static diagnostic_op error_D030(const range& range, std::string_view type);
     static diagnostic_op error_D031(const range& range);
     static diagnostic_op warn_D032(const range& range, std::string_view modifier);
+    static diagnostic_op error_D033(const range& range);
 
     static diagnostic_op error_M102(std::string_view instr_name, const range& range);
 

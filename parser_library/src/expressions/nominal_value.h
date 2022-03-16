@@ -58,10 +58,10 @@ struct nominal_value_string final : public nominal_value_t
 struct address_nominal final : public context::dependable
 {
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
-    address_nominal();
-    address_nominal(mach_expr_ptr displacement, mach_expr_ptr base);
+    address_nominal(mach_expr_ptr displacement, mach_expr_ptr base, range r);
     mach_expr_ptr displacement;
     mach_expr_ptr base;
+    range total;
 
     friend bool is_similar(const address_nominal& l, const address_nominal& r);
 

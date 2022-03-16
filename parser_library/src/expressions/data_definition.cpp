@@ -235,6 +235,8 @@ checking::data_def_field<int32_t> set_data_def_field(
 
         if (ret.value_kind() == context::symbol_value_kind::ABS)
             field.value = ret.get_abs();
+        else
+            field.present = false;
     }
     return field;
 }
@@ -267,8 +269,17 @@ checking::exponent_modifier_t data_definition::evaluate_exponent(
     return set_data_def_field(exponent.get(), info, diags);
 }
 
-inline checking::nominal_value_expressions extract_nominal_value_expressions(
-    const expr_or_address_list& exprs, context::dependency_solver& info, diagnostic_op_consumer& diags, bool S_type)
+enum class nominal_eval_subtype
+{
+    none,
+    S_type,
+    SY_type,
+};
+
+inline checking::nominal_value_expressions extract_nominal_value_expressions(const expr_or_address_list& exprs,
+    context::dependency_solver& info,
+    diagnostic_op_consumer& diags,
+    nominal_eval_subtype type)
 {
     checking::nominal_value_expressions values;
     for (const auto& e_or_a : exprs)
@@ -292,12 +303,14 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(
             else if (kind == context::symbol_value_kind::RELOC)
             {
                 const auto& addr = ev.get_reloc();
-                if (S_type && addr.is_simple())
+                if (type != nominal_eval_subtype::none && addr.is_simple())
                 {
                     checking::data_def_address ch_adr;
+                    ch_adr.total = e->get_range();
 
                     const auto& base = addr.bases().front().first;
-                    auto translated_addr = info.using_evaluate(base.qualifier, base.owner, addr.offset(), false);
+                    auto translated_addr = info.using_evaluate(
+                        base.qualifier, base.owner, addr.offset(), type == nominal_eval_subtype::SY_type);
 
                     if (translated_addr.reg == context::using_collection::invalid_register)
                     {
@@ -340,6 +353,7 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(
             const auto& a = std::get<expressions::address_nominal>(e_or_a);
             checking::data_def_address ch_adr;
 
+            ch_adr.total = a.total;
             ch_adr.base = set_data_def_field(a.base.get(), info, diags);
             ch_adr.displacement = set_data_def_field(a.displacement.get(), info, diags);
             values.push_back(ch_adr);
@@ -363,7 +377,11 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(
     }
     else if (nominal_value->access_exprs())
     {
-        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs, info, diags, type == 'S');
+        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs,
+            info,
+            diags,
+            type != 'S' ? nominal_eval_subtype::none
+                        : (extension == 'Y' ? nominal_eval_subtype::SY_type : nominal_eval_subtype::S_type));
     }
     else
         assert(false);

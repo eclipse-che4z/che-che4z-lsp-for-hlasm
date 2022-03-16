@@ -1086,7 +1086,7 @@ L     USING  A,1
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005", "ME005" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005", "ME005", "ME007" }));
 }
 
 TEST(using, recursive_operand_inspection_literals_inactive)
@@ -1227,7 +1227,7 @@ A     CSECT
     a.analyze();
     a.collect_diags();
 
-    EXPECT_FALSE(a.diags().empty()); // TODO:
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
 }
 
 TEST(using, dc_s_invalid)

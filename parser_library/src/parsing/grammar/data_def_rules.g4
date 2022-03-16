@@ -45,9 +45,9 @@ mach_expr_or_address returns [std::optional<expressions::expr_or_address> e]
 	:
 	disp=mach_expr (lpar base=mach_expr rpar)?
 	{
-		if ($disp.ctx && $base.ctx) {
+		if ($disp.ctx && $base.ctx && $rpar.ctx) {
 			if ($disp.m_e && $base.m_e)
-				$e.emplace(std::in_place_type_t<address_nominal>{}, std::move($disp.m_e), std::move($base.m_e));
+				$e.emplace(std::in_place_type_t<address_nominal>{}, std::move($disp.m_e), std::move($base.m_e), provider.get_range($disp.ctx->getStart(), $rpar.ctx->getStop()));
 		}
 		else if ($disp.ctx)
 		{
