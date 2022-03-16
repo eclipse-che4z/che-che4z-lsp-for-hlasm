@@ -66,7 +66,7 @@ int16_t data_definition_operand::get_scale_attribute() const
 {
     auto def_type = access_data_def_type();
     if (def_type)
-        return def_type->get_scale_attribute(scale, nominal_value);
+        return def_type->get_scale_attribute(scale, reduce_nominal_value(nominal_value));
     else
         return 0;
 }
@@ -75,7 +75,7 @@ uint32_t data_definition_operand::get_length_attribute() const
 {
     auto def_type = access_data_def_type();
     if (def_type)
-        return def_type->get_length_attribute(length, nominal_value);
+        return def_type->get_length_attribute(length, reduce_nominal_value(nominal_value));
     else
         return 0;
 }
@@ -84,7 +84,7 @@ uint32_t data_definition_operand::get_integer_attribute() const
 {
     auto def_type = access_data_def_type();
     if (def_type)
-        return def_type->get_integer_attribute(length, scale, nominal_value);
+        return def_type->get_integer_attribute(length, scale, reduce_nominal_value(nominal_value));
     else
         return 0;
 }

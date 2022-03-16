@@ -137,7 +137,7 @@ int32_t data_definition::get_scale_attribute(context::dependency_solver& info, d
 {
     auto def_type = access_data_def_type();
     if (def_type)
-        return def_type->get_scale_attribute(evaluate_scale(info, diags), evaluate_nominal_value(info, diags));
+        return def_type->get_scale_attribute(evaluate_scale(info, diags), evaluate_reduced_nominal_value());
     else
         return 0;
 }
@@ -146,7 +146,7 @@ uint32_t data_definition::get_length_attribute(context::dependency_solver& info,
 {
     auto def_type = access_data_def_type();
     if (def_type)
-        return def_type->get_length_attribute(evaluate_length(info, diags), evaluate_nominal_value(info, diags));
+        return def_type->get_length_attribute(evaluate_length(info, diags), evaluate_reduced_nominal_value());
     else
         return 0;
 }
@@ -156,7 +156,7 @@ int32_t data_definition::get_integer_attribute(context::dependency_solver& info,
     auto def_type = access_data_def_type();
     if (def_type)
         return def_type->get_integer_attribute(
-            evaluate_length(info, diags), evaluate_scale(info, diags), evaluate_nominal_value(info, diags));
+            evaluate_length(info, diags), evaluate_scale(info, diags), evaluate_reduced_nominal_value());
     else
         return 0;
 }
@@ -222,14 +222,18 @@ checking::data_def_field<int32_t> set_data_def_field(
     using namespace checking;
     data_def_field<int32_t> field;
     // if the expression cannot be evaluated, we return field as if it was not there
-    field.present = e != nullptr && !e->get_dependencies(info).contains_dependencies();
-    if (field.present)
+    if (e)
     {
         field.rng = e->get_range();
+        field.present = !e->get_dependencies(info).contains_dependencies();
+    }
+    if (field.present)
+    {
         // TODO get_reloc get_abs
-        auto ret(e->evaluate(info, diags));
+        auto ret = e->evaluate(info, diags);
+
         if (ret.value_kind() == context::symbol_value_kind::ABS)
-            field.value = e->evaluate(info, diags).get_abs();
+            field.value = ret.get_abs();
     }
     return field;
 }
@@ -340,6 +344,56 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(
         assert(false);
 
     return nom;
+}
+
+checking::reduced_nominal_value_t data_definition::evaluate_reduced_nominal_value() const
+{
+    if (!nominal_value)
+        return {};
+
+    checking::reduced_nominal_value_t nom;
+    nom.present = true;
+    if (nominal_value->access_string())
+    {
+        nom.value = nominal_value->access_string()->value;
+        nom.rng = nominal_value->access_string()->value_range;
+    }
+    else if (nominal_value->access_exprs())
+    {
+        nom.value = nominal_value->access_exprs()->exprs.size();
+    }
+    else
+        assert(false);
+
+    return nom;
+}
+
+long long data_definition::evaluate_total_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
+{
+    auto dd_type = checking::data_def_type::access_data_def_type(type, extension);
+    if (!dd_type)
+        return -1;
+    auto dupl = evaluate_dupl_factor(info, diags);
+    auto len = evaluate_length(info, diags);
+
+    diagnostic_collector drop_diags;
+
+    if (!dd_type->check_dupl_factor(dupl, drop_diags))
+        return -1;
+
+    if (nominal_value)
+    {
+        if (!dd_type->check_length<checking::data_instr_type::DC>(len, drop_diags))
+            return -1;
+    }
+    else
+    {
+        if (!dd_type->check_length<checking::data_instr_type::DS>(len, drop_diags))
+            return -1;
+    }
+
+    auto result = dd_type->get_length(dupl, len, evaluate_reduced_nominal_value());
+    return result >= ((1ll << 31) - 1) * 8 ? -1 : (long long)result;
 }
 
 void data_definition::apply(mach_expr_visitor& visitor) const

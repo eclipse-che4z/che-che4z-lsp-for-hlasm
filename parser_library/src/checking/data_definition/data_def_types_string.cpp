@@ -103,7 +103,7 @@ bool data_def_type_B::check(
     return true;
 }
 
-uint64_t data_def_type_B::get_nominal_length(const nominal_value_t& op) const
+uint64_t data_def_type_B::get_nominal_length(const reduced_nominal_value_t& op) const
 {
     if (!op.present)
         return 1;
@@ -111,7 +111,7 @@ uint64_t data_def_type_B::get_nominal_length(const nominal_value_t& op) const
         return get_X_B_length(std::get<std::string>(op.value), 8);
 }
 
-uint32_t data_def_type_B::get_nominal_length_attribute(const nominal_value_t& nom) const
+uint32_t data_def_type_B::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
 {
     if (!nom.present)
         return 1;
@@ -138,7 +138,7 @@ data_def_type_CA_CE::data_def_type_CA_CE(char extension)
         as_needed())
 {}
 
-uint64_t data_def_type_CA_CE::get_nominal_length(const nominal_value_t& op) const
+uint64_t data_def_type_CA_CE::get_nominal_length(const reduced_nominal_value_t& op) const
 {
     if (!op.present)
         return 1;
@@ -146,7 +146,7 @@ uint64_t data_def_type_CA_CE::get_nominal_length(const nominal_value_t& op) cons
         return std::get<std::string>(op.value).size();
 }
 
-uint32_t data_def_type_CA_CE::get_nominal_length_attribute(const nominal_value_t& nom) const
+uint32_t data_def_type_CA_CE::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
 {
     if (!nom.present)
         return 1;
@@ -176,7 +176,7 @@ data_def_type_CU::data_def_type_CU()
         'C', 'U', n_a(), modifier_bound { 1, 256 }, n_a(), n_a(), nominal_value_type::STRING, no_align, as_needed())
 {}
 
-uint64_t data_def_type_CU::get_nominal_length(const nominal_value_t& op) const
+uint64_t data_def_type_CU::get_nominal_length(const reduced_nominal_value_t& op) const
 {
     if (!op.present)
         return 2;
@@ -184,7 +184,7 @@ uint64_t data_def_type_CU::get_nominal_length(const nominal_value_t& op) const
         return 2 * (uint64_t)std::get<std::string>(op.value).size();
 }
 
-uint32_t data_def_type_CU::get_nominal_length_attribute(const nominal_value_t& nom) const
+uint32_t data_def_type_CU::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
 {
     if (!nom.present)
         return 2;
@@ -233,7 +233,7 @@ bool data_def_type_G::check(const data_definition_operand& op, const diagnostic_
     return true;
 }
 
-uint64_t data_def_type_G::get_nominal_length(const nominal_value_t& op) const
+uint64_t data_def_type_G::get_nominal_length(const reduced_nominal_value_t& op) const
 {
     if (!op.present)
         return 2;
@@ -244,7 +244,7 @@ uint64_t data_def_type_G::get_nominal_length(const nominal_value_t& op) const
     }
 }
 
-uint32_t data_def_type_G::get_nominal_length_attribute(const nominal_value_t& nom) const
+uint32_t data_def_type_G::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
 {
     if (!nom.present)
         return 2;
@@ -290,7 +290,7 @@ bool data_def_type_X::check(
     return true;
 }
 
-uint64_t data_def_type_X::get_nominal_length(const nominal_value_t& op) const
+uint64_t data_def_type_X::get_nominal_length(const reduced_nominal_value_t& op) const
 {
     if (!op.present)
         return 1;
@@ -298,7 +298,7 @@ uint64_t data_def_type_X::get_nominal_length(const nominal_value_t& op) const
         return get_X_B_length(std::get<std::string>(op.value), 2);
 }
 
-uint32_t data_def_type_X::get_nominal_length_attribute(const nominal_value_t& nom) const
+uint32_t data_def_type_X::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
 {
     if (!nom.present)
         return 1;

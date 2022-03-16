@@ -71,14 +71,12 @@ int32_t data_def_dependency<instr_type>::get_operands_length(const semantics::op
             // enforce data def alignment
             round_up_bytes(solver.operands_bit_length, dd->get_alignment().boundary);
         }
-        const auto o = op->access_data_def()->get_operand_value(solver, diags);
-        const auto* dd_op = dynamic_cast<checking::data_definition_operand*>(o.get());
+        long long len = op->access_data_def()->evaluate_total_length(solver, diags);
 
-
-        if (!dd_op->check<instr_type>(diagnostic_collector()))
+        if (len < 0)
             return 0;
 
-        solver.operands_bit_length += dd_op->get_length();
+        solver.operands_bit_length += len;
     }
 
     // align to whole byte

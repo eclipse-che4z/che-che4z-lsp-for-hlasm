@@ -573,6 +573,11 @@ checking::data_definition_operand data_def_operand::get_operand_value(
 
 void data_def_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
+long long data_def_operand::evaluate_total_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
+{
+    return value->evaluate_total_length(info, diags);
+}
+
 string_assembler_operand::string_assembler_operand(std::string value, range operand_range)
     : evaluable_operand(operand_type::ASM, std::move(operand_range))
     , assembler_operand(asm_kind::STRING)

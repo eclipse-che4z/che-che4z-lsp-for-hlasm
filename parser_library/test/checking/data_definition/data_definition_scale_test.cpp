@@ -32,7 +32,7 @@ TEST(data_def_scale_attribute, P)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_scale_attribute(op.scale, op.nominal_value), 4);
+    EXPECT_EQ(t.get_scale_attribute(op.scale, reduce_nominal_value(op.nominal_value)), 4);
 }
 
 TEST(data_def_scale_attribute, P_no_integral)
@@ -44,7 +44,7 @@ TEST(data_def_scale_attribute, P_no_integral)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_scale_attribute(op.scale, op.nominal_value), 4);
+    EXPECT_EQ(t.get_scale_attribute(op.scale, reduce_nominal_value(op.nominal_value)), 4);
 }
 
 TEST(data_def_scale_attribute, P_no_fraction)
@@ -56,7 +56,7 @@ TEST(data_def_scale_attribute, P_no_fraction)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_scale_attribute(op.scale, op.nominal_value), 0);
+    EXPECT_EQ(t.get_scale_attribute(op.scale, reduce_nominal_value(op.nominal_value)), 0);
 }
 
 TEST(data_def_scale_attribute, P_simple_number)
@@ -68,7 +68,7 @@ TEST(data_def_scale_attribute, P_simple_number)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_scale_attribute(op.scale, op.nominal_value), 0);
+    EXPECT_EQ(t.get_scale_attribute(op.scale, reduce_nominal_value(op.nominal_value)), 0);
 }
 
 TEST(data_def_scale_attribute, H_explicit)
@@ -82,5 +82,5 @@ TEST(data_def_scale_attribute, H_explicit)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_scale_attribute(op.scale, op.nominal_value), 5);
+    EXPECT_EQ(t.get_scale_attribute(op.scale, reduce_nominal_value(op.nominal_value)), 5);
 }

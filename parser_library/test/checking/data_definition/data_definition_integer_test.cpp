@@ -32,7 +32,7 @@ TEST(data_def_integer_attribute, H)
 
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
-    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, op.nominal_value), 9);
+    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, reduce_nominal_value(op.nominal_value)), 9);
 }
 
 TEST(data_def_integer_attribute, F)
@@ -44,7 +44,7 @@ TEST(data_def_integer_attribute, F)
 
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
-    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, op.nominal_value), 23);
+    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, reduce_nominal_value(op.nominal_value)), 23);
 }
 
 TEST(data_def_integer_attribute, E)
@@ -56,7 +56,7 @@ TEST(data_def_integer_attribute, E)
 
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
-    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, op.nominal_value), 4);
+    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, reduce_nominal_value(op.nominal_value)), 4);
 }
 
 TEST(data_def_integer_attribute, D)
@@ -68,7 +68,7 @@ TEST(data_def_integer_attribute, D)
 
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
-    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, op.nominal_value), 9);
+    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, reduce_nominal_value(op.nominal_value)), 9);
 }
 
 TEST(data_def_integer_attribute, L)
@@ -80,7 +80,7 @@ TEST(data_def_integer_attribute, L)
 
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
-    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, op.nominal_value), 18);
+    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, reduce_nominal_value(op.nominal_value)), 18);
 }
 
 TEST(data_def_integer_attribute, P)
@@ -91,7 +91,7 @@ TEST(data_def_integer_attribute, P)
 
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
-    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, op.nominal_value), 2);
+    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, reduce_nominal_value(op.nominal_value)), 2);
 }
 
 TEST(data_def_integer_attribute, Z)
@@ -102,7 +102,7 @@ TEST(data_def_integer_attribute, Z)
 
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
-    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, op.nominal_value), 1);
+    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, reduce_nominal_value(op.nominal_value)), 1);
 }
 
 TEST(data_def_integer_attribute, LD)
@@ -113,7 +113,7 @@ TEST(data_def_integer_attribute, LD)
 
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
-    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, op.nominal_value), 0);
+    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, reduce_nominal_value(op.nominal_value)), 0);
 }
 
 TEST(data_def_integer_attribute, LB)
@@ -124,5 +124,5 @@ TEST(data_def_integer_attribute, LB)
 
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
-    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, op.nominal_value), 0);
+    EXPECT_EQ(t.get_integer_attribute(op.length, op.scale, reduce_nominal_value(op.nominal_value)), 0);
 }
