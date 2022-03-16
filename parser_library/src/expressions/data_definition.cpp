@@ -368,6 +368,34 @@ checking::reduced_nominal_value_t data_definition::evaluate_reduced_nominal_valu
     return nom;
 }
 
+long long data_definition::evaluate_total_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
+{
+    auto dd_type = checking::data_def_type::access_data_def_type(type, extension);
+    if (!dd_type)
+        return -1;
+    auto dupl = evaluate_dupl_factor(info, diags);
+    auto len = evaluate_length(info, diags);
+
+    diagnostic_collector drop_diags;
+
+    if (!dd_type->check_dupl_factor(dupl, drop_diags))
+        return -1;
+
+    if (nominal_value)
+    {
+        if (!dd_type->check_length<checking::data_instr_type::DC>(len, drop_diags))
+            return -1;
+    }
+    else
+    {
+        if (!dd_type->check_length<checking::data_instr_type::DS>(len, drop_diags))
+            return -1;
+    }
+
+    auto result = dd_type->get_length(dupl, len, evaluate_reduced_nominal_value());
+    return result >= ((1ll << 31) - 1) * 8 ? -1 : (long long)result;
+}
+
 void data_definition::apply(mach_expr_visitor& visitor) const
 {
     if (dupl_factor)

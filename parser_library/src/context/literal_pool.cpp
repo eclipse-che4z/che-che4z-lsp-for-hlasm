@@ -126,7 +126,10 @@ void literal_pool::generate_pool(diagnosable_ctx& diags)
                 it->first.generation,
                 it->first.unique_id,
             });
-        size = (semantics::data_def_operand::get_operand_value(*lit, solver, diags).get_length() + 7) / 8;
+        auto bit_length = lit->evaluate_total_length(solver, diags);
+        if (bit_length < 0)
+            continue;
+        size = (bit_length + 7) / 8;
         if (size == 0)
             continue;
 

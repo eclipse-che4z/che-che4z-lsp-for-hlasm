@@ -575,30 +575,7 @@ void data_def_operand::apply(operand_visitor& visitor) const { visitor.visit(*th
 
 long long data_def_operand::evaluate_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    auto dd_type = checking::data_def_type::access_data_def_type(value->type, value->extension);
-    if (!dd_type)
-        return -1;
-    auto dupl = value->evaluate_dupl_factor(info, diags);
-    auto len = value->evaluate_length(info, diags);
-
-    diagnostic_collector drop_diags;
-
-    if (!dd_type->check_dupl_factor(dupl, drop_diags))
-        return -1;
-
-    if (value->nominal_value)
-    {
-        if (!dd_type->check_length<checking::data_instr_type::DC>(len, drop_diags))
-            return -1;
-    }
-    else
-    {
-        if (!dd_type->check_length<checking::data_instr_type::DS>(len, drop_diags))
-            return -1;
-    }
-
-    auto result = type->get_length(dupl, len, value->evaluate_reduced_nominal_value());
-    return result >= ((1ll << 31) - 1) * 8 ? -1 : (long long)result;
+    return value->evaluate_total_length(info, diags);
 }
 
 string_assembler_operand::string_assembler_operand(std::string value, range operand_range)

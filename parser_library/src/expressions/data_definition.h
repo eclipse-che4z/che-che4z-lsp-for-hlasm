@@ -99,6 +99,8 @@ struct data_definition final : public context::dependable
         context::dependency_solver& info, diagnostic_op_consumer& diags) const;
     checking::reduced_nominal_value_t evaluate_reduced_nominal_value() const;
 
+    long long evaluate_total_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+
     void apply(mach_expr_visitor& visitor) const;
 
     friend bool is_similar(const data_definition& l, const data_definition& r) noexcept;
