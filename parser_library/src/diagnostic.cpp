@@ -2191,6 +2191,25 @@ diagnostic_op diagnostic_op::error_ME008(long missed_by, const range& range)
         diagnostic_severity::error, "ME008", concat("Beyond active USING range by ", missed_by, "."), range);
 }
 
+diagnostic_op diagnostic_op::error_ME009(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "ME009", "A simple relocatable expression resolvable by USING expected.", range);
+}
+
+diagnostic_op diagnostic_op::error_ME010(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "ME010", "Expression must evaluate to an absolute value.", range);
+}
+
+diagnostic_op diagnostic_op::error_ME011(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "ME011",
+        "Cannot combine relocatable displacement with an explicit base register.",
+        range);
+}
+
 diagnostic_op diagnostic_op::error_CE001(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "CE001", "Operator expected", range);
