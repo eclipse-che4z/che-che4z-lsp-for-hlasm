@@ -166,7 +166,7 @@ bool data_def_type_P_Z::check(
     return true;
 }
 
-int16_t data_def_type_P_Z::get_implicit_scale(const nominal_value_t& op) const
+int16_t data_def_type_P_Z::get_implicit_scale(const reduced_nominal_value_t& op) const
 {
     if (!op.present || !std::holds_alternative<std::string>(op.value))
         return 0;
@@ -191,7 +191,7 @@ data_def_type_P::data_def_type_P()
     : data_def_type_P_Z('P')
 {}
 
-uint64_t data_def_type_P::get_nominal_length(const nominal_value_t& op) const
+uint64_t data_def_type_P::get_nominal_length(const reduced_nominal_value_t& op) const
 {
     if (!op.present || !std::holds_alternative<std::string>(op.value))
         return 1;
@@ -218,7 +218,7 @@ uint64_t data_def_type_P::get_nominal_length(const nominal_value_t& op) const
 }
 
 uint32_t hlasm_plugin::parser_library::checking::data_def_type_P::get_nominal_length_attribute(
-    const nominal_value_t& op) const
+    const reduced_nominal_value_t& op) const
 {
     if (!op.present || !std::holds_alternative<std::string>(op.value))
         return 1;
@@ -248,7 +248,7 @@ data_def_type_Z::data_def_type_Z()
     : data_def_type_P_Z('Z')
 {}
 
-uint64_t data_def_type_Z::get_nominal_length(const nominal_value_t& op) const
+uint64_t data_def_type_Z::get_nominal_length(const reduced_nominal_value_t& op) const
 {
     if (!op.present || !std::holds_alternative<std::string>(op.value))
         return 1;
@@ -260,7 +260,7 @@ uint64_t data_def_type_Z::get_nominal_length(const nominal_value_t& op) const
     return std::count_if(s.cbegin(), s.cend(), &is_digit);
 }
 
-uint32_t data_def_type_Z::get_nominal_length_attribute(const nominal_value_t& op) const
+uint32_t data_def_type_Z::get_nominal_length_attribute(const reduced_nominal_value_t& op) const
 {
     if (!op.present || !std::holds_alternative<std::string>(op.value))
         return 1;

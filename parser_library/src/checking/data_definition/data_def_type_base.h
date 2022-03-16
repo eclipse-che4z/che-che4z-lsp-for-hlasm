@@ -113,19 +113,29 @@ public:
     context::alignment get_alignment(bool length_present) const;
     // returns length of the operand in bits
     uint64_t get_length(const data_definition_operand& op) const;
+    uint64_t get_length(const data_def_field<int32_t>& dupl_factor,
+        const data_def_length_t& length,
+        const reduced_nominal_value_t& rnv) const;
     // returns the length attribute of operand with specified length modifier and nominal value
-    uint32_t get_length_attribute(const data_def_length_t& length, const nominal_value_t& nominal) const;
+    uint32_t get_length_attribute(const data_def_length_t& length, const reduced_nominal_value_t& nominal) const;
     // returns scale attribute of operand with specified scale modifier and nominal value
-    int16_t get_scale_attribute(const scale_modifier_t& scale, const nominal_value_t& nominal) const;
+    int16_t get_scale_attribute(const scale_modifier_t& scale, const reduced_nominal_value_t& nominal) const;
     // returns length of operand with specified scale modifier and nominal value
     int32_t get_integer_attribute(
-        const data_def_length_t& length, const scale_modifier_t& scale, const nominal_value_t& nominal) const;
+        const data_def_length_t& length, const scale_modifier_t& scale, const reduced_nominal_value_t& nominal) const;
     // Returns type corresponding to specified type and extension.
     static const data_def_type* access_data_def_type(char type, char extension);
 
     static const std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> types_and_extensions;
 
     virtual ~data_def_type() = 0;
+
+    // Checks duplication factor.
+    bool check_dupl_factor(const data_def_field<int32_t>& op, const diagnostic_collector& add_diagnostic) const;
+
+    // Checks the length modifier.
+    template<data_instr_type type>
+    bool check_length(const data_def_length_t& op, const diagnostic_collector& add_diagnostic) const;
 
 protected:
     char type;
@@ -134,11 +144,11 @@ protected:
 
     // When implicit length is "as needed" - it depends on nominal value, returns the implicit length in bytes.
     // All types that have implicit length "as needed" must override this function.
-    virtual uint64_t get_nominal_length(const nominal_value_t& op) const;
+    virtual uint64_t get_nominal_length(const reduced_nominal_value_t& op) const;
 
-    virtual uint32_t get_nominal_length_attribute(const nominal_value_t& op) const;
+    virtual uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const;
     // Gets the value of scale attribute when there is no scale modifier defined by user.
-    virtual int16_t get_implicit_scale(const nominal_value_t& op) const;
+    virtual int16_t get_implicit_scale(const reduced_nominal_value_t& op) const;
 
     virtual int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const;
 
@@ -155,12 +165,6 @@ private:
 
     // Concatenates the two characters and returns resulting string.
     static std::string init_type_str(char type, char extension);
-    // Checks duplication factor.
-    bool check_dupl_factor(const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;
-
-    // Checks the length modifier.
-    template<data_instr_type type>
-    bool check_length(const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;
 
     // Checks whether the nominal value is present when it is mandatory. Returns two booleans: the first one specifies
     // whether there was an error, the second one specifies whether the nominal value is present and needs to be checked
@@ -172,7 +176,7 @@ private:
     // Checks if nominal value has the right type and is safe to access. Expects that nominal type is present.
     bool check_nominal_type(const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;
 
-    size_t get_number_of_values_in_nominal(const nominal_value_t& nom) const;
+    size_t get_number_of_values_in_nominal(const reduced_nominal_value_t& nom) const;
 
     template<data_instr_type type>
     modifier_spec get_length_spec() const;

@@ -97,7 +97,7 @@ TEST(data_def_length_attribute, B_multiple)
     diag_collector col;
     ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 2U);
+    EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 2U);
 }
 
 TEST(data_def_length_attribute, B_explicit)
@@ -109,7 +109,7 @@ TEST(data_def_length_attribute, B_explicit)
     diag_collector col;
     ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 5U);
+    EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 5U);
 }
 
 TEST(data_def_length, dupl_factor_bit_length)
@@ -196,7 +196,7 @@ TEST(data_def_length_attribute, CA)
 
     ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 5U);
+    EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 5U);
 }
 
 TEST(data_def_length_attribute, CA_bit_length)
@@ -209,7 +209,7 @@ TEST(data_def_length_attribute, CA_bit_length)
 
     ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 4U);
+    EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 4U);
 }
 
 
@@ -270,7 +270,7 @@ TEST(data_def_length_attribute, CU)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 12U);
+    EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 12U);
 }
 
 TEST(data_def_length, CU_no_nominal)
@@ -355,7 +355,7 @@ TEST(data_def_length_attribute, X_multiple)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 2U);
+    EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 2U);
 }
 
 TEST(data_def_length, X_even)
@@ -415,7 +415,7 @@ TEST(data_def_length_attribute, F)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 4U);
+    EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 4U);
 }
 
 TEST(data_def_length, F_no_nominal)
@@ -487,7 +487,7 @@ TEST(data_def_length_attribute, P_multiple)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 4U);
+    EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 4U);
 }
 
 TEST(data_def_length_attribute, P_simple)
@@ -499,7 +499,7 @@ TEST(data_def_length_attribute, P_simple)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 2U);
+    EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 2U);
 }
 
 TEST(data_def_length, Z)
@@ -523,7 +523,7 @@ TEST(data_def_length_attribute, Z_multiple)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 4U);
+    EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 4U);
 }
 
 TEST(data_def_length_attribute, Z_simple)
@@ -535,7 +535,7 @@ TEST(data_def_length_attribute, Z_simple)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 2U);
+    EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 2U);
 }
 
 TEST(data_def_length, A)

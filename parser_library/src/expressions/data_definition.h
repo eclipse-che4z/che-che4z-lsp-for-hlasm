@@ -97,6 +97,7 @@ struct data_definition final : public context::dependable
     // data_def_expr::ignored or data_def_address::ignored set to false
     checking::nominal_value_t evaluate_nominal_value(
         context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    checking::reduced_nominal_value_t evaluate_reduced_nominal_value() const;
 
     void apply(mach_expr_visitor& visitor) const;
 

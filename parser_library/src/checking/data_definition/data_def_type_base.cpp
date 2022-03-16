@@ -95,7 +95,7 @@ bool data_def_type::check(const data_definition_operand& op, const diagnostic_co
     if (!ret)
         return false;
     // if operand is ok, we can call get_length and check if it is not too long
-    if (get_length(op) >= (1ll << 31) * 8)
+    if (get_length(op) >= ((1ll << 31) - 1) * 8)
     {
         add_diagnostic(diagnostic_op::error_D028(op.operand_range));
         return false;
@@ -150,21 +150,21 @@ bool check_modifier(const data_def_field<field_val_T>& modifier,
     return true;
 }
 
-uint64_t data_def_type::get_nominal_length(const nominal_value_t&) const
+uint64_t data_def_type::get_nominal_length(const reduced_nominal_value_t&) const
 {
     // all types that have implicit length as needed must override this function
     assert(false);
     return uint64_t();
 }
 
-uint32_t data_def_type::get_nominal_length_attribute(const nominal_value_t&) const
+uint32_t data_def_type::get_nominal_length_attribute(const reduced_nominal_value_t&) const
 {
     // all types that have implicit length as needed must override this function
     assert(false);
     return uint32_t();
 }
 
-int16_t data_def_type::get_implicit_scale(const nominal_value_t&) const
+int16_t data_def_type::get_implicit_scale(const reduced_nominal_value_t&) const
 {
     // All types except P and Z have implicit scale 0.
     return 0;
@@ -228,33 +228,33 @@ modifier_spec data_def_type::get_bit_length_spec() const
 }
 
 bool data_def_type::check_dupl_factor(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const
+    const data_def_field<int32_t>& dupl_factor, const diagnostic_collector& add_diagnostic) const
 {
-    if (op.dupl_factor.present)
-        if (op.dupl_factor.value < 0)
+    if (dupl_factor.present)
+        if (dupl_factor.value < 0)
         {
             // Duplication factor must be non negative
-            add_diagnostic(diagnostic_op::error_D011(op.dupl_factor.rng));
+            add_diagnostic(diagnostic_op::error_D011(dupl_factor.rng));
             return false;
         }
     return true;
 }
 
 template<data_instr_type instr_type>
-bool data_def_type::check_length(const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const
+bool data_def_type::check_length(const data_def_length_t& length, const diagnostic_collector& add_diagnostic) const
 {
-    if (std::holds_alternative<n_a>(bit_length_spec_) && op.length.len_type == data_def_length_t::length_type::BIT)
+    if (std::holds_alternative<n_a>(bit_length_spec_) && length.len_type == data_def_length_t::length_type::BIT)
     {
         // bit length not allowed with this type
-        add_diagnostic(diagnostic_op::error_D007(op.length.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D007(length.rng, type_str));
         return false;
     }
     else
     {
-        if (op.length.len_type == data_def_length_t::length_type::BIT)
-            return check_modifier(op.length, type_str, "bit length", get_bit_length_spec<instr_type>(), add_diagnostic);
+        if (length.len_type == data_def_length_t::length_type::BIT)
+            return check_modifier(length, type_str, "bit length", get_bit_length_spec<instr_type>(), add_diagnostic);
         else
-            return check_modifier(op.length, type_str, "length", get_length_spec<instr_type>(), add_diagnostic);
+            return check_modifier(length, type_str, "length", get_length_spec<instr_type>(), add_diagnostic);
     }
 }
 
@@ -309,8 +309,8 @@ std::pair<bool, bool> data_def_type::check_base(
 {
     assert(op.type.value == type);
     assert(op.extension.value == extension);
-    bool ret = check_dupl_factor(op, add_diagnostic);
-    ret &= check_length<instr_type>(op, add_diagnostic);
+    bool ret = check_dupl_factor(op.dupl_factor, add_diagnostic);
+    ret &= check_length<instr_type>(op.length, add_diagnostic);
     ret &= check_modifier(op.scale, type_str, "scale", scale_spec_, add_diagnostic);
     ret &= check_modifier(op.exponent, type_str, "exponent", exponent_spec_, add_diagnostic);
 
@@ -336,7 +336,7 @@ context::alignment data_def_type::get_alignment(bool length_present) const
         return alignment_;
 }
 
-size_t data_def_type::get_number_of_values_in_nominal(const nominal_value_t& nom) const
+size_t data_def_type::get_number_of_values_in_nominal(const reduced_nominal_value_t& nom) const
 {
     if (type == 'C' || type == 'G') // C and G do not support multiple nominal values
         return 1;
@@ -346,36 +346,43 @@ size_t data_def_type::get_number_of_values_in_nominal(const nominal_value_t& nom
         return std::count(s.begin(), s.end(), ',') + 1;
     }
     else
-        return std::get<nominal_value_expressions>(nom.value).size();
+        return std::get<size_t>(nom.value);
 }
 
 // this function assumes, that the operand is already checked and was OK
 uint64_t data_def_type::get_length(const data_definition_operand& op) const
 {
+    return get_length(op.dupl_factor, op.length, reduce_nominal_value(op.nominal_value));
+}
+uint64_t data_def_type::get_length(const data_def_field<int32_t>& dupl_factor,
+    const data_def_length_t& length,
+    const reduced_nominal_value_t& rnv) const
+{
     uint64_t len_in_bits;
-    if (op.length.present)
+    if (length.present)
     {
-        uint64_t val_count = get_number_of_values_in_nominal(op.nominal_value);
-        len_in_bits = val_count * op.length.value;
+        uint64_t val_count = get_number_of_values_in_nominal(rnv);
+        len_in_bits = val_count * length.value;
 
-        if (op.length.len_type == data_def_length_t::BYTE)
+        if (length.len_type == data_def_length_t::BYTE)
             len_in_bits *= 8;
     }
     else if (std::holds_alternative<as_needed>(implicit_length_))
-        len_in_bits = get_nominal_length(op.nominal_value) * 8;
-    else if (!op.nominal_value.present)
+        len_in_bits = get_nominal_length(rnv) * 8;
+    else if (!rnv.present)
         len_in_bits = std::get<uint64_t>(implicit_length_) * 8;
     else
     {
-        uint64_t val_count = get_number_of_values_in_nominal(op.nominal_value);
+        uint64_t val_count = get_number_of_values_in_nominal(rnv);
         len_in_bits = val_count * std::get<uint64_t>(implicit_length_) * 8;
     }
-    if (op.dupl_factor.present)
-        len_in_bits *= (uint64_t)op.dupl_factor.value;
+    if (dupl_factor.present)
+        len_in_bits *= (uint64_t)dupl_factor.value;
     return len_in_bits;
 }
 
-uint32_t data_def_type::get_length_attribute(const data_def_length_t& length, const nominal_value_t& nominal) const
+uint32_t data_def_type::get_length_attribute(
+    const data_def_length_t& length, const reduced_nominal_value_t& nominal) const
 {
     if (length.present)
     {
@@ -394,7 +401,7 @@ uint32_t data_def_type::get_length_attribute(const data_def_length_t& length, co
         return (uint32_t)std::get<uint64_t>(implicit_length_);
 }
 
-int16_t data_def_type::get_scale_attribute(const scale_modifier_t& scale, const nominal_value_t& nominal) const
+int16_t data_def_type::get_scale_attribute(const scale_modifier_t& scale, const reduced_nominal_value_t& nominal) const
 {
     if (scale.present)
         return scale.value;
@@ -403,7 +410,7 @@ int16_t data_def_type::get_scale_attribute(const scale_modifier_t& scale, const 
 }
 
 int32_t data_def_type::get_integer_attribute(
-    const data_def_length_t& length, const scale_modifier_t& scale, const nominal_value_t& nominal) const
+    const data_def_length_t& length, const scale_modifier_t& scale, const reduced_nominal_value_t& nominal) const
 {
     uint32_t L = get_length_attribute(length, nominal);
     int32_t S = get_scale_attribute(scale, nominal);
@@ -462,7 +469,7 @@ const data_def_type* data_def_type::access_data_def_type(char type, char extensi
     return found == types_and_extensions.end() ? nullptr : found->second.get();
 }
 
-data_def_type::~data_def_type() {}
+data_def_type::~data_def_type() = default;
 
 template bool data_def_type::check<data_instr_type::DC>(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;
