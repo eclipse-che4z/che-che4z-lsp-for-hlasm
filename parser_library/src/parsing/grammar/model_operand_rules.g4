@@ -58,12 +58,11 @@ model_string returns [std::string value]
 	};
 
 before_var_sym_model_string returns [std::string value]
-	: ap1=APOSTROPHE
+	: ap1=APOSTROPHE 
 	(
-		l_sp_ch
+		l_string
 		{
-			$value.append(std::move($l_sp_ch.value));
-
+			$value.append(std::move($l_string.value));
 		}
 		|
 		(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$value.append("''");}
