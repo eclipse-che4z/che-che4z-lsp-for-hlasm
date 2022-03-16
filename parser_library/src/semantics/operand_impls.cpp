@@ -573,25 +573,27 @@ checking::data_definition_operand data_def_operand::get_operand_value(
 
 void data_def_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
-long long data_def_operand::get_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
+long long data_def_operand::evaluate_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    auto type = checking::data_def_type::access_data_def_type(value->type, value->extension);
-    if (!type)
+    auto dd_type = checking::data_def_type::access_data_def_type(value->type, value->extension);
+    if (!dd_type)
         return -1;
     auto dupl = value->evaluate_dupl_factor(info, diags);
     auto len = value->evaluate_length(info, diags);
 
-    if (!type->check_dupl_factor(dupl, diagnostic_collector()))
+    diagnostic_collector drop_diags;
+
+    if (!dd_type->check_dupl_factor(dupl, drop_diags))
         return -1;
 
     if (value->nominal_value)
     {
-        if (!type->check_length<checking::data_instr_type::DC>(len, diagnostic_collector()))
+        if (!dd_type->check_length<checking::data_instr_type::DC>(len, drop_diags))
             return -1;
     }
     else
     {
-        if (!type->check_length<checking::data_instr_type::DS>(len, diagnostic_collector()))
+        if (!dd_type->check_length<checking::data_instr_type::DS>(len, drop_diags))
             return -1;
     }
 

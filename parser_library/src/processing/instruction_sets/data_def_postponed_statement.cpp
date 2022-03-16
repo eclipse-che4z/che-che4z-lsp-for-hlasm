@@ -71,7 +71,7 @@ int32_t data_def_dependency<instr_type>::get_operands_length(const semantics::op
             // enforce data def alignment
             round_up_bytes(solver.operands_bit_length, dd->get_alignment().boundary);
         }
-        long long len = op->access_data_def()->get_length(solver, diags);
+        long long len = op->access_data_def()->evaluate_length(solver, diags);
 
         if (len < 0)
             return 0;
