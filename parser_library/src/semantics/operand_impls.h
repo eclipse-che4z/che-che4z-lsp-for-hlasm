@@ -350,7 +350,7 @@ struct data_def_operand final : evaluable_operand
 
     void apply(operand_visitor& visitor) const override;
 
-    long long evaluate_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    long long evaluate_total_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 };
 
 

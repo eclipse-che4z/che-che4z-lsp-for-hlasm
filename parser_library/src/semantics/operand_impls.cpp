@@ -573,7 +573,7 @@ checking::data_definition_operand data_def_operand::get_operand_value(
 
 void data_def_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
-long long data_def_operand::evaluate_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
+long long data_def_operand::evaluate_total_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
     return value->evaluate_total_length(info, diags);
 }
