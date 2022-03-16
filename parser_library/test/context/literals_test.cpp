@@ -376,7 +376,7 @@ B        CSECT
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "M113" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M136" }));
 }
 
 TEST(literals, no_csect_available)
@@ -389,7 +389,7 @@ TEST(literals, no_csect_available)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "M113" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M136" }));
 }
 
 TEST(literals, ltorg_in_dsect)

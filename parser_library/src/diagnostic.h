@@ -493,6 +493,8 @@ struct diagnostic_op
 
     static diagnostic_op error_M135(std::string_view instr_name, long long from, long long to, const range& range);
 
+    static diagnostic_op warn_M136(const range& range);
+
     static diagnostic_op error_optional_number_of_operands(
         std::string_view instr_name, int optional_no, int operands_no, const range& range);
 
