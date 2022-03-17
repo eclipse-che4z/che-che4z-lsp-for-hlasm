@@ -610,7 +610,9 @@ class db2_preprocessor : public preprocessor
     static bool sql_has_codegen(std::string_view sql)
     {
         // handles only the most obvious cases (imprecisely)
-        static const auto no_code_statements = std::regex("(?:DECLARE|WHENEVER)(?: .*)?", std::regex_constants::icase);
+        static const auto no_code_statements =
+            std::regex("(?:DECLARE|WHENEVER|BEGIN[ ]+DECLARE[ ]+SECTION|END[ ]+DECLARE[ ]+SECTION)(?: .*)?",
+                std::regex_constants::icase);
         return !std::regex_match(sql.begin(), sql.end(), no_code_statements);
     }
     void generate_sql_code_mock()
