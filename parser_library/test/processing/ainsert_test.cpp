@@ -166,20 +166,23 @@ TEST(ainsert, argument_limit_over)
     ASSERT_TRUE(matches_message_codes(a.diags(), { "A157" }));
 }
 
-TEST(ainsert, sysstmt_postponed_variable_evaluation)
+TEST(ainsert, postponed_variable_evaluation)
 {
     std::string input = R"(
     MACRO
     MAC_AIN
     AINSERT '       MACRO',BACK
     AINSERT '       MAC',BACK
-    AINSERT '       GBLC &&A',BACK
-    AINSERT '&&A    SETC ''&&SYSSTMT''',BACK
+    AINSERT '       GBLA &&A',BACK
+    AINSERT '       GBLC &&C1',BACK
+    AINSERT '&&A    SETA   &&SYSSTMT',BACK
+    AINSERT '&&C1   SETC ''&&SYSSTMT''',BACK
     AINSERT '       MEND',BACK
-    AINSERT '&&B    SETC ''&&SYSSTMT''',BACK
+    AINSERT '&&C2   SETC ''&&SYSSTMT''',BACK
     MEND
     
-    GBLC &A
+    GBLA &A
+    GBLC &C1
     MAC_AIN
     MAC
     END
@@ -190,27 +193,28 @@ TEST(ainsert, sysstmt_postponed_variable_evaluation)
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "00000029");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "00000027");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 37);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "00000038");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "00000033");
 }
 
-TEST(ainsert, sysstmt_immediate_variable_evaluation)
+TEST(ainsert, immediate_variable_evaluation)
 {
     std::string input = R"(
     MACRO
     MAC_AIN
     AINSERT '       MACRO',BACK
     AINSERT '       MAC',BACK
-    AINSERT '       GBLC &&A',BACK
-    AINSERT '       GBLA &&B',BACK
-    AINSERT '&&A    SETC ''&SYSSTMT''',BACK
-    AINSERT '&&B    SETA   &SYSSTMT',BACK
+    AINSERT '       GBLA &&A',BACK
+    AINSERT '       GBLC &&C1',BACK
+    AINSERT '&&A    SETA   &SYSSTMT',BACK
+    AINSERT '&&C1   SETC ''&SYSSTMT''',BACK
     AINSERT '       MEND',BACK
-    AINSERT '&&C    SETC ''&SYSSTMT''',BACK
+    AINSERT '&&C2   SETC ''&SYSSTMT''',BACK
     MEND
 
-    GBLC &A
-    GBLA &B
+    GBLA &A
+    GBLC &C1
     MAC_AIN
     MAC
     END
@@ -221,7 +225,7 @@ TEST(ainsert, sysstmt_immediate_variable_evaluation)
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "00000021");
-    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), 22);
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C"), "00000024");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 21);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "00000022");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "00000024");
 }
