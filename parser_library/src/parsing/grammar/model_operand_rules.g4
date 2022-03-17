@@ -58,17 +58,9 @@ model_string returns [std::string value]
 	};
 
 before_var_sym_model_string returns [std::string value]
-	: ap1=APOSTROPHE 
-	(
-		l_string
-		{
-			$value.append(std::move($l_string.value));
-		}
-		|
-		(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$value.append("''");}
-	)*?
-	ap2=(APOSTROPHE|ATTR)
+	: ap1=APOSTROPHE model_string_ch_c ap2=(APOSTROPHE|ATTR)
 	{
+	    $value.append(std::move($model_string_ch_c.value));
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string));
 	};
 
