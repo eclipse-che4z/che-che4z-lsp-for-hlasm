@@ -15,6 +15,8 @@
 // This file contains implementation of the data_def_type for
 // these types: B, C, G, X
 
+#include <concepts>
+
 #include "checking/checker_helper.h"
 #include "data_def_types.h"
 
@@ -51,7 +53,8 @@ uint32_t get_X_B_length_attr(const std::string& s, uint64_t frac)
 }
 
 // Checks comma separated values. is_valid_digit specifies whether the char is valid character of value.
-bool check_comma_separated(const std::string nom, std::function<bool(char c)> is_valid_digit)
+template</* std::predicate<char> */ typename F>
+bool check_comma_separated(const std::string& nom, F is_valid_digit)
 {
     bool last_valid = false;
     for (char c : nom)

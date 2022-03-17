@@ -179,7 +179,7 @@ bool assembler_instruction::check_optable_operands(const std::vector<std::unique
 
 bool assembler_instruction::check_typecheck_operands(const std::vector<std::unique_ptr<asm_operand>>& input,
     std::string_view instr_name,
-    const std::string,
+    std::string_view,
     const diagnostic_collector& add_diagnostic) const
 {
     const static std::vector<std::string_view> typecheck_operands = {

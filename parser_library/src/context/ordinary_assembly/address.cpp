@@ -299,7 +299,7 @@ bool address::in_same_loctr(const address& addr) const
 
 bool address::is_simple() const { return bases_.size() == 1 && bases_[0].second == 1; }
 
-bool has_unresolved_spaces(const space_ptr sp)
+bool has_unresolved_spaces(const space_ptr& sp)
 {
     if (!sp->resolved())
         return true;
