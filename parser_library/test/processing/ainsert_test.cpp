@@ -195,7 +195,7 @@ TEST(ainsert, postponed_variable_evaluation)
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 37);
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "00000038");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "00000033");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "00000034");
 }
 
 TEST(ainsert, immediate_variable_evaluation)
