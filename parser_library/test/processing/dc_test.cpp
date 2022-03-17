@@ -266,3 +266,25 @@ X DC CL(L'X)'X'
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
+
+TEST(DC, manual_alignment)
+{
+    std::string input = R"(
+S   CSECT
+    DC    C' '
+    DS    XL(((((*-S)+4095)/4096)*4096)-(*-S))'00'
+T   EQU   *
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto t = get_symbol_reloc(a.hlasm_ctx(), "T");
+
+    ASSERT_TRUE(t);
+
+    EXPECT_EQ(t->offset(), 0x1000);
+}

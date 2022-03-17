@@ -127,7 +127,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
                 it->first.unique_id,
                 active_using,
             });
-        auto bit_length = lit->evaluate_total_length(solver, diags);
+        auto bit_length = lit->evaluate_total_length(solver, checking::data_instr_type::DC, diags);
         if (bit_length < 0)
             continue;
         size = (bit_length + 7) / 8;

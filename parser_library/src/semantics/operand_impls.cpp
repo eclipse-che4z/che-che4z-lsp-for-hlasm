@@ -718,9 +718,10 @@ void data_def_operand::apply_mach_visitor(expressions::mach_expr_visitor& v) con
         value->apply(v);
 }
 
-long long data_def_operand::evaluate_total_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
+long long data_def_operand::evaluate_total_length(
+    context::dependency_solver& info, checking::data_instr_type checking_rules, diagnostic_op_consumer& diags) const
 {
-    return value->evaluate_total_length(info, diags);
+    return value->evaluate_total_length(info, checking_rules, diags);
 }
 
 string_assembler_operand::string_assembler_operand(std::string value, range operand_range)

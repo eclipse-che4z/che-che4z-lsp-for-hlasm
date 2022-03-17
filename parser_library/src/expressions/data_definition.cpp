@@ -412,7 +412,8 @@ checking::reduced_nominal_value_t data_definition::evaluate_reduced_nominal_valu
     return nom;
 }
 
-long long data_definition::evaluate_total_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
+long long data_definition::evaluate_total_length(
+    context::dependency_solver& info, checking::data_instr_type checking_rules, diagnostic_op_consumer& diags) const
 {
     auto dd_type = checking::data_def_type::access_data_def_type(type, extension);
     if (!dd_type)
@@ -425,16 +426,18 @@ long long data_definition::evaluate_total_length(context::dependency_solver& inf
     if (!dd_type->check_dupl_factor(dupl, drop_diags))
         return -1;
 
-    if (nominal_value)
+    if (checking_rules == checking::data_instr_type::DC)
     {
         if (!dd_type->check_length<checking::data_instr_type::DC>(len, drop_diags))
             return -1;
     }
-    else
+    else if (checking_rules == checking::data_instr_type::DS)
     {
         if (!dd_type->check_length<checking::data_instr_type::DS>(len, drop_diags))
             return -1;
     }
+    else
+        assert(false);
 
     auto result = dd_type->get_length(dupl, len, evaluate_reduced_nominal_value());
     return result >= ((1ll << 31) - 1) * 8 ? -1 : (long long)result;
