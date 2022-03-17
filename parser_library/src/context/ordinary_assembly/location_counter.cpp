@@ -148,8 +148,11 @@ std::pair<space_ptr, std::vector<address>> location_counter::set_available_value
         assert(loctr_start->kind == space_kind::LOCTR_BEGIN);
         for (auto& addr : addr_arr)
         {
+            // make addresses (pseudo-)relative to current location counter
             if (addr.spaces().front().first->kind == space_kind::LOCTR_BEGIN)
                 addr.spaces().erase(addr.spaces().begin());
+            else if (addr.spaces().front().first->kind == space_kind::LOCTR_SET)
+                addr.spaces().emplace_back(loctr_start, -1);
         }
     }
 
