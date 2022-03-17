@@ -8,6 +8,7 @@
 
 #### Fixed
 - Behavior of currently supported subscripted system variables corrected
+- AINSERT can now do immediate variable evaluatation correctly
 
 ## [1.0.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.1...1.0.0) (2022-01-31)
 
