@@ -1457,3 +1457,21 @@ B   DS    A
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(using, tolerate_missing_sections)
+{
+    std::string input = R"(
+    USING D,13
+    USING MISSING,10
+    ST    0,F
+
+D   DSECT
+F   DS    F
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M113" }));
+}

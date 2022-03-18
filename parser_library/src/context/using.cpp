@@ -172,7 +172,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     if (v.mapping_regs == invalid_register_set)
     {
         diag.add_diagnostic(diagnostic_op::error_U004_no_active_using(rng));
-        return {};
+        return failed_entry_resolved { m_parent };
     }
 
     return using_entry_resolved(
@@ -188,7 +188,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     if (!b.has_value())
     {
         diag.add_diagnostic(diagnostic_op::error_M113(USING, b_rng));
-        return {};
+        return failed_entry_resolved { m_parent };
     }
     if (b->qualifier)
     {
