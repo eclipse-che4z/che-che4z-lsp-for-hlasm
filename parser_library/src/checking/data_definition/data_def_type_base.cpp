@@ -263,7 +263,7 @@ bool data_def_type::check_length(const data_def_length_t& length, const diagnost
 namespace {
 struct
 {
-    std::optional<range> operator()(const data_def_expr& e)
+    std::optional<range> operator()(const data_def_expr& e) const
     {
         if (e.ignored)
             return std::nullopt;
@@ -271,7 +271,7 @@ struct
             return e.rng;
         return std::nullopt;
     }
-    std::optional<range> operator()(const data_def_address& a)
+    std::optional<range> operator()(const data_def_address& a) const
     {
         if (a.ignored)
             return std::nullopt;
@@ -279,7 +279,7 @@ struct
             return a.total;
         return std::nullopt;
     }
-} abs_or_addr;
+} const abs_or_addr;
 } // namespace
 
 bool data_def_type::check_nominal_type(

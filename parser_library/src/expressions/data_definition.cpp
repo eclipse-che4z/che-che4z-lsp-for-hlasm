@@ -276,90 +276,95 @@ enum class nominal_eval_subtype
     SY_type,
 };
 
+struct extract_nominal_value_visitor
+{
+    context::dependency_solver& info;
+    diagnostic_op_consumer& diags;
+    nominal_eval_subtype type;
+
+    checking::expr_or_address handle_simple_reloc_with_using_map(const context::address& addr, range r) const
+    {
+        checking::data_def_address ch_adr;
+        ch_adr.total = r;
+
+        const auto& base = addr.bases().front().first;
+        auto translated_addr =
+            info.using_evaluate(base.qualifier, base.owner, addr.offset(), type == nominal_eval_subtype::SY_type);
+
+        if (translated_addr.reg == context::using_collection::invalid_register)
+        {
+            if (translated_addr.reg_offset)
+                diags.add_diagnostic(diagnostic_op::error_ME008(translated_addr.reg_offset, r));
+            else
+                diags.add_diagnostic(diagnostic_op::error_ME007(r));
+            ch_adr.ignored = true; // already diagnosed
+        }
+        else
+        {
+            ch_adr.displacement = translated_addr.reg_offset;
+            ch_adr.base = translated_addr.reg;
+        }
+
+        return ch_adr;
+    }
+
+    checking::expr_or_address operator()(const expressions::mach_expr_ptr& e) const
+    {
+        auto deps = e->get_dependencies(info);
+        bool ignored = deps.has_error || deps.contains_dependencies(); // ignore values with dependencies
+        auto ev = e->evaluate(info, diags);
+        auto kind = ev.value_kind();
+        switch (kind)
+        {
+            case context::symbol_value_kind::UNDEF:
+                return checking::data_def_expr { 0, checking::expr_type::ABS, e->get_range(), true };
+
+            case context::symbol_value_kind::ABS:
+                return checking::data_def_expr {
+                    ev.get_abs(),
+                    checking::expr_type::ABS,
+                    e->get_range(),
+                    ignored,
+                };
+
+            case context::symbol_value_kind::RELOC:
+                if (const auto& addr = ev.get_reloc(); type != nominal_eval_subtype::none && addr.is_simple())
+                    return handle_simple_reloc_with_using_map(addr, e->get_range());
+                else
+                    return checking::data_def_expr {
+                        0,
+                        addr.is_complex() ? checking::expr_type::COMPLEX : checking::expr_type::RELOC,
+                        e->get_range(),
+                        ignored,
+                    };
+
+            default:
+                assert(false);
+                return checking::data_def_expr {};
+        }
+    }
+
+    checking::expr_or_address operator()(const expressions::address_nominal& a) const
+    {
+        checking::data_def_address ch_adr;
+
+        ch_adr.total = a.total;
+        ch_adr.base = set_data_def_field(a.base.get(), info, diags);
+        ch_adr.displacement = set_data_def_field(a.displacement.get(), info, diags);
+        return ch_adr;
+    }
+};
+
 inline checking::nominal_value_expressions extract_nominal_value_expressions(const expr_or_address_list& exprs,
     context::dependency_solver& info,
     diagnostic_op_consumer& diags,
     nominal_eval_subtype type)
 {
+    extract_nominal_value_visitor visitor { info, diags, type };
     checking::nominal_value_expressions values;
     for (const auto& e_or_a : exprs)
-    {
-        if (std::holds_alternative<expressions::mach_expr_ptr>(e_or_a))
-        {
-            const expressions::mach_expr_ptr& e = std::get<expressions::mach_expr_ptr>(e_or_a);
-            auto deps = e->get_dependencies(info);
-            bool ignored = deps.has_error || deps.contains_dependencies(); // ignore values with dependencies
-            auto ev = e->evaluate(info, diags);
-            auto kind = ev.value_kind();
-            if (kind == context::symbol_value_kind::ABS)
-            {
-                values.push_back(checking::data_def_expr {
-                    ev.get_abs(),
-                    checking::expr_type::ABS,
-                    e->get_range(),
-                    ignored,
-                });
-            }
-            else if (kind == context::symbol_value_kind::RELOC)
-            {
-                const auto& addr = ev.get_reloc();
-                if (type != nominal_eval_subtype::none && addr.is_simple())
-                {
-                    checking::data_def_address ch_adr;
-                    ch_adr.total = e->get_range();
+        values.push_back(std::visit(visitor, e_or_a));
 
-                    const auto& base = addr.bases().front().first;
-                    auto translated_addr = info.using_evaluate(
-                        base.qualifier, base.owner, addr.offset(), type == nominal_eval_subtype::SY_type);
-
-                    if (translated_addr.reg == context::using_collection::invalid_register)
-                    {
-                        if (translated_addr.reg_offset)
-                            diags.add_diagnostic(
-                                diagnostic_op::error_ME008(translated_addr.reg_offset, e->get_range()));
-                        else
-                            diags.add_diagnostic(diagnostic_op::error_ME007(e->get_range()));
-                        ch_adr.ignored = true; // already diagnosed
-                    }
-                    else
-                    {
-                        ch_adr.displacement = translated_addr.reg_offset;
-                        ch_adr.base = translated_addr.reg;
-                    }
-
-                    values.push_back(ch_adr);
-                }
-                else
-                {
-                    values.push_back(checking::data_def_expr {
-                        0,
-                        addr.is_complex() ? checking::expr_type::COMPLEX : checking::expr_type::RELOC,
-                        e->get_range(),
-                        ignored,
-                    });
-                }
-            }
-            else if (kind == context::symbol_value_kind::UNDEF)
-            {
-                values.push_back(checking::data_def_expr { 0, checking::expr_type::ABS, e->get_range(), true });
-            }
-            else
-            {
-                assert(false);
-                continue;
-            }
-        }
-        else // there is an address D(B)
-        {
-            const auto& a = std::get<expressions::address_nominal>(e_or_a);
-            checking::data_def_address ch_adr;
-
-            ch_adr.total = a.total;
-            ch_adr.base = set_data_def_field(a.base.get(), info, diags);
-            ch_adr.displacement = set_data_def_field(a.displacement.get(), info, diags);
-            values.push_back(ch_adr);
-        }
-    }
     return values;
 }
 
