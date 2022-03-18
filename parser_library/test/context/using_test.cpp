@@ -1427,7 +1427,8 @@ L   DS    F
     EXPECT_TRUE(a.diags().empty());
 }
 
-TEST(using, long_displacement_instruction) {
+TEST(using, long_displacement_instruction)
+{
     std::string input = R"(
 A   DS    A
     USING *,1
