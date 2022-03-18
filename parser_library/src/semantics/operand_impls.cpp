@@ -247,107 +247,84 @@ std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
     return get_operand_value(info, { context::empty, context::empty, context::empty, false }, diags);
 }
 
+namespace {
+std::pair<std::optional<context::symbol_value::abs_value_t>, bool> evaluate_abs_expression(
+    const expressions::mach_expr_ptr& expr, context::dependency_solver& info, diagnostic_op_consumer& diags)
+{
+    if (!expr)
+        return { std::nullopt, false };
+
+    auto value = expr->evaluate(info, diags);
+    if (value.value_kind() == context::symbol_value_kind::ABS)
+        return { value.get_abs(), false };
+
+    diags.add_diagnostic(diagnostic_op::error_ME010(expr->get_range()));
+    return { std::nullopt, true };
+}
+} // namespace
+
 std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(context::dependency_solver& info,
     const checking::machine_operand_format& mach_op_format,
     diagnostic_op_consumer& diags) const
 {
-    context::symbol_value displ, first, second;
-    std::optional<context::symbol_value::abs_value_t> displ_v, first_v, second_v;
-    bool error = false;
+    std::optional<context::symbol_value::abs_value_t> displ_v;
 
-    displ = displacement->evaluate(info, diags);
-    if (first_par)
-    {
-        first = first_par->evaluate(info, diags);
-        if (first.value_kind() == context::symbol_value_kind::ABS)
-            first_v = first.get_abs();
-        else
-        {
-            error = true;
-            diags.add_diagnostic(diagnostic_op::error_ME010(first_par->get_range()));
-        }
-    }
-    if (second_par)
-    {
-        second = second_par->evaluate(info, diags);
-        if (second.value_kind() == context::symbol_value_kind::ABS)
-            second_v = second.get_abs();
-        else
-        {
-            error = true;
-            diags.add_diagnostic(diagnostic_op::error_ME010(second_par->get_range()));
-        }
-    }
+    auto [first_v, first_err] = evaluate_abs_expression(first_par, info, diags);
+    auto [second_v, second_err] = evaluate_abs_expression(second_par, info, diags);
 
-    if (displ.value_kind() == context::symbol_value_kind::ABS)
+    if (auto displ = displacement->evaluate(info, diags); displ.value_kind() == context::symbol_value_kind::ABS)
         displ_v = displ.get_abs();
     else if (displ.value_kind() == context::symbol_value_kind::RELOC)
     {
-        if (mach_op_format.identifier.type
-            != checking::machine_operand_type::DISPLC) // only translate when memory-like operand requested
+        if (mach_op_format.identifier.type != checking::machine_operand_type::DISPLC)
         {
+            // only translate when memory-like operand indicated
             displ_v = 0;
         }
         else if (first_par && second_par || second_par && state != checking::operand_state::ONE_OP)
         {
             // <reloc>(X,B) and <reloc>(,B) not allowed
-            error = true;
             diags.add_diagnostic(diagnostic_op::error_ME011(operand_range));
+        }
+        else if (const auto& reloc = displ.get_reloc(); !reloc.is_simple())
+        {
+            diags.add_diagnostic(diagnostic_op::error_ME009(displacement->get_range()));
         }
         else
         {
             if (state == checking::operand_state::ONE_OP)
                 std::swap(first_v, second_v); // <reloc>(,X) -> <reloc>(X,?)
 
-            const auto& reloc = displ.get_reloc();
-            if (reloc.is_simple())
+            const auto& base = reloc.bases().front().first;
+            const bool long_displacement = mach_op_format.identifier == context::dis_20s;
+            auto translated_addr = info.using_evaluate(base.qualifier, base.owner, reloc.offset(), long_displacement);
+            if (translated_addr.reg != context::using_collection::invalid_register)
             {
-                const auto& base = reloc.bases().front().first;
-                auto translated_addr = info.using_evaluate(
-                    base.qualifier, base.owner, reloc.offset(), mach_op_format.identifier == context::dis_20s);
-                if (translated_addr.reg != context::using_collection::invalid_register)
-                {
-                    // TODO: this does not work correctly for d(L,r) type of operand,
-                    // we really need the operand type here, to do the right thing.
-                    // NOTE: length of the leftmost operand determines the value
-                    displ_v = translated_addr.reg_offset;
-                    second_v = translated_addr.reg;
-                }
-                else
-                {
-                    error = true;
-                    if (translated_addr.reg_offset)
-                        diags.add_diagnostic(
-                            diagnostic_op::error_ME008(translated_addr.reg_offset, displacement->get_range()));
-                    else
-                        diags.add_diagnostic(diagnostic_op::error_ME007(displacement->get_range()));
-                }
+                // TODO: this does not work correctly for d(L,r) type of operand,
+                // we really need the operand type here, to do the right thing.
+                // NOTE: length of the leftmost operand determines the value
+                displ_v = translated_addr.reg_offset;
+                second_v = translated_addr.reg;
             }
             else
             {
-                error = true;
-                diags.add_diagnostic(diagnostic_op::error_ME009(displacement->get_range()));
+                if (translated_addr.reg_offset)
+                    diags.add_diagnostic(
+                        diagnostic_op::error_ME008(translated_addr.reg_offset, displacement->get_range()));
+                else
+                    diags.add_diagnostic(diagnostic_op::error_ME007(displacement->get_range()));
             }
         }
     }
-    else
-        error = true;
 
-    if (error)
-    {
+    if (!displ_v.has_value() || first_err || second_err)
         return std::make_unique<checking::address_operand>(checking::address_state::RES_INVALID, 0, 0, 0, state);
-    }
 
-    if (first_v && second_v) // both defined
-        return std::make_unique<checking::address_operand>(
-            checking::address_state::UNRES, *displ_v, *first_v, *second_v); // D(B1,B2)
-    if (first_v) // only first defined
-        return std::make_unique<checking::address_operand>(
-            checking::address_state::UNRES, *displ_v, *first_v, 0, state); // D(B1,)
-    if (second_v) // only second defined
-        return std::make_unique<checking::address_operand>(
-            checking::address_state::UNRES, *displ_v, 0, *second_v, state); // D(B) or D(,B)
-    return std::make_unique<checking::address_operand>(checking::address_state::UNRES, *displ_v, 0, 0, state); // D(,)
+    return std::make_unique<checking::address_operand>(checking::address_state::UNRES,
+        *displ_v,
+        first_v.value_or(0),
+        second_v.value_or(0),
+        first_v && second_v ? checking::operand_state::PRESENT : state);
 }
 
 void address_machine_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
