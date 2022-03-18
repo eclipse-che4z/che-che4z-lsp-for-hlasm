@@ -29,16 +29,14 @@ namespace hlasm_plugin::parser_library::context {
 space::space(location_counter& owner, alignment align, space_kind kind)
     : kind(kind)
     , align(std::move(align))
-    , previous_loctr_value(address::base {}, 0, {})
     , owner(owner)
     , resolved_length(0)
     , resolved_(false)
 {}
 
-space::space(location_counter& owner, alignment align, address previous_loctr_value, size_t boundary, int offset)
+space::space(location_counter& owner, alignment align, size_t boundary, int offset)
     : kind(space_kind::LOCTR_UNKNOWN)
     , align(std::move(align))
-    , previous_loctr_value(std::move(previous_loctr_value))
     , previous_boundary(boundary)
     , previous_offset(offset)
     , owner(owner)

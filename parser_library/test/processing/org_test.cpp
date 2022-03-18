@@ -1034,3 +1034,25 @@ Z   DS    A
 
     EXPECT_EQ(z->offset(), 1004);
 }
+
+TEST(org, correct_relative_address_after_org)
+{
+    std::string input(R"(
+        DS      512XL1024
+LOC     LOCTR
+LABEL   DS      XL(LEN)
+        ORG     *-LEN
+        DS      CL8
+        ORG     ,
+TEST    EQU     *-LABEL
+LEN     EQU     144
+
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TEST"), 144);
+}
