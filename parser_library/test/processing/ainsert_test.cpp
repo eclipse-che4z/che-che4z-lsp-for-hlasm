@@ -229,3 +229,65 @@ TEST(ainsert, immediate_variable_evaluation)
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "00000022");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "00000024");
 }
+
+TEST(ainsert, grammar_verification_01)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+    AINSERT '&&S    SETC ''S''',BACK
+    AINSERT '&&T    SETC ''T''',BACK
+    AINSERT '&&R    SETC ''R''',BACK
+    AINSERT '&&A    SETA 1',BACK
+    AINSERT '&&B    SETA 2',BACK
+    AINSERT '&&(&&S&&T&&R&&A&&B)    SETC ''&&SYSSTMT''',BACK
+
+    AINSERT '&&C1   SETC ''&SYSLIST(N'&SYSLIST)''',BACK
+    AINSERT '&&C2   SETC ''C''''''.''&SYSLIST(N'&SYSLIST)''(1,1).''''''x
+               ''',BACK
+    MEND
+    
+    MAC 1,2,3,4,5
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STR12"), "00000032");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "5");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "C'5'");
+}
+
+TEST(ainsert, grammar_verification_02)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+    AINSERT '       MACRO',BACK
+    AINSERT '       MAC_GEN',BACK
+
+    AINSERT '       GBLC &&C1,&&C2,&&C3',BACK
+
+    AINSERT '&&C1   SETC ''&&SYSLIST(N''&&SYSLIST)''',BACK
+    AINSERT '&&C2   SETC ''C''''''.''&&SYSLIST(N''&&SYSLIST)''(1,1).'''x
+               '''''',BACK
+
+    AINSERT '       MEND',BACK
+    MEND
+    
+    MAC 1,2,3,4,5
+    
+    GBLC &C1,&C2,&C3
+    MAC_GEN 6,7,8,9
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "9");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "C'9'");
+}
