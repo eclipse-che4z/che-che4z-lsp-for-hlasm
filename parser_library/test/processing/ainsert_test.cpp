@@ -170,21 +170,22 @@ TEST(ainsert, postponed_variable_evaluation)
 {
     std::string input = R"(
     MACRO
-    MAC_AIN
+    MAC
     AINSERT '       MACRO',BACK
-    AINSERT '       MAC',BACK
+    AINSERT '       MAC_GEN',BACK
     AINSERT '       GBLA &&A',BACK
-    AINSERT '       GBLC &&C1',BACK
+    AINSERT '       GBLC &&C1,&&C2',BACK
     AINSERT '&&A    SETA   &&SYSSTMT',BACK
     AINSERT '&&C1   SETC ''&&SYSSTMT''',BACK
+    AINSERT '&&C2   SETC ''&&SYSLIST(N''&&SYSLIST)''',BACK
     AINSERT '       MEND',BACK
-    AINSERT '&&C2   SETC ''&&SYSSTMT''',BACK
+    AINSERT '&&C3   SETC ''&&SYSSTMT''',BACK
     MEND
     
     GBLA &A
-    GBLC &C1
-    MAC_AIN
-    MAC
+    GBLC &C1,&C2
+    MAC 1,2,3,4,5
+    MAC_GEN 6,7,8,9
     END
 )";
 
@@ -193,30 +194,32 @@ TEST(ainsert, postponed_variable_evaluation)
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 37);
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "00000038");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "00000034");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 40);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "00000041");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "9");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C3"), "00000037");
 }
 
 TEST(ainsert, immediate_variable_evaluation)
 {
     std::string input = R"(
     MACRO
-    MAC_AIN
+    MAC
     AINSERT '       MACRO',BACK
-    AINSERT '       MAC',BACK
+    AINSERT '       MAC_GEN',BACK
     AINSERT '       GBLA &&A',BACK
-    AINSERT '       GBLC &&C1',BACK
+    AINSERT '       GBLC &&C1,&&C2',BACK
     AINSERT '&&A    SETA   &SYSSTMT',BACK
     AINSERT '&&C1   SETC ''&SYSSTMT''',BACK
+    AINSERT '&&C2   SETC ''&SYSLIST(N'&SYSLIST)''',BACK
     AINSERT '       MEND',BACK
-    AINSERT '&&C2   SETC ''&SYSSTMT''',BACK
+    AINSERT '&&C3   SETC ''&SYSSTMT''',BACK
     MEND
 
     GBLA &A
-    GBLC &C1
-    MAC_AIN
-    MAC
+    GBLC &C1,&C2
+    MAC 1,2,3,4,5
+    MAC_GEN 6,7,8,9
     END
 )";
 
@@ -225,12 +228,13 @@ TEST(ainsert, immediate_variable_evaluation)
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 21);
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "00000022");
-    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "00000024");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 22);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "00000023");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "5");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C3"), "00000026");
 }
 
-TEST(ainsert, grammar_verification_01)
+TEST(ainsert, grammar_valid_01)
 {
     std::string input = R"(
     MACRO
@@ -260,7 +264,7 @@ TEST(ainsert, grammar_verification_01)
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "C'5'");
 }
 
-TEST(ainsert, grammar_verification_02)
+TEST(ainsert, grammar_valid_02)
 {
     std::string input = R"(
     MACRO
@@ -290,4 +294,163 @@ TEST(ainsert, grammar_verification_02)
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "9");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "C'9'");
+}
+
+TEST(ainsert, grammar_unknown_label)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+
+    AINSERT '       MACRO',BACK
+    AINSERT '       MAC_GEN',BACK
+    AINSERT 'C1     SETC ''&SYSLIST(N''&SYSLIST)''',BACK
+    AINSERT '&&&&C2 SETC ''&SYSLIST(N''&SYSLIST)''',BACK
+    AINSERT '       MEND',BACK
+
+    AINSERT 'C3     SETC ''&&SYSLIST(N''&&SYSLIST)''',BACK
+    AINSERT '&&&&C4 SETC ''&&SYSLIST(N''&&SYSLIST)''',BACK
+
+    MEND
+    
+    MAC 1,2,3,4,5
+    MAC_GEN 6,7,8,9
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)8);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E010", "E076", "E010", "E076", "E010", "E076", "E010", "E076" }));
+}
+
+TEST(ainsert, grammar_unknown_variable)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+
+    AINSERT '&&C1   SETC ''&&SYSLIST(N''SYSLIST)''',BACK
+
+    MEND
+    
+    MAC 1,2,3,4,5
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_TRUE(matches_message_codes(a.diags(),
+        {
+            "E010",
+            "E066",
+        }));
+}
+
+TEST(ainsert, grammar_invalid_string)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+
+    AINSERT '       MACRO',BACK
+    AINSERT '       MAC_GEN',BACK
+    AINSERT '&&C1   SETC ''SYSLIST(N''&SYSLIST)''',BACK
+    AINSERT '&&C2   SETC ''&SYSLIST(N''SYSLIST)''',BACK
+    AINSERT '       MEND',BACK
+
+    AINSERT '&&C3   SETC ''SYSLIST(N''&&SYSLIST)''',BACK
+    AINSERT '&&C4   SETC ''SYSLIST(N''SYSLIST)''',BACK
+
+    MEND
+    
+    MAC 1,2,3,4,5
+    MAC_GEN 6,7,8,9
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)6);
+    EXPECT_TRUE(matches_message_codes(a.diags(),
+        {
+            "E022",
+            "E076",
+            "E022",
+            "E076",
+            "E022",
+            "E022",
+        }));
+}
+
+TEST(ainsert, grammar_non_matching_apostrophes_by_two)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+
+    AINSERT '       MACRO',BACK
+    AINSERT '       MAC_GEN',BACK
+    AINSERT '&&C1   SETC ''C''''''.''&&SYSLIST(N''&&SYSLIST)''(1,1).'''x
+               '''''''',BACK
+    AINSERT '       MEND',BACK
+
+    AINSERT '&&C2   SETC ''C''''''.''&SYSLIST(N''&SYSLIST)''(1,1).'''''x
+               '''''',BACK
+    
+    MEND
+    
+    MAC 1,2,3,4,5
+    MAC_GEN 6,7,8,9
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)4);
+    EXPECT_TRUE(matches_message_codes(a.diags(),
+        {
+            "E022",
+            "E022",
+            "E076",
+            "E076",
+        }));
+}
+
+TEST(ainsert, grammar_non_matching_apostrophes_by_one)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+
+    AINSERT '       MACRO',BACK
+    AINSERT '       MAC_GEN',BACK
+    AINSERT '&&C1   SETC '''C''''''.''&&SYSLIST(N''&&SYSLIST)''(1,1).''x
+               ''''''''',BACK
+    AINSERT '       MEND',BACK
+
+    AINSERT '&&C2   SETC '''C''''''.''&SYSLIST(N''&SYSLIST)''(1,1).''''x
+               ''''''',BACK
+
+    MEND
+    
+    MAC 1,2,3,4,5
+    MAC_GEN 6,7,8,9
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)7);
+    EXPECT_TRUE(matches_message_codes(a.diags(),
+        {
+            "S0003",
+            "S0003",
+            "A011",
+            "E076",
+            "E076",
+            "S0003",
+            "A011",
+        }));
 }
