@@ -313,8 +313,7 @@ struct extract_nominal_value_visitor
         auto deps = e->get_dependencies(info);
         bool ignored = deps.has_error || deps.contains_dependencies(); // ignore values with dependencies
         auto ev = e->evaluate(info, diags);
-        auto kind = ev.value_kind();
-        switch (kind)
+        switch (ev.value_kind())
         {
             case context::symbol_value_kind::UNDEF:
                 return checking::data_def_expr { 0, checking::expr_type::ABS, e->get_range(), true };
