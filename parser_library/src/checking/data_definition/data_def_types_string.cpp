@@ -110,6 +110,8 @@ uint64_t data_def_type_B::get_nominal_length(const reduced_nominal_value_t& op) 
 {
     if (!op.present)
         return 1;
+    else if (!std::holds_alternative<std::string>(op.value))
+        return 0;
     else
         return get_X_B_length(std::get<std::string>(op.value), 8);
 }
@@ -145,6 +147,8 @@ uint64_t data_def_type_CA_CE::get_nominal_length(const reduced_nominal_value_t& 
 {
     if (!op.present)
         return 1;
+    else if (!std::holds_alternative<std::string>(op.value))
+        return 0;
     else
         return std::get<std::string>(op.value).size();
 }
@@ -183,6 +187,8 @@ uint64_t data_def_type_CU::get_nominal_length(const reduced_nominal_value_t& op)
 {
     if (!op.present)
         return 2;
+    else if (!std::holds_alternative<std::string>(op.value))
+        return 0;
     else
         return 2 * (uint64_t)std::get<std::string>(op.value).size();
 }
@@ -240,6 +246,8 @@ uint64_t data_def_type_G::get_nominal_length(const reduced_nominal_value_t& op) 
 {
     if (!op.present)
         return 2;
+    else if (!std::holds_alternative<std::string>(op.value))
+        return 0;
     else
     {
         const std::string& s = std::get<std::string>(op.value);
@@ -297,6 +305,8 @@ uint64_t data_def_type_X::get_nominal_length(const reduced_nominal_value_t& op) 
 {
     if (!op.present)
         return 1;
+    else if (!std::holds_alternative<std::string>(op.value))
+        return 0;
     else
         return get_X_B_length(std::get<std::string>(op.value), 2);
 }

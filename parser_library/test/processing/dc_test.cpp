@@ -288,3 +288,17 @@ T   EQU   *
 
     EXPECT_EQ(t->offset(), 0x1000);
 }
+
+TEST(DC, tolerate_incorrect_nominal_value)
+{
+    std::string input = R"(
+    DC C(0)
+    DC A'0'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D018", "D017" }));
+}
