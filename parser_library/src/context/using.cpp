@@ -458,7 +458,7 @@ R clamp(T value)
     if (value < std::numeric_limits<R>::min())
         return std::numeric_limits<R>::min();
     else if (value > std::numeric_limits<R>::max())
-        return std::numeric_limits<R>::min();
+        return std::numeric_limits<R>::max();
 
     return (R)value;
 }
