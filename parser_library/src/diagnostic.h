@@ -454,6 +454,7 @@ struct diagnostic_op
     static diagnostic_op error_D030(const range& range, std::string_view type);
     static diagnostic_op error_D031(const range& range);
     static diagnostic_op warn_D032(const range& range, std::string_view modifier);
+    static diagnostic_op error_D033(const range& range);
 
     static diagnostic_op error_M102(std::string_view instr_name, const range& range);
 
@@ -619,6 +620,22 @@ struct diagnostic_op
     static diagnostic_op error_ME002(const range& range);
 
     static diagnostic_op error_ME003(const range& range);
+
+    static diagnostic_op error_ME004(const range& range);
+
+    static diagnostic_op error_ME005(std::string_view label, std::string_view sect, const range& range);
+
+    static diagnostic_op error_ME006(const range& range);
+
+    static diagnostic_op error_ME007(const range& range);
+
+    static diagnostic_op error_ME008(long, const range& range);
+
+    static diagnostic_op error_ME009(const range& range);
+
+    static diagnostic_op error_ME010(const range& range);
+
+    static diagnostic_op error_ME011(const range& range);
 
     static diagnostic_op error_CE001(const range& range);
 

@@ -89,7 +89,7 @@ protected:
 
     bool check_typecheck_operands(const std::vector<std::unique_ptr<asm_operand>>& input,
         std::string_view instr_name,
-        const std::string op_name,
+        std::string_view op_name,
         const diagnostic_collector& add_diagnostic) const;
 
     // process instruction functions

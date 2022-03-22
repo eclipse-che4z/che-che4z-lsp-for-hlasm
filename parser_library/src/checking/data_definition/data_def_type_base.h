@@ -32,7 +32,7 @@ class data_definition_operand;
 enum class data_instr_type
 {
     DC,
-    DS
+    DS,
 };
 
 // Modifier spec specifies allowed values for modifiers.

@@ -112,14 +112,13 @@ struct space
 
     // previous address values
     // for LOCTR_UNKNOWN space kind
-    address previous_loctr_value;
     size_t previous_boundary = 0;
     int previous_offset = 0;
 
     location_counter& owner;
 
     space(location_counter& owner, alignment align, space_kind kind);
-    space(location_counter& owner, alignment align, address previous_loctr_value, size_t boundary, int offset);
+    space(location_counter& owner, alignment align, size_t boundary, int offset);
 
     space(const space&) = delete;
 

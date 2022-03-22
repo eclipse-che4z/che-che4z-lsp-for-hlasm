@@ -296,25 +296,25 @@ LABEL DS    0H
     ASSERT_TRUE(a.diags().empty());
 }
 
-// TODO: should work after operand checking with USING is implemented
-// TEST(mach_instr_processing, relimm_qualified_bad)
-// {
-//     std::string input = R"(
-//       J     Q.LABEL
-// LABEL DS    0H
-// )";
-//
-//     analyzer a(input);
-//     a.analyze();
-//     a.collect_diags();
-//
-//     ASSERT_FALSE(a.diags().empty());
-// }
+TEST(mach_instr_processing, relimm_qualified_bad)
+{
+    std::string input = R"(
+      J     Q.LABEL
+LABEL DS    0H
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005" }));
+}
 
 TEST(mach_instr_processing, literals_with_index_register)
 {
     std::string input(R"(
-    L   0,=A(0)(1)
+    USING *,10
+    L     0,=A(0)(1)
 )");
 
     analyzer a(input);

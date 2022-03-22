@@ -1720,6 +1720,14 @@ diagnostic_op diagnostic_op::warn_D032(const range& range, std::string_view oper
         range);
 }
 
+diagnostic_op diagnostic_op::error_D033(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "D033",
+        "Address in form D(B) or a simple relocatable expression resolvable by USING expected.",
+        range);
+}
+
 
 diagnostic_op diagnostic_op::error_M135(std::string_view instr_name, long long from, long long to, const range& range)
 {
@@ -2150,6 +2158,56 @@ diagnostic_op diagnostic_op::error_ME003(const range& range)
 {
     return diagnostic_op(
         diagnostic_severity::error, "ME003", "Relative Immediate operand must evaluate into an even offset.", range);
+}
+
+diagnostic_op diagnostic_op::error_ME004(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "ME004", "Absolute expression cannot be qualified with a label.", range);
+}
+
+diagnostic_op diagnostic_op::error_ME005(std::string_view label, std::string_view sect, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "ME005",
+        concat("Labeled USING '", label, "' does not map section '", sect, "'."),
+        range);
+}
+
+diagnostic_op diagnostic_op::error_ME006(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "ME006", "Complex relocatable expression cannot be qualified with a label.", range);
+}
+
+diagnostic_op diagnostic_op::error_ME007(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "ME007", "No active USING.", range);
+}
+
+diagnostic_op diagnostic_op::error_ME008(long missed_by, const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "ME008", concat("Beyond active USING range by ", missed_by, "."), range);
+}
+
+diagnostic_op diagnostic_op::error_ME009(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "ME009", "A simple relocatable expression resolvable by USING expected.", range);
+}
+
+diagnostic_op diagnostic_op::error_ME010(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "ME010", "Expression must evaluate to an absolute value.", range);
+}
+
+diagnostic_op diagnostic_op::error_ME011(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "ME011",
+        "Cannot combine relocatable displacement with an explicit base register.",
+        range);
 }
 
 diagnostic_op diagnostic_op::error_CE001(const range& range)

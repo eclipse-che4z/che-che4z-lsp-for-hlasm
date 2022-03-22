@@ -100,14 +100,10 @@ dependency_collector address_nominal::get_dependencies(dependency_solver& solver
     return conjunction;
 }
 
-address_nominal::address_nominal()
-    : displacement()
-    , base()
-{}
-
-address_nominal::address_nominal(mach_expr_ptr displacement, mach_expr_ptr base)
+address_nominal::address_nominal(mach_expr_ptr displacement, mach_expr_ptr base, range r)
     : displacement(std::move(displacement))
     , base(std::move(base))
+    , total(r)
 {}
 
 size_t address_nominal::hash() const

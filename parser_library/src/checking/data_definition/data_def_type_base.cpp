@@ -14,6 +14,8 @@
 
 #include "data_def_type_base.h"
 
+#include <optional>
+
 #include "checking/instr_operand.h"
 #include "data_def_types.h"
 
@@ -258,6 +260,28 @@ bool data_def_type::check_length(const data_def_length_t& length, const diagnost
     }
 }
 
+namespace {
+struct
+{
+    std::optional<range> operator()(const data_def_expr& e) const
+    {
+        if (e.ignored)
+            return std::nullopt;
+        if (e.ex_kind != expr_type::ABS)
+            return e.rng;
+        return std::nullopt;
+    }
+    std::optional<range> operator()(const data_def_address& a) const
+    {
+        if (a.ignored)
+            return std::nullopt;
+        if (!a.displacement.present || !a.base.present)
+            return a.total;
+        return std::nullopt;
+    }
+} const abs_or_addr;
+} // namespace
+
 bool data_def_type::check_nominal_type(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const
 {
@@ -294,6 +318,17 @@ bool data_def_type::check_nominal_type(
                 add_diagnostic(diagnostic_op::error_D017(op.operand_range, type_str));
                 return false;
             }
+            for (const auto& p : std::get<nominal_value_expressions>(op.nominal_value.value))
+            {
+                if (auto range_o = std::visit(abs_or_addr, p); range_o)
+                {
+                    add_diagnostic(diagnostic_op::error_D033(*range_o));
+                    ret = false;
+                }
+            }
+            if (!ret)
+                return false;
+
             break;
         default:
             assert(false);

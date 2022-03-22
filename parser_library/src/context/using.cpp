@@ -172,7 +172,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     if (v.mapping_regs == invalid_register_set)
     {
         diag.add_diagnostic(diagnostic_op::error_U004_no_active_using(rng));
-        return {};
+        return failed_entry_resolved { m_parent };
     }
 
     return using_entry_resolved(
@@ -188,7 +188,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     if (!b.has_value())
     {
         diag.add_diagnostic(diagnostic_op::error_M113(USING, b_rng));
-        return {};
+        return failed_entry_resolved { m_parent };
     }
     if (b->qualifier)
     {
@@ -330,9 +330,11 @@ id_index identify_label(const ordinary_assembly_context& ord_context, const expr
 
 void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag)
 {
-    for (auto& expr : m_expr_values)
-    {
-        if (!(expr.label = identify_label(ord_context, expr.expression.get())))
+    assert(!m_resolved);
+
+    const auto evaluate_expression = [&ord_context, &diag, this](expression_value& expr) {
+        expr.label = identify_label(ord_context, expr.expression.get());
+        if (!expr.label)
         {
             const auto& expr_context = get(expr.context);
             ordinary_assembly_dependency_solver solver(ord_context, expr_context.evaluation_ctx);
@@ -342,16 +344,24 @@ void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagn
 
             expr.value = expr.expression->evaluate(solver, diag_collector);
         }
-    }
+    };
 
+    size_t expr_id = 0;
     for (auto& u : m_usings)
     {
+        assert(u.expression_used_limit);
+
+        for (; expr_id != u.expression_used_limit.value(); ++expr_id)
+            evaluate_expression(m_expr_values[expr_id]);
+
         diagnostic_consumer_transform t([this, &diag, &u](diagnostic_op d) {
             diag.add_diagnostic(add_stack_details(std::move(d), get(u.instruction_ctx).stack));
         });
         u.resolve(*this, t);
         u.compute_context(*this, t);
     }
+
+    m_resolved = true;
 }
 
 index_t<using_collection::instruction_context> using_collection::add(
@@ -391,7 +401,7 @@ index_t<using_collection> using_collection::add(index_t<using_collection> curren
         return add(std::move(a), ctx_id);
     });
 
-    m_usings.emplace_back(current, ctx_id, b, base, label, e);
+    m_usings.emplace_back(current, index_t<mach_expression>(m_expr_values.size()), ctx_id, b, base, label, e);
     return index_t<using_collection>(m_usings.size() - 1);
 }
 
@@ -400,6 +410,7 @@ index_t<using_collection> using_collection::remove(index_t<using_collection> cur
     dependency_evaluation_context eval_ctx,
     processing_stack_t stack)
 {
+    assert(!args.empty());
     index_t<instruction_context> ctx_id = add(std::move(eval_ctx), std::move(stack));
 
     std::vector<index_t<mach_expression>> base;
@@ -408,7 +419,7 @@ index_t<using_collection> using_collection::remove(index_t<using_collection> cur
     std::transform(args.begin(), args.end(), std::back_inserter(base), [this, ctx_id](auto& a) {
         return add(std::move(a), ctx_id);
     });
-    m_usings.emplace_back(current, ctx_id, std::move(base));
+    m_usings.emplace_back(current, index_t<mach_expression>(m_expr_values.size()), ctx_id, std::move(base));
 
     return index_t<using_collection>(m_usings.size() - 1);
 }
@@ -427,13 +438,27 @@ using_collection::evaluate_result using_collection::evaluate(
         return evaluate_result { tmp.mapping_regs[0], tmp.reg_offset };
 }
 
+bool hlasm_plugin::parser_library::context::using_collection::is_label_mapping_section(
+    index_t<using_collection> context_id, id_index label, const section* owner) const
+{
+    assert(m_resolved);
+
+    if (!context_id)
+        return false;
+
+    const auto& state = get(context_id).context.m_state;
+
+    return std::any_of(
+        state.begin(), state.end(), [label, owner](const auto& s) { return s.label == label && s.owner == owner; });
+}
+
 template</* std::integral */ typename R, /* std::integral */ typename T>
 R clamp(T value)
 {
     if (value < std::numeric_limits<R>::min())
         return std::numeric_limits<R>::min();
     else if (value > std::numeric_limits<R>::max())
-        return std::numeric_limits<R>::min();
+        return std::numeric_limits<R>::max();
 
     return (R)value;
 }
@@ -445,13 +470,23 @@ auto using_collection::using_context::evaluate(id_index label,
     int32_t max_disp,
     bool ignore_length) const -> context_evaluate_result
 {
-    struct result_candidate
+    struct result_candidate_entry
     {
         const entry* result_entry = nullptr;
         ptrdiff_t result_reg = 0;
         long long min_dist_abs = std::numeric_limits<long long>::max();
         long long min_dist = 0;
         int min_dist_reg = -1;
+
+        bool is_better_candidate(long long new_abs_dist, register_t new_reg) const
+        {
+            return new_abs_dist < min_dist_abs || new_abs_dist == min_dist_abs && new_reg > min_dist_reg;
+        }
+    };
+    struct result_candidate
+    {
+        result_candidate_entry valid;
+        result_candidate_entry invalid;
     };
     result_candidate positive;
     result_candidate negative;
@@ -479,6 +514,7 @@ auto using_collection::using_context::evaluate(id_index label,
         if (label != s.label || owner != s.owner)
             continue;
         auto next_dist = (offset - s.offset) + s.reg_offset;
+        const bool fits_limit = next_dist < s.length;
         for (const auto& reg : s.regs)
         {
             const auto dist = next_dist;
@@ -489,27 +525,43 @@ auto using_collection::using_context::evaluate(id_index label,
 
             result_candidate& target = dist >= 0 ? positive : negative;
             auto abs_dist = std::abs(dist);
-            if (abs_dist < target.min_dist_abs || abs_dist == target.min_dist_abs && reg > target.min_dist_reg)
+            if (auto& t = target.invalid; t.is_better_candidate(abs_dist, reg))
             {
-                target.min_dist_abs = abs_dist;
-                target.min_dist_reg = reg;
-                target.result_reg = &reg - s.regs.data();
-                target.result_entry = &s;
-                target.min_dist = dist;
+                t.min_dist_abs = abs_dist;
+                t.min_dist_reg = reg;
+                t.result_reg = &reg - s.regs.data();
+                t.result_entry = &s;
+                t.min_dist = dist;
+            }
+            if (auto& t = target.valid; t.is_better_candidate(abs_dist, reg) && dist >= min_disp && dist <= max_disp
+                && (ignore_length || fits_limit))
+            {
+                t.min_dist_abs = abs_dist;
+                t.min_dist_reg = reg;
+                t.result_reg = &reg - s.regs.data();
+                t.result_entry = &s;
+                t.min_dist = dist;
             }
         }
     }
 
-    const auto& r = [min_disp, max_disp](const auto& p, const auto& n) {
-        if (p.result_entry && p.min_dist >= min_disp && p.min_dist <= max_disp)
-            return p;
-        if (n.result_entry && n.min_dist >= min_disp && n.min_dist <= max_disp)
-            return n;
+    const auto& r = [](const auto& p, const auto& n) {
+        if (p.valid.result_entry)
+            return p.valid;
+        if (n.valid.result_entry)
+            return n.valid;
 
-        if (p.min_dist_abs <= n.min_dist_abs)
-            return p;
+        if (p.invalid.result_entry && n.invalid.result_entry)
+        {
+            if (p.invalid.min_dist_abs <= n.invalid.min_dist_abs)
+                return p.invalid;
+            else
+                return n.invalid;
+        }
+        else if (p.invalid.result_entry)
+            return p.invalid;
         else
-            return n;
+            return n.invalid;
     }(positive, negative);
 
     if (!r.result_entry)

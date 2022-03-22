@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_TAGGED_INDEX_H
 #define HLASMPLUGIN_PARSERLIBRARY_TAGGED_INDEX_H
 
+#include <cassert>
 #include <cstddef>
 
 namespace hlasm_plugin::parser_library {

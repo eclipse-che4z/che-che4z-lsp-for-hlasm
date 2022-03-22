@@ -91,7 +91,7 @@ private:
     context::id_index create_space_name(char type);
 
     space_ptr register_space(alignment align, space_kind kind);
-    space_ptr register_space(alignment align, address addr, size_t boundary, int offset);
+    space_ptr register_space(alignment align, size_t boundary, int offset);
 
     bool has_alignment(alignment align) const;
 

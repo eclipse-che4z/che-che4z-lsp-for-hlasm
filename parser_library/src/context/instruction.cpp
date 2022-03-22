@@ -248,7 +248,7 @@ const ca_instruction& instruction::get_ca_instructions(std::string_view name)
 std::span<const ca_instruction> instruction::all_ca_instructions() { return ca_instructions; }
 
 constexpr assembler_instruction assembler_instructions[] = {
-    { "*PROCESS", 1, -1, true, "" }, // TO DO
+    { "*PROCESS", 1, -1, false, "" }, // TO DO
     { "ACONTROL", 1, -1, false, "<selection>+" },
     { "ADATA", 5, 5, false, "value1,value2,value3,value4,character_string" },
     { "AINSERT", 2, 2, false, "'record',BACK|FRONT" },
@@ -454,7 +454,6 @@ constexpr auto SI_2_s = instruction_format_definition_factory<mach_format::SI, d
 constexpr auto SI_2_u = instruction_format_definition_factory<mach_format::SI, db_12_4_U, imm_8_U>::def();
 constexpr auto SIL_2_s = instruction_format_definition_factory<mach_format::SIL, db_12_4_U, imm_16_S>::def();
 constexpr auto SIL_2_u = instruction_format_definition_factory<mach_format::SIL, db_12_4_U, imm_16_U>::def();
-constexpr auto SIY_2_uu = instruction_format_definition_factory<mach_format::SIY, db_12_4_U, imm_8_U>::def();
 constexpr auto SIY_2_ss = instruction_format_definition_factory<mach_format::SIY, db_20_4_S, imm_8_S>::def();
 constexpr auto SIY_2_su = instruction_format_definition_factory<mach_format::SIY, db_20_4_S, imm_8_U>::def();
 constexpr auto SMI_3 = instruction_format_definition_factory<mach_format::SMI, mask_4_U, rel_addr_imm_16_S, db_12_4_U>::def();
@@ -754,7 +753,7 @@ constexpr machine_instruction machine_instructions[] = {
     { "CLIB", RIS_4, 638 },
     { "CLIH", RIL_a_2, 642 },
     { "CLIJ", RIE_c_4, 638 },
-    { "CLIY", SIY_2_uu, 636 },
+    { "CLIY", SIY_2_su, 636 },
     { "CLM", RS_b_3, 641 },
     { "CLMH", RSY_b_3_us, 641 },
     { "CLMY", RSY_b_3_us, 641 },
@@ -1226,7 +1225,7 @@ constexpr machine_instruction machine_instructions[] = {
     { "MVHHI", SIL_2_s, 773 },
     { "MVHI", SIL_2_s, 773 },
     { "MVI", SI_2_u, 773 },
-    { "MVIY", SIY_2_uu, 773 },
+    { "MVIY", SIY_2_su, 773 },
     { "MVN", SS_a_2_u, 785 },
     { "MVO", SS_b_2, 786 },
     { "MVPG", RRE_2, 1044 },

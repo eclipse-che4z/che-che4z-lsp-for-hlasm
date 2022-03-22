@@ -5,6 +5,7 @@
 #### Added
 - USING and DROP support
 - SYSSTMT support
+- Instruction operand checking utilizes USING map
 
 #### Fixed
 - Behavior of currently supported subscripted system variables corrected

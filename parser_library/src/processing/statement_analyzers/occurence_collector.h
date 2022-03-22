@@ -60,6 +60,7 @@ public:
 private:
     void visit(const expressions::mach_expr_constant& expr) override;
     void visit(const expressions::mach_expr_data_attr& expr) override;
+    void visit(const expressions::mach_expr_data_attr_literal& expr) override;
     void visit(const expressions::mach_expr_symbol& expr) override;
     void visit(const expressions::mach_expr_location_counter& expr) override;
     void visit(const expressions::mach_expr_default& expr) override;

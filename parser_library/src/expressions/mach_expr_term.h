@@ -79,21 +79,40 @@ class mach_expr_data_attr final : public mach_expression
 {
     bool do_is_similar(const mach_expression& expr) const override;
 
-    struct private_t
-    {};
-
 public:
     mach_expr_data_attr(context::id_index value,
+        context::id_index qualifier,
         context::data_attr_kind attribute,
         range whole_rng,
-        range symbol_rng,
-        std::unique_ptr<mach_expr_literal> lit,
-        private_t);
-    mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range whole_rng, range symbol_rng);
-    mach_expr_data_attr(
-        std::unique_ptr<mach_expr_literal> value, context::data_attr_kind attribute, range whole_rng, range symbol_rng);
+        range symbol_rng);
 
     context::id_index value;
+    context::id_index qualifier;
+    context::data_attr_kind attribute;
+    range symbol_range;
+
+    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+
+    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
+
+    const mach_expression* leftmost_term() const override;
+
+    void apply(mach_expr_visitor& visitor) const override;
+
+    size_t hash() const override;
+
+    mach_expr_ptr clone() const override;
+};
+
+// Represents an attribute of a symbol written in machine expressions (e.g. L'SYMBOL)
+class mach_expr_data_attr_literal final : public mach_expression
+{
+    bool do_is_similar(const mach_expression& expr) const override;
+
+public:
+    mach_expr_data_attr_literal(
+        std::unique_ptr<mach_expr_literal> value, context::data_attr_kind attribute, range whole_rng, range symbol_rng);
+
     context::data_attr_kind attribute;
     range symbol_range;
     std::unique_ptr<mach_expr_literal> lit;

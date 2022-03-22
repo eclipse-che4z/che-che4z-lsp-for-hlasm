@@ -27,16 +27,30 @@
 #include "dependant.h"
 #include "loctr_dependency_resolver.h"
 #include "postponed_statement.h"
+#include "tagged_index.h"
 
 namespace hlasm_plugin::parser_library::context {
 
 class ordinary_assembly_context;
+class using_collection;
 
 struct dependency_evaluation_context
 {
     std::optional<address> loctr_address;
     size_t literal_pool_generation = 0;
     size_t unique_id = 0;
+    index_t<using_collection> active_using;
+
+    dependency_evaluation_context() = default;
+    dependency_evaluation_context(std::optional<address> loctr_address,
+        size_t literal_pool_generation,
+        size_t unique_id,
+        index_t<using_collection> active_using)
+        : loctr_address(std::move(loctr_address))
+        , literal_pool_generation(literal_pool_generation)
+        , unique_id(unique_id)
+        , active_using(active_using)
+    {}
 };
 
 // helper structure to count dependencies of a statement

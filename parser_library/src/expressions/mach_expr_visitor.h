@@ -26,6 +26,7 @@ class mach_expr_visitor
 public:
     virtual void visit(const mach_expr_constant& expr) = 0;
     virtual void visit(const mach_expr_data_attr& expr) = 0;
+    virtual void visit(const mach_expr_data_attr_literal& expr) = 0;
     virtual void visit(const mach_expr_symbol& expr) = 0;
     virtual void visit(const mach_expr_location_counter& expr) = 0;
     virtual void visit(const mach_expr_default& expr) = 0;

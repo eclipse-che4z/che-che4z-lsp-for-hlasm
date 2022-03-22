@@ -170,7 +170,7 @@ A LR 1,1
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "A")->kind() == symbol_value_kind::RELOC);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M110" }));
 }
 
 TEST(ordinary_symbols, relocatable_address_multiplication)

@@ -138,3 +138,15 @@ TEST(special_lines, process_after_limit_and_ictl)
 
     ASSERT_EQ(diags.size(), 0);
 }
+
+TEST(special_lines, single_op)
+{
+    std::string input("*PROCESS RENT");
+    analyzer a(input, analyzer_options { file_is_opencode::yes });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+
+    EXPECT_TRUE(diags.empty());
+}
