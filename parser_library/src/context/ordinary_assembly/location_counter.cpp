@@ -92,7 +92,7 @@ space_ptr location_counter::set_value(const address& addr, size_t boundary, int 
     {
         // when address has undefined absolute part, register space
         org_data_.emplace_back();
-        return register_space(context::no_align, std::move(curr_addr), boundary, offset);
+        return register_space(context::no_align, boundary, offset);
     }
 
     if (curr_addr.spaces() != addr.spaces() || curr_data().storage - addr.offset() > curr_data().current_safe_area
@@ -152,6 +152,8 @@ std::pair<space_ptr, std::vector<address>> location_counter::set_available_value
             if (addr.spaces().front().first->kind == space_kind::LOCTR_BEGIN)
                 addr.spaces().erase(addr.spaces().begin());
             else if (addr.spaces().front().first->kind == space_kind::LOCTR_SET)
+                addr.spaces().emplace_back(loctr_start, -1);
+            else if (addr.spaces().front().first->kind == space_kind::LOCTR_UNKNOWN)
                 addr.spaces().emplace_back(loctr_start, -1);
         }
     }
@@ -330,9 +332,9 @@ space_ptr location_counter::register_space(alignment align, space_kind sp_kind)
     return curr_data().last_space();
 }
 
-space_ptr location_counter::register_space(alignment align, address addr, size_t boundary, int offset)
+space_ptr location_counter::register_space(alignment align, size_t boundary, int offset)
 {
-    curr_data().append_space(std::make_shared<space>(*this, align, std::move(addr), boundary, offset));
+    curr_data().append_space(std::make_shared<space>(*this, align, boundary, offset));
 
     curr_data().kind = loctr_data_kind::POTENTIAL_MAX;
 

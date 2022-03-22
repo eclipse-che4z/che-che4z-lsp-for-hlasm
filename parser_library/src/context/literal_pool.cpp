@@ -107,7 +107,7 @@ const semantics::instruction_si literal_pool::literal_postponed_statement::empty
 const processing::processing_format literal_pool::literal_postponed_statement::dc_format(
     processing::processing_kind::ORDINARY, processing::processing_form::ASM, processing::operand_occurence::PRESENT);
 
-void literal_pool::generate_pool(diagnosable_ctx& diags)
+void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using)
 {
     ordinary_assembly_context& ord_ctx = hlasm_ctx.ord_ctx;
 
@@ -125,8 +125,9 @@ void literal_pool::generate_pool(diagnosable_ctx& diags)
                 it->second.loctr,
                 it->first.generation,
                 it->first.unique_id,
+                active_using,
             });
-        auto bit_length = lit->evaluate_total_length(solver, diags);
+        auto bit_length = lit->evaluate_total_length(solver, checking::data_instr_type::DC, diags);
         if (bit_length < 0)
             continue;
         size = (bit_length + 7) / 8;
@@ -155,6 +156,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags)
                 lit_val.loctr,
                 lit_key.generation,
                 lit_key.unique_id,
+                active_using,
             });
 
         if (!lit->access_data_def_type()) // unknown type
@@ -179,22 +181,13 @@ void literal_pool::generate_pool(diagnosable_ctx& diags)
 
         if (!cycle_ok)
             diags.add_diagnostic(diagnostic_op::error_E033(it->second.r));
-        else if (lit->get_dependencies(solver).contains_dependencies())
+        else
         {
             auto adder = ord_ctx.symbol_dependencies.add_dependencies(
                 std::make_unique<literal_postponed_statement>(lit, lit_val, hlasm_ctx.ids()),
-                { lit_val.loctr, lit_key.generation, lit_key.unique_id });
+                { lit_val.loctr, lit_key.generation, lit_key.unique_id, active_using });
             adder.add_dependency();
             adder.finish();
-        }
-        else
-        {
-            auto ddt = lit->access_data_def_type();
-            if (!ddt) // unknown type
-                continue;
-
-            auto ddo = semantics::data_def_operand::get_operand_value(*lit, solver, diags);
-            ddt->check_DC(ddo, diagnostic_collector(&diags, lit_val.stack));
         }
     }
 

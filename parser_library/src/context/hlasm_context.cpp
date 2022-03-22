@@ -776,8 +776,8 @@ macro_def_ptr hlasm_context::add_macro(id_index name,
 void hlasm_context::add_macro(macro_def_ptr macro)
 {
     const auto& m = macros_[macro->id] = std::move(macro);
-    // associate mnemonic if previously deleted by OPSYN
-    if (auto m_op = opcode_mnemo_.find(m->id); m_op != opcode_mnemo_.end() && !m_op->second)
+    // override associate mnemonic if exists
+    if (auto m_op = opcode_mnemo_.find(m->id); m_op != opcode_mnemo_.end())
         m_op->second = opcode_t { m->id, m };
 };
 

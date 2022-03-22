@@ -115,9 +115,10 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
         return context::dependency_collector();
 }
 
-mach_expr_constant::value_t mach_expr_symbol::evaluate(context::dependency_solver& info, diagnostic_op_consumer&) const
+mach_expr_constant::value_t mach_expr_symbol::evaluate(
+    context::dependency_solver& solver, diagnostic_op_consumer& diags) const
 {
-    auto symbol = info.get_symbol(value);
+    auto symbol = solver.get_symbol(value);
 
     if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
         return context::symbol_value();
@@ -126,7 +127,7 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(context::dependency_solve
     {
         if (qualifier)
         {
-            // TODO: diagnose
+            diags.add_diagnostic(diagnostic_op::error_ME004(get_range()));
         }
         return symbol->value();
     }
@@ -136,10 +137,12 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(context::dependency_solve
             return symbol->value();
         auto reloc_value = symbol->value().get_reloc();
         if (reloc_value.is_simple())
+        {
             reloc_value.bases().front().first.qualifier = qualifier;
+        }
         else
         {
-            // TODO: diagnose
+            diags.add_diagnostic(diagnostic_op::error_ME006(get_range()));
         }
         return reloc_value;
     }
@@ -154,8 +157,7 @@ size_t mach_expr_symbol::hash() const
 {
     auto result = (size_t)0xdf510e8c145dd28d;
 
-    if (value)
-        result = hash_combine(result, (uintptr_t)value);
+    result = hash_combine(result, (uintptr_t)value);
     if (qualifier)
         result = hash_combine(result, (uintptr_t)qualifier);
     return result;
@@ -232,92 +234,52 @@ mach_expr_ptr mach_expr_default::clone() const { return std::make_unique<mach_ex
 bool mach_expr_data_attr::do_is_similar(const mach_expression& expr) const
 {
     const auto& e = static_cast<const mach_expr_data_attr&>(expr);
-    return value == e.value && attribute == e.attribute && utils::is_similar(lit, e.lit);
+    return value == e.value && qualifier == e.qualifier && attribute == e.attribute;
 }
 
-mach_expr_data_attr::mach_expr_data_attr(
-    context::id_index value, context::data_attr_kind attribute, range rng, range symbol_rng)
-    : mach_expr_data_attr(value, attribute, rng, symbol_rng, nullptr, private_t())
-{}
-
-mach_expr_data_attr::mach_expr_data_attr(
-    std::unique_ptr<mach_expr_literal> value, context::data_attr_kind attribute, range whole_rng, range symbol_rng)
-    : mach_expr_data_attr(nullptr, attribute, whole_rng, symbol_rng, std::move(value), private_t())
-{}
-
 mach_expr_data_attr::mach_expr_data_attr(context::id_index value,
+    context::id_index qualifier,
     context::data_attr_kind attribute,
-    range whole_rng,
-    range symbol_rng,
-    std::unique_ptr<mach_expr_literal> lit,
-    private_t)
-    : mach_expression(whole_rng)
+    range rng,
+    range symbol_rng)
+    : mach_expression(rng)
     , value(value)
+    , qualifier(qualifier)
     , attribute(attribute)
     , symbol_range(symbol_rng)
-    , lit(std::move(lit))
 {}
 
 context::dependency_collector mach_expr_data_attr::get_dependencies(context::dependency_solver& solver) const
 {
-    if (value)
-    {
-        auto symbol = solver.get_symbol(value);
+    auto symbol = solver.get_symbol(value);
 
-        if (symbol == nullptr || !symbol->attributes().is_defined(attribute))
-            return context::dependency_collector({ attribute, value });
-        else
-            return context::dependency_collector();
-    }
-    else if (lit)
-    {
-        return lit->get_data_definition().get_dependencies(solver);
-    }
-
-    return context::dependency_collector::error();
+    if (symbol == nullptr || !symbol->attributes().is_defined(attribute))
+        return context::dependency_collector({ attribute, value });
+    else
+        return context::dependency_collector();
 }
 
 mach_expression::value_t mach_expr_data_attr::evaluate(
     context::dependency_solver& solver, diagnostic_op_consumer& diags) const
 {
-    if (value)
-    {
-        auto symbol = solver.get_symbol(value);
+    auto symbol = solver.get_symbol(value);
 
-        if (symbol == nullptr)
-        {
-            return context::symbol_attributes::default_value(attribute);
-        }
-        else if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
-            && !symbol->attributes().can_have_SI_attr())
-        {
-            diags.add_diagnostic(diagnostic_op::warning_W011(get_range()));
-            return 0;
-        }
-        else if (symbol->attributes().is_defined(attribute))
-        {
-            return symbol->attributes().get_attribute_value(attribute);
-        }
-        else
-            return context::symbol_attributes::default_value(attribute);
-    }
-    else if (lit)
+    if (symbol == nullptr)
     {
-        auto& dd = lit->get_data_definition();
-        context::symbol_attributes attrs(context::symbol_origin::DAT,
-            ebcdic_encoding::a2e[(unsigned char)dd.get_type_attribute()],
-            dd.get_length_attribute(solver, diags),
-            dd.get_scale_attribute(solver, diags),
-            dd.get_integer_attribute(solver, diags));
-        if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
-            && !attrs.can_have_SI_attr())
-        {
-            diags.add_diagnostic(diagnostic_op::warning_W011(get_range()));
-            return 0;
-        }
-        return attrs.get_attribute_value(attribute);
+        return context::symbol_attributes::default_value(attribute);
     }
-    return context::symbol_attributes::default_value(attribute);
+    else if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
+        && !symbol->attributes().can_have_SI_attr())
+    {
+        diags.add_diagnostic(diagnostic_op::warning_W011(get_range()));
+        return 0;
+    }
+    else if (symbol->attributes().is_defined(attribute))
+    {
+        return symbol->attributes().get_attribute_value(attribute);
+    }
+    else
+        return context::symbol_attributes::default_value(attribute);
 }
 
 const mach_expression* mach_expr_data_attr::leftmost_term() const { return this; }
@@ -327,23 +289,76 @@ void mach_expr_data_attr::apply(mach_expr_visitor& visitor) const { visitor.visi
 size_t mach_expr_data_attr::hash() const
 {
     auto result = (size_t)0xa2957a462d908bd2;
-    if (value)
-        result = hash_combine(result, (uintptr_t)value);
+    result = hash_combine(result, (uintptr_t)value);
+    if (qualifier)
+        result = hash_combine(result, (uintptr_t)qualifier);
     result = hash_combine(result, (size_t)attribute);
-    if (lit)
-        result = hash_combine(result, lit->hash());
 
     return result;
 }
 
 mach_expr_ptr mach_expr_data_attr::clone() const
 {
-    return std::make_unique<mach_expr_data_attr>(value,
+    return std::make_unique<mach_expr_data_attr>(value, qualifier, attribute, get_range(), symbol_range);
+}
+
+bool mach_expr_data_attr_literal::do_is_similar(const mach_expression& expr) const
+{
+    const auto& e = static_cast<const mach_expr_data_attr_literal&>(expr);
+    return attribute == e.attribute && utils::is_similar(lit, e.lit);
+}
+
+mach_expr_data_attr_literal::mach_expr_data_attr_literal(
+    std::unique_ptr<mach_expr_literal> value, context::data_attr_kind attribute, range whole_rng, range symbol_rng)
+    : mach_expression(whole_rng)
+    , attribute(attribute)
+    , symbol_range(symbol_rng)
+    , lit(std::move(value))
+{}
+
+context::dependency_collector mach_expr_data_attr_literal::get_dependencies(context::dependency_solver& solver) const
+{
+    return lit->get_data_definition().get_dependencies(solver);
+}
+
+mach_expression::value_t mach_expr_data_attr_literal::evaluate(
+    context::dependency_solver& solver, diagnostic_op_consumer& diags) const
+{
+    auto& dd = lit->get_data_definition();
+    context::symbol_attributes attrs(context::symbol_origin::DAT,
+        ebcdic_encoding::a2e[(unsigned char)dd.get_type_attribute()],
+        dd.get_length_attribute(solver, diags),
+        dd.get_scale_attribute(solver, diags),
+        dd.get_integer_attribute(solver, diags));
+    if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
+        && !attrs.can_have_SI_attr())
+    {
+        diags.add_diagnostic(diagnostic_op::warning_W011(get_range()));
+        return 0;
+    }
+    return attrs.get_attribute_value(attribute);
+}
+
+const mach_expression* mach_expr_data_attr_literal::leftmost_term() const { return this; }
+
+void mach_expr_data_attr_literal::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
+
+size_t mach_expr_data_attr_literal::hash() const
+{
+    auto result = (size_t)0x7DD0367F88459860;
+    result = hash_combine(result, lit->hash());
+    result = hash_combine(result, (size_t)attribute);
+
+    return result;
+}
+
+mach_expr_ptr mach_expr_data_attr_literal::clone() const
+{
+    return std::make_unique<mach_expr_data_attr_literal>(
+        std::unique_ptr<mach_expr_literal>(static_cast<mach_expr_literal*>(lit->clone().release())),
         attribute,
         get_range(),
-        symbol_range,
-        std::unique_ptr<mach_expr_literal>(lit ? static_cast<mach_expr_literal*>(lit->clone().release()) : nullptr),
-        private_t());
+        symbol_range);
 }
 
 bool mach_expr_literal::do_is_similar(const mach_expression& expr) const

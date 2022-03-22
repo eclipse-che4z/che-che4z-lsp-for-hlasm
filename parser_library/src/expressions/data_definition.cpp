@@ -21,6 +21,7 @@
 
 #include "checking/data_definition/data_def_fields.h"
 #include "checking/data_definition/data_def_type_base.h"
+#include "context/using.h"
 #include "lexing/logical_line.h"
 #include "mach_expr_term.h"
 #include "mach_expr_visitor.h"
@@ -234,6 +235,8 @@ checking::data_def_field<int32_t> set_data_def_field(
 
         if (ret.value_kind() == context::symbol_value_kind::ABS)
             field.value = ret.get_abs();
+        else
+            field.present = false;
     }
     return field;
 }
@@ -266,60 +269,101 @@ checking::exponent_modifier_t data_definition::evaluate_exponent(
     return set_data_def_field(exponent.get(), info, diags);
 }
 
-inline checking::nominal_value_expressions extract_nominal_value_expressions(
-    const expr_or_address_list& exprs, context::dependency_solver& info, diagnostic_op_consumer& diags)
+enum class nominal_eval_subtype
 {
-    checking::nominal_value_expressions values;
-    for (const auto& e_or_a : exprs)
+    none,
+    S_type,
+    SY_type,
+};
+
+struct extract_nominal_value_visitor
+{
+    context::dependency_solver& info;
+    diagnostic_op_consumer& diags;
+    nominal_eval_subtype type;
+
+    checking::expr_or_address handle_simple_reloc_with_using_map(const context::address& addr, range r) const
     {
-        if (std::holds_alternative<expressions::mach_expr_ptr>(e_or_a))
+        checking::data_def_address ch_adr;
+        ch_adr.total = r;
+
+        const auto& base = addr.bases().front().first;
+        auto translated_addr =
+            info.using_evaluate(base.qualifier, base.owner, addr.offset(), type == nominal_eval_subtype::SY_type);
+
+        if (translated_addr.reg == context::using_collection::invalid_register)
         {
-            const expressions::mach_expr_ptr& e = std::get<expressions::mach_expr_ptr>(e_or_a);
-            auto deps = e->get_dependencies(info);
-            bool ignored = deps.has_error || deps.contains_dependencies(); // ignore values with dependencies
-            auto ev = e->evaluate(info, diags);
-            auto kind = ev.value_kind();
-            if (kind == context::symbol_value_kind::ABS)
-            {
-                values.push_back(checking::data_def_expr {
+            if (translated_addr.reg_offset)
+                diags.add_diagnostic(diagnostic_op::error_ME008(translated_addr.reg_offset, r));
+            else
+                diags.add_diagnostic(diagnostic_op::error_ME007(r));
+            ch_adr.ignored = true; // already diagnosed
+        }
+        else
+        {
+            ch_adr.displacement = translated_addr.reg_offset;
+            ch_adr.base = translated_addr.reg;
+        }
+
+        return ch_adr;
+    }
+
+    checking::expr_or_address operator()(const expressions::mach_expr_ptr& e) const
+    {
+        auto deps = e->get_dependencies(info);
+        bool ignored = deps.has_error || deps.contains_dependencies(); // ignore values with dependencies
+        auto ev = e->evaluate(info, diags);
+        switch (ev.value_kind())
+        {
+            case context::symbol_value_kind::UNDEF:
+                return checking::data_def_expr { 0, checking::expr_type::ABS, e->get_range(), true };
+
+            case context::symbol_value_kind::ABS:
+                return checking::data_def_expr {
                     ev.get_abs(),
                     checking::expr_type::ABS,
                     e->get_range(),
                     ignored,
-                });
-            }
-            else if (kind == context::symbol_value_kind::RELOC)
-            {
-                // TO DO value of the relocatable expression
-                // maybe push back data_def_addr?
-                values.push_back(checking::data_def_expr {
-                    0,
-                    ev.get_reloc().is_complex() ? checking::expr_type::COMPLEX : checking::expr_type::RELOC,
-                    e->get_range(),
-                    ignored,
-                });
-            }
-            else if (kind == context::symbol_value_kind::UNDEF)
-            {
-                values.push_back(checking::data_def_expr { 0, checking::expr_type::ABS, e->get_range(), true });
-            }
-            else
-            {
-                assert(false);
-                continue;
-            }
-        }
-        else // there is an address D(B)
-        {
-            const auto& a = std::get<expressions::address_nominal>(e_or_a);
-            checking::data_def_address ch_adr;
+                };
 
-            ch_adr.base = set_data_def_field(a.base.get(), info, diags);
-            ch_adr.displacement = set_data_def_field(a.displacement.get(), info, diags);
-            ch_adr.ignored = !ch_adr.base.present || !ch_adr.displacement.present; // ignore value with dependencies
-            values.push_back(ch_adr);
+            case context::symbol_value_kind::RELOC:
+                if (const auto& addr = ev.get_reloc(); type != nominal_eval_subtype::none && addr.is_simple())
+                    return handle_simple_reloc_with_using_map(addr, e->get_range());
+                else
+                    return checking::data_def_expr {
+                        0,
+                        addr.is_complex() ? checking::expr_type::COMPLEX : checking::expr_type::RELOC,
+                        e->get_range(),
+                        ignored,
+                    };
+
+            default:
+                assert(false);
+                return checking::data_def_expr {};
         }
     }
+
+    checking::expr_or_address operator()(const expressions::address_nominal& a) const
+    {
+        checking::data_def_address ch_adr;
+
+        ch_adr.total = a.total;
+        ch_adr.base = set_data_def_field(a.base.get(), info, diags);
+        ch_adr.displacement = set_data_def_field(a.displacement.get(), info, diags);
+        return ch_adr;
+    }
+};
+
+inline checking::nominal_value_expressions extract_nominal_value_expressions(const expr_or_address_list& exprs,
+    context::dependency_solver& info,
+    diagnostic_op_consumer& diags,
+    nominal_eval_subtype type)
+{
+    extract_nominal_value_visitor visitor { info, diags, type };
+    checking::nominal_value_expressions values;
+    for (const auto& e_or_a : exprs)
+        values.push_back(std::visit(visitor, e_or_a));
+
     return values;
 }
 
@@ -338,7 +382,11 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(
     }
     else if (nominal_value->access_exprs())
     {
-        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs, info, diags);
+        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs,
+            info,
+            diags,
+            type != 'S' ? nominal_eval_subtype::none
+                        : (extension == 'Y' ? nominal_eval_subtype::SY_type : nominal_eval_subtype::S_type));
     }
     else
         assert(false);
@@ -368,7 +416,8 @@ checking::reduced_nominal_value_t data_definition::evaluate_reduced_nominal_valu
     return nom;
 }
 
-long long data_definition::evaluate_total_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const
+long long data_definition::evaluate_total_length(
+    context::dependency_solver& info, checking::data_instr_type checking_rules, diagnostic_op_consumer& diags) const
 {
     auto dd_type = checking::data_def_type::access_data_def_type(type, extension);
     if (!dd_type)
@@ -381,16 +430,18 @@ long long data_definition::evaluate_total_length(context::dependency_solver& inf
     if (!dd_type->check_dupl_factor(dupl, drop_diags))
         return -1;
 
-    if (nominal_value)
+    if (checking_rules == checking::data_instr_type::DC)
     {
         if (!dd_type->check_length<checking::data_instr_type::DC>(len, drop_diags))
             return -1;
     }
-    else
+    else if (checking_rules == checking::data_instr_type::DS)
     {
         if (!dd_type->check_length<checking::data_instr_type::DS>(len, drop_diags))
             return -1;
     }
+    else
+        assert(false);
 
     auto result = dd_type->get_length(dupl, len, evaluate_reduced_nominal_value());
     return result >= ((1ll << 31) - 1) * 8 ? -1 : (long long)result;
@@ -457,6 +508,7 @@ struct loctr_reference_visitor final : public mach_expr_visitor
 
     void visit(const mach_expr_constant&) override {}
     void visit(const mach_expr_data_attr&) override {}
+    void visit(const mach_expr_data_attr_literal&) override {}
     void visit(const mach_expr_symbol&) override {}
     void visit(const mach_expr_location_counter&) override { found_loctr_reference = true; }
     void visit(const mach_expr_default&) override {}

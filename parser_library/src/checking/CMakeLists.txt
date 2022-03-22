@@ -23,6 +23,8 @@ target_sources(parser_library PRIVATE
 	instruction_checker.cpp
 	instruction_checker.h
 	operand.h
+	using_label_checker.cpp
+	using_label_checker.h
 )
 
 add_subdirectory(data_definition)

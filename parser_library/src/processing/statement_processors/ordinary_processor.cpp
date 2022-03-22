@@ -132,7 +132,7 @@ void ordinary_processor::end_processing()
         hlasm_ctx.ord_ctx.set_location_counter(ltorg->name, {});
         hlasm_ctx.ord_ctx.set_available_location_counter_value(0, 0);
 
-        hlasm_ctx.ord_ctx.generate_pool(*this);
+        hlasm_ctx.ord_ctx.generate_pool(*this, hlasm_ctx.using_current());
     }
 
     hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);
@@ -175,8 +175,10 @@ struct processing_status_visitor
 
     processing_status operator()(const context::assembler_instruction* i) const
     {
-        const auto f = id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS") ? processing_form::DAT
-                                                                                          : processing_form::ASM;
+        const auto f =
+            id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS") || id == hlasm_ctx.ids().add("DXD")
+            ? processing_form::DAT
+            : processing_form::ASM;
         const auto o = i->max_operands() == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT;
         return return_value(f, o, context::instruction_type::ASM);
     }

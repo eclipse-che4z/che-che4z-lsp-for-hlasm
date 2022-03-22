@@ -15,6 +15,8 @@
 // This file contains implementation of the data_def_type for
 // these types: B, C, G, X
 
+#include <concepts>
+
 #include "checking/checker_helper.h"
 #include "data_def_types.h"
 
@@ -51,7 +53,8 @@ uint32_t get_X_B_length_attr(const std::string& s, uint64_t frac)
 }
 
 // Checks comma separated values. is_valid_digit specifies whether the char is valid character of value.
-bool check_comma_separated(const std::string nom, std::function<bool(char c)> is_valid_digit)
+template</* std::predicate<char> */ typename F>
+bool check_comma_separated(const std::string& nom, F is_valid_digit)
 {
     bool last_valid = false;
     for (char c : nom)
@@ -107,6 +110,8 @@ uint64_t data_def_type_B::get_nominal_length(const reduced_nominal_value_t& op) 
 {
     if (!op.present)
         return 1;
+    else if (!std::holds_alternative<std::string>(op.value))
+        return 0;
     else
         return get_X_B_length(std::get<std::string>(op.value), 8);
 }
@@ -142,6 +147,8 @@ uint64_t data_def_type_CA_CE::get_nominal_length(const reduced_nominal_value_t& 
 {
     if (!op.present)
         return 1;
+    else if (!std::holds_alternative<std::string>(op.value))
+        return 0;
     else
         return std::get<std::string>(op.value).size();
 }
@@ -180,6 +187,8 @@ uint64_t data_def_type_CU::get_nominal_length(const reduced_nominal_value_t& op)
 {
     if (!op.present)
         return 2;
+    else if (!std::holds_alternative<std::string>(op.value))
+        return 0;
     else
         return 2 * (uint64_t)std::get<std::string>(op.value).size();
 }
@@ -237,6 +246,8 @@ uint64_t data_def_type_G::get_nominal_length(const reduced_nominal_value_t& op) 
 {
     if (!op.present)
         return 2;
+    else if (!std::holds_alternative<std::string>(op.value))
+        return 0;
     else
     {
         const std::string& s = std::get<std::string>(op.value);
@@ -294,6 +305,8 @@ uint64_t data_def_type_X::get_nominal_length(const reduced_nominal_value_t& op) 
 {
     if (!op.present)
         return 1;
+    else if (!std::holds_alternative<std::string>(op.value))
+        return 0;
     else
         return get_X_B_length(std::get<std::string>(op.value), 2);
 }

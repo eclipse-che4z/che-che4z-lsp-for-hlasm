@@ -277,7 +277,7 @@ void workspace::did_close_file(const std::string& file_uri)
     file_manager_.remove_file(file_uri);
 }
 
-void workspace::did_change_file(const std::string file_uri, const document_change*, size_t) { parse_file(file_uri); }
+void workspace::did_change_file(const std::string& file_uri, const document_change*, size_t) { parse_file(file_uri); }
 
 void workspace::did_change_watched_files(const std::string& file_uri)
 {

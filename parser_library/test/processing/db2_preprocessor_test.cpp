@@ -949,3 +949,17 @@ TEST(db2_preprocessor, sql_type_warn_on_continuation)
     ASSERT_EQ(diags.diags.size(), 1U);
     EXPECT_EQ(diags.diags[0].code, "DB005");
 }
+
+TEST(db2_preprocessor, no_codegen_for_unacceptable_sql_statement)
+{
+    std::string input = R"(
+    EXEC SQL BEGIN DECLARE SECTION
+    EXEC SQL END DECLARE SECTION
+)";
+
+    analyzer a(input, analyzer_options(db2_preprocessor_options()));
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty()); // TODO(optional): original warns
+}

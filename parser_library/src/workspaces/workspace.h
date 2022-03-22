@@ -92,7 +92,7 @@ public:
     void refresh_libraries();
     workspace_file_info did_open_file(const std::string& file_uri);
     void did_close_file(const std::string& file_uri);
-    void did_change_file(const std::string document_uri, const document_change* changes, size_t ch_size);
+    void did_change_file(const std::string& document_uri, const document_change* changes, size_t ch_size);
     void did_change_watched_files(const std::string& file_uri);
 
     location definition(const std::string& document_uri, position pos) const override;

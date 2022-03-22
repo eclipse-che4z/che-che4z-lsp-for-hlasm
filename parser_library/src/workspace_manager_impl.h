@@ -88,7 +88,7 @@ public:
         notify_performance_consumers(document_uri, metadata);
     }
     void did_change_file(
-        const std::string document_uri, version_t version, const document_change* changes, size_t ch_size)
+        const std::string& document_uri, version_t version, const document_change* changes, size_t ch_size)
     {
         file_manager_.did_change_file(document_uri, version, changes, ch_size);
         if (cancel_ && *cancel_)
@@ -102,7 +102,7 @@ public:
         notify_diagnostics_consumers();
     }
 
-    void did_close_file(const std::string document_uri)
+    void did_close_file(const std::string& document_uri)
     {
         workspaces::workspace& ws = ws_path_match(document_uri);
         ws.did_close_file(document_uri);

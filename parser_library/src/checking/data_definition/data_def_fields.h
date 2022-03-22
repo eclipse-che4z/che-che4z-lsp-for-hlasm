@@ -89,6 +89,7 @@ struct data_def_address
     data_def_field<int32_t> base;
     data_def_field<int32_t> displacement;
     bool ignored = false;
+    range total;
 };
 
 using expr_or_address = std::variant<data_def_expr, data_def_address>;

@@ -66,12 +66,23 @@ struct test_context : public dependency_solver
     std::unique_ptr<mach_expression> loctr() const { return std::make_unique<mach_expr_location_counter>(range()); }
 
     // Inherited via dependency_solver
-    virtual const context::symbol* get_symbol(id_index name) const override { return &m_symbols.at(name); }
-    virtual std::optional<address> get_loctr() const override { return m_loctr; }
-    virtual id_index get_literal_id(const std::shared_ptr<const expressions::data_definition>&) override
+    const context::symbol* get_symbol(id_index name) const override { return &m_symbols.at(name); }
+    std::optional<address> get_loctr() const override { return m_loctr; }
+    id_index get_literal_id(const std::shared_ptr<const expressions::data_definition>&) override
     {
         assert(false);
         return id_index();
+    }
+    bool using_active(id_index label, const section* sect) const override
+    {
+        assert(false);
+        return false;
+    }
+    using_evaluate_result using_evaluate(
+        id_index label, const section* owner, int32_t offset, bool long_offset) const override
+    {
+        assert(false);
+        return { using_collection::invalid_register, 0 };
     }
 };
 
@@ -781,6 +792,33 @@ TEST(using, absolute)
     EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, -100, true), evaluate_result(0, -100));
 }
 
+TEST(using, smaller_offset_but_invalid)
+{
+    test_context c;
+
+    using_collection coll;
+    index_t<using_collection> current;
+    diagnostic_consumer_container<diagnostic_s> d_s;
+
+    [[maybe_unused]] auto sect = c.create_section("SECT");
+
+    [[maybe_unused]] auto with_sect =
+        coll.add(current, nullptr, c.create_symbol("SECT"), nullptr, args(c.number(1)), {}, {});
+    [[maybe_unused]] auto with_sect2 = coll.add(with_sect,
+        nullptr,
+        c.create_symbol("SECT") + c.number(100),
+        c.create_symbol("SECT") + c.number(120),
+        args(c.number(2)),
+        {},
+        {});
+
+    coll.resolve_all(c.asm_ctx, d_s);
+
+    EXPECT_TRUE(d_s.diags.empty());
+
+    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect, 128, false), evaluate_result(1, 128));
+}
+
 TEST(using, simple_using)
 {
     std::string input = R"(
@@ -1009,4 +1047,431 @@ LABEL DROP
     a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A251" }));
+}
+
+TEST(using, label_not_allowed_in_abs_space)
+{
+    std::string input = R"(
+A     EQU    10
+L     USING  A,1
+      LA     0,L.A
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME004" }));
+}
+
+TEST(using, diag_complex_reloc)
+{
+    std::string input = R"(
+TEST1 DSECT
+TEST2 DSECT
+A     EQU    TEST1+TEST2
+      CSECT
+L     USING  TEST1,1
+      USING  TEST2,2
+      LA     0,L.A
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME006", "ME009" }));
+}
+
+TEST(using, recursive_operand_inspection)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      DROP   ,
+      LA     0,L.A-L.A
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005", "ME005" }));
+}
+
+TEST(using, recursive_operand_inspection_dc)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      DROP   ,
+      DC     A(L.A)
+      DC     S(L.A)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005", "ME005", "ME007" }));
+}
+
+TEST(using, recursive_operand_inspection_literals_inactive)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      LARL   0,=A(L'=A(L.A))
+      DROP   ,
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005" }));
+}
+
+TEST(using, recursive_operand_inspection_literals_active)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      LARL   0,=A(L'=A(L.A))
+      LTORG  ,
+      DROP   ,
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, basic_operand_check)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      LA     0,L.A
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, basic_operand_check_dc)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      DC     A(L.A)
+      DC     S(L.A)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1
+      LA     0,L.A+4096
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
+}
+
+TEST(using, in_range_second_reg)
+{
+    std::string input = R"(
+A     CSECT
+L     USING  A,1,2
+      LA     0,L.A+4096
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, disp_out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8000),1
+      LA     0,A+5000
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
+}
+
+TEST(using, dispy_out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8000),1
+      LAY    0,A+1000000
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
+}
+
+TEST(using, dispy_in_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8000),1
+      LAY    0,A+10000
+      LAY    0,A+5000
+      LAY    0,A-5000
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, dc_s)
+{
+    std::string input = R"(
+A     CSECT
+      USING  A,1
+      DC     S(0)
+      DC     S(1(1))
+      DC     S(A+100)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, dc_s_out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8192),1
+      DC     S(A+5000)
+      DC     S(A-5000)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008", "ME008" }));
+}
+
+TEST(using, dc_sy_in_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8192),1
+      DC     SY(A+5000)
+      DC     SY(A-5000)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, dc_sy_out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8192),1
+      DC     SY(A+1000000)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
+}
+
+TEST(using, dc_s_invalid)
+{
+    std::string input = R"(
+A     CSECT
+      USING  (A,A+8192),1
+      DC     S(A(1))
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D033" }));
+}
+
+TEST(using, mnemonic_check_in_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  *,1
+      B      *
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, mnemonic_check_missing_using)
+{
+    std::string input = R"(
+A     CSECT
+      B      *
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME007" }));
+}
+
+TEST(using, mnemonic_check_out_of_range)
+{
+    std::string input = R"(
+A     CSECT
+      USING  *,1
+      B      *+4096
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
+}
+
+TEST(using, trigger_lookahead_with_known_nominal)
+{
+    std::string input = R"(
+    USING *,10
+L   DS    F
+    AIF   (L'A GT 0).T
+.T  ANOP  ,
+A   DC    S(L)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, literal_with_known_nominal)
+{
+    std::string input = R"(
+    USING *,10
+L   DS    F
+    LARL  0,=S(L)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, simple_dc_with_known_nominal)
+{
+    std::string input = R"(
+L   DS    F
+    USING L,12
+    DC    S(L)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, long_displacement_instruction)
+{
+    std::string input = R"(
+A   DS    A
+    USING *,1
+    CLIY  A,1
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, explicit_length)
+{
+    std::string input = R"(
+    USING *,1
+A   DS    A
+B   DS    A
+    MVC   A(2),B
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(using, tolerate_missing_sections)
+{
+    std::string input = R"(
+    USING D,13
+    USING MISSING,10
+    ST    0,F
+
+D   DSECT
+F   DS    F
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M113" }));
 }

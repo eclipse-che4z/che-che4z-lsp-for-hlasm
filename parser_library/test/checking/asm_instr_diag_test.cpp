@@ -498,14 +498,13 @@ TEST(diagnostics, ainsert_incorrect_string)
 {
     std::string input(
         R"( 
- AINSERT one,two
+ AINSERT one,back
 )");
     analyzer a(input);
     a.analyze();
     a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "A301");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A301" }));
 }
 
 TEST(diagnostics, ainsert_incorrect_second_op)

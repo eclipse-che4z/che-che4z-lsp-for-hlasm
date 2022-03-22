@@ -82,8 +82,11 @@ mach_term returns [mach_expr_ptr m_e]
 				else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,int>) {
 					return std::make_unique<mach_expr_constant>(arg, symbol_rng);
 				}
+				else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,std::unique_ptr<mach_expr_literal>>) {
+					return std::make_unique<mach_expr_data_attr_literal>(std::move(arg), attr, rng, symbol_rng);
+				}
 				else {
-					return std::make_unique<mach_expr_data_attr>(std::move(arg), attr, rng, symbol_rng);
+					return std::make_unique<mach_expr_data_attr>(arg.first, arg.second, attr, rng, symbol_rng);
 				}
 			}, $mach_data_attribute.data);
 	}
@@ -132,7 +135,7 @@ literal_internal returns [std::optional<data_definition> value]
 			add_diagnostic(diagnostic_severity::error, "S0013", "Invalid literal usage", provider.get_range($equals.ctx));
 	};
 
-mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monostate, id_index, std::unique_ptr<mach_expr_literal>, int> data, range symbol_rng]
+mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monostate, std::pair<id_index,id_index>, std::unique_ptr<mach_expr_literal>, int> data, range symbol_rng]
 	: ORDSYMBOL (attr|apostrophe_as_attr) {auto lit_restore = enable_literals();}
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::data_attr_type));
@@ -151,7 +154,7 @@ mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monosta
 		}
 	);
 
-mach_data_attribute_value returns [std::variant<std::monostate, id_index, std::unique_ptr<mach_expr_literal>> data]
+mach_data_attribute_value returns [std::variant<std::monostate, std::pair<id_index,id_index>, std::unique_ptr<mach_expr_literal>> data]
 	: literal
 	{
 		auto rng = provider.get_range($literal.ctx);
@@ -162,7 +165,7 @@ mach_data_attribute_value returns [std::variant<std::monostate, id_index, std::u
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($id.ctx), hl_scopes::ordinary_symbol));
 		if (auto name = $id.name)
-			$data = name;
+			$data = std::make_pair(name, $id.using_qualifier);
 	};
 
 string_ch returns [std::string value]

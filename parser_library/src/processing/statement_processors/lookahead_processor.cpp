@@ -239,16 +239,14 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
 
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
-    auto tmp = data_op->get_operand_value(dep_solver, drop_diags);
-    auto& value = dynamic_cast<checking::data_definition_operand&>(*tmp);
 
     if (!data_op->value->length || !data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
     {
-        len = value.get_length_attribute();
+        len = data_op->value->get_length_attribute(dep_solver, drop_diags);
     }
     if (data_op->value->scale && !data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
     {
-        scale = value.get_scale_attribute();
+        scale = data_op->value->get_scale_attribute(dep_solver, drop_diags);
     }
 
     register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::DAT, type, len, scale));
