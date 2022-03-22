@@ -162,25 +162,33 @@ TEST(data_attributes, N_var_syms_2_macros)
 {
     std::string input = R"(
       MACRO
-      MAC &A=()
-      GBLA &VAR
-&VAR  SETA N'&A
+      MAC_KEY_PAR &A=()
+      GBLA &VAR1
+&VAR1 SETA N'&A
+      MEND
+
+      MACRO
+      MAC_POS_PAR &A
+      GBLA &VAR2
+&VAR2 SETA N'&A
       MEND
 
       MACRO
       MAC2 &A=()
-      GBLA &VAR
-      MAC A=&A
+      GBLA &VAR1,&VAR2
+      MAC_KEY_PAR A=&A
+      MAC_POS_PAR &A
       MEND
 
-      GBLA &VAR
+      GBLA &VAR1,&VAR2
       MAC2
 )";
 
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR"), 1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR1"), 1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR2"), 1);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
