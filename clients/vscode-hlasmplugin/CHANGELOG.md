@@ -13,6 +13,7 @@
 - Incorrect module layout computed when ORG instruction is used in sections with multiple location counters
 - AINSERT can now do immediate variable evaluatation correctly
 - Highlighting of single character strings (which could represent data attributes - e.g. `I'`, `L'`, `S'` and others) is fixed
+- Document navigation does not work correctly in Untitled documents
 
 ## [1.0.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.1...1.0.0) (2022-01-31)
 
