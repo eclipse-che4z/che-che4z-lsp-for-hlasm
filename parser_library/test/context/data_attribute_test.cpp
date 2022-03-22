@@ -158,6 +158,34 @@ TEST(data_attributes, N_var_syms)
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
+TEST(data_attributes, N_var_syms_2_macros)
+{
+    std::string input = R"(
+      MACRO
+      MAC &A=()
+      GBLA &VAR
+&VAR  SETA N'&A
+      MEND
+
+      MACRO
+      MAC2 &A=()
+      GBLA &VAR
+      MAC A=&A
+      MEND
+
+      GBLA &VAR
+      MAC2
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR"), 1);
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
 TEST(data_attributes, K_var_syms_good)
 {
     std::string input = R"(
