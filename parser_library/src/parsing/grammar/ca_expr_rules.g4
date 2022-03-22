@@ -320,7 +320,7 @@ substring returns [expressions::ca_string::substring_t value]
 	|;
 
 ca_string_b returns [ca_expr_ptr ca_expr]
-	: ca_dupl_factor (apostrophe|attr) string_ch_v_c (apostrophe|attr) substring
+	: ca_dupl_factor (apostrophe|attr) string_ch_v_c l_apo substring
 	{
 		auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $substring.ctx->getStop());
 		$ca_expr = std::make_unique<expressions::ca_string>(std::move($string_ch_v_c.chain), std::move($ca_dupl_factor.value), std::move($substring.value), r);

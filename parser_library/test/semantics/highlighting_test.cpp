@@ -286,3 +286,49 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
     EXPECT_EQ(tokens, expected);
 }
+
+TEST(highlighting, single_chars)
+{
+    std::string source_file = "file_name";
+    const std::string contents = R"(
+&C SETC 'A'
+&C SETC 'B'
+&C SETC 'C'
+&C SETC 'D'
+&C SETC 'E'
+&C SETC 'F'
+&C SETC 'G'
+&C SETC 'H'
+&C SETC 'I'
+&C SETC 'J'
+&C SETC 'K'
+&C SETC 'L'
+&C SETC 'M'
+&C SETC 'N'
+&C SETC 'O'
+&C SETC 'P'
+&C SETC 'Q'
+&C SETC 'R'
+&C SETC 'S'
+&C SETC 'T'
+&C SETC 'U'
+&C SETC 'V'
+&C SETC 'W'
+&C SETC 'X'
+&C SETC 'Y'
+&C SETC 'Z'
+)";
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
+    a.analyze();
+    const auto& tokens = a.source_processor().semantic_tokens();
+    semantics::lines_info expected;
+
+    for (size_t i = 1; i <= 'Z' - 'A' + 1; ++i)
+    {
+        expected.emplace_back(token_info({ { i, 0 }, { i, 2 } }, hl_scopes::var_symbol));
+        expected.emplace_back(token_info({ { i, 3 }, { i, 7 } }, hl_scopes::instruction));
+        expected.emplace_back(token_info({ { i, 8 }, { i, 11 } }, hl_scopes::string));
+    }
+
+    EXPECT_EQ(tokens, expected);
+}
