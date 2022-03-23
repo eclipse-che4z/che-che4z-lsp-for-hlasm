@@ -23,7 +23,7 @@ using namespace hlasm_plugin::parser_library::debugging;
 void set_symbol_variable::fill_string_value()
 {
     if (!is_scalar())
-        value_ = "";
+        value_ = get_array_value();
     else if (type() == set_type::A_TYPE)
         value_ = std::to_string(get_value<context::A_t>());
     else if (type() == set_type::B_TYPE)
@@ -72,6 +72,32 @@ std::vector<variable_ptr> set_symbol_variable::values() const
         vals.push_back(std::make_unique<set_symbol_variable>(set_symbol_, (int)keys[i]));
 
     return vals;
+}
+
+std::string set_symbol_variable::get_array_value() const
+{
+    std::string values;
+    values += "(";
+
+    auto keys = set_symbol_.keys();
+    for (size_t i = 0; i < keys.size(); ++i)
+    {
+        if (i > 0)
+        {
+            values += ",";
+        }
+
+        if (type() == set_type::A_TYPE)
+            values += std::to_string(set_symbol_.access_set_symbol<context::A_t>()->get_value(keys[i]));
+        else if (type() == set_type::B_TYPE)
+            values += set_symbol_.access_set_symbol<context::B_t>()->get_value(keys[i]);
+        else
+            values += set_symbol_.access_set_symbol<std::string>()->get_value(keys[i]);
+    }
+
+    values += ")";
+
+    return values;
 }
 
 size_t set_symbol_variable::size() const { return set_symbol_.size(); }
