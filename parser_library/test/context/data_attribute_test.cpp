@@ -158,7 +158,7 @@ TEST(data_attributes, N_var_syms)
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
-TEST(data_attributes, N_var_syms_2_macros)
+TEST(data_attributes, N_var_syms_2)
 {
     std::string input = R"(
       MACRO
