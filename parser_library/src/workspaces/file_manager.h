@@ -67,6 +67,9 @@ public:
         const std::string& document_uri, version_t version, const document_change* changes, size_t ch_size) = 0;
     virtual void did_close_file(const std::string& document_uri) = 0;
 
+    virtual void put_virtual_file(unsigned long long id, std::string_view text) = 0;
+    virtual const std::string* get_virtual_file(unsigned long long id) const = 0;
+
 protected:
     ~file_manager() = default;
 };

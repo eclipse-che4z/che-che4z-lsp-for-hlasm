@@ -34,6 +34,7 @@ target_sources(parser_library PRIVATE
 	preprocessor_options.h
 	protocol.cpp
 	tagged_index.h
+	virtual_file_monitor.h
 	workspace_manager.cpp
 	workspace_manager_impl.h
 )

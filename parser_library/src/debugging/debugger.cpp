@@ -33,6 +33,7 @@
 #include "ordinary_symbol_variable.h"
 #include "set_symbol_variable.h"
 #include "variable.h"
+#include "virtual_file_monitor.h"
 #include "workspaces/file_manager.h"
 
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -137,12 +138,28 @@ public:
                                                               // it is stopped and waiting in the statement method
             debug_lib_provider debug_provider(workspace);
 
+            struct debugger_vf_monitor final : public virtual_file_monitor
+            {
+                workspaces::file_manager& fm;
+                // Inherited via virtual_file_monitor
+                void file_generated(unsigned long long id, std::string_view content) override
+                {
+                    fm.put_virtual_file(id, content);
+                }
+
+                debugger_vf_monitor(workspaces::file_manager& fm)
+                    : fm(fm)
+                {}
+            } vfm(workspace.get_file_manager());
+            // TODO: it would probably be better to implement Sources request and keep everything locally
+
             analyzer a(open_code->get_text(),
                 analyzer_options {
                     open_code->get_file_name(),
                     lib_provider ? lib_provider : &debug_provider,
                     workspace.get_asm_options(open_code->get_file_name()),
                     workspace.get_preprocessor_options(open_code->get_file_name()),
+                    &vfm,
                 });
 
             a.register_stmt_analyzer(this);
@@ -183,19 +200,22 @@ public:
 
         bool breakpoint_hit = false;
 
-        for (const auto& bp : breakpoints(ctx_->processing_stack().back().proc_location.file))
+        auto stack = ctx_->processing_stack();
+        const auto stack_depth = stack.size();
+
+        for (const auto& bp : breakpoints(stack.back().proc_location.file))
         {
             if (bp.line >= stmt_range.start.line && bp.line <= stmt_range.end.line)
                 breakpoint_hit = true;
         }
 
         // breakpoint check
-        if (stop_on_next_stmt_ || breakpoint_hit || (step_over_ && ctx_->processing_stack().size() <= step_over_depth_))
+        if (stop_on_next_stmt_ || breakpoint_hit || (step_over_ && stack_depth <= step_over_depth_))
         {
             variables_.clear();
             stack_frames_.clear();
             scopes_.clear();
-            proc_stack_ = ctx_->processing_stack();
+            proc_stack_ = std::move(stack);
             variable_mtx_.unlock();
 
             std::unique_lock<std::mutex> lck(control_mtx);
@@ -204,7 +224,7 @@ public:
             stop_on_next_stmt_ = false;
             step_over_ = false;
             next_stmt_range_ = stmt_range;
-            step_over_depth_ = ctx_->processing_stack().size();
+            step_over_depth_ = stack_depth;
 
             continue_ = false;
             if (event_)

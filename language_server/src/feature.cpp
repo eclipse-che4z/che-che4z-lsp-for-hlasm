@@ -15,6 +15,7 @@
 #include "feature.h"
 
 #include <filesystem>
+#include <regex>
 
 #include "network/uri/uri.hpp"
 
@@ -71,9 +72,11 @@ std::string feature::uri_to_path(const std::string& uri)
     return utils::path::lexically_normal(network::detail::decode(auth_path)).string();
 }
 
+const std::regex uri_like("^[A-Za-z][A-Za-z0-9+\\-.]*://"); // "//" is not really mandatory, but Windows paths collide
+
 std::string feature::path_to_uri(std::string_view path)
 {
-    if (path.substr(0, untitled.size()) == untitled)
+    if (std::regex_search(path.begin(), path.end(), uri_like))
         return std::string(path);
 
     // network::detail::encode_path(uri) ignores @, which is incompatible with VS Code

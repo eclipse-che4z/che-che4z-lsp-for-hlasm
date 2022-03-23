@@ -60,8 +60,13 @@ public:
 
     virtual ~file_manager_impl() = default;
 
+
+    void put_virtual_file(unsigned long long id, std::string_view text) override;
+    const std::string* get_virtual_file(unsigned long long id) const override;
+
 protected:
     std::unordered_map<std::string, std::shared_ptr<file_impl>> files_;
+    std::unordered_map<unsigned long long, std::string> m_virtual_files;
 
 private:
     mutable std::mutex files_mutex;

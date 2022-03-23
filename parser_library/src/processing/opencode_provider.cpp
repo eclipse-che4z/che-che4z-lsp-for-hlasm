@@ -32,7 +32,8 @@ opencode_provider::opencode_provider(std::string_view text,
     semantics::source_info_processor& src_proc,
     diagnosable_ctx& diag_consumer,
     std::unique_ptr<preprocessor> preprocessor,
-    opencode_provider_options opts)
+    opencode_provider_options opts,
+    virtual_file_monitor* virtual_file_monitor)
     : statement_provider(statement_provider_kind::OPEN)
     , m_original_text(text)
     , m_next_line_text(text)
@@ -46,6 +47,7 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_diagnoser(&diag_consumer)
     , m_opts(opts)
     , m_preprocessor(std::move(preprocessor))
+    , m_virtual_file_monitor(virtual_file_monitor)
 {}
 
 void opencode_provider::rewind_input(context::source_position pos)
@@ -329,6 +331,12 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     return result;
 }
 
+unsigned long long next_virtual_file_id()
+{
+    static std::atomic<unsigned long long> id = 0;
+    return id++;
+}
+
 bool opencode_provider::try_running_preprocessor()
 {
     const auto current_line = m_current_line;
@@ -338,7 +346,8 @@ bool opencode_provider::try_running_preprocessor()
 
     auto virtual_copy_name = m_ctx->hlasm_ctx->ids().add("preprocessor:" + std::to_string(current_line));
 
-    auto [new_file, inserted] = m_virtual_files.try_emplace(virtual_copy_name, std::move(result.value()));
+    auto [new_file, inserted] =
+        m_virtual_files.try_emplace(virtual_copy_name, std::move(result.value()), next_virtual_file_id());
 
     // set up "call site"
     const auto current_offset =
@@ -349,9 +358,11 @@ bool opencode_provider::try_running_preprocessor()
 
     if (inserted)
     {
-        analyzer a(new_file->second,
+        if (m_virtual_file_monitor)
+            m_virtual_file_monitor->file_generated(new_file->second.second, new_file->second.first);
+        analyzer a(new_file->second.first,
             analyzer_options {
-                *virtual_copy_name,
+                "hlasm://" + std::to_string(new_file->second.second) + "/" + *virtual_copy_name,
                 m_lib_provider,
                 *m_ctx,
                 workspaces::library_data { processing_kind::COPY, virtual_copy_name },
@@ -361,7 +372,7 @@ bool opencode_provider::try_running_preprocessor()
     }
     else
     {
-        assert(result.value() == new_file->second);
+        assert(result.value() == new_file->second.first);
     }
 
     m_ctx->hlasm_ctx->enter_copy_member(virtual_copy_name);
@@ -419,11 +430,13 @@ void opencode_provider::convert_ainsert_buffer_to_copybook()
     auto virtual_copy_name =
         m_ctx->hlasm_ctx->ids().add("AINSERT:" + std::to_string(m_ctx->hlasm_ctx->obtain_ainsert_id()));
 
-    auto new_file = m_virtual_files.try_emplace(virtual_copy_name, std::move(result)).first;
+    auto new_file = m_virtual_files.try_emplace(virtual_copy_name, std::move(result), next_virtual_file_id()).first;
 
-    analyzer a(new_file->second,
+    if (m_virtual_file_monitor)
+        m_virtual_file_monitor->file_generated(new_file->second.second, new_file->second.first);
+    analyzer a(new_file->second.first,
         analyzer_options {
-            *virtual_copy_name,
+            "hlasm://" + std::to_string(new_file->second.second) + "/" + *virtual_copy_name,
             m_lib_provider,
             *m_ctx,
             workspaces::library_data { processing_kind::COPY, virtual_copy_name },

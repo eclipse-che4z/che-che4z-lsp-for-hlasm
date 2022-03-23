@@ -27,6 +27,7 @@
 #include "processor.h"
 #include "utils/path.h"
 #include "utils/platform.h"
+#include "virtual_file_monitor.h"
 #include "wildcard.h"
 
 using json = nlohmann::json;
@@ -152,6 +153,20 @@ workspace_file_info workspace::parse_file(const std::string& file_uri)
 {
     workspace_file_info ws_file_info;
 
+    struct workspace_monitor final : public virtual_file_monitor
+    {
+        workspaces::file_manager& fm;
+        // Inherited via virtual_file_monitor
+        void file_generated(unsigned long long id, std::string_view content) override
+        {
+            fm.put_virtual_file(id, content);
+        }
+
+        workspace_monitor(workspaces::file_manager& fm)
+            : fm(fm)
+        {}
+    } vfm(get_file_manager());
+
     std::filesystem::path file_path(file_uri);
     // add support for hlasm to vscode (auto detection??) and do the decision based on languageid
     if (utils::path::equal(file_path, proc_grps_path_) || utils::path::equal(file_path, pgm_conf_path_))
@@ -162,7 +177,7 @@ workspace_file_info workspace::parse_file(const std::string& file_uri)
             {
                 auto found = file_manager_.find_processor_file(fname);
                 if (found)
-                    found->parse(*this, get_asm_options(fname), get_preprocessor_options(fname));
+                    found->parse(*this, get_asm_options(fname), get_preprocessor_options(fname), &vfm);
             }
 
             for (auto fname : dependants_)
@@ -202,7 +217,7 @@ workspace_file_info workspace::parse_file(const std::string& file_uri)
 
     for (auto f : files_to_parse)
     {
-        f->parse(*this, get_asm_options(f->get_file_name()), get_preprocessor_options(f->get_file_name()));
+        f->parse(*this, get_asm_options(f->get_file_name()), get_preprocessor_options(f->get_file_name()), &vfm);
         if (!f->dependencies().empty())
             dependants_.insert(f->get_file_name());
 

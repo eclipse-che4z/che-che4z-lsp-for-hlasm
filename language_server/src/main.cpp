@@ -32,6 +32,59 @@ using namespace hlasm_plugin::language_server;
 
 namespace {
 
+class virtual_file_provider : public json_sink
+{
+    hlasm_plugin::parser_library::workspace_manager* ws_mngr;
+    json_sink* out_stream;
+
+    static std::string_view extract_method(const nlohmann::json& msg)
+    {
+        auto method_it = msg.find("method");
+        if (method_it == msg.end() || !method_it->is_string())
+            return {};
+        return method_it->get<std::string_view>();
+    }
+
+public:
+    // Inherited via json_sink
+    void write(const nlohmann::json& m) override
+    {
+        auto file_id = m.at("params").at("id").get<unsigned long long>();
+        auto s = std::string(ws_mngr->get_virtual_file_content(file_id));
+        if (s.empty())
+            out_stream->write(nlohmann::json {
+                { "id", m.at("id") },
+                {
+                    "error",
+                    nlohmann::json {
+                        { "code", 1 },
+                        { "message", "File not found" },
+                    },
+                },
+            });
+        else
+            out_stream->write(nlohmann::json {
+                { "id", m.at("id") },
+                {
+                    "result",
+                    nlohmann::json {
+                        { "content", std::move(s) },
+                    },
+                },
+            });
+    }
+    void write(nlohmann::json&& m) override { write(m); }
+
+    virtual_file_provider(hlasm_plugin::parser_library::workspace_manager& ws_mngr, json_sink& out)
+        : ws_mngr(&ws_mngr)
+        , out_stream(&out)
+    {}
+    [[nodiscard]] message_router::message_predicate get_filtering_predicate() const
+    {
+        return [](const nlohmann::json& msg) { return extract_method(msg) == "get_file_content"; };
+    }
+};
+
 class main_program : public json_sink
 {
     std::atomic<bool> cancel = false;
@@ -44,14 +97,17 @@ class main_program : public json_sink
     std::thread lsp_thread;
     telemetry_broker dap_telemetry_broker;
     dap::session_manager dap_sessions;
+    virtual_file_provider virtual_files;
 
 public:
     main_program(json_sink& json_output, int& ret)
         : ws_mngr(&cancel)
         , router(&lsp_queue)
         , dap_sessions(ws_mngr, json_output, &dap_telemetry_broker)
+        , virtual_files(ws_mngr, json_output)
     {
         router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
+        router.register_route(virtual_files.get_filtering_predicate(), virtual_files);
 
         lsp_thread = std::thread([&ret, this, io = json_channel_adapter(lsp_queue, json_output)]() {
             try

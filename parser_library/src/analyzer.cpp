@@ -85,7 +85,8 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
                     },
                     *this),
                 opts.parsing_opencode == file_is_opencode::yes ? opencode_provider_options { true, 10 }
-                                                               : opencode_provider_options {}),
+                                                               : opencode_provider_options {},
+                opts.vf_monitor),
           ctx_,
           opts.library_data,
           opts.file_name,

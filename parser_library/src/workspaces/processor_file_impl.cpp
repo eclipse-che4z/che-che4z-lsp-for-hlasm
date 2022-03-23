@@ -45,7 +45,8 @@ void processor_file_impl::collect_diags() const { file_impl::collect_diags(); }
 
 bool processor_file_impl::is_once_only() const { return false; }
 
-parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_option asm_opts, preprocessor_options pp)
+parse_result processor_file_impl::parse(
+    parse_lib_provider& lib_provider, asm_option asm_opts, preprocessor_options pp, virtual_file_monitor* vfm)
 {
     if (!last_analyzer_opencode_)
         last_opencode_id_storage_ = std::make_shared<context::id_storage>();
@@ -59,6 +60,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_op
             file_is_opencode::yes,
             last_opencode_id_storage_,
             std::move(pp),
+            vfm,
         });
     // If parsed as opencode previously, use id_index from the last parsing
 

@@ -142,7 +142,7 @@ TEST(macro_cache_test, copy_from_macro)
     auto& [copyfile, copy_c] = file_mngr.add_macro_or_copy(copyfile_file_name, copyfile_text);
 
 
-    opencode->parse(file_mngr, {}, {});
+    opencode->parse(file_mngr, {}, {}, nullptr);
     opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 0U);
 
@@ -174,7 +174,7 @@ TEST(macro_cache_test, copy_from_macro)
 
 
     // Reparse the change so everything is cached again
-    opencode->parse(file_mngr, {}, {});
+    opencode->parse(file_mngr, {}, {}, nullptr);
 
     copyfile->did_change({}, " ");
 
@@ -204,7 +204,7 @@ SETA   OPSYN LR
     auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto& [macro, macro_c] = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
 
-    opencode->parse(file_mngr, {}, {});
+    opencode->parse(file_mngr, {}, {}, nullptr);
     opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 0U);
 
@@ -227,7 +227,7 @@ SETA   OPSYN LR
 
 
     opencode->did_change({}, "L OPSYN SETB\n");
-    opencode->parse(file_mngr, {}, {});
+    opencode->parse(file_mngr, {}, {}, nullptr);
 
     analyzing_context ctx_second_opsyn1 = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
     EXPECT_TRUE(macro_c.load_from_cache(macro_key_one_opsyn, ctx_second_opsyn1));
@@ -258,7 +258,7 @@ TEST(macro_cache_test, empty_macro)
     auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto& [macro, macro_c] = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
 
-    opencode->parse(file_mngr, {}, {});
+    opencode->parse(file_mngr, {}, {}, nullptr);
 
     auto macro_id = file_mngr.hlasm_ctx->ids().add("MAC");
 
@@ -347,7 +347,7 @@ TEST(macro_cache_test, overwrite_by_inline)
     file_mngr.did_open_file(macro_file_name, 0, macro_text);
     auto opencode = file_mngr.add_processor_file(opencode_file_name);
 
-    opencode->parse(lib_provider, {}, {});
+    opencode->parse(lib_provider, {}, {}, nullptr);
     opencode->collect_diags();
 
     EXPECT_EQ(opencode->diags().size(), 2U);
@@ -356,7 +356,7 @@ TEST(macro_cache_test, overwrite_by_inline)
 
     opencode->diags().clear();
 
-    opencode->parse(lib_provider, {}, {});
+    opencode->parse(lib_provider, {}, {}, nullptr);
     opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 2U);
     EXPECT_TRUE(find_diag_with_filename(opencode->diags(), macro_file_name));
@@ -382,7 +382,7 @@ TEST(macro_cache_test, inline_depends_on_copy)
     auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto& [copyfile, copy_c] = file_mngr.add_macro_or_copy(copy_file_name, copy_text);
 
-    opencode->parse(file_mngr, {}, {});
+    opencode->parse(file_mngr, {}, {}, nullptr);
     opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 0U);
 
@@ -396,7 +396,7 @@ TEST(macro_cache_test, inline_depends_on_copy)
     EXPECT_TRUE(copy_c.load_from_cache(copy_key, new_ctx));
 
     copyfile->did_change({ { 0, 4 }, { 0, 5 } }, "16");
-    opencode->parse(file_mngr, {}, {});
+    opencode->parse(file_mngr, {}, {}, nullptr);
     opencode->collect_diags();
     ASSERT_EQ(opencode->diags().size(), 1U);
     EXPECT_EQ(opencode->diags()[0].code, "M120");

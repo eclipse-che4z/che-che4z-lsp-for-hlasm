@@ -222,6 +222,14 @@ public:
         return empty_tokens;
     }
 
+    sequence<char> get_virtual_file_content(unsigned long long id) const
+    {
+        auto f = file_manager_.get_virtual_file(id);
+        if (f)
+            return sequence<char>(*f);
+        return {};
+    }
+
 private:
     void collect_diags() const override
     {
@@ -289,6 +297,7 @@ private:
         }
         return match;
     }
+
     std::vector<debugging::variable*> temp_variables_;
 
     std::unordered_map<std::string, workspaces::workspace> workspaces_;
