@@ -218,6 +218,14 @@ TEST(context_macro_param, param_data)
     EXPECT_EQ(ptr->get_value(), "(first,second,third)");
 }
 
+TEST(context_macro_param, param_data_composite_empty)
+{
+    std::vector<macro_data_ptr> v;
+    macro_param_data_composite c(std::move(v));
+
+    EXPECT_EQ(c.get_value(), "()");
+}
+
 // testing more complex composite data
 TEST(context_macro_param, param_data_composite)
 {
