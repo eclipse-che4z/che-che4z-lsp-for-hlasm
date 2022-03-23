@@ -29,7 +29,14 @@ macro_param_variable::macro_param_variable(const context::macro_param_base& para
     else
         name_ = "&" + *macro_param_.id;
 
-    value_ = macro_param_.get_value(index_);
+    if (is_scalar())
+    {
+        value_ = macro_param_.get_value(index_);
+    }
+    else
+    {
+        value_ = get_array_value();
+    }
 }
 
 const std::string& macro_param_variable::get_name() const { return name_; }
@@ -64,6 +71,43 @@ std::vector<variable_ptr> macro_param_variable::values() const
         }
     }
     return vals;
+}
+
+std::string macro_param_variable::get_array_value() const
+{
+    std::string values;
+
+    std::vector<size_t> child_index = index_;
+    child_index.push_back(0);
+    
+    values += "(";
+
+    if (macro_param_.access_system_variable() && child_index.size() == 1)
+    {
+        for (size_t i = 0; i < size(); ++i)
+        {
+            if (i >= 1)
+                values += ",";
+
+            child_index.back() = i;
+            values += macro_param_.get_value(child_index);
+        }
+    }
+    else
+    {
+        for (size_t i = 1; i <= size(); ++i)
+        {
+            if (i >= 2)
+                values += ",";
+
+            child_index.back() = i;
+            values += macro_param_.get_value(child_index);
+        }
+    }
+
+    values += ")";
+
+    return values;
 }
 
 size_t macro_param_variable::size() const { return macro_param_.size(index_); }

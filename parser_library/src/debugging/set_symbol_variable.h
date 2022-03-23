@@ -45,6 +45,7 @@ private:
     T get_value() const;
 
     void fill_string_value();
+    std::string get_array_value() const;
 
     const context::set_symbol_base& set_symbol_;
     const std::optional<int> index_;
