@@ -50,6 +50,13 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_virtual_file_monitor(virtual_file_monitor)
 {}
 
+opencode_provider::~opencode_provider()
+{
+    if (m_virtual_file_monitor)
+        for (const auto& [_, v] : m_virtual_files)
+            m_virtual_file_monitor->file_released(v.second);
+}
+
 void opencode_provider::rewind_input(context::source_position pos)
 {
     apply_pending_line_changes();
@@ -337,10 +344,10 @@ unsigned long long next_virtual_file_id()
     return id++;
 }
 
-std::string generate_virtual_file_uri(unsigned long long id, std::string_view name)
+std::string generate_virtual_file_uri(virtual_file_id id, std::string_view name)
 {
     std::string result = "hlasm://";
-    result += std::to_string(id);
+    result += std::to_string(id.value());
     result += "/";
     result += name;
     return result;

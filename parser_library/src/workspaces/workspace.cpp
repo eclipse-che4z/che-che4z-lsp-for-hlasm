@@ -157,10 +157,11 @@ workspace_file_info workspace::parse_file(const std::string& file_uri)
     {
         workspaces::file_manager& fm;
         // Inherited via virtual_file_monitor
-        void file_generated(unsigned long long id, std::string_view content) override
+        void file_generated(virtual_file_id id, std::string_view content) override
         {
-            fm.put_virtual_file(id, content);
+            fm.put_virtual_file(id.value(), content);
         }
+        void file_released(virtual_file_id id) override { fm.remove_virtual_file(id.value()); }
 
         workspace_monitor(workspaces::file_manager& fm)
             : fm(fm)

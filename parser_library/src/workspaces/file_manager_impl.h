@@ -62,6 +62,7 @@ public:
 
 
     void put_virtual_file(unsigned long long id, std::string_view text) override;
+    void remove_virtual_file(unsigned long long id) override;
     const std::string* get_virtual_file(unsigned long long id) const override;
 
 protected:
