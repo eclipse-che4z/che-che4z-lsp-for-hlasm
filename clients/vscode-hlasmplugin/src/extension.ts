@@ -24,7 +24,7 @@ import { ServerFactory, ServerVariant } from './serverFactory';
 import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
 import { Telemetry } from './telemetry';
 import { LanguageClientErrorHandler } from './languageClientErrorHandler';
-import assert = require('assert');
+import { hlasmVirtualFileContentProvider } from './hlasmVirtualFileContentProvider';
 
 const offset = 71;
 const continueColumn = 15;
@@ -187,31 +187,7 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', () => getProgramName()));
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getCurrentProgramName', () => getCurrentProgramName()));
 
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("hlasm", new provider(client)));
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("hlasm", new hlasmVirtualFileContentProvider(client)));
 
     return handler;
-}
-
-class file_content {
-    content: string;
-}
-class provider implements vscode.TextDocumentContentProvider {
-    onDidChange?: vscode.Event<vscode.Uri>;
-    provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
-        return new Promise((resolve, reject) => {
-            this.client.onReady().then(() => {
-                assert(uri.scheme === 'hlasm');
-                let file_id = +uri.authority;
-                if (typeof file_id === 'number')
-                    this.client.sendRequest<file_content>("get_file_content", { id: file_id }, token)
-                        .then(c => resolve(c.content))
-                        .catch(e => reject(e));
-                else
-                    reject("Invalid virtual HLASM file.");
-            });
-        });
-    }
-
-    constructor(private client: vscodelc.BaseLanguageClient) {
-    }
 }
