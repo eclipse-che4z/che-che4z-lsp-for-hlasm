@@ -337,6 +337,15 @@ unsigned long long next_virtual_file_id()
     return id++;
 }
 
+std::string generate_virtual_file_uri(unsigned long long id, std::string_view name)
+{
+    std::string result = "hlasm://";
+    result += std::to_string(id);
+    result += "/";
+    result += name;
+    return result;
+}
+
 bool opencode_provider::try_running_preprocessor()
 {
     const auto current_line = m_current_line;
@@ -362,7 +371,7 @@ bool opencode_provider::try_running_preprocessor()
             m_virtual_file_monitor->file_generated(new_file->second.second, new_file->second.first);
         analyzer a(new_file->second.first,
             analyzer_options {
-                "hlasm://" + std::to_string(new_file->second.second) + "/" + *virtual_copy_name,
+                generate_virtual_file_uri(new_file->second.second, *virtual_copy_name),
                 m_lib_provider,
                 *m_ctx,
                 workspaces::library_data { processing_kind::COPY, virtual_copy_name },
@@ -436,7 +445,7 @@ void opencode_provider::convert_ainsert_buffer_to_copybook()
         m_virtual_file_monitor->file_generated(new_file->second.second, new_file->second.first);
     analyzer a(new_file->second.first,
         analyzer_options {
-            "hlasm://" + std::to_string(new_file->second.second) + "/" + *virtual_copy_name,
+            generate_virtual_file_uri(new_file->second.second, *virtual_copy_name),
             m_lib_provider,
             *m_ctx,
             workspaces::library_data { processing_kind::COPY, virtual_copy_name },
