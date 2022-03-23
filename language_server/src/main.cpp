@@ -26,64 +26,12 @@
 #include "scope_exit.h"
 #include "server_streams.h"
 #include "telemetry_broker.h"
+#include "virtual_file_provider.h"
 #include "workspace_manager.h"
 
 using namespace hlasm_plugin::language_server;
 
 namespace {
-
-class virtual_file_provider : public json_sink
-{
-    hlasm_plugin::parser_library::workspace_manager* ws_mngr;
-    json_sink* out_stream;
-
-    static std::string_view extract_method(const nlohmann::json& msg)
-    {
-        auto method_it = msg.find("method");
-        if (method_it == msg.end() || !method_it->is_string())
-            return {};
-        return method_it->get<std::string_view>();
-    }
-
-public:
-    // Inherited via json_sink
-    void write(const nlohmann::json& m) override
-    {
-        auto file_id = m.at("params").at("id").get<unsigned long long>();
-        auto s = std::string(ws_mngr->get_virtual_file_content(file_id));
-        if (s.empty())
-            out_stream->write(nlohmann::json {
-                { "id", m.at("id") },
-                {
-                    "error",
-                    nlohmann::json {
-                        { "code", 1 },
-                        { "message", "File not found" },
-                    },
-                },
-            });
-        else
-            out_stream->write(nlohmann::json {
-                { "id", m.at("id") },
-                {
-                    "result",
-                    nlohmann::json {
-                        { "content", std::move(s) },
-                    },
-                },
-            });
-    }
-    void write(nlohmann::json&& m) override { write(m); }
-
-    virtual_file_provider(hlasm_plugin::parser_library::workspace_manager& ws_mngr, json_sink& out)
-        : ws_mngr(&ws_mngr)
-        , out_stream(&out)
-    {}
-    [[nodiscard]] message_router::message_predicate get_filtering_predicate() const
-    {
-        return [](const nlohmann::json& msg) { return extract_method(msg) == "get_file_content"; };
-    }
-};
 
 class main_program : public json_sink
 {
