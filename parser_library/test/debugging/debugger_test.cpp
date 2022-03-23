@@ -195,6 +195,23 @@ struct frame_vars
     std::unordered_map<std::string, test_var_value> ord_syms;
 };
 
+struct pos_params_frame_vars : public frame_vars
+{
+    pos_params_frame_vars(std::unordered_map<std::string, test_var_value> globals,
+        std::unordered_map<std::string, test_var_value> locals,
+        std::unordered_map<std::string, test_var_value> ords)
+        : frame_vars(std::move(globals), std::move(locals), std::move(ords))
+    {
+        this->locals["&SYSLIST"];
+        this->locals["&SYSECT"];
+        this->locals["&SYSLOC"];
+        this->locals["&SYSNDX"];
+        this->locals["&SYSSTYP"];
+        this->locals["&SYSNEST"];
+        this->locals["&SYSMAC"];
+    }
+};
+
 bool check_vars(debugger& d,
     const std::vector<hlasm_plugin::parser_library::variable>& vars,
     const std::unordered_map<std::string, test_var_value>& exp_vars)
@@ -452,6 +469,103 @@ TEST(debugger, test_sysstmt)
     d.disconnect();
 }
 
+TEST(debugger, positional_parameters)
+{
+    using list = std::unordered_map<std::string, std::shared_ptr<test_var_value>>;
+
+    std::string open_code = R"(
+        MACRO
+        MAC &VAR
+        MEND
+
+        MAC
+        MAC ()
+        MAC (13,14)
+)";
+
+    file_manager_impl file_manager;
+    workspace_mock lib_provider(file_manager);
+    debug_event_consumer_s_mock m;
+    debugger d;
+    d.set_event_consumer(&m);
+    std::string filename = "ws\\test";
+    file_manager.did_open_file(filename, 0, open_code);
+
+    d.launch(filename, lib_provider, true, &lib_provider);
+    m.wait_for_stopped();
+
+    d.next();
+    m.wait_for_stopped();
+    std::vector<debugging::stack_frame> exp_frames { { 5, 5, 0, "OPENCODE", filename } };
+    std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
+
+    d.step_in();
+    m.wait_for_stopped();
+    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
+    exp_frame_vars.insert(exp_frame_vars.begin(),
+        pos_params_frame_vars({}, // empty globals
+            std::unordered_map<std::string, test_var_value> {
+                // macro locals
+                { "&VAR", "" },
+            },
+            {} // empty ord symbols
+            ));
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.next();
+    m.wait_for_stopped();
+    exp_frames.erase(exp_frames.begin());
+    exp_frame_vars.erase(exp_frame_vars.begin());
+    exp_frames[0].begin_line = exp_frames[0].end_line = 6;
+
+    d.step_in();
+    m.wait_for_stopped();
+    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
+    exp_frame_vars.insert(exp_frame_vars.begin(),
+        pos_params_frame_vars({}, // empty globals
+            std::unordered_map<std::string, test_var_value> {
+                // macro locals
+                {
+                    "&VAR",
+                    test_var_value("()",
+                        list {
+                            { "1", std::make_shared<test_var_value>("") },
+                        }),
+                },
+            },
+            {} // empty ord symbols
+            ));
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.next();
+    m.wait_for_stopped();
+    exp_frames.erase(exp_frames.begin());
+    exp_frame_vars.erase(exp_frame_vars.begin());
+    exp_frames[0].begin_line = exp_frames[0].end_line = 7;
+
+    d.step_in();
+    m.wait_for_stopped();
+    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
+    exp_frame_vars.insert(exp_frame_vars.begin(),
+        pos_params_frame_vars({}, // empty globals
+            std::unordered_map<std::string, test_var_value> {
+                // macro locals
+                {
+                    "&VAR",
+                    test_var_value("(13,14)",
+                        list {
+                            { "1", std::make_shared<test_var_value>("13") },
+                            { "2", std::make_shared<test_var_value>("14") },
+                        }),
+                },
+            },
+            {} // empty ord symbols
+            ));
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.disconnect();
+}
+
 TEST(debugger, var_symbol_array)
 {
     using list = std::unordered_map<std::string, std::shared_ptr<test_var_value>>;
@@ -478,11 +592,11 @@ TEST(debugger, var_symbol_array)
 
     d.next();
     m.wait_for_stopped();
-    exp_frame_vars[0].locals.emplace("&VARP",
+    exp_frame_vars[0].locals.emplace("&VARP", test_var_value("(1,456,48,7)",
         list { { "30", std::make_shared<test_var_value>(1) },
             { "31", std::make_shared<test_var_value>(456) },
             { "32", std::make_shared<test_var_value>(48) },
-            { "33", std::make_shared<test_var_value>(7) } });
+            { "33", std::make_shared<test_var_value>(7) } }));
     exp_frames[0].begin_line = exp_frames[0].end_line = 2;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
