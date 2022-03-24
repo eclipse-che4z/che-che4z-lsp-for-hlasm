@@ -286,8 +286,9 @@ void step_into(debugger& d,
     std::string name,
     debugging::source source)
 {
-    exp_stack_frames.insert(
-        exp_stack_frames.begin(), debugging::stack_frame(line, line, exp_stack_frames[0].id + 1, name, source));
+    uint32_t next_frame_id = exp_stack_frames.empty() ? 0 : exp_stack_frames[0].id + 1;
+
+    exp_stack_frames.insert(exp_stack_frames.begin(), debugging::stack_frame(line, line, next_frame_id, name, source));
 
     d.step_in();
     m.wait_for_stopped();
