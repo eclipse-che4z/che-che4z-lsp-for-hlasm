@@ -76,28 +76,25 @@ std::vector<variable_ptr> set_symbol_variable::values() const
 
 std::string set_symbol_variable::get_array_value() const
 {
-    std::string values;
-    values += "(";
+    std::string array_value;
+    array_value.append("(");
 
     auto keys = set_symbol_.keys();
-    for (size_t i = 0; i < keys.size(); ++i)
+    for (const auto& key : keys)
     {
-        if (i > 0)
-        {
-            values += ",";
-        }
-
         if (type() == set_type::A_TYPE)
-            values += std::to_string(set_symbol_.access_set_symbol<context::A_t>()->get_value(keys[i]));
+            array_value.append(std::to_string(set_symbol_.access_set_symbol<context::A_t>()->get_value(key)));
         else if (type() == set_type::B_TYPE)
-            values += set_symbol_.access_set_symbol<context::B_t>()->get_value(keys[i]);
+            array_value.append(set_symbol_.access_set_symbol<context::B_t>()->get_value(key) ? "TRUE" : "FALSE");
         else
-            values += set_symbol_.access_set_symbol<std::string>()->get_value(keys[i]);
+            array_value.append(set_symbol_.access_set_symbol<context::C_t>()->get_value(key));
+
+        array_value.append(",");
     }
 
-    values += ")";
+    array_value.back() = ')';
 
-    return values;
+    return array_value;
 }
 
 size_t set_symbol_variable::size() const { return set_symbol_.size(); }
