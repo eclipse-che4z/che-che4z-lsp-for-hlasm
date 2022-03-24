@@ -633,11 +633,12 @@ TEST(debugger, var_symbol_array)
 
     d.next();
     m.wait_for_stopped();
-    exp_frame_vars[0].locals.emplace("&VARP", test_var_value("(1,456,48,7)",
-        list { { "30", std::make_shared<test_var_value>(1) },
-            { "31", std::make_shared<test_var_value>(456) },
-            { "32", std::make_shared<test_var_value>(48) },
-            { "33", std::make_shared<test_var_value>(7) } }));
+    exp_frame_vars[0].locals.emplace("&VARP",
+        test_var_value("(1,456,48,7)",
+            list { { "30", std::make_shared<test_var_value>(1) },
+                { "31", std::make_shared<test_var_value>(456) },
+                { "32", std::make_shared<test_var_value>(48) },
+                { "33", std::make_shared<test_var_value>(7) } }));
     exp_frames[0].begin_line = exp_frames[0].end_line = 2;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
