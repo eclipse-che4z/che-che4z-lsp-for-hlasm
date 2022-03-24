@@ -21,6 +21,7 @@ target_sources(library_test PRIVATE
 	pathmask_test.cpp
 	processor_file_test.cpp
 	text_synchronization_test.cpp
+	virtual_files_test.cpp
 	workspace_test.cpp
 )
 

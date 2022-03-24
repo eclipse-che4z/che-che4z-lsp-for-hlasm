@@ -124,7 +124,8 @@ A        DC C
 
     EXPECT_EQ(d.code, "D016");
     ASSERT_EQ(d.related.size(), 3);
-    EXPECT_EQ(d.related[0].location.uri, "AINSERT:1");
+    EXPECT_TRUE(d.related[0].location.uri.starts_with("hlasm://"));
+    EXPECT_TRUE(d.related[0].location.uri.ends_with("/AINSERT:1"));
     EXPECT_EQ(d.related[1].location.uri, "COPYBOOK");
 }
 
