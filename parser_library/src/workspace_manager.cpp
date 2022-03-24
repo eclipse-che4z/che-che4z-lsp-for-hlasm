@@ -138,7 +138,7 @@ document_symbol_list workspace_manager::document_symbol(const char* document_uri
 }
 
 
-sequence<char> workspace_manager::get_virtual_file_content(unsigned long long id) const
+continuous_sequence<char> workspace_manager::get_virtual_file_content(unsigned long long id) const
 {
     return impl_->get_virtual_file_content(id);
 }

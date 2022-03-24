@@ -112,7 +112,7 @@ public:
     virtual void unregister_parsing_metadata_consumer(parsing_metadata_consumer* consumer);
     virtual void set_message_consumer(message_consumer* consumer);
 
-    virtual sequence<char> get_virtual_file_content(unsigned long long id) const;
+    virtual continuous_sequence<char> get_virtual_file_content(unsigned long long id) const;
 
 private:
     impl* impl_;

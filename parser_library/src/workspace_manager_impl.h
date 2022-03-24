@@ -222,12 +222,9 @@ public:
         return empty_tokens;
     }
 
-    sequence<char> get_virtual_file_content(unsigned long long id) const
+    continuous_sequence<char> get_virtual_file_content(unsigned long long id) const
     {
-        auto f = file_manager_.get_virtual_file(id);
-        if (f)
-            return sequence<char>(*f);
-        return {};
+        return make_continuous_sequence(file_manager_.get_virtual_file(id));
     }
 
 private:

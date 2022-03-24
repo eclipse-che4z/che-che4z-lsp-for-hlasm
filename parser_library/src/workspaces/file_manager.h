@@ -69,7 +69,7 @@ public:
 
     virtual void put_virtual_file(unsigned long long id, std::string_view text) = 0;
     virtual void remove_virtual_file(unsigned long long id) = 0;
-    virtual const std::string* get_virtual_file(unsigned long long id) const = 0;
+    virtual std::string get_virtual_file(unsigned long long id) const = 0;
 
 protected:
     ~file_manager() = default;

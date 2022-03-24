@@ -201,13 +201,12 @@ void file_manager_impl::remove_virtual_file(unsigned long long id)
     m_virtual_files.erase(id);
 }
 
-const std::string* file_manager_impl::get_virtual_file(unsigned long long id) const
+std::string file_manager_impl::get_virtual_file(unsigned long long id) const
 {
-    // TODO: no longer safe
     std::lock_guard guard(files_mutex);
     if (auto it = m_virtual_files.find(id); it != m_virtual_files.end())
-        return &it->second;
-    return nullptr;
+        return it->second;
+    return {};
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

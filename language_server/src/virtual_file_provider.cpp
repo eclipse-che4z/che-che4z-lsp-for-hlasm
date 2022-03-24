@@ -34,7 +34,8 @@ void virtual_file_provider::write(const nlohmann::json& m)
 {
     try
     {
-        std::string s(ws_mngr->get_virtual_file_content(m.at("params").at("id").get<unsigned long long>()));
+        auto s_ = ws_mngr->get_virtual_file_content(m.at("params").at("id").get<unsigned long long>());
+        std::string_view s(s_.begin(), s_.end());
         if (s.empty())
             out_stream->write(nlohmann::json {
                 { "id", m.at("id") },
@@ -52,7 +53,7 @@ void virtual_file_provider::write(const nlohmann::json& m)
                 {
                     "result",
                     nlohmann::json {
-                        { "content", std::move(s) },
+                        { "content", s },
                     },
                 },
             });

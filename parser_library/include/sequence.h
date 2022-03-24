@@ -33,37 +33,81 @@ class sequence_iterator
     size_t m_idx;
 
 public:
-    sequence_iterator(const T* ptr, size_t index)
+    sequence_iterator(const T* ptr, size_t index) noexcept
         : m_ptr(ptr)
         , m_idx(index)
     {}
 
     auto operator*() const { return m_ptr->item(m_idx); }
-    sequence_iterator& operator++()
+    sequence_iterator& operator++() noexcept
     {
         m_idx++;
         return *this;
     }
-    sequence_iterator operator++(int)
+    sequence_iterator operator++(int) noexcept
     {
         auto tmp = *this;
         ++(*this);
         return tmp;
     }
-    friend bool operator==(const sequence_iterator& a, const sequence_iterator& b)
+    friend bool operator==(const sequence_iterator& a, const sequence_iterator& b) noexcept
     {
         return a.m_ptr == b.m_ptr && a.m_idx == b.m_idx;
-    };
-    friend bool operator!=(const sequence_iterator& a, const sequence_iterator& b)
+    }
+    friend bool operator!=(const sequence_iterator& a, const sequence_iterator& b) noexcept
     {
         return a.m_ptr != b.m_ptr || a.m_idx != b.m_idx;
-    };
+    }
 
     using iterator_category = std::input_iterator_tag;
     using difference_type = std::ptrdiff_t;
     using value_type = decltype(m_ptr->item(0));
     using pointer = void;
     using reference = value_type;
+};
+
+template<typename T>
+concept trivial_storage_sequence = requires(const T& t)
+{
+    typename T::sequence_trivial;
+    {
+        t.data()
+    }
+    noexcept;
+    requires std::is_pointer_v<decltype(t.data())>;
+    requires std::is_standard_layout_v<std::remove_pointer_t<decltype(t.data())>>;
+};
+
+template<typename T>
+class continuous_storage
+{
+    void* to_delete = nullptr;
+    void (*deleter)(void*) = nullptr;
+    const T* m_data = nullptr;
+
+public:
+    continuous_storage() = default;
+    template<typename U>
+    explicit continuous_storage(U&& v)
+        : to_delete(new U(std::forward<U>(v)))
+        , deleter(+[](void* ptr) { delete (U*)ptr; })
+        , m_data(((const U*)to_delete)->data())
+    {}
+    continuous_storage(const continuous_storage& o) = delete;
+    continuous_storage(continuous_storage&& o) noexcept
+        : to_delete(std::exchange(o.to_delete, nullptr))
+        , deleter(o.deleter)
+        , m_data(std::exchange(o.m_data, nullptr))
+    {}
+    ~continuous_storage()
+    {
+        if (to_delete)
+            deleter(to_delete);
+    }
+
+    auto data() const noexcept { return m_data; }
+
+    using sequence_trivial = void;
 };
 
 // Provides pimpl for arrays. The returned item can be
@@ -79,7 +123,7 @@ class sequence
 
     public:
         counter() = default;
-        counter(size_t s)
+        counter(size_t s) noexcept
             : size(s)
         {}
         counter(const counter&) = default;
@@ -95,23 +139,56 @@ public:
     sequence() = default;
     sequence(const sequence&) = default;
     sequence(sequence&& s) = default;
-    sequence(storage stor, size_t size)
+    sequence(storage stor, size_t size) noexcept(std::is_nothrow_move_constructible_v<storage>)
         : stor_(std::move(stor))
         , size_(size)
     {}
     explicit operator std::vector<c_type>() const { return std::vector<c_type>(begin(), end()); }
 
-    // needs to be specialized for every type
+    // needs to be specialized for every type unless the storage is trivial
     [[nodiscard]] c_type item(size_t index) const;
-    [[nodiscard]] size_t size() const { return size_; }
 
-    [[nodiscard]] auto begin() const { return sequence_iterator(this, 0); }
-    [[nodiscard]] auto end() const { return sequence_iterator(this, size()); }
+    [[nodiscard]] c_type item(size_t index) const noexcept requires(trivial_storage_sequence<storage>)
+    {
+        return data()[index];
+    }
+
+    [[nodiscard]] auto data() const noexcept requires(trivial_storage_sequence<storage>) { return stor_.data(); }
+    [[nodiscard]] size_t size() const noexcept { return size_; }
+
+    [[nodiscard]] auto begin() const noexcept
+    {
+        if constexpr (trivial_storage_sequence<storage>)
+            return stor_.data();
+        else
+            return sequence_iterator(this, 0);
+    }
+    [[nodiscard]] auto end() const noexcept
+    {
+        if constexpr (trivial_storage_sequence<storage>)
+            return stor_.data() + size();
+        else
+            return sequence_iterator(this, size());
+    }
 
 private:
     storage stor_ = storage();
     counter_t size_ = counter_t();
 };
+
+template<typename c_type>
+using continuous_sequence = sequence<c_type, continuous_storage<c_type>>;
+
+template<typename C>
+auto make_continuous_sequence(C c)
+{
+    using c_type = std::decay_t<decltype(*c.data())>;
+
+    if (const auto s = c.size(); s != 0)
+        return continuous_sequence<c_type>(continuous_storage<c_type>(std::move(c)), s);
+    else
+        return continuous_sequence<c_type>();
+}
 
 // Specialization for simple arrays
 // not all string_view implementations are abi-compatible.
@@ -120,12 +197,12 @@ class sequence<c_type, void>
 {
 public:
     sequence() = default;
-    sequence(const c_type* data, size_t size)
+    sequence(const c_type* data, size_t size) noexcept
         : data_(data)
         , size_(size)
     {}
     template<typename U, typename = std::void_t<decltype(std::declval<U>().data()), decltype(std::declval<U>().size())>>
-    explicit sequence(U&& sv)
+    explicit sequence(U&& sv) noexcept
         : data_(sv.data())
         , size_(sv.size())
     {}
@@ -142,11 +219,11 @@ public:
 
 
     [[nodiscard]] c_type item(size_t index) const { return data_[index]; }
-    [[nodiscard]] size_t size() const { return size_; }
-    [[nodiscard]] const c_type* data() const { return data_; }
+    [[nodiscard]] size_t size() const noexcept { return size_; }
+    [[nodiscard]] const c_type* data() const noexcept { return data_; }
 
-    [[nodiscard]] const c_type* begin() const { return data_; }
-    [[nodiscard]] const c_type* end() const { return data_ + size_; }
+    [[nodiscard]] const c_type* begin() const noexcept { return data_; }
+    [[nodiscard]] const c_type* end() const noexcept { return data_ + size_; }
 
 private:
     const c_type* data_ = nullptr;
