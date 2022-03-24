@@ -25,17 +25,14 @@ macro_param_variable::macro_param_variable(const context::macro_param_base& para
     , index_(std::move(index))
 {
     if (!index_.empty())
-        name_ = std::to_string(index_.back());
-    else
-        name_ = "&" + *macro_param_.id;
-
-    if (is_scalar() || !index_.empty())
     {
+        name_ = std::to_string(index_.back());
         value_ = macro_param_.get_value(index_);
     }
     else
     {
-        value_ = macro_param_.access_macro_param_base()->macro_param_base::get_value();
+        name_ = "&" + *macro_param_.id;
+        value_ = (&macro_param_)->macro_param_base::get_value();
     }
 }
 
