@@ -29,7 +29,7 @@ export class hlasmVirtualFileContentProvider implements vscode.TextDocumentConte
                 const trimmed = uri.authority.trim();
                 const file_id = +trimmed;
                 if (trimmed.length > 0 && !isNaN(file_id))
-                    this.client.sendRequest<file_content>("get_file_content", { id: file_id }, token)
+                    this.client.sendRequest<file_content>("get_virtual_file_content", { id: file_id }, token)
                         .then(c => resolve(c.content))
                         .catch(e => reject(e));
 

@@ -67,7 +67,7 @@ void virtual_file_provider::write(nlohmann::json&& m) { write(m); }
 
 message_router::message_predicate virtual_file_provider::get_filtering_predicate() const
 {
-    return [](const nlohmann::json& msg) { return extract_method(msg) == "get_file_content"; };
+    return [](const nlohmann::json& msg) { return extract_method(msg) == "get_virtual_file_content"; };
 }
 
 } // namespace hlasm_plugin::language_server
