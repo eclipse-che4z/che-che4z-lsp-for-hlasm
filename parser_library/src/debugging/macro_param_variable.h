@@ -42,8 +42,6 @@ private:
     std::vector<size_t> index_;
     std::string name_;
     std::string value_;
-
-    std::string get_array_value() const;
 };
 
 
