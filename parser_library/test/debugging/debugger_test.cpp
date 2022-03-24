@@ -262,6 +262,46 @@ bool check_step(
     return true;
 }
 
+namespace {
+void step_over_by(size_t number_of_steps,
+    debugger& d,
+    debug_event_consumer_s_mock& m,
+    std::vector<debugging::stack_frame>& exp_stack_frames,
+    size_t line)
+{
+    exp_stack_frames[0].begin_line = exp_stack_frames[0].end_line = line;
+
+    while (number_of_steps > 0)
+    {
+        d.next();
+        m.wait_for_stopped();
+        number_of_steps--;
+    }
+}
+
+void step_into(debugger& d,
+    debug_event_consumer_s_mock& m,
+    std::vector<debugging::stack_frame>& exp_stack_frames,
+    size_t line,
+    std::string name,
+    debugging::source source)
+{
+    exp_stack_frames.insert(
+        exp_stack_frames.begin(), debugging::stack_frame(line, line, exp_stack_frames[0].id + 1, name, source));
+
+    d.step_in();
+    m.wait_for_stopped();
+}
+
+void erase_frames_from_top(size_t number_of_frames,
+    std::vector<debugging::stack_frame>& exp_stack_frames,
+    std::vector<frame_vars>& exp_frame_vars)
+{
+    exp_stack_frames.erase(exp_stack_frames.begin(), exp_stack_frames.begin() + number_of_frames);
+    exp_frame_vars.erase(exp_frame_vars.begin(), exp_frame_vars.begin() + number_of_frames);
+}
+} // namespace
+
 class workspace_mock : public workspace
 {
     lib_config config;
@@ -330,32 +370,22 @@ TEST(debugger, test)
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
+    step_over_by(1, d, m, exp_frames, 2);
     exp_frame_vars[0].locals.emplace("&VAR", 2);
-    exp_frames[0].begin_line = exp_frames[0].end_line = 2;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
-    exp_frames[0].begin_line = exp_frames[0].end_line = 3;
+    step_over_by(1, d, m, exp_frames, 3);
     exp_frame_vars[0].locals.emplace("&BOOL", true);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
-    exp_frames[0].begin_line = exp_frames[0].end_line = 5;
+    step_over_by(1, d, m, exp_frames, 5);
     exp_frame_vars[0].locals.emplace("&STR", "SOMETHING");
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
-    exp_frames[0].begin_line = exp_frames[0].end_line = 12;
+    step_over_by(1, d, m, exp_frames, 12);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.step_in();
-    m.wait_for_stopped();
-    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(7, 7, 1, "MACRO", filename));
+    step_into(d, m, exp_frames, 7, "MACRO", filename);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars(std::unordered_map<std::string, test_var_value> { {
                        "&SYSPARM",
@@ -383,35 +413,23 @@ TEST(debugger, test)
             ));
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.step_in();
-    m.wait_for_stopped();
-    exp_frames[0].begin_line = exp_frames[0].end_line = 8;
+    step_over_by(1, d, m, exp_frames, 8);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.step_in();
-    m.wait_for_stopped();
-    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(1, 1, 2, "COPY", copy1_filename));
+    step_into(d, m, exp_frames, 1, "COPY", copy1_filename);
     exp_frame_vars.insert(exp_frame_vars.begin(), exp_frame_vars[0]);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.step_in();
-    m.wait_for_stopped();
-    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(2, 2, 3, "COPY", copy2_filename));
+    step_into(d, m, exp_frames, 2, "COPY", copy2_filename);
     exp_frame_vars.insert(exp_frame_vars.begin(), exp_frame_vars[0]);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
-    exp_frames.erase(exp_frames.begin(), exp_frames.begin() + 2);
-    exp_frame_vars.erase(exp_frame_vars.begin(), exp_frame_vars.begin() + 2);
-    exp_frames[0].begin_line = exp_frames[0].end_line = 10;
+    erase_frames_from_top(2, exp_frames, exp_frame_vars);
+    step_over_by(1, d, m, exp_frames, 10);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
-    exp_frames.erase(exp_frames.begin());
-    exp_frame_vars.erase(exp_frame_vars.begin());
-    exp_frames[0].begin_line = exp_frames[0].end_line = 13;
+    erase_frames_from_top(1, exp_frames, exp_frame_vars);
+    step_over_by(1, d, m, exp_frames, 13);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.disconnect();
@@ -446,16 +464,12 @@ TEST(debugger, test_sysstmt)
         {} } };
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
+    step_over_by(1, d, m, exp_frames, 2);
     exp_frame_vars[0].globals["&SYSSTMT"] = "00000004";
-    exp_frames[0].begin_line = exp_frames[0].end_line = 2;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
+    step_over_by(1, d, m, exp_frames, 3);
     exp_frame_vars[0].globals["&SYSSTMT"] = "00000005";
-    exp_frames[0].begin_line = exp_frames[0].end_line = 3;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.disconnect();
@@ -492,9 +506,7 @@ TEST(debugger, positional_parameters)
     std::vector<debugging::stack_frame> exp_frames { { 5, 5, 0, "OPENCODE", filename } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
 
-    d.step_in();
-    m.wait_for_stopped();
-    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
+    step_into(d, m, exp_frames, 3, "MACRO", filename);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
@@ -505,15 +517,10 @@ TEST(debugger, positional_parameters)
             ));
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
-    exp_frames.erase(exp_frames.begin());
-    exp_frame_vars.erase(exp_frame_vars.begin());
-    exp_frames[0].begin_line = exp_frames[0].end_line = 6;
+    erase_frames_from_top(1, exp_frames, exp_frame_vars);
+    step_over_by(1, d, m, exp_frames, 6);
 
-    d.step_in();
-    m.wait_for_stopped();
-    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
+    step_into(d, m, exp_frames, 3, "MACRO", filename);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
@@ -530,15 +537,10 @@ TEST(debugger, positional_parameters)
             ));
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
-    exp_frames.erase(exp_frames.begin());
-    exp_frame_vars.erase(exp_frame_vars.begin());
-    exp_frames[0].begin_line = exp_frames[0].end_line = 7;
+    erase_frames_from_top(1, exp_frames, exp_frame_vars);
+    step_over_by(1, d, m, exp_frames, 7);
 
-    d.step_in();
-    m.wait_for_stopped();
-    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
+    step_into(d, m, exp_frames, 3, "MACRO", filename);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
@@ -556,15 +558,10 @@ TEST(debugger, positional_parameters)
             ));
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
-    exp_frames.erase(exp_frames.begin());
-    exp_frame_vars.erase(exp_frame_vars.begin());
-    exp_frames[0].begin_line = exp_frames[0].end_line = 8;
+    erase_frames_from_top(1, exp_frames, exp_frame_vars);
+    step_over_by(1, d, m, exp_frames, 8);
 
-    d.step_in();
-    m.wait_for_stopped();
-    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
+    step_into(d, m, exp_frames, 3, "MACRO", filename);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
@@ -625,34 +622,27 @@ TEST(debugger, var_symbol_array)
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
+    step_over_by(1, d, m, exp_frames, 2);
     exp_frame_vars[0].locals.emplace("&VAR",
         test_var_value("(1,456,48,7)",
             list { { "30", std::make_shared<test_var_value>(1) },
                 { "31", std::make_shared<test_var_value>(456) },
                 { "32", std::make_shared<test_var_value>(48) },
                 { "33", std::make_shared<test_var_value>(7) } }));
-    exp_frames[0].begin_line = exp_frames[0].end_line = 2;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
+    step_over_by(1, d, m, exp_frames, 3);
     exp_frame_vars[0].locals.emplace("&BOOL",
         test_var_value("(FALSE,TRUE,FALSE)",
             list { { "15", std::make_shared<test_var_value>("FALSE") },
                 { "16", std::make_shared<test_var_value>("TRUE") },
                 { "17", std::make_shared<test_var_value>("FALSE") } }));
-    exp_frames[0].begin_line = exp_frames[0].end_line = 3;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
+    step_over_by(1, d, m, exp_frames, 4);
     exp_frame_vars[0].locals.emplace("&STR",
         test_var_value("(a,b)",
-            list { { "6", std::make_shared<test_var_value>("a") },
-                { "7", std::make_shared<test_var_value>("b") } }));
-    exp_frames[0].begin_line = exp_frames[0].end_line = 4;
+            list { { "6", std::make_shared<test_var_value>("a") }, { "7", std::make_shared<test_var_value>("b") } }));
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.disconnect();
@@ -682,12 +672,10 @@ B EQU A
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    d.next();
-    m.wait_for_stopped();
+    step_over_by(1, d, m, exp_frames, 2);
     exp_frame_vars[0].ord_syms.emplace("A",
         test_var_value("13",
             list { { "L", std::make_shared<test_var_value>("1") }, { "T", std::make_shared<test_var_value>("U") } }));
-    exp_frames[0].begin_line = exp_frames[0].end_line = 2;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.disconnect();
