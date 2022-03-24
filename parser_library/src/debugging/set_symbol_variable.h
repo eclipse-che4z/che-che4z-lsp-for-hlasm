@@ -42,15 +42,15 @@ public:
 
 private:
     template<typename T>
-    T get_value() const;
+    T get_value(const std::optional<int>& index) const;
 
-    void fill_string_value();
-    std::string get_array_value() const;
+    std::string get_string_value(const std::optional<int>& index) const;
+    std::string get_string_array_value() const;
 
     const context::set_symbol_base& set_symbol_;
     const std::optional<int> index_;
 
-    std::string name_;
+    const std::string name_;
     std::string value_;
 };
 
