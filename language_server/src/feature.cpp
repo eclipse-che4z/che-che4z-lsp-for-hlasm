@@ -72,7 +72,8 @@ std::string feature::uri_to_path(const std::string& uri)
     return utils::path::lexically_normal(network::detail::decode(auth_path)).string();
 }
 
-const std::regex uri_like("^[A-Za-z][A-Za-z0-9+\\-.]*://"); // "//" is not really mandatory, but Windows paths collide
+// one letter schemas are valid, but Windows paths collide
+const std::regex uri_like("^[A-Za-z][A-Za-z0-9+\\-.]+:");
 
 std::string feature::path_to_uri(std::string_view path)
 {
