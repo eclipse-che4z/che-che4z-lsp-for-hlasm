@@ -90,38 +90,30 @@ class test_var_value
 public:
     test_var_value(std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec)
         : children_(vec)
-        , ignore_(false)
     {}
     test_var_value(A_t str)
         : data_(std::to_string(str))
-        , ignore_(false)
     {}
     test_var_value(B_t str)
         : data_(str ? "TRUE" : "FALSE")
-        , ignore_(false)
     {}
     test_var_value(std::string str)
         : data_(str)
-        , ignore_(false)
     {}
     test_var_value(std::string str, std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec)
         : children_(vec)
         , data_(str)
-        , ignore_(false)
     {}
     test_var_value(const char* cstr)
         : data_(std::string(cstr))
-        , ignore_(false)
     {}
     test_var_value(const char* cstr, std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec)
         : children_(vec)
         , data_(std::string(cstr))
-        , ignore_(false)
     {}
     test_var_value()
         : ignore_(true)
     {}
-
     test_var_value(std::string str, set_type)
         : data_(str)
     {}
@@ -170,7 +162,7 @@ public:
 private:
     std::unordered_map<std::string, std::shared_ptr<test_var_value>> children_;
     std::optional<std::string> data_;
-    bool ignore_;
+    bool ignore_ = false;
 };
 
 struct frame_vars
@@ -195,9 +187,9 @@ struct frame_vars
     std::unordered_map<std::string, test_var_value> ord_syms;
 };
 
-struct pos_params_frame_vars : public frame_vars
+struct frame_vars_ignore_sys_vars : public frame_vars
 {
-    pos_params_frame_vars(std::unordered_map<std::string, test_var_value> globals,
+    frame_vars_ignore_sys_vars(std::unordered_map<std::string, test_var_value> globals,
         std::unordered_map<std::string, test_var_value> locals,
         std::unordered_map<std::string, test_var_value> ords)
         : frame_vars(std::move(globals), std::move(locals), std::move(ords))
@@ -504,7 +496,7 @@ TEST(debugger, positional_parameters)
     m.wait_for_stopped();
     exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
     exp_frame_vars.insert(exp_frame_vars.begin(),
-        pos_params_frame_vars({}, // empty globals
+        frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
                 { "&VAR", "" },
@@ -523,7 +515,7 @@ TEST(debugger, positional_parameters)
     m.wait_for_stopped();
     exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
     exp_frame_vars.insert(exp_frame_vars.begin(),
-        pos_params_frame_vars({}, // empty globals
+        frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
                 {
@@ -548,7 +540,7 @@ TEST(debugger, positional_parameters)
     m.wait_for_stopped();
     exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
     exp_frame_vars.insert(exp_frame_vars.begin(),
-        pos_params_frame_vars({}, // empty globals
+        frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
                 {
@@ -574,7 +566,7 @@ TEST(debugger, positional_parameters)
     m.wait_for_stopped();
     exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
     exp_frame_vars.insert(exp_frame_vars.begin(),
-        pos_params_frame_vars({}, // empty globals
+        frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
                 {
@@ -613,7 +605,8 @@ TEST(debugger, var_symbol_array)
 
     std::string open_code = R"(
 &VARP(30) SETA 1,456,48,7
- LR 1,1
+&BOOL(15) SETA 0,1,0
+          LR   1,1
 )";
 
 
@@ -643,7 +636,16 @@ TEST(debugger, var_symbol_array)
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.next();
-    m.wait_for_exited();
+    m.wait_for_stopped();
+    exp_frame_vars[0].locals.emplace("&BOOL",
+        test_var_value("(FALSE,TRUE,FALSE)",
+            list { { "15", std::make_shared<test_var_value>("FALSE") },
+                { "16", std::make_shared<test_var_value>("TRUE") },
+                { "17", std::make_shared<test_var_value>("FALSE") } }));
+    exp_frames[0].begin_line = exp_frames[0].end_line = 3;
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.disconnect();
 }
 
 TEST(debugger, ordinary)
