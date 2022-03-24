@@ -604,8 +604,9 @@ TEST(debugger, var_symbol_array)
     using list = std::unordered_map<std::string, std::shared_ptr<test_var_value>>;
 
     std::string open_code = R"(
-&VARP(30) SETA 1,456,48,7
-&BOOL(15) SETA 0,1,0
+&VAR(30)  SETA 1,456,48,7
+&BOOL(15) SETB 0,1,0
+&STR(6)   SETC 'a','b'
           LR   1,1
 )";
 
@@ -626,7 +627,7 @@ TEST(debugger, var_symbol_array)
 
     d.next();
     m.wait_for_stopped();
-    exp_frame_vars[0].locals.emplace("&VARP",
+    exp_frame_vars[0].locals.emplace("&VAR",
         test_var_value("(1,456,48,7)",
             list { { "30", std::make_shared<test_var_value>(1) },
                 { "31", std::make_shared<test_var_value>(456) },
@@ -643,6 +644,15 @@ TEST(debugger, var_symbol_array)
                 { "16", std::make_shared<test_var_value>("TRUE") },
                 { "17", std::make_shared<test_var_value>("FALSE") } }));
     exp_frames[0].begin_line = exp_frames[0].end_line = 3;
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.next();
+    m.wait_for_stopped();
+    exp_frame_vars[0].locals.emplace("&STR",
+        test_var_value("(a,b)",
+            list { { "6", std::make_shared<test_var_value>("a") },
+                { "7", std::make_shared<test_var_value>("b") } }));
+    exp_frames[0].begin_line = exp_frames[0].end_line = 4;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.disconnect();
