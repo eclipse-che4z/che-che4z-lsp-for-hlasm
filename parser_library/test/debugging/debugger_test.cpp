@@ -481,6 +481,7 @@ TEST(debugger, positional_parameters)
         MAC
         MAC ()
         MAC (13,14)
+        MAC (('a','b'),('c'),('d'))
 )";
 
     file_manager_impl file_manager;
@@ -556,6 +557,46 @@ TEST(debugger, positional_parameters)
                         list {
                             { "1", std::make_shared<test_var_value>("13") },
                             { "2", std::make_shared<test_var_value>("14") },
+                        }),
+                },
+            },
+            {} // empty ord symbols
+            ));
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.next();
+    m.wait_for_stopped();
+    exp_frames.erase(exp_frames.begin());
+    exp_frame_vars.erase(exp_frame_vars.begin());
+    exp_frames[0].begin_line = exp_frames[0].end_line = 8;
+
+    d.step_in();
+    m.wait_for_stopped();
+    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(3, 3, 1, "MACRO", filename));
+    exp_frame_vars.insert(exp_frame_vars.begin(),
+        pos_params_frame_vars({}, // empty globals
+            std::unordered_map<std::string, test_var_value> {
+                // macro locals
+                {
+                    "&VAR",
+                    test_var_value("(('a','b'),('c'),('d'))",
+                        list {
+                            { "1",
+                                std::make_shared<test_var_value>("('a','b')",
+                                    list {
+                                        { "1", std::make_shared<test_var_value>("'a'") },
+                                        { "2", std::make_shared<test_var_value>("'b'") },
+                                    }) },
+                            { "2",
+                                std::make_shared<test_var_value>("('c')",
+                                    list {
+                                        { "1", std::make_shared<test_var_value>("'c'") },
+                                    }) },
+                            { "3",
+                                std::make_shared<test_var_value>("('d')",
+                                    list {
+                                        { "1", std::make_shared<test_var_value>("'d'") },
+                                    }) },
                         }),
                 },
             },
