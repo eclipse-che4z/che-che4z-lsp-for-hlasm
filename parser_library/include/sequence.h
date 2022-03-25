@@ -89,9 +89,9 @@ public:
     continuous_storage() = default;
     template<typename U>
     explicit continuous_storage(U&& v)
-        : to_delete(new U(std::forward<U>(v)))
-        , deleter(+[](void* ptr) { delete (U*)ptr; })
-        , m_data(((const U*)to_delete)->data())
+        : to_delete(new std::decay_t<U>(std::forward<U>(v)))
+        , deleter(+[](void* ptr) { delete (std::decay_t<U>*)ptr; })
+        , m_data(((const std::decay_t<U>*)to_delete)->data())
     {}
     continuous_storage(const continuous_storage& o) = delete;
     continuous_storage(continuous_storage&& o) noexcept
