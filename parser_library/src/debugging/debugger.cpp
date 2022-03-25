@@ -35,6 +35,7 @@
 #include "variable.h"
 #include "virtual_file_monitor.h"
 #include "workspaces/file_manager.h"
+#include "workspaces/file_manager_vfm.h"
 
 using namespace hlasm_plugin::parser_library::workspaces;
 
@@ -138,20 +139,7 @@ public:
                                                               // it is stopped and waiting in the statement method
             debug_lib_provider debug_provider(workspace);
 
-            struct debugger_vf_monitor final : public virtual_file_monitor
-            {
-                workspaces::file_manager& fm;
-                // Inherited via virtual_file_monitor
-                void file_generated(virtual_file_id id, std::string_view content) override
-                {
-                    fm.put_virtual_file(id.value(), content);
-                }
-                void file_released(virtual_file_id id) override { fm.remove_virtual_file(id.value()); }
-
-                explicit debugger_vf_monitor(workspaces::file_manager& fm)
-                    : fm(fm)
-                {}
-            } vfm(workspace.get_file_manager());
+            workspaces::file_manager_vfm vfm(workspace.get_file_manager());
             // TODO: it would probably be better to implement Sources request and keep everything locally
 
             analyzer a(open_code->get_text(),

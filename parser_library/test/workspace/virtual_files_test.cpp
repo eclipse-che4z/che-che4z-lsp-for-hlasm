@@ -24,6 +24,15 @@
 
 using namespace ::testing;
 
+namespace {
+class vf_moc : public virtual_file_monitor
+{
+public:
+    MOCK_METHOD(void, file_generated, (virtual_file_id id, std::string_view content), (override));
+    MOCK_METHOD(void, file_released, (virtual_file_id id), (override));
+};
+} // namespace
+
 TEST(virtual_files, callback_test_ainsert)
 {
     std::string input = R"(
@@ -31,12 +40,6 @@ TEST(virtual_files, callback_test_ainsert)
 )";
     std::optional<analyzer> a;
 
-    class vf_moc : public virtual_file_monitor
-    {
-    public:
-        MOCK_METHOD(void, file_generated, (virtual_file_id id, std::string_view content), (override));
-        MOCK_METHOD(void, file_released, (virtual_file_id id), (override));
-    };
     vf_moc vf;
 
     virtual_file_id expected_id;
@@ -57,12 +60,6 @@ TEST(virtual_files, callback_test_preprocessor)
 )";
     std::optional<analyzer> a;
 
-    class vf_moc : public virtual_file_monitor
-    {
-    public:
-        MOCK_METHOD(void, file_generated, (virtual_file_id id, std::string_view content), (override));
-        MOCK_METHOD(void, file_released, (virtual_file_id id), (override));
-    };
     vf_moc vf;
 
     virtual_file_id expected_id;

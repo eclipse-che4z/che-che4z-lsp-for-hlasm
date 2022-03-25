@@ -21,13 +21,13 @@
 #include <regex>
 #include <string>
 
+#include "file_manager_vfm.h"
 #include "lib_config.h"
 #include "library_local.h"
 #include "nlohmann/json.hpp"
 #include "processor.h"
 #include "utils/path.h"
 #include "utils/platform.h"
-#include "virtual_file_monitor.h"
 #include "wildcard.h"
 
 using json = nlohmann::json;
@@ -153,20 +153,7 @@ workspace_file_info workspace::parse_file(const std::string& file_uri)
 {
     workspace_file_info ws_file_info;
 
-    struct workspace_monitor final : public virtual_file_monitor
-    {
-        workspaces::file_manager& fm;
-        // Inherited via virtual_file_monitor
-        void file_generated(virtual_file_id id, std::string_view content) override
-        {
-            fm.put_virtual_file(id.value(), content);
-        }
-        void file_released(virtual_file_id id) override { fm.remove_virtual_file(id.value()); }
-
-        explicit workspace_monitor(workspaces::file_manager& fm)
-            : fm(fm)
-        {}
-    } vfm(get_file_manager());
+    file_manager_vfm vfm(get_file_manager());
 
     std::filesystem::path file_path(file_uri);
     // add support for hlasm to vscode (auto detection??) and do the decision based on languageid
