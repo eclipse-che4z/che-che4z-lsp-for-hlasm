@@ -117,6 +117,8 @@ public:
 template<typename c_type, typename storage = void>
 class sequence
 {
+    friend PARSER_LIBRARY_EXPORT c_type sequence_item_get(const sequence*, size_t);
+
     class counter
     {
         size_t size = 0;
@@ -145,15 +147,19 @@ public:
     {}
     explicit operator std::vector<c_type>() const { return std::vector<c_type>(begin(), end()); }
 
-    // needs to be specialized for every type unless the storage is trivial
-    [[nodiscard]] c_type item(size_t index) const;
-
-    [[nodiscard]] c_type item(size_t index) const noexcept requires(trivial_storage_sequence<storage>)
+    [[nodiscard]] c_type item(size_t index) const noexcept(trivial_storage_sequence<storage>)
     {
-        return data()[index];
+        if constexpr (trivial_storage_sequence<storage>)
+            return data()[index];
+        else
+            return sequence_item_get(this, index);
     }
 
-    [[nodiscard]] auto data() const noexcept requires(trivial_storage_sequence<storage>) { return stor_.data(); }
+    [[nodiscard]] auto data() const noexcept requires(trivial_storage_sequence<storage>)
+    {
+        if constexpr (trivial_storage_sequence<storage>) // clang-12 :(
+            return stor_.data();
+    }
     [[nodiscard]] size_t size() const noexcept { return size_; }
 
     [[nodiscard]] auto begin() const noexcept

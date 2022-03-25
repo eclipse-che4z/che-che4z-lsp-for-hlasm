@@ -35,10 +35,9 @@ std::string_view completion_item::detail() const { return item_.detail; }
 std::string_view completion_item::documentation() const { return item_.documentation; }
 std::string_view completion_item::insert_text() const { return item_.insert_text; }
 
-template<>
-completion_item sequence<completion_item, const lsp::completion_item_s*>::item(size_t index) const
+completion_item sequence_item_get(const sequence<completion_item, const lsp::completion_item_s*>* self, size_t index)
 {
-    return completion_item(stor_[index]);
+    return completion_item(self->stor_[index]);
 }
 
 //********************** document symbol item **********************
@@ -56,10 +55,10 @@ document_symbol_list document_symbol_item::children() const
     return document_symbol_list(item_.children.data(), item_.children.size());
 }
 
-template<>
-document_symbol_item sequence<document_symbol_item, const lsp::document_symbol_item_s*>::item(size_t index) const
+document_symbol_item sequence_item_get(
+    const sequence<document_symbol_item, const lsp::document_symbol_item_s*>* self, size_t index)
 {
-    return document_symbol_item(stor_[index]);
+    return document_symbol_item(self->stor_[index]);
 }
 //********************** location **********************
 
@@ -69,10 +68,9 @@ position_uri::position_uri(const location& item)
 position position_uri::pos() const { return item_.pos; }
 std::string_view position_uri::file() const { return item_.file; }
 
-template<>
-position_uri sequence<position_uri, const location*>::item(size_t index) const
+position_uri sequence_item_get(const sequence<position_uri, const location*>* self, size_t index)
 {
-    return position_uri(stor_[index]);
+    return position_uri(self->stor_[index]);
 }
 
 diagnostic_related_info::diagnostic_related_info(diagnostic_related_info_s& info)
@@ -149,10 +147,9 @@ stack_frame::stack_frame(const debugging::stack_frame& frame)
     , id(frame.id)
 {}
 
-template<>
-stack_frame sequence<stack_frame, const debugging::stack_frame*>::item(size_t index) const
+stack_frame sequence_item_get(const sequence<stack_frame, const debugging::stack_frame*>* self, size_t index)
 {
-    return stack_frame(stor_[index]);
+    return stack_frame(self->stor_[index]);
 }
 
 //********************* source **********************
@@ -169,10 +166,9 @@ scope::scope(const debugging::scope& impl)
     , source_file(impl.scope_source)
 {}
 
-template<>
-scope sequence<scope, const debugging::scope*>::item(size_t index) const
+scope sequence_item_get(const sequence<scope, const debugging::scope*>* self, size_t index)
 {
-    return scope(stor_[index]);
+    return scope(self->stor_[index]);
 }
 
 
@@ -185,10 +181,9 @@ variable::variable(const debugging::variable& impl)
     , type(impl.type())
 {}
 
-template<>
-variable sequence<variable, const debugging::variable_store*>::item(size_t index) const
+variable sequence_item_get(const sequence<variable, const debugging::variable_store*>* self, size_t index)
 {
-    return variable(*stor_->variables[index]);
+    return variable(*self->stor_->variables[index]);
 }
 
 
