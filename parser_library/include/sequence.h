@@ -99,10 +99,25 @@ public:
         , deleter(o.deleter)
         , m_data(std::exchange(o.m_data, nullptr))
     {}
+    continuous_storage& operator=(const continuous_storage&) = delete;
+    continuous_storage& operator=(continuous_storage&& o) noexcept
+    {
+        continuous_storage tmp(std::move(o));
+        swap(tmp);
+        return *this;
+    }
     ~continuous_storage()
     {
         if (to_delete)
             deleter(to_delete);
+    }
+
+    void swap(continuous_storage& o) noexcept
+    {
+        using std::swap;
+        swap(to_delete, o.to_delete);
+        swap(deleter, o.deleter);
+        swap(m_data, o.m_data);
     }
 
     auto data() const noexcept { return m_data; }
@@ -125,13 +140,19 @@ class sequence
 
     public:
         counter() = default;
-        counter(size_t s) noexcept
+        explicit counter(size_t s) noexcept
             : size(s)
         {}
         counter(const counter&) = default;
         counter(counter&& r) noexcept
             : size(std::exchange(r.size, 0))
         {}
+        counter& operator=(const counter&) = default;
+        counter& operator=(counter&& o) noexcept
+        {
+            size = std::exchange(o.size, 0);
+            return *this;
+        }
         operator size_t() const { return size; }
     };
     static constexpr bool owns_resources = !std::is_trivially_destructible_v<storage>;
@@ -139,8 +160,6 @@ class sequence
 
 public:
     sequence() = default;
-    sequence(const sequence&) = default;
-    sequence(sequence&& s) = default;
     sequence(storage stor, size_t size) noexcept(std::is_nothrow_move_constructible_v<storage>)
         : stor_(std::move(stor))
         , size_(size)
