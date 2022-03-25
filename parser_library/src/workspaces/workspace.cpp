@@ -163,7 +163,7 @@ workspace_file_info workspace::parse_file(const std::string& file_uri)
         }
         void file_released(virtual_file_id id) override { fm.remove_virtual_file(id.value()); }
 
-        workspace_monitor(workspaces::file_manager& fm)
+        explicit workspace_monitor(workspaces::file_manager& fm)
             : fm(fm)
         {}
     } vfm(get_file_manager());

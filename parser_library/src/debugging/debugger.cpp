@@ -148,7 +148,7 @@ public:
                 }
                 void file_released(virtual_file_id id) override { fm.remove_virtual_file(id.value()); }
 
-                debugger_vf_monitor(workspaces::file_manager& fm)
+                explicit debugger_vf_monitor(workspaces::file_manager& fm)
                     : fm(fm)
                 {}
             } vfm(workspace.get_file_manager());
