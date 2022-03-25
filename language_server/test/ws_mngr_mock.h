@@ -47,6 +47,8 @@ public:
         completion,
         (const char* document_uri, const position pos, const char trigger_char, completion_trigger_kind trigger_kind),
         (override));
+
+    MOCK_METHOD(continuous_sequence<char>, get_virtual_file_content, (unsigned long long id), (const override));
 };
 
 } // namespace hlasm_plugin::language_server::test

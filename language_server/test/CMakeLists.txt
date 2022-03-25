@@ -24,6 +24,7 @@ target_sources(server_test PRIVATE
 	stream_helper_test.cpp
 	ws_mngr_mock.h
 	telemetry_test.cpp
+	virtual_file_provider_test.cpp
 )
 
 add_subdirectory(dap)
