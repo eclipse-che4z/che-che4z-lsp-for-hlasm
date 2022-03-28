@@ -55,8 +55,7 @@ std::vector<variable_ptr> set_symbol_variable::values() const
 {
     std::vector<std::unique_ptr<debugging::variable>> vals;
 
-    auto keys = set_symbol_.keys();
-    for (const auto& key : keys)
+    for (auto keys = set_symbol_.keys(); const auto& key : keys)
         vals.push_back(std::make_unique<set_symbol_variable>(set_symbol_, static_cast<int>(key)));
 
     return vals;
