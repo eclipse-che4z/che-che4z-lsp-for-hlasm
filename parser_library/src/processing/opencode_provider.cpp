@@ -360,10 +360,10 @@ bool opencode_provider::try_running_preprocessor()
     if (!result.has_value() || result.value().empty())
         return false;
 
-    auto virtual_copy_name = m_ctx->hlasm_ctx->ids().add("preprocessor:" + std::to_string(current_line));
+    auto virtual_file_name = m_ctx->hlasm_ctx->ids().add("preprocessor:" + std::to_string(current_line));
 
     auto [new_file, inserted] =
-        m_virtual_files.try_emplace(virtual_copy_name, std::move(result.value()), next_virtual_file_id());
+        m_virtual_files.try_emplace(virtual_file_name, std::move(result.value()), next_virtual_file_id());
 
     // set up "call site"
     const auto current_offset =
@@ -378,10 +378,10 @@ bool opencode_provider::try_running_preprocessor()
             m_virtual_file_monitor->file_generated(new_file->second.second, new_file->second.first);
         analyzer a(new_file->second.first,
             analyzer_options {
-                generate_virtual_file_uri(new_file->second.second, *virtual_copy_name),
+                generate_virtual_file_uri(new_file->second.second, *virtual_file_name),
                 m_lib_provider,
                 *m_ctx,
-                workspaces::library_data { processing_kind::COPY, virtual_copy_name },
+                workspaces::library_data { processing_kind::COPY, virtual_file_name },
             });
         a.analyze();
         m_diagnoser->collect_diags_from_child(a);
@@ -391,7 +391,7 @@ bool opencode_provider::try_running_preprocessor()
         assert(result.value() == new_file->second.first);
     }
 
-    m_ctx->hlasm_ctx->enter_copy_member(virtual_copy_name);
+    m_ctx->hlasm_ctx->enter_copy_member(virtual_file_name);
 
     return true;
 }
