@@ -98,7 +98,7 @@ TEST_P(system_variable_standard_behavior_fixture, standard_behavior)
     std::string input(GetParam().input);
     std::vector<std::string> exp_behavior(GetParam().exp_results);
 
-    analyzer a(input, analyzer_options { asm_option { "PAR" } });
+    analyzer a(input);
     a.analyze();
     a.collect_diags();
 
