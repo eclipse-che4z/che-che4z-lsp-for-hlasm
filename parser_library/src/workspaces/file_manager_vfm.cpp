@@ -33,6 +33,10 @@ virtual_file_handle file_manager_vfm::file_generated(std::string_view content)
             : fm(fm)
             , id(id)
         {}
+        result_t(const result_t&) = delete;
+        result_t(result_t&&) = delete;
+        result_t& operator=(const result_t&) = delete;
+        result_t& operator=(result_t&&) = delete;
         ~result_t()
         {
             if (id)
