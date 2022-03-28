@@ -18,23 +18,54 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "diagnosable_impl.h"
 #include "preprocessor_options.h"
 #include "virtual_file_monitor.h"
 #include "workspaces/file_manager_impl.h"
+#include "workspaces/file_manager_vfm.h"
 
 using namespace ::testing;
 
 namespace {
-class vf_moc : public virtual_file_monitor
+class vf_mock : public virtual_file_monitor
 {
 public:
     MOCK_METHOD(virtual_file_handle, file_generated, (std::string_view content), (override));
 };
+
+class fm_mock : public file_manager, public diagnosable_impl
+{
+public:
+    void collect_diags() const override
+    {
+        // nothing to do
+    }
+    MOCK_METHOD(file_ptr, add_file, (const file_uri&), (override));
+    MOCK_METHOD(processor_file_ptr, add_processor_file, (const file_uri&), (override));
+    MOCK_METHOD(processor_file_ptr, get_processor_file, (const file_uri&), (override));
+    MOCK_METHOD(void, remove_file, (const file_uri&), (override));
+    MOCK_METHOD(file_ptr, find, (const std::string& key), (const override));
+    MOCK_METHOD(processor_file_ptr, find_processor_file, (const std::string& key), (override));
+    MOCK_METHOD(list_directory_result, list_directory_files, (const std::string& path), (override));
+    MOCK_METHOD(bool, file_exists, (const std::string& file_name), (override));
+    MOCK_METHOD(bool, lib_file_exists, (const std::string& lib_path, const std::string& file_name), (override));
+    MOCK_METHOD(
+        void, did_open_file, (const std::string& document_uri, version_t version, std::string text), (override));
+    MOCK_METHOD(void,
+        did_change_file,
+        (const std::string& document_uri, version_t version, const document_change* changes, size_t ch_size),
+        (override));
+    MOCK_METHOD(void, did_close_file, (const std::string& document_uri), (override));
+    MOCK_METHOD(void, put_virtual_file, (unsigned long long id, std::string_view text), (override));
+    MOCK_METHOD(void, remove_virtual_file, (unsigned long long id), (override));
+    MOCK_METHOD(std::string, get_virtual_file, (unsigned long long id), (const override));
+};
+
 } // namespace
 
 TEST(virtual_files, callback_test_ainsert)
 {
-    vf_moc vf;
+    vf_mock vf;
 
     virtual_file_id expected_id;
     EXPECT_CALL(vf, file_generated(std::string_view("A DS H\n"))).WillOnce(Return(virtual_file_handle()));
@@ -50,7 +81,7 @@ TEST(virtual_files, callback_test_ainsert)
 
 TEST(virtual_files, callback_test_preprocessor)
 {
-    vf_moc vf;
+    vf_mock vf;
 
     virtual_file_id expected_id;
     EXPECT_CALL(vf, file_generated(Ne(std::string_view()))).WillOnce(Return(virtual_file_handle()));
@@ -85,7 +116,7 @@ TEST(virtual_files, file_manager)
 }
 TEST(virtual_files, callback_test_ainsert_valid_vfm)
 {
-    vf_moc vf;
+    vf_mock vf;
 
     virtual_file_id expected_id;
     EXPECT_CALL(vf, file_generated(std::string_view("A DC H\n")))
@@ -101,4 +132,25 @@ TEST(virtual_files, callback_test_ainsert_valid_vfm)
     const auto& d = a.diags();
     ASSERT_EQ(d.size(), 1);
     EXPECT_EQ(d[0].file_name, "hlasm://0/AINSERT:1");
+}
+
+TEST(virtual_files, file_manager_vfm)
+{
+    fm_mock fm;
+    file_manager_vfm vfm(fm);
+
+    constexpr std::string_view test_content = "test content";
+
+    constexpr auto id_initial = ~0ULL;
+    auto id = id_initial;
+
+    EXPECT_CALL(fm, put_virtual_file(_, Eq(test_content))).WillOnce(SaveArg<0>(&id));
+    EXPECT_CALL(fm, remove_virtual_file(Eq(std::cref(id)))).Times(1);
+
+    auto file_id = vfm.file_generated(test_content).file_id();
+
+    EXPECT_NE(id, id_initial);
+
+    ASSERT_TRUE(file_id);
+    EXPECT_EQ(file_id.value(), id);
 }

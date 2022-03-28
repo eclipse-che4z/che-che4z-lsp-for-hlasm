@@ -31,7 +31,7 @@ class virtual_file_handle
 
 public:
     virtual_file_handle() = default;
-    virtual_file_handle(std::shared_ptr<const virtual_file_id> id)
+    explicit virtual_file_handle(std::shared_ptr<const virtual_file_id> id)
         : handle(std::move(id))
     {}
     virtual_file_id file_id() const
