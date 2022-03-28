@@ -55,8 +55,7 @@ std::vector<variable_ptr> set_symbol_variable::values() const
 {
     std::vector<std::unique_ptr<debugging::variable>> vals;
 
-    auto keys = set_symbol_.keys();
-    for (const auto& key : keys)
+    for (auto keys = set_symbol_.keys(); const auto& key : keys)
         vals.push_back(std::make_unique<set_symbol_variable>(set_symbol_, static_cast<int>(key)));
 
     return vals;
@@ -66,18 +65,14 @@ size_t set_symbol_variable::size() const { return set_symbol_.size(); }
 
 std::string set_symbol_variable::get_string_value(const std::optional<int>& index) const
 {
-    std::string string_value;
-
     if (!index && !is_scalar())
-        string_value = get_string_array_value();
+        return get_string_array_value();
     else if (type() == set_type::A_TYPE)
-        string_value = std::to_string(get_value<context::A_t>(index));
+        return std::to_string(get_value<context::A_t>(index));
     else if (type() == set_type::B_TYPE)
-        string_value = get_value<context::B_t>(index) ? "TRUE" : "FALSE";
+        return get_value<context::B_t>(index) ? "TRUE" : "FALSE";
     else
-        string_value = get_value<context::C_t>(index);
-
-    return string_value;
+        return get_value<context::C_t>(index);
 }
 
 std::string set_symbol_variable::get_string_array_value() const
@@ -100,7 +95,7 @@ std::string set_symbol_variable::get_string_array_value() const
 }
 
 template<typename T>
-inline T set_symbol_variable::get_value(const std::optional<int>& index) const
+inline T set_symbol_variable::get_value(const std::optional<int> index) const
 {
     if (!set_symbol_.is_scalar && index)
         return set_symbol_.access_set_symbol<T>()->get_value(*index);

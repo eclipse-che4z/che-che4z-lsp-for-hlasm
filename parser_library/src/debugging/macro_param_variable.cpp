@@ -32,7 +32,7 @@ macro_param_variable::macro_param_variable(const context::macro_param_base& para
     else
     {
         name_ = "&" + *macro_param_.id;
-        value_ = (&macro_param_)->macro_param_base::get_value();
+        value_ = macro_param_.macro_param_base::get_value();
     }
 }
 

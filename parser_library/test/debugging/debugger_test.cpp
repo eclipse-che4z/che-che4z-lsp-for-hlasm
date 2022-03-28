@@ -286,8 +286,9 @@ void step_into(debugger& d,
     std::string name,
     debugging::source source)
 {
-    exp_stack_frames.insert(
-        exp_stack_frames.begin(), debugging::stack_frame(line, line, exp_stack_frames[0].id + 1, name, source));
+    uint32_t next_frame_id = exp_stack_frames.empty() ? 0 : exp_stack_frames[0].id + 1;
+
+    exp_stack_frames.insert(exp_stack_frames.begin(), debugging::stack_frame(line, line, next_frame_id, name, source));
 
     d.step_in();
     m.wait_for_stopped();
@@ -435,10 +436,8 @@ TEST(debugger, test)
     d.disconnect();
 }
 
-TEST(debugger, test_sysstmt)
+TEST(debugger, sysstmt)
 {
-    using list = std::unordered_map<std::string, std::shared_ptr<test_var_value>>;
-
     std::string open_code = R"(
         LR 1,1
         LR 1,1
@@ -470,6 +469,185 @@ TEST(debugger, test_sysstmt)
 
     step_over_by(1, d, m, exp_frames, 3);
     exp_frame_vars[0].globals["&SYSSTMT"] = "00000005";
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.disconnect();
+}
+
+TEST(debugger, sysmac_syslist)
+{
+    using list = std::unordered_map<std::string, std::shared_ptr<test_var_value>>;
+    std::string open_code = R"(
+   MACRO
+   MAC_IN
+   LR 1,1
+   COPY COPY1
+   MEND
+   
+   MACRO
+   MAC_1
+A  MAC_IN ()
+   MEND
+   
+   MACRO
+   MAC_2
+   MEND
+   
+   MAC_1
+   MAC_2 3456,(),,((1,('a','b')),2),((()))
+)";
+
+    std::string copy1_filename = "COPY1";
+    std::string copy1_source = R"(
+           LR 1,1
+)";
+
+    file_manager_impl file_manager;
+    file_manager.did_open_file(copy1_filename, 0, copy1_source);
+    workspace_mock lib_provider(file_manager);
+
+    debug_event_consumer_s_mock m;
+    debugger d;
+    d.set_event_consumer(&m);
+    std::string filename = "ws\\test";
+    file_manager.did_open_file(filename, 0, open_code);
+    d.launch(filename, lib_provider, true, &lib_provider);
+    m.wait_for_stopped();
+    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", filename } };
+    std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
+
+    step_over_by(3, d, m, exp_frames, 16);
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    step_into(d, m, exp_frames, 9, "MACRO", filename);
+    exp_frame_vars.insert(exp_frame_vars.begin(),
+        frame_vars_ignore_sys_vars({},
+            std::unordered_map<std::string, test_var_value> {
+                // macro locals
+                {
+                    "&SYSLIST",
+                    test_var_value("()",
+                        list {
+                            { "0", std::make_shared<test_var_value>("") },
+                        }),
+                },
+                {
+
+                    "&SYSMAC",
+                    test_var_value("(MAC_1,OPEN CODE)",
+                        list {
+                            { "0", std::make_shared<test_var_value>("MAC_1") },
+                            { "1", std::make_shared<test_var_value>("OPEN CODE") },
+                        }),
+                },
+            },
+            {} // empty ord symbols
+            ));
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    step_into(d, m, exp_frames, 3, "MACRO", filename);
+    exp_frame_vars.insert(exp_frame_vars.begin(),
+        frame_vars_ignore_sys_vars({},
+            std::unordered_map<std::string, test_var_value> {
+                // macro locals
+                {
+                    "&SYSLIST",
+                    test_var_value("(A,())",
+                        list {
+                            { "0", std::make_shared<test_var_value>("A") },
+                            { "1",
+                                std::make_shared<test_var_value>("()",
+                                    list {
+                                        { "1", std::make_shared<test_var_value>("") },
+                                    }) },
+                        }),
+                },
+                {
+
+                    "&SYSMAC",
+                    test_var_value("(MAC_IN,MAC_1,OPEN CODE)",
+                        list {
+                            { "0", std::make_shared<test_var_value>("MAC_IN") },
+                            { "1", std::make_shared<test_var_value>("MAC_1") },
+                            { "2", std::make_shared<test_var_value>("OPEN CODE") },
+                        }),
+                },
+            },
+            {} // empty ord symbols
+            ));
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    step_over_by(1, d, m, exp_frames, 4);
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    step_into(d, m, exp_frames, 1, "COPY", copy1_filename);
+    exp_frame_vars.insert(exp_frame_vars.begin(), exp_frame_vars[0]);
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    erase_frames_from_top(3, exp_frames, exp_frame_vars);
+    step_over_by(3, d, m, exp_frames, 17);
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    step_into(d, m, exp_frames, 14, "MACRO", filename);
+    exp_frame_vars.insert(exp_frame_vars.begin(),
+        frame_vars_ignore_sys_vars({},
+            std::unordered_map<std::string, test_var_value> {
+                // macro locals
+                {
+                    "&SYSLIST",
+                    test_var_value("(,3456,(),,((1,('a','b')),2),((())))",
+                        list {
+                            { "0", std::make_shared<test_var_value>("") },
+                            { "1", std::make_shared<test_var_value>("3456") },
+                            { "2",
+                                std::make_shared<test_var_value>("()",
+                                    list {
+                                        { "1", std::make_shared<test_var_value>("") },
+                                    }) },
+                            { "3", std::make_shared<test_var_value>("") },
+                            { "4",
+                                std::make_shared<test_var_value>("((1,('a','b')),2)",
+                                    list {
+                                        { "1",
+                                            std::make_shared<test_var_value>("(1,('a','b'))",
+                                                list {
+                                                    { "1", std::make_shared<test_var_value>("1") },
+                                                    { "2",
+                                                        std::make_shared<test_var_value>("('a','b')",
+                                                            list {
+                                                                { "1", std::make_shared<test_var_value>("'a'") },
+                                                                { "2", std::make_shared<test_var_value>("'b'") },
+                                                            }) },
+                                                }) },
+                                        { "2", std::make_shared<test_var_value>("2") },
+
+                                    }) },
+                            { "5",
+                                std::make_shared<test_var_value>("((()))",
+                                    list {
+                                        { "1",
+                                            std::make_shared<test_var_value>("(())",
+                                                list {
+                                                    { "1",
+                                                        std::make_shared<test_var_value>("()",
+                                                            list {
+                                                                { "1", std::make_shared<test_var_value>("") },
+                                                            }) },
+                                                }) },
+                                    }) },
+                        }),
+                },
+                {
+                    "&SYSMAC",
+                    test_var_value("(MAC_2,OPEN CODE)",
+                        list {
+                            { "0", std::make_shared<test_var_value>("MAC_2") },
+                            { "1", std::make_shared<test_var_value>("OPEN CODE") },
+                        }),
+                },
+            },
+            {} // empty ord symbols
+            ));
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.disconnect();

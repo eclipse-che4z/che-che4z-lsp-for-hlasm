@@ -14,7 +14,7 @@
 - AINSERT can now do immediate variable evaluatation correctly
 - Highlighting of single character strings (which could represent data attributes - e.g. `I'`, `L'`, `S'` and others) is fixed
 - Document navigation does not work correctly in Untitled documents
-- N' attribute now returns 1 for empty subscript arrays ("()") which are provided to a macro from a caller's 'macro's symbolic parameter
+- Fixed an issue preventing correct N' attribute evaluation of empty subscript arrays
 - Contents of subscript arrays are now visible during debugging without the need to expand them
 
 ## [1.0.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.1...1.0.0) (2022-01-31)

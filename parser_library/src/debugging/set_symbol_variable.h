@@ -42,7 +42,7 @@ public:
 
 private:
     template<typename T>
-    T get_value(const std::optional<int>& index) const;
+    T get_value(const std::optional<int> index) const;
 
     std::string get_string_value(const std::optional<int>& index) const;
     std::string get_string_array_value() const;
