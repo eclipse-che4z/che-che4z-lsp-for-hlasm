@@ -339,10 +339,10 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     return result;
 }
 
-std::string generate_virtual_file_name(virtual_file_handle handle, std::string_view name)
+std::string generate_virtual_file_name(virtual_file_id id, std::string_view name)
 {
     std::string result;
-    if (auto id = handle.file_id(); id)
+    if (id)
     {
         result += "hlasm://";
         result += std::to_string(id.value());
@@ -372,12 +372,11 @@ bool opencode_provider::try_running_preprocessor()
 
     if (inserted)
     {
-        auto vf_handle = m_virtual_file_monitor->file_generated(new_file->second);
-        m_vf_handles.push_back(vf_handle);
-
         analyzer a(new_file->second,
             analyzer_options {
-                generate_virtual_file_name(std::move(vf_handle), *virtual_file_name),
+                generate_virtual_file_name(
+                    m_vf_handles.emplace_back(m_virtual_file_monitor->file_generated(new_file->second)).file_id(),
+                    *virtual_file_name),
                 m_lib_provider,
                 *m_ctx,
                 workspaces::library_data { processing_kind::COPY, virtual_file_name },
@@ -447,12 +446,11 @@ void opencode_provider::convert_ainsert_buffer_to_copybook()
 
     auto new_file = m_virtual_files.try_emplace(virtual_copy_name, std::move(result)).first;
 
-    auto vf_handle = m_virtual_file_monitor->file_generated(new_file->second);
-    m_vf_handles.push_back(vf_handle);
-
     analyzer a(new_file->second,
         analyzer_options {
-            generate_virtual_file_name(std::move(vf_handle), *virtual_copy_name),
+            generate_virtual_file_name(
+                m_vf_handles.emplace_back(m_virtual_file_monitor->file_generated(new_file->second)).file_id(),
+                *virtual_copy_name),
             m_lib_provider,
             *m_ctx,
             workspaces::library_data { processing_kind::COPY, virtual_copy_name },
