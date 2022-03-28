@@ -98,7 +98,7 @@ class opencode_provider final : public statement_provider
 
     std::deque<std::string> m_ainsert_buffer;
 
-    std::unordered_map<context::id_index, std::pair<std::string, virtual_file_id>> m_virtual_files;
+    std::unordered_map<context::id_index, std::string> m_virtual_files;
 
     std::unique_ptr<parsing::parser_holder> m_parser;
     std::unique_ptr<parsing::parser_holder> m_lookahead_parser;
@@ -117,6 +117,7 @@ class opencode_provider final : public statement_provider
     std::unique_ptr<preprocessor> m_preprocessor;
 
     virtual_file_monitor* m_virtual_file_monitor;
+    std::vector<virtual_file_handle> m_vf_handles;
 
 public:
     // rewinds position in file
@@ -133,7 +134,6 @@ public:
         std::unique_ptr<preprocessor> preprocessor,
         opencode_provider_options opts,
         virtual_file_monitor* virtual_file_monitor);
-    ~opencode_provider();
 
     parsing::hlasmparser& parser(); // for testing only
 

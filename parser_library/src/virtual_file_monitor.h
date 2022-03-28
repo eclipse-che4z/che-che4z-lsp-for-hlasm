@@ -15,7 +15,9 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_VIRTUAL_FILE_MONITOR_H
 #define HLASMPLUGIN_PARSERLIBRARY_VIRTUAL_FILE_MONITOR_H
 
+#include <memory>
 #include <string_view>
+#include <utility>
 
 #include "tagged_index.h"
 
@@ -23,13 +25,29 @@ namespace hlasm_plugin::parser_library {
 class virtual_file_monitor;
 using virtual_file_id = index_t<virtual_file_monitor, unsigned long long>;
 
+class virtual_file_handle
+{
+    std::shared_ptr<const virtual_file_id> handle;
+
+public:
+    virtual_file_handle() = default;
+    virtual_file_handle(std::shared_ptr<const virtual_file_id> id)
+        : handle(std::move(id))
+    {}
+    virtual_file_id file_id() const
+    {
+        if (handle)
+            return *handle;
+        else
+            return virtual_file_id();
+    }
+};
+
 class virtual_file_monitor
 {
 public:
     // notifies the monitor that a new virtual file has been produced
-    virtual void file_generated(virtual_file_id id, std::string_view content) = 0;
-    // notifies the monitor that the virtual file is no longer required
-    virtual void file_released(virtual_file_id id) = 0;
+    virtual virtual_file_handle file_generated(std::string_view content) = 0;
 
 protected:
     ~virtual_file_monitor() = default;

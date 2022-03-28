@@ -25,6 +25,14 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
+namespace {
+struct dummy_vfm final : public virtual_file_monitor
+{
+    virtual_file_handle file_generated(std::string_view content) override { return virtual_file_handle(); }
+};
+dummy_vfm fallback_vfm;
+} // namespace
+
 opencode_provider::opencode_provider(std::string_view text,
     analyzing_context& ctx,
     workspaces::parse_lib_provider& lib_provider,
@@ -47,15 +55,8 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_diagnoser(&diag_consumer)
     , m_opts(opts)
     , m_preprocessor(std::move(preprocessor))
-    , m_virtual_file_monitor(virtual_file_monitor)
+    , m_virtual_file_monitor(virtual_file_monitor ? virtual_file_monitor : &fallback_vfm)
 {}
-
-opencode_provider::~opencode_provider()
-{
-    if (m_virtual_file_monitor)
-        for (const auto& [_, v] : m_virtual_files)
-            m_virtual_file_monitor->file_released(v.second);
-}
 
 void opencode_provider::rewind_input(context::source_position pos)
 {
@@ -338,17 +339,15 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     return result;
 }
 
-unsigned long long next_virtual_file_id()
+std::string generate_virtual_file_name(virtual_file_handle handle, std::string_view name)
 {
-    static std::atomic<unsigned long long> id = 0;
-    return id++;
-}
-
-std::string generate_virtual_file_uri(virtual_file_id id, std::string_view name)
-{
-    std::string result = "hlasm://";
-    result += std::to_string(id.value());
-    result += "/";
+    std::string result;
+    if (auto id = handle.file_id(); id)
+    {
+        result += "hlasm://";
+        result += std::to_string(id.value());
+        result += "/";
+    }
     result += name;
     return result;
 }
@@ -362,8 +361,7 @@ bool opencode_provider::try_running_preprocessor()
 
     auto virtual_file_name = m_ctx->hlasm_ctx->ids().add("preprocessor:" + std::to_string(current_line));
 
-    auto [new_file, inserted] =
-        m_virtual_files.try_emplace(virtual_file_name, std::move(result.value()), next_virtual_file_id());
+    auto [new_file, inserted] = m_virtual_files.try_emplace(virtual_file_name, std::move(result.value()));
 
     // set up "call site"
     const auto current_offset =
@@ -374,11 +372,12 @@ bool opencode_provider::try_running_preprocessor()
 
     if (inserted)
     {
-        if (m_virtual_file_monitor)
-            m_virtual_file_monitor->file_generated(new_file->second.second, new_file->second.first);
-        analyzer a(new_file->second.first,
+        auto vf_handle = m_virtual_file_monitor->file_generated(new_file->second);
+        m_vf_handles.push_back(vf_handle);
+
+        analyzer a(new_file->second,
             analyzer_options {
-                generate_virtual_file_uri(new_file->second.second, *virtual_file_name),
+                generate_virtual_file_name(std::move(vf_handle), *virtual_file_name),
                 m_lib_provider,
                 *m_ctx,
                 workspaces::library_data { processing_kind::COPY, virtual_file_name },
@@ -388,7 +387,7 @@ bool opencode_provider::try_running_preprocessor()
     }
     else
     {
-        assert(result.value() == new_file->second.first);
+        assert(result.value() == new_file->second);
     }
 
     m_ctx->hlasm_ctx->enter_copy_member(virtual_file_name);
@@ -446,13 +445,14 @@ void opencode_provider::convert_ainsert_buffer_to_copybook()
     auto virtual_copy_name =
         m_ctx->hlasm_ctx->ids().add("AINSERT:" + std::to_string(m_ctx->hlasm_ctx->obtain_ainsert_id()));
 
-    auto new_file = m_virtual_files.try_emplace(virtual_copy_name, std::move(result), next_virtual_file_id()).first;
+    auto new_file = m_virtual_files.try_emplace(virtual_copy_name, std::move(result)).first;
 
-    if (m_virtual_file_monitor)
-        m_virtual_file_monitor->file_generated(new_file->second.second, new_file->second.first);
-    analyzer a(new_file->second.first,
+    auto vf_handle = m_virtual_file_monitor->file_generated(new_file->second);
+    m_vf_handles.push_back(vf_handle);
+
+    analyzer a(new_file->second,
         analyzer_options {
-            generate_virtual_file_uri(new_file->second.second, *virtual_copy_name),
+            generate_virtual_file_name(std::move(vf_handle), *virtual_copy_name),
             m_lib_provider,
             *m_ctx,
             workspaces::library_data { processing_kind::COPY, virtual_copy_name },

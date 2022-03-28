@@ -28,50 +28,39 @@ namespace {
 class vf_moc : public virtual_file_monitor
 {
 public:
-    MOCK_METHOD(void, file_generated, (virtual_file_id id, std::string_view content), (override));
-    MOCK_METHOD(void, file_released, (virtual_file_id id), (override));
+    MOCK_METHOD(virtual_file_handle, file_generated, (std::string_view content), (override));
 };
 } // namespace
 
 TEST(virtual_files, callback_test_ainsert)
 {
-    std::string input = R"(
-    AINSERT 'A DS H',BACK
-)";
-    std::optional<analyzer> a;
-
     vf_moc vf;
 
     virtual_file_id expected_id;
-    EXPECT_CALL(vf, file_generated(_, std::string_view("A DS H\n"))).WillOnce(SaveArg<0>(&expected_id));
-    EXPECT_CALL(vf, file_released(Eq(std::cref(expected_id))));
+    EXPECT_CALL(vf, file_generated(std::string_view("A DS H\n"))).WillOnce(Return(virtual_file_handle()));
 
-    a.emplace(input, analyzer_options(&vf));
-    a->analyze();
-    a->collect_diags();
-    EXPECT_TRUE(a->diags().empty());
-
-    a.reset();
+    std::string input = R"(
+    AINSERT 'A DS H',BACK
+)";
+    analyzer a(input, analyzer_options(&vf));
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(virtual_files, callback_test_preprocessor)
 {
-    std::string input = R"(
-)";
-    std::optional<analyzer> a;
-
     vf_moc vf;
 
     virtual_file_id expected_id;
-    EXPECT_CALL(vf, file_generated(_, Ne(std::string_view()))).WillOnce(SaveArg<0>(&expected_id));
-    EXPECT_CALL(vf, file_released(Eq(std::cref(expected_id))));
+    EXPECT_CALL(vf, file_generated(Ne(std::string_view()))).WillOnce(Return(virtual_file_handle()));
 
-    a.emplace(input, analyzer_options(&vf, db2_preprocessor_options()));
-    a->analyze();
-    a->collect_diags();
-    EXPECT_TRUE(a->diags().empty());
-
-    a.reset();
+    std::string input = R"(
+)";
+    analyzer a(input, analyzer_options(&vf, db2_preprocessor_options()));
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(virtual_files, file_manager)
@@ -93,4 +82,23 @@ TEST(virtual_files, file_manager)
     fm.remove_virtual_file(0);
 
     EXPECT_EQ(fm.get_virtual_file(0), empty);
+}
+TEST(virtual_files, callback_test_ainsert_valid_vfm)
+{
+    vf_moc vf;
+
+    virtual_file_id expected_id;
+    EXPECT_CALL(vf, file_generated(std::string_view("A DC H\n")))
+        .WillOnce(Return(virtual_file_handle(std::make_shared<const virtual_file_id>(0))));
+
+    std::string input = R"(
+    AINSERT 'A DC H',BACK
+)";
+    analyzer a(input, analyzer_options(&vf));
+    a.analyze();
+    a.collect_diags();
+
+    const auto& d = a.diags();
+    ASSERT_EQ(d.size(), 1);
+    EXPECT_EQ(d[0].file_name, "hlasm://0/AINSERT:1");
 }
