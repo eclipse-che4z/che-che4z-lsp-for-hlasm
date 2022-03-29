@@ -67,7 +67,6 @@ TEST(virtual_files, callback_test_ainsert)
 {
     vf_mock vf;
 
-    virtual_file_id expected_id;
     EXPECT_CALL(vf, file_generated(std::string_view("A DS H\n"))).WillOnce(Return(virtual_file_handle()));
 
     std::string input = R"(
@@ -83,7 +82,6 @@ TEST(virtual_files, callback_test_preprocessor)
 {
     vf_mock vf;
 
-    virtual_file_id expected_id;
     EXPECT_CALL(vf, file_generated(Ne(std::string_view()))).WillOnce(Return(virtual_file_handle()));
 
     std::string input = R"(
@@ -118,7 +116,6 @@ TEST(virtual_files, callback_test_ainsert_valid_vfm)
 {
     vf_mock vf;
 
-    virtual_file_id expected_id;
     EXPECT_CALL(vf, file_generated(std::string_view("A DC H\n")))
         .WillOnce(Return(virtual_file_handle(std::make_shared<const virtual_file_id>(0))));
 
