@@ -2,6 +2,12 @@
 
 ## ****Unreleased****
 
+#### Added
+
+#### Fixed
+- Fixed an issue preventing correct N' attribute evaluation of empty subscript arrays
+- Contents of subscript arrays are now visible during debugging without the need to expand them
+
 ## [1.1.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.0.0...1.1.0) (2022-03-29)
 
 #### Added
@@ -16,8 +22,6 @@
 - AINSERT can now do immediate variable evaluatation correctly
 - Highlighting of single character strings (which could represent data attributes - e.g. `I'`, `L'`, `S'` and others) is fixed
 - Document navigation does not work correctly in Untitled documents
-- Fixed an issue preventing correct N' attribute evaluation of empty subscript arrays
-- Contents of subscript arrays are now visible during debugging without the need to expand them
 
 ## [1.0.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.1...1.0.0) (2022-01-31)
 
