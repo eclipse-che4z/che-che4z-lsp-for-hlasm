@@ -1,3 +1,29 @@
+## [1.1.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.0.0...1.1.0) (2022-03-29)
+
+
+### Features
+
+* Added support for SYSSTMT ([#234](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/234)) ([2d3da68](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/2d3da6819ae9aa1167120815e3168cfbf76773f0)), closes [#213](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/213)
+* Instruction operand checking utilizes USING map ([#242](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/242)) ([5e77dac](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/5e77dacdbfa3c171b4f7a9e964703ccca3fec168))
+* USING and DROP support ([#230](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/230)) ([f9dfd05](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f9dfd05bee2d344241ea92ec0ba4879dd93e3710))
+
+
+### Other changes
+
+* Expressions should not collect diagnostics ([#235](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/235)) ([45c2711](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/45c271103e1740710abf014ff2e7338a7a2bd2e3))
+* Reduce data definition length evaluation dependencies ([#239](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/239)) ([b07419f](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/b07419ff31e2d8c8b05acb28e440cddeb35e1646))
+* Use string_view in instructions and diagnostics ([#226](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/226)) ([0652b66](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/0652b66cc5b366fec3a1f787f60f5ab26a869600))
+
+
+### Fixes
+
+* AINSERT immediate variable evaluation ([#243](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/243)) ([e8006e9](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e8006e9b4c8e1ba262781e6e2a10e8296913b254)), closes [#236](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/236)
+* Cross-section relative immediate references should be only warned upon ([#240](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/240)) ([fe243de](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/fe243def88410643af5d4060b5959eafab527dc7))
+* Document navigation does not work correctly in Untitled documents ([#247](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/247)) ([4316546](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/4316546c5a56c1c1de729b07444042a8a65de4ba))
+* Incorrect module layout computed when ORG instruction is used in sections with multiple location counters ([#241](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/241)) ([e5838c5](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e5838c5e026d85a178111f95895336e7202dd302))
+* Single char strings highlighting ([#246](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/246)) ([37cd2d7](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/37cd2d71cc936d07a93fc0e663d74a1c47c65ccd))
+* System variables with subscripts ([#233](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/233)) ([f01e81b](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f01e81b7656661104c9f68e0e6819fc116e01c64)), closes [#212](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/212)
+
 ## [1.0.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.1...1.0.0) (2022-01-31)
 
 
