@@ -68,8 +68,12 @@ size_t macro_param_data_composite::size() const { return data_.size(); }
 
 
 macro_param_data_composite::macro_param_data_composite(std::vector<macro_data_ptr> value)
-    : macro_param_data_component(value.size())
-    , data_(move(value))
+    : macro_param_data_component(!value.empty() ? value.size() : 1)
+    , data_(!value.empty() ? std::move(value) : [] {
+        std::vector<context::macro_data_ptr> vec;
+        vec.push_back(std::make_unique<context::macro_param_data_dummy>());
+        return vec;
+    }())
 {
     value_.append("(");
     for (size_t i = 0; i < data_.size(); ++i)

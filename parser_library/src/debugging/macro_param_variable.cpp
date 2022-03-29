@@ -25,11 +25,15 @@ macro_param_variable::macro_param_variable(const context::macro_param_base& para
     , index_(std::move(index))
 {
     if (!index_.empty())
+    {
         name_ = std::to_string(index_.back());
+        value_ = macro_param_.get_value(index_);
+    }
     else
+    {
         name_ = "&" + *macro_param_.id;
-
-    value_ = macro_param_.get_value(index_);
+        value_ = macro_param_.macro_param_base::get_value();
+    }
 }
 
 const std::string& macro_param_variable::get_name() const { return name_; }
