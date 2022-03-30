@@ -38,6 +38,8 @@ target_sources(language_server_base PRIVATE
 	telemetry_broker.h
 	telemetry_info.h
 	telemetry_sink.h
+	virtual_file_provider.cpp
+	virtual_file_provider.h
 )
 
 if(EMSCRIPTEN)

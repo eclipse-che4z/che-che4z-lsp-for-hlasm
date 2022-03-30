@@ -21,6 +21,7 @@
 #include <regex>
 #include <string>
 
+#include "file_manager_vfm.h"
 #include "lib_config.h"
 #include "library_local.h"
 #include "nlohmann/json.hpp"
@@ -42,6 +43,7 @@ workspace::workspace(const ws_uri& uri,
     , name_(name)
     , uri_(uri)
     , file_manager_(file_manager)
+    , fm_vfm_(file_manager_)
     , implicit_proc_grp("pg_implicit", {}, {})
     , ws_path_(uri)
     , global_config_(global_config)
@@ -162,7 +164,7 @@ workspace_file_info workspace::parse_file(const std::string& file_uri)
             {
                 auto found = file_manager_.find_processor_file(fname);
                 if (found)
-                    found->parse(*this, get_asm_options(fname), get_preprocessor_options(fname));
+                    found->parse(*this, get_asm_options(fname), get_preprocessor_options(fname), &fm_vfm_);
             }
 
             for (auto fname : dependants_)
@@ -202,7 +204,7 @@ workspace_file_info workspace::parse_file(const std::string& file_uri)
 
     for (auto f : files_to_parse)
     {
-        f->parse(*this, get_asm_options(f->get_file_name()), get_preprocessor_options(f->get_file_name()));
+        f->parse(*this, get_asm_options(f->get_file_name()), get_preprocessor_options(f->get_file_name()), &fm_vfm_);
         if (!f->dependencies().empty())
             dependants_.insert(f->get_file_name());
 

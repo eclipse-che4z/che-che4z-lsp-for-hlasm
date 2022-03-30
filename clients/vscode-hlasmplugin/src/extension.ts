@@ -24,6 +24,7 @@ import { ServerFactory, ServerVariant } from './serverFactory';
 import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
 import { Telemetry } from './telemetry';
 import { LanguageClientErrorHandler } from './languageClientErrorHandler';
+import { HLASMVirtualFileContentProvider } from './hlasmVirtualFileContentProvider';
 
 const offset = 71;
 const continueColumn = 15;
@@ -185,6 +186,8 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
     // register filename retrieve functions for debug sessions
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', () => getProgramName()));
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getCurrentProgramName', () => getCurrentProgramName()));
+
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("hlasm", new HLASMVirtualFileContentProvider(client)));
 
     return handler;
 }

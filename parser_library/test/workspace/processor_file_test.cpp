@@ -59,7 +59,7 @@ TEST(processor_file, parse_macro)
  MEND)");
     auto macro = mngr.add_processor_file(macro_name);
 
-    opencode->parse(provider, {}, {});
+    opencode->parse(provider, {}, {}, nullptr);
 
     // Opencode file tests
     auto& open_fp = opencode->get_lsp_feature_provider();

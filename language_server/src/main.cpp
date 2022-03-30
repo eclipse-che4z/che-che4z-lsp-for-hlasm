@@ -26,6 +26,7 @@
 #include "scope_exit.h"
 #include "server_streams.h"
 #include "telemetry_broker.h"
+#include "virtual_file_provider.h"
 #include "workspace_manager.h"
 
 using namespace hlasm_plugin::language_server;
@@ -44,14 +45,17 @@ class main_program : public json_sink
     std::thread lsp_thread;
     telemetry_broker dap_telemetry_broker;
     dap::session_manager dap_sessions;
+    virtual_file_provider virtual_files;
 
 public:
     main_program(json_sink& json_output, int& ret)
         : ws_mngr(&cancel)
         , router(&lsp_queue)
         , dap_sessions(ws_mngr, json_output, &dap_telemetry_broker)
+        , virtual_files(ws_mngr, json_output)
     {
         router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
+        router.register_route(virtual_files.get_filtering_predicate(), virtual_files);
 
         lsp_thread = std::thread([&ret, this, io = json_channel_adapter(lsp_queue, json_output)]() {
             try

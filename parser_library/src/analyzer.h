@@ -27,6 +27,7 @@
 #include "parsing/parser_error_listener.h"
 #include "preprocessor_options.h"
 #include "processing/processing_manager.h"
+#include "virtual_file_monitor.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library {
@@ -53,6 +54,7 @@ class analyzer_options
     file_is_opencode parsing_opencode = file_is_opencode::no;
     std::shared_ptr<context::id_storage> ids_init;
     preprocessor_options preprocessor_args;
+    virtual_file_monitor* vf_monitor = nullptr;
 
     void set(std::string fn) { file_name = std::move(fn); }
     void set(workspaces::parse_lib_provider* lp) { lib_provider = lp; }
@@ -63,6 +65,7 @@ class analyzer_options
     void set(file_is_opencode f_oc) { parsing_opencode = f_oc; }
     void set(std::shared_ptr<context::id_storage> ids) { ids_init = std::move(ids); }
     void set(preprocessor_options pp) { preprocessor_args = std::move(pp); }
+    void set(virtual_file_monitor* vfm) { vf_monitor = vfm; }
 
     context::hlasm_context& get_hlasm_context();
     analyzing_context& get_context();
@@ -88,8 +91,9 @@ public:
         constexpr auto f_oc_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, file_is_opencode>);
         constexpr auto ids_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, std::shared_ptr<context::id_storage>>);
         constexpr auto pp_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, preprocessor_options>);
+        constexpr auto vfm_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, virtual_file_monitor*>);
         constexpr auto cnt =
-            string_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt + pp_cnt;
+            string_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt + pp_cnt + vfm_cnt;
 
         static_assert(string_cnt <= 1, "Duplicate file_name");
         static_assert(lib_cnt <= 1, "Duplicate parse_lib_provider");
@@ -100,6 +104,7 @@ public:
         static_assert(f_oc_cnt <= 1, "Duplicate file_is_opencode");
         static_assert(ids_cnt <= 1, "Duplicate id_storage");
         static_assert(pp_cnt <= 1, "Duplicate preprocessor_args");
+        static_assert(vfm_cnt <= 1, "Duplicate virtual_file_monitor");
         static_assert(!(ac_cnt && (ao_cnt || ids_cnt || pp_cnt)),
             "Do not specify both analyzing_context and asm_option, id_storage or preprocessor_args");
         static_assert(cnt == sizeof...(Args), "Unrecognized argument provided");

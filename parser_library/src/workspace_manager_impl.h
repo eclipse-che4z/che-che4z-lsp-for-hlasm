@@ -31,9 +31,9 @@ class workspace_manager::impl final : public diagnosable_impl
 {
 public:
     impl(std::atomic<bool>* cancel = nullptr)
-        : file_manager_(cancel)
+        : cancel_(cancel)
+        , file_manager_(cancel)
         , implicit_workspace_(file_manager_, global_config_, cancel)
-        , cancel_(cancel)
     {}
     impl(const impl&) = delete;
     impl& operator=(const impl&) = delete;
@@ -222,6 +222,11 @@ public:
         return empty_tokens;
     }
 
+    continuous_sequence<char> get_virtual_file_content(unsigned long long id) const
+    {
+        return make_continuous_sequence(file_manager_.get_virtual_file(id));
+    }
+
 private:
     void collect_diags() const override
     {
@@ -276,25 +281,16 @@ private:
         }
     }
 
-    size_t prefix_match(const std::string& first, const std::string& second) const
+    static size_t prefix_match(const std::string& first, const std::string& second)
     {
-        size_t match = 0;
-        size_t i1 = 0;
-        size_t i2 = 0;
-        while (first[i1] == second[i2] && i1 < first.size() && i2 < second.size())
-        {
-            ++i1;
-            ++i2;
-            ++match;
-        }
-        return match;
+        auto [f, s] = std::mismatch(first.begin(), first.end(), second.begin(), second.end());
+        return static_cast<size_t>(std::min(f - first.begin(), s - second.begin()));
     }
-    std::vector<debugging::variable*> temp_variables_;
 
-    std::unordered_map<std::string, workspaces::workspace> workspaces_;
-    workspaces::file_manager_impl file_manager_;
-    workspaces::workspace implicit_workspace_;
     std::atomic<bool>* cancel_;
+    workspaces::file_manager_impl file_manager_;
+    std::unordered_map<std::string, workspaces::workspace> workspaces_;
+    workspaces::workspace implicit_workspace_;
 
     std::vector<diagnostics_consumer*> diag_consumers_;
     std::vector<parsing_metadata_consumer*> parsing_metadata_consumers_;

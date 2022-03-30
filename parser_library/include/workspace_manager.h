@@ -96,11 +96,11 @@ public:
 
     virtual position_uri definition(const char* document_uri, position pos);
     virtual position_uri_list references(const char* document_uri, position pos);
-    virtual std::string_view hover(const char* document_uri, position pos);
+    virtual sequence<char> hover(const char* document_uri, position pos);
     virtual completion_list completion(
         const char* document_uri, position pos, char trigger_char, completion_trigger_kind trigger_kind);
 
-    virtual const std::vector<token_info>& semantic_tokens(const char* document_uri);
+    virtual sequence<token_info> semantic_tokens(const char* document_uri);
     virtual document_symbol_list document_symbol(const char* document_uri, long long limit);
 
     virtual void configuration_changed(const lib_config& new_config);
@@ -111,6 +111,8 @@ public:
     virtual void register_parsing_metadata_consumer(parsing_metadata_consumer* consumer);
     virtual void unregister_parsing_metadata_consumer(parsing_metadata_consumer* consumer);
     virtual void set_message_consumer(message_consumer* consumer);
+
+    virtual continuous_sequence<char> get_virtual_file_content(unsigned long long id) const;
 
 private:
     impl* impl_;

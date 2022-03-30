@@ -16,19 +16,20 @@
 #define HLASMPLUGIN_PARSERLIBRARY_TAGGED_INDEX_H
 
 #include <cassert>
+#include <concepts>
 #include <cstddef>
 
 namespace hlasm_plugin::parser_library {
 
-template<typename Tag>
+template<typename Tag, /* std::integral */ typename T = std::size_t>
 class index_t
 {
-    static constexpr std::size_t invalid_index = (std::size_t)-1;
-    std::size_t index = invalid_index;
+    static constexpr T invalid_index = (T)-1;
+    T index = invalid_index;
 
 public:
     index_t() = default;
-    explicit constexpr index_t(std::size_t i) noexcept
+    explicit constexpr index_t(T i) noexcept
         : index(i)
     {
         assert(i != invalid_index);
@@ -38,7 +39,7 @@ public:
 
     constexpr explicit operator bool() const { return index != invalid_index; }
 
-    constexpr std::size_t value() const
+    constexpr T value() const
     {
         assert(index != invalid_index);
         return index;

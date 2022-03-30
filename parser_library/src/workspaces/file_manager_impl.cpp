@@ -189,4 +189,24 @@ bool file_manager_impl::lib_file_exists(const std::string& lib_path, const std::
     return std::filesystem::exists(utils::path::join(lib_path, file_name));
 }
 
+void file_manager_impl::put_virtual_file(unsigned long long id, std::string_view text)
+{
+    std::lock_guard guard(files_mutex);
+    m_virtual_files.try_emplace(id, text);
+}
+
+void file_manager_impl::remove_virtual_file(unsigned long long id)
+{
+    std::lock_guard guard(files_mutex);
+    m_virtual_files.erase(id);
+}
+
+std::string file_manager_impl::get_virtual_file(unsigned long long id) const
+{
+    std::lock_guard guard(files_mutex);
+    if (auto it = m_virtual_files.find(id); it != m_virtual_files.end())
+        return it->second;
+    return {};
+}
+
 } // namespace hlasm_plugin::parser_library::workspaces

@@ -113,7 +113,6 @@ private:
     const lsp::completion_item_s& item_;
 };
 
-template class PARSER_LIBRARY_EXPORT sequence<completion_item, const lsp::completion_item_s*>;
 using completion_list = sequence<completion_item, const lsp::completion_item_s*>;
 
 enum class PARSER_LIBRARY_EXPORT document_symbol_kind
@@ -150,8 +149,6 @@ private:
     const lsp::document_symbol_item_s& item_;
 };
 
-template class PARSER_LIBRARY_EXPORT sequence<document_symbol_item, const lsp::document_symbol_item_s*>;
-
 struct PARSER_LIBRARY_EXPORT position_uri
 {
     explicit position_uri(const location& item);
@@ -162,7 +159,6 @@ private:
     const location& item_;
 };
 
-template class PARSER_LIBRARY_EXPORT sequence<position_uri, const location*>;
 using position_uri_list = sequence<position_uri, const location*>;
 
 struct PARSER_LIBRARY_EXPORT range_uri
@@ -330,7 +326,6 @@ struct PARSER_LIBRARY_EXPORT stack_frame
     uint32_t id;
 };
 
-template class PARSER_LIBRARY_EXPORT sequence<stack_frame, const debugging::stack_frame*>;
 using stack_frames_t = sequence<stack_frame, const debugging::stack_frame*>;
 
 using frame_id_t = size_t;
@@ -353,7 +348,6 @@ struct PARSER_LIBRARY_EXPORT scope
     source source_file;
 };
 
-template class PARSER_LIBRARY_EXPORT sequence<scope, const debugging::scope*>;
 using scopes_t = sequence<scope, const debugging::scope*>;
 
 struct PARSER_LIBRARY_EXPORT variable
@@ -366,7 +360,6 @@ struct PARSER_LIBRARY_EXPORT variable
     set_type type;
 };
 
-template class PARSER_LIBRARY_EXPORT sequence<variable, const debugging::variable_store*>;
 using variables_t = sequence<variable, const debugging::variable_store*>;
 
 struct breakpoint

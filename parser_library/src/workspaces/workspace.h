@@ -28,6 +28,7 @@
 #include "config/proc_grps.h"
 #include "diagnosable_impl.h"
 #include "file_manager.h"
+#include "file_manager_vfm.h"
 #include "lib_config.h"
 #include "library.h"
 #include "message_consumer.h"
@@ -119,7 +120,6 @@ public:
 
     processor_file_ptr get_processor_file(const std::string& filename);
 
-protected:
     file_manager& get_file_manager();
 
 private:
@@ -132,6 +132,7 @@ private:
     std::string name_;
     ws_uri uri_;
     file_manager& file_manager_;
+    file_manager_vfm fm_vfm_;
 
     std::unordered_map<proc_grp_id, processor_group> proc_grps_;
     std::map<std::string, program> exact_pgm_conf_;
