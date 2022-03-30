@@ -43,10 +43,10 @@ TEST(processor_group, preprocessor_options)
 
     EXPECT_EQ(pp_options(std::monostate()), preprocessor_options());
 
-    EXPECT_EQ(pp_options(config::db2_preprocessor()), db2());
-    EXPECT_EQ(pp_options(config::db2_preprocessor("A")), db2("A"));
+    EXPECT_EQ(pp_options(config::db2_preprocessor {}), db2());
+    EXPECT_EQ(pp_options(config::db2_preprocessor { .version = "A" }), db2("A"));
 
-    EXPECT_EQ(pp_options(config::cics_preprocessor()), cics());
+    EXPECT_EQ(pp_options(config::cics_preprocessor {}), cics());
     EXPECT_EQ(pp_options(config::cics_preprocessor { .leasm = true }), cics(true, true, true));
     EXPECT_EQ(pp_options(config::cics_preprocessor { .prolog = false }), cics(false, true, false));
     EXPECT_EQ(pp_options(config::cics_preprocessor { .epilog = false }), cics(true, false, false));
