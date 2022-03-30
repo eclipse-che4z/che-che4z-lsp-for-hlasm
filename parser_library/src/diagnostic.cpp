@@ -2447,6 +2447,16 @@ diagnostic_s diagnostic_s::error_W005(std::string_view file_name, std::string_vi
         {});
 }
 
+diagnostic_s diagnostic_s::error_W006(std::string_view file_name, std::string_view proc_group)
+{
+    return diagnostic_s(std::string(file_name),
+        {},
+        diagnostic_severity::warning,
+        "W0006",
+        concat("The processor group '", proc_group, "' from '", file_name, "' defines invalid preprocessor options."),
+        {});
+}
+
 diagnostic_s diagnostic_s::error_L0001(std::string_view path)
 {
     return diagnostic_s(std::string(path), {}, "L0001", concat("Unable to load library: ", path, "."));

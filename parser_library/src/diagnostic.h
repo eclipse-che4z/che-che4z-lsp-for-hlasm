@@ -811,6 +811,8 @@ public:
 
     static diagnostic_s error_W005(std::string_view file_name, std::string_view proc_group);
 
+    static diagnostic_s error_W006(std::string_view file_name, std::string_view proc_group);
+
     /*
     E01x - wrong format
     - E010 - unknown name

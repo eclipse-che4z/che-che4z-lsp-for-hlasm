@@ -63,8 +63,41 @@ void from_json(const nlohmann::json& j, assembler_options& p)
         it->get_to(p.system_id);
 }
 
-void to_json(nlohmann::json& j, const db2_preprocessor&) { j = "DB2"; }
-void from_json(const nlohmann::json&, db2_preprocessor&) {}
+void to_json(nlohmann::json& j, const db2_preprocessor& v)
+{
+    static const db2_preprocessor default_config;
+    if (v == default_config)
+    {
+        j = "DB2";
+        return;
+    }
+    j = nlohmann::json {
+        { "name", "DB2" },
+        {
+            "options",
+            {
+                { "version", v.version },
+            },
+        },
+    };
+}
+void from_json(const nlohmann::json& j, db2_preprocessor& v)
+{
+    v = db2_preprocessor {};
+    if (!j.is_object())
+        return;
+    if (auto it = j.find("options"); it != j.end())
+    {
+        if (!it->is_object())
+            throw nlohmann::json::other_error::create(501, "Object with DB2 options expected.");
+        if (auto ver = it->find("version"); ver != it->end())
+        {
+            if (!ver->is_string())
+                throw nlohmann::json::other_error::create(501, "Version string expected.");
+            v.version = ver->get<std::string>();
+        }
+    }
+}
 
 void to_json(nlohmann::json& j, const cics_preprocessor& v)
 {
@@ -181,5 +214,23 @@ void from_json(const nlohmann::json& j, proc_grps& p)
     if (auto it = j.find("macro_extensions"); it != j.end())
         it->get_to(p.macro_extensions);
 }
+
+namespace {
+struct preprocessor_validator
+{
+    template<typename T>
+    bool operator()(const T&) const noexcept
+    {
+        return true;
+    }
+    template<typename T>
+    bool operator()(const T& t) const noexcept requires(requires(const T& t) { t.valid(); })
+    {
+        return t.valid();
+    }
+};
+} // namespace
+
+bool preprocessor_options::valid() const noexcept { return std::visit(preprocessor_validator {}, options); }
 
 } // namespace hlasm_plugin::parser_library::config

@@ -22,7 +22,15 @@
 namespace hlasm_plugin::parser_library {
 
 struct db2_preprocessor_options
-{};
+{
+    std::string version;
+
+    explicit db2_preprocessor_options(std::string version = {})
+        : version(std::move(version))
+    {}
+
+    bool operator==(const db2_preprocessor_options&) const = default;
+};
 
 struct cics_preprocessor_options
 {
@@ -36,10 +44,7 @@ struct cics_preprocessor_options
         , leasm(leasm)
     {}
 
-    friend bool operator==(const cics_preprocessor_options& l, const cics_preprocessor_options& r)
-    {
-        return l.prolog == r.prolog && l.epilog == r.epilog && l.leasm == r.leasm;
-    }
+    bool operator==(const cics_preprocessor_options&) const = default;
 };
 
 using preprocessor_options = std::variant<std::monostate, db2_preprocessor_options, cics_preprocessor_options>;
