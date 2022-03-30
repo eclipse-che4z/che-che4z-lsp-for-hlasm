@@ -21,6 +21,7 @@
 #include "diagnosable_impl.h"
 #include "preprocessor_options.h"
 #include "virtual_file_monitor.h"
+#include "workspace_manager.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/file_manager_vfm.h"
 
@@ -150,4 +151,15 @@ TEST(virtual_files, file_manager_vfm)
 
     ASSERT_TRUE(file_id);
     EXPECT_EQ(file_id.value(), id);
+}
+
+TEST(virtual_files, workspace)
+{
+    workspace_manager wm;
+    wm.add_workspace("ws", "ws");
+    std::string_view input = R"(
+    AINSERT 'A DC H',BACK
+)";
+    wm.did_open_file("ws/file", 1, input.data(), input.size());
+    wm.did_close_file("ws/file");
 }
