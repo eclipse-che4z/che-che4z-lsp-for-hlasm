@@ -84,6 +84,17 @@
                                         "enum": [
                                             "DB2"
                                         ]
+                                    },
+                                    "options": {
+                                        "type": "object",
+                                        "description": "Parameters for the preprocessor.",
+                                        "properties": {
+                                            "version": {
+                                                "type": "string",
+                                                "description": "The DB2 package VERSION string",
+                                                "maxlength": 64
+                                            }
+                                        }
                                     }
                                 }
                             },
