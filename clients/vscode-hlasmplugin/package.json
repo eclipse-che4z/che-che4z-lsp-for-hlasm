@@ -158,7 +158,11 @@
       {
         "id": "hlasm",
         "extensions": [
-          ".hlasm"
+          ".hlasm",
+          ".asmpgm",
+          ".asmmac",
+          ".asm",
+          ".mac"
         ],
         "aliases": [
           "HLASM"
