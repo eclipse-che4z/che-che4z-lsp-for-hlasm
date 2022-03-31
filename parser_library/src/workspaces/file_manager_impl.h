@@ -29,6 +29,10 @@ namespace hlasm_plugin::parser_library::workspaces {
 // Implementation of the file_manager interface.
 class file_manager_impl : public file_manager, public diagnosable_impl
 {
+    mutable std::mutex files_mutex;
+    mutable std::mutex virtual_files_mutex;
+    std::atomic<bool>* cancel_;
+
 public:
     file_manager_impl(std::atomic<bool>* cancel = nullptr)
         : cancel_(cancel) {};
@@ -66,15 +70,11 @@ public:
     std::string get_virtual_file(unsigned long long id) const override;
 
 protected:
-    std::unordered_map<std::string, std::shared_ptr<file_impl>> files_;
     std::unordered_map<unsigned long long, std::string> m_virtual_files;
+    // m_virtual_files must outlive the files_
+    std::unordered_map<std::string, std::shared_ptr<file_impl>> files_;
 
 private:
-    mutable std::mutex files_mutex;
-    mutable std::mutex virtual_files_mutex;
-
-    std::atomic<bool>* cancel_;
-
     processor_file_ptr change_into_processor_file_if_not_already_(std::shared_ptr<file_impl>& ret);
     void prepare_file_for_change_(std::shared_ptr<file_impl>& file);
 };
