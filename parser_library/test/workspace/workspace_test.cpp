@@ -196,6 +196,27 @@ std::string pgroups_file_invalid_assembler_options = R"({
   ]
 })";
 
+std::string pgroups_file_invalid_preprocessor_options = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [
+        {
+          "path": "missing",
+          "optional": true
+        },
+        "lib"
+      ],
+      "preprocessor": {
+        "name": "DB2",
+        "options": {
+          "version": "AAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFFFFFFFGGGGGGGGGG"
+        }
+      }
+    }
+  ]
+})";
+
 std::string pgmconf_file = R"({
   "pgms": [
     {
@@ -270,6 +291,7 @@ enum class file_manager_opt_variant
     required,
     optional,
     invalid_assembler_options,
+    invalid_preprocessor_options,
 };
 
 class file_manager_opt : public file_manager_impl
@@ -289,6 +311,9 @@ class file_manager_opt : public file_manager_impl
             case file_manager_opt_variant::invalid_assembler_options:
                 return std::make_unique<file_with_text>(
                     "proc_grps.json", pgroups_file_invalid_assembler_options, *this);
+            case file_manager_opt_variant::invalid_preprocessor_options:
+                return std::make_unique<file_with_text>(
+                    "proc_grps.json", pgroups_file_invalid_preprocessor_options, *this);
         }
         throw std::logic_error("Not implemented");
     }
@@ -419,6 +444,17 @@ TEST_F(workspace_test, invalid_assembler_options)
 
     EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
     EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "W0005"; }));
+}
+
+TEST_F(workspace_test, invalid_preprocessor_options)
+{
+    file_manager_opt file_manager(file_manager_opt_variant::invalid_preprocessor_options);
+    lib_config config;
+    workspace ws("", "workspace_name", file_manager, config);
+    ws.open();
+
+    EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+    EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "W0006"; }));
 }
 
 class file_manager_list_dir_failed : public file_manager_opt

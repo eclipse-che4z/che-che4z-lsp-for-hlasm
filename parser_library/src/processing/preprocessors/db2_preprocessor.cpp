@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <algorithm>
 #include <cassert>
 #include <charconv>
 #include <regex>
@@ -41,6 +42,7 @@ class db2_preprocessor : public preprocessor
     const char* m_last_position = nullptr;
     lexing::logical_line m_logical_line;
     std::string m_operands;
+    std::string m_version;
     library_fetcher m_libs;
     diagnostic_op_consumer* m_diags = nullptr;
     std::string m_buffer;
@@ -70,8 +72,42 @@ class db2_preprocessor : public preprocessor
         return true;
     }
 
+    void push_sql_version_data()
+    {
+        assert(!m_version.empty());
+
+        constexpr auto version_chunk = (size_t)32;
+        if (m_version.size() <= version_chunk)
+        {
+            m_buffer.append("SQLVERSP DC    CL4'VER.' VERSION-ID PREFIX\n");
+            m_buffer.append("SQLVERD1 DC    CL64'").append(m_version).append("'        VERSION-ID\n");
+        }
+        else
+        {
+            m_buffer.append("SQLVERS  DS    CL68      VERSION-ID\n"
+                            "         ORG   SQLVERS+0\n"
+                            "SQLVERSP DC    CL4'VER.' VERS-ID PREFIX\n");
+
+            for (auto [version, i] = std::pair(std::string_view(m_version), 1); !version.empty();
+                 version.remove_prefix(std::min(version.size(), version_chunk)), ++i)
+            {
+                auto i_str = std::to_string(i);
+                m_buffer.append("SQLVERD")
+                    .append(i_str)
+                    .append(" DC    CL32'")
+                    .append(version.substr(0, version_chunk))
+                    .append("'    VERS-ID PART-")
+                    .append(i_str)
+                    .append("\n");
+            }
+        }
+    }
+
     void push_sql_working_storage()
     {
+        if (!m_version.empty())
+            push_sql_version_data();
+
         m_buffer.append("***$$$ SQL WORKING STORAGE                      \n"
                         "SQLDSIZ  DC    A(SQLDLEN) SQLDSECT SIZE         \n"
                         "SQLDSECT DSECT                                  \n"
@@ -646,16 +682,17 @@ class db2_preprocessor : public preprocessor
     bool finished() const override { return true; }
 
 public:
-    db2_preprocessor(library_fetcher libs, diagnostic_op_consumer* diags)
-        : m_libs(std::move(libs))
+    db2_preprocessor(const db2_preprocessor_options& opts, library_fetcher libs, diagnostic_op_consumer* diags)
+        : m_version(opts.version)
+        , m_libs(std::move(libs))
         , m_diags(diags)
     {}
 };
 } // namespace
 
 std::unique_ptr<preprocessor> preprocessor::create(
-    const db2_preprocessor_options&, library_fetcher libs, diagnostic_op_consumer* diags)
+    const db2_preprocessor_options& opts, library_fetcher libs, diagnostic_op_consumer* diags)
 {
-    return std::make_unique<db2_preprocessor>(std::move(libs), diags);
+    return std::make_unique<db2_preprocessor>(opts, std::move(libs), diags);
 }
 } // namespace hlasm_plugin::parser_library::processing

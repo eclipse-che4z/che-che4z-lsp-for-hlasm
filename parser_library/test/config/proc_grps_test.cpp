@@ -126,6 +126,9 @@ TEST(proc_grps, full_content_read)
             proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"DB2"}}]})"_json,
             proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
+        std::make_pair(
+            R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"DB2","options":{"version":"AAA"}}}]})"_json,
+            proc_grps { { { "P1", {}, {}, db2_preprocessor { "AAA" } } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS"}}]})"_json,
             proc_grps { { { "P1", {}, {}, cics_preprocessor {} } } }),
         std::make_pair(
@@ -167,6 +170,9 @@ TEST(proc_grps, full_content_write)
             R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_grps { { { "P1", {}, {}, std::monostate {} } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"DB2"}]})"_json,
             proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
+        std::make_pair(
+            R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"DB2","options":{"version":"AAA"}}}]})"_json,
+            proc_grps { { { "P1", {}, {}, db2_preprocessor { "AAA" } } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"CICS"}]})"_json,
             proc_grps { { { "P1", {}, {}, cics_preprocessor {} } } }),
         std::make_pair(
@@ -190,6 +196,9 @@ TEST(proc_grps, invalid)
         R"({"pgroups":[{"name":"","libs":[{}]}],"preprocessor":"invalid"})"_json,
         R"({"pgroups":[{"name":"","libs":[{}]}],"preprocessor":{}})"_json,
         R"({"pgroups":[{"name":"","libs":[{}]}],"preprocessor":{"name":"invalid"}})"_json,
+        R"({"pgroups":[{"name":"","libs":[{}]}],"preprocessor":{"name":"DB2","options":""}})"_json,
+        R"({"pgroups":[{"name":"","libs":[{}]}],"preprocessor":{"name":"DB2","options":{"version":1}}})"_json,
+        R"({"pgroups":[{"name":"","libs":[{}]}],"preprocessor":{"name":"DB2","options":{"version":{}}}})"_json,
     };
 
     for (const auto& input : cases)
@@ -204,6 +213,23 @@ TEST(proc_grps, assembler_options_validate)
         std::make_pair(assembler_options { "SYSPARM" }, true),
         std::make_pair(assembler_options { std::string(255, 'A') }, true),
         std::make_pair(assembler_options { std::string(256, 'A') }, false),
+    };
+
+    for (const auto& [input, expected] : cases)
+        EXPECT_EQ(input.valid(), expected);
+}
+
+TEST(proc_grps, preprocessor_options_validate)
+{
+    const auto cases = {
+        std::make_pair(preprocessor_options { std::monostate {} }, true),
+        std::make_pair(preprocessor_options { db2_preprocessor {} }, true),
+        std::make_pair(preprocessor_options { cics_preprocessor {} }, true),
+        std::make_pair(preprocessor_options { db2_preprocessor { "" } }, true),
+        std::make_pair(preprocessor_options { db2_preprocessor { "aaa" } }, true),
+        std::make_pair(preprocessor_options { db2_preprocessor { std::string(64, 'A') } }, true),
+        std::make_pair(preprocessor_options { db2_preprocessor { std::string(65, 'A') } }, false),
+        std::make_pair(preprocessor_options { db2_preprocessor { std::string(256, 'A') } }, false),
     };
 
     for (const auto& [input, expected] : cases)
