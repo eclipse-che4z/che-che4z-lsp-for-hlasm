@@ -71,6 +71,7 @@ protected:
 
 private:
     mutable std::mutex files_mutex;
+    mutable std::mutex virtual_files_mutex;
 
     std::atomic<bool>* cancel_;
 
