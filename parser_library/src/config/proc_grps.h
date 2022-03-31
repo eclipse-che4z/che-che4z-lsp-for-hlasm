@@ -62,6 +62,8 @@ struct cics_preprocessor
     bool epilog = true;
     bool leasm = false;
 
+    bool valid() const noexcept { return true; }
+
     friend bool operator==(const cics_preprocessor&, const cics_preprocessor&) = default;
 };
 

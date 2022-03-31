@@ -219,15 +219,12 @@ namespace {
 struct preprocessor_validator
 {
     template<typename T>
-    bool operator()(const T&) const noexcept
-    {
-        return true;
-    }
-    template<typename T>
-    bool operator()(const T& t) const noexcept requires(requires(const T& t) { t.valid(); })
+    bool operator()(const T& t) const noexcept
     {
         return t.valid();
     }
+
+    bool operator()(const std::monostate&) const noexcept { return true; }
 };
 } // namespace
 
