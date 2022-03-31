@@ -163,3 +163,13 @@ TEST(virtual_files, workspace)
     wm.did_open_file("ws/file", 1, input.data(), input.size());
     wm.did_close_file("ws/file");
 }
+
+TEST(virtual_files, workspace_auto_cleanup)
+{
+    workspace_manager wm;
+    wm.add_workspace("ws", "ws");
+    std::string_view input = R"(
+    AINSERT 'A DC H',BACK
+)";
+    wm.did_open_file("ws/file", 1, input.data(), input.size());
+}
