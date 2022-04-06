@@ -76,8 +76,8 @@ jobs:
           export PATH=$SONAR_SCANNER_HOME/bin:$PATH &&
           export SONAR_SCANNER_OPTS="-server" &&
           sonar-scanner
-          -Dsonar.projectKey=eclipse_che-che4z-lsp-for-hlasm
-          -Dsonar.organization=eclipse
+          -Dsonar.projectKey=$(echo "$GITHUB_REPOSITORY" | tr "/[:upper:]" "_[:lower:]")
+          -Dsonar.organization=$(echo "$GITHUB_REPOSITORY_OWNER" | tr "[:upper:]" "[:lower:]")
           -Dsonar.sources=benchmark,clients/vscode-hlasmplugin/src/,language_server/src,parser_library/src,parser_library/include,build/generated_parser/
           -Dsonar.tests=parser_library/test,language_server/test,clients/vscode-hlasmplugin/src/test
           -Dsonar.host.url=https://sonarcloud.io
