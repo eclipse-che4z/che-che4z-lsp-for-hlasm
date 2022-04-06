@@ -7,9 +7,9 @@ Prerequisites
 
 In order to build the project on any platform, the following software needs to be installed:
 
--   CMake 3.10 or higher
+-   CMake 3.13 or higher
 
--   C++ compiler with support for C++17
+-   C++ compiler with support for C++20
 
 -   Java Development Kit (JDK) 8 or higher (the ANTLR project written in Java is built from sources)
 
