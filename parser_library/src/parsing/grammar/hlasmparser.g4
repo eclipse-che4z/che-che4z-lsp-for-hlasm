@@ -180,6 +180,12 @@ num_ch
 num returns [self_def_t value]
 	: num_ch									{$value = parse_self_def_term("D",$num_ch.ctx->getText(),provider.get_range($num_ch.ctx));};
 
+signed_num_ch
+	: MINUS? NUM+;
+
+signed_num returns [self_def_t value]
+	: signed_num_ch									{$value = parse_self_def_term("D",$signed_num_ch.ctx->getText(),provider.get_range($signed_num_ch.ctx));};
+
 self_def_term returns [self_def_t value]
 	: ORDSYMBOL string							
 	{

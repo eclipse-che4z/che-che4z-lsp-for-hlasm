@@ -29,7 +29,6 @@ namespace hlasm_plugin::parser_library::processing {
 class ordinary_processor : public statement_processor
 {
     static constexpr size_t NEST_LIMIT = 100;
-    static constexpr size_t ACTR_LIMIT = 1000;
 
     expressions::evaluation_context eval_ctx;
 

@@ -376,7 +376,7 @@ TEST(ACTR, exceeded)
 
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E056" }));
 }
 
 TEST(ACTR, infinite_ACTR)
@@ -387,12 +387,30 @@ TEST(ACTR, infinite_ACTR)
  LR 1,1
  AGO .A
 )");
+    analyzer a(input, analyzer_options(asm_option { .statement_count_limit = 10000 }));
+    a.analyze();
+
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W063", "E077" }));
+}
+
+TEST(ACTR, negative)
+{
+    std::string input(R"(
+&A SETA -2147483648
+   ACTR &A
+   AGO .A
+.A ANOP
+&B SETA 1
+)");
     analyzer a(input);
     a.analyze();
 
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E056" }));
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), std::nullopt);
 }
 
 TEST(MHELP, SYSNDX_limit)

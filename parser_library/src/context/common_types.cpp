@@ -14,6 +14,7 @@
 
 #include "common_types.h"
 
+#include <cassert>
 #include <cctype>
 
 namespace hlasm_plugin::parser_library::context {
@@ -78,5 +79,26 @@ const A_t& SET_t::access_a() const { return a_value; }
 const B_t& SET_t::access_b() const { return b_value; }
 
 const C_t& SET_t::access_c() const { return c_value; }
+
+bool SET_t::operator==(const SET_t& r) const noexcept
+{
+    if (type != r.type)
+        return false;
+
+    switch (type)
+    {
+        case SET_t_enum::A_TYPE:
+            return a_value == r.a_value;
+        case SET_t_enum::B_TYPE:
+            return b_value == r.b_value;
+        case SET_t_enum::C_TYPE:
+            return c_value == r.c_value;
+        case SET_t_enum::UNDEF_TYPE:
+            return true;
+        default:
+            assert(false);
+            return false;
+    }
+}
 
 } // namespace hlasm_plugin::parser_library::context

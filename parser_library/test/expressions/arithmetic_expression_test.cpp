@@ -288,3 +288,20 @@ TEST(arithmetic_expressions, dots)
         ASSERT_EQ(a.diags().empty(), ok);
     }
 }
+
+TEST(arithmetic_expressions, limits)
+{
+    std::string input =
+        R"(
+&A SETA 2147483647
+&B SETA -2147483648
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), SET_t(2147483647));
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), SET_t(static_cast<A_t>(-2147483648)));
+}

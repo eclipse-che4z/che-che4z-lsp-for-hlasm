@@ -273,6 +273,13 @@ void ordinary_processor::check_postponed_statements(
 
 bool ordinary_processor::check_fatals(range line_range)
 {
+    if (!hlasm_ctx.next_statement())
+    {
+        add_diagnostic(diagnostic_op::error_E077(line_range));
+        finished_flag_ = true;
+        return true;
+    }
+
     if (hlasm_ctx.scope_stack().size() > NEST_LIMIT)
     {
         while (hlasm_ctx.is_in_macro())
@@ -290,13 +297,6 @@ bool ordinary_processor::check_fatals(range line_range)
         else
             finished_flag_ = true;
 
-        return true;
-    }
-
-    if (hlasm_ctx.scope_stack().back().branch_counter_change > ACTR_LIMIT)
-    {
-        add_diagnostic(diagnostic_op::error_E063(line_range));
-        finished_flag_ = true;
         return true;
     }
 

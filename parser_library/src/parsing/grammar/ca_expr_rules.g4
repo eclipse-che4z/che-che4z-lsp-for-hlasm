@@ -95,11 +95,11 @@ term returns [ca_expr_ptr ca_expr]
 		auto r = provider.get_range($self_def_term.ctx);
 		$ca_expr = std::make_unique<ca_constant>($self_def_term.value, r);
 	}
-	| num
+	| signed_num
 	{
-		collector.add_hl_symbol(token_info(provider.get_range( $num.ctx),hl_scopes::number));
-		auto r = provider.get_range($num.ctx);
-		$ca_expr = std::make_unique<ca_constant>($num.value, r);
+		collector.add_hl_symbol(token_info(provider.get_range( $signed_num.ctx),hl_scopes::number));
+		auto r = provider.get_range($signed_num.ctx);
+		$ca_expr = std::make_unique<ca_constant>($signed_num.value, r);
 	}
 	| ca_dupl_factor id_no_dot subscript_ne
 	{

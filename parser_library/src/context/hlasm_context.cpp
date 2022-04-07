@@ -320,6 +320,7 @@ hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, std:
     , instruction_map_(init_instruction_map(*ids_))
     , m_usings(std::make_unique<using_collection>())
     , m_active_usings(1, m_usings->remove_all())
+    , m_statements_remaining(asm_options_.statement_count_limit)
     , ord_ctx(*ids_, *this)
 {
     add_global_system_vars(scope_stack_.emplace_back());
@@ -566,10 +567,10 @@ const sequence_symbol* hlasm_context::get_opencode_sequence_symbol(id_index name
     return nullptr;
 }
 
-void hlasm_context::set_branch_counter(A_t value)
+size_t hlasm_context::set_branch_counter(A_t value)
 {
     curr_scope()->branch_counter = value;
-    ++curr_scope()->branch_counter_change;
+    return ++curr_scope()->branch_counter_change;
 }
 
 int hlasm_context::get_branch_counter() const { return curr_scope()->branch_counter; }

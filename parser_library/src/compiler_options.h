@@ -30,6 +30,8 @@ struct asm_option
 
     static constexpr unsigned int sysopt_rent_default = 0;
     unsigned int sysopt_rent = sysopt_rent_default;
+
+    long long statement_count_limit = 10'000'000;
 };
 } // namespace hlasm_plugin::parser_library
 #endif

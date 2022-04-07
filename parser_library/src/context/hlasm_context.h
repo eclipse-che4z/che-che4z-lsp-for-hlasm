@@ -100,6 +100,8 @@ class hlasm_context
     std::unique_ptr<using_collection> m_usings;
     std::vector<index_t<using_collection>> m_active_usings;
 
+    long long m_statements_remaining;
+
 public:
     hlasm_context(std::string file_name = "",
         asm_option asm_opts = {},
@@ -180,7 +182,7 @@ public:
     // returns nullptr if there is none
     const sequence_symbol* get_opencode_sequence_symbol(id_index name) const;
 
-    void set_branch_counter(A_t value);
+    size_t set_branch_counter(A_t value);
     A_t get_branch_counter() const;
     void decrement_branch_counter();
 
@@ -314,6 +316,8 @@ public:
 
     using name_result = std::pair<bool, context::id_index>;
     name_result try_get_symbol_name(const std::string& symbol);
+
+    bool next_statement() { return --m_statements_remaining >= 0; }
 };
 
 bool test_symbol_for_read(

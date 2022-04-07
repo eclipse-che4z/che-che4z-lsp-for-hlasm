@@ -1980,7 +1980,7 @@ diagnostic_op diagnostic_op::error_E055(const range& range)
 
 diagnostic_op diagnostic_op::error_E056(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "E055", "ACTR counter exceeded", range);
+    return diagnostic_op(diagnostic_severity::error, "E056", "ACTR counter exceeded", range);
 }
 
 diagnostic_op diagnostic_op::error_E057(const range& range)
@@ -2016,9 +2016,10 @@ diagnostic_op diagnostic_op::error_E062(const range& range)
     return diagnostic_op(diagnostic_severity::error, "E062", "Recursive COPY", range);
 }
 
-diagnostic_op diagnostic_op::error_E063(const range& range)
+diagnostic_op diagnostic_op::error_W063(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "E063", "Too many ACTR calls, exiting", range);
+    return diagnostic_op(
+        diagnostic_severity::warning, "W063", "Too many ACTR calls, review the use of the ACTR instruction", range);
 }
 
 diagnostic_op diagnostic_op::error_E064(const range& range)
@@ -2094,6 +2095,11 @@ diagnostic_op diagnostic_op::error_E076(const range& range)
 {
     return diagnostic_op(
         diagnostic_severity::error, "E076", "SYSLIST must be subscripted; using default subscript is 1", range);
+}
+
+diagnostic_op diagnostic_op::error_E077(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E077", "Statement count limit reached", range);
 }
 
 diagnostic_op diagnostic_op::warning_W010(std::string_view message, const range& range)

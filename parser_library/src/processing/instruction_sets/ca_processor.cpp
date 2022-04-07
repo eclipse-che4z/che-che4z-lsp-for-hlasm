@@ -263,7 +263,7 @@ bool ca_processor::prepare_ACTR(const semantics::complete_statement& stmt, conte
     const auto* ca_op = stmt.operands_ref().value[0]->access_ca();
     assert(ca_op);
 
-    if (ca_op->kind == semantics::ca_kind::EXPR || ca_op->kind == semantics::ca_kind::VAR)
+    if (ca_op->kind == semantics::ca_kind::EXPR)
     {
         ctr = ca_op->access_expr()->expression->evaluate<context::A_t>(eval_ctx);
         return true;
@@ -279,11 +279,14 @@ void ca_processor::process_ACTR(const semantics::complete_statement& stmt)
 {
     register_seq_sym(stmt);
 
-    context::A_t ctr;
-    bool ok = prepare_ACTR(stmt, ctr);
-
-    if (ok)
-        hlasm_ctx.set_branch_counter(ctr);
+    if (context::A_t ctr; prepare_ACTR(stmt, ctr))
+    {
+        static constexpr size_t ACTR_LIMIT = 1000;
+        if (hlasm_ctx.set_branch_counter(ctr) == ACTR_LIMIT)
+        {
+            add_diagnostic(diagnostic_op::error_W063(stmt.stmt_range_ref()));
+        }
+    }
 }
 
 bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt,

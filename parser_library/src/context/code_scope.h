@@ -37,22 +37,17 @@ struct code_scope
     // gets macro to which this scope belong (nullptr if in open code)
     macro_invo_ptr this_macro;
     // the ACTR branch counter
-    A_t branch_counter;
+    A_t branch_counter = 4096;
     // number of changed branch counters
-    size_t branch_counter_change;
+    size_t branch_counter_change = 0;
 
     bool is_in_macro() const { return !!this_macro; }
 
     code_scope(macro_invo_ptr macro_invo, macro_def_ptr macro_def)
         : this_macro(std::move(macro_invo))
-        , branch_counter(4096)
-        , branch_counter_change(0)
         , this_macro_def_(std::move(macro_def))
     {}
-    code_scope()
-        : branch_counter(4096)
-        , branch_counter_change(0)
-    {}
+    code_scope() = default;
 
 private:
     macro_def_ptr this_macro_def_;

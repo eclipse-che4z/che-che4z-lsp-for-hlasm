@@ -298,15 +298,6 @@ TEST_P(ca_func, test)
 
     if (!GetParam().erroneous)
     {
-        ASSERT_EQ(result.type, GetParam().true_result.type);
-
-        if (result.type == context::SET_t_enum::A_TYPE)
-            EXPECT_EQ(result.access_a(), GetParam().true_result.access_a());
-        else if (result.type == context::SET_t_enum::B_TYPE)
-            EXPECT_EQ(result.access_b(), GetParam().true_result.access_b());
-        else if (result.type == context::SET_t_enum::C_TYPE)
-            EXPECT_EQ(result.access_c(), GetParam().true_result.access_c());
-        else
-            FAIL();
+        EXPECT_EQ(result, GetParam().true_result);
     }
 }

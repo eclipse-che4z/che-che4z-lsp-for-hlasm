@@ -115,6 +115,8 @@ public:
     const A_t& access_a() const;
     const B_t& access_b() const;
     const C_t& access_c() const;
+
+    bool operator==(const SET_t& r) const noexcept;
 };
 
 // just mock method for now, will be implemented later with respect to UTF/EBCDIC
