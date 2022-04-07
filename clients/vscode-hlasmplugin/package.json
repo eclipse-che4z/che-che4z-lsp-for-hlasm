@@ -169,7 +169,8 @@
         ],
         "configuration": "./language-configuration.json",
         "filenames": [],
-        "firstLine": " *MACRO *"
+        "filenamePatterns": [],
+        "firstLine": "^(\\*[Pp][Rr][Oo][Cc][Ee][Ss][Ss] |[A-Za-z0-9#$@_]* +([Cc][Ss][Ee][Cc][Tt]|[Aa][Mm][Oo][Dd][Ee]|[Rr][Mm][Oo][Dd][Ee]|[Dd][Ss][Ee][Cc][Tt]|[Rr][Ss][Ee][Cc][Tt]|[Tt][Ii][Tt][Ll][Ee]|[Ss][Yy][Ss][Ss][Tt][Aa][Tt][Ee]|[Ss][Pp][Ll][Ee][Vv][Ee][Ll])\\b|\\.\\*+|\\*[][*+-<>?=_ ]{4,}| +[Mm][Aa][Cc][Rr][Oo]\\b)"
       },
       {
         "id": "hlasmListing",

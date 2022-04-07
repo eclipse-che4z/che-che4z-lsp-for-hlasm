@@ -349,6 +349,7 @@ std::string generate_virtual_file_name(virtual_file_id id, std::string_view name
         result += "/";
     }
     result += name;
+    result += ".hlasm";
     return result;
 }
 

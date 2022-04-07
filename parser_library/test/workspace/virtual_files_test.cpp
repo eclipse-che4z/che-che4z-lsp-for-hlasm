@@ -129,7 +129,7 @@ TEST(virtual_files, callback_test_ainsert_valid_vfm)
 
     const auto& d = a.diags();
     ASSERT_EQ(d.size(), 1);
-    EXPECT_EQ(d[0].file_name, "hlasm://0/AINSERT:1");
+    EXPECT_EQ(d[0].file_name, "hlasm://0/AINSERT:1.hlasm");
 }
 
 TEST(virtual_files, file_manager_vfm)
