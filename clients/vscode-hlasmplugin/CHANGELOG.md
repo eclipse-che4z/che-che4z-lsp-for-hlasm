@@ -12,6 +12,7 @@
 - Contents of subscript arrays are now visible during debugging without the need to expand them
 - Improve detection of HLASM files
 - Reaching ACTR limit now only generates warnings
+- Parsing of negative numbers in machine expressions
 
 ## [1.1.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.0.0...1.1.0) (2022-03-29)
 

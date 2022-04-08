@@ -99,10 +99,10 @@ mach_term returns [mach_expr_ptr m_e]
 		collector.add_hl_symbol(token_info(provider.get_range( $id.ctx),hl_scopes::ordinary_symbol));
 		$m_e = std::make_unique<mach_expr_symbol>($id.name, $id.using_qualifier, provider.get_range( $id.ctx));
 	}
-	| num
+	| signed_num
 	{
-		collector.add_hl_symbol(token_info(provider.get_range( $num.ctx),hl_scopes::number));
-		$m_e =  std::make_unique<mach_expr_constant>($num.value, provider.get_range( $num.ctx));
+		collector.add_hl_symbol(token_info(provider.get_range( $signed_num.ctx),hl_scopes::number));
+		$m_e =  std::make_unique<mach_expr_constant>($signed_num.value, provider.get_range( $signed_num.ctx));
 	}
 	| literal
 	{

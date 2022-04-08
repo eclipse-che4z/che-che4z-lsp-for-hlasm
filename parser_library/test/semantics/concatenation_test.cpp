@@ -127,3 +127,17 @@ TEST(concatenation, no_dots_without_subscript)
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), " ' ");
 }
+
+TEST(concatenation, identifier_after_variable_name)
+{
+    std::string input = R"(
+&A SETC 'X'
+&B SETC '&A:'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "X:");
+}
