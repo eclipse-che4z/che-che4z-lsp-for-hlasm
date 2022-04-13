@@ -81,7 +81,12 @@ std::string set_symbol_variable::get_string_array_value() const
     array_value.append("(");
 
     auto keys = set_symbol_.keys();
-    assert(!keys.empty());
+
+    if (keys.empty())
+    {
+        array_value.append(")");
+        return array_value;
+    }
 
     for (const auto& key : keys)
     {

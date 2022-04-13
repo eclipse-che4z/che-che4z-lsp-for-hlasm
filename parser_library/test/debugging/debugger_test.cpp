@@ -774,7 +774,7 @@ TEST(debugger, positional_parameters)
     d.disconnect();
 }
 
-TEST(debugger, var_symbol_array)
+TEST(debugger, arrays)
 {
     using list = std::unordered_map<std::string, std::shared_ptr<test_var_value>>;
 
@@ -782,7 +782,8 @@ TEST(debugger, var_symbol_array)
 &VAR(30)  SETA 1,456,48,7
 &BOOL(15) SETB 0,1,0
 &STR(6)   SETC 'a','b'
-          LR   1,1
+          GBLC &ARR(10)
+          END
 )";
 
 
@@ -821,6 +822,10 @@ TEST(debugger, var_symbol_array)
     exp_frame_vars[0].locals.emplace("&STR",
         test_var_value("(a,b)",
             list { { "6", std::make_shared<test_var_value>("a") }, { "7", std::make_shared<test_var_value>("b") } }));
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    step_over_by(1, d, m, exp_frames, 5);
+    exp_frame_vars[0].globals.emplace("&ARR", test_var_value("()", list {}));
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.disconnect();

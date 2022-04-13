@@ -13,6 +13,7 @@
 - Improve detection of HLASM files
 - Reaching ACTR limit now only generates warnings
 - Parsing of negative numbers in machine expressions
+- Empty arrays now behave similarly to other subscripted variables in macro tracer
 
 ## [1.1.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.0.0...1.1.0) (2022-03-29)
 
@@ -38,7 +39,7 @@
 
 #### Fixed
 - Highlighting now fully works with themes, not just categories dark, light and contrast.
-- Incorrect module layout generated when data defintion operands have different alignments
+- Incorrect module layout generated when data definition operands have different alignments
 - Data definition grammar is too greedy
 - Readme update
 
@@ -75,7 +76,7 @@
 - Infinite loop during lookahead processing when model statement is located in copybook
 - DOT operator in string concatenation is optional
 - AINSERT operand length validation
-- HLASM Listing highligting of lines with trimmed whitespace
+- HLASM Listing highlighting of lines with trimmed whitespace
 - Macro tracer: step over sometimes stops inside a macro or a copy file
 
 ## [0.14.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.13.0...0.14.0) (2021-08-18)
@@ -94,9 +95,9 @@
 - Improved OPSYN processing
 - Language server crashes while evaluating conditional assembly statements
 - Allow self-reference in previously undefined array variables
-- Tolerate '+' in modifiers in data defintions
+- Tolerate '+' in modifiers in data definitions
 - Empty TITLE argument must be tolerated
-- Statements skipped by conditinal assembly emmiting errors in macros and copy files
+- Statements skipped by conditional assembly emitting errors in macros and copy files
 - Location counter in machine instruction sometimes evaluating incorrectly
 - WASM variant of the language server not working with the V8 JavaScript machine version 9 or later
 - Improve language server stability

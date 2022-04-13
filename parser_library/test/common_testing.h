@@ -126,6 +126,35 @@ std::optional<std::vector<T>> get_var_vector(hlasm_context& ctx, std::string nam
     return result;
 }
 
+template<typename T>
+std::optional<std::unordered_map<size_t, T>> get_var_vector_map(hlasm_context& ctx, std::string name)
+{
+    auto var = ctx.get_var_sym(ctx.ids().find(name));
+    if (!var)
+        return std::nullopt;
+
+    if (var->var_kind != context::variable_kind::SET_VAR_KIND)
+        return std::nullopt;
+    auto var_ = var->access_set_symbol_base();
+    if (var_->type != object_traits<T>::type_enum || var_->is_scalar)
+        return std::nullopt;
+
+    auto symbol = var_->template access_set_symbol<T>();
+    if (!symbol)
+        return std::nullopt;
+
+    auto keys = symbol->keys();
+
+    std::unordered_map<size_t, T> result;
+    result.reserve(keys.size());
+    for (size_t i = 0; i < keys.size(); ++i)
+    {
+        result.emplace(keys[i], symbol->get_value(keys[i]));
+    }
+
+    return result;
+}
+
 inline bool matches_message_codes(const std::vector<diagnostic_op>& d, std::initializer_list<std::string> m)
 {
     std::vector<std::string> codes;

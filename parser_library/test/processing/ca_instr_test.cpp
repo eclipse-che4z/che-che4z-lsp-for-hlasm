@@ -20,10 +20,8 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::semantics;
 
-// tests for
-// variable substitution for model statements
-// concatenation of multiple substitutions
-// CA instructions
+// Tests for variable substitution for model statements concatenation of multiple substitutions CA instructions
+// Some inputs are deliberately not written in uppercase to also verify case-insensitivity
 
 TEST(var_subs, gbl_instr_only)
 {
@@ -31,11 +29,7 @@ TEST(var_subs, gbl_instr_only)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-
-    auto it = ctx.ids().find("var");
-
-    ASSERT_TRUE(ctx.get_var_sym(it));
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "var"), 0);
 }
 
 TEST(var_subs, lcl_instr_only)
@@ -44,11 +38,7 @@ TEST(var_subs, lcl_instr_only)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-
-    auto it = ctx.ids().find("var");
-
-    ASSERT_TRUE(ctx.get_var_sym(it));
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "var"), 0);
 }
 
 TEST(var_subs, gbl_instr_more)
@@ -57,15 +47,9 @@ TEST(var_subs, gbl_instr_more)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-
-    auto it = ctx.ids().find("var");
-    auto it2 = ctx.ids().find("var2");
-    auto it3 = ctx.ids().find("var3");
-
-    ASSERT_TRUE(ctx.get_var_sym(it));
-    ASSERT_TRUE(ctx.get_var_sym(it2));
-    ASSERT_TRUE(ctx.get_var_sym(it3));
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "var"), 0);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "var2"), 0);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "var3"), 0);
 }
 
 TEST(var_subs, lcl_instr_more)
@@ -74,15 +58,22 @@ TEST(var_subs, lcl_instr_more)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "var"), 0);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "var2"), 0);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "var3"), 0);
+}
 
-    auto it = ctx.ids().find("var");
-    auto it2 = ctx.ids().find("var2");
-    auto it3 = ctx.ids().find("var3");
+TEST(var_subs, big_arrays)
+{
+    std::string input = R"(
+    lclc &larr(100000000)
+    gblc &garr(100000000)
+)";
+    analyzer a(input);
+    a.analyze();
 
-    ASSERT_TRUE(ctx.get_var_sym(it));
-    ASSERT_TRUE(ctx.get_var_sym(it2));
-    ASSERT_TRUE(ctx.get_var_sym(it3));
+    EXPECT_EQ(get_var_vector<C_t>(a.hlasm_ctx(), "larr")->size(), 0);
+    EXPECT_EQ(get_var_vector<C_t>(a.hlasm_ctx(), "garr")->size(), 0);
 }
 
 TEST(var_subs, set_to_var)
@@ -91,15 +82,7 @@ TEST(var_subs, set_to_var)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-
-    auto it = ctx.ids().find("var");
-
-    ASSERT_TRUE(ctx.get_var_sym(it));
-
-    diagnostic_op_consumer_container diags;
-    int tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_a();
-    EXPECT_EQ(tmp, 3);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "var"), 3);
 }
 
 TEST(var_subs, set_to_var_idx)
@@ -108,160 +91,105 @@ TEST(var_subs, set_to_var_idx)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-    diagnostic_op_consumer_container diags;
-
-    auto it = ctx.ids().find("var");
-
-    ASSERT_TRUE(ctx.get_var_sym(it));
-    std::vector<A_t> subscript1;
-    subscript1.push_back(2);
-    int tmp = get_var_sym_value(ctx, it, std::move(subscript1), {}, diags).access_a();
-    EXPECT_EQ(tmp, 3);
+    std::unordered_map<size_t, A_t> expected = { { 1, 3 } };
+    EXPECT_EQ(get_var_vector_map<A_t>(a.hlasm_ctx(), "var"), expected);
 }
 
 TEST(var_subs, set_to_var_idx_many)
 {
     std::string input("&var(2) seta 3,4,5");
-    std::string input_s1("2");
-    std::string input_s2("3");
-    std::string input_s3("4");
-    analyzer s1(input_s1);
-    analyzer s2(input_s2);
-    analyzer s3(input_s3);
-
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-    diagnostic_op_consumer_container diags;
-
-    auto it = ctx.ids().find("var");
-
-    ASSERT_TRUE(ctx.get_var_sym(it));
-
-    int tmp;
-    std::vector<A_t> subscript1;
-    subscript1.push_back(2);
-    tmp = get_var_sym_value(ctx, it, std::move(subscript1), {}, diags).access_a();
-    EXPECT_EQ(tmp, 3);
-    std::vector<A_t> subscript2;
-    subscript2.push_back(3);
-    tmp = get_var_sym_value(ctx, it, std::move(subscript2), {}, diags).access_a();
-    EXPECT_EQ(tmp, 4);
-    std::vector<A_t> subscript3;
-    subscript3.push_back(4);
-    tmp = get_var_sym_value(ctx, it, std::move(subscript3), {}, diags).access_a();
-    EXPECT_EQ(tmp, 5);
+    std::unordered_map<size_t, A_t> expected = { { 1, 3 }, { 2, 4 }, { 3, 5 } };
+    EXPECT_EQ(get_var_vector_map<A_t>(a.hlasm_ctx(), "var"), expected);
 }
 
 TEST(var_subs, var_sym_reset)
 {
-    std::string input("&var setc 'avc'   \n&var setc 'XXX'");
+    std::string input = R"(
+&var setc 'avc'   
+&var setc 'XXX'
+)";
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-    diagnostic_op_consumer_container diags;
-
-    auto it = ctx.ids().find("var");
-
-    ASSERT_TRUE(ctx.get_var_sym(it));
-
-    std::string tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_c();
-    EXPECT_EQ(tmp, "XXX");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "var"), "XXX");
 }
 
 TEST(var_subs, created_set_sym)
 {
-    std::string input("&var setc 'avc'   \n&var2 setb 0  \n&(ab&var.cd&var2) seta 11");
+    std::string input = R"(
+&var setc 'avc'   
+&var2 setb 0  
+&(ab&var.cd&var2) seta 11
+)";
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-    diagnostic_op_consumer_container diags;
-
-    auto it = ctx.ids().find("abavccd0");
-
-    ASSERT_TRUE(ctx.get_var_sym(it));
-
-    auto tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_a();
-    EXPECT_EQ(tmp, 11);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "abavccd0"), 11);
 }
 
 TEST(var_subs, instruction_substitution_space_at_end)
 {
-    std::string input("&var setc 'LR '   \n &var 1,1");
+    std::string input = R"(
+&var setc 'lr '   
+     &var 1,1
+)";
     analyzer a(input);
     a.analyze();
-
-
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(var_subs, instruction_substitution_space_in_middle)
 {
-    std::string input("&var setc 'LR 1,1'   \n &var ");
+    std::string input = R"(
+&var setc 'lr 1,1'   
+     &var 
+)";
     analyzer a(input);
     a.analyze();
-
-
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E075" }));
 }
 
 TEST(var_concatenation, concatenated_string_dot_last)
 {
-    std::string input("&var setc 'avc'   \n&var2 setc '&var.'");
+    std::string input = R"(
+&var setc 'avc'   
+&var2 setc '&var.'
+)";
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-    diagnostic_op_consumer_container diags;
-
-    auto it = ctx.ids().find("var2");
-
-    ASSERT_TRUE(ctx.get_var_sym(it));
-
-    auto tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_c();
-    EXPECT_EQ(tmp, "avc");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "var2"), "avc");
 }
 
 TEST(var_concatenation, concatenated_string_dot)
 {
-    std::string input("&var setc 'avc'   \n&var2 setc '&var.-get'");
+    std::string input = R"(
+&var setc 'avc'   
+&var2 setc '&var.-get'
+)";
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-    diagnostic_op_consumer_container diags;
-
-    auto it = ctx.ids().find("var2");
-
-    ASSERT_TRUE(ctx.get_var_sym(it));
-
-    auto tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_c();
-    EXPECT_EQ(tmp, "avc-get");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "var2"), "avc-get");
 }
 
 TEST(var_concatenation, concatenated_string_double_dot)
 {
-    std::string input("&var setc 'avc'   \n&var2 setc '&var..'");
+    std::string input = R"(
+&var setc 'avc'   
+&var2 setc '&var..'
+)";
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-    diagnostic_op_consumer_container diags;
-
-    auto it = ctx.ids().find("var2");
-
-    ASSERT_TRUE(ctx.get_var_sym(it));
-
-    auto tmp = get_var_sym_value(ctx, it, std::vector<int> {}, {}, diags).access_c();
-    EXPECT_EQ(tmp, "avc.");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "var2"), "avc.");
 }
 
 TEST(AGO, extended)
@@ -278,15 +206,9 @@ TEST(AGO, extended)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-
-    auto it1 = ctx.ids().add("var1");
-    auto it2 = ctx.ids().add("var2");
-    auto it3 = ctx.ids().add("var3");
-
-    EXPECT_FALSE(ctx.get_var_sym(it1));
-    EXPECT_TRUE(ctx.get_var_sym(it2));
-    EXPECT_TRUE(ctx.get_var_sym(it3));
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var1"), std::nullopt);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var2"), false);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var3"), false);
 }
 
 TEST(AGO, extended_fail)
@@ -303,15 +225,9 @@ TEST(AGO, extended_fail)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-
-    auto it1 = ctx.ids().add("var1");
-    auto it2 = ctx.ids().add("var2");
-    auto it3 = ctx.ids().add("var3");
-
-    EXPECT_TRUE(ctx.get_var_sym(it1));
-    EXPECT_TRUE(ctx.get_var_sym(it2));
-    EXPECT_TRUE(ctx.get_var_sym(it3));
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var1"), false);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var2"), false);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var3"), false);
 }
 
 TEST(AIF, extended)
@@ -328,15 +244,9 @@ TEST(AIF, extended)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-
-    auto it1 = ctx.ids().add("var1");
-    auto it2 = ctx.ids().add("var2");
-    auto it3 = ctx.ids().add("var3");
-
-    EXPECT_FALSE(ctx.get_var_sym(it1));
-    EXPECT_TRUE(ctx.get_var_sym(it2));
-    EXPECT_TRUE(ctx.get_var_sym(it3));
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var1"), std::nullopt);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var2"), false);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var3"), false);
 }
 
 TEST(AIF, extended_fail)
@@ -353,15 +263,9 @@ TEST(AIF, extended_fail)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-
-    auto it1 = ctx.ids().add("var1");
-    auto it2 = ctx.ids().add("var2");
-    auto it3 = ctx.ids().add("var3");
-
-    EXPECT_TRUE(ctx.get_var_sym(it1));
-    EXPECT_TRUE(ctx.get_var_sym(it2));
-    EXPECT_TRUE(ctx.get_var_sym(it3));
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var1"), false);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var2"), false);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var3"), false);
 }
 
 TEST(ACTR, exceeded)
@@ -373,7 +277,6 @@ TEST(ACTR, exceeded)
 )");
     analyzer a(input);
     a.analyze();
-
     a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E056" }));
@@ -389,7 +292,6 @@ TEST(ACTR, infinite_ACTR)
 )");
     analyzer a(input, analyzer_options(asm_option { .statement_count_limit = 10000 }));
     a.analyze();
-
     a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W063", "E077" }));
@@ -406,7 +308,6 @@ TEST(ACTR, negative)
 )");
     analyzer a(input);
     a.analyze();
-
     a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E056" }));
@@ -433,7 +334,6 @@ TEST(MHELP, SYSNDX_limit)
  )";
     analyzer a(input);
     a.analyze();
-
     a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E072" }));
@@ -452,7 +352,6 @@ ABC EQU 1
 )";
     analyzer a(input);
     a.analyze();
-
     a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E021", "E020", "E020", "CE012", "E010" }));
@@ -474,7 +373,6 @@ ABC EQU 1
 )";
     analyzer a(input);
     a.analyze();
-
     a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
@@ -495,10 +393,9 @@ TEST(SET, conversions_valid)
 )");
     analyzer a(input);
     a.analyze();
-
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(SET, conversions_invalid)
@@ -516,10 +413,10 @@ TEST(SET, conversions_invalid)
 )");
     analyzer a(input);
     a.analyze();
-
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)8);
+    EXPECT_TRUE(
+        matches_message_codes(a.diags(), { "CE004", "CE004", "CE004", "CE004", "CE004", "CE004", "CE017", "CE017" }));
 }
 
 TEST(CA_instructions, undefined_relocatable)
@@ -536,10 +433,9 @@ B EQU 1
 )");
     analyzer a(input);
     a.analyze();
-
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)3);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE012", "CE012", "CE012" }));
 }
 
 TEST(var_subs, defined_by_self_ref)
