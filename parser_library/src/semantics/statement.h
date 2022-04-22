@@ -23,7 +23,7 @@
 
 namespace hlasm_plugin::parser_library::semantics {
 
-// structure representing core fields of statmenent
+// structure representing core fields of statement
 struct core_statement
 {
     virtual const range& stmt_range_ref() const = 0;

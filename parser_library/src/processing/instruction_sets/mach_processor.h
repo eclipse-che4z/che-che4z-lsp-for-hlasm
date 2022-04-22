@@ -22,8 +22,6 @@ namespace hlasm_plugin::parser_library::processing {
 // processor of machine instructions
 class mach_processor : public low_language_processor
 {
-    checking::machine_checker checker;
-
 public:
     mach_processor(analyzing_context ctx,
         branching_provider& branch_provider,

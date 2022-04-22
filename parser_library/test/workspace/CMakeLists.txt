@@ -16,6 +16,7 @@ target_sources(library_test PRIVATE
 	extension_handling_test.cpp
 	file_with_text.h
 	files_parse_lib_provider.h
+	instruction_sets_test.cpp
 	load_config_test.cpp
 	macro_cache_test.cpp
 	pathmask_test.cpp

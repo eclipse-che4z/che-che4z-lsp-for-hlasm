@@ -37,11 +37,7 @@ public:
        MEND)" },
             { "COPYFILE", R"(R2 EQU 2
             LR R2,R2)" } })
-        , a(contents, analyzer_options { SOURCE_FILE, &lib_provider })
-        , instruction_count(context::instruction::all_machine_instructions().size()
-              + context::instruction::all_assembler_instructions().size()
-              + context::instruction::all_ca_instructions().size()
-              + context::instruction::all_mnemonic_codes().size()) {};
+        , a(contents, analyzer_options { SOURCE_FILE, &lib_provider }) {};
 
     void SetUp() override { a.analyze(); }
     void TearDown() override {}
@@ -79,7 +75,6 @@ R1      MAC   R2
     std::string content;
     mock_parse_lib_provider lib_provider;
     analyzer a;
-    const size_t instruction_count;
 };
 
 TEST_F(lsp_features_test, go_to)
@@ -100,7 +95,7 @@ TEST_F(lsp_features_test, go_to)
     EXPECT_EQ(location(position(8, 13), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(11, 15)));
     // forward jump in source, open code, ord symbol R1
     EXPECT_EQ(location(position(22, 0), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(21, 10)));
-    // jump from source to copy file, ord symbol R2 on machine instrution
+    // jump from source to copy file, ord symbol R2 on machine instruction
     EXPECT_EQ(location(position(0, 0), COPY_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(21, 13)));
     // jump from source to copy file, ord symbol R2 on macro MAC
     EXPECT_EQ(location(position(0, 0), COPY_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(23, 14)));

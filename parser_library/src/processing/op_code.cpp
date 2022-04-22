@@ -50,7 +50,7 @@ processing_status_cache_key::processing_status_cache_key(const processing_status
     : form(s.first.form)
     , occurence(s.first.occurence)
     , is_alias(s.second.type == context::instruction_type::ASM && s.second.value && *s.second.value == "ALIAS")
-    , loctr_len(generate_loctr_len(s.second.value))
-    , rel_addr(get_reladdr_bitmask(s.second.value))
+    , loctr_len(s.second.type != context::instruction_type::MACH ? 1 : generate_loctr_len(s.second.value))
+    , rel_addr(s.second.type != context::instruction_type::MACH ? 0 : get_reladdr_bitmask(s.second.value))
 {}
 } // namespace hlasm_plugin::parser_library::processing

@@ -77,9 +77,9 @@ class hlasm_context
     asm_option asm_options_;
     static constexpr alignment sectalgn = doubleword;
 
-    // map of all instruction in HLASM
-    const instruction_storage instruction_map_;
-    static instruction_storage init_instruction_map(id_storage& ids);
+    // map of active instructions in HLASM
+    const instruction_storage m_instruction_map;
+    static instruction_storage init_instruction_map(id_storage& ids, instruction_set_version active_instr_set);
 
     // value of system variable SYSNDX
     unsigned long SYSNDX_ = 1;
@@ -156,7 +156,7 @@ public:
     id_storage& ids();
     std::shared_ptr<id_storage> ids_ptr();
 
-    // map of instructions
+    // map of active instructions
     const instruction_storage& instruction_map() const;
 
     // field that accessed ordinary assembly context
@@ -192,7 +192,7 @@ public:
     void remove_mnemonic(id_index mnemo);
     const opcode_map& opcode_mnemo_storage() const;
 
-    // checks wheter the symbol is an operation code (is a valid instruction or a mnemonic)
+    // checks whether the symbol is an operation code (is a valid instruction or a mnemonic)
     opcode_t get_operation_code(id_index symbol) const;
 
     // get data attribute value of variable symbol

@@ -148,15 +148,23 @@ private:
     void find_and_add_libs(
         std::string root, const std::string& path_pattern, processor_group& prc_grp, const library_local_options& opts);
 
+    bool is_config_file(const std::string& file_uri) const;
+    workspace_file_info parse_config_file();
+
     bool load_and_process_config();
     // Loads the pgm_conf.json and proc_grps.json from disk, adds them to file_manager_ and parses both jsons.
     // Returns false if there is any error.
-    bool load_config(config::proc_grps& proc_groups, config::pgm_conf& pgm_config, file_ptr& pgm_conf_file);
+    bool load_config(config::proc_grps& proc_groups,
+        config::pgm_conf& pgm_config,
+        file_ptr& proc_grps_file,
+        file_ptr& pgm_conf_file);
 
     bool is_wildcard(const std::string& str);
 
     // files, that depend on others (e.g. open code files that use macros)
-    std::set<std::string> dependants_;
+    std::set<std::string, std::less<>> dependants_;
+
+    std::set<std::string, std::less<>> opened_files_;
 
     diagnostic_container config_diags_;
 

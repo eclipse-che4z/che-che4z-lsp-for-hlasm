@@ -42,7 +42,7 @@ public:
         const std::vector<const operand*>& operand_vector,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
-    // map of all assembler instruction maes to their representations
+    // map of all assembler instruction names to their representations
     static const std::map<std::string_view,
         std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
         assembler_instruction_map;

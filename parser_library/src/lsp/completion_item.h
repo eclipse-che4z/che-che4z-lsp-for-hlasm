@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "context/hlasm_context.h"
 #include "protocol.h"
 
 namespace hlasm_plugin::parser_library::lsp {
@@ -28,8 +29,7 @@ using completion_list_s = std::vector<completion_item_s>;
 // representation of completion item based on LSP
 struct completion_item_s
 {
-public:
-    // contents directly passed via the contrusctor
+    // contents directly passed via the constructor
     completion_item_s(std::string label,
         std::string detail,
         std::string insert_text,
@@ -60,7 +60,7 @@ public:
         }
     };
 
-    static const std::set<completion_item_s, label_comparer> instruction_completion_items_;
+    static const std::set<completion_item_s, label_comparer> m_instruction_completion_items;
 };
 
 bool operator==(const completion_item_s& lhs, const completion_item_s& rhs);

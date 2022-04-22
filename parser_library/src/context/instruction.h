@@ -28,7 +28,33 @@
 #include "checking/instr_operand.h"
 #include "diagnostic.h"
 #include "id_storage.h"
+#include "instruction_set_version.h"
+
 namespace hlasm_plugin::parser_library::context {
+
+enum class z_arch_affiliation : uint16_t
+{
+    NO_AFFILIATION = 0,
+    SINCE_ZOP,
+    SINCE_YOP,
+    SINCE_Z9,
+    SINCE_Z10,
+    SINCE_Z11,
+    SINCE_Z12,
+    SINCE_Z13,
+    SINCE_Z14,
+    SINCE_Z15,
+};
+
+struct instruction_set_affiliation
+{
+    z_arch_affiliation z_arch : 4;
+    uint16_t esa : 1;
+    uint16_t xa : 1;
+    uint16_t _370 : 1;
+    uint16_t dos : 1;
+    uint16_t uni : 1;
+};
 
 // all mach_format types for operands of machine instructions:
 // formats with length 16 are arranged in range (0,2),formats with length 32 are arranged in range(3,20),formats with
@@ -259,6 +285,14 @@ struct instruction_format_definition
 // machine instruction representation for checking
 class machine_instruction
 {
+    enum class size_identifier : unsigned char
+    {
+        LENGTH_0 = 0,
+        LENGTH_16,
+        LENGTH_32,
+        LENGTH_48,
+    };
+
     // Generates a bitmask for an arbitrary machine instruction indicating which operands
     // are of the RI type (and therefore are modified by transform_reloc_imm_operands)
     static constexpr unsigned char generate_reladdr_bitmask(std::span<const checking::machine_operand_format> operands)
@@ -281,22 +315,24 @@ class machine_instruction
 
     static constexpr char get_length_by_format(mach_format instruction_format)
     {
-        auto interval = (int)(instruction_format);
-        if (interval >= (int)mach_format::length_48)
-            return 48;
-        if (interval >= (int)mach_format::length_32)
-            return 32;
-        if (interval >= (int)mach_format::length_16)
-            return 16;
-        return 0;
+        auto interval = static_cast<int>(instruction_format);
+        if (interval >= static_cast<int>(mach_format::length_48))
+            return static_cast<char>(size_identifier::LENGTH_48);
+        if (interval >= static_cast<int>(mach_format::length_32))
+            return static_cast<char>(size_identifier::LENGTH_32);
+        if (interval >= static_cast<int>(mach_format::length_16))
+            return static_cast<char>(size_identifier::LENGTH_16);
+        return static_cast<char>(size_identifier::LENGTH_0);
     }
 
     inline_string<7> m_name;
 
-    mach_format m_format;
-    char m_size_in_bits;
-    unsigned short m_page_no;
+    unsigned short m_size_identifier : 2; // Size is only 16,32,48 bits i.e. 0x10,0x20,0x30 (low nibble is always zero)
+    unsigned short m_page_no : 14; // PoP has less than 16k pages
 
+    instruction_set_affiliation m_instr_set_affiliation;
+
+    mach_format m_format;
     reladdr_transform_mask m_reladdr_mask;
     unsigned char m_optional_op_count;
     unsigned char m_operand_len;
@@ -307,11 +343,13 @@ public:
     constexpr machine_instruction(std::string_view name,
         mach_format format,
         std::span<const checking::machine_operand_format> operands,
-        unsigned short page_no)
+        unsigned short page_no,
+        instruction_set_affiliation instr_set_affiliation)
         : m_name(name)
-        , m_format(format)
-        , m_size_in_bits(get_length_by_format(format))
+        , m_size_identifier(get_length_by_format(format))
         , m_page_no(page_no)
+        , m_instr_set_affiliation(instr_set_affiliation)
+        , m_format(format)
         , m_reladdr_mask(generate_reladdr_bitmask(operands))
 #ifdef __cpp_lib_ranges
         , m_optional_op_count(
@@ -325,20 +363,36 @@ public:
     {
         assert(operands.size() <= std::numeric_limits<decltype(m_operand_len)>::max());
     }
-    constexpr machine_instruction(std::string_view name, instruction_format_definition ifd, unsigned short page_no)
-        : machine_instruction(name, ifd.format, ifd.op_format, page_no)
+    constexpr machine_instruction(std::string_view name,
+        instruction_format_definition ifd,
+        unsigned short page_no,
+        instruction_set_affiliation instr_set_affiliation)
+        : machine_instruction(name, ifd.format, ifd.op_format, page_no, instr_set_affiliation)
     {}
 
     constexpr std::string_view name() const { return m_name.to_string_view(); }
     mach_format format() const { return m_format; }
-    constexpr size_t page_no() const { return m_page_no; }
-    constexpr size_t size_in_bits() const { return m_size_in_bits; }
+    constexpr size_t size_in_bits() const
+    {
+        switch (static_cast<size_identifier>(m_size_identifier))
+        {
+            case size_identifier::LENGTH_0:
+                return 0;
+            case size_identifier::LENGTH_16:
+                return 16;
+            case size_identifier::LENGTH_32:
+                return 32;
+            default:
+                return 48;
+        }
+    }
     constexpr reladdr_transform_mask reladdr_mask() const { return m_reladdr_mask; }
     constexpr std::span<const checking::machine_operand_format> operands() const
     {
         return std::span<const checking::machine_operand_format>(m_operands, m_operand_len);
     }
     constexpr size_t optional_operand_count() const { return m_optional_op_count; }
+    constexpr const instruction_set_affiliation& instr_set_affiliation() const { return m_instr_set_affiliation; };
 
     bool check_nth_operand(size_t place, const checking::machine_operand* operand);
     bool check(std::string_view name_of_instruction,
@@ -373,12 +427,14 @@ class mnemonic_code
 
     reladdr_transform_mask m_reladdr_mask;
 
+    instruction_set_affiliation m_instr_set_affiliation;
+
     inline_string<9> m_name;
 
     // Generates a bitmask for an arbitrary mnemonic indicating which operands
     // are of the RI type (and therefore are modified by transform_reloc_imm_operands)
-    static constexpr unsigned char generate_reladdr_bitmask(const machine_instruction* instruction,
-        std::initializer_list<const std::pair<unsigned char, unsigned char>> replaced)
+    static constexpr unsigned char generate_reladdr_bitmask(
+        const machine_instruction* instruction, std::initializer_list<const std::pair<int, int>> replaced)
     {
         unsigned char result = 0;
 
@@ -409,17 +465,21 @@ class mnemonic_code
 public:
     constexpr mnemonic_code(std::string_view name,
         const machine_instruction* instr,
-        std::initializer_list<const std::pair<unsigned char, unsigned char>> replaced)
+        std::initializer_list<const std::pair<int, int>> replaced,
+        instruction_set_affiliation instr_set_affiliation)
         : m_instruction(instr)
         , m_replaced {}
         , m_replaced_count((unsigned char)replaced.size())
         , m_reladdr_mask(generate_reladdr_bitmask(instr, replaced))
+        , m_instr_set_affiliation(instr_set_affiliation)
         , m_name(name)
     {
         assert(replaced.size() <= m_replaced.size());
-        size_t i = 0;
-        for (const auto& r : replaced)
-            m_replaced[i++] = r;
+        for (size_t i = 0; const auto& [a, b] : replaced)
+        {
+            m_replaced[i] = std::make_pair(static_cast<unsigned char>(a), static_cast<unsigned char>(b));
+            i++;
+        }
     };
 
     constexpr const machine_instruction* instruction() const { return m_instruction; }
@@ -433,6 +493,7 @@ public:
     }
     constexpr reladdr_transform_mask reladdr_mask() const { return m_reladdr_mask; }
     constexpr std::string_view name() const { return m_name.to_string_view(); }
+    constexpr const instruction_set_affiliation& instr_set_affiliation() const { return m_instr_set_affiliation; };
 };
 
 // machine instruction common representation

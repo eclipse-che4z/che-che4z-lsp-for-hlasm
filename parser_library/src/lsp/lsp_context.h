@@ -26,11 +26,11 @@ namespace hlasm_plugin::parser_library::lsp {
 
 class lsp_context final : public feature_provider
 {
-    opencode_info_ptr opencode_;
-    std::unordered_map<std::string, file_info_ptr> files_;
-    std::unordered_map<context::macro_def_ptr, macro_info_ptr> macros_;
+    opencode_info_ptr m_opencode;
+    std::unordered_map<std::string, file_info_ptr> m_files;
+    std::unordered_map<context::macro_def_ptr, macro_info_ptr> m_macros;
 
-    std::shared_ptr<context::hlasm_context> hlasm_ctx_;
+    std::shared_ptr<context::hlasm_context> m_hlasm_ctx;
 
     struct document_symbol_cache
     {

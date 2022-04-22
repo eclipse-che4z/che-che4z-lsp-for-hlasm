@@ -141,7 +141,8 @@ void file_manager_impl::did_open_file(const std::string& document_uri, version_t
 void file_manager_impl::did_change_file(
     const std::string& document_uri, version_t, const document_change* changes, size_t ch_size)
 {
-    // the version is the version after the changes -> I dont see how is that useful
+    // TODO
+    // the version is the version after the changes -> I don't see how is that useful
     // should we just overwrite the version??
     // on the other hand, the spec clearly specifies that each change increments version by one.
 

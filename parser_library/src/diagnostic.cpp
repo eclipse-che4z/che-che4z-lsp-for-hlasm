@@ -55,7 +55,7 @@ std::string concat(Args&&... args)
 
 // diagnostic_op errors
 
-// asembler instruction errors
+// assembler instruction errors
 
 diagnostic_op diagnostic_op::error_I999(std::string_view instr_name, const range& range)
 {
@@ -506,7 +506,7 @@ diagnostic_op diagnostic_op::error_A133_EQU_len_att_format(const range& range)
     return diagnostic_op(diagnostic_severity::error,
         "A133",
         "Error at EQU instruction: operand representing length attribute value must either be an absolute value in the "
-        "range 0 throught 65535 or must be omitted",
+        "range 0 through 65535 or must be omitted",
         range);
 }
 
@@ -515,7 +515,7 @@ diagnostic_op diagnostic_op::error_A134_EQU_type_att_format(const range& range)
     return diagnostic_op(diagnostic_severity::error,
         "A134",
         "Error at EQU instruction: operand representing type attribute value must either be an absolute value in the "
-        "range 0 throught 255 or must be omitted",
+        "range 0 through 255 or must be omitted",
         range);
 }
 
@@ -1243,7 +1243,7 @@ diagnostic_op diagnostic_op::warning_A243_END_expr_format(const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning,
         "A243",
-        "First operand must either be an expresison or the operand must be omitted",
+        "First operand must either be an expression or the operand must be omitted",
         range);
 }
 
@@ -1751,7 +1751,7 @@ diagnostic_op diagnostic_op::warn_M136(const range& range)
 }
 
 diagnostic_op diagnostic_op::error_optional_number_of_operands(
-    std::string_view instr_name, int optional_no, int operands_no, const range& range)
+    std::string_view instr_name, size_t optional_no, size_t operands_no, const range& range)
 {
     if (optional_no == 0)
         return error_M000(instr_name, operands_no, range);
@@ -1762,7 +1762,7 @@ diagnostic_op diagnostic_op::error_optional_number_of_operands(
 }
 
 diagnostic_op hlasm_plugin::parser_library::diagnostic_op::error_M000(
-    std::string_view instr_name, int number, const range& range)
+    std::string_view instr_name, size_t number, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "M000",
@@ -1770,7 +1770,7 @@ diagnostic_op hlasm_plugin::parser_library::diagnostic_op::error_M000(
         range);
 }
 
-diagnostic_op diagnostic_op::error_M001(std::string_view instr_name, int one, int two, const range& range)
+diagnostic_op diagnostic_op::error_M001(std::string_view instr_name, size_t one, size_t two, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "M001",
@@ -1791,7 +1791,7 @@ diagnostic_op hlasm_plugin::parser_library::diagnostic_op::error_M010(std::strin
         range);
 }
 
-diagnostic_op diagnostic_op::error_M002(std::string_view instr_name, int one, int two, const range& range)
+diagnostic_op diagnostic_op::error_M002(std::string_view instr_name, size_t one, size_t two, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "M002",
@@ -1903,7 +1903,7 @@ diagnostic_op diagnostic_op::error_E033(const range& range)
 
 diagnostic_op diagnostic_op::error_E042(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "E042", "Macro name ommited - ASPACE instead", range);
+    return diagnostic_op(diagnostic_severity::error, "E042", "Macro name omitted - ASPACE instead", range);
 }
 
 diagnostic_op diagnostic_op::error_E043(const range& range)
@@ -2067,7 +2067,7 @@ diagnostic_op diagnostic_op::error_E071(const range& range)
 
 diagnostic_op diagnostic_op::error_E072(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "E072", "SYSNDX limit reached, macro call supressed.", range);
+    return diagnostic_op(diagnostic_severity::error, "E072", "SYSNDX limit reached, macro call suppressed.", range);
 }
 
 diagnostic_op diagnostic_op::error_E073(const range& range)
@@ -2411,7 +2411,7 @@ diagnostic_op diagnostic_op::error_U006_duplicate_base_specified(const range& ra
     return diagnostic_op(diagnostic_severity::error, "U006", "Base registers must be distinct.", range);
 }
 
-diagnostic_s diagnostic_s::error_W002(std::string_view ws_uri, std::string_view ws_name)
+diagnostic_s diagnostic_s::error_W0002(std::string_view ws_uri, std::string_view ws_name)
 {
     return diagnostic_s(std::string(ws_uri),
         {},
@@ -2421,7 +2421,7 @@ diagnostic_s diagnostic_s::error_W002(std::string_view ws_uri, std::string_view 
         {});
 }
 
-diagnostic_s diagnostic_s::error_W003(std::string_view file_name, std::string_view ws_name)
+diagnostic_s diagnostic_s::error_W0003(std::string_view file_name, std::string_view ws_name)
 {
     return diagnostic_s(std::string(file_name),
         {},
@@ -2431,7 +2431,7 @@ diagnostic_s diagnostic_s::error_W003(std::string_view file_name, std::string_vi
         {});
 }
 
-diagnostic_s diagnostic_s::error_W004(std::string_view file_name, std::string_view ws_name)
+diagnostic_s diagnostic_s::error_W0004(std::string_view file_name, std::string_view ws_name)
 {
     return diagnostic_s(std::string(file_name),
         {},
@@ -2443,7 +2443,7 @@ diagnostic_s diagnostic_s::error_W004(std::string_view file_name, std::string_vi
         {});
 }
 
-diagnostic_s diagnostic_s::error_W005(std::string_view file_name, std::string_view proc_group)
+diagnostic_s diagnostic_s::error_W0005(std::string_view file_name, std::string_view proc_group)
 {
     return diagnostic_s(std::string(file_name),
         {},
@@ -2453,13 +2453,27 @@ diagnostic_s diagnostic_s::error_W005(std::string_view file_name, std::string_vi
         {});
 }
 
-diagnostic_s diagnostic_s::error_W006(std::string_view file_name, std::string_view proc_group)
+diagnostic_s diagnostic_s::error_W0006(std::string_view file_name, std::string_view proc_group)
 {
     return diagnostic_s(std::string(file_name),
         {},
         diagnostic_severity::warning,
         "W0006",
         concat("The processor group '", proc_group, "' from '", file_name, "' defines invalid preprocessor options."),
+        {});
+}
+
+diagnostic_s diagnostic_s::error_W0007(std::string_view file_name, std::string_view proc_group)
+{
+    return diagnostic_s(std::string(file_name),
+        {},
+        diagnostic_severity::warning,
+        "W0007",
+        concat("The processor group '",
+            proc_group,
+            "' from '",
+            file_name,
+            "' refers to invalid OPTABLE value. Using value UNI as default."),
         {});
 }
 

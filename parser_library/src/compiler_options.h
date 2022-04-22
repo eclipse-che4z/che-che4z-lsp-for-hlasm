@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include "instruction_set_version.h"
+
 // This file contains assembler compiler options definitions.
 
 namespace hlasm_plugin::parser_library {
@@ -24,6 +26,9 @@ struct asm_option
 {
     std::string sysparm;
     std::string profile;
+
+    static constexpr instruction_set_version instr_set_default = instruction_set_version::UNI;
+    instruction_set_version instr_set = instr_set_default;
 
     static const std::string system_id_default;
     std::string system_id = system_id_default;

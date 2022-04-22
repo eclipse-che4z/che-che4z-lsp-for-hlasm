@@ -24,7 +24,7 @@ TEST(system_id, basic_properties)
 &B    SETC T'&SYSTEM_ID
 &C    SETA K'&SYSTEM_ID
 )";
-    analyzer a(input, analyzer_options { asm_option { "", "", "VSE" } });
+    analyzer a(input, analyzer_options { asm_option { "", "", instruction_set_version::UNI, "VSE" } });
     a.analyze();
 
     a.collect_diags();

@@ -15,6 +15,7 @@ target_sources(library_test PRIVATE
 	context_test.cpp
 	data_attribute_test.cpp
 	dependency_collector_test.cpp
+	instruction_test.cpp
 	literals_test.cpp
 	macro_test.cpp
 	ord_sym_test.cpp

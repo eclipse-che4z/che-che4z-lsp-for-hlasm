@@ -111,10 +111,10 @@ void lsp_context::document_symbol_macro(document_symbol_list_s& result,
     long long& limit,
     document_symbol_cache& cache) const
 {
-    auto m = std::find_if(macros_.begin(), macros_.end(), [&document_uri](const auto& mac) {
+    auto m = std::find_if(m_macros.begin(), m_macros.end(), [&document_uri](const auto& mac) {
         return mac.first->definition_location.file == document_uri;
     });
-    if (m == macros_.end())
+    if (m == m_macros.end())
         return;
 
     const auto& [def, info] = *m;
@@ -187,9 +187,9 @@ const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& 
     if (auto it = cache.occurences.find(document_uri); it != cache.occurences.end())
         return it->second;
 
-    const auto& file = files_.find(document_uri);
+    const auto& file = m_files.find(document_uri);
     std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> copy_occurences;
-    for (const auto& [uri, info] : files_)
+    for (const auto& [uri, info] : m_files)
     {
         if (info->type != file_type::COPY)
             continue;
@@ -326,14 +326,14 @@ void lsp_context::document_symbol_symbol(document_symbol_list_s& modified,
 
 void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& result, long long& limit) const
 {
-    const auto& symbol_list = hlasm_ctx_->ord_ctx.symbols();
+    const auto& symbol_list = m_hlasm_ctx->ord_ctx.symbols();
     std::map<const context::section*, document_symbol_list_s> children_of_sects;
     for (const auto& [id, sym_var] : symbol_list)
     {
         const auto* sym = std::get_if<context::symbol>(&sym_var);
         if (sym && sym->attributes().origin == context::symbol_origin::SECT)
         {
-            if (auto sect = hlasm_ctx_->ord_ctx.get_section(id))
+            if (auto sect = m_hlasm_ctx->ord_ctx.get_section(id))
             {
                 children_of_sects.try_emplace(sect, document_symbol_list_s {});
                 --limit;
@@ -377,7 +377,7 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
         }
         else
         {
-            const auto* sect_sym = hlasm_ctx_->ord_ctx.get_symbol(sect->name);
+            const auto* sect_sym = m_hlasm_ctx->ord_ctx.get_symbol(sect->name);
             auto& children = children_of_sects.find(sect)->second;
             unsigned long i = 1;
             if (do_not_need_nodes(sym.proc_stack(), sect_sym->proc_stack(), i))
@@ -402,7 +402,7 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
 
     for (auto&& [sect, children] : children_of_sects)
     {
-        const auto& sym = *hlasm_ctx_->ord_ctx.get_symbol(sect->name);
+        const auto& sym = *m_hlasm_ctx->ord_ctx.get_symbol(sect->name);
         if (sym.proc_stack().size() == 1)
         {
             result.emplace_back(*sect->name,
@@ -438,7 +438,7 @@ void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_li
         if (uri == name_to_uri_cache.end() || uri->second.empty())
             return;
 
-        if (const auto& file = files_.find(std::string(uri->second)); file != files_.end())
+        if (const auto& file = m_files.find(std::string(uri->second)); file != m_files.end())
         {
             if (file->second->type == file_type::MACRO)
                 document_symbol_macro(item.children, file->first, item.symbol_range, limit, cache);
@@ -453,14 +453,14 @@ void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_li
 document_symbol_list_s lsp_context::document_symbol(const std::string& document_uri, long long limit) const
 {
     document_symbol_list_s result;
-    const auto& file = files_.find(document_uri);
-    if (file == files_.end() || limit <= 0)
+    const auto& file = m_files.find(document_uri);
+    if (file == m_files.end() || limit <= 0)
         return result;
 
     std::unordered_map<std::string_view, std::string_view> name_to_uri;
-    for (const auto& [def, info] : macros_)
+    for (const auto& [def, info] : m_macros)
         name_to_uri.insert_or_assign(*def->id, info->definition_location.file);
-    for (const auto& [def, info] : hlasm_ctx_->copy_members())
+    for (const auto& [def, info] : m_hlasm_ctx->copy_members())
         name_to_uri.insert_or_assign(*info->name, info->definition_location.file);
 
     document_symbol_cache cache;
@@ -479,7 +479,7 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
             document_symbol_opencode_ord_symbol(result, limit);
             document_symbol_opencode_var_seq_symbol_aux(result, name_to_uri, limit, cache);
 
-            for (const auto& sym : opencode_->variable_definitions)
+            for (const auto& sym : m_opencode->variable_definitions)
             {
                 if (limit <= 0)
                     break;
@@ -502,11 +502,11 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
 void lsp_context::add_file(file_info file_i)
 {
     std::string name = file_i.name;
-    files_.try_emplace(std::move(name), std::make_unique<file_info>(std::move(file_i)));
+    m_files.try_emplace(std::move(name), std::make_unique<file_info>(std::move(file_i)));
 }
 
 lsp_context::lsp_context(std::shared_ptr<context::hlasm_context> h_ctx)
-    : hlasm_ctx_(std::move(h_ctx))
+    : m_hlasm_ctx(std::move(h_ctx))
 {}
 
 void lsp_context::add_copy(context::copy_member_ptr copy, text_data_ref_t text_data)
@@ -519,37 +519,37 @@ void lsp_context::add_macro(macro_info_ptr macro_i, text_data_ref_t text_data)
     if (macro_i->external)
         add_file(file_info(macro_i->macro_definition, std::move(text_data)));
 
-    macros_[macro_i->macro_definition] = macro_i;
+    m_macros[macro_i->macro_definition] = macro_i;
 }
 
 void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data)
 {
-    opencode_ = std::move(opencode_i);
-    add_file(file_info(hlasm_ctx_->opencode_file_name(), std::move(text_data)));
+    m_opencode = std::move(opencode_i);
+    add_file(file_info(m_hlasm_ctx->opencode_file_name(), std::move(text_data)));
 
-    // distribute all occurences as all files are present
-    for (const auto& [_, m] : macros_)
+    // distribute all occurrences as all files are present
+    for (const auto& [_, m] : m_macros)
         distribute_macro_i(m);
 
-    distribute_file_occurences(opencode_->file_occurences);
+    distribute_file_occurences(m_opencode->file_occurences);
 
-    for (const auto& [name, file] : files_)
+    for (const auto& [name, file] : m_files)
         file->process_occurrences();
 }
 
 macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name) const
 {
     // This function does not respect OPSYN, so we do not use hlasm_context::get_macro_definition
-    auto it = hlasm_ctx_->macros().find(macro_name);
-    if (it == hlasm_ctx_->macros().end())
+    auto it = m_hlasm_ctx->macros().find(macro_name);
+    if (it == m_hlasm_ctx->macros().end())
         return nullptr;
     else
-        return macros_.at(it->second);
+        return m_macros.at(it->second);
 }
 
 const file_info* lsp_context::get_file_info(const std::string& file_name) const
 {
-    if (auto it = files_.find(file_name); it != files_.end())
+    if (auto it = m_files.find(file_name); it != m_files.end())
         return it->second.get();
     else
         return nullptr;
@@ -591,13 +591,13 @@ location_list lsp_context::references(const std::string& document_uri, const pos
         if (macro_scope)
             collect_references(result, *occ, macro_scope->file_occurences_);
         else
-            collect_references(result, *occ, opencode_->file_occurences);
+            collect_references(result, *occ, m_opencode->file_occurences);
     }
     else
     {
-        for (const auto& [_, mac_i] : macros_)
+        for (const auto& [_, mac_i] : m_macros)
             collect_references(result, *occ, mac_i->file_occurences_);
-        collect_references(result, *occ, opencode_->file_occurences);
+        collect_references(result, *occ, m_opencode->file_occurences);
     }
 
     return result;
@@ -635,8 +635,8 @@ completion_list_s lsp_context::completion(const std::string& document_uri,
     const char trigger_char,
     completion_trigger_kind trigger_kind) const
 {
-    auto file_it = files_.find(document_uri);
-    if (file_it == files_.end())
+    auto file_it = m_files.find(document_uri);
+    if (file_it == m_files.end())
         return completion_list_s();
     const text_data_ref_t& text = file_it->second->data;
 
@@ -659,7 +659,7 @@ completion_list_s lsp_context::complete_var(const file_info& file, position pos)
 
 
     completion_list_s items;
-    const vardef_storage& var_defs = scope ? scope->var_definitions : opencode_->variable_definitions;
+    const vardef_storage& var_defs = scope ? scope->var_definitions : m_opencode->variable_definitions;
     for (const auto& vardef : var_defs)
     {
         items.emplace_back(
@@ -674,7 +674,7 @@ completion_list_s lsp_context::complete_seq(const file_info& file, position pos)
     auto macro_i = file.find_scope(pos);
 
     const context::label_storage& seq_syms =
-        macro_i ? macro_i->macro_definition->labels : hlasm_ctx_->current_scope().sequence_symbols;
+        macro_i ? macro_i->macro_definition->labels : m_hlasm_ctx->current_scope().sequence_symbols;
 
     completion_list_s items;
     for (const auto& [_, sym] : seq_syms)
@@ -724,8 +724,8 @@ bool is_comment(std::string_view line) { return line.substr(0, 1) == "*" || line
 std::string lsp_context::get_macro_documentation(const macro_info& m) const
 {
     // Get file, where the macro is defined
-    auto it = files_.find(m.definition_location.file);
-    if (it == files_.end())
+    auto it = m_files.find(m.definition_location.file);
+    if (it == m_files.end())
         return "";
     const text_data_ref_t& text = it->second->data;
 
@@ -768,10 +768,21 @@ std::string lsp_context::get_macro_documentation(const macro_info& m) const
 
 completion_list_s lsp_context::complete_instr(const file_info&, position) const
 {
-    completion_list_s result(completion_item_s::instruction_completion_items_.begin(),
-        completion_item_s::instruction_completion_items_.end());
+    completion_list_s result;
 
-    for (const auto& [_, macro_i] : macros_)
+    // Store only instructions from the currently active instruction set
+    for (const auto& instr : completion_item_s::m_instruction_completion_items)
+    {
+        auto id = m_hlasm_ctx->ids().find(instr.label);
+
+        auto it = m_hlasm_ctx->instruction_map().find(id);
+        if (it != m_hlasm_ctx->instruction_map().end())
+        {
+            result.emplace_back(instr);
+        }
+    }
+
+    for (const auto& [_, macro_i] : m_macros)
     {
         const context::macro_definition& m = *macro_i->macro_definition;
 
@@ -795,25 +806,25 @@ bool files_present(
 
 void lsp_context::distribute_macro_i(macro_info_ptr macro_i)
 {
-    assert(files_present(files_, macro_i->file_scopes_));
+    assert(files_present(m_files, macro_i->file_scopes_));
 
     for (const auto& [file, slices] : macro_i->file_scopes_)
-        files_[file]->update_slices(file_slice_t::transform_slices(slices, macro_i));
+        m_files[file]->update_slices(file_slice_t::transform_slices(slices, macro_i));
 
     distribute_file_occurences(macro_i->file_occurences_);
 }
 
 void lsp_context::distribute_file_occurences(const file_occurences_t& occurences)
 {
-    assert(files_present(files_, occurences));
+    assert(files_present(m_files, occurences));
 
     for (const auto& [file, occs] : occurences)
-        files_[file]->update_occurences(occs);
+        m_files[file]->update_occurences(occs);
 }
 
 occurence_scope_t lsp_context::find_occurence_with_scope(const std::string& document_uri, const position pos) const
 {
-    if (auto file = files_.find(document_uri); file != files_.end())
+    if (auto file = m_files.find(document_uri); file != m_files.end())
         return file->second->find_occurence_with_scope(pos);
     return std::make_pair(nullptr, nullptr);
 }
@@ -824,21 +835,21 @@ std::optional<location> lsp_context::find_definition_location(
     switch (occ.kind)
     {
         case lsp::occurence_kind::ORD: {
-            auto sym = hlasm_ctx_->ord_ctx.get_symbol(occ.name);
+            auto sym = m_hlasm_ctx->ord_ctx.get_symbol(occ.name);
             if (sym)
                 return sym->symbol_location;
             break;
         }
         case lsp::occurence_kind::SEQ: {
             const context::label_storage& seq_syms =
-                macro_scope_i ? macro_scope_i->macro_definition->labels : hlasm_ctx_->current_scope().sequence_symbols;
+                macro_scope_i ? macro_scope_i->macro_definition->labels : m_hlasm_ctx->current_scope().sequence_symbols;
             if (auto sym = seq_syms.find(occ.name); sym != seq_syms.end())
                 return sym->second->symbol_location;
             break;
         }
         case lsp::occurence_kind::VAR: {
             const vardef_storage& var_syms =
-                macro_scope_i ? macro_scope_i->var_definitions : opencode_->variable_definitions;
+                macro_scope_i ? macro_scope_i->var_definitions : m_opencode->variable_definitions;
 
             auto sym = std::find_if(
                 var_syms.begin(), var_syms.end(), [&occ](const auto& var) { return var.name == occ.name; });
@@ -855,17 +866,25 @@ std::optional<location> lsp_context::find_definition_location(
         case lsp::occurence_kind::INSTR: {
             if (occ.opcode)
             {
-                if (auto it = macros_.find(occ.opcode); it != macros_.end())
+                if (auto it = m_macros.find(occ.opcode); it != m_macros.end())
                     return it->second->definition_location;
             }
             break;
         }
         case lsp::occurence_kind::COPY_OP: {
-            auto copy = std::find_if(files_.begin(), files_.end(), [&](const auto& f) {
+#ifdef __cpp_lib_ranges
+            auto copy = std::ranges::find_if(m_files, [&](const auto& f) {
                 return f.second->type == file_type::COPY
                     && std::get<context::copy_member_ptr>(f.second->owner)->name == occ.name;
             });
-            if (copy != files_.end())
+#else
+            auto copy = std::find_if(m_files.begin(), m_files.end(), [&](const auto& f) {
+                return f.second->type == file_type::COPY
+                    && std::get<context::copy_member_ptr>(f.second->owner)->name == occ.name;
+            });
+#endif
+
+            if (copy != m_files.end())
                 return std::get<context::copy_member_ptr>(copy->second->owner)->definition_location;
             break;
         }
@@ -880,7 +899,7 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
     switch (occ.kind)
     {
         case lsp::occurence_kind::ORD: {
-            auto sym = hlasm_ctx_->ord_ctx.get_symbol(occ.name);
+            auto sym = m_hlasm_ctx->ord_ctx.get_symbol(occ.name);
             if (sym)
                 return hover_text(*sym);
             break;
@@ -890,7 +909,7 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
 
         case lsp::occurence_kind::VAR: {
             const vardef_storage& var_syms =
-                macro_scope_i ? macro_scope_i->var_definitions : opencode_->variable_definitions;
+                macro_scope_i ? macro_scope_i->var_definitions : m_opencode->variable_definitions;
 
             auto sym =
                 std::find_if(var_syms.begin(), var_syms.end(), [&](const auto& var) { return var.name == occ.name; });
@@ -901,14 +920,14 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
         case lsp::occurence_kind::INSTR: {
             if (occ.opcode)
             {
-                auto it = macros_.find(occ.opcode);
-                assert(it != macros_.end());
+                auto it = m_macros.find(occ.opcode);
+                assert(it != m_macros.end());
                 return get_macro_documentation(*it->second);
             }
             else
             {
-                auto it = completion_item_s::instruction_completion_items_.find(*occ.name);
-                if (it == completion_item_s::instruction_completion_items_.end())
+                auto it = completion_item_s::m_instruction_completion_items.find(*occ.name);
+                if (it == completion_item_s::m_instruction_completion_items.end())
                     return "";
                 return it->detail + "  \n" + it->documentation;
             }

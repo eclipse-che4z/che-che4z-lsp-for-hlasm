@@ -16,6 +16,7 @@
 
 #include "analyzer.h"
 #include "checking/instruction_checker.h"
+#include "context/instruction.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::checking;

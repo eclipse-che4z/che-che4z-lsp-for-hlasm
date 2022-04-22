@@ -81,7 +81,6 @@ const std::map<std::string_view, std::unique_ptr<assembler_instruction>> assembl
         a.add<no_operands>("COM",
             { label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL });
         a.add<copy>("COPY", { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL });
-        a.add<copy>("COPY", { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL });
         a.add<no_operands>("CSECT",
             { label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL });
         a.add<no_operands>("CXD",

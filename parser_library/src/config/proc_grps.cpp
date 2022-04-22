@@ -14,6 +14,7 @@
 
 #include "proc_grps.h"
 
+#include "instruction_set_version.h"
 #include "nlohmann/json.hpp"
 
 namespace hlasm_plugin::parser_library::config {
@@ -43,6 +44,8 @@ void from_json(const nlohmann::json& j, library& p)
 void to_json(nlohmann::json& j, const assembler_options& p)
 {
     j = nlohmann::json::object();
+    if (p.optable.size())
+        j["OPTABLE"] = p.optable;
     if (p.profile.size())
         j["PROFILE"] = p.profile;
     if (p.sysparm.size())
@@ -55,6 +58,8 @@ void from_json(const nlohmann::json& j, assembler_options& p)
     if (!j.is_object())
         throw nlohmann::json::other_error::create(501, "asm_options must be an object.");
 
+    if (auto it = j.find("OPTABLE"); it != j.end())
+        it->get_to(p.optable);
     if (auto it = j.find("PROFILE"); it != j.end())
         it->get_to(p.profile);
     if (auto it = j.find("SYSPARM"); it != j.end())
@@ -214,6 +219,23 @@ void from_json(const nlohmann::json& j, proc_grps& p)
     if (auto it = j.find("macro_extensions"); it != j.end())
         it->get_to(p.macro_extensions);
 }
+
+namespace {
+bool optable_valid(std::string_view optable) noexcept
+{
+#ifdef __cpp_lib_ranges
+    return optable.size() == 0
+        || std::ranges::any_of(instr_set_version_equivalents, [optable](auto item) { return optable == item.first; });
+#else
+    return optable.size() == 0
+        || std::any_of(std::begin(instr_set_version_equivalents),
+            std::end(instr_set_version_equivalents),
+            [optable](auto item) { return optable == item.first; });
+#endif
+}
+} // namespace
+
+bool assembler_options::valid() const noexcept { return sysparm.size() < 256 && optable_valid(optable); }
 
 namespace {
 struct preprocessor_validator
