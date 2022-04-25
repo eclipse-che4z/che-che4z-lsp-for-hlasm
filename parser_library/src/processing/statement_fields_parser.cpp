@@ -132,7 +132,11 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
                 line = std::move(h.parser->op_rem_body_mac_r()->line);
                 literals = h.parser->get_collector().take_literals();
 
-                if (line.operands.size())
+                if (h.error_handler->error_reported())
+                {
+                    line.operands.clear();
+                }
+                else if (line.operands.size())
                 {
                     auto [to_parse, ranges, r] = join_operands(line.operands);
 

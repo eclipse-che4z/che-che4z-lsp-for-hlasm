@@ -39,9 +39,11 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 		|
 		(
 			{std::string name;}
-			AMPERSAND (ORDSYMBOL {name += $ORDSYMBOL->getText();})+
+			AMPERSAND
+			ORDSYMBOL {name += $ORDSYMBOL->getText();}
+			(ORDSYMBOL {name += $ORDSYMBOL->getText();}|NUM {name += $NUM->getText();})*
 			{
-				auto r = provider.get_range($AMPERSAND,$ORDSYMBOL);
+				auto r = provider.get_range($AMPERSAND,_input->LT(-1));
 				$vs.push_back(std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add(std::move(name)), std::vector<ca_expr_ptr>(), r));
 				collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 			}
@@ -66,9 +68,14 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 			{
 				name += $ORDSYMBOL->getText();
 			}
+			|
+			NUM
+			{
+				name += $NUM->getText();
+			}
 		)*
 		{
-			auto r = provider.get_range($AMPERSAND,$ORDSYMBOL);
+			auto r = provider.get_range($AMPERSAND,_input->LT(-1));
 			$vs.push_back(std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add(std::move(name)), std::vector<ca_expr_ptr>(), r));
 			collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 		}
@@ -80,19 +87,6 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 	;
 	finally
 	{enable_ca_string();}
-
-def_string_body
-	: string_ch_v
-	| IGNORED
-	| CONTINUATION;
-
-def_string returns [concat_chain chain]
-	: ap1=APOSTROPHE def_string_body*? ap2=(APOSTROPHE|ATTR)
-	{ 
-		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
-	};
-	finally
-	{concatenation_point::clear_concat_chain($chain);}
 
 deferred_op_rem returns [remark_list remarks, std::vector<vs_ptr> var_list]
 	:

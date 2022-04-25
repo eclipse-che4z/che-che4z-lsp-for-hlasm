@@ -442,9 +442,11 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_one)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), (size_t)7);
+
     EXPECT_TRUE(matches_message_codes(a.diags(),
         {
+            "S0002",
+            "S0002",
             "S0003",
             "S0003",
             "A011",

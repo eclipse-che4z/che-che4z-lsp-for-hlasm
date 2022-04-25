@@ -29,12 +29,19 @@ enum tokens
 // copied from antlr4::DefaultErrorStrategy.
 class error_strategy final : public antlr4::DefaultErrorStrategy
 {
+    bool m_error_reported = false;
+    void reset(antlr4::Parser* recognizer) override
+    {
+        m_error_reported = false;
+        antlr4::DefaultErrorStrategy::reset(recognizer);
+    }
     void reportError(antlr4::Parser* recognizer, const antlr4::RecognitionException& e) override
     {
-        if (inErrorRecoveryMode(recognizer))
+        if (m_error_reported && inErrorRecoveryMode(recognizer))
         {
             return; // don't report spurious errors
         }
+        m_error_reported = true;
 
         // recovery strategy
         antlr4::misc::IntervalSet endTokens;
@@ -69,6 +76,9 @@ class error_strategy final : public antlr4::DefaultErrorStrategy
     antlr4::Token* singleTokenDeletion(antlr4::Parser*) override { return nullptr; }
 
     bool singleTokenInsertion(antlr4::Parser*) override { return false; }
+
+public:
+    bool error_reported() const { return m_error_reported; }
 };
 
 } // namespace hlasm_plugin::parser_library::parsing

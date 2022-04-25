@@ -757,14 +757,12 @@ join_operands_result join_operands(const operand_list& operands)
 
     result.text.reserve(string_size);
 
-    bool insert_comma = false;
     for (const auto& op : operands)
     {
-        if (std::exchange(insert_comma, true))
-            result.text.push_back(',');
-
         if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
             result.text.append(m_op->value);
+        else
+            result.text.push_back(',');
 
         result.ranges.push_back(op->operand_range);
     }

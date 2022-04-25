@@ -204,15 +204,32 @@ id_no_dot returns [id_index name = id_storage::empty_id] locals [std::string buf
 	}
 	;
 
-remark_ch: DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|NUM|VERTICAL|ORDSYMBOL|SPACE|ATTR;
-
 remark
-	: remark_ch*;
+	: (DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|NUM|VERTICAL|ORDSYMBOL|SPACE|ATTR)*;
+
+remark_non_empty
+	: (DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|NUM|VERTICAL|ORDSYMBOL|SPACE|ATTR)+;
 
 remark_o returns [std::optional<range> value]
 	: SPACE remark							{$value = provider.get_range( $remark.ctx);}
 	| ;
 
+remark_eol returns [std::optional<range> value]
+	:
+	(
+		SPACE
+		{
+			auto s = _input->LT(1);
+		}
+		l=(DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|NUM|VERTICAL|ORDSYMBOL|SPACE|ATTR)*
+		{$value = provider.get_range(s, $l);}
+	)?
+	(
+		CONTINUATION
+		|
+		EOF
+	)
+	;
 
 
 

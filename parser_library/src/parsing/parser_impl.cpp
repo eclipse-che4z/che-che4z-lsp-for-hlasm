@@ -211,6 +211,21 @@ bool parser_impl::ALIAS()
     return opcode.type == instruction_type::ASM && opcode.value == hlasm_ctx->ids().well_known.ALIAS;
 }
 
+bool parser_impl::is_previous_attribute_consuming(bool top_level, const antlr4::Token* token)
+{
+    if (!token)
+        return false;
+
+    auto text = token->getText();
+    if (text.empty() || text.size() >= 2 && std::isalpha((unsigned char)text[text.size() - 2]))
+        return false;
+
+    auto tmp = std::toupper((unsigned char)text.back());
+
+    // this almost looks like a bug in the original assembler
+    return tmp == 'O' && top_level || tmp == 'S' || tmp == 'I' || tmp == 'L' || tmp == 'T';
+}
+
 antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
 {
     if (proc_status->first.kind == processing::processing_kind::LOOKAHEAD)

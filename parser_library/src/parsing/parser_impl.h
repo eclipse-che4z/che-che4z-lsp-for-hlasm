@@ -149,6 +149,7 @@ protected:
     bool ASM();
     bool DAT();
     bool ALIAS();
+    static bool is_previous_attribute_consuming(bool top_level, const antlr4::Token* token);
 
     void add_diagnostic(diagnostic_severity severity, std::string code, std::string message, range diag_range) const;
     void add_diagnostic(diagnostic_op d) const;

@@ -283,7 +283,11 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                     auto line = std::move(rule->line);
                     auto line_range = rule->line_range;
 
-                    if (line.operands.size())
+                    if (h.error_handler->error_reported())
+                    {
+                        line.operands.clear();
+                    }
+                    else if (line.operands.size())
                     {
                         auto [to_parse, ranges, r] = join_operands(line.operands);
 
@@ -750,7 +754,6 @@ const parsing::parser_holder& opencode_provider::prepare_operand_parser(const st
     h.lex->set_unlimited_line(unlimited_line);
 
     h.stream->reset();
-
 
     h.parser->reinitialize(&hlasm_ctx, std::move(range_prov), proc_status, diags);
 

@@ -93,7 +93,6 @@ std::string set_symbol_variable::get_string_array_value() const
         array_value.append(get_string_value(static_cast<int>(key)));
         array_value.append(",");
     }
-
     array_value.back() = ')';
 
     return array_value;

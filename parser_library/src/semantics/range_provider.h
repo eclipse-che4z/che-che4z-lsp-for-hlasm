@@ -50,7 +50,7 @@ public:
     range adjust_range(range r) const;
 
 private:
-    position adjust_position(position pos) const;
+    position adjust_position(position pos, bool end) const;
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

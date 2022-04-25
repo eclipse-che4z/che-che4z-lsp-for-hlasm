@@ -138,7 +138,6 @@ common_ch returns [std::string value]
 
 l_ch returns [std::string value]
 	: common_ch												{$value = std::move($common_ch.value);}
-	| EQUALS												{$value = "=";}
 	| COMMA													{$value = ",";}
 	| LPAR													{$value = "(";}
 	| RPAR													{$value = ")";};
@@ -151,17 +150,21 @@ common_ch_v returns [concat_point_ptr point]
 	| GT													{$point = std::make_unique<char_str_conc>(">", provider.get_range($GT));}
 	| SLASH													{$point = std::make_unique<char_str_conc>("/", provider.get_range($SLASH));}
 	| EQUALS												{$point = std::make_unique<equals_conc>();}
-	| l=AMPERSAND r=AMPERSAND								{$point = std::make_unique<char_str_conc>("&&", provider.get_range($l,$r));}
 	| VERTICAL												{$point = std::make_unique<char_str_conc>("|", provider.get_range($VERTICAL));}
 	| IDENTIFIER											{$point = std::make_unique<char_str_conc>($IDENTIFIER->getText(), provider.get_range($IDENTIFIER));}
 	| NUM													{$point = std::make_unique<char_str_conc>($NUM->getText(), provider.get_range($NUM));}
 	| ORDSYMBOL												{$point = std::make_unique<char_str_conc>($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL));}
 	| DOT													{$point = std::make_unique<dot_conc>();}											
-	| var_symbol											{$point = std::make_unique<var_sym_conc>(std::move($var_symbol.vs));};
+	|
+	(
+		l=AMPERSAND r=AMPERSAND								{$point = std::make_unique<char_str_conc>("&&", provider.get_range($l,$r));}
+		|
+		var_symbol											{$point = std::make_unique<var_sym_conc>(std::move($var_symbol.vs));}
+	)
+	;
 
 l_ch_v returns [concat_point_ptr point]
 	: common_ch_v											{$point = std::move($common_ch_v.point);}
-	| EQUALS												{$point = std::make_unique<char_str_conc>("=", provider.get_range($EQUALS));}
 	| COMMA													{$point = std::make_unique<char_str_conc>(",", provider.get_range($COMMA));}
 	| LPAR													{$point = std::make_unique<char_str_conc>("(", provider.get_range($LPAR));}
 	| RPAR													{$point = std::make_unique<char_str_conc>(")", provider.get_range($RPAR));};

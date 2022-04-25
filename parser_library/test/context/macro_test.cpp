@@ -889,3 +889,245 @@ ALIAS    OPSYN SAM64
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(macro, operand_string_substitution)
+{
+    std::string input = R"(
+        MACRO
+        MAC  &PAR
+        GBLC &VAR
+&VAR    SETC '&PAR'
+        MEND
+
+        GBLC &VAR
+        MAC  'test string &SYSPARM'
+)";
+    analyzer a(input, analyzer_options(asm_option { .sysparm = "ABC" }));
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "'test string ABC'");
+}
+
+TEST(macro, operand_string_substitution_continuation)
+{
+    for (int i = 0; i < 256; ++i)
+    {
+        std::string input = R"(
+        MACRO
+        MAC  &PAR
+        GBLC &VAR
+&VAR    SETC '&PAR'
+        MEND
+
+        GBLC &VAR
+&AAA(1) SETC 'ABC'
+)";
+        std::string suffix_ = " MAC " + std::string(i, ' ') + "'test string &(AAA)(1)'";
+        std::string_view suffix = suffix_;
+        size_t limit = 71;
+        while (suffix.size() > limit)
+        {
+            input.append(suffix.substr(0, limit)).append("X\n               ");
+            suffix.remove_prefix(limit);
+            limit = 71 - 15;
+        }
+        input += std::move(suffix);
+        analyzer a(input);
+        a.analyze();
+        a.collect_diags();
+
+        EXPECT_TRUE(a.diags().empty()) << i;
+        EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "'test string ABC'") << i;
+    }
+}
+
+TEST(macro, operand_sublist_continuation)
+{
+    for (int i = 0; i < 256; ++i)
+    {
+        std::string input = R"(
+        MACRO
+        MAC
+        MEND
+)";
+        std::string suffix_ =
+            " MAC " + std::string(i, ' ') + "(" + std::string(i / 2, 'J') + "," + std::string(i / 2, 'K') + ")";
+        std::string_view suffix = suffix_;
+        size_t limit = 71;
+        while (suffix.size() > limit)
+        {
+            input.append(suffix.substr(0, limit)).append("X\n               ");
+            suffix.remove_prefix(limit);
+            limit = 71 - 15;
+        }
+        input += std::move(suffix);
+        analyzer a(input);
+        a.analyze();
+        a.collect_diags();
+
+        ASSERT_TRUE(a.diags().empty()) << i;
+    }
+}
+
+TEST(macro, pass_empty_operand_components)
+{
+    std::string input = R"(
+        MACRO
+        MAC2 &PAR=
+        GBLA &VAR
+&VAR    SETA N'&PAR
+        MEND
+
+        MACRO
+        MAC  &PAR=
+        MAC2 PAR=&PAR
+        MEND
+
+        GBLA &VAR
+        MAC  PAR=(E,)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR"), 2);
+}
+
+TEST(macro, multiline_comment)
+{
+    std::string input = R"(
+        MACRO
+        MAC  &PAR=
+        MEND
+
+        MAC  PAR='test'                                        comment X
+                                                               comment
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(macro, attribute_and_multiline_comment)
+{
+    std::string input = R"(
+        MACRO
+        MAC  &F,&L
+TEST    EQU  L'&F-&L
+        MEND
+LABEL   DS   CL80
+
+        MAC  LABEL,L'LABEL                                     comment X
+                                                               comment
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TEST"), 0);
+}
+
+TEST(macro, attribute_string_combo)
+{
+    std::string input = R"(
+        MACRO
+        MAC  
+TEST    EQU  &SYSLIST(1,2)
+        MEND
+
+LABEL   DS   A
+
+        MAC  (0,l'LABEL),'-',(l'LABEL,0),                              X
+               '-'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TEST"), 4);
+}
+
+TEST(macro, empty_parms)
+{
+    std::string input = R"(
+        MACRO
+        MAC  &PAR1,&PAR2,&PAR3
+        MEND
+
+        MAC  ,A,B
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(macro, empty_parms_after_continuation)
+{
+    std::string input = R"(
+        MACRO
+        MAC  &PAR1,&PAR2,&PAR3
+        GBLB &RESULT
+        AIF  ('&PAR2' NE '').SKIP
+&RESULT SETB 1
+.SKIP   ANOP ,
+        MEND
+
+        GBLB &RESULT
+
+        MAC    A,                                                      X
+               ,B
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "RESULT"), true);
+}
+
+TEST(macro, syslist_size)
+{
+    using namespace std::string_literals;
+
+    std::string input = R"(
+     MACRO
+&L   MAC
+&A   SETA N'&SYSLIST
+&L   EQU  &A
+     MEND
+T0   MAC
+T1   MAC 
+T2   MAC A 
+T3   MAC A,
+T4   MAC A, 
+T5   MAC ,A
+T6   MAC ,A 
+T7   MAC ,
+T8   MAC , 
+T9   MAC ,,
+T10  MAC ,, 
+T11  MAC ,, A
+     END
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto expected = { 0, 0, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3 };
+
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+        EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), std::string("T") + std::to_string(i)), expected.begin()[i]) << i;
+    }
+}

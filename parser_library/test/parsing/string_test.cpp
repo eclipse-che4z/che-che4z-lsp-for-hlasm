@@ -69,11 +69,7 @@ INSTANTIATE_TEST_SUITE_P(parser,
         test_param { "literal_FS", "=FS'SYM STH'", "=FS'SYM STH'" },
         test_param { "number_before_attr_L", "=4L'SYM 93'", "=4L'SYM 93'" },
         test_param { "quote_before_attr_L", "\"L'SYM 93'", "\"L'SYM" },
-        test_param { "quote_before_attr_D", "\"D'SYM 93'", "\"D'SYM 93'" },
-
-        // Invalid inputs are currently parsed as remark, therefore the variable symbol is empty.
-        test_param { "no_ending_apostrophe", "\"N'SYM", "" },
-        test_param { "no_ending_apostrophe_2", "\"L'SYM' STH", "" }),
+        test_param { "quote_before_attr_D", "\"D'SYM 93'", "\"D'SYM 93'" }),
     stringer());
 } // namespace
 
@@ -92,11 +88,39 @@ TEST_P(parser_string_fixture, basic)
     a.analyze();
 
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), 0U);
+    EXPECT_TRUE(a.diags().empty());
 
-    auto par_value = get_var_value<C_t>(a.hlasm_ctx(), "PAR");
-    ASSERT_TRUE(par_value.has_value());
-    EXPECT_EQ(*par_value, GetParam().expected);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "PAR"), GetParam().expected);
+}
+
+TEST(parser, no_ending_apostrophe)
+{
+    std::string input = R"(
+ MACRO
+ MAC &VAR
+ MEND
+ 
+ MAC "N'SYM)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0005" }));
+}
+
+TEST(parser, no_ending_apostrophe_2)
+{
+    std::string input = R"(
+ MACRO
+ MAC &VAR
+ MEND
+ 
+ MAC "L'SYM' STH)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0005" }));
 }
 
 
@@ -113,10 +137,36 @@ TEST(parser, incomplete_string)
  MAC 'A 93)";
     analyzer a(input);
     a.analyze();
-
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), 0U);
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0005" }));
 
     auto par_value = get_var_value<C_t>(a.hlasm_ctx(), "PAR");
     ASSERT_TRUE(par_value.has_value());
+}
+
+TEST(parser, preserve_structured_parameter)
+{
+    std::string input = R"(
+     GBLC  &PAR
+     MACRO
+     MAC2
+     GBLC  &PAR
+&PAR SETC  '&SYSLIST(1,1)'
+     MEND
+
+     MACRO
+     MAC   &P1
+     MAC2  &P1
+     MEND
+
+
+     MAC   (A,O'-9')
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "PAR"), "A");
 }

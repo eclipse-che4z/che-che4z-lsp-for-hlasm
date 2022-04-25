@@ -41,14 +41,16 @@ void macro_processor::process(std::shared_ptr<const processing::resolved_stateme
     hlasm_ctx.enter_macro(stmt->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
 }
 
-bool is_data_def(unsigned char c)
+bool is_consuming_data_def(unsigned char c)
 {
     c = (char)toupper(c);
-    return c == 'L' || c == 'I' || c == 'S' || c == 'T' || c == 'D' || c == 'O' || c == 'N' || c == 'K';
+    return c == 'L' || c == 'I' || c == 'S' || c == 'T';
 }
 
-std::unique_ptr<context::macro_param_data_single> find_single_macro_param(const std::string& data, size_t& start)
+std::pair<std::unique_ptr<context::macro_param_data_single>, bool> find_single_macro_param(
+    const std::string& data, size_t& start)
 {
+    // always called in nested configuration
     size_t begin = start;
 
     while (true)
@@ -56,7 +58,7 @@ std::unique_ptr<context::macro_param_data_single> find_single_macro_param(const 
         start = data.find_first_of(",'()", start);
 
         if (start == std::string::npos)
-            return nullptr;
+            return { nullptr, false };
 
         if (data[start] == '(')
         {
@@ -65,7 +67,7 @@ std::unique_ptr<context::macro_param_data_single> find_single_macro_param(const 
             {
                 ++start;
                 if (start == data.size())
-                    return nullptr;
+                    return { nullptr, false };
 
                 if (data[start] == '(')
                     ++nest;
@@ -76,7 +78,7 @@ std::unique_ptr<context::macro_param_data_single> find_single_macro_param(const 
         }
         else if (data[start] == '\'')
         {
-            if (start > 0 && is_data_def(data[start - 1]))
+            if (start > 0 && is_consuming_data_def(data[start - 1]))
             {
                 ++start;
                 continue;
@@ -85,7 +87,7 @@ std::unique_ptr<context::macro_param_data_single> find_single_macro_param(const 
             start = data.find_first_of('\'', start + 1);
 
             if (start == std::string::npos)
-                return nullptr;
+                return { nullptr, false };
 
             ++start;
         }
@@ -94,10 +96,14 @@ std::unique_ptr<context::macro_param_data_single> find_single_macro_param(const 
     }
 
     auto tmp_start = start;
-    if (data[start] == ',')
+    bool comma_encountered = data[start] == ',';
+    if (comma_encountered)
         ++start;
 
-    return std::make_unique<context::macro_param_data_single>(data.substr(begin, tmp_start - begin));
+    return {
+        std::make_unique<context::macro_param_data_single>(data.substr(begin, tmp_start - begin)),
+        comma_encountered,
+    };
 }
 
 context::macro_data_ptr macro_processor::string_to_macrodata(std::string data)
@@ -114,6 +120,7 @@ context::macro_data_ptr macro_processor::string_to_macrodata(std::string data)
 
     nests.push(0);
     macro_data.emplace();
+    bool empty_op_pending = false;
 
     while (true)
     {
@@ -126,6 +133,7 @@ context::macro_data_ptr macro_processor::string_to_macrodata(std::string data)
         {
             nests.push(begin + 1);
             macro_data.emplace();
+            empty_op_pending = false;
         }
         else if (data[begin] == ')')
         {
@@ -135,9 +143,13 @@ context::macro_data_ptr macro_processor::string_to_macrodata(std::string data)
             auto vec = std::move(macro_data.top());
             macro_data.pop();
 
+            if (std::exchange(empty_op_pending, false))
+                vec.push_back(std::make_unique<context::macro_param_data_single>(""));
+
             if (begin != data.size() && data[begin] != ',' && data[begin] != ')')
             {
-                auto tmp_single = find_single_macro_param(data, begin);
+                auto [tmp_single, comma] = find_single_macro_param(data, begin);
+                empty_op_pending = comma;
 
                 if (tmp_single == nullptr)
                     return std::make_unique<context::macro_param_data_single>(std::move(data));
@@ -158,8 +170,10 @@ context::macro_data_ptr macro_processor::string_to_macrodata(std::string data)
         }
         else
         {
-            macro_data.top().push_back(find_single_macro_param(data, begin));
+            auto [op, comma] = find_single_macro_param(data, begin);
+            macro_data.top().push_back(std::move(op));
             nests.top() = begin;
+            empty_op_pending = comma;
 
             if (macro_data.top().back() == nullptr)
                 return std::make_unique<context::macro_param_data_single>(std::move(data));

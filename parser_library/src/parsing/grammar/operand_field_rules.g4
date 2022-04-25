@@ -191,23 +191,20 @@ op_rem_body_mac returns [op_rem line, range line_range]
 	{
 		$line = std::move($op_rem_body_alt_mac.line);
 		$line_range = provider.get_range($op_rem_body_alt_mac.ctx);
-	} EOF
-	| remark_o 
-	{
-		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
-		$line_range = provider.get_range($remark_o.ctx);
 	} EOF;
 
 op_rem_body_alt_mac returns [op_rem line]
 	:
+	{
+		int paren_count = 0;
+	}
 	(
 		(
-			mac_op? comma
+			mac_op[&paren_count]? comma
 			{
 				if ($mac_op.ctx && $mac_op.op)
 					$line.operands.push_back(std::move($mac_op.op));
-				else
-					$line.operands.push_back(std::make_unique<semantics::empty_operand>(provider.get_empty_range($comma.ctx->getStart())));
+				$line.operands.push_back(std::make_unique<semantics::empty_operand>(provider.get_range($comma.ctx->getStart())));
 			}
 		)+
 		{enable_continuation();}
@@ -220,14 +217,16 @@ op_rem_body_alt_mac returns [op_rem line]
 		{disable_continuation();}
 	)*
 	(
-		last_mac_op=mac_op? last_remark=remark_o
+		last_mac_op=mac_op[&paren_count]? last_remark=remark_o
 		{
-			if ($last_mac_op.ctx)
+			if ($last_mac_op.ctx && $last_mac_op.op)
 				$line.operands.push_back(std::move($last_mac_op.op));
 			if ($last_remark.value)
 				$line.remarks.push_back(std::move(*$last_remark.value));
 		}
 	);
+	finally
+	{disable_continuation();}
 
 /////////////
 
@@ -320,10 +319,6 @@ op_rem_body_mac_r returns [op_rem line]
 	op_rem_body_alt_mac
 	{
 		$line = std::move($op_rem_body_alt_mac.line);
-	} EOF
-	| remark_o 
-	{
-		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 	} EOF;
 
 op_rem_body_noop_r

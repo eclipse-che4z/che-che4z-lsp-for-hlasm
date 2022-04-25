@@ -55,7 +55,13 @@ range range_provider::get_empty_range(const antlr4::Token* start) const
 range range_provider::adjust_range(range r) const
 {
     if (state == adjusting_state::MACRO_REPARSE)
-        return range(adjust_position(r.start), adjust_position(r.end));
+    {
+        if (r.start != r.end)
+            return range(adjust_position(r.start, false), adjust_position(r.end, true));
+
+        auto adjusted = adjust_position(r.end, true);
+        return range(adjusted, adjusted);
+    }
     else if (state == adjusting_state::SUBSTITUTION)
         return original_range;
     else if (state == adjusting_state::NONE)
@@ -64,27 +70,20 @@ range range_provider::adjust_range(range r) const
     return r;
 }
 
-position range_provider::adjust_position(position pos) const
+position range_provider::adjust_position(position pos, bool end) const
 {
-    size_t idx = 1;
-    auto orig_range = original_operand_ranges.empty() ? original_range : original_operand_ranges.front();
+    auto [orig_range, offset] = [this, pos, end]() {
+        constexpr static size_t continued_code_line_width = 72 - 16;
 
-    auto offset = pos.column - orig_range.start.column;
-
-    if (original_operand_ranges.size())
-        while (true)
+        for (auto offset = pos.column - original_range.start.column; const auto& r : original_operand_ranges)
         {
-            auto tmp_lines = orig_range.end.line - orig_range.start.line;
-            auto tmp_cols = (orig_range.end.column + 72 * tmp_lines) - orig_range.start.column;
-
-            if (tmp_cols >= offset)
-                break;
-            else
-            {
-                offset -= tmp_cols + 1;
-                orig_range = original_operand_ranges[idx++];
-            }
+            auto range_len = r.end.column - r.start.column + continued_code_line_width * (r.end.line - r.start.line);
+            if (offset < range_len + end)
+                return std::pair(r, offset);
+            offset -= range_len;
         }
+        return std::pair(original_range, pos.column - original_range.start.column);
+    }();
 
     auto column_start = orig_range.start.column;
     auto line_start = orig_range.start.line;
@@ -92,16 +91,16 @@ position range_provider::adjust_position(position pos) const
     while (true)
     {
         auto rest = 71 - column_start;
-        if (offset > rest)
+        if (offset < rest + end)
+        {
+            column_start += offset;
+            break;
+        }
+        else
         {
             offset -= rest;
             column_start = 15;
             ++line_start;
-        }
-        else
-        {
-            column_start += offset;
-            break;
         }
     }
     return position(line_start, column_start);
@@ -113,11 +112,13 @@ range_provider::range_provider(range original_range, adjusting_state state)
 {}
 
 range_provider::range_provider(
-    range original_field_range, std::vector<range> original_operand_ranges, adjusting_state state)
+    range original_field_range, std::vector<range> original_operand_ranges_, adjusting_state state)
     : original_range(original_field_range)
-    , original_operand_ranges(std::move(original_operand_ranges))
+    , original_operand_ranges(std::move(original_operand_ranges_))
     , state(state)
-{}
+{
+    assert(original_operand_ranges.empty() || original_range.start == original_operand_ranges.front().start);
+}
 
 range_provider::range_provider()
     : original_range()
