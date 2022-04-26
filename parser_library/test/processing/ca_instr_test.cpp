@@ -449,3 +449,70 @@ TEST(var_subs, defined_by_self_ref)
 
     EXPECT_EQ(get_var_vector<A_t>(a.hlasm_ctx(), "VAR"), std::vector<A_t> { 2 });
 }
+
+TEST(SET, empty_args_in_arrays)
+{
+    std::string input = R"(
+        MACRO
+        MAC
+        GBLA &RES
+&A(1)   SETC 'A',,,,'B'
+&RES    SETA N'&A
+        MEND
+
+        GBLA &RES
+        MAC
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "RES"), 5);
+}
+
+TEST(SET, single_comma)
+{
+    std::string input = R"(
+        MACRO
+        MAC
+        GBLA &RES
+&A(1)   SETC ,
+&RES    SETA N'&A
+        MEND
+
+        GBLA &RES
+        MAC
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "RES"), 2);
+}
+
+TEST(SET, empty_args_in_arrays_no_overwrite)
+{
+    std::string input = R"(
+        MACRO
+        MAC
+        GBLC &A(5)
+&A(1)   SETC 'A',,,,'B'
+        MEND
+
+        GBLC &A(5)
+&A(1)   SETC 'A','B','C','D','E'
+        MAC
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    std::vector<C_t> expected { "A", "B", "C", "D", "B" };
+    EXPECT_EQ(get_var_vector<C_t>(a.hlasm_ctx(), "A"), expected);
+}

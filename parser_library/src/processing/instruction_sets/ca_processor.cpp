@@ -161,13 +161,20 @@ template ca_processor::SET_info ca_processor::get_SET_symbol<context::C_t>(const
 bool ca_processor::prepare_SET_operands(
     const semantics::complete_statement& stmt, std::vector<expressions::ca_expression*>& expr_values)
 {
-    bool has_operand = false;
-    for (auto& op : stmt.operands_ref().value)
+    const auto& ops = stmt.operands_ref().value;
+    if (ops.empty())
+    {
+        add_diagnostic(diagnostic_op::error_E022("SET instruction", stmt.instruction_ref().field_range));
+        return false;
+    }
+
+    for (const auto& op : ops)
     {
         if (op->type == semantics::operand_type::EMPTY)
+        {
+            expr_values.push_back(nullptr);
             continue;
-
-        has_operand = true;
+        }
 
         auto ca_op = op->access_ca();
         assert(ca_op);
@@ -179,12 +186,6 @@ bool ca_processor::prepare_SET_operands(
         }
 
         expr_values.push_back(ca_op->access_expr()->expression.get());
-    }
-
-    if (!has_operand)
-    {
-        add_diagnostic(diagnostic_op::error_E022("SET instruction", stmt.instruction_ref().field_range));
-        return false;
     }
     return true;
 }
@@ -608,8 +609,9 @@ void ca_processor::process_SET(const semantics::complete_statement& stmt)
     {
         // first obtain a place to put the result in
         auto& val = set_symbol->template access_set_symbol<T>()->reserve_value(index - 1 + i);
-        // then evaluate the new value and save it
-        val = expr_values[i]->template evaluate<T>(eval_ctx);
+        // then evaluate the new value and save it unless the opreand is empty
+        if (expr_values[i])
+            val = expr_values[i]->template evaluate<T>(eval_ctx);
     }
 }
 
