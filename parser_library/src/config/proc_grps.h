@@ -39,6 +39,7 @@ struct assembler_options
     std::string profile;
     std::string optable;
     std::string system_id;
+    bool goff = false;
 
     bool valid() const noexcept;
 };

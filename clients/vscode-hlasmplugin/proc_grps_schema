@@ -49,6 +49,10 @@
                         "type": "object",
                         "description": "List of assembler options",
                         "properties": {
+                            "GOFF": {
+                                "type": "boolean",
+                                "description": "Produces Generalized Object File format dataset."
+                            },
                             "OPTABLE": {
                                 "type": "string",
                                 "description": "Specifies the instruction set to use.",
@@ -90,6 +94,10 @@
                             "SYSTEM_ID": {
                                 "type": "string",
                                 "description": "Provides the value for the SYSTEM_ID system variable. Defaults to 'z/OS 02.04.00' when omitted."
+                            },
+                            "XOBJECT": {
+                                "type": "boolean",
+                                "description": "Synonym for the GOFF option."
                             }
                         }
                     },

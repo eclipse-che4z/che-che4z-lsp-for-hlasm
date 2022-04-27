@@ -67,13 +67,12 @@ instruction_set_version processor_group::find_instruction_set(
 asm_option processor_group::translate_assembler_options(
     const config::assembler_options& asm_options, std::string_view pg_file_name) const
 {
-    return asm_option {
-        asm_options.sysparm,
-        asm_options.profile,
-        asm_options.optable.empty() ? asm_option::instr_set_default
-                                    : find_instruction_set(asm_options.optable, pg_file_name),
-        asm_options.system_id.empty() ? asm_option::system_id_default : asm_options.system_id,
-    };
+    return asm_option { .sysparm = asm_options.sysparm,
+        .profile = asm_options.profile,
+        .instr_set = asm_options.optable.empty() ? asm_option::instr_set_default
+                                                 : find_instruction_set(asm_options.optable, pg_file_name),
+        .system_id = asm_options.system_id.empty() ? asm_option::system_id_default : asm_options.system_id,
+        .sysopt_xobject = asm_options.goff };
 }
 
 void processor_group::collect_diags() const

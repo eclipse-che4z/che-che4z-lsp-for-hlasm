@@ -257,3 +257,22 @@ TEST(system_variable, sysstyp_empty)
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "");
 }
+
+TEST(system_variable, sysopt_xobject)
+{
+    std::string input = R"(
+&VAR    SETB    (&SYSOPT_XOBJECT)
+        END
+)";
+
+    auto cases = { std::make_pair(true, true), std::make_pair(false, false) };
+    for (auto [xobject, expected] : cases)
+    {
+        analyzer a(input, analyzer_options(asm_option { .sysopt_xobject = xobject }));
+        a.analyze();
+        a.collect_diags();
+        EXPECT_TRUE(a.diags().empty());
+
+        EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "VAR"), expected);
+    }
+}

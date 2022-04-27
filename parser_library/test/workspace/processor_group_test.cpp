@@ -29,11 +29,16 @@ auto pp_options(decltype(config::preprocessor_options::options) o)
 
 TEST(processor_group, assembler_options)
 {
+    EXPECT_EQ(asm_options({ .optable = "XA" }).instr_set, instruction_set_version::XA);
+    EXPECT_EQ(asm_options({}).instr_set, asm_option::instr_set_default);
     EXPECT_EQ(asm_options({ .profile = "PROFILE" }).profile, "PROFILE");
     EXPECT_EQ(asm_options({ .sysparm = "SYSPARM" }).sysparm, "SYSPARM");
     EXPECT_EQ(asm_options({ .system_id = "SYSID" }).system_id, "SYSID");
     EXPECT_EQ(asm_options({}).system_id, asm_option::system_id_default);
     EXPECT_EQ(asm_options({}).sysopt_rent, asm_option::sysopt_rent_default);
+    EXPECT_EQ(asm_options({ .goff = true }).sysopt_xobject, true);
+    EXPECT_EQ(asm_options({ .goff = false }).sysopt_xobject, false);
+    EXPECT_EQ(asm_options({}).sysopt_xobject, asm_option::sysopt_xobject_default);
 }
 
 TEST(processor_group, preprocessor_options)
@@ -63,7 +68,6 @@ TEST_F(processor_group_test, asm_options_optable_valid)
 {
     std::string grp_name = "Group";
     config::assembler_options asm_opts;
-    asm_opts.optable = "UNI";
 
     const auto cases = {
         std::make_pair("ZOP", instruction_set_version::ZOP),
@@ -112,7 +116,6 @@ TEST_F(processor_group_test, asm_options_optable_invalid)
 {
     std::string grp_name = "Group";
     config::assembler_options asm_opts;
-    asm_opts.optable = "UNI";
 
     const auto cases = {
         std::make_pair("klgadh", instruction_set_version::UNI),

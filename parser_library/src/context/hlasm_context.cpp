@@ -331,6 +331,11 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         }
 
         {
+            globals_.insert(create_system_variable<system_variable>(
+                ids(), "SYSOPT_XOBJECT", std::to_string(asm_options_.sysopt_xobject), true));
+        }
+
+        {
             globals_.insert(create_system_variable<system_variable>(ids(), "SYSPARM", asm_options_.sysparm, true));
         }
 
@@ -349,6 +354,7 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
     add_global_system_var_to_scope(ids(), "SYSDATE", scope);
     add_global_system_var_to_scope(ids(), "SYSTIME", scope);
     add_global_system_var_to_scope(ids(), "SYSOPT_RENT", scope);
+    add_global_system_var_to_scope(ids(), "SYSOPT_XOBJECT", scope);
     add_global_system_var_to_scope(ids(), "SYSPARM", scope);
     add_global_system_var_to_scope(ids(), "SYSSTMT", scope);
     add_global_system_var_to_scope(ids(), "SYSTEM_ID", scope);

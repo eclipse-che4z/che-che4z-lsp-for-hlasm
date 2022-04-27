@@ -7,6 +7,7 @@
 - Expand the list of associated file extensions
 - DB2 preprocessor now supports the VERSION option
 - Instruction set versioning support
+- Basic GOFF, XOBJECT and SYSOPT_XOBJECT support
 
 #### Fixed
 - Fixed an issue preventing correct N' attribute evaluation of empty subscript arrays
