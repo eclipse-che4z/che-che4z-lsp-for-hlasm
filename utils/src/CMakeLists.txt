@@ -12,6 +12,7 @@
 
 target_sources(hlasm_utils PRIVATE
 	platform.cpp
+	utf8text.cpp
 )
 
 if(EMSCRIPTEN)

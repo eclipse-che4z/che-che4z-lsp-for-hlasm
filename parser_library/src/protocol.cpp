@@ -110,6 +110,8 @@ const diagnostic_related_info diagnostic::related_info(size_t index) const { ret
 
 size_t diagnostic::related_info_size() const { return impl_.related.size(); }
 
+diagnostic_tag diagnostic::tags() const { return impl_.tag; }
+
 //********************* diagnostics_container *******************
 
 class diagnostic_list_impl

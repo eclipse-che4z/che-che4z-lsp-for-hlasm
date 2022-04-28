@@ -15,4 +15,5 @@ target_sources(hlasm_utils PUBLIC
 	path.h
 	platform.h
 	similar.h
+	utf8text.h
 )

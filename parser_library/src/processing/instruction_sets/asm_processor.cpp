@@ -14,6 +14,8 @@
 
 #include "asm_processor.h"
 
+#include <charconv>
+
 #include "checking/instr_operand.h"
 #include "context/literal_pool.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
@@ -22,7 +24,7 @@
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expr_visitor.h"
 #include "postponed_statement_impl.h"
-
+#include "utils/utf8text.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -49,6 +51,17 @@ std::optional<context::A_t> try_get_abs_value(const semantics::operand* op, cont
         return std::nullopt;
     return try_get_abs_value(expr_op, dep_solver);
 }
+
+std::optional<int> try_get_number(std::string_view s)
+{
+    int v = 0;
+    const char* b = s.data();
+    const char* e = b + s.size();
+    if (auto ec = std::from_chars(b, e, v); ec.ec == std::errc {} && ec.ptr == e)
+        return v;
+    return std::nullopt;
+}
+
 } // namespace
 
 void asm_processor::process_sect(const context::section_kind kind, rebuilt_statement stmt)
@@ -716,6 +729,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("DROP"), [this](rebuilt_statement stmt) { process_DROP(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("PUSH"), [this](rebuilt_statement stmt) { process_PUSH(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("POP"), [this](rebuilt_statement stmt) { process_POP(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("MNOTE"), [this](rebuilt_statement stmt) { process_MNOTE(std::move(stmt)); });
 
     return table;
 }
@@ -1148,6 +1162,100 @@ void asm_processor::process_POP(rebuilt_statement stmt)
     hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
         std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
         dep_solver.derive_current_dependency_evaluation_context());
+}
+
+void asm_processor::process_MNOTE(rebuilt_statement stmt)
+{
+    static constexpr std::string_view MNOTE = "MNOTE";
+    const auto& ops = stmt.operands_ref().value;
+
+    std::optional<int> level;
+    size_t first_op_len = 0;
+
+    find_sequence_symbol(stmt);
+
+    switch (ops.size())
+    {
+        case 1:
+            level = 0;
+            break;
+        case 2:
+            switch (ops[0]->type)
+            {
+                case semantics::operand_type::EMPTY:
+                    level = 1;
+                    break;
+                case semantics::operand_type::ASM:
+                    if (auto expr = ops[0]->access_asm()->access_expr(); !expr)
+                    {
+                        // fail
+                    }
+                    else if (dynamic_cast<const expressions::mach_expr_location_counter*>(expr->expression.get()))
+                    {
+                        level = 0;
+                        first_op_len = 1;
+                    }
+                    else
+                    {
+                        const auto& val = expr->get_value();
+                        first_op_len = val.size();
+                        level = try_get_number(val);
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+        default:
+            add_diagnostic(diagnostic_op::error_A012_from_to(MNOTE, 1, 2, stmt.operands_ref().field_range));
+            return;
+    }
+    if (!level.has_value() || level.value() < 0 || level.value() > 255)
+    {
+        add_diagnostic(diagnostic_op::error_A119_MNOTE_first_op_format(ops[0]->operand_range));
+        return;
+    }
+
+    std::string_view text;
+
+    const auto& r = ops.back()->operand_range;
+    if (ops.back()->type != semantics::operand_type::ASM)
+    {
+        add_diagnostic(diagnostic_op::warning_A300_op_apostrophes_missing(MNOTE, r));
+    }
+    else
+    {
+        auto* string_op = ops.back()->access_asm();
+        if (string_op->kind == semantics::asm_kind::STRING)
+        {
+            text = string_op->access_string()->value;
+        }
+        else
+        {
+            if (string_op->kind == semantics::asm_kind::EXPR)
+            {
+                text = string_op->access_expr()->get_value();
+            }
+            add_diagnostic(diagnostic_op::warning_A300_op_apostrophes_missing(MNOTE, r));
+        }
+    }
+
+    if (text.size() > checking::MNOTE_max_message_length)
+    {
+        add_diagnostic(diagnostic_op::error_A117_MNOTE_message_size(r));
+        text = text.substr(0, checking::MNOTE_max_message_length);
+    }
+    else if (text.size() + first_op_len > checking::MNOTE_max_operands_length)
+    {
+        add_diagnostic(diagnostic_op::error_A118_MNOTE_operands_size(r));
+    }
+
+    std::string sanitized;
+    sanitized.reserve(text.size());
+    utils::append_utf8_sanitized(sanitized, text);
+
+    add_diagnostic(diagnostic_op::mnote_diagnostic(level.value(), sanitized, r));
 }
 
 } // namespace hlasm_plugin::parser_library::processing

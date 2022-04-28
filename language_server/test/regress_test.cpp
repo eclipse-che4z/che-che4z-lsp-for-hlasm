@@ -593,3 +593,31 @@ TEST(regress_test, stability_sync)
     for (const auto& message : messages)
         s.message_received(message);
 }
+
+TEST(regress_test, check_diagnostic_tags)
+{
+    parser_library::workspace_manager ws_mngr;
+    message_provider_mock mess_p;
+    lsp::server s(ws_mngr);
+    s.set_send_message_provider(&mess_p);
+
+    auto notf = make_notification("textDocument/didOpen",
+        R"#({"textDocument":{"uri":"file:///c%3A/test/note_test.hlasm","languageId":"plaintext","version":1,"text":" MNOTE 'test note'"}})#"_json);
+    s.message_received(notf);
+
+    ASSERT_EQ(mess_p.notfs.size(), (size_t)2);
+    auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](json notif) {
+        return notif["method"] == "textDocument/publishDiagnostics";
+    });
+    ASSERT_NE(publish_notif, mess_p.notfs.end());
+    ASSERT_EQ((*publish_notif)["method"], "textDocument/publishDiagnostics");
+    auto diagnostics = (*publish_notif)["params"]["diagnostics"];
+    ASSERT_EQ(diagnostics.size(), (size_t)1);
+    EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "MNOTE");
+    ASSERT_GT(diagnostics[0].count("tags"), 0);
+    ASSERT_TRUE(diagnostics[0]["tags"].is_array());
+    ASSERT_EQ(diagnostics[0]["tags"].size(), (size_t)1);
+    ASSERT_EQ(diagnostics[0]["tags"][0], 1);
+
+    mess_p.notfs.clear();
+}

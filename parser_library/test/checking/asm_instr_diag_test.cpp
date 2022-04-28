@@ -830,9 +830,8 @@ TEST(diagnostics, mnote_first_op_format)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "A117");
+    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A300", "MNOTE" }));
 }
 
 TEST(diagnostics, mnote_long_message)
@@ -863,8 +862,7 @@ TEST(diagnostics, mnote_long_message)
     a.analyze();
     a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "A117");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A117", "MNOTE" }));
 }
 
 TEST(diagnostics, iseq_number_of_operands)
@@ -991,4 +989,163 @@ TEST(diagnostics, org_incorrect_first_op)
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "A245");
+}
+
+struct mnote_test
+{
+    int code;
+    std::string text;
+    diagnostic_severity expected;
+};
+
+class mnote_fixture : public ::testing::TestWithParam<mnote_test>
+{};
+
+INSTANTIATE_TEST_SUITE_P(mnote,
+    mnote_fixture,
+    ::testing::Values(mnote_test { -2, "test", diagnostic_severity::hint },
+        mnote_test { -1, "test", diagnostic_severity::hint },
+        mnote_test { 0, "test", diagnostic_severity::hint },
+        mnote_test { 1, "test", diagnostic_severity::hint },
+        mnote_test { 2, "test", diagnostic_severity::info },
+        mnote_test { 3, "test", diagnostic_severity::info },
+        mnote_test { 4, "test", diagnostic_severity::warning },
+        mnote_test { 5, "test", diagnostic_severity::warning },
+        mnote_test { 6, "test", diagnostic_severity::warning },
+        mnote_test { 7, "test", diagnostic_severity::warning },
+        mnote_test { 8, "test", diagnostic_severity::error },
+        mnote_test { 20, "test", diagnostic_severity::error },
+        mnote_test { 150, "test", diagnostic_severity::error },
+        mnote_test { 255, "test", diagnostic_severity::error }));
+
+TEST_P(mnote_fixture, diagnostic_severity)
+{
+    const auto& [code, text, expected] = GetParam();
+    std::string input = " MNOTE "
+        + (code == -2        ? ""
+                : code == -1 ? "*,"
+                             : std::to_string(code) + ",")
+        + "'" + text + "'";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+
+    const auto& d = a.diags()[0];
+    EXPECT_EQ(d.code, "MNOTE");
+    EXPECT_EQ(d.message, text);
+    EXPECT_EQ(d.severity, expected);
+}
+
+TEST(mnote, substitution_first)
+{
+    std::string input = R"(
+&L  SETA  4
+    MNOTE &L,'test message'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+
+    const auto& d = a.diags()[0];
+    EXPECT_EQ(d.code, "MNOTE");
+    EXPECT_EQ(d.message, "test message");
+    EXPECT_EQ(d.severity, diagnostic_severity::warning);
+}
+
+TEST(mnote, substitution_both)
+{
+    std::string input = R"(
+&L  SETA  8
+&M  SETC  'test message'
+    MNOTE &L,'&M'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+
+    const auto& d = a.diags()[0];
+    EXPECT_EQ(d.code, "MNOTE");
+    EXPECT_EQ(d.message, "test message");
+    EXPECT_EQ(d.severity, diagnostic_severity::error);
+}
+
+TEST(mnote, empty_first_arg)
+{
+    std::string input = R"(
+    MNOTE ,'test message'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+
+    const auto& d = a.diags()[0];
+    EXPECT_EQ(d.code, "MNOTE");
+    EXPECT_EQ(d.message, "test message");
+    EXPECT_EQ(d.severity, diagnostic_severity::hint);
+}
+
+TEST(mnote, three_args)
+{
+    std::string input = R"(
+    MNOTE ,'test message',
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A012" }));
+}
+
+TEST(mnote, emtpy_second_arg)
+{
+    std::string input = R"(
+    MNOTE 0,
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE", "A300" }));
+}
+
+TEST(mnote, missing_quotes)
+{
+    std::string input = R"(
+    MNOTE 0,test
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE", "A300" }));
+}
+
+TEST(mnote, nonprintable_characters)
+{
+    std::string input = R"(
+&C  SETC X2C('0101')
+    MNOTE 0,'&C'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
+    EXPECT_EQ(a.diags()[0].message, "<01><01>");
 }

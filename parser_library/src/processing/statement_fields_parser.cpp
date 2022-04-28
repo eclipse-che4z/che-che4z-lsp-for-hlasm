@@ -17,6 +17,7 @@
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "parsing/error_strategy.h"
+#include "utils/utf8text.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -52,39 +53,6 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
     return *m_parser;
 }
 
-void append_sanitized(std::string& result, std::string_view str)
-{
-    auto it = str.begin();
-    auto end = str.end();
-    while (true)
-    {
-        auto first_complex = std::find_if(it, end, [](unsigned char c) { return c >= 0x80; });
-        result.append(it, first_complex);
-        it = first_complex;
-        if (it == end)
-            break;
-
-        unsigned char c = *it;
-        auto cs = lexing::utf8_prefix_sizes[c];
-        if (cs.utf8 && (end - it) >= cs.utf8
-            && std::all_of(it + 1, it + cs.utf8, [](unsigned char c) { return (c & 0xC0) == 0x80; }))
-        {
-            result.append(it, it + cs.utf8);
-            it += cs.utf8;
-        }
-        else
-        {
-            static const char hex_digits[] = "0123456789ABCDEF";
-            result.append(1, '<');
-            result.append(1, hex_digits[(c >> 4) & 0xf]);
-            result.append(1, hex_digits[(c >> 0) & 0xf]);
-            result.append(1, '>');
-
-            ++it;
-        }
-    }
-}
-
 std::string decorate_message(const std::string& field, const std::string& message)
 {
     static const std::string_view prefix = "While evaluating the result of substitution '";
@@ -93,7 +61,7 @@ std::string decorate_message(const std::string& field, const std::string& messag
     result.reserve(prefix.size() + field.size() + arrow.size() + message.size());
 
     result.append(prefix);
-    append_sanitized(result, field);
+    utils::append_utf8_sanitized(result, field);
     result.append(arrow);
     result.append(message);
 

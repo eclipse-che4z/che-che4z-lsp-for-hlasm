@@ -18,6 +18,7 @@
 #include "gtest/gtest.h"
 
 #include "lexing/logical_line.h"
+#include "utils/utf8text.h"
 
 using namespace hlasm_plugin::parser_library::lexing;
 
@@ -54,4 +55,24 @@ TEST(utf8, substr_with_validate)
     {
         EXPECT_THROW(utf8_substr<true>(str, off, len), utf8_error) << str << ":" << off << ":" << len;
     }
+}
+
+TEST(utf8, multibyte_validation)
+{
+    using namespace hlasm_plugin::utils;
+    for (const auto [f, s, e] : std::initializer_list<std::tuple<unsigned char, unsigned char, bool>> {
+             { 0, 0, false },
+             { 0x7f, 0, false },
+             { 0xa0, 0x80, false },
+             { 0xc0, 0, false },
+             { 0xc0, 0x80, false },
+             { 0xc0, 0x90, false },
+             { 0xc2, 0x80, true },
+             { 0xed, 0xa0, false },
+             { 0xed, 0xbf, false },
+             { 0xf4, 0x8f, true },
+             { 0xf4, 0x90, false },
+             { 0xff, 0xff, false },
+         })
+        EXPECT_EQ(utf8_valid_multibyte_prefix(f, s), e);
 }

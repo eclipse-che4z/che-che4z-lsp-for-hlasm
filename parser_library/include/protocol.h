@@ -213,6 +213,13 @@ enum class PARSER_LIBRARY_EXPORT diagnostic_severity
     unspecified = 5
 };
 
+enum class PARSER_LIBRARY_EXPORT diagnostic_tag
+{
+    none = 0,
+    unnecessary = 1 << 0,
+    deprecated = 1 << 1,
+};
+
 struct PARSER_LIBRARY_EXPORT diagnostic_related_info
 {
     diagnostic_related_info(diagnostic_related_info_s&);
@@ -236,6 +243,7 @@ struct PARSER_LIBRARY_EXPORT diagnostic
     const char* message() const;
     const diagnostic_related_info related_info(size_t index) const;
     size_t related_info_size() const;
+    diagnostic_tag tags() const;
 
 private:
     diagnostic_s& impl_;

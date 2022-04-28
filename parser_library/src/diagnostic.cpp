@@ -17,6 +17,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 
 namespace hlasm_plugin::parser_library {
 
@@ -32,7 +33,7 @@ struct concat_helper
 
     size_t len(std::string_view t) const { return t.size(); }
     template<typename T>
-    std::enable_if_t<!std::is_convertible_v<T&&, std::string_view>, size_t> len(T&&) const
+    std::enable_if_t<!std::is_convertible_v<T&&, std::string_view>, size_t> len(const T&) const
     {
         return 8; // arbitrary estimate for the length of the stringified argument (typically small numbers)
     }
@@ -45,7 +46,7 @@ std::string concat(Args&&... args)
 
     concat_helper h;
 
-    result.reserve((... + h.len(std::forward<Args>(args))));
+    result.reserve((... + h.len(std::as_const(args))));
 
     (h(result, std::forward<Args>(args)), ...);
 
@@ -2411,6 +2412,16 @@ diagnostic_op diagnostic_op::error_U006_duplicate_base_specified(const range& ra
     return diagnostic_op(diagnostic_severity::error, "U006", "Base registers must be distinct.", range);
 }
 
+diagnostic_op diagnostic_op::mnote_diagnostic(unsigned level, std::string_view message, const range& range)
+{
+    const auto lvl = level >= 8 ? diagnostic_severity::error
+        : level >= 4            ? diagnostic_severity::warning
+        : level >= 2            ? diagnostic_severity::info
+                                : diagnostic_severity::hint;
+    const auto tag = level >= 2 ? diagnostic_tag::none : diagnostic_tag::unnecessary;
+    return diagnostic_op(lvl, "MNOTE", std::string(message), range, tag);
+}
+
 diagnostic_s diagnostic_s::error_W0002(std::string_view ws_uri, std::string_view ws_name)
 {
     return diagnostic_s(std::string(ws_uri),
@@ -2418,7 +2429,8 @@ diagnostic_s diagnostic_s::error_W0002(std::string_view ws_uri, std::string_view
         diagnostic_severity::error,
         "W0002",
         concat("The configuration file proc_grps for workspace ", ws_name, " is malformed."),
-        {});
+        {},
+        diagnostic_tag::none);
 }
 
 diagnostic_s diagnostic_s::error_W0003(std::string_view file_name, std::string_view ws_name)
@@ -2428,7 +2440,8 @@ diagnostic_s diagnostic_s::error_W0003(std::string_view file_name, std::string_v
         diagnostic_severity::error,
         "W0003",
         concat("The configuration file pgm_conf for workspace ", ws_name, " is malformed."),
-        {});
+        {},
+        diagnostic_tag::none);
 }
 
 diagnostic_s diagnostic_s::error_W0004(std::string_view file_name, std::string_view ws_name)
@@ -2440,7 +2453,8 @@ diagnostic_s diagnostic_s::error_W0004(std::string_view file_name, std::string_v
         concat("The configuration file pgm_conf for workspace ",
             ws_name,
             " refers to a processor group, that is not defined in proc_grps"),
-        {});
+        {},
+        diagnostic_tag::none);
 }
 
 diagnostic_s diagnostic_s::error_W0005(std::string_view file_name, std::string_view proc_group)
@@ -2450,7 +2464,8 @@ diagnostic_s diagnostic_s::error_W0005(std::string_view file_name, std::string_v
         diagnostic_severity::warning,
         "W0005",
         concat("The processor group '", proc_group, "' from '", file_name, "' defines invalid assembler options."),
-        {});
+        {},
+        diagnostic_tag::none);
 }
 
 diagnostic_s diagnostic_s::error_W0006(std::string_view file_name, std::string_view proc_group)
@@ -2460,7 +2475,8 @@ diagnostic_s diagnostic_s::error_W0006(std::string_view file_name, std::string_v
         diagnostic_severity::warning,
         "W0006",
         concat("The processor group '", proc_group, "' from '", file_name, "' defines invalid preprocessor options."),
-        {});
+        {},
+        diagnostic_tag::none);
 }
 
 diagnostic_s diagnostic_s::error_W0007(std::string_view file_name, std::string_view proc_group)
@@ -2474,7 +2490,8 @@ diagnostic_s diagnostic_s::error_W0007(std::string_view file_name, std::string_v
             "' from '",
             file_name,
             "' refers to invalid OPTABLE value. Using value UNI as default."),
-        {});
+        {},
+        diagnostic_tag::none);
 }
 
 diagnostic_s diagnostic_s::error_L0001(std::string_view path)
@@ -2497,7 +2514,8 @@ diagnostic_s diagnostic_s::warning_L0003(std::string_view path)
         concat("Macros from library '",
             path,
             "' were selected by a deprecated mechanism to specify file extensions (alwaysRecognize in pgm_conf.json)."),
-        {});
+        {},
+        diagnostic_tag::none);
 }
 
 diagnostic_s diagnostic_s::warning_L0004(std::string_view path, std::string_view macro_name)
@@ -2507,7 +2525,8 @@ diagnostic_s diagnostic_s::warning_L0004(std::string_view path, std::string_view
         diagnostic_severity::warning,
         "L0004",
         concat("Library '", path, "' contains multiple definitions of the macro '", macro_name, "'."),
-        {});
+        {},
+        diagnostic_tag::none);
 }
 
 diagnostic_s diagnostic_s::warning_L0005(std::string_view pattern, size_t limit)
@@ -2517,7 +2536,8 @@ diagnostic_s diagnostic_s::warning_L0005(std::string_view pattern, size_t limit)
         diagnostic_severity::warning,
         "L0005",
         concat("Limit of ", limit, " directories was reached while evaluating library pattern '", pattern, "'."),
-        {});
+        {},
+        diagnostic_tag::none);
 }
 
 diagnostic_op diagnostic_op::error_S100(std::string_view message, const range& range)

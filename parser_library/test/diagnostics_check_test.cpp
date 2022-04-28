@@ -294,7 +294,7 @@ label1 RSECT
 
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
 }
 
 TEST(diagnostics, parser_diagnostics_passing)

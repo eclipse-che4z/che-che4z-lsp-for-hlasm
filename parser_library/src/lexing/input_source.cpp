@@ -17,6 +17,7 @@
 #include <exception>
 
 #include "logical_line.h"
+#include "utils/utf8text.h"
 
 namespace hlasm_plugin::parser_library::lexing {
 
@@ -37,7 +38,7 @@ void append_utf8_to_utf32(UTF32String& t, std::string_view s)
             s.remove_prefix(1);
             continue;
         }
-        const auto cs = utf8_prefix_sizes[c];
+        const auto cs = utils::utf8_prefix_sizes[c];
         if (cs.utf8 && cs.utf8 <= s.size())
         {
             uint32_t v = c & 0b0111'1111u >> cs.utf8;
@@ -48,7 +49,7 @@ void append_utf8_to_utf32(UTF32String& t, std::string_view s)
         }
         else
         {
-            t.append(1, substitute_character);
+            t.append(1, utils::substitute_character);
             s.remove_prefix(1);
         }
     }

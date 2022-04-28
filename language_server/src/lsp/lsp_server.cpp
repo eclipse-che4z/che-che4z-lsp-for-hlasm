@@ -285,6 +285,14 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
             {
                 one_json["severity"] = (int)d.severity();
             }
+            if (auto t = d.tags(); t != parser_library::diagnostic_tag::none)
+            {
+                auto& tags = one_json["tags"] = json::array();
+                if (static_cast<int>(t) & static_cast<int>(parser_library::diagnostic_tag::unnecessary))
+                    tags.push_back(1);
+                if (static_cast<int>(t) & static_cast<int>(parser_library::diagnostic_tag::deprecated))
+                    tags.push_back(2);
+            }
             diags_array.push_back(std::move(one_json));
         }
 

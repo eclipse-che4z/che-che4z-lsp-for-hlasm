@@ -15,7 +15,6 @@
 #ifndef HLASMPLUGIN_HLASMPARSERLIBRARY_LOGICAL_LINE_H
 #define HLASMPLUGIN_HLASMPARSERLIBRARY_LOGICAL_LINE_H
 
-#include <array>
 #include <cassert>
 #include <limits>
 #include <stdexcept>
@@ -23,30 +22,6 @@
 #include <vector>
 
 namespace hlasm_plugin::parser_library::lexing {
-
-// Length of Unicode character in 8/16-bit chunks
-struct char_size
-{
-    uint8_t utf8 : 4;
-    uint8_t utf16 : 4;
-};
-
-// Map first byte of UTF-8 encoded Unicode character to char_size
-constexpr const auto utf8_prefix_sizes = []() {
-    std::array<char_size, 256> sizes = {};
-    static_assert(std::numeric_limits<unsigned char>::max() < sizes.size());
-    for (int i = 0b0000'0000; i <= 0b0111'1111; ++i)
-        sizes[i] = { 1, 1 };
-    for (int i = 0b1100'0000; i <= 0b1101'1111; ++i)
-        sizes[i] = { 2, 1 };
-    for (int i = 0b1110'0000; i <= 0b1110'1111; ++i)
-        sizes[i] = { 3, 1 };
-    for (int i = 0b1111'0000; i <= 0b1111'0111; ++i)
-        sizes[i] = { 4, 2 };
-    return sizes;
-}();
-
-constexpr const char substitute_character = 0x1a;
 
 class utf8_error : public std::runtime_error
 {
