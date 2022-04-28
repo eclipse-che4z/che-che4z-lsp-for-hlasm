@@ -25,7 +25,11 @@ TEST(pgm_conf, full_content_read)
 "pgms":[
   {
     "program": "P1",
-    "pgroup": "G1"
+    "pgroup": "G1",
+    "asm_options":
+    {
+      "SYSPARM":"PARM"
+    }
   },
   {
     "program": "P2",
@@ -43,8 +47,10 @@ TEST(pgm_conf, full_content_read)
     ASSERT_EQ(config.pgms.size(), 2);
     EXPECT_EQ(config.pgms[0].pgroup, "G1");
     EXPECT_EQ(config.pgms[0].program, "P1");
+    EXPECT_EQ(config.pgms[0].opts, assembler_options { .sysparm = "PARM" });
     EXPECT_EQ(config.pgms[1].pgroup, "G2");
     EXPECT_EQ(config.pgms[1].program, "P2");
+    EXPECT_EQ(config.pgms[1].opts, assembler_options {});
 
     ASSERT_EQ(config.always_recognize.size(), 3);
     EXPECT_EQ(config.always_recognize[0], "*.mac");
@@ -56,9 +62,16 @@ TEST(pgm_conf, full_content_read)
 
 TEST(pgm_conf, full_content_write)
 {
-    const pgm_conf config = { { { "P1", "G1" }, { "P2", "G2" } }, { "*.mac1", "*.mac2", "*.mac3" }, 321 };
+    const pgm_conf config = {
+        {
+            { "P1", "G1", { .sysparm = "PARM" } },
+            { "P2", "G2" },
+        },
+        { "*.mac1", "*.mac2", "*.mac3" },
+        321,
+    };
     const auto expected =
-        R"({"pgms":[{"program":"P1","pgroup":"G1"},{"program":"P2","pgroup":"G2"}],"alwaysRecognize":["*.mac1","*.mac2","*.mac3"],"diagnosticsSuppressLimit":321})"_json;
+        R"({"pgms":[{"program":"P1","pgroup":"G1","asm_options":{"SYSPARM":"PARM"}},{"program":"P2","pgroup":"G2"}],"alwaysRecognize":["*.mac1","*.mac2","*.mac3"],"diagnosticsSuppressLimit":321})"_json;
 
     EXPECT_EQ(nlohmann::json(config), expected);
 }

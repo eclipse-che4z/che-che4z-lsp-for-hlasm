@@ -20,6 +20,7 @@
 #include <variant>
 #include <vector>
 
+#include "assembler_options.h"
 #include "nlohmann/json_fwd.hpp"
 
 namespace hlasm_plugin::parser_library::config {
@@ -32,19 +33,6 @@ struct library
 };
 void to_json(nlohmann::json& j, const library& p);
 void from_json(const nlohmann::json& j, library& p);
-
-struct assembler_options
-{
-    std::string sysparm;
-    std::string profile;
-    std::string optable;
-    std::string system_id;
-    bool goff = false;
-
-    bool valid() const noexcept;
-};
-void to_json(nlohmann::json& j, const assembler_options& p);
-void from_json(const nlohmann::json& j, assembler_options& p);
 
 struct db2_preprocessor
 {

@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "assembler_options.h"
 #include "nlohmann/json_fwd.hpp"
 
 namespace hlasm_plugin::parser_library::config {
@@ -27,6 +28,7 @@ struct program_mapping
 {
     std::string program;
     std::string pgroup;
+    assembler_options opts;
 };
 void to_json(nlohmann::json& j, const program_mapping& p);
 void from_json(const nlohmann::json& j, program_mapping& p);

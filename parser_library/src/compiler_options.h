@@ -40,6 +40,8 @@ struct asm_option
     bool sysopt_xobject = sysopt_xobject_default;
 
     long long statement_count_limit = 10'000'000;
+
+    bool operator==(const asm_option&) const = default;
 };
 } // namespace hlasm_plugin::parser_library
 #endif

@@ -44,7 +44,7 @@ workspace::workspace(const ws_uri& uri,
     , uri_(uri)
     , file_manager_(file_manager)
     , fm_vfm_(file_manager_)
-    , implicit_proc_grp("pg_implicit", "", {}, {})
+    , implicit_proc_grp("pg_implicit", {}, {})
     , ws_path_(uri)
     , global_config_(global_config)
 {
@@ -131,6 +131,18 @@ lib_config workspace::get_config() { return local_config_.fill_missing_settings(
 
 const processor_group& workspace::get_proc_grp_by_program(const std::string& filename) const
 {
+    const auto* pgm = get_program(filename);
+    if (pgm)
+        return proc_grps_.at(pgm->pgroup);
+    return implicit_proc_grp;
+}
+const processor_group& workspace::get_proc_grp_by_program(const program& pgm) const
+{
+    return proc_grps_.at(pgm.pgroup);
+}
+
+const program* workspace::get_program(const std::string& filename) const
+{
     assert(opened_);
 
     std::string file = utils::path::lexically_normal(utils::path::lexically_relative(filename, uri_)).string();
@@ -138,14 +150,14 @@ const processor_group& workspace::get_proc_grp_by_program(const std::string& fil
     // direct match
     auto program = exact_pgm_conf_.find(file);
     if (program != exact_pgm_conf_.cend())
-        return proc_grps_.at(program->second.pgroup);
+        return &program->second;
 
     for (const auto& pgm : regex_pgm_conf_)
     {
         if (std::regex_match(file, pgm.second))
-            return proc_grps_.at(pgm.first.pgroup);
+            return &pgm.first;
     }
-    return implicit_proc_grp;
+    return nullptr;
 }
 
 const ws_uri& workspace::uri() { return uri_; }
@@ -553,7 +565,7 @@ bool workspace::load_and_process_config()
     // process processor groups
     for (auto& pg : proc_groups.pgroups)
     {
-        processor_group prc_grp(pg.name, proc_grps_file->get_file_name(), pg.asm_options, pg.preprocessor);
+        processor_group prc_grp(pg.name, pg.asm_options, pg.preprocessor);
 
         for (const auto& lib : pg.libs)
         {
@@ -599,9 +611,9 @@ bool workspace::load_and_process_config()
                 std::replace(pgm_name.begin(), pgm_name.end(), '/', '\\');
 
             if (!is_wildcard(pgm_name))
-                exact_pgm_conf_.emplace(pgm_name, program { pgm_name, pgm.pgroup });
+                exact_pgm_conf_.emplace(pgm_name, program { pgm_name, pgm.pgroup, pgm.opts });
             else
-                regex_pgm_conf_.push_back({ program { pgm_name, pgm.pgroup }, wildcard2regex(pgm_name) });
+                regex_pgm_conf_.push_back({ program { pgm_name, pgm.pgroup, pgm.opts }, wildcard2regex(pgm_name) });
         }
         else
         {
@@ -629,7 +641,8 @@ bool workspace::load_config(
         for (const auto& pg : proc_groups.pgroups)
         {
             if (!pg.asm_options.valid())
-                config_diags_.push_back(diagnostic_s::error_W0005(proc_grps_file->get_file_name(), pg.name));
+                config_diags_.push_back(
+                    diagnostic_s::error_W0005(proc_grps_file->get_file_name(), pg.name, "processor group"));
             if (!pg.preprocessor.valid())
                 config_diags_.push_back(diagnostic_s::error_W0006(proc_grps_file->get_file_name(), pg.name));
         }
@@ -650,6 +663,12 @@ bool workspace::load_config(
     try
     {
         nlohmann::json::parse(pgm_conf_file->get_text()).get_to(pgm_config);
+        for (const auto& pgm : pgm_config.pgms)
+        {
+            if (!pgm.opts.valid())
+                config_diags_.push_back(
+                    diagnostic_s::error_W0005(pgm_conf_file->get_file_name(), pgm.program, "program"));
+        }
         exact_pgm_conf_.clear();
         regex_pgm_conf_.clear();
     }
@@ -764,9 +783,20 @@ std::optional<std::string> workspace::get_library(
 
 asm_option workspace::get_asm_options(const std::string& file_name) const
 {
-    auto& proc_grp = get_proc_grp_by_program(file_name);
+    asm_option result;
 
-    return proc_grp.asm_options();
+    auto pgm = get_program(file_name);
+    if (pgm)
+    {
+        get_proc_grp_by_program(*pgm).update_asm_options(result);
+        pgm->asm_opts.apply(result);
+    }
+    else
+    {
+        implicit_proc_grp.update_asm_options(result);
+    }
+
+    return result;
 }
 
 preprocessor_options workspace::get_preprocessor_options(const std::string& file_name) const

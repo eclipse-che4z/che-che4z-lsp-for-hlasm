@@ -11,6 +11,8 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
+	assembler_options.cpp
+	assembler_options.h
 	pgm_conf.cpp
 	pgm_conf.h
 	proc_grps.cpp

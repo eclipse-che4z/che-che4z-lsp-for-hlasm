@@ -47,49 +47,6 @@ TEST(proc_grps, library_write)
     EXPECT_EQ(nlohmann::json(l), expected);
 }
 
-TEST(proc_grps, assembler_options_read)
-{
-    const auto cases = {
-        std::make_pair(R"({})"_json, assembler_options {}),
-        std::make_pair(R"({"PROFILE":"MAC"})"_json, assembler_options { "", "MAC" }),
-        std::make_pair(R"({"SYSPARM":"TESTPARM"})"_json, assembler_options { "TESTPARM", "" }),
-        std::make_pair(R"({"OPTABLE":"ZS9"})"_json, assembler_options { "", "", "ZS9" }),
-        std::make_pair(R"({"SYSTEM_ID":"VSE"})"_json, assembler_options { "", "", "", "VSE" }),
-        std::make_pair(R"({"GOFF":true})"_json, assembler_options { "", "", "", "", true }),
-        std::make_pair(R"({"XOBJECT":true})"_json, assembler_options { "", "", "", "", true }),
-        std::make_pair(
-            R"({"GOFF":true,"PROFILE":"MAC","SYSPARM":"TESTPARM","OPTABLE":"ZS9","SYSTEM_ID":"VSE","XOBJECT":false})"_json,
-            assembler_options { "TESTPARM", "MAC", "ZS9", "VSE", true }),
-    };
-
-    for (const auto& [input, expected] : cases)
-    {
-        const auto ao = input.get<assembler_options>();
-        EXPECT_EQ(ao.profile, expected.profile);
-        EXPECT_EQ(ao.sysparm, expected.sysparm);
-        EXPECT_EQ(ao.optable, expected.optable);
-        EXPECT_EQ(ao.system_id, expected.system_id);
-        EXPECT_EQ(ao.goff, expected.goff);
-    }
-}
-
-TEST(proc_grps, assembler_options_write)
-{
-    const auto cases = {
-        std::make_pair(R"({})"_json, assembler_options {}),
-        std::make_pair(R"({"PROFILE":"MAC"})"_json, assembler_options { "", "MAC" }),
-        std::make_pair(R"({"SYSPARM":"TESTPARM"})"_json, assembler_options { "TESTPARM", "" }),
-        std::make_pair(R"({"OPTABLE":"ZS9"})"_json, assembler_options { "", "", "ZS9" }),
-        std::make_pair(R"({"SYSTEM_ID":"VSE"})"_json, assembler_options { "", "", "", "VSE" }),
-        std::make_pair(R"({"GOFF":true})"_json, assembler_options { "", "", "", "", true }),
-        std::make_pair(R"({"GOFF":true,"PROFILE":"MAC","SYSPARM":"TESTPARM","OPTABLE":"ZS9","SYSTEM_ID":"VSE"})"_json,
-            assembler_options { "TESTPARM", "MAC", "ZS9", "VSE", true }),
-    };
-
-    for (const auto& [expected, input] : cases)
-        EXPECT_EQ(nlohmann::json(input), expected);
-}
-
 static void compare_proc_grps(const proc_grps& pg, const proc_grps& expected)
 {
     ASSERT_EQ(pg.pgroups.size(), expected.pgroups.size());
@@ -211,25 +168,6 @@ TEST(proc_grps, invalid)
 
     for (const auto& input : cases)
         EXPECT_THROW(input.get<proc_grps>(), nlohmann::json::exception);
-}
-
-TEST(proc_grps, assembler_options_validate)
-{
-    const auto cases = {
-        std::make_pair(assembler_options {}, true),
-        std::make_pair(assembler_options { "A" }, true),
-        std::make_pair(assembler_options { "SYSPARM" }, true),
-        std::make_pair(assembler_options { std::string(255, 'A') }, true),
-        std::make_pair(assembler_options { std::string(256, 'A') }, false),
-        std::make_pair(assembler_options { "", "", "" }, true),
-        std::make_pair(assembler_options { "", "", "UNI" }, true),
-        std::make_pair(assembler_options { "", "", "A" }, false),
-        std::make_pair(assembler_options { "", "", "", "", false }, true),
-        std::make_pair(assembler_options { "", "", "", "", true }, true),
-    };
-
-    for (const auto& [input, expected] : cases)
-        EXPECT_EQ(input.valid(), expected);
 }
 
 TEST(proc_grps, preprocessor_options_validate)

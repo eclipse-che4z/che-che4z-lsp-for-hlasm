@@ -2457,13 +2457,13 @@ diagnostic_s diagnostic_s::error_W0004(std::string_view file_name, std::string_v
         diagnostic_tag::none);
 }
 
-diagnostic_s diagnostic_s::error_W0005(std::string_view file_name, std::string_view proc_group)
+diagnostic_s diagnostic_s::error_W0005(std::string_view file_name, std::string_view name, std::string_view type)
 {
     return diagnostic_s(std::string(file_name),
         {},
         diagnostic_severity::warning,
         "W0005",
-        concat("The processor group '", proc_group, "' from '", file_name, "' defines invalid assembler options."),
+        concat("The ", type, " '", name, "' from '", file_name, "' defines invalid assembler options."),
         {},
         diagnostic_tag::none);
 }
@@ -2475,21 +2475,6 @@ diagnostic_s diagnostic_s::error_W0006(std::string_view file_name, std::string_v
         diagnostic_severity::warning,
         "W0006",
         concat("The processor group '", proc_group, "' from '", file_name, "' defines invalid preprocessor options."),
-        {},
-        diagnostic_tag::none);
-}
-
-diagnostic_s diagnostic_s::error_W0007(std::string_view file_name, std::string_view proc_group)
-{
-    return diagnostic_s(std::string(file_name),
-        {},
-        diagnostic_severity::warning,
-        "W0007",
-        concat("The processor group '",
-            proc_group,
-            "' from '",
-            file_name,
-            "' refers to invalid OPTABLE value. Using value UNI as default."),
         {},
         diagnostic_tag::none);
 }

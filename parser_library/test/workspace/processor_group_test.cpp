@@ -21,10 +21,15 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
 
-auto asm_options(config::assembler_options o) { return processor_group("", "", std::move(o), {}).asm_options(); }
+auto asm_options(config::assembler_options o)
+{
+    asm_option result;
+    processor_group("", std::move(o), {}).update_asm_options(result);
+    return result;
+}
 auto pp_options(decltype(config::preprocessor_options::options) o)
 {
-    return processor_group("", "", {}, config::preprocessor_options { .options = std::move(o) }).preprocessor();
+    return processor_group("", {}, config::preprocessor_options { .options = std::move(o) }).preprocessor();
 }
 
 TEST(processor_group, assembler_options)
@@ -58,17 +63,8 @@ TEST(processor_group, preprocessor_options)
     EXPECT_EQ(pp_options(config::cics_preprocessor { .prolog = false, .leasm = true }), cics(false, true, true));
 }
 
-class processor_group_test : public diagnosable_impl, public testing::Test
+TEST(processor_group, asm_options_optable_valid)
 {
-public:
-    void collect_diags() const override {}
-};
-
-TEST_F(processor_group_test, asm_options_optable_valid)
-{
-    std::string grp_name = "Group";
-    config::assembler_options asm_opts;
-
     const auto cases = {
         std::make_pair("ZOP", instruction_set_version::ZOP),
         std::make_pair("ZS1", instruction_set_version::ZOP),
@@ -98,25 +94,12 @@ TEST_F(processor_group_test, asm_options_optable_valid)
 
     for (const auto& [input, expected] : cases)
     {
-        diags().clear();
-
-        asm_opts.optable = input;
-        workspaces::processor_group proc_group("Group", "", asm_opts, {});
-
-        auto instr_set = proc_group.asm_options().instr_set;
-
-        collect_diags_from_child(proc_group);
-        EXPECT_EQ(diags().size(), (size_t)0);
-
-        EXPECT_EQ(instr_set, expected);
+        EXPECT_EQ(asm_options({ .optable = input }).instr_set, expected);
     }
 }
 
-TEST_F(processor_group_test, asm_options_optable_invalid)
+TEST(processor_group, asm_options_optable_invalid)
 {
-    std::string grp_name = "Group";
-    config::assembler_options asm_opts;
-
     const auto cases = {
         std::make_pair("klgadh", instruction_set_version::UNI),
         std::make_pair("ZS5ZS6", instruction_set_version::UNI),
@@ -126,17 +109,6 @@ TEST_F(processor_group_test, asm_options_optable_invalid)
 
     for (const auto& [input, expected] : cases)
     {
-        diags().clear();
-
-        asm_opts.optable = input;
-        workspaces::processor_group proc_group("Group", "", asm_opts, {});
-
-        auto instr_set = proc_group.asm_options().instr_set;
-
-        collect_diags_from_child(proc_group);
-        EXPECT_EQ(diags().size(), (size_t)1);
-        EXPECT_TRUE(matches_message_codes(diags(), { "W0007" }));
-
-        EXPECT_EQ(instr_set, expected);
+        EXPECT_EQ(asm_options({ .optable = input }).instr_set, expected);
     }
 }

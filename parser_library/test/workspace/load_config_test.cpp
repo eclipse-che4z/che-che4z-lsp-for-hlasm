@@ -123,6 +123,14 @@ public:
       "pgroup": "P1"
     },
     {
+      "program": "pgm_override",
+      "pgroup": "P1",
+      "asm_options":
+      {
+        "PROFILE": "PROFILE OVERRIDE"
+      }
+    },
+    {
       "program": "pgms\\*",
       "pgroup": "P2"
     }
@@ -133,6 +141,14 @@ public:
     {
       "program": "pgm1",
       "pgroup": "P1"
+    },
+    {
+      "program": "pgm_override",
+      "pgroup": "P1",
+      "asm_options":
+      {
+        "PROFILE": "PROFILE OVERRIDE"
+      }
     },
     {
       "program": "pgms/*",
@@ -247,6 +263,13 @@ TEST(workspace, load_config_synthetic)
         ws.get_preprocessor_options(is_windows() ? "test_proc_grps_uri\\pgm1" : "test_proc_grps_uri/pgm1");
 
     EXPECT_TRUE(std::holds_alternative<db2_preprocessor_options>(pp_options));
+
+    // test of asm_options override
+    const auto& asm_options_override =
+        ws.get_asm_options(is_windows() ? "test_proc_grps_uri\\pgm_override" : "test_proc_grps_uri/pgm_override");
+
+    EXPECT_EQ("SEVEN", asm_options_override.sysparm);
+    EXPECT_EQ("PROFILE OVERRIDE", asm_options_override.profile);
 }
 
 

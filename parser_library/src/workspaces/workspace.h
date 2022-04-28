@@ -35,7 +35,6 @@
 #include "processor.h"
 #include "processor_group.h"
 
-
 namespace hlasm_plugin::parser_library::workspaces {
 
 using ws_uri = std::string;
@@ -48,13 +47,15 @@ struct library_local_options;
 // information that a program uses certain processor group
 struct program
 {
-    program(program_id prog_id, proc_grp_id pgroup)
-        : prog_id(prog_id)
-        , pgroup(pgroup)
+    program(program_id prog_id, proc_grp_id pgroup, config::assembler_options asm_opts)
+        : prog_id(std::move(prog_id))
+        , pgroup(std::move(pgroup))
+        , asm_opts(std::move(asm_opts))
     {}
 
     program_id prog_id;
     proc_grp_id pgroup;
+    config::assembler_options asm_opts;
 };
 
 
@@ -88,6 +89,8 @@ public:
     void add_proc_grp(processor_group pg);
     const processor_group& get_proc_grp(const proc_grp_id& proc_grp) const;
     const processor_group& get_proc_grp_by_program(const std::string& program) const;
+    const processor_group& get_proc_grp_by_program(const program& program) const;
+    const program* get_program(const std::string& filename) const;
 
     workspace_file_info parse_file(const std::string& file_uri);
     void refresh_libraries();

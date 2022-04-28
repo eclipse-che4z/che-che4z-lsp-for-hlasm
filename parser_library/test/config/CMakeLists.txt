@@ -11,6 +11,7 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(library_test PRIVATE
+	assembler_options_test.cpp
 	pgm_conf_test.cpp
 	proc_grps_test.cpp
 	system_id_test.cpp

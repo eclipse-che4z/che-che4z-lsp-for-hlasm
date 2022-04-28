@@ -21,12 +21,16 @@ namespace hlasm_plugin::parser_library::config {
 void to_json(nlohmann::json& j, const program_mapping& p)
 {
     j = nlohmann::json { { "program", p.program }, { "pgroup", p.pgroup } };
+    if (p.opts.has_value())
+        j["asm_options"] = p.opts;
 }
 
 void from_json(const nlohmann::json& j, program_mapping& p)
 {
     j.at("program").get_to(p.program);
     j.at("pgroup").get_to(p.pgroup);
+    if (auto it = j.find("asm_options"); it != j.end())
+        it->get_to(p.opts);
 }
 
 void to_json(nlohmann::json& j, const pgm_conf& p)

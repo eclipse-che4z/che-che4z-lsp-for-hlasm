@@ -15,7 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H
 
-#include "compiler_options.h"
+#include "config/proc_grps.h"
 #include "diagnosable_impl.h"
 #include "file_manager.h"
 #include "library.h"
@@ -33,7 +33,6 @@ class processor_group : public diagnosable_impl
 {
 public:
     processor_group(const std::string& pg_name,
-        std::string_view pg_file_name,
         const config::assembler_options& asm_options,
         const config::preprocessor_options& pp);
 
@@ -45,19 +44,15 @@ public:
 
     const std::vector<std::unique_ptr<library>>& libraries() const { return m_libs; }
 
-    const asm_option& asm_options() const { return m_asm_opts; }
+    void update_asm_options(asm_option& opts) const;
 
     const preprocessor_options& preprocessor() const { return m_prep_opts; }
 
 private:
     std::vector<std::unique_ptr<library>> m_libs;
     std::string m_pg_name;
-    asm_option m_asm_opts;
+    config::assembler_options m_asm_opts;
     preprocessor_options m_prep_opts;
-
-    instruction_set_version find_instruction_set(std::string_view optable, std::string_view pg_file_name) const;
-    asm_option translate_assembler_options(
-        const config::assembler_options& asm_options, std::string_view pg_file_name) const;
 };
 } // namespace hlasm_plugin::parser_library::workspaces
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H

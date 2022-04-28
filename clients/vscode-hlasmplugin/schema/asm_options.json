@@ -1,0 +1,56 @@
+{
+    "type": "object",
+    "description": "List of assembler options",
+    "properties": {
+        "GOFF": {
+            "type": "boolean",
+            "description": "Produces Generalized Object File format dataset."
+        },
+        "OPTABLE": {
+            "type": "string",
+            "description": "Specifies the instruction set to use.",
+            "enum": [
+                "UNI",
+                "DOS",
+                "370",
+                "XA",
+                "ESA",
+                "ZOP",
+                "ZS1",
+                "YOP",
+                "ZS2",
+                "Z9",
+                "ZS3",
+                "Z10",
+                "ZS4",
+                "Z11",
+                "ZS5",
+                "Z12",
+                "ZS6",
+                "Z13",
+                "ZS7",
+                "Z14",
+                "ZS8",
+                "Z15",
+                "ZS9"
+            ]
+        },
+        "SYSPARM": {
+            "type": "string",
+            "description": "Specifies the character string the assembler assigns to the &SYSPARM system variable symbol.",
+            "maxLength": 255
+        },
+        "PROFILE": {
+            "type": "string",
+            "description": "Profile Member to be copied into the source program."
+        },
+        "SYSTEM_ID": {
+            "type": "string",
+            "description": "Provides the value for the SYSTEM_ID system variable. Defaults to 'z/OS 02.04.00' when omitted."
+        },
+        "XOBJECT": {
+            "type": "boolean",
+            "description": "Synonym for the GOFF option."
+        }
+    }
+}

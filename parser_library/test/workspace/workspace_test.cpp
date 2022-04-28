@@ -234,6 +234,30 @@ std::string pgmconf_file = R"({
   ]
 })";
 
+std::string pgmconf_file_invalid_assembler_options = R"({
+  "pgms": [
+    {
+      "program": "source1",
+      "pgroup": "P1"
+    },
+	{
+      "program": "source2",
+      "pgroup": "P1"
+    },
+	{
+      "program": "source3",
+      "pgroup": "P1"
+    },
+	{
+      "program": "invalid",
+      "pgroup": "P1",
+      "asm_options": {
+        "SYSPARM": "AAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFFFFFFFGGGGGGGGGGHHHHHHHHHHIIIIIIIIIIJJJJJJJJJJAAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFFFFFFFGGGGGGGGGGHHHHHHHHHHIIIIIIIIIIJJJJJJJJJJAAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFFFFFFFGGGGGGGGGGHHHHHHHHHHIIIIIIIIIIJJJJJJJJJJ"
+      }
+    }
+  ]
+})";
+
 std::string faulty_macro_file = R"( MACRO
  ERROR
 label
@@ -292,6 +316,7 @@ enum class file_manager_opt_variant
     optional,
     invalid_assembler_options,
     invalid_preprocessor_options,
+    invalid_assembler_options_in_pgm_conf,
 };
 
 class file_manager_opt : public file_manager_impl
@@ -301,6 +326,7 @@ class file_manager_opt : public file_manager_impl
         switch (variant)
         {
             case file_manager_opt_variant::old_school:
+            case file_manager_opt_variant::invalid_assembler_options_in_pgm_conf:
                 return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_old_school, *this);
             case file_manager_opt_variant::default_to_required:
                 return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_default, *this);
@@ -318,12 +344,22 @@ class file_manager_opt : public file_manager_impl
         throw std::logic_error("Not implemented");
     }
 
+    std::unique_ptr<file_with_text> generate_pgm_conf_file(file_manager_opt_variant variant)
+    {
+        switch (variant)
+        {
+            case file_manager_opt_variant::invalid_assembler_options_in_pgm_conf:
+                return std::make_unique<file_with_text>("pgm_conf.json", pgmconf_file_invalid_assembler_options, *this);
+            default:
+                return std::make_unique<file_with_text>("pgm_conf.json", pgmconf_file, *this);
+        }
+    }
+
 public:
     file_manager_opt(file_manager_opt_variant variant)
     {
         files_.emplace(hlasmplugin_folder + "proc_grps.json", generate_proc_grps_file(variant));
-        files_.emplace(hlasmplugin_folder + "pgm_conf.json",
-            std::make_unique<file_with_text>("pgm_conf.json", pgmconf_file, *this));
+        files_.emplace(hlasmplugin_folder + "pgm_conf.json", generate_pgm_conf_file(variant));
         files_.emplace("source1", std::make_unique<file_with_text>("source1", source_using_macro_file_no_error, *this));
         files_.emplace(
             correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file, *this));
@@ -438,6 +474,17 @@ TEST_F(workspace_test, missing_library_optional)
 TEST_F(workspace_test, invalid_assembler_options)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_assembler_options);
+    lib_config config;
+    workspace ws("", "workspace_name", file_manager, config);
+    ws.open();
+
+    EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+    EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "W0005"; }));
+}
+
+TEST_F(workspace_test, invalid_assembler_options_in_pgm_conf)
+{
+    file_manager_opt file_manager(file_manager_opt_variant::invalid_assembler_options_in_pgm_conf);
     lib_config config;
     workspace ws("", "workspace_name", file_manager, config);
     ws.open();
