@@ -2,6 +2,9 @@
   "pgroups": [
     {
       "name": "P1",
+      "asm_options": {
+        "OPTABLE": "Z15"
+      },
       "libs": [
         {
           "path": "libs"

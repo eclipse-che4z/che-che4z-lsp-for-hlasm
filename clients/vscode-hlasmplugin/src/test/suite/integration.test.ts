@@ -15,194 +15,160 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as helper from './testHelper';
 
 suite('Integration Test Suite', () => {
-	const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    const workspace_file = 'open';
+    let editor: vscode.TextEditor;
 
-	const workspace_file = 'open';
-	const get_editor = () => {
-		const editor = vscode.window.activeTextEditor;
-		assert.equal(editor.document.uri.fsPath, path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, workspace_file));
+    suiteSetup(async function () {
+        this.timeout(30000);
 
-		return editor;
-	}
-	const sleep = (ms: number) => {
-		return new Promise((resolve) => { setTimeout(resolve, ms) });
-	};
+        await helper.showDocument(workspace_file);
+        editor = helper.get_editor(workspace_file);
+    });
 
-	suiteSetup(async function () {
-		this.timeout(30000);
-		// 'open' should be in workspace
-		const files = await vscode.workspace.findFiles(workspace_file);
+    // open 'open' file, should be recognized as hlasm
+    test('HLASM file open test', async () => {
+        // setting a language takes a while but shouldn't take longer than a second
+        await helper.sleep(1000);
+        assert.ok(editor.document.languageId === 'hlasm');
+    }).timeout(10000).slow(4000);
 
-		assert.ok(files && files[0]);
-		const file = files[0];
+    // change 'open' file to create diagnostic
+    test('Diagnostic test', async () => {
+        // register callback to check for the correctness of the diagnostic
+        const diagnostic_event = new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve, reject) => {
+            const listener = vscode.languages.onDidChangeDiagnostics((_) => {
+                listener.dispose();
+                resolve(vscode.languages.getDiagnostics());
+            });
+        });
+        // remove second parameter from LR instruction
+        await editor.edit(edit => {
+            edit.delete(new vscode.Range(new vscode.Position(2, 6), new vscode.Position(2, 7)));
+        });
 
-		// open the file
-		const document = await vscode.workspace.openTextDocument(file);
+        const allDiags = await diagnostic_event;
+        const openDiags = allDiags.find(pair => pair[0].path.endsWith("open"))[1]
 
-		await vscode.window.showTextDocument(document);
-	});
+        assert.ok(openDiags.length == 1 && openDiags[0].code == 'M003', 'Wrong diagnostic');
+    }).timeout(10000).slow(1000);
 
-	// open 'open' file, should be recognized as hlasm
-	test('HLASM file open test', async () => {
-		const editor = get_editor();
+    // test completion for instructions
+    test('Completion Instructions test', async () => {
+        await helper.insertString(editor, new vscode.Position(7, 1), 'L');
 
-		// setting a language takes a while but shouldn't take longer than a second
-		await sleep(1000);
-		assert.ok(editor.document.languageId === 'hlasm');
-	}).timeout(10000).slow(4000);
+        await vscode.commands.executeCommand('editor.action.triggerSuggest');
+        await helper.sleep(1000);
 
-	// change 'open' file to create diagnostic
-	test('Diagnostic test', async () => {
-		const editor = get_editor();
+        await vscode.commands.executeCommand('acceptSelectedSuggestion');
+        await helper.sleep(1000);
 
-		// register callback to check for the correctness of the diagnostic
-		const diagnostic_event = new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve, reject) => {
-			const listener = vscode.languages.onDidChangeDiagnostics((_) => {
-				listener.dispose();
-				resolve(vscode.languages.getDiagnostics());
-			});
-		});
-		// remove second parameter from LR instruction
-		await editor.edit(edit => {
-			edit.delete(new vscode.Range(new vscode.Position(2, 6), new vscode.Position(2, 7)));
-		});
+        const text = editor.document.getText();
+        const acceptedLine = text.split('\n')[7];
 
-		const allDiags = await diagnostic_event;
-		const openDiags = allDiags.find(pair => pair[0].path.endsWith("open"))[1]
+        assert.ok(acceptedLine.includes('L   R,D12U(X,B)'), 'Wrong suggestion result' + acceptedLine);
+    }).timeout(10000).slow(4000);
 
-		assert.ok(openDiags.length == 1 && openDiags[0].code == 'M003', 'Wrong diagnostic');
-	}).timeout(10000).slow(1000);
+    // test completion for variable symbols
+    test('Completion Variable symbol test', async () => {
+        await helper.insertString(editor, new vscode.Position(8, 0), '&');
 
-	// test completion for instructions
-	test('Completion Instructions test', async () => {
-		const editor = get_editor();
-		await editor.edit(edit => {
-			edit.insert(new vscode.Position(7, 1), 'L');
-		});
-		const movePosition = new vscode.Position(7, 2);
-		editor.selection = new vscode.Selection(movePosition, movePosition);
+        await vscode.commands.executeCommand('editor.action.triggerSuggest');
+        await helper.sleep(1000);
 
-		await vscode.commands.executeCommand('editor.action.triggerSuggest');
-		await sleep(1000);
+        await vscode.commands.executeCommand('acceptSelectedSuggestion')
+        await helper.sleep(1000);
 
-		await vscode.commands.executeCommand('acceptSelectedSuggestion');
-		await sleep(1000);
+        const text = editor.document.getText();
+        const acceptedLine = text.split('\n')[8];
 
-		const text = editor.document.getText();
-		const acceptedLine = text.split('\n')[7];
+        assert.ok(acceptedLine.includes('&VAR'), 'Wrong suggestion result' + acceptedLine);
+    }).timeout(10000).slow(4000);
 
-		assert.ok(acceptedLine.includes('L   R,D12U(X,B)'), 'Wrong suggestion result' + acceptedLine);
-	}).timeout(10000).slow(4000);
+    // go to definition for ordinary symbol
+    test('Definition Ordinary symbol test', async () => {
+        const result: vscode.Location[] = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', editor.document.uri, new vscode.Position(1, 7));
 
-	// test completion for variable symbols
-	test('Completion Variable symbol test', async () => {
-		const editor = get_editor();
-		// add '&' to simulate start of a variable symbol
-		await editor.edit(edit => {
-			edit.insert(new vscode.Position(8, 0), '&');
-		});
-		const movePosition = new vscode.Position(8, 1);
-		editor.selection = new vscode.Selection(movePosition, movePosition);
+        assert.ok(result.length == 1
+            && result[0].uri.fsPath == editor.document.fileName
+            && result[0].range.start.line == 9
+            && result[0].range.start.character == 0, 'Wrong ordinary symbol definition location');
+    }).timeout(10000).slow(1000);
 
-		await vscode.commands.executeCommand('editor.action.triggerSuggest');
-		await sleep(1000);
+    // hover for variable symbol
+    test('Hover Variable symbol test', async () => {
+        const result: vscode.Hover[] = await vscode.commands.executeCommand('vscode.executeHoverProvider', editor.document.uri, new vscode.Position(6, 8));
 
-		await vscode.commands.executeCommand('acceptSelectedSuggestion')
-		await sleep(1000);
+        assert.ok(result.length == 1
+            && result[0].contents.length == 1
+            && (result[0].contents[0] as vscode.MarkdownString).value == 'SETA variable', 'Wrong variable symbol hover contents');
+    }).timeout(10000).slow(1000);
 
-		const text = editor.document.getText();
-		const acceptedLine = text.split('\n')[8];
+    // go to definition for macros
+    test('Definition Macro test', async () => {
+        const result: vscode.Location[] = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', editor.document.uri, new vscode.Position(6, 2));
+        assert.ok(result.length == 1
+            && result[0].uri.fsPath == path.join(helper.getWorkspacePath(), 'libs', 'mac.asm')
+            && result[0].range.start.line == 1
+            && result[0].range.start.character == 4, 'Wrong macro definition location');
+    }).timeout(10000).slow(1000);
 
-		assert.ok(acceptedLine.includes('&VAR'), 'Wrong suggestion result' + acceptedLine);
-	}).timeout(10000).slow(4000);
+    // debug open code test
+    test('Debug test', async () => {
+        const session_started_event = new Promise<vscode.DebugSession>((resolve) => {
+            // when the debug session starts
+            const disposable = vscode.debug.onDidStartDebugSession((session) => {
+                disposable.dispose();
+                resolve(session);
+            });
+        });
+        // start debugging
+        if (!await vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], 'Macro tracer: current program'))
+            throw new Error("Failed to start a debugging session");
 
-	// go to definition for ordinary symbol
-	test('Definition Ordinary symbol test', async () => {
-		const editor = get_editor();
-		const result: vscode.Location[] = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', editor.document.uri, new vscode.Position(1, 7));
+        const session = await session_started_event;
 
-		assert.ok(result.length == 1
-			&& result[0].uri.fsPath == editor.document.fileName
-			&& result[0].range.start.line == 9
-			&& result[0].range.start.character == 0, 'Wrong ordinary symbol definition location');
-	}).timeout(10000).slow(1000);
+        // wait a second to let the debug session complete
+        await helper.sleep(1000);
+        // step over once
+        await vscode.commands.executeCommand('workbench.action.debug.stepOver');
+        // wait 1 more second to let step over take place
+        await helper.sleep(1000);
+        // then check for VAR2 variable
+        const scopesResult = await session.customRequest('scopes', { frameId: 0 });
 
-	// hover for variable symbol
-	test('Hover Variable symbol test', async () => {
-		const editor = get_editor();
-		const result: vscode.Hover[] = await vscode.commands.executeCommand('vscode.executeHoverProvider', editor.document.uri, new vscode.Position(6, 8));
+        const scopes = scopesResult.body ? scopesResult.body.scopes : scopesResult.scopes;
 
-		assert.ok(result.length == 1
-			&& result[0].contents.length == 1
-			&& (result[0].contents[0] as vscode.MarkdownString).value == 'SETA variable', 'Wrong variable symbol hover contents');
-	}).timeout(10000).slow(1000);
+        const reference = scopes.find((scope: { name: string }) => scope.name == 'Locals').variablesReference;
+        const variablesResult = await session.customRequest('variables', { variablesReference: reference });
 
-	// go to definition for macros
-	test('Definition Macro test', async () => {
-		const editor = get_editor();
-		const result: vscode.Location[] = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', editor.document.uri, new vscode.Position(6, 2));
-		assert.ok(result.length == 1
-			&& result[0].uri.fsPath == path.join(workspacePath, 'libs', 'mac.asm')
-			&& result[0].range.start.line == 1
-			&& result[0].range.start.character == 4, 'Wrong macro definition location');
-	}).timeout(10000).slow(1000);
+        await vscode.commands.executeCommand('workbench.action.debug.stop');
 
-	// debug open code test
-	test('Debug test', async () => {
-		const session_started_event = new Promise<vscode.DebugSession>((resolve) => {
-			// when the debug session starts
-			const disposable = vscode.debug.onDidStartDebugSession((session) => {
-				disposable.dispose();
-				resolve(session);
-			});
-		});
-		// start debugging
-		if (!await vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], 'Macro tracer: current program'))
-			throw new Error("Failed to start a debugging session");
+        const variables = variablesResult.body ? variablesResult.body.variables : variablesResult.variables;
 
-		const session = await session_started_event;
+        assert.ok(variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == '&VAR2', 'Wrong debug variable &VAR2');
+    }).timeout(10000).slow(4000);
 
-		// wait a second to let the debug session complete
-		await sleep(1000);
-		// step over once
-		await vscode.commands.executeCommand('workbench.action.debug.stepOver');
-		// wait 1 more second to let step over take place
-		await sleep(1000);
-		// then check for VAR2 variable
-		const scopesResult = await session.customRequest('scopes', { frameId: 0 });
+    // verify that library patterns are working
+    test('Test library patterns', async () => {
+        const files = await vscode.workspace.findFiles('pattern_test/test_pattern.hlasm');
 
-		const scopes = scopesResult.body ? scopesResult.body.scopes : scopesResult.scopes;
+        assert.ok(files && files[0]);
+        const file = files[0];
 
-		const reference = scopes.find((scope: { name: string }) => scope.name == 'Locals').variablesReference;
-		const variablesResult = await session.customRequest('variables', { variablesReference: reference });
+        // open the file
+        const document = await vscode.workspace.openTextDocument(file);
 
-		await vscode.commands.executeCommand('workbench.action.debug.stop');
+        await vscode.window.showTextDocument(document);
 
-		const variables = variablesResult.body ? variablesResult.body.variables : variablesResult.variables;
+        await helper.sleep(2000);
 
-		assert.ok(variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == '&VAR2', 'Wrong debug variable &VAR2');
-	}).timeout(10000).slow(4000);
+        const allDiags = vscode.languages.getDiagnostics();
+        const patternDiags = allDiags.find(pair => pair[0].path.endsWith("test_pattern.hlasm"))
 
-	// verify that library patterns are working
-	test('Test library patterns', async () => {
-		const files = await vscode.workspace.findFiles('pattern_test/test_pattern.hlasm');
-
-		assert.ok(files && files[0]);
-		const file = files[0];
-
-		// open the file
-		const document = await vscode.workspace.openTextDocument(file);
-
-		await vscode.window.showTextDocument(document);
-
-		await sleep(2000);
-
-		const allDiags = vscode.languages.getDiagnostics();
-		const patternDiags = allDiags.find(pair => pair[0].path.endsWith("test_pattern.hlasm"))
-
-		if (patternDiags)
-			assert.ok(patternDiags[1].length == 0, 'Library patterns are not working');
-	}).timeout(10000).slow(2500);
+        if (patternDiags)
+            assert.ok(patternDiags[1].length == 0, 'Library patterns are not working');
+    }).timeout(10000).slow(2500);
 });
