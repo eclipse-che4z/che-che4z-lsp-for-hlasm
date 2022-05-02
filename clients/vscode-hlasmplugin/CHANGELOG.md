@@ -20,6 +20,7 @@
 - Empty arrays now behave similarly to other subscripted variables in macro tracer
 - Forward structured macro parameters correctly
 - Empty operands ignored by the SETx instructions
+- Incorrect operator precedence in conditional assembly expressions
 
 ## [1.1.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.0.0...1.1.0) (2022-03-29)
 

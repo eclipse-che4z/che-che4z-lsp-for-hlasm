@@ -205,12 +205,6 @@ context::SET_t ca_function_binary_operator::operation(
                 return lhs.access_b() || rhs.access_b();
             case ca_expr_ops::XOR:
                 return lhs.access_b() != rhs.access_b();
-            case ca_expr_ops::AND_NOT:
-                return lhs.access_b() && !rhs.access_b();
-            case ca_expr_ops::OR_NOT:
-                return lhs.access_b() || !rhs.access_b();
-            case ca_expr_ops::XOR_NOT:
-                return lhs.access_b() != !rhs.access_b();
             default:
                 break;
         }

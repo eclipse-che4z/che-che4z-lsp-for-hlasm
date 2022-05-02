@@ -15,6 +15,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CA_EXPR_POLICY_H
 #define HLASMPLUGIN_PARSERLIBRARY_CA_EXPR_POLICY_H
 
+#include <variant>
+
 #include "context/common_types.h"
 #include "context/id_storage.h"
 
@@ -34,9 +36,6 @@ enum class ca_expr_ops
     INDEX,
 
     // logical
-    AND_NOT,
-    OR_NOT,
-    XOR_NOT,
     EQ,
     NE,
     LE,
@@ -59,6 +58,18 @@ enum class ca_expr_ops
 
     UNKNOWN
 };
+
+struct ca_expr_op
+{
+    ca_expr_ops op;
+    int priority;
+    bool binary;
+    bool requires_terms;
+    bool right_assoc;
+};
+
+struct invalid_by_policy
+{};
 
 enum class ca_expr_funcs
 {
@@ -120,9 +131,6 @@ public:
     // is binary arithmetic operation
     static bool is_binary(ca_expr_ops op);
 
-    // true if op can consist of multiple words (eg AND NOT)
-    static bool multiple_words(ca_expr_ops op);
-
     // get priority relative to rest of arithmetic operators
     static int get_priority(ca_expr_ops op);
 
@@ -134,6 +142,9 @@ public:
 
     // transforms string operator to enum
     static ca_expr_ops get_operator(const std::string& symbol);
+
+    static std::variant<std::monostate, invalid_by_policy, ca_expr_op> get_operator_properties(
+        const std::string& symbol);
 
     // transforms string function to enum
     static ca_expr_funcs get_function(const std::string& symbol);
@@ -157,9 +168,6 @@ public:
     // is binary binary operation
     static bool is_binary(ca_expr_ops op);
 
-    // true if op can consist of multiple words (eg AND NOT)
-    static bool multiple_words(ca_expr_ops op);
-
     // get priority relative to rest of binary operators
     static int get_priority(ca_expr_ops op);
 
@@ -171,6 +179,9 @@ public:
 
     // transforms string operator to enum
     static ca_expr_ops get_operator(const std::string& symbol);
+
+    static std::variant<std::monostate, invalid_by_policy, ca_expr_op> get_operator_properties(
+        const std::string& symbol);
 
     // transforms string function to enum
     static ca_expr_funcs get_function(const std::string& symbol);
@@ -194,9 +205,6 @@ public:
     // is binary character operation
     static bool is_binary(ca_expr_ops op);
 
-    // true if op can consist of multiple words (eg AND NOT)
-    static bool multiple_words(ca_expr_ops op);
-
     // get priority relative to rest of character operators
     static int get_priority(ca_expr_ops op);
 
@@ -208,6 +216,9 @@ public:
 
     // transforms string operator to enum
     static ca_expr_ops get_operator(const std::string& symbol);
+
+    static std::variant<std::monostate, invalid_by_policy, ca_expr_op> get_operator_properties(
+        const std::string& symbol);
 
     // transforms string function to enum
     static ca_expr_funcs get_function(const std::string& symbol);

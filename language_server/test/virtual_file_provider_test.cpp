@@ -46,7 +46,7 @@ TEST(virtual_file_provider, predicate)
 
 TEST(virtual_file_provider, file_missing)
 {
-    ws_mngr_mock ws_mngr;
+    NiceMock<ws_mngr_mock> ws_mngr;
     json_sink_mock sink;
 
     virtual_file_provider vfp(ws_mngr, sink);
@@ -75,7 +75,7 @@ TEST(virtual_file_provider, file_missing)
 
 TEST(virtual_file_provider, file_present)
 {
-    ws_mngr_mock ws_mngr;
+    NiceMock<ws_mngr_mock> ws_mngr;
     json_sink_mock sink;
 
     virtual_file_provider vfp(ws_mngr, sink);

@@ -117,11 +117,8 @@ INSTANTIATE_TEST_SUITE_P(op_parameters_suite,
         op_test_param { ca_expr_ops::NOT, SET_t_enum::A_TYPE, { 10 }, -11, "NOTA" },
 
         op_test_param { ca_expr_ops::AND, SET_t_enum::B_TYPE, { false, true }, false, "ANDB" },
-        op_test_param { ca_expr_ops::AND_NOT, SET_t_enum::B_TYPE, { true, false }, true, "AND_NOT" },
         op_test_param { ca_expr_ops::OR, SET_t_enum::B_TYPE, { false, true }, true, "ORB" },
-        op_test_param { ca_expr_ops::OR_NOT, SET_t_enum::B_TYPE, { false, true }, false, "OR_NOT" },
         op_test_param { ca_expr_ops::XOR, SET_t_enum::B_TYPE, { false, true }, true, "XORB" },
-        op_test_param { ca_expr_ops::XOR_NOT, SET_t_enum::B_TYPE, { true, false }, false, "XOR_NOT" },
         op_test_param { ca_expr_ops::NOT, SET_t_enum::B_TYPE, { false }, true, "NOTB" },
 
         op_test_param { ca_expr_ops::EQ, SET_t_enum::B_TYPE, { 1, 0 }, false, "EQA" },

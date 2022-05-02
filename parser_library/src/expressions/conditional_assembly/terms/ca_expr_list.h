@@ -57,15 +57,6 @@ private:
     // each loop iteration it pastes them together and continue until list is exhausted
     template<typename T>
     void resolve(diagnostic_op_consumer& diags);
-    // retrieves single term with possible unary operators before it
-    // also checks for following binary operator,
-    // if it has higher prio than the current one, recursively calls retrieve_term for the second term for the higher
-    // priority operator
-    template<typename EXPR_POLICY>
-    ca_expr_ptr retrieve_term(size_t& it, int priority, diagnostic_op_consumer& diags);
-    // retrieves following binary operator with its priority
-    template<typename EXPR_POLICY>
-    std::pair<int, ca_expr_ops> retrieve_binary_operator(size_t& it, bool& err, diagnostic_op_consumer& diags);
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

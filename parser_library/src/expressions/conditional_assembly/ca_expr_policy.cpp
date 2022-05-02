@@ -26,13 +26,6 @@ bool ca_character_policy::is_unary(ca_expr_ops op)
         || op == ca_expr_ops::UPPER;
 }
 
-bool ca_arithmetic_policy::multiple_words(ca_expr_ops) { return false; }
-bool ca_binary_policy::multiple_words(ca_expr_ops op)
-{
-    return op == ca_expr_ops::AND || op == ca_expr_ops::OR || op == ca_expr_ops::XOR;
-}
-bool ca_character_policy::multiple_words(ca_expr_ops) { return false; }
-
 bool ca_arithmetic_policy::is_binary(ca_expr_ops op)
 {
     return op == ca_expr_ops::SLA || op == ca_expr_ops::SLL || op == ca_expr_ops::SRA || op == ca_expr_ops::SRL
@@ -44,8 +37,7 @@ bool ca_binary_policy::is_binary(ca_expr_ops op)
 {
     return op == ca_expr_ops::EQ || op == ca_expr_ops::NE || op == ca_expr_ops::LE || op == ca_expr_ops::LT
         || op == ca_expr_ops::GE || op == ca_expr_ops::GT || op == ca_expr_ops::AND || op == ca_expr_ops::OR
-        || op == ca_expr_ops::XOR || op == ca_expr_ops::AND_NOT || op == ca_expr_ops::OR_NOT
-        || op == ca_expr_ops::XOR_NOT;
+        || op == ca_expr_ops::XOR;
 }
 
 bool ca_character_policy::is_binary(ca_expr_ops) { return false; }
@@ -156,13 +148,10 @@ int ca_binary_policy::get_priority(ca_expr_ops op)
         case ca_expr_ops::NOT:
             return 1;
         case ca_expr_ops::AND:
-        case ca_expr_ops::AND_NOT:
             return 2;
         case ca_expr_ops::OR:
-        case ca_expr_ops::OR_NOT:
             return 3;
         case ca_expr_ops::XOR:
-        case ca_expr_ops::XOR_NOT:
             return 4;
         default:
             return 0;
@@ -289,9 +278,6 @@ ca_expr_ops get_expr_operator(const std::string& op)
     S2O(SRL);
     S2O(FIND);
     S2O(INDEX);
-    S2O(AND_NOT);
-    S2O(OR_NOT);
-    S2O(XOR_NOT);
     S2O(EQ);
     S2O(NE);
     S2O(LE);
@@ -312,8 +298,54 @@ ca_expr_ops get_expr_operator(const std::string& op)
 }
 
 ca_expr_ops ca_arithmetic_policy::get_operator(const std::string& symbol) { return get_expr_operator(symbol); }
+std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_arithmetic_policy::get_operator_properties(
+    const std::string& symbol)
+{
+    auto o = get_operator(symbol);
+    if (o == ca_expr_ops::UNKNOWN)
+        return std::monostate();
+    bool unary = is_unary(o);
+    bool binary = is_binary(o);
+    if (!unary && !binary)
+        return invalid_by_policy();
+    return ca_expr_op { o, get_priority(o), binary, false, unary };
+}
+
 ca_expr_ops ca_binary_policy::get_operator(const std::string& symbol) { return get_expr_operator(symbol); }
+std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_binary_policy::get_operator_properties(
+    const std::string& symbol)
+{
+    auto o = get_operator(symbol);
+    if (o == ca_expr_ops::UNKNOWN)
+        return std::monostate();
+    bool unary = is_unary(o);
+    bool binary = is_binary(o);
+    if (!unary && !binary)
+        return invalid_by_policy();
+    return ca_expr_op {
+        o,
+        get_priority(o),
+        binary,
+        o == ca_expr_ops::EQ || o == ca_expr_ops::NE || o == ca_expr_ops::LE || o == ca_expr_ops::LT
+            || o == ca_expr_ops::GE || o == ca_expr_ops::GT,
+        unary,
+    };
+}
+
 ca_expr_ops ca_character_policy::get_operator(const std::string& symbol) { return get_expr_operator(symbol); }
+std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_character_policy::get_operator_properties(
+    const std::string& symbol)
+{
+    auto o = get_operator(symbol);
+    if (o == ca_expr_ops::UNKNOWN)
+        return std::monostate();
+    bool unary = is_unary(o);
+    bool binary = is_binary(o);
+    if (!unary && !binary)
+        return invalid_by_policy();
+    return ca_expr_op { o, get_priority(o), binary, false, unary };
+}
+
 
 ca_expr_funcs ca_arithmetic_policy::get_function(const std::string& symbol)
 {
