@@ -16,6 +16,7 @@
 
 #include "ca_function.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
+#include "expressions/evaluation_context.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -116,6 +117,25 @@ context::A_t ca_constant::self_defining_term(const std::string& value, diagnosti
             add_diagnostic);
     else
         return self_defining_term("D", value, add_diagnostic);
+}
+
+context::A_t ca_constant::self_defining_term_or_abs_symbol(
+    const std::string& value, const evaluation_context& eval_ctx, range expr_range)
+{
+    auto add_diagnostic = diagnostic_adder(eval_ctx.diags, expr_range);
+    auto q = value.find('\'');
+    if (value.size() >= 3 && value.back() == '\'' && q != value.size() - 1)
+        return self_defining_term(std::string_view(value.c_str(), q),
+            std::string_view(value.c_str() + q + 1, value.size() - q - 2),
+            add_diagnostic);
+    else if (value.front() == '+' || value.front() == '-' || std::isdigit((unsigned char)value.front()))
+        return self_defining_term("D", value, add_diagnostic);
+    else
+    {
+        auto result = ca_symbol(eval_ctx.hlasm_ctx.ids().find(value), expr_range).evaluate(eval_ctx);
+        assert(result.type == context::SET_t_enum::A_TYPE);
+        return result.access_a();
+    }
 }
 
 std::optional<context::A_t> ca_constant::try_self_defining_term(const std::string& value)

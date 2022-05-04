@@ -53,8 +53,11 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const evaluation_cont
     return get_undefined_attributed_symbols_vs(symbol, eval_ctx);
 }
 
-void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer&)
+void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
 {
+    // this conversion request indicates that the variable was used without the mandatory quotes around it
+    if (kind == context::SET_t_enum::C_TYPE)
+        diags.add_diagnostic(diagnostic_op::error_CE017_character_expression_expected(expr_range));
     expr_kind = kind;
     resolve_expression_tree_vs(symbol);
 }
@@ -79,14 +82,14 @@ context::SET_t ca_var_sym::convert_return_types(
             case context::SET_t_enum::A_TYPE:
                 // empty string is convertible to 0, but it is not a self-def term
                 if (const auto& val_c = retval.access_c(); val_c.size())
-                    return ca_constant::self_defining_term(val_c, add_diags);
+                    return ca_constant::self_defining_term_or_abs_symbol(val_c, eval_ctx, expr_range);
                 else
                     return 0;
 
             case context::SET_t_enum::B_TYPE:
                 // empty string is convertible to false, but it is not a self-def term
                 if (const auto& val_c = retval.access_c(); val_c.size())
-                    return !!ca_constant::self_defining_term(val_c, add_diags);
+                    return !!ca_constant::self_defining_term_or_abs_symbol(val_c, eval_ctx, expr_range);
                 else
                     return false;
 
@@ -98,11 +101,11 @@ context::SET_t ca_var_sym::convert_return_types(
     }
     else if (retval.type == context::SET_t_enum::B_TYPE && type == context::SET_t_enum::A_TYPE)
     {
-        retval.type = context::SET_t_enum::A_TYPE;
+        retval = context::SET_t(retval.access_b() ? 1 : 0);
     }
     else if (retval.type == context::SET_t_enum::A_TYPE && type == context::SET_t_enum::B_TYPE)
     {
-        retval.type = context::SET_t_enum::B_TYPE;
+        retval = context::SET_t(!!retval.access_a());
     }
     return retval;
 }

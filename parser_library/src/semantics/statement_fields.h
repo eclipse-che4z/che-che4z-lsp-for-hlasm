@@ -89,6 +89,8 @@ struct label_si
     range field_range;
 
     label_si_value_t value;
+
+    void resolve(diagnostic_op_consumer& diags);
 };
 
 enum class instruction_si_type
@@ -125,6 +127,8 @@ struct instruction_si
     range field_range;
 
     instruction_si_value_t value;
+
+    void resolve(diagnostic_op_consumer& diags);
 };
 
 // struct holding semantic information (si) about operand field

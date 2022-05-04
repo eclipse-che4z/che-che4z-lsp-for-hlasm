@@ -270,3 +270,11 @@ void hlasm_plugin::parser_library::semantics::collector::set_literals(std::vecto
 {
     lit_ = std::move(lit);
 }
+
+void collector::resolve_first_part()
+{
+    if (lbl_)
+        lbl_->resolve(statement_diagnostics);
+    if (instr_)
+        instr_->resolve(statement_diagnostics);
+}

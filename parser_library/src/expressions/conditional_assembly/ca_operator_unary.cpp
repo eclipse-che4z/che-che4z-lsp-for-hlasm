@@ -66,11 +66,6 @@ void ca_function_unary_operator::resolve_expression_tree(context::SET_t_enum kin
     {
         auto param_type = ca_common_expr_policy::get_operands_type(function, kind);
         expr->resolve_expression_tree(param_type, diags);
-
-        // TODO: additional types?
-        if (param_type == context::SET_t_enum::C_TYPE
-            && !expr->is_character_expression(character_expression_purpose::function_parameter))
-            diags.add_diagnostic(diagnostic_op::error_CE017_character_expression_expected(expr->expr_range));
     }
 }
 

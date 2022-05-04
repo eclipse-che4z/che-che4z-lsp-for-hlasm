@@ -26,6 +26,8 @@ char_str_conc::char_str_conc(std::string value, const range& conc_range)
 
 std::string char_str_conc::evaluate(const expressions::evaluation_context&) const { return value; }
 
+void char_str_conc::resolve(diagnostic_op_consumer&) {}
+
 var_sym_conc::var_sym_conc(vs_ptr symbol)
     : concatenation_point(concat_type::VAR)
     , symbol(std::move(symbol))
@@ -37,6 +39,8 @@ std::string var_sym_conc::evaluate(const expressions::evaluation_context& eval_c
 
     return evaluate(std::move(value));
 }
+
+void var_sym_conc::resolve(diagnostic_op_consumer& diag) { symbol->resolve(diag); }
 
 std::string var_sym_conc::evaluate(context::SET_t varsym_value)
 {
@@ -59,11 +63,15 @@ dot_conc::dot_conc()
 
 std::string dot_conc::evaluate(const expressions::evaluation_context&) const { return "."; }
 
+void dot_conc::resolve(diagnostic_op_consumer&) {}
+
 equals_conc::equals_conc()
     : concatenation_point(concat_type::EQU)
 {}
 
 std::string equals_conc::evaluate(const expressions::evaluation_context&) const { return "="; }
+
+void equals_conc::resolve(diagnostic_op_consumer&) {}
 
 sublist_conc::sublist_conc(std::vector<concat_chain> list)
     : concatenation_point(concat_type::SUB)
@@ -82,6 +90,13 @@ std::string sublist_conc::evaluate(const expressions::evaluation_context& eval_c
     }
     ret.push_back(')');
     return ret;
+}
+
+void sublist_conc::resolve(diagnostic_op_consumer& diag)
+{
+    for (const auto& l : list)
+        for (const auto& e : l)
+            e->resolve(diag);
 }
 
 } // namespace hlasm_plugin::parser_library::semantics

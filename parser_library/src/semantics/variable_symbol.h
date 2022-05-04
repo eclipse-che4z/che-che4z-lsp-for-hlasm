@@ -54,6 +54,7 @@ struct variable_symbol
     context::SET_t evaluate(const expressions::evaluation_context& eval_ctx) const;
 
     virtual context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const = 0;
+    virtual void resolve(diagnostic_op_consumer& diag);
 
     virtual ~variable_symbol() = default;
 
@@ -61,7 +62,7 @@ protected:
     variable_symbol(const bool created, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
 };
 
-struct basic_variable_symbol : variable_symbol
+struct basic_variable_symbol final : variable_symbol
 {
     basic_variable_symbol(context::id_index name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
 
@@ -70,7 +71,7 @@ struct basic_variable_symbol : variable_symbol
     context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const override;
 };
 
-struct created_variable_symbol : variable_symbol
+struct created_variable_symbol final : variable_symbol
 {
     created_variable_symbol(
         concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
@@ -78,6 +79,7 @@ struct created_variable_symbol : variable_symbol
     const concat_chain created_name;
 
     context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const override;
+    void resolve(diagnostic_op_consumer& diag) override;
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "../common_testing.h"
 #include "semantics/operand_impls.h"
 
 using namespace hlasm_plugin::parser_library::semantics;
@@ -160,4 +161,19 @@ TEST(operand, access_operand)
     // string
     macro_operand_string mos("", range());
     EXPECT_TRUE(access_mac_op(mac_kind::STRING, &mos));
+}
+
+TEST(operand, resolve_model)
+{
+    std::string input =
+        R"(
+A       DS     A
+&A(1)   SETC   '0,A'
+        LARL   &A((1 AND 1))
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
 }

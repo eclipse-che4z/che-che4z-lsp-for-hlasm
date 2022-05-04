@@ -454,6 +454,7 @@ void hlasm_context::pop_statement_processing()
 }
 
 id_storage& hlasm_context::ids() { return *ids_; }
+const id_storage& hlasm_context::ids() const { return *ids_; }
 
 std::shared_ptr<id_storage> hlasm_context::ids_ptr() { return ids_; }
 

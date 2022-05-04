@@ -512,6 +512,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
             return std::tie(lab_instr->op_text, lab_instr->op_range);
         }
     }();
+    ph.parser->get_collector().resolve_first_part();
 
     if (!collector.has_instruction())
     {

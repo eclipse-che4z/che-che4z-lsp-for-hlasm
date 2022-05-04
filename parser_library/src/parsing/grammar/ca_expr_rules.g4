@@ -107,12 +107,6 @@ term returns [ca_expr_ptr ca_expr]
 		
 		auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $subscript_ne.ctx->getStop());
 		auto func = ca_common_expr_policy::get_function(*$id_no_dot.name);
-		if (func != expressions::ca_expr_funcs::UNKNOWN)
-		{
-			auto [param_size, param_kind] = ca_common_expr_policy::get_function_param_info(func, ca_common_expr_policy::get_function_type(func));
-			resolve_expression($subscript_ne.value, param_kind);
-		}
-
 		$ca_expr = std::make_unique<ca_function>($id_no_dot.name, func, std::move($subscript_ne.value), std::move($ca_dupl_factor.value), r);
 	}
 	| id_no_dot
@@ -170,7 +164,6 @@ subscript returns [std::vector<ca_expr_ptr> value]
 	: lpar expr_comma_c rpar
 	{
 		$value = std::move($expr_comma_c.ca_exprs);
-		resolve_expression($value, context::SET_t_enum::A_TYPE);
 	}
 	|;
 
@@ -323,7 +316,6 @@ ca_dupl_factor returns [ca_expr_ptr value]
 	: lpar expr rpar
 	{
 		$value =std::move($expr.ca_expr);
-		resolve_expression($value, context::SET_t_enum::A_TYPE);
 	}
 	|;
 
@@ -332,11 +324,9 @@ substring returns [expressions::ca_string::substring_t value]
 	{
 		$value.start = std::move($e1.ca_expr);
 		$value.substring_range = provider.get_range($lpar.ctx->getStart(), $rpar.ctx->getStop());
-		resolve_expression($value.start, context::SET_t_enum::A_TYPE);
 		if ($e2.ctx)
 		{
 			$value.count = std::move($e2.ca_expr);
-			resolve_expression($value.count, context::SET_t_enum::A_TYPE);
 		}
 	}
 	|;

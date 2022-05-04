@@ -204,9 +204,7 @@ struct resolve_stacks
     {
         while (!op_stack.empty())
         {
-            if (op_stack.top().priority > prio_limit)
-                break;
-            if (op_stack.top().priority == prio_limit && right_assoc)
+            if (op_stack.top().priority + right_assoc > prio_limit)
                 break;
             if (!reduce_stack_entry(diags))
                 return false;

@@ -76,6 +76,8 @@ public:
     std::vector<literal_si> take_literals();
     void set_literals(std::vector<literal_si> lit);
 
+    void resolve_first_part();
+
 private:
     std::optional<label_si> lbl_;
     std::optional<instruction_si> instr_;

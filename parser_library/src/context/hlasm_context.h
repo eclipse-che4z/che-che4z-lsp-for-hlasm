@@ -154,6 +154,7 @@ public:
 
     // index storage
     id_storage& ids();
+    const id_storage& ids() const;
     std::shared_ptr<id_storage> ids_ptr();
 
     // map of active instructions

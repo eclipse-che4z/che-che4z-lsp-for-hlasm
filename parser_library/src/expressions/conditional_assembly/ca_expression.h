@@ -41,7 +41,6 @@ enum class character_expression_purpose
 {
     assignment,
     left_side_of_comparison,
-    function_parameter,
 };
 
 // base class for conditional assembly expressions

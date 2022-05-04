@@ -28,14 +28,17 @@ context::SET_t ca_expression::convert_return_types(
 {
     if (type != retval.type)
     {
-        if (retval.type == context::SET_t_enum::A_TYPE && type == context::SET_t_enum::B_TYPE
-            && (retval.access_a() == 0 || retval.access_a() == 1))
-            return retval.access_a() == 1;
+        if (retval.type == context::SET_t_enum::A_TYPE && type == context::SET_t_enum::B_TYPE)
+        {
+            auto val = retval.access_a();
+            if (val != 0 && val != 1)
+                eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
+            return val != 0;
+        }
         if (retval.type == context::SET_t_enum::B_TYPE && type == context::SET_t_enum::A_TYPE)
             return (context::A_t)retval.access_b();
 
-        eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
-        return context::SET_t(expr_kind);
+        return context::SET_t(type);
     }
     return retval;
 }

@@ -27,6 +27,7 @@ target_sources(parser_library PRIVATE
 	source_info_processor.cpp
 	source_info_processor.h
 	statement.h
+	statement_fields.cpp
 	statement_fields.h
 	variable_symbol.cpp
 	variable_symbol.h

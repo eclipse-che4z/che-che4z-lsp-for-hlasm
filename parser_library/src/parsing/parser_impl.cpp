@@ -173,8 +173,6 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
     else if (opcode.value == wk.SETC)
     {
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
-        if (!expr->is_character_expression(character_expression_purpose::assignment))
-            diags.add_diagnostic(diagnostic_op::error_CE017_character_expression_expected(expr->expr_range));
     }
     else if (opcode.value == wk.AREAD)
     {
@@ -185,6 +183,16 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
         assert(false);
         resolve_expression(expr, context::SET_t_enum::UNDEF_TYPE);
     }
+}
+
+void parser_impl::resolve_concat_chain(const semantics::concat_chain& chain) const
+{
+    diagnostic_consumer_transform diags([this](diagnostic_op d) {
+        if (diagnoser_)
+            diagnoser_->add_diagnostic(std::move(d));
+    });
+    for (const auto& e : chain)
+        e->resolve(diags);
 }
 
 bool parser_impl::MACH()

@@ -22,6 +22,8 @@
 #include <locale>
 #include <string>
 
+#include "utils/utf8text.h"
+
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -242,28 +244,13 @@ size_t file_impl::index_from_position(const std::string& text, const std::vector
     {
         if (!utf8_one_byte_begin(text[i]))
         {
-            char width;
-            char utf16_width;
-            if (utf8_four_byte_begin(text[i])) // 11110xxx
-            {
-                width = 4;
-                utf16_width = 2;
-            }
-            else if (utf8_three_byte_begin(text[i])) // 1110xxxx
-            {
-                width = 3;
-                utf16_width = 1;
-            }
-            else if (utf8_two_byte_begin(text[i])) // 110xxxxx
-            {
-                width = 2;
-                utf16_width = 1;
-            }
-            else
+            const auto cs = utils::utf8_prefix_sizes[(unsigned char)text[i]];
+
+            if (!cs.utf8)
                 throw std::runtime_error("The text of the file is not in utf-8."); // WRONG UTF-8 input
 
-            i += width;
-            utf16_counter += utf16_width;
+            i += cs.utf8;
+            utf16_counter += cs.utf16;
         }
         else
         {
@@ -280,36 +267,20 @@ std::string file_impl::replace_non_utf8_chars(std::string_view text)
     ret.reserve(text.size());
     while (!text.empty())
     {
-        size_t ch_len = 0;
         if (utf8_one_byte_begin(text.front()))
-            ch_len = 1;
-        else if (utf8_two_byte_begin(text.front()))
-            ch_len = 2;
-        else if (utf8_three_byte_begin(text.front()))
-            ch_len = 3;
-        else if (utf8_four_byte_begin(text.front()))
-            ch_len = 4;
-
-        bool OK = ch_len != 0 && ch_len <= text.size();
-
-        // check whether all subsequent bytes of one character begin with 10
-        // otherwise we consider the first byte a wrong character
-        if (OK)
-            OK = std::all_of(text.begin() + 1, text.begin() + ch_len, utf8_continue_byte);
-
-        if (OK && ch_len == 4)
         {
-            // Unicode limit 0x10FFFF
-            unsigned char c0 = text[0];
-            unsigned char c1 = text[1];
-            OK = ((c0 & 0b0000'0111) << 6 | (c1 & 0b00111111)) <= 0x10f;
+            ret.push_back(text.front());
+            text.remove_prefix(1);
+            continue;
         }
 
-        if (OK)
+        const auto cs = utils::utf8_prefix_sizes[(unsigned char)text.front()];
+        if (cs.utf8 != 0 && cs.utf8 <= text.size() && utils::utf8_valid_multibyte_prefix(text[0], text[1])
+            && std::all_of(text.begin() + 2, text.begin() + cs.utf8, utf8_continue_byte))
         {
             // copy the character to output
-            ret.append(text.substr(0, ch_len));
-            text.remove_prefix(ch_len);
+            ret.append(text.substr(0, cs.utf8));
+            text.remove_prefix(cs.utf8);
         }
         else
         {

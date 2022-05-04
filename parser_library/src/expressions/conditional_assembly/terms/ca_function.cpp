@@ -72,14 +72,6 @@ void ca_function::resolve_expression_tree(context::SET_t_enum kind, diagnostic_o
             for (auto&& expr : parameters)
             {
                 expr->resolve_expression_tree(param_kind, diags);
-
-                // TODO: other parameter types?
-                if (param_kind == context::SET_t_enum::C_TYPE)
-                {
-                    if (!expr->is_character_expression(character_expression_purpose::function_parameter))
-                        diags.add_diagnostic(
-                            diagnostic_op::error_CE017_character_expression_expected(expr->expr_range));
-                }
             }
         }
     }

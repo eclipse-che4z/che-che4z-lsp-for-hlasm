@@ -21,7 +21,7 @@
 namespace hlasm_plugin::parser_library::expressions {
 
 // represents CA expression variable symbol
-class ca_var_sym : public ca_expression
+class ca_var_sym final : public ca_expression
 {
 public:
     const semantics::vs_ptr symbol;

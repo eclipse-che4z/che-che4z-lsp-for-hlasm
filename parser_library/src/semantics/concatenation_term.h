@@ -24,7 +24,7 @@
 namespace hlasm_plugin::parser_library::semantics {
 
 // concatenation point representing character string
-struct char_str_conc : concatenation_point
+struct char_str_conc final : concatenation_point
 {
     explicit char_str_conc(std::string value, const range& conc_range);
 
@@ -32,44 +32,49 @@ struct char_str_conc : concatenation_point
     range conc_range;
 
     std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
+    void resolve(diagnostic_op_consumer& diag) override;
 };
 
 // concatenation point representing variable symbol
-struct var_sym_conc : concatenation_point
+struct var_sym_conc final : concatenation_point
 {
     explicit var_sym_conc(vs_ptr);
 
     vs_ptr symbol;
 
     std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
+    void resolve(diagnostic_op_consumer& diag) override;
 
     static std::string evaluate(context::SET_t varsym_value);
 };
 
 // concatenation point representing dot
-struct dot_conc : concatenation_point
+struct dot_conc final : concatenation_point
 {
     dot_conc();
 
     std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
+    void resolve(diagnostic_op_consumer& diag) override;
 };
 
 // concatenation point representing equals sign
-struct equals_conc : concatenation_point
+struct equals_conc final : concatenation_point
 {
     equals_conc();
 
     std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
+    void resolve(diagnostic_op_consumer& diag) override;
 };
 
 // concatenation point representing macro operand sublist
-struct sublist_conc : concatenation_point
+struct sublist_conc final : concatenation_point
 {
     explicit sublist_conc(std::vector<concat_chain> list);
 
     std::vector<concat_chain> list;
 
     std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
+    void resolve(diagnostic_op_consumer& diag) override;
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

@@ -44,6 +44,13 @@ context::id_index created_variable_symbol::evaluate_name(const expressions::eval
     return id;
 }
 
+void created_variable_symbol::resolve(diagnostic_op_consumer& diag)
+{
+    for (const auto& c : created_name)
+        c->resolve(diag);
+    variable_symbol::resolve(diag);
+}
+
 basic_variable_symbol* variable_symbol::access_basic()
 {
     return created ? nullptr : static_cast<basic_variable_symbol*>(this);
@@ -88,6 +95,12 @@ context::SET_t variable_symbol::evaluate(const expressions::evaluation_context& 
     auto val = get_var_sym_value(eval_ctx.hlasm_ctx, name, evaluated_subscript, symbol_range, eval_ctx.diags);
 
     return val;
+}
+
+void variable_symbol::resolve(diagnostic_op_consumer& diag)
+{
+    for (const auto& v : subscript)
+        v->resolve_expression_tree(context::SET_t_enum::A_TYPE, diag);
 }
 
 variable_symbol::variable_symbol(

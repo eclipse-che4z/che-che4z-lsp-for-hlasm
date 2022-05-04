@@ -22,6 +22,7 @@
 
 #include "context/common_types.h"
 #include "context/id_storage.h"
+#include "diagnostic_consumer.h"
 
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields
@@ -83,6 +84,7 @@ struct concatenation_point
         const expressions::evaluation_context& eval_ctx);
 
     virtual std::string evaluate(const expressions::evaluation_context& eval_ctx) const = 0;
+    virtual void resolve(diagnostic_op_consumer& diag) = 0;
 
     virtual ~concatenation_point() = default;
 };

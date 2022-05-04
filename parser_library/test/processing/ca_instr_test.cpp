@@ -415,8 +415,7 @@ TEST(SET, conversions_invalid)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(
-        matches_message_codes(a.diags(), { "CE004", "CE004", "CE004", "CE004", "CE004", "CE004", "CE017", "CE017" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004", "CE004", "CE017", "CE017" }));
 }
 
 TEST(CA_instructions, undefined_relocatable)
