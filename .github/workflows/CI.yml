@@ -346,7 +346,11 @@ jobs:
       options: --user root
 
     steps:
-      - uses: actions/checkout@v1
+      - name: Workaround for git safe.directory feature
+        run: chown root:root .
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
       - name: Install Chromium
         run: apk add --no-cache chromium
       - name: Extract branch name
