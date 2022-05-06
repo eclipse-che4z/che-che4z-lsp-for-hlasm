@@ -76,11 +76,11 @@
     "jsonValidation": [
       {
         "fileMatch": "pgm_conf.json",
-        "url": "./schema/pgm_conf.json"
+        "url": "./schema/pgm_conf.schema.json"
       },
       {
         "fileMatch": "proc_grps.json",
-        "url": "./schema/proc_grps.json"
+        "url": "./schema/proc_grps.schema.json"
       }
     ],
     "breakpoints": [

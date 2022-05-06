@@ -46,7 +46,7 @@
                         }
                     },
                     "asm_options": {
-                        "$ref": "asm_options.json"
+                        "$ref": "asm_options.schema.json"
                     },
                     "preprocessor": {
                         "description": "Defines optional preprocessor pass for open code.",

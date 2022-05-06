@@ -16,7 +16,7 @@
                         "description": "Name of processor group as defined in proc_grps.json"
                     },
                     "asm_options": {
-                        "$ref": "asm_options.json"
+                        "$ref": "asm_options.schema.json"
                     }
                 },
                 "required": [
