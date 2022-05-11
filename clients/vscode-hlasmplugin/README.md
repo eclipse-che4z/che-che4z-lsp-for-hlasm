@@ -179,7 +179,7 @@ The program name in `pgm_conf.json` can be wildcarded, as in the following examp
 ```
 In this example, GROUP1 is used for all open code programs.
 
-Assmebler options defined by the processor group can be overriden in the `pgm_conf.json` file as shown in the following example:
+Assembler options defined by the processor group can be overriden in the `pgm_conf.json` file as shown in the following example:
 ```
 {
   "pgms": [
