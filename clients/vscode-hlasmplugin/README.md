@@ -13,10 +13,6 @@ HLASM Language Support is an extension that supports the High Level Assembler la
 
 HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack), an all-round package that offers a modern experience for mainframe application developers, including extensions for language support, data editing, testing, and source code management.
 
-## Prerequisites
-
-- There are no client or server-side prerequisites for HLASM Language Support.
-
 ## Compatibility
 
 HLASM Language Support is supported on Visual Studio Code and Github Codespaces.
@@ -179,7 +175,7 @@ The program name in `pgm_conf.json` can be wildcarded, as in the following examp
 ```
 In this example, GROUP1 is used for all open code programs.
 
-Assmebler options defined by the processor group can be overriden in the `pgm_conf.json` file as shown in the following example:
+You can override Assembler options, that are defined by the processor group, in the `pgm_conf.json` file as shown in the following example:
 ```
 {
   "pgms": [
