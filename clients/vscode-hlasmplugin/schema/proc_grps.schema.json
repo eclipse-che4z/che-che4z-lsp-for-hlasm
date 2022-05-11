@@ -28,8 +28,7 @@
                                         },
                                         "optional": {
                                             "type": "boolean",
-                                            "description": "TODO Specifies if it is acceptable not to be able locate the folder."
-                                            // TODO This doesn't make much sense. Let's discuss this descirption and come up with better wording
+                                            "description": "Specifies whether it is acceptable to not locate the selected folder."
                                         },
                                         "macro_extensions": {
                                             "type": "array",

@@ -42,7 +42,7 @@
         },
         "PROFILE": {
             "type": "string",
-            "description": "Profile Member that is copied into the source program."
+            "description": "Profile Member that will be copied into the source program."
         },
         "SYSTEM_ID": {
             "type": "string",

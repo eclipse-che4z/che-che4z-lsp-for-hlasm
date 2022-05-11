@@ -13,6 +13,10 @@ HLASM Language Support is an extension that supports the High Level Assembler la
 
 HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack), an all-round package that offers a modern experience for mainframe application developers, including extensions for language support, data editing, testing, and source code management.
 
+## Prerequisites
+
+- There are no client or server-side prerequisites for HLASM Language Support.
+
 ## Compatibility
 
 HLASM Language Support is supported on Visual Studio Code and Github Codespaces.
