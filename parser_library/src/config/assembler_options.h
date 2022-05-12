@@ -31,6 +31,7 @@ struct assembler_options
     std::optional<std::string> sysparm;
     std::optional<std::string> profile;
     std::optional<std::string> optable;
+    std::optional<std::string> machine;
     std::optional<std::string> system_id;
     std::optional<bool> goff;
 

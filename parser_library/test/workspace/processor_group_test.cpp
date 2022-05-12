@@ -94,7 +94,8 @@ TEST(processor_group, asm_options_optable_valid)
 
     for (const auto& [input, expected] : cases)
     {
-        EXPECT_EQ(asm_options({ .optable = input }).instr_set, expected);
+        EXPECT_EQ(asm_options({ .optable = input }).instr_set, expected)
+            << "Input: " << input << " Expected: " << int(expected);
     }
 }
 
@@ -109,6 +110,89 @@ TEST(processor_group, asm_options_optable_invalid)
 
     for (const auto& [input, expected] : cases)
     {
-        EXPECT_EQ(asm_options({ .optable = input }).instr_set, expected);
+        EXPECT_EQ(asm_options({ .optable = input }).instr_set, expected)
+            << "Input: " << input << " Expected: " << int(expected);
+    }
+}
+
+TEST(processor_group, asm_options_machine_valid)
+{
+    const auto cases = {
+        std::make_pair("ARCH-0", instruction_set_version::XA),
+        std::make_pair("ARCH-1", instruction_set_version::ESA),
+        std::make_pair("ARCH-10", instruction_set_version::Z12),
+        std::make_pair("ARCH-11", instruction_set_version::Z13),
+        std::make_pair("ARCH-12", instruction_set_version::Z14),
+        std::make_pair("ARCH-13", instruction_set_version::Z15),
+        std::make_pair("ARCH-2", instruction_set_version::ESA),
+        std::make_pair("ARCH-3", instruction_set_version::ESA),
+        std::make_pair("ARCH-4", instruction_set_version::ESA),
+        std::make_pair("ARCH-5", instruction_set_version::ZOP),
+        std::make_pair("ARCH-6", instruction_set_version::YOP),
+        std::make_pair("ARCH-7", instruction_set_version::Z9),
+        std::make_pair("ARCH-8", instruction_set_version::Z10),
+        std::make_pair("ARCH-9", instruction_set_version::Z11),
+        std::make_pair("S370", instruction_set_version::_370),
+        std::make_pair("S370ESA", instruction_set_version::ESA),
+        std::make_pair("S370XA", instruction_set_version::XA),
+        std::make_pair("S390", instruction_set_version::ESA),
+        std::make_pair("S390E", instruction_set_version::ESA),
+        std::make_pair("ZS", instruction_set_version::ZOP),
+        std::make_pair("ZS-1", instruction_set_version::ZOP),
+        std::make_pair("ZS-2", instruction_set_version::YOP),
+        std::make_pair("ZS-3", instruction_set_version::Z9),
+        std::make_pair("ZS-4", instruction_set_version::Z10),
+        std::make_pair("ZS-5", instruction_set_version::Z11),
+        std::make_pair("ZS-6", instruction_set_version::Z12),
+        std::make_pair("ZS-7", instruction_set_version::Z13),
+        std::make_pair("ZS-8", instruction_set_version::Z14),
+        std::make_pair("ZS-9", instruction_set_version::Z15),
+        std::make_pair("z10", instruction_set_version::Z10),
+        std::make_pair("z11", instruction_set_version::Z11),
+        std::make_pair("z114", instruction_set_version::Z11),
+        std::make_pair("z12", instruction_set_version::Z12),
+        std::make_pair("z13", instruction_set_version::Z13),
+        std::make_pair("z14", instruction_set_version::Z14),
+        std::make_pair("z15", instruction_set_version::Z15),
+        std::make_pair("z196", instruction_set_version::Z11),
+        std::make_pair("z800", instruction_set_version::ZOP),
+        std::make_pair("z890", instruction_set_version::YOP),
+        std::make_pair("z9", instruction_set_version::Z9),
+        std::make_pair("z900", instruction_set_version::ZOP),
+        std::make_pair("z990", instruction_set_version::YOP),
+        std::make_pair("zBC12", instruction_set_version::Z12),
+        std::make_pair("zEC12", instruction_set_version::Z12),
+        std::make_pair("zSeries", instruction_set_version::ZOP),
+        std::make_pair("zSeries-1", instruction_set_version::ZOP),
+        std::make_pair("zSeries-2", instruction_set_version::YOP),
+        std::make_pair("zSeries-3", instruction_set_version::Z9),
+        std::make_pair("zSeries-4", instruction_set_version::Z10),
+        std::make_pair("zSeries-5", instruction_set_version::Z11),
+        std::make_pair("zSeries-6", instruction_set_version::Z12),
+        std::make_pair("zSeries-7", instruction_set_version::Z13),
+        std::make_pair("zSeries-8", instruction_set_version::Z14),
+        std::make_pair("zSeries-9", instruction_set_version::Z15),
+    };
+
+    for (const auto& [input, expected] : cases)
+    {
+        EXPECT_EQ(asm_options({ .machine = input }).instr_set, expected)
+            << "Input: " << input << " Expected: " << int(expected);
+    }
+}
+
+TEST(processor_group, asm_options_machine_invalid)
+{
+    const auto cases = {
+        std::make_pair("klgadh", instruction_set_version::UNI),
+        std::make_pair("ZS5ZS6", instruction_set_version::UNI),
+        std::make_pair("ZS-0", instruction_set_version::UNI),
+        std::make_pair("zSeries-0", instruction_set_version::UNI),
+    };
+
+    for (const auto& [input, expected] : cases)
+    {
+        EXPECT_EQ(asm_options({ .machine = input }).instr_set, expected)
+            << "Input: " << input << " Expected: " << int(expected);
     }
 }

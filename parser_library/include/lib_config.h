@@ -32,14 +32,15 @@ class PARSER_LIBRARY_EXPORT lib_config
 public:
     // Creates an instance of lib_config with values from input json.
     [[nodiscard]] static lib_config load_from_json(const nlohmann::json& config);
-    [[nodiscard]] static lib_config load_from_json(const config::pgm_conf& config);
+
+    // Creates an instance of lib_config with values from input pgm_conf.
+    [[nodiscard]] static lib_config load_from_pgm_config(const config::pgm_conf& config);
+
     // Returns a lib_config instance that is a copy of this instance, but the missing settings are replaced with the
     // parameter second. If there are more missing settings after that step, they are filled with default values
     [[nodiscard]] lib_config fill_missing_settings(const lib_config& second);
 
     std::optional<int64_t> diag_supress_limit;
-
-
 
 private:
     // Returns an instance that has missing settings of this filled with not missing setting of the parameter

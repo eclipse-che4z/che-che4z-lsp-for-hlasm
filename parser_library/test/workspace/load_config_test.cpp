@@ -355,3 +355,60 @@ TEST(workspace, asm_options_invalid)
     ASSERT_EQ(ws.diags().size(), 1U);
     EXPECT_EQ(ws.diags()[0].code, "W0002");
 }
+
+class file_proc_grps_asm : public file_proc_grps
+{
+public:
+    file_proc_grps_asm()
+        : file_proc_grps()
+        , proc_file(generate_proc_file())
+
+    {}
+
+    const std::string& get_text() override { return proc_file; }
+
+    std::string proc_file;
+
+private:
+    std::string generate_proc_file()
+    {
+        return
+            R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [],
+      "asm_options": {
+         "GOFF":true,
+         "XOBJECT":true
+      }
+    }
+  ]
+})";
+    }
+};
+
+class file_manager_asm_test : public file_manager_proc_grps_test
+{
+public:
+    file_manager_asm_test()
+        : file_manager_proc_grps_test()
+    {
+        proc_grps = std::make_shared<file_proc_grps_asm>();
+    };
+};
+
+TEST(workspace, asm_options_goff_xobject_redefinition)
+{
+    {
+        file_manager_asm_test file_manager;
+        lib_config config;
+        workspace ws("test_proc_grps_uri", "test_proc_grps_name", file_manager, config);
+
+        ws.open();
+
+        ws.collect_diags();
+        ASSERT_NE(ws.diags().size(), 0);
+        EXPECT_EQ(ws.diags()[0].code, "W0002");
+    }
+}

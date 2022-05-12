@@ -560,7 +560,7 @@ bool workspace::load_and_process_config()
         std::unique(macro_extensions_compatibility_list.begin(), macro_extensions_compatibility_list.end()),
         macro_extensions_compatibility_list.end());
 
-    local_config_ = lib_config::load_from_json(pgm_config);
+    local_config_ = lib_config::load_from_pgm_config(pgm_config);
 
     // process processor groups
     for (auto& pg : proc_groups.pgroups)

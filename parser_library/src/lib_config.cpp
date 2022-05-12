@@ -45,7 +45,7 @@ lib_config lib_config::load_from_json(const nlohmann::json& config)
     return loaded;
 }
 
-lib_config lib_config::load_from_json(const config::pgm_conf& config)
+lib_config lib_config::load_from_pgm_config(const config::pgm_conf& config)
 {
     lib_config loaded;
 

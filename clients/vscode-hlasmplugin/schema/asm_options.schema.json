@@ -6,6 +6,66 @@
             "type": "boolean",
             "description": "Produces Generalized Object File format dataset."
         },
+        "MACHINE": {
+            "type": "string",
+            "description": "Specifies the instruction set to use.",
+            "enum": [
+                "ARCH-0",
+                "ARCH-1",
+                "ARCH-10",
+                "ARCH-11",
+                "ARCH-12",
+                "ARCH-13",
+                "ARCH-2",
+                "ARCH-3",
+                "ARCH-4",
+                "ARCH-5",
+                "ARCH-6",
+                "ARCH-7",
+                "ARCH-8",
+                "ARCH-9",
+                "S370",
+                "S370ESA",
+                "S370XA",
+                "S390",
+                "S390E",
+                "ZS",
+                "ZS-1",
+                "ZS-2",
+                "ZS-3",
+                "ZS-4",
+                "ZS-5",
+                "ZS-6",
+                "ZS-7",
+                "ZS-8",
+                "ZS-9",
+                "z10",
+                "z11",
+                "z114",
+                "z12",
+                "z13",
+                "z14",
+                "z15",
+                "z196",
+                "z800",
+                "z890",
+                "z9",
+                "z900",
+                "z990",
+                "zBC12",
+                "zEC12",
+                "zSeries",
+                "zSeries-1",
+                "zSeries-2",
+                "zSeries-3",
+                "zSeries-4",
+                "zSeries-5",
+                "zSeries-6",
+                "zSeries-7",
+                "zSeries-8",
+                "zSeries-9"
+            ]
+        },
         "OPTABLE": {
             "type": "string",
             "description": "Specifies the instruction set to use.",
@@ -52,5 +112,71 @@
             "type": "boolean",
             "description": "Synonym for the GOFF option."
         }
-    }
+    },
+    "allOf": [
+        {
+            "anyOf": [
+                {
+                    "required": [
+                        "GOFF"
+                    ],
+                    "not": {
+                        "required": [
+                            "XOBJECT"
+                        ]
+                    }
+                },
+                {
+                    "required": [
+                        "XOBJECT"
+                    ],
+                    "not": {
+                        "required": [
+                            "GOFF"
+                        ]
+                    }
+                },
+                {
+                    "not": {
+                        "required": [
+                            "GOFF",
+                            "XOBJECT"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "anyOf": [
+                {
+                    "required": [
+                        "MACHINE"
+                    ],
+                    "not": {
+                        "required": [
+                            "OPTABLE"
+                        ]
+                    }
+                },
+                {
+                    "required": [
+                        "OPTABLE"
+                    ],
+                    "not": {
+                        "required": [
+                            "MACHINE"
+                        ]
+                    }
+                },
+                {
+                    "not": {
+                        "required": [
+                            "MACHINE",
+                            "OPTABLE"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
 }

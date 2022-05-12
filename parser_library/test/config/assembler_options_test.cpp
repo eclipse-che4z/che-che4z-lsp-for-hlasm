@@ -29,12 +29,12 @@ TEST(assembler_options, read)
         std::make_pair(R"({})"_json, assembler_options {}),
         std::make_pair(R"({"PROFILE":"MAC"})"_json, assembler_options { .profile = "MAC" }),
         std::make_pair(R"({"SYSPARM":"TESTPARM"})"_json, assembler_options { .sysparm = "TESTPARM" }),
+        std::make_pair(R"({"MACHINE":"zSeries-2"})"_json, assembler_options { .machine = "zSeries-2" }),
         std::make_pair(R"({"OPTABLE":"ZS9"})"_json, assembler_options { .optable = "ZS9" }),
         std::make_pair(R"({"SYSTEM_ID":"VSE"})"_json, assembler_options { .system_id = "VSE" }),
         std::make_pair(R"({"GOFF":true})"_json, assembler_options { .goff = true }),
         std::make_pair(R"({"XOBJECT":true})"_json, assembler_options { .goff = true }),
-        std::make_pair(
-            R"({"GOFF":true,"PROFILE":"MAC","SYSPARM":"TESTPARM","OPTABLE":"ZS9","SYSTEM_ID":"VSE","XOBJECT":false})"_json,
+        std::make_pair(R"({"GOFF":true,"PROFILE":"MAC","SYSPARM":"TESTPARM","OPTABLE":"ZS9","SYSTEM_ID":"VSE"})"_json,
             assembler_options {
                 .sysparm = "TESTPARM", .profile = "MAC", .optable = "ZS9", .system_id = "VSE", .goff = true }),
     };
@@ -51,6 +51,7 @@ TEST(assembler_options, write)
         std::make_pair(R"({})"_json, assembler_options {}),
         std::make_pair(R"({"PROFILE":"MAC"})"_json, assembler_options { .profile = "MAC" }),
         std::make_pair(R"({"SYSPARM":"TESTPARM"})"_json, assembler_options { .sysparm = "TESTPARM" }),
+        std::make_pair(R"({"MACHINE":"zSeries-2"})"_json, assembler_options { .machine = "zSeries-2" }),
         std::make_pair(R"({"OPTABLE":"ZS9"})"_json, assembler_options { .optable = "ZS9" }),
         std::make_pair(R"({"SYSTEM_ID":"VSE"})"_json, assembler_options { .system_id = "VSE" }),
         std::make_pair(R"({"GOFF":true})"_json, assembler_options { .goff = true }),
@@ -72,10 +73,14 @@ TEST(assembler_options, validate)
         std::make_pair(assembler_options { std::string(255, 'A') }, true),
         std::make_pair(assembler_options { std::string(256, 'A') }, false),
         std::make_pair(assembler_options { "", "", "" }, true),
-        std::make_pair(assembler_options { "", "", "UNI" }, true),
-        std::make_pair(assembler_options { "", "", "A" }, false),
-        std::make_pair(assembler_options { "", "", "", "", false }, true),
-        std::make_pair(assembler_options { "", "", "", "", true }, true),
+        std::make_pair(assembler_options { "", "", "", "" }, false),
+        std::make_pair(assembler_options { .optable = "UNI" }, true),
+        std::make_pair(assembler_options { .optable = "A" }, false),
+        std::make_pair(assembler_options { .machine = "zSeries-2" }, true),
+        std::make_pair(assembler_options { .machine = "ZsErieS-2" }, true),
+        std::make_pair(assembler_options { .machine = "A" }, false),
+        std::make_pair(assembler_options { .goff = false }, true),
+        std::make_pair(assembler_options { .goff = true }, true),
     };
 
     for (const auto& [input, expected] : cases)
@@ -91,10 +96,12 @@ TEST(assembler_options, has_value)
         std::make_pair(assembler_options { std::string(255, 'A') }, true),
         std::make_pair(assembler_options { std::string(256, 'A') }, true),
         std::make_pair(assembler_options { "", "", "" }, true),
-        std::make_pair(assembler_options { "", "", "UNI" }, true),
-        std::make_pair(assembler_options { "", "", "A" }, true),
-        std::make_pair(assembler_options { "", "", "", "", false }, true),
-        std::make_pair(assembler_options { "", "", "", "", true }, true),
+        std::make_pair(assembler_options { "", "", "", "" }, true),
+        std::make_pair(assembler_options { .optable = "UNI" }, true),
+        std::make_pair(assembler_options { .optable = "A" }, true),
+        std::make_pair(assembler_options { .machine = "ZSERIES-2" }, true),
+        std::make_pair(assembler_options { .machine = "A" }, true),
+        std::make_pair(assembler_options { .goff = false }, true),
         std::make_pair(assembler_options { .goff = true }, true),
     };
 
@@ -138,6 +145,29 @@ TEST(assembler_options, apply)
                 { .optable = "invalid" },
             },
             asm_option { .instr_set = instruction_set_version::Z10 }),
+        std::make_pair(
+            std::vector<assembler_options> {
+                { .machine = "zSeries-2" },
+            },
+            asm_option { .instr_set = instruction_set_version::YOP }),
+        std::make_pair(
+            std::vector<assembler_options> {
+                { .machine = "zSeries-2" },
+                { .machine = "zSeries-3" },
+            },
+            asm_option { .instr_set = instruction_set_version::Z9 }),
+        std::make_pair(
+            std::vector<assembler_options> {
+                { .machine = "zSeries-2" },
+                { .machine = "invalid" },
+            },
+            asm_option { .instr_set = instruction_set_version::YOP }),
+        std::make_pair(
+            std::vector<assembler_options> {
+                { .optable = "Z10" },
+                { .machine = "zSeries-2" },
+            },
+            asm_option { .instr_set = instruction_set_version::YOP }),
         std::make_pair(std::vector<assembler_options> { { .goff = true } }, asm_option { .sysopt_xobject = true }),
         std::make_pair(
             std::vector<assembler_options> {
