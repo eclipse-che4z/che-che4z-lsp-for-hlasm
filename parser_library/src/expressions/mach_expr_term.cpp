@@ -324,12 +324,7 @@ context::dependency_collector mach_expr_data_attr_literal::get_dependencies(cont
 mach_expression::value_t mach_expr_data_attr_literal::evaluate(
     context::dependency_solver& solver, diagnostic_op_consumer& diags) const
 {
-    auto& dd = lit->get_data_definition();
-    context::symbol_attributes attrs(context::symbol_origin::DAT,
-        ebcdic_encoding::a2e[(unsigned char)dd.get_type_attribute()],
-        dd.get_length_attribute(solver, diags),
-        dd.get_scale_attribute(solver, diags),
-        dd.get_integer_attribute(solver, diags));
+    context::symbol_attributes attrs = lit->get_data_definition().get_symbol_attributes(solver, diags);
     if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
         && !attrs.can_have_SI_attr())
     {

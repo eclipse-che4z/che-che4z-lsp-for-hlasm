@@ -17,7 +17,6 @@
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "parsing/error_strategy.h"
-#include "utils/utf8text.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -53,21 +52,6 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
     return *m_parser;
 }
 
-std::string decorate_message(const std::string& field, const std::string& message)
-{
-    static const std::string_view prefix = "While evaluating the result of substitution '";
-    static const std::string_view arrow = "' => ";
-    std::string result;
-    result.reserve(prefix.size() + field.size() + arrow.size() + message.size());
-
-    result.append(prefix);
-    utils::append_utf8_sanitized(result, field);
-    result.append(arrow);
-    result.append(message);
-
-    return result;
-}
-
 statement_fields_parser::parse_result statement_fields_parser::parse_operand_field(std::string field,
     bool after_substitution,
     semantics::range_provider field_range,
@@ -80,7 +64,7 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
 
     diagnostic_consumer_transform add_diag_subst([&field, &add_diag, after_substitution](diagnostic_op diag) {
         if (after_substitution)
-            diag.message = decorate_message(field, diag.message);
+            diag.message = diagnostic_decorate_message(field, diag.message);
         add_diag.add_diagnostic(std::move(diag));
     });
     const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, add_diag_subst);

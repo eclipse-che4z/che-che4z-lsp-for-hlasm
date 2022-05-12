@@ -111,14 +111,13 @@ TEST(literals, attribute_references_to_literals_in_ca)
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "L"), 4);
-    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "D"), 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "D"), 1);
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "S"), 1);
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "I"), 30);
-    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "T"), "U");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "T"), "F");
 
     auto* sect = get_section(a.hlasm_ctx(), "");
-    ASSERT_TRUE(sect);
-    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 4);
+    ASSERT_FALSE(sect);
 }
 
 TEST(literals, attribute_references_to_literals_in_ca_future)
@@ -141,14 +140,14 @@ B DC A(0)
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "L"), 4);
-    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "D"), 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "D"), 1);
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "S"), 1);
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "I"), 30);
-    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "T"), "U");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "T"), "G");
 
     auto* sect = get_section(a.hlasm_ctx(), "");
     ASSERT_TRUE(sect);
-    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 12);
+    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 8);
 }
 
 TEST(literals, ltorg)
@@ -545,4 +544,119 @@ LEN EQU   *-L
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 16);
+}
+
+TEST(literals, attribute_references_to_substituted_literal)
+{
+    std::string input = R"(
+&LIT SETC '=FS1''0'''
+&L   SETA L'&LIT
+&D   SETA D'&LIT
+&S   SETA S'&LIT
+&I   SETA I'&LIT
+&T   SETC T'&LIT
+&O   SETC O'&LIT
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "L"), 4);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "D"), 1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "S"), 1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "I"), 30);
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "T"), "F");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "O"), "U");
+
+    auto* sect = get_section(a.hlasm_ctx(), "");
+    ASSERT_FALSE(sect);
+}
+
+TEST(literals, defined_in_ca_expr)
+{
+    std::string input = R"(
+&D1 SETB (D'=A(*))
+&D2 SETB (D'=A(*))
+&D3 SETB (D'=A(0))
+&D4 SETB (D'=A(0))
+&X  SETA L'=A(*)
+&X  SETA L'=A(0)
+&D5 SETB (D'=A(*))
+&D6 SETB (D'=A(0))
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "D1"), false);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "D2"), false);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "D3"), false);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "D4"), false);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "D5"), false);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "D6"), true);
+
+    auto* sect = get_section(a.hlasm_ctx(), "");
+    ASSERT_FALSE(sect);
+}
+
+TEST(literals, in_ca_expr_previously_mentioned)
+{
+    std::string input = R"(
+    LARL 0,=A(0)
+&D  SETB (D'=A(0))
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "D"), true);
+}
+
+TEST(literals, undefined_after_ltorg)
+{
+    std::string input = R"(
+    LARL 0,=A(0)
+    LTORG
+&D  SETB (D'=A(0))
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "D"), false);
+}
+
+TEST(literals, suppress_messages_from_DTO_attributes)
+{
+    std::string input = R"(
+        MACRO
+        MAC   &T=
+        GBLB  &XD
+        GBLC  &XT,&XO
+&XD     SETB  (D'&T)
+&XT     SETC  T'&T
+&XO     SETC  O'&T
+        MEND
+
+        GBLB  &XD
+        GBLC  &XT,&XO
+        MAC   T==
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "XD"), false);
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "XT"), "U");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "XO"), "U");
 }

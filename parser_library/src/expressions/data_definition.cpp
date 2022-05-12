@@ -22,6 +22,7 @@
 #include "checking/data_definition/data_def_fields.h"
 #include "checking/data_definition/data_def_type_base.h"
 #include "context/using.h"
+#include "ebcdic_encoding.h"
 #include "lexing/logical_line.h"
 #include "mach_expr_term.h"
 #include "mach_expr_visitor.h"
@@ -160,6 +161,16 @@ int32_t data_definition::get_integer_attribute(context::dependency_solver& info,
             evaluate_length(info, diags), evaluate_scale(info, diags), evaluate_reduced_nominal_value());
     else
         return 0;
+}
+
+context::symbol_attributes data_definition::get_symbol_attributes(
+    context::dependency_solver& solver, diagnostic_op_consumer& diags) const
+{
+    return context::symbol_attributes(context::symbol_origin::DAT,
+        ebcdic_encoding::a2e[(unsigned char)get_type_attribute()],
+        get_length_attribute(solver, diags),
+        get_scale_attribute(solver, diags),
+        get_integer_attribute(solver, diags));
 }
 
 bool data_definition::expects_single_symbol() const

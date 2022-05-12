@@ -75,9 +75,11 @@ struct data_definition final : public context::dependable
     int32_t get_scale_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
     uint32_t get_length_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
     int32_t get_integer_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    context::symbol_attributes get_symbol_attributes(
+        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 
-    // Returns true, if this data definition has one of the types, that take expressions consisting of only one symbol
-    // (like V or R)
+    // Returns true, if this data definition has one of the types, that take expressions consisting of only one
+    // symbol (like V or R)
     bool expects_single_symbol() const;
     // Returns true, if data definition does not violate the single symbol rule, if the type requires it.
     bool check_single_symbol_ok(const diagnostic_collector& add_diagnostic) const;

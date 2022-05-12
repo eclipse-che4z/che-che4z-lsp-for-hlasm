@@ -40,7 +40,7 @@ id_index literal_pool::add_literal(const std::string& literal_text,
         return lit;
 
     auto [it, inserted] = m_literals.try_emplace(
-        literal_id { m_current_literal_pool_generation, unique_id, dd }, literal_text, std::move(r), std::move(loctr));
+        literal_id { m_current_literal_pool_generation, unique_id, dd }, literal_text, r, std::move(loctr));
     // even if we end up inserting a duplicate
     // we need to try to insert const expressions::data_definition->iterator relation
     // because a single literal may be referenced by independent data_definitions
@@ -50,6 +50,15 @@ id_index literal_pool::add_literal(const std::string& literal_text,
     {
         m_pending_literals.emplace_back(it);
         it->second.stack = hlasm_ctx.processing_stack();
+    }
+    else if (it->second.ca_expr_only)
+    {
+        m_pending_literals.emplace_back(it);
+        it->second.text = literal_text;
+        it->second.r = r;
+        it->second.loctr = std::move(loctr); // loctr is valid if !inserted
+        it->second.stack = hlasm_ctx.processing_stack();
+        it->second.ca_expr_only = false;
     }
     it->second.align_on_halfword |= align_on_halfword;
 
@@ -66,6 +75,21 @@ id_index literal_pool::get_literal(
     return &it->second->second.text;
 }
 
+bool literal_pool::defined_for_ca_expr(std::shared_ptr<const expressions::data_definition> dd) const
+{
+    if (dd->references_loctr)
+        return false;
+
+    return m_literals.contains(literal_id { current_generation(), 0, std::move(dd) });
+}
+
+void literal_pool::mentioned_in_ca_expr(std::shared_ptr<const expressions::data_definition> dd)
+{
+    if (dd->references_loctr)
+        return;
+
+    m_literals.try_emplace(literal_id { current_generation(), 0, std::move(dd) }, ca_only_literal());
+}
 
 class literal_pool::literal_postponed_statement : public context::postponed_statement,
                                                   public processing::resolved_statement

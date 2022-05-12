@@ -248,7 +248,7 @@ data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr,
 		if (auto& lv = $literal.value; lv)
 			$value = std::move(lv);
 	}
-	| var_symbol DOT?
+	| var_symbol DOT? // in reality, this seems to be much more complicated (arbitrary many dots are consumed for *some* attributes)
 	{
 		$value = std::move($var_symbol.vs);
 	}

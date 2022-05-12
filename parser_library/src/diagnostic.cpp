@@ -19,6 +19,8 @@
 #include <type_traits>
 #include <utility>
 
+#include "utils/utf8text.h"
+
 namespace hlasm_plugin::parser_library {
 
 namespace {
@@ -2528,6 +2530,20 @@ diagnostic_s diagnostic_s::warning_L0005(std::string_view pattern, size_t limit)
 diagnostic_op diagnostic_op::error_S100(std::string_view message, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "S100", concat("Long ordinary symbol name - ", message), range);
+}
+std::string diagnostic_decorate_message(std::string_view field, std::string_view message)
+{
+    static const std::string_view prefix = "While evaluating the result of substitution '";
+    static const std::string_view arrow = "' => ";
+    std::string result;
+    result.reserve(prefix.size() + field.size() + arrow.size() + message.size());
+
+    result.append(prefix);
+    utils::append_utf8_sanitized(result, field);
+    result.append(arrow);
+    result.append(message);
+
+    return result;
 }
 
 } // namespace hlasm_plugin::parser_library

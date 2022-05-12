@@ -39,6 +39,8 @@ class literal_pool
 
         bool is_similar(const literal_id&) const noexcept;
     };
+    struct ca_only_literal
+    {};
     struct literal_details
     {
         std::string text;
@@ -46,6 +48,7 @@ class literal_pool
         std::optional<address> loctr;
         processing_stack_t stack;
         bool align_on_halfword = false;
+        bool ca_expr_only = false;
 
         literal_details(std::string text, range r, std::optional<address> loctr)
             : text(std::move(text))
@@ -58,6 +61,9 @@ class literal_pool
             , r(r)
             , loctr(std::move(loctr))
             , stack(std::move(stack))
+        {}
+        explicit literal_details(ca_only_literal)
+            : ca_expr_only(true)
         {}
     };
     class literal_postponed_statement;
@@ -112,6 +118,9 @@ public:
         bool align_on_halfword);
     id_index get_literal(
         size_t generation, const std::shared_ptr<const expressions::data_definition>& dd, size_t unique_id) const;
+
+    bool defined_for_ca_expr(std::shared_ptr<const expressions::data_definition> dd) const;
+    void mentioned_in_ca_expr(std::shared_ptr<const expressions::data_definition> dd);
 
     void generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using);
     size_t current_generation() const { return m_current_literal_pool_generation; }

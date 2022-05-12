@@ -113,6 +113,12 @@ mach_term returns [mach_expr_ptr m_e]
 			$m_e = std::make_unique<mach_expr_default>(rng);
 	};
 
+literal_reparse returns [literal_si value]
+	: literal_internal EOF
+	{
+		if (auto& v = $literal_internal.value; v.has_value())
+			$value = collector.add_literal($literal_internal.text, std::move(v.value()), provider.get_range($literal_internal.ctx));
+	};
 
 literal returns [literal_si value]
 	: literal_internal

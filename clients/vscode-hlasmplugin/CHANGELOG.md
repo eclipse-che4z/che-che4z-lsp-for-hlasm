@@ -6,7 +6,7 @@
 - Added support for MACHINE assembler option
 
 #### Fixed
-- 
+- Incorrect attribute values generated when literals are substituted in CA expressions
 
 ## [1.2.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.1.0...1.2.0) (2022-05-11)
 
