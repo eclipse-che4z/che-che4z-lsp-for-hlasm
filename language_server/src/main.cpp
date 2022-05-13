@@ -141,7 +141,8 @@ int main(int argc, char** argv)
             }
             catch (const nlohmann::json::exception&)
             {
-                LOG_WARNING("Could not parse received JSON: " + msg.value());
+                LOG_WARNING("Could not parse received JSON: "
+                    + msg.value().dump(-1, ' ', true, nlohmann::detail::error_handler_t::replace));
             }
         }
 

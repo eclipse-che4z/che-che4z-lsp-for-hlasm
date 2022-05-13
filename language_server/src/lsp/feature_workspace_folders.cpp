@@ -123,7 +123,7 @@ void feature_workspace_folders::add_workspace(const std::string& name, const std
 
 void feature_workspace_folders::did_change_watched_files(const json&, const json& params)
 {
-    std::vector<json> changes = params["changes"];
+    std::vector<json> changes(params["changes"]);
     std::vector<std::string> paths;
     for (auto& change : changes)
     {

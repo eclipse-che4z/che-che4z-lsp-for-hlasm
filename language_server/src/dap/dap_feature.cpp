@@ -252,7 +252,7 @@ void dap_feature::on_variables(const json& request_seq, const json& args)
 
     nlohmann::json variables_json = json::array();
 
-    for (auto var : debugger->variables(args["variablesReference"]))
+    for (auto var : debugger->variables(parser_library::var_reference_t(args["variablesReference"])))
     {
         std::string type;
         switch (var.type)
