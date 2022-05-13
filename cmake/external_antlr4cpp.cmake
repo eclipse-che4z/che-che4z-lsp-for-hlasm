@@ -16,7 +16,7 @@ INCLUDE(FetchContent)
 FIND_PACKAGE(Git REQUIRED)
 
 # only JRE required
-FIND_PACKAGE(Java COMPONENTS Runtime REQUIRED)
+FIND_PACKAGE(Java 11 COMPONENTS Runtime REQUIRED)
 
 if(APPLE)
   find_library(COREFOUNDATION_LIBRARY CoreFoundation)
@@ -28,15 +28,10 @@ if(MVN_RETURN MATCHES "MVN_RETURN-NOTFOUND")
     message(FATAL_ERROR "Cannot find mvn. Are you sure maven is installed and in the path?" )
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(UUID REQUIRED uuid)
-endif()
-
 # external repository
 # GIT_REPOSITORY     https://github.com/antlr/antlr4.git
 set(ANTLR4CPP_EXTERNAL_REPO "https://github.com/antlr/antlr4.git")
-set(ANTLR4CPP_EXTERNAL_TAG  "4.7.2")
+set(ANTLR4CPP_EXTERNAL_TAG  "4.10.1")
 set(ANTLR_VERSION ${ANTLR4CPP_EXTERNAL_TAG})
 
 FetchContent_Declare(
@@ -54,6 +49,7 @@ FetchContent_GetProperties(antlr4cpp)
 function(add_antlr4)
     set(PROJECT_SOURCE_DIR ${antlr4cpp_SOURCE_DIR}/runtime/Cpp)
     set(LIB_OUTPUT_DIR ${CMAKE_BINARY_DIR}/bin)
+    set(ANTLR_BUILD_CPP_TESTS Off)
     add_subdirectory(${antlr4cpp_SOURCE_DIR}/runtime/Cpp/runtime ${antlr4cpp_BINARY_DIR} EXCLUDE_FROM_ALL)
 
     target_include_directories(antlr4_shared INTERFACE ${antlr4cpp_SOURCE_DIR}/runtime/Cpp/runtime/src)

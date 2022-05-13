@@ -65,6 +65,10 @@ deferred_operand_rules;
 	#endif
 }
 
+@members {
+	using parser_impl::initialize;
+}
+
 @footer 
 {
 	#ifdef _MSC_VER

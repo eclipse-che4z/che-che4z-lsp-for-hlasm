@@ -30,7 +30,7 @@ class input_source final : public antlr4::ANTLRInputStream
 public:
     input_source(const std::string& input);
 
-    void append(const UTF32String& str);
+    void append(const std::u32string& str);
     void append(std::string_view str);
     using antlr4::ANTLRInputStream::reset;
     void reset(std::string_view str);

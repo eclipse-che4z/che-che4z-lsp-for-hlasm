@@ -66,7 +66,7 @@ public:
 
     std::string getSourceName() override;
 
-    Ref<antlr4::TokenFactory<antlr4::CommonToken>> getTokenFactory() override { return dummy_factory; };
+    antlr4::TokenFactory<antlr4::CommonToken>* getTokenFactory() override { return dummy_factory.get(); };
 
     enum Tokens
     {

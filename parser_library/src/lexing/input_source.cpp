@@ -27,7 +27,7 @@ input_source::input_source(const std::string& input)
 {}
 
 namespace {
-void append_utf8_to_utf32(UTF32String& t, std::string_view s)
+void append_utf8_to_utf32(std::u32string& t, std::string_view s)
 {
     while (!s.empty())
     {
@@ -41,7 +41,7 @@ void append_utf8_to_utf32(UTF32String& t, std::string_view s)
         const auto cs = utils::utf8_prefix_sizes[c];
         if (cs.utf8 && cs.utf8 <= s.size())
         {
-            uint32_t v = c & 0b0111'1111u >> cs.utf8;
+            char32_t v = c & 0b0111'1111u >> cs.utf8;
             for (int i = 1; i < cs.utf8; ++i)
                 v = v << 6 | (s[i] & 0b0011'1111u);
             t.append(1, v);
@@ -56,7 +56,7 @@ void append_utf8_to_utf32(UTF32String& t, std::string_view s)
 }
 } // namespace
 
-void input_source::append(const UTF32String& str) { _data.append(str); }
+void input_source::append(const std::u32string& str) { _data.append(str); }
 
 void input_source::append(std::string_view str)
 {
