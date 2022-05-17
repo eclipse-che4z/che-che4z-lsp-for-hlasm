@@ -4,6 +4,7 @@
 
 #### Added
 - Added support for MACHINE assembler option
+- Show hexadecimal offsets and lengths in hover texts
 
 #### Fixed
 - Incorrect attribute values generated when literals are substituted in CA expressions

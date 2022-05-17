@@ -101,23 +101,6 @@ void space::resolve(space_ptr this_space, std::variant<space_ptr, address> value
 
 bool space::resolved() const { return resolved_; }
 
-std::string address::to_string() const
-{
-    std::stringstream ss;
-    for (const auto& b : bases_)
-    {
-        if (*b.first.owner->name == "" || b.second == 0)
-            continue;
-        if (b.second > 1)
-            ss << b.second << "*";
-        if (b.first.qualifier)
-            ss << *b.first.qualifier << ".";
-        ss << *b.first.owner->name << " + ";
-    }
-    ss << std::to_string(offset());
-    return ss.str();
-}
-
 const std::vector<address::base_entry>& address::bases() const { return bases_; }
 
 std::vector<address::base_entry>& address::bases() { return bases_; }

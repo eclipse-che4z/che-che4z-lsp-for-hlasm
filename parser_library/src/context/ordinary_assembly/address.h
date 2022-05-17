@@ -47,8 +47,6 @@ struct address
         friend bool operator==(const base&, const base&) = default;
     };
 
-    std::string to_string() const;
-
     using space_entry = std::pair<space_ptr, int>;
     using base_entry = std::pair<base, int>;
 
