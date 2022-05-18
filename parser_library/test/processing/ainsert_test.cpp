@@ -320,7 +320,6 @@ TEST(ainsert, grammar_unknown_label)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), (size_t)8);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E010", "E076", "E010", "E076", "E010", "E076", "E010", "E076" }));
 }
 
@@ -340,7 +339,6 @@ TEST(ainsert, grammar_unknown_variable)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), (size_t)2);
     EXPECT_TRUE(matches_message_codes(a.diags(),
         {
             "E010",
@@ -372,7 +370,6 @@ TEST(ainsert, grammar_invalid_string)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), (size_t)6);
     EXPECT_TRUE(matches_message_codes(a.diags(),
         {
             "E022",
@@ -384,7 +381,12 @@ TEST(ainsert, grammar_invalid_string)
         }));
 }
 
-TEST(ainsert, grammar_non_matching_apostrophes_by_two)
+/*
+Original valid strings:
+    AINSERT '&&C    SETC ''C''''''.''&&SYSLIST(N''&&SYSLIST)''(1,1).'''x
+               '''''''''',BACK
+*/
+TEST(ainsert, grammar_non_matching_apostrophes_by_two_01)
 {
     std::string input = R"(
     MACRO
@@ -392,33 +394,53 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_two)
 
     AINSERT '       MACRO',BACK
     AINSERT '       MAC_GEN',BACK
-    AINSERT '&&C1   SETC ''C''''''.''&&SYSLIST(N''&&SYSLIST)''(1,1).'''x
+    AINSERT '&&C    SETC ''C''''''.''&&SYSLIST(N''&&SYSLIST)''(1,1).'''x
                '''''''',BACK
     AINSERT '       MEND',BACK
 
-    AINSERT '&&C2   SETC ''C''''''.''&SYSLIST(N''&SYSLIST)''(1,1).'''''x
+    MEND
+    
+    MAC 1,2,3,4,5
+    MAC_GEN 6,7,8,9
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E022" }));
+}
+
+/*
+Original valid strings:
+    AINSERT '&&C    SETC  ''C''''''.''&SYSLIST(N'&SYSLIST)''(1,1).'''''x
+               '''''''',BACK
+*/
+TEST(ainsert, grammar_non_matching_apostrophes_by_two_02)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+
+    AINSERT '&&C    SETC  ''C''''''.''&SYSLIST(N'&SYSLIST)''(1,1).'''''x
                '''''',BACK
     
     MEND
     
     MAC 1,2,3,4,5
-    MAC_GEN 6,7,8,9
 )";
 
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), (size_t)4);
-    EXPECT_TRUE(matches_message_codes(a.diags(),
-        {
-            "E022",
-            "E022",
-            "E076",
-            "E076",
-        }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E022" }));
 }
 
-TEST(ainsert, grammar_non_matching_apostrophes_by_one)
+/*
+Original valid strings:
+    AINSERT '&&C    SETC ''C''''''.''&&SYSLIST(N''&&SYSLIST)''(1,1).'''x
+               '''''''''',BACK
+*/
+TEST(ainsert, grammar_non_matching_apostrophes_by_one_01)
 {
     std::string input = R"(
     MACRO
@@ -426,12 +448,9 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_one)
 
     AINSERT '       MACRO',BACK
     AINSERT '       MAC_GEN',BACK
-    AINSERT '&&C1   SETC '''C''''''.''&&SYSLIST(N''&&SYSLIST)''(1,1).''x
-               ''''''''',BACK
+    AINSERT '&&C    SETC ''C''''''.''&&SYSLIST(N''&&SYSLIST)''(1,1).'''x
+               ''''''''''',BACK
     AINSERT '       MEND',BACK
-
-    AINSERT '&&C2   SETC '''C''''''.''&SYSLIST(N''&SYSLIST)''(1,1).''''x
-               ''''''',BACK
 
     MEND
     
@@ -443,16 +462,31 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_one)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(),
-        {
-            "S0002",
-            "S0002",
-            "S0003",
-            "S0003",
-            "A011",
-            "E076",
-            "E076",
-            "S0003",
-            "A011",
-        }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A011", "S0002", "S0005" }));
+}
+
+/*
+Original valid strings:
+    AINSERT '&&C    SETC  ''C''''''.''&SYSLIST(N'&SYSLIST)''(1,1).'''''x
+               '''''''',BACK
+*/
+TEST(ainsert, grammar_non_matching_apostrophes_by_one_02)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+
+    AINSERT '&&C    SETC  ''C''''''.''&SYSLIST(N'&SYSLIST)''(1,1).'''''x
+               ''''''''',BACK
+
+    MEND
+    
+    MAC 1,2,3,4,5
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0003", "A011", "E076", "E076" }));
 }
