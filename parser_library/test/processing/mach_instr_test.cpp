@@ -26,7 +26,7 @@ TEST(mach_instr_processing, reloc_imm_expected)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M113" }));
 }
 
@@ -86,7 +86,7 @@ TEST(mach_instr_processing, vec_reg_expected)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M114" }));
 }
 TEST(mach_instr_processing, reloc_symbol_expected)
@@ -112,7 +112,7 @@ TEST(mach_instr_processing, setc_variable_mnemonic_reloc_operand)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(mach_instr_processing, setc_variable_reloc_operand)
@@ -128,7 +128,7 @@ TEST CSECT
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(mach_instr_processing, setc_variable_reloc_symbol_expected_warn)
@@ -160,7 +160,7 @@ LABEL   BRAS  0,*+12
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(mach_instr_processing, reloc_parsed_in_macro_with_immValue)

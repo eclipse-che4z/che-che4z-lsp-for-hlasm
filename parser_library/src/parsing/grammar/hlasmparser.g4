@@ -247,8 +247,6 @@ apostrophe
 	: APOSTROPHE;
 attr
 	: ATTR {collector.add_hl_symbol(token_info(provider.get_range( $ATTR),hl_scopes::operator_symbol)); };
-apostrophe_as_attr
-	: APOSTROPHE {collector.add_hl_symbol(token_info(provider.get_range($APOSTROPHE),hl_scopes::operator_symbol)); };
 lpar
 	: LPAR { collector.add_hl_symbol(token_info(provider.get_range( $LPAR),hl_scopes::operator_symbol)); };
 rpar 

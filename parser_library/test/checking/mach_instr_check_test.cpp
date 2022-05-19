@@ -105,7 +105,7 @@ TEST(machine_instr_check_test, second_par_omitted)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M004");
 }
@@ -119,7 +119,7 @@ TEST(machine_instr_check_test, displ_unsigned_size)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M130");
 }
@@ -133,7 +133,7 @@ TEST(machine_instr_check_test, displ_signed_size)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
@@ -146,7 +146,7 @@ TEST(machine_instr_check_test, displ_signed_err)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M130");
 }
@@ -160,7 +160,7 @@ TEST(machine_instr_check_test, db_incorrect_format)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M104");
 }
@@ -174,7 +174,7 @@ TEST(machine_instr_check_test, db_not_corresponding)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M131");
 }
@@ -188,7 +188,7 @@ TEST(machine_instr_check_test, dxb_second_par_incorrect)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M131");
 }
@@ -202,7 +202,7 @@ TEST(machine_instr_check_test, length_not_corresponding)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M132");
 }
@@ -216,7 +216,7 @@ TEST(machine_instr_check_test, dis_reg_not_corresponding)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M135");
 }
@@ -230,7 +230,7 @@ TEST(machine_instr_check_test, reg_not_corresponding)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M133");
 }
@@ -244,7 +244,7 @@ TEST(machine_instr_check_test, vec_reg_not_corresponding)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M134");
 }
@@ -258,7 +258,7 @@ TEST(machine_instr_check_test, displ_as_simple_unsigned)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M130");
 }
@@ -272,7 +272,7 @@ TEST(machine_instr_check_test, displ_as_simple_signed_correct)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
@@ -285,7 +285,7 @@ TEST(machine_instr_check_test, displ_as_simple_signed_err)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M130");
 }
@@ -299,7 +299,7 @@ TEST(machine_instr_check_test, immS_out_of_range)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M122");
 }
@@ -315,7 +315,7 @@ DISP     MVC  0(1),1
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M123");
 }
@@ -331,7 +331,7 @@ DISP     MVC 0(1),1
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
@@ -344,7 +344,7 @@ TEST(machine_instr_check_test, mask_out_of_range)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M121");
 }
@@ -358,7 +358,7 @@ TEST(machine_instr_check_test, immU_out_of_range)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M122");
 }
@@ -372,7 +372,7 @@ TEST(machine_instr_check_test, vecReg_out_of_range)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M124");
 }
@@ -386,7 +386,7 @@ TEST(machine_instr_check_test, mask_expected)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M111");
 }
@@ -400,7 +400,7 @@ TEST(machine_instr_check_test, imm_expected)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M112");
 }
@@ -414,6 +414,6 @@ TEST(machine_instr_check_test, vec_reg_limits)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }

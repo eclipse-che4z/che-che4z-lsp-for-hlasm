@@ -399,7 +399,7 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_two_01)
     AINSERT '       MEND',BACK
 
     MEND
-    
+
     MAC 1,2,3,4,5
     MAC_GEN 6,7,8,9
 )";
@@ -425,7 +425,7 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_two_02)
                '''''',BACK
     
     MEND
-    
+
     MAC 1,2,3,4,5
 )";
 
@@ -453,7 +453,7 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_one_01)
     AINSERT '       MEND',BACK
 
     MEND
-    
+
     MAC 1,2,3,4,5
     MAC_GEN 6,7,8,9
 )";
@@ -480,7 +480,7 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_one_02)
                ''''''''',BACK
 
     MEND
-    
+
     MAC 1,2,3,4,5
 )";
 

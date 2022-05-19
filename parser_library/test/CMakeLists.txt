@@ -14,6 +14,7 @@ add_executable(library_test)
 
 target_sources(library_test PRIVATE
 	aread_time_test.cpp
+	common_testing.cpp
 	common_testing.h
 	diagnosable_ctx_test.cpp
 	diagnostics_check_test.cpp

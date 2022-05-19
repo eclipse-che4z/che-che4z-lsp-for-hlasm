@@ -68,7 +68,8 @@ void iterate_error_stream(antlr4::TokenStream* input_stream,
     bool& sign_preceding,
     bool& unexpected_sign,
     bool& odd_apostrophes,
-    bool& ampersand_followed)
+    bool& ampersand_followed,
+    bool& attr_last)
 {
     int parenthesis = 0;
     int apostrophes = 0;
@@ -96,7 +97,12 @@ void iterate_error_stream(antlr4::TokenStream* input_stream,
             if (is_comparative_sign(type))
                 unexpected_sign = true;
             if (type == APOSTROPHE)
+            {
                 apostrophes++;
+                attr_last = false;
+            }
+            if (type == ATTR)
+                attr_last = true;
         }
         // if there is right bracket preceding left bracket
         if (parenthesis > 0)
@@ -130,7 +136,29 @@ void parser_error_listener_base::syntaxError(
         auto start_token = excp.getStartToken();
         int start_index = (int)start_token->getTokenIndex();
 
+        auto alternate_start_index = [](auto ctx) {
+            while (ctx)
+            {
+                auto first = ctx->getStart();
+                if (!first)
+                    break;
+
+                if (first->getType() == antlr4::Token::EOF)
+                {
+                    ctx = dynamic_cast<const antlr4::ParserRuleContext*>(ctx->parent);
+                    continue;
+                }
+                return (int)first->getTokenIndex();
+            }
+            return -1;
+        }(dynamic_cast<const antlr4::ParserRuleContext*>(excp.getCtx()));
+
         // find first eoln
+
+        if (alternate_start_index != -1 && alternate_start_index < start_index)
+        {
+            start_index = alternate_start_index;
+        }
 
         auto first_symbol_type = input_stream->get(start_index)->getType();
 
@@ -159,6 +187,7 @@ void parser_error_listener_base::syntaxError(
         bool unexpected_sign = false;
         bool odd_apostrophes = false;
         bool ampersand_followed = true;
+        bool attr_last = false;
 
         iterate_error_stream(input_stream,
             start_index,
@@ -170,7 +199,8 @@ void parser_error_listener_base::syntaxError(
             sign_preceding,
             unexpected_sign,
             odd_apostrophes,
-            ampersand_followed);
+            ampersand_followed,
+            attr_last);
 
         // right paranthesis has no left match
         if (right_prec)
@@ -224,6 +254,9 @@ void parser_error_listener_base::syntaxError(
                 diagnostic_severity::error,
                 "S0004",
                 "Unfinished statement, the label cannot be alone on a line");
+        else if (attr_last && is_expected(APOSTROPHE, expected_tokens))
+            add_parser_diagnostic(
+                range(position(line, char_pos_in_line)), diagnostic_severity::error, "S0005", "Expected an apostrophe");
         // other undeclared errors
         else
             add_parser_diagnostic(

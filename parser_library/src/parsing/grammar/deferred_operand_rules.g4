@@ -30,7 +30,34 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 	| dot
 	| lpar
 	| rpar
-	| attr
+	| ap1=ATTR
+	{disable_ca_string();}
+	(
+		(
+			(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)
+			|
+			(
+				{std::string name;}
+				AMPERSAND
+				ORDSYMBOL {name += $ORDSYMBOL->getText();}
+				(ORDSYMBOL {name += $ORDSYMBOL->getText();}|NUM {name += $NUM->getText();})*
+				{
+					auto r = provider.get_range($AMPERSAND,_input->LT(-1));
+					$vs.push_back(std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add(std::move(name)), std::vector<ca_expr_ptr>(), r));
+					collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
+				}
+			)
+			|
+			l_sp_ch_v
+		)*
+		ap2=(APOSTROPHE|ATTR)
+		{
+			collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string));
+		}
+		|
+		{collector.add_hl_symbol(token_info(provider.get_range($ap1),hl_scopes::operator_symbol)); }
+	)
+	{enable_ca_string();}
 	|
 	ap1=APOSTROPHE
 	{disable_ca_string();}

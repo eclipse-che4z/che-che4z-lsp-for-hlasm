@@ -16,6 +16,7 @@
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
+#include "hlasmparser.h"
 
 // tests for lookahead feature:
 // forward/backward jums
@@ -55,7 +56,7 @@ TEST(lookahead, forward_jump_to_continued)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     EXPECT_FALSE(a.hlasm_ctx().get_var_sym(a.hlasm_ctx().ids().add("bad")));
     EXPECT_TRUE(a.hlasm_ctx().get_var_sym(a.hlasm_ctx().ids().add("good")));
@@ -78,7 +79,7 @@ TEST(lookahead, forward_jump_from_continued)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     EXPECT_FALSE(a.hlasm_ctx().get_var_sym(a.hlasm_ctx().ids().add("bad")));
     EXPECT_TRUE(a.hlasm_ctx().get_var_sym(a.hlasm_ctx().ids().add("good")));
@@ -101,7 +102,7 @@ tr9023-22
     auto id = a.hlasm_ctx().ids().add("new");
     auto var = a.hlasm_ctx().get_var_sym(id);
     EXPECT_FALSE(var);
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 }
 
 TEST(lookahead, forward_jump_fail)

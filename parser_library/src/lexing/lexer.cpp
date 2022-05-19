@@ -460,12 +460,10 @@ bool lexer::is_ord_char() const { return ord_char(input_state_->c); }
 
 bool lexer::is_space() const { return input_state_->c == ' ' || input_state_->c == '\n' || input_state_->c == '\r'; }
 
-bool lexer::is_consuming_data_attribute() const
+bool is_data_attribute(char_t c)
 {
-    // Although there are more data attributes (N, K, D), only these 5 consume the apostrophe right away, so that it
-    // cannot denote the beginning of string
-    auto tmp = std::toupper(input_state_->c);
-    return tmp == 'O' || tmp == 'S' || tmp == 'I' || tmp == 'L' || tmp == 'T';
+    auto tmp = std::toupper(c);
+    return tmp == 'O' || tmp == 'S' || tmp == 'I' || tmp == 'L' || tmp == 'T' || tmp == 'N' || tmp == 'K' || tmp == 'D';
 }
 
 void lexer::lex_word()
@@ -475,14 +473,18 @@ void lexer::lex_word()
     bool num = (input_state_->c >= '0' && input_state_->c <= '9');
     size_t last_part_ord_len = 0;
     size_t w_len = 0;
+    bool last_ord = true;
     while (!is_space() && !eof() && !identifier_divider() && before_end())
     {
         bool curr_ord = is_ord_char();
+        if (!last_ord && curr_ord)
+            break;
+
         last_part_ord_len = curr_ord ? last_part_ord_len + 1 : 0;
         ord &= curr_ord;
 
         num &= (input_state_->c >= '0' && input_state_->c <= '9');
-        last_char_data_attr = is_consuming_data_attribute();
+        last_char_data_attr = is_data_attribute(input_state_->c) && w_len == 0;
 
         if (creating_var_symbol_ && !ord && w_len > 0 && w_len <= 63)
         {
@@ -492,6 +494,7 @@ void lexer::lex_word()
 
         consume();
         ++w_len;
+        last_ord = curr_ord;
     }
 
     bool var_sym_tmp = creating_var_symbol_;

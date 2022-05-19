@@ -34,7 +34,7 @@ LABEL EQU *+2
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
@@ -60,7 +60,7 @@ TEST(diagnostics, string_substitution)
 
     a.collect_diags();
 
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
@@ -87,7 +87,7 @@ TEST(diagnostics, division_by_zero) // test ok
 
     a.collect_diags();
 
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
@@ -108,7 +108,7 @@ TEST(diagnostics, instr_zero_op) // test ok
 
     a.collect_diags();
 
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
@@ -131,7 +131,7 @@ TEST(diagnostics, unkown_symbols) // to do? number of errors?
 
         a.collect_diags();
 
-        ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+        ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
 
         ASSERT_EQ(a.diags().size(), (size_t)0);
 }*/
@@ -152,7 +152,7 @@ TEST(diagnostics, case_insensitivity)
 
     a.collect_diags();
 
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
@@ -173,7 +173,7 @@ TEST(diagnostics, machine)
 
     a.collect_diags();
 
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
@@ -236,7 +236,7 @@ LABEL2 equ *+79000
 
     a.collect_diags();
 
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
@@ -292,7 +292,7 @@ label1 RSECT
 
     a.collect_diags();
 
-    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
 }

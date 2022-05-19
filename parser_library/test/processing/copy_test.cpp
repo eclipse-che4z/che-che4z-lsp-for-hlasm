@@ -448,7 +448,7 @@ TEST(copy, inner_copy_jump)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 }
 
 TEST(copy, jump_from_copy_fail)
@@ -466,7 +466,7 @@ TEST(copy, jump_from_copy_fail)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)2);
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     EXPECT_EQ(a.diags()[1].diag_range.start.line, (size_t)2);
     EXPECT_EQ(a.diags()[1].file_name, "COPYJF");
@@ -501,7 +501,7 @@ TEST(copy, jump_in_macro_from_copy_fail)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)2);
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)1);
     EXPECT_EQ(a.diags()[0].file_name, "COPYJF");
@@ -533,7 +533,7 @@ TEST(copy, macro_nested_diagnostics)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
     EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)4);
     EXPECT_EQ(a.diags()[0].file_name, "COPYND2");
@@ -563,7 +563,7 @@ TEST(copy, copy_call_with_jump_before_comment)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 }
 
 TEST(copy, copy_empty_file)

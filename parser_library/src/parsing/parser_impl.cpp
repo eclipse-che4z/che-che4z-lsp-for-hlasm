@@ -82,13 +82,6 @@ bool parser_impl::is_self_def()
     return tmp == "B" || tmp == "X" || tmp == "C" || tmp == "G";
 }
 
-bool parser_impl::is_data_attr()
-{
-    std::string tmp(_input->LT(1)->getText());
-    context::to_upper(tmp);
-    return tmp == "D" || tmp == "O" || tmp == "N" || tmp == "S" || tmp == "K" || tmp == "I" || tmp == "L" || tmp == "T";
-}
-
 bool parser_impl::is_var_def()
 {
     auto [_, opcode] = *proc_status;
@@ -225,7 +218,7 @@ bool parser_impl::is_previous_attribute_consuming(bool top_level, const antlr4::
         return false;
 
     auto text = token->getText();
-    if (text.empty() || text.size() >= 2 && std::isalpha((unsigned char)text[text.size() - 2]))
+    if (text.size() != 1)
         return false;
 
     auto tmp = std::toupper((unsigned char)text.back());

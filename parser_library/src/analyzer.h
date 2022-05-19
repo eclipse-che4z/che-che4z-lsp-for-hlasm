@@ -21,7 +21,6 @@
 #include "analyzing_context.h"
 #include "context/hlasm_context.h"
 #include "diagnosable_ctx.h"
-#include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "lsp/lsp_context.h"
 #include "parsing/parser_error_listener.h"
@@ -29,6 +28,10 @@
 #include "processing/processing_manager.h"
 #include "virtual_file_monitor.h"
 #include "workspaces/parse_lib_provider.h"
+
+namespace hlasm_plugin::parser_library::parsing {
+class hlasmparser;
+} // namespace hlasm_plugin::parser_library::parsing
 
 namespace hlasm_plugin::parser_library {
 
@@ -139,6 +142,7 @@ public:
     void register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer);
 
     parsing::hlasmparser& parser(); // for testing only
+    size_t debug_syntax_errors(); // for testing only
 };
 
 } // namespace hlasm_plugin::parser_library

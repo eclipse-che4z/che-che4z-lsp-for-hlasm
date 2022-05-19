@@ -194,7 +194,6 @@ mac_entry [bool top_level = true] returns [concat_chain chain]
 		ap1=ATTR
 		{
 			$chain.push_back(std::make_unique<char_str_conc>("'", provider.get_range($ap1)));
-			bool attribute = true;
 		}
 		(
 			{!is_previous_attribute_consuming($top_level, _input->LT(-2))}?
@@ -209,12 +208,12 @@ mac_entry [bool top_level = true] returns [concat_chain chain]
 			{
 				$chain.push_back(std::make_unique<char_str_conc>("'", provider.get_range($ap2)));
 				collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string));
-				attribute = false;
 			}
-		)?
-		{
-			if (attribute)
+			|
+			{is_previous_attribute_consuming($top_level, _input->LT(-2))}?
+			{
 				collector.add_hl_symbol(token_info(provider.get_range($ap1),hl_scopes::operator_symbol));
-		}
+			}
+		)
 	)+
 	;

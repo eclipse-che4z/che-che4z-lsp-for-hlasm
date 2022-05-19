@@ -20,16 +20,13 @@
 #include <utility>
 #include <vector>
 
-#include "antlr4-runtime.h"
 #include "gmock/gmock.h"
 
 #include "analyzer.h"
 #include "ebcdic_encoding.h"
-#include "hlasmparser.h"
 #include "lexing/input_source.h"
 #include "lexing/token_stream.h"
 #include "processing/instruction_sets/macro_processor.h"
-
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
@@ -40,40 +37,10 @@ using namespace hlasm_plugin::parser_library::expressions;
 
 const size_t size_t_zero = static_cast<size_t>(0);
 
-inline std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(
-    hlasm_plugin::parser_library::parsing::hlasmparser& h_parser)
-{
-    h_parser.getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(
-        antlr4::atn::PredictionMode::SLL); // try with simpler/faster SLL(*)
-    // we don't want error messages or recovery during first try
-    h_parser.removeErrorListeners();
-    h_parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
-    try
-    {
-        auto tree = h_parser.program();
-        // if we get here, there was no syntax error and SLL(*) was enough;
-        // there is no need to try full LL(*)
-        return { true, tree };
-    }
-    catch (antlr4::RuntimeException&)
-    {
-        std::cout << "SLL FAILURE" << std::endl;
-
-        auto tokens = h_parser.getTokenStream();
-        std::cout << tokens->get(tokens->index())->getLine() << std::endl;
-        // The BailErrorStrategy wraps the RecognitionExceptions in
-        // RuntimeExceptions so we have to make sure we're detecting
-        // a true RecognitionException not some other kind
-        dynamic_cast<antlr4::BufferedTokenStream*>(tokens)->reset(); // rewind input stream
-        // back to standard listeners/handlers
-        h_parser.addErrorListener(&antlr4::ConsoleErrorListener::INSTANCE);
-        h_parser.setErrorHandler(std::make_shared<antlr4::DefaultErrorStrategy>());
-        h_parser.getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(
-            antlr4::atn::PredictionMode::LL); // try full LL(*)
-        auto tree = h_parser.program();
-        return { false, tree };
-    }
-}
+namespace antlr4 {
+class ParserRuleContext;
+} // namespace antlr4
+std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_library::parsing::hlasmparser& h_parser);
 
 template<typename T>
 std::optional<T> get_var_value(hlasm_context& ctx, std::string name)

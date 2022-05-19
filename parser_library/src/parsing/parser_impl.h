@@ -104,7 +104,6 @@ protected:
     void enable_continuation();
     void disable_continuation();
     bool is_self_def();
-    bool is_data_attr();
     bool is_var_def();
 
     bool allow_ca_string() const { return ca_string_enabled; }

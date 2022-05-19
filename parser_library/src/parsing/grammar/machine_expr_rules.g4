@@ -68,37 +68,40 @@ mach_term returns [mach_expr_ptr m_e]
 	{
 		$m_e = std::make_unique<mach_expr_location_counter>( provider.get_range( $mach_location_counter.ctx));
 	}
-	| {is_data_attr()}? mach_data_attribute
-	{
-		auto rng = provider.get_range($mach_data_attribute.ctx);
-		auto attr = $mach_data_attribute.attribute;
-		if(attr == data_attr_kind::UNKNOWN)
-			$m_e = std::make_unique<mach_expr_default>(rng);
-		else
-			$m_e = std::visit([rng, attr, symbol_rng = $mach_data_attribute.symbol_rng](auto& arg) -> mach_expr_ptr {
-				if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,std::monostate>) {
-					return std::make_unique<mach_expr_default>(rng);
-				}
-				else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,int>) {
-					return std::make_unique<mach_expr_constant>(arg, symbol_rng);
-				}
-				else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,std::unique_ptr<mach_expr_literal>>) {
-					return std::make_unique<mach_expr_data_attr_literal>(std::move(arg), attr, rng, symbol_rng);
-				}
-				else {
-					return std::make_unique<mach_expr_data_attr>(arg.first, arg.second, attr, rng, symbol_rng);
-				}
-			}, $mach_data_attribute.data);
-	}
-	| self_def_term
-	{
-		$m_e = std::make_unique<mach_expr_constant>($self_def_term.value, provider.get_range( $self_def_term.ctx));
-	}
-	| id
-	{
-		collector.add_hl_symbol(token_info(provider.get_range( $id.ctx),hl_scopes::ordinary_symbol));
-		$m_e = std::make_unique<mach_expr_symbol>($id.name, $id.using_qualifier, provider.get_range( $id.ctx));
-	}
+	|
+	(
+		mach_data_attribute
+		{
+			auto rng = provider.get_range($mach_data_attribute.ctx);
+			auto attr = $mach_data_attribute.attribute;
+			if(attr == data_attr_kind::UNKNOWN)
+				$m_e = std::make_unique<mach_expr_default>(rng);
+			else
+				$m_e = std::visit([rng, attr, symbol_rng = $mach_data_attribute.symbol_rng](auto& arg) -> mach_expr_ptr {
+					if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,std::monostate>) {
+						return std::make_unique<mach_expr_default>(rng);
+					}
+					else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,int>) {
+						return std::make_unique<mach_expr_constant>(arg, symbol_rng);
+					}
+					else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,std::unique_ptr<mach_expr_literal>>) {
+						return std::make_unique<mach_expr_data_attr_literal>(std::move(arg), attr, rng, symbol_rng);
+					}
+					else {
+						return std::make_unique<mach_expr_data_attr>(arg.first, arg.second, attr, rng, symbol_rng);
+					}
+				}, $mach_data_attribute.data);
+		}
+		| self_def_term
+		{
+			$m_e = std::make_unique<mach_expr_constant>($self_def_term.value, provider.get_range( $self_def_term.ctx));
+		}
+		| id
+		{
+			collector.add_hl_symbol(token_info(provider.get_range( $id.ctx),hl_scopes::ordinary_symbol));
+			$m_e = std::make_unique<mach_expr_symbol>($id.name, $id.using_qualifier, provider.get_range( $id.ctx));
+		}
+	)
 	| signed_num
 	{
 		collector.add_hl_symbol(token_info(provider.get_range( $signed_num.ctx),hl_scopes::number));
@@ -142,7 +145,7 @@ literal_internal returns [std::optional<data_definition> value]
 	};
 
 mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monostate, std::pair<id_index,id_index>, std::unique_ptr<mach_expr_literal>, int> data, range symbol_rng]
-	: ORDSYMBOL (attr|apostrophe_as_attr) {auto lit_restore = enable_literals();}
+	: ORDSYMBOL attr {auto lit_restore = enable_literals();}
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::data_attr_type));
 		$attribute = get_attribute($ORDSYMBOL->getText());

@@ -54,7 +54,7 @@ TEST_F(library_test, simple)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
 }
 
 // 5 instruction statements that have 1,1,1,2 and 4 operands respectively
@@ -68,7 +68,7 @@ TEST_F(library_test, operand)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
 }
 
 // 3 alternative forms of instructions
@@ -80,7 +80,7 @@ TEST_F(library_test, continuation)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
 }
 
 // finding 3 variable symbols in model statement
@@ -93,7 +93,7 @@ TEST_F(library_test, model_statement)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
 }
 
 // simply parse correctly
@@ -107,7 +107,7 @@ TEST_F(library_test, comment)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
 }
 
 // simply parse correctly
@@ -131,7 +131,7 @@ TEST_F(library_test, long_macro)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
 }
 
 TEST_F(library_test, process_statement)
@@ -144,7 +144,7 @@ TEST_F(library_test, process_statement)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
 }
 
 TEST_F(library_test, macro_model)
@@ -157,5 +157,5 @@ TEST_F(library_test, macro_model)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
 }
