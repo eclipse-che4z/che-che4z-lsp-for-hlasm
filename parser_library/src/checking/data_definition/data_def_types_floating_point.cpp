@@ -49,7 +49,7 @@ std::map<char, std::set<std::string>> allowed_round_modes = {
 class E_D_L_number_spec
 {
 public:
-    static bool is_end_char(char c) { return c == ',' || c == 'E' || c == 'R'; }
+    static bool is_end_char(char c) { return c == ',' || c == 'E' || c == 'e' || c == 'R' || c == 'r'; }
 
     static bool is_sign_char(char c) { return c == '+' || c == '-'; }
 };
@@ -82,7 +82,7 @@ bool data_def_type_E_D_L::check(
         }
 
         // After E comes exponent
-        if (nom[i] == 'E')
+        if (nom[i] == 'E' || nom[i] == 'e')
         {
             if (!check_exponent(nom, i))
             {
@@ -94,7 +94,7 @@ bool data_def_type_E_D_L::check(
         }
 
         // After R comes rounding mode
-        if (nom[i] == 'R')
+        if (nom[i] == 'R' || nom[i] == 'r')
         {
             ++i;
             std::string round_mode_s;

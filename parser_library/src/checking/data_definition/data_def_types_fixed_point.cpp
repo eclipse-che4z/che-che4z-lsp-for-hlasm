@@ -39,9 +39,9 @@ data_def_type_H_F_FD::data_def_type_H_F_FD(char type, char extension, uint8_t wo
 class H_F_FD_number_spec
 {
 public:
-    static bool is_end_char(char c) { return c == ',' || c == 'E'; }
+    static bool is_end_char(char c) { return c == ',' || c == 'E' || c == 'e'; }
 
-    static bool is_sign_char(char c) { return c == 'U' || c == '+' || c == '-'; }
+    static bool is_sign_char(char c) { return c == 'U' || c == 'u' || c == '+' || c == '-'; }
 };
 
 bool data_def_type_H_F_FD::check(
@@ -68,7 +68,7 @@ bool data_def_type_H_F_FD::check(
         if (i >= nom.size())
             return true;
         // check exponent
-        if (nom[i] == 'E')
+        if (nom[i] == 'E' || nom[i] == 'e')
         {
             if (!check_exponent(nom, i))
             {

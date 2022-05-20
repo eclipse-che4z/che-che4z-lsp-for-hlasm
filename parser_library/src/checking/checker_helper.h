@@ -202,7 +202,7 @@ inline bool check_number(const std::string& nominal, size_t& i)
 // character.
 inline bool check_exponent(const std::string& nominal, size_t& i)
 {
-    assert(nominal[i] == 'E');
+    assert(nominal[i] == 'E' || nominal[i] == 'e');
     ++i;
     if (i < nominal.size() && is_sign(nominal[i]))
         ++i;

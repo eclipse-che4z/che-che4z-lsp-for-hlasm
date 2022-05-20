@@ -431,6 +431,18 @@ TEST(data_def_checker, FD_correct)
     ASSERT_EQ(col.diags().size(), (size_t)0);
 }
 
+TEST(data_def_checker, FD_correct_case_insensitive)
+{
+    data_def_type_FD t;
+
+    data_definition_operand op = setup_data_def_op('F', 'D', "u1.23e3");
+
+    diag_collector col;
+    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+    ASSERT_EQ(col.diags().size(), (size_t)0);
+}
+
 TEST(data_def_checker, H_correct)
 {
     data_def_type_H t;
@@ -815,6 +827,18 @@ TEST(data_def_checker, L_invalid_round_mode)
 
     ASSERT_EQ(col.diags().size(), (size_t)1);
     EXPECT_EQ(col.diags()[0].code, "D026");
+}
+
+TEST(data_def_checker, LB_correct_case_insensitive)
+{
+    data_def_type_LB t;
+
+    data_definition_operand op = setup_data_def_op('L', 'B', "456e10r5");
+
+    diag_collector col;
+    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+    ASSERT_EQ(col.diags().size(), (size_t)0);
 }
 
 TEST(data_def_checker, LD_invalid_round_mode)
