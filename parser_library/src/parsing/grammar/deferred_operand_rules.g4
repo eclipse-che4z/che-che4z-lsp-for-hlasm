@@ -31,8 +31,9 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 	| lpar
 	| rpar
 	| ap1=ATTR
-	{disable_ca_string();}
 	(
+		{!is_previous_attribute_consuming(true, _input->LT(-2))}?
+		{disable_ca_string();}
 		(
 			(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)
 			|
@@ -54,10 +55,10 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 		{
 			collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string));
 		}
+		{enable_ca_string();}
 		|
 		{collector.add_hl_symbol(token_info(provider.get_range($ap1),hl_scopes::operator_symbol)); }
 	)
-	{enable_ca_string();}
 	|
 	ap1=APOSTROPHE
 	{disable_ca_string();}

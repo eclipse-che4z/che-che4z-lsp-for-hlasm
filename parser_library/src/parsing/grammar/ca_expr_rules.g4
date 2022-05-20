@@ -20,16 +20,28 @@ expr returns [ca_expr_ptr ca_expr]
 	{
 		$ca_expr = std::move($begin.ca_expr);
 	} 
-	((plus|minus) next=expr_s
-	{
-		auto r = provider.get_range($begin.ctx->getStart(), $next.ctx->getStop());
-		if ($plus.ctx)
-			$ca_expr = std::make_unique<ca_basic_binary_operator<ca_add>>(std::move($ca_expr), std::move($next.ca_expr), r);
-		else
-			$ca_expr = std::make_unique<ca_basic_binary_operator<ca_sub>>(std::move($ca_expr), std::move($next.ca_expr), r);
-		$plus.ctx = nullptr;
-	}
-	)*;
+	(
+		(
+			(plus|minus) next=expr_s
+			{
+				auto r = provider.get_range($begin.ctx->getStart(), $next.ctx->getStop());
+				if ($plus.ctx)
+					$ca_expr = std::make_unique<ca_basic_binary_operator<ca_add>>(std::move($ca_expr), std::move($next.ca_expr), r);
+				else
+					$ca_expr = std::make_unique<ca_basic_binary_operator<ca_sub>>(std::move($ca_expr), std::move($next.ca_expr), r);
+				$plus.ctx = nullptr;
+			}
+		)+
+		|
+		(
+			dot term
+			{
+				auto r = provider.get_range($begin.ctx->getStart(), $term.ctx->getStop());
+				$ca_expr = std::make_unique<ca_basic_binary_operator<ca_conc>>(std::move($ca_expr), std::move($term.ca_expr), r);
+			}
+		)+
+		|
+	);
 	finally
 	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
@@ -331,25 +343,20 @@ substring returns [expressions::ca_string::substring_t value]
 	}
 	|;
 
-ca_string_b returns [ca_expr_ptr ca_expr]
-	: ca_dupl_factor (apostrophe|attr) string_ch_v_c l_apo substring
-	{
-		auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $substring.ctx->getStop());
-		$ca_expr = std::make_unique<expressions::ca_string>(std::move($string_ch_v_c.chain), std::move($ca_dupl_factor.value), std::move($substring.value), r);
-	};
-	finally
-	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
-
 ca_string returns [ca_expr_ptr ca_expr]
-	: ca_string_b
-	{
-		$ca_expr = std::move($ca_string_b.ca_expr);
-	}
-	| tmp=ca_string dot? ca_string_b
-	{
-		auto r = provider.get_range($tmp.ctx->getStart(), $ca_string_b.ctx->getStop());
-		$ca_expr = std::make_unique<ca_basic_binary_operator<ca_conc>>(std::move($tmp.ca_expr), std::move($ca_string_b.ca_expr), r);
-	};
+	:
+	(
+		ca_dupl_factor (apostrophe|attr) string_ch_v_c l_apo substring
+		{
+			auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $substring.ctx->getStop());
+			auto next = std::make_unique<expressions::ca_string>(std::move($string_ch_v_c.chain), std::move($ca_dupl_factor.value), std::move($substring.value), r);
+			auto& ca_expr = $ca_expr;
+			if (!ca_expr)
+				ca_expr = std::move(next);
+			else
+				ca_expr = std::make_unique<ca_basic_binary_operator<ca_conc>>(std::move(ca_expr), std::move(next), provider.get_range($ctx->getStart(), $substring.ctx->getStop()));
+		}
+	)+;
 	finally
 	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 

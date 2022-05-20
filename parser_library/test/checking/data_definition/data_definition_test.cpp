@@ -631,3 +631,24 @@ L   EQU   *
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(data_definition, continued_nominal_value_in_macro)
+{
+    std::string input = R"(
+     MACRO
+     MAC
+LEN  DS   CL120
+X    DC   CL(L'LEN)'                                                   X
+               AAA'
+TEST EQU  *-X
+     MEND
+
+     MAC
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TEST"), 120);
+}
