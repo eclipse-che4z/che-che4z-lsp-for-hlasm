@@ -730,6 +730,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("PUSH"), [this](rebuilt_statement stmt) { process_PUSH(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("POP"), [this](rebuilt_statement stmt) { process_POP(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("MNOTE"), [this](rebuilt_statement stmt) { process_MNOTE(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("CXD"), [this](rebuilt_statement stmt) { process_CXD(std::move(stmt)); });
 
     return table;
 }
@@ -1256,6 +1257,28 @@ void asm_processor::process_MNOTE(rebuilt_statement stmt)
     utils::append_utf8_sanitized(sanitized, text);
 
     add_diagnostic(diagnostic_op::mnote_diagnostic(level.value(), sanitized, r));
+}
+
+void asm_processor::process_CXD(rebuilt_statement stmt)
+{
+    context::address loctr = hlasm_ctx.ord_ctx.align(context::fullword);
+    constexpr uint32_t cxd_length = 4;
+
+    // process label
+    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
+    {
+        if (!hlasm_ctx.ord_ctx.symbol_defined(label))
+        {
+            create_symbol(stmt.stmt_range_ref(),
+                label,
+                loctr,
+                context::symbol_attributes(context::symbol_origin::ASM, 'A'_ebcdic, cxd_length));
+        }
+        else
+            add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+    }
+
+    hlasm_ctx.ord_ctx.reserve_storage_area(cxd_length, context::no_align);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

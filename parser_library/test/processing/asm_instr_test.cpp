@@ -212,3 +212,58 @@ L X     C'SOMESTRING'
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(asm_instr_processing, CXD)
+{
+    std::string input = R"(
+    DS   C
+C   CXD
+L   EQU  *-C
+&T  SETC T'C
+&O  SETC O'C
+&L  SETA L'C
+&S  SETA S'C
+&I  SETA I'C
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E066", "E066" })); // S, I attributes
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L"), 4);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "A");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "O"), "O");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 4);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "S"), 0);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "I"), 0);
+
+    auto C = get_symbol_reloc(a.hlasm_ctx(), "C");
+    ASSERT_TRUE(C);
+    EXPECT_EQ(C->offset(), 4);
+}
+
+TEST(asm_instr_processing, CXD_lookahead)
+{
+    std::string input = R"(
+&T  SETC T'C
+&O  SETC O'C
+&L  SETA L'C
+&S  SETA S'C
+&I  SETA I'C
+C   CXD
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E066", "E066" })); // S, I attributes
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "A");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "O"), "O");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 4);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "S"), 0);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "I"), 0);
+}

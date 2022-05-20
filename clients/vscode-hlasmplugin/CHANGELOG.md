@@ -5,6 +5,7 @@
 #### Added
 - Added support for MACHINE assembler option
 - Show hexadecimal offsets and lengths in hover texts
+- CXD instruction support
 
 #### Fixed
 - Incorrect attribute values generated when literals are substituted in CA expressions

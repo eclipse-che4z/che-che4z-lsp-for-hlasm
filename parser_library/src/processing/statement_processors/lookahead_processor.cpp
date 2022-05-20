@@ -146,6 +146,8 @@ lookahead_processor::process_table_t lookahead_processor::create_table(context::
     table.emplace(h_ctx.ids().add("DS"),
         std::bind(
             &lookahead_processor::assign_data_def_attributes, this, std::placeholders::_1, std::placeholders::_2));
+    table.emplace(h_ctx.ids().add("CXD"),
+        std::bind(&lookahead_processor::assign_cxd_attributes, this, std::placeholders::_1, std::placeholders::_2));
 
     return table;
 }
@@ -281,6 +283,11 @@ void lookahead_processor::assign_assembler_attributes(
     }
     else
         register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic));
+}
+
+void lookahead_processor::assign_cxd_attributes(context::id_index symbol_name, const resolved_statement&)
+{
+    register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::ASM, 'A'_ebcdic, 4));
 }
 
 void lookahead_processor::find_seq(const semantics::core_statement& statement)
