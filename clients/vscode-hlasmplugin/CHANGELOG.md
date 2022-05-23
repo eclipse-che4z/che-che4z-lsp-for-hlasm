@@ -13,6 +13,7 @@
 - Incorrect attribute parsing in CA expressions without spaces between individual terms
 - String functions are not recognized in concatenations
 - Parsing of numeric nominal values must be case insensitive
+- The language server may crash when a complex expression is used as a variable symbol index
 
 ## [1.2.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.1.0...1.2.0) (2022-05-11)
 

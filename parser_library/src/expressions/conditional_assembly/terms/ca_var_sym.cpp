@@ -43,11 +43,6 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols_vs(
     return tmp;
 }
 
-void ca_var_sym::resolve_expression_tree_vs(const semantics::vs_ptr&)
-{
-    // already resolved in parser
-}
-
 undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
 {
     return get_undefined_attributed_symbols_vs(symbol, eval_ctx);
@@ -59,7 +54,7 @@ void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op
     if (kind == context::SET_t_enum::C_TYPE)
         diags.add_diagnostic(diagnostic_op::error_CE017_character_expression_expected(expr_range));
     expr_kind = kind;
-    resolve_expression_tree_vs(symbol);
+    symbol->resolve(diags);
 }
 
 bool ca_var_sym::is_character_expression(character_expression_purpose) const { return false; }

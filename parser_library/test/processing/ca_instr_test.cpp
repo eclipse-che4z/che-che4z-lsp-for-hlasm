@@ -515,3 +515,18 @@ TEST(SET, empty_args_in_arrays_no_overwrite)
     std::vector<C_t> expected { "A", "B", "C", "D", "B" };
     EXPECT_EQ(get_var_vector<C_t>(a.hlasm_ctx(), "A"), expected);
 }
+
+
+TEST(var_subs, expr_list_as_index)
+{
+    std::string input = R"(
+&var(1) seta &var((1 and 1))
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_vector<A_t>(a.hlasm_ctx(), "var"), std::vector<A_t>({ 0 }));
+}

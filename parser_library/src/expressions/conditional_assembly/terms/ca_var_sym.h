@@ -40,7 +40,6 @@ public:
 
     static undef_sym_set get_undefined_attributed_symbols_vs(
         const semantics::vs_ptr& symbol, const evaluation_context& eval_ctx);
-    static void resolve_expression_tree_vs(const semantics::vs_ptr& symbol);
 
 private:
     context::SET_t convert_return_types(

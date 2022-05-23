@@ -127,7 +127,7 @@ void ca_symbol_attribute::resolve_expression_tree(context::SET_t_enum kind, diag
     if (kind == context::SET_t_enum::C_TYPE && kind != expr_kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else if (std::holds_alternative<semantics::vs_ptr>(symbol))
-        ca_var_sym::resolve_expression_tree_vs(std::get<semantics::vs_ptr>(symbol));
+        std::get<semantics::vs_ptr>(symbol)->resolve(diags);
 }
 
 bool ca_symbol_attribute::is_character_expression(character_expression_purpose) const
