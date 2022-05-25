@@ -136,6 +136,15 @@ TEST(occurence_collector, var_ca_expr)
     EXPECT_EQ(oa.st[0], lsp::symbol_occurence(lsp::occurence_kind::VAR, oa.get_id("V"), { { 0, 6 }, { 0, 8 } }));
 }
 
+TEST(occurence_collector, var_ca_expr_in_string)
+{
+    std::string input = " AIF ('&V' EQ ' ').SEQ";
+    operand_occurence_analyzer_mock oa(input, lsp::occurence_kind::VAR);
+
+    ASSERT_EQ(oa.st.size(), 1U);
+    EXPECT_EQ(oa.st[0], lsp::symbol_occurence(lsp::occurence_kind::VAR, oa.get_id("V"), { { 0, 7 }, { 0, 9 } }));
+}
+
 TEST(occurence_collector, var_ca_expr_ca_string_dupl_factor)
 {
     std::string input = "&V SETC (&D)'STR'";

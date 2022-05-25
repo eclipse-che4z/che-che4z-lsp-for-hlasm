@@ -122,7 +122,7 @@ void occurence_collector::get_occurence(const semantics::concat_chain& chain)
                 break;
             case semantics::concat_type::VAR:
                 if (collector_kind == lsp::occurence_kind::VAR)
-                    get_occurence(*point->access_var()->access_var()->symbol);
+                    get_occurence(*point->access_var()->symbol);
                 break;
             case semantics::concat_type::SUB:
                 for (const auto& ch : point->access_sub()->list)
@@ -185,6 +185,11 @@ void occurence_collector::visit(const expressions::ca_string& expr)
 {
     if (expr.duplication_factor)
         expr.duplication_factor->apply(*this);
+    get_occurence(expr.value);
+    if (expr.substring.start)
+        expr.substring.start->apply(*this);
+    if (expr.substring.count)
+        expr.substring.count->apply(*this);
 }
 
 void occurence_collector::visit(const expressions::ca_symbol& expr) { get_occurence(expr.symbol, expr.expr_range); }
