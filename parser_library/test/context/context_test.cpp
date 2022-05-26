@@ -642,3 +642,22 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "k2"), 2);
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "k3"), 0);
 }
+
+TEST(context_system_variables, SYSVER)
+{
+    std::string input =
+        R"(
+&V      SETC '&SYSVER'
+&T      SETC T'&SYSVER
+&K      SETA K'&SYSVER
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "V"), "1.6.0");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "T"), "U");
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "K"), 5);
+}

@@ -127,6 +127,7 @@ INSTANTIATE_TEST_SUITE_P(system_variable_subscripts,
         system_variable_params::create_input("SYSSTYP", { "CSECT", "CSECT", "CSECT", "CSECT", "", "", "" }),
         system_variable_params::create_input(
             "SYSTEM_ID", { "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "z/OS 02.04.00", "", "", "" }),
+        system_variable_params::create_input("SYSVER", { "1.6.0", "1.6.0", "1.6.0", "1.6.0", "", "", "" }),
         system_variable_params::create_input("SYSLIST",
             { "WW",
                 "NNN",

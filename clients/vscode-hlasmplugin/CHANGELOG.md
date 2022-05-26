@@ -6,6 +6,7 @@
 - Added support for MACHINE assembler option
 - Show hexadecimal offsets and lengths in hover texts
 - CXD instruction support
+- Support for SYSVER system variable
 
 #### Fixed
 - Incorrect attribute values generated when literals are substituted in CA expressions

@@ -145,7 +145,10 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSTEM_ID", "(1,1,0)"),
         diagnostics_sysvar_params::create_input("SYSTIME", "(0)"),
         diagnostics_sysvar_params::create_input("SYSTIME", "(1,0)"),
-        diagnostics_sysvar_params::create_input("SYSTIME", "(1,1,0)")));
+        diagnostics_sysvar_params::create_input("SYSTIME", "(1,1,0)"),
+        diagnostics_sysvar_params::create_input("SYSVER", "(0)"),
+        diagnostics_sysvar_params::create_input("SYSVER", "(1,0)"),
+        diagnostics_sysvar_params::create_input("SYSVER", "(1,1,0)")));
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_null_opcode_fixture,
@@ -205,7 +208,11 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSTIME", "(2)"),
         diagnostics_sysvar_params::create_input("SYSTIME", "(2,0)"),
         diagnostics_sysvar_params::create_input("SYSTIME", "(2,1)"),
-        diagnostics_sysvar_params::create_input("SYSTIME", "(2,2,2)")));
+        diagnostics_sysvar_params::create_input("SYSTIME", "(2,2,2)"),
+        diagnostics_sysvar_params::create_input("SYSVER", "(2)"),
+        diagnostics_sysvar_params::create_input("SYSVER", "(2,0)"),
+        diagnostics_sysvar_params::create_input("SYSVER", "(2,1)"),
+        diagnostics_sysvar_params::create_input("SYSVER", "(2,2,2)")));
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_bad_symbol_fixture,
@@ -230,7 +237,11 @@ INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
         diagnostics_sysvar_params::create_input("SYSTIME", ""),
         diagnostics_sysvar_params::create_input("SYSTIME", "(1)"),
         diagnostics_sysvar_params::create_input("SYSTIME", "(1,1)"),
-        diagnostics_sysvar_params::create_input("SYSTIME", "(1,1,1)")));
+        diagnostics_sysvar_params::create_input("SYSTIME", "(1,1,1)"),
+        diagnostics_sysvar_params::create_input("SYSVER", ""),
+        diagnostics_sysvar_params::create_input("SYSVER", "(1)"),
+        diagnostics_sysvar_params::create_input("SYSVER", "(1,1)"),
+        diagnostics_sysvar_params::create_input("SYSVER", "(1,1,1)")));
 
 INSTANTIATE_TEST_SUITE_P(diagnostics_sysvar,
     diagnostics_sysvar_unsubscripted_syslist_invalid_opcode_fixture,

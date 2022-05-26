@@ -348,6 +348,11 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         {
             globals_.insert(create_system_variable<system_variable>(ids(), "SYSTEM_ID", asm_options_.system_id, true));
         }
+
+        {
+            static constexpr auto emulated_hlasm_sysver = "1.6.0";
+            globals_.insert(create_system_variable<system_variable>(ids(), "SYSVER", emulated_hlasm_sysver, true));
+        }
     }
 
     add_global_system_var_to_scope(ids(), "SYSDATC", scope);
@@ -358,6 +363,7 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
     add_global_system_var_to_scope(ids(), "SYSPARM", scope);
     add_global_system_var_to_scope(ids(), "SYSSTMT", scope);
     add_global_system_var_to_scope(ids(), "SYSTEM_ID", scope);
+    add_global_system_var_to_scope(ids(), "SYSVER", scope);
 }
 
 bool hlasm_context::is_opcode(id_index symbol) const
