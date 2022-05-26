@@ -146,7 +146,7 @@ export class ConfigurationsHandler {
         if (!empty)
             programName = vscode.window.activeTextEditor.document.fileName.split('\\').pop().split('/').pop();
         fs.writeFileSync(this.pgmConfPath, JSON.stringify(
-            { "pgms": [{ "program": programName, "pgroup": "" }], "alwaysRecognize": [] }
+            { "pgms": [{ "program": programName, "pgroup": "" }] }
             , null, 2));
         vscode.commands.executeCommand("vscode.open", vscode.Uri.file(this.pgmConfPath));
     }
