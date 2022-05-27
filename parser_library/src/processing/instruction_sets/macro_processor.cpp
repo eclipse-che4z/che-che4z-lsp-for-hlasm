@@ -227,6 +227,16 @@ bool is_keyword(const semantics::concat_chain& chain, context::hlasm_context& hl
         && hlasm_ctx.try_get_symbol_name(chain[0]->access_str()->value).first;
 }
 
+bool can_chain_be_forwarded(const semantics::concat_chain& chain)
+{
+    if (chain.size() == 1 && chain.front()->type == semantics::concat_type::VAR) // single variable symbol &VAR
+        return true;
+    if (chain.size() == 2 && chain.front()->type == semantics::concat_type::VAR
+        && chain.back()->type == semantics::concat_type::DOT) // single variable symbol with dot &VAR.
+        return true;
+    return false;
+}
+
 std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved_statement& statement) const
 {
     std::vector<context::macro_arg> args;
@@ -249,7 +259,7 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
         {
             get_keyword_arg(statement, tmp_chain, args, keyword_params, tmp->operand_range);
         }
-        else if (tmp_chain.size() == 1 && tmp_chain.front()->type == semantics::concat_type::VAR) // single varsym
+        else if (can_chain_be_forwarded(tmp_chain)) // single varsym
         {
             context::macro_data_ptr data = string_to_macrodata(
                 semantics::var_sym_conc::evaluate(tmp_chain.front()->access_var()->symbol->evaluate(eval_ctx)));

@@ -170,3 +170,29 @@ TEST(parser, preserve_structured_parameter)
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "PAR"), "A");
 }
+
+TEST(parser, preserve_structured_parameter_2)
+{
+    std::string input = R"(
+     GBLC  &PAR
+     MACRO
+     MAC2
+     GBLC  &PAR
+&PAR SETC  '&SYSLIST(1,1)'
+     MEND
+
+     MACRO
+     MAC   &P1
+     MAC2  &P1.
+     MEND
+
+
+     MAC   (A,O'-9')
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "PAR"), "A");
+}
