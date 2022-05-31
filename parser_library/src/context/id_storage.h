@@ -69,6 +69,7 @@ public:
         const std::string* AREAD;
         const std::string* ALIAS;
         const std::string* END;
+        const std::string* SYSLIST;
         well_known_strings(std::unordered_set<std::string>& ptr);
 
     } const well_known;

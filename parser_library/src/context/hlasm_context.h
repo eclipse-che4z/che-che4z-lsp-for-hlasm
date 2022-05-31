@@ -196,13 +196,10 @@ public:
     // checks whether the symbol is an operation code (is a valid instruction or a mnemonic)
     opcode_t get_operation_code(id_index symbol) const;
 
-    // get data attribute value of variable symbol
-    SET_t get_attribute_value_ca(data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset);
     // get data attribute value of ordinary symbol
-    SET_t get_attribute_value_ca(data_attr_kind attribute, id_index symbol);
-    SET_t get_attribute_value_ca(data_attr_kind attribute, const symbol* symbol);
+    SET_t get_attribute_value_ord(data_attr_kind attribute, id_index symbol);
+    SET_t get_attribute_value_ord(data_attr_kind attribute, const symbol* symbol);
 
-    C_t get_type_attr(var_sym_ptr var_symbol, const std::vector<size_t>& offset);
     C_t get_opcode_attr(id_index symbol);
 
     // gets macro storage

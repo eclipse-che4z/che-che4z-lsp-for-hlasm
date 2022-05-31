@@ -18,6 +18,7 @@
 #include "context/literal_pool.h"
 #include "context/ordinary_assembly/dependable.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
+#include "diagnostic_consumer.h"
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
@@ -28,6 +29,7 @@
 #include "processing/op_code.h"
 #include "semantics/range_provider.h"
 #include "semantics/statement_fields.h"
+#include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -180,22 +182,11 @@ std::string ca_symbol_attribute::try_extract_leading_symbol(std::string_view exp
     return std::string(expr);
 }
 
-context::SET_t ca_symbol_attribute::get_ordsym_attr_value(
-    context::id_index name, const evaluation_context& eval_ctx) const
-{
-    const context::symbol* ord_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(name);
-
-    if (!ord_symbol)
-        ord_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol_reference(name);
-
-    return retrieve_value(ord_symbol, eval_ctx);
-}
-
 context::SET_t ca_symbol_attribute::retrieve_value(
     const context::symbol* ord_symbol, const evaluation_context& eval_ctx) const
 {
     if (attribute == context::data_attr_kind::T)
-        return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, ord_symbol);
+        return eval_ctx.hlasm_ctx.get_attribute_value_ord(attribute, ord_symbol);
 
     if (!ord_symbol)
     {
@@ -216,22 +207,57 @@ context::SET_t ca_symbol_attribute::retrieve_value(
         return context::symbol_attributes::default_value(attribute);
     }
 
-    return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, ord_symbol);
+    return eval_ctx.hlasm_ctx.get_attribute_value_ord(attribute, ord_symbol);
+}
+
+bool iequals(std::string_view l, std::string_view r)
+{
+    return std::equal(l.begin(), l.end(), r.begin(), r.end(), [](unsigned char lc, unsigned char rc) {
+        return std::toupper(lc) == std::toupper(rc);
+    });
+}
+
+context::C_t get_current_macro_name_field(const context::hlasm_context& ctx)
+{
+    const auto& scope = ctx.current_scope();
+
+    if (!scope.is_in_macro())
+        return {};
+    return scope.this_macro->named_params.at(ctx.ids().well_known.SYSLIST)->get_data({ 0 })->get_value();
 }
 
 context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, const evaluation_context& eval_ctx) const
 {
     if (context::symbol_attributes::is_ordinary_attribute(attribute))
     {
-        return get_ordsym_attr_value(name, eval_ctx);
+        const context::symbol* ord_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(name);
+
+        if (!ord_symbol)
+        {
+            if (attribute == context::data_attr_kind::T)
+            {
+                // it is not an ordinary symbol, but it could be
+                //
+                // Just to make clear what is going on here
+                // This special 'M' behavior is triggerred ONLY
+                // when the tested symbol is equal to the name field on the macro call
+                const auto& name_field = get_current_macro_name_field(eval_ctx.hlasm_ctx);
+                if (!name_field.empty() && iequals(*name, name_field))
+                    return "M";
+            }
+
+            ord_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol_reference(name);
+        }
+
+        return retrieve_value(ord_symbol, eval_ctx);
     }
     else if (attribute == context::data_attr_kind::D)
     {
-        return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, name);
+        return eval_ctx.hlasm_ctx.get_attribute_value_ord(attribute, name);
     }
     else if (attribute == context::data_attr_kind::O)
     {
-        auto tmp = eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, name);
+        auto tmp = eval_ctx.hlasm_ctx.get_attribute_value_ord(attribute, name);
         if (tmp.access_c() == "U" && eval_ctx.lib_provider.has_library(*name, eval_ctx.hlasm_ctx.opencode_file_name()))
             return std::string("S");
         return tmp;
@@ -248,15 +274,34 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
 {
     auto& literals = eval_ctx.hlasm_ctx.ord_ctx.literals();
 
+    bool defined =
+        literals.defined_for_ca_expr(std::shared_ptr<const expressions::data_definition>(lit, &lit->get_dd()));
     if (attribute == context::data_attr_kind::D)
-        return literals.defined_for_ca_expr(std::shared_ptr<const expressions::data_definition>(lit, &lit->get_dd()));
+        return defined;
 
-    literals.mentioned_in_ca_expr(std::shared_ptr<const expressions::data_definition>(lit, &lit->get_dd()));
+    if (!eval_ctx.hlasm_ctx.current_scope().is_in_macro())
+        literals.mentioned_in_ca_expr(std::shared_ptr<const expressions::data_definition>(lit, &lit->get_dd()));
 
     if (attribute == context::data_attr_kind::O)
         return "U";
     else if (attribute == context::data_attr_kind::T)
+    {
+        if (!defined)
+        {
+            auto name_field = get_current_macro_name_field(eval_ctx.hlasm_ctx);
+            if (name_field == lit->get_text())
+                return "M";
+
+            diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
+            // all literals have the form =XY that can be trivially compared
+            if (iequals(std::string_view(name_field).substr(0, 3), std::string_view(lit->get_text()).substr(0, 3))
+                && utils::is_similar(lit,
+                    reparse_substituted_literal(
+                        name_field, lit->get_range(), { eval_ctx.hlasm_ctx, eval_ctx.lib_provider, drop_diags })))
+                return "M";
+        }
         return std::string { lit->get_dd().get_type_attribute() };
+    }
     else
     {
         context::ordinary_assembly_dependency_solver solver(eval_ctx.hlasm_ctx.ord_ctx, context::address());
@@ -271,12 +316,35 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
     }
 }
 
-std::vector<size_t> transform(const std::vector<context::A_t>& v)
+std::vector<size_t> transform(const std::vector<context::A_t>& v) { return std::vector<size_t>(v.begin(), v.end()); }
+
+std::optional<context::C_t> read_string_var_sym(const context::variable_symbol& vs, std::vector<size_t> indices)
 {
-    std::vector<size_t> ret;
-    for (auto val : v)
-        ret.push_back((size_t)val);
-    return ret;
+    context::C_t var_value;
+    if (auto set_sym = vs.access_set_symbol_base())
+    {
+        if (set_sym->type != context::SET_t_enum::C_TYPE)
+            return std::nullopt;
+
+        auto setc_sym = set_sym->access_set_symbol<context::C_t>();
+        if (indices.empty())
+            var_value = setc_sym->get_value();
+        else
+            var_value = setc_sym->get_value(indices.front() - 1);
+    }
+    else if (auto mac_par = vs.access_macro_param_base())
+    {
+        auto data = mac_par->get_data(indices);
+
+        while (dynamic_cast<const context::macro_param_data_composite*>(data))
+            data = data->get_ith(0);
+
+        var_value = data->get_value();
+    }
+    else
+        assert(false);
+
+    return var_value;
 }
 
 context::SET_t ca_symbol_attribute::evaluate_varsym(
@@ -293,30 +361,54 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
-    // must substitute var sym
-    if (context::symbol_attributes::requires_ordinary_symbol(attribute))
+    switch (attribute)
     {
-        return evaluate_substituted(var_name, std::move(expr_subscript), vs->symbol_range, eval_ctx);
-    }
-    else if (attribute == context::data_attr_kind::T)
-    {
-        if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
-            return std::string("U");
+        // requires_ordinary_symbol
+        case context::data_attr_kind::D:
+        case context::data_attr_kind::L:
+        case context::data_attr_kind::O:
+        case context::data_attr_kind::S:
+        case context::data_attr_kind::I:
+            return evaluate_substituted(var_name, std::move(expr_subscript), vs->symbol_range, eval_ctx);
 
-        context::SET_t value =
-            eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, var_symbol, transform(expr_subscript)).access_c();
+        case context::data_attr_kind::T: {
+            if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
+                return "U";
 
-        if (value.access_c() != "U")
-            return value;
-        return evaluate_substituted(
-            var_name, std::move(expr_subscript), vs->symbol_range, eval_ctx); // is type U, must substitute var sym
-    }
-    else
-    {
-        if (attribute == context::data_attr_kind::K
-            && !test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
-            return context::symbol_attributes::default_ca_value(attribute);
-        return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, var_symbol, transform(expr_subscript));
+            std::string var_value;
+            if (auto var_value_o = read_string_var_sym(*var_symbol, transform(expr_subscript));
+                !var_value_o.has_value())
+                return "N";
+            else
+                var_value = std::move(*var_value_o);
+
+            if (var_value.empty())
+                return "O";
+
+            var_value = expressions::ca_symbol_attribute::try_extract_leading_symbol(var_value);
+
+            if (auto res = expressions::ca_constant::try_self_defining_term(var_value))
+                return "N";
+
+            auto symbol_name = eval_ctx.hlasm_ctx.ids().add(std::move(var_value));
+
+            if (auto tmp_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(symbol_name))
+                return std::string { (char)ebcdic_encoding::e2a[tmp_symbol->attributes().type()] };
+
+            return evaluate_substituted(
+                var_name, std::move(expr_subscript), vs->symbol_range, eval_ctx); // is type U, must substitute var sym
+        }
+        case context::data_attr_kind::K:
+            if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
+                return context::symbol_attributes::default_ca_value(attribute);
+
+            return var_symbol ? var_symbol->count(transform(expr_subscript)) : 0;
+
+        case context::data_attr_kind::N:
+            return var_symbol ? var_symbol->number(transform(expr_subscript)) : 0;
+
+        default:
+            return context::SET_t();
     }
 }
 
@@ -338,7 +430,14 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
     const auto& text = substituted_name.access_c();
 
     if (!text.empty() && text.starts_with('='))
-        return evaluate_substituted_literal(text, var_range, eval_ctx);
+    {
+        if (auto lit = reparse_substituted_literal(text, var_range, eval_ctx))
+            return evaluate_literal(lit, eval_ctx);
+        else if (iequals(text, get_current_macro_name_field(eval_ctx.hlasm_ctx)))
+            return "M";
+        else
+            return context::symbol_attributes::default_ca_value(attribute);
+    }
 
     auto [valid, ord_name] = eval_ctx.hlasm_ctx.try_get_symbol_name(try_extract_leading_symbol(text));
 
@@ -352,7 +451,7 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
         return evaluate_ordsym(ord_name, eval_ctx);
 }
 
-context::SET_t ca_symbol_attribute::evaluate_substituted_literal(
+semantics::literal_si ca_symbol_attribute::reparse_substituted_literal(
     const std::string& text, range var_range, const evaluation_context& eval_ctx) const
 {
     // error production is suppressed when evaluating D', T' and O' attributes
@@ -390,10 +489,10 @@ context::SET_t ca_symbol_attribute::evaluate_substituted_literal(
 
     auto literal_context = h->parser->literal_reparse();
 
-    if (!error && literal_context->value)
-        return evaluate_literal(literal_context->value, eval_ctx);
-    else
-        return context::symbol_attributes::default_ca_value(attribute);
+    if (!error)
+        return std::move(literal_context->value);
+
+    return {};
 }
 
 } // namespace hlasm_plugin::parser_library::expressions

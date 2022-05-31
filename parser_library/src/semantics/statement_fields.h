@@ -193,6 +193,8 @@ public:
     const expressions::data_definition& get_dd() const { return m_dd; }
 
     const range& get_range() const { return m_range; }
+
+    bool is_similar(const literal_si_data&) const;
 };
 
 using literal_si = std::shared_ptr<literal_si_data>;

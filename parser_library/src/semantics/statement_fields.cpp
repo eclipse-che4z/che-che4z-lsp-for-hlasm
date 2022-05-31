@@ -14,6 +14,8 @@
 
 #include "statement_fields.h"
 
+#include "utils/similar.h"
+
 
 namespace hlasm_plugin::parser_library::semantics {
 
@@ -52,6 +54,11 @@ void instruction_si::resolve(diagnostic_op_consumer& diag)
         case instruction_si_type::EMPTY:
             break;
     }
+}
+
+bool literal_si_data::is_similar(const literal_si_data& other) const
+{
+    return utils::is_similar(get_dd(), other.get_dd());
 }
 
 } // namespace hlasm_plugin::parser_library::semantics

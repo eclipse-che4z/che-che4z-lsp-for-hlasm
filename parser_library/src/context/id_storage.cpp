@@ -76,4 +76,5 @@ id_storage::well_known_strings::well_known_strings(std::unordered_set<std::strin
     , AREAD(&*ptr.emplace("AREAD").first)
     , ALIAS(&*ptr.emplace("ALIAS").first)
     , END(&*ptr.emplace("END").first)
+    , SYSLIST(&*ptr.emplace("SYSLIST").first)
 {}

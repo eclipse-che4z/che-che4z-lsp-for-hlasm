@@ -57,7 +57,6 @@ public:
     static std::string try_extract_leading_symbol(std::string_view expr);
 
 private:
-    context::SET_t get_ordsym_attr_value(context::id_index name, const evaluation_context& eval_ctx) const;
     context::SET_t retrieve_value(const context::symbol* ord_symbol, const evaluation_context& eval_ctx) const;
 
     context::SET_t evaluate_ordsym(context::id_index symbol, const evaluation_context& eval_ctx) const;
@@ -67,7 +66,7 @@ private:
         range var_range,
         const evaluation_context& eval_ctx) const;
     context::SET_t evaluate_literal(const semantics::literal_si& lit, const evaluation_context& eval_ctx) const;
-    context::SET_t evaluate_substituted_literal(
+    semantics::literal_si reparse_substituted_literal(
         const std::string& text, range var_range, const evaluation_context& eval_ctx) const;
 };
 

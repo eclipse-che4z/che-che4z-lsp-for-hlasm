@@ -684,32 +684,14 @@ opcode_t hlasm_context::get_operation_code(id_index symbol) const
     return value;
 }
 
-SET_t hlasm_context::get_attribute_value_ca(
-    data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset)
-{
-    switch (attribute)
-    {
-        case data_attr_kind::K:
-            return var_symbol ? var_symbol->count(std::move(offset)) : 0;
-        case data_attr_kind::N:
-            return var_symbol ? var_symbol->number(std::move(offset)) : 0;
-        case data_attr_kind::T:
-            return get_type_attr(var_symbol, std::move(offset));
-        default:
-            break;
-    }
-
-    return SET_t();
-}
-
-SET_t hlasm_context::get_attribute_value_ca(data_attr_kind attribute, id_index symbol_name)
+SET_t hlasm_context::get_attribute_value_ord(data_attr_kind attribute, id_index symbol_name)
 {
     if (attribute == data_attr_kind::O)
         return get_opcode_attr(symbol_name);
-    return get_attribute_value_ca(attribute, ord_ctx.get_symbol(symbol_name));
+    return get_attribute_value_ord(attribute, ord_ctx.get_symbol(symbol_name));
 }
 
-SET_t hlasm_context::get_attribute_value_ca(data_attr_kind attribute, const symbol* symbol)
+SET_t hlasm_context::get_attribute_value_ord(data_attr_kind attribute, const symbol* symbol)
 {
     switch (attribute)
     {
@@ -733,52 +715,6 @@ SET_t hlasm_context::get_attribute_value_ca(data_attr_kind attribute, const symb
                 return symbol->attributes().get_attribute_value(attribute);
             return symbol_attributes::default_value(attribute);
     }
-}
-
-C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_t>& offset)
-{
-    if (!var_symbol)
-        return "U";
-
-    C_t value;
-
-    if (auto set_sym = var_symbol->access_set_symbol_base())
-    {
-        if (set_sym->type != SET_t_enum::C_TYPE)
-            return "N";
-
-        auto setc_sym = set_sym->access_set_symbol<C_t>();
-        if (offset.empty())
-            value = setc_sym->get_value();
-        else
-            value = setc_sym->get_value(offset.front() - 1);
-    }
-    else if (auto mac_par = var_symbol->access_macro_param_base())
-    {
-        auto data = mac_par->get_data(offset);
-
-        while (dynamic_cast<const context::macro_param_data_composite*>(data))
-            data = data->get_ith(0);
-
-        value = data->get_value();
-    }
-
-    if (value.empty())
-        return "O";
-
-    value = expressions::ca_symbol_attribute::try_extract_leading_symbol(value);
-
-    auto res = expressions::ca_constant::try_self_defining_term(value);
-    if (res)
-        return "N";
-
-    id_index symbol_name = ids().add(std::move(value));
-    auto tmp_symbol = ord_ctx.get_symbol(symbol_name);
-
-    if (tmp_symbol)
-        return { (char)ebcdic_encoding::e2a[tmp_symbol->attributes().type()] };
-
-    return "U";
 }
 
 struct opcode_attr_visitor
