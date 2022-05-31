@@ -502,7 +502,6 @@ constexpr auto RSY_b_3_su = instruction_format_definition_factory<mach_format::R
 constexpr auto RSY_b_3_us = instruction_format_definition_factory<mach_format::RSY_b, reg_4_U, mask_4_U, db_20_4_S>::def();
 constexpr auto RSY_b_3_ux = instruction_format_definition_factory<mach_format::RSY_b, reg_4_U, mask_4_U, dxb_20_4x4_S>::def();
 constexpr auto RX_a_2_ux = instruction_format_definition_factory<mach_format::RX_a, reg_4_U, dxb_12_4x4_U>::def();
-constexpr auto RX_a_2 = instruction_format_definition_factory<mach_format::RX_a, reg_4_U, reg_4_U>::def();
 constexpr auto RX_b_2 = instruction_format_definition_factory<mach_format::RX_b, mask_4_U, dxb_12_4x4_U>::def();
 constexpr auto RXE_2 = instruction_format_definition_factory<mach_format::RXE, reg_4_U, dxb_12_4x4_U>::def();
 constexpr auto RXE_3_xm = instruction_format_definition_factory<mach_format::RXE, reg_4_U, dxb_12_4x4_U, mask_4_U>::def();
@@ -647,7 +646,7 @@ constexpr machine_instruction machine_instructions[] = {
     { "BALR", RR_2, 519, UNI_ESA_XA_370_DOS_SINCE_ZOP },
     { "BAS", RX_a_2_ux, 520, UNI_ESA_XA_370_SINCE_ZOP },
     { "BASR", RR_2, 520, UNI_ESA_XA_370_SINCE_ZOP },
-    { "BASSM", RX_a_2, 520, UNI_ESA_XA_SINCE_ZOP },
+    { "BASSM", RR_2, 520, UNI_ESA_XA_SINCE_ZOP },
     { "BC", RX_b_2, 524, UNI_ESA_XA_370_DOS_SINCE_ZOP },
     { "BCR", RR_2_m, 524, UNI_ESA_XA_370_DOS_SINCE_ZOP },
     { "BCT", RX_a_2_ux, 525, UNI_ESA_XA_370_DOS_SINCE_ZOP },
