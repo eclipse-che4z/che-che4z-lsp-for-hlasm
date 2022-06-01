@@ -233,21 +233,7 @@ context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, cons
         const context::symbol* ord_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(name);
 
         if (!ord_symbol)
-        {
-            if (attribute == context::data_attr_kind::T)
-            {
-                // it is not an ordinary symbol, but it could be
-                //
-                // Just to make clear what is going on here
-                // This special 'M' behavior is triggerred ONLY
-                // when the tested symbol is equal to the name field on the macro call
-                const auto& name_field = get_current_macro_name_field(eval_ctx.hlasm_ctx);
-                if (!name_field.empty() && iequals(*name, name_field))
-                    return "M";
-            }
-
             ord_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol_reference(name);
-        }
 
         return retrieve_value(ord_symbol, eval_ctx);
     }

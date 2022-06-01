@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -122,31 +123,25 @@ std::optional<std::unordered_map<size_t, T>> get_var_vector_map(hlasm_context& c
     return result;
 }
 
-inline bool matches_message_codes(const std::vector<diagnostic_op>& d, std::initializer_list<std::string> m)
+template<typename Msg, typename C = std::initializer_list<std::string>>
+inline bool matches_message_codes(const std::vector<Msg>& d, const C& c)
 {
     std::vector<std::string> codes;
     std::transform(d.begin(), d.end(), std::back_inserter(codes), [](const auto& d) { return d.code; });
 
-    return std::is_permutation(codes.begin(), codes.end(), m.begin(), m.end());
+    return std::is_permutation(codes.begin(), codes.end(), c.begin(), c.end());
 }
 
-inline bool matches_message_codes(const std::vector<diagnostic_s>& d, std::initializer_list<std::string> m)
+template<typename Msg, typename C = std::initializer_list<std::string>>
+inline bool contains_message_codes(const std::vector<Msg>& d, const C& c)
 {
-    std::vector<std::string> codes;
-    std::transform(d.begin(), d.end(), std::back_inserter(codes), [](const auto& d) { return d.code; });
-
-    return std::is_permutation(codes.begin(), codes.end(), m.begin(), m.end());
-}
-
-inline bool contains_message_codes(const std::vector<diagnostic_s>& d, std::initializer_list<std::string> m)
-{
-    if (d.size() < m.size())
+    if (d.size() < c.size())
         return false;
 
     std::vector<std::string> codes;
     std::transform(d.begin(), d.end(), std::back_inserter(codes), [](const auto& d) { return d.code; });
 
-    std::vector to_find(m.begin(), m.end());
+    std::vector to_find(c.begin(), c.end());
 
     std::sort(codes.begin(), codes.end());
     std::sort(to_find.begin(), to_find.end());

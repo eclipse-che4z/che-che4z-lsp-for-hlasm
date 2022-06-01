@@ -18,6 +18,7 @@
 #include <memory>
 #include <stack>
 
+#include "ebcdic_encoding.h"
 #include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -35,6 +36,19 @@ void macro_processor::process(std::shared_ptr<const processing::resolved_stateme
     {
         add_diagnostic(diagnostic_op::error_E072(stmt->stmt_range_ref()));
         return;
+    }
+
+    if (const auto& label = stmt->label_ref(); label.type == semantics::label_si_type::ORD)
+    {
+        auto [valid, id] = hlasm_ctx.try_get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol);
+        if (valid && !hlasm_ctx.ord_ctx.get_symbol(id))
+        {
+            hlasm_ctx.ord_ctx.add_symbol_reference(context::symbol(id,
+                context::symbol_value(),
+                context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic),
+                location(),
+                {}));
+        }
     }
 
     auto args = get_args(*stmt);

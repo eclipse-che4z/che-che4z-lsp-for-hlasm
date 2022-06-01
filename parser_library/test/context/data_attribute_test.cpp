@@ -878,6 +878,82 @@ A_       MAC   A_
         }));
 }
 
+TEST(data_attributes, variable_type_with_lookahead)
+{
+    std::string input_template = R"(
+     MACRO
+&L   MAC
+     GBLC   RES
+&RES SETC   T'&L
+     MEND
+
+     MACRO
+     MAC2
+A    MAC
+     MEND
+
+     GBLC   RES
+%
+!
+A    DS     A
+)";
+
+    struct
+    {
+        std::string trigger;
+        std::string call;
+        std::string expected;
+        std::vector<std::string> errs;
+    } const tests[] = {
+        { "&A SETC T'A", " MAC2", "A", {} },
+        { "&A SETA L'A", " MAC2", "A", {} },
+        { "&A SETC T'A", "A MAC", "M", {} },
+        { "&A SETA L'A", "A MAC", "M", { "W013" } },
+    };
+
+    for (const auto& [trigger, call, expected, errs] : tests)
+    {
+        auto input = input_template;
+        input.replace(input.find('%'), 1, trigger);
+        input.replace(input.find('!'), 1, call);
+
+        analyzer a(input);
+        a.analyze();
+        a.collect_diags();
+
+        EXPECT_TRUE(matches_message_codes(a.diags(), errs));
+
+        EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "RES"), expected);
+    }
+}
+
+TEST(data_attributes, variable_type_preserve_m)
+{
+    std::string input = R"(
+     MACRO
+&L   MAC
+     MEND
+
+     MACRO
+     MAC2
+A    MAC
+     MEND
+
+     MAC2
+&T   SETC   T'A
+A    DS     A
+)";
+
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "M");
+}
+
 TEST(data_attributes, delayed_literal_definition)
 {
     std::string input = R"(
