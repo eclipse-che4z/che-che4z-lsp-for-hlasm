@@ -2356,11 +2356,11 @@ diagnostic_op diagnostic_op::warn_CIC001(const range& range)
         range);
 }
 
-diagnostic_op diagnostic_op::warn_CIC002(const range& range)
+diagnostic_op diagnostic_op::warn_CIC002(const range& range, std::string_view variable_name)
 {
     return diagnostic_op(diagnostic_severity::warning,
         "CIC002",
-        std::string("CICS preprocessor - DFHRESP argument cannot be NULL"),
+        concat("CICS preprocessor - ", variable_name, " argument cannot be NULL"),
         range);
 }
 

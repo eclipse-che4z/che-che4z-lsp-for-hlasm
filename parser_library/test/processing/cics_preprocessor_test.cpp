@@ -173,6 +173,15 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
             },
         } },
         { {
+            { " LA 0,DFHVALUE(FIRSTQUIESCE)\n", cics_preprocessor_options() },
+            {
+                "*LA 0,DFHVALUE(FIRSTQUIESCE)",
+                "         LA   0,=F'182'",
+                "*DFH7041I W  NO END CARD FOUND - COPYBOOK ASSUMED.",
+                "         DFHEIMSG 4",
+            },
+        } },
+        { {
             { "A LA 0,DFHRESP(NORMAL)\n", cics_preprocessor_options() },
             {
                 "* LA 0,DFHRESP(NORMAL)",
@@ -192,13 +201,24 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
                 "         DFHEIMSG 4",
             },
         } },
+        { {
+            { " LA 0,DFHVALUE()\n", cics_preprocessor_options() },
+            {
+                " LA 0,DFHVALUE()",
+                "*DFH7218I S  SUB-OPERAND(S) OF 'DFHVALUE' CANNOT BE NULL. COMMAND NOT",
+                "*            TRANSLATED.",
+                "         DFHEIMSG 12",
+                "*DFH7041I W  NO END CARD FOUND - COPYBOOK ASSUMED.",
+                "         DFHEIMSG 4",
+            },
+        } },
     }));
 
-class cics_preprocessor_dfhresp_fixture
+class cics_preprocessor_dfh_fixture
     : public ::testing::TestWithParam<std::pair<std::vector<std::string_view>, std::pair<int, std::string>>>
 {};
 
-TEST_P(cics_preprocessor_dfhresp_fixture, dfhresp_substitution)
+TEST_P(cics_preprocessor_dfh_fixture, dfh_substitution)
 {
     using hlasm_plugin::parser_library::processing::test::test_cics_miniparser;
 
@@ -208,7 +228,7 @@ TEST_P(cics_preprocessor_dfhresp_fixture, dfhresp_substitution)
 }
 
 INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
-    cics_preprocessor_dfhresp_fixture,
+    cics_preprocessor_dfh_fixture,
     ::testing::ValuesIn(std::initializer_list<std::pair<std::vector<std::string_view>, std::pair<int, std::string>>> {
         {
             {},
@@ -245,6 +265,14 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
             { -1, "" },
         },
         {
+            { "DFHVALUE()" },
+            { -1, "" },
+        },
+        {
+            { "A,DFHVALUE()" },
+            { -1, "" },
+        },
+        {
             {
                 "A ",
                 "DFHRESP()",
@@ -258,6 +286,10 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
         {
             { "DFHRESP(NORMAL)" },
             { 1, "=F'0'" },
+        },
+        {
+            { "DFHVALUE(FIRSTQUIESCE)" },
+            { 1, "=F'182'" },
         },
         {
             { "DFHRESP(NORMAL),DFHRESP(NORMAL)" },
@@ -304,8 +336,20 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
             { 1, "L'DFHRESP(=F'0')" },
         },
         {
+            { "L'DFHVALUE(DFHRESP(NORMAL))" },
+            { 1, "L'DFHVALUE(=F'0')" },
+        },
+        {
+            { "L'DFHRESP(DFHVALUE(FIRSTQUIESCE))" },
+            { 1, "L'DFHRESP(=F'182')" },
+        },
+        {
             { "=C'DFHRESP(NORMAL)'" },
             { 0, "=C'DFHRESP(NORMAL)'" },
+        },
+        {
+            { "=C'DFHVALUE(FIRSTQUIESCE)'" },
+            { 0, "=C'DFHVALUE(FIRSTQUIESCE)'" },
         },
         {
             { "L'DFHRESP(NORMAL),=C'DFHRESP(NORMAL)'" },
@@ -339,6 +383,29 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
             { "ADFHRESPZ(NORMAL)" },
             { 0, "ADFHRESPZ(NORMAL)" },
         },
+        {
+            { "A.DFHVALUE(FIRSTQUIESCE)" },
+            { 1, "A.=F'182'" },
+        },
+        {
+            { "ADFHVALUE(NORMAL)" },
+            { 0, "ADFHVALUE(NORMAL)" },
+        },
+        {
+            { "DFHVALUEZ(NORMAL)" },
+            { 0, "DFHVALUEZ(NORMAL)" },
+        },
+        {
+            { "ADFHVALUEZ(NORMAL)" },
+            { 0, "ADFHVALUEZ(NORMAL)" },
+        },
+        {
+            {
+                "DFHRESP(NORMAL),",
+                "DFHVALUE(FIRSTQUIESCE)",
+            },
+            { 2, "=F'0',=F'182'" },
+        },
     }));
 
 TEST(cics_preprocessor, check_continuation_error_message)
@@ -371,6 +438,7 @@ TEST(cics_preprocessor, check_null_argument_message)
          MEND
 
          LARL 0,DFHRESP()
+         LARL 0,DFHVALUE()
          END
 )";
     analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
@@ -378,13 +446,27 @@ TEST(cics_preprocessor, check_null_argument_message)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(contains_message_codes(a.diags(), { "CIC002" }));
+    EXPECT_TRUE(contains_message_codes(a.diags(), { "CIC002", "CIC002" }));
 }
 
 TEST(cics_preprocessor, dfhresp_substitution)
 {
     std::string input = R"(
          LARL 0,DFHRESP(NORMAL)
+         END
+)";
+    analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(cics_preprocessor, dfhvalue_substitution)
+{
+    std::string input = R"(
+         LARL 0,DFHVALUE(FIRSTQUIESCE)
          END
 )";
     analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));

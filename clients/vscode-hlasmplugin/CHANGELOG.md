@@ -7,6 +7,7 @@
 - Show hexadecimal offsets and lengths in hover texts
 - CXD instruction support
 - Support for SYSVER system variable
+- CICS preprocessor now recognizes DFHVALUE constants
 
 #### Fixed
 - Incorrect attribute values generated when literals are substituted in CA expressions

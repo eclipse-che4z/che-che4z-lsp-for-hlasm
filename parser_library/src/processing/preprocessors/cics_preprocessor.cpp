@@ -16,6 +16,7 @@
 #include <charconv>
 #include <regex>
 #include <utility>
+#include <variant>
 
 #include "lexing/logical_line.h"
 #include "preprocessor_options.h"
@@ -150,17 +151,479 @@ const std::unordered_map<std::string_view, int> DFHRESP_operands = {
     { "BUSY", 128 },
 };
 
-const std::regex DFHRESP_matcher(
-    [](const auto& operands) {
-        std::string list;
-        for (const auto& [key, value] : operands)
-            list.append(key).append(1, '|');
-        // keep the empty alternative
-        return "^DFHRESP[ ]*\\([ ]*(" + list + ")[ ]*\\)";
-    }(DFHRESP_operands),
+const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
+    { "ACQUIRED", 69 },
+    { "ACQUIRING", 71 },
+    { "ACTIVE", 181 },
+    { "ADD", 291 },
+    { "ADDABLE", 41 },
+    { "ADVANCE", 265 },
+    { "ALLCONN", 169 },
+    { "ALLOCATED", 81 },
+    { "ALLQUERY", 431 },
+    { "ALTERNATE", 197 },
+    { "ALTPRTCOPY", 446 },
+    { "ANY", 158 },
+    { "APLKYBD", 391 },
+    { "APLTEXT", 393 },
+    { "APPC", 124 },
+    { "APPCPARALLEL", 374 },
+    { "APPCSINGLE", 373 },
+    { "ASATCL", 224 },
+    { "ASCII7", 616 },
+    { "ASCII8", 617 },
+    { "ASSEMBLER", 150 },
+    { "ATI", 75 },
+    { "ATTENTION", 524 },
+    { "AUDALARM", 395 },
+    { "AUTOACTIVE", 630 },
+    { "AUTOARCH", 262 },
+    { "AUTOCONN", 170 },
+    { "AUTOINACTIVE", 631 },
+    { "AUTOPAGEABLE", 80 },
+    { "AUXILIARY", 247 },
+    { "AUXPAUSE", 313 },
+    { "AUXSTART", 312 },
+    { "AUXSTOP", 314 },
+    { "BACKOUT", 192 },
+    { "BACKTRANS", 397 },
+    { "BASE", 10 },
+    { "BATCHLU", 191 },
+    { "BDAM", 2 },
+    { "BELOW", 159 },
+    { "BGAM", 63 },
+    { "BIPROG", 160 },
+    { "BISYNCH", 128 },
+    { "BIT", 1600 },
+    { "BLK", 47 },
+    { "BLOCKED", 16 },
+    { "BROWSABLE", 39 },
+    { "BSAM", 61 },
+    { "BTAM_ES", 62 },
+    { "BUSY", 612 },
+    { "C", 149 },
+    { "CANCELLED", 624 },
+    { "CDRDLPRT", 24 },
+    { "CEDF", 370 },
+    { "CICSDATAKEY", 379 },
+    { "CICSEXECKEY", 381 },
+    { "CICSSECURITY", 195 },
+    { "CICSTABLE", 101 },
+    { "CHAR", 1601 },
+    { "CLEAR", 640 },
+    { "CLOSED", 19 },
+    { "CLOSEFAILED", 349 },
+    { "CLOSELEAVE", 261 },
+    { "CLOSEREQUEST", 22 },
+    { "CLOSING", 21 },
+    { "CMDPROT", 673 },
+    { "CMDSECEXT", 207 },
+    { "CMDSECNO", 205 },
+    { "CMDSECYES", 206 },
+    { "COBOL", 151 },
+    { "COBOLIT", 1507 },
+    { "COLDACQ", 72 },
+    { "COLDQUERY", 433 },
+    { "COLDSTART", 266 },
+    { "COLOR", 399 },
+    { "COMMIT", 208 },
+    { "CONFFREE", 82 },
+    { "CONFRECEIVE", 83 },
+    { "CONFSEND", 84 },
+    { "CONSOLE", 66 },
+    { "CONTNLU", 189 },
+    { "CONTROLSHUT", 623 },
+    { "COPY", 401 },
+    { "CPP", 624 },
+    { "CREATE", 67 },
+    { "CTLGALL", 632 },
+    { "CTLGMODIFY", 633 },
+    { "CTLGNONE", 634 },
+    { "CURRENT", 260 },
+    { "DB2", 623 },
+    { "DEC", 46 },
+    { "DEFAULT", 198 },
+    { "DELAY", 637 },
+    { "DELETABLE", 43 },
+    { "DEST", 235 },
+    { "DISABLED", 24 },
+    { "DISABLING", 25 },
+    { "DISCREQ", 444 },
+    { "DISK1", 252 },
+    { "DISK2", 253 },
+    { "DISK2PAUSE", 254 },
+    { "DISPATCHABLE", 228 },
+    { "DPLSUBSET", 383 },
+    { "DS3270", 615 },
+    { "DUALCASE", 403 },
+    { "DYNAMIC", 178 },
+    { "EMERGENCY", 268 },
+    { "EMPTY", 210 },
+    { "EMPTYREQ", 31 },
+    { "ENABLED", 23 },
+    { "ESDS", 5 },
+    { "EVENT", 334 },
+    { "EXCEPT", 332 },
+    { "EXCTL", 48 },
+    { "EXITTRACE", 362 },
+    { "EXTENDEDDS", 405 },
+    { "EXTRA", 221 },
+    { "EXTSECURITY", 194 },
+    { "FAILEDBKOUT", 357 },
+    { "FAILINGBKOUT", 358 },
+    { "FCLOSE", 273 },
+    { "FINALQUIESCE", 183 },
+    { "FINPUT", 270 },
+    { "FIRSTINIT", 625 },
+    { "FIRSTQUIESCE", 182 },
+    { "FIXED", 12 },
+    { "FMH", 502 },
+    { "FMHPARM", 385 },
+    { "FOPEN", 272 },
+    { "FORCE", 342 },
+    { "FORCECLOSE", 351 },
+    { "FORCECLOSING", 353 },
+    { "FORCEPURGE", 237 },
+    { "FORMFEED", 407 },
+    { "FOUTPUT", 271 },
+    { "FREE", 85 },
+    { "FREEING", 94 },
+    { "FULL", 212 },
+    { "FULLAPI", 384 },
+    { "FWDRECOVABLE", 354 },
+    { "GENERIC", 651 },
+    { "GOINGOUT", 172 },
+    { "GFTSTART", 317 },
+    { "GFTSTOP", 318 },
+    { "HARDCOPY", 32 },
+    { "HEX", 45 },
+    { "HFORM", 409 },
+    { "HILIGHT", 413 },
+    { "HOLD", 163 },
+    { "IBMCOBOL", 375 },
+    { "IGNORE", 1 },
+    { "IMMCLOSE", 350 },
+    { "IMMCLOSING", 352 },
+    { "INACTIVE", 378 },
+    { "INDIRECT", 122 },
+    { "INDOUBT", 620 },
+    { "INFLIGHT", 621 },
+    { "INITCOMPLETE", 628 },
+    { "INPUT", 226 },
+    { "INSERVICE", 73 },
+    { "INSTART", 1502 },
+    { "INSTOP", 1503 },
+    { "INTACTLU", 190 },
+    { "INTRA", 222 },
+    { "INTSTART", 310 },
+    { "INTSTOP", 311 },
+    { "INVALID", 359 },
+    { "IPIC", 805 },
+    { "IRC", 121 },
+    { "ISCMMCONV", 209 },
+    { "ISOLATE", 658 },
+    { "JAVA", 625 },
+    { "KATAKANA", 415 },
+    { "KEYED", 8 },
+    { "KSDS", 6 },
+    { "LIGHTPEN", 417 },
+    { "LOGICAL", 216 },
+    { "LPA", 165 },
+    { "LU61", 125 },
+    { "LUCMODGRP", 210 },
+    { "LUCSESS", 211 },
+    { "LUTYPE4", 193 },
+    { "LUTYPE6", 192 },
+    { "MAGTAPE", 20 },
+    { "MAIN", 248 },
+    { "MAP", 155 },
+    { "MAPSET", 155 },
+    { "MCHCTL", 241 },
+    { "MODEL", 370 },
+    { "MSRCONTROL", 419 },
+    { "NEW", 28 },
+    { "NEWCOPY", 167 },
+    { "NOALTPRTCOPY", 447 },
+    { "NOAPLKYBD", 392 },
+    { "NOAPLTEXT", 394 },
+    { "NOATI", 76 },
+    { "NOAUDALARM", 396 },
+    { "NOAUTOARCH", 263 },
+    { "NOBACKTRANS", 398 },
+    { "NOCEDF", 371 },
+    { "NOCLEAR", 641 },
+    { "NOCMDPROT", 674 },
+    { "NOCOLOR", 400 },
+    { "NOCOPY", 402 },
+    { "NOCREATE", 68 },
+    { "NOCTL", 223 },
+    { "NODISCREQ", 445 },
+    { "NODUALCASE", 404 },
+    { "NOEMPTYREQ", 32 },
+    { "NOEVENT", 335 },
+    { "NOEXCEPT", 333 },
+    { "NOEXCTL", 49 },
+    { "NOEXITTRACE", 363 },
+    { "NOEXTENDEDDS", 406 },
+    { "NOFMH", 503 },
+    { "NOFMHPARM", 386 },
+    { "NOFORMFEED", 408 },
+    { "NOHFORM", 410 },
+    { "NOHILIGHT", 414 },
+    { "NOHOLD", 164 },
+    { "NOISOLATE", 657 },
+    { "NOKATAKANA", 416 },
+    { "NOLIGHTPEN", 418 },
+    { "NOMSRCONTROL", 420 },
+    { "NONAUTOCONN", 171 },
+    { "NOOBFORMAT", 422 },
+    { "NOOBOPERID", 388 },
+    { "NOOUTLINE", 424 },
+    { "NOPARTITIONS", 426 },
+    { "NOPERF", 331 },
+    { "NOPRESETSEC", 243 },
+    { "NOPRINTADAPT", 428 },
+    { "NOPROGSYMBOL", 430 },
+    { "NOPRTCOPY", 449 },
+    { "NOQUERY", 432 },
+    { "NOREENTPROT", 681 },
+    { "NORELREQ", 443 },
+    { "NORMALBKOUT", 356 },
+    { "NOSHUTDOWN", 289 },
+    { "NOSOSI", 435 },
+    { "NOSWITCH", 285 },
+    { "NOSYSDUMP", 185 },
+    { "NOTADDABLE", 42 },
+    { "NOTAPPLIC", 1 },
+    { "NOTEXTKYBD", 437 },
+    { "NOTEXTPRINT", 439 },
+    { "NOTBROWSABLE", 40 },
+    { "NOTBUSY", 613 },
+    { "NOTDELETABLE", 44 },
+    { "NOTEMPTY", 211 },
+    { "NOTERMINAL", 214 },
+    { "NOTFWDRCVBLE", 361 },
+    { "NOTKEYED", 9 },
+    { "NOTLPA", 166 },
+    { "NOTPENDING", 127 },
+    { "NOTPURGEABLE", 161 },
+    { "NOTRANDUMP", 187 },
+    { "NOTREADABLE", 36 },
+    { "NOTREADY", 259 },
+    { "NOTRECOVABLE", 30 },
+    { "NOTREQUIRED", 667 },
+    { "NOTSOS", 669 },
+    { "NOTTABLE", 100 },
+    { "NOTINIT", 376 },
+    { "NOTTI", 78 },
+    { "NOTUPDATABLE", 38 },
+    { "NOUCTRAN", 451 },
+    { "NOVALIDATION", 441 },
+    { "NOVFORM", 412 },
+    { "NOWAIT", 341 },
+    { "NOZCPTRACE", 365 },
+    { "OBFORMAT", 421 },
+    { "OBOPERID", 387 },
+    { "OBTAINING", 96 },
+    { "OFF", 200 },
+    { "OK", 274 },
+    { "OLD", 26 },
+    { "OLDCOPY", 162 },
+    { "ON", 201 },
+    { "OPEN", 18 },
+    { "OPENING", 20 },
+    { "OPENINPUT", 256 },
+    { "OPENOUTPUT", 257 },
+    { "OUTLINE", 423 },
+    { "OUTPUT", 227 },
+    { "OUTSERVICE", 74 },
+    { "PAGEABLE", 79 },
+    { "PARTITIONS", 425 },
+    { "PARTITIONSET", 156 },
+    { "PATH", 11 },
+    { "PENDFREE", 86 },
+    { "PENDING", 126 },
+    { "PENDRECEIVE", 87 },
+    { "PERF", 330 },
+    { "PHASEIN", 168 },
+    { "PHYSICAL", 215 },
+    { "POST", 636 },
+    { "PRESETSEC", 242 },
+    { "PRIMARY", 110 },
+    { "PRINTADAPT", 427 },
+    { "PRIVATE", 174 },
+    { "PROGRAM", 154 },
+    { "PROGSYMBOL", 429 },
+    { "PRTCOPY", 448 },
+    { "PURGE", 236 },
+    { "PURGEABLE", 160 },
+    { "READABLE", 35 },
+    { "READBACK", 209 },
+    { "READONLY", 275 },
+    { "READY", 258 },
+    { "RECEIVE", 88 },
+    { "RECOVERABLE", 29 },
+    { "REENTPROT", 680 },
+    { "RELEASED", 70 },
+    { "RELEASING", 549 },
+    { "RELREQ", 442 },
+    { "REMOTE", 4 },
+    { "REMOVE", 276 },
+    { "REQUIRED", 666 },
+    { "RESSECEXT", 204 },
+    { "RESSECNO", 202 },
+    { "RESSECYES", 203 },
+    { "RESSYS", 208 },
+    { "REVERTED", 264 },
+    { "ROLLBACK", 89 },
+    { "RPC", 1500 },
+    { "RRDS", 7 },
+    { "RUNNING", 229 },
+    { "SCS", 614 },
+    { "SDLC", 176 },
+    { "SECONDINIT", 626 },
+    { "SEND", 90 },
+    { "SEQDISK", 18 },
+    { "SESSION", 372 },
+    { "SFS", 3 },
+    { "SHARE", 27 },
+    { "SHARED", 173 },
+    { "SHUTDISABLED", 645 },
+    { "SHUTENABLED", 644 },
+    { "SHUTDOWN", 288 },
+    { "SIGNEDOFF", 245 },
+    { "SIGNEDON", 244 },
+    { "SINGLEOFF", 324 },
+    { "SINGLEON", 323 },
+    { "SMF", 255 },
+    { "SOS", 668 },
+    { "SOSABOVE", 683 },
+    { "SOSBELOW", 682 },
+    { "SOSI", 434 },
+    { "SPECIFIC", 652 },
+    { "SPECTRACE", 177 },
+    { "SPRSTRACE", 175 },
+    { "SQL", 623 },
+    { "STANTRACE", 176 },
+    { "START", 635 },
+    { "STARTUP", 180 },
+    { "STATIC", 179 },
+    { "SURROGATE", 371 },
+    { "SUSPENDED", 231 },
+    { "SWITCH", 188 },
+    { "SWITCHALL", 287 },
+    { "SWITCHING", 225 },
+    { "SWITCHNEXT", 286 },
+    { "SYNCFREE", 91 },
+    { "SYNCRECEIVE", 92 },
+    { "SYNCSEND", 93 },
+    { "SYSDUMP", 184 },
+    { "SYSTEM", 643 },
+    { "SYSTEMOFF", 320 },
+    { "SYSTEMON", 319 },
+    { "SYSTEM3", 161 },
+    { "SYSTEM7", 2 },
+    { "SYS370", 164 },
+    { "SYS7BSCA", 166 },
+    { "TAKEOVER", 111 },
+    { "TAPE1", 250 },
+    { "TAPE2", 251 },
+    { "TASK", 233 },
+    { "TCAM", 64 },
+    { "TCAMSNA", 65 },
+    { "TCEXITALL", 366 },
+    { "TCEXITALLOFF", 369 },
+    { "TCEXITNONE", 368 },
+    { "TCEXITSYSTEM", 367 },
+    { "TCONSOLE", 8 },
+    { "TCPIP", 802 },
+    { "TELETYPE", 34 },
+    { "TERM", 234 },
+    { "TERMINAL", 213 },
+    { "TERMSTATUS", 606 },
+    { "TEXTKYBD", 436 },
+    { "TEXTPRINT", 438 },
+    { "THIRDINIT", 627 },
+    { "TRANDUMP", 186 },
+    { "TRANIDONLY", 452 },
+    { "TTCAM", 80 },
+    { "TTI", 77 },
+    { "TWX33_35", 33 },
+    { "T1050", 36 },
+    { "T1053", 74 },
+    { "T2260L", 65 },
+    { "T2260R", 72 },
+    { "T2265", 76 },
+    { "T2740", 40 },
+    { "T2741BCD", 43 },
+    { "T2741COR", 42 },
+    { "T2772", 130 },
+    { "T2780", 132 },
+    { "T2980", 134 },
+    { "T3275R", 146 },
+    { "T3277L", 153 },
+    { "T3277R", 145 },
+    { "T3284L", 155 },
+    { "T3284R", 147 },
+    { "T3286L", 156 },
+    { "T3286R", 148 },
+    { "T3600BI", 138 },
+    { "T3601", 177 },
+    { "T3614", 178 },
+    { "T3650ATT", 186 },
+    { "T3650HOST", 185 },
+    { "T3650PIPE", 184 },
+    { "T3650USER", 187 },
+    { "T3735", 136 },
+    { "T3740", 137 },
+    { "T3780", 133 },
+    { "T3790", 180 },
+    { "T3790SCSP", 182 },
+    { "T3790UP", 181 },
+    { "T7770", 1 },
+    { "UCTRAN", 450 },
+    { "UNBLOCKED", 17 },
+    { "UNDEFINED", 14 },
+    { "UNDETERMINED", 355 },
+    { "UNENABLED", 33 },
+    { "UNENABLING", 34 },
+    { "UPDATABLE", 37 },
+    { "USER", 642 },
+    { "USERDATAKEY", 380 },
+    { "USEREXECKEY", 382 },
+    { "USEROFF", 322 },
+    { "USERON", 321 },
+    { "USERTABLE", 102 },
+    { "VALID", 360 },
+    { "VALIDATION", 440 },
+    { "VARIABLE", 13 },
+    { "VFORM", 411 },
+    { "VIDEOTERM", 64 },
+    { "VSAM", 3 },
+    { "VTAM", 60 },
+    { "WAIT", 340 },
+    { "WAITFORGET", 622 },
+    { "WARMSTART", 267 },
+    { "XM", 123 },
+    { "XNOTDONE", 144 },
+    { "XOK", 143 },
+    { "ZCPTRACE", 364 },
+};
+
+const std::regex DFH_matcher(
+    [](const auto& DFHRESP_operands, const auto& DFHVALUE_operands) {
+        std::string DFHRESP_list;
+        for (const auto& [key, value] : DFHRESP_operands)
+            DFHRESP_list.append(key).append(1, '|');
+        std::string DFHVALUE_list;
+        for (const auto& [key, value] : DFHVALUE_operands)
+            DFHVALUE_list.append(key).append(1, '|');
+        // keep the empty alternatives
+        return "^DFH(?:RESP[ ]*\\([ ]*(" + DFHRESP_list + ")[ ]*\\)|VALUE[ ]*\\([ ]*(" + DFHVALUE_list + ")[ ]*\\))";
+    }(DFHRESP_operands, DFHVALUE_operands),
     std::regex_constants::icase);
 
-// emulates limited variant of alternative operand parser and performs DFHRESP substitutions
+// emulates limited variant of alternative operand parser and performs DFHRESP/DFHVALUE substitutions
 // recognizes L' attribute, '...' strings and skips end of line comments
 template<typename It>
 class mini_parser
@@ -216,10 +679,29 @@ public:
     const std::string& operands() const& { return m_substituted_operands; }
     std::string operands() && { return std::move(m_substituted_operands); }
 
-    int parse_and_substitute(It b, It e)
+    class parse_and_substitute_result
+    {
+        std::variant<size_t, std::string_view> m_value;
+
+    public:
+        explicit parse_and_substitute_result(size_t substitutions_performed)
+            : m_value(substitutions_performed)
+        {}
+        explicit parse_and_substitute_result(std::string_view var_name)
+            : m_value(var_name)
+        {}
+
+        bool error() const { return std::holds_alternative<std::string_view>(m_value); }
+
+        std::string_view error_variable_name() const { return std::get<std::string_view>(m_value); }
+
+        size_t substitutions_performed() const { return std::get<size_t>(m_value); }
+    };
+
+    parse_and_substitute_result parse_and_substitute(It b, It e)
     {
         m_substituted_operands.clear();
-        int valid_dfhresp = 0;
+        size_t valid_dfh = 0;
 
         bool next_last_attribute = false;
         bool next_new_token = true;
@@ -250,17 +732,29 @@ public:
                     }
                     else if (!last_attribute && (c == 'D' || c == 'd'))
                     {
-                        // check for DFHRESP expression
-                        if (std::regex_search(b, e, m_matches, DFHRESP_matcher))
+                        // check for DFHRESP/DFHVALUE expression
+                        if (std::regex_search(b, e, m_matches, DFH_matcher))
                         {
-                            if (m_matches[1].length() == 0)
-                                return -1; // indicate NULL argument error
+                            if (m_matches[1].length() != 0)
+                                m_substituted_operands.append("=F'")
+                                    .append(
+                                        std::to_string(DFHRESP_operands.at(context::to_upper_copy(m_matches[1].str()))))
+                                    .append("'");
+                            else if (m_matches[2].length() != 0)
+                                m_substituted_operands.append("=F'")
+                                    .append(std::to_string(
+                                        DFHVALUE_operands.at(context::to_upper_copy(m_matches[2].str()))))
+                                    .append("'");
+                            else
+                            {
+                                if (auto c3 = *std::next(b, 3); c3 == 'R' || c3 == 'r') // indicate NULL argument error
+                                    return parse_and_substitute_result("DFHRESP");
+                                else
+                                    return parse_and_substitute_result("DFHVALUE");
+                            }
 
-                            m_substituted_operands.append("=F'")
-                                .append(std::to_string(DFHRESP_operands.at(context::to_upper_copy(m_matches[1].str()))))
-                                .append("'");
                             b = m_matches.suffix().first;
-                            ++valid_dfhresp;
+                            ++valid_dfh;
                             continue;
                         }
                     }
@@ -309,7 +803,7 @@ public:
         }
 
     done:
-        return valid_dfhresp;
+        return parse_and_substitute_result(valid_dfh);
     }
 };
 
@@ -326,7 +820,7 @@ class cics_preprocessor : public preprocessor
     bool m_end_seen = false;
     bool m_global_macro_called = false;
     bool m_pending_prolog = false;
-    bool m_pending_dfhresp_null_error = false;
+    std::string_view m_pending_dfh_null_error;
 
     std::match_results<std::string_view::iterator> m_matches_sv;
     std::match_results<lexing::logical_line::const_iterator> m_matches_ll;
@@ -365,9 +859,9 @@ public:
     }
 
     void inject_prolog() { m_buffer.append("         DFHEIENT                  INSERTED BY TRANSLATOR\n"); }
-    void inject_dfhresp_null_error()
+    void inject_dfh_null_error(std::string_view variable)
     {
-        m_buffer.append("*DFH7218I S  SUB-OPERAND(S) OF 'DFHRESP' CANNOT BE NULL. COMMAND NOT\n");
+        m_buffer.append("*DFH7218I S  SUB-OPERAND(S) OF '").append(variable).append("' CANNOT BE NULL. COMMAND NOT\n");
         m_buffer.append("*            TRANSLATED.\n");
         m_buffer.append("         DFHEIMSG 12\n");
     }
@@ -511,10 +1005,10 @@ public:
         m_buffer.append("DFHECALL =X'0E'\n"); // TODO: generate correct calls
     }
 
-    int try_substituting_dfhresp(const std::match_results<lexing::logical_line::const_iterator>& matches)
+    auto try_substituting_dfh(const std::match_results<lexing::logical_line::const_iterator>& matches)
     {
         auto events = m_mini_parser.parse_and_substitute(matches[3].first, matches[3].second);
-        if (events > 0)
+        if (!events.error() && events.substitutions_performed() > 0)
         {
             auto label_b = matches[1].first;
             auto label_e = matches[1].second;
@@ -556,8 +1050,8 @@ public:
     {
         if (std::exchange(m_pending_prolog, false))
             inject_prolog();
-        if (std::exchange(m_pending_dfhresp_null_error, false))
-            inject_dfhresp_null_error();
+        if (!m_pending_dfh_null_error.empty())
+            inject_dfh_null_error(std::exchange(m_pending_dfh_null_error, std::string_view()));
 
         if (input.empty())
         {
@@ -615,8 +1109,9 @@ public:
             return m_logical_line.segments.size();
         }
 
-        static const std::regex dfhresp_lookup(
-            "([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+(.*DFHRESP[ ]*\\([ ]*[A-Z]*[ ]*\\).*)", std::regex_constants::icase);
+        static const std::regex dfh_lookup(
+            "([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+(.*(DFHRESP|DFHVALUE)[ ]*\\([ ]*[A-Z]*[ ]*\\).*)",
+            std::regex_constants::icase);
 
         input = input_backup;
 
@@ -628,22 +1123,18 @@ public:
             if (m_diags)
                 m_diags->add_diagnostic(diagnostic_op::warn_CIC001(range(position(lineno, 0))));
         }
-        else if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, dfhresp_lookup))
+        else if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, dfh_lookup))
         {
-            switch (try_substituting_dfhresp(m_matches_ll))
+            auto r = try_substituting_dfh(m_matches_ll);
+            if (r.error())
             {
-                case -1:
-                    if (m_diags)
-                        m_diags->add_diagnostic(diagnostic_op::warn_CIC002(range(position(lineno, 0))));
-                    m_pending_dfhresp_null_error = true;
-                    break;
-
-                case 0:
-                    break;
-
-                default:
-                    return m_logical_line.segments.size();
+                if (m_diags)
+                    m_diags->add_diagnostic(
+                        diagnostic_op::warn_CIC002(range(position(lineno, 0)), r.error_variable_name()));
+                m_pending_dfh_null_error = r.error_variable_name();
             }
+            else if (r.substitutions_performed() > 0)
+                return m_logical_line.segments.size();
         }
 
         input = input_backup;
@@ -670,7 +1161,7 @@ public:
             return std::nullopt;
     }
 
-    bool finished() const override { return !m_pending_prolog && !m_pending_dfhresp_null_error; }
+    bool finished() const override { return !m_pending_prolog && m_pending_dfh_null_error.empty(); }
 
     cics_preprocessor_options current_options() const { return m_options; }
 };
@@ -701,8 +1192,14 @@ std::pair<int, std::string> test_cics_miniparser(const std::vector<std::string_v
     mini_parser<lexing::logical_line::const_iterator> p;
     std::pair<int, std::string> result;
 
-    if ((result.first = p.parse_and_substitute(ll.begin(), ll.end())) >= 0)
+    auto p_s = p.parse_and_substitute(ll.begin(), ll.end());
+    if (p_s.error())
+        result.first = -1;
+    else
+    {
+        result.first = (int)p_s.substitutions_performed();
         result.second = std::move(p).operands();
+    }
 
     return result;
 }
