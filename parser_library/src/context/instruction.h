@@ -422,7 +422,7 @@ class mnemonic_code
     const machine_instruction* m_instruction;
 
     // first goes place, then value
-    std::array<std::pair<unsigned char, unsigned char>, 3> m_replaced;
+    std::array<std::pair<unsigned char, unsigned short>, 3> m_replaced;
     unsigned char m_replaced_count;
 
     reladdr_transform_mask m_reladdr_mask;
@@ -477,13 +477,15 @@ public:
         assert(replaced.size() <= m_replaced.size());
         for (size_t i = 0; const auto& [a, b] : replaced)
         {
-            m_replaced[i] = std::make_pair(static_cast<unsigned char>(a), static_cast<unsigned char>(b));
+            assert(static_cast<unsigned char>(a) == a && static_cast<unsigned short>(b) == b
+                && static_cast<unsigned char>(a) < instr->operands().size() + instr->optional_operand_count());
+            m_replaced[i] = std::make_pair(static_cast<unsigned char>(a), static_cast<unsigned short>(b));
             i++;
         }
     };
 
     constexpr const machine_instruction* instruction() const { return m_instruction; }
-    constexpr std::span<const std::pair<unsigned char, unsigned char>> replaced_operands() const
+    constexpr std::span<const std::pair<unsigned char, unsigned short>> replaced_operands() const
     {
         return { m_replaced.data(), m_replaced_count };
     }

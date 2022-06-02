@@ -38,7 +38,7 @@ suite('Completion List Test Suite', () => {
         const completionList: vscode.CompletionList = await vscode.commands.executeCommand('vscode.executeCompletionItemProvider', editor.document.uri, movePosition);
 
         const result = completionList.items.filter(complItem => complItem.label.toString().startsWith('L'));
-        assert.ok(result.length === 289, 'Wrong number of suggestion result. Expected 289 got ' + result.length);
+        assert.ok(result.length === 343, 'Wrong number of suggestion result. Expected 343 got ' + result.length);
     }).timeout(3000).slow(1000);
 
     // test completion list for variable symbols
