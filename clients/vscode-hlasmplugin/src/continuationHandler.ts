@@ -39,7 +39,7 @@ export class ContinuationHandler {
         let continuationSymbols: { [name: string]: number } = {};
         for (let i = 0; i < Math.min(document.lineCount, 5000); ++i) {
             const line = document.lineAt(i).text;
-            if (line.length <= continuationOffset)
+            if (continuationOffset >= line.length)
                 continue;
             const candidate = line.at(continuationOffset);
             if (candidate == ' ')
@@ -159,10 +159,13 @@ export class ContinuationHandler {
             return;
         if (lineText.substring(continuationOffset, lastSpace).trim().length != 0)
             return;
+        const notSpace = lastSpace + 1;
+        // the end of line segment is either a single character, or longer than 8 => assume continuation symbol is present
+        // otherwise assume only sequence symbols are present
         edit.delete(
             new vscode.Range(
-                new vscode.Position(line, continuationOffset),
-                new vscode.Position(line, lastSpace + 1)
+                new vscode.Position(line, continuationOffset + (notSpace + 1 == lineText.length || lineText.length - notSpace > 8 ? 0 : 1)),
+                new vscode.Position(line, notSpace)
             )
         );
     }
