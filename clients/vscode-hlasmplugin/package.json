@@ -218,9 +218,16 @@
     "configurationDefaults": {
       "[hlasm]": {
         "editor.rulers": [
+          9,
+          15,
+          39,
+          71,
           72
         ],
-        "editor.wordBasedSuggestions": false
+        "editor.wordBasedSuggestions": false,
+        "editor.tabSize": 1,
+        "editor.detectIndentation": false,
+        "editor.guides.indentation": false
       }
     },
     "commands": [
