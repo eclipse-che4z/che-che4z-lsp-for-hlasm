@@ -115,16 +115,31 @@ export class ContinuationHandler {
     removeContinuation(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, continuationOffset: number) {
         const isThisContinued = isLineContinued(editor.document, editor.selection.active.line, continuationOffset);
         const isPrevContinued = isLineContinued(editor.document, editor.selection.active.line - 1, continuationOffset);
+        const line = editor.selection.active.line;
+        const col = editor.selection.active.character;
 
         if (editor.selection.active.line > 0 && isPrevContinued) {
-            const continuationPosition = new vscode.Position(
-                editor.selection.active.line - 1, continuationOffset);
             edit.delete(
                 new vscode.Range(
-                    new vscode.Position(editor.selection.active.line, editor.document.lineAt(editor.selection.active).text.length),
-                    new vscode.Position(editor.selection.active.line - 1, continuationOffset + (isThisContinued ? 1 : 0))));
-
-            setCursor(editor, continuationPosition);
+                    new vscode.Position(line - 1, editor.document.lineAt(line - 1).text.length),
+                    new vscode.Position(line, editor.document.lineAt(line).text.length)));
+            if (!isThisContinued) {
+                const continuationPosition = new vscode.Position(
+                    editor.selection.active.line - 1, continuationOffset);
+                edit.replace(
+                    new vscode.Range(
+                        new vscode.Position(editor.selection.active.line - 1, continuationOffset),
+                        new vscode.Position(editor.selection.active.line - 1, continuationOffset + 1)
+                    ),
+                    ' '
+                );
+            }
+            setImmediate(() => setCursor(editor,
+                new vscode.Position(
+                    line - 1,
+                    editor.document.lineAt(line - 1).text.substring(0, continuationOffset).trimEnd().length
+                )
+            ));
         }
     }
 }
