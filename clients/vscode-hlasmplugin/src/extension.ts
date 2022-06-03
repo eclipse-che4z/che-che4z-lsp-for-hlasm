@@ -161,6 +161,8 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
             (editor, edit) => contHandling.insertContinuation(editor, edit, offset, continueColumn)));
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("removeContinuation",
             (editor, edit) => contHandling.removeContinuation(editor, edit, offset)));
+        context.subscriptions.push(vscode.commands.registerTextEditorCommand("rearrangeSequenceNumbers",
+            (editor, edit) => contHandling.rearrangeSequenceNumbers(editor, edit, offset)));
     }
 
     // overrides should happen only if the user wishes

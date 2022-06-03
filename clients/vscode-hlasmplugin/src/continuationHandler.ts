@@ -142,4 +142,28 @@ export class ContinuationHandler {
             ));
         }
     }
+
+    rearrangeSequenceNumbers(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, continuationOffset: number) {
+        const sel = editor.selection;
+
+        // retrieve continuation information
+        const line = sel.active.line;
+        const col = sel.active.character;
+        const doc = editor.document;
+        const lineText = doc.lineAt(line).text;
+
+        if (lineText.length <= continuationOffset)
+            return;
+        const lastSpace = lineText.lastIndexOf(' ');
+        if (lastSpace < continuationOffset)
+            return;
+        if (lineText.substring(continuationOffset, lastSpace).trim().length != 0)
+            return;
+        edit.delete(
+            new vscode.Range(
+                new vscode.Position(line, continuationOffset),
+                new vscode.Position(line, lastSpace + 1)
+            )
+        );
+    }
 }

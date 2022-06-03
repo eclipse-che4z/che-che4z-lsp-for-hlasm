@@ -240,6 +240,11 @@
         "command": "removeContinuation",
         "category": "HLASM",
         "title": "Remove Continuation"
+      },
+      {
+        "command": "rearrangeSequenceNumbers",
+        "category": "HLASM",
+        "title": "RearrangeSequenceNumbers"
       }
     ],
     "keybindings": [
@@ -251,6 +256,11 @@
       {
         "command": "removeContinuation",
         "key": "shift+alt+backspace",
+        "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "rearrangeSequenceNumbers",
+        "key": "shift+alt+delete",
         "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
       }
     ],
