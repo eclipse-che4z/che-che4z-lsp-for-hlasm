@@ -68,10 +68,10 @@ class hlasm_context
     // stack of processed source files
     std::vector<source_context> source_stack_;
 
-    // path to the opencode
-    std::string opencode_file_name_;
+    // opencode file location
+    utils::resource::resource_location opencode_file_location_;
     // all files processes via macro or copy member invocation
-    std::set<std::string> visited_files_;
+    std::set<utils::resource::resource_location> visited_files_;
 
     // Compiler options
     asm_option asm_options_;
@@ -103,15 +103,15 @@ class hlasm_context
     long long m_statements_remaining;
 
 public:
-    hlasm_context(std::string file_name = "",
+    hlasm_context(utils::resource::resource_location file_loc = utils::resource::resource_location(""),
         asm_option asm_opts = {},
         std::shared_ptr<id_storage> init_ids = std::make_shared<id_storage>());
     ~hlasm_context();
 
-    // gets name of file where is open-code located
-    const std::string& opencode_file_name() const;
+    // gets opencode file location
+    const utils::resource::resource_location& opencode_location() const;
     // accesses visited files
-    const std::set<std::string>& get_visited_files();
+    const std::set<utils::resource::resource_location>& get_visited_files() const;
 
     // gets current source
     const source_context& current_source() const;
@@ -128,7 +128,7 @@ public:
     // pushes new kind of statement processing
     void push_statement_processing(const processing::processing_kind kind);
     // pushes new kind of statement processing as well as new source
-    void push_statement_processing(const processing::processing_kind kind, std::string file_name);
+    void push_statement_processing(const processing::processing_kind kind, utils::resource::resource_location file_loc);
     // pops statement processing
     void pop_statement_processing();
 
@@ -236,7 +236,7 @@ public:
     void leave_copy_member();
 
     // register preprocessor dependency
-    void add_preprocessor_dependency(const std::string& file);
+    void add_preprocessor_dependency(const utils::resource::resource_location& file_loc);
 
     // creates specified global set symbol
     template<typename T>

@@ -17,6 +17,8 @@
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
 
+using namespace hlasm_plugin::utils::resource;
+
 TEST(ainsert, ainsert_with_substitution)
 {
     std::string input(R"(

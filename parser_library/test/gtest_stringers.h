@@ -36,7 +36,7 @@ inline std::ostream& operator<<(std::ostream& stream, range item)
 
 inline std::ostream& operator<<(std::ostream& stream, const location& item)
 {
-    return stream << "{ file: " << item.file << "\n position: " << item.pos << " }";
+    return stream << "{ file: " << item.get_uri() << "\n position: " << item.pos << " }";
 }
 
 inline std::ostream& operator<<(std::ostream& stream, const performance_metrics& item)

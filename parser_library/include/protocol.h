@@ -153,7 +153,7 @@ struct PARSER_LIBRARY_EXPORT position_uri
 {
     explicit position_uri(const location& item);
     position pos() const;
-    std::string_view file() const;
+    std::string_view file_uri() const;
 
 private:
     const location& item_;
@@ -235,7 +235,7 @@ struct PARSER_LIBRARY_EXPORT diagnostic
 {
     diagnostic(diagnostic_s&);
 
-    const char* file_name() const;
+    const char* file_uri() const;
     range get_range() const;
     diagnostic_severity severity() const;
     const char* code() const;
@@ -321,7 +321,7 @@ struct PARSER_LIBRARY_EXPORT source
 {
     source(const debugging::source& source);
 
-    sequence<char> path;
+    sequence<char> uri;
 };
 
 struct PARSER_LIBRARY_EXPORT stack_frame

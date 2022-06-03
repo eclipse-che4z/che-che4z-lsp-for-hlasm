@@ -49,7 +49,7 @@ enum class file_is_opencode : bool
 
 class analyzer_options
 {
-    std::string file_name = "";
+    utils::resource::resource_location file_loc = utils::resource::resource_location("");
     workspaces::parse_lib_provider* lib_provider = nullptr;
     std::variant<asm_option, analyzing_context> ctx_source;
     workspaces::library_data library_data = { processing::processing_kind::ORDINARY, context::id_storage::empty_id };
@@ -59,7 +59,7 @@ class analyzer_options
     preprocessor_options preprocessor_args;
     virtual_file_monitor* vf_monitor = nullptr;
 
-    void set(std::string fn) { file_name = std::move(fn); }
+    void set(utils::resource::resource_location rl) { file_loc = std::move(rl); }
     void set(workspaces::parse_lib_provider* lp) { lib_provider = lp; }
     void set(asm_option ao) { ctx_source = std::move(ao); }
     void set(analyzing_context ac) { ctx_source = std::move(ac); }
@@ -85,7 +85,8 @@ public:
     template<typename... Args>
     explicit analyzer_options(Args&&... args)
     {
-        constexpr auto string_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, std::string>);
+        constexpr auto rl_cnt =
+            (0 + ... + std::is_convertible_v<std::decay_t<Args>, utils::resource::resource_location>);
         constexpr auto lib_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, workspaces::parse_lib_provider*>);
         constexpr auto ao_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, asm_option>);
         constexpr auto ac_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, analyzing_context>);
@@ -96,9 +97,9 @@ public:
         constexpr auto pp_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, preprocessor_options>);
         constexpr auto vfm_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, virtual_file_monitor*>);
         constexpr auto cnt =
-            string_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt + pp_cnt + vfm_cnt;
+            rl_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt + pp_cnt + vfm_cnt;
 
-        static_assert(string_cnt <= 1, "Duplicate file_name");
+        static_assert(rl_cnt <= 1, "Duplicate resource_location");
         static_assert(lib_cnt <= 1, "Duplicate parse_lib_provider");
         static_assert(ao_cnt <= 1, "Duplicate asm_option");
         static_assert(ac_cnt <= 1, "Duplicate analyzing_context");

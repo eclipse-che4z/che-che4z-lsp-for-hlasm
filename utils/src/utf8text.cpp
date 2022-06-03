@@ -98,4 +98,64 @@ void append_utf8_sanitized(std::string& result, std::string_view str)
         ++it;
     }
 }
+
+bool utf8_one_byte_begin(char ch)
+{
+    return (ch & 0x80) == 0; // 0xxxxxxx
+}
+
+bool utf8_continue_byte(char ch)
+{
+    return (ch & 0xC0) == 0x80; // 10xxxxxx
+}
+
+
+bool utf8_two_byte_begin(char ch)
+{
+    return (ch & 0xE0) == 0xC0; // 110xxxxx
+}
+
+bool utf8_three_byte_begin(char ch)
+{
+    return (ch & 0xF0) == 0xE0; // 1110xxxx
+}
+
+bool utf8_four_byte_begin(char ch)
+{
+    return (ch & 0xF8) == 0xF0; // 11110xxx
+}
+
+std::string replace_non_utf8_chars(std::string_view text)
+{
+    std::string ret;
+    ret.reserve(text.size());
+    while (!text.empty())
+    {
+        if (utf8_one_byte_begin(text.front()))
+        {
+            ret.push_back(text.front());
+            text.remove_prefix(1);
+            continue;
+        }
+
+        const auto cs = utils::utf8_prefix_sizes[(unsigned char)text.front()];
+        if (cs.utf8 != 0 && cs.utf8 <= text.size() && utils::utf8_valid_multibyte_prefix(text[0], text[1])
+            && std::all_of(text.begin() + 2, text.begin() + cs.utf8, utf8_continue_byte))
+        {
+            // copy the character to output
+            ret.append(text.substr(0, cs.utf8));
+            text.remove_prefix(cs.utf8);
+        }
+        else
+        {
+            // UTF8 replacement for unknown character
+            ret.push_back((uint8_t)0xEF);
+            ret.push_back((uint8_t)0xBF);
+            ret.push_back((uint8_t)0xBD);
+            text.remove_prefix(1);
+        }
+    }
+    return ret;
+}
+
 } // namespace hlasm_plugin::utils

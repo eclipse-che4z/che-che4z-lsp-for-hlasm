@@ -14,16 +14,17 @@
 #ifndef TEST_WORKSPACE_WORKSPACE_FILE_WITH_TEXT_TEST_H
 #define TEST_WORKSPACE_WORKSPACE_FILE_WITH_TEXT_TEST_H
 
+#include "utils/resource_location.h"
 #include "workspaces/processor_file_impl.h"
 
 class file_with_text : public hlasm_plugin::parser_library::workspaces::processor_file_impl
 {
 public:
-    file_with_text(const std::string& name,
+    file_with_text(const hlasm_plugin::utils::resource::resource_location& location,
         const std::string& text,
         const hlasm_plugin::parser_library::workspaces::file_manager& file_mngr)
-        : file_impl(name)
-        , processor_file_impl(name, file_mngr)
+        : file_impl(location)
+        , processor_file_impl(location, file_mngr)
     {
         did_open(text, 1);
     }

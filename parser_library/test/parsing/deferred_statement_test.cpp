@@ -16,7 +16,7 @@
 
 #include "../common_testing.h"
 
-
+using namespace hlasm_plugin::utils::resource;
 TEST(deferred_statement, split_var)
 {
     std::string input = R"(
@@ -34,8 +34,8 @@ TEST(deferred_statement, split_var)
     a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
-    auto aa1 = a.context().lsp_ctx->hover("", { 3, 71 });
-    auto aa2 = a.context().lsp_ctx->hover("", { 4, 16 });
+    auto aa1 = a.context().lsp_ctx->hover(resource_location(""), { 3, 71 });
+    auto aa2 = a.context().lsp_ctx->hover(resource_location(""), { 4, 16 });
     EXPECT_EQ(aa1, "MACRO parameter");
     EXPECT_EQ(aa2, "MACRO parameter");
 }

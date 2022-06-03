@@ -37,7 +37,7 @@ public:
     processing_manager(std::unique_ptr<opencode_provider> base_provider,
         analyzing_context ctx,
         workspaces::library_data data,
-        std::string file_name,
+        utils::resource::resource_location file_loc,
         const std::string& file_text,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
@@ -79,7 +79,7 @@ private:
     void finish_copy_member(copy_processing_result result) override;
     void finish_opencode() override;
 
-    void start_macro_definition(macrodef_start_data start, std::optional<std::string> file);
+    void start_macro_definition(macrodef_start_data start, std::optional<utils::resource::resource_location> file_loc);
 
     void jump_in_statements(context::id_index target, range symbol_range) override;
     void register_sequence_symbol(context::id_index target, range symbol_range) override;

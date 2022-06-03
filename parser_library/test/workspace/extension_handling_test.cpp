@@ -22,15 +22,21 @@
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library::workspaces;
+using namespace hlasm_plugin::utils::resource;
 
-const std::string lib_path = hlasm_plugin::utils::platform::is_windows() ? "lib\\" : "lib/";
-const std::string lib_path2 = hlasm_plugin::utils::platform::is_windows() ? "lib2\\" : "lib2/";
+namespace {
+const auto lib_loc =
+    hlasm_plugin::utils::platform::is_windows() ? resource_location("lib\\") : resource_location("lib/");
+const auto lib2_loc =
+    hlasm_plugin::utils::platform::is_windows() ? resource_location("lib2\\") : resource_location("lib2/");
+} // namespace
 
 class file_manager_extension_mock : public file_manager_impl
 {
-    list_directory_result list_directory_files(const std::string&) override
+    list_directory_result list_directory_files(const resource_location&) override
     {
-        return { { { "Mac.hlasm", lib_path + "Mac.hlasm" } }, hlasm_plugin::utils::path::list_directory_rc::done };
+        return { { { "Mac.hlasm", resource_location::join(lib_loc, "Mac.hlasm") } },
+            hlasm_plugin::utils::path::list_directory_rc::done };
     }
 };
 
@@ -55,38 +61,38 @@ TEST(extension_handling_test, extension_removal)
 {
     file_manager_extension_mock file_mngr;
     // file must end with hlasm
-    library_local lib(file_mngr, "lib", { { ".hlasm" } });
+    library_local lib(file_mngr, lib_loc, { { ".hlasm" } });
     EXPECT_NE(lib.find_file("MAC"), nullptr);
 
     // file must end with hlasm
-    library_local lib2(file_mngr, "lib", { { ".hlasm" } });
+    library_local lib2(file_mngr, lib_loc, { { ".hlasm" } });
     EXPECT_NE(lib2.find_file("MAC"), nullptr);
 
     // file must end with asm
-    library_local lib3(file_mngr, "lib", { { ".asm" } });
+    library_local lib3(file_mngr, lib_loc, { { ".asm" } });
     EXPECT_EQ(lib3.find_file("MAC"), nullptr);
 
     // test multiple extensions
-    library_local lib4(file_mngr, "lib2", { { ".hlasm", ".asm" } });
+    library_local lib4(file_mngr, lib2_loc, { { ".hlasm", ".asm" } });
     EXPECT_NE(lib4.find_file("MAC"), nullptr);
 
     // test no extensions
-    library_local lib5(file_mngr, "lib2", { {} });
+    library_local lib5(file_mngr, lib2_loc, { {} });
     EXPECT_EQ(lib5.find_file("MAC"), nullptr);
 
     // test no extensions
-    library_local lib6(file_mngr, "lib2", { { "" } });
+    library_local lib6(file_mngr, lib2_loc, { { "" } });
     EXPECT_EQ(lib6.find_file("MAC"), nullptr);
 
     // tolerate missing dot
-    library_local lib7(file_mngr, "lib", { { "hlasm", "asm" } });
+    library_local lib7(file_mngr, lib_loc, { { "hlasm", "asm" } });
     EXPECT_NE(lib7.find_file("MAC"), nullptr);
 }
 
 TEST(extension_handling_test, legacy_extension_selection)
 {
     file_manager_extension_mock file_mngr;
-    library_local lib(file_mngr, "lib", { { ".hlasm" }, true });
+    library_local lib(file_mngr, lib_loc, { { ".hlasm" }, true });
     EXPECT_NE(lib.find_file("MAC"), nullptr);
     lib.collect_diags();
     const auto& diags = lib.diags();
@@ -95,9 +101,10 @@ TEST(extension_handling_test, legacy_extension_selection)
 
 class file_manager_extension_mock2 : public file_manager_impl
 {
-    list_directory_result list_directory_files(const std::string&) override
+    list_directory_result list_directory_files(const resource_location&) override
     {
-        return { { { "Mac.hlasm", lib_path + "Mac.hlasm" }, { "Mac", lib_path + "Mac" } },
+        return { { { "Mac.hlasm", resource_location::join(lib_loc, "Mac.hlasm") },
+                     { "Mac", resource_location::join(lib_loc, "Mac") } },
             hlasm_plugin::utils::path::list_directory_rc::done };
     }
 };
@@ -105,7 +112,7 @@ class file_manager_extension_mock2 : public file_manager_impl
 TEST(extension_handling_test, multiple_macro_definitions)
 {
     file_manager_extension_mock2 file_mngr;
-    library_local lib(file_mngr, "lib", { { ".hlasm", "" } });
+    library_local lib(file_mngr, lib_loc, { { ".hlasm", "" } });
     EXPECT_NE(lib.find_file("MAC"), nullptr);
     lib.collect_diags();
     const auto& diags = lib.diags();
@@ -115,7 +122,7 @@ TEST(extension_handling_test, multiple_macro_definitions)
 TEST(extension_handling_test, no_multiple_macro_definitions)
 {
     file_manager_extension_mock2 file_mngr;
-    library_local lib(file_mngr, "lib", { { ".hlasm" } });
+    library_local lib(file_mngr, lib_loc, { { ".hlasm" } });
     EXPECT_NE(lib.find_file("MAC"), nullptr);
     lib.collect_diags();
     const auto& diags = lib.diags();
@@ -124,16 +131,17 @@ TEST(extension_handling_test, no_multiple_macro_definitions)
 
 class file_manager_extension_mock_no_ext : public file_manager_impl
 {
-    list_directory_result list_directory_files(const std::string&) override
+    list_directory_result list_directory_files(const resource_location&) override
     {
-        return { { { "Mac", lib_path + "Mac" } }, hlasm_plugin::utils::path::list_directory_rc::done };
+        return { { { "Mac", resource_location::join(lib_loc, "Mac") } },
+            hlasm_plugin::utils::path::list_directory_rc::done };
     }
 };
 
 TEST(extension_handling_test, legacy_extension_selection_file_without_ext)
 {
     file_manager_extension_mock_no_ext file_mngr;
-    library_local lib(file_mngr, "lib", { { ".hlasm" }, true });
+    library_local lib(file_mngr, lib_loc, { { ".hlasm" }, true });
     EXPECT_NE(lib.find_file("MAC"), nullptr);
     lib.collect_diags();
     const auto& diags = lib.diags();

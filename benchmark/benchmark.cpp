@@ -27,8 +27,8 @@
 #include "config/pgm_conf.h"
 #include "diagnostic_counter.h"
 #include "nlohmann/json.hpp"
+#include "utils/utf8text.h"
 #include "workspace_manager.h"
-#include "workspaces/file_impl.h"
 
 /*
  * The benchmark is used to evaluate multiple aspects about the performance and accuracy of the parse library.
@@ -98,7 +98,7 @@ json parse_one_file(const std::string& source_file,
     s.program_count++;
     // program's contents
     auto content = std::string((std::istreambuf_iterator<char>(in)), (std::istreambuf_iterator<char>()));
-    content = hlasm_plugin::parser_library::workspaces::file_impl::replace_non_utf8_chars(content);
+    content = hlasm_plugin::utils::replace_non_utf8_chars(content);
 
     // new workspace manager
     hlasm_plugin::parser_library::workspace_manager ws;

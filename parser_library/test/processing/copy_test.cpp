@@ -15,8 +15,10 @@
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
 
+using namespace hlasm_plugin::utils::resource;
+
 // test for COPY instruction
-// various cases of instruction occurence in the source
+// various cases of instruction occurrence in the source
 namespace {
 mock_parse_lib_provider create_copy_mock()
 {
@@ -154,6 +156,44 @@ mock_parse_lib_provider create_copy_mock()
         { "EMPTY", content_EMPTY },
         { "COPYEMPTY", content_COPYEMPTY } };
 }
+
+const resource_location start("start");
+const resource_location copybm("COPYBM");
+const resource_location copyd("COPYD");
+const resource_location copyjf("COPYJF");
+const resource_location copyl("COPYL");
+const resource_location copynd1("COPYND1");
+const resource_location copynd2("COPYND2");
+const resource_location copyr("COPYR");
+
+void check_diag(const hlasm_plugin::parser_library::diagnostic_s& diag,
+    size_t expected_line,
+    const resource_location& expected_file)
+{
+    EXPECT_EQ(diag.diag_range.start.line, expected_line);
+    EXPECT_EQ(diag.file_uri, expected_file.get_uri());
+}
+
+void check_related_diag(const hlasm_plugin::parser_library::diagnostic_related_info_s& diag,
+    size_t expected_line,
+    const resource_location& expected_file)
+{
+    EXPECT_EQ(diag.location.rang.start.line, expected_line);
+    EXPECT_EQ(diag.location.uri, expected_file.get_uri());
+}
+
+analyzer get_analyzer(const std::string& input)
+{
+    static auto lib_provider = create_copy_mock();
+    return analyzer(input, analyzer_options { &lib_provider });
+}
+
+analyzer get_analyzer(const std::string& input, std::string_view resource_loc)
+{
+    static auto lib_provider = create_copy_mock();
+    return analyzer(input, analyzer_options { resource_location(resource_loc), &lib_provider });
+}
+
 } // namespace
 TEST(copy, copy_enter_fail)
 {
@@ -162,8 +202,7 @@ TEST(copy, copy_enter_fail)
  COPY A+1
  COPY UNKNOWN
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { &lib_provider });
+    auto a = get_analyzer(input);
     a.analyze();
 
     a.collect_diags();
@@ -180,8 +219,7 @@ TEST(copy, copy_enter_success)
         R"(
  COPY COPYR
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { &lib_provider });
+    auto a = get_analyzer(input);
     a.analyze();
 
     a.collect_diags();
@@ -201,8 +239,7 @@ TEST(copy, copy_enter_diag_test)
         R"(
  COPY COPYD
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { "start", &lib_provider });
+    auto a = get_analyzer(input, "start");
     a.analyze();
 
     a.collect_diags();
@@ -211,13 +248,11 @@ TEST(copy, copy_enter_diag_test)
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
-    auto diag = a.diags()[0];
+    const auto& diag = a.diags()[0];
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)2);
-    EXPECT_EQ(a.diags()[0].file_name, "COPYD");
-    EXPECT_EQ(a.diags()[0].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
+    check_diag(diag, 2, copyd);
+    EXPECT_EQ(diag.related.size(), (size_t)1);
+    check_related_diag(diag.related[0], 1, start);
 }
 
 TEST(copy, copy_jump)
@@ -229,8 +264,7 @@ TEST(copy, copy_jump)
  COPY COPYF
  AIF (&VAR LT 4).A
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { &lib_provider });
+    auto a = get_analyzer(input);
     a.analyze();
 
     a.collect_diags();
@@ -270,8 +304,7 @@ TEST(copy, copy_twice)
  COPY COPYR
  COPY COPYR
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { &lib_provider });
+    auto a = get_analyzer(input);
     a.analyze();
 
     a.collect_diags();
@@ -289,8 +322,7 @@ TEST(copy, macro_call_from_copy_enter)
  M1
  M2
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { &lib_provider });
+    auto a = get_analyzer(input);
     a.analyze();
 
     a.collect_diags();
@@ -315,8 +347,7 @@ TEST(copy, copy_enter_from_macro_call)
 
  M
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { "start", &lib_provider });
+    auto a = get_analyzer(input, "start");
     a.analyze();
 
     a.collect_diags();
@@ -336,11 +367,9 @@ TEST(copy, copy_enter_from_macro_call)
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)16);
-    EXPECT_EQ(a.diags()[0].file_name, "COPYR");
+    check_diag(a.diags()[0], 16, copyr);
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)5);
-    EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
+    check_related_diag(a.diags()[0].related[0], 5, start);
 }
 
 TEST(copy, copy_enter_from_lookahead)
@@ -354,8 +383,7 @@ TEST(copy, copy_enter_from_lookahead)
 &V SETA &V+1
  
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { "start", &lib_provider });
+    auto a = get_analyzer(input, "start");
     a.analyze();
 
     a.collect_diags();
@@ -366,11 +394,9 @@ TEST(copy, copy_enter_from_lookahead)
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)6);
-    EXPECT_EQ(a.diags()[0].file_name, "COPYL");
+    check_diag(a.diags()[0], 6, copyl);
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)4);
-    EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
+    check_related_diag(a.diags()[0].related[0], 4, start);
 }
 
 TEST(copy, nested_macro_copy_call)
@@ -380,8 +406,7 @@ TEST(copy, nested_macro_copy_call)
  COPY COPYN
  
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { &lib_provider });
+    auto a = get_analyzer(input);
     a.analyze();
 
     a.collect_diags();
@@ -411,8 +436,7 @@ TEST(copy, macro_from_copy_call)
  M
  
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { "start", &lib_provider });
+    auto a = get_analyzer(input, "start");
     a.analyze();
 
     a.collect_diags();
@@ -424,11 +448,9 @@ TEST(copy, macro_from_copy_call)
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)3);
-    EXPECT_EQ(a.diags()[0].file_name, "COPYBM");
+    check_diag(a.diags()[0], 3, copybm);
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)2);
-    EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
+    check_related_diag(a.diags()[0].related[0], 2, start);
 }
 
 TEST(copy, inner_copy_jump)
@@ -439,8 +461,7 @@ TEST(copy, inner_copy_jump)
  LR
  
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { &lib_provider });
+    auto a = get_analyzer(input);
     a.analyze();
 
     a.collect_diags();
@@ -457,8 +478,7 @@ TEST(copy, jump_from_copy_fail)
         R"(
  COPY COPYJF
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { "start", &lib_provider });
+    auto a = get_analyzer(input, "start");
     a.analyze();
 
     a.collect_diags();
@@ -468,17 +488,13 @@ TEST(copy, jump_from_copy_fail)
     EXPECT_EQ(a.diags().size(), (size_t)2);
     EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
-    EXPECT_EQ(a.diags()[1].diag_range.start.line, (size_t)2);
-    EXPECT_EQ(a.diags()[1].file_name, "COPYJF");
+    check_diag(a.diags()[1], 2, copyjf);
     ASSERT_EQ(a.diags()[1].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[1].related[0].location.rang.start.line, (size_t)1);
-    EXPECT_EQ(a.diags()[1].related[0].location.uri, "start");
+    check_related_diag(a.diags()[1].related[0], 1, start);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)1);
-    EXPECT_EQ(a.diags()[0].file_name, "COPYJF");
+    check_diag(a.diags()[0], 1, copyjf);
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
+    check_related_diag(a.diags()[0].related[0], 1, start);
 }
 
 TEST(copy, jump_in_macro_from_copy_fail)
@@ -492,8 +508,7 @@ TEST(copy, jump_in_macro_from_copy_fail)
 
  m
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { "start", &lib_provider });
+    auto a = get_analyzer(input, "start");
     a.analyze();
 
     a.collect_diags();
@@ -503,13 +518,10 @@ TEST(copy, jump_in_macro_from_copy_fail)
     EXPECT_EQ(a.diags().size(), (size_t)2);
     EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)1);
-    EXPECT_EQ(a.diags()[0].file_name, "COPYJF");
+    check_diag(a.diags()[0], 1, copyjf);
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)2);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)3);
-    EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
-    EXPECT_EQ(a.diags()[0].related[1].location.rang.start.line, (size_t)6);
-    EXPECT_EQ(a.diags()[0].related[1].location.uri, "start");
+    check_related_diag(a.diags()[0].related[0], 3, start);
+    check_related_diag(a.diags()[1].related[1], 6, start);
 }
 
 TEST(copy, macro_nested_diagnostics)
@@ -524,8 +536,7 @@ TEST(copy, macro_nested_diagnostics)
  
  MAC  
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { "start", &lib_provider });
+    auto a = get_analyzer(input, "start");
     a.analyze();
 
     a.collect_diags();
@@ -535,15 +546,11 @@ TEST(copy, macro_nested_diagnostics)
     EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)4);
-    EXPECT_EQ(a.diags()[0].file_name, "COPYND2");
+    check_diag(a.diags()[0], 4, copynd2);
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)3);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.uri, "COPYND1");
-    EXPECT_EQ(a.diags()[0].related[1].location.rang.start.line, (size_t)3);
-    EXPECT_EQ(a.diags()[0].related[1].location.uri, "start");
-    EXPECT_EQ(a.diags()[0].related[2].location.rang.start.line, (size_t)7);
-    EXPECT_EQ(a.diags()[0].related[2].location.uri, "start");
+    check_related_diag(a.diags()[0].related[0], 1, copynd1);
+    check_related_diag(a.diags()[0].related[1], 3, start);
+    check_related_diag(a.diags()[0].related[2], 7, start);
 }
 
 TEST(copy, copy_call_with_jump_before_comment)
@@ -554,8 +561,7 @@ TEST(copy, copy_call_with_jump_before_comment)
 ***
  ANOP
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { "start", &lib_provider });
+    auto a = get_analyzer(input, "start");
     a.analyze();
 
     a.collect_diags();
@@ -580,8 +586,7 @@ TEST(copy, copy_empty_file)
  COPY EMPTY
  MEND
 )";
-    auto lib_provider = create_copy_mock();
-    analyzer a(input, analyzer_options { "start", &lib_provider });
+    auto a = get_analyzer(input, "start");
     a.analyze();
 
     a.collect_diags();

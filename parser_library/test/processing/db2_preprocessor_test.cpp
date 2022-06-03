@@ -21,7 +21,13 @@
 // test db2 preprocessor emulator
 
 using namespace hlasm_plugin::parser_library::processing;
+using namespace hlasm_plugin::utils::resource;
 
+namespace {
+const auto copy1_loc = resource_location("COPY1");
+const auto copy2_loc = resource_location("COPY2");
+const auto member_loc = resource_location("MEMBER");
+} // namespace
 TEST(db2_preprocessor, first_line)
 {
     auto p = preprocessor::create(
@@ -383,7 +389,7 @@ TEST(db2_preprocessor, continuation_in_buffer)
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("MEMBER"));
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
 }
 
 TEST(db2_preprocessor, include_empty)
@@ -399,7 +405,7 @@ TEST(db2_preprocessor, include_empty)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("MEMBER"));
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
 }
 
 TEST(db2_preprocessor, include_nonexistent)
@@ -430,7 +436,7 @@ TEST(db2_preprocessor, ago_in_include)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("MEMBER"));
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 }
 
@@ -454,7 +460,7 @@ TEST(db2_preprocessor, ago_into_include)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("MEMBER"));
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), 2);
 }
@@ -479,7 +485,7 @@ TEST(db2_preprocessor, ago_from_include)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("MEMBER"));
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), 2);
 }
@@ -508,7 +514,7 @@ TEST(db2_preprocessor, ago_around_include)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("MEMBER"));
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
 }
 
@@ -535,9 +541,9 @@ TEST(db2_preprocessor, copy_in_include)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("COPY1"));
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("COPY2"));
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("MEMBER"));
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(copy1_loc));
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(copy2_loc));
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A1"), 1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A2"), 2);

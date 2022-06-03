@@ -45,6 +45,11 @@ inline bool utf8_valid_multibyte_prefix(unsigned char first, unsigned char secon
 }
 
 void append_utf8_sanitized(std::string& result, std::string_view str);
+
+bool utf8_one_byte_begin(char ch);
+
+std::string replace_non_utf8_chars(std::string_view text);
+
 } // namespace hlasm_plugin::utils
 
 #endif

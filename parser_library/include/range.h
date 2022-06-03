@@ -18,6 +18,7 @@
 // This file contains definitions of LSP representation of
 // positions in files and selection ranges.
 
+#include <compare>
 #include <string>
 
 #include "parser_library_export.h"
@@ -34,8 +35,7 @@ struct PARSER_LIBRARY_EXPORT position
         : line(line)
         , column(column)
     {}
-    bool operator==(const position& oth) const { return line == oth.line && column == oth.column; }
-    bool operator!=(const position& oth) const { return !(*this == oth); }
+    auto operator<=>(const position& oth) const noexcept = default;
     size_t line;
     size_t column;
 

@@ -42,7 +42,7 @@ jobs:
       - name: Build
         run: cd build && cmake --build .
       - name: Test
-        run: cd build/bin && ./server_test && ./library_test
+        run: cd build/bin && ./server_test && ./library_test && ./hlasm_utils_test
   
   clang-tsan:
     name: Clang TSAN
@@ -61,7 +61,7 @@ jobs:
       - name: Build
         run: cd build && cmake --build .
       - name: Test
-        run: cd build/bin && ./server_test && ./library_test
+        run: cd build/bin && ./server_test && ./library_test && ./hlasm_utils_test
 
   clang-format-check:
     name: Code format

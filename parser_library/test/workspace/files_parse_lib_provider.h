@@ -17,7 +17,6 @@
 #include "analyzer.h"
 #include "workspaces/file_manager.h"
 
-
 namespace hlasm_plugin::parser_library::workspaces {
 
 struct files_parse_lib_provider : public workspaces::parse_lib_provider
@@ -28,19 +27,22 @@ struct files_parse_lib_provider : public workspaces::parse_lib_provider
     {}
     virtual parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
     {
-        auto macro = file_mngr->add_processor_file(library);
+        auto macro = file_mngr->add_processor_file(utils::resource::resource_location(library));
         if (!macro)
             return false;
         return macro->parse_macro(*this, std::move(ctx), std::move(data));
     }
-    virtual bool has_library(const std::string& library, const std::string&) const override
+    virtual bool has_library(const std::string& library, const utils::resource::resource_location&) const override
     {
-        return file_mngr->find(library) != nullptr;
+        return file_mngr->find(utils::resource::resource_location(library)) != nullptr;
     }
-    virtual std::optional<std::string> get_library(
-        const std::string& library, const std::string&, std::string*) const override
+    virtual std::optional<std::string> get_library(const std::string& library,
+        const utils::resource::resource_location&,
+        std::optional<utils::resource::resource_location>& lib_location) const override
     {
-        auto macro = file_mngr->add_processor_file(library);
+        lib_location = std::nullopt;
+
+        auto macro = file_mngr->add_processor_file(utils::resource::resource_location(library));
         if (!macro)
             return std::nullopt;
         return macro->get_text();

@@ -467,7 +467,7 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
             auto& sym = result_.sequence_symbols[seq.name];
             if (!sym)
                 sym = std::make_unique<context::macro_sequence_symbol>(seq.name,
-                    location(label.field_range.start, hlasm_ctx.current_statement_location().file),
+                    location(label.field_range.start, hlasm_ctx.current_statement_location().resource_loc),
                     curr_line_);
         }
     }
@@ -476,19 +476,19 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
 void macrodef_processor::add_correct_copy_nest()
 {
     result_.nests.push_back({ context::copy_nest_item {
-        { curr_outer_position_, result_.definition_location.file }, result_.prototype.macro_name } });
+        { curr_outer_position_, result_.definition_location.resource_loc }, result_.prototype.macro_name } });
 
     for (size_t i = initial_copy_nest_; i < hlasm_ctx.current_copy_stack().size(); ++i)
     {
         const auto& nest = hlasm_ctx.current_copy_stack()[i];
         result_.nests.back().emplace_back(context::copy_nest_item {
-            location { nest.current_statement_position(), nest.definition_location()->file }, nest.name() });
+            location { nest.current_statement_position(), nest.definition_location()->resource_loc }, nest.name() });
     }
 
     if (initial_copy_nest_ < hlasm_ctx.current_copy_stack().size())
         result_.used_copy_members.insert(hlasm_ctx.current_copy_stack().back().copy_member_definition);
 
-    const auto& current_file = result_.nests.back().back().loc.file;
+    const auto& current_file = result_.nests.back().back().loc.resource_loc;
     bool in_inner_macro = macro_nest_ > 1;
 
 

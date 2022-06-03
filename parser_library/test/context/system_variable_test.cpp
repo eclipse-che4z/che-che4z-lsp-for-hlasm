@@ -17,6 +17,8 @@
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
 
+using namespace hlasm_plugin::utils::resource;
+
 namespace {
 struct system_variable_params
 {
@@ -182,7 +184,7 @@ TEST(system_variable, sysstmt_copy)
 )";
 
     mock_parse_lib_provider lib_prov_instance { { copy1_filename, copy1_source }, { copy2_filename, copy2_source } };
-    analyzer a(input, analyzer_options { "ipnut", &lib_prov_instance });
+    analyzer a(input, analyzer_options { resource_location("ipnut"), &lib_prov_instance });
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);

@@ -34,7 +34,7 @@ public:
     workspaces::parse_result parse_library(
         const std::string& library, analyzing_context ctx, workspaces::library_data data) override
     {
-        auto& proc_grp = ws_.get_proc_grp_by_program(ctx.hlasm_ctx->opencode_file_name());
+        auto& proc_grp = ws_.get_proc_grp_by_program(ctx.hlasm_ctx->opencode_location());
         for (auto&& lib : proc_grp.libraries())
         {
             std::shared_ptr<workspaces::processor> found = lib->find_file(library);
@@ -45,15 +45,16 @@ public:
         return false;
     }
 
-    bool has_library(const std::string& library, const std::string& program) const override
+    bool has_library(const std::string& library, const utils::resource::resource_location& program) const override
     {
         return ws_.has_library(library, program);
     }
 
-    std::optional<std::string> get_library(
-        const std::string& library, const std::string& program, std::string* uri) const override
+    std::optional<std::string> get_library(const std::string& library,
+        const utils::resource::resource_location& program,
+        std::optional<utils::resource::resource_location>& lib_location) const override
     {
-        return ws_.get_library(library, program, uri);
+        return ws_.get_library(library, program, lib_location);
     }
 };
 

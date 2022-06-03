@@ -41,7 +41,8 @@ class library_local final : public library, public diagnosable_impl
 public:
     // takes reference to file manager that provides access to the files
     // and normalised path to directory that it wraps.
-    library_local(file_manager& file_manager, std::string lib_path, library_local_options options);
+    library_local(
+        file_manager& file_manager, utils::resource::resource_location lib_loc, library_local_options options);
 
     library_local(const library_local&) = delete;
     library_local& operator=(const library_local&) = delete;
@@ -50,7 +51,7 @@ public:
 
     void collect_diags() const override;
 
-    const std::string& get_lib_path() const;
+    const utils::resource::resource_location& get_location() const;
 
     std::shared_ptr<processor> find_file(const std::string& file) override;
 
@@ -61,10 +62,11 @@ public:
 private:
     file_manager& file_manager_;
 
-    std::string lib_path_;
-    std::unordered_map<std::string, std::string> files_;
+    utils::resource::resource_location lib_loc_;
+    std::unordered_map<std::string, utils::resource::resource_location, utils::hashers::string_hasher, std::equal_to<>>
+        files_;
     std::vector<std::string> extensions_;
-    // indicates whether load_files function was called (not whether it was succesful)
+    // indicates whether load_files function was called (not whether it was successful)
     bool files_loaded_ = false;
     bool optional_ = false;
     bool extensions_from_deprecated_source = false;

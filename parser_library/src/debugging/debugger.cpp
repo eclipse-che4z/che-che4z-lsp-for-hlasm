@@ -107,7 +107,7 @@ class debugger::impl final : public processing::statement_analyzer
 
     // Debugging information retrieval
     context::hlasm_context* ctx_ = nullptr;
-    std::string opencode_source_path_;
+    std::string opencode_source_uri_;
     std::vector<stack_frame> stack_frames_;
     std::vector<scope> scopes_;
 
@@ -115,7 +115,10 @@ class debugger::impl final : public processing::statement_analyzer
     size_t next_var_ref_ = 1;
     context::processing_stack_t proc_stack_;
 
-    std::unordered_map<std::string, std::vector<breakpoint>> breakpoints_;
+    std::unordered_map<utils::resource::resource_location,
+        std::vector<breakpoint>,
+        utils::resource::resource_location_hasher>
+        breakpoints_;
 
     size_t add_variable(std::vector<variable_ptr> vars)
     {
@@ -130,8 +133,8 @@ public:
         std::string_view source, workspaces::workspace& workspace, bool stop_on_entry, parse_lib_provider* lib_provider)
     {
         // TODO: check if already running???
-        auto open_code = workspace.get_processor_file(std::string(source));
-        opencode_source_path_ = open_code->get_file_name();
+        auto open_code = workspace.get_processor_file(utils::resource::resource_location(source));
+        opencode_source_uri_ = open_code->get_location().get_uri();
         stop_on_next_stmt_ = stop_on_entry;
 
         thread_ = std::thread([this, open_code = std::move(open_code), &workspace, lib_provider]() {
@@ -144,10 +147,10 @@ public:
 
             analyzer a(open_code->get_text(),
                 analyzer_options {
-                    open_code->get_file_name(),
+                    open_code->get_location(),
                     lib_provider ? lib_provider : &debug_provider,
-                    workspace.get_asm_options(open_code->get_file_name()),
-                    workspace.get_preprocessor_options(open_code->get_file_name()),
+                    workspace.get_asm_options(open_code->get_location()),
+                    workspace.get_preprocessor_options(open_code->get_location()),
                     &vfm,
                 });
 
@@ -192,7 +195,7 @@ public:
         auto stack = ctx_->processing_stack();
         const auto stack_depth = stack.size();
 
-        for (const auto& bp : breakpoints(stack.back().proc_location.file))
+        for (const auto& bp : breakpoints(stack.back().proc_location.resource_loc))
         {
             if (bp.line >= stmt_range.start.line && bp.line <= stmt_range.end.line)
                 breakpoint_hit = true;
@@ -248,7 +251,7 @@ public:
 
     void disconnect()
     {
-        // set cancelation token and wake up the thread,
+        // set cancellation token and wake up the thread,
         // so it peacefully finishes, we then wait for it and join
         {
             std::lock_guard<std::mutex> lck(control_mtx);
@@ -279,7 +282,7 @@ public:
             return stack_frames_;
         for (size_t i = proc_stack_.size() - 1; i != (size_t)-1; --i)
         {
-            source source(proc_stack_[i].proc_location.file);
+            source source(proc_stack_[i].proc_location.get_uri());
             std::string name;
             switch (proc_stack_[i].proc_type)
             {
@@ -358,10 +361,10 @@ public:
 
 
 
-        scopes_.emplace_back("Globals", add_variable(std::move(globals)), source(opencode_source_path_));
-        scopes_.emplace_back("Locals", add_variable(std::move(scope_vars)), source(opencode_source_path_));
+        scopes_.emplace_back("Globals", add_variable(std::move(globals)), source(opencode_source_uri_));
+        scopes_.emplace_back("Locals", add_variable(std::move(scope_vars)), source(opencode_source_uri_));
         scopes_.emplace_back(
-            "Ordinary symbols", add_variable(std::move(ordinary_symbols)), source(opencode_source_path_));
+            "Ordinary symbols", add_variable(std::move(ordinary_symbols)), source(opencode_source_uri_));
 
         return scopes_;
     }
@@ -387,16 +390,16 @@ public:
         return it->second;
     }
 
-    void breakpoints(std::string_view source, std::vector<breakpoint> bps)
+    void breakpoints(const utils::resource::resource_location& source, std::vector<breakpoint> bps)
     {
         std::lock_guard g(breakpoints_mutex_);
-        breakpoints_[std::string(source)] = std::move(bps);
+        breakpoints_[source] = std::move(bps);
     }
 
-    [[nodiscard]] std::vector<breakpoint> breakpoints(std::string_view source) const
+    [[nodiscard]] std::vector<breakpoint> breakpoints(const utils::resource::resource_location& source) const
     {
         std::lock_guard g(breakpoints_mutex_);
-        if (auto it = breakpoints_.find(std::string(source)); it != breakpoints_.end())
+        if (auto it = breakpoints_.find(source); it != breakpoints_.end())
             return it->second;
         return {};
     }
@@ -444,13 +447,13 @@ void debugger::continue_debug() { pimpl->continue_debug(); }
 
 void debugger::breakpoints(sequence<char> source, sequence<breakpoint> bps)
 {
-    pimpl->breakpoints(std::string_view(source), std::vector<breakpoint>(bps));
+    pimpl->breakpoints(utils::resource::resource_location(std::string(source)), std::vector<breakpoint>(bps));
 }
 breakpoints_t debugger::breakpoints(sequence<char> source) const
 {
     breakpoints_t result;
 
-    result.pimpl->m_breakpoints = pimpl->breakpoints(std::string_view(source));
+    result.pimpl->m_breakpoints = pimpl->breakpoints(utils::resource::resource_location(std::string(source)));
 
 
     return result;

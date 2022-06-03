@@ -20,12 +20,14 @@
 #include "../common_testing.h"
 #include "diagnosable_impl.h"
 #include "preprocessor_options.h"
+#include "utils/resource_location.h"
 #include "virtual_file_monitor.h"
 #include "workspace_manager.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/file_manager_vfm.h"
 
 using namespace ::testing;
+using namespace hlasm_plugin::utils::path;
 
 namespace {
 class vf_mock : public virtual_file_monitor
@@ -41,22 +43,25 @@ public:
     {
         // nothing to do
     }
-    MOCK_METHOD(file_ptr, add_file, (const file_uri&), (override));
-    MOCK_METHOD(processor_file_ptr, add_processor_file, (const file_uri&), (override));
-    MOCK_METHOD(processor_file_ptr, get_processor_file, (const file_uri&), (override));
-    MOCK_METHOD(void, remove_file, (const file_uri&), (override));
-    MOCK_METHOD(file_ptr, find, (const std::string& key), (const override));
-    MOCK_METHOD(processor_file_ptr, find_processor_file, (const std::string& key), (override));
-    MOCK_METHOD(list_directory_result, list_directory_files, (const std::string& path), (override));
+    MOCK_METHOD(file_ptr, add_file, (const file_location&), (override));
+    MOCK_METHOD(processor_file_ptr, add_processor_file, (const file_location&), (override));
+    MOCK_METHOD(processor_file_ptr, get_processor_file, (const file_location&), (override));
+    MOCK_METHOD(void, remove_file, (const file_location&), (override));
+    MOCK_METHOD(file_ptr, find, (const file_location& key), (const override));
+    MOCK_METHOD(processor_file_ptr, find_processor_file, (const file_location& key), (override));
+    MOCK_METHOD(list_directory_result,
+        list_directory_files,
+        (const hlasm_plugin::utils::resource::resource_location& path),
+        (override));
     MOCK_METHOD(bool, file_exists, (const std::string& file_name), (override));
     MOCK_METHOD(bool, lib_file_exists, (const std::string& lib_path, const std::string& file_name), (override));
     MOCK_METHOD(
-        void, did_open_file, (const std::string& document_uri, version_t version, std::string text), (override));
+        void, did_open_file, (const file_location& document_loc, version_t version, std::string text), (override));
     MOCK_METHOD(void,
         did_change_file,
-        (const std::string& document_uri, version_t version, const document_change* changes, size_t ch_size),
+        (const file_location& document_loc, version_t version, const document_change* changes, size_t ch_size),
         (override));
-    MOCK_METHOD(void, did_close_file, (const std::string& document_uri), (override));
+    MOCK_METHOD(void, did_close_file, (const file_location& document_loc), (override));
     MOCK_METHOD(void, put_virtual_file, (unsigned long long id, std::string_view text), (override));
     MOCK_METHOD(void, remove_virtual_file, (unsigned long long id), (override));
     MOCK_METHOD(std::string, get_virtual_file, (unsigned long long id), (const override));
@@ -129,7 +134,7 @@ TEST(virtual_files, callback_test_ainsert_valid_vfm)
 
     const auto& d = a.diags();
     ASSERT_EQ(d.size(), 1);
-    EXPECT_EQ(d[0].file_name, "hlasm://0/AINSERT:1.hlasm");
+    EXPECT_EQ(d[0].file_uri, "hlasm://0/AINSERT:1.hlasm");
 }
 
 TEST(virtual_files, file_manager_vfm)

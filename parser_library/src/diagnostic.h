@@ -753,21 +753,21 @@ public:
     diagnostic_s()
         : severity(diagnostic_severity::unspecified)
     {}
-    diagnostic_s(std::string file_name, range range, std::string code, std::string message)
-        : file_name(std::move(file_name))
+    diagnostic_s(std::string file_uri, range range, std::string code, std::string message)
+        : file_uri(std::move(file_uri))
         , diag_range(range)
         , severity(diagnostic_severity::unspecified)
         , code(code)
         , message(std::move(message))
     {}
-    diagnostic_s(std::string file_name,
+    diagnostic_s(std::string file_uri,
         range range,
         diagnostic_severity severity,
         std::string code,
         std::string message,
         std::vector<diagnostic_related_info_s> related,
         diagnostic_tag tag)
-        : file_name(std::move(file_name))
+        : file_uri(std::move(file_uri))
         , diag_range(range)
         , severity(severity)
         , code(std::move(code))
@@ -776,8 +776,8 @@ public:
         , related(std::move(related))
         , tag(tag)
     {}
-    diagnostic_s(std::string file_name, diagnostic_op diag_op)
-        : file_name(std::move(file_name))
+    diagnostic_s(std::string file_uri, diagnostic_op diag_op)
+        : file_uri(std::move(file_uri))
         , diag_range(std::move(diag_op.diag_range))
         , severity(diag_op.severity)
         , code(std::move(diag_op.code))
@@ -795,7 +795,7 @@ public:
     {}
 
 
-    std::string file_name;
+    std::string file_uri;
     range diag_range;
     diagnostic_severity severity;
     std::string code;
@@ -820,6 +820,8 @@ public:
     static diagnostic_s warning_L0004(std::string_view path, std::string_view macro_name);
 
     static diagnostic_s warning_L0005(std::string_view pattern, size_t limit);
+
+    static diagnostic_s error_W0001(std::string_view file_name);
 
     static diagnostic_s error_W0002(std::string_view file_name, std::string_view ws_name);
 

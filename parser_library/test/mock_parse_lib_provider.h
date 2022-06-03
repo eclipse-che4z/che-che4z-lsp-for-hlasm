@@ -41,26 +41,32 @@ public:
         if (it == m_files.end())
             return false;
 
-        auto a = std::make_unique<analyzer>(it->second, analyzer_options { library, this, std::move(ctx), data });
+        auto a = std::make_unique<analyzer>(it->second,
+            analyzer_options { hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data });
         a->analyze();
         a->collect_diags();
         analyzers[library] = std::move(a);
         return true;
     }
 
-    bool has_library(const std::string& library, const std::string&) const override { return m_files.count(library); }
+    bool has_library(const std::string& library, const utils::resource::resource_location&) const override
+    {
+        return m_files.count(library);
+    }
 
 
-    std::optional<std::string> get_library(
-        const std::string& library, const std::string&, std::string* uri) const override
+    std::optional<std::string> get_library(const std::string& library,
+        const utils::resource::resource_location&,
+        std::optional<utils::resource::resource_location>& lib_location) const override
     {
         auto it = m_files.find(library);
         if (it == m_files.end())
+        {
+            lib_location = std::nullopt;
             return std::nullopt;
+        }
 
-        if (uri)
-            *uri = library;
-
+        lib_location = utils::resource::resource_location(library);
         return it->second;
     }
 };

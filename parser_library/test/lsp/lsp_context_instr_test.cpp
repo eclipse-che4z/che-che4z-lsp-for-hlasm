@@ -29,7 +29,7 @@ struct lsp_context_instr : public ::testing::Test
  ADR
 )";
 
-    const static inline std::string opencode_file_name = "source";
+    const static inline auto opencode_file_loc = hlasm_plugin::utils::resource::resource_location("source");
     std::unique_ptr<analyzer> m_analyzer;
 
     lsp_context_instr() = default;
@@ -37,9 +37,8 @@ struct lsp_context_instr : public ::testing::Test
     std::unique_ptr<analyzer> new_analyzer(instruction_set_version instr_set = instruction_set_version::Z15)
     {
         auto a = std::make_unique<analyzer>(input,
-            analyzer_options { opencode_file_name,
-                &workspaces::empty_parse_lib_provider::instance,
-                asm_option { "", "", instr_set } });
+            analyzer_options {
+                opencode_file_loc, &workspaces::empty_parse_lib_provider::instance, asm_option { "", "", instr_set } });
 
         a->analyze();
         return a;
@@ -48,14 +47,13 @@ struct lsp_context_instr : public ::testing::Test
     lsp::completion_list_s get_completion_list(instruction_set_version instr_set)
     {
         analyzer a(input,
-            analyzer_options { opencode_file_name,
-                &workspaces::empty_parse_lib_provider::instance,
-                asm_option { "", "", instr_set } });
+            analyzer_options {
+                opencode_file_loc, &workspaces::empty_parse_lib_provider::instance, asm_option { "", "", instr_set } });
 
         a.analyze();
 
         return a.context().lsp_ctx->completion(
-            opencode_file_name, { 2, 3 }, 'R', completion_trigger_kind::trigger_character);
+            opencode_file_loc, { 2, 3 }, 'R', completion_trigger_kind::trigger_character);
     }
 };
 

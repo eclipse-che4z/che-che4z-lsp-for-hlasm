@@ -50,8 +50,10 @@ suite('Integration Test Suite', () => {
         });
 
         const allDiags = await diagnostic_event;
-        const openDiags = allDiags.find(pair => pair[0].path.endsWith("open"))[1]
+        assert.ok(allDiags.length === 1, 'Wrong number of diagnosed files');
+        assert.ok(allDiags[0][0].path === editor.document.uri.path, 'Wrong path');
 
+        const openDiags = allDiags[0][1];
         assert.ok(openDiags.length == 1 && openDiags[0].code == 'M003', 'Wrong diagnostic');
     }).timeout(10000).slow(1000);
 
@@ -117,25 +119,10 @@ suite('Integration Test Suite', () => {
 
     // debug open code test
     test('Debug test', async () => {
-        const session_started_event = new Promise<vscode.DebugSession>((resolve) => {
-            // when the debug session starts
-            const disposable = vscode.debug.onDidStartDebugSession((session) => {
-                disposable.dispose();
-                resolve(session);
-            });
-        });
-        // start debugging
-        if (!await vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], 'Macro tracer: current program'))
-            throw new Error("Failed to start a debugging session");
+        const session = await helper.debugStartSession();
 
-        const session = await session_started_event;
-
-        // wait a second to let the debug session complete
-        await helper.sleep(1000);
         // step over once
-        await vscode.commands.executeCommand('workbench.action.debug.stepOver');
-        // wait 1 more second to let step over take place
-        await helper.sleep(1000);
+        await helper.debugStepOver(1);
         // then check for VAR2 variable
         const scopesResult = await session.customRequest('scopes', { frameId: 0 });
 
@@ -144,12 +131,12 @@ suite('Integration Test Suite', () => {
         const reference = scopes.find((scope: { name: string }) => scope.name == 'Locals').variablesReference;
         const variablesResult = await session.customRequest('variables', { variablesReference: reference });
 
-        await vscode.commands.executeCommand('workbench.action.debug.stop');
-
         const variables = variablesResult.body ? variablesResult.body.variables : variablesResult.variables;
 
         assert.ok(variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == '&VAR2', 'Wrong debug variable &VAR2');
-    }).timeout(10000).slow(4000);
+
+        await helper.debugStop();
+    }).timeout(20000).slow(10000);
 
     // verify that library patterns are working
     test('Test library patterns', async () => {

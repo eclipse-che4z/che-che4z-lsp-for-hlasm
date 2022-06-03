@@ -56,7 +56,9 @@ public:
 
     void add_workspace(std::string name, std::string uri)
     {
-        auto ws = workspaces_.emplace(name, workspaces::workspace(uri, name, file_manager_, global_config_, cancel_));
+        auto ws = workspaces_.emplace(name,
+            workspaces::workspace(
+                utils::resource::resource_location(std::move(uri)), name, file_manager_, global_config_, cancel_));
         ws.first->second.set_message_consumer(message_consumer_);
         ws.first->second.open();
 
@@ -72,48 +74,50 @@ public:
         notify_diagnostics_consumers();
     }
 
-    void did_open_file(const std::string& document_uri, version_t version, std::string text)
+    void did_open_file(const utils::resource::resource_location& document_loc, version_t version, std::string text)
     {
-        file_manager_.did_open_file(document_uri, version, std::move(text));
+        file_manager_.did_open_file(document_loc, version, std::move(text));
         if (cancel_ && *cancel_)
             return;
 
-        workspaces::workspace& ws = ws_path_match(document_uri);
-        auto metadata = ws.did_open_file(document_uri);
+        workspaces::workspace& ws = ws_path_match(document_loc.get_uri());
+        auto metadata = ws.did_open_file(document_loc);
         if (cancel_ && *cancel_)
             return;
 
         notify_diagnostics_consumers();
         // only on open
-        notify_performance_consumers(document_uri, metadata);
+        notify_performance_consumers(document_loc, metadata);
     }
-    void did_change_file(
-        const std::string& document_uri, version_t version, const document_change* changes, size_t ch_size)
+    void did_change_file(const utils::resource::resource_location& document_loc,
+        version_t version,
+        const document_change* changes,
+        size_t ch_size)
     {
-        file_manager_.did_change_file(document_uri, version, changes, ch_size);
+        file_manager_.did_change_file(document_loc, version, changes, ch_size);
         if (cancel_ && *cancel_)
             return;
 
-        workspaces::workspace& ws = ws_path_match(document_uri);
-        ws.did_change_file(document_uri, changes, ch_size);
+        workspaces::workspace& ws = ws_path_match(document_loc.get_uri());
+        ws.did_change_file(document_loc, changes, ch_size);
         if (cancel_ && *cancel_)
             return;
 
         notify_diagnostics_consumers();
     }
 
-    void did_close_file(const std::string& document_uri)
+    void did_close_file(const utils::resource::resource_location& document_loc)
     {
-        workspaces::workspace& ws = ws_path_match(document_uri);
-        ws.did_close_file(document_uri);
+        workspaces::workspace& ws = ws_path_match(document_loc.get_uri());
+        ws.did_close_file(document_loc);
         notify_diagnostics_consumers();
     }
 
-    void did_change_watched_files(std::vector<std::string> paths)
+    void did_change_watched_files(const std::vector<utils::resource::resource_location>& paths)
     {
         for (const auto& path : paths)
         {
-            workspaces::workspace& ws = ws_path_match(path);
+            workspaces::workspace& ws = ws_path_match(path.get_uri());
             ws.did_change_watched_files(path);
         }
         notify_diagnostics_consumers();
@@ -148,12 +152,15 @@ public:
     location definition_result;
     position_uri definition(const std::string& document_uri, const position pos)
     {
+        auto doc_loc = utils::resource::resource_location(document_uri);
+
         if (cancel_ && *cancel_)
         {
-            definition_result = { pos, document_uri };
+            definition_result = { pos, doc_loc };
             return position_uri(definition_result);
         }
-        definition_result = ws_path_match(document_uri).definition(document_uri, pos);
+
+        definition_result = ws_path_match(document_uri).definition(doc_loc, pos);
 
         return position_uri(definition_result);
     }
@@ -164,7 +171,8 @@ public:
         if (cancel_ && *cancel_)
             return {};
 
-        references_result = ws_path_match(document_uri).references(document_uri, pos);
+        references_result =
+            ws_path_match(document_uri).references(utils::resource::resource_location(document_uri), pos);
 
         return { references_result.data(), references_result.size() };
     }
@@ -175,7 +183,7 @@ public:
         if (cancel_ && *cancel_)
             return "";
 
-        hover_result = ws_path_match(document_uri).hover(document_uri, pos);
+        hover_result = ws_path_match(document_uri).hover(utils::resource::resource_location(document_uri), pos);
 
         return hover_result;
     }
@@ -190,7 +198,9 @@ public:
         if (cancel_ && *cancel_)
             return completion_list { nullptr, 0 };
 
-        completion_result = ws_path_match(document_uri).completion(document_uri, pos, trigger_char, trigger_kind);
+        completion_result =
+            ws_path_match(document_uri)
+                .completion(utils::resource::resource_location(document_uri), pos, trigger_char, trigger_kind);
 
         return completion_list(completion_result.data(), completion_result.size());
     }
@@ -201,7 +211,8 @@ public:
         if (cancel_ && *cancel_)
             return document_symbol_list { nullptr, 0 };
 
-        document_symbol_result = ws_path_match(document_uri).document_symbol(document_uri, limit);
+        document_symbol_result =
+            ws_path_match(document_uri).document_symbol(utils::resource::resource_location(document_uri), limit);
 
         return document_symbol_list(document_symbol_result.data(), document_symbol_result.size());
     }
@@ -215,9 +226,11 @@ public:
         if (cancel_ && *cancel_)
             return empty_tokens;
 
-        auto file = file_manager_.find(document_uri);
+        utils::resource::resource_location doc(document_uri);
+
+        auto file = file_manager_.find(doc);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            return file_manager_.find_processor_file(document_uri)->get_hl_info();
+            return file_manager_.find_processor_file(doc)->get_hl_info();
 
         return empty_tokens;
     }
@@ -267,13 +280,14 @@ private:
         }
     }
 
-    void notify_performance_consumers(const std::string& document_uri, workspace_file_info ws_file_info) const
+    void notify_performance_consumers(
+        const utils::resource::resource_location& document_uri, workspace_file_info ws_file_info) const
     {
         auto file = file_manager_.find(document_uri);
         auto proc_file = dynamic_cast<workspaces::processor_file*>(file.get());
         if (proc_file)
         {
-            auto metrics = proc_file->get_metrics();
+            const auto& metrics = proc_file->get_metrics();
             for (auto consumer : parsing_metadata_consumers_)
             {
                 consumer->consume_parsing_metadata({ metrics, ws_file_info });

@@ -18,6 +18,7 @@
 #include "diagnosable_impl.h"
 #include "file.h"
 #include "processor.h"
+#include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -29,7 +30,7 @@ namespace hlasm_plugin::parser_library::workspaces {
 class file_impl : public virtual file, public virtual diagnosable_impl
 {
 public:
-    explicit file_impl(file_uri uri);
+    explicit file_impl(file_location location);
     explicit file_impl(const file_impl&) = default;
     file_impl& operator=(const file_impl&) = default;
 
@@ -38,7 +39,7 @@ public:
 
     void collect_diags() const override;
 
-    const file_uri& get_file_name() override;
+    const file_location& get_location() override;
     const std::string& get_text() override;
     version_t get_version() override;
     bool update_and_get_bad() override;
@@ -49,7 +50,6 @@ public:
     void did_change(range range, std::string new_text) override;
     void did_close() override;
 
-    static std::string replace_non_utf8_chars(std::string_view text);
     static std::vector<size_t> create_line_indices(const std::string& text);
 
     // Returns the location in text that corresponds to utf-16 based location
@@ -62,7 +62,7 @@ protected:
     const std::string& get_text_ref();
 
 private:
-    file_uri file_name_;
+    file_location file_location_;
     std::string text_;
     // Array of "pointers" to text_ where lines start.
     std::vector<size_t> lines_ind_;

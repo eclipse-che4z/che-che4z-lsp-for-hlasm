@@ -35,7 +35,7 @@ struct macro_cache_key
     [[nodiscard]] static macro_cache_key create_from_context(context::hlasm_context& hlasm_ctx, library_data data);
     static void sort_opsyn_state(std::vector<cached_opsyn_mnemo>& opsyn_state);
     static std::vector<cached_opsyn_mnemo> get_opsyn_state(context::hlasm_context& hlasm_ctx);
-    std::string opencode_file_name;
+    utils::resource::resource_location opencode_file_location;
     library_data data;
     std::vector<cached_opsyn_mnemo> opsyn_state;
 };
@@ -62,7 +62,8 @@ bool inline operator<(const macro_cache_key& lhs, const macro_cache_key& rhs)
     return tie_macro_cache_key(lhs) < tie_macro_cache_key(rhs);
 }
 
-using version_stamp = std::unordered_map<std::string, version_t>;
+using version_stamp =
+    std::unordered_map<utils::resource::resource_location, version_t, utils::resource::resource_location_hasher>;
 
 // Pair of version stamp and analyzer that parsed the version of file(s)
 struct macro_cache_data
@@ -85,7 +86,7 @@ public:
     // cached macro to the specified context. Returns true, if the macro was loaded.
     bool load_from_cache(const macro_cache_key& key, const analyzing_context& ctx);
     void save_macro(const macro_cache_key& key, const analyzer& analyzer);
-    void erase_cache_of_opencode(const std::string& opencode_file_name);
+    void erase_cache_of_opencode(const utils::resource::resource_location& opencode_file_location);
 
 private:
     [[nodiscard]] const macro_cache_data* find_cached_data(const macro_cache_key& key) const;

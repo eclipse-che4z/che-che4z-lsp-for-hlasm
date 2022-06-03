@@ -88,7 +88,7 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
     if (!result.invalid)
     {
         // add instruction occurence of macro name
-        const auto& macro_file = macrodef->definition_location.file;
+        const auto& macro_file = macrodef->definition_location.resource_loc;
         macro_occurences_[macro_file].emplace_back(macrodef->id, macrodef, result.prototype.macro_name_range);
 
         auto m_i = std::make_shared<lsp::macro_info>(result.external,
@@ -124,13 +124,13 @@ void lsp_analyzer::assign_statement_occurences()
 {
     if (in_macro_)
     {
-        auto& file_occs = macro_occurences_[hlasm_ctx_.current_statement_location().file];
+        auto& file_occs = macro_occurences_[hlasm_ctx_.current_statement_location().resource_loc];
         file_occs.insert(
             file_occs.end(), std::move_iterator(stmt_occurences_.begin()), std::move_iterator(stmt_occurences_.end()));
     }
     else
     {
-        auto& file_occs = opencode_occurences_[hlasm_ctx_.current_statement_location().file];
+        auto& file_occs = opencode_occurences_[hlasm_ctx_.current_statement_location().resource_loc];
         file_occs.insert(
             file_occs.end(), std::move_iterator(stmt_occurences_.begin()), std::move_iterator(stmt_occurences_.end()));
     }
@@ -303,13 +303,16 @@ void lsp_analyzer::add_var_def(const semantics::variable_symbol* var, context::S
         != opencode_var_defs_.end())
         return;
 
-    opencode_var_defs_.emplace_back(
-        var->access_basic()->name, type, global, hlasm_ctx_.current_statement_location().file, var->symbol_range.start);
+    opencode_var_defs_.emplace_back(var->access_basic()->name,
+        type,
+        global,
+        hlasm_ctx_.current_statement_location().resource_loc,
+        var->symbol_range.start);
 }
 
 void lsp_analyzer::add_copy_operand(context::id_index name, const range& operand_range)
 {
-    // find ORD occurence of COPY_OP
+    // find ORD occurrence of COPY_OP
     lsp::symbol_occurence occ(lsp::occurence_kind::ORD, name, operand_range);
     auto ord_sym = std::find(stmt_occurences_.begin(), stmt_occurences_.end(), occ);
 

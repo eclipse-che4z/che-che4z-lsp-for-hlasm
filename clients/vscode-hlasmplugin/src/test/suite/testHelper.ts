@@ -14,9 +14,10 @@
 import * as assert from 'assert';
 import * as vscode from "vscode";
 import * as path from 'path';
+import { integer } from 'vscode-languageclient';
 
 export function getWorkspacePath(): string {
-    return vscode.workspace.workspaceFolders[0].uri.fsPath;;
+    return vscode.workspace.workspaceFolders[0].uri.fsPath;
 }
 
 export function get_editor(workspace_file: string): vscode.TextEditor {
@@ -36,6 +37,75 @@ export async function showDocument(workspace_file: string) {
     const document = await vscode.workspace.openTextDocument(file);
 
     await vscode.window.showTextDocument(document);
+}
+
+export async function closeAllEditors() {
+    while (vscode.window.activeTextEditor !== undefined) {
+        await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+        await sleep(500);
+    }
+}
+
+export function moveCursor(editor: vscode.TextEditor, position: vscode.Position) {
+    editor.selection = new vscode.Selection(position, position);
+}
+
+export async function toggleBreakpoints(file: string, lines: Array<integer>) {
+    await showDocument(file);
+    await sleep(1000);
+
+    for (const line of lines) {
+        moveCursor(get_editor(file), new vscode.Position(line, 0));
+        await vscode.commands.executeCommand('editor.debug.action.toggleBreakpoint');
+    }
+
+    await sleep(1000);
+}
+
+export async function removeAllBreakpoints() {
+
+    await vscode.commands.executeCommand('workbench.debug.viewlet.action.removeAllBreakpoints');
+    await sleep(1000);
+}
+
+export async function debugStartSession(): Promise<vscode.DebugSession> {
+    const session_started_event = new Promise<vscode.DebugSession>((resolve) => {
+        // when the debug session starts
+        const disposable = vscode.debug.onDidStartDebugSession((session) => {
+            disposable.dispose();
+            resolve(session);
+        });
+    });
+    // start debugging
+    if (!await vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], 'Macro tracer: current program'))
+        throw new Error("Failed to start a debugging session");
+
+    const session = await session_started_event;
+    await sleep(1000);
+
+    return session;
+}
+
+export async function debugContinue() {
+    await vscode.commands.executeCommand('workbench.action.debug.continue');
+    await sleep(1000);
+}
+
+export async function debugStepOver(steps: integer) {
+    while (steps) {
+        await vscode.commands.executeCommand('workbench.action.debug.stepOver');
+        await sleep(1000);
+        steps--;
+    }
+}
+
+export async function debugStepInto() {
+    await vscode.commands.executeCommand('workbench.action.debug.stepInto');
+    await sleep(1000);
+}
+
+export async function debugStop() {
+    await vscode.commands.executeCommand('workbench.action.debug.stop');
 }
 
 export async function insertString(editor: vscode.TextEditor, position: vscode.Position, str: string): Promise<vscode.Position> {

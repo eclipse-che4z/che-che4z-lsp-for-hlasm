@@ -18,6 +18,7 @@
 #include <stack>
 
 #include "../feature.h"
+#include "utils/resource_location.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -104,11 +105,9 @@ void feature_language_features::definition(const json& id, const json& params)
     auto pos =
         parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
 
-
-    auto definition_position_uri = ws_mngr_.definition(uri_to_path(document_uri).c_str(), pos);
-    document_uri = definition_position_uri.file().empty() ? document_uri : path_to_uri(definition_position_uri.file());
+    auto definition_position_uri = ws_mngr_.definition(document_uri.c_str(), pos);
     json to_ret {
-        { "uri", document_uri },
+        { "uri", definition_position_uri.file_uri() },
         { "range", range_to_json({ definition_position_uri.pos(), definition_position_uri.pos() }) },
     };
     response_->respond(id, "", to_ret);
@@ -120,12 +119,11 @@ void feature_language_features::references(const json& id, const json& params)
     auto pos =
         parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
     json to_ret = json::array();
-    auto references = ws_mngr_.references(uri_to_path(document_uri).c_str(), pos);
+    auto references = ws_mngr_.references(document_uri.c_str(), pos);
     for (size_t i = 0; i < references.size(); ++i)
     {
         auto ref = references.item(i);
-        to_ret.push_back(
-            json { { "uri", path_to_uri(ref.file()) }, { "range", range_to_json({ ref.pos(), ref.pos() }) } });
+        to_ret.push_back(json { { "uri", ref.file_uri() }, { "range", range_to_json({ ref.pos(), ref.pos() }) } });
     }
     response_->respond(id, "", to_ret);
 }
@@ -136,7 +134,7 @@ void feature_language_features::hover(const json& id, const json& params)
         parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
 
 
-    auto hover_list = std::string_view(ws_mngr_.hover(uri_to_path(document_uri).c_str(), pos));
+    auto hover_list = std::string_view(ws_mngr_.hover(document_uri.c_str(), pos));
 
     response_->respond(id, "", json { { "contents", hover_list.empty() ? json() : get_markup_content(hover_list) } });
 }
@@ -203,7 +201,7 @@ void feature_language_features::completion(const json& id, const json& params)
     if (trigger_kind == parser_library::completion_trigger_kind::trigger_character)
         trigger_char = params["context"]["triggerCharacter"].get<std::string>()[0];
 
-    auto completion_list = ws_mngr_.completion(uri_to_path(document_uri).c_str(), pos, trigger_char, trigger_kind);
+    auto completion_list = ws_mngr_.completion(document_uri.c_str(), pos, trigger_char, trigger_kind);
     json to_ret = json::value_t::null;
     json completion_item_array = json::array();
     for (size_t i = 0; i < completion_list.size(); ++i)
@@ -248,14 +246,6 @@ void add_token(
 
     last_rng = current.token_range;
 }
-
-namespace {
-static bool operator<(const parser_library::position& lhs, const parser_library::position& rhs)
-{
-    return std::tie(lhs.line, lhs.column) < std::tie(rhs.line, rhs.column);
-}
-
-} // namespace
 
 json feature_language_features::convert_tokens_to_num_array(const std::vector<parser_library::token_info>& tokens)
 {
@@ -332,7 +322,7 @@ void feature_language_features::semantic_tokens(const json& id, const json& para
 {
     auto document_uri = params["textDocument"]["uri"].get<std::string>();
 
-    auto tokens = std::vector<parser_library::token_info>(ws_mngr_.semantic_tokens(uri_to_path(document_uri).c_str()));
+    auto tokens = std::vector<parser_library::token_info>(ws_mngr_.semantic_tokens(document_uri.c_str()));
     json num_array = convert_tokens_to_num_array(tokens);
 
     response_->respond(id, "", { { "data", num_array } });
@@ -412,7 +402,7 @@ void feature_language_features::document_symbol(const json& id, const json& para
     auto document_uri = params["textDocument"]["uri"].get<std::string>();
 
     const auto limit = 5000LL;
-    auto symbol_list = ws_mngr_.document_symbol(uri_to_path(document_uri).c_str(), limit);
+    auto symbol_list = ws_mngr_.document_symbol(document_uri.c_str(), limit);
 
     response_->respond(id, "", document_symbol_list_json(symbol_list));
 }

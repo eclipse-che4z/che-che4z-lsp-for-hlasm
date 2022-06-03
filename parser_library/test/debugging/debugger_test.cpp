@@ -24,13 +24,14 @@
 #include "debugger.h"
 #include "debugging/debug_types.h"
 #include "protocol.h"
+#include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::debugging;
 using namespace hlasm_plugin::parser_library::workspaces;
-
+using namespace hlasm_plugin::utils::resource;
 
 TEST(debugger, stopped_on_entry)
 {
@@ -42,14 +43,16 @@ TEST(debugger, stopped_on_entry)
     debugger d;
     d.set_event_consumer(&m);
     std::string file_name = "test_workspace\\test";
-    file_manager.did_open_file(file_name, 0, "   LR 1,2");
+    resource_location file_loc(file_name);
+
+    file_manager.did_open_file(file_loc, 0, "   LR 1,2");
     d.launch(file_name.c_str(), ws, true);
     m.wait_for_stopped();
 
     auto frames = d.stack_frames();
     ASSERT_EQ(frames.size(), 1U);
     const auto f = frames.item(0);
-    EXPECT_EQ(std::string_view(f.source_file.path), file_name);
+    EXPECT_EQ(std::string_view(f.source_file.uri), file_loc.get_uri());
     EXPECT_EQ(f.source_range.start.line, 0U);
     EXPECT_EQ(f.source_range.end.line, 0U);
     EXPECT_EQ(std::string_view(f.name), "OPENCODE");
@@ -77,7 +80,9 @@ TEST(debugger, disconnect)
     debugger d;
     d.set_event_consumer(&m);
     std::string file_name = "test_workspace\\test";
-    file_manager.did_open_file(file_name, 0, "   LR 1,2");
+    resource_location file_loc(file_name);
+
+    file_manager.did_open_file(file_loc, 0, "   LR 1,2");
     d.launch(file_name.c_str(), ws, true);
     m.wait_for_stopped();
 
@@ -236,7 +241,7 @@ bool check_step(
             return false;
         if (exp_frames[i].end_line != f.source_range.end.line)
             return false;
-        if (exp_frames[i].frame_source.path != std::string_view(f.source_file.path))
+        if (exp_frames[i].frame_source.uri != std::string_view(f.source_file.uri))
             return false;
         if (exp_frames[i].id != f.id)
             return false;
@@ -286,11 +291,12 @@ void step_into(debugger& d,
     std::vector<debugging::stack_frame>& exp_stack_frames,
     size_t line,
     std::string name,
-    debugging::source source)
+    resource_location source)
 {
     uint32_t next_frame_id = exp_stack_frames.empty() ? 0 : exp_stack_frames[0].id + 1;
 
-    exp_stack_frames.insert(exp_stack_frames.begin(), debugging::stack_frame(line, line, next_frame_id, name, source));
+    exp_stack_frames.insert(
+        exp_stack_frames.begin(), debugging::stack_frame(line, line, next_frame_id, name, source.get_uri()));
 
     d.step_in();
     m.wait_for_stopped();
@@ -316,14 +322,21 @@ public:
 
     parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
     {
-        std::shared_ptr<processor> found = get_file_manager().add_processor_file(library);
+        std::shared_ptr<processor> found = get_file_manager().add_processor_file(resource_location(library));
         if (found)
             return found->parse_no_lsp_update(*this, std::move(ctx), data);
 
         return false;
     }
-    asm_option get_asm_options(const std::string&) const override { return { "SEVEN", "" }; }
-    preprocessor_options get_preprocessor_options(const std::string&) const override { return {}; }
+    asm_option get_asm_options(const hlasm_plugin::utils::resource::resource_location&) const override
+    {
+        return { "SEVEN", "" };
+    }
+    preprocessor_options get_preprocessor_options(
+        const hlasm_plugin::utils::resource::resource_location&) const override
+    {
+        return {};
+    }
 };
 
 TEST(debugger, test)
@@ -346,11 +359,13 @@ TEST(debugger, test)
         LR 1,1
 )";
     std::string copy1_filename = "COPY1";
+    resource_location copy1_file_loc(copy1_filename);
     std::string copy1_source = R"(
         COPY COPY2
 )";
 
     std::string copy2_filename = "COPY2";
+    resource_location copy2_file_loc(copy2_filename);
     std::string copy2_source = R"(
 
         ANOP
@@ -358,18 +373,20 @@ TEST(debugger, test)
 
 
     file_manager_impl file_manager;
-    file_manager.did_open_file(copy1_filename, 0, copy1_source);
-    file_manager.did_open_file(copy2_filename, 0, copy2_source);
+    file_manager.did_open_file(copy1_file_loc, 0, copy1_source);
+    file_manager.did_open_file(copy2_file_loc, 0, copy2_source);
     workspace_mock lib_provider(file_manager);
 
     debug_event_consumer_s_mock m;
     debugger d;
     d.set_event_consumer(&m);
     std::string filename = "ws\\test";
-    file_manager.did_open_file(filename, 0, open_code);
+    resource_location file_loc(filename);
+
+    file_manager.did_open_file(file_loc, 0, open_code);
     d.launch(filename, lib_provider, true, &lib_provider);
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", filename } };
+    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
@@ -388,7 +405,7 @@ TEST(debugger, test)
     step_over_by(1, d, m, exp_frames, 12);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    step_into(d, m, exp_frames, 7, "MACRO", filename);
+    step_into(d, m, exp_frames, 7, "MACRO", file_loc);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars(std::unordered_map<std::string, test_var_value> { {
                        "&SYSPARM",
@@ -419,11 +436,11 @@ TEST(debugger, test)
     step_over_by(1, d, m, exp_frames, 8);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    step_into(d, m, exp_frames, 1, "COPY", copy1_filename);
+    step_into(d, m, exp_frames, 1, "COPY", copy1_file_loc);
     exp_frame_vars.insert(exp_frame_vars.begin(), exp_frame_vars[0]);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    step_into(d, m, exp_frames, 2, "COPY", copy2_filename);
+    step_into(d, m, exp_frames, 2, "COPY", copy2_file_loc);
     exp_frame_vars.insert(exp_frame_vars.begin(), exp_frame_vars[0]);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
@@ -453,10 +470,12 @@ TEST(debugger, sysstmt)
     debugger d;
     d.set_event_consumer(&m);
     std::string filename = "ws\\test";
-    file_manager.did_open_file(filename, 0, open_code);
+    resource_location file_loc(filename);
+
+    file_manager.did_open_file(file_loc, 0, open_code);
     d.launch(filename, lib_provider, true, &lib_provider);
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", filename } };
+    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { { {
                                                    "&SYSSTMT",
                                                    "00000003",
@@ -500,28 +519,31 @@ A  MAC_IN ()
 )";
 
     std::string copy1_filename = "COPY1";
+    resource_location copy1_file_loc(copy1_filename);
     std::string copy1_source = R"(
            LR 1,1
 )";
 
     file_manager_impl file_manager;
-    file_manager.did_open_file(copy1_filename, 0, copy1_source);
+    file_manager.did_open_file(copy1_file_loc, 0, copy1_source);
     workspace_mock lib_provider(file_manager);
 
     debug_event_consumer_s_mock m;
     debugger d;
     d.set_event_consumer(&m);
     std::string filename = "ws\\test";
-    file_manager.did_open_file(filename, 0, open_code);
+    resource_location file_loc(filename);
+
+    file_manager.did_open_file(file_loc, 0, open_code);
     d.launch(filename, lib_provider, true, &lib_provider);
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", filename } };
+    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
 
     step_over_by(3, d, m, exp_frames, 16);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    step_into(d, m, exp_frames, 9, "MACRO", filename);
+    step_into(d, m, exp_frames, 9, "MACRO", file_loc);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars_ignore_sys_vars({},
             std::unordered_map<std::string, test_var_value> {
@@ -547,7 +569,7 @@ A  MAC_IN ()
             ));
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    step_into(d, m, exp_frames, 3, "MACRO", filename);
+    step_into(d, m, exp_frames, 3, "MACRO", file_loc);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars_ignore_sys_vars({},
             std::unordered_map<std::string, test_var_value> {
@@ -582,7 +604,7 @@ A  MAC_IN ()
     step_over_by(1, d, m, exp_frames, 4);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    step_into(d, m, exp_frames, 1, "COPY", copy1_filename);
+    step_into(d, m, exp_frames, 1, "COPY", copy1_file_loc);
     exp_frame_vars.insert(exp_frame_vars.begin(), exp_frame_vars[0]);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
@@ -590,7 +612,7 @@ A  MAC_IN ()
     step_over_by(3, d, m, exp_frames, 17);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
-    step_into(d, m, exp_frames, 14, "MACRO", filename);
+    step_into(d, m, exp_frames, 14, "MACRO", file_loc);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars_ignore_sys_vars({},
             std::unordered_map<std::string, test_var_value> {
@@ -676,17 +698,19 @@ TEST(debugger, positional_parameters)
     debugger d;
     d.set_event_consumer(&m);
     std::string filename = "ws\\test";
-    file_manager.did_open_file(filename, 0, open_code);
+    resource_location file_loc(filename);
+
+    file_manager.did_open_file(file_loc, 0, open_code);
 
     d.launch(filename, lib_provider, true, &lib_provider);
     m.wait_for_stopped();
 
     d.next();
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 5, 5, 0, "OPENCODE", filename } };
+    std::vector<debugging::stack_frame> exp_frames { { 5, 5, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
 
-    step_into(d, m, exp_frames, 3, "MACRO", filename);
+    step_into(d, m, exp_frames, 3, "MACRO", file_loc);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
@@ -700,7 +724,7 @@ TEST(debugger, positional_parameters)
     erase_frames_from_top(1, exp_frames, exp_frame_vars);
     step_over_by(1, d, m, exp_frames, 6);
 
-    step_into(d, m, exp_frames, 3, "MACRO", filename);
+    step_into(d, m, exp_frames, 3, "MACRO", file_loc);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
@@ -720,7 +744,7 @@ TEST(debugger, positional_parameters)
     erase_frames_from_top(1, exp_frames, exp_frame_vars);
     step_over_by(1, d, m, exp_frames, 7);
 
-    step_into(d, m, exp_frames, 3, "MACRO", filename);
+    step_into(d, m, exp_frames, 3, "MACRO", file_loc);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
@@ -741,7 +765,7 @@ TEST(debugger, positional_parameters)
     erase_frames_from_top(1, exp_frames, exp_frame_vars);
     step_over_by(1, d, m, exp_frames, 8);
 
-    step_into(d, m, exp_frames, 3, "MACRO", filename);
+    step_into(d, m, exp_frames, 3, "MACRO", file_loc);
     exp_frame_vars.insert(exp_frame_vars.begin(),
         frame_vars_ignore_sys_vars({}, // empty globals
             std::unordered_map<std::string, test_var_value> {
@@ -795,11 +819,13 @@ TEST(debugger, arrays)
     debugger d;
     d.set_event_consumer(&m);
     std::string filename = "ws\\test";
-    file_manager.did_open_file(filename, 0, open_code);
+    resource_location file_loc(filename);
+
+    file_manager.did_open_file(file_loc, 0, open_code);
 
     d.launch(filename, lib_provider, true, &lib_provider);
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", filename } };
+    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
@@ -849,11 +875,13 @@ B EQU A
     debugger d;
     d.set_event_consumer(&m);
     std::string filename = "ws\\test";
-    file_manager.did_open_file(filename, 0, open_code);
+    resource_location file_loc(filename);
 
-    d.launch(filename, lib_provider, true, &lib_provider);
+    file_manager.did_open_file(file_loc, 0, open_code);
+
+    d.launch(file_loc.get_uri(), lib_provider, true, &lib_provider);
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", filename } };
+    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
@@ -866,6 +894,61 @@ B EQU A
     d.disconnect();
 }
 
+TEST(debugger, ainsert)
+{
+    using list = std::unordered_map<std::string, std::shared_ptr<test_var_value>>;
+
+    std::string open_code = R"(
+    MACRO
+    MAC
+    AINSERT '       MACRO',BACK
+    AINSERT '       MAC_GEN',BACK
+    AINSERT '       GBLA &&VAR',BACK
+    AINSERT '&&VAR  SETA 5',BACK
+    AINSERT '       MEND',BACK
+    MEND
+    
+    GBLA &VAR
+    MAC
+    MAC_GEN
+    END
+)";
+
+
+    file_manager_impl file_manager;
+    workspace_mock lib_provider(file_manager);
+    debug_event_consumer_s_mock m;
+    debugger d;
+    d.set_event_consumer(&m);
+    std::string filename = "ws\\test";
+    resource_location file_loc(filename);
+
+    file_manager.did_open_file(file_loc, 0, open_code);
+
+    d.launch(file_loc.get_uri(), lib_provider, true, &lib_provider);
+    m.wait_for_stopped();
+    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
+    std::vector<frame_vars> exp_frame_vars { {
+        std::unordered_map<std::string, test_var_value> {
+            // macro locals
+            {
+                "&VAR",
+                0,
+            },
+        },
+        {}, // empty locals
+        {} // empty ord symbols
+    } };
+
+    step_over_by(3, d, m, exp_frames, 12);
+    step_into(d, m, exp_frames, 2, "MACRO", resource_location("hlasm://0/AINSERT:1.hlasm"));
+    exp_frame_vars.insert(exp_frame_vars.begin(), frame_vars_ignore_sys_vars({}, {}, {}));
+
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    d.disconnect();
+}
+
 TEST(debugger, concurrent_next_and_file_change)
 {
     std::string open_code = R"(
@@ -873,6 +956,7 @@ TEST(debugger, concurrent_next_and_file_change)
     COPY COPY1
 )";
     std::string copy1_filename = "COPY1";
+    resource_location copy1_file_loc(copy1_filename);
     std::string copy1_source = R"(
         LR 1,1
         LR 1,1
@@ -884,15 +968,16 @@ TEST(debugger, concurrent_next_and_file_change)
 
 
     file_manager_impl file_manager;
-    file_manager.did_open_file(copy1_filename, 0, copy1_source);
+    file_manager.did_open_file(copy1_file_loc, 0, copy1_source);
     workspace_mock lib_provider(file_manager);
 
     debug_event_consumer_s_mock m;
     debugger d;
     d.set_event_consumer(&m);
     std::string filename = "ws\\test";
+    resource_location file_loc(filename);
 
-    file_manager.did_open_file(filename, 0, open_code);
+    file_manager.did_open_file(file_loc, 0, open_code);
     d.launch(filename, lib_provider, true, &lib_provider);
     m.wait_for_stopped();
     std::string new_string = "SOME NEW FILE DOES NOT MATTER";
@@ -900,8 +985,8 @@ TEST(debugger, concurrent_next_and_file_change)
     chs.emplace_back(new_string.c_str(), new_string.size());
     d.next();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    std::thread t([&file_manager, &copy1_filename, &chs]() {
-        file_manager.did_change_file(copy1_filename, 0, chs.data(), chs.size());
+    std::thread t([&file_manager, &copy1_file_loc, &chs]() {
+        file_manager.did_change_file(copy1_file_loc, 0, chs.data(), chs.size());
     });
     m.wait_for_stopped();
 

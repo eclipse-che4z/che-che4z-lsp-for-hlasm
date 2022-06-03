@@ -24,6 +24,7 @@
 #include "feature_workspace_folders.h"
 #include "lib_config.h"
 #include "parsing_metadata_serialization.h"
+#include "utils/resource_location.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -243,7 +244,7 @@ json diagnostic_related_info_to_json(parser_library::diagnostic& diag)
     {
         related.push_back(
             json { { "location",
-                       json { { "uri", feature::path_to_uri(diag.related_info(i).location().uri()) },
+                       json { { "uri", diag.related_info(i).location().uri() },
                            { "range", feature::range_to_json(diag.related_info(i).location().get_range()) } } },
                 { "message", diag.related_info(i).message() } });
     }
@@ -271,7 +272,7 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
     for (size_t i = 0; i < diagnostics.diagnostics_size(); ++i)
     {
         auto d = diagnostics.diagnostics(i);
-        diags[d.file_name()].push_back(d);
+        diags[d.file_uri()].push_back(d);
         if (d.severity() == parser_library::diagnostic_severity::error)
             ++diags_error_count;
         else if (d.severity() == parser_library::diagnostic_severity::warning)
@@ -308,7 +309,7 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
             diags_array.push_back(std::move(one_json));
         }
 
-        json publish_diags_params { { "uri", feature::path_to_uri(file_diags.first) }, { "diagnostics", diags_array } };
+        json publish_diags_params { { "uri", file_diags.first }, { "diagnostics", diags_array } };
         new_files.insert(file_diags.first);
         last_diagnostics_files_.erase(file_diags.first);
 
@@ -320,7 +321,7 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
     // remove the diags from UI
     for (auto& it : last_diagnostics_files_)
     {
-        json publish_diags_params { { "uri", feature::path_to_uri(it) }, { "diagnostics", json::array() } };
+        json publish_diags_params { { "uri", it }, { "diagnostics", json::array() } };
         notify("textDocument/publishDiagnostics", publish_diags_params);
     }
 

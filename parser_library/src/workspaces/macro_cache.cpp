@@ -89,7 +89,7 @@ std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_
 
 macro_cache_key macro_cache_key::create_from_context(context::hlasm_context& hlasm_ctx, library_data data)
 {
-    return { hlasm_ctx.opencode_file_name(), data, get_opsyn_state(hlasm_ctx) };
+    return { hlasm_ctx.opencode_location(), data, get_opsyn_state(hlasm_ctx) };
 }
 
 void macro_cache_key::sort_opsyn_state(std::vector<cached_opsyn_mnemo>& opsyn_state)
@@ -136,9 +136,9 @@ bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_co
             // Add all copy members on which this macro is dependant
             for (const auto& copy_ptr : info->macro_definition->used_copy_members)
             {
-                auto copy_file = file_mngr_->find(copy_ptr->definition_location.file);
+                auto file = file_mngr_->find(copy_ptr->definition_location.resource_loc);
                 ctx.hlasm_ctx->add_copy_member(copy_ptr);
-                ctx.lsp_ctx->add_copy(copy_ptr, lsp::text_data_ref_t(copy_file->get_text()));
+                ctx.lsp_ctx->add_copy(copy_ptr, lsp::text_data_ref_t(file->get_text()));
             }
         }
         else if (key.data.proc_kind == processing::processing_kind::COPY)
@@ -159,10 +159,10 @@ version_stamp macro_cache::get_copy_member_versions(context::macro_def_ptr macro
 
     for (const auto& copy_ptr : macro->used_copy_members)
     {
-        auto file = file_mngr_->find(copy_ptr->definition_location.file);
+        auto file = file_mngr_->find(copy_ptr->definition_location.resource_loc);
         if (!file)
             throw std::runtime_error("Dependencies of a macro must be open right after parsing the macro.");
-        result.try_emplace(file->get_file_name(), file->get_version());
+        result.try_emplace(file->get_location(), file->get_version());
     }
     return result;
 }
@@ -182,19 +182,19 @@ void macro_cache::save_macro(const macro_cache_key& key, const analyzer& analyze
     else // Copy members do not have additional dependencies
         cache_data.stamps.clear();
 
-    cache_data.stamps.try_emplace(macro_file_->get_file_name(), macro_file_->get_version());
+    cache_data.stamps.try_emplace(macro_file_->get_location(), macro_file_->get_version());
     if (key.data.proc_kind == processing::processing_kind::MACRO)
         cache_data.cached_member = analyzer.context().lsp_ctx->get_macro_info(key.data.library_member);
     else if (key.data.proc_kind == processing::processing_kind::COPY)
         cache_data.cached_member = analyzer.context().hlasm_ctx->get_copy_member(key.data.library_member);
 }
 
-void macro_cache::erase_cache_of_opencode(const std::string& opencode_file_name)
+void macro_cache::erase_cache_of_opencode(const utils::resource::resource_location& opencode_file_location)
 {
     auto it = cache_.begin();
     while (it != cache_.end())
     {
-        if (it->first.opencode_file_name == opencode_file_name)
+        if (it->first.opencode_file_location == opencode_file_location)
             it = cache_.erase(it);
         else
             ++it;

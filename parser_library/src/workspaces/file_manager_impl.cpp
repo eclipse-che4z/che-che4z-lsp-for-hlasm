@@ -17,7 +17,9 @@
 #include <map>
 
 #include "processor_file_impl.h"
+#include "utils/content_loader.h"
 #include "utils/path.h"
+#include "utils/path_conversions.h"
 #include "utils/platform.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
@@ -30,11 +32,11 @@ void file_manager_impl::collect_diags() const
     }
 }
 
-file_ptr file_manager_impl::add_file(const file_uri& uri)
+file_ptr file_manager_impl::add_file(const file_location& file)
 {
     std::lock_guard guard(files_mutex);
-    auto ret = files_.emplace(uri, std::make_shared<file_impl>(uri));
-    return ret.first->second;
+    auto [ret, _] = files_.try_emplace(file, std::make_shared<file_impl>(file));
+    return ret->second;
 }
 
 processor_file_ptr file_manager_impl::change_into_processor_file_if_not_already_(std::shared_ptr<file_impl>& to_change)
@@ -50,44 +52,43 @@ processor_file_ptr file_manager_impl::change_into_processor_file_if_not_already_
     }
 }
 
-processor_file_ptr file_manager_impl::add_processor_file(const file_uri& uri)
+processor_file_ptr file_manager_impl::add_processor_file(const file_location& file)
 {
     std::lock_guard guard(files_mutex);
-    auto ret = files_.find(uri);
+    auto ret = files_.find(file);
     if (ret == files_.end())
     {
-        auto ptr = std::make_shared<processor_file_impl>(uri, *this, cancel_);
-        files_.emplace(uri, ptr);
+        auto ptr = std::make_shared<processor_file_impl>(file, *this, cancel_);
+        files_.try_emplace(file, ptr);
         return ptr;
     }
     else
         return change_into_processor_file_if_not_already_(ret->second);
 }
 
-processor_file_ptr file_manager_impl::get_processor_file(const file_uri& uri)
+processor_file_ptr file_manager_impl::get_processor_file(const file_location& file)
 {
     std::lock_guard guard(files_mutex);
-    auto ret = files_.find(uri);
+    auto ret = files_.find(file);
     if (ret == files_.end())
     {
-        return std::make_shared<processor_file_impl>(uri, *this);
+        return std::make_shared<processor_file_impl>(file, *this);
     }
     else
         return change_into_processor_file_if_not_already_(ret->second);
 }
 
-void file_manager_impl::remove_file(const file_uri& document_uri)
+void file_manager_impl::remove_file(const file_location& file)
 {
     std::lock_guard guard(files_mutex);
-    auto file = files_.find(document_uri);
-    if (file == files_.end())
+    if (!files_.contains(file))
         return;
 
     // close the file internally
-    files_.erase(document_uri);
+    files_.erase(file);
 }
 
-file_ptr file_manager_impl::find(const std::string& key) const
+file_ptr file_manager_impl::find(const utils::resource::resource_location& key) const
 {
     std::lock_guard guard(files_mutex);
     auto ret = files_.find(key);
@@ -97,7 +98,7 @@ file_ptr file_manager_impl::find(const std::string& key) const
     return ret->second;
 }
 
-processor_file_ptr file_manager_impl::find_processor_file(const std::string& key)
+processor_file_ptr file_manager_impl::find_processor_file(const utils::resource::resource_location& key)
 {
     std::lock_guard guard(files_mutex);
     auto ret = files_.find(key);
@@ -107,15 +108,9 @@ processor_file_ptr file_manager_impl::find_processor_file(const std::string& key
     return change_into_processor_file_if_not_already_(ret->second);
 }
 
-list_directory_result file_manager_impl::list_directory_files(const std::string& path)
+list_directory_result file_manager_impl::list_directory_files(const utils::resource::resource_location& directory)
 {
-    std::filesystem::path lib_p(path);
-    list_directory_result result;
-
-    result.second = utils::path::list_directory_regular_files(lib_p, [&result](const std::filesystem::path& f) {
-        result.first[utils::path::filename(f).string()] = utils::path::absolute(f).string();
-    });
-    return result;
+    return utils::resource::list_directory_files(directory);
 }
 
 void file_manager_impl::prepare_file_for_change_(std::shared_ptr<file_impl>& file)
@@ -130,16 +125,16 @@ void file_manager_impl::prepare_file_for_change_(std::shared_ptr<file_impl>& fil
         file = std::make_shared<file_impl>(*file);
 }
 
-void file_manager_impl::did_open_file(const std::string& document_uri, version_t version, std::string text)
+void file_manager_impl::did_open_file(const file_location& document_loc, version_t version, std::string text)
 {
     std::lock_guard guard(files_mutex);
-    auto ret = files_.emplace(document_uri, std::make_shared<file_impl>(document_uri));
-    prepare_file_for_change_(ret.first->second);
-    ret.first->second->did_open(std::move(text), version);
+    auto [ret, _] = files_.try_emplace(document_loc, std::make_shared<file_impl>(document_loc));
+    prepare_file_for_change_(ret->second);
+    ret->second->did_open(std::move(text), version);
 }
 
 void file_manager_impl::did_change_file(
-    const std::string& document_uri, version_t, const document_change* changes, size_t ch_size)
+    const file_location& document_loc, version_t, const document_change* changes, size_t ch_size)
 {
     // TODO
     // the version is the version after the changes -> I don't see how is that useful
@@ -148,7 +143,7 @@ void file_manager_impl::did_change_file(
 
     std::lock_guard guard(files_mutex);
 
-    auto file = files_.find(document_uri);
+    auto file = files_.find(document_loc);
     if (file == files_.end())
         return; // if the file does not exist, no action is taken
 
@@ -164,10 +159,10 @@ void file_manager_impl::did_change_file(
     }
 }
 
-void file_manager_impl::did_close_file(const std::string& document_uri)
+void file_manager_impl::did_close_file(const file_location& document_loc)
 {
     std::lock_guard guard(files_mutex);
-    auto file = files_.find(document_uri);
+    auto file = files_.find(document_loc);
     if (file == files_.end())
         return;
 

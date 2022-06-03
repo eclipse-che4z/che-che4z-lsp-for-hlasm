@@ -41,7 +41,6 @@ add_subdirectory(processing)
 add_subdirectory(semantics)
 add_subdirectory(workspace)
 
-
 if(MSVC)
 	target_compile_options(library_test PRIVATE /bigobj)
 endif()

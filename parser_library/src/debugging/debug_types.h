@@ -28,11 +28,11 @@ namespace hlasm_plugin::parser_library::debugging {
 
 struct source
 {
-    source(std::string path)
-        : path(std::move(path))
+    source(std::string uri)
+        : uri(std::move(uri))
     {}
-    std::string path;
-    bool operator==(const source& oth) const { return path == oth.path; }
+    std::string uri;
+    bool operator==(const source& oth) const { return uri == oth.uri; }
 };
 
 struct stack_frame

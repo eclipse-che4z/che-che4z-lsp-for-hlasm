@@ -18,6 +18,7 @@
 - The language server may crash when a complex expression is used as a variable symbol index
 - References to CA variables in strings are not reported
 - Structured macro variables were not forwarded correctly when a dot separator was used in the macro operand
+- URIs and paths are now represented by a designated data type
 - Return correct variable type for values provided in the macro's name field
 - Revise machine instructions
 

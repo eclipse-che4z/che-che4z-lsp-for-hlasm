@@ -66,7 +66,7 @@ position_uri::position_uri(const location& item)
     : item_(item)
 {}
 position position_uri::pos() const { return item_.pos; }
-std::string_view position_uri::file() const { return item_.file; }
+std::string_view position_uri::file_uri() const { return item_.get_uri(); }
 
 position_uri sequence_item_get(const sequence<position_uri, const location*>* self, size_t index)
 {
@@ -94,7 +94,7 @@ diagnostic::diagnostic(diagnostic_s& diag)
     : impl_(diag)
 {}
 
-const char* diagnostic::file_name() const { return impl_.file_name.c_str(); }
+const char* diagnostic::file_uri() const { return impl_.file_uri.c_str(); }
 
 range diagnostic::get_range() const { return impl_.diag_range; }
 
@@ -157,7 +157,7 @@ stack_frame sequence_item_get(const sequence<stack_frame, const debugging::stack
 //********************* source **********************
 
 source::source(const debugging::source& source)
-    : path(source.path)
+    : uri(source.uri)
 {}
 
 //*********************** scope *************************

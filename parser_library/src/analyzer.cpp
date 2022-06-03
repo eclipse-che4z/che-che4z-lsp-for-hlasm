@@ -28,7 +28,7 @@ analyzing_context& analyzer_options::get_context()
 {
     if (std::holds_alternative<asm_option>(ctx_source))
     {
-        auto h_ctx = std::make_shared<context::hlasm_context>(file_name,
+        auto h_ctx = std::make_shared<context::hlasm_context>(file_loc,
             std::move(std::get<asm_option>(ctx_source)),
             ids_init ? std::move(ids_init) : std::make_shared<context::id_storage>());
         ctx_source = analyzing_context {
@@ -74,13 +74,13 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
                 src_proc_,
                 *this,
                 opts.get_preprocessor(
-                    [libs = &opts.get_lib_provider(), program = opts.file_name, &ctx = ctx_](std::string_view library) {
-                        std::string uri;
+                    [libs = &opts.get_lib_provider(), program = opts.file_loc, &ctx = ctx_](std::string_view library) {
+                        std::optional<utils::resource::resource_location> res_loc;
 
-                        auto result = libs->get_library(std::string(library), program, &uri);
+                        auto result = libs->get_library(std::string(library), program, res_loc);
 
-                        if (!uri.empty())
-                            ctx.hlasm_ctx->add_preprocessor_dependency(uri);
+                        if (res_loc.has_value())
+                            ctx.hlasm_ctx->add_preprocessor_dependency(res_loc.value());
 
                         return result;
                     },
@@ -90,7 +90,7 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
                 opts.vf_monitor),
           ctx_,
           opts.library_data,
-          opts.file_name,
+          opts.file_loc,
           text,
           opts.get_lib_provider(),
           field_parser_)

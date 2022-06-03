@@ -103,8 +103,8 @@ std::string opencode_provider::aread()
         auto& opencode_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
         auto& copy = opencode_stack.back();
         const auto line = copy.suspended_at;
-        std::string_view remaining_text =
-            m_ctx->lsp_ctx->get_file_info(copy.definition_location()->file)->data.get_lines_beginning_at({ line, 0 });
+        std::string_view remaining_text = m_ctx->lsp_ctx->get_file_info(copy.definition_location()->resource_loc)
+                                              ->data.get_lines_beginning_at({ line, 0 });
         result = lexing::extract_line(remaining_text).first;
         if (remaining_text.empty())
             copy.resume();
@@ -344,7 +344,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     return result;
 }
 
-std::string generate_virtual_file_name(virtual_file_id id, std::string_view name)
+utils::resource::resource_location generate_virtual_file_name(virtual_file_id id, std::string_view name)
 {
     std::string result;
     if (id)
@@ -355,7 +355,7 @@ std::string generate_virtual_file_name(virtual_file_id id, std::string_view name
     }
     result += name;
     result += ".hlasm";
-    return result;
+    return utils::resource::resource_location(std::move(result));
 }
 
 bool opencode_provider::try_running_preprocessor()
@@ -414,7 +414,7 @@ bool opencode_provider::suspend_copy_processing(remove_empty re) const
 
         const auto pos = copy.current_statement_position();
         std::string_view remaining_text =
-            m_ctx->lsp_ctx->get_file_info(copy.definition_location()->file)->data.get_lines_beginning_at(pos);
+            m_ctx->lsp_ctx->get_file_info(copy.definition_location()->resource_loc)->data.get_lines_beginning_at(pos);
         const size_t line_no = pos.line;
 
         // remove line being processed
@@ -635,7 +635,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
         }
         copy_file.current_statement = resync;
 
-        const auto* copy_text = m_ctx->lsp_ctx->get_file_info(copy_file.definition_location()->file);
+        const auto* copy_text = m_ctx->lsp_ctx->get_file_info(copy_file.definition_location()->resource_loc);
         std::string_view full_text = copy_text->data.get_lines_beginning_at({ 0, 0 });
         std::string_view remaining_text = copy_text->data.get_lines_beginning_at({ line, 0 });
         if (!lexing::extract_logical_line(m_current_logical_line, remaining_text, lexing::default_ictl_copy))

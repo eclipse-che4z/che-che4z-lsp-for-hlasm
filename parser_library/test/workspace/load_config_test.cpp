@@ -19,7 +19,9 @@
 #include "gtest/gtest.h"
 
 #include "empty_configs.h"
+#include "utils/content_loader.h"
 #include "utils/platform.h"
+#include "utils/resource_location.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/library_local.h"
@@ -28,17 +30,31 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
 using hlasm_plugin::utils::platform::is_windows;
+using namespace hlasm_plugin::utils::resource;
+
+namespace {
+auto proc_grps_loc = resource_location("proc_grps.json");
+auto file_loc = resource_location("test_uri");
+auto ws_loc = resource_location("test_proc_grps_uri");
+
+auto pgm1_loc =
+    is_windows() ? resource_location("test_proc_grps_uri\\pgm1") : resource_location("test_proc_grps_uri/pgm1");
+auto pgm_override_loc = is_windows() ? resource_location("test_proc_grps_uri\\pgm_override")
+                                     : resource_location("test_proc_grps_uri/pgm_override");
+auto pgm_anything_loc = is_windows() ? resource_location("test_proc_grps_uri\\pgms\\anything")
+                                     : resource_location("test_proc_grps_uri/pgms/anything");
+} // namespace
 
 class file_proc_grps : public file_impl
 {
 public:
     file_proc_grps()
-        : file_impl("proc_grps.json")
+        : file_impl(proc_grps_loc)
     {}
 
-    file_uri uri = "test_uri";
+    file_location location = file_loc;
 
-    const file_uri& get_file_name() override { return uri; }
+    const file_location& get_location() override { return location; }
 
     const std::string& get_text() override { return file; }
 
@@ -105,12 +121,12 @@ class file_pgm_conf : public file_impl
 {
 public:
     file_pgm_conf()
-        : file_impl("proc_grps.json")
+        : file_impl(proc_grps_loc)
     {}
 
-    file_uri uri = "test_uri";
+    file_location location = file_loc;
 
-    const file_uri& get_file_name() override { return uri; }
+    const file_location& get_location() override { return location; }
 
     const std::string& get_text() override { return file; }
 
@@ -161,9 +177,9 @@ public:
 class file_manager_proc_grps_test : public file_manager_impl
 {
 public:
-    file_ptr add_file(const file_uri& uri) override
+    file_ptr add_file(const resource_location& location) override
     {
-        if (uri.substr(uri.size() - 14) == "proc_grps.json")
+        if (hlasm_plugin::utils::resource::filename(location) == "proc_grps.json")
             return proc_grps;
         else
             return pgm_conf;
@@ -174,31 +190,32 @@ public:
 
 
     // Inherited via file_manager
-    void did_open_file(const std::string&, version_t, std::string) override {}
-    void did_change_file(const std::string&, version_t, const document_change*, size_t) override {}
-    void did_close_file(const std::string&) override {}
+    void did_open_file(const resource_location&, version_t, std::string) override {}
+    void did_change_file(const resource_location&, version_t, const document_change*, size_t) override {}
+    void did_close_file(const resource_location&) override {}
 };
 
 TEST(workspace, load_config_synthetic)
 {
     file_manager_proc_grps_test file_manager;
     lib_config config;
-    workspace ws("test_proc_grps_uri", "test_proc_grps_name", file_manager, config);
+    workspace ws(ws_loc, "test_proc_grps_name", file_manager, config);
 
     ws.open();
 
     auto& pg = ws.get_proc_grp("P1");
     EXPECT_EQ("P1", pg.name());
-    auto expected = []() -> std::array<std::string, 4> {
+    auto expected = []() -> std::array<resource_location, 4> {
         if (is_windows())
-            return { "C:\\Users\\Desktop\\ASLib\\",
-                "test_proc_grps_uri\\lib\\",
-                "test_proc_grps_uri\\libs\\lib2\\",
-                "test_proc_grps_uri\\" };
+            return { resource_location("C:\\Users\\Desktop\\ASLib\\"),
+                resource_location("test_proc_grps_uri\\lib\\"),
+                resource_location("test_proc_grps_uri\\libs\\lib2\\"),
+                resource_location("test_proc_grps_uri\\") };
         else
-            return {
-                "/home/user/ASLib/", "test_proc_grps_uri/lib/", "test_proc_grps_uri/libs/lib2/", "test_proc_grps_uri/"
-            };
+            return { resource_location("/home/user/ASLib/"),
+                resource_location("test_proc_grps_uri/lib/"),
+                resource_location("test_proc_grps_uri/libs/lib2/"),
+                resource_location("test_proc_grps_uri/") };
     }();
 
     EXPECT_EQ(std::size(expected), pg.libraries().size());
@@ -206,19 +223,21 @@ TEST(workspace, load_config_synthetic)
     {
         library_local* libl = dynamic_cast<library_local*>(pg.libraries()[i].get());
         ASSERT_NE(libl, nullptr);
-        EXPECT_EQ(expected[i], libl->get_lib_path());
+        EXPECT_EQ(expected[i], libl->get_location());
     }
 
     auto& pg2 = ws.get_proc_grp("P2");
     EXPECT_EQ("P2", pg2.name());
 
-    auto expected2 = []() -> std::array<std::string, 3> {
+    auto expected2 = []() -> std::array<resource_location, 3> {
         if (is_windows())
-            return {
-                "C:\\Users\\Desktop\\ASLib\\", "test_proc_grps_uri\\P2lib\\", "test_proc_grps_uri\\P2libs\\libb\\"
-            };
+            return { resource_location("C:\\Users\\Desktop\\ASLib\\"),
+                resource_location("test_proc_grps_uri\\P2lib\\"),
+                resource_location("test_proc_grps_uri\\P2libs\\libb\\") };
         else
-            return { "/home/user/ASLib/", "test_proc_grps_uri/P2lib/", "test_proc_grps_uri/P2libs/libb/" };
+            return { resource_location("/home/user/ASLib/"),
+                resource_location("test_proc_grps_uri/P2lib/"),
+                resource_location("test_proc_grps_uri/P2libs/libb/") };
     }();
 
     EXPECT_EQ(std::size(expected2), pg2.libraries().size());
@@ -226,47 +245,43 @@ TEST(workspace, load_config_synthetic)
     {
         library_local* libl = dynamic_cast<library_local*>(pg2.libraries()[i].get());
         ASSERT_NE(libl, nullptr);
-        EXPECT_EQ(expected2[i], libl->get_lib_path());
+        EXPECT_EQ(expected2[i], libl->get_location());
     }
 
 
     // test of pgm_conf and workspace::get_proc_grp_by_program
-    auto& pg3 = is_windows() ? ws.get_proc_grp_by_program("test_proc_grps_uri\\pgm1")
-                             : ws.get_proc_grp_by_program("test_proc_grps_uri/pgm1");
+    auto& pg3 = ws.get_proc_grp_by_program(pgm1_loc);
 
     EXPECT_EQ(pg3.libraries().size(), std::size(expected));
     for (size_t i = 0; i < std::min(std::size(expected), pg3.libraries().size()); ++i)
     {
         library_local* libl = dynamic_cast<library_local*>(pg3.libraries()[i].get());
         ASSERT_NE(libl, nullptr);
-        EXPECT_EQ(expected[i], libl->get_lib_path());
+        EXPECT_EQ(expected[i], libl->get_location());
     }
 
 
-    auto& pg4 = is_windows() ? ws.get_proc_grp_by_program("test_proc_grps_uri\\pgms\\anything")
-                             : ws.get_proc_grp_by_program("test_proc_grps_uri/pgms/anything");
+    auto& pg4 = ws.get_proc_grp_by_program(pgm_anything_loc);
 
     EXPECT_EQ(pg4.libraries().size(), std::size(expected2));
     for (size_t i = 0; i < std::min(std::size(expected2), pg4.libraries().size()); ++i)
     {
         library_local* libl = dynamic_cast<library_local*>(pg4.libraries()[i].get());
         ASSERT_NE(libl, nullptr);
-        EXPECT_EQ(expected2[i], libl->get_lib_path());
+        EXPECT_EQ(expected2[i], libl->get_location());
     }
     // test of asm_options
-    const auto& asm_options = ws.get_asm_options(is_windows() ? "test_proc_grps_uri\\pgm1" : "test_proc_grps_uri/pgm1");
+    const auto& asm_options = ws.get_asm_options(pgm1_loc);
 
     EXPECT_EQ("SEVEN", asm_options.sysparm);
     EXPECT_EQ("MAC1", asm_options.profile);
 
-    const auto& pp_options =
-        ws.get_preprocessor_options(is_windows() ? "test_proc_grps_uri\\pgm1" : "test_proc_grps_uri/pgm1");
+    const auto& pp_options = ws.get_preprocessor_options(pgm1_loc);
 
     EXPECT_TRUE(std::holds_alternative<db2_preprocessor_options>(pp_options));
 
     // test of asm_options override
-    const auto& asm_options_override =
-        ws.get_asm_options(is_windows() ? "test_proc_grps_uri\\pgm_override" : "test_proc_grps_uri/pgm_override");
+    const auto& asm_options_override = ws.get_asm_options(pgm_override_loc);
 
     EXPECT_EQ("SEVEN", asm_options_override.sysparm);
     EXPECT_EQ("PROFILE OVERRIDE", asm_options_override.profile);
@@ -403,7 +418,7 @@ TEST(workspace, asm_options_goff_xobject_redefinition)
     {
         file_manager_asm_test file_manager;
         lib_config config;
-        workspace ws("test_proc_grps_uri", "test_proc_grps_name", file_manager, config);
+        workspace ws(ws_loc, "test_proc_grps_name", file_manager, config);
 
         ws.open();
 

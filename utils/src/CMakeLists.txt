@@ -11,7 +11,11 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(hlasm_utils PRIVATE
+	content_loader.cpp
+	filesystem_content_loader.cpp
+	path_conversions.cpp
 	platform.cpp
+	resource_location.cpp
 	utf8text.cpp
 )
 

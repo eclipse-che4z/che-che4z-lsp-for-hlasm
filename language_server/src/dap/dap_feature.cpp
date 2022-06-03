@@ -15,22 +15,24 @@
 #include "dap_feature.h"
 
 #include "utils/path.h"
+#include "utils/path_conversions.h"
 #include "utils/platform.h"
 
 namespace {
 using namespace hlasm_plugin::language_server::dap;
 
-std::string convert_path(const std::string& path, path_format path_format)
+std::string server_conformant_path(const std::string& path, path_format path_format)
 {
+    // Server accepts paths in URI format
     if (path_format == path_format::URI)
-        return hlasm_plugin::language_server::feature::uri_to_path(path);
+        return path;
 
-    // Theia sends us relative path (while not accepting it back) change, to absolute
+    // Theia sends us relative path while not accepting it back. Change to absolute
     std::filesystem::path p = hlasm_plugin::utils::path::absolute(path);
 
     std::string result = hlasm_plugin::utils::path::lexically_normal(p).string();
 
-    // on windows, VS code sends us path with capital drive letter through DAP and
+    // On windows, VS code sends us path with capital drive letter through DAP and
     // lowercase drive letter through LSP.
     // Remove, once we implement case-insensitive comparison of paths in parser_library for windows
     if (hlasm_plugin::utils::platform::is_windows())
@@ -39,7 +41,17 @@ std::string convert_path(const std::string& path, path_format path_format)
             result[0] = (char)tolower((unsigned char)result[0]);
     }
 
-    return result;
+    return hlasm_plugin::utils::path::path_to_uri(result);
+}
+
+std::string client_conformant_path(const std::string& uri, path_format client_path_format)
+{
+    // Server provides paths in URI format -> convert it to whatever the client wants
+    if (client_path_format == path_format::URI)
+        return uri;
+
+    auto generated_path = hlasm_plugin::utils::path::uri_to_path(uri);
+    return generated_path.empty() ? uri : generated_path;
 }
 
 constexpr const int THREAD_ID = 1;
@@ -103,7 +115,7 @@ void dap_feature::on_initialize(const json& requested_seq, const json& args)
 
     line_1_based_ = args["linesStartAt1"].get<bool>() ? 1 : 0;
     column_1_based_ = args["columnsStartAt1"].get<bool>() ? 1 : 0;
-    path_format_ = args["pathFormat"].get<std::string>() == "path" ? path_format::PATH : path_format::URI;
+    client_path_format_ = args["pathFormat"].get<std::string>() == "path" ? path_format::PATH : path_format::URI;
 
     debugger.emplace();
 
@@ -126,7 +138,7 @@ void dap_feature::on_launch(const json& request_seq, const json& args)
         return;
 
     // wait for configurationDone?
-    std::string program_path = convert_path(args["program"].get<std::string>(), path_format_);
+    std::string program_path = server_conformant_path(args["program"].get<std::string>(), client_path_format_);
     bool stop_on_entry = args["stopOnEntry"].get<bool>();
     auto workspace_id = ws_mngr_.find_workspace(program_path.c_str());
     debugger->set_event_consumer(this);
@@ -142,7 +154,7 @@ void dap_feature::on_set_breakpoints(const json& request_seq, const json& args)
 
     json breakpoints_verified = json::array();
 
-    std::string source = convert_path(args["source"]["path"].get<std::string>(), path_format_);
+    std::string source = server_conformant_path(args["source"]["path"].get<std::string>(), client_path_format_);
     std::vector<parser_library::breakpoint> breakpoints;
 
     if (auto bpoints_found = args.find("breakpoints"); bpoints_found != args.end())
@@ -175,9 +187,9 @@ void dap_feature::on_threads(const json& request_seq, const json&)
         json { { "threads", json::array({ json { { "id", THREAD_ID }, { "name", "main" } } }) } });
 }
 
-[[nodiscard]] json source_to_json(parser_library::source source)
+[[nodiscard]] json source_to_json(parser_library::source source, path_format path_format)
 {
-    return json { { "path", std::string_view(source.path) } };
+    return json { { "path", client_conformant_path(std::string(source.uri), path_format) } };
 }
 
 void dap_feature::on_stack_trace(const json& request_seq, const json&)
@@ -192,7 +204,7 @@ void dap_feature::on_stack_trace(const json& request_seq, const json&)
         frames_json.push_back(json {
             { "id", frame.id },
             { "name", std::string_view(frame.name) },
-            { "source", source_to_json(frame.source_file) },
+            { "source", source_to_json(frame.source_file, client_path_format_) },
             { "line", frame.source_range.start.line + line_1_based_ },
             { "column", frame.source_range.start.column + column_1_based_ },
             { "endLine", frame.source_range.end.line + line_1_based_ },
@@ -218,7 +230,7 @@ void dap_feature::on_scopes(const json& request_seq, const json& args)
         json scope_json = json { { "name", std::string_view(scope.name) },
             { "variablesReference", scope.variable_reference },
             { "expensive", false },
-            { "source", source_to_json(scope.source_file) } };
+            { "source", source_to_json(scope.source_file, client_path_format_) } };
         scopes_json.push_back(std::move(scope_json));
     }
 

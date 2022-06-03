@@ -1,0 +1,13 @@
+    MACRO
+    MAC
+    AINSERT '       MACRO',BACK
+    AINSERT '       MAC_GEN',BACK
+    AINSERT '       GBLA &&VAR',BACK
+    AINSERT '&&VAR  SETA 5',BACK
+    AINSERT '       MEND',BACK
+    MEND
+    
+    GBLA &VAR
+    MAC
+    MAC_GEN
+    END

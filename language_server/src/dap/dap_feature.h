@@ -77,7 +77,7 @@ private:
 
     int column_1_based_ = 0;
     int line_1_based_ = 0;
-    path_format path_format_ = path_format::PATH;
+    path_format client_path_format_ = path_format::PATH;
 
     dap_disconnect_listener* disconnect_listener_;
 };

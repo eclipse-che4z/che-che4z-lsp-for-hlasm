@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "analyzer_fixture.h"
+#include "lsp_context_test_helper.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
@@ -33,9 +34,13 @@ R1 EQU 1
     {}
 };
 
+namespace {
+const auto empty_loc = hlasm_plugin::utils::resource::resource_location("");
+}
+
 TEST_F(lsp_context_ord_symbol, document_symbol)
 {
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(opencode_file_name, 1000);
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(opencode_loc, 1000);
     std::string R1 = "R1";
     document_symbol_list_s expected = { document_symbol_item_s {
         R1, document_symbol_kind::EQU, range { { 2, 0 }, { 2, 0 } } } };
@@ -44,20 +49,17 @@ TEST_F(lsp_context_ord_symbol, document_symbol)
 
 TEST_F(lsp_context_ord_symbol, definition)
 {
-    location res = a.context().lsp_ctx->definition(opencode_file_name, { 1, 5 });
-    EXPECT_EQ(res.file, opencode_file_name);
-    EXPECT_EQ(res.pos, position(2, 0));
+    location res = a.context().lsp_ctx->definition(opencode_loc, { 1, 5 });
+    check_location_with_position(res, opencode_loc, 2, 0);
 }
 
 TEST_F(lsp_context_ord_symbol, references)
 {
-    auto res = a.context().lsp_ctx->references(opencode_file_name, { 2, 0 });
+    auto res = a.context().lsp_ctx->references(opencode_loc, { 2, 0 });
     ASSERT_EQ(res.size(), 2U);
 
-    EXPECT_EQ(res[0].file, opencode_file_name);
-    EXPECT_EQ(res[0].pos, position(1, 4));
-    EXPECT_EQ(res[1].file, opencode_file_name);
-    EXPECT_EQ(res[1].pos, position(2, 0));
+    check_location_with_position(res[0], opencode_loc, 1, 4);
+    check_location_with_position(res[1], opencode_loc, 2, 0);
 }
 
 TEST(hover, abs_symbol)
@@ -73,7 +75,7 @@ R1 EQU 1
     EXPECT_TRUE(a.diags().empty());
 
 
-    EXPECT_EQ(a.context().lsp_ctx->hover("", { 1, 5 }), R"(X'1' (1)
+    EXPECT_EQ(a.context().lsp_ctx->hover(empty_loc, { 1, 5 }), R"(X'1' (1)
 
 ---
 
@@ -99,7 +101,7 @@ R  DS  H
 
     EXPECT_TRUE(a.diags().empty());
 
-    auto res = a.context().lsp_ctx->hover("", { 3, 0 });
+    auto res = a.context().lsp_ctx->hover(empty_loc, { 3, 0 });
 
     EXPECT_EQ(res, R"(C + X'2' (2)
 
@@ -132,8 +134,8 @@ D  EQU 0-C1-C1
 
     EXPECT_TRUE(a.diags().empty());
 
-    EXPECT_TRUE(a.context().lsp_ctx->hover("", { 5, 0 }).starts_with("-C2 + X'FFFFFFFF' (-1)"));
-    EXPECT_TRUE(a.context().lsp_ctx->hover("", { 6, 0 }).starts_with("-C2 + C1 + X'FFFFFFFF' (-1)"));
-    EXPECT_TRUE(a.context().lsp_ctx->hover("", { 7, 0 }).starts_with("C1 - C0 + X'0' (0)"));
-    EXPECT_TRUE(a.context().lsp_ctx->hover("", { 8, 0 }).starts_with("-2*C1 + X'0' (0)"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 5, 0 }).starts_with("-C2 + X'FFFFFFFF' (-1)"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 6, 0 }).starts_with("-C2 + C1 + X'FFFFFFFF' (-1)"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 7, 0 }).starts_with("C1 - C0 + X'0' (0)"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 8, 0 }).starts_with("-2*C1 + X'0' (0)"));
 }

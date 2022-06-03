@@ -44,7 +44,7 @@ jobs:
         run: cd build && cmake --build . --parallel --config Release
       - name: Server Test
         shell: cmd
-        run: cd build\bin && library_test.exe && server_test.exe
+        run: cd build\bin && library_test.exe && server_test.exe && hlasm_utils_test.exe
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
@@ -68,7 +68,7 @@ jobs:
       - name: Build
         run: cd build && cmake --build .
       - name: Server Test
-        run: cd build/bin && ./server_test && ./library_test
+        run: cd build/bin && ./server_test && ./library_test && ./hlasm_utils_test
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
@@ -94,7 +94,7 @@ jobs:
       - name: Build
         run: cd build && cmake --build .
       - name: Server Test
-        run: cd build/bin && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./server_test.js && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./library_test.js
+        run: cd build/bin && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./server_test.js && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./library_test.js && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./hlasm_utils_test.js
       - name: Actions artifact
         uses: actions/upload-artifact@v2
         with:
@@ -121,7 +121,7 @@ jobs:
       - name: Build
         run: cd build && cmake --build . -- -v
       - name: Server Test
-        run: cd build/bin && ./server_test && ./library_test
+        run: cd build/bin && ./server_test && ./library_test && ./hlasm_utils_test
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
@@ -258,7 +258,7 @@ jobs:
       - name: Build
         run: chown `id -u`:`id -g` ./clients/vscode-hlasmplugin && cd build && cmake --build .
       - name: Server Test
-        run: cd build/bin && ./server_test && ./library_test
+        run: cd build/bin && ./server_test && ./library_test && ./hlasm_utils_test
       - name: Get VSIX filename
         run: echo VSIX_FILENAME=$(ls build/bin/*.vsix) >> $GITHUB_ENV
       - name: Get version

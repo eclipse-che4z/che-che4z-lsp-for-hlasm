@@ -21,6 +21,7 @@
 // space/alignment creation
 // cyclic definition/location counter
 
+using namespace hlasm_plugin::utils::resource;
 TEST(ordinary_symbols, machine_instruction_duplication)
 {
     std::string input(R"(
@@ -293,13 +294,13 @@ X EQU 1
 )";
     std::string lib_data("XXX EQU 1");
     mock_parse_lib_provider mock { { "COPYF", lib_data } };
-    analyzer a(input, analyzer_options { "test", &mock });
+    analyzer a(input, analyzer_options { resource_location("test"), &mock });
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->symbol_location, location({ 6, 0 }, "test"));
-    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "XX")->symbol_location, location({ 3, 0 }, "test"));
-    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "XXX")->symbol_location, location({ 0, 0 }, "COPYF"));
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->symbol_location, location({ 6, 0 }, resource_location("test")));
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "XX")->symbol_location, location({ 3, 0 }, resource_location("test")));
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "XXX")->symbol_location, location({ 0, 0 }, resource_location("COPYF")));
 }
 
 TEST(ordinary_symbols, alignment_cycle)

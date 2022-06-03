@@ -24,7 +24,7 @@ namespace hlasm_plugin::parser_library::processing {
 struct copy_start_data
 {
     context::id_index member_name;
-    std::string member_file;
+    utils::resource::resource_location member_loc;
 };
 
 // result of copy_processor

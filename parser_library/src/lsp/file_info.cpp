@@ -26,21 +26,21 @@ bool operator<(const line_range& lhs, const line_range& rhs)
     return std::tie(lhs.begin, lhs.end) < std::tie(rhs.begin, rhs.end);
 }
 
-file_info::file_info(std::string name, text_data_ref_t text_data)
-    : name(std::move(name))
+file_info::file_info(utils::resource::resource_location location, text_data_ref_t text_data)
+    : location(std::move(location))
     , type(file_type::OPENCODE)
     , data(std::move(text_data))
 {}
 
 file_info::file_info(context::macro_def_ptr owner, text_data_ref_t text_data)
-    : name(owner->definition_location.file)
+    : location(owner->definition_location.resource_loc)
     , type(file_type::MACRO)
     , owner(std::move(owner))
     , data(std::move(text_data))
 {}
 
 file_info::file_info(context::copy_member_ptr owner, text_data_ref_t text_data)
-    : name(owner->definition_location.file)
+    : location(owner->definition_location.resource_loc)
     , type(file_type::COPY)
     , owner(std::move(owner))
     , data(std::move(text_data))
@@ -60,7 +60,7 @@ occurence_scope_t file_info::find_occurence_with_scope(position pos) const
         return occ.occurence_range.end.line < p.line;
     });
     auto it_limit = occurences_start_limit.begin() + std::distance(occurences.begin(), l);
-    // find in occurences
+    // find in occurrences
     for (auto it = l; it != occurences.end() && *it_limit <= pos.line; ++it, ++it_limit)
     {
         const auto& occ = *it;

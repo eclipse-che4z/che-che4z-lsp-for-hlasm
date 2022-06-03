@@ -37,7 +37,7 @@ struct variable_symbol_definition
     // statement number in macro
     size_t def_location = 0;
     // file in opencode
-    std::string file;
+    utils::resource::resource_location file;
 
     position def_position;
 
@@ -61,8 +61,11 @@ struct variable_symbol_definition
     {}
 
     // in-opencode SET symbol constructor
-    variable_symbol_definition(
-        context::id_index name, context::SET_t_enum type, bool global, std::string file, position def_position)
+    variable_symbol_definition(context::id_index name,
+        context::SET_t_enum type,
+        bool global,
+        utils::resource::resource_location file,
+        position def_position)
         : name(name)
         , macro_param(false)
         , type(type)
@@ -92,8 +95,11 @@ struct macro_slice_t
     {}
 };
 
-using file_scopes_t = std::unordered_map<std::string, std::vector<lsp::macro_slice_t>>;
-using file_occurences_t = std::unordered_map<std::string, occurence_storage>;
+using file_scopes_t = std::unordered_map<utils::resource::resource_location,
+    std::vector<lsp::macro_slice_t>,
+    utils::resource::resource_location_hasher>;
+using file_occurences_t = std::
+    unordered_map<utils::resource::resource_location, occurence_storage, utils::resource::resource_location_hasher>;
 
 class lsp_context;
 

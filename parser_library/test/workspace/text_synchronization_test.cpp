@@ -14,16 +14,18 @@
 
 #include "gtest/gtest.h"
 
+#include "utils/resource_location.h"
 #include "workspaces/file_impl.h"
 
 using namespace hlasm_plugin::parser_library::workspaces;
+using namespace hlasm_plugin::utils::resource;
 
 TEST(file, text_synchronization_rn)
 {
     // the server shall support \r\n, \r and \n as line separators
     std::string test_rn = "this is first line \r\nsecond line blah\r\nthird line\r\n fourth line    \r\nfifthline\r\n";
 
-    file_impl file_rn("file_rn_uri");
+    file_impl file_rn(resource_location("file_rn_uri"));
     file_rn.did_open(test_rn, 47);
     EXPECT_EQ(file_rn.get_text(), test_rn);
 
@@ -120,7 +122,7 @@ TEST(file, text_synchronization_r)
 {
     std::string test_r = "this is first line \rsecond line blah\rthird line\r fourth line    \rfifthline\r";
 
-    file_impl file_r("file_r_uri");
+    file_impl file_r(resource_location("file_r_uri"));
     file_r.did_open(test_r, 47);
     EXPECT_EQ(file_r.get_text(), test_r);
 
@@ -171,7 +173,7 @@ TEST(file, text_synchronization_n)
 {
     std::string test_n = "this is first line \nsecond line blah\nthird line\n fourth line    \nfifthline\n";
 
-    file_impl file_n("file_n_uri");
+    file_impl file_n(resource_location("file_n_uri"));
     file_n.did_open(test_n, 47);
     EXPECT_EQ(file_n.get_text(), test_n);
 

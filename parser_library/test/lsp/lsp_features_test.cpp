@@ -17,14 +17,16 @@
 #include "../mock_parse_lib_provider.h"
 #include "analyzer.h"
 #include "context/instruction.h"
+#include "utils/resource_location.h"
 #include "workspaces/parse_lib_provider.h"
 
 
 using namespace hlasm_plugin::parser_library;
+using namespace hlasm_plugin::utils::resource;
 
-constexpr const char* MACRO_FILE = "MAC";
-constexpr const char* SOURCE_FILE = "OPEN";
-constexpr const char* COPY_FILE = "COPYFILE";
+const resource_location MACRO_FILE("MAC");
+const resource_location SOURCE_FILE("OPEN");
+const resource_location COPY_FILE("COPYFILE");
 
 class lsp_features_test : public testing::Test
 {

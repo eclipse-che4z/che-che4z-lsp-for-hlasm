@@ -60,14 +60,15 @@ jobs:
           cd build/bin
           LLVM_PROFILE_FILE="library.rawprof" ./library_test 
           LLVM_PROFILE_FILE="server.rawprof" ./server_test
+          LLVM_PROFILE_FILE="utils.rawprof" ./hlasm_utils_test
       - name: Extension Test
         uses: GabrielBB/xvfb-action@v1.0
         with:
           run: npm --prefix clients/vscode-hlasmplugin test
       - name: Merge raw profiles
-        run: cd build/bin && llvm-profdata-12 merge -o hlasm_profile library.rawprof server.rawprof
+        run: cd build/bin && llvm-profdata-12 merge -o hlasm_profile library.rawprof server.rawprof utils.rawprof
       - name: Generate lcov coverage
-        run: cd build/bin && llvm-cov-12 show -instr-profile hlasm_profile library_test -object server_test > ../coverage.txt
+        run: cd build/bin && llvm-cov-12 show -instr-profile hlasm_profile library_test -object server_test -object hlasm_utils_test > ../coverage.txt
       - name: Pull request event info
         if: github.event_name == 'pull_request'
         run: |

@@ -31,7 +31,7 @@ namespace hlasm_plugin::parser_library::processing {
 processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_provider,
     analyzing_context ctx,
     workspaces::library_data data,
-    std::string file_name,
+    utils::resource::resource_location file_loc,
     const std::string& file_text,
     workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser)
@@ -51,10 +51,10 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
                 std::make_unique<ordinary_processor>(ctx_, *this, lib_provider, *this, parser, opencode_prov_));
             break;
         case processing_kind::COPY:
-            start_copy_member(copy_start_data { data.library_member, std::move(file_name) });
+            start_copy_member(copy_start_data { data.library_member, std::move(file_loc) });
             break;
         case processing_kind::MACRO:
-            start_macro_definition(macrodef_start_data(data.library_member), std::move(file_name));
+            start_macro_definition(macrodef_start_data(data.library_member), std::move(file_loc));
             break;
         default:
             break;
@@ -220,7 +220,7 @@ void processing_manager::finish_lookahead(lookahead_processing_result result)
 
 void processing_manager::start_copy_member(copy_start_data start)
 {
-    hlasm_ctx_.push_statement_processing(processing_kind::COPY, std::move(start.member_file));
+    hlasm_ctx_.push_statement_processing(processing_kind::COPY, std::move(start.member_loc));
     procs_.emplace_back(std::make_unique<copy_processor>(ctx_, *this, std::move(start)));
 }
 
@@ -235,10 +235,11 @@ void processing_manager::finish_copy_member(copy_processing_result result)
 
 void processing_manager::finish_opencode() { lsp_analyzer_.opencode_finished(); }
 
-void processing_manager::start_macro_definition(macrodef_start_data start, std::optional<std::string> file)
+void processing_manager::start_macro_definition(
+    macrodef_start_data start, std::optional<utils::resource::resource_location> file_loc)
 {
-    if (file)
-        hlasm_ctx_.push_statement_processing(processing_kind::MACRO, std::move(*file));
+    if (file_loc)
+        hlasm_ctx_.push_statement_processing(processing_kind::MACRO, std::move(*file_loc));
     else
         hlasm_ctx_.push_statement_processing(processing_kind::MACRO);
 
@@ -303,7 +304,7 @@ std::unique_ptr<context::opencode_sequence_symbol> processing_manager::create_op
     context::id_index name, range symbol_range)
 {
     auto symbol_pos = symbol_range.start;
-    location loc(symbol_pos, hlasm_ctx_.processing_stack().back().proc_location.file);
+    location loc(symbol_pos, hlasm_ctx_.processing_stack().back().proc_location.resource_loc);
 
     auto&& [statement_position, snapshot] = hlasm_ctx_.get_begin_snapshot(attr_lookahead_active());
 

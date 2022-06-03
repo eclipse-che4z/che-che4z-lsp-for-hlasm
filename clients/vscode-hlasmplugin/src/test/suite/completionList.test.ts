@@ -28,7 +28,7 @@ suite('Completion List Test Suite', () => {
     });
 
     suiteTeardown(async function () {
-        await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+        await helper.closeAllEditors();
     });
 
     // test completion list for instructions

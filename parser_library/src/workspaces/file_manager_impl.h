@@ -20,6 +20,7 @@
 #include "diagnosable_impl.h"
 #include "file_manager.h"
 #include "processor_file_impl.h"
+#include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -44,37 +45,38 @@ public:
 
     void collect_diags() const override;
 
-    file_ptr add_file(const file_uri&) override;
-    processor_file_ptr add_processor_file(const file_uri&) override;
-    processor_file_ptr get_processor_file(const file_uri&) override;
-    void remove_file(const file_uri&) override;
+    file_ptr add_file(const file_location&) override;
+    processor_file_ptr add_processor_file(const file_location&) override;
+    processor_file_ptr get_processor_file(const file_location&) override;
+    void remove_file(const file_location&) override;
 
-    file_ptr find(const std::string& key) const override;
-    processor_file_ptr find_processor_file(const std::string& key) override;
+    file_ptr find(const utils::resource::resource_location& key) const override;
+    processor_file_ptr find_processor_file(const utils::resource::resource_location& key) override;
 
-    list_directory_result list_directory_files(const std::string& path) override;
+    list_directory_result list_directory_files(const utils::resource::resource_location& directory) override;
 
-    void did_open_file(const std::string& document_uri, version_t version, std::string text) override;
+    void did_open_file(const file_location& document_loc, version_t version, std::string text) override;
     void did_change_file(
-        const std::string& document_uri, version_t version, const document_change* changes, size_t ch_size) override;
-    void did_close_file(const std::string& document_uri) override;
+        const file_location& document_loc, version_t version, const document_change* changes, size_t ch_size) override;
+    void did_close_file(const file_location& document_loc) override;
 
     bool file_exists(const std::string& file_name) override;
     bool lib_file_exists(const std::string& lib_path, const std::string& file_name) override;
 
     virtual ~file_manager_impl() = default;
 
-
     void put_virtual_file(unsigned long long id, std::string_view text) override;
     void remove_virtual_file(unsigned long long id) override;
     std::string get_virtual_file(unsigned long long id) const override;
 
-protected:
+private:
     std::unordered_map<unsigned long long, std::string> m_virtual_files;
     // m_virtual_files must outlive the files_
-    std::unordered_map<std::string, std::shared_ptr<file_impl>> files_;
+    std::unordered_map<utils::resource::resource_location,
+        std::shared_ptr<file_impl>,
+        utils::resource::resource_location_hasher>
+        files_;
 
-private:
     processor_file_ptr change_into_processor_file_if_not_already_(std::shared_ptr<file_impl>& ret);
     void prepare_file_for_change_(std::shared_ptr<file_impl>& file);
 };

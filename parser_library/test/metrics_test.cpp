@@ -22,6 +22,7 @@
 #include "workspaces/parse_lib_provider.h"
 
 using namespace hlasm_plugin::parser_library;
+using namespace hlasm_plugin::utils::resource;
 
 class metrics_mock : public parsing_metadata_consumer
 {
@@ -67,7 +68,7 @@ public:
     void TearDown() override {}
     void setUpAnalyzer(const std::string& content)
     {
-        a = std::make_unique<analyzer>(content, analyzer_options { "OPENCODE", &lib_provider });
+        a = std::make_unique<analyzer>(content, analyzer_options { resource_location("OPENCODE"), &lib_provider });
         a->analyze();
     }
 

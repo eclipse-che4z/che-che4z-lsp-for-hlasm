@@ -95,7 +95,7 @@ utf8_substr_result utf8_substr(std::string_view s, size_t offset, size_t length)
 {
     substr_step<validate>(s, offset);
 
-    if (offset) // not long enought
+    if (offset) // not long enough
         return {};
 
     utf8_substr_result result = { s, 0, 0 };

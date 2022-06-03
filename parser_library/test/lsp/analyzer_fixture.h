@@ -24,12 +24,12 @@ namespace hlasm_plugin::parser_library {
 
 struct analyzer_fixture : public ::testing::Test
 {
-    const static inline std::string opencode_file_name = "source";
+    static const inline auto opencode_loc = utils::resource::resource_location("source");
     analyzer a;
     analyzer_fixture(const std::string& input,
         workspaces::parse_lib_provider& provider = workspaces::empty_parse_lib_provider::instance,
         asm_option opts = {})
-        : a(input, analyzer_options { opencode_file_name, &provider, std::move(opts) })
+        : a(input, analyzer_options { opencode_loc, &provider, std::move(opts) })
     {
         a.analyze();
     }

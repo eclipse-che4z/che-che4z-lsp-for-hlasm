@@ -19,6 +19,14 @@
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
+using namespace hlasm_plugin::utils::resource;
+
+namespace {
+const auto empty_loc = resource_location("");
+const auto mac1_loc = resource_location("MAC1");
+const auto mac2_loc = resource_location("MAC2");
+const auto cpyfile1_loc = resource_location("COPYFILE1");
+} // namespace
 
 TEST(lsp_context_document_symbol_var_seq, 1)
 {
@@ -30,7 +38,7 @@ TEST(lsp_context_document_symbol_var_seq, 1)
     a.analyze();
 
     const auto limit = 1000LL;
-    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol("", limit);
+    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol(empty_loc, limit);
     document_symbol_list_s expected_opencode = document_symbol_list_s {
         document_symbol_item_s { "V1", document_symbol_kind::VAR, range { { 0, 0 }, { 0, 0 } } },
         document_symbol_item_s { "V2", document_symbol_kind::VAR, range { { 1, 0 }, { 1, 0 } } }
@@ -61,8 +69,8 @@ EM1   EQU     1
     a.analyze();
 
     const auto limit = 1000LL;
-    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol("", limit);
-    document_symbol_list_s outline_mac1 = a.context().lsp_ctx->document_symbol("MAC1", limit);
+    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol(empty_loc, limit);
+    document_symbol_list_s outline_mac1 = a.context().lsp_ctx->document_symbol(mac1_loc, limit);
     document_symbol_list_s expected_opencode = document_symbol_list_s {
         document_symbol_item_s { "MAC1",
             document_symbol_kind::MACRO,
@@ -116,9 +124,9 @@ EM2   EQU     1
     a.analyze();
 
     const auto limit = 1000LL;
-    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol("", limit);
-    document_symbol_list_s outline_mac1 = a.context().lsp_ctx->document_symbol("MAC1", limit);
-    document_symbol_list_s outline_mac2 = a.context().lsp_ctx->document_symbol("MAC2", limit);
+    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol(empty_loc, limit);
+    document_symbol_list_s outline_mac1 = a.context().lsp_ctx->document_symbol(mac1_loc, limit);
+    document_symbol_list_s outline_mac2 = a.context().lsp_ctx->document_symbol(mac2_loc, limit);
     document_symbol_list_s expected_opencode = document_symbol_list_s {
         document_symbol_item_s { "MAC1",
             document_symbol_kind::MACRO,
@@ -183,9 +191,9 @@ EC1   EQU     1)" },
     a.analyze();
 
     const auto limit = 1000LL;
-    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol("", limit);
-    document_symbol_list_s outline_mac1 = a.context().lsp_ctx->document_symbol("MAC1", limit);
-    document_symbol_list_s outline_copyfile1 = a.context().lsp_ctx->document_symbol("COPYFILE1", limit);
+    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol(empty_loc, limit);
+    document_symbol_list_s outline_mac1 = a.context().lsp_ctx->document_symbol(mac1_loc, limit);
+    document_symbol_list_s outline_copyfile1 = a.context().lsp_ctx->document_symbol(cpyfile1_loc, limit);
     document_symbol_list_s expected_opencode = document_symbol_list_s {
         document_symbol_item_s { "COPYFILE1",
             document_symbol_kind::MACRO,
@@ -250,9 +258,9 @@ EC1   EQU     1
     a.analyze();
 
     const auto limit = 1000LL;
-    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol("", limit);
-    document_symbol_list_s outline_mac1 = a.context().lsp_ctx->document_symbol("MAC1", limit);
-    document_symbol_list_s outline_copyfile1 = a.context().lsp_ctx->document_symbol("COPYFILE1", limit);
+    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol(empty_loc, limit);
+    document_symbol_list_s outline_mac1 = a.context().lsp_ctx->document_symbol(mac1_loc, limit);
+    document_symbol_list_s outline_copyfile1 = a.context().lsp_ctx->document_symbol(cpyfile1_loc, limit);
     document_symbol_list_s expected_opencode = document_symbol_list_s {
         document_symbol_item_s { "COPYFILE1",
             document_symbol_kind::MACRO,
@@ -318,9 +326,9 @@ EC1   EQU     1
     a.analyze();
 
     const auto limit = 1000LL;
-    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol("", limit);
-    document_symbol_list_s outline_mac1 = a.context().lsp_ctx->document_symbol("MAC1", limit);
-    document_symbol_list_s outline_copyfile1 = a.context().lsp_ctx->document_symbol("COPYFILE1", limit);
+    document_symbol_list_s outline_opencode = a.context().lsp_ctx->document_symbol(empty_loc, limit);
+    document_symbol_list_s outline_mac1 = a.context().lsp_ctx->document_symbol(mac1_loc, limit);
+    document_symbol_list_s outline_copyfile1 = a.context().lsp_ctx->document_symbol(cpyfile1_loc, limit);
     document_symbol_list_s expected_opencode = document_symbol_list_s {
         document_symbol_item_s { "MAC1",
             document_symbol_kind::MACRO,

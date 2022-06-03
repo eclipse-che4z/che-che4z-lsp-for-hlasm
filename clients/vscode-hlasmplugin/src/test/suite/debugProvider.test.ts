@@ -18,7 +18,7 @@ import * as path from 'path';
 import { HLASMConfigurationProvider, getCurrentProgramName } from '../../debugProvider';
 import { DebugConfigurationMock } from '../mocks';
 
-suite('Debug Test Suite', () => {
+suite('Debug Provider Test Suite', () => {
 
     test('Debug Configuration Provider test', () => {
         const debugProvider = new HLASMConfigurationProvider();

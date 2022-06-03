@@ -2424,6 +2424,17 @@ diagnostic_op diagnostic_op::mnote_diagnostic(unsigned level, std::string_view m
     return diagnostic_op(lvl, "MNOTE", std::string(message), range, tag);
 }
 
+diagnostic_s diagnostic_s::error_W0001(std::string_view file_name)
+{
+    return diagnostic_s(std::string(file_name),
+        {},
+        diagnostic_severity::error,
+        "W0001",
+        concat("Could not read file ", file_name),
+        {},
+        diagnostic_tag::none);
+}
+
 diagnostic_s diagnostic_s::error_W0002(std::string_view ws_uri, std::string_view ws_name)
 {
     return diagnostic_s(std::string(ws_uri),

@@ -30,7 +30,7 @@ std::pair<int, std::string> test_cics_miniparser(const std::vector<std::string_v
 
 TEST(cics_preprocessor, asm_xopts_parsing)
 {
-    for (const auto [text_template, expected] :
+    for (const auto& [text_template, expected] :
         std::initializer_list<std::pair<std::string_view, cics_preprocessor_options>> {
             { " ", cics_preprocessor_options() },
             { "*ASM XOPTS(NOPROLOG)", cics_preprocessor_options(false) },

@@ -51,12 +51,12 @@ protected:
 class processor_file : public virtual file, public processor
 {
 public:
-    virtual const std::set<std::string>& dependencies() = 0;
+    virtual const std::set<utils::resource::resource_location>& dependencies() = 0;
     virtual const semantics::lines_info& get_hl_info() = 0;
     virtual const lsp::feature_provider& get_lsp_feature_provider() = 0;
-    virtual const std::set<std::string>& files_to_close() = 0;
+    virtual const std::set<utils::resource::resource_location>& files_to_close() = 0;
     virtual const performance_metrics& get_metrics() = 0;
-    virtual void erase_cache_of_opencode(const std::string& opencode_file_name) = 0;
+    virtual void erase_cache_of_opencode(const utils::resource::resource_location& opencode_file_location) = 0;
 
 protected:
     ~processor_file() = default;
