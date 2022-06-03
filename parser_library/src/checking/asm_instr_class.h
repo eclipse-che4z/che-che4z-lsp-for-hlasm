@@ -25,6 +25,10 @@
 #include "diagnosable.h"
 #include "instr_operand.h"
 
+namespace hlasm_plugin::parser_library {
+class diagnostic_collector;
+} // namespace hlasm_plugin::parser_library
+
 namespace hlasm_plugin::parser_library::checking {
 
 // defining label types before instruction, used as parameter in assembler_instruction class

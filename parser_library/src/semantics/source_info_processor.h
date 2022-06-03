@@ -19,7 +19,6 @@
 #include <regex>
 #include <vector>
 
-#include "context/hlasm_context.h"
 #include "highlighting_info.h"
 
 namespace hlasm_plugin::parser_library::semantics {

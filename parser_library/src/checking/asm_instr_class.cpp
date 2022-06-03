@@ -16,6 +16,8 @@
 
 #include <array>
 
+#include "diagnostic_collector.h"
+
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::checking;
 

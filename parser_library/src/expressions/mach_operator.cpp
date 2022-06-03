@@ -16,6 +16,7 @@
 
 #include <cassert>
 
+#include "context/ordinary_assembly/symbol_value.h"
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::expressions {

@@ -16,6 +16,7 @@
 // floating point types: E, D, L
 
 #include "checking/checker_helper.h"
+#include "checking/diagnostic_collector.h"
 #include "data_def_types.h"
 
 using namespace hlasm_plugin::parser_library::checking;
@@ -40,10 +41,25 @@ data_def_type_E_D_L::data_def_type_E_D_L(char type,
         implicit_length)
 {}
 
-std::map<char, std::set<std::string>> allowed_round_modes = {
-    { 'B', { "1", "4", "5", "6", "7" } },
-    { 'H', { "1", "4", "5", "6", "7" } },
-    { 'D', { "8", "9", "10", "11", "12", "13", "14", "15" } },
+const std::set<std::pair<char, std::string_view>> allowed_round_modes = {
+    { 'B', "1" },
+    { 'B', "4" },
+    { 'B', "5" },
+    { 'B', "6" },
+    { 'B', "7" },
+    { 'H', "1" },
+    { 'H', "4" },
+    { 'H', "5" },
+    { 'H', "6" },
+    { 'H', "7" },
+    { 'D', "8" },
+    { 'D', "9" },
+    { 'D', "10" },
+    { 'D', "11" },
+    { 'D', "12" },
+    { 'D', "13" },
+    { 'D', "14" },
+    { 'D', "15" },
 };
 
 class E_D_L_number_spec
@@ -104,7 +120,7 @@ bool data_def_type_E_D_L::check(
                 ++i;
             }
 
-            if (allowed_round_modes[extension].find(round_mode_s) == allowed_round_modes[extension].end())
+            if (!allowed_round_modes.contains(std::pair<char, std::string_view>(extension, round_mode_s)))
             {
                 add_diagnostic(diagnostic_op::error_D026(op.nominal_value.rng));
                 return false;

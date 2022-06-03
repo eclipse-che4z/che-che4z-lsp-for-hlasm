@@ -14,6 +14,7 @@
 
 #include "statement_fields_parser.h"
 
+#include "context/hlasm_context.h"
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "parsing/error_strategy.h"

@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "context/id_storage.h"
+#include "context/macro.h"
 #include "range.h"
 
 namespace hlasm_plugin::parser_library::lsp {

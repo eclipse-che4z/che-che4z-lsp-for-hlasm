@@ -14,6 +14,7 @@
 
 #include "gtest/gtest.h"
 
+#include "checking/diagnostic_collector.h"
 #include "checking/instr_operand.h"
 #include "checking/instruction_checker.h"
 

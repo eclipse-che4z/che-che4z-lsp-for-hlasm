@@ -18,7 +18,6 @@
 #include <optional>
 
 #include "dependency_collector.h"
-#include "symbol.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 struct data_definition;
@@ -26,6 +25,8 @@ struct data_definition;
 
 namespace hlasm_plugin::parser_library::context {
 
+class symbol;
+struct symbol_value;
 struct using_evaluate_result;
 
 // interface for obtaining symbol from its name

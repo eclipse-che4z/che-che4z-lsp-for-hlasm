@@ -19,7 +19,6 @@
 #include <string_view>
 
 #include "../ca_expression.h"
-#include "diagnosable_ctx.h"
 #include "diagnostic_adder.h"
 
 namespace hlasm_plugin::parser_library::expressions {

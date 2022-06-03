@@ -17,15 +17,13 @@
 
 #include "antlr4-runtime.h"
 
-#include "context/hlasm_context.h"
-#include "diagnosable.h"
-#include "expressions/data_definition.h"
-#include "lexing/lexer.h"
-#include "processing/opencode_provider.h"
-#include "processing/statement_fields_parser.h"
-#include "processing/statement_providers/statement_provider.h"
+#include "parser_error_listener.h"
 #include "semantics/collector.h"
 #include "semantics/source_info_processor.h"
+
+namespace hlasm_plugin::parser_library::context {
+class hlasm_context;
+} // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::lexing {
 class input_source;
@@ -153,6 +151,8 @@ protected:
 
     void add_diagnostic(diagnostic_severity severity, std::string code, std::string message, range diag_range) const;
     void add_diagnostic(diagnostic_op d) const;
+
+    context::id_index add_id(std::string s);
 
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;

@@ -15,6 +15,7 @@
 #include "using_label_checker.h"
 
 #include "context/ordinary_assembly/section.h"
+#include "context/ordinary_assembly/symbol.h"
 
 namespace hlasm_plugin::parser_library::checking {
 

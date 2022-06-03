@@ -44,7 +44,7 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 				(ORDSYMBOL {name += $ORDSYMBOL->getText();}|NUM {name += $NUM->getText();})*
 				{
 					auto r = provider.get_range($AMPERSAND,_input->LT(-1));
-					$vs.push_back(std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add(std::move(name)), std::vector<ca_expr_ptr>(), r));
+					$vs.push_back(std::make_unique<basic_variable_symbol>(add_id(std::move(name)), std::vector<ca_expr_ptr>(), r));
 					collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 				}
 			)
@@ -72,7 +72,7 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 			(ORDSYMBOL {name += $ORDSYMBOL->getText();}|NUM {name += $NUM->getText();})*
 			{
 				auto r = provider.get_range($AMPERSAND,_input->LT(-1));
-				$vs.push_back(std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add(std::move(name)), std::vector<ca_expr_ptr>(), r));
+				$vs.push_back(std::make_unique<basic_variable_symbol>(add_id(std::move(name)), std::vector<ca_expr_ptr>(), r));
 				collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 			}
 		)
@@ -104,7 +104,7 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 		)*
 		{
 			auto r = provider.get_range($AMPERSAND,_input->LT(-1));
-			$vs.push_back(std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add(std::move(name)), std::vector<ca_expr_ptr>(), r));
+			$vs.push_back(std::make_unique<basic_variable_symbol>(add_id(std::move(name)), std::vector<ca_expr_ptr>(), r));
 			collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 		}
 		|

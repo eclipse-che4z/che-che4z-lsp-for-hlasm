@@ -18,10 +18,13 @@
 #include <optional>
 
 #include "checking/data_definition/data_def_fields.h"
-#include "checking/diagnostic_collector.h"
 #include "context/id_storage.h"
 #include "context/ordinary_assembly/alignment.h"
 #include "nominal_value.h"
+
+namespace hlasm_plugin::parser_library {
+class diagnostic_collector;
+} // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::checking {
 class data_def_type;

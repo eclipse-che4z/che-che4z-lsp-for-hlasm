@@ -35,7 +35,7 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 		{
 			auto r = provider.get_range($ORDSYMBOL);
 			auto ord_symbol = $ORDSYMBOL->getText();
-			auto id = hlasm_ctx->ids().add(ord_symbol);
+			auto id = add_id(ord_symbol);
 			collector.set_label_field(id,std::move(ord_symbol),nullptr,r);
 		}
 		

@@ -25,6 +25,10 @@
 #include "tagged_index.h"
 #include "utils/similar.h"
 
+namespace hlasm_plugin::parser_library {
+class diagnosable_ctx;
+} // namespace hlasm_plugin::parser_library
+
 namespace hlasm_plugin::parser_library::context {
 class hlasm_context;
 class using_collection;

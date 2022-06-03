@@ -46,7 +46,7 @@ instruction returns [id_index instr]
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($bad_instr.ctx),hl_scopes::instruction));
 		collector.set_instruction_field(
-			hlasm_ctx->ids().add($bad_instr.ctx->getText()),
+			add_id($bad_instr.ctx->getText()),
 			provider.get_range($bad_instr.ctx));
 	};
 

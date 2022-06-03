@@ -18,6 +18,7 @@
 #include <optional>
 
 #include "address.h"
+#include "range.h"
 
 namespace hlasm_plugin::parser_library::context {
 struct dependency_evaluation_context;

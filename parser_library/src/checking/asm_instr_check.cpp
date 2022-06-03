@@ -19,6 +19,7 @@
 #include <regex>
 
 #include "context/common_types.h"
+#include "diagnostic_collector.h"
 
 namespace {
 const std::vector<std::string_view> rmode_options = { "24", "31", "64", "ANY" };

@@ -31,7 +31,7 @@ label
 		{
 			if (!label.empty() && label[0] != '&')
 				collector.add_hl_symbol(token_info(r,hl_scopes::label));
-			auto id = hlasm_ctx->ids().add($l_char_string.value);
+			auto id = add_id($l_char_string.value);
 			collector.set_label_field(id,std::move($l_char_string.value),$l_char_string.ctx,r);
 		}
 	}

@@ -16,6 +16,7 @@
 
 #include <cctype>
 
+#include "context/hlasm_context.h"
 #include "context/literal_pool.h"
 #include "error_strategy.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
@@ -246,6 +247,8 @@ void parser_impl::add_diagnostic(diagnostic_op d) const
     if (diagnoser_)
         diagnoser_->add_diagnostic(std::move(d));
 }
+
+context::id_index parser_impl::add_id(std::string s) { return hlasm_ctx->ids().add(std::move(s)); }
 
 parser_holder::~parser_holder() = default;
 

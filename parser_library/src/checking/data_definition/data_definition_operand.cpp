@@ -14,6 +14,8 @@
 
 #include "data_definition_operand.h"
 
+#include "checking/diagnostic_collector.h"
+
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;
 
@@ -88,3 +90,39 @@ uint32_t data_definition_operand::get_integer_attribute() const
     else
         return 0;
 }
+
+
+template<data_instr_type instr_type>
+uint64_t data_definition_operand::get_operands_length(const std::vector<const data_definition_operand*>& operands)
+{
+    uint64_t operands_bit_length = 0;
+
+    for (auto op : operands)
+    {
+        if (!op->check<instr_type>(diagnostic_collector()))
+            return 0;
+
+        if (op->length.len_type != checking::data_def_length_t::BIT)
+        {
+            // align to whole byte
+            operands_bit_length = round_up(operands_bit_length, (uint64_t)8);
+
+            // enforce data def alignment
+            context::alignment al = op->get_alignment();
+
+            operands_bit_length = round_up(operands_bit_length, (uint64_t)al.boundary * 8);
+        }
+
+        operands_bit_length += op->get_length();
+    }
+    // align to whole byte
+    operands_bit_length = round_up(operands_bit_length, (uint64_t)8);
+
+    // returns the length in bytes
+    return operands_bit_length / 8;
+}
+
+template uint64_t data_definition_operand::get_operands_length<data_instr_type::DC>(
+    const std::vector<const data_definition_operand*>& operands);
+template uint64_t data_definition_operand::get_operands_length<data_instr_type::DS>(
+    const std::vector<const data_definition_operand*>& operands);

@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <limits>
 
+#include "checking/diagnostic_collector.h"
+
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;

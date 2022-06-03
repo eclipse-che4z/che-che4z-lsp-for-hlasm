@@ -16,6 +16,7 @@
 // these types: A, Y, S, R, V, Q, J
 
 #include "checking/checker_helper.h"
+#include "checking/diagnostic_collector.h"
 #include "data_def_types.h"
 
 using namespace hlasm_plugin::parser_library::checking;

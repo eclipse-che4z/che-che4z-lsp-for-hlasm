@@ -20,6 +20,10 @@
 #include "lsp/symbol_occurence.h"
 #include "semantics/operand_visitor.h"
 
+namespace hlasm_plugin::parser_library::context {
+class hlasm_context;
+} // namespace hlasm_plugin::parser_library::context
+
 namespace hlasm_plugin::parser_library::processing {
 
 class occurence_collector : public semantics::operand_visitor,

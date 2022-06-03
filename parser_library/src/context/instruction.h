@@ -30,6 +30,10 @@
 #include "id_storage.h"
 #include "instruction_set_version.h"
 
+namespace hlasm_plugin::parser_library {
+class diagnostic_collector;
+} // namespace hlasm_plugin::parser_library
+
 namespace hlasm_plugin::parser_library::context {
 
 enum class z_arch_affiliation : uint16_t

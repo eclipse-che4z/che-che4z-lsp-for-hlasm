@@ -21,6 +21,7 @@
 
 #include "checking/data_definition/data_def_fields.h"
 #include "checking/data_definition/data_def_type_base.h"
+#include "checking/diagnostic_collector.h"
 #include "context/using.h"
 #include "ebcdic_encoding.h"
 #include "lexing/logical_line.h"

@@ -17,6 +17,7 @@
 #include <cassert>
 #include <stdexcept>
 
+#include "copy_member.h"
 #include "variables/system_variable.h"
 
 using namespace hlasm_plugin::parser_library;

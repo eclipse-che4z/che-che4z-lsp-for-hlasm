@@ -17,7 +17,7 @@
 
 #include "antlr4-runtime.h"
 
-#include "diagnosable_ctx.h"
+#include "diagnostic_consumer.h"
 #include "semantics/range_provider.h"
 
 // Override antlr Error listener for more polished output

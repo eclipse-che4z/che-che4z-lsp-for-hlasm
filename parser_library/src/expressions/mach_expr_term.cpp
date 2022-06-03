@@ -19,6 +19,8 @@
 
 #include "checking/checker_helper.h"
 #include "conditional_assembly/terms/ca_constant.h"
+#include "context/ordinary_assembly/symbol.h"
+#include "context/ordinary_assembly/symbol_value.h"
 #include "ebcdic_encoding.h"
 #include "mach_expr_visitor.h"
 #include "utils/similar.h"

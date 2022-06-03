@@ -16,6 +16,7 @@
 
 #include <optional>
 
+#include "checking/diagnostic_collector.h"
 #include "checking/instr_operand.h"
 #include "data_def_types.h"
 

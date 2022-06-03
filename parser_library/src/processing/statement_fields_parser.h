@@ -15,10 +15,13 @@
 #ifndef PROCESSING_STATEMENT_FIELDS_PARSER_H
 #define PROCESSING_STATEMENT_FIELDS_PARSER_H
 
-#include "context/hlasm_context.h"
 #include "processing/op_code.h"
 #include "semantics/range_provider.h"
 #include "semantics/statement_fields.h"
+
+namespace hlasm_plugin::parser_library::context {
+class hlasm_context;
+} // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::parsing {
 class parser_error_listener_ctx;

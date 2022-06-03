@@ -14,6 +14,9 @@
 
 #include "occurence_collector.h"
 
+#include "context/hlasm_context.h"
+#include "expressions/mach_expression.h"
+
 namespace hlasm_plugin::parser_library::processing {
 
 occurence_collector::occurence_collector(

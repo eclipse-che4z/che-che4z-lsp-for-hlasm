@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <assert.h>
 
+#include "symbol_value.h"
+
 using namespace hlasm_plugin::parser_library::context;
 
 address_resolver::address_resolver(address dependency_address_)

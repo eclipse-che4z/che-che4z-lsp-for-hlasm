@@ -21,6 +21,10 @@
 #include "asm_instr_class.h"
 #include "data_definition/data_def_type_base.h"
 
+namespace hlasm_plugin::parser_library {
+class diagnostic_collector;
+} // namespace hlasm_plugin::parser_library
+
 namespace hlasm_plugin::parser_library::checking {
 /*
 TO DO - notes
