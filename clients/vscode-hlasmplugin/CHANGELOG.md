@@ -8,6 +8,7 @@
 - CXD instruction support
 - Support for SYSVER system variable
 - CICS preprocessor now recognizes DFHVALUE constants
+- Enhanced commands for continuation handling and trimming of oversized lines
 
 #### Fixed
 - Incorrect attribute values generated when literals are substituted in CA expressions

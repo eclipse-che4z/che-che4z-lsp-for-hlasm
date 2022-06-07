@@ -78,7 +78,7 @@ export async function run(): Promise<void> {
 	if (is_vscode) {
 		// report code coverage
 		nyc.writeCoverageFile();
-		nyc.report();
+		await nyc.report();
 		console.log('Report created');
 	}
 	else

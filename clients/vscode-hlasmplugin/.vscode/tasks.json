@@ -40,7 +40,7 @@
             "label": "prepareTest",
             "command": "node",
             "type": "shell",
-            "args" : ["${workspaceFolder}/build/bin/prepareWorkspace.js"],
+            "args" : ["'${workspaceFolder}/build/bin/prepareWorkspace.js'"],
             "dependsOn":[
                 "npm"
             ]
