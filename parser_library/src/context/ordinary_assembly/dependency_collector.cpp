@@ -15,6 +15,7 @@
 #include "dependency_collector.h"
 
 #include <algorithm>
+#include <iterator>
 
 using namespace hlasm_plugin::parser_library::context;
 
@@ -98,6 +99,18 @@ bool dependency_collector::contains_dependencies() const
 {
     return !undefined_symbols.empty() || !undefined_attr_refs.empty() || !unresolved_spaces.empty()
         || (unresolved_address && unresolved_address->has_unresolved_space());
+}
+
+void dependency_collector::collect_unique_symbolic_dependencies(std::vector<context::id_index>& missing_symbols) const
+{
+    missing_symbols.insert(missing_symbols.end(), undefined_symbols.begin(), undefined_symbols.end());
+    std::transform(undefined_attr_refs.begin(),
+        undefined_attr_refs.end(),
+        std::back_inserter(missing_symbols),
+        [](const auto& ref) { return ref.symbol_id; });
+
+    std::sort(missing_symbols.begin(), missing_symbols.end());
+    missing_symbols.erase(std::unique(missing_symbols.begin(), missing_symbols.end()), missing_symbols.end());
 }
 
 bool dependency_collector::merge_undef(const dependency_collector& holder)

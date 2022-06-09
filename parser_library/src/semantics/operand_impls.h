@@ -15,6 +15,7 @@
 #ifndef SEMANTICS_OPERAND_IMPLS_H
 #define SEMANTICS_OPERAND_IMPLS_H
 
+#include <utility>
 #include <vector>
 
 #include "checking/data_definition/data_definition_operand.h"
@@ -55,7 +56,8 @@ struct evaluable_operand : operand
 {
     evaluable_operand(const operand_type type, const range operand_range);
 
-    virtual bool has_dependencies(context::dependency_solver& info) const = 0;
+    virtual bool has_dependencies(
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const = 0;
 
     virtual bool has_error(context::dependency_solver& info) const = 0;
 
@@ -72,7 +74,8 @@ struct simple_expr_operand : virtual evaluable_operand
 {
     simple_expr_operand(expressions::mach_expr_ptr expression);
 
-    bool has_dependencies(context::dependency_solver& info) const override;
+    bool has_dependencies(
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const override;
 
     bool has_error(context::dependency_solver& info) const override;
 
@@ -117,7 +120,8 @@ struct expr_machine_operand final : machine_operand, simple_expr_operand
         const checking::machine_operand_format& mach_op_format,
         diagnostic_op_consumer& diags) const override;
 
-    bool has_dependencies(context::dependency_solver& info) const override;
+    bool has_dependencies(
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const override;
     bool has_error(context::dependency_solver& info) const override;
 
     void apply(operand_visitor& visitor) const override;
@@ -140,7 +144,8 @@ struct address_machine_operand final : machine_operand
     expressions::mach_expr_ptr second_par;
     checking::operand_state state;
 
-    bool has_dependencies(context::dependency_solver& info) const override;
+    bool has_dependencies(
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const override;
 
     bool has_error(context::dependency_solver& info) const override;
 
@@ -197,7 +202,8 @@ public:
     std::unique_ptr<checking::operand> get_operand_value(
         context::dependency_solver& info, bool can_have_ordsym, diagnostic_op_consumer& diags) const;
 
-    bool has_dependencies(context::dependency_solver& info) const override;
+    bool has_dependencies(
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const override;
     bool has_error(context::dependency_solver& info) const override;
 
     void apply(operand_visitor& visitor) const override;
@@ -222,7 +228,8 @@ struct using_instr_assembler_operand final : assembler_operand
         std::string end_text,
         const range operand_range);
 
-    bool has_dependencies(context::dependency_solver& info) const override;
+    bool has_dependencies(
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const override;
 
     bool has_error(context::dependency_solver& info) const override;
 
@@ -306,7 +313,8 @@ struct complex_assembler_operand final : assembler_operand
     complex_assembler_operand(
         std::string identifier, std::vector<std::unique_ptr<component_value_t>> values, const range operand_range);
 
-    bool has_dependencies(context::dependency_solver& info) const override;
+    bool has_dependencies(
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const override;
 
     bool has_error(context::dependency_solver& info) const override;
 
@@ -327,7 +335,8 @@ struct string_assembler_operand final : assembler_operand
 {
     string_assembler_operand(std::string value, const range operand_range);
 
-    bool has_dependencies(context::dependency_solver& info) const override;
+    bool has_dependencies(
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const override;
 
     bool has_error(context::dependency_solver& info) const override;
 
@@ -353,7 +362,8 @@ struct data_def_operand final : evaluable_operand
 
     context::dependency_collector get_dependencies(context::dependency_solver& info) const;
 
-    bool has_dependencies(context::dependency_solver& info) const override;
+    bool has_dependencies(
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const override;
 
     bool has_error(context::dependency_solver& info) const override;
 

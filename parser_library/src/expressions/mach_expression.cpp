@@ -36,6 +36,16 @@ bool mach_expression::is_similar(const mach_expression& expr) const
     return typeid(*this) == typeid(expr) && do_is_similar(expr);
 }
 
+bool mach_expression::has_dependencies(
+    context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const
+{
+    auto d = get_dependencies(info);
+    if (missing_symbols)
+        d.collect_unique_symbolic_dependencies(*missing_symbols);
+
+    return d.contains_dependencies();
+}
+
 range mach_expression::get_range() const { return expr_range_; }
 
 context::symbol_value hlasm_plugin::parser_library::expressions::mach_expression::resolve(

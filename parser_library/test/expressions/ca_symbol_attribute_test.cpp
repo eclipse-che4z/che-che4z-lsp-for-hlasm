@@ -59,7 +59,8 @@ TEST(ca_symbol_attr, evaluate_undef_varsym)
 
     auto res = create_var_sym_attr(context::data_attr_kind::D, ctx.ids().add("n")).evaluate(eval_ctx);
 
-    EXPECT_TRUE(matches_message_codes(diags.diags, { "E010" }));
+    ASSERT_TRUE(matches_message_codes(diags.diags, { "E010" }));
+    EXPECT_TRUE(diags.diags[0].message.ends_with(": N"));
 }
 
 TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)

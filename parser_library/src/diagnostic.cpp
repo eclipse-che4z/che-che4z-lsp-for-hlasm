@@ -33,11 +33,36 @@ struct concat_helper
         s.append(std::to_string(std::forward<T>(t)));
     }
 
+    constexpr static std::string_view span_sep = ", ";
+    template<typename T>
+    void operator()(std::string& s, typename std::span<T> span) const
+    {
+        bool first = true;
+        for (const auto& e : span)
+        {
+            if (!first)
+                s.append(span_sep);
+            else
+                first = false;
+
+            operator()(s, e);
+        }
+    }
+
     size_t len(std::string_view t) const { return t.size(); }
     template<typename T>
     std::enable_if_t<!std::is_convertible_v<T&&, std::string_view>, size_t> len(const T&) const
     {
         return 8; // arbitrary estimate for the length of the stringified argument (typically small numbers)
+    }
+    template<typename T>
+    size_t len(const typename std::span<T>& span) const
+    {
+        size_t result = 0;
+        for (const auto& e : span)
+            result += span_sep.size() + len(e);
+
+        return result - (result ? span_sep.size() : 0);
     }
 };
 
@@ -1846,9 +1871,9 @@ diagnostic_op diagnostic_op::error_E001(const range& range)
         diagnostic_severity::error, "E001", "Continued line does not begin with required number of blanks", range);
 }
 
-diagnostic_op diagnostic_op::error_E010(std::string_view message, const range& range)
+diagnostic_op diagnostic_op::error_E010(std::string_view type, std::string_view name, const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "E010", concat("Unknown name of ", message), range);
+    return diagnostic_op(diagnostic_severity::error, "E010", concat("Unknown ", type, ": ", name), range);
 }
 
 diagnostic_op diagnostic_op::error_E011(std::string_view message, const range& range)
@@ -1864,6 +1889,22 @@ diagnostic_op diagnostic_op::error_E012(std::string_view message, const range& r
 diagnostic_op diagnostic_op::error_E013(std::string_view message, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "E013", concat("Inconsistent format: ", message), range);
+}
+
+diagnostic_op diagnostic_op::error_E014(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E014", "Variable name expected", range);
+}
+
+diagnostic_op diagnostic_op::error_E015(std::span<const std::string_view> expected, const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "E015", concat("Unexpected operand type. Allowed types: ", expected), range);
+}
+
+diagnostic_op diagnostic_op::error_E016(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E016", "Unable to evaluate operand", range);
 }
 
 diagnostic_op diagnostic_op::error_E020(std::string_view message, const range& range)

@@ -82,7 +82,8 @@ TEST(END, undefined_symbol)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E010" }));
+    ASSERT_TRUE(matches_message_codes(a.diags(), { "E010" }));
+    EXPECT_TRUE(a.diags()[0].message.ends_with(": UNDEF"));
 }
 TEST(END, absolute_symbol_false)
 {

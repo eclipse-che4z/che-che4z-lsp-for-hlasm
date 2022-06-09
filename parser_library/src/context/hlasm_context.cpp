@@ -961,7 +961,7 @@ SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
     diagnostic_op_consumer& diags)
 {
     auto var = hlasm_ctx.get_var_sym(name);
-    if (!test_symbol_for_read(var, subscript, symbol_range, diags))
+    if (!test_symbol_for_read(var, subscript, symbol_range, diags, *name))
         return SET_t();
 
     if (auto set_sym = var->access_set_symbol_base())
@@ -1011,12 +1011,16 @@ SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
     return SET_t();
 }
 
-bool test_symbol_for_read(
-    const var_sym_ptr& var, const std::vector<A_t>& subscript, range symbol_range, diagnostic_op_consumer& diags)
+bool test_symbol_for_read(const var_sym_ptr& var,
+    const std::vector<A_t>& subscript,
+    range symbol_range,
+    diagnostic_op_consumer& diags,
+    std::string_view var_name)
 {
     if (!var)
     {
-        diags.add_diagnostic(diagnostic_op::error_E010("variable", symbol_range)); // error - unknown name of variable
+        diags.add_diagnostic(
+            diagnostic_op::error_E010("variable", var_name, symbol_range)); // error - unknown name of variable
         return false;
     }
 

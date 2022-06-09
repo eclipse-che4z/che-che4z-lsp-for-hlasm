@@ -323,9 +323,13 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     const bool can_have_ord_syms = tmp ? tmp->has_ord_symbols() : true;
     const bool postpone_dependencies = tmp ? tmp->postpone_dependencies() : false;
 
-    if (can_have_ord_syms && !postpone_dependencies && ev_op.has_dependencies(dep_solver))
+    std::vector<context::id_index> missing_symbols;
+    if (can_have_ord_syms && !postpone_dependencies && ev_op.has_dependencies(dep_solver, &missing_symbols))
     {
-        add_diagnostic(diagnostic_op::error_E010("ordinary symbol", ev_op.operand_range));
+        for (const auto& symbol : missing_symbols)
+            add_diagnostic(diagnostic_op::error_E010("ordinary symbol", *symbol, ev_op.operand_range));
+        if (missing_symbols.empty()) // this is a fallback message if somehow non-symbolic deps are not resolved
+            add_diagnostic(diagnostic_op::error_E016(ev_op.operand_range));
         return nullptr;
     }
 

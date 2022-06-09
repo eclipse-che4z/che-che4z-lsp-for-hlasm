@@ -175,9 +175,10 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(conte
 }
 
 // suppress MSVC warning 'inherits via dominance'
-bool expr_machine_operand::has_dependencies(context::dependency_solver& info) const
+bool expr_machine_operand::has_dependencies(
+    context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const
 {
-    return simple_expr_operand::has_dependencies(info);
+    return simple_expr_operand::has_dependencies(info, missing_symbols);
 }
 
 // suppress MSVC warning 'inherits via dominance'
@@ -209,21 +210,12 @@ address_machine_operand::address_machine_operand(expressions::mach_expr_ptr disp
     , state(std::move(state))
 {}
 
-bool address_machine_operand::has_dependencies(context::dependency_solver& info) const
+bool address_machine_operand::has_dependencies(
+    context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const
 {
-    if (first_par)
-    {
-        if (second_par)
-            return displacement->get_dependencies(info).contains_dependencies()
-                || first_par->get_dependencies(info).contains_dependencies()
-                || second_par->get_dependencies(info).contains_dependencies(); // D(B1,B2)
-        else
-            return displacement->get_dependencies(info).contains_dependencies()
-                || first_par->get_dependencies(info).contains_dependencies(); // D(B)
-    }
-    else
-        return displacement->get_dependencies(info).contains_dependencies()
-            || second_par->get_dependencies(info).contains_dependencies(); // D(,B)
+    return displacement && displacement->has_dependencies(info, missing_symbols)
+        || first_par && first_par->has_dependencies(info, missing_symbols)
+        || second_par && second_par->has_dependencies(info, missing_symbols);
 }
 
 bool address_machine_operand::has_error(context::dependency_solver& info) const
@@ -407,9 +399,10 @@ std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inn
 }
 
 // suppress MSVC warning 'inherits via dominance'
-bool expr_assembler_operand::has_dependencies(context::dependency_solver& info) const
+bool expr_assembler_operand::has_dependencies(
+    context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const
 {
-    return simple_expr_operand::has_dependencies(info);
+    return simple_expr_operand::has_dependencies(info, missing_symbols);
 }
 
 // suppress MSVC warning 'inherits via dominance'
@@ -441,9 +434,10 @@ using_instr_assembler_operand::using_instr_assembler_operand(expressions::mach_e
     , end_text(std::move(end_text))
 {}
 
-bool using_instr_assembler_operand::has_dependencies(context::dependency_solver& info) const
+bool using_instr_assembler_operand::has_dependencies(
+    context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const
 {
-    return base->get_dependencies(info).contains_dependencies() || end->get_dependencies(info).contains_dependencies();
+    return base->has_dependencies(info, missing_symbols) || end->has_dependencies(info, missing_symbols);
 }
 
 bool using_instr_assembler_operand::has_error(context::dependency_solver& info) const
@@ -479,7 +473,10 @@ complex_assembler_operand::complex_assembler_operand(
     , value(std::move(identifier), std::move(values), std::move(operand_range))
 {}
 
-bool complex_assembler_operand::has_dependencies(context::dependency_solver&) const { return false; }
+bool complex_assembler_operand::has_dependencies(context::dependency_solver&, std::vector<context::id_index>*) const
+{
+    return false;
+}
 
 bool complex_assembler_operand::has_error(context::dependency_solver&) const { return false; }
 
@@ -544,9 +541,10 @@ simple_expr_operand::simple_expr_operand(expressions::mach_expr_ptr expression)
 {}
 
 
-[[nodiscard]] bool simple_expr_operand::has_dependencies(context::dependency_solver& info) const
+[[nodiscard]] bool simple_expr_operand::has_dependencies(
+    context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const
 {
-    return expression->get_dependencies(info).contains_dependencies();
+    return expression->has_dependencies(info, missing_symbols);
 }
 
 [[nodiscard]] bool simple_expr_operand::has_error(context::dependency_solver& info) const
@@ -638,9 +636,13 @@ context::dependency_collector data_def_operand::get_dependencies(context::depend
     return value->get_dependencies(info);
 }
 
-bool data_def_operand::has_dependencies(context::dependency_solver& info) const
+bool data_def_operand::has_dependencies(
+    context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const
 {
-    return value->get_dependencies(info).contains_dependencies();
+    auto deps = value->get_dependencies(info);
+    if (missing_symbols)
+        deps.collect_unique_symbolic_dependencies(*missing_symbols);
+    return deps.contains_dependencies();
 }
 
 bool data_def_operand::has_error(context::dependency_solver& info) const
@@ -707,7 +709,10 @@ string_assembler_operand::string_assembler_operand(std::string value, range oper
     , value(std::move(value))
 {}
 
-bool string_assembler_operand::has_dependencies(context::dependency_solver&) const { return false; }
+bool string_assembler_operand::has_dependencies(context::dependency_solver&, std::vector<context::id_index>*) const
+{
+    return false;
+}
 
 bool string_assembler_operand::has_error(context::dependency_solver&) const { return false; }
 

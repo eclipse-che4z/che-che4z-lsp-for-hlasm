@@ -367,7 +367,7 @@ ABC EQU 1
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E021", "E020", "E020", "CE012", "E010" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E021", "E020", "E020", "CE012", "E015" }));
 }
 
 TEST(MHELP, valid_operands)

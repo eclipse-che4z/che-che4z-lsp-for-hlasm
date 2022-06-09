@@ -276,7 +276,8 @@ TEST(literals, missing_label_in_literal)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E010" }));
+    ASSERT_TRUE(matches_message_codes(a.diags(), { "E010" }));
+    EXPECT_TRUE(a.diags()[0].message.ends_with(": LABEL"));
 }
 
 TEST(literals, processing_stack_in_messages)

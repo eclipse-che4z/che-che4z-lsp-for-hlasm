@@ -318,8 +318,11 @@ public:
     bool next_statement() { return --m_statements_remaining >= 0; }
 };
 
-bool test_symbol_for_read(
-    const var_sym_ptr& var, const std::vector<A_t>& subscript, range symbol_range, diagnostic_op_consumer& diags);
+bool test_symbol_for_read(const var_sym_ptr& var,
+    const std::vector<A_t>& subscript,
+    range symbol_range,
+    diagnostic_op_consumer& diags,
+    std::string_view var_name);
 
 SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
     id_index name,

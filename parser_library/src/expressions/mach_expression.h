@@ -61,6 +61,8 @@ public:
 
     bool is_similar(const mach_expression& expr) const;
 
+    bool has_dependencies(context::dependency_solver& info, std::vector<context::id_index>*) const;
+
 protected:
     mach_expression(range rng);
 

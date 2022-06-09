@@ -343,7 +343,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
 
     if (!var_symbol)
     {
-        eval_ctx.diags.add_diagnostic(diagnostic_op::error_E010("variable", vs->symbol_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_E010("variable", *var_name, vs->symbol_range));
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
@@ -358,7 +358,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
             return evaluate_substituted(var_name, std::move(expr_subscript), vs->symbol_range, eval_ctx);
 
         case context::data_attr_kind::T: {
-            if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
+            if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, *var_name))
                 return "U";
 
             std::string var_value;
@@ -385,7 +385,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
                 var_name, std::move(expr_subscript), vs->symbol_range, eval_ctx); // is type U, must substitute var sym
         }
         case context::data_attr_kind::K:
-            if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags))
+            if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, *var_name))
                 return context::symbol_attributes::default_ca_value(attribute);
 
             return var_symbol ? var_symbol->count(transform(expr_subscript)) : 0;

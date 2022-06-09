@@ -164,7 +164,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
         auto asm_op = statement.operands_ref().value[2]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver))
+        if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver, nullptr))
         {
             auto t_value = expr_op->expression->evaluate(dep_solver, drop_diags);
             if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
@@ -181,7 +181,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
         auto asm_op = statement.operands_ref().value[1]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver))
+        if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver, nullptr))
         {
             auto length_value = expr_op->expression->evaluate(dep_solver, drop_diags);
             if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0

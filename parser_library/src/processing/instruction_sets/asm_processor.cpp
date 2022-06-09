@@ -34,7 +34,7 @@ diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
 std::optional<context::A_t> try_get_abs_value(
     const semantics::simple_expr_operand* op, context::dependency_solver& dep_solver)
 {
-    if (op->has_dependencies(dep_solver))
+    if (op->has_dependencies(dep_solver, nullptr))
         return std::nullopt;
 
     auto val = op->expression->evaluate(dep_solver, drop_diags);
@@ -149,7 +149,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
         auto asm_op = stmt.operands_ref().value[2]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_dependencies(dep_solver))
+        if (expr_op && !expr_op->has_dependencies(dep_solver, nullptr))
         {
             auto t_value = expr_op->expression->evaluate(dep_solver, *this);
             if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
@@ -169,7 +169,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
         auto asm_op = stmt.operands_ref().value[1]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_dependencies(dep_solver))
+        if (expr_op && !expr_op->has_dependencies(dep_solver, nullptr))
         {
             auto length_value = expr_op->expression->evaluate(dep_solver, *this);
             if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0

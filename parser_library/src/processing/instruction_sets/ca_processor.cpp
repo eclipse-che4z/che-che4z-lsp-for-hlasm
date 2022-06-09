@@ -96,7 +96,7 @@ ca_processor::SET_info ca_processor::get_SET_symbol(const semantics::complete_st
 {
     if (stmt.label_ref().type != semantics::label_si_type::VAR)
     {
-        add_diagnostic(diagnostic_op::error_E010("label", stmt.label_ref().field_range));
+        add_diagnostic(diagnostic_op::error_E014(stmt.label_ref().field_range));
         return {};
     }
 
@@ -233,7 +233,7 @@ bool ca_processor::prepare_GBL_LCL(
         }
         else
         {
-            add_diagnostic(diagnostic_op::error_E010("operand", ca_op->operand_range));
+            add_diagnostic(diagnostic_op::error_E014(ca_op->operand_range));
             return false;
         }
     }
@@ -271,7 +271,8 @@ bool ca_processor::prepare_ACTR(const semantics::complete_statement& stmt, conte
     }
     else
     {
-        add_diagnostic(diagnostic_op::error_E010("operand", ca_op->operand_range));
+        static constexpr std::string_view expected[] = { "arithmetic expression" };
+        add_diagnostic(diagnostic_op::error_E015(expected, ca_op->operand_range));
         return false;
     }
 }
@@ -300,11 +301,12 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt,
         return false;
     }
 
+    static constexpr std::string_view expected[] = { "sequence symbol" };
     for (const auto& op : stmt.operands_ref().value)
     {
         if (op->type == semantics::operand_type::EMPTY)
         {
-            add_diagnostic(diagnostic_op::error_E010("operand", op->operand_range));
+            add_diagnostic(diagnostic_op::error_E015(expected, op->operand_range));
             return false;
         }
     }
@@ -316,7 +318,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt,
     {
         if (stmt.operands_ref().value.size() != 1)
         {
-            add_diagnostic(diagnostic_op::error_E010("operand", ca_op->operand_range));
+            add_diagnostic(diagnostic_op::error_E015(expected, ca_op->operand_range));
             return false;
         }
 
@@ -344,7 +346,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt,
             }
             else
             {
-                add_diagnostic(diagnostic_op::error_E010("operand", tmp->operand_range));
+                add_diagnostic(diagnostic_op::error_E015(expected, tmp->operand_range));
                 return false;
             }
         }
@@ -378,6 +380,7 @@ bool ca_processor::prepare_AIF(
         return false;
     }
 
+    static constexpr std::string_view expected[] = { "conditional branch" };
     bool has_operand = false;
     for (auto it = stmt.operands_ref().value.begin(); it != stmt.operands_ref().value.end(); ++it)
     {
@@ -388,7 +391,7 @@ bool ca_processor::prepare_AIF(
             if (it == stmt.operands_ref().value.end() - 1)
                 continue;
 
-            add_diagnostic(diagnostic_op::error_E010("operand", op->operand_range));
+            add_diagnostic(diagnostic_op::error_E015(expected, op->operand_range));
             return false;
         }
         has_operand = true;
@@ -409,7 +412,7 @@ bool ca_processor::prepare_AIF(
         }
         else
         {
-            add_diagnostic(diagnostic_op::error_E010("operand", ca_op->operand_range));
+            add_diagnostic(diagnostic_op::error_E015(expected, ca_op->operand_range));
             return false;
         }
     }
@@ -506,7 +509,7 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
 {
     if (stmt.label_ref().type != semantics::label_si_type::VAR)
     {
-        add_diagnostic(diagnostic_op::error_E010("label", stmt.label_ref().field_range));
+        add_diagnostic(diagnostic_op::error_E014(stmt.label_ref().field_range));
         return;
     }
     if (!hlasm_ctx.current_scope().is_in_macro())
@@ -681,7 +684,8 @@ void ca_processor::process_MHELP(const semantics::complete_statement& stmt)
     }
     else
     {
-        add_diagnostic(diagnostic_op::error_E010("operand", ca_op->operand_range));
+        static constexpr std::string_view expected[] = { "arithmetic expression", "arithmetic variable" };
+        add_diagnostic(diagnostic_op::error_E015(expected, ca_op->operand_range));
     }
     value &= ~0xffUL; // ignore the option part
     if (value & 0xff00UL) // rest is considered only when byte 3 is non-zero

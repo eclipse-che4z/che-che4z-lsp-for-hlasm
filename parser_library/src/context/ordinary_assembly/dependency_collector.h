@@ -59,6 +59,8 @@ struct dependency_collector
 
     bool contains_dependencies() const;
 
+    void collect_unique_symbolic_dependencies(std::vector<context::id_index>& missing_symbols) const;
+
 private:
     bool merge_undef(const dependency_collector& holder);
 
