@@ -106,9 +106,9 @@ TEST(character_expresssion, invalid_string)
 )";
     analyzer a(input);
     a.analyze();
-
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)2);
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0008", "CE011" }));
 }
 
 TEST(character_expresssion, escaping)

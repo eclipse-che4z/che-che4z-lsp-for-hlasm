@@ -249,6 +249,19 @@ TEST(AIF, extended)
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var3"), false);
 }
 
+TEST(AIF, missing_comma)
+{
+    std::string input(R"(
+         AIF ('&SYSPARM' EQ '').A('&SYSPARM' EQ '').A
+.A       ANOP
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002" }));
+}
+
 TEST(AIF, extended_fail)
 {
     std::string input(R"(

@@ -218,26 +218,6 @@ remark_o returns [std::optional<range> value]
 	: SPACE remark							{$value = provider.get_range( $remark.ctx);}
 	| ;
 
-remark_eol returns [std::optional<range> value]
-	:
-	(
-		SPACE
-		{
-			auto s = _input->LT(1);
-		}
-		l=(DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|NUM|VERTICAL|ORDSYMBOL|SPACE|ATTR)*
-		{$value = provider.get_range(s, $l);}
-	)?
-	(
-		CONTINUATION
-		|
-		EOF
-	)
-	;
-
-
-
-
 	//***** highlighting rules
 comma 
 	: COMMA {collector.add_hl_symbol(token_info(provider.get_range( $COMMA),hl_scopes::operator_symbol)); };

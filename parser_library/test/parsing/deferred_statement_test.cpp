@@ -65,3 +65,21 @@ TEST(deferred_statement, nested_macro_def_with_continuation)
     a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(deferred_statement, recognize_comment)
+{
+    std::string input = R"(
+         MACRO
+         MAC   &X
+         AIF   (T'&X NE 'O').A                                         X
+               (T'&X NE 'O').B,
+.A       ANOP
+         MEND
+         MAC
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+}

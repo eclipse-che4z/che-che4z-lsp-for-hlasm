@@ -242,6 +242,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
 
     return result;
 }
+
 std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordinary(const statement_processor& proc,
     semantics::collector& collector,
     const std::optional<std::string>& op_text,

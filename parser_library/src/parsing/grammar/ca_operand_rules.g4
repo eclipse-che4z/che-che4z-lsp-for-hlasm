@@ -15,7 +15,6 @@
  //rules for CA operands
 parser grammar ca_operand_rules; 
 
-
 ca_op returns [operand_ptr op]
 	: expr_list seq_symbol
 	{
