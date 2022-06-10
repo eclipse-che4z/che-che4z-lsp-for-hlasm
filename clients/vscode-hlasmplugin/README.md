@@ -21,6 +21,12 @@ HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio
 
 HLASM Language Support is supported on Visual Studio Code and Github Codespaces.
 
+## Integration with Zowe Explorer
+
+We recommend that you use HLASM Language Support with Zowe Explorer. Zowe Explorer enables you to open your High Level Assembler programs stored on mainframe data sets directly in VS Code.
+
+For more information about the Zowe Explorer extension, see [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) on the VS Code Marketplace.
+
 ## Getting Started
 
 ### Enabling the Extension
