@@ -1015,3 +1015,25 @@ TEST(db2_preprocessor, package_info_long)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(db2_preprocessor, sql_type_in_copybook)
+{
+    mock_parse_lib_provider libs({
+        { "MEMBER", R"(
+*aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 00000000
+RO SQL TYPE IS ROWID                        comment
+RO_LEN  EQU *-RO
+)" },
+    });
+    std::string input = R"(
+        EXEC  SQL INCLUDE MEMBER
+)";
+
+    analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "RO_LEN"), 42);
+}

@@ -258,8 +258,7 @@ class db2_preprocessor : public preprocessor
                 const auto text = lexing::extract_line(include).first;
                 m_buffer.append(text);
                 m_buffer.append("\n");
-                if (text.size() <= lexing::default_ictl_copy.continuation
-                    || text[lexing::default_ictl_copy.continuation] == ' ')
+                if (text.size() <= lexing::default_ictl_copy.end || text[lexing::default_ictl_copy.end] == ' ')
                     break;
             }
         }
