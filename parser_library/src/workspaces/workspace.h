@@ -91,7 +91,8 @@ public:
     const processor_group& get_proc_grp(const proc_grp_id& proc_grp) const;
     const processor_group& get_proc_grp_by_program(const utils::resource::resource_location& file_location) const;
     const processor_group& get_proc_grp_by_program(const program& program) const;
-    const program* get_program(const utils::resource::resource_location& file_location) const;
+    std::pair<const program*, utils::resource::resource_location> get_program(
+        const utils::resource::resource_location& file_location) const;
 
     workspace_file_info parse_file(const utils::resource::resource_location& file_location);
     void refresh_libraries();

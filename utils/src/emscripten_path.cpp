@@ -107,6 +107,15 @@ std::filesystem::path filename(const std::filesystem::path& p)
         return p.filename();
 }
 
+std::filesystem::path parent_path(const std::filesystem::path& p)
+{
+    // emscripten implementation seems to be broken on windows
+    if (is_windows())
+        return std::filesystem::path(make_linux_preferred(p.string())).parent_path();
+    else
+        return p.parent_path();
+}
+
 bool equal(const std::filesystem::path& left, const std::filesystem::path& right)
 {
     // emscripten implementation seems to be broken on windows

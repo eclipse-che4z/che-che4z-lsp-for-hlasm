@@ -46,6 +46,11 @@ std::string resource_location::to_presentable(bool debug) const
     return utils::path::get_presentable_uri(m_uri, debug);
 }
 
+bool resource_location::lexically_out_of_scope() const
+{
+    return m_uri == std::string_view("..") || m_uri.starts_with("../") || m_uri.starts_with("..\\");
+}
+
 resource_location resource_location::join(const resource_location& rl, std::string_view relative_path)
 {
     std::string uri = rl.get_uri();

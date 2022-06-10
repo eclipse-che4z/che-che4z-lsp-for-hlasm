@@ -278,3 +278,69 @@ TEST(system_variable, sysopt_xobject)
         EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "VAR"), expected);
     }
 }
+
+TEST(system_variable, sysin_empty)
+{
+    std::string input = R"(
+        MACRO
+        MAC
+        GBLC &VAR
+&T1     SETC T'&SYSIN_DSN
+&T2     SETC T'&SYSIN_MEMBER
+&K1     SETA K'&SYSIN_DSN
+&K2     SETA K'&SYSIN_MEMBER
+&VAR    SETC '&T1 &K1 &T2 &K2'
+        MEND
+
+        GBLC &VAR
+        MAC
+        END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "O 0 O 0");
+}
+
+TEST(system_variable, sysin_nonempty)
+{
+    std::string input = R"(
+        MACRO
+        MAC
+        GBLC &VAR
+&T1     SETC T'&SYSIN_DSN
+&T2     SETC T'&SYSIN_MEMBER
+&K1     SETA K'&SYSIN_DSN
+&K2     SETA K'&SYSIN_MEMBER
+&VAR    SETC '&T1 &K1 &T2 &K2'
+        MEND
+
+        GBLC &VAR
+        MAC
+        END
+)";
+
+    analyzer a(input, analyzer_options { asm_option { .sysin_dsn = "DATASET.NAME", .sysin_member = "MEMBER" } });
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "U 12 U 6");
+}
+
+TEST(system_variable, sysin_out_of_scope)
+{
+    std::string input = R"(
+&T1     SETC T'&SYSIN_DSN
+&T2     SETC T'&SYSIN_MEMBER
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E010", "E010" }));
+}

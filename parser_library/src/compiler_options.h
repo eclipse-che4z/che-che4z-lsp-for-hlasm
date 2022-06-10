@@ -41,6 +41,9 @@ struct asm_option
 
     long long statement_count_limit = 10'000'000;
 
+    std::string sysin_dsn;
+    std::string sysin_member;
+
     bool operator==(const asm_option&) const = default;
 };
 } // namespace hlasm_plugin::parser_library

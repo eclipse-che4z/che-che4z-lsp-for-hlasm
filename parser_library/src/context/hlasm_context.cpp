@@ -251,6 +251,16 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
             scope.system_variables.insert(
                 create_system_variable<system_variable_sysmac>(ids(), "SYSMAC", std::move(data), false));
         }
+
+        {
+            scope.system_variables.insert(
+                create_system_variable<system_variable>(ids(), "SYSIN_DSN", asm_options_.sysin_dsn, false));
+        }
+
+        {
+            scope.system_variables.insert(
+                create_system_variable<system_variable>(ids(), "SYSIN_MEMBER", asm_options_.sysin_member, false));
+        }
     }
 }
 

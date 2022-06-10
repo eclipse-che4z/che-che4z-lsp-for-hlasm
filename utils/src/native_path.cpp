@@ -34,6 +34,7 @@ std::filesystem::path lexically_relative(const std::filesystem::path& p, std::st
 }
 
 std::filesystem::path filename(const std::filesystem::path& p) { return p.filename(); }
+std::filesystem::path parent_path(const std::filesystem::path& p) { return p.parent_path(); }
 
 std::filesystem::path canonical(const std::filesystem::path& p) { return std::filesystem::canonical(p); }
 std::filesystem::path canonical(const std::filesystem::path& p, std::error_code& ec)

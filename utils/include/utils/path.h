@@ -31,6 +31,7 @@ std::filesystem::path join(const std::filesystem::path& left, const std::filesys
 std::filesystem::path lexically_normal(const std::filesystem::path& p);
 std::filesystem::path lexically_relative(const std::filesystem::path& p, std::string q);
 std::filesystem::path filename(const std::filesystem::path& p);
+std::filesystem::path parent_path(const std::filesystem::path& p);
 std::filesystem::path canonical(const std::filesystem::path& p);
 std::filesystem::path canonical(const std::filesystem::path& p, std::error_code& ec);
 bool equal(const std::filesystem::path& left, const std::filesystem::path& right);

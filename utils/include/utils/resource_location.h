@@ -33,6 +33,8 @@ public:
     std::string get_path() const;
     std::string to_presentable(bool debug = false) const;
 
+    bool lexically_out_of_scope() const;
+
     static resource_location join(const resource_location& rl, std::string_view relative_path);
 
     std::strong_ordering operator<=>(const resource_location& rl) const noexcept = default;

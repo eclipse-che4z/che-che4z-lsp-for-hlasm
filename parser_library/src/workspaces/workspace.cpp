@@ -134,7 +134,7 @@ lib_config workspace::get_config() { return local_config_.fill_missing_settings(
 
 const processor_group& workspace::get_proc_grp_by_program(const utils::resource::resource_location& file_location) const
 {
-    const auto* pgm = get_program(file_location);
+    const auto [pgm, _] = get_program(file_location);
     if (pgm)
         return proc_grps_.at(pgm->pgroup);
     return implicit_proc_grp;
@@ -144,7 +144,8 @@ const processor_group& workspace::get_proc_grp_by_program(const program& pgm) co
     return proc_grps_.at(pgm.pgroup);
 }
 
-const program* workspace::get_program(const utils::resource::resource_location& file_location) const
+std::pair<const program*, utils::resource::resource_location> workspace::get_program(
+    const utils::resource::resource_location& file_location) const
 {
     assert(opened_);
 
@@ -155,14 +156,14 @@ const program* workspace::get_program(const utils::resource::resource_location& 
     // direct match
     auto program = exact_pgm_conf_.find(file);
     if (program != exact_pgm_conf_.cend())
-        return &program->second;
+        return { &program->second, utils::resource::resource_location(std::move(file)) };
 
     for (const auto& pgm : regex_pgm_conf_)
     {
         if (std::regex_match(file, pgm.second))
-            return &pgm.first;
+            return { &pgm.first, utils::resource::resource_location(std::move(file)) };
     }
-    return nullptr;
+    return { nullptr, utils::resource::resource_location(std::move(file)) };
 }
 
 const ws_uri& workspace::uri() const { return location_.get_uri(); }
@@ -815,7 +816,7 @@ asm_option workspace::get_asm_options(const utils::resource::resource_location& 
 {
     asm_option result;
 
-    auto pgm = get_program(file_location);
+    const auto [pgm, file] = get_program(file_location);
     if (pgm)
     {
         get_proc_grp_by_program(*pgm).update_asm_options(result);
@@ -825,6 +826,10 @@ asm_option workspace::get_asm_options(const utils::resource::resource_location& 
     {
         implicit_proc_grp.update_asm_options(result);
     }
+
+    auto sysin_path = !pgm && file.lexically_out_of_scope() ? file_location.get_path() : file.get_path();
+    result.sysin_member = utils::path::filename(sysin_path).string();
+    result.sysin_dsn = utils::path::parent_path(sysin_path).string();
 
     return result;
 }

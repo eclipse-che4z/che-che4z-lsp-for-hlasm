@@ -208,6 +208,8 @@ struct frame_vars_ignore_sys_vars : public frame_vars
         this->locals["&SYSSTYP"];
         this->locals["&SYSNEST"];
         this->locals["&SYSMAC"];
+        this->locals["&SYSIN_DSN"];
+        this->locals["&SYSIN_MEMBER"];
     }
 };
 
@@ -427,6 +429,8 @@ TEST(debugger, test)
                 { "&SYSLOC", "" },
                 { "&SYSNEST", 1 },
                 { "&SYSMAC", test_var_value() },
+                { "&SYSIN_DSN", "" },
+                { "&SYSIN_MEMBER", "" },
                 { "&VAR", "13" },
             },
             {} // empty ord symbols
