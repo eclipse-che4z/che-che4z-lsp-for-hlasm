@@ -217,7 +217,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
             }
             else
             {
-                if (!holder.is_address())
+                if (!holder.is_address() || !holder.unresolved_spaces.empty())
                 {
                     bool cycle_ok = create_symbol(stmt.stmt_range_ref(), symbol_name, context::symbol_value(), attrs);
 
@@ -235,7 +235,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
                     create_symbol(stmt.stmt_range_ref(),
                         symbol_name,
                         *holder.unresolved_address,
-                        attrs); // TODO: this is almost certainly wrong - unresolved space_sp are ignored
+                        attrs);
             }
         }
     }

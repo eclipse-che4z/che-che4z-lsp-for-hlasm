@@ -187,3 +187,43 @@ C  EQU   B-*+A
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(EQU, deps_with_multiplication)
+{
+    std::string input = R"(
+TEST CSECT
+     DS    XL(D)
+A    DS    A
+L    EQU   (A-TEST)*(A-TEST)
+     DS    XL(L)
+D    EQU   4
+RES  EQU   *-TEST
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "RES"), 24);
+}
+
+TEST(EQU, reloc_deps_with_multiplication)
+{
+    std::string input = R"(
+TEST CSECT
+     DS    XL(D)
+A    DS    A
+L    EQU   TEST+(A-TEST)*(A-TEST)
+     DS    XL(L-TEST)
+D    EQU   4
+RES  EQU   *-TEST
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "RES"), 24);
+}

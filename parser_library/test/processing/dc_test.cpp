@@ -302,3 +302,20 @@ TEST(DC, tolerate_incorrect_nominal_value)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D018", "D017" }));
 }
+
+TEST(DC, reloc_in_length_and_dupl_fields)
+{
+    std::string input = R"(
+TEST CSECT
+     DC CL(TEST)' '
+     DC (TEST)C' '
+     DS CL(TEST)
+     DS (TEST)C
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D034", "D034", "D034", "D034" }));
+}

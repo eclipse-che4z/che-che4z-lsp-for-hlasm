@@ -238,17 +238,19 @@ checking::data_def_field<int32_t> set_data_def_field(
     if (e)
     {
         field.rng = e->get_range();
-        field.present = !e->get_dependencies(info).contains_dependencies();
-    }
-    if (field.present)
-    {
-        // TODO get_reloc get_abs
-        auto ret = e->evaluate(info, diags);
 
-        if (ret.value_kind() == context::symbol_value_kind::ABS)
-            field.value = ret.get_abs();
-        else
-            field.present = false;
+        if (field.present = !e->get_dependencies(info).contains_dependencies())
+        {
+            auto ret = e->evaluate(info, diags);
+
+            if (ret.value_kind() == context::symbol_value_kind::ABS)
+                field.value = ret.get_abs();
+            else
+            {
+                field.present = false;
+                diags.add_diagnostic(diagnostic_op::error_D034(e->get_range()));
+            }
+        }
     }
     return field;
 }
