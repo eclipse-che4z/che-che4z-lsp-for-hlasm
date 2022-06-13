@@ -232,10 +232,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
                     }
                 }
                 else
-                    create_symbol(stmt.stmt_range_ref(),
-                        symbol_name,
-                        *holder.unresolved_address,
-                        attrs);
+                    create_symbol(stmt.stmt_range_ref(), symbol_name, *holder.unresolved_address, attrs);
             }
         }
     }
