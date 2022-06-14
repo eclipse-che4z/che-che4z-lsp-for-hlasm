@@ -2584,6 +2584,17 @@ diagnostic_s diagnostic_s::warning_L0005(std::string_view pattern, size_t limit)
         diagnostic_tag::none);
 }
 
+diagnostic_s diagnostic_s::warning_L0006(std::string_view path)
+{
+    return diagnostic_s("",
+        {},
+        diagnostic_severity::warning,
+        "L0006",
+        concat("Home directory could not have been retrieved while expanding '", path, "'."),
+        {},
+        diagnostic_tag::none);
+}
+
 diagnostic_op diagnostic_op::error_S100(std::string_view message, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "S100", concat("Long ordinary symbol name - ", message), range);

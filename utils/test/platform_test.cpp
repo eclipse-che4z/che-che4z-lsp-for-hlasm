@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Broadcom.
+ * Copyright (c) 2022 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -12,14 +12,15 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_UTILS_PLATFORM_H
-#define HLASMPLUGIN_UTILS_PLATFORM_H
+#include "gtest/gtest.h"
 
-#include <string>
+#include "utils/platform.h"
 
-namespace hlasm_plugin::utils::platform {
-bool is_windows();
-const std::string& home();
-} // namespace hlasm_plugin::utils::platform
+using namespace hlasm_plugin::utils::platform;
 
-#endif
+TEST(platform, home)
+{
+    auto homedir = home();
+
+    EXPECT_NE(homedir.size(), 0);
+}

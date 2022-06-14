@@ -134,7 +134,7 @@ lib_config workspace::get_config() { return local_config_.fill_missing_settings(
 
 const processor_group& workspace::get_proc_grp_by_program(const utils::resource::resource_location& file_location) const
 {
-    const auto [pgm, _] = get_program(file_location);
+    const auto* pgm = get_program(file_location);
     if (pgm)
         return proc_grps_.at(pgm->pgroup);
     return implicit_proc_grp;
@@ -144,26 +144,23 @@ const processor_group& workspace::get_proc_grp_by_program(const program& pgm) co
     return proc_grps_.at(pgm.pgroup);
 }
 
-std::pair<const program*, utils::resource::resource_location> workspace::get_program(
-    const utils::resource::resource_location& file_location) const
+const program* workspace::get_program(const utils::resource::resource_location& file_location) const
 {
     assert(opened_);
 
-    std::string file =
-        utils::path::lexically_normal(utils::path::lexically_relative(file_location.get_path(), location_.get_path()))
-            .string();
+    std::string file = file_location.get_path();
 
     // direct match
     auto program = exact_pgm_conf_.find(file);
     if (program != exact_pgm_conf_.cend())
-        return { &program->second, utils::resource::resource_location(std::move(file)) };
+        return &program->second;
 
     for (const auto& pgm : regex_pgm_conf_)
     {
         if (std::regex_match(file, pgm.second))
-            return { &pgm.first, utils::resource::resource_location(std::move(file)) };
+            return &pgm.first;
     }
-    return { nullptr, utils::resource::resource_location(std::move(file)) };
+    return nullptr;
 }
 
 const ws_uri& workspace::uri() const { return location_.get_uri(); }
@@ -495,7 +492,7 @@ void workspace::find_and_add_libs(
     if (std::error_code ec; dirs_to_search.emplace_back(fix_path(root), utils::path::canonical(root, ec).string()), ec)
     {
         if (!opts.optional_library)
-            add_diagnostic(diagnostic_s::error_L0001(root));
+            config_diags_.push_back(diagnostic_s::error_L0001(root));
         return;
     }
 
@@ -504,7 +501,7 @@ void workspace::find_and_add_libs(
     {
         if (processed_canonical_paths.size() > limit)
         {
-            add_diagnostic(diagnostic_s::warning_L0005(path_pattern, limit));
+            config_diags_.push_back(diagnostic_s::warning_L0005(path_pattern, limit));
             break;
         }
         auto [path, canonical_path] = std::move(dirs_to_search.front());
@@ -528,7 +525,7 @@ void workspace::find_and_add_libs(
             });
         if (rc != utils::path::list_directory_rc::done)
         {
-            add_diagnostic(diagnostic_s::error_L0001(path));
+            config_diags_.push_back(diagnostic_s::error_L0001(path));
             break;
         }
     }
@@ -557,6 +554,24 @@ std::vector<std::string> get_macro_extensions_compatibility_list(const config::p
 
     return macro_extensions_compatibility_list;
 }
+
+std::optional<std::string> substitute_home_directory(std::string p)
+{
+    if (p.starts_with("~"))
+    {
+        const auto& homedir = utils::platform::home();
+        if (homedir.empty())
+        {
+            return std::nullopt;
+        }
+        else
+        {
+            const auto skip = (size_t)1 + (p.starts_with("~/") || p.starts_with("~\\"));
+            return utils::path::join(homedir, std::move(p).substr(skip)).string();
+        }
+    }
+    return p;
+}
 } // namespace
 
 void workspace::process_processor_group(
@@ -573,6 +588,13 @@ void workspace::process_processor_group(
                 return utils::path::join(path, "");
             return std::filesystem::path {};
         }();
+        if (auto sp = substitute_home_directory(lib_path.string()); sp.has_value())
+            lib_path = std::move(sp.value());
+        else
+        {
+            config_diags_.push_back(diagnostic_s::warning_L0006(lib_path.string()));
+            continue;
+        }
         if (!utils::path::is_absolute(lib_path))
             lib_path = utils::path::join(ws_path, lib_path);
         lib_path = utils::path::lexically_normal(lib_path);
@@ -607,8 +629,22 @@ void workspace::process_program(const config::program_mapping& pgm, const file_p
     if (proc_grps_.find(pgm.pgroup) != proc_grps_.end())
     {
         std::string pgm_name = pgm.program;
+        if (auto sp = substitute_home_directory(pgm_name); sp.has_value())
+            pgm_name = std::move(sp.value());
+        else
+        {
+            config_diags_.push_back(diagnostic_s::warning_L0006(pgm_name));
+            return;
+        }
+        if (std::filesystem::path pgm_path = pgm_name; !utils::path::is_absolute(pgm_path))
+            pgm_name = utils::path::join(location_.get_path(), std::move(pgm_path)).string();
+
         if (utils::platform::is_windows())
+        {
             std::replace(pgm_name.begin(), pgm_name.end(), '/', '\\');
+            if (!pgm_name.empty())
+                pgm_name.front() = std::tolower((unsigned char)pgm_name.front());
+        }
 
         if (!is_wildcard(pgm_name))
             exact_pgm_conf_.emplace(pgm_name, program { pgm_name, pgm.pgroup, pgm.opts });
@@ -816,7 +852,7 @@ asm_option workspace::get_asm_options(const utils::resource::resource_location& 
 {
     asm_option result;
 
-    const auto [pgm, file] = get_program(file_location);
+    const auto* pgm = get_program(file_location);
     if (pgm)
     {
         get_proc_grp_by_program(*pgm).update_asm_options(result);
@@ -827,7 +863,15 @@ asm_option workspace::get_asm_options(const utils::resource::resource_location& 
         implicit_proc_grp.update_asm_options(result);
     }
 
-    auto sysin_path = !pgm && file.lexically_out_of_scope() ? file_location.get_path() : file.get_path();
+    utils::resource::resource_location relative_to_location(
+        utils::path::lexically_normal(utils::path::lexically_relative(file_location.get_path(), location_.get_path()))
+            .string());
+
+    std::filesystem::path sysin_path = !pgm
+            && (relative_to_location == utils::resource::resource_location()
+                || relative_to_location.lexically_out_of_scope())
+        ? file_location.get_path()
+        : relative_to_location.get_path();
     result.sysin_member = utils::path::filename(sysin_path).string();
     result.sysin_dsn = utils::path::parent_path(sysin_path).string();
 
