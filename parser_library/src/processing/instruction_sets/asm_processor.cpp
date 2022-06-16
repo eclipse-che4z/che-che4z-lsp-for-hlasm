@@ -462,7 +462,7 @@ void asm_processor::process_external(rebuilt_statement stmt, external_type t)
             {
                 if (const auto* string_val =
                         dynamic_cast<const semantics::complex_assembler_operand::string_value_t*>(nested.get());
-                    !string_val->value.empty())
+                    string_val && !string_val->value.empty())
                     add_external(hlasm_ctx.ids().add(string_val->value), string_val->op_range);
             }
         }

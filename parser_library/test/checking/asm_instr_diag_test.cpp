@@ -86,6 +86,20 @@ TEST(diagnostics, extrn_incorrect_complex_operand)
     ASSERT_EQ(a.diags().at(0).code, "A129");
 }
 
+TEST(diagnostics, extrn_incorrect_part_type)
+{
+    std::string input(
+        R"( 
+ EXTRN PART(1)
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A129" }));
+}
+
 TEST(diagnostics, ictl_empty_op)
 {
     std::string input(
