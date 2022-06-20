@@ -401,11 +401,10 @@ hlasm_context::~hlasm_context() = default;
 
 void hlasm_context::set_source_position(position pos) { source_stack_.back().current_instruction.pos = pos; }
 
-void hlasm_context::set_source_indices(size_t begin_index, size_t end_index, size_t end_line)
+void hlasm_context::set_source_indices(size_t begin_index, size_t end_index)
 {
     source_stack_.back().begin_index = begin_index;
     source_stack_.back().end_index = end_index;
-    source_stack_.back().end_line = end_line;
 }
 
 std::pair<source_position, source_snapshot> hlasm_context::get_begin_snapshot(bool ignore_macros) const
@@ -416,13 +415,11 @@ std::pair<source_position, source_snapshot> hlasm_context::get_begin_snapshot(bo
 
     if (!is_in_macros && current_copy_stack().empty())
     {
-        statement_position.file_offset = current_source().begin_index;
-        statement_position.file_line = current_source().current_instruction.pos.line;
+        statement_position.rewind_target = current_source().begin_index;
     }
     else
     {
-        statement_position.file_offset = current_source().end_index;
-        statement_position.file_line = current_source().end_line + 1;
+        statement_position.rewind_target = current_source().end_index;
     }
 
     context::source_snapshot snapshot = current_source().create_snapshot();
@@ -436,8 +433,7 @@ std::pair<source_position, source_snapshot> hlasm_context::get_begin_snapshot(bo
 std::pair<source_position, source_snapshot> hlasm_context::get_end_snapshot() const
 {
     context::source_position statement_position;
-    statement_position.file_offset = current_source().end_index;
-    statement_position.file_line = current_source().end_line + 1;
+    statement_position.rewind_target = current_source().end_index;
 
     context::source_snapshot snapshot = current_source().create_snapshot();
 
@@ -896,7 +892,6 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
     source_stack_.back().current_instruction = std::move(snapshot.instruction);
     source_stack_.back().begin_index = snapshot.begin_index;
     source_stack_.back().end_index = snapshot.end_index;
-    source_stack_.back().end_line = snapshot.end_line;
 
     source_stack_.back().copy_stack.clear();
 

@@ -120,7 +120,7 @@ public:
     // sets current source position
     void set_source_position(position pos);
     // sets current source file indices
-    void set_source_indices(size_t begin_index, size_t end_index, size_t end_line);
+    void set_source_indices(size_t begin_index, size_t end_index);
 
     std::pair<source_position, source_snapshot> get_begin_snapshot(bool ignore_macros) const;
     std::pair<source_position, source_snapshot> get_end_snapshot() const;

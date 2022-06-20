@@ -43,8 +43,7 @@ opencode_provider::opencode_provider(std::string_view text,
     opencode_provider_options opts,
     virtual_file_monitor* virtual_file_monitor)
     : statement_provider(statement_provider_kind::OPEN)
-    , m_original_text(text)
-    , m_next_line_text(text)
+    , m_input_document(preprocessor ? preprocessor->generate_replacement(document(text)) : document(text))
     , m_parser(parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer))
     , m_lookahead_parser(parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr))
     , m_operand_parser(parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr))
@@ -60,11 +59,9 @@ opencode_provider::opencode_provider(std::string_view text,
 
 void opencode_provider::rewind_input(context::source_position pos)
 {
-    apply_pending_line_changes();
-
     m_ainsert_buffer.clear(); // this needs to be tested, but apparently AGO clears AINSERT buffer
-    m_next_line_text = m_original_text.substr(pos.file_offset);
-    m_current_line = pos.file_line;
+    assert(pos.rewind_target <= m_input_document.size());
+    m_next_line_index = pos.rewind_target;
 }
 
 void opencode_provider::generate_aread_highlighting(std::string_view text, size_t line_no) const
@@ -88,8 +85,6 @@ void opencode_provider::generate_aread_highlighting(std::string_view text, size_
 
 std::string opencode_provider::aread()
 {
-    apply_pending_line_changes();
-
     bool adjust_length = true;
     std::string result;
     if (!m_ainsert_buffer.empty())
@@ -114,13 +109,13 @@ std::string opencode_provider::aread()
         while (!opencode_stack.empty() && !opencode_stack.back().suspended())
             opencode_stack.pop_back();
     }
-    else if (!m_next_line_text.empty())
+    else if (m_next_line_index < m_input_document.size())
     {
-        result = lexing::extract_line(m_next_line_text).first;
-
-        generate_aread_highlighting(result, m_current_line);
-
-        m_lines_to_remove.current_text_lines++;
+        const auto& line = m_input_document.at(m_next_line_index++);
+        auto line_text = line.text();
+        result = lexing::extract_line(line_text).first;
+        if (auto lineno = line.lineno(); lineno.has_value())
+            generate_aread_highlighting(result, *lineno);
     }
     else
         adjust_length = false;
@@ -361,21 +356,32 @@ utils::resource::resource_location generate_virtual_file_name(virtual_file_id id
 
 bool opencode_provider::try_running_preprocessor()
 {
-    const auto current_line = m_current_line;
-    auto result = m_preprocessor->generate_replacement(m_next_line_text, m_current_line);
-    if (!result.has_value() || result.value().empty())
+    if (m_next_line_index >= m_input_document.size() || m_input_document.at(m_next_line_index).is_original())
         return false;
+
+    const auto current_line = m_next_line_index ? m_input_document.at(m_next_line_index - 1).lineno().value() + 1 : 0;
+
+    std::string preprocessor_text;
+    auto it = m_input_document.begin() + m_next_line_index;
+    for (; it != m_input_document.end() && !it->is_original(); ++it)
+    {
+        const auto text = it->text();
+        preprocessor_text.append(text);
+        if (text.empty() || text.back() != '\n')
+            preprocessor_text.push_back('\n');
+    }
+    const size_t stop_line = it != m_input_document.end() ? it->lineno().value() : current_line;
+    const auto last_index = it - m_input_document.begin();
 
     auto virtual_file_name = m_ctx->hlasm_ctx->ids().add("preprocessor:" + std::to_string(current_line));
 
-    auto [new_file, inserted] = m_virtual_files.try_emplace(virtual_file_name, std::move(result.value()));
+    auto [new_file, inserted] = m_virtual_files.try_emplace(virtual_file_name, std::move(preprocessor_text));
 
     // set up "call site"
-    const auto current_offset =
-        m_next_line_text.empty() ? m_original_text.size() : m_next_line_text.data() - m_original_text.data();
-    const auto last_statement_line = m_current_line - (current_line != m_current_line);
+    const auto last_statement_line = stop_line - (stop_line != current_line);
     m_ctx->hlasm_ctx->set_source_position(position(last_statement_line, 0));
-    m_ctx->hlasm_ctx->set_source_indices(current_offset, current_offset, last_statement_line);
+    m_ctx->hlasm_ctx->set_source_indices(m_next_line_index, last_index);
+    m_next_line_index = last_index;
 
     if (inserted)
     {
@@ -393,7 +399,7 @@ bool opencode_provider::try_running_preprocessor()
     }
     else
     {
-        assert(result.value() == new_file->second);
+        assert(preprocessor_text == new_file->second); // isn't moved if insert fails
     }
 
     m_ctx->hlasm_ctx->enter_copy_member(virtual_file_name);
@@ -534,9 +540,8 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
                 std::move(collector.diag_container().diags));
     }
 
-    m_ctx->hlasm_ctx->set_source_indices(m_current_logical_line_source.begin_offset,
-        m_current_logical_line_source.end_offset,
-        m_current_logical_line_source.end_line);
+    m_ctx->hlasm_ctx->set_source_indices(
+        m_current_logical_line_source.first_index, m_current_logical_line_source.last_index);
 
     return lookahead ? process_lookahead(proc, collector, op_text, op_range)
                      : process_ordinary(proc, collector, op_text, op_range, diag_target);
@@ -544,13 +549,11 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
 bool opencode_provider::finished() const
 {
-    if (!m_next_line_text.empty())
+    if (m_next_line_index < m_input_document.size())
         return false;
     if (!m_ctx->hlasm_ctx->in_opencode())
         return true;
     if (!m_ainsert_buffer.empty())
-        return false;
-    if (m_preprocessor && !m_preprocessor->finished())
         return false;
     const auto& o = m_ctx->hlasm_ctx->opencode_copy_stack();
     if (o.empty())
@@ -566,23 +569,18 @@ parsing::hlasmparser& opencode_provider::parser()
     return *m_parser->parser;
 }
 
-void opencode_provider::apply_pending_line_changes()
-{
-    m_ainsert_buffer.erase(m_ainsert_buffer.begin(), m_ainsert_buffer.begin() + m_lines_to_remove.ainsert_buffer);
-
-    m_current_line += m_lines_to_remove.current_text_lines;
-
-    m_lines_to_remove = {};
-}
-
 bool opencode_provider::is_next_line_ictl() const
 {
     static constexpr std::string_view ICTL_LITERAL = "ICTL";
 
-    const auto non_blank = m_next_line_text.find_first_not_of(' ');
+    const auto& current_line = m_input_document.at(m_next_line_index);
+    if (!current_line.is_original()) // for now, let's say that ICTL can only be specified in the original
+        return false;
+    const auto current_line_text = current_line.text();
+    const auto non_blank = current_line_text.find_first_not_of(' ');
     if (non_blank == std::string_view::npos || non_blank == 0)
         return false;
-    const auto test_ictl = m_next_line_text.substr(non_blank);
+    const auto test_ictl = current_line_text.substr(non_blank);
 
     if (test_ictl.size() > ICTL_LITERAL.size() && test_ictl[ICTL_LITERAL.size()] != ' ')
         return false;
@@ -598,10 +596,15 @@ bool opencode_provider::is_next_line_process() const
 {
     static constexpr std::string_view PROCESS_LITERAL = "*PROCESS";
 
-    if (m_next_line_text.size() > PROCESS_LITERAL.size() && m_next_line_text[PROCESS_LITERAL.size()] != ' ')
+    const auto& current_line = m_input_document.at(m_next_line_index);
+    if (!current_line.is_original()) // for now, let's say that *PROCESS can only be specified in the original
         return false;
 
-    const auto test_process = m_next_line_text.substr(0, PROCESS_LITERAL.size());
+    const auto current_line_text = current_line.text();
+    if (current_line_text.size() > PROCESS_LITERAL.size() && current_line_text[PROCESS_LITERAL.size()] != ' ')
+        return false;
+
+    const auto test_process = current_line_text.substr(0, PROCESS_LITERAL.size());
     return std::equal(
         test_process.cbegin(), test_process.cend(), PROCESS_LITERAL.cbegin(), [](unsigned char l, unsigned char r) {
             return std::toupper(l) == r;
@@ -637,7 +640,6 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
         copy_file.current_statement = resync;
 
         const auto* copy_text = m_ctx->lsp_ctx->get_file_info(copy_file.definition_location()->resource_loc);
-        std::string_view full_text = copy_text->data.get_lines_beginning_at({ 0, 0 });
         std::string_view remaining_text = copy_text->data.get_lines_beginning_at({ line, 0 });
         if (!lexing::extract_logical_line(m_current_logical_line, remaining_text, lexing::default_ictl_copy))
         {
@@ -646,11 +648,8 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
         }
 
         m_current_logical_line_source.begin_line = line;
-        m_current_logical_line_source.end_line = line + m_current_logical_line.segments.size() - 1;
-        m_current_logical_line_source.begin_offset =
-            m_current_logical_line.segments.front().code.data() - full_text.data();
-        m_current_logical_line_source.end_offset =
-            remaining_text.size() ? remaining_text.data() - full_text.data() : full_text.size();
+        m_current_logical_line_source.first_index = m_next_line_index;
+        m_current_logical_line_source.last_index = m_next_line_index;
         m_current_logical_line_source.source = logical_line_origin::source_type::copy;
 
         copy_file.resume();
@@ -662,8 +661,6 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
 
 extract_next_logical_line_result opencode_provider::extract_next_logical_line()
 {
-    apply_pending_line_changes();
-
     bool ictl_allowed = false;
     if (m_opts.ictl_allowed)
     {
@@ -686,6 +683,9 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
             return extract_next_logical_line_from_copy_buffer();
     }
 
+    if (m_next_line_index >= m_input_document.size())
+        return extract_next_logical_line_result::failed;
+
     if (ictl_allowed)
         ictl_allowed = is_next_line_ictl();
 
@@ -695,17 +695,16 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
             m_opts.process_remaining = 0;
         else
         {
-            ++m_lines_to_remove.current_text_lines;
-            append_to_logical_line(m_current_logical_line, m_next_line_text, lexing::default_ictl);
+            const auto first_index = m_next_line_index;
+            const auto& current_line = m_input_document.at(m_next_line_index++);
+            auto current_line_text = current_line.text();
+            append_to_logical_line(m_current_logical_line, current_line_text, lexing::default_ictl);
             finish_logical_line(m_current_logical_line, lexing::default_ictl);
             --m_opts.process_remaining;
 
-            m_current_logical_line_source.begin_line = m_current_line;
-            m_current_logical_line_source.end_line = m_current_line + m_current_logical_line.segments.size() - 1;
-            m_current_logical_line_source.begin_offset =
-                m_current_logical_line.segments.front().code.data() - m_original_text.data();
-            m_current_logical_line_source.end_offset =
-                m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size();
+            m_current_logical_line_source.begin_line = current_line.lineno().value();
+            m_current_logical_line_source.first_index = first_index;
+            m_current_logical_line_source.last_index = m_next_line_index;
             m_current_logical_line_source.source = logical_line_origin::source_type::file;
 
             return extract_next_logical_line_result::process;
@@ -715,10 +714,13 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     if (m_preprocessor && try_running_preprocessor())
         return extract_next_logical_line_result::failed;
 
-    while (!m_next_line_text.empty())
+    const auto first_index = m_next_line_index;
+    const auto current_lineno = m_input_document.at(m_next_line_index).lineno().value();
+    while (m_next_line_index < m_input_document.size())
     {
-        ++m_lines_to_remove.current_text_lines;
-        if (!append_to_logical_line(m_current_logical_line, m_next_line_text, lexing::default_ictl))
+        const auto& current_line = m_input_document.at(m_next_line_index++);
+        auto current_line_text = current_line.text();
+        if (!append_to_logical_line(m_current_logical_line, current_line_text, lexing::default_ictl))
             break;
     }
     finish_logical_line(m_current_logical_line, lexing::default_ictl);
@@ -726,12 +728,9 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     if (m_current_logical_line.segments.empty())
         return extract_next_logical_line_result::failed;
 
-    m_current_logical_line_source.begin_line = m_current_line;
-    m_current_logical_line_source.end_line = m_current_line + m_current_logical_line.segments.size() - 1;
-    m_current_logical_line_source.begin_offset =
-        m_current_logical_line.segments.front().code.data() - m_original_text.data();
-    m_current_logical_line_source.end_offset =
-        m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size();
+    m_current_logical_line_source.begin_line = current_lineno;
+    m_current_logical_line_source.first_index = first_index;
+    m_current_logical_line_source.last_index = m_next_line_index;
     m_current_logical_line_source.source = logical_line_origin::source_type::file;
 
     if (ictl_allowed)

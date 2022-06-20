@@ -47,11 +47,9 @@ TEST(cics_preprocessor, asm_xopts_parsing)
     {
         auto p = preprocessor::create(
             cics_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
-        size_t lineno = 0;
 
-        auto text = text_template;
-        auto result = p->generate_replacement(text, lineno);
-        EXPECT_FALSE(result.has_value());
+        auto result = p->generate_replacement(document(text_template));
+        EXPECT_GT(result.size(), 0);
 
         using hlasm_plugin::parser_library::processing::test::test_cics_current_options;
         EXPECT_EQ(test_cics_current_options(*p), expected) << text_template;
@@ -83,40 +81,20 @@ TEST_P(cics_preprocessor_tests, basics)
     auto [text_template, config] = input;
     auto p = preprocessor::create(
         config, [](std::string_view) { return std::nullopt; }, nullptr);
-    size_t lineno = 0;
 
-    auto text = text_template;
+    auto result = p->generate_replacement(document(text_template));
 
-    auto result_it = expected.begin();
-
-    bool passed_empty_to_preprocessor = false;
-
-    while (!passed_empty_to_preprocessor || !text.empty() || !p->finished())
-    {
-        if (text.empty())
-            passed_empty_to_preprocessor = true;
-
-        auto result = p->generate_replacement(text, lineno);
-        if (result.has_value())
-        {
-            std::string_view to_check = result.value();
-            while (!to_check.empty())
-            {
-                ASSERT_NE(result_it, expected.end()) << text_template;
-                EXPECT_EQ(lexing::extract_line(to_check).first, *result_it);
-                ++result_it;
-            }
-        }
-        else
-        {
-            if (text.empty())
-                break;
-            ASSERT_NE(result_it, expected.end()) << text_template;
-            EXPECT_EQ(lexing::extract_line(text).first, *result_it);
-            ++result_it;
-        }
-    }
-    EXPECT_EQ(result_it, expected.end());
+    EXPECT_TRUE(std::equal(expected.begin(),
+        expected.end(),
+        result.begin(),
+        result.end(),
+        [](const auto& l, const auto& r) {
+            auto text = r.text();
+            while (!text.empty() && (text.back() == '\n' || text.back() == '\r'))
+                text.remove_suffix(1);
+            return l == text;
+        }))
+        << text_template;
 }
 
 INSTANTIATE_TEST_SUITE_P(cics_preprocessor,

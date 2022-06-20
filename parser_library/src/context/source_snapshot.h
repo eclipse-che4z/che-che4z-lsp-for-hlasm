@@ -26,19 +26,14 @@ namespace hlasm_plugin::parser_library::context {
 struct source_position
 {
     // line in the file
-    size_t file_line;
-    // character offset in the file
-    size_t file_offset;
+    size_t rewind_target = 0;
 
-    source_position(size_t file_line = 0, size_t file_offset = 0)
-        : file_line(file_line)
-        , file_offset(file_offset)
+    source_position() = default;
+    explicit source_position(size_t rewind_target)
+        : rewind_target(rewind_target)
     {}
 
-    bool operator==(const source_position& oth) const
-    {
-        return file_line == oth.file_line && file_offset == oth.file_offset;
-    }
+    bool operator==(const source_position& oth) const noexcept = default;
 };
 
 // helper structure representing a copy member invocation
@@ -64,27 +59,20 @@ struct source_snapshot
     location instruction;
     size_t begin_index = 0;
     size_t end_index = 0;
-    size_t end_line = 0;
     std::vector<copy_frame> copy_frames;
 
     source_snapshot() = default;
 
-    source_snapshot(location instruction,
-        size_t begin_index,
-        size_t end_index,
-        size_t end_line,
-        std::vector<copy_frame> copy_frames)
+    source_snapshot(location instruction, size_t begin_index, size_t end_index, std::vector<copy_frame> copy_frames)
         : instruction(std::move(instruction))
         , begin_index(begin_index)
         , end_index(end_index)
-        , end_line(end_line)
         , copy_frames(std::move(copy_frames))
     {}
 
     bool operator==(const source_snapshot& oth) const
     {
-        return end_line == oth.end_line && begin_index == oth.begin_index && end_index == oth.end_index
-            && copy_frames == oth.copy_frames;
+        return begin_index == oth.begin_index && end_index == oth.end_index && copy_frames == oth.copy_frames;
     }
 };
 

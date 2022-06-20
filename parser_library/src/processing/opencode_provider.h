@@ -67,26 +67,15 @@ enum class extract_next_logical_line_result
 // uses the parser implementation to produce statements in the opencode(-like) scenario
 class opencode_provider final : public statement_provider
 {
-    struct lines_to_remove
-    {
-        size_t ainsert_buffer;
-        size_t copy_files;
-        size_t current_text_lines;
-    };
-    lines_to_remove m_lines_to_remove = {};
-
-    std::string_view m_original_text;
-    size_t m_current_line = 0;
-
-    std::string_view m_next_line_text;
+    document m_input_document;
+    std::size_t m_next_line_index = 0;
 
     lexing::logical_line m_current_logical_line;
     struct logical_line_origin
     {
-        size_t begin_offset;
-        size_t end_offset;
         size_t begin_line;
-        size_t end_line;
+        size_t first_index;
+        size_t last_index;
         enum class source_type
         {
             none,
@@ -151,7 +140,6 @@ private:
     void generate_continuation_error_messages(diagnostic_op_consumer* diags) const;
     extract_next_logical_line_result extract_next_logical_line_from_copy_buffer();
     extract_next_logical_line_result extract_next_logical_line();
-    void apply_pending_line_changes();
     const parsing::parser_holder& prepare_operand_parser(const std::string& text,
         context::hlasm_context& hlasm_ctx,
         diagnostic_op_consumer* diag_collector,

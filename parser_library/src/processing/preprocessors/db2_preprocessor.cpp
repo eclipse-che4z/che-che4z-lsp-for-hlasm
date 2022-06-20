@@ -16,11 +16,14 @@
 #include <cassert>
 #include <charconv>
 #include <regex>
+#include <span>
+#include <tuple>
 #include <utility>
 
 #include "lexing/logical_line.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
+#include "utils/concat.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace {
@@ -37,15 +40,16 @@ constexpr std::string_view trim_right(std::string_view s)
 
 namespace hlasm_plugin::parser_library::processing {
 namespace {
+using utils::concat;
+
 class db2_preprocessor : public preprocessor
 {
-    const char* m_last_position = nullptr;
     lexing::logical_line m_logical_line;
     std::string m_operands;
     std::string m_version;
     library_fetcher m_libs;
     diagnostic_op_consumer* m_diags = nullptr;
-    std::string m_buffer;
+    std::vector<document_line> m_result;
 
     static bool remove_space(std::string_view& s)
     {
@@ -79,26 +83,26 @@ class db2_preprocessor : public preprocessor
         constexpr auto version_chunk = (size_t)32;
         if (m_version.size() <= version_chunk)
         {
-            m_buffer.append("SQLVERSP DC    CL4'VER.' VERSION-ID PREFIX\n");
-            m_buffer.append("SQLVERD1 DC    CL64'").append(m_version).append("'        VERSION-ID\n");
+            m_result.emplace_back(replaced_line { "SQLVERSP DC    CL4'VER.' VERSION-ID PREFIX\n" });
+            m_result.emplace_back(replaced_line { concat("SQLVERD1 DC    CL64'", m_version, "'        VERSION-ID\n") });
         }
         else
         {
-            m_buffer.append("SQLVERS  DS    CL68      VERSION-ID\n"
-                            "         ORG   SQLVERS+0\n"
-                            "SQLVERSP DC    CL4'VER.' VERS-ID PREFIX\n");
+            m_result.emplace_back(replaced_line { "SQLVERS  DS    CL68      VERSION-ID\n" });
+            m_result.emplace_back(replaced_line { "         ORG   SQLVERS+0\n" });
+            m_result.emplace_back(replaced_line { "SQLVERSP DC    CL4'VER.' VERS-ID PREFIX\n" });
 
             for (auto [version, i] = std::pair(std::string_view(m_version), 1); !version.empty();
                  version.remove_prefix(std::min(version.size(), version_chunk)), ++i)
             {
                 auto i_str = std::to_string(i);
-                m_buffer.append("SQLVERD")
-                    .append(i_str)
-                    .append(" DC    CL32'")
-                    .append(version.substr(0, version_chunk))
-                    .append("'    VERS-ID PART-")
-                    .append(i_str)
-                    .append("\n");
+                m_result.emplace_back(replaced_line { concat("SQLVERD",
+                    i_str,
+                    " DC    CL32'",
+                    version.substr(0, version_chunk),
+                    "'    VERS-ID PART-",
+                    i_str,
+                    "\n") });
             }
         }
     }
@@ -108,119 +112,119 @@ class db2_preprocessor : public preprocessor
         if (!m_version.empty())
             push_sql_version_data();
 
-        m_buffer.append("***$$$ SQL WORKING STORAGE                      \n"
-                        "SQLDSIZ  DC    A(SQLDLEN) SQLDSECT SIZE         \n"
-                        "SQLDSECT DSECT                                  \n"
-                        "SQLTEMP  DS    CL128     TEMPLATE               \n"
-                        "DSNTEMP  DS    F         INT SCROLL VALUE       \n"
-                        "DSNTMP2  DS    PL16      DEC SCROLL VALUE       \n"
-                        "DSNNROWS DS    F         MULTI-ROW N-ROWS VALUE \n"
-                        "DSNNTYPE DS    H         MULTI-ROW N-ROWS TYPE  \n"
-                        "DSNNLEN  DS    H         MULTI-ROW N-ROWS LENGTH\n"
-                        "DSNPARMS DS    4F        DSNHMLTR PARM LIST     \n"
-                        "DSNPNM   DS    CL386     PROCEDURE NAME         \n"
-                        "DSNCNM   DS    CL128     CURSOR NAME            \n"
-                        "SQL_FILE_READ      EQU 2                        \n"
-                        "SQL_FILE_CREATE    EQU 8                        \n"
-                        "SQL_FILE_OVERWRITE EQU 16                       \n"
-                        "SQL_FILE_APPEND    EQU 32                       \n"
-                        "         DS    0D                               \n"
-                        "SQLPLIST DS    F                                \n"
-                        "SQLPLLEN DS    H         PLIST LENGTH           \n"
-                        "SQLFLAGS DS    XL2       FLAGS                  \n"
-                        "SQLCTYPE DS    H         CALL-TYPE              \n"
-                        "SQLPROGN DS    CL8       PROGRAM NAME           \n"
-                        "SQLTIMES DS    CL8       TIMESTAMP              \n"
-                        "SQLSECTN DS    H         SECTION                \n"
-                        "SQLCODEP DS    A         CODE POINTER           \n"
-                        "SQLVPARM DS    A         VPARAM POINTER         \n"
-                        "SQLAPARM DS    A         AUX PARAM PTR          \n"
-                        "SQLSTNM7 DS    H         PRE_V8 STATEMENT NUMBER\n"
-                        "SQLSTYPE DS    H         STATEMENT TYPE         \n"
-                        "SQLSTNUM DS    F         STATEMENT NUMBER       \n"
-                        "SQLFLAG2 DS    H         internal flags         \n"
-                        "SQLRSRVD DS    CL18      RESERVED               \n"
-                        "SQLPVARS DS    CL8,F,2H,0CL44                   \n"
-                        "SQLAVARS DS    CL8,F,2H,0CL44                   \n"
-                        "         DS    0D                               \n"
-                        "SQLDLEN  EQU   *-SQLDSECT                       \n");
+        m_result.emplace_back(replaced_line { "***$$$ SQL WORKING STORAGE                      \n" });
+        m_result.emplace_back(replaced_line { "SQLDSIZ  DC    A(SQLDLEN) SQLDSECT SIZE         \n" });
+        m_result.emplace_back(replaced_line { "SQLDSECT DSECT                                  \n" });
+        m_result.emplace_back(replaced_line { "SQLTEMP  DS    CL128     TEMPLATE               \n" });
+        m_result.emplace_back(replaced_line { "DSNTEMP  DS    F         INT SCROLL VALUE       \n" });
+        m_result.emplace_back(replaced_line { "DSNTMP2  DS    PL16      DEC SCROLL VALUE       \n" });
+        m_result.emplace_back(replaced_line { "DSNNROWS DS    F         MULTI-ROW N-ROWS VALUE \n" });
+        m_result.emplace_back(replaced_line { "DSNNTYPE DS    H         MULTI-ROW N-ROWS TYPE  \n" });
+        m_result.emplace_back(replaced_line { "DSNNLEN  DS    H         MULTI-ROW N-ROWS LENGTH\n" });
+        m_result.emplace_back(replaced_line { "DSNPARMS DS    4F        DSNHMLTR PARM LIST     \n" });
+        m_result.emplace_back(replaced_line { "DSNPNM   DS    CL386     PROCEDURE NAME         \n" });
+        m_result.emplace_back(replaced_line { "DSNCNM   DS    CL128     CURSOR NAME            \n" });
+        m_result.emplace_back(replaced_line { "SQL_FILE_READ      EQU 2                        \n" });
+        m_result.emplace_back(replaced_line { "SQL_FILE_CREATE    EQU 8                        \n" });
+        m_result.emplace_back(replaced_line { "SQL_FILE_OVERWRITE EQU 16                       \n" });
+        m_result.emplace_back(replaced_line { "SQL_FILE_APPEND    EQU 32                       \n" });
+        m_result.emplace_back(replaced_line { "         DS    0D                               \n" });
+        m_result.emplace_back(replaced_line { "SQLPLIST DS    F                                \n" });
+        m_result.emplace_back(replaced_line { "SQLPLLEN DS    H         PLIST LENGTH           \n" });
+        m_result.emplace_back(replaced_line { "SQLFLAGS DS    XL2       FLAGS                  \n" });
+        m_result.emplace_back(replaced_line { "SQLCTYPE DS    H         CALL-TYPE              \n" });
+        m_result.emplace_back(replaced_line { "SQLPROGN DS    CL8       PROGRAM NAME           \n" });
+        m_result.emplace_back(replaced_line { "SQLTIMES DS    CL8       TIMESTAMP              \n" });
+        m_result.emplace_back(replaced_line { "SQLSECTN DS    H         SECTION                \n" });
+        m_result.emplace_back(replaced_line { "SQLCODEP DS    A         CODE POINTER           \n" });
+        m_result.emplace_back(replaced_line { "SQLVPARM DS    A         VPARAM POINTER         \n" });
+        m_result.emplace_back(replaced_line { "SQLAPARM DS    A         AUX PARAM PTR          \n" });
+        m_result.emplace_back(replaced_line { "SQLSTNM7 DS    H         PRE_V8 STATEMENT NUMBER\n" });
+        m_result.emplace_back(replaced_line { "SQLSTYPE DS    H         STATEMENT TYPE         \n" });
+        m_result.emplace_back(replaced_line { "SQLSTNUM DS    F         STATEMENT NUMBER       \n" });
+        m_result.emplace_back(replaced_line { "SQLFLAG2 DS    H         internal flags         \n" });
+        m_result.emplace_back(replaced_line { "SQLRSRVD DS    CL18      RESERVED               \n" });
+        m_result.emplace_back(replaced_line { "SQLPVARS DS    CL8,F,2H,0CL44                   \n" });
+        m_result.emplace_back(replaced_line { "SQLAVARS DS    CL8,F,2H,0CL44                   \n" });
+        m_result.emplace_back(replaced_line { "         DS    0D                               \n" });
+        m_result.emplace_back(replaced_line { "SQLDLEN  EQU   *-SQLDSECT                       \n" });
     }
 
     void inject_SQLCA()
     {
-        m_buffer.append("***$$$ SQLCA                          \n"
-                        "SQLCA    DS    0F                     \n"
-                        "SQLCAID  DS    CL8      ID            \n"
-                        "SQLCABC  DS    F        BYTE COUNT    \n"
-                        "SQLCODE  DS    F        RETURN CODE   \n"
-                        "SQLERRM  DS    H,CL70   ERR MSG PARMS \n"
-                        "SQLERRP  DS    CL8      IMPL-DEPENDENT\n"
-                        "SQLERRD  DS    6F                     \n"
-                        "SQLWARN  DS    0C       WARNING FLAGS \n"
-                        "SQLWARN0 DS    C'W' IF ANY            \n"
-                        "SQLWARN1 DS    C'W' = WARNING         \n"
-                        "SQLWARN2 DS    C'W' = WARNING         \n"
-                        "SQLWARN3 DS    C'W' = WARNING         \n"
-                        "SQLWARN4 DS    C'W' = WARNING         \n"
-                        "SQLWARN5 DS    C'W' = WARNING         \n"
-                        "SQLWARN6 DS    C'W' = WARNING         \n"
-                        "SQLWARN7 DS    C'W' = WARNING         \n"
-                        "SQLEXT   DS    0CL8                   \n"
-                        "SQLWARN8 DS    C                      \n"
-                        "SQLWARN9 DS    C                      \n"
-                        "SQLWARNA DS    C                      \n"
-                        "SQLSTATE DS    CL5                    \n"
-                        "***$$$\n");
+        m_result.emplace_back(replaced_line { "***$$$ SQLCA                          \n" });
+        m_result.emplace_back(replaced_line { "SQLCA    DS    0F                     \n" });
+        m_result.emplace_back(replaced_line { "SQLCAID  DS    CL8      ID            \n" });
+        m_result.emplace_back(replaced_line { "SQLCABC  DS    F        BYTE COUNT    \n" });
+        m_result.emplace_back(replaced_line { "SQLCODE  DS    F        RETURN CODE   \n" });
+        m_result.emplace_back(replaced_line { "SQLERRM  DS    H,CL70   ERR MSG PARMS \n" });
+        m_result.emplace_back(replaced_line { "SQLERRP  DS    CL8      IMPL-DEPENDENT\n" });
+        m_result.emplace_back(replaced_line { "SQLERRD  DS    6F                     \n" });
+        m_result.emplace_back(replaced_line { "SQLWARN  DS    0C       WARNING FLAGS \n" });
+        m_result.emplace_back(replaced_line { "SQLWARN0 DS    C'W' IF ANY            \n" });
+        m_result.emplace_back(replaced_line { "SQLWARN1 DS    C'W' = WARNING         \n" });
+        m_result.emplace_back(replaced_line { "SQLWARN2 DS    C'W' = WARNING         \n" });
+        m_result.emplace_back(replaced_line { "SQLWARN3 DS    C'W' = WARNING         \n" });
+        m_result.emplace_back(replaced_line { "SQLWARN4 DS    C'W' = WARNING         \n" });
+        m_result.emplace_back(replaced_line { "SQLWARN5 DS    C'W' = WARNING         \n" });
+        m_result.emplace_back(replaced_line { "SQLWARN6 DS    C'W' = WARNING         \n" });
+        m_result.emplace_back(replaced_line { "SQLWARN7 DS    C'W' = WARNING         \n" });
+        m_result.emplace_back(replaced_line { "SQLEXT   DS    0CL8                   \n" });
+        m_result.emplace_back(replaced_line { "SQLWARN8 DS    C                      \n" });
+        m_result.emplace_back(replaced_line { "SQLWARN9 DS    C                      \n" });
+        m_result.emplace_back(replaced_line { "SQLWARNA DS    C                      \n" });
+        m_result.emplace_back(replaced_line { "SQLSTATE DS    CL5                    \n" });
+        m_result.emplace_back(replaced_line { "***$$$\n" });
     }
     void inject_SQLDA()
     {
-        m_buffer.append("***$$$ SQLDA                                            \n"
-                        "SQLTRIPL EQU    C'3'                                    \n"
-                        "SQLDOUBL EQU    C'2'                                    \n"
-                        "SQLSINGL EQU    C' '                                    \n"
-                        "*                                                       \n"
-                        "         SQLSECT SAVE                                   \n"
-                        "*                                                       \n"
-                        "SQLDA    DSECT                                          \n"
-                        "SQLDAID  DS    CL8      ID                              \n"
-                        "SQLDABC  DS    F        BYTE COUNT                      \n"
-                        "SQLN     DS    H        COUNT SQLVAR/SQLVAR2 ENTRIES    \n"
-                        "SQLD     DS    H        COUNT VARS (TWICE IF USING BOTH)\n"
-                        "*                                                       \n"
-                        "SQLVAR   DS    0F       BEGIN VARS                      \n"
-                        "SQLVARN  DSECT ,        NTH VARIABLE                    \n"
-                        "SQLTYPE  DS    H        DATA TYPE CODE                  \n"
-                        "SQLLEN   DS    0H       LENGTH                          \n"
-                        "SQLPRCSN DS    X        DEC PRECISION                   \n"
-                        "SQLSCALE DS    X        DEC SCALE                       \n"
-                        "SQLDATA  DS    A        ADDR OF VAR                     \n"
-                        "SQLIND   DS    A        ADDR OF IND                     \n"
-                        "SQLNAME  DS    H,CL30   DESCRIBE NAME                   \n"
-                        "SQLVSIZ  EQU   *-SQLDATA                                \n"
-                        "SQLSIZV  EQU   *-SQLVARN                                \n"
-                        "*                                                       \n"
-                        "SQLDA    DSECT                                          \n"
-                        "SQLVAR2  DS     0F      BEGIN EXTENDED FIELDS OF VARS   \n"
-                        "SQLVAR2N DSECT  ,       EXTENDED FIELDS OF NTH VARIABLE \n"
-                        "SQLLONGL DS     F       LENGTH                          \n"
-                        "SQLRSVDL DS     F       RESERVED                        \n"
-                        "SQLDATAL DS     A       ADDR OF LENGTH IN BYTES         \n"
-                        "SQLTNAME DS     H,CL30  DESCRIBE NAME                   \n"
-                        "*                                                       \n"
-                        "         SQLSECT RESTORE                                \n"
-                        "***$$$\n");
+        m_result.emplace_back(replaced_line { "***$$$ SQLDA                                            \n" });
+        m_result.emplace_back(replaced_line { "SQLTRIPL EQU    C'3'                                    \n" });
+        m_result.emplace_back(replaced_line { "SQLDOUBL EQU    C'2'                                    \n" });
+        m_result.emplace_back(replaced_line { "SQLSINGL EQU    C' '                                    \n" });
+        m_result.emplace_back(replaced_line { "*                                                       \n" });
+        m_result.emplace_back(replaced_line { "         SQLSECT SAVE                                   \n" });
+        m_result.emplace_back(replaced_line { "*                                                       \n" });
+        m_result.emplace_back(replaced_line { "SQLDA    DSECT                                          \n" });
+        m_result.emplace_back(replaced_line { "SQLDAID  DS    CL8      ID                              \n" });
+        m_result.emplace_back(replaced_line { "SQLDABC  DS    F        BYTE COUNT                      \n" });
+        m_result.emplace_back(replaced_line { "SQLN     DS    H        COUNT SQLVAR/SQLVAR2 ENTRIES    \n" });
+        m_result.emplace_back(replaced_line { "SQLD     DS    H        COUNT VARS (TWICE IF USING BOTH)\n" });
+        m_result.emplace_back(replaced_line { "*                                                       \n" });
+        m_result.emplace_back(replaced_line { "SQLVAR   DS    0F       BEGIN VARS                      \n" });
+        m_result.emplace_back(replaced_line { "SQLVARN  DSECT ,        NTH VARIABLE                    \n" });
+        m_result.emplace_back(replaced_line { "SQLTYPE  DS    H        DATA TYPE CODE                  \n" });
+        m_result.emplace_back(replaced_line { "SQLLEN   DS    0H       LENGTH                          \n" });
+        m_result.emplace_back(replaced_line { "SQLPRCSN DS    X        DEC PRECISION                   \n" });
+        m_result.emplace_back(replaced_line { "SQLSCALE DS    X        DEC SCALE                       \n" });
+        m_result.emplace_back(replaced_line { "SQLDATA  DS    A        ADDR OF VAR                     \n" });
+        m_result.emplace_back(replaced_line { "SQLIND   DS    A        ADDR OF IND                     \n" });
+        m_result.emplace_back(replaced_line { "SQLNAME  DS    H,CL30   DESCRIBE NAME                   \n" });
+        m_result.emplace_back(replaced_line { "SQLVSIZ  EQU   *-SQLDATA                                \n" });
+        m_result.emplace_back(replaced_line { "SQLSIZV  EQU   *-SQLVARN                                \n" });
+        m_result.emplace_back(replaced_line { "*                                                       \n" });
+        m_result.emplace_back(replaced_line { "SQLDA    DSECT                                          \n" });
+        m_result.emplace_back(replaced_line { "SQLVAR2  DS     0F      BEGIN EXTENDED FIELDS OF VARS   \n" });
+        m_result.emplace_back(replaced_line { "SQLVAR2N DSECT  ,       EXTENDED FIELDS OF NTH VARIABLE \n" });
+        m_result.emplace_back(replaced_line { "SQLLONGL DS     F       LENGTH                          \n" });
+        m_result.emplace_back(replaced_line { "SQLRSVDL DS     F       RESERVED                        \n" });
+        m_result.emplace_back(replaced_line { "SQLDATAL DS     A       ADDR OF LENGTH IN BYTES         \n" });
+        m_result.emplace_back(replaced_line { "SQLTNAME DS     H,CL30  DESCRIBE NAME                   \n" });
+        m_result.emplace_back(replaced_line { "*                                                       \n" });
+        m_result.emplace_back(replaced_line { "         SQLSECT RESTORE                                \n" });
+        m_result.emplace_back(replaced_line { "***$$$\n" });
     }
     void inject_SQLSECT()
     {
-        m_buffer.append("         MACRO                          \n"
-                        "         SQLSECT &TYPE                  \n"
-                        "         GBLC  &SQLSECT                 \n"
-                        "         AIF ('&TYPE' EQ 'RESTORE').REST\n"
-                        "&SQLSECT SETC  '&SYSECT'                \n"
-                        "         MEXIT                          \n"
-                        ".REST    ANOP                           \n"
-                        "&SQLSECT CSECT                          \n"
-                        "         MEND                           \n");
+        m_result.emplace_back(replaced_line { "         MACRO                          \n" });
+        m_result.emplace_back(replaced_line { "         SQLSECT &TYPE                  \n" });
+        m_result.emplace_back(replaced_line { "         GBLC  &SQLSECT                 \n" });
+        m_result.emplace_back(replaced_line { "         AIF ('&TYPE' EQ 'RESTORE').REST\n" });
+        m_result.emplace_back(replaced_line { "&SQLSECT SETC  '&SYSECT'                \n" });
+        m_result.emplace_back(replaced_line { "         MEXIT                          \n" });
+        m_result.emplace_back(replaced_line { ".REST    ANOP                           \n" });
+        m_result.emplace_back(replaced_line { "&SQLSECT CSECT                          \n" });
+        m_result.emplace_back(replaced_line { "         MEND                           \n" });
     }
 
     void process_include(std::string_view operands, size_t lineno)
@@ -235,7 +239,7 @@ class db2_preprocessor : public preprocessor
             inject_SQLDA();
             return;
         }
-        m_buffer.append("***$$$\n");
+        m_result.emplace_back(replaced_line { "***$$$\n" });
 
         std::optional<std::string> include_text;
         if (m_libs)
@@ -247,21 +251,9 @@ class db2_preprocessor : public preprocessor
             return;
         }
 
-        std::string_view include = include_text.value();
-
-        while (!include.empty())
-        {
-            if (fill_buffer(include, lineno, false) > 0)
-                continue;
-            while (true)
-            {
-                const auto text = lexing::extract_line(include).first;
-                m_buffer.append(text);
-                m_buffer.append("\n");
-                if (text.size() <= lexing::default_ictl_copy.end || text[lexing::default_ictl_copy.end] == ' ')
-                    break;
-            }
-        }
+        document d(include_text.value());
+        d.convert_to_replaced();
+        generate_replacement(d.begin(), d.end(), false);
     }
     static bool consume_words(
         std::string_view& l, std::initializer_list<std::string_view> words, bool tolerate_no_space_at_end = false)
@@ -366,13 +358,14 @@ class db2_preprocessor : public preprocessor
 
     void add_ds_line(std::string_view label, std::string_view label_suffix, std::string_view type, bool align = true)
     {
-        m_buffer.append(label)
-            .append(label_suffix)
-            .append(align && label.size() + label_suffix.size() < 8 ? 8 - (label.size() + label_suffix.size()) : 0, ' ')
-            .append(" DS ")
-            .append(align ? 2 + (type.front() != '0') : 0, ' ')
-            .append(type)
-            .append("\n");
+        m_result.emplace_back(replaced_line { concat(label,
+            label_suffix,
+            std::string(
+                align && label.size() + label_suffix.size() < 8 ? 8 - (label.size() + label_suffix.size()) : 0, ' '),
+            " DS ",
+            std::string(align ? 2 + (type.front() != '0') : 0, ' '),
+            type,
+            "\n") });
     };
 
     struct lob_info_t
@@ -448,11 +441,10 @@ class db2_preprocessor : public preprocessor
                 add_ds_line(label, "_LENGTH", "FL4", false);
                 add_ds_line(label, "_DATA", li.prefix + std::to_string(len <= li.limit ? len : li.limit), false);
                 if (len > li.limit)
-                    m_buffer
-                        .append(" ORG   *+(")
+                    m_result.emplace_back(replaced_line { concat(" ORG   *+(",
                         // there seems be this strage artifical limit
-                        .append(std::to_string(std::min(len - li.limit, 1073676289ull)))
-                        .append(")\n");
+                        std::min(len - li.limit, 1073676289ULL),
+                        ")\n") });
                 break;
             }
         }
@@ -525,13 +517,13 @@ class db2_preprocessor : public preprocessor
     void process_regular_line(std::string_view label, size_t first_line_skipped)
     {
         if (!label.empty())
-            m_buffer.append(label).append(" DS 0H\n");
+            m_result.emplace_back(replaced_line { concat(label, " DS 0H\n") });
 
-        m_buffer.append("***$$$\n");
+        m_result.emplace_back(replaced_line { "***$$$\n" });
 
         for (const auto& segment : m_logical_line.segments)
         {
-            m_buffer.append(segment.line);
+            std::string this_line(segment.line);
 
             auto operand_part = segment.code;
             if (first_line_skipped)
@@ -539,25 +531,25 @@ class db2_preprocessor : public preprocessor
                 const auto appended_line_size = segment.line.size();
                 operand_part.remove_prefix(first_line_skipped);
                 if (!label.empty())
-                    m_buffer.replace(m_buffer.size() - appended_line_size,
+                    this_line.replace(this_line.size() - appended_line_size,
                         label.size(),
                         label.size(),
                         ' '); // mask out any label-like characters
-                m_buffer[m_buffer.size() - appended_line_size] = '*';
+                this_line[this_line.size() - appended_line_size] = '*';
 
                 first_line_skipped = 0;
             }
-            m_buffer.append("\n");
+            this_line.append("\n");
+            m_result.emplace_back(replaced_line { std::move(this_line) });
             m_operands.append(operand_part);
         }
     }
 
     void process_sql_type_line(size_t first_line_skipped)
     {
-        m_buffer.append("***$$$\n");
-        m_buffer.append("*")
-            .append(m_logical_line.segments.front().code.substr(0, lexing::default_ictl.end - 1))
-            .append("\n");
+        m_result.emplace_back(replaced_line { "***$$$\n" });
+        m_result.emplace_back(replaced_line {
+            concat("*", m_logical_line.segments.front().code.substr(0, lexing::default_ictl.end - 1), "\n") });
 
         for (const auto& segment : m_logical_line.segments)
         {
@@ -565,46 +557,44 @@ class db2_preprocessor : public preprocessor
             first_line_skipped = 0;
         }
 
-        m_buffer.append("***$$$\n");
+        m_result.emplace_back(replaced_line { "***$$$\n" });
     }
 
-    /* returns number of consumed lines */
-    size_t fill_buffer(std::string_view& input, size_t lineno, bool include_allowed)
+    std::tuple<line_type, size_t, std::string_view> check_line(std::string_view input)
     {
-        using namespace std::literals;
-
+        static constexpr std::tuple<line_type, size_t, std::string_view> ignore(line_type::ignore, 0, {});
         std::string_view line_preview = create_line_preview(input);
 
         if (ignore_line(line_preview))
-            return 0;
+            return ignore;
 
         size_t first_line_skipped = line_preview.size();
         std::string_view label = extract_label(line_preview);
 
         if (!remove_space(line_preview))
-            return 0;
+            return ignore;
 
         if (is_end(line_preview))
         {
             push_sql_working_storage();
 
-            return 0;
+            return ignore;
         }
 
         auto instruction = consume_instruction(line_preview);
         if (instruction == line_type::ignore)
-            return 0;
+            return ignore;
 
         if (!line_preview.empty())
             first_line_skipped = line_preview.data() - input.data();
 
-        // now we have a valid line
+        return { instruction, first_line_skipped, label };
+    }
 
+    void process_nonempty_line(
+        size_t lineno, bool include_allowed, line_type instruction, size_t first_line_skipped, std::string_view label)
+    {
         m_operands.clear();
-        m_logical_line.clear();
-
-        bool extracted = lexing::extract_logical_line(m_logical_line, input, lexing::default_ictl);
-        assert(extracted);
 
         if (m_logical_line.continuation_error && m_diags)
             m_diags->add_diagnostic(diagnostic_op::error_DB001(range(position(lineno, 0))));
@@ -615,7 +605,7 @@ class db2_preprocessor : public preprocessor
                 process_regular_line(label, first_line_skipped);
                 if (sql_has_codegen(m_operands))
                     generate_sql_code_mock();
-                m_buffer.append("***$$$\n");
+                m_result.emplace_back(replaced_line { "***$$$\n" });
                 break;
 
             case line_type::include:
@@ -638,8 +628,6 @@ class db2_preprocessor : public preprocessor
                     m_diags->add_diagnostic(diagnostic_op::error_DB004(range(position(lineno, 0))));
                 break;
         }
-
-        return m_logical_line.segments.size();
     }
 
     static bool sql_has_codegen(std::string_view sql)
@@ -653,32 +641,78 @@ class db2_preprocessor : public preprocessor
     void generate_sql_code_mock()
     {
         // this function generates non-realistic sql statement replacement code, because people do strange things...
-        m_buffer.append("         LA    15,SQLCA      \n"
-                        "         L     15,=V(DSNHLI) \n"
-                        "         BALR  14,15         \n");
+        m_result.emplace_back(replaced_line { "         LA    15,SQLCA      \n" });
+        m_result.emplace_back(replaced_line { "         L     15,=V(DSNHLI) \n" });
+        m_result.emplace_back(replaced_line { "         BALR  14,15         \n" });
+    }
+
+    void skip_process(line_iterator& it, line_iterator end)
+    {
+        static constexpr std::string_view PROCESS_LITERAL = "*PROCESS";
+        for (; it != end; ++it)
+        {
+            const auto text = it->text();
+            if (text.size() < PROCESS_LITERAL.size())
+                break;
+            if (text.size() > PROCESS_LITERAL.size() && text[PROCESS_LITERAL.size()] != ' ')
+                break;
+            if (!std::equal(
+                    PROCESS_LITERAL.begin(), PROCESS_LITERAL.end(), text.begin(), [](unsigned char l, unsigned char r) {
+                        return l == ::toupper(r);
+                    }))
+                break;
+
+            m_result.push_back(*it);
+        }
+    }
+
+    void generate_replacement(line_iterator it, line_iterator end, bool include_allowed)
+    {
+        bool skip_continuation = false;
+        while (it != end)
+        {
+            const auto text = it->text();
+            if (skip_continuation)
+            {
+                m_result.emplace_back(*it++);
+                skip_continuation = is_continued(text);
+                continue;
+            }
+            auto [instruction, first_line_skipped, label] = check_line(text);
+            if (instruction == line_type::ignore)
+            {
+                m_result.emplace_back(*it++);
+                skip_continuation = is_continued(text);
+                continue;
+            }
+
+            m_logical_line.clear();
+
+            size_t lineno = it->lineno().value_or(0); // TODO: needs to be addressed for chained preprocessors
+
+            it = extract_nonempty_logical_line(m_logical_line, it, end, lexing::default_ictl);
+
+            process_nonempty_line(lineno, include_allowed, instruction, first_line_skipped, label);
+        }
     }
 
     // Inherited via preprocessor
-    std::optional<std::string> generate_replacement(std::string_view& input, size_t& lineno) override
+    document generate_replacement(document doc) override
     {
-        if (input.data() == m_last_position)
-            return std::nullopt;
+        m_result.clear();
+        m_result.reserve(doc.size());
 
-        m_buffer.clear();
-        if (std::exchange(m_last_position, input.data()) == nullptr)
-        {
-            // injected right after ICTL or *PROCESS
-            inject_SQLSECT();
-        }
+        auto it = doc.begin();
+        const auto end = doc.end();
 
-        lineno += fill_buffer(input, lineno, true);
-        if (m_buffer.size())
-            return m_buffer;
-        else
-            return std::nullopt;
+        skip_process(it, end);
+        // ignores ICTL
+        inject_SQLSECT();
+
+        generate_replacement(it, end, true);
+
+        return document(std::move(m_result));
     }
-
-    bool finished() const override { return true; }
 
 public:
     db2_preprocessor(const db2_preprocessor_options& opts, library_fetcher libs, diagnostic_op_consumer* diags)
@@ -694,4 +728,5 @@ std::unique_ptr<preprocessor> preprocessor::create(
 {
     return std::make_unique<db2_preprocessor>(opts, std::move(libs), diags);
 }
+
 } // namespace hlasm_plugin::parser_library::processing

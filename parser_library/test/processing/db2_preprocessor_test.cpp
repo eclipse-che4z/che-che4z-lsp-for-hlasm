@@ -33,16 +33,14 @@ TEST(db2_preprocessor, first_line)
     auto p = preprocessor::create(
         db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
     std::string_view text = "";
-    size_t lineno = 0;
 
-    auto result = p->generate_replacement(text, lineno);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(lineno, 0);
+    auto result = p->generate_replacement(document());
 
-    EXPECT_NE(result.value().find("SQLSECT"), std::string::npos);
-
-    EXPECT_FALSE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 0);
+    EXPECT_EQ(std::count_if(result.begin(),
+                  result.end(),
+                  [](const auto& l) { return l.text().find(" SQLSECT ") != std::string_view::npos; }),
+        1);
+    EXPECT_TRUE(std::all_of(result.begin(), result.end(), [](const auto& l) { return !l.is_original(); }));
 }
 
 TEST(db2_preprocessor, last_line)
@@ -50,23 +48,14 @@ TEST(db2_preprocessor, last_line)
     auto p = preprocessor::create(
         db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
     std::string_view text = "\n END ";
-    size_t lineno = 0;
 
-    EXPECT_TRUE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 0);
-    text.remove_prefix(1);
-    ++lineno;
+    auto result = p->generate_replacement(document(text));
 
-    std::string_view original_text = text;
-    auto result = p->generate_replacement(text, lineno);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(lineno, 1);
-    EXPECT_EQ(original_text, text); // END should remain in the text
-
-    EXPECT_EQ(result.value().find("***$$$ SQL WORKING STORAGE"), 0);
-
-    EXPECT_FALSE(p->generate_replacement(text, lineno).has_value()); // but should not be processed again
-    EXPECT_EQ(lineno, 1);
+    EXPECT_EQ(std::count_if(result.begin(),
+                  result.end(),
+                  [](const auto& l) { return l.text().find("***$$$ SQL WORKING STORAGE") == 0; }),
+        1);
+    EXPECT_EQ(std::count_if(result.begin(), result.end(), [](const auto& l) { return l.text() == " END "; }), 1);
 }
 
 TEST(db2_preprocessor, include)
@@ -79,23 +68,15 @@ TEST(db2_preprocessor, include)
         },
         nullptr);
     std::string_view text = "\n EXEC SQL INCLUDE MEMBER ";
-    size_t lineno = 0;
 
-    EXPECT_TRUE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 0);
-    text.remove_prefix(1);
-    ++lineno;
+    auto result = p->generate_replacement(document(text));
 
-    std::string_view original_text = text;
-    auto result = p->generate_replacement(text, lineno);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_NE(original_text, text); // INCLUDE should be removed
-    EXPECT_EQ(lineno, 2);
-
-    EXPECT_NE(result.value().find("member content\n"), std::string::npos);
-
-    EXPECT_FALSE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 2);
+    EXPECT_EQ(
+        std::count_if(result.begin(), result.end(), [](const auto& l) { return l.text() == "member content"; }), 1);
+    EXPECT_EQ(std::count_if(result.begin(),
+                  result.end(),
+                  [](const auto& l) { return l.text().starts_with(" EXEC SQL INCLUDE MEMBER"); }),
+        0);
 }
 
 TEST(db2_preprocessor, include_sqlca)
@@ -109,24 +90,13 @@ TEST(db2_preprocessor, include_sqlca)
         },
         nullptr);
     std::string_view text = "\n EXEC SQL INCLUDE SQLCA ";
-    size_t lineno = 0;
 
-    EXPECT_TRUE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 0);
-    text.remove_prefix(1);
-    ++lineno;
+    auto result = p->generate_replacement(document(text));
 
-    std::string_view original_text = text;
-    auto result = p->generate_replacement(text, lineno);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(lineno, 2);
-    EXPECT_NE(original_text, text); // INCLUDE should be removed
-
-    EXPECT_FALSE(called);
-    EXPECT_NE(result.value().find("***$$$ SQLCA"), std::string::npos);
-
-    EXPECT_FALSE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 2);
+    EXPECT_EQ(std::count_if(result.begin(),
+                  result.end(),
+                  [](const auto& l) { return l.text().find("***$$$ SQLCA") != std::string::npos; }),
+        1);
 }
 
 TEST(db2_preprocessor, include_sqlda)
@@ -140,24 +110,13 @@ TEST(db2_preprocessor, include_sqlda)
         },
         nullptr);
     std::string_view text = "\n EXEC SQL INCLUDE SQLDA ";
-    size_t lineno = 0;
 
-    EXPECT_TRUE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 0);
-    text.remove_prefix(1);
-    ++lineno;
+    auto result = p->generate_replacement(document(text));
 
-    std::string_view original_text = text;
-    auto result = p->generate_replacement(text, lineno);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(lineno, 2);
-    EXPECT_NE(original_text, text); // INCLUDE should be removed
-
-    EXPECT_FALSE(called);
-    EXPECT_NE(result.value().find("***$$$ SQLDA"), std::string::npos);
-
-    EXPECT_FALSE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 2);
+    EXPECT_EQ(std::count_if(result.begin(),
+                  result.end(),
+                  [](const auto& l) { return l.text().find("***$$$ SQLDA") != std::string::npos; }),
+        1);
 }
 
 TEST(db2_preprocessor, sql_like)
@@ -171,24 +130,15 @@ TEST(db2_preprocessor, sql_like)
         },
         nullptr);
     std::string_view text = "\n EXEC SQL SELECT 1 INTO :A FROM SYSIBM.SYSDUMMY1";
-    size_t lineno = 0;
 
-    EXPECT_TRUE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 0);
-    text.remove_prefix(1);
-    ++lineno;
+    auto result = p->generate_replacement(document(text));
 
-    std::string_view original_text = text;
-    auto result = p->generate_replacement(text, lineno);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(lineno, 2);
-    EXPECT_NE(original_text, text); // SQL should be removed
-
-    EXPECT_FALSE(called);
-    EXPECT_EQ(result.value().find("***$$$\n*EXEC SQL SELECT 1 INTO :A FROM SYSIBM.SYSDUMMY1\n"), 0);
-
-    EXPECT_FALSE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 2);
+    EXPECT_NE(std::adjacent_find(result.begin(),
+                  result.end(),
+                  [](const auto& l, const auto& r) {
+                      return l.text() == "***$$$\n" && r.text() == "*EXEC SQL SELECT 1 INTO :A FROM SYSIBM.SYSDUMMY1\n";
+                  }),
+        result.end());
 }
 
 TEST(db2_preprocessor, with_label)
@@ -196,21 +146,21 @@ TEST(db2_preprocessor, with_label)
     auto p = preprocessor::create(
         db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
     std::string_view text = "\nABC EXEC SQL WHATEVER";
-    size_t lineno = 0;
 
-    EXPECT_TRUE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 0);
-    text.remove_prefix(1);
-    ++lineno;
+    auto result = p->generate_replacement(document(text));
 
-    auto result = p->generate_replacement(text, lineno);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(lineno, 2);
+    const auto expected = {
+        std::string_view("ABC DS 0H\n"),
+        std::string_view("***$$$\n"),
+        std::string_view("*   EXEC SQL WHATEVER\n"),
+    };
 
-    EXPECT_EQ(result.value().find("ABC DS 0H\n***$$$\n*   EXEC SQL WHATEVER"), 0);
-
-    EXPECT_FALSE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 2);
+    EXPECT_NE(std::search(result.begin(),
+                  result.end(),
+                  expected.begin(),
+                  expected.end(),
+                  [](const auto& l, const auto& r) { return l.text() == r; }),
+        result.end());
 }
 
 TEST(db2_preprocessor, missing_member)
@@ -220,13 +170,11 @@ TEST(db2_preprocessor, missing_member)
         db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
 
     std::string_view text = " EXEC SQL INCLUDE MISSING";
-    size_t lineno = 0;
 
-    EXPECT_TRUE(p->generate_replacement(text, lineno));
-    EXPECT_EQ(lineno, 1);
+    auto doc = p->generate_replacement(document(text));
 
-    ASSERT_EQ(diags.diags.size(), 1U);
-    EXPECT_EQ(diags.diags[0].code, "DB002");
+    EXPECT_NE(doc.size(), 0);
+    EXPECT_TRUE(matches_message_codes(diags.diags, { "DB002" }));
 }
 
 TEST(db2_preprocessor, bad_continuation)
@@ -237,13 +185,11 @@ TEST(db2_preprocessor, bad_continuation)
 
     std::string_view text = R"( EXEC SQL PRETENT SQL STATEMENT                                        X
 badcontinuation)";
-    size_t lineno = 0;
 
-    EXPECT_TRUE(p->generate_replacement(text, lineno));
-    EXPECT_EQ(lineno, 2);
+    auto doc = p->generate_replacement(document(text));
 
-    ASSERT_EQ(diags.diags.size(), 1U);
-    EXPECT_EQ(diags.diags[0].code, "DB001");
+    EXPECT_NE(doc.size(), 0);
+    EXPECT_TRUE(matches_message_codes(diags.diags, { "DB001" }));
 }
 
 TEST(db2_preprocessor, no_nested_include)
@@ -257,13 +203,11 @@ TEST(db2_preprocessor, no_nested_include)
         },
         &diags);
     std::string_view text = " EXEC SQL INCLUDE MEMBER ";
-    size_t lineno = 0;
 
-    EXPECT_TRUE(p->generate_replacement(text, lineno));
-    EXPECT_EQ(lineno, 1);
+    auto doc = p->generate_replacement(document(text));
+    EXPECT_NE(doc.size(), 0);
 
-    ASSERT_EQ(diags.diags.size(), 1U);
-    EXPECT_EQ(diags.diags[0].code, "DB003");
+    EXPECT_TRUE(matches_message_codes(diags.diags, { "DB003" }));
 }
 
 TEST(db2_preprocessor, sqlsect_available)
@@ -710,55 +654,37 @@ BFILE SQL TYPE IS BLOB_FILE
 CFILE SQL TYPE IS CLOB_FILE
 DFILE SQL TYPE IS DBCLOB_FILE
 )";
-    size_t lineno = 0;
 
-    EXPECT_TRUE(p->generate_replacement(text, lineno).has_value());
-    EXPECT_EQ(lineno, 0);
-    text.remove_prefix(1);
-    ++lineno;
-
-    std::vector<std::string> expected = {
+    std::string_view expected = {
         R"(
 ***$$$
 *RE SQL TYPE IS RESULT_SET_LOCATOR VARYING
 ***$$$
 RE       DS    FL4
-)",
-        R"(
 ***$$$
 *RO SQL TYPE IS ROWID
 ***$$$
 RO       DS    H,CL40
-)",
-        R"(
 ***$$$
 *TU SQL TYPE IS TABLE LIKE A AS LOCATOR
 ***$$$
 TU       DS    FL4
-)",
-        R"(
 ***$$$
 *TQ SQL TYPE IS TABLE LIKE 'A''B' AS LOCATOR
 ***$$$
 TQ       DS    FL4
-)",
-        R"(
 ***$$$
 *XB SQL TYPE IS XML AS BLOB 10
 ***$$$
 XB       DS   0FL4
 XB_LENGTH DS FL4
 XB_DATA DS CL10
-)",
-        R"(
 ***$$$
 *XC SQL TYPE IS XML AS CLOB 10K
 ***$$$
 XC       DS   0FL4
 XC_LENGTH DS FL4
 XC_DATA DS CL10240
-)",
-        R"(
 ***$$$
 *XD SQL TYPE IS XML AS DBCLOB 10M
 ***$$$
@@ -766,16 +692,12 @@ XD       DS   0FL4
 XD_LENGTH DS FL4
 XD_DATA DS GL65534
  ORG   *+(10420226)
-)",
-        R"(
 ***$$$
 *BL SQL TYPE IS BINARY LARGE OBJECT 10K
 ***$$$
 BL       DS   0FL4
 BL_LENGTH DS FL4
 BL_DATA DS CL10240
-)",
-        R"(
 ***$$$
 *CL SQL TYPE IS CHARACTER LARGE OBJECT 10M
 ***$$$
@@ -783,8 +705,6 @@ CL       DS   0FL4
 CL_LENGTH DS FL4
 CL_DATA DS CL65535
  ORG   *+(10420225)
-)",
-        R"(
 ***$$$
 *DL SQL TYPE IS DBCLOB 1G
 ***$$$
@@ -792,26 +712,18 @@ DL       DS   0FL4
 DL_LENGTH DS FL4
 DL_DATA DS GL65534
  ORG   *+(1073676289)
-)",
-        R"(
 ***$$$
 *BLOC SQL TYPE IS BLOB_LOCATOR
 ***$$$
 BLOC     DS    FL4
-)",
-        R"(
 ***$$$
 *CLOC SQL TYPE IS CLOB_LOCATOR
 ***$$$
 CLOC     DS    FL4
-)",
-        R"(
 ***$$$
 *DLOC SQL TYPE IS DBCLOB_LOCATOR
 ***$$$
 DLOC     DS    FL4
-)",
-        R"(
 ***$$$
 *BFILE SQL TYPE IS BLOB_FILE
 ***$$$
@@ -820,8 +732,6 @@ BFILE_NAME_LENGTH DS FL4
 BFILE_DATA_LENGTH DS FL4
 BFILE_FILE_OPTIONS DS FL4
 BFILE_NAME DS CL255
-)",
-        R"(
 ***$$$
 *CFILE SQL TYPE IS CLOB_FILE
 ***$$$
@@ -830,8 +740,6 @@ CFILE_NAME_LENGTH DS FL4
 CFILE_DATA_LENGTH DS FL4
 CFILE_FILE_OPTIONS DS FL4
 CFILE_NAME DS CL255
-)",
-        R"(
 ***$$$
 *DFILE SQL TYPE IS DBCLOB_FILE
 ***$$$
@@ -843,23 +751,12 @@ DFILE_NAME DS CL255
 )"
     };
 
-    size_t result_id = 0;
-    while (!text.empty())
-    {
-        ASSERT_LT(result_id, expected.size());
+    auto doc = p->generate_replacement(document(text));
+    EXPECT_NE(doc.size(), 0);
 
-        auto result = p->generate_replacement(text, lineno);
-        ASSERT_TRUE(result.has_value());
+    EXPECT_NE(doc.text().find(expected), std::string_view::npos);
 
-        std::string_view e = expected[result_id];
-        e.remove_prefix(1);
-
-        EXPECT_EQ(result, e);
-
-        ++result_id;
-    }
-    EXPECT_EQ(result_id, expected.size());
-    EXPECT_EQ(diags.diags.size(), 0);
+    EXPECT_TRUE(diags.diags.empty());
 }
 
 TEST(db2_preprocessor, sql_types_with_space)
@@ -931,12 +828,9 @@ TEST(db2_preprocessor, sql_type_fails)
         auto p = preprocessor::create(
             db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
 
-        size_t lineno = 0;
+        p->generate_replacement(document(text));
 
-        EXPECT_TRUE(p->generate_replacement(text, lineno));
-
-        ASSERT_EQ(diags.diags.size(), 1U);
-        EXPECT_EQ(diags.diags[0].code, "DB004");
+        EXPECT_TRUE(matches_message_codes(diags.diags, { "DB004" }));
     }
 }
 
@@ -948,12 +842,9 @@ TEST(db2_preprocessor, sql_type_warn_on_continuation)
     auto p = preprocessor::create(
         db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
 
-    size_t lineno = 0;
+    p->generate_replacement(document(text));
 
-    EXPECT_TRUE(p->generate_replacement(text, lineno));
-
-    ASSERT_EQ(diags.diags.size(), 1U);
-    EXPECT_EQ(diags.diags[0].code, "DB005");
+    EXPECT_TRUE(matches_message_codes(diags.diags, { "DB005" }));
 }
 
 TEST(db2_preprocessor, no_codegen_for_unacceptable_sql_statement)

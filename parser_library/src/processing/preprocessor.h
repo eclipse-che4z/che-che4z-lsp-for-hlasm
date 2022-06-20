@@ -22,12 +22,20 @@
 #include <string>
 #include <string_view>
 #include <variant>
+#include <vector>
 
 #include "diagnostic_consumer.h"
+#include "document.h"
 
 namespace hlasm_plugin::parser_library {
 struct cics_preprocessor_options;
 struct db2_preprocessor_options;
+
+namespace lexing {
+struct logical_line;
+struct logical_line_extractor_args;
+} // namespace lexing
+
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::processing {
@@ -39,15 +47,23 @@ class preprocessor
 public:
     virtual ~preprocessor() = default;
 
-    virtual std::optional<std::string> generate_replacement(std::string_view& input, size_t& lineno) = 0;
-
-    virtual bool finished() const = 0;
+    virtual document generate_replacement(document doc) = 0;
 
     static std::unique_ptr<preprocessor> create(
         const cics_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
 
     static std::unique_ptr<preprocessor> create(
         const db2_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
+
+protected:
+    using line_iterator = std::vector<document_line>::const_iterator;
+
+    static line_iterator extract_nonempty_logical_line(lexing::logical_line& out,
+        line_iterator it,
+        line_iterator end,
+        const lexing::logical_line_extractor_args& opts);
+
+    static bool is_continued(std::string_view s);
 };
 } // namespace hlasm_plugin::parser_library::processing
 

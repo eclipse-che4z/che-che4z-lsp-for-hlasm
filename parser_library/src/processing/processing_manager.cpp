@@ -184,10 +184,9 @@ void processing_manager::finish_macro_definition(macrodef_processing_result resu
 void processing_manager::start_lookahead(lookahead_start_data start)
 {
     // jump to the statement where the previous lookahead stopped
-    if (hlasm_ctx_.current_source().end_index < lookahead_stop_.end_index
+    if (hlasm_ctx_.current_source().end_index < lookahead_stop_.begin_index
         && (!hlasm_ctx_.in_opencode() || hlasm_ctx_.current_ainsert_id() <= lookahead_stop_ainsert_id))
-        perform_opencode_jump(
-            context::source_position(lookahead_stop_.end_line + 1, lookahead_stop_.end_index), lookahead_stop_);
+        perform_opencode_jump(context::source_position(lookahead_stop_.end_index), lookahead_stop_);
 
     hlasm_ctx_.push_statement_processing(processing_kind::LOOKAHEAD);
     procs_.emplace_back(std::make_unique<lookahead_processor>(ctx_, *this, *this, lib_provider_, std::move(start)));
