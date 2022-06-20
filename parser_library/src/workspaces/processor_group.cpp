@@ -22,7 +22,7 @@ struct translate_pp_options
     preprocessor_options operator()(const std::monostate&) const { return std::monostate {}; }
     preprocessor_options operator()(const config::db2_preprocessor& opt) const
     {
-        return db2_preprocessor_options(opt.version);
+        return db2_preprocessor_options(opt.version, opt.conditional);
     }
     preprocessor_options operator()(const config::cics_preprocessor& opt) const
     {

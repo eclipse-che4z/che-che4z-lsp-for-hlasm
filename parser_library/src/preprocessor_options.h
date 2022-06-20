@@ -24,9 +24,11 @@ namespace hlasm_plugin::parser_library {
 struct db2_preprocessor_options
 {
     std::string version;
+    bool conditional = false;
 
-    explicit db2_preprocessor_options(std::string version = {})
+    explicit db2_preprocessor_options(std::string version = {}, bool conditional = false)
         : version(std::move(version))
+        , conditional(conditional)
     {}
 
     bool operator==(const db2_preprocessor_options&) const = default;

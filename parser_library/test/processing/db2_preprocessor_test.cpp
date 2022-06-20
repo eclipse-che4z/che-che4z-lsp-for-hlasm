@@ -928,3 +928,18 @@ RO_LEN  EQU *-RO
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "RO_LEN"), 42);
 }
+
+TEST(db2_preprocessor, conditional)
+{
+    auto p = preprocessor::create(
+        db2_preprocessor_options("", true), [](std::string_view) { return std::nullopt; }, nullptr);
+    std::string_view text = "";
+
+    auto result = p->generate_replacement(document());
+
+    EXPECT_EQ(std::count_if(result.begin(),
+                  result.end(),
+                  [](const auto& l) { return l.text().find(" SQLSECT ") != std::string_view::npos; }),
+        0);
+    EXPECT_TRUE(std::all_of(result.begin(), result.end(), [](const auto& l) { return !l.is_original(); }));
+}

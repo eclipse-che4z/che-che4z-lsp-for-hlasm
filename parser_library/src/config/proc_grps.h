@@ -37,6 +37,7 @@ void from_json(const nlohmann::json& j, library& p);
 struct db2_preprocessor
 {
     std::string version;
+    bool conditional = false;
 
     bool valid() const noexcept { return version.size() <= 64; }
 

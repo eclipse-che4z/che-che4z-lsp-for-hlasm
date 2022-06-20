@@ -75,8 +75,12 @@
                                         "properties": {
                                             "version": {
                                                 "type": "string",
-                                                "description": "The DB2 package VERSION string",
+                                                "description": "The DB2 package VERSION string.",
                                                 "maxLength": 64
+                                            },
+                                            "conditional": {
+                                                "type": "boolean",
+                                                "description": "DB2 preprocessor modifications are applied only when SQL statements are present in the input source code."
                                             }
                                         }
                                     }

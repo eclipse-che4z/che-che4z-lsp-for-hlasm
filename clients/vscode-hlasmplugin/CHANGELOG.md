@@ -12,6 +12,7 @@
 - Provide the name of a missing variable or ordinary symbol in messages
 - SYSIN_DSN and SYSIN_MEMBER support
 - Home directory substitution is now supported in proc_grps.json and pgm_conf.json
+- Conditional DB2 preprocessor option
 
 #### Fixed
 - Incorrect attribute values generated when literals are substituted in CA expressions

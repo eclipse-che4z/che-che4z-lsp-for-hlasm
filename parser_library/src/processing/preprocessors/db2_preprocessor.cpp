@@ -47,9 +47,11 @@ class db2_preprocessor : public preprocessor
     lexing::logical_line m_logical_line;
     std::string m_operands;
     std::string m_version;
+    bool m_conditional;
     library_fetcher m_libs;
     diagnostic_op_consumer* m_diags = nullptr;
     std::vector<document_line> m_result;
+    bool m_source_translated = false;
 
     static bool remove_space(std::string_view& s)
     {
@@ -686,6 +688,8 @@ class db2_preprocessor : public preprocessor
                 continue;
             }
 
+            m_source_translated = true;
+
             m_logical_line.clear();
 
             size_t lineno = it->lineno().value_or(0); // TODO: needs to be addressed for chained preprocessors
@@ -699,6 +703,7 @@ class db2_preprocessor : public preprocessor
     // Inherited via preprocessor
     document generate_replacement(document doc) override
     {
+        m_source_translated = false;
         m_result.clear();
         m_result.reserve(doc.size());
 
@@ -711,12 +716,16 @@ class db2_preprocessor : public preprocessor
 
         generate_replacement(it, end, true);
 
-        return document(std::move(m_result));
+        if (m_source_translated || !m_conditional)
+            return document(std::move(m_result));
+        else
+            return doc;
     }
 
 public:
     db2_preprocessor(const db2_preprocessor_options& opts, library_fetcher libs, diagnostic_op_consumer* diags)
         : m_version(opts.version)
+        , m_conditional(opts.conditional)
         , m_libs(std::move(libs))
         , m_diags(diags)
     {}
