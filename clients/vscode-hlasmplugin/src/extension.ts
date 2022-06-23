@@ -68,7 +68,10 @@ export async function activate(context: vscode.ExtensionContext) {
     const clientOptions: vscodelc.LanguageClientOptions = {
         documentSelector: [{ language: 'hlasm' }],
         synchronize: !syncFileEvents ? undefined : {
-            fileEvents: vscode.workspace.createFileSystemWatcher(filePattern)
+            fileEvents: [
+                vscode.workspace.createFileSystemWatcher(filePattern),
+                vscode.workspace.createFileSystemWatcher('.hlasmplugin/*.json'),
+            ]
         },
         errorHandler: clientErrorHandler
     };

@@ -30,6 +30,7 @@
 - DB2 preprocessor incorrectly processes line continuations from included members
 - Partially resolved value used as the final value by EQU statement
 - Language server may crash while processing an unexpected operand
+- Changes in configuration files were not detected on Linux
 
 ## [1.2.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.1.0...1.2.0) (2022-05-11)
 
