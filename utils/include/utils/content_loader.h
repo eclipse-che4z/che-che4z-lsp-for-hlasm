@@ -17,7 +17,9 @@
 
 #include <optional>
 #include <string>
+#include <system_error>
 #include <unordered_map>
+#include <vector>
 
 #include "resource_location.h"
 #include "utils/general_hashers.h"
@@ -25,17 +27,35 @@
 
 namespace hlasm_plugin::utils::resource {
 
-using list_directory_result = std::pair<
-    std::unordered_map<std::string, utils::resource::resource_location, utils::hashers::string_hasher, std::equal_to<>>,
-    utils::path::list_directory_rc>;
+using list_directory_result =
+    std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>, utils::path::list_directory_rc>;
 
 class content_loader
 {
 public:
+    // Loads text
     virtual std::optional<std::string> load_text(const resource_location& res_loc) const = 0;
+
+    // Returns list of all files in a directory. Returns associative array with pairs file name - file location.
     virtual list_directory_result list_directory_files(
         const utils::resource::resource_location& directory_loc) const = 0;
+
+    // Returns list of all sub directories and symbolic links. Returns associative array with pairs {canonical path -
+    // file location}.
+    virtual list_directory_result list_directory_subdirs_and_symlinks(
+        const utils::resource::resource_location& directory_loc) const = 0;
+
+    // Returns file name
     virtual std::string filename(const utils::resource::resource_location& res_loc) const = 0;
+
+    // Checks whether a provided resource is an existing file
+    virtual bool file_exists(const utils::resource::resource_location& res_loc) const = 0;
+
+    // Checks whether a provided resource is an existing directory
+    virtual bool dir_exists(const utils::resource::resource_location& res_loc) const = 0;
+
+    // Gets canonical representation if possible
+    virtual std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec) const = 0;
 
 protected:
     ~content_loader() = default;
@@ -43,7 +63,11 @@ protected:
 
 std::optional<std::string> load_text(const resource_location& res_loc);
 list_directory_result list_directory_files(const utils::resource::resource_location& directory_loc);
+list_directory_result list_directory_subdirs_and_symlinks(const utils::resource::resource_location& directory_loc);
 std::string filename(const utils::resource::resource_location& res_loc);
+bool file_exists(const utils::resource::resource_location& res_loc);
+bool dir_exists(const utils::resource::resource_location& res_loc);
+std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec);
 
 } // namespace hlasm_plugin::utils::resource
 

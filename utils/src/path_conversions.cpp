@@ -24,6 +24,8 @@
 
 namespace hlasm_plugin::utils::path {
 
+static const std::regex uri_like_windows_path("^[A-Za-z](?::|%3[aA])");
+
 std::string uri_to_path(const std::string& uri)
 {
     try
@@ -38,22 +40,24 @@ std::string uri_to_path(const std::string& uri)
         std::string auth_path;
         if (u.has_authority() && u.authority().to_string() != "")
         {
+            if (!utils::platform::is_windows())
+                return ""; // There is no path representation for URIs like "file://share/home/etc" on linux
+
             auth_path = u.authority().to_string() + u.path().to_string();
-            if (utils::platform::is_windows())
-            {
-                // handle remote locations correctly, like \\server\path
+
+            if (!std::regex_search(auth_path, uri_like_windows_path))
+                // handle remote locations correctly, like \\server\path, if the auth doesn't start with e.g. C:/
                 auth_path = "//" + auth_path;
-            }
         }
         else
         {
             network::string_view path = u.path();
 
-            if (utils::platform::is_windows())
-            {
-                // we get path always beginning with / on windows, e.g. /c:/Users/path
+            if (utils::platform::is_windows() && path.size() >= 2
+                && ((path[0] == '/' || path[0] == '\\') && path[1] != '/' && path[1] != '\\'))
+                // If Windows path begins with exactly 1 slash, remove it e.g. /c:/Users/path -> c:/Users/path
                 path.remove_prefix(1);
-            }
+
             auth_path = path.to_string();
 
             if (utils::platform::is_windows())
@@ -70,12 +74,11 @@ std::string uri_to_path(const std::string& uri)
     }
 }
 
-// one letter schemas are valid, but Windows paths collide
-const std::regex uri_like("^[A-Za-z][A-Za-z0-9+\\-.]+:");
-
 std::string path_to_uri(std::string_view path)
 {
-    if (std::regex_search(path.begin(), path.end(), uri_like))
+    // Don't consider one-letter schemes to be URI, consider them to be the beginnings of Windows path
+    if (static const std::regex uri_unlike_windows_path("^[A-Za-z][A-Za-z0-9+\\-.]+:");
+        std::regex_search(path.begin(), path.end(), uri_unlike_windows_path))
         return std::string(path);
 
     // network::detail::encode_path(uri) ignores @, which is incompatible with VS Code
@@ -105,26 +108,27 @@ std::string path_to_uri(std::string_view path)
     return uri;
 }
 
-namespace {
-struct dissected_uri
+bool is_uri(const std::string& path) noexcept
 {
-    struct authority
+    if (path.empty())
+        return false;
+
+    // one letter schemas are valid, but Windows paths collide
+    if (std::regex_search(path.begin(), path.end(), uri_like_windows_path))
+        return false;
+
+    try
     {
-        std::optional<std::string> user_info;
-        std::string host;
-        std::optional<std::string> port;
-    };
+        network::uri u(path);
+        return true;
+    }
+    catch (const std::exception&)
+    {
+        return false;
+    }
+}
 
-    std::string scheme;
-    std::optional<authority> auth;
-    std::string path;
-    std::optional<std::string> query;
-    std::optional<std::string> fragment;
-
-    bool contains_host() const { return auth.has_value() && !auth->host.empty(); }
-};
-
-dissected_uri dissect_uri(const std::string& uri)
+dissected_uri dissect_uri(const std::string& uri) noexcept
 {
     dissected_uri dis_uri;
 
@@ -169,6 +173,47 @@ dissected_uri dissect_uri(const std::string& uri)
     }
 }
 
+std::string reconstruct_uri(const dissected_uri& dis_uri)
+{
+    std::string uri;
+
+    uri.append(dis_uri.scheme);
+    uri.push_back(':');
+
+    if (dis_uri.auth)
+    {
+        uri.append("//");
+        if (dis_uri.auth->user_info)
+        {
+            uri.append(*dis_uri.auth->user_info);
+            uri.push_back('@');
+        }
+        uri.append(dis_uri.auth->host);
+        if (dis_uri.auth->port)
+        {
+            uri.push_back(':');
+            uri.append(*dis_uri.auth->port);
+        }
+    }
+
+    uri.append(dis_uri.path);
+
+    if (dis_uri.query)
+    {
+        uri.push_back('?');
+        uri.append(*dis_uri.query);
+    }
+
+    if (dis_uri.fragment)
+    {
+        uri.push_back('#');
+        uri.append(*dis_uri.fragment);
+    }
+
+    return uri;
+}
+
+namespace {
 void format_path_pre_processing(std::string& hostname, std::string_view port, std::string& path)
 {
     if (!port.empty() && !hostname.empty())

@@ -108,9 +108,20 @@ processor_file_ptr file_manager_impl::find_processor_file(const utils::resource:
     return change_into_processor_file_if_not_already_(ret->second);
 }
 
-list_directory_result file_manager_impl::list_directory_files(const utils::resource::resource_location& directory)
+list_directory_result file_manager_impl::list_directory_files(const utils::resource::resource_location& directory) const
 {
     return utils::resource::list_directory_files(directory);
+}
+
+list_directory_result file_manager_impl::list_directory_subdirs_and_symlinks(
+    const utils::resource::resource_location& directory) const
+{
+    return utils::resource::list_directory_subdirs_and_symlinks(directory);
+}
+
+std::string file_manager_impl::canonical(const utils::resource::resource_location& res_loc, std::error_code& ec) const
+{
+    return utils::resource::canonical(res_loc, ec);
 }
 
 void file_manager_impl::prepare_file_for_change_(std::shared_ptr<file_impl>& file)
@@ -173,16 +184,9 @@ void file_manager_impl::did_close_file(const file_location& document_loc)
     // if the file does not exist, no action is taken
 }
 
-bool file_manager_impl::file_exists(const std::string& file_name)
+bool file_manager_impl::dir_exists(const utils::resource::resource_location& dir_loc) const
 {
-    std::error_code ec;
-    return std::filesystem::exists(file_name, ec);
-    // TODO use error code??
-}
-
-bool file_manager_impl::lib_file_exists(const std::string& lib_path, const std::string& file_name)
-{
-    return std::filesystem::exists(utils::path::join(lib_path, file_name));
+    return utils::resource::dir_exists(dir_loc);
 }
 
 void file_manager_impl::put_virtual_file(unsigned long long id, std::string_view text)

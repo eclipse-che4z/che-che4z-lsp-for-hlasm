@@ -33,7 +33,7 @@ const auto lib2_loc =
 
 class file_manager_extension_mock : public file_manager_impl
 {
-    list_directory_result list_directory_files(const resource_location&) override
+    list_directory_result list_directory_files(const resource_location&) const override
     {
         return { { { "Mac.hlasm", resource_location::join(lib_loc, "Mac.hlasm") } },
             hlasm_plugin::utils::path::list_directory_rc::done };
@@ -55,6 +55,15 @@ TEST(extension_handling_test, wildcard)
 
     regex = wildcard2regex("*.?");
     EXPECT_FALSE(std::regex_match(test, regex));
+}
+
+TEST(extension_handling_test, wildcard_path)
+{
+    auto regex = wildcard2regex("pgms/*");
+    EXPECT_TRUE(std::regex_match("pgms/anything", regex));
+
+    regex = wildcard2regex("pgms\\*");
+    EXPECT_TRUE(std::regex_match("pgms/anything", regex));
 }
 
 TEST(extension_handling_test, extension_removal)
@@ -101,7 +110,7 @@ TEST(extension_handling_test, legacy_extension_selection)
 
 class file_manager_extension_mock2 : public file_manager_impl
 {
-    list_directory_result list_directory_files(const resource_location&) override
+    list_directory_result list_directory_files(const resource_location&) const override
     {
         return { { { "Mac.hlasm", resource_location::join(lib_loc, "Mac.hlasm") },
                      { "Mac", resource_location::join(lib_loc, "Mac") } },
@@ -131,7 +140,7 @@ TEST(extension_handling_test, no_multiple_macro_definitions)
 
 class file_manager_extension_mock_no_ext : public file_manager_impl
 {
-    list_directory_result list_directory_files(const resource_location&) override
+    list_directory_result list_directory_files(const resource_location&) const override
     {
         return { { { "Mac", resource_location::join(lib_loc, "Mac") } },
             hlasm_plugin::utils::path::list_directory_rc::done };

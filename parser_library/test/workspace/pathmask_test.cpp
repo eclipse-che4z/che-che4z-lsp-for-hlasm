@@ -19,7 +19,7 @@
 #include "../common_testing.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
-extern std::regex pathmask_to_regex(std::string input);
+extern std::regex pathmask_to_regex(const std::string& input);
 } // namespace hlasm_plugin::parser_library::workspaces
 
 bool check_path(std::string pattern, std::string path)
@@ -54,30 +54,51 @@ TEST(pathmask, pass)
     EXPECT_TRUE(check_path("/path/**", "/path/a/test/"));
     EXPECT_TRUE(check_path("/path/**", "/path/a/b/test/"));
 
-    EXPECT_TRUE(check_path("/path/**/test/", "\\path\\test\\"));
-    EXPECT_TRUE(check_path("/path/**/test/", "\\path\\a\\test\\"));
-    EXPECT_TRUE(check_path("/path/**/test/", "\\path\\a\\b\\test\\"));
+    EXPECT_TRUE(check_path("file:///C%3A/path/**/", "file:///C%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///C%3A/path/**/test/", "file:///C%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c%3A/path/**/", "file:///C%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c%3A/path/**/test/", "file:///C%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c%3A/path/**/", "file:///c%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c%3A/path/**/test/", "file:///c%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///C%3A/path/**/", "file:///c%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///C%3A/path/**/test/", "file:///c%3A/path/a/test/"));
 
-    EXPECT_TRUE(check_path("/path/*/test/", "\\path\\a\\test\\"));
+    EXPECT_TRUE(check_path("file:///C%3a/path/**/", "file:///C%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///C%3a/path/**/test/", "file:///C%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c%3a/path/**/", "file:///C%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c%3a/path/**/test/", "file:///C%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c%3a/path/**/", "file:///c%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c%3a/path/**/test/", "file:///c%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///C%3a/path/**/", "file:///c%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///C%3a/path/**/test/", "file:///c%3A/path/a/test/"));
 
-    EXPECT_TRUE(check_path("/path/a*/test/", "\\path\\a\\test\\"));
-    EXPECT_TRUE(check_path("/path/*b/test/", "\\path\\b\\test\\"));
-    EXPECT_TRUE(check_path("/path/a*b/test/", "\\path\\ab\\test\\"));
+    EXPECT_TRUE(check_path("file:///C:/path/**/", "file:///C%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///C:/path/**/test/", "file:///C%3a/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c:/path/**/", "file:///C%3a/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c:/path/**/test/", "file:///C%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c:/path/**/", "file:///c%3A/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///c:/path/**/test/", "file:///c%3a/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///C:/path/**/", "file:///c%3a/path/a/test/"));
+    EXPECT_TRUE(check_path("file:///C:/path/**/test/", "file:///c%3A/path/a/test/"));
 
-    EXPECT_TRUE(check_path("/path/a**/test/", "\\path\\a\\test\\"));
-    EXPECT_TRUE(check_path("/path/**b/test/", "\\path\\b\\test\\"));
-    EXPECT_TRUE(check_path("/path/a**b/test/", "\\path\\ab\\test\\"));
-    EXPECT_TRUE(check_path("/path/a**b/test/", "\\path\\a\\b\\test\\"));
-    EXPECT_TRUE(check_path("/path/a**b/test/", "\\path\\a\\c\\b\\test\\"));
+    // The following tests just check that there is no longer a SEH exception
+    EXPECT_TRUE(check_path("file:///C%3A/User/ws/symlinks/inf/**",
+        "file:///C%3A/User/ws/symlinks/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/"
+        "inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/"
+        "inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/"
+        "inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf"));
 
-    EXPECT_TRUE(check_path("/path/**/", "\\path\\"));
-    EXPECT_TRUE(check_path("/path/**/", "\\path\\test\\"));
-    EXPECT_TRUE(check_path("/path/**/", "\\path\\a\\test\\"));
-    EXPECT_TRUE(check_path("/path/**/", "\\path\\a\\b\\test\\"));
-    EXPECT_TRUE(check_path("/path/**", "\\path\\"));
-    EXPECT_TRUE(check_path("/path/**", "\\path\\test\\"));
-    EXPECT_TRUE(check_path("/path/**", "\\path\\a\\test\\"));
-    EXPECT_TRUE(check_path("/path/**", "\\path\\a\\b\\test\\"));
+    EXPECT_TRUE(check_path("file:///C%3A/User/ws/symlinks/inf/**",
+        "file:///C%3A/User/ws/symlinks/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/"
+        "inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/"
+        "inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/"
+        "inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/"));
+
+    EXPECT_TRUE(check_path("file:///C%3A/User/ws/symlinks/inf/**/",
+        "file:///C%3A/User/ws/symlinks/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/"
+        "inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/"
+        "inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/"
+        "inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/inf/"));
 }
 
 TEST(pathmask, fail)
@@ -93,4 +114,9 @@ TEST(pathmask, fail)
     EXPECT_FALSE(check_path("/path/a*/test/", "/path/b/test/"));
     EXPECT_FALSE(check_path("/path/*b/test/", "/path/a/test/"));
     EXPECT_FALSE(check_path("/path/a*b/test/", "/path/ba/test/"));
+
+    EXPECT_FALSE(check_path("file:///C%3A/path/**/", "file:///c%3A/Path/a/test/"));
+    EXPECT_FALSE(check_path("file:///C%3A/path/**/test/", "file:///c%3A/path/a/tEst/"));
+    EXPECT_FALSE(check_path("file:///c%3A/path/**/", "file:///C%3A/Path/a/test/"));
+    EXPECT_FALSE(check_path("file:///c%3A/path/**/test/", "file:///C%3A/path/a/tEst/"));
 }

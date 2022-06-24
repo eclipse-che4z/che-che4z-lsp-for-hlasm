@@ -112,8 +112,7 @@ TEST_F(workspace_test, parse_lib_provider)
         library_data { processing::processing_kind::MACRO, ctx_2->ids().add("not_existing") });
 }
 
-
-
+namespace {
 std::string pgroups_file = R"({
   "pgroups": [
     {
@@ -286,6 +285,7 @@ const resource_location source2_loc("source2");
 const resource_location source3_loc("source3");
 const resource_location faulty_macro_loc(faulty_macro_path);
 const resource_location correct_macro_loc(correct_macro_path);
+} // namespace
 
 class file_manager_extended : public file_manager_impl
 {
@@ -301,7 +301,7 @@ public:
         did_open_file(correct_macro_loc, 1, correct_macro_file);
     }
 
-    list_directory_result list_directory_files(const hlasm_plugin::utils::resource::resource_location&) override
+    list_directory_result list_directory_files(const hlasm_plugin::utils::resource::resource_location&) const override
     {
         if (insert_correct_macro)
             return { { { "ERROR", faulty_macro_loc }, { "CORRECT", correct_macro_loc } },
@@ -367,9 +367,9 @@ public:
     }
 
     list_directory_result list_directory_files(
-        const hlasm_plugin::utils::resource::resource_location& location) override
+        const hlasm_plugin::utils::resource::resource_location& location) const override
     {
-        if (location == resource_location("lib/") || location == resource_location("lib\\"))
+        if (location == resource_location("lib/"))
             return { { { "CORRECT", correct_macro_loc } }, hlasm_plugin::utils::path::list_directory_rc::done };
 
         return { {}, hlasm_plugin::utils::path::list_directory_rc::not_exists };
@@ -515,9 +515,9 @@ public:
     {}
 
     list_directory_result list_directory_files(
-        const hlasm_plugin::utils::resource::resource_location& location) override
+        const hlasm_plugin::utils::resource::resource_location& location) const override
     {
-        if (location == resource_location("lib/") || location == resource_location("lib\\"))
+        if (location == resource_location("lib/"))
             return { {}, hlasm_plugin::utils::path::list_directory_rc::other_failure };
 
         return { {}, hlasm_plugin::utils::path::list_directory_rc::not_exists };

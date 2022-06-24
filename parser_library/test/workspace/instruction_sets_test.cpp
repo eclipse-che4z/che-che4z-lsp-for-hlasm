@@ -139,9 +139,9 @@ public:
     }
 
     list_directory_result list_directory_files(
-        const hlasm_plugin::utils::resource::resource_location& location) override
+        const hlasm_plugin::utils::resource::resource_location& location) const override
     {
-        if (location == resource_location("lib/") || location == resource_location("lib\\"))
+        if (location == resource_location("lib/"))
             return { { { "SAM31", resource_location(sam31_macro_path) } },
                 hlasm_plugin::utils::path::list_directory_rc::done };
 

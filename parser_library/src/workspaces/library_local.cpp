@@ -123,17 +123,17 @@ void library_local::load_files()
     }
 
     bool extension_removed = false;
-    for (const auto& file : files_list)
+    for (auto& [file, rl] : files_list)
     {
         if (extensions_.empty())
         {
-            files_[context::to_upper_copy(file.first)] = file.second;
+            files_[context::to_upper_copy(file)] = std::move(rl);
             continue;
         }
 
         for (const auto& extension : extensions_)
         {
-            std::string_view filename(file.first);
+            std::string_view filename(file);
 
             if (filename.size() <= extension.size())
                 continue;
@@ -142,7 +142,7 @@ void library_local::load_files()
                 continue;
             filename.remove_suffix(extension.size());
 
-            const auto [_, inserted] = files_.try_emplace(context::to_upper_copy(std::string(filename)), file.second);
+            const auto [_, inserted] = files_.try_emplace(context::to_upper_copy(std::string(filename)), rl);
             // TODO: the stored value is a full path, yet we try to interpret it as a relative one later on
             if (!inserted)
                 add_diagnostic(diagnostic_s::warning_L0004(

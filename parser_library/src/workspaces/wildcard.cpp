@@ -22,21 +22,17 @@ namespace {
 const std::regex escape("(\\(|\\[|\\{|\\\\|\\^|\\-|\\=|\\$|\\!|\\||\\]|\\}|\\)|\\.)");
 const std::regex question("\\?");
 const std::regex nongreedy("(\\*|\\+)");
-const std::regex slash("\\/");
+const std::regex slash("\\\\");
 } // namespace
 
-std::regex wildcard2regex(const std::string& wildcard)
+std::regex wildcard2regex(std::string wildcard)
 {
-    auto regex_str = wildcard;
-    if (utils::platform::is_windows())
-    {
-        // change of forward slash to double backslash on windows
-        regex_str = std::regex_replace(regex_str, slash, "\\");
-    }
-    regex_str = std::regex_replace(regex_str, escape, "\\$1");
-    regex_str = std::regex_replace(regex_str, question, ".");
-    regex_str = std::regex_replace(regex_str, nongreedy, ".$1?");
-    return std::regex(regex_str);
+    // change of double backslash to forward slash
+    wildcard = std::regex_replace(wildcard, slash, "/");
+    wildcard = std::regex_replace(wildcard, escape, "\\$1");
+    wildcard = std::regex_replace(wildcard, question, ".");
+    wildcard = std::regex_replace(wildcard, nongreedy, ".$1?");
+    return std::regex(wildcard);
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

@@ -33,9 +33,8 @@ namespace hlasm_plugin::parser_library::workspaces {
 
 using file_ptr = std::shared_ptr<file>;
 using processor_file_ptr = std::shared_ptr<processor_file>;
-using list_directory_result = std::pair<
-    std::unordered_map<std::string, utils::resource::resource_location, utils::hashers::string_hasher, std::equal_to<>>,
-    utils::path::list_directory_rc>;
+using list_directory_result =
+    std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>, utils::path::list_directory_rc>;
 
 // Wraps an associative array of file names and files.
 // Implements LSP text synchronization methods.
@@ -61,11 +60,18 @@ public:
     // Returns nullptr if there is no such file.
     virtual processor_file_ptr find_processor_file(const file_location& key) = 0;
 
-    // Returns list of all files in a directory. Returns associative array with pairs file location - file name.
-    virtual list_directory_result list_directory_files(const utils::resource::resource_location& directory) = 0;
+    // Returns list of all files in a directory. Returns associative array with pairs file name - file location.
+    virtual list_directory_result list_directory_files(const utils::resource::resource_location& directory) const = 0;
 
-    virtual bool file_exists(const std::string& file_name) = 0;
-    virtual bool lib_file_exists(const std::string& lib_path, const std::string& file_name) = 0;
+    // Returns list of all sub directories and symbolic links. Returns associative array with pairs {canonical path -
+    // file location}.
+    // TODO Used as a shortcut for easier testing with mocks - refactor it out of this class together with canonical()
+    virtual list_directory_result list_directory_subdirs_and_symlinks(
+        const utils::resource::resource_location& directory) const = 0;
+
+    virtual std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec) const = 0;
+
+    virtual bool dir_exists(const utils::resource::resource_location& dir_loc) const = 0;
 
     virtual void did_open_file(const file_location& document_loc, version_t version, std::string text) = 0;
     virtual void did_change_file(

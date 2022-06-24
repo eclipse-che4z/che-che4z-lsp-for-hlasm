@@ -58,12 +58,34 @@ std::optional<std::string> filesystem_content_loader::load_text(const resource_l
 list_directory_result filesystem_content_loader::list_directory_files(
     const utils::resource::resource_location& directory_loc) const
 {
-    std::filesystem::path lib_p(directory_loc.get_path());
+    std::filesystem::path path(directory_loc.get_path());
     list_directory_result result;
 
-    result.second = utils::path::list_directory_regular_files(lib_p, [&result](const std::filesystem::path& f) {
-        result.first[utils::path::filename(f).string()] =
-            utils::resource::resource_location(utils::path::path_to_uri(utils::path::absolute(f).string()));
+    result.second = utils::path::list_directory_regular_files(path, [&result](const std::filesystem::path& f) {
+        result.first.emplace_back(utils::path::filename(f).string(),
+            utils::resource::resource_location(utils::path::path_to_uri(utils::path::absolute(f).string())));
+    });
+
+    return result;
+}
+
+list_directory_result filesystem_content_loader::list_directory_subdirs_and_symlinks(
+    const utils::resource::resource_location& directory_loc) const
+{
+    std::filesystem::path path(directory_loc.get_path());
+    list_directory_result result;
+
+    result.second = utils::path::list_directory_subdirs_and_symlinks(path, [&result](const std::filesystem::path& p) {
+        std::error_code ec;
+        auto cp = utils::path::canonical(p, ec);
+
+        if (!ec && utils::path::is_directory(cp))
+        {
+            auto cp_str = cp.string();
+            auto found_dir = utils::resource::resource_location(utils::path::path_to_uri(cp_str));
+            found_dir.join(""); // Ensure that this is a directory
+            result.first.emplace_back(std::move(cp_str), std::move(found_dir));
+        }
     });
 
     return result;
@@ -72,6 +94,23 @@ list_directory_result filesystem_content_loader::list_directory_files(
 std::string filesystem_content_loader::filename(const utils::resource::resource_location& res_loc) const
 {
     return utils::path::filename(std::filesystem::path(res_loc.get_path())).string();
+}
+
+bool filesystem_content_loader::file_exists(const utils::resource::resource_location& res_loc) const
+{
+    std::error_code ec;
+    return std::filesystem::exists(res_loc.get_path(), ec) && !ec && !dir_exists(res_loc);
+}
+
+bool filesystem_content_loader::dir_exists(const utils::resource::resource_location& res_loc) const
+{
+    return utils::path::is_directory(res_loc.get_path());
+}
+
+std::string filesystem_content_loader::canonical(
+    const utils::resource::resource_location& res_loc, std::error_code& ec) const
+{
+    return utils::path::canonical(res_loc.get_path(), ec).string();
 }
 
 } // namespace hlasm_plugin::utils::resource

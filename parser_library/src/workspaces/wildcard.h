@@ -19,7 +19,7 @@
 
 namespace hlasm_plugin::parser_library::workspaces {
 // Returns a regex that can be used for wildcard matching.
-std::regex wildcard2regex(const std::string& wildcard);
+std::regex wildcard2regex(std::string wildcard);
 
 } // namespace hlasm_plugin::parser_library::workspaces
 

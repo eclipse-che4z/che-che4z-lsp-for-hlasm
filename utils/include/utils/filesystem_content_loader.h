@@ -28,9 +28,14 @@ public:
     filesystem_content_loader() = default;
     virtual ~filesystem_content_loader() = default;
 
-    std::optional<std::string> load_text(const resource_location& resource) const;
-    list_directory_result list_directory_files(const utils::resource::resource_location& directory_loc) const;
-    std::string filename(const utils::resource::resource_location& res_loc) const;
+    std::optional<std::string> load_text(const resource_location& resource) const override;
+    list_directory_result list_directory_files(const utils::resource::resource_location& directory_loc) const override;
+    list_directory_result list_directory_subdirs_and_symlinks(
+        const utils::resource::resource_location& directory_loc) const override;
+    std::string filename(const utils::resource::resource_location& res_loc) const override;
+    bool file_exists(const utils::resource::resource_location& res_loc) const override;
+    bool dir_exists(const utils::resource::resource_location& res_loc) const override;
+    std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec) const override;
 };
 
 } // namespace hlasm_plugin::utils::resource

@@ -42,11 +42,39 @@ list_directory_result list_directory_files(const utils::resource::resource_locat
     return cl.list_directory_files(directory_loc);
 }
 
+list_directory_result list_directory_subdirs_and_symlinks(const utils::resource::resource_location& directory_loc)
+{
+    const auto& cl = get_content_loader();
+
+    return cl.list_directory_subdirs_and_symlinks(directory_loc);
+}
+
 std::string filename(const utils::resource::resource_location& res_loc)
 {
     const auto& cl = get_content_loader();
 
     return cl.filename(res_loc);
+}
+
+bool file_exists(const utils::resource::resource_location& res_loc)
+{
+    const auto& cl = get_content_loader();
+
+    return cl.file_exists(res_loc);
+}
+
+bool dir_exists(const utils::resource::resource_location& res_loc)
+{
+    const auto& cl = get_content_loader();
+
+    return cl.dir_exists(res_loc);
+}
+
+std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec)
+{
+    const auto& cl = get_content_loader();
+
+    return cl.canonical(res_loc, ec);
 }
 
 } // namespace hlasm_plugin::utils::resource

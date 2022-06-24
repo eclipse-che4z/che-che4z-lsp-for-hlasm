@@ -40,7 +40,7 @@ namespace hlasm_plugin::parser_library::workspaces {
 
 using ws_uri = std::string;
 using proc_grp_id = std::string;
-using program_id = std::string;
+using program_id = utils::resource::resource_location;
 using ws_highlight_info = std::unordered_map<std::string, semantics::highlighting_info>;
 struct library_local_options;
 
@@ -143,7 +143,7 @@ private:
     file_manager_vfm fm_vfm_;
 
     std::unordered_map<proc_grp_id, processor_group> proc_grps_;
-    std::map<std::string, program> exact_pgm_conf_;
+    std::map<utils::resource::resource_location, program> exact_pgm_conf_;
     std::vector<std::pair<program, std::regex>> regex_pgm_conf_;
     processor_group implicit_proc_grp;
 
@@ -152,8 +152,10 @@ private:
 
     bool opened_ = false;
 
-    void find_and_add_libs(
-        std::string root, const std::string& path_pattern, processor_group& prc_grp, const library_local_options& opts);
+    void find_and_add_libs(const utils::resource::resource_location& root,
+        const utils::resource::resource_location& path_pattern,
+        processor_group& prc_grp,
+        const library_local_options& opts);
 
     void process_processor_group(
         const config::processor_group& pg, const config::proc_grps& proc_groups, const config::pgm_conf& pgm_config);
@@ -183,8 +185,6 @@ private:
     void filter_and_close_dependencies_(
         const std::set<utils::resource::resource_location>& dependencies, processor_file_ptr file);
     bool is_dependency_(const utils::resource::resource_location& file_location);
-
-    bool program_id_match(const std::string& filename, const program_id& program) const;
 
     std::vector<processor_file_ptr> find_related_opencodes(
         const utils::resource::resource_location& document_loc) const;
