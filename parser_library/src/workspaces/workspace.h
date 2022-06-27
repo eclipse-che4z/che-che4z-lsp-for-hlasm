@@ -118,6 +118,7 @@ public:
     const program* get_program(const utils::resource::resource_location& file_location) const;
 
     workspace_file_info parse_file(const utils::resource::resource_location& file_location);
+    workspace_file_info parse_successful(const processor_file_ptr& f);
     void refresh_libraries();
     workspace_file_info did_open_file(const utils::resource::resource_location& file_location);
     void did_close_file(const utils::resource::resource_location& file_location);

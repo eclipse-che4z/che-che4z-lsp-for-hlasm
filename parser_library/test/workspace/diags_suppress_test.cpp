@@ -180,5 +180,5 @@ TEST(diags_suppress, cancel_token)
     ASSERT_TRUE(pfile);
 
     pfile->collect_diags();
-    EXPECT_EQ(pfile->diags().size(), 6U);
+    EXPECT_EQ(pfile->diags().size(), 0U);
 }

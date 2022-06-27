@@ -175,25 +175,26 @@ bool workspace::is_config_file(const utils::resource::resource_location& file_lo
 
 workspace_file_info workspace::parse_config_file()
 {
-    workspace_file_info ws_file_info;
-
     if (load_and_process_config())
     {
         // Reparse every opened file when configuration is changed
         for (const auto& fname : opened_files_)
         {
             auto found = file_manager_.find_processor_file(fname);
-            if (found)
-                found->parse(*this, get_asm_options(fname), get_preprocessor_options(fname), &fm_vfm_);
+            if (!found || !found->parse(*this, get_asm_options(fname), get_preprocessor_options(fname), &fm_vfm_))
+                continue;
+
+            (void)parse_successful(found);
         }
 
         for (const auto& fname : dependants_)
         {
-            auto found = file_manager_.find_processor_file(fname);
-            if (found)
+            if (auto found = file_manager_.find_processor_file(fname); found)
                 filter_and_close_dependencies_(found->files_to_close(), found);
         }
     }
+
+    workspace_file_info ws_file_info;
     ws_file_info.config_parsing = true;
     return ws_file_info;
 }
@@ -297,29 +298,36 @@ workspace_file_info workspace::parse_file(const utils::resource::resource_locati
 
     for (const auto& f : files_to_parse)
     {
-        f->parse(*this, get_asm_options(f->get_location()), get_preprocessor_options(f->get_location()), &fm_vfm_);
-        if (!f->dependencies().empty())
-            dependants_.insert(f->get_location());
-
-        // if there is no processor group assigned to the program, delete diagnostics that may have been created
-        if (cancel_ && cancel_->load()) // skip, if parsing was cancelled using the cancellation token
+        if (!f->parse(*this, get_asm_options(f->get_location()), get_preprocessor_options(f->get_location()), &fm_vfm_))
             continue;
 
-        const processor_group& grp = get_proc_grp_by_program(f->get_location());
-        f->collect_diags();
-        ws_file_info.processor_group_found = &grp != &implicit_proc_grp;
-        if (&grp == &implicit_proc_grp && (int64_t)f->diags().size() > get_config().diag_supress_limit)
-        {
-            ws_file_info.diagnostics_suppressed = true;
-            delete_diags(f);
-        }
-        else
-            diag_suppress_notified_[f->get_location()] = false;
+        ws_file_info = parse_successful(f);
     }
 
     // second check after all dependants are there to close all files that used to be dependencies
     for (const auto& f : files_to_parse)
         filter_and_close_dependencies_(f->files_to_close(), f);
+
+    return ws_file_info;
+}
+
+workspace_file_info workspace::parse_successful(const processor_file_ptr& f)
+{
+    workspace_file_info ws_file_info;
+
+    if (!f->dependencies().empty())
+        dependants_.insert(f->get_location());
+
+    const processor_group& grp = get_proc_grp_by_program(f->get_location());
+    f->collect_diags();
+    ws_file_info.processor_group_found = &grp != &implicit_proc_grp;
+    if (&grp == &implicit_proc_grp && (int64_t)f->diags().size() > get_config().diag_supress_limit)
+    {
+        ws_file_info.diagnostics_suppressed = true;
+        delete_diags(f);
+    }
+    else
+        diag_suppress_notified_[f->get_location()] = false;
 
     return ws_file_info;
 }

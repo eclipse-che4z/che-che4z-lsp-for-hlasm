@@ -51,7 +51,7 @@ parse_result processor_file_impl::parse(
     if (!last_analyzer_opencode_)
         last_opencode_id_storage_ = std::make_shared<context::id_storage>();
 
-    last_analyzer_ = std::make_unique<analyzer>(get_text(),
+    auto new_analyzer = std::make_unique<analyzer>(get_text(),
         analyzer_options {
             get_location(),
             &lib_provider,
@@ -64,26 +64,27 @@ parse_result processor_file_impl::parse(
         });
     // If parsed as opencode previously, use id_index from the last parsing
 
-    last_analyzer_opencode_ = true;
-
     auto old_dep = dependencies_;
 
-    auto res = parse_inner(*last_analyzer_);
+    auto res = parse_inner(*new_analyzer);
 
     if (!cancel_ || !*cancel_)
     {
+        last_analyzer_ = std::move(new_analyzer);
+        last_analyzer_opencode_ = true;
+
         dependencies_.clear();
         for (auto& file : last_analyzer_->hlasm_ctx().get_visited_files())
             if (file != get_location())
                 dependencies_.insert(file);
-    }
 
-    files_to_close_.clear();
-    // files that used to be dependencies but are not anymore should be closed internally
-    for (const auto& file : old_dep)
-    {
-        if (dependencies_.find(file) == dependencies_.end())
-            files_to_close_.insert(file);
+        files_to_close_.clear();
+        // files that used to be dependencies but are not anymore should be closed internally
+        for (const auto& file : old_dep)
+        {
+            if (dependencies_.find(file) == dependencies_.end())
+                files_to_close_.insert(file);
+        }
     }
 
     return res;
@@ -198,14 +199,13 @@ void processor_file_impl::erase_cache_of_opencode(const utils::resource::resourc
 
 bool processor_file_impl::parse_inner(analyzer& new_analyzer)
 {
-    diags().clear();
-
     new_analyzer.analyze(cancel_);
-
-    collect_diags_from_child(new_analyzer);
 
     if (cancel_ && *cancel_)
         return false;
+
+    diags().clear();
+    collect_diags_from_child(new_analyzer);
     return true;
 }
 

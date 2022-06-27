@@ -14,6 +14,9 @@
 
 #include <chrono>
 #include <thread>
+#ifdef WIN32
+#    include <locale.h>
+#endif
 
 #include "dap/dap_message_wrappers.h"
 #include "dap/dap_server.h"
@@ -114,6 +117,9 @@ auto separate_arguments(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+#ifdef WIN32
+    setlocale(LC_ALL, ".UTF-8");
+#endif
     using namespace hlasm_plugin::language_server;
 
     auto [count, start] = separate_arguments(argc, argv);
