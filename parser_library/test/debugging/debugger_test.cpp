@@ -20,6 +20,7 @@
 
 #include "gtest/gtest.h"
 
+#include "../workspace/empty_configs.h"
 #include "debug_event_consumer_s_mock.h"
 #include "debugger.h"
 #include "debugging/debug_types.h"
@@ -37,7 +38,8 @@ TEST(debugger, stopped_on_entry)
 {
     file_manager_impl file_manager;
     lib_config config;
-    workspace ws(file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(file_manager, config, global_settings);
 
     debug_event_consumer_s_mock m;
     debugger d;
@@ -74,7 +76,8 @@ TEST(debugger, disconnect)
 {
     file_manager_impl file_manager;
     lib_config config;
-    workspace ws(file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(file_manager, config, global_settings);
 
     debug_event_consumer_s_mock m;
     debugger d;
@@ -316,10 +319,11 @@ void erase_frames_from_top(size_t number_of_frames,
 class workspace_mock : public workspace
 {
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
 
 public:
     workspace_mock(file_manager& file_mngr)
-        : workspace(file_mngr, config)
+        : workspace(file_mngr, config, global_settings)
     {}
 
     parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override

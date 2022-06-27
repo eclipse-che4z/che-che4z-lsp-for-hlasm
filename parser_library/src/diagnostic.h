@@ -26,6 +26,10 @@
 
 #include "protocol.h"
 
+namespace hlasm_plugin::utils::resource {
+class resource_location;
+} // namespace hlasm_plugin::utils::resource
+
 namespace hlasm_plugin::parser_library {
 
 /*
@@ -830,17 +834,20 @@ public:
 
     static diagnostic_s warning_L0006(std::string_view path);
 
-    static diagnostic_s error_W0001(std::string_view file_name);
+    static diagnostic_s error_W0001(const utils::resource::resource_location& file_name);
 
-    static diagnostic_s error_W0002(std::string_view file_name, std::string_view ws_name);
+    static diagnostic_s error_W0002(const utils::resource::resource_location& file_name, std::string_view ws_name);
 
-    static diagnostic_s error_W0003(std::string_view file_name, std::string_view ws_name);
+    static diagnostic_s error_W0003(const utils::resource::resource_location& file_name, std::string_view ws_name);
 
-    static diagnostic_s error_W0004(std::string_view file_name, std::string_view ws_name);
+    static diagnostic_s error_W0004(const utils::resource::resource_location&, std::string_view ws_name);
 
-    static diagnostic_s error_W0005(std::string_view file_name, std::string_view name, std::string_view type);
+    static diagnostic_s error_W0005(
+        const utils::resource::resource_location&, std::string_view name, std::string_view type);
 
-    static diagnostic_s error_W0006(std::string_view file_name, std::string_view proc_group);
+    static diagnostic_s error_W0006(const utils::resource::resource_location&, std::string_view proc_group);
+
+    static diagnostic_s warn_W0007(const utils::resource::resource_location&, std::string_view substitution);
 
     /*
     E01x - wrong format

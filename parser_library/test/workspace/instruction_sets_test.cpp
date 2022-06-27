@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../workspace/empty_configs.h"
 #include "file_with_text.h"
 #include "utils/path.h"
 #include "utils/platform.h"
@@ -164,7 +165,8 @@ TEST_F(workspace_instruction_sets_test, changed_instr_set_370_Z10)
 {
     file_manager_opt file_manager(file_manager_opt_variant::optable_370);
     lib_config config;
-    workspace ws(file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(file_manager, config, global_settings);
     ws.open();
 
     ws.did_open_file(source_loc);
@@ -181,7 +183,8 @@ TEST_F(workspace_instruction_sets_test, changed_instr_set_Z10_370)
 {
     file_manager_opt file_manager(file_manager_opt_variant::optable_Z10);
     lib_config config;
-    workspace ws(file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(file_manager, config, global_settings);
     ws.open();
 
     ws.did_open_file(source_loc);

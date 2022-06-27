@@ -146,7 +146,13 @@ void feature_workspace_folders::did_change_watched_files(const json&, const json
 
 void feature_workspace_folders::send_configuration_request()
 {
-    static const json config_request_args { { "items", { { { "section", "hlasm" } } } } };
+    static const json config_request_args { {
+        "items",
+        json::array_t {
+            { { "section", "hlasm" } },
+            json::object(),
+        },
+    } };
     response_->request("config_request_" + std::to_string(config_request_number_),
         "workspace/configuration",
         config_request_args,
@@ -156,13 +162,13 @@ void feature_workspace_folders::send_configuration_request()
 
 void feature_workspace_folders::configuration(const json&, const json& params) const
 {
-    if (params.size() == 0)
+    if (params.size() != 2)
     {
-        LOG_WARNING("Empty configuration response received.");
+        LOG_WARNING("Unexpected configuration response received.");
         return;
     }
 
-    ws_mngr_.configuration_changed(parser_library::lib_config::load_from_json(params[0]));
+    ws_mngr_.configuration_changed(parser_library::lib_config::load_from_json(params[0]), params[1].dump().c_str());
 }
 
 void feature_workspace_folders::did_change_configuration(const json&, const json&) { send_configuration_request(); }

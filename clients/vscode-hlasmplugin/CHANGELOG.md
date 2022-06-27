@@ -11,8 +11,9 @@
 - Enhanced commands for continuation handling and trimming of oversized lines
 - Provide the name of a missing variable or ordinary symbol in messages
 - SYSIN_DSN and SYSIN_MEMBER support
-- Home directory substitution is now supported in proc_grps.json and pgm_conf.json
+- Home directory substitution is now supported in `proc_grps.json` and `pgm_conf.json`
 - Conditional DB2 preprocessor option
+- Visual Studio Code workspace variables `${config:...}` and `${workspaceFolder}` can be used in `pgm_conf.json` and `proc_grps.json`
 
 #### Fixed
 - Incorrect attribute values generated when literals are substituted in CA expressions

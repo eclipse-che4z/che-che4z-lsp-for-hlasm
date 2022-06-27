@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "utils/concat.h"
+#include "utils/resource_location.h"
 #include "utils/utf8text.h"
 
 namespace hlasm_plugin::parser_library {
@@ -2415,20 +2416,20 @@ diagnostic_op diagnostic_op::mnote_diagnostic(unsigned level, std::string_view m
     return diagnostic_op(lvl, "MNOTE", std::string(message), range, tag);
 }
 
-diagnostic_s diagnostic_s::error_W0001(std::string_view file_name)
+diagnostic_s diagnostic_s::error_W0001(const utils::resource::resource_location& file_name)
 {
-    return diagnostic_s(std::string(file_name),
+    return diagnostic_s(file_name.get_uri(),
         {},
         diagnostic_severity::error,
         "W0001",
-        concat("Could not read file ", file_name),
+        concat("Could not read file ", file_name.to_presentable()),
         {},
         diagnostic_tag::none);
 }
 
-diagnostic_s diagnostic_s::error_W0002(std::string_view ws_uri, std::string_view ws_name)
+diagnostic_s diagnostic_s::error_W0002(const utils::resource::resource_location& ws_uri, std::string_view ws_name)
 {
-    return diagnostic_s(std::string(ws_uri),
+    return diagnostic_s(ws_uri.get_uri(),
         {},
         diagnostic_severity::error,
         "W0002",
@@ -2437,9 +2438,9 @@ diagnostic_s diagnostic_s::error_W0002(std::string_view ws_uri, std::string_view
         diagnostic_tag::none);
 }
 
-diagnostic_s diagnostic_s::error_W0003(std::string_view file_name, std::string_view ws_name)
+diagnostic_s diagnostic_s::error_W0003(const utils::resource::resource_location& file_name, std::string_view ws_name)
 {
-    return diagnostic_s(std::string(file_name),
+    return diagnostic_s(file_name.get_uri(),
         {},
         diagnostic_severity::error,
         "W0003",
@@ -2448,9 +2449,9 @@ diagnostic_s diagnostic_s::error_W0003(std::string_view file_name, std::string_v
         diagnostic_tag::none);
 }
 
-diagnostic_s diagnostic_s::error_W0004(std::string_view file_name, std::string_view ws_name)
+diagnostic_s diagnostic_s::error_W0004(const utils::resource::resource_location& file_name, std::string_view ws_name)
 {
-    return diagnostic_s(std::string(file_name),
+    return diagnostic_s(file_name.get_uri(),
         {},
         diagnostic_severity::warning,
         "W0004",
@@ -2461,31 +2462,49 @@ diagnostic_s diagnostic_s::error_W0004(std::string_view file_name, std::string_v
         diagnostic_tag::none);
 }
 
-diagnostic_s diagnostic_s::error_W0005(std::string_view file_name, std::string_view name, std::string_view type)
+diagnostic_s diagnostic_s::error_W0005(
+    const utils::resource::resource_location& file_name, std::string_view name, std::string_view type)
 {
-    return diagnostic_s(std::string(file_name),
+    return diagnostic_s(file_name.get_uri(),
         {},
         diagnostic_severity::warning,
         "W0005",
-        concat("The ", type, " '", name, "' from '", file_name, "' defines invalid assembler options."),
+        concat(
+            "The ", type, " '", name, "' from '", file_name.to_presentable(), "' defines invalid assembler options."),
         {},
         diagnostic_tag::none);
 }
 
-diagnostic_s diagnostic_s::error_W0006(std::string_view file_name, std::string_view proc_group)
+diagnostic_s diagnostic_s::error_W0006(const utils::resource::resource_location& file_name, std::string_view proc_group)
 {
-    return diagnostic_s(std::string(file_name),
+    return diagnostic_s(file_name.get_uri(),
         {},
         diagnostic_severity::warning,
         "W0006",
-        concat("The processor group '", proc_group, "' from '", file_name, "' defines invalid preprocessor options."),
+        concat("The processor group '",
+            proc_group,
+            "' from '",
+            file_name.to_presentable(),
+            "' defines invalid preprocessor options."),
+        {},
+        diagnostic_tag::none);
+}
+
+diagnostic_s diagnostic_s::warn_W0007(
+    const utils::resource::resource_location& file_name, std::string_view substitution)
+{
+    return diagnostic_s(file_name.get_uri(),
+        {},
+        diagnostic_severity::warning,
+        "W0007",
+        concat("Unable to perform workspace settings substitution for variable '", substitution, "'."),
         {},
         diagnostic_tag::none);
 }
 
 diagnostic_s diagnostic_s::error_L0001(std::string_view path)
 {
-    return diagnostic_s(std::string(path), {}, "L0001", concat("Unable to load library: ", path, "."));
+    return diagnostic_s("", {}, "L0001", concat("Unable to load library: ", path, "."));
 }
 
 diagnostic_s diagnostic_s::error_L0002(std::string_view path)

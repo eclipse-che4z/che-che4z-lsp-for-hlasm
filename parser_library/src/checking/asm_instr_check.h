@@ -204,7 +204,6 @@ class entry final : public assembler_instruction
 {
 public:
     entry(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    ;
     bool check(const std::vector<const asm_operand*>& to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;

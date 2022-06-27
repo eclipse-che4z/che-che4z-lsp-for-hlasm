@@ -109,7 +109,7 @@ TEST(workspace_manager, did_change_file)
 TEST(workspace_manager, set_message_consumer)
 {
     workspace_manager mngr;
-    mngr.configuration_changed(lib_config::load_from_json(R"({"diagnosticsSuppressLimit":0})"_json));
+    mngr.configuration_changed(lib_config::load_from_json(R"({"diagnosticsSuppressLimit":0})"_json), "{}");
     mngr.add_workspace("ws1", "ws1");
 
     message_consumer_mock msg_consumer;

@@ -12,6 +12,7 @@
 
 target_sources(library_test PRIVATE
 	diags_suppress_test.cpp
+	empty_configs.cpp
 	empty_configs.h
 	extension_handling_test.cpp
 	file_with_text.h

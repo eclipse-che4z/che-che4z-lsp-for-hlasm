@@ -19,8 +19,10 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
+#include "nlohmann/json.hpp"
 #include "utils/resource_location.h"
 #include "workspace_manager_impl.h"
 #include "workspaces/file_manager_impl.h"
@@ -83,9 +85,10 @@ void workspace_manager::did_close_file(const char* document_uri)
     impl_->did_close_file(utils::resource::resource_location(document_uri));
 }
 
-void workspace_manager::configuration_changed(const lib_config& new_config)
+void workspace_manager::configuration_changed(const lib_config& new_config, const char* whole_settings)
 {
-    impl_->configuration_changed(new_config);
+    impl_->configuration_changed(
+        new_config, std::make_shared<const nlohmann::json>(nlohmann::json::parse(std::string_view(whole_settings))));
 }
 
 void workspace_manager::register_diagnostics_consumer(diagnostics_consumer* consumer)

@@ -15,11 +15,14 @@
 #include "workspace.h"
 
 #include <algorithm>
+#include <charconv>
 #include <filesystem>
 #include <iostream>
 #include <memory>
 #include <regex>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "file_manager_vfm.h"
 #include "lib_config.h"
@@ -40,6 +43,7 @@ workspace::workspace(const utils::resource::resource_location& location,
     const std::string& name,
     file_manager& file_manager,
     const lib_config& global_config,
+    const shared_json& global_settings,
     std::atomic<bool>* cancel)
     : cancel_(cancel)
     , name_(name)
@@ -48,6 +52,7 @@ workspace::workspace(const utils::resource::resource_location& location,
     , fm_vfm_(file_manager_)
     , implicit_proc_grp("pg_implicit", {}, {})
     , global_config_(global_config)
+    , m_global_settings(global_settings)
 {
     auto hlasm_folder = utils::resource::resource_location::join(location_, HLASM_PLUGIN_FOLDER);
     proc_grps_loc_ = utils::resource::resource_location::join(hlasm_folder, FILENAME_PROC_GRPS);
@@ -57,12 +62,16 @@ workspace::workspace(const utils::resource::resource_location& location,
 workspace::workspace(const utils::resource::resource_location& location,
     file_manager& file_manager,
     const lib_config& global_config,
+    const shared_json& global_settings,
     std::atomic<bool>* cancel)
-    : workspace(location, location.get_uri(), file_manager, global_config, cancel)
+    : workspace(location, location.get_uri(), file_manager, global_config, global_settings, cancel)
 {}
 
-workspace::workspace(file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel)
-    : workspace(utils::resource::resource_location(""), file_manager, global_config, cancel)
+workspace::workspace(file_manager& file_manager,
+    const lib_config& global_config,
+    const shared_json& global_settings,
+    std::atomic<bool>* cancel)
+    : workspace(utils::resource::resource_location(""), file_manager, global_config, global_settings, cancel)
 {
     opened_ = true;
 }
@@ -187,6 +196,69 @@ workspace_file_info workspace::parse_config_file()
     }
     ws_file_info.config_parsing = true;
     return ws_file_info;
+}
+
+namespace {
+const nlohmann::json* find_member(std::string_view key, const nlohmann::json& j)
+{
+    if (j.is_object())
+    {
+        if (auto it = j.find(key); it == j.end())
+            return nullptr;
+        else
+            return &it.value();
+    }
+    else if (j.is_array())
+    {
+        unsigned long long i = 0;
+        const auto conv_result = std::from_chars(std::to_address(key.begin()), std::to_address(key.end()), i);
+        if (conv_result.ec != std::errc() || conv_result.ptr != std::to_address(key.end()) || i >= j.size())
+            return nullptr;
+
+        return &j[i];
+    }
+    else
+        return nullptr;
+}
+
+std::optional<std::string_view> find_setting(std::string_view key, const nlohmann::json& j_)
+{
+    const nlohmann::json* j = &j_;
+
+    while (true)
+    {
+        auto dot = key.find('.');
+        auto subkey = key.substr(0, dot);
+
+        j = find_member(subkey, *j);
+        if (!j)
+            return std::nullopt;
+
+        if (dot == std::string_view::npos)
+            break;
+        else
+            key.remove_prefix(dot + 1);
+    }
+
+    if (!j->is_string())
+        return std::nullopt;
+    else
+        return j->get<std::string_view>();
+}
+} // namespace
+
+bool workspace::settings_updated()
+{
+    auto global_settings = m_global_settings.load();
+    for (const auto& [key, value] : m_utilized_settings_values)
+    {
+        if (find_setting(key, *global_settings) != value)
+        {
+            parse_config_file();
+            return true;
+        }
+    }
+    return false;
 }
 
 workspace_file_info workspace::parse_file(const utils::resource::resource_location& file_location)
@@ -712,7 +784,7 @@ void workspace::process_program(const config::program_mapping& pgm, const file_p
     }
     else
     {
-        config_diags_.push_back(diagnostic_s::error_W0004(pgm_conf_file->get_location().to_presentable(), name_));
+        config_diags_.push_back(diagnostic_s::error_W0004(pgm_conf_file->get_location(), name_));
     }
 }
 
@@ -727,8 +799,9 @@ bool workspace::load_and_process_config()
     config::proc_grps proc_groups;
     file_ptr proc_grps_file;
     file_ptr pgm_conf_file;
+    global_settings_map utilized_settings_values;
 
-    bool load_ok = load_config(proc_groups, pgm_config, proc_grps_file, pgm_conf_file);
+    bool load_ok = load_config(proc_groups, pgm_config, proc_grps_file, pgm_conf_file, utilized_settings_values);
     if (!load_ok)
         return false;
 
@@ -746,34 +819,118 @@ bool workspace::load_and_process_config()
         process_program(pgm, pgm_conf_file);
     }
 
+    m_utilized_settings_values = std::move(utilized_settings_values);
+
     return true;
 }
-bool workspace::load_config(
-    config::proc_grps& proc_groups, config::pgm_conf& pgm_config, file_ptr& proc_grps_file, file_ptr& pgm_conf_file)
+
+namespace {
+
+struct json_settings_replacer
+{
+    static const std::regex config_reference;
+
+    const std::shared_ptr<const nlohmann::json>& global_settings;
+    workspace::global_settings_map& utilized_settings_values;
+    utils::resource::resource_location& location;
+    std::match_results<std::string_view::iterator> matches;
+    std::unordered_set<std::string, utils::hashers::string_hasher, std::equal_to<>> unavailable;
+
+    void operator()(nlohmann::json& val)
+    {
+        if (val.is_structured())
+        {
+            for (auto& value : val)
+                (*this)(value);
+        }
+        else if (val.is_string())
+        {
+            const auto& value = val.get<std::string_view>();
+
+            if (auto replacement = try_replace(value); replacement.has_value())
+                val = std::move(replacement).value();
+        }
+    }
+
+    std::optional<std::string> try_replace(std::string_view s)
+    {
+        std::optional<std::string> result;
+        if (!std::regex_search(s.begin(), s.end(), matches, config_reference))
+            return result;
+
+        auto& r = result.emplace();
+        do
+        {
+            r.append(s.begin(), matches[0].first);
+            s.remove_prefix(matches[0].second - s.begin());
+
+            static constexpr std::string_view config_section = "config:";
+
+            std::string_view key(std::to_address(matches[1].first), matches[1].length());
+            if (key.starts_with(config_section))
+            {
+                auto reduced_key = key.substr(config_section.size());
+                auto v = find_setting(reduced_key, *global_settings);
+                if (v.has_value())
+                    r.append(*v);
+                else
+                    unavailable.emplace(key);
+                utilized_settings_values.emplace(reduced_key, v);
+            }
+            else if (key == "workspaceFolder")
+                r.append(location.get_path()); // TODO: change to get_uri as soon as possible
+            else
+                unavailable.emplace(key);
+
+        } while (std::regex_search(s.begin(), s.end(), matches, config_reference));
+
+        r.append(s);
+
+        return result;
+    }
+};
+const std::regex json_settings_replacer::config_reference(R"(\$\{([^}]+)\})");
+} // namespace
+
+bool workspace::load_config(config::proc_grps& proc_groups,
+    config::pgm_conf& pgm_config,
+    file_ptr& proc_grps_file,
+    file_ptr& pgm_conf_file,
+    global_settings_map& utilized_settings_values)
 {
     // proc_grps.json parse
     proc_grps_file = file_manager_.add_file(proc_grps_loc_);
     if (proc_grps_file->update_and_get_bad())
         return false;
 
+    const auto current_settings = m_global_settings.load();
+    json_settings_replacer json_visitor { current_settings, utilized_settings_values, location_ };
+
     try
     {
-        nlohmann::json::parse(proc_grps_file->get_text()).get_to(proc_groups);
+        auto proc_json = nlohmann::json::parse(proc_grps_file->get_text());
+
+        json_visitor.unavailable.clear();
+        json_visitor(proc_json);
+
+        for (const auto& var : json_visitor.unavailable)
+            config_diags_.push_back(diagnostic_s::warn_W0007(proc_grps_file->get_location(), var));
+
+        proc_json.get_to(proc_groups);
         proc_grps_.clear();
         for (const auto& pg : proc_groups.pgroups)
         {
             if (!pg.asm_options.valid())
-                config_diags_.push_back(diagnostic_s::error_W0005(
-                    proc_grps_file->get_location().to_presentable(), pg.name, "processor group"));
-            if (!pg.preprocessor.valid())
                 config_diags_.push_back(
-                    diagnostic_s::error_W0006(proc_grps_file->get_location().to_presentable(), pg.name));
+                    diagnostic_s::error_W0005(proc_grps_file->get_location(), pg.name, "processor group"));
+            if (!pg.preprocessor.valid())
+                config_diags_.push_back(diagnostic_s::error_W0006(proc_grps_file->get_location(), pg.name));
         }
     }
     catch (const nlohmann::json::exception&)
     {
         // could not load proc_grps
-        config_diags_.push_back(diagnostic_s::error_W0002(proc_grps_file->get_location().to_presentable(), name_));
+        config_diags_.push_back(diagnostic_s::error_W0002(proc_grps_file->get_location(), name_));
         return false;
     }
 
@@ -784,19 +941,27 @@ bool workspace::load_config(
 
     try
     {
-        nlohmann::json::parse(pgm_conf_file->get_text()).get_to(pgm_config);
+        auto pgm_json = nlohmann::json::parse(pgm_conf_file->get_text());
+
+        json_visitor.unavailable.clear();
+        json_visitor(pgm_json);
+
+        for (const auto& var : json_visitor.unavailable)
+            config_diags_.push_back(diagnostic_s::warn_W0007(pgm_conf_file->get_location(), var));
+
+        pgm_json.get_to(pgm_config);
         for (const auto& pgm : pgm_config.pgms)
         {
             if (!pgm.opts.valid())
                 config_diags_.push_back(
-                    diagnostic_s::error_W0005(pgm_conf_file->get_location().to_presentable(), pgm.program, "program"));
+                    diagnostic_s::error_W0005(pgm_conf_file->get_location(), pgm.program, "program"));
         }
         exact_pgm_conf_.clear();
         regex_pgm_conf_.clear();
     }
     catch (const nlohmann::json::exception&)
     {
-        config_diags_.push_back(diagnostic_s::error_W0003(pgm_conf_file->get_location().to_presentable(), name_));
+        config_diags_.push_back(diagnostic_s::error_W0003(pgm_conf_file->get_location(), name_));
         return false;
     }
 

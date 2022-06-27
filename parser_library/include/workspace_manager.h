@@ -103,7 +103,7 @@ public:
     virtual sequence<token_info> semantic_tokens(const char* document_uri);
     virtual document_symbol_list document_symbol(const char* document_uri, long long limit);
 
-    virtual void configuration_changed(const lib_config& new_config);
+    virtual void configuration_changed(const lib_config& new_config, const char* whole_settings);
 
     // implementation of observer pattern - register consumer.
     virtual void register_diagnostics_consumer(diagnostics_consumer* consumer);

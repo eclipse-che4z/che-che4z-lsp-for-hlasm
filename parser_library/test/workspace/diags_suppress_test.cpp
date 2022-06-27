@@ -20,6 +20,7 @@
 #include "gtest/gtest.h"
 
 #include "../message_consumer_mock.h"
+#include "../workspace/empty_configs.h"
 #include "empty_configs.h"
 #include "lib_config.h"
 #include "nlohmann/json.hpp"
@@ -59,7 +60,9 @@ TEST(diags_suppress, no_suppress)
 )");
 
     lib_config config;
-    workspace ws(fm, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+
+    workspace ws(fm, config, global_settings);
     ws.open();
     ws.did_open_file(file_loc);
 
@@ -73,6 +76,7 @@ TEST(diags_suppress, no_suppress)
 TEST(diags_suppress, do_suppress)
 {
     auto config = lib_config::load_from_json(R"({"diagnosticsSuppressLimit":5})"_json);
+    workspace::shared_json global_settings = make_empty_shared_json();
 
     file_manager_impl fm;
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
@@ -89,7 +93,7 @@ TEST(diags_suppress, do_suppress)
 
     message_consumer_mock msg_consumer;
 
-    workspace ws(fm, config);
+    workspace ws(fm, config, global_settings);
     ws.set_message_consumer(&msg_consumer);
     ws.open();
     ws.did_open_file(file_loc);
@@ -122,7 +126,9 @@ TEST(diags_suppress, pgm_supress_limit_changed)
 )");
 
     lib_config config;
-    workspace ws(fm, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+
+    workspace ws(fm, config, global_settings);
     ws.open();
     ws.did_open_file(file_loc);
 
@@ -164,7 +170,9 @@ TEST(diags_suppress, cancel_token)
 
     std::atomic<bool> cancel = true;
     auto config = lib_config::load_from_json(R"({"diagnosticsSuppressLimit":5})"_json);
-    workspace ws(fm, config, &cancel);
+    workspace::shared_json global_settings = make_empty_shared_json();
+
+    workspace ws(fm, config, global_settings, &cancel);
     ws.open();
     ws.did_open_file(file_loc);
 

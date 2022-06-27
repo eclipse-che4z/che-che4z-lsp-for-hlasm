@@ -26,7 +26,6 @@ using namespace hlasm_plugin::language_server;
 
 class server_mock : public server
 {
-    ;
     int counter = 0;
     int messages_limit;
 

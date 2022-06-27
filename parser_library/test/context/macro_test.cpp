@@ -202,7 +202,7 @@ TEST(macro, macro_lookahead_fail)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), 1U);
     EXPECT_EQ(a.diags()[0].code, "E047");
-    ;
+
     EXPECT_EQ(a.diags()[0].diag_range, range({ 2, 5 }, { 2, 7 }));
 }
 

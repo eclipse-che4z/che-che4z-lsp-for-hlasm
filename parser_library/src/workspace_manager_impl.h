@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_IMPL_H
 
 #include <algorithm>
+#include <atomic>
 
 #include "debugging/debug_lib_provider.h"
 #include "workspace_manager.h"
@@ -33,7 +34,7 @@ public:
     impl(std::atomic<bool>* cancel = nullptr)
         : cancel_(cancel)
         , file_manager_(cancel)
-        , implicit_workspace_(file_manager_, global_config_, cancel)
+        , implicit_workspace_(file_manager_, global_config_, m_global_settings, cancel)
     {}
     impl(const impl&) = delete;
     impl& operator=(const impl&) = delete;
@@ -57,8 +58,12 @@ public:
     void add_workspace(std::string name, std::string uri)
     {
         auto ws = workspaces_.emplace(name,
-            workspaces::workspace(
-                utils::resource::resource_location(std::move(uri)), name, file_manager_, global_config_, cancel_));
+            workspaces::workspace(utils::resource::resource_location(std::move(uri)),
+                name,
+                file_manager_,
+                global_config_,
+                m_global_settings,
+                cancel_));
         ws.first->second.set_message_consumer(message_consumer_);
         ws.first->second.open();
 
@@ -218,7 +223,20 @@ public:
     }
 
     lib_config global_config_;
-    virtual void configuration_changed(const lib_config& new_config) { global_config_ = new_config; }
+    workspaces::workspace::shared_json m_global_settings =
+        std::make_shared<const nlohmann::json>(nlohmann::json::object());
+    void configuration_changed(const lib_config& new_config, std::shared_ptr<const nlohmann::json> global_settings)
+    {
+        global_config_ = new_config;
+        m_global_settings.store(std::move(global_settings));
+
+        bool updated = false;
+        for (auto& [_, ws] : workspaces_)
+            updated |= ws.settings_updated();
+
+        if (updated)
+            notify_diagnostics_consumers();
+    }
 
     std::vector<token_info> empty_tokens;
     const std::vector<token_info>& semantic_tokens(const char* document_uri)

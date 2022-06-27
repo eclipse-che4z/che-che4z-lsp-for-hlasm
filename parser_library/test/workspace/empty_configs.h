@@ -15,8 +15,10 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_TEST_EMPTY_CONFIGS_H
 #define HLASMPLUGIN_PARSERLIBRARY_TEST_EMPTY_CONFIGS_H
 
-#include <filesystem>
+#include <memory>
+#include <string>
 
+#include "nlohmann/json_fwd.hpp"
 #include "utils/path.h"
 #include "utils/resource_location.h"
 
@@ -24,5 +26,7 @@ inline const auto pgm_conf_name = hlasm_plugin::utils::resource::resource_locati
 inline const auto proc_grps_name = hlasm_plugin::utils::resource::resource_location(".hlasmplugin/proc_grps.json");
 inline const std::string empty_pgm_conf = R"({ "pgms": []})";
 inline const std::string empty_proc_grps = R"({ "pgroups": []})";
+
+std::shared_ptr<const nlohmann::json> make_empty_shared_json();
 
 #endif // !HLASMPLUGIN_PARSERLIBRARY_TEST_EMPTY_CONFIGS_H

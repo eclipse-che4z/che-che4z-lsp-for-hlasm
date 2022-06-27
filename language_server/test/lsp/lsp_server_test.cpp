@@ -53,7 +53,7 @@ TEST(lsp_server, initialize)
     json register_message =
         R"({"jsonrpc":"2.0", "id":"register1", "method" : "client/registerCapability", "params" : [{"registrations":[{"id":"configureRegister", "method":"workspace/didChangeConfiguration"}]}]})"_json;
     json config_request_message =
-        R"({"id":"config_request_0","jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[{"section":"hlasm"}]}})"_json;
+        R"({"id":"config_request_0","jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[{"section":"hlasm"},{}]}})"_json;
 
     EXPECT_CALL(smpm, reply(::testing::_)).WillOnce(::testing::SaveArg<0>(&server_capab));
     EXPECT_CALL(smpm, reply(show_message)).Times(::testing::AtMost(1));

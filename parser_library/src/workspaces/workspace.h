@@ -23,6 +23,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <version>
 
 #include "config/pgm_conf.h"
 #include "config/proc_grps.h"
@@ -34,6 +35,7 @@
 #include "message_consumer.h"
 #include "processor.h"
 #include "processor_group.h"
+#include "utils/general_hashers.h"
 #include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
@@ -66,17 +68,39 @@ struct program
 class workspace : public diagnosable_impl, public parse_lib_provider, public lsp::feature_provider
 {
 public:
+#if __cpp_lib_atomic_shared_ptr >= 201711L
+    using shared_json = std::atomic<std::shared_ptr<const nlohmann::json>>;
+#else
+    class shared_json
+    {
+        std::shared_ptr<const nlohmann::json> m_data;
+
+    public:
+        shared_json(std::shared_ptr<const nlohmann::json> data)
+            : m_data(std::move(data))
+        {}
+
+        auto load() const { return std::atomic_load(&m_data); }
+        void store(std::shared_ptr<const nlohmann::json> data) { std::atomic_store(&m_data, std::move(data)); }
+    };
+#endif
+
     // Creates just a dummy workspace with no libraries - no dependencies
     // between files.
-    workspace(file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel = nullptr);
+    workspace(file_manager& file_manager,
+        const lib_config& global_config,
+        const shared_json& global_settings,
+        std::atomic<bool>* cancel = nullptr);
     workspace(const utils::resource::resource_location& location,
         file_manager& file_manager,
         const lib_config& global_config,
+        const shared_json& global_settings,
         std::atomic<bool>* cancel = nullptr);
     workspace(const utils::resource::resource_location& location,
         const std::string& name,
         file_manager& file_manager,
         const lib_config& global_config,
+        const shared_json& global_settings,
         std::atomic<bool>* cancel = nullptr);
 
     workspace(const workspace& ws) = delete;
@@ -130,6 +154,11 @@ public:
 
     file_manager& get_file_manager();
 
+    bool settings_updated();
+
+    using global_settings_map =
+        std::unordered_map<std::string, std::optional<std::string>, utils::hashers::string_hasher, std::equal_to<>>;
+
 private:
     constexpr static char FILENAME_PROC_GRPS[] = "proc_grps.json";
     constexpr static char FILENAME_PGM_CONF[] = "pgm_conf.json";
@@ -145,6 +174,7 @@ private:
     std::unordered_map<proc_grp_id, processor_group> proc_grps_;
     std::map<utils::resource::resource_location, program> exact_pgm_conf_;
     std::vector<std::pair<program, std::regex>> regex_pgm_conf_;
+    global_settings_map m_utilized_settings_values;
     processor_group implicit_proc_grp;
 
     utils::resource::resource_location proc_grps_loc_;
@@ -171,7 +201,8 @@ private:
     bool load_config(config::proc_grps& proc_groups,
         config::pgm_conf& pgm_config,
         file_ptr& proc_grps_file,
-        file_ptr& pgm_conf_file);
+        file_ptr& pgm_conf_file,
+        global_settings_map& utilized_settings_values);
 
     bool is_wildcard(const std::string& str);
 
@@ -198,6 +229,7 @@ private:
     std::unordered_map<utils::resource::resource_location, bool, utils::resource::resource_location_hasher>
         diag_suppress_notified_;
     const lib_config& global_config_;
+    const shared_json& m_global_settings;
     lib_config local_config_;
     lib_config get_config();
 };

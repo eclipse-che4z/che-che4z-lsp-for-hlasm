@@ -110,7 +110,7 @@ export class EventsHandler {
 
     // should the configs be checked
     private editorChanged(document: vscode.TextDocument) {
-        if (this.configSetup.shouldCheckConfigs && this.langDetect.setHlasmLanguage(document))
+        if (this.configSetup.shouldCheckConfigs && !document.isClosed && this.langDetect.setHlasmLanguage(document))
             this.configSetup.checkConfigs();
     }
 }

@@ -115,6 +115,8 @@ To use a predefined set of macro and copy members, follow these steps:
 The structure of the configuration is based on Endevor®. Ensure that you configure these files before using macros from separate files or the COPY instruction.
 When you open a HLASM file or manually set the HLASM language for a file, you can choose to automatically create these files for the current program.
 
+Visual Studio Code workspace variables can be referenced in both configuration files using the standard syntax (${config:variable_name}).
+
 Example `proc_grps.json`:
 
 The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files, it also defines the _SYSPARM_ assembler parameter for GROUP1. Additionally, if the library `MACLIB/` does not exist in the workspace, the plugin does not report it as an error. 

@@ -19,6 +19,7 @@
 
 #include "gtest/gtest.h"
 
+#include "empty_configs.h"
 #include "file_with_text.h"
 #include "utils/path.h"
 #include "utils/platform.h"
@@ -73,11 +74,12 @@ TEST_F(workspace_test, parse_lib_provider)
     using namespace hlasm_plugin::utils;
 
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
     file_manager_impl file_mngr;
 
     std::string test_wks_path = path::join(path::join("test", "library"), "test_wks").string();
 
-    workspace ws(resource_location(test_wks_path), file_mngr, config);
+    workspace ws(resource_location(test_wks_path), file_mngr, config, global_settings);
 
     ws.open();
 
@@ -380,8 +382,9 @@ public:
 TEST_F(workspace_test, did_close_file)
 {
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
     file_manager_extended file_manager;
-    workspace ws(empty_loc, "workspace_name", file_manager, config);
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
 
     ws.open();
     // 3 files are open
@@ -423,7 +426,8 @@ TEST_F(workspace_test, did_change_watched_files)
 {
     file_manager_extended file_manager;
     lib_config config;
-    workspace ws(empty_loc, "workspace_name", file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     // no diagnostics with no syntax errors
@@ -454,7 +458,8 @@ TEST_F(workspace_test, missing_library_required)
     {
         file_manager_opt file_manager(type);
         lib_config config;
-        workspace ws(empty_loc, "workspace_name", file_manager, config);
+        workspace::shared_json global_settings = make_empty_shared_json();
+        workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
         ws.open();
 
         ws.did_open_file(source1_loc);
@@ -467,7 +472,8 @@ TEST_F(workspace_test, missing_library_optional)
 {
     file_manager_opt file_manager(file_manager_opt_variant::optional);
     lib_config config;
-    workspace ws(empty_loc, "workspace_name", file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     ws.did_open_file(source1_loc);
@@ -478,7 +484,8 @@ TEST_F(workspace_test, invalid_assembler_options)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_assembler_options);
     lib_config config;
-    workspace ws(empty_loc, "workspace_name", file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
@@ -489,7 +496,8 @@ TEST_F(workspace_test, invalid_assembler_options_in_pgm_conf)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_assembler_options_in_pgm_conf);
     lib_config config;
-    workspace ws(empty_loc, "workspace_name", file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
@@ -500,7 +508,8 @@ TEST_F(workspace_test, invalid_preprocessor_options)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_preprocessor_options);
     lib_config config;
-    workspace ws(empty_loc, "workspace_name", file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
@@ -528,7 +537,8 @@ TEST_F(workspace_test, library_list_failure)
 {
     file_manager_list_dir_failed file_manager;
     lib_config config;
-    workspace ws(empty_loc, "workspace_name", file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     ws.did_open_file(source1_loc);

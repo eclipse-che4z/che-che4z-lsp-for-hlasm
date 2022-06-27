@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "empty_configs.h"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"
@@ -357,8 +358,9 @@ void verify_absolute(pgmconf_variants pgmconf_variant)
 {
     file_manager_lib_pattern file_manager(pgroup_variants::ABSOLUTE, pgmconf_variant);
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config);
+    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     EXPECT_CALL(file_manager, list_directory_files(temp_lib_loc))
@@ -375,8 +377,9 @@ void verify_relative_1(pgmconf_variants pgmconf_variant)
 {
     file_manager_lib_pattern file_manager(pgroup_variants::RELATIVE, pgmconf_variant);
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config);
+    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_loc))
@@ -395,8 +398,9 @@ void verify_relative_2(pgmconf_variants pgmconf_variant)
 {
     file_manager_lib_pattern file_manager(pgroup_variants::RELATIVE_2, pgmconf_variant);
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config);
+    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_loc))
@@ -413,8 +417,9 @@ void verify_relative_3(pgmconf_variants pgmconf_variant)
 {
     file_manager_lib_pattern file_manager(pgroup_variants::RELATIVE_3, pgmconf_variant);
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config);
+    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     EXPECT_CALL(file_manager, list_directory_files(pattern_test_dir_loc))
@@ -431,8 +436,9 @@ void verify_uri_1(pgmconf_variants pgmconf_variant)
 {
     file_manager_lib_pattern file_manager(pgroup_variants::URI, pgmconf_variant);
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config);
+    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_loc))
@@ -451,8 +457,9 @@ void verify_uri_2(pgmconf_variants pgmconf_variant)
 {
     file_manager_lib_pattern file_manager(pgroup_variants::URI_2, pgmconf_variant);
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config);
+    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
@@ -469,8 +476,9 @@ void verify_uri_non_standard(pgroup_variants pgroup_variant, pgmconf_variants pg
 {
     file_manager_lib_pattern file_manager(pgroup_variant, pgmconf_variant);
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config);
+    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_loc))
@@ -489,8 +497,9 @@ void verify_combination(pgmconf_variants pgmconf_variant)
 {
     file_manager_lib_pattern file_manager(pgroup_variants::COMBINATION, pgmconf_variant);
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config);
+    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     EXPECT_CALL(file_manager, list_directory_files(temp_lib_loc))
@@ -729,8 +738,9 @@ void verify_infinit_loop(pgroup_symlinks_variants pgroup_variant, pgmconf_varian
 {
     ::testing::NiceMock<file_manager_infinit_loop> file_manager(pgroup_variant, pgmconf_variant);
     lib_config config;
+    workspace::shared_json global_settings = make_empty_shared_json();
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config);
+    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
     ws.did_open_file(pattern_test_source_loc);
 

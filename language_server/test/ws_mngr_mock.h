@@ -38,7 +38,7 @@ public:
         void(const char* document_uri, version_t version, const document_change* changes, size_t ch_size));
     MOCK_METHOD1(did_close_file, void(const char* document_uri));
 
-    MOCK_METHOD1(configuration_changed, void(const lib_config& new_config));
+    MOCK_METHOD2(configuration_changed, void(const lib_config& new_config, const char* whole_settings));
 
     MOCK_METHOD(position_uri, definition, (const char* document_uri, const position pos), (override));
     MOCK_METHOD(position_uri_list, references, (const char* document_uri, const position pos), (override));

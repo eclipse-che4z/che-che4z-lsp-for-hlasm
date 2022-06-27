@@ -18,7 +18,9 @@
 
 #include "gtest/gtest.h"
 
+#include "../common_testing.h"
 #include "empty_configs.h"
+#include "nlohmann/json.hpp"
 #include "utils/content_loader.h"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
@@ -213,7 +215,8 @@ TEST(workspace, load_config_synthetic)
 {
     file_manager_proc_grps_test file_manager;
     lib_config config;
-    workspace ws(ws_loc, "test_proc_grps_name", file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(ws_loc, "test_proc_grps_name", file_manager, config, global_settings);
 
     ws.open();
 
@@ -292,7 +295,8 @@ TEST(workspace, pgm_conf_malformed)
     fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
 
     lib_config config;
-    workspace ws(fm, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(fm, config, global_settings);
     ws.open();
 
     ws.collect_diags();
@@ -308,7 +312,8 @@ TEST(workspace, proc_grps_malformed)
     fm.did_open_file(proc_grps_name, 0, R"({ "pgroups" []})");
 
     lib_config config;
-    workspace ws(fm, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(fm, config, global_settings);
     ws.open();
 
     ws.collect_diags();
@@ -322,7 +327,8 @@ TEST(workspace, pgm_conf_missing)
     fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
 
     lib_config config;
-    workspace ws(fm, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(fm, config, global_settings);
     ws.open();
 
     ws.collect_diags();
@@ -335,7 +341,8 @@ TEST(workspace, proc_grps_missing)
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
 
     lib_config config;
-    workspace ws(fm, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(fm, config, global_settings);
     ws.open();
 
     ws.collect_diags();
@@ -360,7 +367,8 @@ TEST(workspace, asm_options_invalid)
     fm.did_open_file(proc_grps_name, 0, proc_file);
 
     lib_config config;
-    workspace ws(fm, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(fm, config, global_settings);
     ws.open();
 
     ws.collect_diags();
@@ -414,11 +422,115 @@ TEST(workspace, asm_options_goff_xobject_redefinition)
 {
     file_manager_asm_test file_manager;
     lib_config config;
-    workspace ws(ws_loc, "test_proc_grps_name", file_manager, config);
+    workspace::shared_json global_settings = make_empty_shared_json();
+    workspace ws(ws_loc, "test_proc_grps_name", file_manager, config, global_settings);
 
     ws.open();
 
     ws.collect_diags();
+
     ASSERT_NE(ws.diags().size(), 0);
     EXPECT_EQ(ws.diags()[0].code, "W0002");
+}
+
+TEST(workspace, proc_grps_with_substitutions)
+{
+    file_manager_impl fm;
+
+    fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
+    fm.did_open_file(
+        proc_grps_name, 0, R"({ "pgroups":[{"name":"a${config:name}b","libs":["${config:lib1}","${config:lib2}"]}]})");
+
+    lib_config config;
+    workspace::shared_json global_settings = std::make_shared<const nlohmann::json>(
+        nlohmann::json::parse(R"({"name":"proc_group","lib1":"library1","lib2":"library2"})"));
+    workspace ws(fm, config, global_settings);
+    ws.open();
+    ws.collect_diags();
+
+    EXPECT_TRUE(ws.diags().empty());
+
+    const auto& pg = ws.get_proc_grp("aproc_groupb");
+
+    using hlasm_plugin::utils::resource::resource_location;
+
+    ASSERT_EQ(pg.libraries().size(), 2);
+    EXPECT_EQ(dynamic_cast<const library_local*>(pg.libraries()[0].get())->get_location(),
+        resource_location::join(resource_location("library1"), ""));
+    EXPECT_EQ(dynamic_cast<const library_local*>(pg.libraries()[1].get())->get_location(),
+        resource_location::join(resource_location("library2"), ""));
+}
+
+TEST(workspace, pgm_conf_with_substitutions)
+{
+    file_manager_impl fm;
+
+    fm.did_open_file(pgm_conf_name,
+        0,
+        R"({"pgms":[{"program":"test/${config:pgm_mask.0}","pgroup":"P1","asm_options":{"SYSPARM":"${config:sysparm}${config:sysparm}"}}]})");
+    fm.did_open_file(proc_grps_name, 0, R"({"pgroups":[{"name": "P1","libs":[]}]})");
+
+    lib_config config;
+    workspace::shared_json global_settings = std::make_shared<const nlohmann::json>(
+        nlohmann::json::parse(R"({"pgm_mask":["file_name"],"sysparm":"DEBUG"})"));
+    workspace ws(fm, config, global_settings);
+    ws.open();
+    ws.collect_diags();
+
+    EXPECT_TRUE(ws.diags().empty());
+
+    using hlasm_plugin::utils::resource::resource_location;
+
+    const auto& opts = ws.get_asm_options(resource_location::join(resource_location("test"), "file_name"));
+
+    EXPECT_EQ(opts.sysparm, "DEBUGDEBUG");
+}
+
+TEST(workspace, missing_substitutions)
+{
+    file_manager_impl fm;
+
+    fm.did_open_file(pgm_conf_name, 0, R"({"pgms":[{"program":"test/${config:pgm_mask}","pgroup":"P1"}]})");
+    fm.did_open_file(proc_grps_name, 0, R"({"pgroups":[{"name":"P1","libs":["${config:lib}"]}]})");
+
+    lib_config config;
+    workspace::shared_json global_settings = std::make_shared<const nlohmann::json>(nlohmann::json::object());
+    workspace ws(fm, config, global_settings);
+    ws.open();
+    ws.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "W0007", "W0007" }));
+}
+
+TEST(workspace, refresh_settings)
+{
+    file_manager_impl fm;
+
+    fm.did_open_file(pgm_conf_name,
+        0,
+        R"({"pgms":[{"program":"test/${config:pgm_mask.0}","pgroup":"P1","asm_options":{"SYSPARM":"${config:sysparm}${config:sysparm}"}}]})");
+    fm.did_open_file(proc_grps_name, 0, R"({"pgroups":[{"name": "P1","libs":[]}]})");
+
+    lib_config config;
+    workspace::shared_json global_settings = std::make_shared<const nlohmann::json>(
+        nlohmann::json::parse(R"({"pgm_mask":["file_name"],"sysparm":"DEBUG"})"));
+    workspace ws(fm, config, global_settings);
+    ws.open();
+    ws.collect_diags();
+
+    EXPECT_TRUE(ws.diags().empty());
+
+    using hlasm_plugin::utils::resource::resource_location;
+
+    EXPECT_EQ(
+        ws.get_asm_options(resource_location::join(resource_location("test"), "file_name")).sysparm, "DEBUGDEBUG");
+    EXPECT_FALSE(ws.settings_updated());
+
+    global_settings = std::make_shared<const nlohmann::json>(
+        nlohmann::json::parse(R"({"pgm_mask":["different_file"],"sysparm":"RELEASE"})"));
+    EXPECT_TRUE(ws.settings_updated());
+
+    EXPECT_EQ(ws.get_asm_options(resource_location::join(resource_location("test"), "file_name")).sysparm, "");
+    EXPECT_EQ(ws.get_asm_options(resource_location::join(resource_location("test"), "different_file")).sysparm,
+        "RELEASERELEASE");
 }

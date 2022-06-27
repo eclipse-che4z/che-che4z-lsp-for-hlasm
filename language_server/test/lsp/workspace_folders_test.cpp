@@ -160,7 +160,7 @@ TEST(workspace_folders, did_change_configuration)
 
 
     method handler;
-    json config_request_args { { "items", { { { "section", "hlasm" } } } } };
+    json config_request_args { { "items", json::array_t { { { "section", "hlasm" } }, json::object() } } };
 
     EXPECT_CALL(
         provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_))
@@ -171,9 +171,9 @@ TEST(workspace_folders, did_change_configuration)
     parser_library::lib_config expected_config;
     expected_config.diag_supress_limit = 42;
 
-    EXPECT_CALL(ws_mngr, configuration_changed(::testing::Eq(expected_config)));
+    EXPECT_CALL(ws_mngr, configuration_changed(::testing::Eq(expected_config), ::testing::StrEq(R"({"aaa":"bbb"})")));
 
-    handler.handler("config_respond", R"([{"diagnosticsSuppressLimit":42}])"_json);
+    handler.handler("config_respond", R"([{"diagnosticsSuppressLimit":42},{"aaa":"bbb"}])"_json);
 }
 
 TEST(workspace_folders, did_change_configuration_empty_configuration_params)
@@ -191,7 +191,7 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
 
 
     method handler;
-    json config_request_args { { "items", { { { "section", "hlasm" } } } } };
+    json config_request_args { { "items", json::array_t { { { "section", "hlasm" } }, json::object() } } };
 
     EXPECT_CALL(
         provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_))
@@ -199,7 +199,7 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
 
     methods["workspace/didChangeConfiguration"].handler("did_change_configuration_id", "{}"_json);
 
-    EXPECT_CALL(ws_mngr, configuration_changed(::testing::_)).Times(0);
+    EXPECT_CALL(ws_mngr, configuration_changed(::testing::_, ::testing::_)).Times(0);
 
     handler.handler("config_respond", R"([])"_json);
 }
