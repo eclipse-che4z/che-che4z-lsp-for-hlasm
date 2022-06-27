@@ -18,6 +18,7 @@
 #include <string>
 
 #include "analyzer.h"
+#include "utils/utf8text.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -49,27 +50,27 @@ public:
         if (!lib.has_value())
             return false;
 
-        auto a =
-            std::make_unique<analyzer>(files[lib.value()], analyzer_options { library, this, std::move(ctx), data });
+        auto a = std::make_unique<analyzer>(files[lib.value()],
+            analyzer_options { hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data });
         a->analyze();
         a->collect_diags();
         return true;
     }
 
-    bool has_library(const std::string& library, const std::string&) const override
+    bool has_library(const std::string& library, const hlasm_plugin::utils::resource::resource_location&) const override
     {
         return read_library_name(library).has_value();
     }
 
-    std::optional<std::string> get_library(
-        const std::string& library, const std::string&, std::string* uri) const override
+    std::optional<std::string> get_library(const std::string& library,
+        const hlasm_plugin::utils::resource::resource_location&,
+        std::optional<hlasm_plugin::utils::resource::resource_location>& location) const override
     {
         auto lib = read_library_name(library);
         if (!lib.has_value())
             return std::nullopt;
 
-        if (uri)
-            *uri = library;
+        location = hlasm_plugin::utils::resource::resource_location(library);
 
         return files[lib.value()];
     }
@@ -85,13 +86,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 
     while (auto next = (const uint8_t*)memchr(data, 0xff, size))
     {
-        *target = workspaces::file_impl::replace_non_utf8_chars(std::string_view((const char*)data, next - data));
+        *target = hlasm_plugin::utils::replace_non_utf8_chars(std::string_view((const char*)data, next - data));
 
         target = &lib.files.emplace_back();
         size -= next + 1 - data;
         data = next + 1;
     }
-    *target = workspaces::file_impl::replace_non_utf8_chars(std::string_view((const char*)data, size));
+    *target = hlasm_plugin::utils::replace_non_utf8_chars(std::string_view((const char*)data, size));
 
     analyzer a(source, analyzer_options(&lib, db2_preprocessor_options()));
     a.analyze();
