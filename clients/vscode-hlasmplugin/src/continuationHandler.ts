@@ -95,6 +95,8 @@ export class ContinuationHandler {
                 else {
                     edit.insert(new vscode.Position(line, continuationOffset), ' '.repeat(reinsert.length));
                     edit.replace(new vscode.Selection(new vscode.Position(line, continuationOffset), new vscode.Position(line, continuationOffset + 1)), contSymbol);
+                    if (line == doc.lineCount - 1) // missing newline
+                        edit.insert(new vscode.Position(line, lineText.length), eol);
                     edit.insert(new vscode.Position(line + 1, 0), trimmed_reinsert + eol);
                 }
             }
