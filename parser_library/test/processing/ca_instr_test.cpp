@@ -543,3 +543,14 @@ TEST(var_subs, expr_list_as_index)
 
     EXPECT_EQ(get_var_vector<A_t>(a.hlasm_ctx(), "var"), std::vector<A_t>({ 0 }));
 }
+
+TEST(SET, missing_var_name)
+{
+    std::string input = "&A SETA --&";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0003", "E010" }));
+}

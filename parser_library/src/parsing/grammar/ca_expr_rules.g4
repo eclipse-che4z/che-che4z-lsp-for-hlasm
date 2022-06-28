@@ -244,6 +244,8 @@ var_symbol returns [vs_ptr vs]
 			$vs = std::make_unique<created_variable_symbol>($clc.ctx ? std::move($clc.concat_list) : concat_chain{},std::move($subscript.value),provider.get_range($AMPERSAND,$subscript.ctx->getStop()));
 		}
 	);
+	finally
+	{if (!$vs) $vs = std::make_unique<basic_variable_symbol>(parse_identifier("", {}), std::vector<expressions::ca_expr_ptr>{}, provider.get_range($ctx));}
 
 data_attribute returns [context::data_attr_kind attribute, std::variant<context::id_index, semantics::vs_ptr, semantics::literal_si> value, range value_range]
 	: ORDSYMBOL attr data_attribute_value
