@@ -18,7 +18,6 @@
 #include <filesystem>
 #include <iostream>
 #include <locale>
-#include <regex>
 
 #include "utils/path.h"
 #include "utils/platform.h"

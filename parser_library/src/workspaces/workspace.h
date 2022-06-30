@@ -115,7 +115,7 @@ public:
     const processor_group& get_proc_grp(const proc_grp_id& proc_grp) const;
     const processor_group& get_proc_grp_by_program(const utils::resource::resource_location& file_location) const;
     const processor_group& get_proc_grp_by_program(const program& program) const;
-    const program* get_program(const utils::resource::resource_location& file_location) const;
+    const program* get_program(utils::resource::resource_location) const;
 
     workspace_file_info parse_file(const utils::resource::resource_location& file_location);
     workspace_file_info parse_successful(const processor_file_ptr& f);
@@ -204,8 +204,6 @@ private:
         file_ptr& proc_grps_file,
         file_ptr& pgm_conf_file,
         global_settings_map& utilized_settings_values);
-
-    bool is_wildcard(const std::string& str);
 
     // files, that depend on others (e.g. open code files that use macros)
     std::set<utils::resource::resource_location> dependants_;

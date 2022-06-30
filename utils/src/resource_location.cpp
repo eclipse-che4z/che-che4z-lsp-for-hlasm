@@ -257,6 +257,7 @@ std::string resource_location::lexically_normal() const
     dis_uri.path = normalize_path(dis_uri.path);
 
     normalize_file_scheme(dis_uri);
+    dis_uri.path = utils::path::encode(dis_uri.path);
 
     return utils::path::reconstruct_uri(dis_uri);
 }
@@ -477,6 +478,53 @@ resource_location resource_location::relative_reference_resolution(resource_loca
     rl.relative_reference_resolution(other);
 
     return rl;
+}
+
+namespace {
+std::strong_ordering string_compare(std::string_view a, std::string_view b)
+{
+    if (auto res = a.compare(b); res < 0)
+        return std::strong_ordering::less;
+    else if (res > 0)
+        return std::strong_ordering::greater;
+
+    return std::strong_ordering::equal;
+}
+} // namespace
+
+std::strong_ordering resource_location::operator<=>(const resource_location& rl) const noexcept
+{
+    if (!utils::platform::is_windows())
+        return string_compare(m_uri,
+            rl.m_uri); // TODO replace this and others with 'return m_uri <=> rl.m_uri' when new version of Clang is
+                       // available
+
+    std::smatch this_smatch;
+    std::smatch other_smatch;
+
+    // Determine if this is a file scheme with windows drive letter
+    if (static const std::regex file_scheme_windows("^file:///([A-Za-z])(?::|%3[aA])");
+        !std::regex_search(m_uri, this_smatch, file_scheme_windows)
+        || !std::regex_search(rl.m_uri, other_smatch, file_scheme_windows))
+        return string_compare(m_uri, rl.m_uri);
+
+    // Compare Windows drive folders
+    if (auto res = tolower(this_smatch[1].str()[0]) <=> tolower(other_smatch[1].str()[0]);
+        res != std::strong_ordering::equal)
+        return res;
+
+    // Get rid of the windows drive letter prefix before further comparison
+    auto this_sv = std::string_view(m_uri);
+    auto other_sv = std::string_view(rl.m_uri);
+    this_sv.remove_prefix(this_smatch[0].length());
+    other_sv.remove_prefix(other_smatch[0].length());
+
+    return string_compare(this_sv, other_sv);
+}
+
+bool resource_location::operator==(const resource_location& rl) const noexcept
+{
+    return std::strong_ordering::equal == (this->operator<=>(rl));
 }
 
 std::size_t resource_location_hasher::operator()(const resource_location& rl) const

@@ -128,6 +128,21 @@ bool is_uri(const std::string& path) noexcept
     }
 }
 
+std::string encode(std::string_view s)
+{
+    std::string uri;
+    auto out = std::back_inserter(uri);
+
+    for (char c : s)
+    {
+        if (c == '\\')
+            c = '/';
+        network::detail::encode_char(c, out, "/.%;=*?:");
+    }
+
+    return uri;
+}
+
 dissected_uri dissect_uri(const std::string& uri) noexcept
 {
     dissected_uri dis_uri;

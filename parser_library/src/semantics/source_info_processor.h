@@ -16,7 +16,6 @@
 #define SOURCE_INFO_PROC_INFO
 
 #include <memory>
-#include <regex>
 #include <vector>
 
 #include "highlighting_info.h"

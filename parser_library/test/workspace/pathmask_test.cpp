@@ -54,6 +54,39 @@ TEST(pathmask, pass)
     EXPECT_TRUE(check_path("/path/**", "/path/a/test/"));
     EXPECT_TRUE(check_path("/path/**", "/path/a/b/test/"));
 
+    EXPECT_TRUE(check_path("/p?th/test/", "/path/test/"));
+    EXPECT_TRUE(check_path("/path/?/test/", "/path/a/test/"));
+
+    EXPECT_TRUE(check_path("/path/?*", "/path/a"));
+    EXPECT_TRUE(check_path("/path/*?", "/path/a"));
+
+    EXPECT_TRUE(check_path("/path/?*/test/", "/path/a/test/"));
+    EXPECT_TRUE(check_path("/path/*?/test/", "/path/b/test/"));
+    EXPECT_TRUE(check_path("/path/?*?/test/", "/path/ab/test/"));
+    EXPECT_TRUE(check_path("/path/?*?/test/", "/path/abc/test/"));
+
+    EXPECT_TRUE(check_path("/path?**/", "/path_/"));
+    EXPECT_TRUE(check_path("/path?**/", "/path_/a/"));
+    EXPECT_TRUE(check_path("/path?**/", "/path_/a/test/"));
+
+    EXPECT_TRUE(check_path("/path?**", "/path_"));
+    EXPECT_TRUE(check_path("/path?**", "/path_/"));
+    EXPECT_TRUE(check_path("/path?**", "/path_/a/"));
+    EXPECT_TRUE(check_path("/path?**", "/path_/a/test/"));
+    EXPECT_TRUE(check_path("/path?**", "/path_/a/b/test/"));
+    EXPECT_TRUE(check_path("/path?**", "/path_/a/b/test"));
+
+    EXPECT_TRUE(check_path("/path/?**/test/", "/path/a/test/"));
+    EXPECT_TRUE(check_path("/path/?**/test/", "/path/a/b/test/"));
+    EXPECT_TRUE(check_path("/path/**?/test/", "/path/a/test/"));
+    EXPECT_TRUE(check_path("/path/**?/test/", "/path/a/b/test/"));
+
+    EXPECT_TRUE(check_path("/path/?**?/test/", "/path/ab/test/"));
+    EXPECT_TRUE(check_path("/path/?**?/test/", "/path/a/b/test/"));
+    EXPECT_TRUE(check_path("/path/?**?/test/", "/path/a/c/b/test/"));
+
+    EXPECT_TRUE(check_path("/path/*?**?*/test/", "/path/a/b/test/"));
+
     EXPECT_TRUE(check_path("file:///C%3A/path/**/", "file:///C%3A/path/a/test/"));
     EXPECT_TRUE(check_path("file:///C%3A/path/**/test/", "file:///C%3A/path/a/test/"));
     EXPECT_TRUE(check_path("file:///c%3A/path/**/", "file:///C%3A/path/a/test/"));
@@ -114,6 +147,44 @@ TEST(pathmask, fail)
     EXPECT_FALSE(check_path("/path/a*/test/", "/path/b/test/"));
     EXPECT_FALSE(check_path("/path/*b/test/", "/path/a/test/"));
     EXPECT_FALSE(check_path("/path/a*b/test/", "/path/ba/test/"));
+
+    EXPECT_FALSE(check_path("/path/a?/test/", "/path/a/test/"));
+    EXPECT_FALSE(check_path("/path/?a/test/", "/path/a/test/"));
+    EXPECT_FALSE(check_path("/path/a?b/test/", "/path/ab/test/"));
+
+    EXPECT_FALSE(check_path("/path/?/test/", "/path/test/"));
+    EXPECT_FALSE(check_path("/path/?/test/", "/path//test/"));
+    EXPECT_FALSE(check_path("/path/?/test/", "/path///test/"));
+    EXPECT_FALSE(check_path("/path/???/test/", "/path/ab/test/"));
+    EXPECT_FALSE(check_path("/path/???/test/", "/path/a/b/test/"));
+
+    EXPECT_FALSE(check_path("/path/?*", "/path/a/"));
+    EXPECT_FALSE(check_path("/path/*?", "/path/a/"));
+    EXPECT_FALSE(check_path("/path?*", "/path/a"));
+    EXPECT_FALSE(check_path("/path*?", "/path/a"));
+
+    EXPECT_FALSE(check_path("/path?**/test/", "/path/test/"));
+    EXPECT_FALSE(check_path("/path/?**/test", "/path/test"));
+    EXPECT_FALSE(check_path("/path/?**?/test/", "/path/a/test/"));
+
+    EXPECT_FALSE(check_path("/path/?**/", "/path/"));
+    EXPECT_FALSE(check_path("/path/?**/", "/path//"));
+    EXPECT_FALSE(check_path("/path/?**", "/path/"));
+
+    EXPECT_FALSE(check_path("/path?**/", "/path"));
+    EXPECT_FALSE(check_path("/path?**/", "/path/"));
+    EXPECT_FALSE(check_path("/path?**/", "/path//"));
+    EXPECT_FALSE(check_path("/path?**/", "/path/a/"));
+
+    EXPECT_FALSE(check_path("/path?**", "/path"));
+    EXPECT_FALSE(check_path("/path?**", "/path/"));
+    EXPECT_FALSE(check_path("/path?**", "/path//"));
+    EXPECT_FALSE(check_path("/path?**", "/path/a/test/"));
+
+    EXPECT_FALSE(check_path("/path/*?*/test/", "/path/a/b/test/"));
+    EXPECT_FALSE(check_path("/path/*?*?*/test/", "/path/a/b/test/"));
+    EXPECT_FALSE(check_path("/path/?*?*?/test/", "/path/a/b/test/"));
+    EXPECT_FALSE(check_path("/path/?**?/test/", "/path/a//test/"));
 
     EXPECT_FALSE(check_path("file:///C%3A/path/**/", "file:///c%3A/Path/a/test/"));
     EXPECT_FALSE(check_path("file:///C%3A/path/**/test/", "file:///c%3A/path/a/tEst/"));

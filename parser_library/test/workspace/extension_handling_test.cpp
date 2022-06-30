@@ -18,7 +18,6 @@
 #include "utils/platform.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/library_local.h"
-#include "workspaces/wildcard.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -39,32 +38,6 @@ class file_manager_extension_mock : public file_manager_impl
             hlasm_plugin::utils::path::list_directory_rc::done };
     }
 };
-
-TEST(extension_handling_test, wildcard)
-{
-    std::string test = "this is a test sentence.";
-
-    auto regex = wildcard2regex("*test*");
-    EXPECT_TRUE(std::regex_match(test, regex));
-
-    regex = wildcard2regex("*.");
-    EXPECT_TRUE(std::regex_match(test, regex));
-
-    regex = wildcard2regex("this is a test ?entence.");
-    EXPECT_TRUE(std::regex_match(test, regex));
-
-    regex = wildcard2regex("*.?");
-    EXPECT_FALSE(std::regex_match(test, regex));
-}
-
-TEST(extension_handling_test, wildcard_path)
-{
-    auto regex = wildcard2regex("pgms/*");
-    EXPECT_TRUE(std::regex_match("pgms/anything", regex));
-
-    regex = wildcard2regex("pgms\\*");
-    EXPECT_TRUE(std::regex_match("pgms/anything", regex));
-}
 
 TEST(extension_handling_test, extension_removal)
 {
