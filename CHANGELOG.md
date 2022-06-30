@@ -1,3 +1,51 @@
+## [1.3.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.2.0...1.3.0) (2022-06-30)
+
+
+### Features
+
+* CICS preprocessor now recognizes DFHVALUE constants ([a13e10d](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/a13e10dd9525f383fca222bff6693749df492ab0))
+* Conditional DB2 preprocessor ([2b8e38b](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/2b8e38b185e426335635f2caa586d3dd20006b7e))
+* CXD instruction support ([19466b4](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/19466b40f680a1b90085dab7f2890285da987847))
+* Enhanced commands for continuation handling and trimming of oversized lines ([675256e](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/675256e3161876c97f0dd7b49c0ec4726f18ce11))
+* Home directory substitution is now supported in proc_grps.json and pgm_conf.json ([83271c5](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/83271c50ff877104eec32430147dc265977112f8)), closes [eclipse/che-che4z-lsp-for-hlasm#221](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/221)
+* Machine option + JSON synonyms validation ([ea71391](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/ea71391dfd37c53ad5658fd19119ecf78613e47b))
+* Provide the name of a missing variable or an ordinary symbol in diagnostics ([9ba5294](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/9ba5294f5835b1371dd9595c21ffb22f7b2c49ea)), closes [eclipse/che-che4z-lsp-for-hlasm#265](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/265)
+* Show hexadecimal offsets and lengths in hover texts ([1a5e8a3](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/1a5e8a334e3430539a58e2c3ba583eccfafe1356))
+* Support for SYSVER system variable ([1af16d0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/1af16d0c60eaa874172854390f2684cd06c79003))
+* SYSIN_DSN and SYSIN_MEMBER support ([dde525d](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/dde525db8e6b6c5f5b40868a346b840ed9fdfc17))
+* Visual Studio Code workspace variables can be used in pgm_conf.json and proc_grps.json ([e396b17](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e396b174ca1d29526b38fa5f18a763a439f35b08))
+
+
+### Fixes
+
+* BASSM has the RR instruction format ([5304035](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/530403574434b542766d1f2bd5a6c6926ace6ff6))
+* Changes in configuration files were not detected on Linux ([ebc1ae8](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/ebc1ae8b1a9462e8f9856b99f3b1966a256a39b4))
+* DB2 preprocessor incorrectly processes line continuations from included members ([0acf426](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/0acf426e2e3b524801bccf53b8ee452f803d3200))
+* Incorrect attribute parsing in CA expressions without spaces between individual terms ([821fae0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/821fae08ee83f0c301c2685afacf3320ce9f62fe)), closes [eclipse/che-che4z-lsp-for-hlasm#263](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/263)
+* Incorrect attribute values generated when literals are substituted in CA expressions ([861c09c](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/861c09cf890b79f5292ad7069608cde7fa9d35b8))
+* Incorrect remark parsing in CA statements ([4e4a516](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/4e4a516feafb41a954c5c0e70cb6ebb2863cbb80))
+* Language server may crash while processing an unexpected operand ([dd714da](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/dd714da2d4b30a8a054addf8ccb0c45efec688aa))
+* Parsing of numeric nominal values must be case insensitive ([3b05e1c](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/3b05e1c2536f2979697dd6bc21f43593ec9483df))
+* Partially resolved value used as the final value by EQU statement ([0899cf9](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/0899cf9e40a144a9f13c11bbd5e6848fa1207acf))
+* References to CA variables in strings are not reported ([3881b55](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/3881b552bc4dd624e8991688dff662c4abe1a8e8))
+* Remove deprecated property from the default configuration file ([790e128](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/790e128625350a7dd1e74a5f7227047e4ccec3aa))
+* Return correct variable type for values provided in the macro's name field ([39f7ce2](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/39f7ce2e10504ffb573ca611604591a423a0d192))
+* Revise machine instructions ([be53133](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/be53133ad15b4e276ab810a982bc335e679e1896))
+* String functions are not recognized in concatenations ([79456d5](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/79456d53e79e4aa9d2a9339489bee130aa2a2cac))
+* Structured macro variables were not forwarded correctly when a dot separator was used in the macro operand ([dcb5aeb](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/dcb5aebf87d4c5a6928c702f46ed912b83cb460b))
+* The language server may crash after reloading the configuration ([860d453](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/860d4532a934306640e0e4495c2ae7e6222f1a56)), closes [eclipse/che-che4z-lsp-for-hlasm#271](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/271)
+* The language server may crash when a complex expression is used as a variable symbol index ([e49745f](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e49745f26621165f9a233b1b0ab6a7108078164e))
+
+
+### Other changes
+
+* AINSERT grammar tests improvements ([e2fa7d8](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e2fa7d88ca908208dbefe62bf91fa8583c8159a8))
+* Preprocessors ([7ea7ce8](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/7ea7ce80dfa2ff3eecf6c898fee478c0b81fdf68))
+* Reduce header dependencies ([2a7f8cb](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/2a7f8cb640884201e3911979961252e7104c10fd))
+* Replace internal path uses by URIs ([2c1aab6](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/2c1aab6d3a14fb26b2f7138ed4af55fd43e06bb4))
+* Replace internal path uses by URIs [#2](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/2) ([c2d5593](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/c2d55930e432f655aea0fdb0d2648752859e51d2))
+* URI representation ([1f664c2](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/1f664c29550f8b8551af317073f891d04953c932))
+
 ## [1.2.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.1.0...1.2.0) (2022-05-11)
 
 
