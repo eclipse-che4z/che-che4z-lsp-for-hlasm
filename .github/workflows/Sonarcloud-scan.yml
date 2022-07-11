@@ -55,16 +55,18 @@ jobs:
       - run: mv bw-artifact.zip /tmp/bw-artifact.zip
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+          persist-credentials: false
+          fetch-depth: 1
           ref: ${{ env.REF }}
       - run: mv /tmp/bw-artifact.zip bw-artifact.zip
       - run: unzip bw-artifact.zip
       - name: Get version
-        run: echo "VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")" >> $GITHUB_ENV
+        run: |
+          echo "VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")" >> $GITHUB_ENV
+          echo "HEAD_BRANCH_ARG=$(cat pr-info/head-branch-arg.txt)" >> $GITHUB_ENV
+          echo "PR_NUMBER_ARG=$(cat pr-info/pr-number-arg.txt)" >> $GITHUB_ENV
 
       - name: Sonar scan
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           export SONAR_SCANNER_VERSION=4.2.0.1873 &&
           export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux &&
@@ -86,10 +88,10 @@ jobs:
           -Dsonar.cfamily.llvm-cov.reportPath=build/coverage.txt
           -Dsonar.cfamily.cache.enabled=false
           -Dsonar.javascript.lcov.reportPaths=clients/vscode-hlasmplugin/coverage/lcov.info
-          -Dsonar.projectVersion=${{ env.VERSION }}
+          -Dsonar.projectVersion=$VERSION
           -Dsonar.cpd.exclusions=parser_library/src/context/instruction.cpp
           -Dsonar.exclusions=clients/vscode-hlasmplugin/src/test/**
           -Dsonar.test.inclusions=clients/vscode-hlasmplugin/src/test/**
           -Dsonar.coverage.exclusions=benchmark/benchmark.cpp
-          $(cat pr-info/head-branch-arg.txt)
-          $(cat pr-info/pr-number-arg.txt)
+          $HEAD_BRANCH_ARG
+          $PR_NUMBER_ARG
