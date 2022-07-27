@@ -124,24 +124,25 @@ void feature_workspace_folders::add_workspace(const std::string& name, const std
 
 void feature_workspace_folders::did_change_watched_files(const json&, const json& params)
 {
-    std::vector<json> changes(params["changes"]);
-    std::vector<std::string> paths;
-    for (auto& change : changes)
+    using namespace hlasm_plugin::parser_library;
+    try
     {
-        try
-        {
-            paths.push_back(change["uri"].get<std::string>());
-        }
-        catch (const std::system_error& e)
-        {
-            LOG_ERROR(
-                std::string("An exception caught while parsing didChangeWatchedFiles notification uri: ") + e.what());
-        }
+        const auto& json_changes = params.at("changes");
+        std::vector<fs_change> changes;
+        changes.reserve(json_changes.size());
+        std::transform(json_changes.begin(), json_changes.end(), std::back_inserter(changes), [](const json& change) {
+            auto uri = change.at("uri").get<std::string_view>();
+            auto type = change.at("type").get<long long>();
+            if (type < 1 || type > 3)
+                type = 0;
+            return fs_change { sequence<char>(uri), static_cast<fs_change_type>(type) };
+        });
+        ws_mngr_.did_change_watched_files(sequence<fs_change>(changes));
     }
-    std::vector<const char*> c_uris;
-    std::transform(
-        paths.begin(), paths.end(), std::back_inserter(c_uris), [](const std::string& s) { return s.c_str(); });
-    ws_mngr_.did_change_watched_files(c_uris.data(), c_uris.size());
+    catch (const nlohmann::json::exception& j)
+    {
+        LOG_ERROR(std::string("Invalid didChangeWatchedFiles notification parameter: ") + j.what());
+    }
 }
 
 void feature_workspace_folders::send_configuration_request()

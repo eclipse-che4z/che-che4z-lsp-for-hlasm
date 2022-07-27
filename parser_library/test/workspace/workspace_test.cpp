@@ -436,13 +436,13 @@ TEST_F(workspace_test, did_change_watched_files)
 
     // remove the macro, there should still be 1 diagnostic E049 that the ERROR was not found
     file_manager.insert_correct_macro = false;
-    ws.did_change_watched_files(correct_macro_loc);
+    ws.did_change_watched_files({ correct_macro_loc });
     ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)1);
     EXPECT_STREQ(diags()[0].code.c_str(), "E049");
 
     // put it back and make some change in the source file, the diagnostic will disappear
     file_manager.insert_correct_macro = true;
-    ws.did_change_watched_files(correct_macro_loc);
+    ws.did_change_watched_files({ correct_macro_loc });
     std::vector<document_change> changes;
     std::string new_text = "";
     changes.push_back(document_change({ { 0, 0 }, { 0, 0 } }, new_text.c_str(), new_text.size()));

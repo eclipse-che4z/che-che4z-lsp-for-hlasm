@@ -396,10 +396,11 @@ void workspace::did_change_file(const utils::resource::resource_location& file_l
     parse_file(file_location);
 }
 
-void workspace::did_change_watched_files(const utils::resource::resource_location& file_location)
+void workspace::did_change_watched_files(const std::vector<utils::resource::resource_location>& file_locations)
 {
     refresh_libraries();
-    parse_file(file_location);
+    for (const auto& file_location : file_locations)
+        parse_file(file_location);
 }
 
 location workspace::definition(const utils::resource::resource_location& document_loc, const position pos) const

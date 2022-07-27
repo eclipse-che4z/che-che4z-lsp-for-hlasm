@@ -121,13 +121,15 @@ public:
         notify_diagnostics_consumers();
     }
 
-    void did_change_watched_files(const std::vector<utils::resource::resource_location>& paths)
+    void did_change_watched_files(std::vector<utils::resource::resource_location> paths)
     {
-        for (const auto& path : paths)
-        {
-            workspaces::workspace& ws = ws_path_match(path.get_uri());
-            ws.did_change_watched_files(path);
-        }
+        std::unordered_map<workspaces::workspace*, std::vector<utils::resource::resource_location>> paths_for_ws;
+        for (auto& path : paths)
+            paths_for_ws[&ws_path_match(path.get_uri())].push_back(std::move(path));
+
+        for (const auto& [ws, path_list] : paths_for_ws)
+            ws->did_change_watched_files(path_list);
+
         notify_diagnostics_consumers();
     }
 

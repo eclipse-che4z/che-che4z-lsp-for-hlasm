@@ -124,7 +124,7 @@ public:
     void did_close_file(const utils::resource::resource_location& file_location);
     void did_change_file(
         const utils::resource::resource_location& file_location, const document_change* changes, size_t ch_size);
-    void did_change_watched_files(const utils::resource::resource_location& file_location);
+    void did_change_watched_files(const std::vector<utils::resource::resource_location>& file_locations);
 
     location definition(const utils::resource::resource_location& document_loc, position pos) const override;
     location_list references(const utils::resource::resource_location& document_loc, position pos) const override;

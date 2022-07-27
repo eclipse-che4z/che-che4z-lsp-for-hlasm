@@ -63,6 +63,20 @@ protected:
     ~parsing_metadata_consumer() = default;
 };
 
+enum class fs_change_type
+{
+    invalid = 0,
+    created = 1,
+    changed = 2,
+    deleted = 3,
+};
+
+struct fs_change
+{
+    sequence<char> uri;
+    fs_change_type change_type;
+};
+
 // The main class that encapsulates all functionality of parser library.
 // All the methods are C++ version of LSP and DAP methods.
 class PARSER_LIBRARY_EXPORT workspace_manager
@@ -92,7 +106,7 @@ public:
     virtual void did_change_file(
         const char* document_uri, version_t version, const document_change* changes, size_t ch_size);
     virtual void did_close_file(const char* document_uri);
-    virtual void did_change_watched_files(const char** paths, size_t size);
+    virtual void did_change_watched_files(sequence<fs_change> changes);
 
     virtual position_uri definition(const char* document_uri, position pos);
     virtual position_uri_list references(const char* document_uri, position pos);

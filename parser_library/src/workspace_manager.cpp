@@ -60,14 +60,14 @@ ws_id workspace_manager::find_workspace(const char* document_uri) { return impl_
 
 void workspace_manager::remove_workspace(const char* uri) { impl_->remove_workspace(uri); }
 
-void workspace_manager::did_change_watched_files(const char** paths, size_t size)
+void workspace_manager::did_change_watched_files(sequence<fs_change> fs_changes)
 {
     std::vector<utils::resource::resource_location> paths_s;
-    for (size_t i = 0; i < size; ++i)
-    {
-        paths_s.emplace_back(paths[i]);
-    }
-    impl_->did_change_watched_files(paths_s);
+    paths_s.reserve(fs_changes.size());
+    std::transform(fs_changes.begin(), fs_changes.end(), std::back_inserter(paths_s), [](const auto& change) {
+        return utils::resource::resource_location(static_cast<std::string_view>(change.uri));
+    });
+    impl_->did_change_watched_files(std::move(paths_s));
 }
 
 void workspace_manager::did_open_file(const char* document_uri, version_t version, const char* text, size_t text_size)
