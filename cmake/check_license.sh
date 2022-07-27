@@ -13,7 +13,8 @@
 
 #These are MIT-licensed third party sources
 EXCEPTIONS="semanticTokens.ts
-protocol.semanticTokens.ts"
+protocol.semanticTokens.ts
+terse.js"
 
 EXLIST=""
 for e in $EXCEPTIONS

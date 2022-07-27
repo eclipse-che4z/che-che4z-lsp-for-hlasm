@@ -61,7 +61,7 @@ export class ServerFactory {
             const server: vscodelc.NodeModule = {
                 module: path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
                 args: ServerFactory.decorateArgs(getConfig<string[]>('arguments')),
-                options: { execArgv: this.getWasmRuntimeArgs() }
+                options: { execArgv: ServerFactory.getWasmRuntimeArgs() }
             };
             return server;
         }
@@ -78,7 +78,7 @@ export class ServerFactory {
         ];
     }
 
-    private getWasmRuntimeArgs(): Array<string> {
+    public static getWasmRuntimeArgs(): Array<string> {
         const v8Version = process && process.versions && process.versions.v8 || "1.0";
         const v8Major = +v8Version.split(".")[0];
         if (v8Major >= 9)

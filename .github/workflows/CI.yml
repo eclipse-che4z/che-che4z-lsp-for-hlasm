@@ -213,7 +213,7 @@ jobs:
         run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
       - name: Update version
         if: env.BRANCH == 'master' || startsWith(env.BRANCH, 'release')
-        run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
+        run: cd clients/vscode-hlasmplugin && npm ci && npm run compile && npx semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Inject telemetry key
@@ -222,7 +222,7 @@ jobs:
           export TEL_KEY=`node -e "console.log(Buffer.from('${{ secrets.TELEMETRY_KEY }}').toString('base64'))"`
           sed -i "s/const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY/const TELEMETRY_KEY_ENCODED = '$TEL_KEY'/" telemetry.ts
       - name: Package VSIX
-        run: cd clients/vscode-hlasmplugin/ && npm ci && npm run package
+        run: cd clients/vscode-hlasmplugin/ && npm ci && npm run compile && npm run package
       - name: Get VSIX filename
         run: echo VSIX_FILENAME=$(ls clients/vscode-hlasmplugin/*.vsix) >> $GITHUB_ENV
       - name: Get version
@@ -250,7 +250,7 @@ jobs:
         run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
       - name: Update version
         if: env.BRANCH == 'master' || startsWith(env.BRANCH, 'release')
-        run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
+        run: cd clients/vscode-hlasmplugin && npm ci && npm run compile && npx semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Inject telemetry key
@@ -285,7 +285,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Update version
-        run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
+        run: cd clients/vscode-hlasmplugin && npm ci && npm run compile && npx semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get new version
@@ -374,7 +374,7 @@ jobs:
         run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
       - name: Update version
         if: env.BRANCH == 'master' || startsWith(env.BRANCH, 'release')
-        run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
+        run: cd clients/vscode-hlasmplugin && npm ci && npm run compile && npx semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get version
@@ -384,7 +384,7 @@ jobs:
         with:
           name: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
           path: clients/vscode-hlasmplugin/plugin/
-      - name: npm install
-        run: cd clients/vscode-hlasmplugin && npm install
+      - name: npm ci
+        run: cd clients/vscode-hlasmplugin && npm ci
       - name: Run Theia Tests
         run: cd clients/vscode-hlasmplugin && npm run test:theia /home/theia/
