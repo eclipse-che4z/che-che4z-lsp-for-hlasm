@@ -338,7 +338,7 @@ public:
     {
         return { "SEVEN", "" };
     }
-    preprocessor_options get_preprocessor_options(
+    std::vector<preprocessor_options> get_preprocessor_options(
         const hlasm_plugin::utils::resource::resource_location&) const override
     {
         return {};

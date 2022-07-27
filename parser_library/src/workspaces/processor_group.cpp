@@ -19,7 +19,6 @@ namespace hlasm_plugin::parser_library::workspaces {
 namespace {
 struct translate_pp_options
 {
-    preprocessor_options operator()(const std::monostate&) const { return std::monostate {}; }
     preprocessor_options operator()(const config::db2_preprocessor& opt) const
     {
         return db2_preprocessor_options(opt.version, opt.conditional);
@@ -29,13 +28,24 @@ struct translate_pp_options
         return cics_preprocessor_options(opt.prolog, opt.epilog, opt.leasm);
     }
 };
+
+std::vector<preprocessor_options> translate_pp_configs(const std::vector<config::preprocessor_options>& pp)
+{
+    std::vector<preprocessor_options> result;
+    result.reserve(pp.size());
+    std::transform(pp.begin(), pp.end(), std::back_inserter(result), [](const auto& p) {
+        return std::visit(translate_pp_options {}, p.options);
+    });
+    return result;
+}
 } // namespace
 
-processor_group::processor_group(
-    const std::string& pg_name, const config::assembler_options& asm_options, const config::preprocessor_options& pp)
+processor_group::processor_group(const std::string& pg_name,
+    const config::assembler_options& asm_options,
+    const std::vector<config::preprocessor_options>& pp)
     : m_pg_name(pg_name)
     , m_asm_opts(asm_options)
-    , m_prep_opts(std::visit(translate_pp_options {}, pp.options))
+    , m_prep_opts(translate_pp_configs(pp))
 {}
 
 void processor_group::update_asm_options(asm_option& opts) const { m_asm_opts.apply(opts); }

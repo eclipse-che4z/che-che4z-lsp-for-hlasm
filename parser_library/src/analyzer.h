@@ -56,7 +56,7 @@ class analyzer_options
     collect_highlighting_info collect_hl_info = collect_highlighting_info::no;
     file_is_opencode parsing_opencode = file_is_opencode::no;
     std::shared_ptr<context::id_storage> ids_init;
-    preprocessor_options preprocessor_args;
+    std::vector<preprocessor_options> preprocessor_args;
     virtual_file_monitor* vf_monitor = nullptr;
 
     void set(utils::resource::resource_location rl) { file_loc = std::move(rl); }
@@ -67,7 +67,8 @@ class analyzer_options
     void set(collect_highlighting_info hi) { collect_hl_info = hi; }
     void set(file_is_opencode f_oc) { parsing_opencode = f_oc; }
     void set(std::shared_ptr<context::id_storage> ids) { ids_init = std::move(ids); }
-    void set(preprocessor_options pp) { preprocessor_args = std::move(pp); }
+    void set(preprocessor_options pp) { preprocessor_args.push_back(std::move(pp)); }
+    void set(std::vector<preprocessor_options> pp) { preprocessor_args = std::move(pp); }
     void set(virtual_file_monitor* vfm) { vf_monitor = vfm; }
 
     context::hlasm_context& get_hlasm_context();
@@ -94,7 +95,8 @@ public:
         constexpr auto hi_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, collect_highlighting_info>);
         constexpr auto f_oc_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, file_is_opencode>);
         constexpr auto ids_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, std::shared_ptr<context::id_storage>>);
-        constexpr auto pp_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, preprocessor_options>);
+        constexpr auto pp_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, preprocessor_options>)+(
+            0 + ... + std::is_same_v<std::decay_t<Args>, std::vector<preprocessor_options>>);
         constexpr auto vfm_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, virtual_file_monitor*>);
         constexpr auto cnt =
             rl_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt + pp_cnt + vfm_cnt;

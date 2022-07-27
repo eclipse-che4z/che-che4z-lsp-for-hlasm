@@ -4,6 +4,7 @@
 
 #### Added
 - Command for downloading copybook datasets from the mainframe
+- Support for multiple preprocessors
 
 ### Fixed
 - Improve performance of file system event processing

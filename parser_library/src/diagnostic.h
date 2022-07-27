@@ -845,7 +845,8 @@ public:
     static diagnostic_s error_W0005(
         const utils::resource::resource_location&, std::string_view name, std::string_view type);
 
-    static diagnostic_s error_W0006(const utils::resource::resource_location&, std::string_view proc_group);
+    static diagnostic_s error_W0006(
+        const utils::resource::resource_location&, std::string_view proc_group, std::string_view type);
 
     static diagnostic_s warn_W0007(const utils::resource::resource_location&, std::string_view substitution);
 

@@ -142,7 +142,7 @@ public:
         const utils::resource::resource_location& program,
         std::optional<utils::resource::resource_location>& location) const override;
     virtual asm_option get_asm_options(const utils::resource::resource_location& file_location) const;
-    virtual preprocessor_options get_preprocessor_options(
+    virtual std::vector<preprocessor_options> get_preprocessor_options(
         const utils::resource::resource_location& file_location) const;
     const ws_uri& uri() const;
 

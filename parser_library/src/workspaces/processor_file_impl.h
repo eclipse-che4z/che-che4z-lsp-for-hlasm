@@ -39,7 +39,8 @@ public:
     void collect_diags() const override;
     bool is_once_only() const override;
     // Starts parser with new (empty) context
-    parse_result parse(parse_lib_provider&, asm_option, preprocessor_options, virtual_file_monitor*) override;
+    parse_result parse(
+        parse_lib_provider&, asm_option, std::vector<preprocessor_options>, virtual_file_monitor*) override;
     // Starts parser with in the context of parameter
     parse_result parse_macro(parse_lib_provider&, analyzing_context, library_data) override;
     // Starts parser with in the context of parameter, but does not affect LSP, HL info or parse_info_updated.

@@ -37,7 +37,8 @@ class processor : public virtual diagnosable
 {
 public:
     // starts parser with new (empty) context
-    virtual parse_result parse(parse_lib_provider&, asm_option, preprocessor_options, virtual_file_monitor*) = 0;
+    virtual parse_result parse(
+        parse_lib_provider&, asm_option, std::vector<preprocessor_options>, virtual_file_monitor*) = 0;
     // starts parser with in the context of parameter
     virtual parse_result parse_macro(parse_lib_provider&, analyzing_context, library_data) = 0;
     // starts parser to parse macro but does not update parse info or diagnostics

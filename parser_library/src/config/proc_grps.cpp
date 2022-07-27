@@ -146,7 +146,6 @@ struct preprocessor_visitor
 {
     nlohmann::json& j;
 
-    void operator()(const std::monostate&) const {}
     void operator()(const db2_preprocessor& p) const { j = p; }
     void operator()(const cics_preprocessor& p) const { j = p; }
 };
@@ -158,9 +157,22 @@ void to_json(nlohmann::json& j, const processor_group& p)
     if (auto opts = nlohmann::json(p.asm_options); !opts.empty())
         j["asm_options"] = std::move(opts);
 
-    if (!std::holds_alternative<std::monostate>(p.preprocessor.options))
-        std::visit(preprocessor_visitor { j["preprocessor"] }, p.preprocessor.options);
+    if (p.preprocessors.empty())
+    {
+        // nothing to do
+    }
+    else if (p.preprocessors.size() == 1)
+    {
+        std::visit(preprocessor_visitor { j["preprocessor"] }, p.preprocessors.front().options);
+    }
+    else
+    {
+        auto& pp_array = j["preprocessor"] = nlohmann::json::array_t();
+        for (const auto& pp : p.preprocessors)
+            std::visit(preprocessor_visitor { pp_array.emplace_back() }, pp.options);
+    }
 }
+
 void from_json(const nlohmann::json& j, processor_group& p)
 {
     j.at("name").get_to(p.name);
@@ -170,21 +182,33 @@ void from_json(const nlohmann::json& j, processor_group& p)
 
     if (auto it = j.find("preprocessor"); it != j.end())
     {
-        std::string p_name;
-        if (it->is_string())
-            p_name = it->get<std::string>();
-        else if (it->is_object())
-            it->at("name").get_to(p_name);
-        else
-            throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.", j);
+        const auto add_single_pp = [&p](nlohmann::json::const_iterator it) {
+            std::string p_name;
+            if (it->is_string())
+                p_name = it->get<std::string>();
+            else if (it->is_object())
+                it->at("name").get_to(p_name);
+            else
+                throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.", *it);
 
-        std::transform(p_name.begin(), p_name.end(), p_name.begin(), [](unsigned char c) { return (char)toupper(c); });
-        if (p_name == "DB2")
-            it->get_to(p.preprocessor.options.emplace<db2_preprocessor>());
-        else if (p_name == "CICS")
-            it->get_to(p.preprocessor.options.emplace<cics_preprocessor>());
+            std::transform(
+                p_name.begin(), p_name.end(), p_name.begin(), [](unsigned char c) { return (char)toupper(c); });
+            if (p_name == "DB2")
+                it->get_to(std::get<db2_preprocessor>(
+                    p.preprocessors.emplace_back(preprocessor_options { db2_preprocessor() }).options));
+            else if (p_name == "CICS")
+                it->get_to(std::get<cics_preprocessor>(
+                    p.preprocessors.emplace_back(preprocessor_options { cics_preprocessor() }).options));
+            else
+                throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.", *it);
+        };
+        if (it->is_array())
+        {
+            for (auto nested_it = it->begin(); nested_it != it->end(); ++nested_it)
+                add_single_pp(nested_it);
+        }
         else
-            throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.", j);
+            add_single_pp(it);
     }
 }
 
@@ -209,11 +233,20 @@ struct preprocessor_validator
     {
         return t.valid();
     }
+};
 
-    bool operator()(const std::monostate&) const noexcept { return true; }
+struct preprocessor_type_visitor
+{
+    std::string_view operator()(const db2_preprocessor&) const noexcept { return "DB2"; }
+    std::string_view operator()(const cics_preprocessor&) const noexcept { return "CICS"; }
 };
 } // namespace
 
 bool preprocessor_options::valid() const noexcept { return std::visit(preprocessor_validator {}, options); }
+
+std::string_view preprocessor_options::type() const noexcept
+{
+    return std::visit(preprocessor_type_visitor(), options);
+}
 
 } // namespace hlasm_plugin::parser_library::config

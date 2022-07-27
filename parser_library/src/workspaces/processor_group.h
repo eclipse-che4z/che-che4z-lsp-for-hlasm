@@ -34,7 +34,7 @@ class processor_group : public diagnosable_impl
 public:
     processor_group(const std::string& pg_name,
         const config::assembler_options& asm_options,
-        const config::preprocessor_options& pp);
+        const std::vector<config::preprocessor_options>& pp);
 
     void collect_diags() const override;
 
@@ -46,13 +46,13 @@ public:
 
     void update_asm_options(asm_option& opts) const;
 
-    const preprocessor_options& preprocessor() const { return m_prep_opts; }
+    const std::vector<preprocessor_options>& preprocessors() const { return m_prep_opts; }
 
 private:
     std::vector<std::unique_ptr<library>> m_libs;
     std::string m_pg_name;
     config::assembler_options m_asm_opts;
-    preprocessor_options m_prep_opts;
+    std::vector<preprocessor_options> m_prep_opts;
 };
 } // namespace hlasm_plugin::parser_library::workspaces
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H

@@ -49,60 +49,15 @@
                         "$ref": "asm_options.schema.json"
                     },
                     "preprocessor": {
-                        "description": "Defines optional preprocessor pass for open code.",
+                        "description": "Defines preprocessor passes for the open code.",
                         "anyOf": [
                             {
-                                "type": "string",
-                                "description": "Name of the preprocessor.",
-                                "enum": [
-                                    "DB2",
-                                    "CICS"
-                                ]
+                                "$ref": "preprocessor_entry.schema.json"
                             },
                             {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "description": "Name of the preprocessor.",
-                                        "enum": [
-                                            "DB2"
-                                        ]
-                                    },
-                                    "options": {
-                                        "type": "object",
-                                        "description": "Parameters for the preprocessor.",
-                                        "properties": {
-                                            "version": {
-                                                "type": "string",
-                                                "description": "The DB2 package VERSION string.",
-                                                "maxLength": 64
-                                            },
-                                            "conditional": {
-                                                "type": "boolean",
-                                                "description": "DB2 preprocessor modifications are applied only when SQL statements are present in the input source code."
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "description": "Name of the preprocessor.",
-                                        "enum": [
-                                            "CICS"
-                                        ]
-                                    },
-                                    "options": {
-                                        "type": "array",
-                                        "description": "Parameters for the preprocessor.",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
+                                "type": "array",
+                                "items": {
+                                    "$ref": "preprocessor_entry.schema.json"
                                 }
                             }
                         ]

@@ -2475,7 +2475,8 @@ diagnostic_s diagnostic_s::error_W0005(
         diagnostic_tag::none);
 }
 
-diagnostic_s diagnostic_s::error_W0006(const utils::resource::resource_location& file_name, std::string_view proc_group)
+diagnostic_s diagnostic_s::error_W0006(
+    const utils::resource::resource_location& file_name, std::string_view proc_group, std::string_view type)
 {
     return diagnostic_s(file_name.get_uri(),
         {},
@@ -2485,7 +2486,9 @@ diagnostic_s diagnostic_s::error_W0006(const utils::resource::resource_location&
             proc_group,
             "' from '",
             file_name.to_presentable(),
-            "' defines invalid preprocessor options."),
+            "' defines invalid ",
+            type,
+            " preprocessor options."),
         {},
         diagnostic_tag::none);
 }

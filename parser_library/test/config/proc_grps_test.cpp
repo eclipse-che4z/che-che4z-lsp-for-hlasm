@@ -55,7 +55,7 @@ static void compare_proc_grps(const proc_grps& pg, const proc_grps& expected)
         EXPECT_EQ(pg.pgroups[i].name, expected.pgroups[i].name);
         EXPECT_EQ(pg.pgroups[i].asm_options.profile, expected.pgroups[i].asm_options.profile);
         EXPECT_EQ(pg.pgroups[i].asm_options.sysparm, expected.pgroups[i].asm_options.sysparm);
-        EXPECT_EQ(pg.pgroups[i].preprocessor, expected.pgroups[i].preprocessor);
+        EXPECT_EQ(pg.pgroups[i].preprocessors, expected.pgroups[i].preprocessors);
         ASSERT_EQ(pg.pgroups[i].libs.size(), expected.pgroups[i].libs.size());
         for (size_t j = 0; j < pg.pgroups[i].libs.size(); ++j)
         {
@@ -85,26 +85,31 @@ TEST(proc_grps, full_content_read)
             proc_grps { { { "P1", { { "lib1", {}, false }, { "lib2", { "mac" }, true } }, { "PARAM", "PROFMAC" } },
                             { "P2", { { "lib2_1", {}, false }, { "lib2_2", {}, true } } } },
                 { "asmmac" } }),
-        std::make_pair(
-            R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_grps { { { "P1", {}, {}, std::monostate {} } } }),
+        std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_grps { { { "P1", {}, {}, {} } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"DB2"}]})"_json,
-            proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
+            proc_grps { { { "P1", {}, {}, { { db2_preprocessor {} } } } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"DB2"}}]})"_json,
-            proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
+            proc_grps { { { "P1", {}, {}, { { db2_preprocessor {} } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"DB2","options":{"conditional":false,"version":"AAA"}}}]})"_json,
-            proc_grps { { { "P1", {}, {}, db2_preprocessor { "AAA" } } } }),
+            proc_grps { { { "P1", {}, {}, { { db2_preprocessor { "AAA" } } } } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS"}}]})"_json,
-            proc_grps { { { "P1", {}, {}, cics_preprocessor {} } } }),
+            proc_grps { { { "P1", {}, {}, { { cics_preprocessor {} } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS","options":["NOPROLOG"]}}]})"_json,
-            proc_grps { { { "P1", {}, {}, cics_preprocessor { false } } } }),
+            proc_grps { { { "P1", {}, {}, { { cics_preprocessor { false } } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS","options":["NOEPILOG","NOPROLOG"]}}]})"_json,
-            proc_grps { { { "P1", {}, {}, cics_preprocessor { false, false } } } }),
+            proc_grps { { { "P1", {}, {}, { { cics_preprocessor { false, false } } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS","options":["LEASM"]}}]})"_json,
-            proc_grps { { { "P1", {}, {}, cics_preprocessor { true, true, true } } } }),
+            proc_grps { { { "P1", {}, {}, { { cics_preprocessor { true, true, true } } } } } }),
+        std::make_pair(
+            R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":[{"name":"CICS","options":["LEASM"]}]}]})"_json,
+            proc_grps { { { "P1", {}, {}, { { cics_preprocessor { true, true, true } } } } } }),
+        std::make_pair(
+            R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":[{"name":"CICS","options":["LEASM"]},"DB2"]}]})"_json,
+            proc_grps { { { "P1", {}, {}, { { cics_preprocessor { true, true, true } }, { db2_preprocessor() } } } } }),
     };
 
     for (const auto& [input, expected] : cases)
@@ -131,21 +136,23 @@ TEST(proc_grps, full_content_write)
             proc_grps { { { "P1", { { "lib1", {}, false }, { "lib2", { "mac" }, true } }, { "PARAM", "PROFMAC" } },
                             { "P2", { { "lib2_1", {}, false }, { "lib2_2", {}, true } } } },
                 { "asmmac" } }),
-        std::make_pair(
-            R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_grps { { { "P1", {}, {}, std::monostate {} } } }),
+        std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_grps { { { "P1", {}, {}, {} } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"DB2"}]})"_json,
-            proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
+            proc_grps { { { "P1", {}, {}, { { db2_preprocessor {} } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"DB2","options":{"conditional":false,"version":"AAA"}}}]})"_json,
-            proc_grps { { { "P1", {}, {}, db2_preprocessor { "AAA" } } } }),
+            proc_grps { { { "P1", {}, {}, { { db2_preprocessor { "AAA" } } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"DB2","options":{"conditional":true,"version":"BBB"}}}]})"_json,
-            proc_grps { { { "P1", {}, {}, db2_preprocessor { "BBB", true } } } }),
+            proc_grps { { { "P1", {}, {}, { { db2_preprocessor { "BBB", true } } } } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"CICS"}]})"_json,
-            proc_grps { { { "P1", {}, {}, cics_preprocessor {} } } }),
+            proc_grps { { { "P1", {}, {}, { { cics_preprocessor {} } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS", "options":["NOPROLOG","NOEPILOG","LEASM"]}}]})"_json,
-            proc_grps { { { "P1", {}, {}, cics_preprocessor { false, false, true } } } }),
+            proc_grps { { { "P1", {}, {}, { { cics_preprocessor { false, false, true } } } } } }),
+        std::make_pair(
+            R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":[{"name":"CICS","options":["PROLOG","EPILOG","LEASM"]},"DB2"]}]})"_json,
+            proc_grps { { { "P1", {}, {}, { { cics_preprocessor { true, true, true } }, { db2_preprocessor() } } } } }),
     };
 
     for (const auto& [expected, input] : cases)
@@ -178,7 +185,6 @@ TEST(proc_grps, invalid)
 TEST(proc_grps, preprocessor_options_validate)
 {
     const auto cases = {
-        std::make_pair(preprocessor_options { std::monostate {} }, true),
         std::make_pair(preprocessor_options { db2_preprocessor {} }, true),
         std::make_pair(preprocessor_options { cics_preprocessor {} }, true),
         std::make_pair(preprocessor_options { db2_preprocessor { "" } }, true),

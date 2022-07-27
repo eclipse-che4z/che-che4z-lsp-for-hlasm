@@ -50,16 +50,34 @@ workspaces::parse_lib_provider& analyzer_options::get_lib_provider() const
 }
 
 std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(
-    processing::library_fetcher lf, diagnostic_op_consumer& diag_consumer) const
+    processing::library_fetcher asm_lf, diagnostic_op_consumer& diag_consumer) const
 {
-    return std::visit(
-        [&lf, &diag_consumer](const auto& p) -> std::unique_ptr<processing::preprocessor> {
-            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, std::monostate>)
-                return {};
-            else
-                return processing::preprocessor::create(p, std::move(lf), &diag_consumer);
-        },
-        preprocessor_args);
+    const auto transform_preprocessor = [&asm_lf, &diag_consumer](const preprocessor_options& po) {
+        return std::visit(
+            [&asm_lf, &diag_consumer](const auto& p) -> std::unique_ptr<processing::preprocessor> {
+                return processing::preprocessor::create(p, std::move(asm_lf), &diag_consumer);
+            },
+            po);
+    };
+    if (preprocessor_args.empty())
+        return {};
+    else if (preprocessor_args.size() == 1)
+        return transform_preprocessor(preprocessor_args.front());
+
+    struct combined_preprocessor : processing::preprocessor
+    {
+        std::vector<std::unique_ptr<processing::preprocessor>> pp;
+        document generate_replacement(document doc) override
+        {
+            for (const auto& p : pp)
+                doc = p->generate_replacement(std::move(doc));
+            return doc;
+        }
+    } tmp;
+    std::transform(
+        preprocessor_args.begin(), preprocessor_args.end(), std::back_inserter(tmp.pp), transform_preprocessor);
+
+    return std::make_unique<combined_preprocessor>(std::move(tmp));
 }
 
 analyzer::analyzer(const std::string& text, analyzer_options opts)

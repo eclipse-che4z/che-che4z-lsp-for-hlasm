@@ -270,7 +270,7 @@ TEST(workspace, load_config_synthetic)
     EXPECT_EQ("MAC1", asm_options.profile);
 
     const auto& pp_options = ws.get_preprocessor_options(pgm1_loc);
-    EXPECT_TRUE(std::holds_alternative<db2_preprocessor_options>(pp_options));
+    EXPECT_TRUE(pp_options.size() == 1 && std::holds_alternative<db2_preprocessor_options>(pp_options.front()));
 
     // test of asm_options override
     const auto& asm_options_override = ws.get_asm_options(pgm_override_loc);
