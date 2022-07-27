@@ -21,6 +21,25 @@ on:
       - completed
 
 jobs:
+  sonar-prev-job-failure:
+    name: SonarCloud scan - previous job failure
+    runs-on: ubuntu-20.04
+    if: ${{ github.event.workflow_run.conclusion != 'success' }}
+
+    steps:
+     - name: Dump
+       run: |
+            echo Previous project ended unsuccessfully with conclusion &CONCLUSION
+            mkdir logs
+            echo ${{ github.event }} > logs/gh-event.txt
+       env:
+         CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+     - uses: actions/upload-artifact@v2
+       with:
+          name: logs
+          path: |
+            logs/
+
   sonar:
     name: SonarCloud scan
     runs-on: ubuntu-20.04
