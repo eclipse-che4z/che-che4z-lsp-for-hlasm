@@ -19,78 +19,68 @@
 
 #include "network/uri/uri.hpp"
 
+#include "utils/encoding.h"
 #include "utils/path.h"
 #include "utils/platform.h"
 
 namespace hlasm_plugin::utils::path {
+const std::regex windows_drive("^[a-z]%3A");
+const std::regex uri_unlike_windows_path("^[A-Za-z][A-Za-z0-9+\\-.]+:");
+const std::regex uri_like_windows_path("^[A-Za-z](?::|%3[aA])");
 
-static const std::regex uri_like_windows_path("^[A-Za-z](?::|%3[aA])");
-
-std::string uri_to_path(const std::string& uri)
+std::string uri_to_path(std::string_view uri)
 {
-    try
+    std::error_code ec;
+    network::uri u(uri.begin(), uri.end(), ec);
+
+    if (ec)
+        return std::string(uri);
+
+    if (u.scheme().compare("file"))
+        return "";
+    if (!u.has_path())
+        return "";
+
+    std::string auth_path;
+    if (u.has_authority() && u.authority().to_string() != "")
     {
-        network::uri u(uri);
+        if (!utils::platform::is_windows())
+            return ""; // There is no path representation for URIs like "file://share/home/etc" on linux
 
-        if (u.scheme().compare("file"))
-            return "";
-        if (!u.has_path())
-            return "";
+        auth_path = u.authority().to_string() + u.path().to_string();
 
-        std::string auth_path;
-        if (u.has_authority() && u.authority().to_string() != "")
-        {
-            if (!utils::platform::is_windows())
-                return ""; // There is no path representation for URIs like "file://share/home/etc" on linux
-
-            auth_path = u.authority().to_string() + u.path().to_string();
-
-            if (!std::regex_search(auth_path, uri_like_windows_path))
-                // handle remote locations correctly, like \\server\path, if the auth doesn't start with e.g. C:/
-                auth_path = "//" + auth_path;
-        }
-        else
-        {
-            network::string_view path = u.path();
-
-            if (utils::platform::is_windows() && path.size() >= 2
-                && ((path[0] == '/' || path[0] == '\\') && path[1] != '/' && path[1] != '\\'))
-                // If Windows path begins with exactly 1 slash, remove it e.g. /c:/Users/path -> c:/Users/path
-                path.remove_prefix(1);
-
-            auth_path = path.to_string();
-
-            if (utils::platform::is_windows())
-            {
-                auth_path[0] = (char)tolower((unsigned char)auth_path[0]);
-            }
-        }
-
-        return utils::path::lexically_normal(network::detail::decode(auth_path)).string();
+        if (!std::regex_search(auth_path, windows_drive))
+            // handle remote locations correctly, like \\server\path, if the auth doesn't start with e.g. C:/
+            auth_path = "//" + auth_path;
     }
-    catch (const std::exception&)
+    else
     {
-        return uri;
+        network::string_view path = u.path();
+
+        if (utils::platform::is_windows() && path.size() >= 2
+            && ((path[0] == '/' || path[0] == '\\') && path[1] != '/' && path[1] != '\\'))
+            // If Windows path begins with exactly 1 slash, remove it e.g. /c:/Users/path -> c:/Users/path
+            path.remove_prefix(1);
+
+        auth_path = path.to_string();
+
+        if (utils::platform::is_windows())
+        {
+            auth_path[0] = (char)tolower((unsigned char)auth_path[0]);
+        }
     }
+
+    return utils::path::lexically_normal(network::detail::decode(auth_path)).string();
 }
 
 std::string path_to_uri(std::string_view path)
 {
     // Don't consider one-letter schemes to be URI, consider them to be the beginnings of Windows path
-    if (static const std::regex uri_unlike_windows_path("^[A-Za-z][A-Za-z0-9+\\-.]+:");
-        std::regex_search(path.begin(), path.end(), uri_unlike_windows_path))
+    if (std::regex_search(path.begin(), path.end(), uri_unlike_windows_path))
         return std::string(path);
 
     // network::detail::encode_path(uri) ignores @, which is incompatible with VS Code
-    std::string uri;
-    auto out = std::back_inserter(uri);
-
-    for (char c : path)
-    {
-        if (c == '\\')
-            c = '/';
-        network::detail::encode_char(c, out, "/.%;=");
-    }
+    std::string uri = utils::encoding::percent_encode(path);
 
     if (utils::platform::is_windows())
     {
@@ -108,7 +98,7 @@ std::string path_to_uri(std::string_view path)
     return uri;
 }
 
-bool is_uri(const std::string& path) noexcept
+bool is_uri(std::string_view path) noexcept
 {
     if (path.empty())
         return false;
@@ -117,75 +107,51 @@ bool is_uri(const std::string& path) noexcept
     if (std::regex_search(path.begin(), path.end(), uri_like_windows_path))
         return false;
 
-    try
-    {
-        network::uri u(path);
-        return true;
-    }
-    catch (const std::exception&)
-    {
-        return false;
-    }
+    std::error_code ec;
+    network::uri u(path.begin(), path.end(), ec);
+
+    return ec.value() == 0;
 }
 
-std::string encode(std::string_view s)
-{
-    std::string uri;
-    auto out = std::back_inserter(uri);
-
-    for (char c : s)
-    {
-        if (c == '\\')
-            c = '/';
-        network::detail::encode_char(c, out, "/.%;=*?:");
-    }
-
-    return uri;
-}
-
-dissected_uri dissect_uri(const std::string& uri) noexcept
+dissected_uri dissect_uri(std::string_view uri) noexcept
 {
     dissected_uri dis_uri;
 
-    try
-    {
-        network::uri u(uri);
+    std::error_code ec;
+    network::uri u(uri.begin(), uri.end(), ec);
 
-        // Process non-authority parts
-        if (u.has_scheme())
-            dis_uri.scheme = u.scheme().to_string();
-        if (u.has_path())
-            dis_uri.path = u.path().to_string();
-        if (u.has_query())
-            dis_uri.query = u.query().to_string();
-        if (u.has_fragment())
-            dis_uri.fragment = u.fragment().to_string();
-
-        // Process authority parts
-        std::optional<std::string> user_info;
-        std::optional<std::string> host;
-        std::optional<std::string> port;
-
-        if (u.has_user_info())
-            user_info = u.user_info().to_string();
-        if (u.has_host())
-            host = u.host().to_string();
-        if (u.has_port())
-            port = u.port().to_string();
-
-        if (user_info.has_value() || host.has_value() || port.has_value())
-        {
-            dis_uri.auth = dissected_uri::authority {
-                std::move(user_info), std::move(host).value_or(std::string()), std::move(port)
-            };
-        }
-
+    if (ec)
         return dis_uri;
-    }
-    catch (const std::exception&)
+
+    // Process non-authority parts
+    if (u.has_scheme())
+        dis_uri.scheme = u.scheme().to_string();
+    if (u.has_path())
+        dis_uri.path = u.path().to_string();
+    if (u.has_query())
+        dis_uri.query = u.query().to_string();
+    if (u.has_fragment())
+        dis_uri.fragment = u.fragment().to_string();
+
+    // Process authority parts
+    std::optional<std::string> user_info;
+    std::optional<std::string> host;
+    std::optional<std::string> port;
+
+    if (u.has_user_info())
+        user_info = u.user_info().to_string();
+    if (u.has_host())
+        host = u.host().to_string();
+    if (u.has_port())
+        port = u.port().to_string();
+
+    if (user_info.has_value() || host.has_value() || port.has_value())
     {
-        return dis_uri;
+        dis_uri.auth =
+            dissected_uri::authority { std::move(user_info), std::move(host).value_or(std::string()), std::move(port) };
     }
+
+    return dis_uri;
 }
 
 std::string reconstruct_uri(const dissected_uri& dis_uri)
@@ -337,7 +303,7 @@ std::string to_presentable_internal_debug(const dissected_uri& dis_uri, std::str
 }
 } // namespace
 
-std::string get_presentable_uri(const std::string& uri, bool debug)
+std::string get_presentable_uri(std::string_view uri, bool debug)
 {
     dissected_uri dis_uri = dissect_uri(uri);
 

@@ -1,11 +1,9 @@
          MACRO
          TEST
-         TEST1
-         TEST2
+         TEST_2_BYTE
          MEND
 
          TEST
-         TEST1
-         TEST2
+         TEST_2_BYTE
 
          END

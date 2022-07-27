@@ -32,23 +32,27 @@ public:
     std::string get_path() const;
     std::string to_presentable(bool debug = false) const;
 
+    bool is_local() const;
+    static bool is_local(std::string_view uri);
+
     // Lexically functions behave very similarly to std::filesystem functions
-    // Additionally tries to normalize URIs containing file scheme on Windows (file:C:/dir or file:/C:/dir or
-    // file://C:/dir -> or file:///C://dir)
-    std::string lexically_normal() const;
-    std::string lexically_relative(const resource_location& base) const;
+    // Additionally tries to
+    // - normalize URIs containing file scheme on Windows (from file:C:/dir or file:/C:/dir or
+    // file://C:/dir or file:///C://dir to file:///C:/dir)
+    // - percent encode special characters
+    resource_location lexically_normal() const;
+    resource_location lexically_relative(const resource_location& base) const;
     bool lexically_out_of_scope() const;
 
     // Join behaves very similarly to std::filesystem functions
-    void join(const std::string& other);
-    static resource_location join(resource_location rl, const std::string& other);
+    void join(std::string_view other);
+    static resource_location join(resource_location rl, std::string_view other);
 
     // Relative reference resolution based on RFC 3986
-    void relative_reference_resolution(const std::string& other);
-    static resource_location relative_reference_resolution(resource_location rl, const std::string& other);
+    void relative_reference_resolution(std::string_view other);
+    static resource_location relative_reference_resolution(resource_location rl, std::string_view other);
 
-    std::strong_ordering operator<=>(const resource_location& rl) const noexcept;
-    bool operator==(const resource_location& rl) const noexcept;
+    std::strong_ordering operator<=>(const resource_location& rl) const noexcept = default;
 
 private:
     std::string m_uri;

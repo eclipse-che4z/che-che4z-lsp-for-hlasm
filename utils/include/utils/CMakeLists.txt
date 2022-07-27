@@ -12,6 +12,7 @@
 
 target_sources(hlasm_utils PUBLIC
 	content_loader.h
+	encoding.h
 	filesystem_content_loader.h
 	general_hashers.h
 	list_directory_rc.h

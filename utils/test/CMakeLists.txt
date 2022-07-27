@@ -13,6 +13,7 @@
 add_executable(hlasm_utils_test)
 
 target_sources(hlasm_utils_test PRIVATE
+	encoding_test.cpp
 	path_conversions_test.cpp
 	platform_test.cpp
 	resource_location_test.cpp

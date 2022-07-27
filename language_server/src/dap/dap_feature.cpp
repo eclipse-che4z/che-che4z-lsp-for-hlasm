@@ -21,11 +21,11 @@
 namespace {
 using namespace hlasm_plugin::language_server::dap;
 
-std::string server_conformant_path(const std::string& path, path_format path_format)
+std::string server_conformant_path(std::string_view path, path_format path_format)
 {
     // Server accepts paths in URI format
     if (path_format == path_format::URI)
-        return path;
+        return std::string(path);
 
     // Theia sends us relative path while not accepting it back. Change to absolute
     std::filesystem::path p = hlasm_plugin::utils::path::absolute(path);
@@ -44,14 +44,14 @@ std::string server_conformant_path(const std::string& path, path_format path_for
     return hlasm_plugin::utils::path::path_to_uri(result);
 }
 
-std::string client_conformant_path(const std::string& uri, path_format client_path_format)
+std::string client_conformant_path(std::string_view uri, path_format client_path_format)
 {
     // Server provides paths in URI format -> convert it to whatever the client wants
     if (client_path_format == path_format::URI)
-        return uri;
+        return std::string(uri);
 
     auto generated_path = hlasm_plugin::utils::path::uri_to_path(uri);
-    return generated_path.empty() ? uri : generated_path;
+    return generated_path.empty() ? std::string(uri) : generated_path;
 }
 
 constexpr const int THREAD_ID = 1;
@@ -138,7 +138,7 @@ void dap_feature::on_launch(const json& request_seq, const json& args)
         return;
 
     // wait for configurationDone?
-    std::string program_path = server_conformant_path(args["program"].get<std::string>(), client_path_format_);
+    std::string program_path = server_conformant_path(args["program"].get<std::string_view>(), client_path_format_);
     bool stop_on_entry = args["stopOnEntry"].get<bool>();
     auto workspace_id = ws_mngr_.find_workspace(program_path.c_str());
     debugger->set_event_consumer(this);
@@ -154,7 +154,7 @@ void dap_feature::on_set_breakpoints(const json& request_seq, const json& args)
 
     json breakpoints_verified = json::array();
 
-    std::string source = server_conformant_path(args["source"]["path"].get<std::string>(), client_path_format_);
+    std::string source = server_conformant_path(args["source"]["path"].get<std::string_view>(), client_path_format_);
     std::vector<parser_library::breakpoint> breakpoints;
 
     if (auto bpoints_found = args.find("breakpoints"); bpoints_found != args.end())
@@ -189,7 +189,7 @@ void dap_feature::on_threads(const json& request_seq, const json&)
 
 [[nodiscard]] json source_to_json(parser_library::source source, path_format path_format)
 {
-    return json { { "path", client_conformant_path(std::string(source.uri), path_format) } };
+    return json { { "path", client_conformant_path(std::string_view(source.uri), path_format) } };
 }
 
 void dap_feature::on_stack_trace(const json& request_seq, const json&)

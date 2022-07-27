@@ -12,6 +12,7 @@
 
 target_sources(hlasm_utils PRIVATE
 	content_loader.cpp
+	encoding.cpp
 	filesystem_content_loader.cpp
 	path_conversions.cpp
 	platform.cpp

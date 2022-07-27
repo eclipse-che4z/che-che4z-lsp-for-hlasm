@@ -138,24 +138,46 @@ suite('Integration Test Suite', () => {
         await helper.debugStop();
     }).timeout(20000).slow(10000);
 
-    // verify that library patterns are working
-    test('Test library patterns', async () => {
-        const files = await vscode.workspace.findFiles('pattern_test/test_pattern.hlasm');
-
-        assert.ok(files && files[0]);
-        const file = files[0];
-
-        // open the file
-        const document = await vscode.workspace.openTextDocument(file);
-
-        await vscode.window.showTextDocument(document);
-
-        await helper.sleep(2000);
+    async function openDocumentAndCheckDiags(workspace_file: string) {
+        await helper.showDocument(workspace_file);
+        await helper.sleep(1500);
 
         const allDiags = vscode.languages.getDiagnostics();
-        const patternDiags = allDiags.find(pair => pair[0].path.endsWith("test_pattern.hlasm"))
+        const patternDiags = allDiags.find(pair => pair[0].path.endsWith(workspace_file));
 
-        if (patternDiags)
-            assert.ok(patternDiags[1].length == 0, 'Library patterns are not working');
+        assert.ok(patternDiags === undefined, "Library patterns are not working for file: " + workspace_file);
+    }
+
+    // verify that library patterns are working
+    test('General', async () => {
+        await openDocumentAndCheckDiags("pattern_test/test_pattern.hlasm");
+    }).timeout(10000).slow(2500);
+
+    test('Special chars - basic character set', async () => {
+        await openDocumentAndCheckDiags("pattern_test/!#$%&'()+,-.0123456789;=@ABCDEFGHIJKLMNOPQRSTUVWXYZ??^_`abcdefghijklmnopqrstuvwxyz??~.hlasm");
+    }).timeout(10000).slow(2500);
+
+    test('1 Byte UTF-8 Encoding', async () => {
+        await openDocumentAndCheckDiags("pattern_test/test_utf_8_+.hlasm");
+    }).timeout(10000).slow(2500);
+
+    test('2 Byte UTF-8 Encoding', async () => {
+        await openDocumentAndCheckDiags("pattern_test/test_utf_8_߿.hlasm");
+    }).timeout(10000).slow(2500);
+
+    test('3 Byte UTF-8 Encoding', async () => {
+        await openDocumentAndCheckDiags("pattern_test/test_utf_8_ﾝ.hlasm");
+    }).timeout(10000).slow(2500);
+
+    test('4 Byte UTF-8 Encoding', async () => {
+        await openDocumentAndCheckDiags("pattern_test/test_utf_8_🧿.hlasm");
+    }).timeout(10000).slow(2500);
+
+    test('Wildcards and UTF-8 Encoding (Part #1)', async () => {
+        await openDocumentAndCheckDiags("pattern_test/$test㎛_utf🧽_8_߽.hlasm");
+    }).timeout(10000).slow(2500);
+
+    test('Wildcards and UTF-8 Encoding (Part #2)', async () => {
+        await openDocumentAndCheckDiags("pattern_test/test¾_🧼utf@_8_☕.hlasm");
     }).timeout(10000).slow(2500);
 });

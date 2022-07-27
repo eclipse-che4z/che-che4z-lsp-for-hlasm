@@ -21,10 +21,23 @@
 #include <iterator>
 #include <regex>
 
+#include "utils/encoding.h"
 #include "utils/path_conversions.h"
 #include "utils/platform.h"
 
 namespace hlasm_plugin::utils::resource {
+
+namespace {
+const std::string windows_drive_letter = "[A-Za-z]";
+const std::string colon = "(?::|%3[aA])";
+const std::string slash = "(?:/|\\\\)";
+
+const std::regex windows_drive("^(" + windows_drive_letter + colon + ")");
+const std::regex host_like_windows_path("^(" + windows_drive_letter + ")(" + colon + "?)$");
+const std::regex path_like_windows_path("^(?:[///]|[//]|[/])?(" + windows_drive_letter + ")" + colon);
+const std::regex local_windows("^file:" + slash + "*" + windows_drive_letter + colon);
+const std::regex local_non_windows("^file:(?:" + slash + "{3}|(?:" + slash + "(?:[^/\\\\])+))");
+} // namespace
 
 resource_location::resource_location(std::string uri)
     : m_uri(std::move(uri))
@@ -45,6 +58,21 @@ std::string resource_location::get_path() const { return m_uri.size() != 0 ? uti
 std::string resource_location::to_presentable(bool debug) const
 {
     return utils::path::get_presentable_uri(m_uri, debug);
+}
+
+bool resource_location::is_local() const { return is_local(m_uri); }
+
+bool resource_location::is_local(std::string_view uri)
+{
+    if (utils::platform::is_windows())
+    {
+        if (std::regex_search(uri.begin(), uri.end(), local_windows))
+            return true;
+    }
+    else if (std::regex_search(uri.begin(), uri.end(), local_non_windows))
+        return true;
+
+    return false;
 }
 
 namespace {
@@ -151,10 +179,11 @@ private:
     };
 };
 
-std::string normalize_path(std::string_view path)
+std::string normalize_path(std::string_view orig_path, bool has_file_scheme, bool has_host)
 {
     std::deque<std::string_view> elements;
-    std::string_view orig_path = path;
+    std::string_view path = orig_path;
+    std::string_view win_root_dir;
 
     for (uri_path_iterator this_it(&path); auto element : this_it)
     {
@@ -162,19 +191,22 @@ std::string normalize_path(std::string_view path)
             continue;
         else if (element == "..")
         {
-            if (!elements.empty())
+            if (!elements.empty() && (elements.size() > 1 || (elements.front() != "/" && elements.front() != "\\")))
                 elements.pop_back();
         }
         else if (elements.empty() && element.empty())
             elements.push_back("/");
+        else if (has_file_scheme && !has_host && utils::platform::is_windows()
+            && std::regex_match(element.begin(), element.end(), windows_drive))
+            win_root_dir = element;
         else
             elements.push_back(element);
     }
 
     std::string ret = "";
-    // Check if there is any element to process further
-    if (elements.empty())
-        return ret;
+
+    if (!win_root_dir.empty())
+        ret.append(win_root_dir);
 
     // Append elements to uri
     while (!elements.empty())
@@ -191,7 +223,22 @@ std::string normalize_path(std::string_view path)
     return ret;
 }
 
-void normalize_file_scheme(utils::path::dissected_uri& dis_uri)
+void normalize_windows_like_uri_helper(
+    utils::path::dissected_uri& dis_uri, unsigned char win_drive_letter, std::string_view path_suffix)
+{
+    std::string path;
+    path.push_back('/');
+    path.push_back(static_cast<const char>(tolower(win_drive_letter)));
+    path.push_back(':');
+    path.append(path_suffix);
+
+    dis_uri.path = std::move(path);
+
+    // Clear host but keep in mind that it needs to remain valid (albeit empty)
+    dis_uri.auth = { std::nullopt, "", std::nullopt };
+}
+
+void normalize_windows_like_uri(utils::path::dissected_uri& dis_uri)
 {
     if (dis_uri.scheme == "file")
     {
@@ -199,52 +246,23 @@ void normalize_file_scheme(utils::path::dissected_uri& dis_uri)
             return;
 
         if (std::smatch s; dis_uri.auth.has_value() && (!dis_uri.auth->port.has_value() || dis_uri.auth->port->empty())
-            && !dis_uri.auth->user_info.has_value())
+            && !dis_uri.auth->user_info.has_value() && dis_uri.contains_host())
         {
-            if (static const std::regex host_like_windows_path("^([A-Za-z])($|:$|%3[aA]$)");
-                !std::regex_search(dis_uri.auth->host, s, host_like_windows_path)
+            if (!std::regex_search(dis_uri.auth->host, s, host_like_windows_path)
                 || (s[2].length() == 0 && !dis_uri.auth->port.has_value()))
                 return;
 
             // auth consists only of host name resembling Windows drive and empty or missing port part
-
-            // Start constructing new path
-            std::string new_path = "/";
-            new_path.append(s[1]);
-
-            // If drive letter is captured without colon -> append it
-            if (s[2].length() == 0)
-                new_path.append(":");
-            else
-                new_path.append(s[2]);
-
-            new_path.append(dis_uri.path);
-            dis_uri.path = std::move(new_path);
-
-            // Clear host but keep in mind that it needs to remain valid (albeit empty)
-            dis_uri.auth->host.clear();
-
-            // port and user_info have zero length in the worst case -> assign nullopt
-            dis_uri.auth->port = std::nullopt;
-            dis_uri.auth->user_info = std::nullopt;
+            normalize_windows_like_uri_helper(dis_uri, s[1].str()[0], dis_uri.path);
         }
-        else if (static const std::regex path_like_windows_path("^(|[/]|[//])[A-Za-z](?::|%3[aA])");
-                 !dis_uri.auth.has_value() && std::regex_search(dis_uri.path, s, path_like_windows_path))
-        {
+        else if (!dis_uri.contains_host() && std::regex_search(dis_uri.path, s, path_like_windows_path))
             // Seems like we have a windows like path
-            std::string slashes;
-            for (auto i = 3 - s[1].length(); i != 0; i--)
-            {
-                slashes.push_back('/');
-            }
-
-            dis_uri.path.insert(0, slashes);
-        }
+            normalize_windows_like_uri_helper(dis_uri, s[1].str()[0], s.suffix().str());
     }
 }
 } // namespace
 
-std::string resource_location::lexically_normal() const
+resource_location resource_location::lexically_normal() const
 {
     auto uri = m_uri;
 
@@ -252,17 +270,21 @@ std::string resource_location::lexically_normal() const
 
     auto dis_uri = utils::path::dissect_uri(uri);
     if (dis_uri.path.empty())
-        return uri;
+        return resource_location(m_uri);
 
-    dis_uri.path = normalize_path(dis_uri.path);
+    std::transform(dis_uri.scheme.begin(), dis_uri.scheme.end(), dis_uri.scheme.begin(), [](unsigned char c) {
+        return static_cast<const char>(tolower(c));
+    });
 
-    normalize_file_scheme(dis_uri);
-    dis_uri.path = utils::path::encode(dis_uri.path);
+    dis_uri.path = normalize_path(dis_uri.path, dis_uri.scheme == "file", dis_uri.contains_host());
+    normalize_windows_like_uri(dis_uri);
 
-    return utils::path::reconstruct_uri(dis_uri);
+    dis_uri.path = utils::encoding::percent_encode_and_ignore_utf8(dis_uri.path);
+
+    return resource_location(utils::path::reconstruct_uri(dis_uri));
 }
 
-std::string resource_location::lexically_relative(const resource_location& base) const
+resource_location resource_location::lexically_relative(const resource_location& base) const
 {
     std::string_view this_uri = m_uri;
     std::string_view base_uri = base.get_uri();
@@ -271,7 +293,7 @@ std::string resource_location::lexically_relative(const resource_location& base)
     if (auto this_colon = this_uri.find_first_of(":") + 1; this_colon != std::string_view::npos)
     {
         if (0 != this_uri.compare(0, this_colon, base_uri, 0, this_colon))
-            return "";
+            return resource_location();
 
         this_uri.remove_prefix(this_colon);
         base_uri.remove_prefix(this_colon);
@@ -283,7 +305,7 @@ std::string resource_location::lexically_relative(const resource_location& base)
 
     auto [this_it, base_it] = std::mismatch(l_it.begin(), l_it.end(), r_it.begin(), r_it.end());
     if (this_it == this_it.end() && base_it == base_it.end())
-        return ".";
+        return resource_location(".");
 
     // Figure out how many dirs to return
     int16_t number_of_dirs_to_return = 0;
@@ -298,10 +320,10 @@ std::string resource_location::lexically_relative(const resource_location& base)
     }
 
     if (number_of_dirs_to_return < 0)
-        return "";
+        return resource_location();
 
     if (number_of_dirs_to_return == 0 && (this_it == this_it.end() || *this_it == ""))
-        return ".";
+        return resource_location(".");
 
     // Append number of dirs to return
     std::string ret;
@@ -318,7 +340,7 @@ std::string resource_location::lexically_relative(const resource_location& base)
         this_it++;
     }
 
-    return ret;
+    return resource_location(ret);
 }
 
 bool resource_location::lexically_out_of_scope() const
@@ -326,7 +348,7 @@ bool resource_location::lexically_out_of_scope() const
     return m_uri == std::string_view("..") || m_uri.starts_with("../") || m_uri.starts_with("..\\");
 }
 
-void resource_location::join(const std::string& other)
+void resource_location::join(std::string_view other)
 {
     if (utils::path::is_uri(other))
         m_uri = other;
@@ -340,7 +362,7 @@ void resource_location::join(const std::string& other)
         uri_append(m_uri, other);
 }
 
-resource_location resource_location::join(resource_location rl, const std::string& other)
+resource_location resource_location::join(resource_location rl, std::string_view other)
 {
     rl.join(other);
 
@@ -404,11 +426,11 @@ std::string remove_dot_segments(std::string_view path)
         }
         else
         {
-            auto slash = path.find_first_of("/", 1);
-            elements.push_back(path.substr(0, slash));
+            auto first_slash = path.find_first_of("/", 1);
+            elements.push_back(path.substr(0, first_slash));
 
-            if (slash != std::string::npos)
-                path = path.substr(slash);
+            if (first_slash != std::string::npos)
+                path = path.substr(first_slash);
             else
                 path.remove_prefix(path.size());
         }
@@ -428,7 +450,7 @@ std::string remove_dot_segments(std::string_view path)
 } // namespace
 
 void resource_location::relative_reference_resolution(
-    const std::string& other) // TODO enhancements can be made based on rfc3986 if needed
+    std::string_view other) // TODO enhancements can be made based on rfc3986 if needed
 {
     if (other.empty())
         return;
@@ -473,58 +495,11 @@ void resource_location::relative_reference_resolution(
     }
 }
 
-resource_location resource_location::relative_reference_resolution(resource_location rl, const std::string& other)
+resource_location resource_location::relative_reference_resolution(resource_location rl, std::string_view other)
 {
     rl.relative_reference_resolution(other);
 
     return rl;
-}
-
-namespace {
-std::strong_ordering string_compare(std::string_view a, std::string_view b)
-{
-    if (auto res = a.compare(b); res < 0)
-        return std::strong_ordering::less;
-    else if (res > 0)
-        return std::strong_ordering::greater;
-
-    return std::strong_ordering::equal;
-}
-} // namespace
-
-std::strong_ordering resource_location::operator<=>(const resource_location& rl) const noexcept
-{
-    if (!utils::platform::is_windows())
-        return string_compare(m_uri,
-            rl.m_uri); // TODO replace this and others with 'return m_uri <=> rl.m_uri' when new version of Clang is
-                       // available
-
-    std::smatch this_smatch;
-    std::smatch other_smatch;
-
-    // Determine if this is a file scheme with windows drive letter
-    if (static const std::regex file_scheme_windows("^file:///([A-Za-z])(?::|%3[aA])");
-        !std::regex_search(m_uri, this_smatch, file_scheme_windows)
-        || !std::regex_search(rl.m_uri, other_smatch, file_scheme_windows))
-        return string_compare(m_uri, rl.m_uri);
-
-    // Compare Windows drive folders
-    if (auto res = tolower(this_smatch[1].str()[0]) <=> tolower(other_smatch[1].str()[0]);
-        res != std::strong_ordering::equal)
-        return res;
-
-    // Get rid of the windows drive letter prefix before further comparison
-    auto this_sv = std::string_view(m_uri);
-    auto other_sv = std::string_view(rl.m_uri);
-    this_sv.remove_prefix(this_smatch[0].length());
-    other_sv.remove_prefix(other_smatch[0].length());
-
-    return string_compare(this_sv, other_sv);
-}
-
-bool resource_location::operator==(const resource_location& rl) const noexcept
-{
-    return std::strong_ordering::equal == (this->operator<=>(rl));
 }
 
 std::size_t resource_location_hasher::operator()(const resource_location& rl) const

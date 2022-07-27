@@ -26,6 +26,11 @@ TEST(path_conversions, uri_to_path)
     {
         EXPECT_EQ(uri_to_path("file://czprfs50/Public"), "\\\\czprfs50\\Public");
         EXPECT_EQ(uri_to_path("file:///C%3A/Public"), "c:\\Public");
+        EXPECT_EQ(uri_to_path("file:///c%3A/Public"), "c:\\Public");
+        EXPECT_EQ(uri_to_path("file:///C%3a/Public"), "c:\\Public");
+        EXPECT_EQ(uri_to_path("file:///c%3a/Public"), "c:\\Public");
+        EXPECT_EQ(uri_to_path("file:///C:/Public"), "c:\\Public");
+        EXPECT_EQ(uri_to_path("file:///c:/Public"), "c:\\Public");
     }
     else
     {

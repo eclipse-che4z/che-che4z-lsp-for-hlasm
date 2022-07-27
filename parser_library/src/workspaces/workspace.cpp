@@ -30,6 +30,7 @@
 #include "nlohmann/json.hpp"
 #include "processor.h"
 #include "utils/content_loader.h"
+#include "utils/encoding.h"
 #include "utils/path.h"
 #include "utils/path_conversions.h"
 #include "utils/platform.h"
@@ -47,7 +48,7 @@ workspace::workspace(const utils::resource::resource_location& location,
     std::atomic<bool>* cancel)
     : cancel_(cancel)
     , name_(name)
-    , location_(location)
+    , location_(location.lexically_normal())
     , file_manager_(file_manager)
     , fm_vfm_(file_manager_)
     , implicit_proc_grp("pg_implicit", {}, {})
@@ -149,20 +150,20 @@ const processor_group& workspace::get_proc_grp_by_program(const program& pgm) co
     return proc_grps_.at(pgm.pgroup);
 }
 
-const program* workspace::get_program(utils::resource::resource_location file_location) const
+const program* workspace::get_program(const utils::resource::resource_location& file_location) const
 {
     assert(opened_);
 
-    file_location.lexically_normal();
+    auto rl = file_location.lexically_normal();
 
     // direct match
-    auto program = exact_pgm_conf_.find(file_location);
+    auto program = exact_pgm_conf_.find(rl);
     if (program != exact_pgm_conf_.cend())
         return &program->second;
 
     for (const auto& pgm : regex_pgm_conf_)
     {
-        if (std::regex_match(file_location.get_uri(), pgm.second))
+        if (std::regex_match(rl.get_uri(), pgm.second))
             return &pgm.first;
     }
     return nullptr;
@@ -476,7 +477,7 @@ void workspace::find_and_add_libs(const utils::resource::resource_location& root
         return;
     }
 
-    std::regex path_validator = pathmask_to_regex(path_pattern.get_uri());
+    std::regex path_validator = percent_encoded_pathmask_to_regex(path_pattern.get_uri());
 
     std::set<std::string> processed_canonical_paths;
     std::deque<std::pair<std::string, utils::resource::resource_location>> dirs_to_search;
@@ -518,7 +519,7 @@ void workspace::find_and_add_libs(const utils::resource::resource_location& root
             if (processed_canonical_paths.contains(subdir_canonical_path))
                 continue;
 
-            dirs_to_search.emplace_back(std::move(subdir_canonical_path), std::move(subdir));
+            dirs_to_search.emplace_back(std::move(subdir_canonical_path), subdir.lexically_normal());
         }
     }
 }
@@ -543,23 +544,28 @@ std::optional<std::filesystem::path> get_fs_abs_path(std::string_view path)
 }
 
 utils::resource::resource_location transform_to_resource_location(
-    std::string path, const utils::resource::resource_location& base_resource_location)
+    std::string_view path, const utils::resource::resource_location& base_resource_location)
 {
     utils::resource::resource_location rl;
 
-    if (auto encoded_path = utils::path::encode(path); utils::path::is_uri(encoded_path))
-        rl = utils::resource::resource_location(std::move(encoded_path));
+    if (utils::resource::resource_location::is_local(path))
+        rl = utils::resource::resource_location(
+            "file:" + utils::encoding::percent_encode_and_ignore_utf8(path.substr(5)));
+    else if (utils::path::is_uri(path))
+        rl = utils::resource::resource_location(path);
     else if (auto fs_path = get_fs_abs_path(path); fs_path.has_value())
         rl = utils::resource::resource_location(
             utils::path::path_to_uri(utils::path::lexically_normal(*fs_path).string()));
     else
     {
-        std::replace(path.begin(), path.end(), '\\', '/');
-
-        rl = utils::resource::resource_location::join(base_resource_location, encoded_path);
+        if (base_resource_location.is_local())
+            rl =
+                utils::resource::resource_location::join(base_resource_location, utils::encoding::percent_encode(path));
+        else
+            rl = utils::resource::resource_location::join(base_resource_location, path);
     }
 
-    return rl;
+    return rl.lexically_normal();
 }
 
 std::vector<std::string> get_macro_extensions_compatibility_list(const config::pgm_conf& pgm_config)
@@ -622,31 +628,6 @@ library_local_options get_library_local_options(
 
     return opts;
 }
-
-// Constructs resource location from a provided path which can be either absolute, relative or uri and analyzes if it
-// contains wildcards
-std::pair<utils::resource::resource_location, bool> construct_and_analyze_resource_location(
-    std::string lib_path, const utils::resource::resource_location& base)
-{
-    auto wildcard = lib_path.find_first_of("*?");
-    auto last_valid_slash = lib_path.find_last_of("/\\", wildcard);
-    utils::resource::resource_location rl;
-
-    if (wildcard != std::string::npos && last_valid_slash != std::string::npos)
-    {
-        // This is a path with a wildcard
-        // Split the path at the last slash before the asterisk, transform the first part into resource_location, then
-        // join the second part
-        rl = transform_to_resource_location(lib_path.substr(0, last_valid_slash), base);
-
-        auto encoded_path = utils::path::encode(lib_path.substr(last_valid_slash + 1));
-        rl.join(encoded_path);
-    }
-    else
-        rl = transform_to_resource_location(lib_path, base);
-
-    return std::make_pair(utils::resource::resource_location(rl.lexically_normal()), wildcard != std::string::npos);
-}
 } // namespace
 
 void workspace::process_processor_group(
@@ -664,22 +645,18 @@ void workspace::process_processor_group(
         }
 
         auto lib_local_opts = get_library_local_options(lib, proc_groups, pgm_config);
+        auto rl = transform_to_resource_location(*lib_path, location_);
+        rl.join(""); // Ensure that this is a directory
 
-        if (auto [rl, has_wildcards] = construct_and_analyze_resource_location(*lib_path, location_); !has_wildcards)
-        {
-            rl.join(""); // Ensure that this is a directory
+        if (auto first_wild_card = rl.get_uri().find_first_of("*?"); first_wild_card == std::string::npos)
             prc_grp.add_library(
                 std::make_unique<library_local>(file_manager_, std::move(rl), std::move(lib_local_opts)));
-        }
         else
-        {
-            rl.join(""); // Ensure that this is a directory
-            find_and_add_libs(utils::resource::resource_location(rl.get_uri().substr(
-                                  0, rl.get_uri().find_last_of("/", rl.get_uri().find_first_of("*?")) + 1)),
+            find_and_add_libs(utils::resource::resource_location(
+                                  rl.get_uri().substr(0, rl.get_uri().find_last_of("/", first_wild_card) + 1)),
                 rl,
                 prc_grp,
                 lib_local_opts);
-        }
     }
 
     add_proc_grp(std::move(prc_grp));
@@ -696,15 +673,14 @@ void workspace::process_program(const config::program_mapping& pgm, const file_p
             return;
         }
 
-        if (auto [rl, has_wildcards] = construct_and_analyze_resource_location(*pgm_name, location_); !has_wildcards)
+        if (auto rl = transform_to_resource_location(*pgm_name, location_);
+            pgm_name->find_first_of("*?") == std::string::npos)
             exact_pgm_conf_.try_emplace(rl, rl, pgm.pgroup, pgm.opts);
         else
             regex_pgm_conf_.emplace_back(program { rl, pgm.pgroup, pgm.opts }, wildcard2regex(rl.get_uri()));
     }
     else
-    {
         config_diags_.push_back(diagnostic_s::error_W0004(pgm_conf_file->get_location(), name_));
-    }
 }
 
 // open config files and parse them
@@ -998,8 +974,8 @@ asm_option workspace::get_asm_options(const utils::resource::resource_location& 
         implicit_proc_grp.update_asm_options(result);
     }
 
-    utils::resource::resource_location relative_to_location(file_location.lexically_relative(location_));
-    relative_to_location = utils::resource::resource_location(relative_to_location.lexically_normal());
+    utils::resource::resource_location relative_to_location(
+        file_location.lexically_relative(location_).lexically_normal());
 
     // TODO - convert sysin_path from std::filesystem::path to utils::resource::resource_location
     std::filesystem::path sysin_path = !pgm

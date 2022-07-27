@@ -25,6 +25,7 @@ target_sources(library_test PRIVATE
 	processor_group_test.cpp
 	text_synchronization_test.cpp
 	virtual_files_test.cpp
+	wildcard2regex_test.cpp
 	workspace_pattern_test.cpp
 	workspace_test.cpp
 )

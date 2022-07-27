@@ -225,7 +225,7 @@ TEST(workspace, load_config_synthetic)
     EXPECT_EQ("P1", pg.name());
     auto expected = []() -> std::array<resource_location, 5> {
         if (is_windows())
-            return { resource_location("file:///C%3A/Users/Desktop/ASLib/"),
+            return { resource_location("file:///c%3A/Users/Desktop/ASLib/"),
                 resource_location("file:///c%3A/Users/ws/lib/"),
                 resource_location("file:///c%3A/Users/ws/libs/lib2/"),
                 resource_location("file:///c%3A/Users/Desktop/Temp/"),
@@ -245,7 +245,7 @@ TEST(workspace, load_config_synthetic)
 
     auto expected2 = []() -> std::array<resource_location, 3> {
         if (is_windows())
-            return { resource_location("file:///C%3A/Users/Desktop/ASLib/"),
+            return { resource_location("file:///c%3A/Users/Desktop/ASLib/"),
                 resource_location("file:///c%3A/Users/ws/P2lib/"),
                 resource_location("file:///c%3A/Users/ws/P2libs/libb/") };
         else

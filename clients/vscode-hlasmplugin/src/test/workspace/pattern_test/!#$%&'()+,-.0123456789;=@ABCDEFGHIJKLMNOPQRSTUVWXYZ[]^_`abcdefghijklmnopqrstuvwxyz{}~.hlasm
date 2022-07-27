@@ -1,0 +1,11 @@
+      MACRO
+      TEST
+      !#$%&'()+,-.0123456789;=@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`{}~macro
+
+      MEND
+
+      TEST
+      !#$%&'()+,-.0123456789;=@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`{}~macro
+
+
+      END

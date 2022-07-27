@@ -17,6 +17,42 @@
       "libs": [
         "pattern_test/libs/**"
       ]
+    },
+    {
+      "name": "patterns_special_chars",
+      "libs": [
+        "pattern_test/libs/!#$%&'()+,-.0123456789;=@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`{}~sublib"
+      ]
+    },
+    {
+      "name": "patterns_1_byte_utf_8",
+      "libs": [
+        "pattern_test/libs/sublib_,"
+      ]
+    },
+    {
+      "name": "patterns_2_byte_utf_8",
+      "libs": [
+        "pattern_test/libs/sublib_߾"
+      ]
+    },
+    {
+      "name": "patterns_3_byte_utf_8",
+      "libs": [
+        "pattern_test/libs/sublib_墻"
+      ]
+    },
+    {
+      "name": "patterns_4_byte_utf_8",
+      "libs": [
+        "pattern_test/libs/sublib_🧾"
+      ]
+    },
+    {
+      "name": "patterns_utf_8_wildcards",
+      "libs": [
+        "pattern_test/libs/sublib_?"
+      ]
     }
   ],
   "macro_extensions": [

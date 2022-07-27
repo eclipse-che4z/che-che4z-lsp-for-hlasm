@@ -7,6 +7,34 @@
     {
       "program": "pattern_test/test_pattern.hlasm",
       "pgroup": "patterns"
+    },
+    {
+      "program": "pattern_test/!#$%&'()+,-.0123456789;=@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{}~.hlasm",
+      "pgroup": "patterns_special_chars"
+    },
+    {
+      "program": "pattern_test/test_utf_8_+.hlasm",
+      "pgroup": "patterns_1_byte_utf_8"
+    },
+    {
+      "program": "pattern_test/test_utf_8_߿.hlasm",
+      "pgroup": "patterns_2_byte_utf_8"
+    },
+    {
+      "program": "pattern_test/test_utf_8_ﾝ.hlasm",
+      "pgroup": "patterns_3_byte_utf_8"
+    },
+    {
+      "program": "pattern_test/test_utf_8_🧿.hlasm",
+      "pgroup": "patterns_4_byte_utf_8"
+    },
+    {
+      "program": "pattern_test/$test㎛_utf🧽_8_߽.hlasm",
+      "pgroup": "patterns_utf_8_wildcards"
+    },
+    {
+      "program": "pattern_test/test?_?utf?_8_?.hlasm",
+      "pgroup": "patterns_utf_8_wildcards"
     }
   ],
   "alwaysRecognize": [

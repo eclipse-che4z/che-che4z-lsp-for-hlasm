@@ -1,0 +1,15 @@
+         MACRO
+         TEST
+         TEST_2_BYTE
+         TEST_4_BYTE
+         TEST_1_BYTE
+         TEST_3_BYTE
+         MEND
+
+         TEST
+         TEST_2_BYTE
+         TEST_4_BYTE
+         TEST_1_BYTE
+         TEST_3_BYTE
+
+         END

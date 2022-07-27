@@ -14,7 +14,10 @@
 
 #include "gtest/gtest.h"
 
+#include "utils/platform.h"
 #include "workspaces/wildcard.h"
+
+using namespace hlasm_plugin::parser_library::workspaces;
 
 TEST(wildcard2regex_test, general)
 {
@@ -42,32 +45,64 @@ TEST(wildcard2regex_test, path)
     EXPECT_TRUE(std::regex_match("pgms/anything", regex));
 }
 
-namespace {
-void verify_file_scheme(std::string colon)
+TEST(wildcard2regex_test, uri)
 {
-    auto regex = wildcard2regex("file:///C" + colon + "/dir/*");
-
+    auto regex = wildcard2regex("file:///C:/dir/*");
     EXPECT_TRUE(std::regex_match("file:///C:/dir/whatever/file", regex));
     EXPECT_TRUE(std::regex_match("file:///C:/dir/", regex));
-    EXPECT_TRUE(std::regex_match("file:///c:/dir/whatever/file", regex));
-    EXPECT_TRUE(std::regex_match("file:///c:/dir/", regex));
-    EXPECT_TRUE(std::regex_match("file:///C%3A/dir/whatever/file", regex));
-    EXPECT_TRUE(std::regex_match("file:///C%3A/dir/", regex));
+    EXPECT_FALSE(std::regex_match("file:///C%3A/dir/", regex));
+    EXPECT_FALSE(std::regex_match("file:///C%3a/dir/", regex));
+    EXPECT_FALSE(std::regex_match("file:///D:/dir/", regex));
+
+    regex = wildcard2regex("file:///C%3a/dir/*");
     EXPECT_TRUE(std::regex_match("file:///C%3a/dir/whatever/file", regex));
     EXPECT_TRUE(std::regex_match("file:///C%3a/dir/", regex));
-
-    EXPECT_FALSE(std::regex_match("file:///D:/dir/", regex));
-    EXPECT_FALSE(std::regex_match("file:///D%3A/dir/", regex));
+    EXPECT_FALSE(std::regex_match("file:///C%3A/dir/", regex));
+    EXPECT_FALSE(std::regex_match("file:///C:/dir/", regex));
     EXPECT_FALSE(std::regex_match("file:///D%3a/dir/", regex));
-}
-} // namespace
 
-TEST(wildcard2regex_test, file_scheme)
+    regex = wildcard2regex("file:///C%3A/dir/*");
+    EXPECT_TRUE(std::regex_match("file:///C%3A/dir/whatever/file", regex));
+    EXPECT_TRUE(std::regex_match("file:///C%3A/dir/", regex));
+    EXPECT_FALSE(std::regex_match("file:///C:/dir/", regex));
+    EXPECT_FALSE(std::regex_match("file:///C%3a/dir/", regex));
+    EXPECT_FALSE(std::regex_match("file:///D%3A/dir/", regex));
+}
+TEST(wildcard2regex_test, utf_8_chars_01)
 {
-    if (hlasm_plugin::utils::platform::is_windows())
-    {
-        verify_file_scheme(":");
-        verify_file_scheme("%3A");
-        verify_file_scheme("%3a");
-    }
+    auto regex = wildcard2regex("pg?s");
+    EXPECT_TRUE(std::regex_match("pgms", regex));
+    EXPECT_TRUE(std::regex_match("pg%7Fs", regex));
+    EXPECT_TRUE(std::regex_match("pg%CF%BFs", regex));
+    EXPECT_TRUE(std::regex_match("pg%EF%BF%BFs", regex));
+    EXPECT_TRUE(std::regex_match("pg%F0%9F%A7%BFs", regex));
+
+    EXPECT_FALSE(std::regex_match("pg%7fs", regex)); // lowercase percent encoding is not allowed
+
+    EXPECT_FALSE(std::regex_match("pg%24%25s", regex));
+    EXPECT_FALSE(std::regex_match("pg%C3%BF%25s", regex));
+    EXPECT_FALSE(std::regex_match("pg%C3%BF%C3%BEs", regex));
+    EXPECT_FALSE(std::regex_match("pg%DF%BF%25s", regex));
+
+    // %FF is not a valid UTF-8 character
+    EXPECT_FALSE(std::regex_match("pg%FFs", regex));
+}
+
+TEST(wildcard2regex_test, utf_8_chars_02)
+{
+    auto regex = wildcard2regex("pg??s");
+
+    EXPECT_TRUE(std::regex_match("pg%24%25s", regex));
+    EXPECT_TRUE(std::regex_match("pg%C3%BF%25s", regex));
+    EXPECT_TRUE(std::regex_match("pg%C3%BF%C3%BEs", regex));
+    EXPECT_TRUE(std::regex_match("pg%DF%BF%25s", regex));
+
+    EXPECT_FALSE(std::regex_match("pgms", regex));
+    EXPECT_FALSE(std::regex_match("pg%7Fs", regex));
+    EXPECT_FALSE(std::regex_match("pg%CF%BFs", regex));
+    EXPECT_FALSE(std::regex_match("pg%EF%BF%BFs", regex));
+    EXPECT_FALSE(std::regex_match("pg%F0%9F%A7%BFs", regex));
+
+    // %FF is not a valid UTF-8 character
+    EXPECT_FALSE(std::regex_match("pg%FF%FFs", regex));
 }

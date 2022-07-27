@@ -39,22 +39,19 @@ struct dissected_uri
 };
 
 // Converts URI (RFC3986) to common filesystem path.
-std::string uri_to_path(const std::string& uri);
+std::string uri_to_path(std::string_view uri);
 
 // Converts from filesystem path to URI
 std::string path_to_uri(std::string_view path);
 
 // Checks if provided path has the URI format
-bool is_uri(const std::string& path) noexcept;
-
-// Returns percent encoded string
-std::string encode(std::string_view s);
+bool is_uri(std::string_view path) noexcept;
 
 // Returns URI in a presentable format for the user
-std::string get_presentable_uri(const std::string& uri, bool debug);
+std::string get_presentable_uri(std::string_view uri, bool debug);
 
 // Do URI dissection
-dissected_uri dissect_uri(const std::string& uri) noexcept;
+dissected_uri dissect_uri(std::string_view uri) noexcept;
 
 // Reconstruct dissected URI
 std::string reconstruct_uri(const dissected_uri& dis_uri);

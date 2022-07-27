@@ -27,349 +27,177 @@ using namespace hlasm_plugin::utils::resource;
 using hlasm_plugin::utils::platform::is_windows;
 
 namespace {
-const std::string pgroups_file_pattern_absolute = is_windows() ? R"({
+const std::string file_scheme_user_dir = is_windows() ? "file:///C:/User/" : "file:///home/User/";
+const std::string file_scheme_user_dir_encoded = is_windows() ? "file:///C%3A/User/" : "file:///home/User/";
+
+std::string pgroups_generator(std::vector<std::string> lib_paths)
+{
+    std::string lib_path;
+    bool first = true;
+
+    for (auto path : lib_paths)
+    {
+        if (!first)
+            lib_path.append(", ");
+
+        first = false;
+
+        lib_path.push_back('"');
+        lib_path.append(path);
+        lib_path.push_back('"');
+    }
+
+    return R"({
   "pgroups": [
     {
       "name": "P1",
-      "libs": [ "C:\\Temp\\Lib", "C:\\Temp\\Lib2\\Libs\\**" ]
-    }
-  ]
-})"
-                                                               : R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "/home/Temp/Lib", "/home/Temp/Lib2/Libs/**" ]
+      "libs": [ )"
+        + lib_path + R"( ]
     }
   ]
 })";
+}
 
-const std::string pgroups_file_pattern_relative = is_windows() ? R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "pattern_test\\libs\\**\\" ]
-    }
-  ]
-})"
-                                                               : R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "pattern_test/libs/**/" ]
-    }
-  ]
-})";
-
-const std::string pgroups_file_pattern_relative_2 = is_windows() ? R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "pattern_test\\libs\\**" ]
-    }
-  ]
-})"
-                                                                 : R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "pattern_test/libs/**" ]
-    }
-  ]
-})";
-
-const std::string pgroups_file_pattern_relative_3 = R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "*" ]
-    }
-  ]
-})";
-
-const std::string pgroups_file_pattern_uri = is_windows() ? R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///C%3A/User/ws/pattern_test/libs/**" ]
-    }
-  ]
-})"
-                                                          : R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///home/User/ws/pattern_test/libs/**" ]
-    }
-  ]
-})";
-
-const std::string pgroups_file_pattern_uri_2 = is_windows() ? R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///C%3A/User/**/pattern_*est/libs/sublib1", "file:///C%3A/User/ws/pattern_test/libs/sublib2" ]
-    }
-  ]
-})"
-                                                            : R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///home/User/**/pattern_*est/libs/sublib1", "file:///home/User/ws/pattern_test/libs/sublib2" ]
-    }
-  ]
-})";
-
-const std::string pgroups_file_pattern_uri_3 = is_windows() ? R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///C%3A/User/ws/pattern_?est/**/sublib1", "file:///C%3A/User/w?/pattern_test/libs/sublib2" ]
-    }
-  ]
-})"
-                                                            : R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///home/User/ws/pattern_?est/**/sublib1", "file:///home/User/w?/pattern_test/libs/sublib2" ]
-    }
-  ]
-})";
-
-const std::string pgroups_file_pattern_uri_non_standard_0 = R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:C%3A/User/ws/pattern_test/libs/**" ]
-    }
-  ]
-})";
-
-const std::string pgroups_file_pattern_uri_non_standard_1 = R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:/C%3A/User/ws/pattern_test/libs/**" ]
-    }
-  ]
-})";
-
-const std::string pgroups_file_pattern_uri_non_standard_2 = R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file://C%3A/User/ws/pattern_test/libs/**" ]
-    }
-  ]
-})";
-
-const std::string pgroups_file_combination = is_windows() ? R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "C:\\Temp\\Lib", "C:\\Temp\\Lib2\\Libs\\**", "different_libs", "different_libs2\\Libs\\**", "file:///C%3A/User/**/pattern_?est/libs/sublib1", "file:///C%3A/User/ws/pattern_test/libs/sublib2" ]
-    }
-  ]
-})"
-                                                          : R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "/home/Temp/Lib", "/home/Temp/Lib2/Libs/**", "different_libs", "different_libs2/Libs/**", "file:///home/User/**/pattern_?est/libs/sublib1", "file:///home/User/ws/pattern_test/libs/sublib2" ]
-    }
-  ]
-})";
-
-const std::string pgmconf_file_relative_platform_dependent_slashes = is_windows() ? R"({
+std::string pgmconf_generator(std::string program)
+{
+    return R"({
   "pgms": [
 	{
-      "program": "pattern_test\\source",
-      "pgroup": "P1"
-    }
-  ]
-})"
-                                                                                  : R"({
-  "pgms": [
-	{
-      "program": "pattern_test/source",
+      "program": ")"
+        + std::string(program) + R"(",
       "pgroup": "P1"
     }
   ]
 })";
+}
 
-const std::string pgmconf_file_relative_platform_independent_slashes = R"({
-  "pgms": [
-	{
-      "program": "pattern_test/source",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_absolute = is_windows()
+    ? pgroups_generator({ "C:\\\\Temp\\\\Lib", "C:\\\\Temp\\\\Lib2\\\\L%25bs;\\\\**" })
+    : pgroups_generator({ "/home/Temp/Lib", "/home/Temp/Lib2/L%25bs;/**" });
 
-const std::string pgmconf_file_relative_wild = is_windows() ? R"({
-  "pgms": [
-	{
-      "program": "patter*s*\\*",
-      "pgroup": "P1"
-    }
-  ]
-})"
-                                                            : R"({
-  "pgms": [
-	{
-      "program": "patter*s*/*",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_relative = is_windows()
+    ? pgroups_generator({ "product\\\\pattern_test\\\\l%25bs;\\\\**\\\\" })
+    : pgroups_generator({ "product/pattern_test/l%25bs;/**/" });
 
-const std::string pgmconf_file_absolute = is_windows() ? R"({
-  "pgms": [
-	{
-      "program": "C:/User/ws/pattern_test/source",
-      "pgroup": "P1"
-    }
-  ]
-})"
-                                                       : R"({
-  "pgms": [
-	{
-      "program": "/home/User/ws/pattern_test/source",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_relative_2 = is_windows()
+    ? pgroups_generator({ "product\\\\pattern_test\\\\l%25bs;\\\\**" })
+    : pgroups_generator({ "product/pattern_test/l%25bs;/**" });
 
-const std::string pgmconf_file_uri_full = is_windows() ? R"({
-  "pgms": [
-	{
-      "program": "file:///C%3A/User/ws/pattern_test/source",
-      "pgroup": "P1"
-    }
-  ]
-})"
-                                                       : R"({
-  "pgms": [
-	{
-      "program": "file:////home/User/ws/pattern_test/source",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_relative_3 = pgroups_generator({ "product/*" });
 
-const std::string pgmconf_file_platform_uri_wild_01 = is_windows() ? R"({
-  "pgms": [
-	{
-      "program": "file:///C:/User/ws/*/source",
-      "pgroup": "P1"
-    }
-  ]
-})"
-                                                                   : R"({
-  "pgms": [
-	{
-      "program": "file:////home/User/ws/*/source",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_uri =
+    pgroups_generator({ file_scheme_user_dir_encoded + "ws/product/pattern_test/l%2525bs;/**" });
 
-const std::string pgmconf_file_platform_uri_wild_02 = is_windows() ? R"({
-  "pgms": [
-	{
-      "program": "file:///C:/User/ws/pattern_*est/source",
-      "pgroup": "P1"
-    }
-  ]
-})"
-                                                                   : R"({
-  "pgms": [
-	{
-      "program": "file:////home/User/ws/pattern_*est/source",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_uri_2 =
+    pgroups_generator({ file_scheme_user_dir_encoded + "**/pattern_*est/l%2525bs;/sublib1",
+        file_scheme_user_dir_encoded + "ws/product/pattern_test/l%2525bs;/sublib2" });
 
-const std::string pgmconf_file_platform_uri_wild_03 = is_windows() ? R"({
-  "pgms": [
-	{
-      "program": "file:///C:/User/ws/pattern_?est/source",
-      "pgroup": "P1"
-    }
-  ]
-})"
-                                                                   : R"({
-  "pgms": [
-	{
-      "program": "file:////home/User/ws/pattern_?est/source",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_uri_3 =
+    pgroups_generator({ file_scheme_user_dir_encoded + "ws/product/pattern_?est/**/sublib1",
+        file_scheme_user_dir_encoded + "w?/product/pattern_test/l%2525bs;/sublib2" });
 
-const std::string pgmconf_file_platform_uri_wild_04 = is_windows() ? R"({
-  "pgms": [
-	{
-      "program": "file:///C:/User/ws/pattern_?est/s*rce",
-      "pgroup": "P1"
-    }
-  ]
-})"
-                                                                   : R"({
-  "pgms": [
-	{
-      "program": "file:////home/User/ws/pattern_?est/s*rce",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_uri_non_standard_0 =
+    pgroups_generator({ "file:C%3A/User/ws/product/pattern_test/l%2525bs;/**" });
 
-const std::string pgmconf_file_platform_uri_wild_05 = is_windows() ? R"({
-  "pgms": [
-	{
-      "program": "file:///C:/User/**/pattern_?est/source",
-      "pgroup": "P1"
-    }
-  ]
-})"
-                                                                   : R"({
-  "pgms": [
-	{
-      "program": "file:////home/User/**/pattern_?est/source",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_uri_non_standard_1 =
+    pgroups_generator({ "file:/C%3A/User/ws/product/pattern_test/l%2525bs;/**" });
 
-const std::string pgmconf_file_platform_file_scheme_non_standard_0 = R"({
-  "pgms": [
-	{
-      "program": "file:c%3A/User/ws/pattern_test/sou*ce",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_uri_non_standard_2 =
+    pgroups_generator({ "file://C%3A/User/ws/product/pattern_test/l%2525bs;/**" });
 
-const std::string pgmconf_file_platform_file_scheme_non_standard_1 = R"({
-  "pgms": [
-	{
-      "program": "file:/C%3a/User/ws/pattern_**/source",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_combination = is_windows()
+    ? pgroups_generator({ "C:\\\\Temp\\\\Lib",
+        "C:\\\\Temp\\\\Lib2\\\\L%25bs;\\\\**",
+        "different_libs",
+        "different_libs2\\\\Libs\\\\**",
+        file_scheme_user_dir_encoded + "**/pattern_?est/l%2525bs;/sublib1",
+        file_scheme_user_dir_encoded + "ws/product/pattern_test/l%2525bs;/sublib2" })
+    : pgroups_generator({ "/home/Temp/Lib",
+        "/home/Temp/Lib2/L%25bs;/**",
+        "different_libs",
+        "different_libs2/Libs/**",
+        file_scheme_user_dir_encoded + "**/pattern_?est/l%2525bs;/sublib1",
+        file_scheme_user_dir_encoded + "ws/product/pattern_test/l%2525bs;/sublib2" });
 
-const std::string pgmconf_file_platform_file_scheme_non_standard_2 = R"({
-  "pgms": [
-	{
-      "program": "file://c:/User/**/patter*_test/source",
-      "pgroup": "P1"
-    }
-  ]
-})";
+const std::string pgroups_file_pattern_double_dot_absolute =
+    pgroups_generator({ file_scheme_user_dir_encoded + "ws/product/../product/pattern_test/l%2525bs;/**" });
+
+const std::string pgroups_file_pattern_double_dot_relative_1 =
+    pgroups_generator({ "../ws/product/pattern_test/l%25bs;/**" });
+
+const std::string pgroups_file_pattern_double_dot_relative_2 =
+    pgroups_generator({ "../../User/ws/product/pattern_test/l%25bs;/**" });
+
+const std::string pgroups_file_pattern_double_dot_relative_3 =
+    pgroups_generator({ "../ws/../ws/product/pattern_test/l%25bs;/**" });
+
+const std::string pgroups_file_pattern_double_dot_absolute_wildcard =
+    pgroups_generator({ file_scheme_user_dir_encoded + "ws/**/../pattern_test/l%2525bs;/**" });
+
+const std::string pgroups_file_pattern_double_dot_relative_wildcard =
+    pgroups_generator({ "**/../pattern_test/l%25bs;/**" });
+
+const std::string pgmconf_file_relative_platform_dependent_slashes = is_windows()
+    ? pgmconf_generator("product\\\\pattern_test\\\\s%25urce;")
+    : pgmconf_generator("product/pattern_test/s%25urce;");
+
+const std::string pgmconf_file_relative_platform_independent_slashes =
+    pgmconf_generator("product/pattern_test/s%25urce;");
+
+const std::string pgmconf_file_relative_wild =
+    is_windows() ? pgmconf_generator("product\\\\patter*s*\\\\*") : pgmconf_generator("product/patter*s*/*");
+
+const std::string pgmconf_file_absolute = is_windows()
+    ? pgmconf_generator("C:/User/ws/product/pattern_test/s%25urce;")
+    : pgmconf_generator("/home/User/ws/product/pattern_test/s%25urce;");
+
+const std::string pgmconf_file_absolute_wild = is_windows()
+    ? pgmconf_generator("C:/User/ws/product/pattern_test/s%25urce?")
+    : pgmconf_generator("/home/User/ws/product/pattern_test/s%25urce?");
+
+const std::string pgmconf_file_uri_full =
+    pgmconf_generator(file_scheme_user_dir_encoded + "ws/product/pattern_test/s%2525urce%3B");
+
+const std::string pgmconf_file_platform_uri_wild_01 =
+    pgmconf_generator(file_scheme_user_dir + "ws/product/*/s%2525urce%3B");
+
+const std::string pgmconf_file_platform_uri_wild_02 =
+    pgmconf_generator(file_scheme_user_dir + "ws/product/pattern_*est/s%2525urce%3B");
+
+const std::string pgmconf_file_platform_uri_wild_03 =
+    pgmconf_generator(file_scheme_user_dir + "ws/product/pattern_?est/s%2525urce%3B");
+
+const std::string pgmconf_file_platform_uri_wild_04 =
+    pgmconf_generator(file_scheme_user_dir + "ws/product/pattern_?est/s*rce%3B");
+
+const std::string pgmconf_file_platform_uri_wild_05 =
+    pgmconf_generator(file_scheme_user_dir + "**/pattern_?est/s?25urce?");
+
+const std::string pgmconf_file_platform_file_scheme_non_standard_0 =
+    pgmconf_generator("file:c%3A/User/ws/product/pattern_test/s%2525u*ce%3B");
+
+const std::string pgmconf_file_platform_file_scheme_non_standard_1 =
+    pgmconf_generator("file:/C%3a/User/ws/product/pattern_**/s%2525urce%3B");
+
+const std::string pgmconf_file_platform_file_scheme_non_standard_2 =
+    pgmconf_generator("file://c:/User/**/patter*_test/s%2525urce%3B");
+
+const std::string pgmconf_file_double_dot_absolute =
+    pgmconf_generator({ file_scheme_user_dir_encoded + "ws/../ws/product/pattern_test/**" });
+
+const std::string pgmconf_file_double_dot_relative_1 = pgmconf_generator({ "../ws/product/pattern_test/**" });
+
+const std::string pgmconf_file_double_dot_relative_2 = pgmconf_generator({ "../../User/ws/product/pattern_test/**" });
+
+const std::string pgmconf_file_double_dot_relative_3 =
+    pgmconf_generator({ "../ws/product/../product/pattern_test/**" });
+
+const std::string pgmconf_file_double_dot_absolute_wildcard =
+    pgmconf_generator({ file_scheme_user_dir_encoded + "**/../product/pattern_test/**" });
+
+const std::string pgmconf_file_double_dot_relative_wildcard = pgmconf_generator({ "../**/../product/pattern_test/**" });
+
+const std::string pgmconf_file_root_asterisk = pgmconf_generator({ "*" });
 
 const std::string source_txt = R"(         MACRO
          MAC
@@ -395,7 +223,13 @@ enum class pgroup_variants
     URI_NON_STANDARD_0,
     URI_NON_STANDARD_1,
     URI_NON_STANDARD_2,
-    COMBINATION
+    COMBINATION,
+    DOUBLE_DOT_ABSOLUTE,
+    DOUBLE_DOT_RELATIVE_1,
+    DOUBLE_DOT_RELATIVE_2,
+    DOUBLE_DOT_RELATIVE_3,
+    DOUBLE_DOT_ABSOLUTE_WILDCARD,
+    DOUBLE_DOT_RELATIVE_WILDCARD
 };
 
 enum class pgmconf_variants
@@ -404,6 +238,7 @@ enum class pgmconf_variants
     RELATIVE_PLATFORM_INDEPENDENT,
     RELATIVE_WILD,
     ABSOLUTE,
+    ABSOLUTE_WILD,
     URI_FULL,
     URI_WILD_01,
     URI_WILD_02,
@@ -412,10 +247,17 @@ enum class pgmconf_variants
     URI_WILD_05,
     URI_NON_STANDARD_0,
     URI_NON_STANDARD_1,
-    URI_NON_STANDARD_2
+    URI_NON_STANDARD_2,
+    DOUBLE_DOT_ABSOLUTE,
+    DOUBLE_DOT_RELATIVE_1,
+    DOUBLE_DOT_RELATIVE_2,
+    DOUBLE_DOT_RELATIVE_3,
+    DOUBLE_DOT_ABSOLUTE_WILDCARD,
+    DOUBLE_DOT_RELATIVE_WILDCARD,
+    ROOT_ASTERISK
 };
 
-const auto root_dir_loc = is_windows() ? resource_location("file:///C%3A/") : resource_location("file:///home/");
+const auto root_dir_loc = is_windows() ? resource_location("file:///c%3A/") : resource_location("file:///home/");
 const auto user_dir_loc = resource_location::join(root_dir_loc, "User/");
 
 const auto ws_loc = resource_location::join(user_dir_loc, "ws/");
@@ -423,19 +265,23 @@ const auto hlasmplugin_folder_loc(resource_location::join(ws_loc, ".hlasmplugin/
 const auto proc_grps_loc(resource_location::join(hlasmplugin_folder_loc, "proc_grps.json"));
 const auto pgm_conf_loc(resource_location::join(hlasmplugin_folder_loc, "pgm_conf.json"));
 
-const auto pattern_test_dir_loc = resource_location::join(ws_loc, "pattern_test/");
-const auto pattern_est_dir_loc = resource_location::join(ws_loc, "pattern_est/");
-const auto patter_test_dir_loc = resource_location::join(ws_loc, "patter_test/");
+const auto root_source_file = resource_location::join(user_dir_loc, "ws/");
 
-const auto pattern_test_source_loc(resource_location::join(pattern_test_dir_loc, "source"));
-const auto pattern_test_lib_loc(resource_location::join(pattern_test_dir_loc, "libs/"));
+const auto product_loc = resource_location::join(ws_loc, "product/");
+const auto pattern_test_dir_loc = resource_location::join(product_loc, "pattern_test/");
+const auto pattern_est_dir_loc = resource_location::join(product_loc, "pattern_est/");
+const auto patter_test_dir_loc = resource_location::join(product_loc, "patter_test/");
+
+const auto pattern_test_source_loc(resource_location::join(pattern_test_dir_loc, "s%2525urce%3B")); // -> "s%25urce;"
+const auto pattern_test_lib_loc(resource_location::join(pattern_test_dir_loc, "l%2525bs%3B/")); // -> "l%25bs;"
 const auto pattern_test_lib_sublib1_loc(resource_location::join(pattern_test_lib_loc, "sublib1/"));
 const auto pattern_test_lib_sublib2_loc(resource_location::join(pattern_test_lib_loc, "sublib2/"));
 const auto pattern_test_macro1_loc(resource_location::join(pattern_test_lib_sublib1_loc, "mac1"));
 const auto pattern_test_macro2_loc(resource_location::join(pattern_test_lib_sublib2_loc, "mac2"));
 
 const auto temp_lib_loc = resource_location::join(root_dir_loc, "Temp/Lib/");
-const auto temp_lib2_libs_loc = resource_location::join(root_dir_loc, "Temp/Lib2/Libs/");
+const auto temp_lib2_libs_loc =
+    resource_location::join(root_dir_loc, "Temp/Lib2/L%2525bs%3B/"); // -> "Temp/Lib2/L%25bs;/"
 
 const auto different_libs_loc = resource_location::join(ws_loc, "different_libs/");
 const auto different_libs2_libs_loc = resource_location::join(ws_loc, "different_libs2/Libs/");
@@ -443,10 +289,10 @@ const auto different_libs2_libs_loc = resource_location::join(ws_loc, "different
 const auto different_libs2_libs_subdir = resource_location::join(different_libs2_libs_loc, "subdir/");
 const auto temp_lib2_libs_subdir = resource_location::join(temp_lib2_libs_loc, "subdir/");
 
-const char* pattern_lib_sublib1_abs_path =
-    is_windows() ? "C:\\\\User\\ws\\pattern_test\\libs\\sublib1\\" : "/home/User/ws/pattern_test/libs/sublib1/";
-const char* pattern_lib_sublib2_abs_path =
-    is_windows() ? "c:\\\\User\\ws\\pAttErn_test\\libs\\sublib2\\" : "/home/User/ws/pattern_test/libs/sublib2/";
+const char* pattern_lib_sublib1_abs_path = is_windows() ? "C:\\\\User\\ws\\product\\pattern_test\\l%25bs;\\sublib1\\"
+                                                        : "/home/User/ws/product/pattern_test/l%25bs;/sublib1/";
+const char* pattern_lib_sublib2_abs_path = is_windows() ? "c:\\\\User\\ws\\product\\pAttErn_test\\l%25bs;\\sublib2\\"
+                                                        : "/home/User/ws/product/pattern_test/l%25bs;/sublib2/";
 
 class file_manager_lib_pattern : public file_manager_impl
 {
@@ -475,7 +321,19 @@ class file_manager_lib_pattern : public file_manager_impl
             case pgroup_variants::URI_NON_STANDARD_2:
                 return pgroups_file_pattern_uri_non_standard_2;
             case pgroup_variants::COMBINATION:
-                return pgroups_file_combination;
+                return pgroups_file_pattern_combination;
+            case pgroup_variants::DOUBLE_DOT_ABSOLUTE:
+                return pgroups_file_pattern_double_dot_absolute;
+            case pgroup_variants::DOUBLE_DOT_RELATIVE_1:
+                return pgroups_file_pattern_double_dot_relative_1;
+            case pgroup_variants::DOUBLE_DOT_RELATIVE_2:
+                return pgroups_file_pattern_double_dot_relative_2;
+            case pgroup_variants::DOUBLE_DOT_RELATIVE_3:
+                return pgroups_file_pattern_double_dot_relative_3;
+            case pgroup_variants::DOUBLE_DOT_ABSOLUTE_WILDCARD:
+                return pgroups_file_pattern_double_dot_absolute_wildcard;
+            case pgroup_variants::DOUBLE_DOT_RELATIVE_WILDCARD:
+                return pgroups_file_pattern_double_dot_relative_wildcard;
         }
         throw std::logic_error("Not implemented");
     }
@@ -493,6 +351,8 @@ protected:
                 return pgmconf_file_relative_wild;
             case pgmconf_variants::ABSOLUTE:
                 return pgmconf_file_absolute;
+            case pgmconf_variants::ABSOLUTE_WILD:
+                return pgmconf_file_absolute_wild;
             case pgmconf_variants::URI_FULL:
                 return pgmconf_file_uri_full;
             case pgmconf_variants::URI_WILD_01:
@@ -511,6 +371,20 @@ protected:
                 return pgmconf_file_platform_file_scheme_non_standard_1;
             case pgmconf_variants::URI_NON_STANDARD_2:
                 return pgmconf_file_platform_file_scheme_non_standard_2;
+            case pgmconf_variants::DOUBLE_DOT_ABSOLUTE:
+                return pgmconf_file_double_dot_absolute;
+            case pgmconf_variants::DOUBLE_DOT_RELATIVE_1:
+                return pgmconf_file_double_dot_relative_1;
+            case pgmconf_variants::DOUBLE_DOT_RELATIVE_2:
+                return pgmconf_file_double_dot_relative_2;
+            case pgmconf_variants::DOUBLE_DOT_RELATIVE_3:
+                return pgmconf_file_double_dot_relative_3;
+            case pgmconf_variants::DOUBLE_DOT_ABSOLUTE_WILDCARD:
+                return pgmconf_file_double_dot_absolute_wildcard;
+            case pgmconf_variants::DOUBLE_DOT_RELATIVE_WILDCARD:
+                return pgmconf_file_double_dot_relative_wildcard;
+            case pgmconf_variants::ROOT_ASTERISK:
+                return pgmconf_file_root_asterisk;
         }
         throw std::logic_error("Not implemented");
     }
@@ -523,6 +397,7 @@ public:
         did_open_file(proc_grps_loc, 1, get_pgroup_file(pgroup_variant));
         did_open_file(pgm_conf_loc, 1, get_pgmconf_file(pgmconf_variant));
         did_open_file(pattern_test_source_loc, 1, source_txt);
+        did_open_file(root_source_file, 1, source_txt);
     }
 
     MOCK_METHOD(list_directory_result,
@@ -543,6 +418,9 @@ public:
             return { { { "ws", ws_loc } }, hlasm_plugin::utils::path::list_directory_rc::done };
 
         if (location == ws_loc)
+            return { { { "product_loc", product_loc } }, hlasm_plugin::utils::path::list_directory_rc::done };
+
+        if (location == product_loc)
             return { { { "pattern_est", pattern_est_dir_loc },
                          { "pattern_test", pattern_test_dir_loc },
                          { "patter_test", patter_test_dir_loc } },
@@ -568,197 +446,187 @@ public:
 
     bool dir_exists(const hlasm_plugin::utils::resource::resource_location&) const override { return true; }
 };
-} // namespace
+
+struct test_variables_lib_pattern
+{
+    file_manager_lib_pattern file_manager;
+    lib_config config;
+    workspace::shared_json global_settings;
+    workspace ws;
+
+public:
+    test_variables_lib_pattern(pgroup_variants pgroup_variant, pgmconf_variants pgmconf_variant)
+        : file_manager(pgroup_variant, pgmconf_variant)
+        , config()
+        , global_settings(make_empty_shared_json())
+        , ws(ws_loc, "workspace_name", file_manager, config, global_settings)
+    {
+        ws.open();
+    };
+};
 
 void verify_absolute(pgmconf_variants pgmconf_variant)
 {
-    file_manager_lib_pattern file_manager(pgroup_variants::ABSOLUTE, pgmconf_variant);
-    lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    test_variables_lib_pattern vars(pgroup_variants::ABSOLUTE, pgmconf_variant);
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
-    ws.open();
-
-    EXPECT_CALL(file_manager, list_directory_files(temp_lib_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(temp_lib2_libs_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib2_libs_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(temp_lib2_libs_subdir))
+    EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib2_libs_subdir))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
 
-    ws.did_open_file(pattern_test_source_loc);
+    vars.ws.did_open_file(pattern_test_source_loc);
 }
 
 void verify_relative_1(pgmconf_variants pgmconf_variant)
 {
-    file_manager_lib_pattern file_manager(pgroup_variants::RELATIVE, pgmconf_variant);
-    lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    test_variables_lib_pattern vars(pgroup_variants::RELATIVE, pgmconf_variant);
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
-    ws.open();
-
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
         .WillOnce(::testing::Return(list_directory_result {
             { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
         .WillOnce(::testing::Return(list_directory_result {
             { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
 
-    ws.did_open_file(pattern_test_source_loc);
+    vars.ws.did_open_file(pattern_test_source_loc);
 }
 
 void verify_relative_2(pgmconf_variants pgmconf_variant)
 {
-    file_manager_lib_pattern file_manager(pgroup_variants::RELATIVE_2, pgmconf_variant);
-    lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    test_variables_lib_pattern vars(pgroup_variants::RELATIVE_2, pgmconf_variant);
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
-    ws.open();
-
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
 
-    ws.did_open_file(pattern_test_source_loc);
+    vars.ws.did_open_file(pattern_test_source_loc);
 }
 
 void verify_relative_3(pgmconf_variants pgmconf_variant)
 {
-    file_manager_lib_pattern file_manager(pgroup_variants::RELATIVE_3, pgmconf_variant);
-    lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    test_variables_lib_pattern vars(pgroup_variants::RELATIVE_3, pgmconf_variant);
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
-    ws.open();
-
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_dir_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_dir_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(patter_test_dir_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(patter_test_dir_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_est_dir_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_est_dir_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
 
-    ws.did_open_file(pattern_test_source_loc);
+    vars.ws.did_open_file(pattern_test_source_loc);
 }
 
 void verify_uri_1(pgmconf_variants pgmconf_variant)
 {
-    file_manager_lib_pattern file_manager(pgroup_variants::URI, pgmconf_variant);
-    lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    test_variables_lib_pattern vars(pgroup_variants::URI, pgmconf_variant);
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
-    ws.open();
-
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
         .WillOnce(::testing::Return(list_directory_result {
             { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
         .WillOnce(::testing::Return(list_directory_result {
             { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
 
-    ws.did_open_file(pattern_test_source_loc);
+    vars.ws.did_open_file(pattern_test_source_loc);
 }
 
-void verify_uri_2(pgmconf_variants pgmconf_variant)
+void verify_uri_2_3(pgmconf_variants pgmconf_variant)
 {
-    file_manager_lib_pattern file_manager(pgroup_variants::URI_2, pgmconf_variant);
-    lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    test_variables_lib_pattern vars(pgroup_variants::URI_2, pgmconf_variant);
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
-    ws.open();
-
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
         .WillOnce(::testing::Return(list_directory_result {
             { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
         .WillOnce(::testing::Return(list_directory_result {
             { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
 
-    ws.did_open_file(pattern_test_source_loc);
-}
-
-void verify_uri_3(pgmconf_variants pgmconf_variant)
-{
-    file_manager_lib_pattern file_manager(pgroup_variants::URI_3, pgmconf_variant);
-    lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
-
-    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
-    ws.open();
-
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
-
-    ws.did_open_file(pattern_test_source_loc);
+    vars.ws.did_open_file(pattern_test_source_loc);
 }
 
 void verify_uri_non_standard(pgroup_variants pgroup_variant, pgmconf_variants pgmconf_variant)
 {
-    file_manager_lib_pattern file_manager(pgroup_variant, pgmconf_variant);
-    lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    test_variables_lib_pattern vars(pgroup_variant, pgmconf_variant);
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
-    ws.open();
-
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
         .WillOnce(::testing::Return(list_directory_result {
             { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
         .WillOnce(::testing::Return(list_directory_result {
             { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
 
-    ws.did_open_file(pattern_test_source_loc);
+    vars.ws.did_open_file(pattern_test_source_loc);
 }
 
 void verify_combination(pgmconf_variants pgmconf_variant)
 {
-    file_manager_lib_pattern file_manager(pgroup_variants::COMBINATION, pgmconf_variant);
-    lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    test_variables_lib_pattern vars(pgroup_variants::COMBINATION, pgmconf_variant);
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
-    ws.open();
-
-    EXPECT_CALL(file_manager, list_directory_files(temp_lib_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(temp_lib2_libs_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib2_libs_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(temp_lib2_libs_subdir))
+    EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib2_libs_subdir))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(different_libs_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(different_libs_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(different_libs2_libs_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(different_libs2_libs_loc))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(different_libs2_libs_subdir))
+    EXPECT_CALL(vars.file_manager, list_directory_files(different_libs2_libs_subdir))
         .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
         .WillOnce(::testing::Return(list_directory_result {
             { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
-    EXPECT_CALL(file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
         .WillOnce(::testing::Return(list_directory_result {
             { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
 
-    ws.did_open_file(pattern_test_source_loc);
+    vars.ws.did_open_file(pattern_test_source_loc);
 }
 
+void verify_double_dot(pgroup_variants pgroup_variant, pgmconf_variants pgmconf_variant)
+{
+    test_variables_lib_pattern vars(pgroup_variant, pgmconf_variant);
+
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
+        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
+        .WillOnce(::testing::Return(list_directory_result {
+            { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
+        .WillOnce(::testing::Return(list_directory_result {
+            { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+
+    vars.ws.did_open_file(pattern_test_source_loc);
+}
+
+void verify_root_asterisk()
+{
+    test_variables_lib_pattern vars(pgroup_variants::DOUBLE_DOT_ABSOLUTE, pgmconf_variants::ROOT_ASTERISK);
+
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
+        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
+        .WillOnce(::testing::Return(list_directory_result {
+            { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+    EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
+        .WillOnce(::testing::Return(list_directory_result {
+            { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+
+    vars.ws.did_open_file(root_source_file);
+}
+} // namespace
 TEST(workspace_pattern_test, absolute) { verify_absolute(pgmconf_variants::RELATIVE_PLATFORM_DEPENDENT); }
 
 TEST(workspace_pattern_test, absolute_independent) { verify_absolute(pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT); }
@@ -788,13 +656,13 @@ TEST(workspace_pattern_test, uri_1) { verify_uri_1(pgmconf_variants::RELATIVE_PL
 
 TEST(workspace_pattern_test, uri_1_independent) { verify_uri_1(pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT); }
 
-TEST(workspace_pattern_test, uri_2) { verify_uri_2(pgmconf_variants::RELATIVE_PLATFORM_DEPENDENT); }
+TEST(workspace_pattern_test, uri_2) { verify_uri_2_3(pgmconf_variants::RELATIVE_PLATFORM_DEPENDENT); }
 
-TEST(workspace_pattern_test, uri_2_independent) { verify_uri_2(pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT); }
+TEST(workspace_pattern_test, uri_2_independent) { verify_uri_2_3(pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT); }
 
-TEST(workspace_pattern_test, uri_3) { verify_uri_3(pgmconf_variants::RELATIVE_PLATFORM_DEPENDENT); }
+TEST(workspace_pattern_test, uri_3) { verify_uri_2_3(pgmconf_variants::RELATIVE_PLATFORM_DEPENDENT); }
 
-TEST(workspace_pattern_test, uri_3_independent) { verify_uri_3(pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT); }
+TEST(workspace_pattern_test, uri_3_independent) { verify_uri_2_3(pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT); }
 
 TEST(workspace_pattern_test, uri_non_standard_0)
 {
@@ -838,9 +706,42 @@ TEST(workspace_pattern_test, combination_independent)
     verify_combination(pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT);
 }
 
+TEST(workspace_pattern_test, double_dot_absolute)
+{
+    verify_double_dot(pgroup_variants::DOUBLE_DOT_ABSOLUTE, pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT);
+}
+
+TEST(workspace_pattern_test, double_dot_relative_1)
+{
+    verify_double_dot(pgroup_variants::DOUBLE_DOT_RELATIVE_1, pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT);
+}
+
+TEST(workspace_pattern_test, double_dot_relative_2)
+{
+    verify_double_dot(pgroup_variants::DOUBLE_DOT_RELATIVE_2, pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT);
+}
+
+TEST(workspace_pattern_test, double_dot_relative_3)
+{
+    verify_double_dot(pgroup_variants::DOUBLE_DOT_RELATIVE_3, pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT);
+}
+
+// TODO - make the following pattern work: "**/.."
+// TEST(workspace_pattern_test, double_dot_absolute_wildcard)
+//{
+//    verify_double_dot(pgroup_variants::DOUBLE_DOT_ABSOLUTE_WILDCARD, pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT);
+//}
+//
+// TEST(workspace_pattern_test, double_dot_relative_wildcard)
+//{
+//    verify_double_dot(pgroup_variants::DOUBLE_DOT_RELATIVE_WILDCARD, pgmconf_variants::RELATIVE_PLATFORM_INDEPENDENT);
+//}
+
 TEST(workspace_pattern_test, pgm_conf_relative_wild) { verify_combination(pgmconf_variants::RELATIVE_WILD); }
 
 TEST(workspace_pattern_test, pgm_conf_absolute) { verify_combination(pgmconf_variants::ABSOLUTE); }
+
+TEST(workspace_pattern_test, pgm_conf_absolute_wild) { verify_combination(pgmconf_variants::ABSOLUTE_WILD); }
 
 TEST(workspace_pattern_test, pgm_conf_uri_full) { verify_combination(pgmconf_variants::URI_FULL); }
 
@@ -872,58 +773,43 @@ TEST(workspace_pattern_test, pgm_conf_uri_non_standard_2)
         verify_combination(pgmconf_variants::URI_NON_STANDARD_2);
 }
 
+TEST(workspace_pattern_test, pgm_conf_double_dot_absolute)
+{
+    verify_combination(pgmconf_variants::DOUBLE_DOT_ABSOLUTE);
+}
+
+TEST(workspace_pattern_test, pgm_conf_double_dot_relative_1)
+{
+    verify_combination(pgmconf_variants::DOUBLE_DOT_RELATIVE_1);
+}
+
+TEST(workspace_pattern_test, pgm_conf_double_dot_relative_2)
+{
+    verify_combination(pgmconf_variants::DOUBLE_DOT_RELATIVE_2);
+}
+
+TEST(workspace_pattern_test, pgm_conf_double_dot_relative_3)
+{
+    verify_combination(pgmconf_variants::DOUBLE_DOT_RELATIVE_3);
+}
+
+// TODO - make the following pattern work: "**/.."
+// TEST(workspace_pattern_test, pgm_conf_double_dot_absolute_wildcard)
+//{
+//    verify_combination(pgmconf_variants::DOUBLE_DOT_ABSOLUTE_WILDCARD);
+//}
+//
+// TEST(workspace_pattern_test, pgm_conf_double_dot_relative_wildcard)
+//{
+//    verify_combination(pgmconf_variants::DOUBLE_DOT_RELATIVE_WILDCARD);
+//}
+
+TEST(workspace_pattern_test, pgm_root_asterisk) { verify_root_asterisk(); }
+
 namespace {
-
-const std::string pgroups_file_inf = is_windows() ? R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///C%3A/User/ws/symlinks/inf0/**" ]
-    }
-  ]
-})"
-                                                  : R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///home/User/ws/symlinks/inf0/**" ]
-    }
-  ]
-})";
-
-const std::string pgroups_file_inf_2 = is_windows() ? R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///C%3A/User/ws/symlinks/inf/**" ]
-    }
-  ]
-})"
-                                                    : R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///home/User/ws/symlinks/inf/**" ]
-    }
-  ]
-})";
-
-const std::string pgroups_file_canonical = is_windows() ? R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///C%3A/User/ws/canonical/**" ]
-    }
-  ]
-})"
-                                                        : R"({
-  "pgroups": [
-    {
-      "name": "P1",
-      "libs": [ "file:///home/User/ws/canonical/**" ]
-    }
-  ]
-})";
+const std::string pgroups_file_inf = pgroups_generator({ file_scheme_user_dir_encoded + "ws/symlinks/inf0/**" });
+const std::string pgroups_file_inf_2 = pgroups_generator({ file_scheme_user_dir_encoded + "ws/symlinks/inf/**" });
+const std::string pgroups_file_canonical = pgroups_generator({ file_scheme_user_dir_encoded + "ws/canonical/**" });
 
 enum class pgroup_symlinks_variants
 {
@@ -1017,7 +903,6 @@ public:
         return { {}, hlasm_plugin::utils::path::list_directory_rc::done };
     }
 };
-} // namespace
 
 void verify_infinit_loop(pgroup_symlinks_variants pgroup_variant, pgmconf_variants pgmconf_variant)
 {
@@ -1031,6 +916,8 @@ void verify_infinit_loop(pgroup_symlinks_variants pgroup_variant, pgmconf_varian
 
     // No explicit expectations - it is just expected that this will not crash or end up in a loop.
 }
+
+} // namespace
 
 TEST(workspace_pattern_test, infinit_loop_general)
 {
