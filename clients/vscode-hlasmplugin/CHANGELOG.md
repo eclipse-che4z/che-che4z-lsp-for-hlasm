@@ -164,7 +164,7 @@
 - Support for approximately 300 missing machine instructions
 
 #### Changed
-- `AlwaysRecognize` option is deprecated in favour of standard VS Code setting `file.associations`. New configuration for macro libraries has been added - option `macro_extensions` specified either for all libraries or for each library separately in `proc_grps.json`.
+- `AlwaysRecognize` option is deprecated in favor of standard VS Code setting `file.associations`. New configuration for macro libraries has been added - option `macro_extensions` specified either for all libraries or for each library separately in `proc_grps.json`.
 
 #### Fixed
 - Conversion of empty string into a number in conditional assembly expressions

@@ -19,7 +19,7 @@ HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio
 
 ## Compatibility
 
-HLASM Language Support is supported on Visual Studio Code and Github Codespaces.
+HLASM Language Support is supported on Visual Studio Code and GitHub Codespaces.
 
 ## Integration with Zowe Explorer
 
@@ -33,23 +33,23 @@ For more information about the Zowe Explorer extension, see [Zowe Explorer](http
 
 Follow these steps to open a HLASM project:
 
-1. In **File** -> **Open Folder...**, select the folder with the HLASM sources. <!-- (An example workspace is provided in the folder `example_workspace`.) Uncomment once PR#44 is merged-->
+1. In **File** -> **Open Folder...** select the folder with the HLASM sources. An example workspace is provided in the folder `example_workspace`.
 2. Open any HLASM source file (note that HLASM does not have a standard filename extension) or create a new file.
 3. If the auto-detection of HLASM language does not recognize the file, set it manually in the bottom-right corner of the VS Code window.  
 4. The extension is now enabled on the open file. If you have macro definitions in separate files or use the COPY instruction, you need to set up a workspace.
 
 ### Setting Up a Multi-File Project Environment
 
-The HLASM COPY instruction copies the source code from various external files, as driven by HLASM evaluation. The source code interpreter in the HLASM Extension needs to be set up correctly to be able to find the same files as the HLASM assembler program. 
+External files are usually accessed during HLASM evaluation (e.g. due to use of HLASM COPY instruction or due to used macro definitions in external libraries). The source code interpreter in the HLASM Extension needs to be set up correctly to be able to find the same files as the HLASM assembler program. 
 
 To do this, set up two configuration files — `proc_grps.json` and `pgm_conf.json`. Follow these steps:
 
-1. After you open a HLASM file for the first time, two pop-ups display. Select **Create pgm_conf.json with current program** and **Create empty proc_grps.json**. 
-   The two configuration files are then created with default values. They are stored in the `.hlasmplugin` subfolder.
+1. After you open a HLASM file for the first time, two pop-ups display. Select **Create empty proc_grps.json** and **Create pgm_conf.json with this file**. 
+   Two configuration files are then created with default values. They are stored in the `.hlasmplugin` subfolder.
 2. Navigate to the `proc_grps.json` file. This is the entry point where you can specify paths to macro definitions and COPY files. 
 3. Fill the `libs` array with the corresponding paths. For example, if you have your macro files in the `ASMMAC/` folder, add the string `"ASMMAC"` into the libs array.
 
-Follow the section *External Macro Libraries and COPY Members* below for more detailed instructions on configuring the environment.
+Follow the section [External Macro Libraries and COPY Members](#External-Macro-Libraries-and-COPY-Members) below for more detailed instructions on configuring the environment.
 
 ## Language Features
 
@@ -57,7 +57,7 @@ The HLASM Language Support extension parses and analyzes all parts of a HLASM pr
 
 ## LSP Features
 ### Highlighting
-The HLASM Language Support extension highlights statements with different colors for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted differently to statements that do not expect operands. Code that is skipped by branching AIF, AGO or conditional assembly is not colored.
+The HLASM Language Support extension highlights statements with different colors for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted differently to statements that do not expect operands. Code that is skipped by branching `AIF`, `AGO` or conditional assembly is not colored.
 
 ![](https://github.com/eclipse/che-che4z-lsp-for-hlasm/raw/master/clients/vscode-hlasmplugin/readme_res/highlighting.png)
 
@@ -76,20 +76,18 @@ The extension adds the 'go to definition' and 'find all references' functionalit
 
 The macro tracer functionality allows you to track the process of assembling HLASM code. It lets you see step-by-step how macros are expanded and displays values of variable symbols at different points during the assembly process. You can also set breakpoints in problematic sections of your conditional assembly code. 
 
-The macro tracer is not a debugger. It cannot debug running executables, only track the compilation process.
+The macro tracer is not a debugger. It cannot debug running executables, it only tracks the compilation process.
 
 ### Configuring the Macro Tracer
 
 1. Open your workspace.
-2. In the left sidebar, click the bug icon to open the debugging panel (Ctrl + Shift + D).
+2. In the left sidebar, click the bug icon to open the debugging panel (`Ctrl + Shift + D`).
 3. Select `create a launch.json file`.  
-   A "select environment" prompt displays.
-4. Enter **HLASM Macro tracer**.  
-   Your workspace is now configured for macro tracing.
+   File `launch.json` opens with pre-filled configuration and your workspace is now configured for macro tracing.   
 
 ### Using the Macro Tracer
 
-To run the macro tracer, open the file that you want to trace. Then press **F5** to open the debugging panel and start the debugging session.
+To run the macro tracer, open the file you want to trace. Then press **`F5`** to open the debugging panel and start the debugging session.
 
 When the tracer stops at a macro or COPY instruction, you can select **step into** to open the macro or COPY file, or **step over** to skip to the next line.
 
@@ -100,11 +98,11 @@ Breakpoints can be set before or during the debugging session.
 ## Configuration
 
 ### External Macro Libraries and COPY Members
-The HLASM Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the `.hlasmplugin` folder of the currently open workspace:
+The HLASM Language Support extension looks for locally stored members when a macro call or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the `.hlasmplugin` folder of the currently open workspace:
 
-- `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries defined by a list of directories (some of which can be optional). Additionaly, the `SYSPARM` and `SYSTEM_ID` options can be specified in the `asm_options` section.
+- `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries defined by a list of directories (some of which can be optional). Additionaly, some assembler options can be specified in `asm_options` sections (`SYSPARM`, `SYSTEM_ID` and others).
 
-- `pgm_conf.json` provides a mapping between programs (open-code files) and processor groups. It specifies which list of directories is used with which source file. If a relative source file path is specified, it is relative to the current workspace.
+- `pgm_conf.json` provides a mapping between programs (open-code files) and processor groups. It specifies which list of directories is used with which program. 
 
 To use a predefined set of macro and copy members, follow these steps: 
 1. Specify any number of library directories to search for macros and COPY files in `proc_grps.json`. These directories are searched in order they are listed. 
@@ -112,16 +110,26 @@ To use a predefined set of macro and copy members, follow these steps:
    You have created a new processor group.
 3. Use the identifier of the new processor group with the name of your source code file in `pgm_conf.json` to assign the library members to the program.
 
-The structure of the configuration is based on Endevor®. Ensure that you configure these files before using macros from separate files or the COPY instruction.
-When you open a HLASM file or manually set the HLASM language for a file, you can choose to automatically create these files for the current program.
+The structure of the configuration is based on Endevor®. Ensure that you configure these files before using macros or the COPY instruction.
 
-Visual Studio Code workspace variables can be referenced in both configuration files using the standard syntax (${config:variable_name}).
+Visual Studio Code workspace variables can be referenced in both configuration files using the standard syntax `${config:variable_name}`.
 
-Example `proc_grps.json`:
+---
+**NOTE**
+
+Relative paths specified in `proc_grps.json` (for libraries) or in `pgm_conf.json` (for programs) are resolved with respect to the current workspace.
+
+---
+### Example `proc_grps.json`:
 
 The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files, it also defines the _SYSPARM_ assembler parameter for GROUP1. Additionally, if the library `MACLIB/` does not exist in the workspace, the plugin does not report it as an error. 
 
-The path `C:/common/**/maclib` contains the wildcard `**`, which matches any number of characters and directory separators. Path masks can also be specified using the wildcard `*` which matches characters but not directory separators. The order of libraries selected by a path mask is arbitrary. We therefore recommend you ensure that macro names within these libraries are unique.
+Wildcards can be used to locate libraries and/or programs as is shown in the path mask `C:/common/**/maclib` below. Available wildcards are:
+- `?` -  Matches a single character but not a directory separator 
+- `*` -  Matches 0 characters, 1 characters or a continuous sequence of characters but not a directory separator
+- `**` - Matches 0 characters, 1 character or a continuous sequence of characters including directory separators
+
+The order of libraries selected by a path mask is arbitrary. We therefore recommend you ensure that macro names within these libraries are unique.
 
 ```
 {
@@ -153,7 +161,7 @@ The path `C:/common/**/maclib` contains the wildcard `**`, which matches any num
 }
 ```
 
-Example `pgm_conf.json`:
+### Example `pgm_conf.json`:
 
 The following example specifies that GROUP1 is used when working with `source_code` and GROUP2 is used when working with `second_file`.
 
@@ -171,7 +179,8 @@ The following example specifies that GROUP1 is used when working with `source_co
   ]
 }
 ```
-If you have the two configuration files configured as above and invoke the MAC1 macro from `source_code`, the folder `ASMMAC/` in the current workspace is searched for a file with the exact name "MAC1". If that search is unsuccessful the folder `C:/SYS.ASMMAC` is searched. If that search is unsuccessful an error displays that the macro does not exist.
+
+When you have both `proc_grps.json` and `pgm_conf.json` configured as above and you invoke the MAC1 macro from the `source_code`, the folder `ASMMAC/` in the current workspace is searched for a file with the name "MAC1". If "MAC1" file isn't found, the folder `C:/SYS.ASMMAC` is searched. If even this search is unsuccessful, an error saying that the macro does not exist is displayed.
 
 The program name in `pgm_conf.json` can be wildcarded, as in the following example:
 
@@ -187,7 +196,8 @@ The program name in `pgm_conf.json` can be wildcarded, as in the following examp
 ```
 In this example, GROUP1 is used for all open code programs.
 
-Assembler options defined by the processor group can be overriden in the `pgm_conf.json` file as shown in the following example:
+Assembler options defined by the processor group can be overridden in the `pgm_conf.json` file as shown in the following example:
+
 ```
 {
   "pgms": [
@@ -202,10 +212,10 @@ Assembler options defined by the processor group can be overriden in the `pgm_co
   ]
 }
 ```
-
+---
 ### File Extensions
 
-The `alwaysRecognize` option in `pgm_conf.json` has been deprecated in favour of the standard VSCode user and workspace level setting `file.associations`.
+The `alwaysRecognize` option in `pgm_conf.json` has been deprecated in favor of the standard VSCode user and workspace level setting `file.associations`.
 
 `proc_grps.json` can include an optional parameter `macro_extensions` which contains a list of extensions that are to be used to identify files with macro definitions.
 The options can be specified both at the top level of the file, providing the default list for all libraries in all process groups, and at the level of individual library definitions, overriding the default from the top level.
@@ -256,9 +266,9 @@ In the `pgm_conf.json` above, the `source_code` file has a configuration, so all
 
 ### Preprocessors
 
-Processor groups can be configured so that the HLASM source will be processed with a preprocessor. Currently, there are two preprocessor options available - `DB2` and `CICS`.
+Processor groups can be configured so that the HLASM source will be processed with a preprocessor. Currently, there are the following preprocessor options available - `DB2`, `CICS` and `ENDEVOR`.
 
-It can by configured using the `preprocessor` key in processor group:
+A preprocessor option can be configured using the `preprocessor` key in a processor group:
 ```
 {
   "pgroups": [
@@ -276,6 +286,34 @@ It can by configured using the `preprocessor` key in processor group:
           "NOPROLOG"
         ]
       }
+    },
+    {
+      "name": "GROUP3",
+      "libs": [ "ASMMAC/" ],
+      "preprocessor": "ENDEVOR"
+    },
+  ]
+}
+```
+
+You can also chain the preprocessors in the following way:
+```
+{
+  "pgroups": [
+    {
+      "name": "GROUP1",
+      "libs": [ "ASMMAC/" ],
+      "preprocessor": [
+        {
+          "name": "DB2"
+        },
+        {
+          "name": "CICS",
+          "options": [
+            "NOPROLOG"
+          ]
+        }
+      ]
     }
   ]
 }

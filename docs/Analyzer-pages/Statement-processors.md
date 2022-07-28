@@ -6,7 +6,7 @@ During processing, statement processing kinds can be nested. Hence, statement pr
 
 A statement consists of *statement fields* — *label field*, *instruction field*, *operands field*, and *remark field*. It is used by statement processors and produced by statement providers.
 
-The abstract class *HLASM statement* is the ancestor for all statement related classes. Then, there are the abstract classes *deferred statement* and *resolved statement*. Deferred statement has its operand field stored in uresolved — deferred — format (in code stored as string). This statement is created when the actual instruction is not yet known before the statement is created (see the example below). Resolved statements are complementary to the deferred statements as their instruction and operand format are known before the statement is created.
+The abstract class *HLASM statement* is the ancestor for all statement related classes. Then, there are the abstract classes *deferred statement* and *resolved statement*. Deferred statement has its operand field stored in unresolved — deferred — format (in code stored as string). This statement is created when the actual instruction is not yet known before the statement is created (see the example below). Resolved statements are complementary to the deferred statements as their instruction and operand format are known before the statement is created.
 
     *VALUE OF INSTRUCTION IN DEFERRED STATEMENT IS PARAMETER OF MACRO MAC
          MACRO

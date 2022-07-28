@@ -52,7 +52,7 @@ On Ubuntu 20.04 the following commands install all prerequisites and then build 
 
 ### Alpine Linux
 
-The build works on Alpine linux version 3.10. The following commands install all prerequisites and then build the project into the `build` folder:
+The build works on Alpine Linux version 3.10. The following commands install all prerequisites and then build the project into the `build` folder:
 
     apk update && apk add linux-headers git g++ cmake util-linux-dev npm ninja
                           pkgconfig openjdk8 maven

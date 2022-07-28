@@ -28,7 +28,7 @@ Encapsulates structures describing ordinary assembly.
 
 ### Macro Definition
 
-HLASM context stores visited macro definitions in the *macro strorage*.
+HLASM context stores visited macro definitions in the *macro storage*.
 
 A macro definition is represented by:
 

@@ -1,6 +1,6 @@
 <img src="img/lang_server.svg" alt="Architecture of language server." />
 
-The architecture of the language server component is illustrated in the picture above. It communicates via the standard input/output or TCP/IP connection using LSP with the LSP client. The low level details of receiving and sending JSON messages are abstracted away by `json_source` and `json_sink` interfaces. Specific implementations are provided during the server start-up depending on parameters and the environemnt by `server_streams` implementation.
+The architecture of the language server component is illustrated in the picture above. It communicates via the standard input/output or TCP/IP connection using LSP with the LSP client. The low level details of receiving and sending JSON messages are abstracted away by `json_source` and `json_sink` interfaces. Specific implementations are provided during the server start-up depending on parameters and the environment by `server_streams` implementation.
 
 The main purpose of the class [`dispatcher`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/IO-handling) is to implement a message loop shared by LSP and DAP. It reads `json_source` to get messages parsed using the JSON for Modern C++ library (see [[third party libraries]]) and stores them in the [`request_manager`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/Request-manager) as `requests`.
 
