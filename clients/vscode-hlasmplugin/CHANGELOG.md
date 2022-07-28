@@ -5,6 +5,7 @@
 #### Added
 - Command for downloading copybook datasets from the mainframe
 - Support for multiple preprocessors
+- Preprocessor for expanding Endevor includes
 
 ### Fixed
 - Improve performance of file system event processing

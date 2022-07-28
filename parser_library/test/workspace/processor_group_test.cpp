@@ -56,6 +56,9 @@ TEST(processor_group, preprocessor_options)
 {
     constexpr auto cics = [](auto... p) { return preprocessor_options(cics_preprocessor_options(std::move(p)...)); };
     constexpr auto db2 = [](auto... p) { return preprocessor_options(db2_preprocessor_options(std::move(p)...)); };
+    constexpr auto endevor = [](auto... p) {
+        return preprocessor_options(endevor_preprocessor_options(std::move(p)...));
+    };
 
     EXPECT_EQ(pp_options(), std::vector<preprocessor_options> {});
 
@@ -71,6 +74,8 @@ TEST(processor_group, preprocessor_options)
 
     EXPECT_EQ(pp_options(config::cics_preprocessor { .leasm = true }, config::db2_preprocessor { .version = "A" }),
         (std::vector<preprocessor_options> { cics(true, true, true), db2("A") }));
+
+    EXPECT_EQ(pp_options(config::endevor_preprocessor {}), std::vector { endevor() });
 }
 
 TEST(processor_group, asm_options_optable_valid)

@@ -190,6 +190,33 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
                 "         DFHEIMSG 4",
             },
         } },
+        { {
+            { "DFHEISTG DSECT\n END", cics_preprocessor_options(false, false, false) },
+            {
+                "         DFHEIGBL ,,,NOLE          INSERTED BY TRANSLATOR",
+                "DFHEISTG DSECT",
+                " END",
+            },
+        } },
+        { {
+            { "DFHEISTG DSECT\n END", cics_preprocessor_options(true, false, false) },
+            {
+                "         DFHEIGBL ,,,NOLE          INSERTED BY TRANSLATOR",
+                "DFHEISTG DSECT",
+                "         DFHEISTG                  INSERTED BY TRANSLATOR",
+                "         DFHEISTG                  INSERTED BY TRANSLATOR",
+                "         DFHEIEND                  INSERTED BY TRANSLATOR",
+                " END",
+            },
+        } },
+        { {
+            { "*PROCESS OVERRIDE(RENT)\n*ASM XOPTS(NOPROLOG,NOEPILOG)\n END", cics_preprocessor_options() },
+            {
+                "*PROCESS OVERRIDE(RENT)",
+                "*ASM XOPTS(NOPROLOG,NOEPILOG)",
+                " END",
+            },
+        } },
     }));
 
 class cics_preprocessor_dfh_fixture

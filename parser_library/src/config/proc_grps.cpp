@@ -14,11 +14,23 @@
 
 #include "proc_grps.h"
 
+#include <array>
+
 #include "assembler_options.h"
 #include "instruction_set_version.h"
 #include "nlohmann/json.hpp"
 
 namespace hlasm_plugin::parser_library::config {
+
+bool preprocessor_options::valid() const noexcept
+{
+    return std::visit([](const auto& t) { return t.valid(); }, options);
+}
+
+std::string_view preprocessor_options::type() const noexcept
+{
+    return std::visit([]<typename T>(const T&) { return T::name; }, options);
+}
 
 void to_json(nlohmann::json& j, const library& p)
 {
@@ -42,23 +54,30 @@ void from_json(const nlohmann::json& j, library& p)
         throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", j);
 }
 
-void to_json(nlohmann::json& j, const db2_preprocessor& v)
+template<typename T>
+bool to_json_preprocessor_defaults(nlohmann::json& j, const T& v)
 {
-    static const db2_preprocessor default_config;
+    static const T default_config;
     if (v == default_config)
     {
-        j = "DB2";
-        return;
+        j = T::name;
+        return true;
     }
+
     j = nlohmann::json {
-        { "name", "DB2" },
-        {
-            "options",
-            {
-                { "conditional", v.conditional },
-                { "version", v.version },
-            },
-        },
+        { "name", T::name },
+    };
+    return false;
+}
+
+void to_json(nlohmann::json& j, const db2_preprocessor& v)
+{
+    if (to_json_preprocessor_defaults(j, v))
+        return;
+
+    j["options"] = nlohmann::json {
+        { "conditional", v.conditional },
+        { "version", v.version },
     };
 }
 void from_json(const nlohmann::json& j, db2_preprocessor& v)
@@ -87,24 +106,14 @@ void from_json(const nlohmann::json& j, db2_preprocessor& v)
 
 void to_json(nlohmann::json& j, const cics_preprocessor& v)
 {
-    static const cics_preprocessor default_config;
-    if (v == default_config)
-    {
-        j = "CICS";
+    if (to_json_preprocessor_defaults(j, v))
         return;
-    }
 
-    j = nlohmann::json {
-        { "name", "CICS" },
-        {
-            "options",
-            nlohmann::json::array({
-                v.prolog ? "PROLOG" : "NOPROLOG",
-                v.epilog ? "EPILOG" : "NOEPILOG",
-                v.leasm ? "LEASM" : "NOLEASM",
-            }),
-        },
-    };
+    j["options"] = nlohmann::json::array({
+        v.prolog ? "PROLOG" : "NOPROLOG",
+        v.epilog ? "EPILOG" : "NOEPILOG",
+        v.leasm ? "LEASM" : "NOLEASM",
+    });
 }
 
 namespace {
@@ -141,13 +150,23 @@ void from_json(const nlohmann::json& j, cics_preprocessor& v)
     }
 }
 
+void to_json(nlohmann::json& j, const endevor_preprocessor& v)
+{
+    if (to_json_preprocessor_defaults(j, v))
+        return;
+}
+void from_json(const nlohmann::json&, endevor_preprocessor& v) { v = endevor_preprocessor(); }
+
 namespace {
 struct preprocessor_visitor
 {
     nlohmann::json& j;
 
-    void operator()(const db2_preprocessor& p) const { j = p; }
-    void operator()(const cics_preprocessor& p) const { j = p; }
+    template<typename T>
+    void operator()(const T& p) const
+    {
+        j = p;
+    }
 };
 } // namespace
 
@@ -173,6 +192,57 @@ void to_json(nlohmann::json& j, const processor_group& p)
     }
 }
 
+namespace {
+template<typename T>
+T& emplace_options(std::vector<preprocessor_options>& preprocessors)
+{
+    return std::get<T>(preprocessors.emplace_back(preprocessor_options { T() }).options);
+}
+
+template<typename T>
+constexpr auto generate_preprocessor_entry()
+{
+    return std::make_pair(
+        T::name, +[](std::vector<preprocessor_options>& preprocessors, const nlohmann::json& j) {
+            j.get_to(emplace_options<T>(preprocessors));
+        });
+}
+
+template<typename T>
+struct preprocessor_list_generator;
+template<typename... Ts>
+struct preprocessor_list_generator<std::variant<Ts...>>
+{
+    static constexpr const std::array list = { generate_preprocessor_entry<Ts>()... };
+};
+
+constexpr const auto preprocessor_list = preprocessor_list_generator<decltype(preprocessor_options::options)>::list;
+
+constexpr auto find_preprocessor_deserializer(std::string_view name)
+{
+    auto it = std::find_if(std::begin(preprocessor_list), std::end(preprocessor_list), [&name](const auto& entry) {
+        return entry.first == name;
+    });
+    return it != std::end(preprocessor_list) ? it->second : nullptr;
+}
+
+void add_single_preprocessor(std::vector<preprocessor_options>& preprocessors, const nlohmann::json& j)
+{
+    std::string p_name;
+    if (j.is_string())
+        p_name = j.get<std::string>();
+    else if (j.is_object())
+        j.at("name").get_to(p_name);
+
+    std::transform(p_name.begin(), p_name.end(), p_name.begin(), [](unsigned char c) { return (char)toupper(c); });
+    if (auto deserializer = find_preprocessor_deserializer(p_name); deserializer)
+        deserializer(preprocessors, j);
+    else
+        throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.", j);
+}
+
+} // namespace
+
 void from_json(const nlohmann::json& j, processor_group& p)
 {
     j.at("name").get_to(p.name);
@@ -182,33 +252,13 @@ void from_json(const nlohmann::json& j, processor_group& p)
 
     if (auto it = j.find("preprocessor"); it != j.end())
     {
-        const auto add_single_pp = [&p](nlohmann::json::const_iterator it) {
-            std::string p_name;
-            if (it->is_string())
-                p_name = it->get<std::string>();
-            else if (it->is_object())
-                it->at("name").get_to(p_name);
-            else
-                throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.", *it);
-
-            std::transform(
-                p_name.begin(), p_name.end(), p_name.begin(), [](unsigned char c) { return (char)toupper(c); });
-            if (p_name == "DB2")
-                it->get_to(std::get<db2_preprocessor>(
-                    p.preprocessors.emplace_back(preprocessor_options { db2_preprocessor() }).options));
-            else if (p_name == "CICS")
-                it->get_to(std::get<cics_preprocessor>(
-                    p.preprocessors.emplace_back(preprocessor_options { cics_preprocessor() }).options));
-            else
-                throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.", *it);
-        };
         if (it->is_array())
         {
-            for (auto nested_it = it->begin(); nested_it != it->end(); ++nested_it)
-                add_single_pp(nested_it);
+            for (const auto& nested_j : *it)
+                add_single_preprocessor(p.preprocessors, nested_j);
         }
         else
-            add_single_pp(it);
+            add_single_preprocessor(p.preprocessors, *it);
     }
 }
 
@@ -223,30 +273,6 @@ void from_json(const nlohmann::json& j, proc_grps& p)
     j.at("pgroups").get_to(p.pgroups);
     if (auto it = j.find("macro_extensions"); it != j.end())
         it->get_to(p.macro_extensions);
-}
-
-namespace {
-struct preprocessor_validator
-{
-    template<typename T>
-    bool operator()(const T& t) const noexcept
-    {
-        return t.valid();
-    }
-};
-
-struct preprocessor_type_visitor
-{
-    std::string_view operator()(const db2_preprocessor&) const noexcept { return "DB2"; }
-    std::string_view operator()(const cics_preprocessor&) const noexcept { return "CICS"; }
-};
-} // namespace
-
-bool preprocessor_options::valid() const noexcept { return std::visit(preprocessor_validator {}, options); }
-
-std::string_view preprocessor_options::type() const noexcept
-{
-    return std::visit(preprocessor_type_visitor(), options);
 }
 
 } // namespace hlasm_plugin::parser_library::config

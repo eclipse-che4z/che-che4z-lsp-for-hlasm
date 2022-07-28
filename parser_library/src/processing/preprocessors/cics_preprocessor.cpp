@@ -828,6 +828,7 @@ class cics_preprocessor : public preprocessor
     bool m_end_seen = false;
     bool m_global_macro_called = false;
     bool m_pending_prolog = false;
+    bool m_pending_dfheistg_prolog = false;
     std::string_view m_pending_dfh_null_error;
 
     std::match_results<std::string_view::iterator> m_matches_sv;
@@ -887,6 +888,10 @@ public:
             m_result.emplace_back(replaced_line { "         DFHEIEND                  INSERTED BY TRANSLATOR\n" });
         }
     }
+    void inject_DFHEISTG()
+    {
+        m_result.emplace_back(replaced_line { "         DFHEISTG                  INSERTED BY TRANSLATOR\n" });
+    }
 
     bool try_asm_xopts(std::string_view input, size_t lineno)
     {
@@ -899,7 +904,7 @@ public:
 
         line = line.substr(0, lexing::default_ictl.end);
 
-        static const std::regex asm_statement(R"(\*ASM[ ]+[Xx][Oo][Pp][Tt][Ss][(']([A-Z, ]*)[)'][ ]*)");
+        static const std::regex asm_statement(R"(\*ASM[ ]+[Xx][Oo][Pp][Tt][Ss][(']([A-Z, ]*)[)'](?: .*)?)");
         static const std::regex op_sep("[ ,]+");
         static const std::unordered_map<std::string_view, std::pair<bool cics_preprocessor_options::*, bool>> opts {
             { "PROLOG", { &cics_preprocessor_options::prolog, true } },
@@ -932,10 +937,18 @@ public:
         return true;
     }
 
-    void process_asm_statement(char type)
+    bool process_asm_statement(char type, std::string_view sect_name)
     {
         switch (type)
         {
+            case 'D':
+                if (!std::exchange(m_global_macro_called, true))
+                    inject_DFHEIGBL(false);
+                if (sect_name != "DFHEISTG")
+                    return false;
+                m_pending_dfheistg_prolog = m_options.prolog;
+                break;
+
             case 'S':
             case 'C':
                 if (!std::exchange(m_global_macro_called, true))
@@ -958,6 +971,7 @@ public:
                 assert(false);
                 break;
         }
+        return true;
     }
 
     static constexpr const lexing::logical_line_extractor_args cics_extract { 1, 71, 2, false, false };
@@ -1080,6 +1094,15 @@ public:
         return events;
     }
 
+    static bool is_process_line(std::string_view s)
+    {
+        static constexpr const std::string_view PROCESS = "*PROCESS ";
+        return s.size() >= PROCESS.size()
+            && std::equal(PROCESS.begin(), PROCESS.end(), s.begin(), [](unsigned char l, unsigned char r) {
+                   return l == toupper(r);
+               });
+    }
+
     // Inherited via preprocessor
     document generate_replacement(document doc) override
     {
@@ -1090,6 +1113,7 @@ public:
         const auto end = doc.end();
 
         bool skip_continuation = false;
+        bool asm_xopts_allowed = true;
         while (it != end)
         {
             const auto text = it->text();
@@ -1101,17 +1125,28 @@ public:
             }
             if (std::exchange(m_pending_prolog, false))
                 inject_prolog();
+            if (std::exchange(m_pending_dfheistg_prolog, false))
+                inject_DFHEISTG();
             if (!m_pending_dfh_null_error.empty())
                 inject_dfh_null_error(std::exchange(m_pending_dfh_null_error, std::string_view()));
 
             const auto lineno = it->lineno().value_or(0); // TODO: preprocessor chaining
 
-            if (lineno == 0 && try_asm_xopts(it->text(), lineno))
+            if (asm_xopts_allowed && is_process_line(text))
             {
                 m_result.emplace_back(*it++);
                 // ignores continuation
                 continue;
             }
+
+            if (asm_xopts_allowed && try_asm_xopts(it->text(), lineno))
+            {
+                m_result.emplace_back(*it++);
+                // ignores continuation
+                continue;
+            }
+
+            asm_xopts_allowed = false;
 
             auto [line, line_len_chars, _] = create_line_preview(text);
 
@@ -1129,11 +1164,12 @@ public:
                 continue;
             }
 
-            static const std::regex line_of_interest("(?:[^ ]*)[ ]+(START|CSECT|RSECT|END)(?: .+)?");
+            static const std::regex line_of_interest("([^ ]*)[ ]+(START|CSECT|RSECT|DSECT|END)(?: .+)?");
 
-            if (std::regex_match(line.begin(), line.end(), m_matches_sv, line_of_interest))
+            if (std::regex_match(line.begin(), line.end(), m_matches_sv, line_of_interest)
+                && process_asm_statement(*m_matches_sv[2].first,
+                    std::string_view(std::to_address(m_matches_sv[1].first), m_matches_sv[1].length())))
             {
-                process_asm_statement(*m_matches_sv[1].first);
                 m_result.emplace_back(*it++);
                 skip_continuation = is_continued(text);
                 continue;
@@ -1203,6 +1239,8 @@ public:
 
         if (std::exchange(m_pending_prolog, false))
             inject_prolog();
+        if (std::exchange(m_pending_dfheistg_prolog, false))
+            inject_DFHEISTG();
         if (!m_pending_dfh_null_error.empty())
             inject_dfh_null_error(std::exchange(m_pending_dfh_null_error, std::string_view()));
         if (!std::exchange(m_end_seen, true))

@@ -19,6 +19,7 @@ target_sources(library_test PRIVATE
 	copy_test.cpp
 	db2_preprocessor_test.cpp
 	dc_test.cpp
+	endevor_preprocessor_test.cpp
 	equ_test.cpp
 	label_test.cpp
 	loctr_test.cpp

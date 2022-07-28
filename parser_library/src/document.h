@@ -70,6 +70,9 @@ class document
     std::vector<document_line> m_lines;
 
 public:
+    using iterator = std::vector<document_line>::const_iterator;
+    using const_iterator = std::vector<document_line>::const_iterator;
+
     document() = default;
     explicit document(std::string_view text);
     explicit document(std::vector<document_line> lines) noexcept

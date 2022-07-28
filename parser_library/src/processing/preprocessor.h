@@ -30,6 +30,7 @@
 namespace hlasm_plugin::parser_library {
 struct cics_preprocessor_options;
 struct db2_preprocessor_options;
+struct endevor_preprocessor_options;
 
 namespace lexing {
 struct logical_line;
@@ -54,6 +55,9 @@ public:
 
     static std::unique_ptr<preprocessor> create(
         const db2_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
+
+    static std::unique_ptr<preprocessor> create(
+        const endevor_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
 
 protected:
     using line_iterator = std::vector<document_line>::const_iterator;

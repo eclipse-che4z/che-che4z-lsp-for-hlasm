@@ -110,6 +110,8 @@ TEST(proc_grps, full_content_read)
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":[{"name":"CICS","options":["LEASM"]},"DB2"]}]})"_json,
             proc_grps { { { "P1", {}, {}, { { cics_preprocessor { true, true, true } }, { db2_preprocessor() } } } } }),
+        std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"ENDEVOR"}}]})"_json,
+            proc_grps { { { "P1", {}, {}, { { endevor_preprocessor {} } } } } }),
     };
 
     for (const auto& [input, expected] : cases)
@@ -153,6 +155,8 @@ TEST(proc_grps, full_content_write)
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":[{"name":"CICS","options":["PROLOG","EPILOG","LEASM"]},"DB2"]}]})"_json,
             proc_grps { { { "P1", {}, {}, { { cics_preprocessor { true, true, true } }, { db2_preprocessor() } } } } }),
+        std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"ENDEVOR"}]})"_json,
+            proc_grps { { { "P1", {}, {}, { { endevor_preprocessor {} } } } } }),
     };
 
     for (const auto& [expected, input] : cases)
@@ -192,6 +196,7 @@ TEST(proc_grps, preprocessor_options_validate)
         std::make_pair(preprocessor_options { db2_preprocessor { std::string(64, 'A') } }, true),
         std::make_pair(preprocessor_options { db2_preprocessor { std::string(65, 'A') } }, false),
         std::make_pair(preprocessor_options { db2_preprocessor { std::string(256, 'A') } }, false),
+        std::make_pair(preprocessor_options { endevor_preprocessor {} }, true),
     };
 
     for (const auto& [input, expected] : cases)

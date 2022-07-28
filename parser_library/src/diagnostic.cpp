@@ -2356,6 +2356,22 @@ diagnostic_op diagnostic_op::warn_CIC002(const range& range, std::string_view va
         range);
 }
 
+diagnostic_op diagnostic_op::error_END001(const range& range, std::string_view lib)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "END001",
+        std::string("ENDEVOR preprocessor - unable to find library '").append(lib).append("'"),
+        range);
+}
+
+diagnostic_op diagnostic_op::error_END002(const range& range, std::string_view lib)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "END002",
+        std::string("ENDEVOR preprocessor - cycle detected while expanding library '").append(lib).append("'"),
+        range);
+}
+
 diagnostic_op diagnostic_op::warn_U001_drop_had_no_effect(const range& range, std::string_view arg)
 {
     return diagnostic_op(

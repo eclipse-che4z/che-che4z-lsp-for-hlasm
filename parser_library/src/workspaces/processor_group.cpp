@@ -27,6 +27,10 @@ struct translate_pp_options
     {
         return cics_preprocessor_options(opt.prolog, opt.epilog, opt.leasm);
     }
+    preprocessor_options operator()(const config::endevor_preprocessor&) const
+    {
+        return endevor_preprocessor_options();
+    }
 };
 
 std::vector<preprocessor_options> translate_pp_configs(const std::vector<config::preprocessor_options>& pp)
