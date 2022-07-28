@@ -21,6 +21,23 @@ on:
       - completed
 
 jobs:
+  sonar-prev-job-failure:
+    name: SonarCloud scan - previous job failure
+    runs-on: ubuntu-20.04
+    if: ${{ github.event.workflow_run.conclusion != 'success' }}
+
+    steps:
+     - name: Dump
+       run: |
+            echo 'github.event details:'
+            echo '${{ toJSON(github.event) }}'
+    
+     - name: Issue error
+       uses: actions/github-script@v3
+       with:
+         script: |
+                 core.setFailed('Previous job ended unsuccessfully with the following conclusion: ${{ github.event.workflow_run.conclusion }}')
+
   sonar:
     name: SonarCloud scan
     runs-on: ubuntu-20.04
