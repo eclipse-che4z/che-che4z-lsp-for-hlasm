@@ -43,6 +43,7 @@ const std::unordered_map<std::string_view, int> DFHRESP_operands = {
     { "NONVAL", 9 },
     { "NOSTART", 10 },
     { "TERMIDERR", 11 },
+    { "DSIDERR", 12 },
     { "FILENOTFOUND", 12 },
     { "NOTFND", 13 },
     { "DUPREC", 14 },
@@ -214,6 +215,7 @@ const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
     { "CICSSECURITY", 195 },
     { "CICSTABLE", 101 },
     { "CHAR", 1601 },
+    { "CKOPEN", 1055 },
     { "CLEAR", 640 },
     { "CLOSED", 19 },
     { "CLOSEFAILED", 349 },
@@ -225,6 +227,7 @@ const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
     { "CMDSECNO", 205 },
     { "CMDSECYES", 206 },
     { "COBOL", 151 },
+    { "COBOLII", 375 },
     { "COBOLIT", 1507 },
     { "COLDACQ", 72 },
     { "COLDQUERY", 433 },
@@ -319,6 +322,7 @@ const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
     { "INSTART", 1502 },
     { "INSTOP", 1503 },
     { "INTACTLU", 190 },
+    { "INTERNAL", 1058 },
     { "INTRA", 222 },
     { "INTSTART", 310 },
     { "INTSTOP", 311 },
@@ -331,6 +335,7 @@ const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
     { "KATAKANA", 415 },
     { "KEYED", 8 },
     { "KSDS", 6 },
+    { "LE370", 377 },
     { "LIGHTPEN", 417 },
     { "LOG", 54 },
     { "LOGICAL", 216 },
@@ -440,6 +445,7 @@ const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
     { "OLDCOPY", 162 },
     { "ON", 201 },
     { "OPEN", 18 },
+    { "OPENAPI", 1053 },
     { "OPENING", 20 },
     { "OPENINPUT", 256 },
     { "OPENOUTPUT", 257 },
@@ -456,6 +462,7 @@ const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
     { "PERF", 330 },
     { "PHASEIN", 168 },
     { "PHYSICAL", 215 },
+    { "PL1", 152 },
     { "POST", 636 },
     { "PRESETSEC", 242 },
     { "PRIMARY", 110 },
@@ -466,6 +473,7 @@ const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
     { "PRTCOPY", 448 },
     { "PURGE", 236 },
     { "PURGEABLE", 160 },
+    { "QR", 1057 },
     { "READABLE", 35 },
     { "READBACK", 209 },
     { "READONLY", 275 },
@@ -484,6 +492,7 @@ const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
     { "RESSECYES", 203 },
     { "RESSYS", 208 },
     { "REVERTED", 264 },
+    { "RFC3339", 647 },
     { "ROLLBACK", 89 },
     { "RPC", 1500 },
     { "RRDS", 7 },
@@ -515,8 +524,10 @@ const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
     { "SQL", 623 },
     { "STANTRACE", 176 },
     { "START", 635 },
+    { "STARTED", 609 },
     { "STARTUP", 180 },
     { "STATIC", 179 },
+    { "STOPPED", 610 },
     { "SURROGATE", 371 },
     { "SUSPENDED", 231 },
     { "SWITCH", 188 },
@@ -553,6 +564,7 @@ const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
     { "TEXTKYBD", 436 },
     { "TEXTPRINT", 438 },
     { "THIRDINIT", 627 },
+    { "THREADSAFE", 1051 },
     { "TRANDUMP", 186 },
     { "TRANIDONLY", 452 },
     { "TTCAM", 80 },
@@ -591,6 +603,7 @@ const std::unordered_map<std::string_view, int> DFHVALUE_operands = {
     { "T3790UP", 181 },
     { "T7770", 1 },
     { "UCTRAN", 450 },
+    { "UKOPEN", 1056 },
     { "UNBLOCKED", 17 },
     { "UNDEFINED", 14 },
     { "UNDETERMINED", 355 },
@@ -904,7 +917,8 @@ public:
 
         line = line.substr(0, lexing::default_ictl.end);
 
-        static const std::regex asm_statement(R"(\*ASM[ ]+[Xx][Oo][Pp][Tt][Ss][(']([A-Z, ]*)[)'](?: .*)?)");
+        static const std::regex asm_statement(
+            R"(\*ASM[ ]+(?:[Xx][Oo][Pp][Tt][Ss]?|[Cc][Ii][Cc][Ss])[(']([A-Z, ]*)[)'](?: .*)?)");
         static const std::regex op_sep("[ ,]+");
         static const std::unordered_map<std::string_view, std::pair<bool cics_preprocessor_options::*, bool>> opts {
             { "PROLOG", { &cics_preprocessor_options::prolog, true } },
@@ -937,13 +951,16 @@ public:
         return true;
     }
 
-    bool process_asm_statement(char type, std::string_view sect_name)
+    bool process_asm_statement(std::string_view type, std::string_view sect_name)
     {
-        switch (type)
+        switch (type.front())
         {
             case 'D':
                 if (!std::exchange(m_global_macro_called, true))
                     inject_DFHEIGBL(false);
+                if (type.starts_with("DFHE"))
+                    return false;
+                // DSECT otherwise
                 if (sect_name != "DFHEISTG")
                     return false;
                 m_pending_dfheistg_prolog = m_options.prolog;
@@ -1164,10 +1181,12 @@ public:
                 continue;
             }
 
-            static const std::regex line_of_interest("([^ ]*)[ ]+(START|CSECT|RSECT|DSECT|END)(?: .+)?");
+            static const std::regex line_of_interest(
+                "([^ ]*)[ ]+(START|CSECT|RSECT|DSECT|DFHEIENT|DFHEISTG|END)(?: .+)?");
 
             if (std::regex_match(line.begin(), line.end(), m_matches_sv, line_of_interest)
-                && process_asm_statement(*m_matches_sv[2].first,
+                && process_asm_statement(
+                    std::string_view(std::to_address(m_matches_sv[2].first), m_matches_sv[2].length()),
                     std::string_view(std::to_address(m_matches_sv[1].first), m_matches_sv[1].length())))
             {
                 m_result.emplace_back(*it++);
@@ -1203,7 +1222,7 @@ public:
             }
 
             static const std::regex dfh_lookup(
-                "([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+(.*(DFHRESP|DFHVALUE)[ ]*\\([ ]*[A-Z]*[ ]*\\).*)",
+                "([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+(.*?(DFHRESP|DFHVALUE)[ ]*\\([ ]*[A-Z0-9]*[ ]*\\).*)",
                 std::regex_constants::icase);
 
             it = it_backup;
@@ -1243,7 +1262,7 @@ public:
             inject_DFHEISTG();
         if (!m_pending_dfh_null_error.empty())
             inject_dfh_null_error(std::exchange(m_pending_dfh_null_error, std::string_view()));
-        if (!std::exchange(m_end_seen, true))
+        if (!std::exchange(m_end_seen, true) && !asm_xopts_allowed) // actual code encountered
             inject_no_end_warning();
 
         return document(std::move(m_result));

@@ -217,6 +217,35 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
                 " END",
             },
         } },
+        { {
+            { "*PROCESS OVERRIDE(RENT)\n*ASM cics(NOPROLOG,NOEPILOG)\n END", cics_preprocessor_options() },
+            {
+                "*PROCESS OVERRIDE(RENT)",
+                "*ASM cics(NOPROLOG,NOEPILOG)",
+                " END",
+            },
+        } },
+        { {
+            { "         DFHEISTG\n END", cics_preprocessor_options(false, false, false) },
+            {
+                "         DFHEIGBL ,,,NOLE          INSERTED BY TRANSLATOR",
+                "         DFHEISTG",
+                " END",
+            },
+        } },
+        { {
+            { "*ASM XOPT(NOPROLOG NOEPILOG) ", cics_preprocessor_options() },
+            {
+                "*ASM XOPT(NOPROLOG NOEPILOG) ",
+            },
+        } },
+        { {
+            { "*ASM XOPT(NOPROLOG NOEPILOG) \n END", cics_preprocessor_options() },
+            {
+                "*ASM XOPT(NOPROLOG NOEPILOG) ",
+                " END",
+            },
+        } },
     }));
 
 class cics_preprocessor_dfh_fixture
