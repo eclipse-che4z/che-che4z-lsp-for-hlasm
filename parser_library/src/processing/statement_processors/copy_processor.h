@@ -23,7 +23,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 // processor that processes copy members
-class copy_processor : public statement_processor
+class copy_processor final : public statement_processor
 {
     processing_state_listener& listener_;
     copy_start_data start_;

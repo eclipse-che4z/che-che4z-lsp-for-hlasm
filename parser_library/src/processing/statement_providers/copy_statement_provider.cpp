@@ -45,4 +45,11 @@ context::statement_cache* copy_statement_provider::get_next()
     return &invo.cached_definition()->at(invo.current_statement);
 }
 
+std::vector<diagnostic_op> copy_statement_provider::filter_cached_diagnostics(
+    const semantics::deferred_statement& stmt) const
+{
+    auto diags = stmt.diagnostics_without_operands();
+    return std::vector<diagnostic_op>(diags.begin(), diags.end());
+}
+
 } // namespace hlasm_plugin::parser_library::processing

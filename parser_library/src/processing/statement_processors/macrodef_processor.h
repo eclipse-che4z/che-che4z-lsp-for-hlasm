@@ -24,7 +24,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 // processor that creates macro definition from provided statements
-class macrodef_processor : public statement_processor
+class macrodef_processor final : public statement_processor
 {
     processing_state_listener& listener_;
     workspaces::parse_lib_provider& provider_;

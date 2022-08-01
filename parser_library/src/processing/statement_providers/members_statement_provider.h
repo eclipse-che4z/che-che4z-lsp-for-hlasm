@@ -44,12 +44,13 @@ protected:
     processing::processing_state_listener& listener;
     diagnostic_op_consumer& diagnoser;
     virtual context::statement_cache* get_next() = 0;
+    virtual std::vector<diagnostic_op> filter_cached_diagnostics(const semantics::deferred_statement& stmt) const = 0;
 
 private:
     const semantics::instruction_si* retrieve_instruction(const context::statement_cache& cache) const;
 
     void fill_cache(context::statement_cache& cache,
-        const semantics::deferred_statement& def_stmt,
+        std::shared_ptr<const semantics::deferred_statement> def_stmt,
         const processing_status& status);
 
     context::shared_stmt_ptr preprocess_deferred(const statement_processor& processor, context::statement_cache& cache);

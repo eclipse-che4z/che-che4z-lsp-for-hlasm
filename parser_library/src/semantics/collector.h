@@ -78,6 +78,8 @@ public:
 
     void resolve_first_part();
 
+    void starting_operand_parsing();
+
 private:
     std::optional<label_si> lbl_;
     std::optional<instruction_si> instr_;
@@ -90,6 +92,7 @@ private:
     bool hl_symbols_extracted_;
 
     diagnostic_op_consumer_container statement_diagnostics;
+    size_t statement_diagnostics_without_operands = 0;
 
     void add_operand_remark_hl_symbols();
 };

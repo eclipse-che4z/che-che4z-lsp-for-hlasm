@@ -24,7 +24,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 // processor used for lookahead, hence finding desired symbol
-class lookahead_processor : public statement_processor
+class lookahead_processor final : public statement_processor
 {
     using process_table_t =
         std::unordered_map<context::id_index, std::function<void(context::id_index, const resolved_statement&)>>;

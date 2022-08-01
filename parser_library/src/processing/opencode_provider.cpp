@@ -256,6 +256,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
 
     if (op_text)
     {
+        collector.starting_operand_parsing();
         const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, diags, {}, op_range, proc_status, false);
 
         const auto& [format, opcode] = proc_status;

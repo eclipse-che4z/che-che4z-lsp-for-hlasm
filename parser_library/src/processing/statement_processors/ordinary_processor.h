@@ -26,7 +26,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 // statement processor that evaluates the writen code, processes instructions
-class ordinary_processor : public statement_processor
+class ordinary_processor final : public statement_processor
 {
     static constexpr size_t NEST_LIMIT = 100;
 

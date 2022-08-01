@@ -20,7 +20,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 // processor ignoring provided statements
-class empty_processor : public statement_processor
+class empty_processor final : public statement_processor
 {
 public:
     empty_processor(analyzing_context ctx);

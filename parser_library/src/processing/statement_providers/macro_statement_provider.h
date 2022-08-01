@@ -20,7 +20,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 // statement provider providing statements of macro defintion
-class macro_statement_provider : public members_statement_provider
+class macro_statement_provider final : public members_statement_provider
 {
 public:
     macro_statement_provider(analyzing_context ctx,
@@ -33,6 +33,7 @@ public:
 
 protected:
     context::statement_cache* get_next() override;
+    std::vector<diagnostic_op> filter_cached_diagnostics(const semantics::deferred_statement& stmt) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

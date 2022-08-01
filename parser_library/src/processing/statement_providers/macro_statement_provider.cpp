@@ -44,4 +44,11 @@ context::statement_cache* macro_statement_provider::get_next()
     return &invo->cached_definition[invo->current_statement];
 }
 
+std::vector<diagnostic_op> macro_statement_provider::filter_cached_diagnostics(
+    const semantics::deferred_statement& stmt) const
+{
+    auto diags = stmt.diagnostics();
+    return std::vector<diagnostic_op>(diags.begin(), diags.end());
+}
+
 } // namespace hlasm_plugin::parser_library::processing

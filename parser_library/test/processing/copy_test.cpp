@@ -631,3 +631,20 @@ aaaaaaaaa
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+
+TEST(copy, invalid_quotes_on_operandless)
+{
+    mock_parse_lib_provider libs { { "MEMBER", R"(
+    DSECT '
+)" } };
+    std::string input = R"(
+    COPY MEMBER
+)";
+
+    analyzer a(input, analyzer_options(&libs));
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}

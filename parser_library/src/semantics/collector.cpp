@@ -212,7 +212,8 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
             std::move(*lbl_),
             std::move(*instr_),
             std::move(*def_),
-            std::move(statement_diagnostics.diags));
+            std::move(statement_diagnostics.diags),
+            statement_diagnostics_without_operands);
     }
     else
     {
@@ -257,6 +258,7 @@ void collector::prepare_for_next_statement()
     hl_symbols_extracted_ = false;
 
     statement_diagnostics.diags.clear();
+    statement_diagnostics_without_operands = 0;
 }
 
 std::shared_ptr<literal_si_data> collector::add_literal(std::string text, expressions::data_definition dd, range r)
@@ -277,4 +279,9 @@ void collector::resolve_first_part()
         lbl_->resolve(statement_diagnostics);
     if (instr_)
         instr_->resolve(statement_diagnostics);
+}
+
+void hlasm_plugin::parser_library::semantics::collector::starting_operand_parsing()
+{
+    statement_diagnostics_without_operands = statement_diagnostics.diags.size();
 }

@@ -10,6 +10,7 @@
 ### Fixed
 - Improve performance of file system event processing
 - Improve CICS preprocessor accuracy
+- False positive diagnostics generated for statements included by the COPY instruction
 
 ## [1.3.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.2.0...1.3.0) (2022-06-30)
 
