@@ -598,7 +598,7 @@ var_sym_ptr hlasm_context::get_var_sym(id_index name) const
     return var_sym_ptr();
 }
 
-void hlasm_context::add_sequence_symbol(sequence_symbol_ptr seq_sym)
+void hlasm_context::add_opencode_sequence_symbol(std::unique_ptr<opencode_sequence_symbol> seq_sym)
 {
     auto& opencode = scope_stack_.front();
     opencode.sequence_symbols.try_emplace(seq_sym->name, std::move(seq_sym));

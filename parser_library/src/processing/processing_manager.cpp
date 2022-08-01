@@ -134,6 +134,12 @@ bool processing_manager::attr_lookahead_active() const
     return look_pr && look_pr->action == lookahead_action::ORD;
 }
 
+bool processing_manager::seq_lookahead_active() const
+{
+    auto look_pr = dynamic_cast<lookahead_processor*>(&*procs_.back());
+    return look_pr && look_pr->action == lookahead_action::SEQ;
+}
+
 statement_provider& processing_manager::find_provider()
 {
     if (attr_lookahead_active())
@@ -194,6 +200,15 @@ void processing_manager::start_lookahead(lookahead_start_data start)
 
 void processing_manager::finish_lookahead(lookahead_processing_result result)
 {
+    for (auto it : m_pending_seq_redifinitions)
+    {
+        auto& [state, diags] = it->second;
+        if (state == pending_seq_redifinition_state::lookahead_pending)
+            state = diags.empty() ? pending_seq_redifinition_state::lookahead_done
+                                  : pending_seq_redifinition_state::diagnostics;
+    }
+    m_pending_seq_redifinitions.clear();
+
     lookahead_stop_ = hlasm_ctx_.current_source().create_snapshot();
     lookahead_stop_ainsert_id = hlasm_ctx_.current_ainsert_id();
 
@@ -272,9 +287,19 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
         }
         else
         {
-            auto opencode_symbol = symbol->access_opencode_symbol();
+            if (auto it = m_lookahead_seq_redifinitions.find(target); it != m_lookahead_seq_redifinitions.end()
+                && it->second.first != pending_seq_redifinition_state::lookahead_done)
+            {
+                for (auto& d : it->second.second)
+                    diagnosable_impl::add_diagnostic(std::move(d));
+                it->second.second.clear();
+            }
+            else
+            {
+                auto opencode_symbol = symbol->access_opencode_symbol();
 
-            perform_opencode_jump(opencode_symbol->statement_position, opencode_symbol->snapshot);
+                perform_opencode_jump(opencode_symbol->statement_position, opencode_symbol->snapshot);
+            }
         }
 
         hlasm_ctx_.decrement_branch_counter();
@@ -289,13 +314,28 @@ void processing_manager::register_sequence_symbol(context::id_index target, rang
     auto symbol = hlasm_ctx_.get_opencode_sequence_symbol(target);
     auto new_symbol = create_opencode_sequence_symbol(target, symbol_range);
 
+    bool seq_lookahead = seq_lookahead_active();
+
     if (!symbol)
     {
-        hlasm_ctx_.add_sequence_symbol(std::move(new_symbol));
+        hlasm_ctx_.add_opencode_sequence_symbol(std::move(new_symbol));
+        if (seq_lookahead)
+            m_pending_seq_redifinitions.emplace_back(m_lookahead_seq_redifinitions.try_emplace(target).first);
     }
     else if (!(*symbol->access_opencode_symbol() == *new_symbol))
     {
-        add_diagnostic(diagnostic_op::error_E045(*target, symbol_range));
+        if (!seq_lookahead)
+            add_diagnostic(diagnostic_op::error_E045(*target, symbol_range));
+        else if (auto it = m_lookahead_seq_redifinitions.find(target); it == m_lookahead_seq_redifinitions.end()
+                 || it->second.first != pending_seq_redifinition_state::lookahead_pending)
+        {
+            // already defined either in normal processing or previous lookahead, so silently ignore
+        }
+        else
+        {
+            it->second.second.push_back(
+                add_stack_details(diagnostic_op::error_E045(*target, symbol_range), hlasm_ctx_.processing_stack()));
+        }
     }
 }
 

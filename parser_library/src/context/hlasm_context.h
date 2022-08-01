@@ -175,7 +175,7 @@ public:
     var_sym_ptr get_var_sym(id_index name) const;
 
     // registers sequence symbol
-    void add_sequence_symbol(sequence_symbol_ptr seq_sym);
+    void add_opencode_sequence_symbol(std::unique_ptr<opencode_sequence_symbol> seq_sym);
     // return sequence symbol in current scope
     // returns nullptr if there is none in the current scope
     const sequence_symbol* get_sequence_symbol(id_index name) const;

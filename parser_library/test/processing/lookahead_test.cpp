@@ -896,3 +896,141 @@ A  DS   C
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "C");
 }
+
+TEST(lookahead, unused_duplicate_seq)
+{
+    std::string input = R"(
+     AIF  (1).B
+.X   ANOP
+.X   ANOP
+.B   ANOP
+.END END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(lookahead, hidden_duplicate_seq)
+{
+    std::string input = R"(
+     AGO  .O
+.A   ANOP
+.X   ANOP
+     AIF  (1).END
+.O   ANOP
+     AIF  (1).B
+.X   ANOP
+.X   ANOP
+.B   ANOP
+     AGO  .X
+.END END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(lookahead, used_duplicate_seq)
+{
+    std::string input = R"(
+     AGO  .O
+.A   ANOP
+.X   ANOP
+.X   ANOP
+.X   ANOP
+     AIF  (1).END
+.O   ANOP
+     AIF  (1).B
+.X   ANOP
+.X   ANOP
+.B   ANOP
+     AGO  .X
+.END END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E045", "E045" }));
+}
+
+TEST(lookahead, unconditional_redefinition)
+{
+    std::string input = R"(
+     AGO  .O
+.A   ANOP
+.X   ANOP
+     AIF  (1).END
+.O   ANOP
+     AIF  (1).B
+.X   ANOP
+.X   ANOP
+.B   ANOP
+.X   ANOP
+.END END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E045" }));
+}
+
+TEST(lookahead, unconditional_redefinition_2)
+{
+    std::string input = R"(
+     AGO  .O
+.A   ANOP
+.X   ANOP
+.X   ANOP
+     AIF  (1).END
+.O   ANOP
+     AIF  (1).B
+.X   ANOP
+.X   ANOP
+.B   ANOP
+.X   ANOP
+.END END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E045" }));
+}
+
+TEST(lookahead, combined_redefinition)
+{
+    std::string input = R"(
+     AGO  .O
+.A   ANOP
+.X   ANOP
+.X   ANOP
+.X   ANOP
+     AIF  (1).END
+.O   ANOP
+     AIF  (1).B
+.X   ANOP
+.X   ANOP
+.B   ANOP
+.X   ANOP
+     AGO  .X
+.END END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E045", "E045", "E045" }));
+}

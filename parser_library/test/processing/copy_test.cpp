@@ -392,11 +392,7 @@ TEST(copy, copy_enter_from_lookahead)
 
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "V"), 1);
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-
-    check_diag(a.diags()[0], 6, copyl);
-    ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
-    check_related_diag(a.diags()[0].related[0], 4, start);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(copy, nested_macro_copy_call)
