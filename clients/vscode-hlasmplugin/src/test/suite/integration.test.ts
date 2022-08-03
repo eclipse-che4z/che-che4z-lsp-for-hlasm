@@ -70,7 +70,7 @@ suite('Integration Test Suite', () => {
         const text = editor.document.getText();
         const acceptedLine = text.split('\n')[7];
 
-        assert.ok(acceptedLine.includes('L   R,D12U(X,B)'), 'Wrong suggestion result' + acceptedLine);
+        assert.ok(acceptedLine.includes('L             R,D12U(X,B)'), 'Wrong suggestion result' + acceptedLine);
     }).timeout(10000).slow(4000);
 
     // test completion for variable symbols

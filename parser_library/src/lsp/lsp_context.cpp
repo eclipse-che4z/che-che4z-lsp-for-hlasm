@@ -826,9 +826,15 @@ std::string lsp_context::get_macro_documentation(const macro_info& m) const
     return result;
 }
 
-completion_list_s lsp_context::complete_instr(const file_info&, position) const
+completion_list_s lsp_context::complete_instr(const file_info& fi, position pos) const
 {
     completion_list_s result;
+
+    auto completion_start = fi.data.get_line(pos.line).substr(0, pos.column).rfind(' ');
+    if (completion_start == std::string_view::npos)
+        completion_start = pos.column;
+    else
+        completion_start += 2; // after and turn to column
 
     // Store only instructions from the currently active instruction set
     for (const auto& instr : completion_item_s::m_instruction_completion_items)
@@ -838,7 +844,12 @@ completion_list_s lsp_context::complete_instr(const file_info&, position) const
         auto it = m_hlasm_ctx->instruction_map().find(id);
         if (it != m_hlasm_ctx->instruction_map().end())
         {
-            result.emplace_back(instr);
+            auto& i = result.emplace_back(instr);
+            if (auto space = i.insert_text.find(' '); space != std::string::npos)
+            {
+                if (completion_start + space < 15)
+                    i.insert_text.insert(i.insert_text.begin() + space, 15 - (completion_start + space), ' ');
+            }
         }
     }
 
@@ -991,7 +1002,7 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
                 auto it = completion_item_s::m_instruction_completion_items.find(*occ.name);
                 if (it == completion_item_s::m_instruction_completion_items.end())
                     return "";
-                return it->detail + "  \n" + it->documentation;
+                return it->detail + "\n\n" + it->documentation;
             }
         }
         case lsp::occurence_kind::COPY_OP:

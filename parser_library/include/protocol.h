@@ -108,6 +108,7 @@ struct PARSER_LIBRARY_EXPORT completion_item
     std::string_view detail() const;
     std::string_view documentation() const;
     std::string_view insert_text() const;
+    bool is_snippet() const;
 
 private:
     const lsp::completion_item_s& item_;

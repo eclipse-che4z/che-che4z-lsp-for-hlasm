@@ -207,11 +207,14 @@ void feature_language_features::completion(const json& id, const json& params)
     for (size_t i = 0; i < completion_list.size(); ++i)
     {
         const auto& item = completion_list.item(i);
-        completion_item_array.push_back(json { { "label", item.label() },
+        completion_item_array.push_back(json {
+            { "label", item.label() },
             { "kind", completion_item_kind_mapping.at(item.kind()) },
             { "detail", item.detail() },
             { "documentation", get_markup_content(item.documentation()) },
-            { "insertText", item.insert_text() } });
+            { "insertText", item.insert_text() },
+            { "insertTextFormat", 1 + (int)item.is_snippet() },
+        });
     }
     to_ret = json { { "isIncomplete", false }, { "items", completion_item_array } };
 

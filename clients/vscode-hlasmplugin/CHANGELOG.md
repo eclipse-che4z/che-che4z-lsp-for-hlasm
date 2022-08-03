@@ -6,6 +6,7 @@
 - Command for downloading copybook datasets from the mainframe
 - Support for multiple preprocessors
 - Preprocessor for expanding Endevor includes
+- Code completion for machine instructions and mnemonics utilizes snippets
 
 ### Fixed
 - Improve performance of file system event processing

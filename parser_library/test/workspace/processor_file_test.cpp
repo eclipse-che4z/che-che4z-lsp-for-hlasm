@@ -68,7 +68,7 @@ TEST(processor_file, parse_macro)
 
     EXPECT_EQ(open_fp.definition(opencode_loc, { 1, 2 }), location({ 1, 1 }, macro_loc));
 
-    const std::string sam31_hover_message = "Operands:   \nMachine instruction \nInstruction format: E";
+    const std::string sam31_hover_message = "Operands: \n\nMachine instruction \n\nInstruction format: E";
     EXPECT_EQ(open_fp.hover(opencode_loc, { 0, 2 }), sam31_hover_message);
     EXPECT_EQ(open_fp.hover(macro_loc, { 2, 2 }), sam31_hover_message);
 

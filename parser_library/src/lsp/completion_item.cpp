@@ -24,74 +24,66 @@ completion_item_s::completion_item_s(std::string label,
     std::string detail,
     std::string insert_text,
     std::string documentation,
-    completion_item_kind kind)
+    completion_item_kind kind,
+    bool snippet)
     : label(std::move(label))
     , detail(std::move(detail))
     , insert_text(std::move(insert_text))
     , documentation(std::move(documentation))
     , kind(kind)
+    , snippet(snippet)
 {}
 
 namespace {
 void process_machine_instruction(const context::machine_instruction& machine_instr,
     std::set<completion_item_s, completion_item_s::label_comparer>& items)
 {
-    std::stringstream doc_ss(" ");
+    std::stringstream doc_ss("");
     std::stringstream detail_ss(""); // operands used for hover - e.g. V,D12U(X,B)[,M]
     std::stringstream autocomplete(""); // operands used for autocomplete - e.g. V,D12U(X,B) [,M]
 
-    autocomplete << machine_instr.name() << "   ";
-
+    size_t snippet_id = 1;
+    bool first_optional = true;
     for (size_t i = 0; i < machine_instr.operands().size(); i++)
     {
         const auto& op = machine_instr.operands()[i];
-        if (machine_instr.optional_operand_count() == 1 && machine_instr.operands().size() - i == 1)
+        const bool is_optional = machine_instr.operands().size() - i <= machine_instr.optional_operand_count();
+        if (is_optional && first_optional)
         {
-            autocomplete << " [";
+            first_optional = false;
+            autocomplete << "${" << snippet_id++ << ": [";
             detail_ss << "[";
-            if (i != 0)
-            {
-                autocomplete << ",";
-                detail_ss << ",";
-            }
-            detail_ss << op.to_string() << "]";
-            autocomplete << op.to_string() << "]";
         }
-        else if (machine_instr.optional_operand_count() == 2 && machine_instr.operands().size() - i == 2)
+        if (i != 0)
         {
-            autocomplete << " [";
-            detail_ss << "[";
-            if (i != 0)
-            {
-                autocomplete << ",";
-                detail_ss << ",";
-            }
-            detail_ss << op.to_string() << "]";
-            autocomplete << op.to_string() << "[,";
+            autocomplete << ",";
+            detail_ss << ",";
         }
-        else if (machine_instr.optional_operand_count() == 2 && machine_instr.operands().size() - i == 1)
+        if (!is_optional)
         {
-            detail_ss << op.to_string() << "]]";
-            autocomplete << op.to_string() << "]]";
+            detail_ss << op.to_string();
+            autocomplete << "${" << snippet_id++ << ":" << op.to_string() << "}";
+        }
+        else if (machine_instr.operands().size() - i > 1)
+        {
+            detail_ss << op.to_string() << "[";
+            autocomplete << op.to_string() << "[";
         }
         else
         {
-            if (i != 0)
-            {
-                autocomplete << ",";
-                detail_ss << ",";
-            }
-            detail_ss << op.to_string();
-            autocomplete << op.to_string();
+            detail_ss << op.to_string() << std::string(machine_instr.optional_operand_count(), ']');
+            autocomplete << op.to_string() << std::string(machine_instr.optional_operand_count(), ']') << "}";
         }
     }
-    doc_ss << "Machine instruction " << std::endl
+    doc_ss << "Machine instruction "
+           << "\n\n"
            << "Instruction format: " << context::instruction::mach_format_to_string(machine_instr.format());
     items.emplace(std::string(machine_instr.name()),
         "Operands: " + detail_ss.str(),
-        autocomplete.str(),
+        std::string(machine_instr.name()) + " ${" + std::to_string(snippet_id++) + ":}" + autocomplete.str(),
         doc_ss.str(),
-        completion_item_kind::mach_instr);
+        completion_item_kind::mach_instr,
+        true);
 }
 
 void process_assembler_instruction(const context::assembler_instruction& asm_instr,
@@ -112,18 +104,24 @@ void process_assembler_instruction(const context::assembler_instruction& asm_ins
 void process_mnemonic_code(
     const context::mnemonic_code& mnemonic_instr, std::set<completion_item_s, completion_item_s::label_comparer>& items)
 {
-    std::stringstream doc_ss(" ");
+    std::stringstream doc_ss("");
     std::stringstream detail_ss("");
-    std::stringstream subs_ops_mnems(" ");
-    std::stringstream subs_ops_nomnems(" ");
+    std::stringstream subs_ops_mnems("");
+    std::stringstream subs_ops_nomnems("");
+    std::stringstream subs_ops_nomnems_no_snippets("");
 
     // get mnemonic operands
     size_t iter_over_mnem = 0;
+    size_t snippet_id = 1;
+    bool first_optional = true;
 
     const auto& mach_operands = mnemonic_instr.instruction()->operands();
-    auto no_optional = mnemonic_instr.instruction()->optional_operand_count();
+    const auto optional_count = mnemonic_instr.instruction()->optional_operand_count();
     bool first = true;
-    std::vector<std::string> mnemonic_with_operand_ommited = { "VNOT", "NOTR", "NOTGR" };
+    constexpr const auto is_mnemonic_with_operand_ommited = [](std::string_view name) {
+        static constexpr const std::string_view list[] = { "VNOT", "NOTR", "NOTGR" };
+        return std::find(std::begin(list), std::end(list), name) != std::end(list);
+    };
 
 
     auto replaces = mnemonic_instr.replaced_operands();
@@ -136,8 +134,8 @@ void process_mnemonic_code(
             // can still replace mnemonics
             if (position == i)
             {
-                // mnemonics can be substituted when no_optional is 1, but not 2 -> 2 not implemented
-                if (no_optional == 1 && mach_operands.size() - i == 1)
+                // mnemonics can be substituted when optional_count is 1, but not 2 -> 2 not implemented
+                if (optional_count == 1 && mach_operands.size() - i == 1)
                 {
                     subs_ops_mnems << "[";
                     if (i != 0)
@@ -148,10 +146,7 @@ void process_mnemonic_code(
                 // replace current for mnemonic
                 if (i != 0)
                     subs_ops_mnems << ",";
-                if (std::find(mnemonic_with_operand_ommited.begin(),
-                        mnemonic_with_operand_ommited.end(),
-                        mnemonic_instr.name())
-                    != mnemonic_with_operand_ommited.end())
+                if (is_mnemonic_with_operand_ommited(mnemonic_instr.name()))
                 {
                     subs_ops_mnems << mach_operands[i - 1].to_string();
                 }
@@ -161,59 +156,52 @@ void process_mnemonic_code(
                 continue;
             }
         }
-        // do not replace by a mnemonic
-        std::string curr_op_with_mnem = "";
-        std::string curr_op_without_mnem = "";
-        if (no_optional == 0)
+        const bool is_optional = mach_operands.size() - i <= optional_count;
+        if (is_optional && first_optional)
         {
-            if (i != 0)
-                curr_op_with_mnem += ",";
-            if (!first)
-                curr_op_without_mnem += ",";
-            curr_op_with_mnem += mach_operands[i].to_string();
-            curr_op_without_mnem += mach_operands[i].to_string();
+            first_optional = false;
+            subs_ops_mnems << " [";
+            subs_ops_nomnems << "${" << snippet_id++ << ": [";
+            subs_ops_nomnems_no_snippets << " [";
         }
-        else if (no_optional == 1 && mach_operands.size() - i == 1)
+        if (i != 0)
+            subs_ops_mnems << ",";
+        if (!first)
+            subs_ops_nomnems << ",";
+        if (!first)
+            subs_ops_nomnems_no_snippets << ",";
+        if (!is_optional)
         {
-            curr_op_with_mnem += "[";
-            curr_op_without_mnem += "[";
-            if (i != 0)
-                curr_op_with_mnem += ",";
-            if (!first)
-                curr_op_without_mnem += ",";
-            curr_op_with_mnem += mach_operands[i].to_string() + "]";
-            curr_op_without_mnem += mach_operands[i].to_string() + "]";
+            subs_ops_mnems << mach_operands[i].to_string();
+            subs_ops_nomnems << "${" << snippet_id++ << ":" << mach_operands[i].to_string() << "}";
+            subs_ops_nomnems_no_snippets << mach_operands[i].to_string();
         }
-        else if (no_optional == 2 && mach_operands.size() - i == 1)
+        else if (mach_operands.size() - i > 1)
         {
-            curr_op_with_mnem += mach_operands[i].to_string() + "]]";
-            curr_op_without_mnem += mach_operands[i].to_string() + "]]";
+            subs_ops_mnems << mach_operands[i].to_string() + "[";
+            subs_ops_nomnems << mach_operands[i].to_string() << "[";
+            subs_ops_nomnems_no_snippets << mach_operands[i].to_string() << "[";
         }
-        else if (no_optional == 2 && mach_operands.size() - i == 2)
+        else
         {
-            curr_op_with_mnem += "[";
-            curr_op_without_mnem += "[";
-            if (i != 0)
-                curr_op_with_mnem += ",";
-            if (!first)
-                curr_op_without_mnem += ",";
-            curr_op_with_mnem += mach_operands[i].to_string() + "[,";
-            curr_op_without_mnem += mach_operands[i].to_string() + "[,";
+            subs_ops_mnems << mach_operands[i].to_string() + std::string(optional_count, ']');
+            subs_ops_nomnems << mach_operands[i].to_string() << std::string(optional_count, ']') << "}";
+            subs_ops_nomnems_no_snippets << mach_operands[i].to_string() << std::string(optional_count, ']');
         }
-        subs_ops_mnems << curr_op_with_mnem;
-        subs_ops_nomnems << curr_op_without_mnem;
         first = false;
     }
-    detail_ss << "Operands: " + subs_ops_nomnems.str();
-    doc_ss << "Mnemonic code for " << mnemonic_instr.instruction()->name() << " instruction" << std::endl
-           << "Substituted operands: " << subs_ops_mnems.str() << std::endl
+    detail_ss << "Operands: " + subs_ops_nomnems_no_snippets.str();
+    doc_ss << "Mnemonic code for " << mnemonic_instr.instruction()->name() << " instruction"
+           << "\n\n"
+           << "Substituted operands: " << subs_ops_mnems.str() << "\n\n"
            << "Instruction format: "
            << context::instruction::mach_format_to_string(mnemonic_instr.instruction()->format());
     items.emplace(std::string(mnemonic_instr.name()),
         detail_ss.str(),
-        std::string(mnemonic_instr.name()) + "   " + subs_ops_nomnems.str(),
+        std::string(mnemonic_instr.name()) + " ${" + std::to_string(snippet_id++) + ":}" + subs_ops_nomnems.str(),
         doc_ss.str(),
-        completion_item_kind::mach_instr);
+        completion_item_kind::mach_instr,
+        true);
 }
 
 void process_ca_instruction(
