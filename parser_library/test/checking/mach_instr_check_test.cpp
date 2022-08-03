@@ -14,6 +14,7 @@
 
 #include "gtest/gtest.h"
 
+#include "../common_testing.h"
 #include "analyzer.h"
 #include "checking/instruction_checker.h"
 #include "context/instruction.h"
@@ -416,4 +417,20 @@ TEST(machine_instr_check_test, vec_reg_limits)
     a.collect_diags();
     ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(machine_instr_check_test, mnemonics_with_optional_args)
+{
+    std::string input(
+        R"(
+        VFAEZHS 0,0
+        VFAEZHS 0,0,0
+        VFAEZHS 0,0,0,0
+        VFAEZHS 0,0,0,0,0
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M001", "M001" }));
 }

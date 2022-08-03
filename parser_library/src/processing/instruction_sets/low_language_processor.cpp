@@ -15,6 +15,7 @@
 #include "low_language_processor.h"
 
 #include <optional>
+#include <type_traits>
 
 #include "checking/using_label_checker.h"
 #include "processing/statement_processors/ordinary_processor.h"
@@ -217,15 +218,15 @@ void low_language_processor::resolve_unknown_loctr_dependency(context::space_ptr
 }
 
 
-low_language_processor::transform_result low_language_processor::transform_mnemonic(
-    const resolved_statement& stmt, context::dependency_solver& dep_solver, diagnostic_collector add_diagnostic)
+low_language_processor::transform_result low_language_processor::transform_mnemonic(const resolved_statement& stmt,
+    context::dependency_solver& dep_solver,
+    const context::mnemonic_code& mnemonic,
+    const diagnostic_collector& add_diagnostic)
 {
     // operands obtained from the user
     const auto& operands = stmt.operands_ref().value;
     // the name of the instruction (mnemonic) obtained from the user
     const auto& instr_name = *stmt.opcode_ref().value;
-    // the associated mnemonic structure with the given name
-    const auto& mnemonic = context::instruction::get_mnemonic_codes(instr_name);
     // the machine instruction structure associated with the given instruction name
     auto curr_instr = mnemonic.instruction();
 
@@ -234,57 +235,50 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     // check whether substituted mnemonic values are ok
 
     // check size of mnemonic operands
-    int diff = (int)curr_instr->operands().size() - (int)operands.size() - (int)replaced.size();
-    if (std::abs(diff) > curr_instr->optional_operand_count())
+    if (operands.size() + replaced.size() > curr_instr->operands().size()
+        || operands.size() + replaced.size() < curr_instr->operands().size() - curr_instr->optional_operand_count())
     {
-        auto curr_diag = diagnostic_op::error_optional_number_of_operands(instr_name,
+        add_diagnostic(diagnostic_op::error_optional_number_of_operands(instr_name,
             curr_instr->optional_operand_count(),
             curr_instr->operands().size() - replaced.size(),
-            stmt.stmt_range_ref());
-
-        add_diagnostic(curr_diag);
+            stmt.stmt_range_ref()));
         return std::nullopt;
     }
 
-    std::vector<checking::check_op_ptr> substituted_mnems;
-    for (const auto& mnem : replaced)
-        substituted_mnems.push_back(std::make_unique<checking::one_operand>((int)mnem.second));
-
-    std::vector<checking::check_op_ptr> operand_vector;
     // create vector of empty operands
-    for (size_t i = 0; i < curr_instr->operands().size() + curr_instr->optional_operand_count(); i++)
-        operand_vector.push_back(nullptr);
+    std::vector<checking::check_op_ptr> operand_vector(curr_instr->operands().size());
     // add substituted
-    for (size_t i = 0; i < replaced.size(); i++)
-        operand_vector[replaced[i].first] = std::move(substituted_mnems[i]);
+    for (const auto& mnem : replaced)
+        operand_vector[mnem.first] = std::make_unique<checking::one_operand>((int)mnem.second);
     // add other
     size_t real_op_idx = 0;
     for (size_t j = 0; j < operand_vector.size() && real_op_idx < operands.size(); j++)
     {
-        if (operand_vector[j] == nullptr)
-        {
-            auto& operand = operands[real_op_idx++];
-            if (operand->type == semantics::operand_type::EMPTY) // if operand is empty
-            {
-                operand_vector[j] = std::make_unique<checking::empty_operand>();
-                operand_vector[j]->operand_range = operand->operand_range;
-            }
-            else // if operand is not empty
-            {
-                auto uniq = get_check_op(operand.get(), dep_solver, add_diagnostic, stmt, j, &mnemonic);
-                if (!uniq)
-                    return std::nullopt; // contains dependencies
+        if (operand_vector[j])
+            continue;
 
-                uniq->operand_range = operand.get()->operand_range;
-                operand_vector[j] = std::move(uniq);
-            }
+        auto& operand = operands[real_op_idx++];
+        if (operand->type == semantics::operand_type::EMPTY) // if operand is empty
+        {
+            operand_vector[j] = std::make_unique<checking::empty_operand>();
+            operand_vector[j]->operand_range = operand->operand_range;
+        }
+        else // if operand is not empty
+        {
+            auto uniq = get_check_op(operand.get(), dep_solver, add_diagnostic, stmt, j, &mnemonic);
+            if (!uniq)
+                return std::nullopt; // contains dependencies
+
+            uniq->operand_range = operand.get()->operand_range;
+            operand_vector[j] = std::move(uniq);
         }
     }
+    std::erase_if(operand_vector, [](const auto& x) { return !x; });
     return operand_vector;
 }
 
 low_language_processor::transform_result low_language_processor::transform_default(
-    const resolved_statement& stmt, context::dependency_solver& dep_solver, diagnostic_collector add_diagnostic)
+    const resolved_statement& stmt, context::dependency_solver& dep_solver, const diagnostic_collector& add_diagnostic)
 {
     std::vector<checking::check_op_ptr> operand_vector;
     for (auto& op : stmt.operands_ref().value)
@@ -310,7 +304,7 @@ low_language_processor::transform_result low_language_processor::transform_defau
 
 checking::check_op_ptr low_language_processor::get_check_op(const semantics::operand* op,
     context::dependency_solver& dep_solver,
-    diagnostic_collector add_diagnostic,
+    const diagnostic_collector& add_diagnostic,
     const resolved_statement& stmt,
     size_t op_position,
     const context::mnemonic_code* mnemonic)
@@ -379,7 +373,7 @@ bool low_language_processor::check(const resolved_statement& stmt,
 
     if (auto mnem_tmp = context::instruction::find_mnemonic_codes(instruction_name))
     {
-        operand_vector = transform_mnemonic(stmt, dep_solver, collector);
+        operand_vector = transform_mnemonic(stmt, dep_solver, *mnem_tmp, collector);
     }
     else
     {
