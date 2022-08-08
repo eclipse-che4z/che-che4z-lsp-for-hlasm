@@ -28,7 +28,7 @@ struct test_context : public dependency_solver
     hlasm_context hlasm_ctx;
     ordinary_assembly_context asm_ctx;
     test_context()
-        : asm_ctx(hlasm_ctx.ids(), hlasm_ctx)
+        : asm_ctx(hlasm_ctx)
     {}
 
     std::map<std::string, section> m_sect;

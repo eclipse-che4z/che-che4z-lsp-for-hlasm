@@ -487,6 +487,17 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
         else
             create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes::make_org_attrs());
     }
+
+    const auto& ops = stmt.operands_ref().value;
+
+    if (ops.empty()
+        || (ops.size() == 2 && ops[0]->type == semantics::operand_type::EMPTY
+            && ops[1]->type == semantics::operand_type::EMPTY))
+    {
+        hlasm_ctx.ord_ctx.set_available_location_counter_value(0, 0);
+        return;
+    }
+
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
 
     const semantics::expr_assembler_operand* reloc_expr = nullptr;
@@ -494,19 +505,18 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
     size_t boundary = 0;
     int offset = 0;
 
-    for (size_t i = 0; i < stmt.operands_ref().value.size(); ++i)
+
+    for (size_t i = 0; i < ops.size(); ++i)
     {
-        if (stmt.operands_ref().value[i]->type != semantics::operand_type::ASM)
+        if (ops[i]->type != semantics::operand_type::ASM)
             continue;
 
-        auto asm_op = stmt.operands_ref().value[i]->access_asm();
+        auto asm_op = ops[i]->access_asm();
         assert(asm_op);
         auto expr = asm_op->access_expr();
         if (!expr)
         {
-            if (i == 0)
-                add_diagnostic(diagnostic_op::error_A245_ORG_expression(stmt.stmt_range_ref()));
-            else
+            if (i != 0)
                 add_diagnostic(diagnostic_op::error_A115_ORG_op_format(stmt.stmt_range_ref()));
             break;
         }
@@ -546,27 +556,28 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
         }
     }
 
-    if (reloc_expr)
+    if (!reloc_expr)
     {
-        auto reloc_val = !undefined_absolute_part
-            ? reloc_expr->expression->evaluate(dep_solver, drop_diags).get_reloc()
-            : *reloc_expr->expression->get_dependencies(dep_solver).unresolved_address;
-
-        if (!check_address_for_ORG(stmt.stmt_range_ref(), reloc_val, loctr, boundary, offset))
-            return;
-
-        if (undefined_absolute_part)
-            hlasm_ctx.ord_ctx.set_location_counter_value(reloc_val,
-                boundary,
-                offset,
-                reloc_expr->expression.get(),
-                std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-                dep_solver.derive_current_dependency_evaluation_context());
-        else
-            hlasm_ctx.ord_ctx.set_location_counter_value(reloc_val, boundary, offset);
+        add_diagnostic(diagnostic_op::error_A245_ORG_expression(stmt.stmt_range_ref()));
+        return;
     }
+
+    auto reloc_val = !undefined_absolute_part
+        ? reloc_expr->expression->evaluate(dep_solver, drop_diags).get_reloc()
+        : *reloc_expr->expression->get_dependencies(dep_solver).unresolved_address;
+
+    if (!check_address_for_ORG(stmt.stmt_range_ref(), reloc_val, loctr, boundary, offset))
+        return;
+
+    if (undefined_absolute_part)
+        hlasm_ctx.ord_ctx.set_location_counter_value(reloc_val,
+            boundary,
+            offset,
+            reloc_expr->expression.get(),
+            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+            dep_solver.derive_current_dependency_evaluation_context());
     else
-        hlasm_ctx.ord_ctx.set_available_location_counter_value(boundary, offset);
+        hlasm_ctx.ord_ctx.set_location_counter_value(reloc_val, boundary, offset);
 }
 
 void asm_processor::process_OPSYN(rebuilt_statement stmt)

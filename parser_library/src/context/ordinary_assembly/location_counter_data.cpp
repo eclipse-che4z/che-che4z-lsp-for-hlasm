@@ -33,7 +33,7 @@ location_counter_data::location_counter_data(loctr_data_kind kind)
 
 void location_counter_data::append_space(space_ptr sp)
 {
-    unknown_parts.emplace_back(space_storage_t { sp, 0 });
+    unknown_parts.emplace_back(space_storage_t { std::move(sp), 0 });
     current_safe_area = 0;
 }
 
@@ -53,44 +53,36 @@ void location_counter_data::append_data(location_counter_data data)
 
     data.unknown_parts.pop_front(); // the first unknown part is substitiuted by this data
 
-    unknown_parts.insert(unknown_parts.end(),
-        std::make_move_iterator(data.unknown_parts.begin()),
-        std::make_move_iterator(data.unknown_parts.end()));
+    unknown_parts.splice(unknown_parts.end(), data.unknown_parts);
 
     current_safe_area = data.current_safe_area;
 }
 
-void location_counter_data::resolve_space(space_ptr sp, size_t length)
+void location_counter_data::resolve_space(const space* sp, size_t length)
 {
-    size_t i = 0;
-    for (auto it = unknown_parts.begin(); it != unknown_parts.end(); ++it, ++i)
-    {
-        if (it->unknown_space == sp)
-        {
-            storage += length;
+    auto match = std::find_if(
+        unknown_parts.begin(), unknown_parts.end(), [sp](const auto& p) { return p.unknown_space.get() == sp; });
+    if (match == unknown_parts.end())
+        return;
 
-            if (i == 0)
-                initial_storage += it->storage_after + length;
-            else
-            {
-                auto tmp = it;
-                (--tmp)->storage_after += it->storage_after + length;
-            }
-            unknown_parts.erase(it);
+    storage += length;
 
-            return;
-        }
-    }
+    if (match == unknown_parts.begin())
+        initial_storage += match->storage_after + length;
+    else
+        std::prev(match)->storage_after += match->storage_after + length;
+
+    unknown_parts.erase(match);
 }
 
-void location_counter_data::resolve_space(space_ptr sp, space_ptr new_space)
+void location_counter_data::resolve_space(const space* sp, space_ptr new_space)
 {
-    for (auto it = unknown_parts.begin(); it != unknown_parts.end(); ++it)
-        if (it->unknown_space == sp)
-        {
-            it->unknown_space = std::move(new_space);
-            return;
-        }
+    auto match = std::find_if(
+        unknown_parts.begin(), unknown_parts.end(), [sp](const auto& p) { return p.unknown_space.get() == sp; });
+    if (match == unknown_parts.end())
+        return;
+
+    match->unknown_space = std::move(new_space);
 }
 
 bool location_counter_data::has_alignment(alignment align) const
@@ -134,17 +126,33 @@ int location_counter_data::last_storage() const
         return unknown_parts.back().storage_after;
 }
 
-const space_ptr location_counter_data::fist_space() const
+bool location_counter_data::matches_first_space(const space* s) const
 {
-    if (unknown_parts.size())
+    if (!unknown_parts.empty())
+        return s == unknown_parts.front().unknown_space.get();
+    else
+        return false;
+}
+
+bool location_counter_data::has_space() const
+{
+    if (!unknown_parts.empty())
+        return !!unknown_parts.front().unknown_space;
+    else
+        return false;
+}
+
+space_ptr location_counter_data::fist_space() const
+{
+    if (!unknown_parts.empty())
         return unknown_parts.front().unknown_space;
     else
         return nullptr;
 }
 
-const space_ptr location_counter_data::last_space() const
+space_ptr location_counter_data::last_space() const
 {
-    if (unknown_parts.size())
+    if (!unknown_parts.empty())
         return unknown_parts.back().unknown_space;
     else
         return nullptr;
@@ -153,7 +161,8 @@ const space_ptr location_counter_data::last_space() const
 space_storage location_counter_data::spaces() const
 {
     space_storage res;
-    for (auto e : unknown_parts)
+    res.reserve(unknown_parts.size());
+    for (const auto& e : unknown_parts)
         res.push_back(e.unknown_space);
     return res;
 }

@@ -36,10 +36,9 @@ const std::unordered_map<id_index, std::variant<symbol, label_tag>>& ordinary_as
     return symbols_;
 }
 
-ordinary_assembly_context::ordinary_assembly_context(id_storage& storage, hlasm_context& hlasm_ctx)
+ordinary_assembly_context::ordinary_assembly_context(hlasm_context& hlasm_ctx)
     : curr_section_(nullptr)
     , m_literals(std::make_unique<literal_pool>(hlasm_ctx))
-    , ids(storage)
     , hlasm_ctx_(hlasm_ctx)
     , symbol_dependencies(*this)
 {}
@@ -348,7 +347,7 @@ std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_sp
 
 section* ordinary_assembly_context::create_section(id_index name, section_kind kind)
 {
-    section* ret = sections_.emplace_back(std::make_unique<section>(name, kind, ids)).get();
+    section* ret = sections_.emplace_back(std::make_unique<section>(name, kind)).get();
     if (first_control_section_ == nullptr
         && (kind == section_kind::COMMON || kind == section_kind::EXECUTABLE || kind == section_kind::READONLY))
         first_control_section_ = ret;

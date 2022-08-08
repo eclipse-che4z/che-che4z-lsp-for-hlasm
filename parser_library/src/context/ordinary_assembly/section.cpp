@@ -19,14 +19,13 @@
 
 using namespace hlasm_plugin::parser_library::context;
 
-const std::vector<loctr_ptr>& section::location_counters() const { return loctrs_; }
+const std::vector<std::unique_ptr<location_counter>>& section::location_counters() const { return loctrs_; }
 
-section::section(id_index name, section_kind kind, id_storage& ids)
-    : ids_(ids)
-    , name(name)
+section::section(id_index name, section_kind kind)
+    : name(name)
     , kind(kind)
 {
-    loctrs_.emplace_back(std::make_unique<location_counter>(name, *this, loctr_kind::STARTING, ids_));
+    loctrs_.emplace_back(std::make_unique<location_counter>(name, *this, loctr_kind::STARTING));
     curr_loctr_ = loctrs_.back().get();
 }
 
@@ -39,7 +38,7 @@ void section::set_location_counter(id_index loctr_name)
         curr_loctr_ = &**tmp;
     else
     {
-        loctrs_.emplace_back(std::make_unique<location_counter>(loctr_name, *this, loctr_kind::NONSTARTING, ids_));
+        loctrs_.emplace_back(std::make_unique<location_counter>(loctr_name, *this, loctr_kind::NONSTARTING));
         curr_loctr_ = loctrs_.back().get();
     }
 }

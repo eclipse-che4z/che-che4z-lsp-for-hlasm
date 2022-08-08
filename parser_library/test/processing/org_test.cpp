@@ -610,7 +610,7 @@ A  DS  (4)C
 B  DS  (4)C
    ORG B
 C  DS  (X)C
-   ORG ,4,2
+   ORG *,4,2
 Y  EQU *-B
 X  EQU 2
 )");
@@ -1055,4 +1055,17 @@ LEN     EQU     144
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TEST"), 144);
+}
+
+TEST(org, missing_reloc_expr)
+{
+    std::string input(R"(
+        ORG     ,2
+
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A245" }));
 }

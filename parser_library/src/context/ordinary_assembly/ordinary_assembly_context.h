@@ -21,7 +21,6 @@
 #include "alignment.h"
 #include "dependable.h"
 #include "diagnostic_consumer.h"
-#include "location_counter.h"
 #include "loctr_dependency_resolver.h"
 #include "section.h"
 #include "symbol.h"
@@ -38,6 +37,7 @@ struct data_definition;
 namespace hlasm_plugin::parser_library::context {
 class hlasm_context;
 class literal_pool;
+class location_counter;
 
 struct label_tag
 {};
@@ -60,8 +60,6 @@ class ordinary_assembly_context
     std::unique_ptr<literal_pool> m_literals;
     size_t m_statement_unique_id = 1;
 
-    // access id storage
-    id_storage& ids;
     hlasm_context& hlasm_ctx_;
 
 public:
@@ -74,7 +72,7 @@ public:
     // access symbol dependency table
     symbol_dependency_tables symbol_dependencies;
 
-    ordinary_assembly_context(id_storage& storage, hlasm_context& hlasm_ctx);
+    explicit ordinary_assembly_context(hlasm_context& hlasm_ctx);
     ordinary_assembly_context(ordinary_assembly_context&&) noexcept;
     ~ordinary_assembly_context();
 

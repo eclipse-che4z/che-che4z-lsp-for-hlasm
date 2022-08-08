@@ -22,14 +22,12 @@
 
 using namespace hlasm_plugin::parser_library::context;
 
-bool location_counter::has_unresolved_spaces() const { return !!org_data_.back().fist_space(); }
+bool location_counter::has_unresolved_spaces() const { return org_data_.back().has_space(); }
 
 size_t location_counter::storage() const { return curr_data().storage; }
 
-location_counter::location_counter(id_index name, const section& owner, const loctr_kind kind, id_storage& ids)
+location_counter::location_counter(id_index name, const section& owner, loctr_kind kind)
     : switched_(nullptr)
-    , last_space_(0)
-    , ids_(ids)
     , layuot_created_(false)
     , name(name)
     , owner(owner)
@@ -206,89 +204,78 @@ void location_counter::finish_layout(size_t offset)
 
 void location_counter::resolve_space(space_ptr sp, int length)
 {
-    if (sp->kind == space_kind::LOCTR_MAX)
+    if (sp->kind == space_kind::LOCTR_MAX && !org_data_.empty())
     {
-        for (size_t i = 0; i < org_data_.size(); ++i)
-        {
-            if (org_data_[i].fist_space() == sp && i > 0)
-            {
-                org_data_.erase(org_data_.begin(), org_data_.begin() + i - 1);
-                break;
-            }
-        }
+        auto it = std::find_if(std::next(org_data_.begin()), org_data_.end(), [s = sp.get()](const auto& d) {
+            return d.matches_first_space(s);
+        });
+        if (it != org_data_.end())
+            org_data_.erase(org_data_.begin(), std::prev(it));
     }
     for (auto& data : org_data_)
     {
-        data.resolve_space(sp, (size_t)length);
+        data.resolve_space(sp.get(), (size_t)length);
     }
 }
 
 void location_counter::switch_to_unresolved_value(space_ptr sp)
 {
-    if (switched_)
-        throw std::runtime_error("value already switched");
+    assert(!switched_);
 
-    size_t new_size = 0;
-    for (size_t i = 0; i < org_data_.size(); ++i)
-    {
-        if (org_data_[i].fist_space() && org_data_[i].fist_space() == sp && !switched_)
-        {
-            switched_ = sp;
-            new_size = i;
-        }
-        if (switched_)
-            switched_org_data_.emplace_back(std::move(org_data_[i]));
-    }
+    auto it = std::find_if(
+        org_data_.begin(), org_data_.end(), [s = sp.get()](const auto& d) { return d.matches_first_space(s); });
 
-    if (!switched_)
-        throw std::runtime_error("value not found");
+    assert(it != org_data_.end());
 
-    org_data_.resize(new_size);
+    switched_ = std::move(sp);
+
+    switched_org_data_.insert(
+        switched_org_data_.end(), std::make_move_iterator(it), std::make_move_iterator(org_data_.end()));
+
+    org_data_.erase(it, org_data_.end());
 }
 
 std::variant<space_ptr, address> location_counter::restore_from_unresolved_value(space_ptr sp)
 {
-    if (switched_ != sp)
-        throw std::runtime_error("restoring bad value");
+    assert(switched_ == sp);
 
+    std::variant<space_ptr, address> result = curr_data().fist_space();
     size_t tmp_idx = org_data_.size() - 1;
-    space_ptr new_sp;
 
-    if (curr_data().fist_space() && curr_data().fist_space()->kind == space_kind::LOCTR_SET)
-        new_sp = curr_data().fist_space();
-
-    address new_addr = current_address();
-
-    for (size_t i = 0; i < switched_org_data_.size(); ++i)
+    if (const auto& new_sp = std::get<space_ptr>(result); new_sp && new_sp->kind == space_kind::LOCTR_SET)
     {
-        if (switched_org_data_[i].fist_space() && switched_org_data_[i].fist_space() == sp)
+        for (auto& switched_data : switched_org_data_)
         {
-            if (new_sp)
-            {
-                org_data_.emplace_back(std::move(switched_org_data_[i]));
-                org_data_.back().unknown_parts.front().unknown_space = new_sp;
-            }
+            if (switched_data.matches_first_space(sp.get()))
+                org_data_.emplace_back(std::move(switched_data)).unknown_parts.front().unknown_space = new_sp;
             else
-            {
-                org_data_.emplace_back(org_data_[tmp_idx]);
-                org_data_.back().kind = switched_org_data_[i].kind;
+                org_data_.emplace_back(std::move(switched_data));
+        }
+    }
+    else
+    {
+        result = current_address();
 
-                org_data_.back().append_data(std::move(switched_org_data_[i]));
+        for (auto& switched_data : switched_org_data_)
+        {
+            if (switched_data.matches_first_space(sp.get()))
+            {
+                auto& last = org_data_.emplace_back(org_data_[tmp_idx]);
+                last.kind = switched_data.kind;
+                last.append_data(std::move(switched_data));
                 check_available_value();
             }
+            else
+                org_data_.emplace_back(std::move(switched_data));
         }
-        else
-            org_data_.emplace_back(std::move(switched_org_data_[i]));
     }
+
     switched_ = nullptr;
     switched_org_data_.clear();
 
     if (check_if_higher_value(tmp_idx + 1))
         org_data_.erase(org_data_.begin() + tmp_idx);
-
-    if (new_sp)
-        return new_sp;
-    return new_addr;
+    return result;
 }
 
 bool location_counter::check_underflow()
@@ -311,16 +298,6 @@ bool location_counter::check_underflow()
         }
     }
     return ok;
-}
-
-id_index location_counter::create_space_name(char type)
-{
-    std::string tmp("_ " + *owner.name + " " + *name + " " + std::to_string(last_space_));
-
-    ++last_space_;
-    tmp[0] = type;
-
-    return ids_.add(std::move(tmp));
 }
 
 space_ptr location_counter::register_space(alignment align, space_kind sp_kind)

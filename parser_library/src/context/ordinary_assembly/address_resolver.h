@@ -60,7 +60,7 @@ protected:
 };
 
 // provides resolvable interface for the agregate of addresses
-struct aggregate_address_resolver : public alignable_address_resolver
+struct aggregate_address_resolver final : public alignable_address_resolver
 {
     aggregate_address_resolver(std::vector<address> base_addrs, size_t boundary, int offset);
 
@@ -68,7 +68,7 @@ struct aggregate_address_resolver : public alignable_address_resolver
 };
 
 // provides resolvable interface for absolute part of the address
-struct alignable_address_abs_part_resolver : public address_resolver_base
+struct alignable_address_abs_part_resolver final : public address_resolver_base
 {
     alignable_address_abs_part_resolver(const resolvable* dependency_source);
 

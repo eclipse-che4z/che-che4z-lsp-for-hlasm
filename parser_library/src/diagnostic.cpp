@@ -1233,7 +1233,7 @@ diagnostic_op diagnostic_op::error_A245_ORG_expression(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "A245",
-        "Error at ORG instruction: operand must specify relocatable expression or must be omitted",
+        "Error at ORG instruction: operand must specify relocatable expression",
         range);
 }
 

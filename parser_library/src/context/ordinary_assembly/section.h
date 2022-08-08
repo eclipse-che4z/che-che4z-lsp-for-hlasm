@@ -15,11 +15,14 @@
 #ifndef CONTEXT_SECTION_H
 #define CONTEXT_SECTION_H
 
+#include <memory>
 #include <vector>
 
 #include "location_counter.h"
 
 namespace hlasm_plugin::parser_library::context {
+
+class location_counter;
 
 enum class section_kind
 {
@@ -36,10 +39,8 @@ enum class section_kind
 class section
 {
     // location counter assigned to this section
-    std::vector<loctr_ptr> loctrs_;
+    std::vector<std::unique_ptr<location_counter>> loctrs_;
     location_counter* curr_loctr_;
-
-    id_storage& ids_;
 
 public:
     // unique identifier
@@ -47,9 +48,9 @@ public:
     const section_kind kind;
 
     // access list of location counters
-    const std::vector<loctr_ptr>& location_counters() const;
+    const std::vector<std::unique_ptr<location_counter>>& location_counters() const;
 
-    section(id_index name, section_kind kind, id_storage& ids);
+    section(id_index name, section_kind kind);
 
     // sets current location counter
     void set_location_counter(id_index loctr_name);

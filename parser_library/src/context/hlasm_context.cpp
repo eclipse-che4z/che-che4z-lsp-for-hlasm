@@ -390,7 +390,7 @@ hlasm_context::hlasm_context(
     , m_usings(std::make_unique<using_collection>())
     , m_active_usings(1, m_usings->remove_all())
     , m_statements_remaining(asm_options_.statement_count_limit)
-    , ord_ctx(*ids_, *this)
+    , ord_ctx(*this)
 {
     add_global_system_vars(scope_stack_.emplace_back());
     visited_files_.insert(file_loc);

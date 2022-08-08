@@ -96,15 +96,17 @@ struct location_counter_data
     void append_space(space_ptr sp);
     void append_storage(int st);
     void append_data(location_counter_data data);
-    void resolve_space(space_ptr sp, size_t length);
-    void resolve_space(space_ptr sp, space_ptr new_space);
+    void resolve_space(const space* sp, size_t length);
+    void resolve_space(const space* sp, space_ptr new_space);
     bool has_alignment(alignment align) const;
     bool align(alignment align);
     bool need_space_alignment(alignment align) const;
 
     int last_storage() const;
-    const space_ptr fist_space() const;
-    const space_ptr last_space() const;
+    bool matches_first_space(const space*) const;
+    bool has_space() const;
+    space_ptr fist_space() const;
+    space_ptr last_space() const;
     space_storage spaces() const;
 };
 

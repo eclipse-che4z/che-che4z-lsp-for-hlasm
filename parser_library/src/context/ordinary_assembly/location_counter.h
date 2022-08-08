@@ -20,9 +20,6 @@
 namespace hlasm_plugin::parser_library::context {
 
 class section;
-class location_counter;
-
-using loctr_ptr = std::unique_ptr<location_counter>;
 
 // enum stating whether the location counter is the first in section or not
 enum class loctr_kind
@@ -41,9 +38,6 @@ class location_counter
     // identifier space of switched unresolved ORG data
     space_ptr switched_;
 
-    size_t last_space_;
-    id_storage& ids_;
-
     bool layuot_created_;
 
 public:
@@ -54,7 +48,7 @@ public:
     bool has_unresolved_spaces() const;
     size_t storage() const;
 
-    location_counter(id_index name, const section& owner, const loctr_kind kind, id_storage& ids);
+    location_counter(id_index name, const section& owner, loctr_kind kind);
 
     address current_address();
 
@@ -88,8 +82,6 @@ public:
     bool check_underflow();
 
 private:
-    context::id_index create_space_name(char type);
-
     space_ptr register_space(alignment align, space_kind kind);
     space_ptr register_space(alignment align, size_t boundary, int offset);
 
