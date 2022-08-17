@@ -15,7 +15,7 @@
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "data_definition_common.h"
 #include "expressions/data_definition.h"
-#include "hlasmparser.h"
+#include "hlasmparser_multiline.h"
 #include "processing/instruction_sets/data_def_postponed_statement.h"
 #include "semantics/operand.h"
 

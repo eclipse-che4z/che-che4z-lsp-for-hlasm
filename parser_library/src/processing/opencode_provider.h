@@ -28,9 +28,10 @@
 #include "virtual_file_monitor.h"
 
 namespace hlasm_plugin::parser_library::parsing {
-class hlasmparser;
+class hlasmparser_multiline;
 class parser_error_listener;
 class parser_error_listener_ctx;
+
 struct parser_holder;
 } // namespace hlasm_plugin::parser_library::parsing
 namespace hlasm_plugin::parser_library::semantics {
@@ -89,9 +90,14 @@ class opencode_provider final : public statement_provider
 
     std::unordered_map<context::id_index, std::string> m_virtual_files;
 
-    std::unique_ptr<parsing::parser_holder> m_parser;
-    std::unique_ptr<parsing::parser_holder> m_lookahead_parser;
-    std::unique_ptr<parsing::parser_holder> m_operand_parser;
+    struct parser_set
+    {
+        std::unique_ptr<parsing::parser_holder> m_parser;
+        std::unique_ptr<parsing::parser_holder> m_lookahead_parser;
+        std::unique_ptr<parsing::parser_holder> m_operand_parser;
+    };
+    parser_set m_singleline;
+    parser_set m_multiline;
 
     analyzing_context* m_ctx;
     workspaces::parse_lib_provider* m_lib_provider;
@@ -124,14 +130,14 @@ public:
         opencode_provider_options opts,
         virtual_file_monitor* virtual_file_monitor);
 
-    parsing::hlasmparser& parser(); // for testing only
+    parsing::hlasmparser_multiline& parser(); // for testing only
 
     context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
 
     bool finished() const override;
 
 private:
-    extract_next_logical_line_result feed_line(parsing::parser_holder& p);
+    void feed_line(const parsing::parser_holder& p, bool is_process);
     bool is_comment();
     void process_comment();
     void generate_aread_highlighting(std::string_view text, size_t line_no) const;
@@ -140,6 +146,7 @@ private:
     void generate_continuation_error_messages(diagnostic_op_consumer* diags) const;
     extract_next_logical_line_result extract_next_logical_line_from_copy_buffer();
     extract_next_logical_line_result extract_next_logical_line();
+
     const parsing::parser_holder& prepare_operand_parser(const std::string& text,
         context::hlasm_context& hlasm_ctx,
         diagnostic_op_consumer* diag_collector,

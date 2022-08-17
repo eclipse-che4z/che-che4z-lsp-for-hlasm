@@ -22,7 +22,6 @@
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
-#include "hlasmparser.h"
 #include "lexing/lexer.h"
 #include "lexing/token_stream.h"
 #include "parsing/parser_impl.h"
@@ -451,32 +450,23 @@ semantics::literal_si ca_symbol_attribute::reparse_substituted_literal(
         diag.message = diagnostic_decorate_message(text, diag.message);
         eval_ctx.diags.add_diagnostic(std::move(diag));
     });
-    auto h = parsing::parser_holder::create(nullptr, &eval_ctx.hlasm_ctx, &add_diag_subst);
+    auto h = parsing::parser_holder::create(nullptr, &eval_ctx.hlasm_ctx, &add_diag_subst, false);
 
-    h->input->reset(text);
-
-    h->lex->reset();
-    h->lex->set_file_offset(var_range.start);
-    h->lex->set_unlimited_line(true);
-
-    h->stream->reset();
-
-    h->parser->reinitialize(&eval_ctx.hlasm_ctx,
+    h->prepare_parser(text,
+        &eval_ctx.hlasm_ctx,
+        &add_diag_subst,
         semantics::range_provider(var_range, semantics::adjusting_state::SUBSTITUTION),
+        var_range,
         processing::processing_status(processing::processing_format(processing::processing_kind::ORDINARY,
                                           processing::processing_form::CA,
                                           processing::operand_occurence::ABSENT),
             processing::op_code()),
-        &add_diag_subst);
+        true);
 
-    h->parser->reset();
-
-    h->parser->get_collector().prepare_for_next_statement();
-
-    auto literal_context = h->parser->literal_reparse();
+    auto literal_value = h->literal_reparse();
 
     if (!error)
-        return std::move(literal_context->value);
+        return literal_value;
 
     return {};
 }

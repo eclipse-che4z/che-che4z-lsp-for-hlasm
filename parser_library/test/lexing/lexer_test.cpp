@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "analyzer.h"
-#include "hlasmparser.h"
+#include "hlasmparser_multiline.h"
 #include "lexing/input_source.h"
 #include "lexing/lexer.h"
 #include "lexing/token_stream.h"
@@ -29,7 +29,7 @@ using namespace hlasm_plugin::parser_library;
 // tests lexer class:
 // continuation statements, rewinding, token creation
 
-using parser = parsing::hlasmparser;
+using parser = parsing::hlasmparser_multiline;
 
 TEST(lexer_test, rntest)
 {

@@ -21,7 +21,8 @@
 #include "error_strategy.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
-#include "hlasmparser.h"
+#include "hlasmparser_multiline.h"
+#include "hlasmparser_singleline.h"
 #include "lexing/token_stream.h"
 #include "processing/op_code.h"
 
@@ -57,19 +58,72 @@ void parser_impl::reinitialize(context::hlasm_context* h_ctx,
     err_listener_.diagnoser = d;
 }
 
-std::unique_ptr<parser_holder> parser_holder::create(
-    semantics::source_info_processor* lsp_proc, context::hlasm_context* hl_ctx, diagnostic_op_consumer* d)
+template<bool multiline>
+struct parser_holder_impl final : parser_holder
 {
-    std::string s;
-    auto h = std::make_unique<parser_holder>();
-    h->error_handler = std::make_shared<parsing::error_strategy>();
-    h->input = std::make_unique<lexing::input_source>(s);
-    h->lex = std::make_unique<lexing::lexer>(h->input.get(), lsp_proc);
-    h->stream = std::make_unique<lexing::token_stream>(h->lex.get());
-    h->parser = std::make_unique<hlasmparser>(h->stream.get());
-    h->parser->setErrorHandler(h->error_handler);
-    h->parser->initialize(hl_ctx, d);
-    return h;
+    using parser_t = std::conditional_t<multiline, hlasmparser_multiline, hlasmparser_singleline>;
+    parser_holder_impl(
+        semantics::source_info_processor* lsp_proc, context::hlasm_context* hl_ctx, diagnostic_op_consumer* d)
+    {
+        error_handler = std::make_shared<parsing::error_strategy>();
+        input = std::make_unique<lexing::input_source>(std::string());
+        lex = std::make_unique<lexing::lexer>(input.get(), lsp_proc);
+        stream = std::make_unique<lexing::token_stream>(lex.get());
+        parser = std::make_unique<parser_t>(stream.get());
+        parser->setErrorHandler(error_handler);
+        parser->initialize(hl_ctx, d);
+    }
+    auto& get_parser() const { return static_cast<parser_t&>(*parser); }
+
+    std::pair<std::optional<std::string>, range> lab_instr() const override
+    {
+        auto rule = get_parser().lab_instr();
+        return { std::move(rule->op_text), rule->op_range };
+    }
+    std::pair<std::optional<std::string>, range> look_lab_instr() const override
+    {
+        auto rule = get_parser().look_lab_instr();
+        return { std::move(rule->op_text), rule->op_range };
+    }
+
+    void op_rem_body_noop() const override { get_parser().op_rem_body_noop(); }
+    void op_rem_body_ignored() const override { get_parser().op_rem_body_ignored(); }
+    void op_rem_body_deferred() const override { get_parser().op_rem_body_deferred(); }
+    void lookahead_operands_and_remarks() const override { get_parser().lookahead_operands_and_remarks(); }
+
+    semantics::op_rem op_rem_body_mac_r() const override { return std::move(get_parser().op_rem_body_mac_r()->line); }
+    semantics::operand_list macro_ops() const override { return std::move(get_parser().macro_ops()->list); }
+    semantics::op_rem op_rem_body_asm_r() const override { return std::move(get_parser().op_rem_body_asm_r()->line); }
+    semantics::op_rem op_rem_body_mach_r() const override { return std::move(get_parser().op_rem_body_mach_r()->line); }
+    semantics::op_rem op_rem_body_dat_r() const override { return std::move(get_parser().op_rem_body_dat_r()->line); }
+
+
+    void op_rem_body_ca_expr() const override { get_parser().op_rem_body_ca_expr(); }
+    void op_rem_body_ca_branch() const override { get_parser().op_rem_body_ca_branch(); }
+    void op_rem_body_ca_var_def() const override { get_parser().op_rem_body_ca_var_def(); }
+
+    void op_rem_body_dat() const override { get_parser().op_rem_body_dat(); }
+    void op_rem_body_mach() const override { get_parser().op_rem_body_mach(); }
+    void op_rem_body_asm() const override { get_parser().op_rem_body_asm(); }
+
+    std::pair<semantics::op_rem, range> op_rem_body_mac() const override
+    {
+        auto rule = get_parser().op_rem_body_mac();
+        return { std::move(rule->line), rule->line_range };
+    }
+
+    semantics::literal_si literal_reparse() const override { return std::move(get_parser().literal_reparse()->value); }
+};
+
+std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_processor* lsp_proc,
+    context::hlasm_context* hl_ctx,
+    diagnostic_op_consumer* d,
+    bool multiline)
+{
+    if (multiline)
+        return std::make_unique<parser_holder_impl<true>>(lsp_proc, hl_ctx, d);
+    else
+        return std::make_unique<parser_holder_impl<false>>(lsp_proc, hl_ctx, d);
 }
 
 void parser_impl::enable_continuation() { input.enable_continuation(); }
@@ -251,5 +305,28 @@ void parser_impl::add_diagnostic(diagnostic_op d) const
 context::id_index parser_impl::add_id(std::string s) { return hlasm_ctx->ids().add(std::move(s)); }
 
 parser_holder::~parser_holder() = default;
+
+void parser_holder::prepare_parser(const std::string& text,
+    context::hlasm_context* hlasm_ctx,
+    diagnostic_op_consumer* diags,
+    semantics::range_provider range_prov,
+    range text_range,
+    const processing::processing_status& proc_status,
+    bool unlimited_line) const
+{
+    input->reset(text);
+
+    lex->reset();
+    lex->set_file_offset(text_range.start);
+    lex->set_unlimited_line(unlimited_line);
+
+    stream->reset();
+
+    parser->reinitialize(hlasm_ctx, std::move(range_prov), proc_status, diags);
+
+    parser->reset();
+
+    parser->get_collector().prepare_for_next_statement();
+}
 
 } // namespace hlasm_plugin::parser_library::parsing

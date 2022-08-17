@@ -155,7 +155,7 @@ expr_space_c returns [std::vector<ca_expr_ptr> ca_exprs]
 		$ca_exprs = std::move($tmp.ca_exprs);
 	};
 
-seq_symbol returns [seq_sym ss]
+seq_symbol returns [seq_sym ss = seq_sym{}]
 	: DOT id_no_dot
 	{
 		$ss = seq_sym{$id_no_dot.name,provider.get_range( $DOT, $id_no_dot.ctx->getStop())};

@@ -244,6 +244,8 @@ std::vector<token_info> collector::extract_hl_symbols()
     return std::move(hl_symbols_);
 }
 
+void collector::set_hl_symbols(std::vector<token_info> m) { hl_symbols_ = std::move(m); }
+
 void collector::prepare_for_next_statement()
 {
     lbl_.reset();

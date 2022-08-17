@@ -115,31 +115,3 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 	;
 	finally
 	{enable_ca_string();}
-
-deferred_op_rem returns [remark_list remarks, std::vector<vs_ptr> var_list]
-	:
-	(
-		deferred_entry
-		{
-			for (auto&v : $deferred_entry.vs)
-				$var_list.push_back(std::move(v));
-		}
-	)*
-	{enable_continuation();}
-	remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);}
-	(
-		CONTINUATION
-		{disable_continuation();}
-		(
-			deferred_entry
-			{
-				for (auto&v : $deferred_entry.vs)
-					$var_list.push_back(std::move(v));
-			}
-		)*
-		{enable_continuation();}
-		remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);}
-	)*
-	;
-	finally
-	{disable_continuation();}

@@ -67,6 +67,7 @@ public:
     const instruction_si& peek_instruction();
     context::shared_stmt_ptr extract_statement(processing::processing_status status, range& statement_range);
     std::vector<token_info> extract_hl_symbols();
+    void set_hl_symbols(std::vector<token_info>);
     void prepare_for_next_statement();
 
     diagnostic_op_consumer* diag_collector() { return &statement_diagnostics; }

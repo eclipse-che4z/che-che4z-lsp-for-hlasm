@@ -15,42 +15,30 @@
 #include "statement_fields_parser.h"
 
 #include "context/hlasm_context.h"
-#include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "parsing/error_strategy.h"
+#include "parsing/parser_impl.h"
+#include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
 statement_fields_parser::statement_fields_parser(context::hlasm_context* hlasm_ctx)
-    : m_parser(parsing::parser_holder::create(nullptr, hlasm_ctx, nullptr))
+    : m_parser_singleline(parsing::parser_holder::create(nullptr, hlasm_ctx, nullptr, false))
+    , m_parser_multiline(parsing::parser_holder::create(nullptr, hlasm_ctx, nullptr, true))
     , m_hlasm_ctx(hlasm_ctx)
 {}
 
-
 statement_fields_parser::~statement_fields_parser() = default;
 
-
-const parsing::parser_holder& statement_fields_parser::prepare_parser(const std::string& text,
-    bool unlimited_line,
-    semantics::range_provider field_range,
-    processing::processing_status status,
-    diagnostic_op_consumer& add_diag)
+constexpr bool is_multiline(std::string_view v)
 {
-    m_parser->input->reset(text);
+    auto nl = v.find_first_of("\r\n");
+    if (nl == std::string_view::npos)
+        return false;
+    v.remove_prefix(nl);
+    v.remove_prefix(1 + v.starts_with("\r\n"));
 
-    m_parser->lex->reset();
-    m_parser->lex->set_file_offset(field_range.original_range.start);
-    m_parser->lex->set_unlimited_line(unlimited_line);
-
-    m_parser->stream->reset();
-
-    m_parser->parser->reinitialize(m_hlasm_ctx, std::move(field_range), status, &add_diag);
-
-    m_parser->parser->reset();
-
-    m_parser->parser->get_collector().prepare_for_next_statement();
-
-    return *m_parser;
+    return !v.empty();
 }
 
 statement_fields_parser::parse_result statement_fields_parser::parse_operand_field(std::string field,
@@ -68,7 +56,9 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
             diag.message = diagnostic_decorate_message(field, diag.message);
         add_diag.add_diagnostic(std::move(diag));
     });
-    const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, add_diag_subst);
+    const auto& h = is_multiline(field) ? *m_parser_multiline : *m_parser_singleline;
+    h.prepare_parser(
+        field, m_hlasm_ctx, &add_diag_subst, std::move(field_range), original_range, status, after_substitution);
 
     semantics::op_rem line;
     std::vector<semantics::literal_si> literals;
@@ -76,13 +66,13 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
     const auto& [format, opcode] = status;
     if (format.occurence == processing::operand_occurence::ABSENT
         || format.form == processing::processing_form::UNKNOWN)
-        h.parser->op_rem_body_noop();
+        h.op_rem_body_noop();
     else
     {
         switch (format.form)
         {
             case processing::processing_form::MAC:
-                line = std::move(h.parser->op_rem_body_mac_r()->line);
+                line = h.op_rem_body_mac_r();
                 literals = h.parser->get_collector().take_literals();
 
                 if (h.error_handler->error_reported())
@@ -93,26 +83,30 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
                 {
                     auto [to_parse, ranges, r] = join_operands(line.operands);
 
-                    semantics::range_provider tmp_provider(
-                        r, std::move(ranges), semantics::adjusting_state::MACRO_REPARSE);
+                    const auto& h_second = *m_parser_singleline;
+                    h_second.prepare_parser(to_parse,
+                        m_hlasm_ctx,
+                        &add_diag_subst,
+                        semantics::range_provider(r, std::move(ranges), semantics::adjusting_state::MACRO_REPARSE),
+                        original_range,
+                        status,
+                        true);
 
-                    const auto& h_second = prepare_parser(to_parse, true, tmp_provider, status, add_diag_subst);
-
-                    line.operands = std::move(h_second.parser->macro_ops()->list);
+                    line.operands = h_second.macro_ops();
                     literals = h.parser->get_collector().take_literals();
                 }
                 break;
             case processing::processing_form::ASM:
-                line = std::move(h.parser->op_rem_body_asm_r()->line);
+                line = h.op_rem_body_asm_r();
                 literals = h.parser->get_collector().take_literals();
                 break;
             case processing::processing_form::MACH:
-                line = std::move(h.parser->op_rem_body_mach_r()->line);
+                line = h.op_rem_body_mach_r();
                 transform_reloc_imm_operands(line.operands, opcode.value);
                 literals = h.parser->get_collector().take_literals();
                 break;
             case processing::processing_form::DAT:
-                line = std::move(h.parser->op_rem_body_dat_r()->line);
+                line = h.op_rem_body_dat_r();
                 literals = h.parser->get_collector().take_literals();
                 break;
             default:

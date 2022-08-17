@@ -64,7 +64,9 @@ public:
         const std::string* MHELP;
         const std::string* ASPACE;
         const std::string* AIF;
+        const std::string* AIFB;
         const std::string* AGO;
+        const std::string* AGOB;
         const std::string* ACTR;
         const std::string* AREAD;
         const std::string* ALIAS;

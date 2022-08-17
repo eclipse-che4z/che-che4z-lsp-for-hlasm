@@ -15,26 +15,39 @@
  //rules for CA operands
 parser grammar ca_operand_rules; 
 
-ca_op returns [operand_ptr op]
+ca_op_branch returns [operand_ptr op]
 	: expr_list seq_symbol
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($seq_symbol.ctx),hl_scopes::seq_symbol));
 
 		resolve_expression($expr_list.ca_expr);
 		auto r = provider.get_range($expr_list.ctx->getStart(),$seq_symbol.ctx->getStop());
-		$op = std::make_unique<branch_ca_operand>(std::move($seq_symbol.ss), std::move($expr_list.ca_expr), r);
+		if ($seq_symbol.ss.name)
+			$op = std::make_unique<branch_ca_operand>(std::move($seq_symbol.ss), std::move($expr_list.ca_expr), r);
 	}
 	| seq_symbol
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($seq_symbol.ctx),hl_scopes::seq_symbol));
-		$op = std::make_unique<seq_ca_operand>(std::move($seq_symbol.ss),provider.get_range($seq_symbol.ctx));
-	}
-	| {!is_var_def()}? expr
+		if ($seq_symbol.ss.name)
+			$op = std::make_unique<seq_ca_operand>(std::move($seq_symbol.ss),provider.get_range($seq_symbol.ctx));
+	};
+	finally
+	{if (!$op) $op = std::make_unique<semantics::empty_operand>(provider.get_range(_localctx));}
+
+
+ca_op_expr returns [operand_ptr op]
+	: expr
 	{
 		resolve_expression($expr.ca_expr);
 		$op = std::make_unique<expr_ca_operand>(std::move($expr.ca_expr), provider.get_range($expr.ctx));
-	}
-	| { is_var_def()}? var_def
+	};
+	finally
+	{if (!$op) $op = std::make_unique<semantics::empty_operand>(provider.get_range(_localctx));}
+
+ca_op_var_def returns [operand_ptr op]
+	: var_def
 	{
 		$op = std::make_unique<var_ca_operand>(std::move($var_def.vs), provider.get_range($var_def.ctx));
 	};
+	finally
+	{if (!$op) $op = std::make_unique<semantics::empty_operand>(provider.get_range(_localctx));}

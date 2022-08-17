@@ -14,9 +14,10 @@
 
 #include "common_testing.h"
 
-#include "hlasmparser.h"
+#include "hlasmparser_multiline.h"
 
-std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_library::parsing::hlasmparser& h_parser)
+std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(
+    hlasm_plugin::parser_library::parsing::hlasmparser_multiline& h_parser)
 {
     h_parser.getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(
         antlr4::atn::PredictionMode::SLL); // try with simpler/faster SLL(*)

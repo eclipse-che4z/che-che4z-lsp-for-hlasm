@@ -34,16 +34,12 @@ class statement_provider;
 using provider_ptr = std::unique_ptr<statement_provider>;
 
 // (re-)parsing of deferred statement fields
+
 class statement_fields_parser final : public diagnosable_impl
 {
-    std::unique_ptr<parsing::parser_holder> m_parser;
+    std::unique_ptr<parsing::parser_holder> m_parser_singleline;
+    std::unique_ptr<parsing::parser_holder> m_parser_multiline;
     context::hlasm_context* m_hlasm_ctx;
-
-    const parsing::parser_holder& prepare_parser(const std::string& text,
-        bool unlimited_line,
-        semantics::range_provider field_range,
-        processing::processing_status status,
-        diagnostic_op_consumer& add_diag);
 
 public:
     struct parse_result
@@ -63,6 +59,13 @@ public:
     ~statement_fields_parser();
 
     void collect_diags() const override;
+
+private:
+    parse_result parse_operand_field_impl(std::string field,
+        bool after_substitution,
+        semantics::range_provider field_range,
+        processing::processing_status status,
+        diagnostic_op_consumer& add_diag);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

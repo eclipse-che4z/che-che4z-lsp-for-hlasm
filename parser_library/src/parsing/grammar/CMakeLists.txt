@@ -12,12 +12,14 @@
 #generated grammar source files
 
 set(GENERATED_SRC_CPP
-	${GENERATED_FOLDER}/hlasmparser.cpp
+	${GENERATED_FOLDER}/hlasmparser_singleline.cpp
+	${GENERATED_FOLDER}/hlasmparser_multiline.cpp
 )
 
 set(GENERATED_SRC
    ${GENERATED_SRC_CPP}
-   ${GENERATED_FOLDER}/hlasmparser.h
+   ${GENERATED_FOLDER}/hlasmparser_singleline.h
+   ${GENERATED_FOLDER}/hlasmparser_multiline.h
  )
 
 file(GLOB GRAMMAR_SRC
@@ -28,13 +30,16 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
    COMMAND 
    ${CMAKE_COMMAND} -E make_directory ${GENERATED_FOLDER}
    COMMAND
-   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/parsing/grammar/ -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::parsing hlasmparser.g4
+   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/parsing/grammar/ -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::parsing hlasmparser_singleline.g4
+   COMMAND
+   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/parsing/grammar/ -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::parsing hlasmparser_multiline.g4
    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/src/parsing/grammar/"
    DEPENDS antlr4jar ${GRAMMAR_SRC} lex.tokens
 )
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-	set_source_files_properties(${GENERATED_FOLDER}/hlasmparser.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
+	set_source_files_properties(${GENERATED_FOLDER}/hlasmparser_singleline.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
+	set_source_files_properties(${GENERATED_FOLDER}/hlasmparser_multiline.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
 endif()
 
 add_library(parser_library_generated OBJECT "${GENERATED_SRC}")

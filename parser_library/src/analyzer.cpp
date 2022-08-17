@@ -14,8 +14,9 @@
 
 #include "analyzer.h"
 
-#include "hlasmparser.h"
+#include "hlasmparser_multiline.h"
 #include "parsing/error_strategy.h"
+#include "processing/opencode_provider.h"
 #include "processing/preprocessor.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -103,8 +104,8 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
                         return result;
                     },
                     *this),
-                opts.parsing_opencode == file_is_opencode::yes ? opencode_provider_options { true, 10 }
-                                                               : opencode_provider_options {},
+                opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
+                                                               : processing::opencode_provider_options {},
                 opts.vf_monitor),
           ctx_,
           opts.library_data,
@@ -118,7 +119,7 @@ analyzing_context analyzer::context() const { return ctx_; }
 
 context::hlasm_context& analyzer::hlasm_ctx() { return *ctx_.hlasm_ctx; }
 
-parsing::hlasmparser& analyzer::parser() { return mngr_.opencode_parser(); }
+parsing::hlasmparser_multiline& analyzer::parser() { return mngr_.opencode_parser(); }
 
 size_t analyzer::debug_syntax_errors() { return mngr_.opencode_parser().getNumberOfSyntaxErrors(); }
 

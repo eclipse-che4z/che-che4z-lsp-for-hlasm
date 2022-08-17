@@ -16,7 +16,7 @@
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
-#include "hlasmparser.h"
+#include "hlasmparser_multiline.h"
 
 // tests for lookahead feature:
 // forward/backward jums

@@ -144,7 +144,7 @@ public:
 
     void register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer);
 
-    parsing::hlasmparser& parser(); // for testing only
+    parsing::hlasmparser_multiline& parser(); // for testing only
     size_t debug_syntax_errors(); // for testing only
 };
 

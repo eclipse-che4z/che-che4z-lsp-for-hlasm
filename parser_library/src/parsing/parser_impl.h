@@ -15,6 +15,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PARSER_IMPL_H
 #define HLASMPLUGIN_PARSERLIBRARY_PARSER_IMPL_H
 
+#include <type_traits>
+
 #include "antlr4-runtime.h"
 
 #include "parser_error_listener.h"
@@ -36,8 +38,8 @@ namespace hlasm_plugin::parser_library::parsing {
 using self_def_t = std::int32_t;
 
 class error_strategy;
-struct parser_holder;
-class hlasmparser;
+class hlasmparser_singleline;
+class hlasmparser_multiline;
 
 // class providing methods helpful for parsing and methods modifying parsing process
 class parser_impl : public antlr4::Parser
@@ -170,12 +172,48 @@ struct parser_holder
     std::unique_ptr<lexing::input_source> input;
     std::unique_ptr<lexing::lexer> lex;
     std::unique_ptr<lexing::token_stream> stream;
-    std::unique_ptr<hlasmparser> parser;
+    std::unique_ptr<parser_impl> parser;
 
-    ~parser_holder();
+    virtual ~parser_holder();
 
-    static std::unique_ptr<parser_holder> create(
-        semantics::source_info_processor* lsp_proc, context::hlasm_context* hl_ctx, diagnostic_op_consumer* d);
+    virtual std::pair<std::optional<std::string>, range> lab_instr() const = 0;
+    virtual std::pair<std::optional<std::string>, range> look_lab_instr() const = 0;
+
+    virtual void op_rem_body_noop() const = 0;
+    virtual void op_rem_body_ignored() const = 0;
+    virtual void op_rem_body_deferred() const = 0;
+    virtual void lookahead_operands_and_remarks() const = 0;
+
+    virtual semantics::op_rem op_rem_body_mac_r() const = 0;
+    virtual semantics::operand_list macro_ops() const = 0;
+    virtual semantics::op_rem op_rem_body_asm_r() const = 0;
+    virtual semantics::op_rem op_rem_body_mach_r() const = 0;
+    virtual semantics::op_rem op_rem_body_dat_r() const = 0;
+
+    virtual void op_rem_body_ca_expr() const = 0;
+    virtual void op_rem_body_ca_branch() const = 0;
+    virtual void op_rem_body_ca_var_def() const = 0;
+
+    virtual void op_rem_body_dat() const = 0;
+    virtual void op_rem_body_mach() const = 0;
+    virtual void op_rem_body_asm() const = 0;
+
+    virtual std::pair<semantics::op_rem, range> op_rem_body_mac() const = 0;
+
+    virtual semantics::literal_si literal_reparse() const = 0;
+
+    void prepare_parser(const std::string& text,
+        context::hlasm_context* hlasm_ctx,
+        diagnostic_op_consumer* diags,
+        semantics::range_provider range_prov,
+        range text_range,
+        const processing::processing_status& proc_status,
+        bool unlimited_line) const;
+
+    static std::unique_ptr<parser_holder> create(semantics::source_info_processor* lsp_proc,
+        context::hlasm_context* hl_ctx,
+        diagnostic_op_consumer* d,
+        bool multiline);
 };
 
 } // namespace hlasm_plugin::parser_library::parsing

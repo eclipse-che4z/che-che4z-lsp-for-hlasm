@@ -116,6 +116,14 @@ mach_term returns [mach_expr_ptr m_e]
 			$m_e = std::make_unique<mach_expr_default>(rng);
 	};
 
+self_def_term returns [self_def_t value]
+	: ORDSYMBOL string							
+	{
+		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL),hl_scopes::self_def_type));
+		auto opt = $ORDSYMBOL->getText();
+		$value = parse_self_def_term(opt, $string.value, provider.get_range($ORDSYMBOL,$string.ctx->getStop()));
+	};
+
 literal_reparse returns [literal_si value]
 	: literal_internal EOF
 	{
