@@ -25,7 +25,6 @@ target_sources(parser_library PRIVATE
 	location_counter.h
 	location_counter_data.cpp
 	location_counter_data.h
-	loctr_dependency_resolver.h
 	ordinary_assembly_context.cpp
 	ordinary_assembly_context.h
 	ordinary_assembly_dependency_solver.cpp

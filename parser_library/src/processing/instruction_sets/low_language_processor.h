@@ -16,14 +16,13 @@
 #define PROCESSING_LOW_LANGUAGE_PROCESSOR_H
 
 #include "checking/instruction_checker.h"
-#include "context/ordinary_assembly/loctr_dependency_resolver.h"
 #include "instruction_processor.h"
 #include "processing/statement_fields_parser.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
 // common ancestor for ASM and MACH processing containing useful methods
-class low_language_processor : public instruction_processor, public context::loctr_dependency_resolver
+class low_language_processor : public instruction_processor
 {
 public:
     static bool check(const resolved_statement& stmt,
@@ -31,11 +30,6 @@ public:
         context::dependency_solver& dep_solver,
         const checking::instruction_checker& checker,
         const diagnosable_ctx& diagnoser);
-
-    void resolve_unknown_loctr_dependency(context::space_ptr sp,
-        const context::address& addr,
-        range err_range,
-        const context::dependency_evaluation_context& dep_ctx) override;
 
 protected:
     statement_fields_parser& parser;
@@ -47,16 +41,6 @@ protected:
 
     rebuilt_statement preprocess(std::shared_ptr<const processing::resolved_statement> stmt);
 
-    // adds dependency and also check for cyclic dependency and adds diagnostics if so
-    template<typename... Args>
-    auto add_dependency(range err_range, Args&&... args)
-        -> std::void_t<decltype(hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(std::forward<Args>(args)...))>
-    {
-        bool cycle_ok = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(std::forward<Args>(args)...);
-        if (!cycle_ok)
-            add_diagnostic(diagnostic_op::error_E033(err_range));
-    }
-
     // finds symbol in the label field
     context::id_index find_label_symbol(const rebuilt_statement& stmt) const;
     // finds using label in the label field
@@ -67,13 +51,6 @@ protected:
         context::id_index symbol_name,
         context::symbol_value value,
         context::symbol_attributes attributes);
-
-    // helper method to check address for the ORG instruction
-    bool check_address_for_ORG(range err_range,
-        const context::address& addr_to_check,
-        const context::address& curr_addr,
-        size_t boundary,
-        int offset);
 
 
 private:
@@ -102,6 +79,17 @@ private:
         size_t op_position,
         const context::mnemonic_code* mnemonic = nullptr);
 };
+
+enum class check_org_result
+{
+    valid,
+    underflow,
+    invalid_address,
+};
+
+// helper method to check address for the ORG instruction
+check_org_result check_address_for_ORG(
+    const context::address& addr_to_check, const context::address& curr_addr, size_t boundary, int offset);
 
 } // namespace hlasm_plugin::parser_library::processing
 #endif

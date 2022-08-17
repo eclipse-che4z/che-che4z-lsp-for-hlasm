@@ -25,7 +25,7 @@
 #include "address_resolver.h"
 #include "dependable.h"
 #include "dependant.h"
-#include "loctr_dependency_resolver.h"
+#include "diagnostic_consumer.h"
 #include "postponed_statement.h"
 #include "tagged_index.h"
 
@@ -71,12 +71,14 @@ class symbol_dependency_tables
     {
         const resolvable* m_resolvable;
         dependency_evaluation_context m_dec;
+        std::vector<std::variant<id_index, space_ptr>> m_last_dependencies;
 
         dependency_value(const resolvable* r, dependency_evaluation_context dec)
             : m_resolvable(r)
             , m_dec(std::move(dec))
         {}
     };
+
     // actual dependecies of symbol or space
     std::unordered_map<dependant, dependency_value> m_dependencies;
 
@@ -93,16 +95,16 @@ class symbol_dependency_tables
 
     void resolve_dependant(dependant target,
         const resolvable* dep_src,
-        loctr_dependency_resolver* resolver,
+        diagnostic_s_consumer* diag_consumer,
         const dependency_evaluation_context& dep_ctx);
     void resolve_dependant_default(const dependant& target);
-    void resolve(loctr_dependency_resolver* resolver);
+    void resolve(std::variant<id_index, space_ptr> what_changed, diagnostic_s_consumer* diag_consumer);
 
     const dependency_value* find_dependency_value(const dependant& target) const;
 
     std::vector<dependant> extract_dependencies(
         const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx);
-    bool has_dependencies(const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx);
+    bool update_dependencies(dependency_value& v);
     std::vector<dependant> extract_dependencies(
         const std::vector<const resolvable*>& dependency_sources, const dependency_evaluation_context& dep_ctx);
 
@@ -151,7 +153,8 @@ public:
 
     // registers that some symbol has been defined
     // if resolver is present, location counter dependencies are checked as well (not just symbol deps)
-    void add_defined(loctr_dependency_resolver* resolver = nullptr);
+    void add_defined(
+        const std::variant<id_index, space_ptr>& what_changed, diagnostic_s_consumer* diag_consumer = nullptr);
 
     // checks for cycle in location counter value
     bool check_loctr_cycle();

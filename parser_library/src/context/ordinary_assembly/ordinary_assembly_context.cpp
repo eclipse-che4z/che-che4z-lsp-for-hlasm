@@ -61,16 +61,17 @@ bool ordinary_assembly_context::create_symbol(
 
     bool ok = true;
 
-    if (value.value_kind() == symbol_value_kind::RELOC)
-        ok = symbol_dependencies.check_loctr_cycle();
-
     if (value.value_kind() != symbol_value_kind::UNDEF)
-        symbol_dependencies.add_defined();
+        symbol_dependencies.add_defined(name);
 
     return ok;
 }
 
-void ordinary_assembly_context::add_symbol_reference(symbol sym) { symbol_refs_.try_emplace(sym.name, std::move(sym)); }
+void ordinary_assembly_context::add_symbol_reference(symbol sym)
+{
+    auto [it, _] = symbol_refs_.try_emplace(sym.name, std::move(sym));
+    symbol_dependencies.add_defined(it->first);
+}
 
 const symbol* ordinary_assembly_context::get_symbol_reference(context::id_index name) const
 {
@@ -100,7 +101,7 @@ section* ordinary_assembly_context::get_section(id_index name)
 
 const section* ordinary_assembly_context::current_section() const { return curr_section_; }
 
-void ordinary_assembly_context::set_section(id_index name, section_kind kind, location symbol_location)
+section* ordinary_assembly_context::set_section(id_index name, section_kind kind, location symbol_location)
 {
     auto tmp = std::find_if(sections_.begin(), sections_.end(), [name, kind](const auto& sect) {
         return sect->name == name && sect->kind == kind;
@@ -123,7 +124,10 @@ void ordinary_assembly_context::set_section(id_index name, section_kind kind, lo
             symbol_attributes::make_section_attrs(),
             std::move(symbol_location),
             hlasm_ctx_.processing_stack());
+        symbol_dependencies.add_defined(name);
     }
+
+    return curr_section_;
 }
 
 void ordinary_assembly_context::create_external_section(
@@ -141,16 +145,15 @@ void ordinary_assembly_context::create_external_section(
         }
     }();
 
-    if (!symbols_
-             .try_emplace(name,
-                 std::in_place_type_t<symbol>(),
-                 name,
-                 create_section(name, kind)->current_location_counter().current_address(),
-                 attrs,
-                 std::move(symbol_location),
-                 processing_stack)
-             .second)
-        throw std::invalid_argument("symbol already defined");
+    auto [it, inserted] = symbols_.try_emplace(name,
+        std::in_place_type_t<symbol>(),
+        name,
+        create_section(name, kind)->current_location_counter().current_address(),
+        attrs,
+        std::move(symbol_location),
+        processing_stack);
+
+    assert(inserted);
 }
 
 void ordinary_assembly_context::set_location_counter(id_index name, location symbol_location)
@@ -182,8 +185,8 @@ void ordinary_assembly_context::set_location_counter(id_index name, location sym
             symbol_attributes::make_section_attrs(),
             std::move(symbol_location),
             hlasm_ctx_.processing_stack());
-        if (!inserted)
-            throw std::invalid_argument("symbol already defined");
+        assert(inserted);
+        symbol_dependencies.add_defined(name);
     }
 }
 
@@ -236,8 +239,7 @@ space_ptr ordinary_assembly_context::set_location_counter_value_space(const addr
     }
 }
 
-void ordinary_assembly_context::set_available_location_counter_value(
-    size_t boundary, int offset, const dependency_evaluation_context& dep_ctx)
+void ordinary_assembly_context::set_available_location_counter_value()
 {
     if (!curr_section_)
         create_private_section();
@@ -245,18 +247,7 @@ void ordinary_assembly_context::set_available_location_counter_value(
     auto [sp, addr] = curr_section_->current_location_counter().set_available_value();
 
     if (sp)
-        symbol_dependencies.add_dependency(
-            sp, std::make_unique<aggregate_address_resolver>(std::move(addr), boundary, offset), dep_ctx);
-    else
-    {
-        if (boundary)
-            (void)align(alignment { 0, boundary }, dep_ctx);
-        (void)reserve_storage_area(offset, context::no_align, dep_ctx);
-    }
-}
-void ordinary_assembly_context::set_available_location_counter_value(size_t boundary, int offset)
-{
-    set_available_location_counter_value(boundary, offset, dependency_evaluation_context {});
+        symbol_dependencies.add_dependency(sp, std::make_unique<aggregate_address_resolver>(std::move(addr), 0, 0), {});
 }
 
 bool ordinary_assembly_context::symbol_defined(id_index name) const { return symbols_.find(name) != symbols_.end(); }
@@ -307,22 +298,18 @@ space_ptr ordinary_assembly_context::register_ordinary_space(alignment align)
     return curr_section_->current_location_counter().register_ordinary_space(align);
 }
 
-void ordinary_assembly_context::finish_module_layout(loctr_dependency_resolver* resolver)
+void ordinary_assembly_context::finish_module_layout(diagnostic_s_consumer* diag_consumer)
 {
     for (auto& sect : sections_)
     {
-        for (size_t i = 0; i < sect->location_counters().size(); ++i)
+        size_t last_offset = 0;
+        for (const auto& loctr : sect->location_counters())
         {
-            if (i == 0)
-                sect->location_counters()[0]->finish_layout(0);
-            else
-            {
-                if (sect->location_counters()[i - 1]->has_unresolved_spaces())
-                    return;
-
-                sect->location_counters()[i]->finish_layout(sect->location_counters()[i - 1]->storage());
-                symbol_dependencies.add_defined(resolver);
-            }
+            loctr->finish_layout(last_offset);
+            symbol_dependencies.add_defined(id_index(), diag_consumer);
+            if (loctr->has_unresolved_spaces())
+                return;
+            last_offset = loctr->storage();
         }
     }
 }

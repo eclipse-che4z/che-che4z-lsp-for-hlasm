@@ -26,7 +26,6 @@
 #include "processing/instruction_sets/postponed_statement_impl.h"
 
 namespace hlasm_plugin::parser_library::context {
-
 bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependant> dependencies)
 {
     if (std::find(dependencies.begin(), dependencies.end(), target)
@@ -61,7 +60,7 @@ bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependa
 struct resolve_dependant_visitor
 {
     symbol_value& val;
-    loctr_dependency_resolver* resolver;
+    diagnostic_s_consumer* diag_consumer;
     ordinary_assembly_context& sym_ctx;
     std::unordered_map<dependant, statement_ref>& dependency_source_stmts;
     const dependency_evaluation_context& dep_ctx;
@@ -92,24 +91,92 @@ struct resolve_dependant_visitor
             length = val.value_kind() == symbol_value_kind::RELOC ? val.get_reloc().offset() : 0;
 
         if (sp->kind == space_kind::LOCTR_UNKNOWN)
-            resolver->resolve_unknown_loctr_dependency(sp,
-                val.get_reloc(),
-                dependency_source_stmts.find(sp)->second.stmt_ref->first->resolved_stmt()->stmt_range_ref(),
-                dep_ctx);
+        {
+            // I don't think that the postponed statement has to always exist.
+            auto dep_it = dependency_source_stmts.find(sp);
+            const postponed_statement* stmt =
+                dep_it == dependency_source_stmts.end() ? nullptr : dep_it->second.stmt_ref->first.get();
+            resolve_unknown_loctr_dependency(sp, val.get_reloc(), stmt);
+        }
         else
             space::resolve(sp, length);
     }
+
+    void resolve_unknown_loctr_dependency(
+        context::space_ptr sp, const context::address& addr, const postponed_statement* stmt) const
+    {
+        using namespace processing;
+
+        assert(diag_consumer);
+
+        const auto add_diagnostic = [stmt, d = diag_consumer](auto f) {
+            if (stmt)
+                d->add_diagnostic(
+                    add_stack_details(f(stmt->resolved_stmt()->stmt_range_ref()), stmt->location_stack()));
+            else
+                d->add_diagnostic(add_stack_details(f(range()), {}));
+        };
+
+        auto tmp_loctr = sym_ctx.current_section()->current_location_counter();
+
+        sym_ctx.set_location_counter(sp->owner.name, location());
+        sym_ctx.current_section()->current_location_counter().switch_to_unresolved_value(sp);
+
+        if (auto org = check_address_for_ORG(
+                addr, sym_ctx.align(context::no_align, dep_ctx), sp->previous_boundary, sp->previous_offset);
+            org != check_org_result::valid)
+        {
+            if (org == check_org_result::underflow)
+                add_diagnostic(diagnostic_op::error_E068);
+            else if (org == check_org_result::invalid_address)
+                add_diagnostic(diagnostic_op::error_A115_ORG_op_format);
+
+            (void)sym_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
+            sym_ctx.set_location_counter(tmp_loctr.name, location());
+            return;
+        }
+
+        auto new_sp = sym_ctx.set_location_counter_value_space(
+            addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr, dep_ctx);
+
+        auto ret = sym_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
+        sym_ctx.set_location_counter(tmp_loctr.name, location());
+
+        context::space::resolve(sp, std::move(ret));
+
+        if (!sym_ctx.symbol_dependencies.check_cycle(new_sp))
+            add_diagnostic(diagnostic_op::error_E033);
+
+        for (auto& sect : sym_ctx.sections())
+        {
+            for (auto& loctr : sect->location_counters())
+            {
+                if (!loctr->check_underflow())
+                {
+                    add_diagnostic(diagnostic_op::error_E068);
+                    return;
+                }
+            }
+        }
+    }
+};
+
+struct dependant_visitor
+{
+    std::variant<id_index, space_ptr> operator()(id_index id) const { return id; }
+    std::variant<id_index, space_ptr> operator()(attr_ref a) const { return a.symbol_id; }
+    std::variant<id_index, space_ptr> operator()(space_ptr p) const { return std::move(p); }
 };
 
 void symbol_dependency_tables::resolve_dependant(dependant target,
     const resolvable* dep_src,
-    loctr_dependency_resolver* resolver,
+    diagnostic_s_consumer* diag_consumer,
     const dependency_evaluation_context& dep_ctx)
 {
     context::ordinary_assembly_dependency_solver dep_solver(m_sym_ctx, dep_ctx);
     symbol_value val = dep_src->resolve(dep_solver);
 
-    std::visit(resolve_dependant_visitor { val, resolver, m_sym_ctx, m_dependency_source_stmts, dep_ctx }, target);
+    std::visit(resolve_dependant_visitor { val, diag_consumer, m_sym_ctx, m_dependency_source_stmts, dep_ctx }, target);
 }
 
 struct resolve_dependant_default_visitor
@@ -139,20 +206,35 @@ void symbol_dependency_tables::resolve_dependant_default(const dependant& target
     std::visit(resolve_dependant_default_visitor { m_sym_ctx }, target);
 }
 
-void symbol_dependency_tables::resolve(loctr_dependency_resolver* resolver)
+void symbol_dependency_tables::resolve(
+    std::variant<id_index, space_ptr> what_changed, diagnostic_s_consumer* diag_consumer)
 {
-    const auto resolvable = [this, resolver](const std::pair<dependant, dependency_value>& v) {
-        if (!resolver && std::holds_alternative<space_ptr>(v.first))
+    const auto resolvable = [this, diag_consumer, &what_changed](std::pair<const dependant, dependency_value>& v) {
+        std::erase_if(v.second.m_last_dependencies, [&what_changed](const auto& d) {
+            return what_changed == d || std::holds_alternative<space_ptr>(d) && std::get<space_ptr>(d)->resolved();
+        });
+        if (!diag_consumer && std::holds_alternative<space_ptr>(v.first))
             return false;
-        return !has_dependencies(v.second.m_resolvable, v.second.m_dec);
+        if (!v.second.m_last_dependencies.empty())
+            return false;
+        return !update_dependencies(v.second);
     };
     auto it = m_dependencies.end();
     while ((it = std::find_if(m_dependencies.begin(), m_dependencies.end(), resolvable)) != m_dependencies.end())
     {
         const auto& [target, dep_value] = *it;
 
-        resolve_dependant(target, dep_value.m_resolvable, resolver, dep_value.m_dec); // resolve target
+        resolve_dependant(target, dep_value.m_resolvable, diag_consumer, dep_value.m_dec); // resolve target
         try_erase_source_statement(target);
+
+        for (auto nested = std::next(it); nested != m_dependencies.end(); ++nested)
+        {
+            std::erase_if(nested->second.m_last_dependencies, [&what_changed](const auto& v) {
+                return what_changed == v || std::holds_alternative<space_ptr>(v) && std::get<space_ptr>(v)->resolved();
+            });
+        }
+
+        what_changed = std::visit(dependant_visitor(), target);
         m_dependencies.erase(it);
     }
 }
@@ -202,14 +284,28 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(
     return ret;
 }
 
-bool symbol_dependency_tables::has_dependencies(
-    const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx)
+bool symbol_dependency_tables::update_dependencies(dependency_value& d)
 {
-    context::ordinary_assembly_dependency_solver dep_solver(m_sym_ctx, dep_ctx);
-    auto deps = dependency_source->get_dependencies(dep_solver);
+    context::ordinary_assembly_dependency_solver dep_solver(m_sym_ctx, d.m_dec);
+    auto deps = d.m_resolvable->get_dependencies(dep_solver);
 
-    return !deps.undefined_symbols.empty() || !deps.unresolved_spaces.empty() || !deps.undefined_attr_refs.empty()
-        || deps.unresolved_address && !deps.unresolved_address->normalized_spaces().empty();
+    d.m_last_dependencies.clear();
+    d.m_last_dependencies.insert(
+        d.m_last_dependencies.end(), deps.undefined_symbols.begin(), deps.undefined_symbols.end());
+    for (const auto& dep : deps.undefined_attr_refs)
+        d.m_last_dependencies.emplace_back(dep.symbol_id);
+
+    if (!d.m_last_dependencies.empty())
+        return true;
+
+    for (const auto& sp : deps.unresolved_spaces)
+        d.m_last_dependencies.emplace_back(sp);
+
+    if (deps.unresolved_address)
+        for (auto&& [sp, _] : deps.unresolved_address->normalized_spaces())
+            d.m_last_dependencies.emplace_back(std::move(sp));
+
+    return !d.m_last_dependencies.empty();
 }
 
 std::vector<dependant> symbol_dependency_tables::extract_dependencies(
@@ -256,12 +352,10 @@ bool symbol_dependency_tables::add_dependency(dependant target,
 {
     if (check_for_cycle)
     {
-        auto dependencies = extract_dependencies(dependency_source, dep_ctx);
-
-        bool no_cycle = check_cycle(target, dependencies);
+        bool no_cycle = check_cycle(target, extract_dependencies(dependency_source, dep_ctx));
         if (!no_cycle)
         {
-            resolve(nullptr);
+            resolve(std::visit(dependant_visitor(), target), nullptr);
             return false;
         }
     }
@@ -338,7 +432,7 @@ bool symbol_dependency_tables::check_cycle(space_ptr target)
     bool no_cycle = check_cycle(target, extract_dependencies(dep_src->m_resolvable, dep_src->m_dec));
 
     if (!no_cycle)
-        resolve(nullptr);
+        resolve(std::move(target), nullptr);
 
     return no_cycle;
 }
@@ -356,7 +450,11 @@ dependency_adder symbol_dependency_tables::add_dependencies(
     return dependency_adder(*this, std::move(dependency_source_stmt), dep_ctx);
 }
 
-void symbol_dependency_tables::add_defined(loctr_dependency_resolver* resolver) { resolve(resolver); }
+void symbol_dependency_tables::add_defined(
+    const std::variant<id_index, space_ptr>& what_changed, diagnostic_s_consumer* diag_consumer)
+{
+    resolve(what_changed, diag_consumer);
+}
 
 bool symbol_dependency_tables::check_loctr_cycle()
 {

@@ -219,16 +219,15 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
             {
                 if (!holder.is_address() || !holder.unresolved_spaces.empty())
                 {
-                    bool cycle_ok = create_symbol(stmt.stmt_range_ref(), symbol_name, context::symbol_value(), attrs);
-
-                    if (cycle_ok)
+                    const auto& stmt_range = stmt.stmt_range_ref();
+                    if (create_symbol(stmt_range, symbol_name, context::symbol_value(), attrs))
                     {
-                        const auto& stmt_range = stmt.stmt_range_ref();
-                        add_dependency(stmt_range,
-                            symbol_name,
-                            &*expr_op->expression,
-                            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-                            dep_solver.derive_current_dependency_evaluation_context());
+                        if (!hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(symbol_name,
+                                expr_op->expression.get(),
+                                std::make_unique<postponed_statement_impl>(
+                                    std::move(stmt), hlasm_ctx.processing_stack()),
+                                dep_solver.derive_current_dependency_evaluation_context()))
+                            add_diagnostic(diagnostic_op::error_E033(stmt_range));
                     }
                 }
                 else
@@ -494,7 +493,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
         || (ops.size() == 2 && ops[0]->type == semantics::operand_type::EMPTY
             && ops[1]->type == semantics::operand_type::EMPTY))
     {
-        hlasm_ctx.ord_ctx.set_available_location_counter_value(0, 0);
+        hlasm_ctx.ord_ctx.set_available_location_counter_value();
         return;
     }
 
@@ -566,8 +565,19 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
         ? reloc_expr->expression->evaluate(dep_solver, drop_diags).get_reloc()
         : *reloc_expr->expression->get_dependencies(dep_solver).unresolved_address;
 
-    if (!check_address_for_ORG(stmt.stmt_range_ref(), reloc_val, loctr, boundary, offset))
-        return;
+    switch (check_address_for_ORG(reloc_val, loctr, boundary, offset))
+    {
+        case check_org_result::valid:
+            break;
+
+        case check_org_result::underflow:
+            add_diagnostic(diagnostic_op::error_E068(stmt.stmt_range_ref()));
+            return;
+
+        case check_org_result::invalid_address:
+            add_diagnostic(diagnostic_op::error_A115_ORG_op_format(stmt.stmt_range_ref()));
+            return;
+    }
 
     if (undefined_absolute_part)
         hlasm_ctx.ord_ctx.set_location_counter_value(reloc_val,
@@ -907,7 +917,7 @@ void asm_processor::process_START(rebuilt_statement stmt)
     const auto& processing_stack = hlasm_ctx.processing_stack();
     auto sym_loc = processing_stack.back().proc_location;
     sym_loc.pos.column = 0;
-    hlasm_ctx.ord_ctx.set_section(sect_name, context::section_kind::EXECUTABLE, std::move(sym_loc));
+    auto* section = hlasm_ctx.ord_ctx.set_section(sect_name, context::section_kind::EXECUTABLE, std::move(sym_loc));
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
 
     const auto& ops = stmt.operands_ref().value;
@@ -929,7 +939,7 @@ void asm_processor::process_START(rebuilt_statement stmt)
     size_t start_section_alignment = hlasm_ctx.section_alignment().boundary;
     size_t start_section_alignment_mask = start_section_alignment - 1;
 
-    auto offset = initial_offset.value();
+    uint32_t offset = initial_offset.value();
     if (offset & start_section_alignment_mask)
     {
         // TODO: generate informational message?
@@ -937,7 +947,7 @@ void asm_processor::process_START(rebuilt_statement stmt)
         offset &= ~start_section_alignment_mask;
     }
 
-    hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment, offset);
+    section->current_location_counter().reserve_storage_area(offset, context::no_align);
 }
 void asm_processor::process_END(rebuilt_statement stmt)
 {

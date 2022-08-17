@@ -21,7 +21,6 @@
 #include "alignment.h"
 #include "dependable.h"
 #include "diagnostic_consumer.h"
-#include "loctr_dependency_resolver.h"
 #include "section.h"
 #include "symbol.h"
 #include "symbol_dependency_tables.h"
@@ -93,7 +92,7 @@ public:
     const section* current_section() const;
 
     // sets current section
-    void set_section(id_index name, section_kind kind, location symbol_location);
+    section* set_section(id_index name, section_kind kind, location symbol_location);
 
     // creates an external section
     void create_external_section(
@@ -118,9 +117,7 @@ public:
         const dependency_evaluation_context& dep_ctx);
 
     // sets next available value for the current location counter
-    void set_available_location_counter_value(
-        size_t boundary, int offset, const dependency_evaluation_context& dep_ctx);
-    void set_available_location_counter_value(size_t boundary, int offset);
+    void set_available_location_counter_value();
 
     // check whether symbol is already defined
     bool symbol_defined(id_index name) const;
@@ -141,7 +138,7 @@ public:
     space_ptr register_ordinary_space(alignment align);
 
     // creates layout of every section
-    void finish_module_layout(loctr_dependency_resolver* resolver);
+    void finish_module_layout(diagnostic_s_consumer* diag_consumer);
 
     size_t current_literal_pool_generation() const;
     size_t next_unique_id() { return ++m_statement_unique_id; }
