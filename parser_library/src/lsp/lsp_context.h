@@ -15,6 +15,8 @@
 #ifndef LSP_CONTEXT_H
 #define LSP_CONTEXT_H
 
+#include <algorithm>
+
 #include "completion_item.h"
 #include "document_symbol_item.h"
 #include "feature_provider.h"
@@ -33,10 +35,18 @@ class lsp_context final : public feature_provider
 
     std::shared_ptr<context::hlasm_context> m_hlasm_ctx;
 
+    template<typename T>
+    struct vector_set
+    {
+        std::vector<T> data;
+
+        bool contains(const T& v) const { return std::binary_search(data.begin(), data.end(), v); }
+    };
+
     struct document_symbol_cache
     {
         std::unordered_map<utils::resource::resource_location,
-            std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>,
+            std::vector<std::pair<symbol_occurence, vector_set<context::id_index>>>,
             utils::resource::resource_location_hasher>
             occurences;
     };
@@ -95,11 +105,15 @@ private:
         long long& limit,
         document_symbol_cache& cache) const;
 
-    const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& copy_occurences(
+    const std::vector<std::pair<symbol_occurence, vector_set<context::id_index>>>& copy_occurences(
         const utils::resource::resource_location& document_loc, document_symbol_cache& cache) const;
+    void fill_cache(
+        std::vector<std::pair<symbol_occurence, lsp_context::vector_set<context::id_index>>>& copy_occurences,
+        const utils::resource::resource_location& document_loc) const;
+
     void modify_with_copy(document_symbol_list_s& modified,
         context::id_index sym_name,
-        const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& copy_occs,
+        const std::vector<std::pair<symbol_occurence, lsp_context::vector_set<context::id_index>>>& copy_occs,
         const document_symbol_kind kind,
         long long& limit) const;
     std::string find_macro_copy_id(const context::processing_stack_t& stack, unsigned long i) const;

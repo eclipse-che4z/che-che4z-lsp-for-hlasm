@@ -17,6 +17,7 @@
 
 #include <functional>
 #include <map>
+#include <span>
 #include <variant>
 
 #include "context/copy_member.h"
@@ -96,12 +97,14 @@ public:
     void update_occurences(const occurence_storage& occurences_upd);
     void update_slices(const std::vector<file_slice_t>& slices);
     const std::vector<symbol_occurence>& get_occurences() const;
+    std::span<const symbol_occurence* const> get_occurences(context::id_index name) const;
     void process_occurrences();
 
 private:
     std::map<line_range, file_slice_t> slices;
     std::vector<symbol_occurence> occurences;
     std::vector<size_t> occurences_start_limit;
+    std::vector<const symbol_occurence*> occurences_by_name;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

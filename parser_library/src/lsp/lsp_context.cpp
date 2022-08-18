@@ -234,45 +234,47 @@ void lsp_context::document_symbol_copy(document_symbol_list_s& result,
     }
 }
 
-const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& lsp_context::copy_occurences(
-    const utils::resource::resource_location& document_loc, document_symbol_cache& cache) const
+void lsp_context::fill_cache(
+    std::vector<std::pair<symbol_occurence, lsp_context::vector_set<context::id_index>>>& copy_occurences,
+    const utils::resource::resource_location& document_loc) const
 {
-    if (auto it = cache.occurences.find(document_loc); it != cache.occurences.end())
-        return it->second;
-
-    const auto& file = m_files.find(document_loc);
-    std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> copy_occurences;
+    const auto& document = *m_files.at(document_loc);
     for (const auto& [_, info] : m_files)
     {
         if (info->type != file_type::COPY)
             continue;
 
-        const context::id_index name = std::get<context::copy_member_ptr>(info->owner)->name;
-        for (const auto& occ : file->second->get_occurences())
+        for (const auto* occ : document.get_occurences(std::get<context::copy_member_ptr>(info->owner)->name))
         {
-            if (occ.name != name)
-                continue;
-
-            std::vector<context::id_index> occurences;
-            for (const auto& new_occ : info->get_occurences())
+            lsp_context::vector_set<context::id_index> occurences;
+            for (context::id_index last = nullptr; const auto* new_occ : info->get_occurences(nullptr))
             {
-                if (new_occ.kind == occurence_kind::VAR
-                    || new_occ.kind == occurence_kind::SEQ
-                        && std::none_of(
-                            occurences.begin(), occurences.end(), [id = new_occ.name](auto e) { return id == e; }))
-                {
-                    occurences.push_back(new_occ.name);
-                }
+                if (last == new_occ->name)
+                    continue;
+                last = new_occ->name;
+
+                if (new_occ->kind == occurence_kind::VAR || new_occ->kind == occurence_kind::SEQ)
+                    occurences.data.push_back(new_occ->name);
             }
-            copy_occurences.emplace_back(occ, std::move(occurences));
+            copy_occurences.emplace_back(*occ, std::move(occurences));
         }
     }
-    return cache.occurences[document_loc] = std::move(copy_occurences);
+}
+
+const std::vector<std::pair<symbol_occurence, lsp_context::vector_set<context::id_index>>>&
+lsp_context::copy_occurences(const utils::resource::resource_location& document_loc, document_symbol_cache& cache) const
+{
+    auto [it, inserted] = cache.occurences.try_emplace(document_loc);
+
+    if (inserted)
+        fill_cache(it->second, document_loc);
+
+    return it->second;
 }
 
 void lsp_context::modify_with_copy(document_symbol_list_s& modified,
     context::id_index sym_name,
-    const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& copy_occs,
+    const std::vector<std::pair<symbol_occurence, lsp_context::vector_set<context::id_index>>>& copy_occs,
     const document_symbol_kind kind,
     long long& limit) const
 {
@@ -280,7 +282,7 @@ void lsp_context::modify_with_copy(document_symbol_list_s& modified,
     {
         if (limit <= 0)
             return;
-        if (std::none_of(occs.begin(), occs.end(), [sym_name](auto e) { return e == sym_name; }))
+        if (!occs.contains(sym_name))
             continue;
 
         bool have_already = false;

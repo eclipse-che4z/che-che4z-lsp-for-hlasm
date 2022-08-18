@@ -151,6 +151,25 @@ std::vector<file_slice_t> file_slice_t::transform_slices(
 
 const std::vector<symbol_occurence>& file_info::get_occurences() const { return occurences; }
 
+std::span<const symbol_occurence* const> file_info::get_occurences(context::id_index name) const
+{
+    if (name == nullptr)
+        return occurences_by_name;
+
+    struct
+    {
+        bool operator()(const symbol_occurence* l, context::id_index r) const { return l->name < r; }
+        bool operator()(context::id_index l, const symbol_occurence* r) const { return l < r->name; }
+    } search_predicate;
+
+    auto [low, high] = std::equal_range(occurences_by_name.begin(), occurences_by_name.end(), name, search_predicate);
+
+    if (low == high) // missing c++20 ctor in libc++ 12 and broken std::to_address
+        return std::span<const symbol_occurence* const>();
+    else
+        return std::span<const symbol_occurence* const>(&*low, std::distance(low, high));
+}
+
 void file_info::process_occurrences()
 {
     std::sort(occurences.begin(), occurences.end(), [](const auto& l, const auto& r) {
@@ -164,6 +183,14 @@ void file_info::process_occurrences()
         occurences.rend(),
         occurences_start_limit.rbegin(),
         [min = (size_t)-1](const auto& occ) mutable { return min = std::min(min, occ.occurence_range.start.line); });
+
+    occurences_by_name.reserve(occurences.size());
+    std::transform(occurences.begin(), occurences.end(), std::back_inserter(occurences_by_name), [](const auto& occ) {
+        return &occ;
+    });
+    std::sort(occurences_by_name.begin(), occurences_by_name.end(), [](const auto* l, const auto* r) {
+        return l->name < r->name;
+    });
 }
 
 } // namespace hlasm_plugin::parser_library::lsp
