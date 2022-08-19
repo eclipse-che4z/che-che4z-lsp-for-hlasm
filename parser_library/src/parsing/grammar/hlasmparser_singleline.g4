@@ -435,11 +435,8 @@ op_rem_body_mac returns [op_rem line, range line_range]
 
 op_rem_body_alt_mac returns [op_rem line]
 	:
-	{
-		int paren_count = 0;
-	}
 	(
-		mac_op[&paren_count]? COMMA
+		mac_op? COMMA
 		{
 			if ($mac_op.ctx && $mac_op.op)
 				$line.operands.push_back(std::move($mac_op.op));
@@ -447,7 +444,7 @@ op_rem_body_alt_mac returns [op_rem line]
 		}
 	)*
 	(
-		last_mac_op=mac_op[&paren_count]? last_remark=remark_o
+		last_mac_op=mac_op? last_remark=remark_o
 		{
 			if ($last_mac_op.ctx && $last_mac_op.op)
 				$line.operands.push_back(std::move($last_mac_op.op));

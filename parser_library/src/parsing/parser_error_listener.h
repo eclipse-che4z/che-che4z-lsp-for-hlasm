@@ -58,8 +58,7 @@ public:
         antlr4::atn::ATNConfigSet* configs) override;
 
 protected:
-    virtual void add_parser_diagnostic(
-        range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) = 0;
+    virtual void add_parser_diagnostic(diagnostic_op (&diag_op)(const range&), range r) = 0;
 };
 
 class parser_error_listener final : public parser_error_listener_base
@@ -74,14 +73,10 @@ public:
     diagnostic_op_consumer* diagnoser = nullptr;
 
 protected:
-    void add_parser_diagnostic(
-        range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) override
+    void add_parser_diagnostic(diagnostic_op (&diag_op)(const range&), range r) override
     {
         if (diagnoser)
-            diagnoser->add_diagnostic(diagnostic_op(severity,
-                std::move(code),
-                std::move(message),
-                provider ? provider->adjust_range(diagnostic_range) : std::move(diagnostic_range)));
+            diagnoser->add_diagnostic(diag_op(provider ? provider->adjust_range(std::move(r)) : r));
     }
 };
 

@@ -825,7 +825,7 @@ TEST(data_attributes, attribute_after_paren)
 TEST(data_attributes, variable_type)
 {
     // Just to make clear what is going on here
-    // This special 'M' behavior is triggerred ONLY
+    // This special 'M' behavior is triggered ONLY
     // when the tested symbol is equal to the name field on the macro call
     std::string input = R"(
          MACRO

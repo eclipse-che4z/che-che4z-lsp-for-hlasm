@@ -267,19 +267,33 @@ bool parser_impl::ALIAS()
     return opcode.type == instruction_type::ASM && opcode.value == hlasm_ctx->ids().well_known.ALIAS;
 }
 
-bool parser_impl::is_previous_attribute_consuming(bool top_level, const antlr4::Token* token)
+bool parser_impl::is_attribute_consuming(char c)
+{
+    auto tmp = std::toupper(static_cast<int>(c));
+    return tmp == 'O' || tmp == 'S' || tmp == 'I' || tmp == 'L' || tmp == 'T';
+}
+
+bool parser_impl::is_attribute_consuming(const antlr4::Token* token)
 {
     if (!token)
         return false;
 
     auto text = token->getText();
-    if (text.size() != 1)
+    return text.size() == 1 && is_attribute_consuming(text.front());
+}
+
+bool parser_impl::can_attribute_consume(char c)
+{
+    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '=' || c == '$' || c == '_' || c == '#' || c == '@';
+}
+
+bool parser_impl::can_attribute_consume(const antlr4::Token* token)
+{
+    if (!token)
         return false;
 
-    auto tmp = std::toupper((unsigned char)text.back());
-
-    // this almost looks like a bug in the original assembler
-    return tmp == 'O' && top_level || tmp == 'S' || tmp == 'I' || tmp == 'L' || tmp == 'T';
+    auto text = token->getText();
+    return text.size() > 0 && can_attribute_consume(text.front());
 }
 
 antlr4::misc::IntervalSet parser_impl::getExpectedTokens()

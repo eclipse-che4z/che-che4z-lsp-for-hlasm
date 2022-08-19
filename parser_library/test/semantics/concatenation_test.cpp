@@ -55,12 +55,12 @@ concat_chain create_chain()
 
 TEST(concatenation, to_string) { EXPECT_EQ(concatenation_point::to_string(create_chain()), "ada&n.=(ada,ada,&(n))"); }
 
-TEST(concatenation, contains_var_sym)
+TEST(concatenation, find_var_sym)
 {
     auto chain = create_chain();
 
     {
-        auto var = concatenation_point::contains_var_sym(chain.cbegin(), chain.cend());
+        auto var = concatenation_point::find_var_sym(chain.cbegin(), chain.cend());
 
         auto pos = dynamic_cast<var_sym_conc*>(chain[1].get());
 
@@ -70,7 +70,7 @@ TEST(concatenation, contains_var_sym)
     chain.erase(chain.begin() + 1);
 
     {
-        auto var = concatenation_point::contains_var_sym(chain.cbegin(), chain.cend());
+        auto var = concatenation_point::find_var_sym(chain.cbegin(), chain.cend());
 
         auto pos = dynamic_cast<var_sym_conc*>(chain.back()->access_sub()->list.back().front().get());
 
@@ -80,7 +80,7 @@ TEST(concatenation, contains_var_sym)
     chain.erase(chain.begin() + (chain.size() - 1));
 
     {
-        auto var = concatenation_point::contains_var_sym(chain.cbegin(), chain.cend());
+        auto var = concatenation_point::find_var_sym(chain.cbegin(), chain.cend());
 
         EXPECT_EQ(var, nullptr);
     }

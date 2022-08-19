@@ -147,28 +147,21 @@ std::string concatenation_point::to_string(concat_chain::const_iterator begin, c
     return ret;
 }
 
-var_sym_conc* concatenation_point::contains_var_sym(
-    concat_chain::const_iterator begin, concat_chain::const_iterator end)
+var_sym_conc* concatenation_point::find_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end)
 {
     for (auto it = begin; it != end; ++it)
     {
-        auto&& point = *it;
-        if (point->type == concat_type::VAR)
-        {
+        if (auto&& point = *it; point->type == concat_type::VAR)
             return point->access_var();
-        }
         else if (point->type == concat_type::SUB)
-        {
             for (const auto& entry : point->access_sub()->list)
             {
-                auto tmp = contains_var_sym(entry.begin(), entry.end());
+                auto tmp = find_var_sym(entry.begin(), entry.end());
                 if (tmp)
                     return tmp;
             }
-        }
-        else
-            continue;
     }
+
     return nullptr;
 }
 

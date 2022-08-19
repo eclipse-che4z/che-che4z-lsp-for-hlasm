@@ -32,7 +32,7 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 	| rpar
 	| ap1=ATTR
 	(
-		{!is_previous_attribute_consuming(true, _input->LT(-2))}?
+		{!is_attribute_consuming(_input->LT(-2))}?
 		{disable_ca_string();}
 		(
 			(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)

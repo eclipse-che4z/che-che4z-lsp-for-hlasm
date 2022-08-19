@@ -2432,6 +2432,68 @@ diagnostic_op diagnostic_op::mnote_diagnostic(unsigned level, std::string_view m
     return diagnostic_op(lvl, "MNOTE", std::string(message), range, tag);
 }
 
+diagnostic_op diagnostic_op::error_S0001(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0001", "C++ error", range);
+}
+
+diagnostic_op diagnostic_op::error_S0002(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0002", "Syntax error", range);
+}
+
+diagnostic_op diagnostic_op::error_S0003(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0003", "Unexpected end of statement", range);
+}
+
+diagnostic_op diagnostic_op::error_S0004(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "S0004", "Unfinished statement, the label cannot be alone on a line", range);
+}
+
+diagnostic_op diagnostic_op::error_S0005(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0005", "Expected an apostrophe", range);
+}
+
+diagnostic_op diagnostic_op::error_S0006(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0006", "Unexpected sign in an expression", range);
+}
+
+diagnostic_op diagnostic_op::error_S0007(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0007", "A sign needs to be preceded by an expression", range);
+}
+
+diagnostic_op diagnostic_op::error_S0008(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "S0008", "Ampersand has to be followed by a name of a variable", range);
+}
+
+diagnostic_op diagnostic_op::error_S0009(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0009", "A sign has to be followed by an expression", range);
+}
+
+diagnostic_op diagnostic_op::error_S0010(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0010", "Only left and right parenthesis present", range);
+}
+
+diagnostic_op diagnostic_op::error_S0011(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0011", "Left parenthesis has no right match", range);
+}
+
+diagnostic_op diagnostic_op::error_S0012(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0012", "Right parenthesis has no left match", range);
+}
+
 diagnostic_s diagnostic_s::error_W0001(const utils::resource::resource_location& file_name)
 {
     return diagnostic_s(file_name.get_uri(),

@@ -19,6 +19,7 @@
 #include <stack>
 
 #include "ebcdic_encoding.h"
+#include "parsing/parser_impl.h"
 #include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -54,15 +55,35 @@ void macro_processor::process(std::shared_ptr<const processing::resolved_stateme
     auto args = get_args(*stmt);
     hlasm_ctx.enter_macro(stmt->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
 }
-
-bool is_consuming_data_def(unsigned char c)
+namespace {
+bool is_valid_string(std::string_view s)
 {
-    c = (char)toupper(c);
-    return c == 'L' || c == 'I' || c == 'S' || c == 'T';
+    size_t index = 0;
+    size_t apostrophes = 0;
+
+    while (true)
+    {
+        auto ap_id = s.find_first_of('\'', index);
+        if (ap_id == std::string_view::npos)
+            break;
+
+        if (ap_id > 0 && ap_id + 1 < s.size() && parsing::parser_impl::is_attribute_consuming(s[ap_id - 1])
+            && parsing::parser_impl::can_attribute_consume(s[ap_id + 1]))
+        {
+            index = ap_id + 1;
+            continue;
+        }
+
+        index = ap_id + 1;
+        apostrophes++;
+    }
+
+    return apostrophes % 2 == 0;
 }
+} // namespace
 
 std::pair<std::unique_ptr<context::macro_param_data_single>, bool> find_single_macro_param(
-    const std::string& data, size_t& start)
+    std::string_view data, size_t& start)
 {
     // always called in nested configuration
     size_t begin = start;
@@ -71,7 +92,7 @@ std::pair<std::unique_ptr<context::macro_param_data_single>, bool> find_single_m
     {
         start = data.find_first_of(",'()", start);
 
-        if (start == std::string::npos)
+        if (start == std::string_view::npos)
             return { nullptr, false };
 
         if (data[start] == '(')
@@ -92,7 +113,8 @@ std::pair<std::unique_ptr<context::macro_param_data_single>, bool> find_single_m
         }
         else if (data[start] == '\'')
         {
-            if (start > 0 && is_consuming_data_def(data[start - 1]))
+            if (start > 0 && start + 1 < data.size() && parsing::parser_impl::is_attribute_consuming(data[start - 1])
+                && parsing::parser_impl::can_attribute_consume(data[start + 1]))
             {
                 ++start;
                 continue;
@@ -100,7 +122,7 @@ std::pair<std::unique_ptr<context::macro_param_data_single>, bool> find_single_m
 
             start = data.find_first_of('\'', start + 1);
 
-            if (start == std::string::npos)
+            if (start == std::string_view::npos)
                 return { nullptr, false };
 
             ++start;
@@ -114,10 +136,8 @@ std::pair<std::unique_ptr<context::macro_param_data_single>, bool> find_single_m
     if (comma_encountered)
         ++start;
 
-    return {
-        std::make_unique<context::macro_param_data_single>(data.substr(begin, tmp_start - begin)),
-        comma_encountered,
-    };
+    return { std::make_unique<context::macro_param_data_single>(std::string(data.substr(begin, tmp_start - begin))),
+        comma_encountered };
 }
 
 context::macro_data_ptr macro_processor::string_to_macrodata(std::string data)
@@ -195,7 +215,7 @@ context::macro_data_ptr macro_processor::string_to_macrodata(std::string data)
     }
 
     if (nests.top() != data.size())
-        return std::make_unique<context::macro_param_data_single>(std::move(data));
+        return std::make_unique<context::macro_param_data_single>(std::string(data));
 
     assert(macro_data.size() == 1 && macro_data.top().size() == 1);
 
@@ -281,7 +301,10 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
             args.push_back({ std::move(data), nullptr });
         }
         else // rest
-            args.push_back({ create_macro_data(tmp_chain.begin(), tmp_chain.end(), eval_ctx), nullptr });
+        {
+            diagnostic_adder add_diags(this->eval_ctx.diags, statement.operands_ref().field_range);
+            args.push_back({ create_macro_data(tmp_chain.begin(), tmp_chain.end(), eval_ctx, add_diags), nullptr });
+        }
     }
 
     return args;
@@ -322,7 +345,10 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
         context::macro_data_ptr data;
 
         if (chain_size == 1 && (*chain_begin)->type == semantics::concat_type::SUB)
-            data = create_macro_data(chain_begin, chain_end, eval_ctx);
+        {
+            diagnostic_adder add_diags(statement.operands_ref().field_range);
+            data = create_macro_data(chain_begin, chain_end, eval_ctx, add_diags);
+        }
         else
             data = string_to_macrodata(semantics::concatenation_point::evaluate(chain_begin, chain_end, eval_ctx));
 
@@ -333,13 +359,28 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
 context::macro_data_ptr create_macro_data_inner(semantics::concat_chain::const_iterator begin,
     semantics::concat_chain::const_iterator end,
     const std::function<std::string(semantics::concat_chain::const_iterator, semantics::concat_chain::const_iterator)>&
-        to_string)
+        to_string,
+    diagnostic_adder& add_diagnostic,
+    bool nested = false)
 {
     auto size = end - begin;
     if (size == 0)
         return std::make_unique<context::macro_param_data_dummy>();
-    else if (size > 1 || (size == 1 && (*begin)->type != semantics::concat_type::SUB))
-        return std::make_unique<context::macro_param_data_single>(to_string(begin, end));
+    else if (size == 1 && (*begin)->type != semantics::concat_type::SUB)
+        return macro_processor::string_to_macrodata(to_string(begin, end));
+    else if (size > 1)
+    {
+        if (auto s = to_string(begin, end);
+            s.front() != '(' && (!nested || semantics::concatenation_point::find_var_sym(begin, end) == nullptr))
+            return macro_processor::string_to_macrodata(std::move(s));
+        else if (is_valid_string(s))
+            return macro_processor::string_to_macrodata(std::move(s));
+        else
+        {
+            add_diagnostic(diagnostic_op::error_S0005);
+            return std::make_unique<context::macro_param_data_dummy>();
+        }
+    }
 
     const auto& inner_chains = (*begin)->access_sub()->list;
 
@@ -347,7 +388,8 @@ context::macro_data_ptr create_macro_data_inner(semantics::concat_chain::const_i
 
     for (auto& inner_chain : inner_chains)
     {
-        sublist.push_back(create_macro_data_inner(inner_chain.begin(), inner_chain.end(), to_string));
+        sublist.push_back(
+            create_macro_data_inner(inner_chain.begin(), inner_chain.end(), to_string, add_diagnostic, true));
     }
     return std::make_unique<context::macro_param_data_composite>(std::move(sublist));
 }
@@ -356,7 +398,7 @@ context::macro_data_ptr macro_processor::create_macro_data(semantics::concat_cha
     semantics::concat_chain::const_iterator end,
     diagnostic_adder& add_diagnostic)
 {
-    auto tmp = semantics::concatenation_point::contains_var_sym(begin, end);
+    auto tmp = semantics::concatenation_point::find_var_sym(begin, end);
     if (tmp)
     {
         add_diagnostic(diagnostic_op::error_E064);
@@ -366,17 +408,18 @@ context::macro_data_ptr macro_processor::create_macro_data(semantics::concat_cha
     auto f = [](semantics::concat_chain::const_iterator b, semantics::concat_chain::const_iterator e) {
         return semantics::concatenation_point::to_string(b, e);
     };
-    return create_macro_data_inner(begin, end, f);
+    return create_macro_data_inner(begin, end, f, add_diagnostic);
 }
 
 context::macro_data_ptr macro_processor::create_macro_data(semantics::concat_chain::const_iterator begin,
     semantics::concat_chain::const_iterator end,
-    const expressions::evaluation_context& eval_ctx)
+    const expressions::evaluation_context& eval_ctx,
+    diagnostic_adder& add_diagnostic)
 {
     auto f = [&eval_ctx](semantics::concat_chain::const_iterator b, semantics::concat_chain::const_iterator e) {
         return semantics::concatenation_point::evaluate(b, e, eval_ctx);
     };
-    return create_macro_data_inner(begin, end, f);
+    return create_macro_data_inner(begin, end, f, add_diagnostic);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

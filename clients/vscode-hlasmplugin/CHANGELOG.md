@@ -16,6 +16,7 @@
 - Validation of mnemonics with optional operands produced incorrect diagnostics
 - Improve parsing performance of CA operands
 - Improve performance of dependency tracking and expression evaluation
+- Implement changes introduced by APAR PH46868
 - Improve performance of generating document outline
 
 ## [1.3.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.2.0...1.3.0) (2022-06-30)
