@@ -80,7 +80,6 @@ void asm_processor::process_sect(const context::section_kind kind, rebuilt_state
         return false;
     };
 
-    const auto& processing_stack = hlasm_ctx.processing_stack();
     if (hlasm_ctx.ord_ctx.symbol_defined(sect_name)
         && (sect_name != context::id_storage::empty_id && !hlasm_ctx.ord_ctx.section_defined(sect_name, kind)
             || sect_name == context::id_storage::empty_id && kind != section_kind::DUMMY
@@ -90,7 +89,7 @@ void asm_processor::process_sect(const context::section_kind kind, rebuilt_state
     }
     else
     {
-        auto sym_loc = processing_stack.back().proc_location;
+        auto sym_loc = hlasm_ctx.processing_stack_top().get_location();
         sym_loc.pos.column = 0;
         hlasm_ctx.ord_ctx.set_section(sect_name, kind, std::move(sym_loc));
     }
@@ -113,7 +112,7 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
     }
     else
     {
-        auto sym_loc = hlasm_ctx.processing_stack().back().proc_location;
+        auto sym_loc = hlasm_ctx.processing_stack_top().get_location();
         sym_loc.pos.column = 0;
         hlasm_ctx.ord_ctx.set_location_counter(loctr_name, std::move(sym_loc));
     }
@@ -914,8 +913,7 @@ void asm_processor::process_START(rebuilt_statement stmt)
         return;
     }
 
-    const auto& processing_stack = hlasm_ctx.processing_stack();
-    auto sym_loc = processing_stack.back().proc_location;
+    auto sym_loc = hlasm_ctx.processing_stack_top().get_location();
     sym_loc.pos.column = 0;
     auto* section = hlasm_ctx.ord_ctx.set_section(sect_name, context::section_kind::EXECUTABLE, std::move(sym_loc));
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);

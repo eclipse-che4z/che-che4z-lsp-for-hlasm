@@ -27,17 +27,14 @@ namespace hlasm_plugin::parser_library {
 
 struct PARSER_LIBRARY_EXPORT position
 {
-    position()
-        : line(0)
-        , column(0)
-    {}
-    position(size_t line, size_t column)
+    constexpr position() = default;
+    constexpr position(size_t line, size_t column)
         : line(line)
         , column(column)
     {}
     auto operator<=>(const position& oth) const noexcept = default;
-    size_t line;
-    size_t column;
+    size_t line = 0;
+    size_t column = 0;
 
     static inline position min(const position& lhs, const position& rhs)
     {

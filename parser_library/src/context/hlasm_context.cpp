@@ -474,34 +474,124 @@ std::shared_ptr<id_storage> hlasm_context::ids_ptr() { return ids_; }
 
 const hlasm_context::instruction_storage& hlasm_context::instruction_map() const { return m_instruction_map; }
 
-processing_stack_t hlasm_context::processing_stack() const
+const utils::resource::resource_location* hlasm_context::shared_resource_location(
+    const utils::resource::resource_location& l)
 {
-    std::vector<processing_frame> res;
+    return &*m_resource_locations.emplace(l).first;
+}
+const utils::resource::resource_location* hlasm_context::shared_resource_location(
+    utils::resource::resource_location&& l)
+{
+    return &*m_resource_locations.emplace(std::move(l)).first;
+}
 
-    for (size_t i = 0; i < source_stack_.size(); ++i)
+processing_stack_t hlasm_context::processing_stack()
+{
+    auto result = m_stack_tree.root();
+
+    for (bool first = true; const auto& source : source_stack_)
     {
-        res.emplace_back(source_stack_[i].current_instruction,
-            scope_stack_.front(),
-            file_processing_type::OPENCODE,
-            id_storage::empty_id);
-        for (const auto& member : source_stack_[i].copy_stack)
+        result = m_stack_tree.step(processing_frame(source.current_instruction.pos,
+                                       shared_resource_location(source.current_instruction.resource_loc),
+                                       id_storage::empty_id),
+            result);
+        for (const auto& member : source.copy_stack)
         {
-            location loc(member.current_statement_position(), member.definition_location()->resource_loc);
-            res.emplace_back(std::move(loc), scope_stack_.front(), file_processing_type::COPY, member.name());
+            result = m_stack_tree.step(processing_frame(member.current_statement_position(),
+                                           shared_resource_location(member.definition_location()->resource_loc),
+                                           member.name()),
+                result);
         }
 
-        if (i == 0) // append macros immediately after ordinary processing
+        if (first) // append macros immediately after ordinary processing
         {
+            first = false;
             for (size_t j = 1; j < scope_stack_.size(); ++j)
             {
                 auto offs = scope_stack_[j].this_macro->current_statement;
 
-                const auto& nest = scope_stack_[j].this_macro->copy_nests[offs];
-                for (size_t k = 0; k < nest.size(); ++k)
-                    res.emplace_back(nest[k].loc,
+                for (const auto& nest : scope_stack_[j].this_macro->copy_nests[offs])
+                    result = m_stack_tree.step(
+                        processing_frame(
+                            nest.loc.pos, shared_resource_location(nest.loc.resource_loc), nest.member_name),
+                        result);
+            }
+        }
+    }
+
+    return result;
+}
+
+processing_frame hlasm_context::processing_stack_top()
+{
+    // this is an inverted version of the loop from processing_stack()
+    // terminating after finding the first (originally last) element
+
+    assert(!source_stack_.empty());
+
+    if (source_stack_.size() == 1 && scope_stack_.size() > 1)
+    {
+        const auto& last_macro = scope_stack_.back().this_macro;
+
+        if (const auto& nest = last_macro->copy_nests[last_macro->current_statement]; !nest.empty())
+        {
+            const auto& last_copy = nest.back();
+            return processing_frame(
+                last_copy.loc.pos, shared_resource_location(last_copy.loc.resource_loc), last_copy.member_name);
+        }
+    }
+
+    const auto& last_source = source_stack_.back();
+    if (!last_source.copy_stack.empty())
+    {
+        const auto& last_member = last_source.copy_stack.back();
+        return processing_frame(last_member.current_statement_position(),
+            shared_resource_location(last_member.definition_location()->resource_loc),
+            last_member.name());
+    }
+
+    return processing_frame(last_source.current_instruction.pos,
+        shared_resource_location(last_source.current_instruction.resource_loc),
+        id_storage::empty_id);
+}
+
+processing_stack_details_t hlasm_context::processing_stack_details()
+{
+    std::vector<processing_frame_details> res;
+
+    for (bool first = true; const auto& source : source_stack_)
+    {
+        res.emplace_back(source.current_instruction.pos,
+            shared_resource_location(source.current_instruction.resource_loc),
+            scope_stack_.front(),
+            file_processing_type::OPENCODE,
+            id_storage::empty_id);
+        for (const auto& member : source.copy_stack)
+        {
+            res.emplace_back(member.current_statement_position(),
+                shared_resource_location(member.definition_location()->resource_loc),
+                scope_stack_.front(),
+                file_processing_type::COPY,
+                member.name());
+        }
+
+        if (first) // append macros immediately after ordinary processing
+        {
+            first = false;
+            for (size_t j = 1; j < scope_stack_.size(); ++j)
+            {
+                auto offs = scope_stack_[j].this_macro->current_statement;
+
+                for (auto type = file_processing_type::MACRO;
+                     const auto& nest : scope_stack_[j].this_macro->copy_nests[offs])
+                {
+                    res.emplace_back(nest.loc.pos,
+                        shared_resource_location(nest.loc.resource_loc),
                         scope_stack_[j],
-                        k == 0 ? file_processing_type::MACRO : file_processing_type::COPY,
-                        nest[k].member_name);
+                        type,
+                        nest.member_name);
+                    type = file_processing_type::COPY;
+                }
             }
         }
     }

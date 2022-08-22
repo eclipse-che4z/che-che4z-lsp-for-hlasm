@@ -19,6 +19,7 @@
 #include <deque>
 #include <memory>
 #include <set>
+#include <unordered_set>
 #include <vector>
 
 #include "code_scope.h"
@@ -102,6 +103,14 @@ class hlasm_context
 
     long long m_statements_remaining;
 
+    std::unordered_set<utils::resource::resource_location, utils::resource::resource_location_hasher>
+        m_resource_locations;
+
+    const utils::resource::resource_location* shared_resource_location(const utils::resource::resource_location&);
+    const utils::resource::resource_location* shared_resource_location(utils::resource::resource_location&&);
+
+    processing_frame_tree m_stack_tree;
+
 public:
     hlasm_context(utils::resource::resource_location file_loc = utils::resource::resource_location(""),
         asm_option asm_opts = {},
@@ -133,7 +142,9 @@ public:
     void pop_statement_processing();
 
     // gets stack of locations of all currently processed files
-    processing_stack_t processing_stack() const;
+    processing_stack_t processing_stack();
+    processing_frame processing_stack_top();
+    processing_stack_details_t processing_stack_details();
     location current_statement_location() const;
     // gets macro nest
     const std::deque<code_scope>& scope_stack() const;

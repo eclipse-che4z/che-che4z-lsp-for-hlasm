@@ -113,7 +113,7 @@ class debugger::impl final : public processing::statement_analyzer
 
     std::unordered_map<size_t, variable_store> variables_;
     size_t next_var_ref_ = 1;
-    context::processing_stack_t proc_stack_;
+    context::processing_stack_details_t proc_stack_;
 
     std::unordered_map<utils::resource::resource_location,
         std::vector<breakpoint>,
@@ -192,10 +192,10 @@ public:
 
         bool breakpoint_hit = false;
 
-        auto stack = ctx_->processing_stack();
+        auto stack = ctx_->processing_stack_details();
         const auto stack_depth = stack.size();
 
-        for (const auto& bp : breakpoints(stack.back().proc_location.resource_loc))
+        for (const auto& bp : breakpoints(*stack.back().resource_loc))
         {
             if (bp.line >= stmt_range.start.line && bp.line <= stmt_range.end.line)
                 breakpoint_hit = true;
@@ -282,7 +282,7 @@ public:
             return stack_frames_;
         for (size_t i = proc_stack_.size() - 1; i != (size_t)-1; --i)
         {
-            source source(proc_stack_[i].proc_location.get_uri());
+            source source(proc_stack_[i].resource_loc->get_uri());
             std::string name;
             switch (proc_stack_[i].proc_type)
             {
@@ -300,11 +300,8 @@ public:
                     break;
             }
 
-            stack_frames_.emplace_back(proc_stack_[i].proc_location.pos.line,
-                proc_stack_[i].proc_location.pos.line,
-                (uint32_t)i,
-                std::move(name),
-                std::move(source));
+            stack_frames_.emplace_back(
+                proc_stack_[i].pos.line, proc_stack_[i].pos.line, (uint32_t)i, std::move(name), std::move(source));
         }
 
 

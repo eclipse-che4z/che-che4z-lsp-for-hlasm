@@ -14,6 +14,8 @@
 
 #include "source_context.h"
 
+#include <cassert>
+
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 
@@ -35,10 +37,42 @@ source_snapshot source_context::create_snapshot() const
     return source_snapshot { current_instruction, begin_index, end_index, std::move(copy_frames) };
 }
 
-processing_frame::processing_frame(
-    location proc_location, const code_scope& scope, file_processing_type proc_type, id_index member)
-    : proc_location(std::move(proc_location))
+processing_frame_details::processing_frame_details(position pos,
+    const utils::resource::resource_location* resource_loc,
+    const code_scope& scope,
+    file_processing_type proc_type,
+    id_index member)
+    : pos(pos)
+    , resource_loc(std::move(resource_loc))
     , scope(scope)
     , proc_type(std::move(proc_type))
     , member_name(member)
 {}
+
+processing_frame_tree::processing_frame_tree()
+    : m_root(&*m_frames.emplace(processing_frame_node { nullptr, processing_frame({}, {}, {}) }).first)
+{}
+
+processing_frame_tree::node_pointer processing_frame_tree::step(processing_frame next, node_pointer current)
+{
+    assert(current.m_node);
+
+    return node_pointer(&*m_frames.emplace(processing_frame_node { current.m_node, next }).first);
+}
+
+
+std::vector<processing_frame> processing_frame_tree::node_pointer::to_vector() const
+{
+    std::vector<processing_frame> result;
+    to_vector(result);
+    return result;
+}
+void processing_frame_tree::node_pointer::to_vector(std::vector<processing_frame>& result) const
+{
+    result.clear();
+
+    for (auto it = *this; !it.empty(); it = it.parent())
+        result.emplace_back(it.frame());
+
+    std::reverse(result.begin(), result.end());
+}
