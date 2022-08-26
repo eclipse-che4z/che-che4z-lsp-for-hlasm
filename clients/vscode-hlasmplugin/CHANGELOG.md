@@ -20,6 +20,7 @@
 - Improve performance of generating document outline
 - Reduce memory footprint
 - The language server may crash when a line is continued by the preprocessor output
+- Invalid CA variable definition may crash the language server
 
 ## [1.3.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.2.0...1.3.0) (2022-06-30)
 

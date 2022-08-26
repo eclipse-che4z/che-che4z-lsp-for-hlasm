@@ -309,7 +309,7 @@ var_def returns [vs_ptr vs]
 			$vs = std::make_unique<created_variable_symbol>(std::move($var_def_name.created_name), std::move($var_def_substr.value), r);	
 	};
 
-var_def_name returns [id_index name, concat_chain created_name]
+var_def_name returns [id_index name = id_storage::empty_id, concat_chain created_name]
 	: AMPERSAND?
 	(
 		vs_id									{$name = $vs_id.name;}

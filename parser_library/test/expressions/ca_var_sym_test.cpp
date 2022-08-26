@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "../common_testing.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/evaluation_context.h"
@@ -64,4 +65,17 @@ TEST(ca_var_sym_created, undefined_attributes)
     auto res = var.get_undefined_attributed_symbols(eval_ctx);
 
     ASSERT_EQ(res.size(), 0U);
+}
+
+TEST(ca_var_sym, invalid_definitions)
+{
+    std::string input = R"(
+    GBLC (([
+    GBLC (([
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "S0002" }));
 }
