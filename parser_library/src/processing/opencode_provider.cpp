@@ -381,12 +381,24 @@ utils::resource::resource_location generate_virtual_file_name(virtual_file_id id
     return utils::resource::resource_location(std::move(result));
 }
 
+namespace {
+size_t extract_current_line(size_t next_line_index, const document& doc)
+{
+    while (next_line_index--)
+    {
+        if (const auto& lineno = doc.at(next_line_index).lineno(); lineno.has_value())
+            return lineno.value() + 1;
+    }
+    return 0;
+}
+} // namespace
+
 bool opencode_provider::try_running_preprocessor()
 {
     if (m_next_line_index >= m_input_document.size() || m_input_document.at(m_next_line_index).is_original())
         return false;
 
-    const auto current_line = m_next_line_index ? m_input_document.at(m_next_line_index - 1).lineno().value() + 1 : 0;
+    const auto current_line = extract_current_line(m_next_line_index, m_input_document);
 
     std::string preprocessor_text;
     auto it = m_input_document.begin() + m_next_line_index;

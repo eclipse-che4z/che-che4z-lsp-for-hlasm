@@ -943,3 +943,14 @@ TEST(db2_preprocessor, conditional)
         0);
     EXPECT_TRUE(std::all_of(result.begin(), result.end(), [](const auto& l) { return !l.is_original(); }));
 }
+
+TEST(db2_preprocessor, preprocessor_continuation_overflow)
+{
+    std::string input = "*PROCESS XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+
+    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+    EXPECT_NO_FATAL_FAILURE(a.analyze());
+    a.collect_diags();
+
+    EXPECT_FALSE(a.diags().empty());
+}
