@@ -241,11 +241,13 @@ jobs:
       image: alpine:3.15
 
     steps:
-      - uses: actions/checkout@v2
       - name: Requirements install
         run: |
           apk update
           apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk11 maven
+      - name: Workaround for git safe.directory feature
+        run: git config --global --add safe.directory '*'
+      - uses: actions/checkout@v2
       - name: Extract branch name
         run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
       - name: Update version
