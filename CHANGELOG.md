@@ -1,3 +1,39 @@
+## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
+
+
+### Features
+
+* Code completion for machine instructions and mnemonics utilizes snippets ([b17bc3a](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/b17bc3aab459b5deb294b6c9f4a1bd8824064deb))
+* Copybook download command ([f383f68](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f383f685e6a43fdd4987165d36adc2fc085de3cd))
+* Preprocessor for expanding Endevor includes ([5e542e4](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/5e542e46b5ff146976058a08ee21f2d356dc81a5))
+* Support for multiple preprocessors ([6029009](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/60290095469b827ae424048b302965914742ded5))
+
+
+### Other changes
+
+* **ci:** Reorganize build and check jobs ([f47ea12](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f47ea1265a63550ef61aed43c689c0c2ec81fc3a))
+* Handling of UTF-8 chars in URLs ([4dc5177](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/4dc51776725b86cd09da2602e65a18824ef7d870))
+* Minor doc update and typos ([62d8287](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/62d82874d035127c723c25819a533b29d0d462d9))
+* ORG instruction ([25761e8](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/25761e85f1980aac43499b787164264dd4b67f82))
+* Sonar workflow update for prev job failures ([11c38fe](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/11c38fe63e1c077dd08d0c6e19626eaaf8b8976d))
+* Update llvm brew ref ([29ced13](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/29ced13073d72945e47648442cbae7336cfca91a))
+* Update README.md ([a8536d7](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/a8536d7a05a698bd77ceff2b25117c5e01b71dc8))
+
+
+### Fixes
+
+* False positive diagnostics generated for statements included by the COPY instruction ([fb95c5e](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/fb95c5e7e136cc6b062382e2d1ddc4ae783e79f1))
+* Improve CICS preprocessor accuracy ([f59d218](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f59d2183b7b786a548f88a0698cefe7fa3a86d83))
+* Improve parsing performance of CA operands ([dbcdcff](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/dbcdcff2f3128c529ae3c2d169b83570daa80003))
+* Improve performance of dependency tracking and expression evaluation ([f1fcc19](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f1fcc198cfa5ad8146c6e79d76f2052bc6ec3551))
+* Improve performance of file system event processing ([0a39937](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/0a399375420a5c5a5ece295a6356b0d352ac6ded))
+* Improve performance of generating document outline ([c4695da](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/c4695da23477a5cf747da99330068f3a3dd9b7a8))
+* Invalid CA variable definition may crash the language server ([70516e4](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/70516e4f05810822a71fa3dd4fef7cc14dbf93fd))
+* Reduce memory footprint ([34e37cc](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/34e37cc8bd9bc09e30acb5a63fe173718615e3ee))
+* Sequence symbol redefinition diagnostic issued even for symbols excluded by CA statements ([e94f03d](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e94f03ddca2c88cae9c7758cd0e203eaee68f279))
+* The language server may crash when a line is continued by the preprocessor output ([0bda7f1](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/0bda7f158a075f864a65998390c0626dd873a3e9))
+* Validation of mnemonics with optional operands produced incorrect diagnostics ([947cb40](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/947cb4049b19cec8d52690c84ea316867240a03d))
+
 ## [1.3.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.2.0...1.3.0) (2022-06-30)
 
 

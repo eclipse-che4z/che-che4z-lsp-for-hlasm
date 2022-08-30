@@ -1,6 +1,6 @@
 # Changelog
 
-## ****Unreleased****
+## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
 
 #### Added
 - Command for downloading copybook datasets from the mainframe
