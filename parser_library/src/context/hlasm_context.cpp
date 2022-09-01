@@ -60,6 +60,7 @@ bool instruction_available(instruction_set_affiliation instr_set_affiliation, in
         case instruction_set_version::Z13:
         case instruction_set_version::Z14:
         case instruction_set_version::Z15:
+        case instruction_set_version::Z16:
             return instr_set_affiliation.z_arch == z_arch_affiliation::NO_AFFILIATION
                 ? false
                 : instr_set_affiliation.z_arch <= active_instr_set;

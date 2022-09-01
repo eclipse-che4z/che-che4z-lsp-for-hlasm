@@ -329,6 +329,9 @@ bool one_operand::check(
 }
 
 empty_operand::empty_operand() {}
+empty_operand::empty_operand(range r)
+    : operand(r)
+{}
 
 bool empty_operand::check(
     diagnostic_op& diag, const machine_operand_format&, std::string_view instr_name, const range&) const
@@ -379,13 +382,16 @@ std::string parameter::to_string() const
     return ret_val;
 }
 
-std::string machine_operand_format::to_string() const
+std::string machine_operand_format::to_string(std::optional<size_t> i) const
 {
-    std::string ret_val = identifier.to_string();
-    if (first.is_empty() && second.is_empty())
-        return ret_val;
-    if (first.is_empty())
-        return (ret_val + "(" + second.to_string() + ")");
-    // only second cannot be empty
-    return (ret_val + "(" + first.to_string() + "," + second.to_string() + ")");
+    const auto index = i.has_value() ? std::to_string(i.value()) : std::string();
+    std::string ret_val = identifier.to_string() + index;
+    if (!first.is_empty() || !second.is_empty())
+    {
+        ret_val.append("(");
+        if (!first.is_empty()) // only second cannot be empty
+            ret_val.append(first.to_string()).append(index).append(",");
+        ret_val.append(second.to_string()).append(index).append(")");
+    }
+    return ret_val;
 }

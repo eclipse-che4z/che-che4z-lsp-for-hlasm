@@ -99,6 +99,8 @@ TEST(processor_group, asm_options_optable_valid)
         std::make_pair("ZS8", instruction_set_version::Z14),
         std::make_pair("Z15", instruction_set_version::Z15),
         std::make_pair("ZS9", instruction_set_version::Z15),
+        std::make_pair("Z16", instruction_set_version::Z16),
+        std::make_pair("ZSA", instruction_set_version::Z16),
         std::make_pair("UNI", instruction_set_version::UNI),
         std::make_pair("DOS", instruction_set_version::DOS),
         std::make_pair("370", instruction_set_version::_370),
@@ -139,6 +141,7 @@ TEST(processor_group, asm_options_machine_valid)
         std::make_pair("ARCH-11", instruction_set_version::Z13),
         std::make_pair("ARCH-12", instruction_set_version::Z14),
         std::make_pair("ARCH-13", instruction_set_version::Z15),
+        std::make_pair("ARCH-14", instruction_set_version::Z16),
         std::make_pair("ARCH-2", instruction_set_version::ESA),
         std::make_pair("ARCH-3", instruction_set_version::ESA),
         std::make_pair("ARCH-4", instruction_set_version::ESA),
@@ -169,6 +172,7 @@ TEST(processor_group, asm_options_machine_valid)
         std::make_pair("z13", instruction_set_version::Z13),
         std::make_pair("z14", instruction_set_version::Z14),
         std::make_pair("z15", instruction_set_version::Z15),
+        std::make_pair("z16", instruction_set_version::Z16),
         std::make_pair("z196", instruction_set_version::Z11),
         std::make_pair("z800", instruction_set_version::ZOP),
         std::make_pair("z890", instruction_set_version::YOP),
@@ -187,6 +191,7 @@ TEST(processor_group, asm_options_machine_valid)
         std::make_pair("zSeries-7", instruction_set_version::Z13),
         std::make_pair("zSeries-8", instruction_set_version::Z14),
         std::make_pair("zSeries-9", instruction_set_version::Z15),
+        std::make_pair("zSeries-10", instruction_set_version::Z16),
     };
 
     for (const auto& [input, expected] : cases)

@@ -21,6 +21,7 @@
 #include <functional>
 #include <limits>
 #include <map>
+#include <numeric>
 #include <set>
 #include <span>
 #include <string>
@@ -48,6 +49,7 @@ enum class z_arch_affiliation : uint16_t
     SINCE_Z13,
     SINCE_Z14,
     SINCE_Z15,
+    SINCE_Z16,
 };
 
 struct instruction_set_affiliation
@@ -146,6 +148,8 @@ enum class mach_format : unsigned char
     VRR_g,
     VRR_h,
     VRR_i,
+    VRR_j,
+    VRR_k,
     VRS_d,
     VSI,
 };
@@ -365,7 +369,7 @@ public:
         , m_operand_len((unsigned char)operands.size())
         , m_operands(operands.data())
     {
-        assert(operands.size() <= std::numeric_limits<decltype(m_operand_len)>::max());
+        assert(operands.size() <= max_operand_count);
     }
     constexpr machine_instruction(std::string_view name,
         instruction_format_definition ifd,
@@ -398,11 +402,12 @@ public:
     constexpr size_t optional_operand_count() const { return m_optional_op_count; }
     constexpr const instruction_set_affiliation& instr_set_affiliation() const { return m_instr_set_affiliation; };
 
-    bool check_nth_operand(size_t place, const checking::machine_operand* operand);
     bool check(std::string_view name_of_instruction,
         const std::vector<const checking::machine_operand*> operands,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const; // input vector is the vector of the actual incoming values
+
+    static constexpr const size_t max_operand_count = 16;
 };
 
 class ca_instruction
@@ -420,48 +425,108 @@ public:
     constexpr auto operandless() const { return m_operandless; }
 };
 
+enum class mnemonic_transformation_kind : unsigned char
+{
+    value,
+    copy,
+    or_with,
+    add_to,
+    subtract_from,
+    complement,
+};
+
+struct mnemonic_transformation
+{
+    unsigned char skip : 4 = 0;
+    unsigned char source : 4 = 0;
+    mnemonic_transformation_kind type : 4 = mnemonic_transformation_kind::value;
+    bool insert : 1 = 1;
+    bool reserved : 3 = 0;
+    unsigned short value = 0;
+
+    constexpr mnemonic_transformation() = default;
+    constexpr mnemonic_transformation(unsigned short v)
+        : value(v)
+    {}
+    constexpr mnemonic_transformation(unsigned char skip, unsigned short v, bool insert = true)
+        : skip(skip)
+        , insert(insert)
+        , value(v)
+    {
+        assert(skip < machine_instruction::max_operand_count);
+    }
+    constexpr mnemonic_transformation(unsigned char skip, mnemonic_transformation_kind t, unsigned char src)
+        : skip(skip)
+        , source(src)
+        , type(t)
+    {
+        assert(t == mnemonic_transformation_kind::copy);
+        assert(skip < machine_instruction::max_operand_count);
+        assert(src < machine_instruction::max_operand_count);
+    }
+    constexpr mnemonic_transformation(
+        unsigned char skip, unsigned short v, mnemonic_transformation_kind t, unsigned char src, bool insert = true)
+        : skip(skip)
+        , source(src)
+        , type(t)
+        , insert(insert)
+        , value(v)
+    {
+        assert(t != mnemonic_transformation_kind::copy && t != mnemonic_transformation_kind::value);
+        assert(skip < machine_instruction::max_operand_count);
+        assert(src < machine_instruction::max_operand_count);
+    }
+
+    constexpr bool has_source() const { return type != mnemonic_transformation_kind::value; }
+};
+
 // representation of mnemonic codes for machine instructions
 class mnemonic_code
 {
     const machine_instruction* m_instruction;
 
-    // first goes place, then value
-    std::array<std::pair<unsigned char, unsigned short>, 3> m_replaced;
-    unsigned char m_replaced_count;
+    std::array<mnemonic_transformation, 3> m_transform;
+    unsigned char m_transform_count;
 
     reladdr_transform_mask m_reladdr_mask;
 
     instruction_set_affiliation m_instr_set_affiliation;
 
     inline_string<9> m_name;
+    unsigned char m_op_min : 4 = 0;
+    unsigned char m_op_max : 4 = 0;
+    // unsigned char available = 0;
 
-    // Generates a bitmask for an arbitrary mnemonic indicating which operands
-    // are of the RI type (and therefore are modified by transform_reloc_imm_operands)
+    //  Generates a bitmask for an arbitrary mnemonic indicating which operands
+    //  are of the RI type (and therefore are modified by transform_reloc_imm_operands)
     static constexpr unsigned char generate_reladdr_bitmask(
-        const machine_instruction* instruction, std::initializer_list<const std::pair<int, int>> replaced)
+        const machine_instruction* instruction, std::span<const mnemonic_transformation> transforms)
     {
         unsigned char result = 0;
 
         decltype(result) top_bit = 1 << (std::numeric_limits<decltype(result)>::digits - 1);
 
-        auto replaced_b = replaced.begin();
-        auto const replaced_e = replaced.end();
+        auto transforms_b = transforms.begin();
+        auto const transforms_e = transforms.end();
 
-        size_t position = 0;
-        for (const auto& op : instruction->operands())
+        for (size_t processed = 0; const auto& op : instruction->operands())
         {
-            if (replaced_b != replaced_e && position == replaced_b->first)
+            if (transforms_b != transforms_e && processed == transforms_b->skip)
             {
-                ++replaced_b;
-                ++position;
+                assert(op.identifier.type == checking::machine_operand_type::IMM
+                    || op.identifier.type == checking::machine_operand_type::MASK
+                    || op.identifier.type == checking::machine_operand_type::REG
+                    || op.identifier.type == checking::machine_operand_type::VEC_REG);
+                top_bit >>= +!transforms_b++->insert;
+                processed = 0;
                 continue;
             }
 
             if (op.identifier.type == checking::machine_operand_type::RELOC_IMM)
                 result |= top_bit;
-            top_bit >>= 1;
 
-            ++position;
+            top_bit >>= 1;
+            ++processed;
         }
         return result;
     }
@@ -469,34 +534,37 @@ class mnemonic_code
 public:
     constexpr mnemonic_code(std::string_view name,
         const machine_instruction* instr,
-        std::initializer_list<const std::pair<int, int>> replaced,
+        std::initializer_list<const mnemonic_transformation> transform,
         instruction_set_affiliation instr_set_affiliation)
         : m_instruction(instr)
-        , m_replaced {}
-        , m_replaced_count((unsigned char)replaced.size())
-        , m_reladdr_mask(generate_reladdr_bitmask(instr, replaced))
+        , m_transform {}
+        , m_transform_count((unsigned char)transform.size())
+        , m_reladdr_mask(generate_reladdr_bitmask(instr, transform))
         , m_instr_set_affiliation(instr_set_affiliation)
         , m_name(name)
     {
-        assert(replaced.size() <= m_replaced.size());
-        for (size_t i = 0; const auto& [a, b] : replaced)
-        {
-            assert(static_cast<unsigned char>(a) == a && static_cast<unsigned short>(b) == b
-                && static_cast<unsigned char>(a) < instr->operands().size() + instr->optional_operand_count());
-            m_replaced[i] = std::make_pair(static_cast<unsigned char>(a), static_cast<unsigned short>(b));
-            i++;
-        }
-    };
+        assert(transform.size() <= m_transform.size());
+        std::copy(transform.begin(), transform.end(), m_transform.begin());
+        const auto insert_count = std::count_if(transform.begin(), transform.end(), [](auto t) { return t.insert; });
+        const auto total = std::accumulate(
+            transform.begin(), transform.end(), (size_t)0, [](size_t res, auto t) { return res + t.skip + t.insert; });
+        assert(total <= instr->operands().size());
+
+        m_op_max = instr->operands().size() - insert_count;
+        m_op_min = instr->operands().size() - instr->optional_operand_count() - insert_count;
+        assert(m_op_max <= instr->operands().size());
+        assert(m_op_min <= m_op_max);
+
+        for (const auto& r : transform)
+            assert(!r.has_source() || r.source < m_op_max);
+    }
 
     constexpr const machine_instruction* instruction() const { return m_instruction; }
-    constexpr std::span<const std::pair<unsigned char, unsigned short>> replaced_operands() const
+    constexpr std::span<const mnemonic_transformation> operand_transformations() const
     {
-        return { m_replaced.data(), m_replaced_count };
+        return { m_transform.data(), m_transform_count };
     }
-    constexpr size_t operand_count() const
-    {
-        return m_instruction->operands().size() + m_instruction->optional_operand_count() - m_replaced_count;
-    }
+    constexpr std::pair<size_t, size_t> operand_count() const { return { m_op_min, m_op_max }; }
     constexpr reladdr_transform_mask reladdr_mask() const { return m_reladdr_mask; }
     constexpr std::string_view name() const { return m_name.to_string_view(); }
     constexpr const instruction_set_affiliation& instr_set_affiliation() const { return m_instr_set_affiliation; };

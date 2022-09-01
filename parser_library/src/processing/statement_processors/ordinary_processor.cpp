@@ -200,7 +200,7 @@ struct processing_status_visitor
     processing_status operator()(const context::mnemonic_code* i) const
     {
         return return_value(processing_form::MACH,
-            i->operand_count() == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            i->operand_count().second == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT,
             context::instruction_type::MACH);
     }
     template<typename T>
