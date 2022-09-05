@@ -298,9 +298,9 @@ X EQU 1
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->symbol_location, location({ 6, 0 }, resource_location("test")));
-    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "XX")->symbol_location, location({ 3, 0 }, resource_location("test")));
-    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "XXX")->symbol_location, location({ 0, 0 }, resource_location("COPYF")));
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->symbol_location(), location({ 6, 0 }, resource_location("test")));
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "XX")->symbol_location(), location({ 3, 0 }, resource_location("test")));
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "XXX")->symbol_location(), location({ 0, 0 }, resource_location("COPYF")));
 }
 
 TEST(ordinary_symbols, alignment_cycle)

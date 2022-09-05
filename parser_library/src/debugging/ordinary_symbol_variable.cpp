@@ -30,7 +30,7 @@ static const std::string complex_string = "COMPLEX";
 
 ordinary_symbol_variable::ordinary_symbol_variable(const context::symbol& symbol)
     : symbol_(symbol)
-    , name_(*symbol_.name)
+    , name_(*symbol_.name())
 {
     value_ = get_string_value();
 }

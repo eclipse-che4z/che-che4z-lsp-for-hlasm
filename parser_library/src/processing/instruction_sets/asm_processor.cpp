@@ -80,10 +80,10 @@ void asm_processor::process_sect(const context::section_kind kind, rebuilt_state
         return false;
     };
 
-    if (hlasm_ctx.ord_ctx.symbol_defined(sect_name)
-        && (sect_name != context::id_storage::empty_id && !hlasm_ctx.ord_ctx.section_defined(sect_name, kind)
-            || sect_name == context::id_storage::empty_id && kind != section_kind::DUMMY
-                && do_other_private_sections_exist(sect_name, kind)))
+    if (sect_name != context::id_storage::empty_id && hlasm_ctx.ord_ctx.symbol_defined(sect_name)
+            && !hlasm_ctx.ord_ctx.section_defined(sect_name, kind)
+        || sect_name == context::id_storage::empty_id && kind != section_kind::DUMMY
+            && do_other_private_sections_exist(sect_name, kind))
     {
         add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
     }

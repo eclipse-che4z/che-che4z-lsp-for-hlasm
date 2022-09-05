@@ -678,15 +678,13 @@ TEST(data_attributes, forward_attr_ref_fail)
 {
     std::string input = R"(
 A EQU L'Q
-B EQU T'W
-
 )";
 
     analyzer a(input);
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)2);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(data_attributes, attr_cycle_ok)
@@ -977,4 +975,116 @@ TEST(data_attributes, delayed_literal_definition)
 
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "B"), false);
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C"), "M");
+}
+
+TEST(data_attributes, mach_O_opencode_ord)
+{
+    std::string input = R"(
+    MACRO
+    M
+    MEND
+
+V1  EQU   O'LR
+V2  EQU   O'ORG
+V3  EQU   O'SETC
+V4  EQU   O'J
+V5  EQU   O'M
+V6  EQU   O'UNKNOWN
+
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "V1"), 0xD6);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "V2"), 0xC1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "V3"), 0xC1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "V4"), 0xC5);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "V5"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "V6"), 0xE4);
+}
+
+TEST(data_attributes, mach_variable_type)
+{
+    std::string input = R"(
+         MACRO
+&L       MAC   &E
+         GBLA  &I
+&I       SETA  &I+1
+&C       SETC  (UPPER '&E')
+L&I      EQU   T'&L
+E&I      EQU   T'&E
+C&I      EQU   T'&C
+         MEND
+A        MAC   A
+A        EQU   1
+A        MAC   A
+$        MAC   $
+3        MAC   3
+_        MAC   _
+A_       MAC   A_
+=        MAC   =
+=A(0)    MAC   =A(0)
+=A(0)    MAC   =A(0+0)
+* TODO: NOT SUPPORTED BECAUSE OF OUTSTANDING LABEL PARSING ISSUE
+*=C' '    MAC   =C' '
+*=C'A'    MAC   =C'A'
+         END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L1"), 0xE4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E1"), 0xE4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C1"), 0xE4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L2"), 0xE4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E2"), 0xE4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C2"), 0xE4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L3"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E3"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C3"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L4"), std::nullopt);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E4"), std::nullopt);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C4"), std::nullopt);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L5"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E5"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C5"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L6"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E6"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C6"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L7"), std::nullopt);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E7"), std::nullopt);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C7"), std::nullopt);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L8"), 0xC1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E8"), 0xC1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C8"), 0xC1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L9"), 0xC1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E9"), 0xC1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C9"), 0xC1);
+    // EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L10"), 0xC3);
+    // EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E10"), 0xC3);
+    // EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C10"), 0xC3);
+    // EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L11"), 0xC3);
+    // EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E11"), 0xC3);
+    // EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C11"), 0xC3);
+}
+
+TEST(data_attributes, mach_variable_type_no_macros)
+{
+    std::string input = R"(
+V1 EQU T'W
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "V1"), 0xE4);
 }

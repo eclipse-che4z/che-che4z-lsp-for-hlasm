@@ -209,13 +209,16 @@ void symbol_dependency_tables::resolve_dependant_default(const dependant& target
 void symbol_dependency_tables::resolve(
     std::variant<id_index, space_ptr> what_changed, diagnostic_s_consumer* diag_consumer)
 {
-    const auto resolvable = [this, diag_consumer, &what_changed](std::pair<const dependant, dependency_value>& v) {
-        std::erase_if(v.second.m_last_dependencies, [&what_changed](const auto& d) {
-            return what_changed == d || std::holds_alternative<space_ptr>(d) && std::get<space_ptr>(d)->resolved();
+    const auto cleanup_deps = [&what_changed](auto& entry) {
+        std::erase_if(entry.m_last_dependencies, [&what_changed](const auto& v) {
+            return what_changed == v || std::holds_alternative<space_ptr>(v) && std::get<space_ptr>(v)->resolved();
         });
+    };
+    const auto resolvable = [this, diag_consumer, &cleanup_deps](std::pair<const dependant, dependency_value>& v) {
+        cleanup_deps(v.second);
         if (!diag_consumer && std::holds_alternative<space_ptr>(v.first))
             return false;
-        if (!v.second.m_last_dependencies.empty())
+        if (!v.second.m_last_dependencies.empty() || (v.second.m_has_t_attr_dependency && !diag_consumer))
             return false;
         return !update_dependencies(v.second);
     };
@@ -228,14 +231,9 @@ void symbol_dependency_tables::resolve(
         try_erase_source_statement(target);
 
         for (auto nested = std::next(it); nested != m_dependencies.end(); ++nested)
-        {
-            std::erase_if(nested->second.m_last_dependencies, [&what_changed](const auto& v) {
-                return what_changed == v || std::holds_alternative<space_ptr>(v) && std::get<space_ptr>(v)->resolved();
-            });
-        }
+            cleanup_deps(nested->second);
 
-        what_changed = std::visit(dependant_visitor(), target);
-        m_dependencies.erase(it);
+        what_changed = std::visit(dependant_visitor(), std::move(m_dependencies.extract(it).key()));
     }
 }
 
@@ -290,12 +288,19 @@ bool symbol_dependency_tables::update_dependencies(dependency_value& d)
     auto deps = d.m_resolvable->get_dependencies(dep_solver);
 
     d.m_last_dependencies.clear();
+    d.m_has_t_attr_dependency = false;
+
     d.m_last_dependencies.insert(
         d.m_last_dependencies.end(), deps.undefined_symbols.begin(), deps.undefined_symbols.end());
     for (const auto& dep : deps.undefined_attr_refs)
-        d.m_last_dependencies.emplace_back(dep.symbol_id);
+    {
+        if (dep.attribute != context::data_attr_kind::T)
+            d.m_last_dependencies.emplace_back(dep.symbol_id);
+        else
+            d.m_has_t_attr_dependency = true;
+    }
 
-    if (!d.m_last_dependencies.empty())
+    if (!d.m_last_dependencies.empty() || d.m_has_t_attr_dependency)
         return true;
 
     for (const auto& sp : deps.unresolved_spaces)

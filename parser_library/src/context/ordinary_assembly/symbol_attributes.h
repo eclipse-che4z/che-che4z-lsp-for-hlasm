@@ -86,10 +86,11 @@ struct symbol_attributes
         len_attr integer = undef_length);
     symbol_attributes(symbol_origin origin);
 
-    type_attr type() const;
-    len_attr length() const;
-    scale_attr scale() const;
-    len_attr integer() const;
+    symbol_origin origin() const { return origin_; }
+    type_attr type() const { return type_; }
+    len_attr length() const { return length_; }
+    scale_attr scale() const { return scale_; }
+    len_attr integer() const { return integer_; }
 
     bool is_defined(data_attr_kind attribute) const;
 
@@ -102,9 +103,9 @@ struct symbol_attributes
     // sets scale if undefined
     void scale(scale_attr value);
 
-    const symbol_origin origin;
 
 private:
+    symbol_origin origin_;
     type_attr type_;
     len_attr length_;
     scale_attr scale_;

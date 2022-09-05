@@ -24,17 +24,19 @@
 #include "context/using.h"
 
 namespace hlasm_plugin::parser_library::context {
+
+bool symbol_can_be_assigned(const auto& symbols, auto name)
+{
+    auto it = symbols.find(name);
+    return it == symbols.end() || std::holds_alternative<macro_label_tag>(it->second);
+}
+
 void ordinary_assembly_context::create_private_section()
 {
     curr_section_ = create_section(id_storage::empty_id, section_kind::EXECUTABLE);
 }
 
 const std::vector<std::unique_ptr<section>>& ordinary_assembly_context::sections() const { return sections_; }
-
-const std::unordered_map<id_index, std::variant<symbol, label_tag>>& ordinary_assembly_context::symbols() const
-{
-    return symbols_;
-}
 
 ordinary_assembly_context::ordinary_assembly_context(hlasm_context& hlasm_ctx)
     : curr_section_(nullptr)
@@ -48,16 +50,10 @@ ordinary_assembly_context::~ordinary_assembly_context() = default;
 bool ordinary_assembly_context::create_symbol(
     id_index name, symbol_value value, symbol_attributes attributes, location symbol_location)
 {
-    auto [_, inserted] = symbols_.try_emplace(name,
-        std::in_place_type_t<symbol>(),
-        name,
-        value,
-        attributes,
-        std::move(symbol_location),
-        hlasm_ctx_.processing_stack());
+    assert(symbol_can_be_assigned(symbols_, name));
 
-    if (!inserted)
-        throw std::runtime_error("symbol name in use");
+    symbols_.insert_or_assign(
+        name, symbol(name, value, attributes, std::move(symbol_location), hlasm_ctx_.processing_stack()));
 
     bool ok = true;
 
@@ -69,7 +65,7 @@ bool ordinary_assembly_context::create_symbol(
 
 void ordinary_assembly_context::add_symbol_reference(symbol sym)
 {
-    auto [it, _] = symbol_refs_.try_emplace(sym.name, std::move(sym));
+    auto [it, _] = symbol_refs_.try_emplace(sym.name(), std::move(sym));
     symbol_dependencies.add_defined(it->first);
 }
 
@@ -111,20 +107,20 @@ section* ordinary_assembly_context::set_section(id_index name, section_kind kind
         curr_section_ = &**tmp;
     else
     {
-        if (name != id_storage::empty_id && symbols_.find(name) != symbols_.end())
-            throw std::invalid_argument("symbol already defined");
-
         curr_section_ = create_section(name, kind);
 
         auto tmp_addr = curr_section_->current_location_counter().current_address();
-        symbols_.try_emplace(name,
-            std::in_place_type_t<symbol>(),
-            name,
-            tmp_addr,
-            symbol_attributes::make_section_attrs(),
-            std::move(symbol_location),
-            hlasm_ctx_.processing_stack());
-        symbol_dependencies.add_defined(name);
+        if (name != id_storage::empty_id)
+        {
+            assert(symbol_can_be_assigned(symbols_, name));
+            symbols_.insert_or_assign(name,
+                symbol(name,
+                    tmp_addr,
+                    symbol_attributes::make_section_attrs(),
+                    std::move(symbol_location),
+                    hlasm_ctx_.processing_stack()));
+            symbol_dependencies.add_defined(name);
+        }
     }
 
     return curr_section_;
@@ -145,15 +141,15 @@ void ordinary_assembly_context::create_external_section(
         }
     }();
 
-    auto [it, inserted] = symbols_.try_emplace(name,
-        std::in_place_type_t<symbol>(),
-        name,
-        create_section(name, kind)->current_location_counter().current_address(),
-        attrs,
-        std::move(symbol_location),
-        processing_stack);
 
-    assert(inserted);
+    assert(symbol_can_be_assigned(symbols_, name));
+
+    symbols_.insert_or_assign(name,
+        symbol(name,
+            create_section(name, kind)->current_location_counter().current_address(),
+            attrs,
+            std::move(symbol_location),
+            std::move(processing_stack)));
 }
 
 void ordinary_assembly_context::set_location_counter(id_index name, location symbol_location)
@@ -178,14 +174,14 @@ void ordinary_assembly_context::set_location_counter(id_index name, location sym
     {
         auto tmp_addr = curr_section_->current_location_counter().current_address();
 
-        auto [_, inserted] = symbols_.try_emplace(name,
-            std::in_place_type_t<symbol>(),
-            name,
-            tmp_addr,
-            symbol_attributes::make_section_attrs(),
-            std::move(symbol_location),
-            hlasm_ctx_.processing_stack());
-        assert(inserted);
+        assert(symbol_can_be_assigned(symbols_, name));
+        symbols_.insert_or_assign(name,
+            symbol(name,
+                tmp_addr,
+                symbol_attributes::make_section_attrs(),
+                std::move(symbol_location),
+                hlasm_ctx_.processing_stack()));
+
         symbol_dependencies.add_defined(name);
     }
 }
@@ -250,7 +246,11 @@ void ordinary_assembly_context::set_available_location_counter_value()
         symbol_dependencies.add_dependency(sp, std::make_unique<aggregate_address_resolver>(std::move(addr), 0, 0), {});
 }
 
-bool ordinary_assembly_context::symbol_defined(id_index name) const { return symbols_.find(name) != symbols_.end(); }
+bool ordinary_assembly_context::symbol_defined(id_index name) const
+{
+    auto it = symbols_.find(name);
+    return it != symbols_.end() && !std::holds_alternative<macro_label_tag>(it->second);
+}
 
 bool ordinary_assembly_context::section_defined(id_index name, section_kind kind) const
 {
@@ -351,15 +351,14 @@ void ordinary_assembly_context::generate_pool(diagnosable_ctx& diags, index_t<us
 bool ordinary_assembly_context::is_using_label(id_index name) const
 {
     auto it = symbols_.find(name);
-    return it != symbols_.end() && std::holds_alternative<label_tag>(it->second);
+    return it != symbols_.end() && std::holds_alternative<using_label_tag>(it->second);
 }
 
 void ordinary_assembly_context::register_using_label(id_index name)
 {
-    auto [_, inserted] = symbols_.try_emplace(name, std::in_place_type_t<label_tag>());
+    assert(symbol_can_be_assigned(symbols_, name));
 
-    if (!inserted)
-        throw std::runtime_error("symbol name in use");
+    symbols_.insert_or_assign(name, using_label_tag {});
 }
 
 index_t<using_collection> ordinary_assembly_context::current_using() const { return hlasm_ctx_.using_current(); }
@@ -376,5 +375,12 @@ bool ordinary_assembly_context::using_label_active(
 
     return usings.is_label_mapping_section(context_id, label, sect);
 }
+
+void ordinary_assembly_context::symbol_mentioned_on_macro(id_index name)
+{
+    symbols_.try_emplace(name, macro_label_tag {});
+}
+
+void ordinary_assembly_context::start_reporting_label_candidates() { reporting_candidates = true; }
 
 } // namespace hlasm_plugin::parser_library::context

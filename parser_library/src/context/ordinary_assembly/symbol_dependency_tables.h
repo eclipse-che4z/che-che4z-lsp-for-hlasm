@@ -72,6 +72,7 @@ class symbol_dependency_tables
         const resolvable* m_resolvable;
         dependency_evaluation_context m_dec;
         std::vector<std::variant<id_index, space_ptr>> m_last_dependencies;
+        bool m_has_t_attr_dependency = false;
 
         dependency_value(const resolvable* r, dependency_evaluation_context dec)
             : m_resolvable(r)

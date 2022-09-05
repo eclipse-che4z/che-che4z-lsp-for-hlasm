@@ -23,6 +23,7 @@
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "instruction.h"
 #include "lexing/lexer.h"
+#include "lexing/tools.h"
 #include "using.h"
 
 namespace hlasm_plugin::parser_library::context {
@@ -807,7 +808,7 @@ SET_t hlasm_context::get_attribute_value_ord(data_attr_kind attribute, const sym
             return "U";
         case data_attr_kind::O:
             if (symbol)
-                return get_opcode_attr(symbol->name);
+                return get_opcode_attr(symbol->name());
             return "U";
         default:
             if (symbol)
@@ -829,14 +830,14 @@ struct opcode_attr_visitor
     }
 };
 
-C_t hlasm_context::get_opcode_attr(id_index symbol)
+C_t hlasm_context::get_opcode_attr(id_index symbol) const
 {
     if (auto it = macros_.find(symbol); it != macros_.end())
         return "M";
 
     if (auto it = m_instruction_map.find(symbol); it != m_instruction_map.end())
     {
-        auto& [opcode, detail] = *it;
+        const auto& [opcode, detail] = *it;
         return std::visit(opcode_attr_visitor(), detail);
     }
 
@@ -900,6 +901,12 @@ macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_pa
 
     macro_def_ptr macro_def = get_macro_definition(name);
     assert(macro_def);
+
+    if (label_param_data)
+    {
+        if (auto label = label_param_data->get_value(); lexing::is_valid_symbol_name(label))
+            ord_ctx.symbol_mentioned_on_macro(ids().add(std::move(label)));
+    }
 
     auto invo = macro_def->call(std::move(label_param_data), std::move(params), ids().add("SYSLIST"));
     auto& new_scope = scope_stack_.emplace_back(invo, macro_def);

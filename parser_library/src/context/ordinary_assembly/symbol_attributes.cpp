@@ -125,7 +125,7 @@ SET_t symbol_attributes::default_ca_value(data_attr_kind attribute)
 }
 
 symbol_attributes::symbol_attributes(symbol_origin origin)
-    : origin(origin)
+    : origin_(origin)
     , type_(undef_type)
     , length_(undef_length)
     , scale_(undef_scale)
@@ -134,16 +134,12 @@ symbol_attributes::symbol_attributes(symbol_origin origin)
 
 symbol_attributes::symbol_attributes(
     symbol_origin origin, type_attr type, len_attr length, scale_attr scale, len_attr integer)
-    : origin(origin)
+    : origin_(origin)
     , type_(type)
     , length_(length)
     , scale_(scale)
     , integer_(integer)
 {}
-
-symbol_attributes::type_attr symbol_attributes::type() const { return type_; }
-
-symbol_attributes::len_attr symbol_attributes::length() const { return length_; }
 
 void symbol_attributes::length(len_attr value)
 {
@@ -154,11 +150,6 @@ void symbol_attributes::scale(scale_attr value)
 {
     scale_ == undef_scale ? scale_ = value : throw std::runtime_error("value can be assigned only once");
 }
-
-symbol_attributes::scale_attr symbol_attributes::scale() const { return scale_; }
-
-
-symbol_attributes::len_attr symbol_attributes::integer() const { return integer_; }
 
 bool symbol_attributes::is_defined(data_attr_kind attribute) const
 {
@@ -179,7 +170,7 @@ bool symbol_attributes::is_defined(data_attr_kind attribute) const
 
 bool symbol_attributes::can_have_SI_attr() const
 {
-    return origin == symbol_origin::DAT
+    return origin_ == symbol_origin::DAT
         && (type_ == ebcdic_encoding::a2e[U'D'] || type_ == ebcdic_encoding::a2e[U'E']
             || type_ == ebcdic_encoding::a2e[U'F'] || type_ == ebcdic_encoding::a2e[U'G']
             || type_ == ebcdic_encoding::a2e[U'H'] || type_ == ebcdic_encoding::a2e[U'K']

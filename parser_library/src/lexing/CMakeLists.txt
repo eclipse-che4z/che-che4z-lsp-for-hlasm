@@ -23,5 +23,7 @@ target_sources(parser_library PRIVATE
 	token_factory.h
 	token_stream.cpp
 	token_stream.h
+	tools.cpp
+	tools.h
 )
 

@@ -136,4 +136,15 @@ context::using_evaluate_result data_def_dependency_solver::using_evaluate(
     return base.using_evaluate(label, owner, offset, long_offset);
 }
 
+std::variant<const context::symbol*, context::symbol_candidate> data_def_dependency_solver::get_symbol_candidate(
+    context::id_index name) const
+{
+    return base.get_symbol_candidate(name);
+}
+
+std::string data_def_dependency_solver::get_opcode_attr(context::id_index name) const
+{
+    return base.get_opcode_attr(name);
+}
+
 } // namespace hlasm_plugin::parser_library::processing

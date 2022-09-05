@@ -129,7 +129,7 @@ struct space
     // common resolver for 2 methods above
     static void resolve(space_ptr this_space, std::variant<space_ptr, address> value);
 
-    bool resolved() const;
+    bool resolved() const { return resolved_; }
     int resolved_length;
     std::vector<address::space_entry> resolved_ptrs;
 

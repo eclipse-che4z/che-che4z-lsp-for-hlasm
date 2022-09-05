@@ -211,7 +211,7 @@ public:
     SET_t get_attribute_value_ord(data_attr_kind attribute, id_index symbol);
     SET_t get_attribute_value_ord(data_attr_kind attribute, const symbol* symbol);
 
-    C_t get_opcode_attr(id_index symbol);
+    C_t get_opcode_attr(id_index symbol) const;
 
     // gets macro storage
     const macro_storage& macros() const;

@@ -99,8 +99,6 @@ void space::resolve(space_ptr this_space, std::variant<space_ptr, address> value
         resolve(std::move(this_space), std::move(std::get<address>(value)));
 }
 
-bool space::resolved() const { return resolved_; }
-
 const std::vector<address::base_entry>& address::bases() const { return bases_; }
 
 std::vector<address::base_entry>& address::bases() { return bases_; }

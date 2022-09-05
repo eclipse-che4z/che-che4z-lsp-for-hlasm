@@ -84,6 +84,12 @@ struct test_context : public dependency_solver
         assert(false);
         return { using_collection::invalid_register, 0 };
     }
+    std::variant<const context::symbol*, context::symbol_candidate> get_symbol_candidate(
+        context::id_index name) const override
+    {
+        return get_symbol(name);
+    }
+    std::string get_opcode_attr(id_index name) const { return hlasm_ctx.get_opcode_attr(name); }
 };
 
 std::unique_ptr<mach_expression> operator+(std::unique_ptr<mach_expression> l, std::unique_ptr<mach_expression> r)

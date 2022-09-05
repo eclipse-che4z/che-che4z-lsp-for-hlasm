@@ -34,20 +34,22 @@ public:
         location symbol_location,
         processing_stack_t stack);
 
-    const symbol_value& value() const;
-    const symbol_attributes& attributes() const;
+    const symbol_value& value() const { return value_; }
+    const symbol_attributes& attributes() const { return attributes_; }
 
-    symbol_value_kind kind() const;
+    symbol_value_kind kind() const { return value_.value_kind(); }
 
     void set_value(symbol_value value);
     void set_length(symbol_attributes::len_attr value);
     void set_scale(symbol_attributes::scale_attr value);
 
-    const id_index name;
-    const location symbol_location;
+    id_index name() const { return name_; }
+    const location& symbol_location() const { return symbol_location_; }
     const processing_stack_t& proc_stack() const;
 
 private:
+    id_index name_;
+    location symbol_location_;
     symbol_value value_;
     symbol_attributes attributes_;
     processing_stack_t stack_;

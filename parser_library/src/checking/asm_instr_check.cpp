@@ -20,6 +20,7 @@
 
 #include "context/common_types.h"
 #include "diagnostic_collector.h"
+#include "lexing/tools.h"
 
 namespace {
 const std::vector<std::string_view> rmode_options = { "24", "31", "64", "ANY" };
@@ -650,32 +651,6 @@ bool ictl::check(const std::vector<const asm_operand*>& to_check,
 external::external(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-static bool is_valid_symbol_name(std::string_view s, bool extended_names_allowed = true)
-{
-    static constexpr const auto allowed_symbols = []() {
-        std::array<bool, 256> result = {};
-        for (unsigned char c = 'a'; c <= 'z'; ++c)
-            result[c] = true;
-        for (unsigned char c = 'A'; c <= 'Z'; ++c)
-            result[c] = true;
-        for (unsigned char c = '0'; c <= '9'; ++c)
-            result[c] = true;
-        result['@'] = true;
-        result['#'] = true;
-        result['$'] = true;
-        result['_'] = true;
-        return result;
-    }();
-    if (s.empty())
-        return false;
-    if (s.size() > 63 || !extended_names_allowed && s.size() > 8)
-        return false;
-    if (s.front() >= '0' && s.front() <= '9')
-        return false;
-    return std::all_of(
-        s.begin(), s.end(), [](unsigned char c) { return c < allowed_symbols.size() && allowed_symbols[c]; });
-}
-
 bool external::check(const std::vector<const asm_operand*>& to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
@@ -695,7 +670,7 @@ bool external::check(const std::vector<const asm_operand*>& to_check,
             for (const auto& parameter : complex_op->operand_parameters)
             {
                 if (is_operand_empty(parameter.get()) || is_operand_complex(parameter.get())
-                    || !is_valid_symbol_name(get_simple_operand(parameter.get())->operand_identifier))
+                    || !lexing::is_valid_symbol_name(get_simple_operand(parameter.get())->operand_identifier))
                 {
                     add_diagnostic(diagnostic_op::error_A129_EXTRN_format(operand->operand_range));
                     return false;
@@ -705,7 +680,7 @@ bool external::check(const std::vector<const asm_operand*>& to_check,
         else if (auto simple_op = get_simple_operand(operand); simple_op)
         {
             // check simple external symbol
-            if (!is_valid_symbol_name(simple_op->operand_identifier))
+            if (!lexing::is_valid_symbol_name(simple_op->operand_identifier))
             {
                 add_diagnostic(diagnostic_op::error_A129_EXTRN_format(operand->operand_range));
                 return false;

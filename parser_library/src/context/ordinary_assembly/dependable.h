@@ -16,6 +16,7 @@
 #define CONTEXT_DEPENDABLE_H
 
 #include <optional>
+#include <variant>
 
 #include "dependency_collector.h"
 
@@ -28,6 +29,10 @@ namespace hlasm_plugin::parser_library::context {
 class symbol;
 struct symbol_value;
 struct using_evaluate_result;
+struct symbol_candidate
+{
+    bool mentioned;
+};
 
 // interface for obtaining symbol from its name
 class dependency_solver
@@ -39,6 +44,8 @@ public:
     virtual bool using_active(id_index label, const section* sect) const = 0;
     virtual using_evaluate_result using_evaluate(
         id_index label, const section* owner, int32_t offset, bool long_offset) const = 0;
+    virtual std::variant<const symbol*, symbol_candidate> get_symbol_candidate(id_index name) const = 0;
+    virtual std::string get_opcode_attr(id_index symbol) const = 0;
 
 protected:
     ~dependency_solver() = default;

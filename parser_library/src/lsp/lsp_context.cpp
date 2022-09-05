@@ -422,7 +422,7 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
     for (const auto& [id, sym_var] : symbol_list)
     {
         const auto* sym = std::get_if<context::symbol>(&sym_var);
-        if (sym && sym->attributes().origin == context::symbol_origin::SECT)
+        if (sym && sym->attributes().origin() == context::symbol_origin::SECT)
         {
             if (auto sect = m_hlasm_ctx->ord_ctx.get_section(id))
             {
@@ -442,7 +442,7 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
         if (!std::holds_alternative<context::symbol>(sym_var))
             continue;
         const auto& sym = std::get<context::symbol>(sym_var);
-        if (sym.attributes().origin == context::symbol_origin::SECT)
+        if (sym.attributes().origin() == context::symbol_origin::SECT)
             continue;
 
         sym.proc_stack().to_vector(sym_stack);
@@ -456,8 +456,8 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
             if (sym_stack.size() == 1)
             {
                 result.emplace_back(*id,
-                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin),
-                    range(sym.symbol_location.pos));
+                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin()),
+                    range(sym.symbol_location().pos));
                 --limit;
             }
             else
@@ -466,7 +466,7 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
                     document_symbol_list_s {},
                     id,
                     sym_stack,
-                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin),
+                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin()),
                     1,
                     limit);
             }
@@ -481,8 +481,9 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
             unsigned long i = 1;
             if (do_not_need_nodes(sym_stack, sect_sym_stack, i))
             {
-                children.emplace_back(
-                    *id, document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin), range(sym_stack[0].pos));
+                children.emplace_back(*id,
+                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin()),
+                    range(sym_stack[0].pos));
                 --limit;
             }
             else
@@ -491,7 +492,7 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
                     document_symbol_list_s {},
                     id,
                     sym_stack,
-                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin),
+                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin()),
                     i,
                     limit);
             }
@@ -508,7 +509,7 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
         {
             result.emplace_back(*sect->name,
                 document_symbol_item_kind_mapping_section.at(sect->kind),
-                range(sym.symbol_location.pos),
+                range(sym.symbol_location().pos),
                 std::move(children));
         }
         else
@@ -959,7 +960,7 @@ std::optional<location> lsp_context::find_definition_location(
         case lsp::occurence_kind::ORD: {
             auto sym = m_hlasm_ctx->ord_ctx.get_symbol(occ.name);
             if (sym)
-                return sym->symbol_location;
+                return sym->symbol_location();
             break;
         }
         case lsp::occurence_kind::SEQ: {

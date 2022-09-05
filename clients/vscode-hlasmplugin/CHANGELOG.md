@@ -5,6 +5,7 @@
 #### Added
 - Add support for z16 instructions
 - Enhance documentation for instruction mnemonics
+- Support O and T attributes in machine expressions
 
 ### Fixed
 

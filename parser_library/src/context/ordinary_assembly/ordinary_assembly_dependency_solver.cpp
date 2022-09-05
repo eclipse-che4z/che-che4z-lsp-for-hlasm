@@ -60,4 +60,30 @@ using_evaluate_result ordinary_assembly_dependency_solver::using_evaluate(
     return u.evaluate(active_using, label, owner, offset, long_offset);
 }
 
+std::variant<const symbol*, symbol_candidate> ordinary_assembly_dependency_solver::get_symbol_candidate(
+    id_index name) const
+{
+    auto it = ord_context.symbols_.find(name);
+
+    if (it == ord_context.symbols_.end())
+    {
+        if (ord_context.reporting_candidates)
+            return symbol_candidate { false };
+        else
+            return nullptr;
+    }
+
+    if (const auto* s = std::get_if<symbol>(&it->second))
+        return s;
+    else if (!ord_context.reporting_candidates)
+        return nullptr;
+    else
+        return symbol_candidate { std::holds_alternative<macro_label_tag>(it->second) };
+}
+
+std::string ordinary_assembly_dependency_solver::get_opcode_attr(id_index name) const
+{
+    return ord_context.hlasm_ctx_.get_opcode_attr(name);
+}
+
 } // namespace hlasm_plugin::parser_library::context
