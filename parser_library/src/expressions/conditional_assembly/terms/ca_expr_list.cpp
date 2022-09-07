@@ -25,9 +25,10 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
-ca_expr_list::ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range)
+ca_expr_list::ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range, bool parenthesized)
     : ca_expression(context::SET_t_enum::UNDEF_TYPE, std::move(expr_range))
     , expr_list(std::move(expr_list))
+    , parenthesized(parenthesized)
 {}
 
 undef_sym_set ca_expr_list::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
@@ -42,7 +43,8 @@ bool is_symbol(const ca_expr_ptr& expr) { return dynamic_cast<const ca_symbol*>(
 
 const std::string& get_symbol(const ca_expr_ptr& expr) { return *dynamic_cast<const ca_symbol&>(*expr).symbol; }
 
-void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
+void ca_expr_list::resolve_expression_tree(
+    context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags)
 {
     expr_kind = kind;
 
@@ -50,11 +52,11 @@ void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind, diagnostic_
         unknown_functions_to_operators();
 
     if (kind == context::SET_t_enum::A_TYPE)
-        resolve<context::A_t>(diags);
+        resolve<context::A_t>(parent_expr_kind, diags);
     else if (kind == context::SET_t_enum::B_TYPE)
-        resolve<context::B_t>(diags);
+        resolve<context::B_t>(parent_expr_kind, diags);
     else if (kind == context::SET_t_enum::C_TYPE)
-        resolve<context::C_t>(diags);
+        resolve<context::C_t>(parent_expr_kind, diags);
     else
         assert(false);
 }
@@ -111,13 +113,14 @@ void ca_expr_list::unknown_functions_to_operators()
     }
 }
 
+std::span<const ca_expr_ptr> ca_expr_list::expression_list() const { return expr_list; }
+
 namespace {
 
 struct term_entry
 {
     ca_expr_ptr term;
     size_t i;
-    bool simple_term;
 };
 struct op_entry
 {
@@ -126,7 +129,6 @@ struct op_entry
     int priority;
     bool binary;
     bool right_assoc;
-    bool requires_terms;
     range r;
 };
 
@@ -148,23 +150,21 @@ struct resolve_stacks
         auto left = std::move(terms.top());
         terms.pop();
 
-        if (op.requires_terms && !left.simple_term || left.i > op.i)
+        if (left.i > op.i)
         {
             diags.add_diagnostic(diagnostic_op::error_CE003(range(op.r.start)));
             return false;
         }
-        if (op.requires_terms && !right.simple_term || right.i < op.i)
+        if (right.i < op.i)
         {
             diags.add_diagnostic(diagnostic_op::error_CE003(range(op.r.end)));
             return false;
         }
 
-        terms.push({
-            std::make_unique<ca_function_binary_operator>(
-                std::move(left.term), std::move(right.term), op.op_type, context::object_traits<T>::type_enum, op.r),
-            left.i,
-            false,
-        });
+        terms.push(
+            { std::make_unique<ca_function_binary_operator>(
+                  std::move(left.term), std::move(right.term), op.op_type, context::object_traits<T>::type_enum, op.r),
+                left.i });
         return true;
     }
 
@@ -173,18 +173,15 @@ struct resolve_stacks
         auto right = std::move(terms.top());
         terms.pop();
 
-        if (op.requires_terms && !right.simple_term || right.i < op.i)
+        if (right.i < op.i)
         {
             diags.add_diagnostic(diagnostic_op::error_CE003(range(op.r.end)));
             return false;
         }
 
-        terms.push({
-            std::make_unique<ca_function_unary_operator>(
-                std::move(right.term), op.op_type, expr_policy::set_type, op.r),
-            op.i,
-            false,
-        });
+        terms.push({ std::make_unique<ca_function_unary_operator>(
+                         std::move(right.term), op.op_type, expr_policy::set_type, op.r),
+            op.i });
         return true;
     }
 
@@ -194,7 +191,8 @@ struct resolve_stacks
         op_stack.pop();
         if (terms.size() < 1 + op.binary)
         {
-            diags.add_diagnostic(diagnostic_op::error_CE003(range(terms.size() < op.binary ? op.r.start : op.r.end)));
+            diags.add_diagnostic(diagnostic_op::error_CE003(
+                range(terms.size() < static_cast<size_t>(op.binary) ? op.r.start : op.r.end)));
             return false;
         }
         return op.binary ? reduce_binary(op, diags) : reduce_unary(op, diags);
@@ -226,7 +224,7 @@ struct resolve_stacks
 } // namespace
 
 template<typename T>
-void ca_expr_list::resolve(diagnostic_op_consumer& diags)
+void ca_expr_list::resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags)
 {
     using expr_policy = typename ca_expr_traits<T>::policy_t;
 
@@ -234,7 +232,6 @@ void ca_expr_list::resolve(diagnostic_op_consumer& diags)
 
     auto i = (size_t)-1;
     bool prefer_next_term = true;
-    bool last_was_terminal = false;
     for (auto& curr_expr : expr_list)
     {
         ++i;
@@ -260,13 +257,7 @@ void ca_expr_list::resolve(diagnostic_op_consumer& diags)
                      !(prefer_next_term && op_type.binary)) // ... AND AND is interpreted as AND term,
                                                             // ... AND NOT ... is apparently not
             {
-                if (op_type.requires_terms && !last_was_terminal)
-                {
-                    diags.add_diagnostic(diagnostic_op::error_CE003(range(curr_expr->expr_range.start)));
-                    expr_list.clear();
-                    return;
-                }
-                if (!stacks.reduce_stack(diags, op_type.priority, op_type.right_assoc))
+                if (op_type.binary && !stacks.reduce_stack(diags, op_type.priority, op_type.right_assoc))
                 {
                     expr_list.clear();
                     return;
@@ -277,17 +268,14 @@ void ca_expr_list::resolve(diagnostic_op_consumer& diags)
                     op_type.priority,
                     op_type.binary,
                     op_type.right_assoc,
-                    op_type.requires_terms,
                     curr_expr->expr_range,
                 });
-                prefer_next_term = op_type.binary || op_type.requires_terms;
-                last_was_terminal = false;
+                prefer_next_term = op_type.binary;
                 continue;
             }
         }
-        stacks.push_term({ std::move(curr_expr), i, true });
+        stacks.push_term({ std::move(curr_expr), i });
         prefer_next_term = false;
-        last_was_terminal = true;
     }
 
     if (!stacks.reduce_stack_all(diags))
@@ -311,7 +299,7 @@ void ca_expr_list::resolve(diagnostic_op_consumer& diags)
     ca_expr_ptr final_expr = std::move(stacks.terms.top().term);
 
     // resolve created tree
-    final_expr->resolve_expression_tree(context::object_traits<T>::type_enum, diags);
+    final_expr->resolve_expression_tree(context::object_traits<T>::type_enum, parent_expr_kind, diags);
 
     // move resolved tree to the front of the array
     expr_list.clear();

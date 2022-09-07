@@ -27,9 +27,9 @@ ca_constant::ca_constant(context::A_t value, range expr_range)
 
 undef_sym_set ca_constant::get_undefined_attributed_symbols(const evaluation_context&) const { return undef_sym_set(); }
 
-void ca_constant::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
+void ca_constant::resolve_expression_tree(context::SET_t_enum kind, context::SET_t_enum, diagnostic_op_consumer& diags)
 {
-    if (kind == context::SET_t_enum::C_TYPE)
+    if (kind == context::SET_t_enum::C_TYPE || (kind == context::SET_t_enum::B_TYPE && value < 0))
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 

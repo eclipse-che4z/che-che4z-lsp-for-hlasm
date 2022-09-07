@@ -173,7 +173,7 @@ token_ptr lexer::nextToken()
             return t;
         }
 
-        // capture lexer state befor the start of token lexing
+        // capture lexer state before the start of token lexing
         // so that we know where the currently lexed token begins
         start_token();
 

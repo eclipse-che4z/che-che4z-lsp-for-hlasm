@@ -172,7 +172,7 @@ void occurence_collector::visit(const expressions::ca_constant&) {}
 
 void occurence_collector::visit(const expressions::ca_expr_list& expr)
 {
-    for (auto& e : expr.expr_list)
+    for (auto& e : expr.expression_list())
         e->apply(*this);
 }
 

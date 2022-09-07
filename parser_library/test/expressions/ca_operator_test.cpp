@@ -65,7 +65,8 @@ protected:
     {
         if (GetParam().operation == ca_expr_ops::NOT || GetParam().kind == SET_t_enum::C_TYPE)
         {
-            ca_function_unary_operator op(nullptr, GetParam().operation, GetParam().kind, range());
+            ca_function_unary_operator op(
+                nullptr, GetParam().operation, GetParam().kind, range(), GetParam().params[0].type);
 
             return op.operation(GetParam().params[0], eval_ctx);
         }
@@ -78,7 +79,8 @@ protected:
                 left =
                     std::make_unique<ca_string>(semantics::concat_chain {}, nullptr, ca_string::substring_t(), range());
 
-            ca_function_binary_operator op(std::move(left), nullptr, GetParam().operation, GetParam().kind, range());
+            ca_function_binary_operator op(
+                std::move(left), nullptr, GetParam().operation, GetParam().kind, range(), GetParam().params[0].type);
 
             return op.operation(GetParam().params[0], GetParam().params[1], eval_ctx);
         }

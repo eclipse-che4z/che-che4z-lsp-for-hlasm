@@ -45,16 +45,17 @@ undef_sym_set ca_string::get_undefined_attributed_symbols(const evaluation_conte
     return tmp;
 }
 
-void ca_string::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
+void ca_string::resolve_expression_tree(
+    context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags)
 {
     if (expr_kind != kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     if (duplication_factor)
-        duplication_factor->resolve_expression_tree(context::SET_t_enum::A_TYPE, diags);
+        duplication_factor->resolve_expression_tree(context::SET_t_enum::A_TYPE, parent_expr_kind, diags);
     if (substring.start)
-        substring.start->resolve_expression_tree(context::SET_t_enum::A_TYPE, diags);
+        substring.start->resolve_expression_tree(context::SET_t_enum::A_TYPE, parent_expr_kind, diags);
     if (substring.count)
-        substring.count->resolve_expression_tree(context::SET_t_enum::A_TYPE, diags);
+        substring.count->resolve_expression_tree(context::SET_t_enum::A_TYPE, parent_expr_kind, diags);
 }
 
 bool ca_string::is_character_expression(character_expression_purpose) const { return true; }

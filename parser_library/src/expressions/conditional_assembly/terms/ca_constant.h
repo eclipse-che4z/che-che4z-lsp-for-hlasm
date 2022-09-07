@@ -33,7 +33,8 @@ public:
 
     undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 
-    void resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags) override;
+    void resolve_expression_tree(
+        context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags) override;
 
     bool is_character_expression(character_expression_purpose purpose) const override;
 
@@ -41,7 +42,10 @@ public:
 
     context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
-    bool is_compatible(ca_expression_compatibility i) const override { return i == ca_expression_compatibility::setb; }
+    bool is_compatible(ca_expression_compatibility i) const override
+    {
+        return i == ca_expression_compatibility::setb && (value == 0 || value == 1);
+    }
 
     static context::A_t self_defining_term(
         std::string_view type, std::string_view value, diagnostic_adder& add_diagnostic);

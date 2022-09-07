@@ -49,6 +49,27 @@ TEST(arithmetic_expressions, valid_self_defining_term)
     SETAEQ("A4", 0);
 }
 
+TEST(arithmetic_expressions, valid_expressions)
+{
+    std::string input =
+        R"(
+&A1 SETA (+1)
+&A2 SETA (-1)
+&A3 SETA (1+0)
+&A4 SETA (1-1)
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+
+    SETAEQ("A1", 1);
+    SETAEQ("A2", -1);
+    SETAEQ("A3", 1);
+    SETAEQ("A4", 0);
+}
+
 TEST(arithmetic_expressions, empty_string_conversion)
 {
     std::string input = R"(
@@ -197,6 +218,7 @@ TEST(arithmetic_expressions, operator_priorities)
 &C SETA (10 OR 1+1)
 &D SETA (10 SLL 10 AND 2)
 &E SETA 4-2+5
+* &F SETA 1+NOT+NOT -5 AND 5
 )";
     analyzer a(input);
     a.analyze();
@@ -209,6 +231,80 @@ TEST(arithmetic_expressions, operator_priorities)
     SETAEQ("C", 10);
     SETAEQ("D", 40);
     SETAEQ("E", 7);
+    // SETAEQ("F", -4); // TODO Resolve when CA expression parsing is extended
+}
+
+TEST(arithmetic_expressions, operator_priorities_invalid)
+{
+    std::string input =
+        R"(
+&A SETA ('A' INDEX 'A' AND 'A' INDEX 'A')
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_NE(a.diags().size(), (size_t)0);
+}
+
+TEST(arithmetic_expressions, not_operator)
+{
+    std::string input =
+        R"(
+&VAR  SETA -7
+&A1 SETA NOT 80
+&A2 SETA (NOT 87)
+&A3 SETA (6 AND NOT &VAR)
+&A4 SETA NoT NOT NOT (6 AND 2)
+&A5 SETA not NOT NOT -5    REMARK
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+
+    SETAEQ("A1", -81);
+    SETAEQ("A2", -88);
+    SETAEQ("A3", 6);
+    SETAEQ("A4", -3);
+    SETAEQ("A5", 4);
+}
+
+TEST(arithmetic_expressions, not_operator_precedence)
+{
+    std::string input =
+        R"(
+&A1   SETA   (-1 AND NOT 0 AND -1)
+&A2   SETA   (-1 AND (NOT 0) AND -1)
+&A3   SETA   (NOT 0 AND NOT 0)
+&A4   SETA   ((NOT 0) AND (NOT 0))
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A1"), -1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A2"), -1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A3"), -1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A4"), -1);
+}
+
+TEST(arithmetic_expressions, not_operator_continuation)
+{
+    std::string input =
+        R"(
+&A       SETA NOT&A
+* TODO Grammar for NOT needs to be adjusted
+*&A       SETA                                                         NX
+               OT&A                                                 
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(arithmetic_expressions, invalid_operator)
@@ -225,7 +321,7 @@ TEST(arithmetic_expressions, invalid_operator)
     EXPECT_EQ(a.diags().front().code, "CE002");
 }
 
-TEST(character_expresssion, illegal_dupl_factor)
+TEST(arithmetic_expressions, illegal_dupl_factor)
 {
     std::string input =
         R"(
@@ -276,6 +372,7 @@ TEST(arithmetic_expressions, dots)
 {
     for (const auto& [input, ok] : {
              std::pair<std::string, bool> { "&A SETA &A", true },
+             std::pair<std::string, bool> { "&A SETA NOT &A", true },
              std::pair<std::string, bool> { "&A. SETA &A", false },
              std::pair<std::string, bool> { "&A SETA &A.", false },
              std::pair<std::string, bool> { "&A. SETA &A.", false },
@@ -304,4 +401,21 @@ TEST(arithmetic_expressions, limits)
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), SET_t(2147483647));
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), SET_t(static_cast<A_t>(-2147483648)));
+}
+
+TEST(arithmetic_expressions, bit_shift)
+{
+    std::string input =
+        R"(
+&A SETA (5 SLA 1)
+&B SETA (5 SLA 1 SRA 1)
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 10);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), 5);
 }

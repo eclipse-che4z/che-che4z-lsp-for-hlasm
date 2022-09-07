@@ -37,14 +37,15 @@ undef_sym_set ca_binary_operator::get_undefined_attributed_symbols(const evaluat
     return tmp;
 }
 
-void ca_binary_operator::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
+void ca_binary_operator::resolve_expression_tree(
+    context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags)
 {
     if (expr_kind != kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else
     {
-        left_expr->resolve_expression_tree(kind, diags);
-        right_expr->resolve_expression_tree(kind, diags);
+        left_expr->resolve_expression_tree(kind, parent_expr_kind, diags);
+        right_expr->resolve_expression_tree(kind, parent_expr_kind, diags);
     }
 }
 
@@ -68,17 +69,21 @@ ca_function_binary_operator::ca_function_binary_operator(ca_expr_ptr left_expr,
     ca_expr_ptr right_expr,
     ca_expr_ops function,
     context::SET_t_enum expr_kind,
-    range expr_range)
+    range expr_range,
+    context::SET_t_enum parent_expr_kind)
     : ca_binary_operator(std::move(left_expr), std::move(right_expr), expr_kind, std::move(expr_range))
     , function(function)
+    , m_parent_expr_kind(parent_expr_kind)
 {}
 
-void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
+void ca_function_binary_operator::resolve_expression_tree(
+    context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags)
 {
     if (expr_kind != kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else
     {
+        m_parent_expr_kind = parent_expr_kind;
         context::SET_t_enum operands_kind;
 
         if (is_relational())
@@ -92,8 +97,8 @@ void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum ki
         else
             operands_kind = ca_common_expr_policy::get_operands_type(function, kind);
 
-        left_expr->resolve_expression_tree(operands_kind, diags);
-        right_expr->resolve_expression_tree(operands_kind, diags);
+        left_expr->resolve_expression_tree(operands_kind, parent_expr_kind, diags);
+        right_expr->resolve_expression_tree(operands_kind, parent_expr_kind, diags);
     }
 }
 
@@ -151,8 +156,37 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
 }
 
 context::SET_t ca_function_binary_operator::operation(
-    context::SET_t lhs, context::SET_t rhs, const evaluation_context&) const
+    context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const
 {
+    if (m_parent_expr_kind == context::SET_t_enum::A_TYPE)
+    {
+        switch (function)
+        {
+            case ca_expr_ops::AND:
+                return convert_return_types(lhs.access_a() & rhs.access_a(), expr_kind, eval_ctx);
+            case ca_expr_ops::OR:
+                return convert_return_types(lhs.access_a() | rhs.access_a(), expr_kind, eval_ctx);
+            case ca_expr_ops::XOR:
+                return convert_return_types(lhs.access_a() ^ rhs.access_a(), expr_kind, eval_ctx);
+            default:
+                break;
+        }
+    }
+    else if (m_parent_expr_kind == context::SET_t_enum::B_TYPE)
+    {
+        switch (function)
+        {
+            case ca_expr_ops::AND:
+                return convert_return_types(lhs.access_b() && rhs.access_b(), expr_kind, eval_ctx);
+            case ca_expr_ops::OR:
+                return convert_return_types(lhs.access_b() || rhs.access_b(), expr_kind, eval_ctx);
+            case ca_expr_ops::XOR:
+                return convert_return_types(lhs.access_b() != rhs.access_b(), expr_kind, eval_ctx);
+            default:
+                break;
+        }
+    }
+
     if (expr_kind == context::SET_t_enum::A_TYPE)
     {
         switch (function)
@@ -166,12 +200,6 @@ context::SET_t ca_function_binary_operator::operation(
                 return ca_function::FIND(lhs.access_c(), rhs.access_c());
             case ca_expr_ops::INDEX:
                 return ca_function::INDEX(lhs.access_c(), rhs.access_c());
-            case ca_expr_ops::AND:
-                return lhs.access_a() & rhs.access_a();
-            case ca_expr_ops::OR:
-                return lhs.access_a() | rhs.access_a();
-            case ca_expr_ops::XOR:
-                return lhs.access_a() ^ rhs.access_a();
             default:
                 break;
         }
@@ -196,12 +224,6 @@ context::SET_t ca_function_binary_operator::operation(
                 return comp >= 0;
             case ca_expr_ops::GT:
                 return comp > 0;
-            case ca_expr_ops::AND:
-                return lhs.access_b() && rhs.access_b();
-            case ca_expr_ops::OR:
-                return lhs.access_b() || rhs.access_b();
-            case ca_expr_ops::XOR:
-                return lhs.access_b() != rhs.access_b();
             default:
                 break;
         }

@@ -31,7 +31,8 @@ public:
 
     undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 
-    void resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags) override;
+    void resolve_expression_tree(
+        context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags) override;
 
     bool is_character_expression(character_expression_purpose purpose) const override;
 
@@ -62,15 +63,15 @@ public:
 class ca_function_binary_operator : public ca_binary_operator
 {
 public:
-    ca_expr_ops function;
-
     ca_function_binary_operator(ca_expr_ptr left_expr,
         ca_expr_ptr right_expr,
         ca_expr_ops function,
         context::SET_t_enum expr_kind,
-        range expr_range);
+        range expr_range,
+        context::SET_t_enum parent_expr_kind = context::SET_t_enum::UNDEF_TYPE);
 
-    void resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags) override;
+    void resolve_expression_tree(
+        context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags) override;
 
     context::SET_t operation(context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const override;
 
@@ -79,6 +80,8 @@ public:
 
 private:
     bool is_relational() const;
+    ca_expr_ops function;
+    context::SET_t_enum m_parent_expr_kind;
 };
 
 struct ca_add

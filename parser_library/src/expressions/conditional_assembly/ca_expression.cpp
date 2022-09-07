@@ -24,17 +24,12 @@ ca_expression::ca_expression(context::SET_t_enum expr_kind, range expr_range)
 {}
 
 context::SET_t ca_expression::convert_return_types(
-    context::SET_t retval, context::SET_t_enum type, const evaluation_context& eval_ctx) const
+    context::SET_t retval, context::SET_t_enum type, const evaluation_context&) const
 {
     if (type != retval.type)
     {
         if (retval.type == context::SET_t_enum::A_TYPE && type == context::SET_t_enum::B_TYPE)
-        {
-            auto val = retval.access_a();
-            if (val != 0 && val != 1)
-                eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
-            return val != 0;
-        }
+            return retval.access_a() != 0;
         if (retval.type == context::SET_t_enum::B_TYPE && type == context::SET_t_enum::A_TYPE)
             return (context::A_t)retval.access_b();
 

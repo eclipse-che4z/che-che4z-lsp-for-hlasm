@@ -26,13 +26,12 @@ namespace hlasm_plugin::parser_library::expressions {
 class ca_expr_list final : public ca_expression
 {
 public:
-    std::vector<ca_expr_ptr> expr_list;
-
-    ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range);
+    ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range, bool parenthesized);
 
     undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 
-    void resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags) override;
+    void resolve_expression_tree(
+        context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags) override;
 
     bool is_character_expression(character_expression_purpose purpose) const override;
 
@@ -42,8 +41,10 @@ public:
 
     bool is_compatible(ca_expression_compatibility i) const override
     {
-        return i == ca_expression_compatibility::aif || i == ca_expression_compatibility::setb;
+        return parenthesized && (i == ca_expression_compatibility::aif || i == ca_expression_compatibility::setb);
     }
+
+    std::span<const ca_expr_ptr> expression_list() const;
 
 private:
     // this function is present due to the fact that in hlasm you can omit space between operator and operands if
@@ -56,7 +57,10 @@ private:
     // in a loop it tries to retrieve first term, binary operator, second term
     // each loop iteration it pastes them together and continue until list is exhausted
     template<typename T>
-    void resolve(diagnostic_op_consumer& diags);
+    void resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags);
+
+    std::vector<ca_expr_ptr> expr_list;
+    const bool parenthesized;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

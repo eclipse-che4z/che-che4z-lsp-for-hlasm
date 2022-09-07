@@ -90,7 +90,7 @@ struct object_traits<C_t>
     }
 };
 
-// struct agregating SET types for easier usage
+// struct aggregating SET types for easier usage
 struct SET_t
 {
 private:
@@ -102,7 +102,7 @@ public:
     SET_t(A_t value);
     SET_t(B_t value);
     SET_t(C_t value);
-    // for string literals (otherwise they prefer coversion to bool rather than to string)
+    // for string literals (otherwise they prefer conversion to bool rather than to string)
     SET_t(const char* value);
     SET_t(SET_t_enum type = SET_t_enum::UNDEF_TYPE);
 

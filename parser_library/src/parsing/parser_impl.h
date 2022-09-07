@@ -155,6 +155,7 @@ protected:
     bool ASM();
     bool DAT();
     bool ALIAS();
+    bool NOT(const antlr4::Token* token) const;
 
     void add_diagnostic(diagnostic_severity severity, std::string code, std::string message, range diag_range) const;
     void add_diagnostic(diagnostic_op d) const;

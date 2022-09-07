@@ -27,7 +27,7 @@
                   ->get_value(),                                                                                       \
         Y)
 
-TEST(character_expresssion, operator_priority)
+TEST(character_expression, operator_priority)
 {
     std::string input =
         R"(
@@ -42,7 +42,7 @@ TEST(character_expresssion, operator_priority)
     SETCEQ("C", "ABCDEFDEFDEF");
 }
 
-TEST(character_expresssion, substring_notation)
+TEST(character_expression, substring_notation)
 {
     std::string input =
         R"(
@@ -67,7 +67,7 @@ TEST(character_expresssion, substring_notation)
     SETCEQ("C6", "XX");
 }
 
-TEST(character_expresssion, invalid_substring_notation)
+TEST(character_expression, invalid_substring_notation)
 {
     std::string input =
         R"(
@@ -83,7 +83,7 @@ TEST(character_expresssion, invalid_substring_notation)
 }
 
 /*TODO uncomment when assembler options will be implemented
-TEST(character_expresssion, exceeds_warning)
+TEST(character_expression, exceeds_warning)
 {
     std::string input =
         R"(
@@ -97,7 +97,7 @@ TEST(character_expresssion, exceeds_warning)
     EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
 }*/
 
-TEST(character_expresssion, invalid_string)
+TEST(character_expression, invalid_string)
 {
     std::string input =
         R"(
@@ -111,7 +111,7 @@ TEST(character_expresssion, invalid_string)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0008", "CE011" }));
 }
 
-TEST(character_expresssion, escaping)
+TEST(character_expression, escaping)
 {
     std::string input =
         R"(
@@ -137,7 +137,7 @@ TEST(character_expresssion, escaping)
     SETCEQ("C6", "&A");
 }
 
-TEST(character_expresssion, single_operand_with_spaces)
+TEST(character_expression, single_operand_with_spaces)
 {
     std::string input =
         R"(
@@ -160,7 +160,7 @@ TEST(character_expresssion, single_operand_with_spaces)
     SETCEQ("C5", "A");
 }
 
-TEST(character_expresssion, single_operand_fail)
+TEST(character_expression, single_operand_fail)
 {
     for (std::string input : {
              "&C SETC UPPER(&C)",
@@ -175,7 +175,7 @@ TEST(character_expresssion, single_operand_fail)
     }
 }
 
-TEST(character_expresssion, zero_length_substring)
+TEST(character_expression, zero_length_substring)
 {
     std::string input = R"(
      LCLC &EMPTY
@@ -191,7 +191,7 @@ TEST(character_expresssion, zero_length_substring)
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
-TEST(character_expresssion, dots)
+TEST(character_expression, dots)
 {
     for (const auto& [input, ok] : {
              std::pair<std::string, bool> { "&C SETC &C", false },

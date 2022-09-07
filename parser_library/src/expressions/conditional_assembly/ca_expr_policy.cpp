@@ -115,19 +115,19 @@ int ca_arithmetic_policy::get_priority(ca_expr_ops op)
 {
     switch (op)
     {
-        case ca_expr_ops::FIND:
-        case ca_expr_ops::INDEX:
-            return 0;
         case ca_expr_ops::NOT:
-            return 1;
+            return 0;
         case ca_expr_ops::AND:
         case ca_expr_ops::OR:
         case ca_expr_ops::XOR:
-            return 2;
+            return 1;
         case ca_expr_ops::SLA:
         case ca_expr_ops::SLL:
         case ca_expr_ops::SRA:
         case ca_expr_ops::SRL:
+            return 2;
+        case ca_expr_ops::FIND:
+        case ca_expr_ops::INDEX:
             return 3;
         default:
             return 0;
@@ -308,7 +308,7 @@ std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_arithmetic_policy
     bool binary = is_binary(o);
     if (!unary && !binary)
         return invalid_by_policy();
-    return ca_expr_op { o, get_priority(o), binary, false, unary };
+    return ca_expr_op { o, get_priority(o), binary, unary };
 }
 
 ca_expr_ops ca_binary_policy::get_operator(const std::string& symbol) { return get_expr_operator(symbol); }
@@ -322,14 +322,7 @@ std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_binary_policy::ge
     bool binary = is_binary(o);
     if (!unary && !binary)
         return invalid_by_policy();
-    return ca_expr_op {
-        o,
-        get_priority(o),
-        binary,
-        o == ca_expr_ops::EQ || o == ca_expr_ops::NE || o == ca_expr_ops::LE || o == ca_expr_ops::LT
-            || o == ca_expr_ops::GE || o == ca_expr_ops::GT,
-        unary,
-    };
+    return ca_expr_op { o, get_priority(o), binary, unary };
 }
 
 ca_expr_ops ca_character_policy::get_operator(const std::string& symbol) { return get_expr_operator(symbol); }
@@ -343,7 +336,7 @@ std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_character_policy:
     bool binary = is_binary(o);
     if (!unary && !binary)
         return invalid_by_policy();
-    return ca_expr_op { o, get_priority(o), binary, false, unary };
+    return ca_expr_op { o, get_priority(o), binary, unary };
 }
 
 

@@ -612,7 +612,7 @@ void ca_processor::process_SET(const semantics::complete_statement& stmt)
     {
         // first obtain a place to put the result in
         auto& val = set_symbol->template access_set_symbol<T>()->reserve_value(index - 1 + i);
-        // then evaluate the new value and save it unless the opreand is empty
+        // then evaluate the new value and save it unless the operand is empty
         if (expr_values[i])
             val = expr_values[i]->template evaluate<T>(eval_ctx);
     }

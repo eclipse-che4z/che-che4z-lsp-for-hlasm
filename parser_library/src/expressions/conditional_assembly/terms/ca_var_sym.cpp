@@ -48,7 +48,7 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const evaluation_cont
     return get_undefined_attributed_symbols_vs(symbol, eval_ctx);
 }
 
-void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
+void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind, context::SET_t_enum, diagnostic_op_consumer& diags)
 {
     // this conversion request indicates that the variable was used without the mandatory quotes around it
     if (kind == context::SET_t_enum::C_TYPE)

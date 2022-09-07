@@ -64,7 +64,6 @@ struct ca_expr_op
     ca_expr_ops op;
     int priority;
     bool binary;
-    bool requires_terms;
     bool right_assoc;
 };
 

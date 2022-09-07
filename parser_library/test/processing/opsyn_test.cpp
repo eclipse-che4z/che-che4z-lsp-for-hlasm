@@ -416,3 +416,47 @@ TEST(OPSYN, macro_replacement_4)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME007" }));
 }
+
+TEST(OPSYN, SETA_SETB_expressions)
+{
+    std::string input = R"(
+           MACRO
+           MAC &IDX
+           GBLA &VAR(2)
+&VAR(&IDX) SETA (10 AND 2)
+           MEND
+
+           GBLA &VAR(2)
+           MAC 1
+SETA       OPSYN SETB
+           MAC 2
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_vector<A_t>(a.hlasm_ctx(), "VAR"), std::vector<A_t>(2, 2));
+}
+
+TEST(OPSYN, SETA_SETB_expressions_ainsert)
+{
+    std::string input = R"(
+           MACRO
+           MAC &IDX
+           AINSERT '&&VAR(&IDX) SETA (10 AND 2)',BACK
+           MEND
+
+           GBLA &VAR(2)
+           MAC 1
+SETA       OPSYN SETB
+           MAC 2
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E013" }));
+}

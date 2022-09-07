@@ -123,7 +123,8 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evalua
     }
 }
 
-void ca_symbol_attribute::resolve_expression_tree(context::SET_t_enum kind, diagnostic_op_consumer& diags)
+void ca_symbol_attribute::resolve_expression_tree(
+    context::SET_t_enum kind, context::SET_t_enum, diagnostic_op_consumer& diags)
 {
     if (kind == context::SET_t_enum::C_TYPE && kind != expr_kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
