@@ -38,7 +38,7 @@ TEST(debugger, stopped_on_entry)
 {
     file_manager_impl file_manager;
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
     workspace ws(file_manager, config, global_settings);
 
     debug_event_consumer_s_mock m;
@@ -76,7 +76,7 @@ TEST(debugger, disconnect)
 {
     file_manager_impl file_manager;
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
     workspace ws(file_manager, config, global_settings);
 
     debug_event_consumer_s_mock m;
@@ -319,7 +319,7 @@ void erase_frames_from_top(size_t number_of_frames,
 class workspace_mock : public workspace
 {
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
 
 public:
     workspace_mock(file_manager& file_mngr)

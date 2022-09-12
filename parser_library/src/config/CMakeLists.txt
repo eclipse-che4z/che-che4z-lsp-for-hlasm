@@ -13,6 +13,8 @@
 target_sources(parser_library PRIVATE
 	assembler_options.cpp
 	assembler_options.h
+	b4g_config.cpp
+	b4g_config.h
 	pgm_conf.cpp
 	pgm_conf.h
 	proc_grps.cpp

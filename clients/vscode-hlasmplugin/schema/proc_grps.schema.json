@@ -36,6 +36,11 @@
                                             "items": {
                                                 "type": "string"
                                             }
+                                        },
+                                        "prefer_alternate_root": {
+                                            "type": "boolean",
+                                            "description": "Specify 'true' to resolve relative paths with respect to a different root folder than the workspace root (e.g. a folder provided by Endevor Bridge for Git).",
+                                            "default": false
                                         }
                                     },
                                     "required": [

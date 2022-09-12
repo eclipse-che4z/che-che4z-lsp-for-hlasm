@@ -864,11 +864,11 @@ public:
 
     static diagnostic_s error_W0001(const utils::resource::resource_location& file_name);
 
-    static diagnostic_s error_W0002(const utils::resource::resource_location& file_name, std::string_view ws_name);
+    static diagnostic_s error_W0002(const utils::resource::resource_location& file_name);
 
-    static diagnostic_s error_W0003(const utils::resource::resource_location& file_name, std::string_view ws_name);
+    static diagnostic_s error_W0003(const utils::resource::resource_location& file_name);
 
-    static diagnostic_s error_W0004(const utils::resource::resource_location&, std::string_view ws_name);
+    static diagnostic_s error_W0004(const utils::resource::resource_location&, std::string_view pgroup);
 
     static diagnostic_s error_W0005(
         const utils::resource::resource_location&, std::string_view name, std::string_view type);
@@ -877,6 +877,10 @@ public:
         const utils::resource::resource_location&, std::string_view proc_group, std::string_view type);
 
     static diagnostic_s warn_W0007(const utils::resource::resource_location&, std::string_view substitution);
+
+    static diagnostic_s error_B4G001(const utils::resource::resource_location&);
+
+    static diagnostic_s error_B4G002(const utils::resource::resource_location&, std::string_view grp_name);
 
     /*
     E01x - wrong format

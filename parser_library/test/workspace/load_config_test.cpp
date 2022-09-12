@@ -215,13 +215,13 @@ TEST(workspace, load_config_synthetic)
 {
     file_manager_proc_grps_test file_manager;
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
     workspace ws(ws_loc, "test_proc_grps_name", file_manager, config, global_settings);
 
     ws.open();
 
     // Check P1
-    auto& pg = ws.get_proc_grp("P1");
+    auto& pg = ws.get_proc_grp({ "P1", resource_location() });
     EXPECT_EQ("P1", pg.name());
     auto expected = []() -> std::array<resource_location, 5> {
         if (is_windows())
@@ -240,7 +240,7 @@ TEST(workspace, load_config_synthetic)
     check_process_group(pg, expected);
 
     // Check P2
-    auto& pg2 = ws.get_proc_grp("P2");
+    auto& pg2 = ws.get_proc_grp({ "P2", resource_location() });
     EXPECT_EQ("P2", pg2.name());
 
     auto expected2 = []() -> std::array<resource_location, 3> {
@@ -295,7 +295,7 @@ TEST(workspace, pgm_conf_malformed)
     fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
 
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
     workspace ws(fm, config, global_settings);
     ws.open();
 
@@ -312,7 +312,7 @@ TEST(workspace, proc_grps_malformed)
     fm.did_open_file(proc_grps_name, 0, R"({ "pgroups" []})");
 
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
     workspace ws(fm, config, global_settings);
     ws.open();
 
@@ -327,7 +327,7 @@ TEST(workspace, pgm_conf_missing)
     fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
 
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
     workspace ws(fm, config, global_settings);
     ws.open();
 
@@ -341,7 +341,7 @@ TEST(workspace, proc_grps_missing)
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
 
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
     workspace ws(fm, config, global_settings);
     ws.open();
 
@@ -367,7 +367,7 @@ TEST(workspace, asm_options_invalid)
     fm.did_open_file(proc_grps_name, 0, proc_file);
 
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
     workspace ws(fm, config, global_settings);
     ws.open();
 
@@ -422,7 +422,7 @@ TEST(workspace, asm_options_goff_xobject_redefinition)
 {
     file_manager_asm_test file_manager;
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
     workspace ws(ws_loc, "test_proc_grps_name", file_manager, config, global_settings);
 
     ws.open();
@@ -442,7 +442,7 @@ TEST(workspace, proc_grps_with_substitutions)
         proc_grps_name, 0, R"({ "pgroups":[{"name":"a${config:name}b","libs":["${config:lib1}","${config:lib2}"]}]})");
 
     lib_config config;
-    workspace::shared_json global_settings = std::make_shared<const nlohmann::json>(
+    shared_json global_settings = std::make_shared<const nlohmann::json>(
         nlohmann::json::parse(R"({"name":"proc_group","lib1":"library1","lib2":"library2"})"));
     workspace ws(fm, config, global_settings);
     ws.open();
@@ -450,7 +450,7 @@ TEST(workspace, proc_grps_with_substitutions)
 
     EXPECT_TRUE(ws.diags().empty());
 
-    const auto& pg = ws.get_proc_grp("aproc_groupb");
+    const auto& pg = ws.get_proc_grp({ "aproc_groupb", resource_location() });
 
     using hlasm_plugin::utils::resource::resource_location;
 
@@ -471,7 +471,7 @@ TEST(workspace, pgm_conf_with_substitutions)
     fm.did_open_file(proc_grps_name, 0, R"({"pgroups":[{"name": "P1","libs":[]}]})");
 
     lib_config config;
-    workspace::shared_json global_settings = std::make_shared<const nlohmann::json>(
+    shared_json global_settings = std::make_shared<const nlohmann::json>(
         nlohmann::json::parse(R"({"pgm_mask":["file_name"],"sysparm":"DEBUG"})"));
     workspace ws(fm, config, global_settings);
     ws.open();
@@ -494,7 +494,7 @@ TEST(workspace, missing_substitutions)
     fm.did_open_file(proc_grps_name, 0, R"({"pgroups":[{"name":"P1","libs":["${config:lib}"]}]})");
 
     lib_config config;
-    workspace::shared_json global_settings = std::make_shared<const nlohmann::json>(nlohmann::json::object());
+    shared_json global_settings = std::make_shared<const nlohmann::json>(nlohmann::json::object());
     workspace ws(fm, config, global_settings);
     ws.open();
     ws.collect_diags();
@@ -512,7 +512,7 @@ TEST(workspace, refresh_settings)
     fm.did_open_file(proc_grps_name, 0, R"({"pgroups":[{"name": "P1","libs":[]}]})");
 
     lib_config config;
-    workspace::shared_json global_settings = std::make_shared<const nlohmann::json>(
+    shared_json global_settings = std::make_shared<const nlohmann::json>(
         nlohmann::json::parse(R"({"pgm_mask":["file_name"],"sysparm":"DEBUG"})"));
     workspace ws(fm, config, global_settings);
     ws.open();

@@ -35,5 +35,7 @@ target_sources(parser_library PRIVATE
 	wildcard.h
 	workspace.cpp
 	workspace.h
+	workspace_configuration.cpp
+	workspace_configuration.h
 )
 

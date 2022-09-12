@@ -32,11 +32,24 @@ std::string_view preprocessor_options::type() const noexcept
     return std::visit([]<typename T>(const T&) { return T::name; }, options);
 }
 
+void to_json(nlohmann::json& j, const processor_group_root_folder& p)
+{
+    j = p == processor_group_root_folder::alternate_root;
+}
+void from_json(const nlohmann::json& j, processor_group_root_folder& p)
+{
+    bool v = false;
+    j.get_to(v);
+    p = v ? processor_group_root_folder::alternate_root : processor_group_root_folder::workspace;
+}
+
 void to_json(nlohmann::json& j, const library& p)
 {
     j = nlohmann::json { { "path", p.path }, { "optional", p.optional } };
     if (auto m = nlohmann::json(p.macro_extensions); !m.empty())
         j["macro_extensions"] = std::move(m);
+    if (p.root_folder != processor_group_root_folder {})
+        j["prefer_alternate_root"] = p.root_folder;
 }
 void from_json(const nlohmann::json& j, library& p)
 {
@@ -49,6 +62,8 @@ void from_json(const nlohmann::json& j, library& p)
             p.optional = it->get_to(p.optional);
         if (auto it = j.find("macro_extensions"); it != j.end())
             it->get_to(p.macro_extensions);
+        if (auto it = j.find("prefer_alternate_root"); it != j.end())
+            it->get_to(p.root_folder);
     }
     else
         throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", j);

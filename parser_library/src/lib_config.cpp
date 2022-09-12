@@ -55,7 +55,7 @@ lib_config lib_config::load_from_pgm_config(const config::pgm_conf& config)
     return loaded;
 }
 
-lib_config lib_config::fill_missing_settings(const lib_config& second)
+lib_config lib_config::fill_missing_settings(const lib_config& second) const
 {
     return combine_two_configs(second).combine_two_configs(default_config);
 }

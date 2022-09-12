@@ -60,7 +60,7 @@ TEST(diags_suppress, no_suppress)
 )");
 
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
 
     workspace ws(fm, config, global_settings);
     ws.open();
@@ -76,7 +76,7 @@ TEST(diags_suppress, no_suppress)
 TEST(diags_suppress, do_suppress)
 {
     auto config = lib_config::load_from_json(R"({"diagnosticsSuppressLimit":5})"_json);
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
 
     file_manager_impl fm;
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
@@ -126,7 +126,7 @@ TEST(diags_suppress, pgm_supress_limit_changed)
 )");
 
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
 
     workspace ws(fm, config, global_settings);
     ws.open();
@@ -170,7 +170,7 @@ TEST(diags_suppress, cancel_token)
 
     std::atomic<bool> cancel = true;
     auto config = lib_config::load_from_json(R"({"diagnosticsSuppressLimit":5})"_json);
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
 
     workspace ws(fm, config, global_settings, &cancel);
     ws.open();

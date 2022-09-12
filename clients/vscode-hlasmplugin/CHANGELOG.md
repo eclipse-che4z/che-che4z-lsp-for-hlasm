@@ -6,6 +6,7 @@
 - Add support for z16 instructions
 - Enhance documentation for instruction mnemonics
 - Support O and T attributes in machine expressions
+- Endevor Bridge for Git integration
 
 ### Fixed
 - Implement rest of the changes introduced by APAR PH46868

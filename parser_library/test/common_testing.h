@@ -16,8 +16,10 @@
 #define HLASMPLUGIN_HLASMPARSERLIBRARY_COMMON_TESTING_H
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
 #include <span>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -123,60 +125,74 @@ std::optional<std::unordered_map<size_t, T>> get_var_vector_map(hlasm_context& c
     return result;
 }
 
+template<typename Msg,
+    typename Proj,
+    typename C = std::initializer_list<std::decay_t<std::invoke_result_t<Proj, const Msg&>>>>
+inline bool matches_message_properties(const std::vector<Msg>& d, const C& c, Proj p)
+{
+    std::vector<std::decay_t<std::invoke_result_t<Proj, const Msg&>>> properties;
+    std::transform(
+        d.begin(), d.end(), std::back_inserter(properties), [&p](const auto& d) { return std::invoke(p, d); });
+
+    return std::is_permutation(properties.begin(), properties.end(), c.begin(), c.end());
+}
+
+template<typename Msg,
+    typename Proj,
+    typename C = std::initializer_list<std::decay_t<std::invoke_result_t<Proj, const Msg&>>>>
+inline bool contains_message_properties(const std::vector<Msg>& d, const C& c, Proj p)
+{
+    if (d.size() < c.size())
+        return false;
+
+    std::vector<std::decay_t<std::invoke_result_t<Proj, const Msg&>>> properties;
+    std::transform(
+        d.begin(), d.end(), std::back_inserter(properties), [&p](const auto& d) { return std::invoke(p, d); });
+
+    std::vector to_find(c.begin(), c.end());
+
+    std::sort(properties.begin(), properties.end());
+    std::sort(to_find.begin(), to_find.end());
+
+    return std::includes(properties.begin(), properties.end(), to_find.begin(), to_find.end());
+}
+
 template<typename Msg, typename C = std::initializer_list<std::string>>
 inline bool matches_message_codes(const std::vector<Msg>& d, const C& c)
 {
-    std::vector<std::string> codes;
-    std::transform(d.begin(), d.end(), std::back_inserter(codes), [](const auto& d) { return d.code; });
-
-    return std::is_permutation(codes.begin(), codes.end(), c.begin(), c.end());
+    return matches_message_properties(d, c, &Msg::code);
 }
 
 template<typename Msg, typename C = std::initializer_list<std::string>>
 inline bool contains_message_codes(const std::vector<Msg>& d, const C& c)
 {
-    if (d.size() < c.size())
-        return false;
-
-    std::vector<std::string> codes;
-    std::transform(d.begin(), d.end(), std::back_inserter(codes), [](const auto& d) { return d.code; });
-
-    std::vector to_find(c.begin(), c.end());
-
-    std::sort(codes.begin(), codes.end());
-    std::sort(to_find.begin(), to_find.end());
-
-    return std::includes(codes.begin(), codes.end(), to_find.begin(), to_find.end());
+    return contains_message_properties(d, c, &Msg::code);
 }
 
 template<typename Msg, typename C = std::initializer_list<std::pair<size_t, size_t>>>
 inline bool matches_diagnosed_line_ranges(const std::vector<Msg>& d, const C& c)
 {
-    std::vector<std::pair<size_t, size_t>> diag_lines;
-    std::transform(d.begin(), d.end(), std::back_inserter(diag_lines), [](const auto& d) {
-        return std::make_pair(d.diag_range.start.line, d.diag_range.end.line);
-    });
-
-    return std::is_permutation(diag_lines.begin(), diag_lines.end(), c.begin(), c.end());
+    return matches_message_properties(
+        d, c, [](const auto& d) { return std::make_pair(d.diag_range.start.line, d.diag_range.end.line); });
 }
 
 template<typename Msg, typename C = std::initializer_list<std::pair<size_t, size_t>>>
 inline bool contains_diagnosed_line_ranges(const std::vector<Msg>& d, const C& c)
 {
-    if (d.size() < c.size())
-        return false;
+    return contains_message_properties(
+        d, c, [](const auto& d) { return std::make_pair(d.diag_range.start.line, d.diag_range.end.line); });
+}
 
-    std::vector<std::pair<size_t, size_t>> diag_lines;
-    std::transform(d.begin(), d.end(), std::back_inserter(diag_lines), [](const auto& d) {
-        return std::make_pair(d.diag_range.start.line, d.diag_range.end.line);
-    });
+template<typename Msg, typename C = std::initializer_list<std::string>>
+inline bool matches_message_text(const std::vector<Msg>& d, const C& c)
+{
+    return matches_message_properties(d, c, &Msg::message);
+}
 
-    std::vector to_find(c.begin(), c.end());
-
-    std::sort(diag_lines.begin(), diag_lines.end());
-    std::sort(to_find.begin(), to_find.end());
-
-    return std::includes(diag_lines.begin(), diag_lines.end(), to_find.begin(), to_find.end());
+template<typename Msg, typename C = std::initializer_list<std::string>>
+inline bool contains_message_text(const std::vector<Msg>& d, const C& c)
+{
+    return contains_message_properties(d, c, &Msg::message);
 }
 
 inline const section* get_section(hlasm_context& ctx, std::string name)

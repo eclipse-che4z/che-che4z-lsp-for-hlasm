@@ -2505,37 +2505,37 @@ diagnostic_s diagnostic_s::error_W0001(const utils::resource::resource_location&
         diagnostic_tag::none);
 }
 
-diagnostic_s diagnostic_s::error_W0002(const utils::resource::resource_location& ws_uri, std::string_view ws_name)
+diagnostic_s diagnostic_s::error_W0002(const utils::resource::resource_location& ws_uri)
 {
     return diagnostic_s(ws_uri.get_uri(),
         {},
         diagnostic_severity::error,
         "W0002",
-        concat("The configuration file proc_grps for workspace ", ws_name, " is malformed."),
+        concat("Malformed proc_conf configuration file."),
         {},
         diagnostic_tag::none);
 }
 
-diagnostic_s diagnostic_s::error_W0003(const utils::resource::resource_location& file_name, std::string_view ws_name)
+diagnostic_s diagnostic_s::error_W0003(const utils::resource::resource_location& file_name)
 {
     return diagnostic_s(file_name.get_uri(),
         {},
         diagnostic_severity::error,
         "W0003",
-        concat("The configuration file pgm_conf for workspace ", ws_name, " is malformed."),
+        concat("Malformed pgm_conf configuration file."),
         {},
         diagnostic_tag::none);
 }
 
-diagnostic_s diagnostic_s::error_W0004(const utils::resource::resource_location& file_name, std::string_view ws_name)
+diagnostic_s diagnostic_s::error_W0004(const utils::resource::resource_location& file_name, std::string_view pgroup)
 {
     return diagnostic_s(file_name.get_uri(),
         {},
         diagnostic_severity::warning,
         "W0004",
-        concat("The configuration file pgm_conf for workspace ",
-            ws_name,
-            " refers to a processor group, that is not defined in proc_grps"),
+        concat("The configuration file pgm_conf refers to a processor group (",
+            pgroup,
+            "), that is not defined in proc_grps"),
         {},
         diagnostic_tag::none);
 }
@@ -2579,6 +2579,30 @@ diagnostic_s diagnostic_s::warn_W0007(
         diagnostic_severity::warning,
         "W0007",
         concat("Unable to perform workspace settings substitution for variable '", substitution, "'."),
+        {},
+        diagnostic_tag::none);
+}
+
+diagnostic_s diagnostic_s::error_B4G001(const utils::resource::resource_location& file_name)
+{
+    return diagnostic_s(file_name.get_uri(),
+        {},
+        diagnostic_severity::warning,
+        "B4G001",
+        concat("The .bridge.json file has unexpected content"),
+        {},
+        diagnostic_tag::none);
+}
+
+diagnostic_s diagnostic_s::error_B4G002(const utils::resource::resource_location& file_name, std::string_view grp_name)
+{
+    return diagnostic_s(file_name.get_uri(),
+        {},
+        diagnostic_severity::warning,
+        "B4G002",
+        concat("The .bridge.json file refers to a processor group \"",
+            grp_name,
+            "\", that is not defined in proc_grps.json"),
         {},
         diagnostic_tag::none);
 }

@@ -451,7 +451,7 @@ struct test_variables_lib_pattern
 {
     file_manager_lib_pattern file_manager;
     lib_config config;
-    workspace::shared_json global_settings;
+    shared_json global_settings;
     workspace ws;
 
 public:
@@ -908,7 +908,7 @@ void verify_infinit_loop(pgroup_symlinks_variants pgroup_variant, pgmconf_varian
 {
     ::testing::NiceMock<file_manager_infinit_loop> file_manager(pgroup_variant, pgmconf_variant);
     lib_config config;
-    workspace::shared_json global_settings = make_empty_shared_json();
+    shared_json global_settings = make_empty_shared_json();
 
     workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();

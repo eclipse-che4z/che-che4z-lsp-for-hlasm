@@ -45,12 +45,15 @@ public:
     bool lexically_out_of_scope() const;
 
     // Join behaves very similarly to std::filesystem functions
-    void join(std::string_view other);
+    resource_location& join(std::string_view other);
     static resource_location join(resource_location rl, std::string_view other);
 
     // Relative reference resolution based on RFC 3986
     void relative_reference_resolution(std::string_view other);
     static resource_location relative_reference_resolution(resource_location rl, std::string_view other);
+
+    resource_location& replace_filename(std::string_view other);
+    static resource_location replace_filename(resource_location rl, std::string_view other);
 
     std::strong_ordering operator<=>(const resource_location& rl) const noexcept = default;
 

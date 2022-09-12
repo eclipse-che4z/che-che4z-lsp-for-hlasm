@@ -53,6 +53,8 @@ To do this, set up two configuration files — `proc_grps.json` and `pgm_conf.js
 
 Follow the section [External Macro Libraries and COPY Members](#External-Macro-Libraries-and-COPY-Members) below for more detailed instructions on configuring the environment.
 
+The `pgm_conf.json` file can be provided implicitly by another product that supports integration with HLASM Language Support (e.g. Endevor Bridge for Git).
+
 ## Language Features
 
 The HLASM Language Support extension parses and analyzes all parts of a HLASM program. It resolves all ordinary symbols, variable symbols and checks the validity of most instructions. The extension supports conditional and unconditional branching and can define global and local variable symbols. It can also expand macros and COPY instructions.
@@ -112,7 +114,7 @@ To use a predefined set of macro and copy members, follow these steps:
    You have created a new processor group.
 3. Use the identifier of the new processor group with the name of your source code file in `pgm_conf.json` to assign the library members to the program.
 
-Relative paths that you specify in `proc_grps.json` (for libraries) or in `pgm_conf.json` (for programs) are resolved with respect to the current workspace.
+Relative paths that you specify in `proc_grps.json` (for libraries) or in `pgm_conf.json` (for programs) are resolved with respect to the current workspace. If you set the option `prefer_alternate_root` to `true`, relative paths are resolved with respect to the directory provided by an integration (e.g. Endevor Bridge for Git integration).
 
 The structure of the configuration is based on Endevor®. Ensure that you configure these files before you use macros or the COPY instruction.
 

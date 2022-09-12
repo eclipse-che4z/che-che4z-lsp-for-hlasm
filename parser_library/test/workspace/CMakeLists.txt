@@ -11,6 +11,7 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(library_test PRIVATE
+	b4g_integration_test.cpp
 	diags_suppress_test.cpp
 	empty_configs.cpp
 	empty_configs.h

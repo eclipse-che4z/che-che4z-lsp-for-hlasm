@@ -26,6 +26,7 @@ export class ConfigurationsHandler {
     private definedExpressions: RegExp[];
     // paths to the configurations
     private pgmConfPath: string;
+    private ebgPath: string;
     private procGrpsPath: string;
     private folderPath: string;
     // whether to create warning prompts on missing configs
@@ -34,6 +35,7 @@ export class ConfigurationsHandler {
     constructor() {
         this.definedExpressions = [];
         this.pgmConfPath = undefined;
+        this.ebgPath = undefined;
         this.procGrpsPath = undefined;
         this.folderPath = undefined;
         this.shouldCheckConfigs = true;
@@ -75,7 +77,7 @@ export class ConfigurationsHandler {
                     }
                 });
         }
-        if (!fs.existsSync(this.pgmConfPath)) {
+        if (!fs.existsSync(this.pgmConfPath) && !fs.existsSync(this.ebgPath)) {
             vscode.window.showWarningMessage('pgm_conf.json not found',
                 ...['Create empty pgm_conf.json', 'Create pgm_conf.json with this file', doNotShowAgain])
                 .then((selection) => {
@@ -189,6 +191,7 @@ export class ConfigurationsHandler {
         // paths where the configs are supposed to be
         this.procGrpsPath = path.join(this.folderPath, 'proc_grps.json');
         this.pgmConfPath = path.join(this.folderPath, 'pgm_conf.json');
+        this.ebgPath = path.join(folder, '.ebg');
 
         if (!fs.existsSync(this.procGrpsPath))
             return false;

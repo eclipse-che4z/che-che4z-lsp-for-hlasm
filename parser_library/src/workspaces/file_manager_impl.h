@@ -82,6 +82,9 @@ private:
 
     processor_file_ptr change_into_processor_file_if_not_already_(std::shared_ptr<file_impl>& ret);
     void prepare_file_for_change_(std::shared_ptr<file_impl>& file);
+
+protected:
+    const auto& get_files() const { return files_; }
 };
 
 #pragma warning(pop)

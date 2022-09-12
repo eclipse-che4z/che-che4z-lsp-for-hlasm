@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_UTILS_CONCAT_H
 #define HLASMPLUGIN_UTILS_CONCAT_H
 
+#include <span>
 #include <string>
 #include <string_view>
 #include <type_traits>

@@ -228,8 +228,7 @@ public:
     }
 
     lib_config global_config_;
-    workspaces::workspace::shared_json m_global_settings =
-        std::make_shared<const nlohmann::json>(nlohmann::json::object());
+    workspaces::shared_json m_global_settings = std::make_shared<const nlohmann::json>(nlohmann::json::object());
     void configuration_changed(const lib_config& new_config, std::shared_ptr<const nlohmann::json> global_settings)
     {
         global_config_ = new_config;
