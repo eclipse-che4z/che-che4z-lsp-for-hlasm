@@ -44,11 +44,11 @@ context::id_index created_variable_symbol::evaluate_name(const expressions::eval
     return id;
 }
 
-void created_variable_symbol::resolve(diagnostic_op_consumer& diag)
+void created_variable_symbol::resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diag)
 {
     for (const auto& c : created_name)
         c->resolve(diag);
-    variable_symbol::resolve(diag);
+    variable_symbol::resolve(parent_expr_kind, diag);
 }
 
 basic_variable_symbol* variable_symbol::access_basic()
@@ -97,10 +97,14 @@ context::SET_t variable_symbol::evaluate(const expressions::evaluation_context& 
     return val;
 }
 
-void variable_symbol::resolve(diagnostic_op_consumer& diag)
+void variable_symbol::resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diag)
 {
+    expressions::ca_expression_ctx expr_ctx = { context::SET_t_enum::A_TYPE,
+        parent_expr_kind == context::SET_t_enum::B_TYPE ? parent_expr_kind : context::SET_t_enum::A_TYPE,
+        true };
+
     for (const auto& v : subscript)
-        v->resolve_expression_tree(context::SET_t_enum::A_TYPE, context::SET_t_enum::A_TYPE, diag);
+        v->resolve_expression_tree(expr_ctx, diag);
 }
 
 variable_symbol::variable_symbol(

@@ -184,7 +184,7 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SE
         if (diagnoser_)
             diagnoser_->add_diagnostic(std::move(d));
     });
-    expr->resolve_expression_tree(type, type, diags);
+    expr->resolve_expression_tree({ type, type, true }, diags);
 }
 
 void parser_impl::resolve_expression(std::vector<expressions::ca_expr_ptr>& expr_list, context::SET_t_enum type) const

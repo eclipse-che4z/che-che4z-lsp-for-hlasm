@@ -31,7 +31,8 @@ TEST(character_expression, operator_priority)
 {
     std::string input =
         R"(
-&C SETC 'ABC'.(3)'ABCDEF'(4,3)
+&C1 SETC 'ABC'.(3)'ABCDEF'(4,3)
+&C2 SETC 'ABC'.(NOT -3)'ABCDEF'(NOT -5,NOT -4)
 )";
     analyzer a(input);
     a.analyze();
@@ -39,7 +40,8 @@ TEST(character_expression, operator_priority)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 
-    SETCEQ("C", "ABCDEFDEFDEF");
+    SETCEQ("C1", "ABCDEFDEFDEF");
+    SETCEQ("C2", "ABCDEFDEF");
 }
 
 TEST(character_expression, substring_notation)
@@ -209,3 +211,116 @@ TEST(character_expression, dots)
         ASSERT_EQ(a.diags().empty(), ok);
     }
 }
+
+TEST(character_expression, valid_subscript_expression)
+{
+    std::string input =
+        R"(
+&A SETC 'XYZ'
+&X SETC '&A'((0 OR 1),1).'&A'((3 AND 7),1)
+&Y SETC '&A'(1,(NOT -2))
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "X"), "XZ");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "Y"), "X");
+}
+
+TEST(character_expression, invalid_subscript_expression)
+{
+    std::string input =
+        R"(
+&C SETC 'ABCDEF'(1,(DCVAL('A')))
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004" }));
+}
+
+TEST(character_expression, valid_dupl_expression)
+{
+    std::string input =
+        R"(
+&A  SETC 'ABC'
+&C1 SETC (1)'&A'
+&C2 SETC (+5)'&A'
+&C3 SETC ((DCLEN('XYZ')))'&A'
+&C4 SETC ((NOT -X'03'))'&A'
+&C5 SETC (((('ABC' FIND 'BC'))))'&A'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "ABC");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "ABCABCABCABCABC");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C3"), "ABCABCABC");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C4"), "ABCABC");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C5"), "ABCABC");
+}
+
+TEST(character_expression, invalid_dupl_expression)
+{
+    std::string input =
+        R"(
+&A  SETC 'ABCDEF'
+&B SETC ((1 AND 1))'&A'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE005" }));
+}
+
+TEST(character_expression, subscripted_concat_evaluation)
+{
+    std::string input =
+        R"(
+&A    SETA 2
+&B    SETA 3
+&L(1) SETB 1,0,1
+&X    SETC '&L((&A OR &B))'.'&L((&A AND &B))'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "X"), "10");
+}
+
+TEST(character_expression, invalid_expression)
+{
+    std::string input =
+        R"(
+&A SETC DCLEN('ABC')
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004" }));
+}
+
+// TODO - DCLEN implementation needs to be changed to support this behavior
+// TEST(character_expression, string_concat_dclen)
+//{
+//    std::string input =
+//        R"(
+//&A SETC 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+//&C SETC '&A'(3,(DCLEN('SEVEN')))
+//)";
+//    analyzer a(input);
+//    a.analyze();
+//    a.collect_diags();
+//
+//    EXPECT_TRUE(a.diags().empty());
+//    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C"), "VENFG");
+//}

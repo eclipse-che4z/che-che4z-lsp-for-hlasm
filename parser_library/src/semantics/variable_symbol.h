@@ -54,7 +54,7 @@ struct variable_symbol
     context::SET_t evaluate(const expressions::evaluation_context& eval_ctx) const;
 
     virtual context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const = 0;
-    virtual void resolve(diagnostic_op_consumer& diag);
+    virtual void resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diag);
 
     virtual ~variable_symbol() = default;
 
@@ -79,7 +79,7 @@ struct created_variable_symbol final : variable_symbol
     const concat_chain created_name;
 
     context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const override;
-    void resolve(diagnostic_op_consumer& diag) override;
+    void resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diag) override;
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

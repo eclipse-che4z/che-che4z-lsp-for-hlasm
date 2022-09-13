@@ -43,7 +43,7 @@ TEST(ca_symbol, resolve_expr_tree)
     ca_symbol sym(nullptr, range());
     diagnostic_op_consumer_container diags;
 
-    sym.resolve_expression_tree(context::SET_t_enum::C_TYPE, context::SET_t_enum::C_TYPE, diags);
+    sym.resolve_expression_tree({ context::SET_t_enum::C_TYPE, context::SET_t_enum::C_TYPE, true }, diags);
 
     EXPECT_FALSE(diags.diags.empty());
 }

@@ -123,13 +123,12 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evalua
     }
 }
 
-void ca_symbol_attribute::resolve_expression_tree(
-    context::SET_t_enum kind, context::SET_t_enum, diagnostic_op_consumer& diags)
+void ca_symbol_attribute::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)
 {
-    if (kind == context::SET_t_enum::C_TYPE && kind != expr_kind)
+    if (expr_ctx.kind == context::SET_t_enum::C_TYPE && expr_ctx.kind != expr_kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else if (std::holds_alternative<semantics::vs_ptr>(symbol))
-        std::get<semantics::vs_ptr>(symbol)->resolve(diags);
+        std::get<semantics::vs_ptr>(symbol)->resolve(expr_ctx.parent_expr_kind, diags);
 }
 
 bool ca_symbol_attribute::is_character_expression(character_expression_purpose) const

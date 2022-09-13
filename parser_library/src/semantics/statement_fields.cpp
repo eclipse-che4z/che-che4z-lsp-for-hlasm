@@ -28,7 +28,7 @@ void label_si::resolve(diagnostic_op_consumer& diag)
         case label_si_type::SEQ:
             break;
         case label_si_type::VAR:
-            std::get<vs_ptr>(value)->resolve(diag);
+            std::get<vs_ptr>(value)->resolve(context::SET_t_enum::A_TYPE, diag);
             break;
         case label_si_type::MAC:
             break;

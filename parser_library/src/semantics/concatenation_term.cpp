@@ -40,7 +40,7 @@ std::string var_sym_conc::evaluate(const expressions::evaluation_context& eval_c
     return evaluate(std::move(value));
 }
 
-void var_sym_conc::resolve(diagnostic_op_consumer& diag) { symbol->resolve(diag); }
+void var_sym_conc::resolve(diagnostic_op_consumer& diag) { symbol->resolve(context::SET_t_enum::A_TYPE, diag); }
 
 std::string var_sym_conc::evaluate(context::SET_t varsym_value)
 {

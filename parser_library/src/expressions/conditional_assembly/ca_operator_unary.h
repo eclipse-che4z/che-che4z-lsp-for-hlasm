@@ -29,8 +29,7 @@ public:
 
     undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 
-    void resolve_expression_tree(
-        context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags) override;
+    void resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags) override;
 
     bool is_character_expression(character_expression_purpose purpose) const override;
 
@@ -62,8 +61,7 @@ class ca_par_operator : public ca_unary_operator
 public:
     ca_par_operator(ca_expr_ptr expr, range expr_range);
 
-    void resolve_expression_tree(
-        context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags) override;
+    void resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags) override;
 
     context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const override;
 };
@@ -78,14 +76,13 @@ public:
         range expr_range,
         context::SET_t_enum parent_expr_kind = context::SET_t_enum::UNDEF_TYPE);
 
-    void resolve_expression_tree(
-        context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags) override;
+    void resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags) override;
 
     context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const override;
 
 private:
     ca_expr_ops function;
-    context::SET_t_enum m_parent_expr_kind = context::SET_t_enum::UNDEF_TYPE;
+    ca_expression_ctx m_expr_ctx;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

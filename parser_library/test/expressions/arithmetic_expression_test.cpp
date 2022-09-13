@@ -57,6 +57,7 @@ TEST(arithmetic_expressions, valid_expressions)
 &A2 SETA (-1)
 &A3 SETA (1+0)
 &A4 SETA (1-1)
+&A5 SETA (NOT(2))
 )";
     analyzer a(input);
     a.analyze();
@@ -68,6 +69,7 @@ TEST(arithmetic_expressions, valid_expressions)
     SETAEQ("A2", -1);
     SETAEQ("A3", 1);
     SETAEQ("A4", 0);
+    SETAEQ("A5", -3);
 }
 
 TEST(arithmetic_expressions, empty_string_conversion)
@@ -418,4 +420,55 @@ TEST(arithmetic_expressions, bit_shift)
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 10);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), 5);
+}
+
+TEST(arithmetic_expressions, subscript_evaluation)
+{
+    std::string input =
+        R"(
+&A    SETA 2                   
+&B    SETA 3                   
+&C    SETA (&A AND &B)
+&L(1) SETB 0,1              
+&X    SETA (&L((&A AND &B)))
+&Y    SETA (&L(&C))         
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "X"), 1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "Y"), 1);
+}
+
+TEST(arithmetic_expressions, subscripted_concat_evaluation)
+{
+    std::string input =
+        R"(
+&A    SETA 2
+&B    SETA 3
+&L(1) SETB 1,0,1
+&X    SETA C2A('&L((&A OR &B))'.'&L((&A AND &B))')
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "X"), 61936); // C2A('10') = 61936
+}
+
+TEST(arithmetic_expressions, different_var_types)
+{
+    std::string input =
+        R"(
+&C SETC 'XYZ'
+&A SETA '&C'((0 OR 1),1)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004" }));
 }

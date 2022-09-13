@@ -158,12 +158,13 @@ TEST(logical_expressions, invalid_relational_expression)
 &A2 SETB (13 LT 'A')
 &A3 SETB ('a' LT 12)
 &A4 SETB (BYTE(X'C1') EQ 'A')
+&A5 SETB (DCLEN('ABC'((0 OR 1),1).'ABC'((3 AND 7),(1 EQ 1))))
 )";
     analyzer a(input);
     a.analyze();
 
     a.collect_diags();
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004", "CE004", "CE004", "CE004" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004", "CE004", "CE004", "CE004", "CE004", "CE004", "CE002" }));
 }
 
 TEST(logical_expressions, priority)
@@ -694,4 +695,42 @@ TEST(logical_expressions, logical_expr_and_string_function)
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "A1"), true);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "A2"), true);
+}
+
+TEST(logical_expressions, subscript_evaluation)
+{
+    std::string input =
+        R"(
+&A    SETA 2                   
+&B    SETA 3                   
+&C    SETA (&A AND &B)
+&L(1) SETB 0,1              
+&X    SETB (&L((&A AND &B)))
+&Y    SETB (&L(&C))         
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "X"), false);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "Y"), true);
+}
+
+TEST(logical_expressions, evaluation_mix)
+{
+    std::string input =
+        R"(
+&A SETC 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'    
+&VAR SETA DCLEN(('&A'((0 OR 1),1).'&A'((3 AND 7),(7 AND 3)))) 
+&RES1 SETB ((DCLEN(('&A'((0 OR 1),1).'&A'((3 AND 7),(7 AND 3))))) EQ 2)
+&RES2 SETB (&VAR EQ 4)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "RES1"), true);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "RES2"), true);
 }

@@ -43,6 +43,13 @@ enum class character_expression_purpose
     left_side_of_comparison,
 };
 
+struct ca_expression_ctx
+{
+    context::SET_t_enum kind;
+    context::SET_t_enum parent_expr_kind;
+    bool binary_operators_allowed;
+};
+
 // base class for conditional assembly expressions
 class ca_expression
 {
@@ -56,8 +63,7 @@ public:
     virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const = 0;
 
     // builds parts of the expression tree that could not be built during parsing
-    virtual void resolve_expression_tree(
-        context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags) = 0;
+    virtual void resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags) = 0;
 
     virtual bool is_character_expression(character_expression_purpose purpose) const = 0;
 

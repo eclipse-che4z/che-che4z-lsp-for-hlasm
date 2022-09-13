@@ -37,15 +37,14 @@ undef_sym_set ca_binary_operator::get_undefined_attributed_symbols(const evaluat
     return tmp;
 }
 
-void ca_binary_operator::resolve_expression_tree(
-    context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags)
+void ca_binary_operator::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)
 {
-    if (expr_kind != kind)
+    if (expr_kind != expr_ctx.kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else
     {
-        left_expr->resolve_expression_tree(kind, parent_expr_kind, diags);
-        right_expr->resolve_expression_tree(kind, parent_expr_kind, diags);
+        left_expr->resolve_expression_tree(expr_ctx, diags);
+        right_expr->resolve_expression_tree(expr_ctx, diags);
     }
 }
 
@@ -73,17 +72,19 @@ ca_function_binary_operator::ca_function_binary_operator(ca_expr_ptr left_expr,
     context::SET_t_enum parent_expr_kind)
     : ca_binary_operator(std::move(left_expr), std::move(right_expr), expr_kind, std::move(expr_range))
     , function(function)
-    , m_parent_expr_kind(parent_expr_kind)
+    , m_expr_ctx { expr_kind, parent_expr_kind, true }
 {}
 
-void ca_function_binary_operator::resolve_expression_tree(
-    context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags)
+void ca_function_binary_operator::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)
 {
-    if (expr_kind != kind)
+    if (expr_kind != expr_ctx.kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
+    else if (!expr_ctx.binary_operators_allowed)
+        diags.add_diagnostic(
+            diagnostic_op::error_CE005(range(left_expr->expr_range.start, right_expr->expr_range.end)));
     else
     {
-        m_parent_expr_kind = parent_expr_kind;
+        m_expr_ctx = expr_ctx;
         context::SET_t_enum operands_kind;
 
         if (is_relational())
@@ -95,10 +96,11 @@ void ca_function_binary_operator::resolve_expression_tree(
                 : context::SET_t_enum::A_TYPE;
         }
         else
-            operands_kind = ca_common_expr_policy::get_operands_type(function, kind);
+            operands_kind = ca_common_expr_policy::get_operands_type(function, expr_ctx.kind);
 
-        left_expr->resolve_expression_tree(operands_kind, parent_expr_kind, diags);
-        right_expr->resolve_expression_tree(operands_kind, parent_expr_kind, diags);
+        expr_ctx.kind = operands_kind;
+        left_expr->resolve_expression_tree(expr_ctx, diags);
+        right_expr->resolve_expression_tree(expr_ctx, diags);
     }
 }
 
@@ -158,7 +160,7 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
 context::SET_t ca_function_binary_operator::operation(
     context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const
 {
-    if (m_parent_expr_kind == context::SET_t_enum::A_TYPE)
+    if (m_expr_ctx.parent_expr_kind == context::SET_t_enum::A_TYPE)
     {
         switch (function)
         {
@@ -172,7 +174,7 @@ context::SET_t ca_function_binary_operator::operation(
                 break;
         }
     }
-    else if (m_parent_expr_kind == context::SET_t_enum::B_TYPE)
+    else if (m_expr_ctx.parent_expr_kind == context::SET_t_enum::B_TYPE)
     {
         switch (function)
         {

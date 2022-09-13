@@ -47,7 +47,7 @@ TEST(ca_expr_list, unknown_function_to_operator)
 
     //   function  =>    operator
     // ((1)AND(1)) => ((1) AND (1))
-    expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, diags);
+    expr_list.resolve_expression_tree({ context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, true }, diags);
     auto res = expr_list.evaluate(eval_ctx);
 
     EXPECT_TRUE(diags.diags.empty());
@@ -72,7 +72,7 @@ TEST(ca_expr_list, resolve_C_type)
     list.emplace_back(std::move(str));
     // (UPPER 'low')
     ca_expr_list expr_list(std::move(list), range(), true);
-    expr_list.resolve_expression_tree(context::SET_t_enum::C_TYPE, context::SET_t_enum::C_TYPE, diags);
+    expr_list.resolve_expression_tree({ context::SET_t_enum::C_TYPE, context::SET_t_enum::C_TYPE, true }, diags);
     auto res = expr_list.evaluate(eval_ctx);
 
     EXPECT_TRUE(diags.diags.empty());
@@ -123,7 +123,7 @@ TEST(ca_expr_list, unfinished_expressions)
     {
         diagnostic_op_consumer_container diags;
         ca_expr_list expr_list({}, range(), true);
-        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, diags);
+        expr_list.resolve_expression_tree({ context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, true }, diags);
 
         EXPECT_FALSE(diags.diags.empty());
     }
@@ -137,7 +137,7 @@ TEST(ca_expr_list, unfinished_expressions)
         list.emplace_back(std::move(sym));
 
         ca_expr_list expr_list(std::move(list), range(), true);
-        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, diags);
+        expr_list.resolve_expression_tree({ context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, true }, diags);
 
         EXPECT_FALSE(diags.diags.empty());
     }
@@ -154,7 +154,7 @@ TEST(ca_expr_list, unfinished_expressions)
         list.emplace_back(std::move(sym));
 
         ca_expr_list expr_list(std::move(list), range(), true);
-        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, diags);
+        expr_list.resolve_expression_tree({ context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, true }, diags);
 
         EXPECT_FALSE(diags.diags.empty());
     }
@@ -176,7 +176,7 @@ TEST(ca_expr_list, unfinished_expressions)
         list.emplace_back(std::move(eq_sym));
 
         ca_expr_list expr_list(std::move(list), range(), true);
-        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, diags);
+        expr_list.resolve_expression_tree({ context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, true }, diags);
 
         EXPECT_FALSE(diags.diags.empty());
     }

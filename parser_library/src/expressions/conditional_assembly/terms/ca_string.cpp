@@ -15,6 +15,7 @@
 #include "ca_string.h"
 
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
+#include "expressions/conditional_assembly/ca_operator_binary.h"
 #include "expressions/evaluation_context.h"
 
 namespace hlasm_plugin::parser_library::expressions {
@@ -45,17 +46,26 @@ undef_sym_set ca_string::get_undefined_attributed_symbols(const evaluation_conte
     return tmp;
 }
 
-void ca_string::resolve_expression_tree(
-    context::SET_t_enum kind, context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diags)
+void ca_string::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)
 {
-    if (expr_kind != kind)
+    if (expr_kind != expr_ctx.kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
+
+    expr_ctx.kind = context::SET_t_enum::A_TYPE;
+    expr_ctx.parent_expr_kind = expr_ctx.parent_expr_kind == context::SET_t_enum::B_TYPE ? expr_ctx.parent_expr_kind
+                                                                                         : context::SET_t_enum::A_TYPE;
+
     if (duplication_factor)
-        duplication_factor->resolve_expression_tree(context::SET_t_enum::A_TYPE, parent_expr_kind, diags);
+        duplication_factor->resolve_expression_tree({ expr_ctx.kind, expr_ctx.parent_expr_kind, false }, diags);
     if (substring.start)
-        substring.start->resolve_expression_tree(context::SET_t_enum::A_TYPE, parent_expr_kind, diags);
+        substring.start->resolve_expression_tree(expr_ctx, diags);
     if (substring.count)
-        substring.count->resolve_expression_tree(context::SET_t_enum::A_TYPE, parent_expr_kind, diags);
+        substring.count->resolve_expression_tree(expr_ctx, diags);
+
+    for (const auto& concat_point : value)
+    {
+        concat_point->resolve(diags);
+    }
 }
 
 bool ca_string::is_character_expression(character_expression_purpose) const { return true; }
@@ -80,7 +90,7 @@ context::SET_t ca_string::evaluate(const evaluation_context& eval_ctx) const
 
         if (count == 0)
         {
-            // when zero-length substring is requested, validation of the first parameter seems supressed
+            // when zero-length substring is requested, validation of the first parameter seems suppressed
             str = "";
         }
         else if (start < 0 || count < 0 || (start == 0 && count > 0))

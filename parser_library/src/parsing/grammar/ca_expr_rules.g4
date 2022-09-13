@@ -356,14 +356,14 @@ var_def_substr returns [std::vector<ca_expr_ptr> value]
 
 
 ca_dupl_factor returns [ca_expr_ptr value]
-	: lpar expr rpar
+	: lpar expr_general rpar
 	{
-		$value =std::move($expr.ca_expr);
+		$value =std::move($expr_general.ca_expr);
 	}
 	|;
 
 substring returns [expressions::ca_string::substring_t value]
-	: lpar e1=expr comma (e2=expr|ASTERISK) rpar
+	: lpar e1=expr_general comma (e2=expr_general|ASTERISK) rpar
 	{
 		$value.start = std::move($e1.ca_expr);
 		$value.substring_range = provider.get_range($lpar.ctx->getStart(), $rpar.ctx->getStop());

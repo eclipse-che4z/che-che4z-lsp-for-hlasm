@@ -26,9 +26,9 @@ ca_symbol::ca_symbol(context::id_index symbol, range expr_range)
 
 undef_sym_set ca_symbol::get_undefined_attributed_symbols(const evaluation_context&) const { return undef_sym_set(); }
 
-void ca_symbol::resolve_expression_tree(context::SET_t_enum kind, context::SET_t_enum, diagnostic_op_consumer& diags)
+void ca_symbol::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)
 {
-    if (kind == context::SET_t_enum::C_TYPE)
+    if (expr_ctx.kind == context::SET_t_enum::C_TYPE)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
