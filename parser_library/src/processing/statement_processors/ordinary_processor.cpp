@@ -33,7 +33,9 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
     statement_fields_parser& parser,
     opencode_provider& open_code)
     : statement_processor(processing_kind::ORDINARY, ctx)
-    , eval_ctx { *ctx.hlasm_ctx, lib_provider, *this }
+    , lib_provider(lib_provider)
+    , lib_info(lib_provider, *ctx.hlasm_ctx)
+    , eval_ctx { *ctx.hlasm_ctx, lib_info, *this }
     , ca_proc_(ctx, branch_provider, lib_provider, state_listener, open_code)
     , mac_proc_(ctx, branch_provider, lib_provider)
     , asm_proc_(ctx, branch_provider, lib_provider, parser, open_code)
@@ -54,15 +56,13 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
 
     if (!status)
     {
-        auto found =
-            eval_ctx.lib_provider.parse_library(*id, ctx, workspaces::library_data { processing_kind::MACRO, id });
+        auto found = lib_provider.parse_library(*id, ctx, workspaces::library_data { processing_kind::MACRO, id });
         processing_form f;
         context::instruction_type t;
         if (found)
         {
             f = processing_form::MAC;
-            t = (hlasm_ctx.macros().find(id) != hlasm_ctx.macros().end()) ? context::instruction_type::MAC
-                                                                          : context::instruction_type::UNDEF;
+            t = hlasm_ctx.find_macro(id) ? context::instruction_type::MAC : context::instruction_type::UNDEF;
         }
         else
         {
@@ -129,27 +129,27 @@ void ordinary_processor::end_processing()
     if (hlasm_ctx.ord_ctx.literals().get_pending_count())
     {
         auto ltorg = hlasm_ctx.ord_ctx.implicit_ltorg_target();
-        hlasm_ctx.ord_ctx.set_location_counter(ltorg->name, {});
-        hlasm_ctx.ord_ctx.set_available_location_counter_value();
+        hlasm_ctx.ord_ctx.set_location_counter(ltorg->name, {}, lib_info);
+        hlasm_ctx.ord_ctx.set_available_location_counter_value(lib_info);
 
-        hlasm_ctx.ord_ctx.generate_pool(*this, hlasm_ctx.using_current());
+        hlasm_ctx.ord_ctx.generate_pool(*this, hlasm_ctx.using_current(), lib_info);
     }
 
     hlasm_ctx.ord_ctx.start_reporting_label_candidates();
 
-    if (!hlasm_ctx.ord_ctx.symbol_dependencies.check_loctr_cycle())
+    if (!hlasm_ctx.ord_ctx.symbol_dependencies.check_loctr_cycle(lib_info))
         add_diagnostic(diagnostic_op::error_E033(range())); // TODO: at least we say something
 
-    hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(context::id_index(), &asm_proc_);
+    hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(context::id_index(), &asm_proc_, lib_info);
 
-    hlasm_ctx.ord_ctx.finish_module_layout(&asm_proc_);
+    hlasm_ctx.ord_ctx.finish_module_layout(&asm_proc_, lib_info);
 
     hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
 
     // do not replace stack trace in the messages - it is already provided
     diagnostic_consumer_transform using_diags(
         [this](diagnostic_s d) { diagnosable_impl::add_diagnostic(std::move(d)); });
-    hlasm_ctx.using_resolve(using_diags);
+    hlasm_ctx.using_resolve(using_diags, lib_info);
 
     check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
 
@@ -256,7 +256,7 @@ void ordinary_processor::check_postponed_statements(
         if (!stmt)
             continue;
 
-        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, dep_ctx);
+        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, dep_ctx, lib_info);
 
         const auto* rs = stmt->resolved_stmt();
         switch (rs->opcode_ref().type)

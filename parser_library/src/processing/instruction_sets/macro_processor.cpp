@@ -44,11 +44,13 @@ void macro_processor::process(std::shared_ptr<const processing::resolved_stateme
         auto [valid, id] = hlasm_ctx.try_get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol);
         if (valid && !hlasm_ctx.ord_ctx.get_symbol(id))
         {
-            hlasm_ctx.ord_ctx.add_symbol_reference(context::symbol(id,
-                context::symbol_value(),
-                context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic),
-                location(),
-                {}));
+            hlasm_ctx.ord_ctx.add_symbol_reference(
+                context::symbol(id,
+                    context::symbol_value(),
+                    context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic),
+                    location(),
+                    {}),
+                lib_info);
         }
     }
 

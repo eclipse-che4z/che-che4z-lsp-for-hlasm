@@ -1088,3 +1088,106 @@ V1 EQU T'W
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "V1"), 0xE4);
 }
+
+TEST(data_attributes, mach_O_external_macro)
+{
+    mock_parse_lib_provider lib { { "MAC", R"(.*
+    MACRO
+    MAC
+    MEND
+)" } };
+    std::string input = R"(
+E1    EQU   O'MAC
+      MACRO
+      MAC
+      MEND
+E2    EQU   O'MAC
+MAC   OPSYN
+E3    EQU   O'MAC
+      MAC
+E4    EQU   O'MAC
+      END
+)";
+
+    analyzer a(input, analyzer_options(&lib));
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E1"), 0xE2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E2"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E3"), 0xE2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E4"), 0xD4);
+}
+
+TEST(data_attributes, mach_O_external_macro_delayed)
+{
+    mock_parse_lib_provider lib { { "MAC", R"(.*
+    MACRO
+    MAC
+    MEND
+)" } };
+    std::string input = R"(
+E1    EQU   X+O'MAC
+      MACRO
+      MAC
+      MEND
+E2    EQU   X+O'MAC
+MAC   OPSYN
+E3    EQU   X+O'MAC
+      MAC
+E4    EQU   X+O'MAC
+X     EQU   0
+      END
+)";
+
+    analyzer a(input, analyzer_options(&lib));
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E1"), 0xE2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E2"), 0xD4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E3"), 0xE2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E4"), 0xD4);
+}
+
+TEST(data_attributes, mach_O_external_macro_literals)
+{
+    mock_parse_lib_provider lib {
+        { "MAC",
+            R"(.*
+    MACRO
+    MAC
+    MEND
+)" },
+    };
+    std::string input = R"(
+C     CSECT
+      LARL  0,=A(O'MAC)
+      MACRO
+      MAC
+      MEND
+      LARL  0,=A(O'MAC)
+MAC   OPSYN
+      LARL  0,=A(O'MAC)
+      MAC
+      LARL  0,=A(O'MAC)
+      END
+)";
+
+    analyzer a(input, analyzer_options(&lib));
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto c = get_section(a.hlasm_ctx(), "C");
+    ASSERT_TRUE(c);
+
+    EXPECT_EQ(c->current_location_counter().current_address().offset(), 4 * 6 + 4);
+
+    // O'MAC should be evaluated when generating the literal pool (0xD4), no way to test that now
+}

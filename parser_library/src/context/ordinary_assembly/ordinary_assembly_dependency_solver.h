@@ -15,8 +15,13 @@
 #ifndef CONTEXT_ORDINARY_ASSEMBLY_DEPENDENCY_SOLVER_H
 #define CONTEXT_ORDINARY_ASSEMBLY_DEPENDENCY_SOLVER_H
 
+#include "context/opcode_generation.h"
 #include "ordinary_assembly_context.h"
 #include "tagged_index.h"
+
+namespace hlasm_plugin::parser_library {
+class library_info;
+} // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::context {
 class using_collection;
@@ -28,30 +33,40 @@ class ordinary_assembly_dependency_solver final : public dependency_solver
     size_t literal_pool_generation = (size_t)-1;
     size_t unique_id = 0;
     index_t<using_collection> active_using;
+    opcode_generation opcode_gen;
+
+    const library_info& lib_info;
 
 public:
-    explicit ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context)
+    explicit ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context, const library_info& li)
         : ord_context(ord_context)
         , literal_pool_generation(ord_context.current_literal_pool_generation())
         , unique_id(ord_context.current_unique_id())
         , active_using(ord_context.current_using())
+        , opcode_gen(ord_context.current_opcode_generation())
+        , lib_info(li)
     {}
 
-    ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context, context::address loctr_addr)
+    ordinary_assembly_dependency_solver(
+        ordinary_assembly_context& ord_context, context::address loctr_addr, const library_info& li)
         : ord_context(ord_context)
         , loctr_addr(std::move(loctr_addr))
         , literal_pool_generation(ord_context.current_literal_pool_generation())
         , unique_id(ord_context.current_unique_id())
         , active_using(ord_context.current_using())
+        , opcode_gen(ord_context.current_opcode_generation())
+        , lib_info(li)
     {}
 
     ordinary_assembly_dependency_solver(
-        ordinary_assembly_context& ord_context, const dependency_evaluation_context& dep_ctx)
+        ordinary_assembly_context& ord_context, const dependency_evaluation_context& dep_ctx, const library_info& li)
         : ord_context(ord_context)
         , loctr_addr(dep_ctx.loctr_address)
         , literal_pool_generation(dep_ctx.literal_pool_generation)
         , unique_id(dep_ctx.unique_id)
         , active_using(dep_ctx.active_using)
+        , opcode_gen(dep_ctx.opcode_gen)
+        , lib_info(li)
     {}
 
     const symbol* get_symbol(id_index name) const override;

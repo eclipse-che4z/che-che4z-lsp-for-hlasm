@@ -37,12 +37,11 @@ TEST(macro, macro_def)
     a.analyze();
 
     id_index id = a.hlasm_ctx().ids().add("m1");
-    auto& macros = a.hlasm_ctx().macros();
 
-    auto tmp = macros.find(id);
-    ASSERT_TRUE(tmp != macros.end());
+    auto tmp = a.hlasm_ctx().find_macro(id);
+    ASSERT_TRUE(tmp);
 
-    auto& m = tmp->second;
+    auto& m = *tmp;
 
     auto op = a.hlasm_ctx().ids().add("op");
 
@@ -94,10 +93,10 @@ TEST(macro, macro_def_count)
     id_index id;
 
     id = a.hlasm_ctx().ids().add("M1");
-    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
+    EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 
     id = a.hlasm_ctx().ids().add("m2");
-    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
+    EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 }
 
 TEST(macro, macro_def_count_inner)
@@ -130,13 +129,13 @@ TEST(macro, macro_def_count_inner)
     id_index id;
 
     id = a.hlasm_ctx().ids().add("M1");
-    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
+    EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 
     id = a.hlasm_ctx().ids().add("M2");
-    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
+    EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 
     id = a.hlasm_ctx().ids().add("INNER_M");
-    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
+    EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 }
 
 TEST(macro, macro_lookahead_pass)
@@ -165,7 +164,7 @@ TEST(macro, macro_lookahead_pass)
     id_index id;
 
     id = a.hlasm_ctx().ids().add("M1");
-    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
+    EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 }
 
 TEST(macro, macro_lookahead_fail)
@@ -194,10 +193,10 @@ TEST(macro, macro_lookahead_fail)
     id_index id;
 
     id = a.hlasm_ctx().ids().add("M1");
-    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
+    EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 
     id = a.hlasm_ctx().ids().add("INNER_M");
-    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
+    EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), 1U);
@@ -359,9 +358,9 @@ TEST(macro, macro_name_param_repetition)
     EXPECT_EQ(a.diags().size(), (size_t)3);
     EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
-    auto& m1 = a.hlasm_ctx().macros().find(a.hlasm_ctx().ids().add("m1"))->second;
-    auto& m2 = a.hlasm_ctx().macros().find(a.hlasm_ctx().ids().add("m2"))->second;
-    auto& m3 = a.hlasm_ctx().macros().find(a.hlasm_ctx().ids().add("m3"))->second;
+    auto& m1 = *a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("m1"));
+    auto& m2 = *a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("m2"));
+    auto& m3 = *a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("m3"));
 
     {
         std::vector<macro_arg> args;

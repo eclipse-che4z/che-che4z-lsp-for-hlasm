@@ -356,14 +356,14 @@ TEST(copy, copy_enter_from_macro_call)
 
     EXPECT_EQ(a.hlasm_ctx().macros().size(), (size_t)2);
 
-    auto mac = a.hlasm_ctx().macros().find(a.hlasm_ctx().ids().add("M"));
-    ASSERT_TRUE(mac != a.hlasm_ctx().macros().end());
+    auto mac = *a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("M"));
+    ASSERT_TRUE(mac);
 
-    EXPECT_TRUE(mac->second->labels.find(a.hlasm_ctx().ids().add("A")) != mac->second->labels.end());
-    EXPECT_TRUE(mac->second->labels.find(a.hlasm_ctx().ids().add("B")) != mac->second->labels.end());
+    EXPECT_TRUE(mac->labels.find(a.hlasm_ctx().ids().add("A")) != mac->labels.end());
+    EXPECT_TRUE(mac->labels.find(a.hlasm_ctx().ids().add("B")) != mac->labels.end());
 
-    ASSERT_EQ(mac->second->used_copy_members.size(), 1U);
-    EXPECT_EQ(mac->second->used_copy_members.begin()->get()->name, a.hlasm_ctx().ids().add("COPYR"));
+    ASSERT_EQ(mac->used_copy_members.size(), 1U);
+    EXPECT_EQ(mac->used_copy_members.begin()->get()->name, a.hlasm_ctx().ids().add("COPYR"));
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
@@ -409,9 +409,11 @@ TEST(copy, nested_macro_copy_call)
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
     ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
-    auto mac = a.hlasm_ctx().macros().find(a.hlasm_ctx().ids().add("MAC"));
+    auto mac_ptr = a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("MAC"));
+    ASSERT_TRUE(mac_ptr);
+    const auto& mac = *mac_ptr;
 
-    EXPECT_TRUE(mac->second->labels.find(a.hlasm_ctx().ids().add("A")) != mac->second->labels.end());
+    EXPECT_TRUE(mac->labels.find(a.hlasm_ctx().ids().add("A")) != mac->labels.end());
 
     EXPECT_EQ(a.hlasm_ctx()
                   .globals()
@@ -439,8 +441,7 @@ TEST(copy, macro_from_copy_call)
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
     ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
-    auto mac = a.hlasm_ctx().macros().find(a.hlasm_ctx().ids().add("M"));
-    ASSERT_NE(a.hlasm_ctx().macros().end(), mac);
+    ASSERT_TRUE(a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("M")));
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 

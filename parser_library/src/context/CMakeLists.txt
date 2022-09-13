@@ -30,6 +30,7 @@ target_sources(parser_library PRIVATE
 	macro.h
 	macro_param_data.cpp
 	macro_param_data.h
+	opcode_generation.h
 	operation_code.h
 	sequence_symbol.cpp
 	sequence_symbol.h

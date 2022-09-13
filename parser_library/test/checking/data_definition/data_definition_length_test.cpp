@@ -16,6 +16,7 @@
 #include "data_definition_common.h"
 #include "expressions/data_definition.h"
 #include "hlasmparser_multiline.h"
+#include "library_info_transitional.h"
 #include "processing/instruction_sets/data_def_postponed_statement.h"
 #include "semantics/operand.h"
 
@@ -37,7 +38,7 @@ TEST(data_def_operands_length, all_bit_len)
     list.push_back(data_def_op_from_string("BL.6'101'"));
 
     context::hlasm_context ctx;
-    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx);
+    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx, library_info_transitional::empty);
     diagnostic_op_consumer_container diags;
 
     EXPECT_EQ(processing::data_def_dependency<data_instr_type::DC>::get_operands_length(
@@ -52,7 +53,7 @@ TEST(data_def_operands_length, byte_in_middle_len)
     list.push_back(data_def_op_from_string("A(1)"));
     list.push_back(data_def_op_from_string("BL.6'101'"));
     context::hlasm_context ctx;
-    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx);
+    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx, library_info_transitional::empty);
     diagnostic_op_consumer_container diags;
 
     EXPECT_EQ(processing::data_def_dependency<data_instr_type::DC>::get_operands_length(
@@ -67,7 +68,7 @@ TEST(data_def_operands_length, explicit_byte)
     list.push_back(data_def_op_from_string("AL4(1)"));
     list.push_back(data_def_op_from_string("C'101'"));
     context::hlasm_context ctx;
-    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx);
+    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx, library_info_transitional::empty);
     diagnostic_op_consumer_container diags;
 
     EXPECT_EQ(processing::data_def_dependency<data_instr_type::DC>::get_operands_length(

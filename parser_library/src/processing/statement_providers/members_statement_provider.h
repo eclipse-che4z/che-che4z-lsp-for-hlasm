@@ -21,6 +21,10 @@
 #include "processing/statement_fields_parser.h"
 #include "statement_provider.h"
 
+namespace hlasm_plugin::parser_library::workspaces {
+class parse_lib_provider;
+} // namespace hlasm_plugin::parser_library::workspaces
+
 namespace hlasm_plugin::parser_library::processing {
 
 // common class for copy and macro statement providers (provider of copy and macro members)

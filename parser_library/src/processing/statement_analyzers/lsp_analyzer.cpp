@@ -183,7 +183,8 @@ void lsp_analyzer::collect_occurence(const semantics::instruction_si& instructio
     else if (instruction.type == semantics::instruction_si_type::ORD
         && collector.collector_kind == lsp::occurence_kind::INSTR)
     {
-        auto opcode = hlasm_ctx_.get_operation_code(std::get<context::id_index>(instruction.value));
+        auto opcode = hlasm_ctx_.get_operation_code(
+            std::get<context::id_index>(instruction.value)); // TODO: collect the instruction at the right time
         auto* macro_def = std::get_if<context::macro_def_ptr>(&opcode.opcode_detail);
         if (opcode.opcode || macro_def)
             collector.occurences.emplace_back(

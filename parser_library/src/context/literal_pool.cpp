@@ -131,7 +131,7 @@ const semantics::instruction_si literal_pool::literal_postponed_statement::empty
 const processing::processing_format literal_pool::literal_postponed_statement::dc_format(
     processing::processing_kind::ORDINARY, processing::processing_form::ASM, processing::operand_occurence::PRESENT);
 
-void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using)
+void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using, const library_info& li)
 {
     ordinary_assembly_context& ord_ctx = hlasm_ctx.ord_ctx;
 
@@ -150,7 +150,9 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
                 it->first.generation,
                 it->first.unique_id,
                 active_using,
-            });
+                ord_ctx.current_opcode_generation(),
+            },
+            li);
         auto bit_length = lit->evaluate_total_length(solver, checking::data_instr_type::DC, diags);
         if (bit_length < 0)
             continue;
@@ -167,7 +169,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
     });
 
     constexpr auto sectalign = doubleword;
-    ord_ctx.align(sectalign);
+    ord_ctx.align(sectalign, li);
 
     for (const auto& [it, size, alignment] : m_pending_literals)
     {
@@ -181,7 +183,9 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
                 lit_key.generation,
                 lit_key.unique_id,
                 active_using,
-            });
+                ord_ctx.current_opcode_generation(),
+            },
+            li);
 
         if (!lit->access_data_def_type()) // unknown type
             continue;
@@ -189,11 +193,12 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
         // TODO: warn on align > sectalign
 
         bool cycle_ok = ord_ctx.create_symbol(&lit_val.text,
-            ord_ctx.align(lit_val.align_on_halfword ? halfword : no_align),
+            ord_ctx.align(lit_val.align_on_halfword ? halfword : no_align, li),
             symbol_attributes(symbol_origin::DAT,
                 ebcdic_encoding::a2e[(unsigned char)lit->get_type_attribute()],
                 lit->get_length_attribute(solver, diags)),
-            {});
+            {},
+            li);
 
         if (size == 0)
         {
@@ -201,7 +206,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
             continue;
         }
 
-        ord_ctx.reserve_storage_area(size, no_align);
+        ord_ctx.reserve_storage_area(size, no_align, li);
 
         if (!cycle_ok)
             diags.add_diagnostic(diagnostic_op::error_E033(it->second.r));
@@ -209,7 +214,14 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
         {
             auto adder = ord_ctx.symbol_dependencies.add_dependencies(
                 std::make_unique<literal_postponed_statement>(lit, lit_val, hlasm_ctx.ids()),
-                { lit_val.loctr, lit_key.generation, lit_key.unique_id, active_using });
+                dependency_evaluation_context {
+                    lit_val.loctr,
+                    lit_key.generation,
+                    lit_key.unique_id,
+                    active_using,
+                    ord_ctx.current_opcode_generation(),
+                },
+                li);
             adder.add_dependency();
             adder.finish();
         }

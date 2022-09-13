@@ -18,6 +18,7 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_string.h"
 #include "expressions/evaluation_context.h"
+#include "library_info_transitional.h"
 #include "semantics/concatenation_term.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
@@ -28,7 +29,7 @@ TEST(ca_string, undefined_attributes)
 {
     diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     concat_chain value;
     value.push_back(std::make_unique<char_str_conc>("gfds", range()));
@@ -83,7 +84,7 @@ TEST(ca_string, test)
 
     diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     auto res = s.evaluate(eval_ctx);
 
@@ -103,7 +104,7 @@ TEST_P(ca_string_suite, dupl)
 
     diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     auto res = s.evaluate(eval_ctx);
 

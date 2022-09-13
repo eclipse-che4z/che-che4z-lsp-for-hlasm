@@ -283,7 +283,7 @@ TEST(macro_cache_test, empty_macro)
 
     macro_cache_key macro_key { opencode_file_loc, { processing::processing_kind::MACRO, macro_id }, {} };
     EXPECT_TRUE(macro_c.load_from_cache(macro_key, new_ctx));
-    EXPECT_EQ(new_ctx.hlasm_ctx->macros().count(macro_id), 0U);
+    EXPECT_FALSE(new_ctx.hlasm_ctx->find_macro(macro_id));
 }
 
 TEST(macro_cache_test, get_opsyn_state)

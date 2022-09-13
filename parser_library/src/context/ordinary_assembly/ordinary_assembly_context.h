@@ -28,6 +28,7 @@
 
 namespace hlasm_plugin::parser_library {
 class diagnosable_ctx;
+class library_info;
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::expressions {
@@ -38,6 +39,7 @@ namespace hlasm_plugin::parser_library::context {
 class hlasm_context;
 class literal_pool;
 class location_counter;
+class opcode_generation;
 
 struct using_label_tag
 {};
@@ -83,10 +85,13 @@ public:
 
     // creates symbol
     // returns false if loctr cycle has occured
-    [[nodiscard]] bool create_symbol(
-        id_index name, symbol_value value, symbol_attributes attributes, location symbol_location);
+    [[nodiscard]] bool create_symbol(id_index name,
+        symbol_value value,
+        symbol_attributes attributes,
+        location symbol_location,
+        const library_info& li);
 
-    void add_symbol_reference(symbol sym);
+    void add_symbol_reference(symbol sym, const library_info& li);
     const symbol* get_symbol_reference(context::id_index name) const;
 
     symbol* get_symbol(id_index name);
@@ -98,14 +103,14 @@ public:
     const section* current_section() const;
 
     // sets current section
-    section* set_section(id_index name, section_kind kind, location symbol_location);
+    section* set_section(id_index name, section_kind kind, location symbol_location, const library_info& li);
 
     // creates an external section
     void create_external_section(
         id_index name, section_kind kind, location symbol_location, processing_stack_t processing_stack);
 
     // sets current location counter of current section
-    void set_location_counter(id_index name, location symbol_location);
+    void set_location_counter(id_index name, location symbol_location, const library_info& li);
 
     // sets value of the current location counter
     void set_location_counter_value(const address& addr,
@@ -113,17 +118,19 @@ public:
         int offset,
         const resolvable* undefined_address,
         post_stmt_ptr dependency_source,
-        const dependency_evaluation_context& dep_ctx);
-    void set_location_counter_value(const address& addr, size_t boundary, int offset);
+        const dependency_evaluation_context& dep_ctx,
+        const library_info& li);
+    void set_location_counter_value(const address& addr, size_t boundary, int offset, const library_info& li);
     space_ptr set_location_counter_value_space(const address& addr,
         size_t boundary,
         int offset,
         const resolvable* undefined_address,
         post_stmt_ptr dependency_source,
-        const dependency_evaluation_context& dep_ctx);
+        const dependency_evaluation_context& dep_ctx,
+        const library_info& li);
 
     // sets next available value for the current location counter
-    void set_available_location_counter_value();
+    void set_available_location_counter_value(const library_info& li);
 
     // check whether symbol is already defined
     bool symbol_defined(id_index name) const;
@@ -133,18 +140,19 @@ public:
     bool counter_defined(id_index name);
 
     // reserves storage area of specified length and alignment
-    address reserve_storage_area(size_t length, alignment align, const dependency_evaluation_context& dep_ctx);
-    address reserve_storage_area(size_t length, alignment align);
+    address reserve_storage_area(
+        size_t length, alignment align, const dependency_evaluation_context& dep_ctx, const library_info& li);
+    address reserve_storage_area(size_t length, alignment align, const library_info& li);
 
     // aligns storage
-    address align(alignment align, const dependency_evaluation_context& dep_ctx);
-    address align(alignment a);
+    address align(alignment align, const dependency_evaluation_context& dep_ctx, const library_info& li);
+    address align(alignment a, const library_info& li);
 
     // adds space to the current location counter
     space_ptr register_ordinary_space(alignment align);
 
     // creates layout of every section
-    void finish_module_layout(diagnostic_s_consumer* diag_consumer);
+    void finish_module_layout(diagnostic_s_consumer* diag_consumer, const library_info& li);
 
     size_t current_literal_pool_generation() const;
     size_t next_unique_id() { return ++m_statement_unique_id; }
@@ -152,7 +160,7 @@ public:
 
     literal_pool& literals() { return *m_literals; }
     const literal_pool& literals() const { return *m_literals; }
-    void generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using) const;
+    void generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using, const library_info& li) const;
     location_counter* implicit_ltorg_target()
     {
         if (!first_control_section_)
@@ -170,10 +178,12 @@ public:
     void symbol_mentioned_on_macro(id_index name);
     void start_reporting_label_candidates();
 
+    opcode_generation current_opcode_generation() const;
+
 private:
     void create_private_section();
     std::pair<address, space_ptr> reserve_storage_area_space(
-        size_t length, alignment align, const dependency_evaluation_context& dep_ctx);
+        size_t length, alignment align, const dependency_evaluation_context& dep_ctx, const library_info& li);
     section* create_section(id_index name, section_kind kind);
 
     friend class ordinary_assembly_dependency_solver;

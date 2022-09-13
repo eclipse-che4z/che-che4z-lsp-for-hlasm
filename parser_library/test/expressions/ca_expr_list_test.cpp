@@ -21,6 +21,7 @@
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "expressions/evaluation_context.h"
+#include "library_info_transitional.h"
 #include "semantics/concatenation_term.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
@@ -31,7 +32,7 @@ TEST(ca_expr_list, unknown_function_to_operator)
 {
     context::hlasm_context ctx;
     diagnostic_op_consumer_container diags;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     std::string name = "AND";
     auto c = std::make_unique<ca_constant>(1, range());
@@ -58,7 +59,7 @@ TEST(ca_expr_list, resolve_C_type)
 {
     context::hlasm_context ctx;
     diagnostic_op_consumer_container diags;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     std::string name = "UPPER";
     auto sym = std::make_unique<ca_symbol>(&name, range());
@@ -96,7 +97,7 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
 
     context::hlasm_context ctx;
     diagnostic_op_consumer_container diags;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
     auto res = expr_list.get_undefined_attributed_symbols(eval_ctx);
 
     ASSERT_TRUE(res.size());

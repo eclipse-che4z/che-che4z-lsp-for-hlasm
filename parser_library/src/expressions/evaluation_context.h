@@ -17,7 +17,7 @@
 
 #include "context/common_types.h"
 #include "diagnosable_ctx.h"
-#include "workspaces/parse_lib_provider.h"
+#include "library_info.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -25,13 +25,12 @@ namespace hlasm_plugin::parser_library::expressions {
 struct evaluation_context
 {
     context::hlasm_context& hlasm_ctx;
-    workspaces::parse_lib_provider& lib_provider;
+    const library_info& lib_info;
     diagnostic_op_consumer& diags;
 
-    evaluation_context(
-        context::hlasm_context& ctx, workspaces::parse_lib_provider& lib_provider, diagnostic_op_consumer& diags)
+    evaluation_context(context::hlasm_context& ctx, const library_info& lib_info, diagnostic_op_consumer& diags)
         : hlasm_ctx(ctx)
-        , lib_provider(lib_provider)
+        , lib_info(lib_info)
         , diags(diags)
     {}
 

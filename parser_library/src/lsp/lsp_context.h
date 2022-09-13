@@ -60,7 +60,8 @@ public:
     void add_macro(macro_info_ptr macro_i, text_data_ref_t text_data = text_data_ref_t());
     void add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data);
 
-    [[nodiscard]] macro_info_ptr get_macro_info(context::id_index macro_name) const;
+    [[nodiscard]] macro_info_ptr get_macro_info(
+        context::id_index macro_name, context::opcode_generation gen = context::opcode_generation::current) const;
     [[nodiscard]] const file_info* get_file_info(const utils::resource::resource_location& file_loc) const;
 
     location definition(const utils::resource::resource_location& document_loc, position pos) const override;

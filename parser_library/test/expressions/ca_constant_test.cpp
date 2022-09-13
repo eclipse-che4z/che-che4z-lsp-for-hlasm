@@ -16,6 +16,7 @@
 
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/evaluation_context.h"
+#include "library_info_transitional.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::semantics;
@@ -25,7 +26,7 @@ TEST(ca_constant, undefined_attributes)
 {
     diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     ca_constant c(1, range());
 

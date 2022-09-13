@@ -19,6 +19,7 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "expressions/evaluation_context.h"
+#include "library_info_transitional.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::semantics;
@@ -28,7 +29,7 @@ TEST(ca_symbol_attr, undefined_attributes)
 {
     diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
@@ -55,7 +56,7 @@ TEST(ca_symbol_attr, evaluate_undef_varsym)
 {
     diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     auto res = create_var_sym_attr(context::data_attr_kind::D, ctx.ids().add("n")).evaluate(eval_ctx);
 
@@ -67,7 +68,7 @@ TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)
 {
     diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     auto name = ctx.ids().add("n");
 
@@ -83,7 +84,7 @@ TEST(ca_symbol_attr, evaluate_substituted_varsym_char_not_sym)
 {
     diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     auto name = ctx.ids().add("n");
 
@@ -119,7 +120,7 @@ class ca_attr : public ::testing::TestWithParam<attr_test_param>
 protected:
     std::shared_ptr<context::hlasm_context> hlasm_ctx = std::make_shared<context::hlasm_context>();
     diagnostic_op_consumer_container diags;
-    evaluation_context eval_ctx { *hlasm_ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { *hlasm_ctx, library_info_transitional::empty, diags };
 };
 
 INSTANTIATE_TEST_SUITE_P(ca_attr_suite,
@@ -142,12 +143,14 @@ TEST_P(ca_attr, test)
     (void)hlasm_ctx->ord_ctx.create_symbol(hlasm_ctx->ids().add("C"),
         context::symbol_value(),
         context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10),
-        location());
+        location(),
+        library_info_transitional::empty);
 
     (void)hlasm_ctx->ord_ctx.create_symbol(hlasm_ctx->ids().add("T"),
         context::symbol_value(),
         context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10),
-        location());
+        location(),
+        library_info_transitional::empty);
 
     auto var = hlasm_ctx->create_local_variable<context::C_t>(name, true);
     var->access_set_symbol<context::C_t>()->set_value(GetParam().value);

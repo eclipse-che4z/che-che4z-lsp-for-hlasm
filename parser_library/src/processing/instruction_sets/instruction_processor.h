@@ -20,6 +20,7 @@
 
 #include "diagnosable_ctx.h"
 #include "expressions/evaluation_context.h"
+#include "library_info_transitional.h"
 #include "processing/branching_provider.h"
 #include "processing/statement.h"
 #include "workspaces/parse_lib_provider.h"
@@ -39,7 +40,7 @@ protected:
     context::hlasm_context& hlasm_ctx;
     branching_provider& branch_provider;
     workspaces::parse_lib_provider& lib_provider;
-
+    library_info_transitional lib_info;
     expressions::evaluation_context eval_ctx;
 
     instruction_processor(
@@ -49,7 +50,8 @@ protected:
         , hlasm_ctx(*ctx.hlasm_ctx)
         , branch_provider(branch_provider)
         , lib_provider(lib_provider)
-        , eval_ctx { *ctx.hlasm_ctx, lib_provider, *this }
+        , lib_info(lib_provider, *ctx.hlasm_ctx)
+        , eval_ctx { *ctx.hlasm_ctx, lib_info, *this }
     {}
 
     void register_literals(

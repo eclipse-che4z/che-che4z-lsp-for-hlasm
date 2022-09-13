@@ -37,6 +37,7 @@ template<typename T>
 class diagnostic_consumer;
 struct diagnostic_op;
 class diagnostic_s;
+class library_info;
 
 namespace expressions {
 class mach_expression;
@@ -334,7 +335,8 @@ public:
     using_collection& operator=(using_collection&&) noexcept;
     ~using_collection();
 
-    void resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag);
+    void resolve_all(
+        ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag, const library_info& li);
 
     bool resolved() const { return m_resolved; }
 

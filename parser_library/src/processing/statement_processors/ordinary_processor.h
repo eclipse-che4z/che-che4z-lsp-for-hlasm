@@ -15,6 +15,7 @@
 #ifndef PROCESSING_ORDINARY_PROCESSOR_H
 #define PROCESSING_ORDINARY_PROCESSOR_H
 
+#include "library_info_transitional.h"
 #include "processing/instruction_sets/asm_processor.h"
 #include "processing/instruction_sets/ca_processor.h"
 #include "processing/instruction_sets/mach_processor.h"
@@ -30,6 +31,8 @@ class ordinary_processor final : public statement_processor
 {
     static constexpr size_t NEST_LIMIT = 100;
 
+    workspaces::parse_lib_provider& lib_provider;
+    library_info_transitional lib_info;
     expressions::evaluation_context eval_ctx;
 
     ca_processor ca_proc_;

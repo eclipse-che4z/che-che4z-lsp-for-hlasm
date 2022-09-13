@@ -328,16 +328,17 @@ id_index identify_label(const ordinary_assembly_context& ord_context, const expr
 }
 } // namespace
 
-void using_collection::resolve_all(ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag)
+void using_collection::resolve_all(
+    ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag, const library_info& li)
 {
     assert(!m_resolved);
 
-    const auto evaluate_expression = [&ord_context, &diag, this](expression_value& expr) {
+    const auto evaluate_expression = [&ord_context, &diag, this, &li](expression_value& expr) {
         expr.label = identify_label(ord_context, expr.expression.get());
         if (!expr.label)
         {
             const auto& expr_context = get(expr.context);
-            ordinary_assembly_dependency_solver solver(ord_context, expr_context.evaluation_ctx);
+            ordinary_assembly_dependency_solver solver(ord_context, expr_context.evaluation_ctx, li);
             diagnostic_consumer_transform diag_collector([&diag, &expr_context](diagnostic_op d) {
                 diag.add_diagnostic(add_stack_details(std::move(d), expr_context.stack));
             });

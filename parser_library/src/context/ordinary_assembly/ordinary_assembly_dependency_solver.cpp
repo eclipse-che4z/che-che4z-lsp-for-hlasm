@@ -17,6 +17,7 @@
 #include "context/hlasm_context.h"
 #include "context/literal_pool.h"
 #include "context/using.h"
+#include "library_info.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -43,6 +44,7 @@ dependency_evaluation_context ordinary_assembly_dependency_solver::derive_curren
         literal_pool_generation,
         unique_id,
         active_using,
+        opcode_gen,
     };
 }
 
@@ -83,7 +85,12 @@ std::variant<const symbol*, symbol_candidate> ordinary_assembly_dependency_solve
 
 std::string ordinary_assembly_dependency_solver::get_opcode_attr(id_index name) const
 {
-    return ord_context.hlasm_ctx_.get_opcode_attr(name);
+    auto result = ord_context.hlasm_ctx_.get_opcode_attr(name, opcode_gen);
+
+    if (result == "U" && lib_info.has_library(*name))
+        return "S";
+
+    return result;
 }
 
 } // namespace hlasm_plugin::parser_library::context

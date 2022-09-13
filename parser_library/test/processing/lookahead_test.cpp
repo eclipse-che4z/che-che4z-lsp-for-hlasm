@@ -17,6 +17,7 @@
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
 #include "hlasmparser_multiline.h"
+#include "library_info_transitional.h"
 
 // tests for lookahead feature:
 // forward/backward jums
@@ -195,7 +196,7 @@ TEST(attribute_lookahead, lookup_triggered)
     auto& expr = a.parser().expr()->ca_expr;
 
     diagnostic_op_consumer_container diags;
-    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
     EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)1);
 
@@ -209,7 +210,7 @@ TEST(attribute_lookahead, nested_lookup_triggered)
     auto& expr = a.parser().expr()->ca_expr;
 
     diagnostic_op_consumer_container diags;
-    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
     auto v1 = a.hlasm_ctx().create_local_variable<context::C_t>(a.hlasm_ctx().ids().add("V1"), false);
     v1->access_set_symbol<context::C_t>()->set_value("A", 0);
@@ -220,11 +221,13 @@ TEST(attribute_lookahead, nested_lookup_triggered)
     ASSERT_EQ(res.size(), (size_t)1);
     EXPECT_TRUE(res.find(a.hlasm_ctx().ids().add("B")) != res.end());
 
-    a.hlasm_ctx().ord_ctx.add_symbol_reference(context::symbol(a.hlasm_ctx().ids().add("B"),
-        context::symbol_value(),
-        context::symbol_attributes(context::symbol_origin::EQU, 'U'_ebcdic, 1),
-        location(),
-        {}));
+    a.hlasm_ctx().ord_ctx.add_symbol_reference(
+        context::symbol(a.hlasm_ctx().ids().add("B"),
+            context::symbol_value(),
+            context::symbol_attributes(context::symbol_origin::EQU, 'U'_ebcdic, 1),
+            location(),
+            {}),
+        library_info_transitional::empty);
 
     res = expr->get_undefined_attributed_symbols(eval_ctx);
     ASSERT_EQ(res.size(), (size_t)1);
@@ -240,11 +243,14 @@ TEST(attribute_lookahead, lookup_not_triggered)
     auto& expr = a.parser().expr()->ca_expr;
 
     diagnostic_op_consumer_container diags;
-    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
     // define symbol with undefined length
-    auto tmp = a.hlasm_ctx().ord_ctx.create_symbol(
-        a.hlasm_ctx().ids().add("X"), symbol_value(), symbol_attributes(symbol_origin::DAT, 200), {});
+    auto tmp = a.hlasm_ctx().ord_ctx.create_symbol(a.hlasm_ctx().ids().add("X"),
+        symbol_value(),
+        symbol_attributes(symbol_origin::DAT, 200),
+        {},
+        library_info_transitional::empty);
     ASSERT_TRUE(tmp);
 
     // although length is undefined the actual symbol is defined so no lookup should happen
@@ -260,7 +266,7 @@ TEST(attribute_lookahead, lookup_of_two_refs)
     auto& expr = a.parser().expr()->ca_expr;
 
     diagnostic_op_consumer_container diags;
-    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
     EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)2);
 
@@ -274,7 +280,7 @@ TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
     auto& expr = a.parser().expr()->ca_expr;
 
     diagnostic_op_consumer_container diags;
-    evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
     EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)1);
 

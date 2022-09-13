@@ -27,6 +27,7 @@
 
 namespace hlasm_plugin::parser_library {
 class diagnosable_ctx;
+class library_info;
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::context {
@@ -126,7 +127,7 @@ public:
     bool defined_for_ca_expr(std::shared_ptr<const expressions::data_definition> dd) const;
     void mentioned_in_ca_expr(std::shared_ptr<const expressions::data_definition> dd);
 
-    void generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using);
+    void generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using, const library_info& li);
     size_t current_generation() const { return m_current_literal_pool_generation; }
 
     // testing

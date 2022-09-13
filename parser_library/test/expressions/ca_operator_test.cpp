@@ -19,6 +19,7 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_string.h"
 #include "expressions/evaluation_context.h"
+#include "library_info_transitional.h"
 
 using namespace std::string_literals;
 using namespace hlasm_plugin::parser_library;
@@ -59,7 +60,7 @@ class ca_op : public ::testing::TestWithParam<op_test_param>
 protected:
     context::hlasm_context ctx;
     diagnostic_op_consumer_container diags;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     SET_t get_result()
     {

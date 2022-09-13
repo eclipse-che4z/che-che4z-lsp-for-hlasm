@@ -18,6 +18,7 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/evaluation_context.h"
+#include "library_info_transitional.h"
 #include "semantics/concatenation_term.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
@@ -28,7 +29,7 @@ TEST(ca_var_sym_basic, undefined_attributes)
 {
     diagnostic_op_consumer_container diags;
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
@@ -48,7 +49,7 @@ TEST(ca_var_sym_created, undefined_attributes)
 {
     context::hlasm_context ctx;
     diagnostic_op_consumer_container diags;
-    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance, diags };
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     std::string name = "n";
     concat_chain created_name;

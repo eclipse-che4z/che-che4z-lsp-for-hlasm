@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "library_info_transitional.h"
 
 // test for
 // address class
@@ -22,7 +23,7 @@
 TEST(address, normalized_spaces)
 {
     hlasm_context ctx;
-    ctx.ord_ctx.set_section(ctx.ids().add("TEST"), section_kind::COMMON, location());
+    ctx.ord_ctx.set_section(ctx.ids().add("TEST"), section_kind::COMMON, location(), library_info_transitional::empty);
 
     auto sp1 = ctx.ord_ctx.current_section()->current_location_counter().set_value(
         ctx.ord_ctx.current_section()->current_location_counter().current_address(), 0, 0, true);
@@ -42,7 +43,7 @@ TEST(address, normalized_spaces)
 TEST(address, has_unresolved_spaces)
 {
     hlasm_context ctx;
-    ctx.ord_ctx.set_section(ctx.ids().add("TEST"), section_kind::COMMON, location());
+    ctx.ord_ctx.set_section(ctx.ids().add("TEST"), section_kind::COMMON, location(), library_info_transitional::empty);
 
     auto sp1 = ctx.ord_ctx.current_section()->current_location_counter().set_value(
         ctx.ord_ctx.current_section()->current_location_counter().current_address(), 0, 0, true);

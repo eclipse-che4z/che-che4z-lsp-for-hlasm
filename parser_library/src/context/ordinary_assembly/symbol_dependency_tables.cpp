@@ -26,7 +26,8 @@
 #include "processing/instruction_sets/postponed_statement_impl.h"
 
 namespace hlasm_plugin::parser_library::context {
-bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependant> dependencies)
+bool symbol_dependency_tables::check_cycle(
+    dependant target, std::vector<dependant> dependencies, const library_info& li)
 {
     if (std::find(dependencies.begin(), dependencies.end(), target)
         != dependencies.end()) // dependencies contain target itself
@@ -44,7 +45,7 @@ bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependa
         if (!dependant)
             continue;
 
-        for (auto&& dep : extract_dependencies(dependant->m_resolvable, dependant->m_dec))
+        for (auto&& dep : extract_dependencies(dependant->m_resolvable, dependant->m_dec, li))
         {
             if (dep == target)
             {
@@ -64,6 +65,7 @@ struct resolve_dependant_visitor
     ordinary_assembly_context& sym_ctx;
     std::unordered_map<dependant, statement_ref>& dependency_source_stmts;
     const dependency_evaluation_context& dep_ctx;
+    const library_info& li;
 
     void operator()(const attr_ref& ref) const
     {
@@ -119,11 +121,11 @@ struct resolve_dependant_visitor
 
         auto tmp_loctr = sym_ctx.current_section()->current_location_counter();
 
-        sym_ctx.set_location_counter(sp->owner.name, location());
+        sym_ctx.set_location_counter(sp->owner.name, location(), li);
         sym_ctx.current_section()->current_location_counter().switch_to_unresolved_value(sp);
 
         if (auto org = check_address_for_ORG(
-                addr, sym_ctx.align(context::no_align, dep_ctx), sp->previous_boundary, sp->previous_offset);
+                addr, sym_ctx.align(context::no_align, dep_ctx, li), sp->previous_boundary, sp->previous_offset);
             org != check_org_result::valid)
         {
             if (org == check_org_result::underflow)
@@ -132,19 +134,19 @@ struct resolve_dependant_visitor
                 add_diagnostic(diagnostic_op::error_A115_ORG_op_format);
 
             (void)sym_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
-            sym_ctx.set_location_counter(tmp_loctr.name, location());
+            sym_ctx.set_location_counter(tmp_loctr.name, location(), li);
             return;
         }
 
         auto new_sp = sym_ctx.set_location_counter_value_space(
-            addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr, dep_ctx);
+            addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr, dep_ctx, li);
 
         auto ret = sym_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
-        sym_ctx.set_location_counter(tmp_loctr.name, location());
+        sym_ctx.set_location_counter(tmp_loctr.name, location(), li);
 
         context::space::resolve(sp, std::move(ret));
 
-        if (!sym_ctx.symbol_dependencies.check_cycle(new_sp))
+        if (!sym_ctx.symbol_dependencies.check_cycle(new_sp, li))
             add_diagnostic(diagnostic_op::error_E033);
 
         for (auto& sect : sym_ctx.sections())
@@ -171,12 +173,14 @@ struct dependant_visitor
 void symbol_dependency_tables::resolve_dependant(dependant target,
     const resolvable* dep_src,
     diagnostic_s_consumer* diag_consumer,
-    const dependency_evaluation_context& dep_ctx)
+    const dependency_evaluation_context& dep_ctx,
+    const library_info& li)
 {
-    context::ordinary_assembly_dependency_solver dep_solver(m_sym_ctx, dep_ctx);
+    context::ordinary_assembly_dependency_solver dep_solver(m_sym_ctx, dep_ctx, li);
     symbol_value val = dep_src->resolve(dep_solver);
 
-    std::visit(resolve_dependant_visitor { val, diag_consumer, m_sym_ctx, m_dependency_source_stmts, dep_ctx }, target);
+    std::visit(
+        resolve_dependant_visitor { val, diag_consumer, m_sym_ctx, m_dependency_source_stmts, dep_ctx, li }, target);
 }
 
 struct resolve_dependant_default_visitor
@@ -207,27 +211,27 @@ void symbol_dependency_tables::resolve_dependant_default(const dependant& target
 }
 
 void symbol_dependency_tables::resolve(
-    std::variant<id_index, space_ptr> what_changed, diagnostic_s_consumer* diag_consumer)
+    std::variant<id_index, space_ptr> what_changed, diagnostic_s_consumer* diag_consumer, const library_info& li)
 {
     const auto cleanup_deps = [&what_changed](auto& entry) {
         std::erase_if(entry.m_last_dependencies, [&what_changed](const auto& v) {
             return what_changed == v || std::holds_alternative<space_ptr>(v) && std::get<space_ptr>(v)->resolved();
         });
     };
-    const auto resolvable = [this, diag_consumer, &cleanup_deps](std::pair<const dependant, dependency_value>& v) {
+    const auto resolvable = [this, diag_consumer, &cleanup_deps, &li](std::pair<const dependant, dependency_value>& v) {
         cleanup_deps(v.second);
         if (!diag_consumer && std::holds_alternative<space_ptr>(v.first))
             return false;
         if (!v.second.m_last_dependencies.empty() || (v.second.m_has_t_attr_dependency && !diag_consumer))
             return false;
-        return !update_dependencies(v.second);
+        return !update_dependencies(v.second, li);
     };
     auto it = m_dependencies.end();
     while ((it = std::find_if(m_dependencies.begin(), m_dependencies.end(), resolvable)) != m_dependencies.end())
     {
         const auto& [target, dep_value] = *it;
 
-        resolve_dependant(target, dep_value.m_resolvable, diag_consumer, dep_value.m_dec); // resolve target
+        resolve_dependant(target, dep_value.m_resolvable, diag_consumer, dep_value.m_dec, li); // resolve target
         try_erase_source_statement(target);
 
         for (auto nested = std::next(it); nested != m_dependencies.end(); ++nested)
@@ -247,10 +251,10 @@ const symbol_dependency_tables::dependency_value* symbol_dependency_tables::find
 }
 
 std::vector<dependant> symbol_dependency_tables::extract_dependencies(
-    const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx)
+    const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx, const library_info& li)
 {
     std::vector<dependant> ret;
-    context::ordinary_assembly_dependency_solver dep_solver(m_sym_ctx, dep_ctx);
+    context::ordinary_assembly_dependency_solver dep_solver(m_sym_ctx, dep_ctx, li);
     auto deps = dependency_source->get_dependencies(dep_solver);
 
     ret.insert(ret.end(),
@@ -282,9 +286,9 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(
     return ret;
 }
 
-bool symbol_dependency_tables::update_dependencies(dependency_value& d)
+bool symbol_dependency_tables::update_dependencies(dependency_value& d, const library_info& li)
 {
-    context::ordinary_assembly_dependency_solver dep_solver(m_sym_ctx, d.m_dec);
+    context::ordinary_assembly_dependency_solver dep_solver(m_sym_ctx, d.m_dec, li);
     auto deps = d.m_resolvable->get_dependencies(dep_solver);
 
     d.m_last_dependencies.clear();
@@ -314,13 +318,15 @@ bool symbol_dependency_tables::update_dependencies(dependency_value& d)
 }
 
 std::vector<dependant> symbol_dependency_tables::extract_dependencies(
-    const std::vector<const resolvable*>& dependency_sources, const dependency_evaluation_context& dep_ctx)
+    const std::vector<const resolvable*>& dependency_sources,
+    const dependency_evaluation_context& dep_ctx,
+    const library_info& li)
 {
     std::vector<dependant> ret;
 
     for (auto dep : dependency_sources)
     {
-        auto tmp = extract_dependencies(dep, dep_ctx);
+        auto tmp = extract_dependencies(dep, dep_ctx, li);
         ret.insert(ret.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
     }
     return ret;
@@ -353,14 +359,15 @@ symbol_dependency_tables::symbol_dependency_tables(ordinary_assembly_context& sy
 bool symbol_dependency_tables::add_dependency(dependant target,
     const resolvable* dependency_source,
     bool check_for_cycle,
-    const dependency_evaluation_context& dep_ctx)
+    const dependency_evaluation_context& dep_ctx,
+    const library_info& li)
 {
     if (check_for_cycle)
     {
-        bool no_cycle = check_cycle(target, extract_dependencies(dependency_source, dep_ctx));
+        bool no_cycle = check_cycle(target, extract_dependencies(dependency_source, dep_ctx, li), li);
         if (!no_cycle)
         {
-            resolve(std::visit(dependant_visitor(), target), nullptr);
+            resolve(std::visit(dependant_visitor(), target), nullptr, li);
             return false;
         }
     }
@@ -375,9 +382,10 @@ bool symbol_dependency_tables::add_dependency(dependant target,
 bool symbol_dependency_tables::add_dependency(id_index target,
     const resolvable* dependency_source,
     post_stmt_ptr dependency_source_stmt,
-    const dependency_evaluation_context& dep_ctx)
+    const dependency_evaluation_context& dep_ctx,
+    const library_info& li)
 {
-    dependency_adder adder(*this, std::move(dependency_source_stmt), dep_ctx);
+    dependency_adder adder(*this, std::move(dependency_source_stmt), dep_ctx, li);
     bool added = adder.add_dependency(target, dependency_source);
     adder.finish();
 
@@ -388,9 +396,10 @@ bool symbol_dependency_tables::add_dependency(id_index target,
     data_attr_kind attr,
     const resolvable* dependency_source,
     post_stmt_ptr dependency_source_stmt,
-    const dependency_evaluation_context& dep_ctx)
+    const dependency_evaluation_context& dep_ctx,
+    const library_info& li)
 {
-    dependency_adder adder(*this, std::move(dependency_source_stmt), dep_ctx);
+    dependency_adder adder(*this, std::move(dependency_source_stmt), dep_ctx, li);
     bool added = adder.add_dependency(target, attr, dependency_source);
     adder.finish();
 
@@ -400,9 +409,10 @@ bool symbol_dependency_tables::add_dependency(id_index target,
 void symbol_dependency_tables::add_dependency(space_ptr space,
     const resolvable* dependency_source,
     post_stmt_ptr dependency_source_stmt,
-    const dependency_evaluation_context& dep_ctx)
+    const dependency_evaluation_context& dep_ctx,
+    const library_info& li)
 {
-    dependency_adder adder(*this, std::move(dependency_source_stmt), dep_ctx);
+    dependency_adder adder(*this, std::move(dependency_source_stmt), dep_ctx, li);
     adder.add_dependency(space, dependency_source);
     adder.finish();
 }
@@ -410,13 +420,14 @@ void symbol_dependency_tables::add_dependency(space_ptr space,
 void symbol_dependency_tables::add_dependency(space_ptr target,
     addr_res_ptr dependency_source,
     const dependency_evaluation_context& dep_ctx,
+    const library_info& li,
     post_stmt_ptr dependency_source_stmt)
 {
     auto [it, inserted] = m_dependency_source_addrs.emplace(target, std::move(dependency_source));
 
     assert(inserted);
 
-    add_dependency(dependant(target), &*it->second, false, dep_ctx);
+    add_dependency(dependant(target), &*it->second, false, dep_ctx, li);
 
     if (dependency_source_stmt)
     {
@@ -428,40 +439,41 @@ void symbol_dependency_tables::add_dependency(space_ptr target,
     }
 }
 
-bool symbol_dependency_tables::check_cycle(space_ptr target)
+bool symbol_dependency_tables::check_cycle(space_ptr target, const library_info& li)
 {
     auto dep_src = find_dependency_value(target);
     if (!dep_src)
         return true;
 
-    bool no_cycle = check_cycle(target, extract_dependencies(dep_src->m_resolvable, dep_src->m_dec));
+    bool no_cycle = check_cycle(target, extract_dependencies(dep_src->m_resolvable, dep_src->m_dec, li), li);
 
     if (!no_cycle)
-        resolve(std::move(target), nullptr);
+        resolve(std::move(target), nullptr, li);
 
     return no_cycle;
 }
 
-void symbol_dependency_tables::add_dependency(post_stmt_ptr target, const dependency_evaluation_context& dep_ctx)
+void symbol_dependency_tables::add_dependency(
+    post_stmt_ptr target, const dependency_evaluation_context& dep_ctx, const library_info& li)
 {
-    dependency_adder adder(*this, std::move(target), dep_ctx);
+    dependency_adder adder(*this, std::move(target), dep_ctx, li);
     adder.add_dependency();
     adder.finish();
 }
 
 dependency_adder symbol_dependency_tables::add_dependencies(
-    post_stmt_ptr dependency_source_stmt, const dependency_evaluation_context& dep_ctx)
+    post_stmt_ptr dependency_source_stmt, const dependency_evaluation_context& dep_ctx, const library_info& li)
 {
-    return dependency_adder(*this, std::move(dependency_source_stmt), dep_ctx);
+    return dependency_adder(*this, std::move(dependency_source_stmt), dep_ctx, li);
 }
 
 void symbol_dependency_tables::add_defined(
-    const std::variant<id_index, space_ptr>& what_changed, diagnostic_s_consumer* diag_consumer)
+    const std::variant<id_index, space_ptr>& what_changed, diagnostic_s_consumer* diag_consumer, const library_info& li)
 {
-    resolve(what_changed, diag_consumer);
+    resolve(what_changed, diag_consumer, li);
 }
 
-bool symbol_dependency_tables::check_loctr_cycle()
+bool symbol_dependency_tables::check_loctr_cycle(const library_info& li)
 {
     struct deref_tools
     {
@@ -469,7 +481,7 @@ bool symbol_dependency_tables::check_loctr_cycle()
         size_t operator()(const dependant* p) const { return std::hash<dependant>()(*p); }
     };
 
-    const auto dep_g = [this]() {
+    const auto dep_g = [this, &li]() {
         // create graph
         std::unordered_map<const dependant*, std::vector<dependant>, deref_tools, deref_tools> result;
         for (const auto& [target, dep_src_loctr] : m_dependencies)
@@ -477,7 +489,7 @@ bool symbol_dependency_tables::check_loctr_cycle()
             if (!std::holds_alternative<space_ptr>(target))
                 continue;
 
-            auto new_deps = extract_dependencies(dep_src_loctr.m_resolvable, dep_src_loctr.m_dec);
+            auto new_deps = extract_dependencies(dep_src_loctr.m_resolvable, dep_src_loctr.m_dec, li);
 
             std::erase_if(new_deps, [](const auto& e) { return !std::holds_alternative<space_ptr>(e); });
 
@@ -567,17 +579,20 @@ statement_ref::statement_ref(ref_t stmt_ref, size_t ref_count)
     , ref_count(ref_count)
 {}
 
-dependency_adder::dependency_adder(
-    symbol_dependency_tables& owner, post_stmt_ptr dependency_source_stmt, const dependency_evaluation_context& dep_ctx)
+dependency_adder::dependency_adder(symbol_dependency_tables& owner,
+    post_stmt_ptr dependency_source_stmt,
+    const dependency_evaluation_context& dep_ctx,
+    const library_info& li)
     : m_owner(owner)
     , m_ref_count(0)
     , m_dep_ctx(dep_ctx)
     , m_source_stmt(std::move(dependency_source_stmt))
+    , m_li(li)
 {}
 
 bool dependency_adder::add_dependency(id_index target, const resolvable* dependency_source)
 {
-    bool added = m_owner.add_dependency(dependant(target), dependency_source, true, m_dep_ctx);
+    bool added = m_owner.add_dependency(dependant(target), dependency_source, true, m_dep_ctx, m_li);
 
     if (added)
     {
@@ -590,7 +605,7 @@ bool dependency_adder::add_dependency(id_index target, const resolvable* depende
 
 bool dependency_adder::add_dependency(id_index target, data_attr_kind attr, const resolvable* dependency_source)
 {
-    bool added = m_owner.add_dependency(dependant(attr_ref { attr, target }), dependency_source, true, m_dep_ctx);
+    bool added = m_owner.add_dependency(dependant(attr_ref { attr, target }), dependency_source, true, m_dep_ctx, m_li);
 
     if (added)
     {
@@ -603,7 +618,7 @@ bool dependency_adder::add_dependency(id_index target, data_attr_kind attr, cons
 
 void dependency_adder::add_dependency(space_ptr target, const resolvable* dependency_source)
 {
-    m_owner.add_dependency(dependant(target), dependency_source, false, m_dep_ctx);
+    m_owner.add_dependency(dependant(target), dependency_source, false, m_dep_ctx, m_li);
     ++m_ref_count;
     m_dependants.push_back(target);
 }

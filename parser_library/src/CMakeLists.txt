@@ -33,6 +33,9 @@ target_sources(parser_library PRIVATE
 	error_messages.h
 	instruction_set_version.h
 	lib_config.cpp
+	library_info.h
+	library_info_transitional.cpp
+	library_info_transitional.h
 	location.h
 	preprocessor_options.h
 	protocol.cpp

@@ -647,14 +647,13 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t tex
         file->process_occurrences();
 }
 
-macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name) const
+macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name, context::opcode_generation gen) const
 {
     // This function does not respect OPSYN, so we do not use hlasm_context::get_macro_definition
-    auto it = m_hlasm_ctx->macros().find(macro_name);
-    if (it == m_hlasm_ctx->macros().end())
+    if (auto it = m_hlasm_ctx->find_macro(macro_name, gen); !it)
         return nullptr;
     else
-        return m_macros.at(it->second);
+        return m_macros.at(*it);
 }
 
 const file_info* lsp_context::get_file_info(const utils::resource::resource_location& file_loc) const
@@ -890,9 +889,8 @@ completion_list_s lsp_context::complete_instr(const file_info& fi, position pos)
     for (const auto& instr : completion_item_s::m_instruction_completion_items)
     {
         auto id = m_hlasm_ctx->ids().find(instr.label);
-
-        auto it = m_hlasm_ctx->instruction_map().find(id);
-        if (it != m_hlasm_ctx->instruction_map().end())
+        // TODO: we could provide more precise results here if actual generation is provided
+        if (m_hlasm_ctx->find_opcode_mnemo(id, context::opcode_generation::zero))
         {
             auto& i = result.emplace_back(instr);
             if (auto space = i.insert_text.find(' '); space != std::string::npos)

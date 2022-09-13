@@ -17,6 +17,7 @@
 
 #include <cassert>
 #include <deque>
+#include <map>
 #include <memory>
 #include <set>
 #include <unordered_set>
@@ -24,11 +25,15 @@
 
 #include "code_scope.h"
 #include "compiler_options.h"
+#include "opcode_generation.h"
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "source_context.h"
 #include "tagged_index.h"
 
+namespace hlasm_plugin::parser_library {
+class library_info;
+} // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::expressions {
 class mach_expression;
 } // namespace hlasm_plugin::parser_library::expressions
@@ -44,10 +49,10 @@ namespace hlasm_plugin::parser_library::context {
 // code
 class hlasm_context
 {
-    using macro_storage = std::unordered_map<id_index, macro_def_ptr>;
+    using macro_storage = std::map<std::pair<id_index, opcode_generation>, macro_def_ptr>;
     using copy_member_storage = std::unordered_map<id_index, copy_member_ptr>;
     using instruction_storage = std::unordered_map<id_index, opcode_t::opcode_variant>;
-    using opcode_map = std::unordered_map<id_index, opcode_t>;
+    using opcode_map = std::map<std::pair<id_index, opcode_generation>, opcode_t>;
     using global_variable_storage = std::unordered_map<id_index, var_sym_ptr>;
 
     // storage of global variables
@@ -59,6 +64,8 @@ class hlasm_context
     copy_member_storage copy_members_;
     // map of OPSYN mnemonics
     opcode_map opcode_mnemo_;
+    opcode_generation m_current_opcode_generation = opcode_generation::zero;
+
     // storage of identifiers
     std::shared_ptr<id_storage> ids_;
 
@@ -79,8 +86,7 @@ class hlasm_context
     static constexpr alignment sectalgn = doubleword;
 
     // map of active instructions in HLASM
-    const instruction_storage m_instruction_map;
-    static instruction_storage init_instruction_map(id_storage& ids, instruction_set_version active_instr_set);
+    static void init_instruction_map(opcode_map& opcodes, id_storage& ids, instruction_set_version active_instr_set);
 
     // value of system variable SYSNDX
     unsigned long SYSNDX_ = 1;
@@ -95,8 +101,6 @@ class hlasm_context
 
     void add_system_vars_to_scope(code_scope& scope);
     void add_global_system_vars(code_scope& scope);
-
-    bool is_opcode(id_index symbol) const;
 
     std::unique_ptr<using_collection> m_usings;
     std::vector<index_t<using_collection>> m_active_usings;
@@ -168,9 +172,6 @@ public:
     const id_storage& ids() const;
     std::shared_ptr<id_storage> ids_ptr();
 
-    // map of active instructions
-    const instruction_storage& instruction_map() const;
-
     // field that accessed ordinary assembly context
     ordinary_assembly_context ord_ctx;
 
@@ -205,17 +206,18 @@ public:
     const opcode_map& opcode_mnemo_storage() const;
 
     // checks whether the symbol is an operation code (is a valid instruction or a mnemonic)
-    opcode_t get_operation_code(id_index symbol) const;
+    opcode_t get_operation_code(id_index symbol, opcode_generation gen = opcode_generation::current) const;
 
     // get data attribute value of ordinary symbol
     SET_t get_attribute_value_ord(data_attr_kind attribute, id_index symbol);
     SET_t get_attribute_value_ord(data_attr_kind attribute, const symbol* symbol);
 
-    C_t get_opcode_attr(id_index symbol) const;
+    C_t get_opcode_attr(id_index symbol, opcode_generation gen = opcode_generation::current) const;
 
     // gets macro storage
     const macro_storage& macros() const;
-    macro_def_ptr get_macro_definition(id_index name) const;
+    const macro_def_ptr* find_macro(id_index name, opcode_generation gen = opcode_generation::current) const;
+    macro_def_ptr get_macro_definition(id_index name, opcode_generation gen = opcode_generation::current) const;
     // checks whether processing is currently in macro
     bool is_in_macro() const;
     // returns macro we are currently in or empty shared_ptr if in open code
@@ -318,7 +320,7 @@ public:
         processing_stack_t stack);
     void using_push();
     bool using_pop();
-    void using_resolve(diagnostic_s_consumer&);
+    void using_resolve(diagnostic_s_consumer&, const library_info&);
     index_t<using_collection> using_current() const;
 
     const using_collection& usings() const { return *m_usings; }
@@ -327,6 +329,10 @@ public:
     name_result try_get_symbol_name(const std::string& symbol);
 
     bool next_statement() { return --m_statements_remaining >= 0; }
+
+    const opcode_t* find_opcode_mnemo(id_index name, opcode_generation gen) const;
+
+    opcode_generation current_opcode_generation() const { return m_current_opcode_generation; }
 };
 
 bool test_symbol_for_read(const var_sym_ptr& var,

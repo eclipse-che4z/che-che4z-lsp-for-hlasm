@@ -73,7 +73,8 @@ bool low_language_processor::create_symbol(
 {
     auto sym_loc = hlasm_ctx.processing_stack_top().get_location();
     sym_loc.pos.column = 0;
-    bool ok = hlasm_ctx.ord_ctx.create_symbol(symbol_name, std::move(value), std::move(attributes), std::move(sym_loc));
+    bool ok = hlasm_ctx.ord_ctx.create_symbol(
+        symbol_name, std::move(value), std::move(attributes), std::move(sym_loc), lib_info);
 
     if (!ok)
         add_diagnostic(diagnostic_op::error_E033(err_range));

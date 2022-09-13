@@ -42,6 +42,9 @@ class source_info_processor;
 namespace hlasm_plugin::parser_library {
 struct analyzing_context;
 } // namespace hlasm_plugin::parser_library
+namespace hlasm_plugin::parser_library::workspaces {
+class parse_lib_provider;
+} // namespace hlasm_plugin::parser_library::workspaces
 
 namespace hlasm_plugin::parser_library::processing {
 
