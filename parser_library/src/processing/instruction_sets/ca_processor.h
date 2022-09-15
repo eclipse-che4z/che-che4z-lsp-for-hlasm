@@ -55,6 +55,19 @@ private:
         int index;
     };
 
+    struct GLB_LCL_info
+    {
+        context::id_index id;
+        bool scalar;
+        range r;
+
+        GLB_LCL_info(context::id_index id, bool scalar, range r)
+            : id(id)
+            , scalar(scalar)
+            , r(r)
+        {}
+    };
+
     template<typename T>
     SET_info get_SET_symbol(const semantics::complete_statement& stmt);
     bool prepare_SET_operands(
@@ -63,8 +76,7 @@ private:
     template<typename T>
     void process_SET(const semantics::complete_statement& stmt);
 
-    bool prepare_GBL_LCL(
-        const semantics::complete_statement& stmt, std::vector<context::id_index>& ids, std::vector<bool>& scalar_info);
+    bool prepare_GBL_LCL(const semantics::complete_statement& stmt, std::vector<GLB_LCL_info>& info) const;
 
     template<typename T, bool global>
     void process_GBL_LCL(const semantics::complete_statement& stmt);

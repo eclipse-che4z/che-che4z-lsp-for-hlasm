@@ -29,7 +29,7 @@ namespace hlasm_plugin::parser_library {
 template<typename T>
 class diagnostic_consumer
 {
-    // TODO The reason why this function is const is that all current implementations have mutable containters where
+    // TODO The reason why this function is const is that all current implementations have mutable containers where
     // the diagnostics are stored and large parts of the project depend on that constness of the function
 public:
     virtual void add_diagnostic(T diagnostic) const = 0;

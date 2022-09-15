@@ -11,6 +11,7 @@
 ### Fixed
 - Implement rest of the changes introduced by APAR PH46868
 - Evaluation of subscripted expressions in CA statements
+- Detection of re-declared global variables with inconsistent types
 
 ## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
 

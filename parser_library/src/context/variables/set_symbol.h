@@ -68,7 +68,7 @@ class set_symbol : public set_symbol_base
     static_assert(object_traits<T>::type_enum != SET_t_enum::UNDEF_TYPE, "Not a SET variable type.");
 
     // data holding this set_symbol
-    // can be scalar or only array of scallars - no other nesting allowed
+    // can be scalar or only array of scalars - no other nesting allowed
     std::map<size_t, T> data;
 
 public:

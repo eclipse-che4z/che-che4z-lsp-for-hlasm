@@ -35,10 +35,10 @@ class diagnostic_collector
 
 public:
     // constructor with explicit location stack
-    // used for outputing diagnostic of postponed statements
+    // used for outputting diagnostic of postponed statements
     diagnostic_collector(const diagnosable_ctx* diagnoser, context::processing_stack_t location_stack);
 
-    // constructor with implicit location stack (aquired from the diagnoser)
+    // constructor with implicit location stack (acquired from the diagnoser)
     // used for default statement checking
     explicit diagnostic_collector(const diagnosable_ctx* diagnoser);
 

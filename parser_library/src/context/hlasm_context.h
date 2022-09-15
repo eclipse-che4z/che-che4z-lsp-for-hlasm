@@ -257,19 +257,19 @@ public:
     {
         auto* scope = curr_scope();
 
-        if (auto tmp = scope->variables.find(id); tmp != scope->variables.end())
-            return tmp->second;
+        if (auto var = scope->variables.find(id); var != scope->variables.end())
+            return std::dynamic_pointer_cast<set_symbol<T>>(var->second);
 
         if (auto glob = globals_.find(id); glob != globals_.end())
         {
-            set_sym_ptr var = std::dynamic_pointer_cast<set_symbol<T>>(glob->second);
-            assert(var);
+            auto var = std::dynamic_pointer_cast<set_symbol<T>>(glob->second);
+            if (var)
+                scope->variables.try_emplace(id, var);
 
-            scope->variables.try_emplace(id, var);
             return var;
         }
 
-        auto val = std::make_shared<set_symbol<T>>(id, is_scalar, true);
+        auto val(std::make_shared<set_symbol<T>>(id, is_scalar, true));
 
         globals_.try_emplace(id, val);
         scope->variables.try_emplace(id, val);
@@ -283,12 +283,10 @@ public:
     {
         auto* scope = curr_scope();
 
-        auto tmp = scope->variables.find(id);
-        if (tmp != scope->variables.end())
-            return tmp->second;
+        if (auto var = scope->variables.find(id); var != scope->variables.end())
+            return std::dynamic_pointer_cast<set_symbol<T>>(var->second);
 
-
-        set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar, false));
+        auto val(std::make_shared<set_symbol<T>>(id, is_scalar, false));
 
         scope->variables.try_emplace(id, val);
 

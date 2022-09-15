@@ -65,19 +65,41 @@ TEST(context_id_storage, case_insensitive)
 TEST(context, create_global_var)
 {
     hlasm_context ctx;
-
+    diagnostic_op_consumer_container diag;
 
     auto idx = ctx.ids().add("var");
 
-    auto glob = ctx.create_global_variable<int>(idx, true);
+    auto glob = ctx.create_global_variable<C_t>(idx, true);
 
     auto found = ctx.get_var_sym(idx);
 
+    ASSERT_TRUE(found);
+    EXPECT_TRUE(glob == found);
 
-    ASSERT_TRUE(glob == found);
-    ASSERT_TRUE(ctx.globals().find(idx) != ctx.globals().end());
+    EXPECT_TRUE(ctx.globals().find(idx) != ctx.globals().end());
     EXPECT_TRUE(glob.get() == ctx.globals().find(idx)->second->access_set_symbol_base());
+    EXPECT_TRUE(std::dynamic_pointer_cast<set_symbol<C_t>>(glob));
     EXPECT_TRUE(glob == ctx.globals().find(idx)->second);
+}
+
+TEST(context, create_global_var_different_types)
+{
+    hlasm_context ctx;
+    diagnostic_op_consumer_container diag;
+
+    auto idx = ctx.ids().add("var");
+    auto glob_a = ctx.create_global_variable<A_t>(idx, true);
+    auto glob_b = ctx.create_global_variable<B_t>(idx, true);
+    auto found = ctx.get_var_sym(idx);
+
+    ASSERT_TRUE(found);
+    EXPECT_TRUE(glob_a == found);
+    EXPECT_FALSE(glob_b);
+
+    EXPECT_TRUE(ctx.globals().find(idx) != ctx.globals().end());
+    EXPECT_TRUE(glob_a.get() == ctx.globals().find(idx)->second->access_set_symbol_base());
+    EXPECT_TRUE(std::dynamic_pointer_cast<set_symbol<A_t>>(glob_a));
+    EXPECT_TRUE(glob_a == ctx.globals().find(idx)->second);
 }
 
 TEST(context, find_global_system_var)
@@ -579,6 +601,64 @@ TEST(context, id_check)
     EXPECT_FALSE(ctx.try_get_symbol_name("a1-").first);
     EXPECT_FALSE(ctx.try_get_symbol_name("*1").first);
     EXPECT_FALSE(ctx.try_get_symbol_name("1av").first);
+}
+
+TEST(context, create_global_var_identical_types_macro)
+{
+    std::string input =
+        R"(
+      MACRO
+      MAC
+      GBLA &A
+      MEND
+
+      GBLA &A
+      MAC
+
+      END
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(context, create_global_var_different_types_macro)
+{
+    std::string input =
+        R"(
+      MACRO
+      MAC
+      GBLB &A
+      MEND
+
+      GBLA &A
+      MAC
+
+      END
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E078" }));
+}
+
+TEST(context, create_local_var_different_types)
+{
+    std::string input =
+        R"(
+      LCLA &A
+      LCLB &A
+
+      END
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E051" }));
 }
 
 TEST(context_system_variables, SYSNEST_SYSMAC)

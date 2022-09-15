@@ -126,7 +126,17 @@ ca_processor::SET_info ca_processor::get_SET_symbol(const semantics::complete_st
         }
     }
     else
-        set_sym = hlasm_ctx.template create_local_variable<T>(name, is_scalar_expression)->access_set_symbol_base();
+    {
+        auto var = hlasm_ctx.create_local_variable<T>(name, is_scalar_expression);
+        if (!var)
+        {
+            add_diagnostic(diagnostic_op::error_E051(*name, symbol->symbol_range));
+            return {};
+        }
+
+        set_sym = var->access_set_symbol_base();
+        assert(set_sym);
+    }
 
     if (symbol->subscript.size() > 1)
     {
@@ -190,8 +200,7 @@ bool ca_processor::prepare_SET_operands(
     return true;
 }
 
-bool ca_processor::prepare_GBL_LCL(
-    const semantics::complete_statement& stmt, std::vector<context::id_index>& ids, std::vector<bool>& scalar_info)
+bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, std::vector<GLB_LCL_info>& info) const
 {
     bool has_operand = false;
     for (auto& op : stmt.operands_ref().value)
@@ -221,15 +230,11 @@ bool ca_processor::prepare_GBL_LCL(
                     assert(false);
                 continue;
             }
-            if (std::find(ids.begin(), ids.end(), id) != ids.end())
-            {
+
+            if (std::find_if(info.begin(), info.end(), [id = id](const auto& i) { return i.id == id; }) != info.end())
                 add_diagnostic(diagnostic_op::error_E051(*id, ca_op->operand_range));
-            }
             else
-            {
-                ids.push_back(id);
-                scalar_info.push_back(subscript.empty());
-            }
+                info.emplace_back(id, subscript.empty(), ca_op->operand_range);
         }
         else
         {
@@ -627,19 +632,24 @@ void ca_processor::process_GBL_LCL(const semantics::complete_statement& stmt)
 {
     register_seq_sym(stmt);
 
-    std::vector<context::id_index> ids;
-    std::vector<bool> scalar_info;
-    bool ok = prepare_GBL_LCL(stmt, ids, scalar_info);
+    std::vector<GLB_LCL_info> info;
+    bool ok = prepare_GBL_LCL(stmt, info);
 
     if (!ok)
         return;
 
-    for (size_t i = 0; i < ids.size(); ++i)
+    for (const auto& i : info)
     {
         if constexpr (global)
-            hlasm_ctx.create_global_variable<T>(ids[i], scalar_info[i]);
+        {
+            if (!hlasm_ctx.create_global_variable<T>(i.id, i.scalar))
+                eval_ctx.diags.add_diagnostic(diagnostic_op::error_E078(*i.id, i.r));
+        }
         else
-            hlasm_ctx.create_local_variable<T>(ids[i], scalar_info[i]);
+        {
+            if (!hlasm_ctx.create_local_variable<T>(i.id, i.scalar))
+                eval_ctx.diags.add_diagnostic(diagnostic_op::error_E051(*i.id, i.r));
+        }
     }
 }
 

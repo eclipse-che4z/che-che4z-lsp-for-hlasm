@@ -2097,6 +2097,14 @@ diagnostic_op diagnostic_op::error_E077(const range& range)
     return diagnostic_op(diagnostic_severity::error, "E077", "Statement count limit reached", range);
 }
 
+diagnostic_op diagnostic_op::error_E078(std::string_view message, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "E078",
+        concat("Global variable re-declared with an incorrect type - ", message),
+        range);
+}
+
 diagnostic_op diagnostic_op::warning_W010(std::string_view message, const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning, "W010", concat(message, " not expected"), range);
