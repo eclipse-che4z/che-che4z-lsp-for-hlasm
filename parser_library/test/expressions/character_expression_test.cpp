@@ -324,3 +324,32 @@ TEST(character_expression, invalid_expression)
 //    EXPECT_TRUE(a.diags().empty());
 //    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C"), "VENFG");
 //}
+
+TEST(character_expression, valid_function)
+{
+    std::string input =
+        R"(
+&A      SETA  210
+&C      SETC (BYTE &A)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C"), "K");
+}
+
+TEST(character_expression, invalid_function)
+{
+    std::string input =
+        R"(
+&A      SETC  'X'
+&C      SETC (BYTE &A)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE012" }));
+}

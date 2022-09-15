@@ -66,7 +66,7 @@ void ca_function_unary_operator::resolve_expression_tree(ca_expression_ctx expr_
     expr_kind = expr_ctx.kind;
     m_expr_ctx = expr_ctx;
     expr_ctx.kind = ca_common_expr_policy::get_operands_type(function, expr_ctx.kind);
-    expr->resolve_expression_tree(m_expr_ctx, diags);
+    expr->resolve_expression_tree(expr_ctx, diags);
 }
 
 context::SET_t ca_function_unary_operator::operation(context::SET_t operand, const evaluation_context& eval_ctx) const
