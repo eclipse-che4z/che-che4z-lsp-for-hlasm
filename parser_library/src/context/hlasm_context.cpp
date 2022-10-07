@@ -358,8 +358,13 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         }
 
         {
-            static constexpr auto emulated_hlasm_sysver = "1.6.0";
+            static constexpr const auto emulated_hlasm_sysver = "1.6.0";
             globals_.insert(create_system_variable<system_variable>(ids(), "SYSVER", emulated_hlasm_sysver, true));
+        }
+
+        {
+            static constexpr const auto emulated_asm_name = "HIGH LEVEL ASSEMBLER";
+            globals_.insert(create_system_variable<system_variable>(ids(), "SYSASM", emulated_asm_name, true));
         }
     }
 
@@ -372,6 +377,7 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
     add_global_system_var_to_scope(ids(), "SYSSTMT", scope);
     add_global_system_var_to_scope(ids(), "SYSTEM_ID", scope);
     add_global_system_var_to_scope(ids(), "SYSVER", scope);
+    add_global_system_var_to_scope(ids(), "SYSASM", scope);
 }
 
 hlasm_context::hlasm_context(

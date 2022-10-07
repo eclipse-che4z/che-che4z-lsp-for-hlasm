@@ -7,6 +7,7 @@
 - Enhance documentation for instruction mnemonics
 - Support O and T attributes in machine expressions
 - Endevor Bridge for Git integration
+- Add support for the SYSASM variable
 
 ### Fixed
 - Implement rest of the changes introduced by APAR PH46868

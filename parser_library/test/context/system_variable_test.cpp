@@ -344,3 +344,23 @@ TEST(system_variable, sysin_out_of_scope)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E010", "E010" }));
 }
+
+TEST(system_variable, sysasm)
+{
+    std::string input = R"(
+&T      SETC T'&SYSASM
+&K      SETA K'&SYSASM
+X       DC   C'&SYSASM'
+LEN     EQU  *-X
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "U");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "K"), 20);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 20);
+}
