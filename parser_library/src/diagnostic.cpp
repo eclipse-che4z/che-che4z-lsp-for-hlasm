@@ -1980,7 +1980,7 @@ diagnostic_op diagnostic_op::error_E056(const range& range)
 
 diagnostic_op diagnostic_op::error_E057(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "E057", "Symbol not an ordinary or sequence symbol", range);
+    return diagnostic_op(diagnostic_severity::error, "E057", "Symbol is not an ordinary or a sequence symbol", range);
 }
 
 diagnostic_op diagnostic_op::error_E058(const range& range)
@@ -2141,6 +2141,12 @@ diagnostic_op diagnostic_op::warning_W015(const range& range)
 {
     return diagnostic_op(
         diagnostic_severity::warning, "W015", "End of source input reached, batch mode is not supported yet", range);
+}
+
+diagnostic_op diagnostic_op::warning_W016(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::warning, "W016", "Multiple TITLE instructions with a non-empty name field", range);
 }
 
 diagnostic_op diagnostic_op::error_EQU1(const range& range)

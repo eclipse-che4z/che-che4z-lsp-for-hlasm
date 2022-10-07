@@ -128,7 +128,8 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
             }
             break;
         case label_si_type::MAC:
-            add_diagnostic(diagnostic_op::error_E057(label_ref.field_range));
+            if (*stmt.opcode_ref().value != "TITLE")
+                add_diagnostic(diagnostic_op::error_E057(label_ref.field_range));
             break;
         case label_si_type::SEQ:
             branch_provider.register_sequence_symbol(

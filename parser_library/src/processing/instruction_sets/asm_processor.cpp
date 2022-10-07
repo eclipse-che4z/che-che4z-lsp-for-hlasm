@@ -757,6 +757,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("POP"), [this](rebuilt_statement stmt) { process_POP(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("MNOTE"), [this](rebuilt_statement stmt) { process_MNOTE(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("CXD"), [this](rebuilt_statement stmt) { process_CXD(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("TITLE"), [this](rebuilt_statement stmt) { process_TITLE(std::move(stmt)); });
 
     return table;
 }
@@ -1313,6 +1314,34 @@ void asm_processor::process_CXD(rebuilt_statement stmt)
     }
 
     hlasm_ctx.ord_ctx.reserve_storage_area(cxd_length, context::no_align, lib_info);
+}
+
+struct title_label_visitor
+{
+    std::string operator()(const std::string& v) const { return v; }
+    std::string operator()(const semantics::ord_symbol_string& v) const { return v.mixed_case; }
+    std::string operator()(const semantics::concat_chain&) const { return {}; }
+    std::string operator()(const semantics::seq_sym&) const { return {}; }
+    std::string operator()(const semantics::vs_ptr&) const { return {}; }
+};
+
+void asm_processor::process_TITLE(rebuilt_statement stmt)
+{
+    const auto& label = stmt.label_ref();
+
+    if (auto label_text = std::visit(title_label_visitor(), label.value); !label_text.empty())
+    {
+        if (hlasm_ctx.get_title_name().empty())
+            hlasm_ctx.set_title_name(std::move(label_text));
+        else
+            add_diagnostic(diagnostic_op::warning_W016(label.field_range));
+    }
+
+    hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
+        std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+        context::ordinary_assembly_dependency_solver(hlasm_ctx.ord_ctx, lib_info)
+            .derive_current_dependency_evaluation_context(),
+        lib_info);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

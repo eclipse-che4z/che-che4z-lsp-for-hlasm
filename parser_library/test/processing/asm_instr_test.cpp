@@ -267,3 +267,50 @@ C   CXD
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "S"), 0);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "I"), 0);
 }
+
+TEST(asm_instr_processing, TITLE_text_label)
+{
+    std::string input = R"(
+0a0 TITLE 'aaa'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(a.hlasm_ctx().get_title_name(), "0a0");
+}
+
+TEST(asm_instr_processing, TITLE_multiple_labels)
+{
+    std::string input = R"(
+000 TITLE 'aaa'
+0b0 TITLE 'aaa'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W016" }));
+
+    EXPECT_EQ(a.hlasm_ctx().get_title_name(), "000");
+}
+
+TEST(asm_instr_processing, TITLE_sequence_does_not_count)
+{
+    std::string input = R"(
+0a0 TITLE 'aaa'
+.A  TITLE 'aaa'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(a.hlasm_ctx().get_title_name(), "0a0");
+}

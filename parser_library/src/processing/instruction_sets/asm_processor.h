@@ -73,6 +73,7 @@ private:
     void process_POP(rebuilt_statement stmt);
     void process_MNOTE(rebuilt_statement stmt);
     void process_CXD(rebuilt_statement stmt);
+    void process_TITLE(rebuilt_statement stmt);
 
     template<checking::data_instr_type instr_type>
     void process_data_instruction(rebuilt_statement stmt);

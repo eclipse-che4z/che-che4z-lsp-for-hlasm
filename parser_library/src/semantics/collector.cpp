@@ -81,7 +81,7 @@ void collector::set_label_field(
     // otherwise it is macro label parameter
     else
     {
-        lbl_.emplace(symbol_range, *label, label_si::mac_flag());
+        lbl_.emplace(symbol_range, mixed_case_label, label_si::mac_flag());
     }
 }
 
