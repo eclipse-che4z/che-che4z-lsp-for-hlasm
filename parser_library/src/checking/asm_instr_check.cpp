@@ -1313,19 +1313,25 @@ bool process::check(const std::vector<const asm_operand*>& to_check,
 {
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
-    if (to_check.size() == 1 && is_operand_complex(to_check[0])
-        && get_complex_operand(to_check[0])->operand_identifier
-            == "OVERRIDE") // everything parsed is parameter of operand
+
+    // OVERRIDE can be used together with assembler options despite what the doc says
+    auto b = to_check.cbegin();
+    auto e = to_check.cend();
+
+    if (auto process_operands = get_complex_operand(to_check.back()); process_operands
+        && process_operands->operand_identifier == "OVERRIDE") // everything parsed is parameter of operand
     {
-        auto process_operands = get_complex_operand(to_check[0]);
-        return std::all_of(process_operands->operand_parameters.cbegin(),
-            process_operands->operand_parameters.cend(),
-            [this, &add_diagnostic](
-                const auto& parameter) { return check_assembler_process_operand(parameter.get(), add_diagnostic); });
+        --e;
+        if (!std::all_of(process_operands->operand_parameters.cbegin(),
+                process_operands->operand_parameters.cend(),
+                [this, &add_diagnostic](const auto& parameter) {
+                    return check_assembler_process_operand(parameter.get(), add_diagnostic);
+                }))
+            return false;
     }
-    // everything is an operand
-    return std::all_of(to_check.cbegin(), to_check.cend(), [this, &add_diagnostic](const auto& operand) {
-        return check_assembler_process_operand(operand, add_diagnostic);
+    // everything else is an operand
+    return std::all_of(b, e, [this, &add_diagnostic](const auto& parameter) {
+        return check_assembler_process_operand(parameter, add_diagnostic);
     });
 }
 

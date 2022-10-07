@@ -150,3 +150,15 @@ TEST(special_lines, single_op)
 
     EXPECT_TRUE(diags.empty());
 }
+
+TEST(special_lines, mix_op_and_override)
+{
+    std::string input("*PROCESS RENT,OVERRIDE(XREF(FULL))");
+    analyzer a(input, analyzer_options { file_is_opencode::yes });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+
+    EXPECT_TRUE(diags.empty());
+}
