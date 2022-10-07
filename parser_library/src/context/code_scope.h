@@ -40,6 +40,8 @@ struct code_scope
     A_t branch_counter = 4096;
     // number of changed branch counters
     size_t branch_counter_change = 0;
+    // variable for implementing &SYSM_SEV
+    unsigned mnote_max_in_scope = 0;
 
     bool is_in_macro() const { return !!this_macro; }
 

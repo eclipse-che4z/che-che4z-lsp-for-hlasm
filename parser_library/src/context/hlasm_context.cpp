@@ -138,6 +138,18 @@ public:
         , scope_stack(scope_stack) {};
 };
 
+template</*std::integral*/ typename T, size_t padding>
+class integral_macro_param_data : public macro_param_data_single_dynamic
+{
+    const T& m_value;
+
+public:
+    C_t get_dynamic_value() const override { return left_pad(std::to_string(m_value), padding, '0'); };
+
+    explicit integral_macro_param_data(const T& value)
+        : m_value(value) {};
+};
+
 macro_data_ptr create_macro_data(std::string value)
 {
     return std::make_unique<macro_param_data_single>(std::move(value));
@@ -348,9 +360,8 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
         }
 
         {
-            auto value = std::make_unique<sysstmt_macro_param_data>(metrics, scope_stack_);
-
-            globals_.insert(create_system_variable<system_variable>(ids(), "SYSSTMT", std::move(value), true));
+            globals_.insert(create_system_variable<system_variable>(
+                ids(), "SYSSTMT", std::make_unique<sysstmt_macro_param_data>(metrics, scope_stack_), true));
         }
 
         {
@@ -366,6 +377,16 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
             static constexpr const auto emulated_asm_name = "HIGH LEVEL ASSEMBLER";
             globals_.insert(create_system_variable<system_variable>(ids(), "SYSASM", emulated_asm_name, true));
         }
+
+        {
+            globals_.insert(create_system_variable<system_variable>(
+                ids(), "SYSM_SEV", std::make_unique<integral_macro_param_data<unsigned, 3>>(mnote_last_max), true));
+        }
+
+        {
+            globals_.insert(create_system_variable<system_variable>(
+                ids(), "SYSM_HSEV", std::make_unique<integral_macro_param_data<unsigned, 3>>(mnote_max), true));
+        }
     }
 
     add_global_system_var_to_scope(ids(), "SYSDATC", scope);
@@ -378,6 +399,8 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
     add_global_system_var_to_scope(ids(), "SYSTEM_ID", scope);
     add_global_system_var_to_scope(ids(), "SYSVER", scope);
     add_global_system_var_to_scope(ids(), "SYSASM", scope);
+    add_global_system_var_to_scope(ids(), "SYSM_SEV", scope);
+    add_global_system_var_to_scope(ids(), "SYSM_HSEV", scope);
 }
 
 hlasm_context::hlasm_context(
@@ -897,11 +920,16 @@ macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_pa
     visited_files_.insert(macro_def->definition_location.resource_loc);
 
     ++SYSNDX_;
+    mnote_last_max = 0;
 
     return invo;
 }
 
-void hlasm_context::leave_macro() { scope_stack_.pop_back(); }
+void hlasm_context::leave_macro()
+{
+    mnote_last_max = scope_stack_.back().mnote_max_in_scope;
+    scope_stack_.pop_back();
+}
 
 macro_invo_ptr hlasm_context::this_macro() const
 {
@@ -984,7 +1012,11 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 
 const code_scope& hlasm_context::current_scope() const { return *curr_scope(); }
 
-
+void hlasm_context::update_mnote_max(unsigned mnote_level)
+{
+    mnote_max = std::max(mnote_max, mnote_level);
+    scope_stack_.back().mnote_max_in_scope = std::max(scope_stack_.back().mnote_max_in_scope, mnote_level);
+}
 
 void hlasm_context::using_add(id_index label,
     std::unique_ptr<expressions::mach_expression> begin,

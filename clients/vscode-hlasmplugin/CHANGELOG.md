@@ -8,6 +8,7 @@
 - Support O and T attributes in machine expressions
 - Endevor Bridge for Git integration
 - Add support for the SYSASM variable
+- Add support for SYSM_SEV and SYSM_HSEV system variables
 
 ### Fixed
 - Implement rest of the changes introduced by APAR PH46868

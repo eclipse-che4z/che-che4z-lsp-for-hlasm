@@ -118,6 +118,9 @@ class hlasm_context
 
     std::string m_title_name;
 
+    unsigned mnote_max = 0;
+    unsigned mnote_last_max = 0;
+
 public:
     hlasm_context(utils::resource::resource_location file_loc = utils::resource::resource_location(""),
         asm_option asm_opts = {},
@@ -337,6 +340,8 @@ public:
 
     const std::string& get_title_name() const { return m_title_name; }
     void set_title_name(std::string name) { m_title_name = std::move(name); }
+
+    void update_mnote_max(unsigned mnote_level);
 };
 
 bool test_symbol_for_read(const var_sym_ptr& var,

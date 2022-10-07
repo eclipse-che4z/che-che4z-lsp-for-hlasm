@@ -1304,6 +1304,8 @@ void asm_processor::process_MNOTE(rebuilt_statement stmt)
     utils::append_utf8_sanitized(sanitized, text);
 
     add_diagnostic(diagnostic_op::mnote_diagnostic(level.value(), sanitized, r));
+
+    hlasm_ctx.update_mnote_max((unsigned)level.value());
 }
 
 void asm_processor::process_CXD(rebuilt_statement stmt)

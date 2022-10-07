@@ -364,3 +364,89 @@ LEN     EQU  *-X
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "K"), 20);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 20);
 }
+
+TEST(system_variable, mnote_sys_variables)
+{
+    std::string input = R"(
+          GBLC  RES(10),HRES(10)
+          GBLA  I
+*
+          MACRO
+          OUTER
+          GBLC  RES(10),HRES(10)
+          GBLA  I
+&I        SETA  &I+1
+&RES(&I)  SETC  '&SYSM_SEV'
+&HRES(&I) SETC  '&SYSM_HSEV'
+.*
+          MNOTE 4,'OUTER'
+.*
+&I        SETA  &I+1
+&RES(&I)  SETC  '&SYSM_SEV'
+&HRES(&I) SETC  '&SYSM_HSEV'
+.*
+          INNER
+.*
+&I        SETA  &I+1
+&RES(&I)  SETC  '&SYSM_SEV'
+&HRES(&I) SETC  '&SYSM_HSEV'
+.*
+          INNER2
+.*
+&I        SETA  &I+1
+&RES(&I)  SETC  '&SYSM_SEV'
+&HRES(&I) SETC  '&SYSM_HSEV'
+          MEND
+*
+          MACRO
+          INNER
+          GBLC  RES(10),HRES(10)
+          GBLA  I
+.*
+&I        SETA  &I+1
+&RES(&I)  SETC  '&SYSM_SEV'
+&HRES(&I) SETC  '&SYSM_HSEV'
+.*
+          MNOTE 8,'INNER'
+.*
+&I        SETA  &I+1
+&RES(&I)  SETC  '&SYSM_SEV'
+&HRES(&I) SETC  '&SYSM_HSEV'
+          MEND
+*
+          MACRO
+          INNER2
+          GBLC  RES(10),HRES(10)
+          GBLA  I
+.*
+&I        SETA  &I+1
+&RES(&I)  SETC  '&SYSM_SEV'
+&HRES(&I) SETC  '&SYSM_HSEV'
+.*
+          MNOTE 2,'INNER2'
+.*
+&I        SETA  &I+1
+&RES(&I)  SETC  '&SYSM_SEV'
+&HRES(&I) SETC  '&SYSM_HSEV'
+          MEND
+*
+&I        SETA  &I+1
+&RES(&I)  SETC  '&SYSM_SEV'
+&HRES(&I) SETC  '&SYSM_HSEV'
+*
+          OUTER
+*
+&I        SETA  &I+1
+&RES(&I)  SETC  '&SYSM_SEV'
+&HRES(&I) SETC  '&SYSM_HSEV'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE", "MNOTE", "MNOTE" }));
+
+    std::vector<C_t> expected_res { "000", "000", "000", "000", "000", "008", "000", "000", "002", "004" };
+    std::vector<C_t> expected_hres { "000", "000", "004", "004", "008", "008", "008", "008", "008", "008" };
+    EXPECT_EQ(get_var_vector<C_t>(a.hlasm_ctx(), "RES"), expected_res);
+    EXPECT_EQ(get_var_vector<C_t>(a.hlasm_ctx(), "HRES"), expected_hres);
+}
