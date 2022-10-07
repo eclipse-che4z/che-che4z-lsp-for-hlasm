@@ -1040,3 +1040,29 @@ TEST(lookahead, combined_redefinition)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E045", "E045", "E045" }));
 }
+
+TEST(lookahead, ord_with_aread)
+{
+    std::string input = R"(
+      MACRO
+      MAC
+&X    AREAD
+&X    AREAD
+      MEND
+*
+      AIF   (L'X EQ 0).SKIP
+      MAC
+.TEST
+.TEST
+      MNOTE 'AAAA'
+.SKIP ANOP
+X     DS    C
+      END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
+}

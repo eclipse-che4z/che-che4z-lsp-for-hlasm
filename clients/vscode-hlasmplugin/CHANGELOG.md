@@ -16,6 +16,7 @@
 - Produce only a warning when immediate operand overflows in machine instructions
 - Relax PROCESS operand validation
 - Syntax error while parsing the END language operands
+- False positive sequence symbol redefinition diagnostics generated
 
 ## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
 

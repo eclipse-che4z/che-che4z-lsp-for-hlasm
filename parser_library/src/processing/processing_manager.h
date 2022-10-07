@@ -77,6 +77,7 @@ private:
 
     bool attr_lookahead_active() const;
     bool seq_lookahead_active() const;
+    bool lookahead_active() const;
 
     statement_provider& find_provider();
     void finish_processor();

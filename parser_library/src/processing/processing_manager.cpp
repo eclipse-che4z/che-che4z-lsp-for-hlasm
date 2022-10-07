@@ -140,6 +140,8 @@ bool processing_manager::seq_lookahead_active() const
     return look_pr && look_pr->action == lookahead_action::SEQ;
 }
 
+bool processing_manager::lookahead_active() const { return procs_.back()->kind == processing_kind::LOOKAHEAD; }
+
 statement_provider& processing_manager::find_provider()
 {
     if (attr_lookahead_active())
@@ -314,17 +316,15 @@ void processing_manager::register_sequence_symbol(context::id_index target, rang
     auto symbol = hlasm_ctx_.get_opencode_sequence_symbol(target);
     auto new_symbol = create_opencode_sequence_symbol(target, symbol_range);
 
-    bool seq_lookahead = seq_lookahead_active();
-
     if (!symbol)
     {
         hlasm_ctx_.add_opencode_sequence_symbol(std::move(new_symbol));
-        if (seq_lookahead)
+        if (lookahead_active())
             m_pending_seq_redifinitions.emplace_back(m_lookahead_seq_redifinitions.try_emplace(target).first);
     }
     else if (!(*symbol->access_opencode_symbol() == *new_symbol))
     {
-        if (!seq_lookahead)
+        if (!lookahead_active())
             add_diagnostic(diagnostic_op::error_E045(*target, symbol_range));
         else if (auto it = m_lookahead_seq_redifinitions.find(target); it == m_lookahead_seq_redifinitions.end()
                  || it->second.first != pending_seq_redifinition_state::lookahead_pending)
