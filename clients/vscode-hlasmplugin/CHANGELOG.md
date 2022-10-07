@@ -13,6 +13,7 @@
 - Evaluation of subscripted expressions in CA statements
 - Detection of re-declared global variables with inconsistent types
 - TITLE instruction name field support
+- Produce only a warning when immediate operand overflows in machine instructions
 
 ## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
 

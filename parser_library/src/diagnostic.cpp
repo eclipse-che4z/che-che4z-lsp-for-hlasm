@@ -1729,6 +1729,14 @@ diagnostic_op diagnostic_op::warn_M136(const range& range)
         range);
 }
 
+diagnostic_op diagnostic_op::warn_M137(std::string_view instr_name, long long from, long long to, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "M137",
+        concat(instr_name, " instruction: immediate operand absolute value should be between ", from, " and ", to),
+        range);
+}
+
 diagnostic_op diagnostic_op::error_optional_number_of_operands(
     std::string_view instr_name, size_t optional_no, size_t operands_no, const range& range)
 {

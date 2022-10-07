@@ -295,14 +295,13 @@ TEST(machine_instr_check_test, immS_out_of_range)
 {
     std::string input(
         R"( 
- VFTCI 1,2,3323,4,4
+ VLEIF 1,32768,0
 )");
     analyzer a(input);
     a.analyze();
     a.collect_diags();
     ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "M122");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M137" }));
 }
 
 TEST(machine_instr_check_test, reloc_ImmS_out_of_range)
@@ -360,8 +359,7 @@ TEST(machine_instr_check_test, immU_out_of_range)
     a.analyze();
     a.collect_diags();
     ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "M122");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M137" }));
 }
 
 TEST(machine_instr_check_test, vecReg_out_of_range)

@@ -293,7 +293,7 @@ bool one_operand::check(
         switch (to_check.identifier.type)
         {
             case machine_operand_type::IMM:
-                diag = diagnostic_op::error_M122(instr_name, -boundary, boundary - 1, operand_range);
+                diag = diagnostic_op::warn_M137(instr_name, -boundary, boundary - 1, operand_range);
                 break;
             case machine_operand_type::RELOC_IMM:
                 diag = diagnostic_op::error_M123(instr_name, -boundary, boundary - 1, operand_range);
@@ -315,7 +315,7 @@ bool one_operand::check(
                 diag = diagnostic_op::error_M121(instr_name, operand_range);
                 break;
             case machine_operand_type::IMM:
-                diag = diagnostic_op::error_M122(instr_name, 0, boundary, operand_range);
+                diag = diagnostic_op::warn_M137(instr_name, 0, boundary, operand_range);
                 break;
             case machine_operand_type::VEC_REG:
                 diag = diagnostic_op::error_M124(instr_name, operand_range);
