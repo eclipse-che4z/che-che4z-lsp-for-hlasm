@@ -143,11 +143,20 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
         add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
         return;
     }
+
+    const auto& ops = stmt.operands_ref().value;
+
+    if (ops.empty() || ops.size() > 5)
+    {
+        add_diagnostic(diagnostic_op::error_A012_from_to("EQU", 1, 5, stmt.stmt_range_ref()));
+        return;
+    }
+
     // type attribute operand
     context::symbol_attributes::type_attr t_attr = context::symbol_attributes::undef_type;
-    if (stmt.operands_ref().value.size() >= 3 && stmt.operands_ref().value[2]->type == semantics::operand_type::ASM)
+    if (ops.size() >= 3 && ops[2]->type == semantics::operand_type::ASM)
     {
-        auto asm_op = stmt.operands_ref().value[2]->access_asm();
+        auto asm_op = ops[2]->access_asm();
         auto expr_op = asm_op->access_expr();
 
         if (expr_op && !expr_op->has_dependencies(dep_solver, nullptr))
@@ -165,9 +174,9 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
     // length attribute operand
     context::symbol_attributes::len_attr length_attr = context::symbol_attributes::undef_length;
-    if (stmt.operands_ref().value.size() >= 2 && stmt.operands_ref().value[1]->type == semantics::operand_type::ASM)
+    if (ops.size() >= 2 && ops[1]->type == semantics::operand_type::ASM)
     {
-        auto asm_op = stmt.operands_ref().value[1]->access_asm();
+        auto asm_op = ops[1]->access_asm();
         auto expr_op = asm_op->access_expr();
 
         if (expr_op && !expr_op->has_dependencies(dep_solver, nullptr))
@@ -184,12 +193,9 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
     }
 
     // value operand
-    if (stmt.operands_ref().value.size() != 0 && stmt.operands_ref().value[0]->type == semantics::operand_type::ASM)
+    if (ops[0]->type == semantics::operand_type::ASM)
     {
-        auto asm_op = stmt.operands_ref().value[0]->access_asm();
-        auto expr_op = asm_op->access_expr();
-
-        if (expr_op)
+        if (auto expr_op = ops[0]->access_asm()->access_expr(); expr_op)
         {
             auto holder(expr_op->expression->get_dependencies(dep_solver));
 
@@ -236,6 +242,12 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
                     create_symbol(stmt.stmt_range_ref(), symbol_name, *holder.unresolved_address, attrs);
             }
         }
+        else
+            add_diagnostic(diagnostic_op::error_A132_EQU_value_format(ops[0]->operand_range));
+    }
+    else
+    {
+        add_diagnostic(diagnostic_op::error_A132_EQU_value_format(ops[0]->operand_range));
     }
 }
 

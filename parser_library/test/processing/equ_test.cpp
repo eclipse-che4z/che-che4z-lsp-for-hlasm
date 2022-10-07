@@ -227,3 +227,30 @@ RES  EQU   *-TEST
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "RES"), 24);
 }
+
+TEST(EQU, op_count)
+{
+    std::string input = R"(
+A   EQU 
+B   EQU 0,0,C'X',0,GR,0
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A012", "A012" }));
+}
+
+TEST(EQU, mandatory_value)
+{
+    std::string input = R"(
+A   EQU ,0
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A132" }));
+}

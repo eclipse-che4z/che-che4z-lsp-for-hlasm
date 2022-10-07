@@ -1179,3 +1179,23 @@ TEST(macro, multiple_apostrophes)
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STR"), "' TXT('''");
 }
+
+TEST(macro, ops_on_second_line)
+{
+    std::string input = R"(
+     MACRO
+     MAC
+A    EQU                                                               X
+                                         1
+     MEND
+
+     MAC
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
+}
