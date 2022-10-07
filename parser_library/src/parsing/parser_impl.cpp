@@ -267,6 +267,12 @@ bool parser_impl::ALIAS()
     return opcode.type == instruction_type::ASM && opcode.value == hlasm_ctx->ids().well_known.ALIAS;
 }
 
+bool parser_impl::END()
+{
+    auto& [_, opcode] = *proc_status;
+    return opcode.type == instruction_type::ASM && opcode.value == hlasm_ctx->ids().well_known.END;
+}
+
 bool parser_impl::NOT(const antlr4::Token* token) const
 {
     if (!token)

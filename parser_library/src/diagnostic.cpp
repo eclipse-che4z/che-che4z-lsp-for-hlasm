@@ -538,8 +538,8 @@ diagnostic_op diagnostic_op::warning_A140_END_lang_third(const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning,
         "A140",
-        "Third parameter of language operand must be exactly 5 character long and must specify the compile date in the "
-        "\"YYDDD\" format",
+        "Third parameter of language operand must be exactly 5 character long and should specify the compile date in "
+        "the \"YYDDD\" format",
         range);
 }
 

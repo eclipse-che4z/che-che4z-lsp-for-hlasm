@@ -835,8 +835,7 @@ bool end::check(const std::vector<const asm_operand*>& to_check,
             return false;
         }
         auto third_op = get_simple_operand(language_operand->operand_parameters[2].get());
-        if (third_op->operand_identifier.size() != END_lang_third_par_size
-            || !has_all_digits(third_op->operand_identifier))
+        if (third_op->operand_identifier.size() != END_lang_third_par_size)
         {
             add_diagnostic(
                 diagnostic_op::warning_A140_END_lang_third(language_operand->operand_parameters[2]->operand_range));

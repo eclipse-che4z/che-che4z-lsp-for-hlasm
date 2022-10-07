@@ -218,7 +218,7 @@ TEST(diagnostics, end_incorrect_language_third_char)
 {
     std::string input(
         R"( 
- END ,(one,four,three)
+ END ,(one,four,toolong)
 )");
     analyzer a(input);
     a.analyze();

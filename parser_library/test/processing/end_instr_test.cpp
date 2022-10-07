@@ -145,6 +145,17 @@ ENTRYPT  BALR            2,0
     a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A012" }));
 }
+
+TEST(END, strange_operands)
+{
+    std::string input(R"(
+     END ,(MY-3)15/A(,01)1,0*2@3)
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+}
 TEST(END, label_sequenceSymbol_true)
 {
     std::string input(R"( 
