@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "utils/utf8text.h"
+#include "utils/unicode_text.h"
 
 #include <algorithm>
 
@@ -138,8 +138,8 @@ std::string replace_non_utf8_chars(std::string_view text)
             continue;
         }
 
-        const auto cs = utils::utf8_prefix_sizes[(unsigned char)text.front()];
-        if (cs.utf8 != 0 && cs.utf8 <= text.size() && utils::utf8_valid_multibyte_prefix(text[0], text[1])
+        const auto cs = utf8_prefix_sizes[(unsigned char)text.front()];
+        if (cs.utf8 != 0 && cs.utf8 <= text.size() && utf8_valid_multibyte_prefix(text[0], text[1])
             && std::all_of(text.begin() + 2, text.begin() + cs.utf8, utf8_continue_byte))
         {
             // copy the character to output
@@ -156,6 +156,109 @@ std::string replace_non_utf8_chars(std::string_view text)
         }
     }
     return ret;
+}
+
+
+template<bool validate>
+std::pair<size_t, size_t> substr_step(std::string_view& s, size_t& chars)
+{
+    std::pair<size_t, size_t> result = { 0, 0 };
+
+    while (chars)
+    {
+        if (s.empty())
+            break;
+        --chars;
+        ++result.first;
+
+        unsigned char c = s.front();
+        if (c < 0x80)
+        {
+            ++result.second;
+            s.remove_prefix(1);
+            continue;
+        }
+
+        const auto cs = utf8_prefix_sizes[c];
+        if constexpr (validate)
+        {
+            if (cs.utf8 < 2 || s.size() < cs.utf8 || !utf8_valid_multibyte_prefix(s[0], s[1]))
+                throw utf8_error();
+            for (const auto* p = s.data() + 2; p != s.data() + cs.utf8; ++p)
+                if ((*p & 0xc0) != 0x80)
+                    throw utf8_error();
+        }
+
+        result.second += cs.utf16;
+        s.remove_prefix(cs.utf8);
+    }
+
+    return result;
+}
+
+std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count)
+{
+    const auto s_ = s;
+    auto [_, utf16_skipped] = substr_step<true>(s, count);
+    return std::pair(s_.substr(s_.size() - s.size()), utf16_skipped);
+}
+
+template<bool validate>
+utf8_substr_result utf8_substr(std::string_view s, size_t offset, size_t length)
+{
+    substr_step<validate>(s, offset);
+
+    if (offset) // not long enough
+        return {};
+
+    utf8_substr_result result = { s, 0, 0 };
+
+    auto [char_count, utf16_len] = substr_step<validate>(s, length);
+    result.char_count = char_count;
+    result.utf16_len = utf16_len;
+
+    result.str = result.str.substr(0, result.str.size() - s.size());
+
+    return result;
+}
+
+template utf8_substr_result utf8_substr<false>(std::string_view s, size_t offset, size_t length);
+template utf8_substr_result utf8_substr<true>(std::string_view s, size_t offset, size_t length);
+
+size_t length_utf16(std::string_view s)
+{
+    auto len = (size_t)-1;
+
+    auto [_, utf16] = substr_step<true>(s, len);
+
+    return utf16;
+}
+
+size_t length_utf16_no_validation(std::string_view s)
+{
+    auto len = (size_t)-1;
+
+    auto [_, utf16] = substr_step<false>(s, len);
+
+    return utf16;
+}
+
+size_t length_utf32(std::string_view text)
+{
+    auto len = (size_t)-1;
+
+    auto [char_count, _] = substr_step<true>(text, len);
+
+    return char_count;
+}
+
+size_t length_utf32_no_validation(std::string_view text)
+{
+    auto len = (size_t)-1;
+
+    auto [char_count, _] = substr_step<false>(text, len);
+
+    return char_count;
 }
 
 } // namespace hlasm_plugin::utils

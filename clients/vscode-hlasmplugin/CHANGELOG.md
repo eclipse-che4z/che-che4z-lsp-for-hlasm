@@ -20,6 +20,7 @@
 - Syntax error while parsing the END language operands
 - False positive sequence symbol redefinition diagnostics generated
 - Incorrect parsing of multiline operands in macros
+- Incorrect implicit length computed for nominal values containing multibyte UTF-8 characters
 
 ## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
 

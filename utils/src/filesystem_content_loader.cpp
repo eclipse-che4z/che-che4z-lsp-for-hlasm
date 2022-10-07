@@ -18,7 +18,7 @@
 
 #include "utils/path.h"
 #include "utils/path_conversions.h"
-#include "utils/utf8text.h"
+#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::utils::resource {
 

@@ -22,6 +22,7 @@
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
 #include "utils/concat.h"
+#include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -996,7 +997,7 @@ public:
     static constexpr size_t valid_cols = 1 + lexing::default_ictl.end - (lexing::default_ictl.begin - 1);
     static auto create_line_preview(std::string_view input)
     {
-        return lexing::utf8_substr(lexing::extract_line(input).first, lexing::default_ictl.begin - 1, valid_cols);
+        return utils::utf8_substr(lexing::extract_line(input).first, lexing::default_ictl.begin - 1, valid_cols);
     }
 
     static bool ignore_line(std::string_view s) { return s.empty() || s.front() == '*' || s.substr(0, 2) == ".*"; }
@@ -1014,9 +1015,9 @@ public:
         for (const auto& l : m_logical_line.segments)
         {
             std::string buffer;
-            buffer.append(lexing::utf8_substr(l.line, 0, cics_extract.end).str);
+            buffer.append(utils::utf8_substr(l.line, 0, cics_extract.end).str);
 
-            if (auto after_cont = lexing::utf8_substr(l.line, cics_extract.end + 1).str; !after_cont.empty())
+            if (auto after_cont = utils::utf8_substr(l.line, cics_extract.end + 1).str; !after_cont.empty())
                 buffer.append(" ").append(after_cont);
 
             if (first_line)
@@ -1081,7 +1082,7 @@ public:
             echo_text(li);
 
             std::string text_to_add = matches[2].str();
-            if (auto instr_len = lexing::utf8_substr(text_to_add).char_count; instr_len < 4)
+            if (auto instr_len = utils::utf8_substr(text_to_add).char_count; instr_len < 4)
                 text_to_add.append(4 - instr_len, ' ');
             text_to_add.append(1, ' ').append(m_mini_parser.operands());
             text_to_add.insert(0, generate_label_fragment(label_b, label_e, li));
@@ -1092,7 +1093,7 @@ public:
             size_t line_limit = 62;
             while (true)
             {
-                auto part = lexing::utf8_substr(t, 0, line_limit);
+                auto part = utils::utf8_substr(t, 0, line_limit);
                 t.remove_prefix(part.str.size());
 
                 if (t.empty())

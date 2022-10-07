@@ -17,6 +17,7 @@ target_sources(hlasm_utils_test PRIVATE
 	path_conversions_test.cpp
 	platform_test.cpp
 	resource_location_test.cpp
+	unicode_text_test.cpp
 )
 
 target_link_libraries(hlasm_utils_test hlasm_utils)

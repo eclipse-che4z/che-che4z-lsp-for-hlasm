@@ -21,7 +21,7 @@
 
 #include "utils/concat.h"
 #include "utils/resource_location.h"
-#include "utils/utf8text.h"
+#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library {
 

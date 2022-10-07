@@ -27,7 +27,7 @@
 #include "config/pgm_conf.h"
 #include "diagnostic_counter.h"
 #include "nlohmann/json.hpp"
-#include "utils/utf8text.h"
+#include "utils/unicode_text.h"
 #include "workspace_manager.h"
 
 /*

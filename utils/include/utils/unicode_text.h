@@ -12,15 +12,24 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_UTILS_UTF8TEXT_H
-#define HLASMPLUGIN_UTILS_UTF8TEXT_H
+#ifndef HLASMPLUGIN_UTILS_UNICODE_TEXT_H
+#define HLASMPLUGIN_UTILS_UNICODE_TEXT_H
 
 #include <array>
 #include <limits>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 
 namespace hlasm_plugin::utils {
+
+class utf8_error : public std::runtime_error
+{
+public:
+    utf8_error()
+        : std::runtime_error("Invalid UTF-8 sequence encountered.")
+    {}
+};
 
 // Length of Unicode character in 8/16-bit chunks
 struct char_size
@@ -49,6 +58,36 @@ void append_utf8_sanitized(std::string& result, std::string_view str);
 bool utf8_one_byte_begin(char ch);
 
 std::string replace_non_utf8_chars(std::string_view text);
+
+// skip <count> UTF-8 characters
+// returns the remaining string and size of the skipped length in utf-16 encoding
+std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count);
+
+struct utf8_substr_result
+{
+    std::string_view str;
+    size_t char_count;
+    size_t utf16_len;
+};
+
+inline bool operator==(const utf8_substr_result& l, const utf8_substr_result& r)
+{
+    return l.str == r.str && l.char_count == r.char_count && l.utf16_len == r.utf16_len;
+}
+
+inline bool operator!=(const utf8_substr_result& l, const utf8_substr_result& r) { return !(l == r); }
+
+// utf-8 substr in unicode characters with optional validation
+template<bool validate = false>
+utf8_substr_result utf8_substr(std::string_view s, size_t offset_chars = 0, size_t length_chars = (size_t)-1);
+
+// returns the length of the string in utf-16 symbols
+size_t length_utf16(std::string_view text);
+size_t length_utf16_no_validation(std::string_view text);
+
+// return the length in unicode codepoints
+size_t length_utf32(std::string_view text);
+size_t length_utf32_no_validation(std::string_view text);
 
 } // namespace hlasm_plugin::utils
 

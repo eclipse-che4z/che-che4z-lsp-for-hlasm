@@ -16,7 +16,7 @@
 
 #include "common_testing.h"
 #include "ebcdic_encoding.h"
-#include "utils/utf8text.h"
+#include "utils/unicode_text.h"
 
 TEST(input_source, utf8conv)
 {

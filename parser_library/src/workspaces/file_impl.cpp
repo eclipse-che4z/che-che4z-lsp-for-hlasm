@@ -23,7 +23,7 @@
 #include <string>
 
 #include "utils/content_loader.h"
-#include "utils/utf8text.h"
+#include "utils/unicode_text.h"
 
 
 namespace hlasm_plugin::parser_library::workspaces {

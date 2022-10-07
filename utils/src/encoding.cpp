@@ -20,7 +20,7 @@
 
 #include "network/uri/uri.hpp"
 
-#include "utils/utf8text.h"
+#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::utils::encoding {
 namespace {

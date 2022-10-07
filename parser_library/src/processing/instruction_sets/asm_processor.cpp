@@ -24,7 +24,7 @@
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expr_visitor.h"
 #include "postponed_statement_impl.h"
-#include "utils/utf8text.h"
+#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

@@ -23,6 +23,7 @@
 #include "processing/error_statement.h"
 #include "semantics/collector.h"
 #include "semantics/range_provider.h"
+#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -73,7 +74,7 @@ void opencode_provider::generate_aread_highlighting(std::string_view text, size_
     if (text.empty())
         return;
 
-    auto [rest, utf16_skipped] = lexing::skip_chars(text, 80);
+    auto [rest, utf16_skipped] = utils::skip_chars(text, 80);
     if (utf16_skipped)
         m_src_proc->add_hl_symbol(
             token_info(range(position(line_no, 0), position(line_no, utf16_skipped)), semantics::hl_scopes::string));
@@ -81,7 +82,7 @@ void opencode_provider::generate_aread_highlighting(std::string_view text, size_
     if (rest.empty())
         return;
 
-    if (auto rest_len = lexing::length_utf16(rest))
+    if (auto rest_len = utils::length_utf16(rest))
         m_src_proc->add_hl_symbol(
             token_info(range(position(line_no, utf16_skipped), position(line_no, utf16_skipped + rest_len)),
                 semantics::hl_scopes::ignored));
@@ -178,8 +179,8 @@ void opencode_provider::process_comment()
     {
         if (l.code.size())
         {
-            auto skip_len = lexing::length_utf16(l.line.substr(0, l.code.data() - l.line.data()));
-            auto code_len = lexing::length_utf16(l.code);
+            auto skip_len = utils::length_utf16(l.line.substr(0, l.code.data() - l.line.data()));
+            auto code_len = utils::length_utf16(l.code);
 
             m_src_proc->add_hl_symbol(
                 token_info(range(position(line_no, skip_len), position(line_no, skip_len + code_len)),

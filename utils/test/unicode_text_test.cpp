@@ -17,10 +17,9 @@
 
 #include "gtest/gtest.h"
 
-#include "lexing/logical_line.h"
-#include "utils/utf8text.h"
+#include "utils/unicode_text.h"
 
-using namespace hlasm_plugin::parser_library::lexing;
+using namespace hlasm_plugin::utils;
 
 TEST(utf8, substr)
 {
@@ -59,7 +58,6 @@ TEST(utf8, substr_with_validate)
 
 TEST(utf8, multibyte_validation)
 {
-    using namespace hlasm_plugin::utils;
     for (const auto [f, s, e] : std::initializer_list<std::tuple<unsigned char, unsigned char, bool>> {
              { 0, 0, false },
              { 0x7f, 0, false },

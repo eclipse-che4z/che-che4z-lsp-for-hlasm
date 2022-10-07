@@ -15,6 +15,7 @@
 #include "preprocessor.h"
 
 #include "lexing/logical_line.h"
+#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -37,7 +38,7 @@ preprocessor::line_iterator preprocessor::extract_nonempty_logical_line(
 
 bool preprocessor::is_continued(std::string_view s)
 {
-    const auto cont = lexing::utf8_substr(s, lexing::default_ictl_copy.end, 1).str;
+    const auto cont = utils::utf8_substr(s, lexing::default_ictl_copy.end, 1).str;
     return !cont.empty() && cont != " ";
 }
 

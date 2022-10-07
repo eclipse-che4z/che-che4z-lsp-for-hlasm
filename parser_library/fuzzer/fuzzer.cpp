@@ -18,7 +18,7 @@
 #include <string>
 
 #include "analyzer.h"
-#include "utils/utf8text.h"
+#include "utils/unicode_text.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/parse_lib_provider.h"
 

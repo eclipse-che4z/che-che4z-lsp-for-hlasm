@@ -17,7 +17,7 @@ target_sources(hlasm_utils PRIVATE
 	path_conversions.cpp
 	platform.cpp
 	resource_location.cpp
-	utf8text.cpp
+	unicode_text.cpp
 )
 
 if(EMSCRIPTEN)

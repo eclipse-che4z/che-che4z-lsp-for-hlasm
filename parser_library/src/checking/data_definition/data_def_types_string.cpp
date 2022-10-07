@@ -20,6 +20,7 @@
 #include "checking/checker_helper.h"
 #include "checking/diagnostic_collector.h"
 #include "data_def_types.h"
+#include "utils/unicode_text.h"
 
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library::context;
@@ -151,7 +152,7 @@ uint64_t data_def_type_CA_CE::get_nominal_length(const reduced_nominal_value_t& 
     else if (!std::holds_alternative<std::string>(op.value))
         return 0;
     else
-        return std::get<std::string>(op.value).size();
+        return utils::length_utf32_no_validation(std::get<std::string>(op.value));
 }
 
 uint32_t data_def_type_CA_CE::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
@@ -163,7 +164,7 @@ uint32_t data_def_type_CA_CE::get_nominal_length_attribute(const reduced_nominal
         if (!std::holds_alternative<std::string>(nom.value))
             return 0;
         else
-            return (uint32_t)std::get<std::string>(nom.value).size();
+            return (uint32_t)utils::length_utf32_no_validation(std::get<std::string>(nom.value));
     }
 }
 
@@ -191,7 +192,7 @@ uint64_t data_def_type_CU::get_nominal_length(const reduced_nominal_value_t& op)
     else if (!std::holds_alternative<std::string>(op.value))
         return 0;
     else
-        return 2 * (uint64_t)std::get<std::string>(op.value).size();
+        return 2 * (uint64_t)utils::length_utf16_no_validation(std::get<std::string>(op.value));
 }
 
 uint32_t data_def_type_CU::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
@@ -203,7 +204,7 @@ uint32_t data_def_type_CU::get_nominal_length_attribute(const reduced_nominal_va
         if (!std::holds_alternative<std::string>(nom.value))
             return 0;
         else
-            return 2 * (uint32_t)std::get<std::string>(nom.value).size();
+            return 2 * (uint32_t)utils::length_utf16_no_validation(std::get<std::string>(nom.value));
     }
 }
 
@@ -252,7 +253,8 @@ uint64_t data_def_type_G::get_nominal_length(const reduced_nominal_value_t& op) 
     else
     {
         const std::string& s = std::get<std::string>(op.value);
-        return std::count_if(s.begin(), s.end(), [](char c) { return c != '<' && c != '>'; });
+        return utils::length_utf32_no_validation(s)
+            - std::count_if(s.begin(), s.end(), [](char c) { return c == '<' || c == '>'; });
     }
 }
 
@@ -267,7 +269,8 @@ uint32_t data_def_type_G::get_nominal_length_attribute(const reduced_nominal_val
         else
         {
             const std::string& s = std::get<std::string>(nom.value);
-            return (uint32_t)std::count_if(s.begin(), s.end(), [](char c) { return c != '<' && c != '>'; });
+            return (uint32_t)(utils::length_utf32_no_validation(s)
+                - std::count_if(s.begin(), s.end(), [](char c) { return c == '<' || c == '>'; }));
         }
     }
 }
