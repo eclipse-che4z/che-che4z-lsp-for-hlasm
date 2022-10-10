@@ -14,152 +14,149 @@
 
 #include "concatenation.h"
 
-#include "concatenation_term.h"
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 
 namespace hlasm_plugin::parser_library::semantics {
-
-concatenation_point::concatenation_point(const concat_type type)
-    : type(type)
-{}
-
-char_str_conc* concatenation_point::access_str()
-{
-    return type == concat_type::STR ? static_cast<char_str_conc*>(this) : nullptr;
-}
-
-var_sym_conc* concatenation_point::access_var()
-{
-    return type == concat_type::VAR ? static_cast<var_sym_conc*>(this) : nullptr;
-}
-
-dot_conc* concatenation_point::access_dot()
-{
-    return type == concat_type::DOT ? static_cast<dot_conc*>(this) : nullptr;
-}
-
-equals_conc* concatenation_point::access_equ()
-{
-    return type == concat_type::EQU ? static_cast<equals_conc*>(this) : nullptr;
-}
-
-sublist_conc* concatenation_point::access_sub()
-{
-    return type == concat_type::SUB ? static_cast<sublist_conc*>(this) : nullptr;
-}
 
 std::string concatenation_point::evaluate(const concat_chain& chain, const expressions::evaluation_context& eval_ctx)
 {
     return evaluate(chain.begin(), chain.end(), eval_ctx);
 }
 
+struct concatenation_point_evaluator
+{
+    std::string& result;
+    const expressions::evaluation_context& eval_ctx;
+    bool was_var = false;
+
+    void operator()(const char_str_conc& v)
+    {
+        result.append(v.evaluate(eval_ctx));
+        was_var = false;
+    }
+
+    void operator()(const var_sym_conc& v)
+    {
+        result.append(v.evaluate(eval_ctx));
+        was_var = true;
+    }
+
+    void operator()(const dot_conc& v)
+    {
+        if (!was_var)
+            result.append(v.evaluate(eval_ctx));
+        was_var = false;
+    }
+
+    void operator()(const sublist_conc& v)
+    {
+        result.append(v.evaluate(eval_ctx));
+        was_var = false;
+    }
+
+    void operator()(const equals_conc& v)
+    {
+        result.append(v.evaluate(eval_ctx));
+        was_var = false;
+    }
+};
+
 std::string concatenation_point::evaluate(concat_chain::const_iterator begin,
     concat_chain::const_iterator end,
     const expressions::evaluation_context& eval_ctx)
 {
     std::string ret;
-    bool was_var = false;
+    concatenation_point_evaluator evaluator { ret, eval_ctx };
+
     for (auto it = begin; it != end; ++it)
-    {
-        auto&& point = *it;
-        switch (point->type)
-        {
-            case concat_type::DOT:
-                if (!was_var)
-                    ret.append(point->evaluate(eval_ctx));
-                was_var = false;
-                break;
-            case concat_type::EQU:
-            case concat_type::STR:
-            case concat_type::SUB:
-                ret.append(point->evaluate(eval_ctx));
-                was_var = false;
-                break;
-            case concat_type::VAR:
-                ret.append(point->evaluate(eval_ctx));
-                was_var = true;
-                break;
-            default:
-                break;
-        }
-    }
+        std::visit(evaluator, it->value);
+
     return ret;
+}
+
+std::string concatenation_point::evaluate(const expressions::evaluation_context& eval_ctx) const
+{
+    return std::visit([&eval_ctx](const auto& v) { return v.evaluate(eval_ctx); }, value);
+}
+
+void concatenation_point::resolve(diagnostic_op_consumer& diag) const
+{
+    std::visit([&diag](const auto& v) { v.resolve(diag); }, value);
 }
 
 void concatenation_point::clear_concat_chain(concat_chain& chain)
 {
-    size_t offset = 0;
-    for (size_t i = 0; i < chain.size(); ++i)
-    {
-        // if not empty ptr and not empty string and not empty var
-        if (chain[i] && !(chain[i]->type == concat_type::STR && chain[i]->access_str()->value.empty())
-            && !(chain[i]->type == concat_type::VAR && !chain[i]->access_var()->symbol))
-            chain[offset++] = std::move(chain[i]);
-    }
+    std::erase_if(chain, [](const concatenation_point& p) {
+        if (auto* str = std::get_if<char_str_conc>(&p.value); str && str->value.empty())
+            return true;
+        if (auto* var = std::get_if<var_sym_conc>(&p.value); var && !var->symbol)
+            return true;
 
-    chain.resize(offset);
+        return false;
+    });
 }
 
 std::string concatenation_point::to_string(const concat_chain& chain) { return to_string(chain.begin(), chain.end()); }
 
+struct concat_point_stringifier
+{
+    std::string& result;
+
+    void operator()(const char_str_conc& v) const { result.append(v.value); }
+
+    void operator()(const var_sym_conc& v) const
+    {
+        result.push_back('&');
+        if (v.symbol->created)
+        {
+            result.push_back('(');
+            result.append(concatenation_point::to_string(v.symbol->access_created()->created_name));
+            result.push_back(')');
+        }
+        else
+            result.append(*v.symbol->access_basic()->name);
+    }
+
+    void operator()(const dot_conc&) const { result.push_back('.'); }
+
+    void operator()(const sublist_conc& v) const
+    {
+        result.push_back('(');
+        for (size_t i = 0; i < v.list.size(); ++i)
+        {
+            result.append(concatenation_point::to_string(v.list[i]));
+            if (i != v.list.size() - 1)
+                result.push_back(',');
+        }
+        result.push_back(')');
+    }
+
+    void operator()(const equals_conc&) const { result.push_back('='); }
+};
+
 std::string concatenation_point::to_string(concat_chain::const_iterator begin, concat_chain::const_iterator end)
 {
     std::string ret;
+    concat_point_stringifier stringifier { ret };
+
     for (auto it = begin; it != end; ++it)
-    {
-        auto&& point = *it;
-        switch (point->type)
-        {
-            case concat_type::DOT:
-                ret.push_back('.');
-                break;
-            case concat_type::EQU:
-                ret.push_back('=');
-                break;
-            case concat_type::STR:
-                ret.append(point->access_str()->value);
-                break;
-            case concat_type::VAR:
-                ret.push_back('&');
-                if (point->access_var()->symbol->created)
-                {
-                    ret.push_back('(');
-                    ret.append(to_string(point->access_var()->symbol->access_created()->created_name));
-                    ret.push_back(')');
-                }
-                else
-                    ret.append(*point->access_var()->symbol->access_basic()->name);
-                break;
-            case concat_type::SUB:
-                ret.push_back('(');
-                for (size_t i = 0; i < point->access_sub()->list.size(); ++i)
-                {
-                    ret += to_string(point->access_sub()->list[i]);
-                    if (i != point->access_sub()->list.size() - 1)
-                        ret.push_back(',');
-                }
-                ret.push_back(')');
-                break;
-            default:
-                break;
-        }
-    }
+        std::visit(stringifier, it->value);
+
     return ret;
 }
 
-var_sym_conc* concatenation_point::find_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end)
+const var_sym_conc* concatenation_point::find_var_sym(
+    concat_chain::const_iterator begin, concat_chain::const_iterator end)
 {
     for (auto it = begin; it != end; ++it)
     {
-        if (auto&& point = *it; point->type == concat_type::VAR)
-            return point->access_var();
-        else if (point->type == concat_type::SUB)
-            for (const auto& entry : point->access_sub()->list)
-            {
-                auto tmp = find_var_sym(entry.begin(), entry.end());
-                if (tmp)
+        if (auto* var = std::get_if<var_sym_conc>(&it->value))
+            return var;
+
+        if (auto* sublist = std::get_if<sublist_conc>(&it->value))
+            for (const auto& entry : sublist->list)
+                if (auto tmp = find_var_sym(entry.begin(), entry.end()))
                     return tmp;
-            }
     }
 
     return nullptr;
@@ -171,22 +168,71 @@ std::set<context::id_index> concatenation_point::get_undefined_attributed_symbol
     std::set<context::id_index> ret;
     for (auto it = chain.begin(); it != chain.end(); ++it)
     {
-        auto&& point = *it;
-        switch (point->type)
-        {
-            case concat_type::VAR:
-                ret.merge(expressions::ca_var_sym::get_undefined_attributed_symbols_vs(
-                    point->access_var()->symbol, eval_ctx));
-                break;
-            case concat_type::SUB:
-                for (const auto& ch : point->access_sub()->list)
-                    ret.merge(get_undefined_attributed_symbols(ch, eval_ctx));
-                break;
-            default:
-                break;
-        }
+        if (auto* var = std::get_if<var_sym_conc>(&it->value))
+            ret.merge(expressions::ca_var_sym::get_undefined_attributed_symbols_vs(var->symbol, eval_ctx));
+        else if (auto* sublist = std::get_if<sublist_conc>(&it->value))
+            for (const auto& entry : sublist->list)
+                ret.merge(get_undefined_attributed_symbols(entry, eval_ctx));
     }
     return ret;
+}
+
+std::string char_str_conc::evaluate(const expressions::evaluation_context&) const { return value; }
+
+void char_str_conc::resolve(diagnostic_op_consumer&) const {}
+
+
+std::string var_sym_conc::evaluate(const expressions::evaluation_context& eval_ctx) const
+{
+    auto value = symbol->evaluate(eval_ctx);
+
+    return evaluate(std::move(value));
+}
+
+void var_sym_conc::resolve(diagnostic_op_consumer& diag) const { symbol->resolve(context::SET_t_enum::A_TYPE, diag); }
+
+std::string var_sym_conc::evaluate(context::SET_t varsym_value)
+{
+    switch (varsym_value.type)
+    {
+        case context::SET_t_enum::A_TYPE:
+            return std::to_string(std::abs(varsym_value.access_a()));
+        case context::SET_t_enum::B_TYPE:
+            return varsym_value.access_b() ? "1" : "0";
+        case context::SET_t_enum::C_TYPE:
+            return std::move(varsym_value.access_c());
+        default:
+            return "";
+    }
+}
+
+std::string dot_conc::evaluate(const expressions::evaluation_context&) const { return "."; }
+
+void dot_conc::resolve(diagnostic_op_consumer&) const {}
+
+std::string equals_conc::evaluate(const expressions::evaluation_context&) const { return "="; }
+
+void equals_conc::resolve(diagnostic_op_consumer&) const {}
+
+std::string sublist_conc::evaluate(const expressions::evaluation_context& eval_ctx) const
+{
+    std::string ret;
+    ret.push_back('(');
+    for (size_t i = 0; i < list.size(); ++i)
+    {
+        ret.append(concatenation_point::evaluate(list[i], eval_ctx));
+        if (i + 1 != list.size())
+            ret.push_back(',');
+    }
+    ret.push_back(')');
+    return ret;
+}
+
+void sublist_conc::resolve(diagnostic_op_consumer& diag) const
+{
+    for (const auto& l : list)
+        for (const auto& e : l)
+            e.resolve(diag);
 }
 
 } // namespace hlasm_plugin::parser_library::semantics

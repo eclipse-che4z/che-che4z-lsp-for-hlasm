@@ -38,18 +38,26 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 			(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)
 			|
 			(
-				{std::string name;}
-				AMPERSAND
-				ORDSYMBOL {name += $ORDSYMBOL->getText();}
-				(ORDSYMBOL {name += $ORDSYMBOL->getText();}|NUM {name += $NUM->getText();})*
-				{
-					auto r = provider.get_range($AMPERSAND,_input->LT(-1));
-					$vs.push_back(std::make_unique<basic_variable_symbol>(add_id(std::move(name)), std::vector<ca_expr_ptr>(), r));
-					collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
-				}
+				AMPERSAND AMPERSAND
+				|
+				var_symbol											{$vs.push_back(std::move($var_symbol.vs));}
 			)
-			|
-			l_sp_ch_v
+			| ASTERISK
+			| MINUS
+			| PLUS
+			| LT
+			| GT
+			| SLASH
+			| EQUALS
+			| VERTICAL
+			| IDENTIFIER
+			| NUM
+			| ORDSYMBOL
+			| DOT
+			| COMMA
+			| LPAR
+			| RPAR
+			| SPACE
 		)*
 		ap2=(APOSTROPHE|ATTR)
 		{
@@ -66,18 +74,26 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 		(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)
 		|
 		(
-			{std::string name;}
-			AMPERSAND
-			ORDSYMBOL {name += $ORDSYMBOL->getText();}
-			(ORDSYMBOL {name += $ORDSYMBOL->getText();}|NUM {name += $NUM->getText();})*
-			{
-				auto r = provider.get_range($AMPERSAND,_input->LT(-1));
-				$vs.push_back(std::make_unique<basic_variable_symbol>(add_id(std::move(name)), std::vector<ca_expr_ptr>(), r));
-				collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
-			}
+			AMPERSAND AMPERSAND
+			|
+			var_symbol											{$vs.push_back(std::move($var_symbol.vs));}
 		)
-		|
-		l_sp_ch_v
+		| ASTERISK
+		| MINUS
+		| PLUS
+		| LT
+		| GT
+		| SLASH
+		| EQUALS
+		| VERTICAL
+		| IDENTIFIER
+		| NUM
+		| ORDSYMBOL
+		| DOT
+		| COMMA
+		| LPAR
+		| RPAR
+		| SPACE
 	)*
 	{enable_ca_string();}
 	ap2=(APOSTROPHE|ATTR)

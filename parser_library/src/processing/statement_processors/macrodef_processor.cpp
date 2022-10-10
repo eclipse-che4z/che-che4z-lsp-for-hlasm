@@ -257,9 +257,10 @@ void macrodef_processor::process_prototype_instruction(const resolved_statement&
 void macrodef_processor::process_prototype_operand(
     const resolved_statement& statement, std::vector<context::id_index>& param_names)
 {
+    using namespace semantics;
     for (auto& op : statement.operands_ref().value)
     {
-        if (op->type == semantics::operand_type::EMPTY)
+        if (op->type == operand_type::EMPTY)
         {
             result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
             continue;
@@ -270,9 +271,9 @@ void macrodef_processor::process_prototype_operand(
 
         auto& tmp_chain = tmp->chain;
 
-        if (tmp_chain.size() == 1 && tmp_chain[0]->type == semantics::concat_type::VAR) // if operand is varsym
+        if (concat_chain_matches<var_sym_conc>(tmp_chain)) // if operand is varsym
         {
-            auto var = tmp_chain[0]->access_var()->symbol.get();
+            auto var = std::get<var_sym_conc>(tmp_chain[0].value).symbol.get();
 
             if (test_varsym_validity(var, param_names, tmp->operand_range, true))
             {
@@ -284,10 +285,9 @@ void macrodef_processor::process_prototype_operand(
         }
         else if (tmp_chain.size() > 1)
         {
-            if (tmp_chain[0]->type == semantics::concat_type::VAR
-                && tmp_chain[1]->type == semantics::concat_type::EQU) // if operand is in form of key param
+            if (concat_chain_starts_with<var_sym_conc, equals_conc>(tmp_chain)) // if operand is in form of key param
             {
-                auto var = tmp_chain[0]->access_var()->symbol.get();
+                auto var = std::get<var_sym_conc>(tmp_chain[0].value).symbol.get();
 
                 if (test_varsym_validity(var, param_names, tmp->operand_range, false))
                 {

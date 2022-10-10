@@ -20,6 +20,8 @@
 #include "expressions/conditional_assembly/terms/ca_string.h"
 #include "expressions/evaluation_context.h"
 #include "library_info_transitional.h"
+#include "semantics/concatenation.h"
+#include "semantics/variable_symbol.h"
 
 using namespace std::string_literals;
 using namespace hlasm_plugin::parser_library;

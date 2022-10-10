@@ -18,6 +18,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "context/common_types.h"
@@ -33,61 +34,136 @@ struct evaluation_context;
 
 namespace hlasm_plugin::parser_library::semantics {
 
-enum class concat_type
-{
-    STR,
-    VAR,
-    DOT,
-    SUB,
-    EQU
-};
-
-struct char_str_conc;
-struct var_sym_conc;
-struct dot_conc;
-struct equals_conc;
-struct sublist_conc;
+struct variable_symbol;
+using vs_ptr = std::unique_ptr<variable_symbol>;
 
 struct concatenation_point;
-using concat_point_ptr = std::unique_ptr<concatenation_point>;
-using concat_chain = std::vector<concat_point_ptr>;
+using concat_chain = std::vector<concatenation_point>;
+
+// concatenation point representing character string
+struct char_str_conc
+{
+    explicit char_str_conc(std::string value, const range& conc_range)
+        : value(std::move(value))
+        , conc_range(conc_range)
+    {}
+
+    std::string value;
+    range conc_range;
+
+    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
+    void resolve(diagnostic_op_consumer& diag) const;
+};
+
+// concatenation point representing variable symbol
+struct var_sym_conc
+{
+    explicit var_sym_conc(vs_ptr s)
+        : symbol(std::move(s))
+    {}
+
+    vs_ptr symbol;
+
+    static std::string evaluate(context::SET_t varsym_value);
+
+    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
+    void resolve(diagnostic_op_consumer& diag) const;
+};
+
+// concatenation point representing dot
+struct dot_conc
+{
+    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
+    void resolve(diagnostic_op_consumer& diag) const;
+};
+
+// concatenation point representing equals sign
+struct equals_conc
+{
+    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
+    void resolve(diagnostic_op_consumer& diag) const;
+};
+
+// concatenation point representing macro operand sublist
+struct sublist_conc
+{
+    explicit sublist_conc(std::vector<concat_chain> list)
+        : list(std::move(list))
+    {}
+
+    std::vector<concat_chain> list;
+
+    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
+    void resolve(diagnostic_op_consumer& diag) const;
+};
 
 // helper stuct for character strings that contain variable symbols
 // these points of concatenation when formed into array represent character string in a way that is easily concatenated
 // when variable symbols are substituted
 struct concatenation_point
 {
+    std::variant<char_str_conc, var_sym_conc, dot_conc, sublist_conc, equals_conc> value;
+
     // cleans concat_chains of empty strings and badly parsed operands
     static void clear_concat_chain(concat_chain& conc_list);
 
     static std::string to_string(const concat_chain& chain);
     static std::string to_string(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
-    static var_sym_conc* find_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end);
+    static const var_sym_conc* find_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
     static std::set<context::id_index> get_undefined_attributed_symbols(
         const concat_chain& chain, const expressions::evaluation_context& eval_ctx);
 
-    const concat_type type;
-
-    concatenation_point(const concat_type type);
-
-    char_str_conc* access_str();
-    var_sym_conc* access_var();
-    dot_conc* access_dot();
-    equals_conc* access_equ();
-    sublist_conc* access_sub();
+    explicit concatenation_point(char_str_conc v)
+        : value(std::move(v))
+    {}
+    explicit concatenation_point(var_sym_conc v)
+        : value(std::move(v))
+    {}
+    explicit concatenation_point(dot_conc v)
+        : value(std::move(v))
+    {}
+    explicit concatenation_point(sublist_conc v)
+        : value(std::move(v))
+    {}
+    explicit concatenation_point(equals_conc v)
+        : value(std::move(v))
+    {}
 
     static std::string evaluate(const concat_chain& chain, const expressions::evaluation_context& eval_ctx);
     static std::string evaluate(concat_chain::const_iterator begin,
         concat_chain::const_iterator end,
         const expressions::evaluation_context& eval_ctx);
 
-    virtual std::string evaluate(const expressions::evaluation_context& eval_ctx) const = 0;
-    virtual void resolve(diagnostic_op_consumer& diag) = 0;
-
-    virtual ~concatenation_point() = default;
+    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
+    void resolve(diagnostic_op_consumer& diag) const;
 };
+
+template<bool exact, typename... Ts>
+struct concat_chain_matcher
+{
+    bool operator()(concat_chain::const_iterator b, concat_chain::const_iterator e) const noexcept
+    {
+        if constexpr (exact)
+        {
+            if (std::distance(b, e) != sizeof...(Ts))
+                return false;
+        }
+        else
+        {
+            if (std::distance(b, e) < sizeof...(Ts))
+                return false;
+        }
+        return ((std::holds_alternative<Ts>(b->value) && (++b, true)) && ...);
+    }
+    bool operator()(const concat_chain& chain) const noexcept { return operator()(chain.begin(), chain.end()); }
+};
+
+template<typename... Ts>
+constexpr const concat_chain_matcher<true, Ts...> concat_chain_matches;
+template<typename... Ts>
+constexpr const concat_chain_matcher<false, Ts...> concat_chain_starts_with;
 
 } // namespace hlasm_plugin::parser_library::semantics
 

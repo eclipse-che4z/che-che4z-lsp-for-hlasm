@@ -19,7 +19,8 @@
 #include "expressions/conditional_assembly/terms/ca_string.h"
 #include "expressions/evaluation_context.h"
 #include "library_info_transitional.h"
-#include "semantics/concatenation_term.h"
+#include "semantics/concatenation.h"
+#include "semantics/variable_symbol.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::semantics;
@@ -32,7 +33,7 @@ TEST(ca_string, undefined_attributes)
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     concat_chain value;
-    value.push_back(std::make_unique<char_str_conc>("gfds", range()));
+    value.emplace_back(char_str_conc("gfds", range()));
 
     ca_expr_ptr dupl = std::make_unique<ca_constant>(1, range());
 
@@ -76,7 +77,7 @@ INSTANTIATE_TEST_SUITE_P(param_suite,
 TEST(ca_string, test)
 {
     concat_chain value;
-    value.push_back(std::make_unique<char_str_conc>("gfds", range()));
+    value.emplace_back(char_str_conc("gfds", range()));
 
     ca_expr_ptr dupl = std::make_unique<ca_constant>(0, range());
 
@@ -96,7 +97,7 @@ TEST(ca_string, test)
 TEST_P(ca_string_suite, dupl)
 {
     concat_chain value;
-    value.push_back(std::make_unique<char_str_conc>(GetParam().value, range()));
+    value.emplace_back(char_str_conc(GetParam().value, range()));
 
     ca_expr_ptr dupl = std::make_unique<ca_constant>(GetParam().factor, range());
 

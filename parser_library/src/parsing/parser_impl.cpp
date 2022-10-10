@@ -308,7 +308,7 @@ void parser_impl::resolve_concat_chain(const semantics::concat_chain& chain) con
             diagnoser_->add_diagnostic(std::move(d));
     });
     for (const auto& e : chain)
-        e->resolve(diags);
+        e.resolve(diags);
 }
 
 bool parser_impl::MACH()

@@ -17,7 +17,7 @@
 #include "ca_constant.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
-#include "semantics/concatenation_term.h"
+#include "semantics/concatenation.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -37,8 +37,8 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols_vs(
     {
         auto created = symbol->access_created();
         for (auto&& point : created->created_name)
-            if (point->type == semantics::concat_type::VAR)
-                tmp.merge(get_undefined_attributed_symbols_vs(point->access_var()->symbol, eval_ctx));
+            if (const auto* var = std::get_if<semantics::var_sym_conc>(&point.value))
+                tmp.merge(get_undefined_attributed_symbols_vs(var->symbol, eval_ctx));
     }
     return tmp;
 }

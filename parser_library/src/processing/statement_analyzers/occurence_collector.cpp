@@ -113,26 +113,24 @@ void occurence_collector::get_occurence(const semantics::concat_chain& chain)
 {
     for (const auto& point : chain)
     {
-        switch (point->type)
+        if (const auto* str = std::get_if<semantics::char_str_conc>(&point.value))
         {
-            case semantics::concat_type::STR:
-                if (collector_kind == lsp::occurence_kind::ORD)
-                {
-                    auto [valid, name] = hlasm_ctx.try_get_symbol_name(point->access_str()->value);
-                    if (valid)
-                        occurences.emplace_back(lsp::occurence_kind::ORD, name, point->access_str()->conc_range);
-                }
-                break;
-            case semantics::concat_type::VAR:
-                if (collector_kind == lsp::occurence_kind::VAR)
-                    get_occurence(*point->access_var()->symbol);
-                break;
-            case semantics::concat_type::SUB:
-                for (const auto& ch : point->access_sub()->list)
-                    get_occurence(ch);
-                break;
-            default:
-                break;
+            if (collector_kind == lsp::occurence_kind::ORD)
+            {
+                auto [valid, name] = hlasm_ctx.try_get_symbol_name(str->value);
+                if (valid)
+                    occurences.emplace_back(lsp::occurence_kind::ORD, name, str->conc_range);
+            }
+        }
+        else if (const auto* var = std::get_if<semantics::var_sym_conc>(&point.value))
+        {
+            if (collector_kind == lsp::occurence_kind::VAR)
+                get_occurence(*var->symbol);
+        }
+        else if (const auto* sub = std::get_if<semantics::sublist_conc>(&point.value))
+        {
+            for (const auto& ch : sub->list)
+                get_occurence(ch);
         }
     }
 }

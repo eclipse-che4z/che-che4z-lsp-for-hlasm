@@ -34,7 +34,7 @@ void label_si::resolve(diagnostic_op_consumer& diag)
             break;
         case label_si_type::CONC:
             for (const auto& c : std::get<concat_chain>(value))
-                c->resolve(diag);
+                c.resolve(diag);
             break;
         case label_si_type::EMPTY:
             break;
@@ -49,7 +49,7 @@ void instruction_si::resolve(diagnostic_op_consumer& diag)
             break;
         case instruction_si_type::CONC:
             for (const auto& c : std::get<concat_chain>(value))
-                c->resolve(diag);
+                c.resolve(diag);
             break;
         case instruction_si_type::EMPTY:
             break;

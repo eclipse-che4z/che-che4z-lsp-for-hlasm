@@ -18,6 +18,8 @@
 
 #include "ebcdic_encoding.h"
 #include "expressions/evaluation_context.h"
+#include "semantics/concatenation.h"
+#include "semantics/variable_symbol.h"
 #include "terms/ca_function.h"
 #include "terms/ca_string.h"
 

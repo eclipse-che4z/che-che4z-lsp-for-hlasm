@@ -90,9 +90,9 @@ void collector::set_label_field(concat_chain label, range symbol_range)
     if (lbl_)
         throw std::runtime_error("field already assigned");
 
-    if (label.size() == 1 && label[0]->type == concat_type::VAR) // label is variable symbol
+    if (concat_chain_matches<var_sym_conc>(label)) // label is variable symbol
     {
-        lbl_.emplace(symbol_range, std::move(label[0]->access_var()->symbol));
+        lbl_.emplace(symbol_range, std::move(std::get<var_sym_conc>(label[0].value).symbol));
     }
     else // label is concatenation
     {

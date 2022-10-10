@@ -15,17 +15,17 @@
  //rules for instruction field
 parser grammar instruction_field_rules;
 
-instruction returns [id_index instr]
-	: l_string_v			/*model*/
+instruction returns [id_index instr] locals [concat_chain chain]
+	: l_string_v[&$chain]			/*model*/
 	{
-		for(const auto& point : $l_string_v.chain)
+		for(const auto& point : $chain)
 		{
-			if(point->type != concat_type::STR)
+			if(!std::holds_alternative<semantics::char_str_conc>(point.value))
 				continue;
-			collector.add_hl_symbol(token_info(point->access_str()->conc_range,hl_scopes::instruction));
+			collector.add_hl_symbol(token_info(std::get<semantics::char_str_conc>(point.value).conc_range,hl_scopes::instruction));
 		}
 
-		collector.set_instruction_field(std::move($l_string_v.chain),provider.get_range($l_string_v.ctx));
+		collector.set_instruction_field(std::move($chain),provider.get_range($l_string_v.ctx));
 	}
 	| macro_name
 	{

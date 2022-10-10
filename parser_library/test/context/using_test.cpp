@@ -73,13 +73,13 @@ struct test_context : public dependency_solver
         assert(false);
         return id_index();
     }
-    bool using_active(id_index label, const section* sect) const override
+    bool using_active(id_index /*label*/, const section* /*sect*/) const override
     {
         assert(false);
         return false;
     }
     using_evaluate_result using_evaluate(
-        id_index label, const section* owner, int32_t offset, bool long_offset) const override
+        id_index /*label*/, const section* /*owner*/, int32_t /*offset*/, bool /*long_offset*/) const override
     {
         assert(false);
         return { using_collection::invalid_register, 0 };

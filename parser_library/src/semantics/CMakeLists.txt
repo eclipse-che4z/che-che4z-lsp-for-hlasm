@@ -15,8 +15,6 @@ target_sources(parser_library PRIVATE
 	collector.h
 	concatenation.cpp
 	concatenation.h
-	concatenation_term.cpp
-	concatenation_term.h
 	highlighting_info.h
 	operand.h
 	operand_impls.cpp

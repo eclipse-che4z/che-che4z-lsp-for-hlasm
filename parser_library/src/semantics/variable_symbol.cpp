@@ -47,7 +47,7 @@ context::id_index created_variable_symbol::evaluate_name(const expressions::eval
 void created_variable_symbol::resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diag)
 {
     for (const auto& c : created_name)
-        c->resolve(diag);
+        c.resolve(diag);
     variable_symbol::resolve(parent_expr_kind, diag);
 }
 

@@ -15,7 +15,7 @@
 #include "gmock/gmock.h"
 
 #include "../common_testing.h"
-#include "semantics/concatenation_term.h"
+#include "semantics/concatenation.h"
 
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::expressions;
@@ -27,27 +27,27 @@ concat_chain create_chain()
     auto vs = std::make_unique<basic_variable_symbol>(&name, std::vector<ca_expr_ptr>(), range());
 
     concat_chain created_name;
-    created_name.push_back(std::make_unique<char_str_conc>("n", range()));
+    created_name.emplace_back(char_str_conc("n", range()));
 
     auto vsc = std::make_unique<created_variable_symbol>(std::move(created_name), std::vector<ca_expr_ptr>(), range());
 
     concat_chain chain;
 
-    chain.push_back(std::make_unique<char_str_conc>("ada", range()));
-    chain.push_back(std::make_unique<var_sym_conc>(std::move(vs)));
-    chain.push_back(std::make_unique<dot_conc>());
-    chain.push_back(std::make_unique<equals_conc>());
+    chain.emplace_back(char_str_conc("ada", range()));
+    chain.emplace_back(var_sym_conc(std::move(vs)));
+    chain.emplace_back(dot_conc());
+    chain.emplace_back(equals_conc());
 
     std::vector<concat_chain> list;
     concat_chain elem;
-    elem.push_back(std::make_unique<char_str_conc>("ada", range()));
+    elem.emplace_back(char_str_conc("ada", range()));
     list.push_back(std::move(elem));
-    elem.push_back(std::make_unique<char_str_conc>("ada", range()));
+    elem.emplace_back(char_str_conc("ada", range()));
     list.push_back(std::move(elem));
-    elem.push_back(std::make_unique<var_sym_conc>(std::move(vsc)));
+    elem.emplace_back(var_sym_conc(std::move(vsc)));
     list.push_back(std::move(elem));
 
-    chain.push_back(std::make_unique<sublist_conc>(std::move(list)));
+    chain.emplace_back(sublist_conc(std::move(list)));
 
     return chain;
 }
@@ -62,7 +62,7 @@ TEST(concatenation, find_var_sym)
     {
         auto var = concatenation_point::find_var_sym(chain.cbegin(), chain.cend());
 
-        auto pos = dynamic_cast<var_sym_conc*>(chain[1].get());
+        auto pos = std::get_if<var_sym_conc>(&chain[1].value);
 
         EXPECT_EQ(var, pos);
     }
@@ -72,7 +72,7 @@ TEST(concatenation, find_var_sym)
     {
         auto var = concatenation_point::find_var_sym(chain.cbegin(), chain.cend());
 
-        auto pos = dynamic_cast<var_sym_conc*>(chain.back()->access_sub()->list.back().front().get());
+        auto pos = std::get_if<var_sym_conc>(&std::get<sublist_conc>(chain.back().value).list.back().front().value);
 
         EXPECT_EQ(var, pos);
     }
