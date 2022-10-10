@@ -96,38 +96,82 @@ export class TextEditorMock implements vscode.TextEditor {
 }
 
 export class TextEditorEditMock implements vscode.TextEditorEdit {
-    text: string;
+    private static get_pos(loc: vscode.Range | vscode.Position | vscode.Selection) {
+        if (loc instanceof vscode.Selection) return loc.active;
+        if (loc instanceof vscode.Range) return loc.start;
+        if (loc instanceof vscode.Position) return loc;
+        return null;
+    }
+    private thing_to_do: (
+        { loc: vscode.Range | vscode.Position | vscode.Selection, value: string | null, what: 'replace' }
+        |
+        { loc: vscode.Position, value: string | null, what: 'insert' }
+        |
+        { loc: vscode.Range | vscode.Selection, value: string | null, what: 'delete' }
+    )[] = [];
+    private _text: string;
+    public get text(): string {
+        this.thing_to_do.sort((x, y) => -TextEditorEditMock.get_pos(x.loc).compareTo(TextEditorEditMock.get_pos(y.loc)));
+        for (const action of this.thing_to_do) {
+            switch (action.what) {
+                case 'replace':
+                    this._replace(action.loc, action.value);
+                    break;
+                case 'insert':
+                    this._insert(action.loc, action.value);
+                    break;
+                case 'delete':
+                    this._delete(action.loc)
+                    break;
+            }
+        }
+        this.thing_to_do = [];
+        return this._text;
+    }
+
     constructor(text: string) {
-        this.text = text;
+        this._text = text;
     }
 
     private skipLines(text: string, line: number): number {
         let pos = 0;
         for (let i = 0; i < line; ++i) {
-            pos = this.text.indexOf('\n', pos);
-            if (pos < 0)
+            pos = this._text.indexOf('\n', pos);
+            if (pos < 0) {
+                if (i + 1 === line) return text.length;
                 throw new Error("Bad coordinate");
+            }
             pos += 1
         }
         return pos;
     }
 
     replace(location: vscode.Range | vscode.Position | vscode.Selection, value: string): void {
-        this.delete(location as vscode.Range);
-        this.insert((location as vscode.Range).start, value);
+        this.thing_to_do.push({ loc: location, value: value, what: 'replace' });
     }
     insert(location: vscode.Position, value: string): void {
-        let pos = this.skipLines(this.text, location.line);
-        var before = this.text.slice(0, pos + location.character);
-        var after = this.text.slice(pos + location.character);
-        this.text = before + value + after;
+        this.thing_to_do.push({ loc: location, value: value, what: 'insert' });
     }
     delete(location: vscode.Range | vscode.Selection): void {
-        let pos_start = this.skipLines(this.text, location.start.line);
-        let pos_end = this.skipLines(this.text, location.end.line);
-        var before = this.text.slice(0, pos_start + location.start.character);
-        var after = this.text.slice(pos_end + location.end.character);
-        this.text = before + after;
+        this.thing_to_do.push({ loc: location, value: null, what: 'delete' });
+    }
+
+    _replace(location: vscode.Range | vscode.Position | vscode.Selection, value: string): void {
+        this._delete(location as vscode.Range);
+        this._insert((location as vscode.Range).start, value);
+    }
+    _insert(location: vscode.Position, value: string): void {
+        let pos = this.skipLines(this._text, location.line);
+        var before = this._text.slice(0, pos + location.character);
+        var after = this._text.slice(pos + location.character);
+        this._text = before + value + after;
+    }
+    _delete(location: vscode.Range | vscode.Selection): void {
+        let pos_start = this.skipLines(this._text, location.start.line);
+        let pos_end = this.skipLines(this._text, location.end.line);
+        var before = this._text.slice(0, pos_start + location.start.character);
+        var after = this._text.slice(pos_end + location.end.character);
+        this._text = before + after;
     }
     setEndOfLine(endOfLine: vscode.EndOfLine): void {
         throw new Error("Method not implemented.");
@@ -173,12 +217,13 @@ export class TextDocumentMock implements vscode.TextDocument {
     lineAt(position: vscode.Position): vscode.TextLine;
     lineAt(position: any) {
         var line = new TextLineMock();
-        var lines = this.text.split('\r\n');
+        var lines = this.text.split(/\r?\n/);
         if ((position as vscode.Position).line !== undefined)
             line.lineNumber = (position as vscode.Position).line;
         else
             line.lineNumber = position as number;
-        line.text = lines[line.lineNumber];
+        line.text = lines[line.lineNumber] || '';
+        line.range = new vscode.Range(line.lineNumber, 0, line.lineNumber, line.text.length);
         return line;
     }
     offsetAt(position: vscode.Position): number {
