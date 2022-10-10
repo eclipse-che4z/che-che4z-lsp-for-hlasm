@@ -92,9 +92,9 @@ mach_term returns [mach_expr_ptr m_e]
 					}
 				}, $mach_data_attribute.data);
 		}
-		| self_def_term
+		| mach_self_def_term
 		{
-			$m_e = std::make_unique<mach_expr_constant>($self_def_term.value, provider.get_range( $self_def_term.ctx));
+			$m_e = std::make_unique<mach_expr_constant>($mach_self_def_term.value, provider.get_range( $mach_self_def_term.ctx));
 		}
 		| id
 		{
@@ -102,10 +102,10 @@ mach_term returns [mach_expr_ptr m_e]
 			$m_e = std::make_unique<mach_expr_symbol>($id.name, $id.using_qualifier, provider.get_range( $id.ctx));
 		}
 	)
-	| signed_num
+	| mach_signed_num
 	{
-		collector.add_hl_symbol(token_info(provider.get_range( $signed_num.ctx),hl_scopes::number));
-		$m_e =  std::make_unique<mach_expr_constant>($signed_num.value, provider.get_range( $signed_num.ctx));
+		collector.add_hl_symbol(token_info(provider.get_range( $mach_signed_num.ctx),hl_scopes::number));
+		$m_e =  std::make_unique<mach_expr_constant>($mach_signed_num.value, provider.get_range( $mach_signed_num.ctx));
 	}
 	| literal
 	{
@@ -116,12 +116,15 @@ mach_term returns [mach_expr_ptr m_e]
 			$m_e = std::make_unique<mach_expr_default>(rng);
 	};
 
-self_def_term returns [self_def_t value]
+mach_signed_num returns [self_def_t value]
+	: signed_num_ch									{$value = parse_self_def_term_in_mach("D",$signed_num_ch.ctx->getText(),provider.get_range($signed_num_ch.ctx));};
+
+mach_self_def_term returns [self_def_t value]
 	: ORDSYMBOL string							
 	{
 		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL),hl_scopes::self_def_type));
 		auto opt = $ORDSYMBOL->getText();
-		$value = parse_self_def_term(opt, $string.value, provider.get_range($ORDSYMBOL,$string.ctx->getStop()));
+		$value = parse_self_def_term_in_mach(opt, $string.value, provider.get_range($ORDSYMBOL,$string.ctx->getStop()));
 	};
 
 literal_reparse returns [literal_si value]

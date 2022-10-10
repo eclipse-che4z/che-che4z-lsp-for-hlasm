@@ -164,6 +164,17 @@ term returns [ca_expr_ptr ca_expr]
 	finally
 	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
+signed_num returns [self_def_t value]
+	: signed_num_ch									{$value = parse_self_def_term("D",$signed_num_ch.ctx->getText(),provider.get_range($signed_num_ch.ctx));};
+
+self_def_term returns [self_def_t value]
+	: ORDSYMBOL string
+	{
+		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL),hl_scopes::self_def_type));
+		auto opt = $ORDSYMBOL->getText();
+		$value = parse_self_def_term(opt, $string.value, provider.get_range($ORDSYMBOL,$string.ctx->getStop()));
+	};
+
 expr_list returns [ca_expr_ptr ca_expr]
 	: lpar SPACE* expr_space_c SPACE* rpar
 	{

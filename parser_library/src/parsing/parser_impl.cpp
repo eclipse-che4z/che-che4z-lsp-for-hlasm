@@ -15,6 +15,7 @@
 #include "parser_impl.h"
 
 #include <cctype>
+#include <charconv>
 
 #include "context/hlasm_context.h"
 #include "context/literal_pool.h"
@@ -149,6 +150,73 @@ self_def_t parser_impl::parse_self_def_term(const std::string& option, const std
 {
     auto add_diagnostic = diagnoser_ ? diagnostic_adder(*diagnoser_, term_range) : diagnostic_adder(term_range);
     return expressions::ca_constant::self_defining_term(option, value, add_diagnostic);
+}
+
+self_def_t parser_impl::parse_self_def_term_in_mach(const std::string& type, const std::string& value, range term_range)
+{
+    auto add_diagnostic = diagnoser_ ? diagnostic_adder(*diagnoser_, term_range) : diagnostic_adder(term_range);
+    if (type.size() == 1)
+    {
+        switch (type.front())
+        {
+            case 'b':
+            case 'B': {
+                if (value.empty())
+                    return 0;
+                uint32_t res = 0;
+                if (auto conv = std::from_chars(value.data(), value.data() + value.size(), res, 2);
+                    conv.ec != std::errc() || conv.ptr != value.data() + value.size())
+                {
+                    add_diagnostic(diagnostic_op::error_CE007);
+                    return 0;
+                }
+
+                return static_cast<int32_t>(res);
+            }
+            case 'd':
+            case 'D': {
+                if (value.empty())
+                    return 0;
+
+                auto it = std::find_if(value.begin(), value.end(), [](auto c) { return c != '-' && c != '+'; });
+
+                if (it - value.begin() > 1 || value.front() == '-' && value.size() > 11)
+                {
+                    add_diagnostic(diagnostic_op::error_CE007);
+                    return 0;
+                }
+
+                size_t start = value.front() == '+' ? 1 : 0;
+
+                int32_t res = 0;
+                if (auto conv = std::from_chars(value.data() + start, value.data() + value.size(), res, 10);
+                    conv.ec != std::errc() || conv.ptr != value.data() + value.size())
+                {
+                    add_diagnostic(diagnostic_op::error_CE007);
+                    return 0;
+                }
+
+                return res;
+            }
+            case 'x':
+            case 'X': {
+                if (value.empty())
+                    return 0;
+                uint32_t res = 0;
+                if (auto conv = std::from_chars(value.data(), value.data() + value.size(), res, 16);
+                    conv.ec != std::errc() || conv.ptr != value.data() + value.size())
+                {
+                    add_diagnostic(diagnostic_op::error_CE007);
+                    return 0;
+                }
+
+                return static_cast<int32_t>(res);
+            }
+            default:
+                break;
+        }
+    }
+    return expressions::ca_constant::self_defining_term(type, value, add_diagnostic);
 }
 
 context::data_attr_kind parser_impl::get_attribute(std::string attr_data)

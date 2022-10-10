@@ -246,18 +246,17 @@ context::SET_t ca_function::D2A(std::string_view param, diagnostic_adder& add_di
     if (param.empty())
         return 0;
 
-    if (param.size() > 11)
-        RET_ERRPARM;
-
-    int res;
-
     auto it = std::find_if(param.begin(), param.end(), [](int c) { return c != '-' && c != '+'; });
 
     if (it - param.begin() > 1)
         RET_ERRPARM;
 
+    if (param.end() - it > 10)
+        RET_ERRPARM;
+
     size_t start = param.front() == '+' ? 1 : 0;
 
+    int res = 0;
     auto conv = std::from_chars(param.data() + start, param.data() + param.size(), res, 10);
 
     if (conv.ec != std::errc() || conv.ptr != param.data() + param.size())

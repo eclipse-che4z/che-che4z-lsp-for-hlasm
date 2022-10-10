@@ -347,3 +347,36 @@ TEST(mach_instr_processing, mach_expr_out_of_bounds)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE007" }));
 }
+
+TEST(mach_instr_processing, mach_expr_leading_zeros_ok)
+
+{
+    std::string input = R"(
+A   MVI  0,X'0000000000'
+    LARL 0,A+00000000000000
+    LARL 0,A+X'00000000000000'
+    LARL 0,A+X'00000000000000000000000000000000000000000000000000'
+    LARL 0,A+-0000000000
+    LARL 0,A+B'0000000000000000000000000000000000000000000000000000000'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(mach_instr_processing, mach_expr_leading_zeros_nok)
+
+{
+    std::string input = R"(
+A   LARL 0,A+-00000000000
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE007" }));
+}

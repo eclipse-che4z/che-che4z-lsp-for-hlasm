@@ -36,6 +36,10 @@ TEST(arithmetic_expressions, valid_self_defining_term)
 &C3 SETC 'C''A'''
 &A3 SETA &C3+&C3
 &A4 SETA &A4
+&A5 SETA 0000000000
+&A6 SETA -0000000000
+&A7 SETA X'00000000'
+&A8 SETA -X'00000000'
 )";
     analyzer a(input);
     a.analyze();
@@ -47,6 +51,10 @@ TEST(arithmetic_expressions, valid_self_defining_term)
     SETAEQ("A2", 196);
     SETAEQ("A3", 386);
     SETAEQ("A4", 0);
+    SETAEQ("A5", 0);
+    SETAEQ("A6", 0);
+    SETAEQ("A7", 0);
+    SETAEQ("A8", 0);
 }
 
 TEST(arithmetic_expressions, valid_expressions)
@@ -94,12 +102,19 @@ TEST(arithmetic_expressions, invalid_self_defining_term)
 &C1 SETC 'D'
 &A1 SETA C'&C1'
 &A2 SETA CA'A'
+&A3 SETA 00000000000
+&A4 SETA -00000000000
+&A5 SETA X'000000000'
+&A6 SETA X'0000000000'
+&A7 SETA -X'000000000'
+&A8 SETA -X'0000000000'
 )";
     analyzer a(input);
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "S0002", "CE012", "CE012" }));
+    EXPECT_TRUE(matches_message_codes(
+        a.diags(), { "S0002", "S0002", "CE012", "CE012", "CE007", "CE007", "CE007", "CE007", "CE007", "CE007" }));
 }
 
 TEST(arithmetic_expressions, substitution_to_character_expression)

@@ -187,9 +187,6 @@ num returns [self_def_t value]
 signed_num_ch
 	: MINUS? NUM+;
 
-signed_num returns [self_def_t value]
-	: signed_num_ch									{$value = parse_self_def_term("D",$signed_num_ch.ctx->getText(),provider.get_range($signed_num_ch.ctx));};
-
 id returns [id_index name = nullptr, id_index using_qualifier = nullptr]
 	: f=id_no_dot {$name = $f.name;} (dot s=id_no_dot {$name = $s.name; $using_qualifier = $f.name;})?;
 
