@@ -517,7 +517,6 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr, lib_info);
 
     const semantics::expr_assembler_operand* reloc_expr = nullptr;
-    bool undefined_absolute_part = false;
     size_t boundary = 0;
     int offset = 0;
 
@@ -539,14 +538,6 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
 
         if (i == 0)
         {
-            auto deps = expr->expression->get_dependencies(dep_solver);
-            undefined_absolute_part =
-                deps.undefined_attr_refs.size() || deps.undefined_symbols.size() || deps.unresolved_spaces.size();
-            if (!deps.unresolved_address)
-            {
-                add_diagnostic(diagnostic_op::error_A245_ORG_expression(stmt.stmt_range_ref()));
-                return;
-            }
             reloc_expr = expr;
         }
 
@@ -578,9 +569,29 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
         return;
     }
 
-    auto reloc_val = !undefined_absolute_part
-        ? reloc_expr->expression->evaluate(dep_solver, drop_diags).get_reloc()
-        : *reloc_expr->expression->get_dependencies(dep_solver).unresolved_address;
+    context::address reloc_val;
+    auto deps = reloc_expr->expression->get_dependencies(dep_solver);
+    bool undefined_absolute_part =
+        deps.undefined_attr_refs.size() || deps.undefined_symbols.size() || deps.unresolved_spaces.size();
+
+    if (!undefined_absolute_part)
+    {
+        if (auto res = reloc_expr->expression->evaluate(dep_solver, drop_diags);
+            res.value_kind() == context::symbol_value_kind::RELOC)
+            reloc_val = std::move(res).get_reloc();
+        else
+        {
+            add_diagnostic(diagnostic_op::error_A245_ORG_expression(stmt.stmt_range_ref()));
+            return;
+        }
+    }
+    else
+    {
+        if (deps.unresolved_address)
+            reloc_val = std::move(*deps.unresolved_address);
+        else
+            reloc_val = loctr;
+    }
 
     switch (check_address_for_ORG(reloc_val, loctr, boundary, offset))
     {
@@ -606,6 +617,11 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
             lib_info);
     else
         hlasm_ctx.ord_ctx.set_location_counter_value(reloc_val, boundary, offset, lib_info);
+
+    if (boundary > 1 && offset == 0)
+    {
+        hlasm_ctx.ord_ctx.align(context::alignment { 0, boundary }, lib_info);
+    }
 }
 
 void asm_processor::process_OPSYN(rebuilt_statement stmt)

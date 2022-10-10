@@ -98,14 +98,14 @@ struct resolve_dependant_visitor
             auto dep_it = dependency_source_stmts.find(sp);
             const postponed_statement* stmt =
                 dep_it == dependency_source_stmts.end() ? nullptr : dep_it->second.stmt_ref->first.get();
-            resolve_unknown_loctr_dependency(sp, val.get_reloc(), stmt);
+            resolve_unknown_loctr_dependency(sp, val, stmt);
         }
         else
             space::resolve(sp, length);
     }
 
     void resolve_unknown_loctr_dependency(
-        context::space_ptr sp, const context::address& addr, const postponed_statement* stmt) const
+        context::space_ptr sp, const context::symbol_value& sym_val, const postponed_statement* stmt) const
     {
         using namespace processing;
 
@@ -118,6 +118,18 @@ struct resolve_dependant_visitor
             else
                 d->add_diagnostic(add_stack_details(f(range()), {}));
         };
+
+        if (sym_val.value_kind() != context::symbol_value_kind::RELOC)
+        {
+            add_diagnostic(diagnostic_op::error_A245_ORG_expression);
+            return;
+        }
+
+        const auto& addr = sym_val.get_reloc();
+
+        if (auto spaces = addr.normalized_spaces();
+            std::find_if(spaces.begin(), spaces.end(), [&sp](const auto& e) { return e.first == sp; }) != spaces.end())
+            add_diagnostic(diagnostic_op::error_E033);
 
         auto tmp_loctr = sym_ctx.current_section()->current_location_counter();
 

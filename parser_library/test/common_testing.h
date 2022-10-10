@@ -239,4 +239,22 @@ inline std::optional<symbol_value::reloc_value_t> get_symbol_reloc(hlasm_context
     return s->value().get_reloc();
 }
 
+inline std::optional<std::pair<int, std::string>> get_symbol_address(hlasm_context& ctx, std::string name)
+{
+    auto symbol = ctx.ids().find(std::move(name));
+    if (!symbol)
+        return std::nullopt;
+
+    auto s = ctx.ord_ctx.get_symbol(symbol);
+    if (!s || s->kind() != symbol_value_kind::RELOC)
+        return std::nullopt;
+
+    const auto& val = s->value().get_reloc();
+
+    if (val.bases().size() != 1 && val.bases().front().second != 1)
+        return std::nullopt;
+
+    return std::pair<int, std::string>(val.offset(), *val.bases().front().first.owner->name);
+}
+
 #endif

@@ -92,7 +92,12 @@ dependency_collector alignable_address_abs_part_resolver::get_dependencies(depen
 
 symbol_value alignable_address_abs_part_resolver::resolve(dependency_solver& solver) const
 {
-    return dependency_source_->resolve(solver);
+    auto result = dependency_source_->resolve(solver);
+
+    if (result.value_kind() != symbol_value_kind::RELOC)
+        result = symbol_value();
+
+    return result;
 }
 
 aggregate_address_resolver::aggregate_address_resolver(std::vector<address> base_addrs, size_t boundary, int offset)

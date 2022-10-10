@@ -129,7 +129,8 @@ symbol_value symbol_value::operator-() const
 
 const symbol_value::abs_value_t& symbol_value::get_abs() const { return std::get<abs_value_t>(value_); }
 
-const symbol_value::reloc_value_t& symbol_value::get_reloc() const { return std::get<reloc_value_t>(value_); }
+const symbol_value::reloc_value_t& symbol_value::get_reloc() const& { return std::get<reloc_value_t>(value_); }
+symbol_value::reloc_value_t&& symbol_value::get_reloc() && { return std::get<reloc_value_t>(std::move(value_)); }
 
 symbol_value_kind symbol_value::value_kind() const { return static_cast<symbol_value_kind>(value_.index()); }
 
