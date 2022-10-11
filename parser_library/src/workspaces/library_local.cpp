@@ -53,26 +53,30 @@ void adjust_extensions_vector(std::vector<std::string>& extensions, bool extensi
 }
 } // namespace
 
-library_local::library_local(
-    file_manager& file_manager, utils::resource::resource_location lib_loc, library_local_options options)
-    : file_manager_(file_manager)
-    , lib_loc_(std::move(lib_loc))
-    , extensions_(std::move(options.extensions))
-    , optional_(options.optional_library)
-    , extensions_from_deprecated_source(options.extensions_from_deprecated_source)
+library_local::library_local(file_manager& file_manager,
+    utils::resource::resource_location lib_loc,
+    library_local_options options,
+    utils::resource::resource_location proc_grps_loc)
+    : m_file_manager(file_manager)
+    , m_lib_loc(std::move(lib_loc))
+    , m_extensions(std::move(options.extensions))
+    , m_optional(options.optional_library)
+    , m_extensions_from_deprecated_source(options.extensions_from_deprecated_source)
+    , m_proc_grps_loc(std::move(proc_grps_loc))
 {
-    if (extensions_.size())
-        adjust_extensions_vector(extensions_, extensions_from_deprecated_source);
+    if (m_extensions.size())
+        adjust_extensions_vector(m_extensions, m_extensions_from_deprecated_source);
 }
 
 library_local::library_local(library_local&& l) noexcept
-    : file_manager_(l.file_manager_)
-    , lib_loc_(std::move(l.lib_loc_))
-    , files_(std::move(l.files_))
-    , extensions_(std::move(l.extensions_))
-    , files_loaded_(l.files_loaded_)
-    , optional_(l.optional_)
-    , extensions_from_deprecated_source(l.extensions_from_deprecated_source)
+    : m_file_manager(l.m_file_manager)
+    , m_lib_loc(std::move(l.m_lib_loc))
+    , m_files(std::move(l.m_files))
+    , m_extensions(std::move(l.m_extensions))
+    , m_files_loaded(l.m_files_loaded)
+    , m_optional(l.m_optional)
+    , m_extensions_from_deprecated_source(l.m_extensions_from_deprecated_source)
+    , m_proc_grps_loc(std::move(l.m_proc_grps_loc))
 {}
 
 void library_local::collect_diags() const
@@ -82,27 +86,27 @@ void library_local::collect_diags() const
 
 void library_local::refresh()
 {
-    files_.clear();
+    m_files.clear();
     load_files();
 }
 
-const utils::resource::resource_location& library_local::get_location() const { return lib_loc_; }
+const utils::resource::resource_location& library_local::get_location() const { return m_lib_loc; }
 
 std::shared_ptr<processor> library_local::find_file(const std::string& file_name)
 {
-    if (!files_loaded_)
+    if (!m_files_loaded)
         load_files();
 
-    if (auto found = files_.find(file_name); found != files_.end())
-        return file_manager_.add_processor_file(found->second);
+    if (auto found = m_files.find(file_name); found != m_files.end())
+        return m_file_manager.add_processor_file(found->second);
     else
         return nullptr;
 }
 
 void library_local::load_files()
 {
-    auto [files_list, rc] = file_manager_.list_directory_files(lib_loc_);
-    files_.clear();
+    auto [files_list, rc] = m_file_manager.list_directory_files(m_lib_loc);
+    m_files.clear();
     diags().clear();
 
     switch (rc)
@@ -110,27 +114,27 @@ void library_local::load_files()
         case hlasm_plugin::utils::path::list_directory_rc::done:
             break;
         case hlasm_plugin::utils::path::list_directory_rc::not_exists:
-            if (!optional_)
-                add_diagnostic(diagnostic_s::error_L0002(lib_loc_.to_presentable()));
+            if (!m_optional)
+                add_diagnostic(diagnostic_s::error_L0002(m_proc_grps_loc, m_lib_loc));
             break;
         case hlasm_plugin::utils::path::list_directory_rc::not_a_directory:
-            add_diagnostic(diagnostic_s::error_L0002(lib_loc_.to_presentable()));
+            add_diagnostic(diagnostic_s::error_L0002(m_proc_grps_loc, m_lib_loc));
             break;
         case hlasm_plugin::utils::path::list_directory_rc::other_failure:
-            add_diagnostic(diagnostic_s::error_L0001(lib_loc_.to_presentable()));
+            add_diagnostic(diagnostic_s::error_L0001(m_proc_grps_loc, m_lib_loc));
             break;
     }
 
     bool extension_removed = false;
     for (auto& [file, rl] : files_list)
     {
-        if (extensions_.empty())
+        if (m_extensions.empty())
         {
-            files_[context::to_upper_copy(file)] = std::move(rl);
+            m_files[context::to_upper_copy(file)] = std::move(rl);
             continue;
         }
 
-        for (const auto& extension : extensions_)
+        for (const auto& extension : m_extensions)
         {
             std::string_view filename(file);
 
@@ -141,21 +145,21 @@ void library_local::load_files()
                 continue;
             filename.remove_suffix(extension.size());
 
-            const auto [_, inserted] = files_.try_emplace(context::to_upper_copy(std::string(filename)), rl);
+            const auto [_, inserted] = m_files.try_emplace(context::to_upper_copy(std::string(filename)), rl);
             // TODO: the stored value is a full path, yet we try to interpret it as a relative one later on
             if (!inserted)
                 add_diagnostic(diagnostic_s::warning_L0004(
-                    lib_loc_.to_presentable(), context::to_upper_copy(std::string(filename))));
+                    m_proc_grps_loc, m_lib_loc, context::to_upper_copy(std::string(filename))));
 
             if (extension.size())
                 extension_removed = true;
             break;
         }
     }
-    if (extension_removed && extensions_from_deprecated_source)
-        add_diagnostic(diagnostic_s::warning_L0003(lib_loc_.to_presentable()));
+    if (extension_removed && m_extensions_from_deprecated_source)
+        add_diagnostic(diagnostic_s::warning_L0003(m_proc_grps_loc, m_lib_loc));
 
-    files_loaded_ = true;
+    m_files_loaded = true;
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

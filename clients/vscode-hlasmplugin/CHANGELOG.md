@@ -24,6 +24,7 @@
 - Incorrect implicit length computed for nominal values containing multibyte UTF-8 characters
 - Self-defining terms are incorrectly parsed in machine expressions
 - Incorrect ORG instruction behavior when operands contain EQUs
+- Library diagnostics point to a respective configuration file
 
 ## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
 

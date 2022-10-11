@@ -272,7 +272,7 @@ void workspace_configuration::process_processor_group(const config::processor_gr
         std::optional<std::string> lib_path = substitute_home_directory(lib.path);
         if (!lib_path.has_value())
         {
-            diags.push_back(diagnostic_s::warning_L0006(lib.path));
+            diags.push_back(diagnostic_s::warning_L0006(m_proc_grps_loc, lib.path));
             continue;
         }
 
@@ -281,8 +281,8 @@ void workspace_configuration::process_processor_group(const config::processor_gr
         rl.join(""); // Ensure that this is a directory
 
         if (auto first_wild_card = rl.get_uri().find_first_of("*?"); first_wild_card == std::string::npos)
-            prc_grp.add_library(
-                std::make_unique<library_local>(m_file_manager, std::move(rl), std::move(lib_local_opts)));
+            prc_grp.add_library(std::make_unique<library_local>(
+                m_file_manager, std::move(rl), std::move(lib_local_opts), m_proc_grps_loc));
         else
             find_and_add_libs(utils::resource::resource_location(
                                   rl.get_uri().substr(0, rl.get_uri().find_last_of("/", first_wild_card) + 1)),
@@ -304,7 +304,7 @@ bool workspace_configuration::process_program(const config::program_mapping& pgm
     std::optional<std::string> pgm_name = substitute_home_directory(pgm.program);
     if (!pgm_name.has_value())
     {
-        diags.push_back(diagnostic_s::warning_L0006(pgm.program));
+        diags.push_back(diagnostic_s::warning_L0006(m_pgm_conf_loc, pgm.program));
         return false;
     }
 
@@ -557,7 +557,7 @@ void workspace_configuration::find_and_add_libs(const utils::resource::resource_
     if (!m_file_manager.dir_exists(root))
     {
         if (!opts.optional_library)
-            diags.push_back(diagnostic_s::error_L0001(root.to_presentable()));
+            diags.push_back(diagnostic_s::error_L0001(m_proc_grps_loc, root));
         return;
     }
 
@@ -569,7 +569,7 @@ void workspace_configuration::find_and_add_libs(const utils::resource::resource_
     if (std::error_code ec; dirs_to_search.emplace_back(m_file_manager.canonical(root, ec), root), ec)
     {
         if (!opts.optional_library)
-            diags.push_back(diagnostic_s::error_L0001(root.to_presentable()));
+            diags.push_back(diagnostic_s::error_L0001(m_proc_grps_loc, root));
         return;
     }
 
@@ -578,7 +578,7 @@ void workspace_configuration::find_and_add_libs(const utils::resource::resource_
     {
         if (processed_canonical_paths.size() > limit)
         {
-            diags.push_back(diagnostic_s::warning_L0005(path_pattern.to_presentable(), limit));
+            diags.push_back(diagnostic_s::warning_L0005(m_proc_grps_loc, path_pattern.to_presentable(), limit));
             break;
         }
 
@@ -589,12 +589,12 @@ void workspace_configuration::find_and_add_libs(const utils::resource::resource_
             continue;
 
         if (std::regex_match(dir.get_uri(), path_validator))
-            prc_grp.add_library(std::make_unique<library_local>(m_file_manager, dir, opts));
+            prc_grp.add_library(std::make_unique<library_local>(m_file_manager, dir, opts, m_proc_grps_loc));
 
         auto [subdir_list, return_code] = m_file_manager.list_directory_subdirs_and_symlinks(dir);
         if (return_code != utils::path::list_directory_rc::done)
         {
-            diags.push_back(diagnostic_s::error_L0001(dir.to_presentable()));
+            diags.push_back(diagnostic_s::error_L0001(m_proc_grps_loc, dir));
             break;
         }
 

@@ -42,39 +42,43 @@ class file_manager_extension_mock : public file_manager_impl
 TEST(extension_handling_test, extension_removal)
 {
     file_manager_extension_mock file_mngr;
+    resource_location empty_loc;
+
     // file must end with hlasm
-    library_local lib(file_mngr, lib_loc, { { ".hlasm" } });
+    library_local lib(file_mngr, lib_loc, { { ".hlasm" } }, empty_loc);
     EXPECT_NE(lib.find_file("MAC"), nullptr);
 
     // file must end with hlasm
-    library_local lib2(file_mngr, lib_loc, { { ".hlasm" } });
+    library_local lib2(file_mngr, lib_loc, { { ".hlasm" } }, empty_loc);
     EXPECT_NE(lib2.find_file("MAC"), nullptr);
 
     // file must end with asm
-    library_local lib3(file_mngr, lib_loc, { { ".asm" } });
+    library_local lib3(file_mngr, lib_loc, { { ".asm" } }, empty_loc);
     EXPECT_EQ(lib3.find_file("MAC"), nullptr);
 
     // test multiple extensions
-    library_local lib4(file_mngr, lib2_loc, { { ".hlasm", ".asm" } });
+    library_local lib4(file_mngr, lib2_loc, { { ".hlasm", ".asm" } }, empty_loc);
     EXPECT_NE(lib4.find_file("MAC"), nullptr);
 
     // test no extensions
-    library_local lib5(file_mngr, lib2_loc, { {} });
+    library_local lib5(file_mngr, lib2_loc, { {} }, empty_loc);
     EXPECT_EQ(lib5.find_file("MAC"), nullptr);
 
     // test no extensions
-    library_local lib6(file_mngr, lib2_loc, { { "" } });
+    library_local lib6(file_mngr, lib2_loc, { { "" } }, empty_loc);
     EXPECT_EQ(lib6.find_file("MAC"), nullptr);
 
     // tolerate missing dot
-    library_local lib7(file_mngr, lib_loc, { { "hlasm", "asm" } });
+    library_local lib7(file_mngr, lib_loc, { { "hlasm", "asm" } }, empty_loc);
     EXPECT_NE(lib7.find_file("MAC"), nullptr);
 }
 
 TEST(extension_handling_test, legacy_extension_selection)
 {
     file_manager_extension_mock file_mngr;
-    library_local lib(file_mngr, lib_loc, { { ".hlasm" }, true });
+    resource_location empty_loc;
+    library_local lib(file_mngr, lib_loc, { { ".hlasm" }, true }, empty_loc);
+
     EXPECT_NE(lib.find_file("MAC"), nullptr);
     lib.collect_diags();
     const auto& diags = lib.diags();
@@ -94,7 +98,9 @@ class file_manager_extension_mock2 : public file_manager_impl
 TEST(extension_handling_test, multiple_macro_definitions)
 {
     file_manager_extension_mock2 file_mngr;
-    library_local lib(file_mngr, lib_loc, { { ".hlasm", "" } });
+    resource_location empty_loc;
+    library_local lib(file_mngr, lib_loc, { { ".hlasm", "" } }, empty_loc);
+
     EXPECT_NE(lib.find_file("MAC"), nullptr);
     lib.collect_diags();
     const auto& diags = lib.diags();
@@ -104,7 +110,9 @@ TEST(extension_handling_test, multiple_macro_definitions)
 TEST(extension_handling_test, no_multiple_macro_definitions)
 {
     file_manager_extension_mock2 file_mngr;
-    library_local lib(file_mngr, lib_loc, { { ".hlasm" } });
+    resource_location empty_loc;
+    library_local lib(file_mngr, lib_loc, { { ".hlasm" } }, empty_loc);
+
     EXPECT_NE(lib.find_file("MAC"), nullptr);
     lib.collect_diags();
     const auto& diags = lib.diags();
@@ -123,7 +131,9 @@ class file_manager_extension_mock_no_ext : public file_manager_impl
 TEST(extension_handling_test, legacy_extension_selection_file_without_ext)
 {
     file_manager_extension_mock_no_ext file_mngr;
-    library_local lib(file_mngr, lib_loc, { { ".hlasm" }, true });
+    resource_location empty_loc;
+    library_local lib(file_mngr, lib_loc, { { ".hlasm" }, true }, empty_loc);
+
     EXPECT_NE(lib.find_file("MAC"), nullptr);
     lib.collect_diags();
     const auto& diags = lib.diags();

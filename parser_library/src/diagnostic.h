@@ -856,17 +856,23 @@ public:
     - L0003 - Deprecated file extension specification was used
     - L0004 - Macro with multiple definitions
     */
-    static diagnostic_s error_L0001(std::string_view path);
+    static diagnostic_s error_L0001(
+        const utils::resource::resource_location& config_loc, const utils::resource::resource_location& lib_loc);
 
-    static diagnostic_s error_L0002(std::string_view path);
+    static diagnostic_s error_L0002(
+        const utils::resource::resource_location& config_loc, const utils::resource::resource_location& lib_loc);
 
-    static diagnostic_s warning_L0003(std::string_view path);
+    static diagnostic_s warning_L0003(
+        const utils::resource::resource_location& config_loc, const utils::resource::resource_location& lib_loc);
 
-    static diagnostic_s warning_L0004(std::string_view path, std::string_view macro_name);
+    static diagnostic_s warning_L0004(const utils::resource::resource_location& config_loc,
+        const utils::resource::resource_location& lib_loc,
+        std::string_view macro_name);
 
-    static diagnostic_s warning_L0005(std::string_view pattern, size_t limit);
+    static diagnostic_s warning_L0005(
+        const utils::resource::resource_location& config_loc, std::string_view pattern, size_t limit);
 
-    static diagnostic_s warning_L0006(std::string_view path);
+    static diagnostic_s warning_L0006(const utils::resource::resource_location& config_loc, std::string_view path);
 
     static diagnostic_s error_W0001(const utils::resource::resource_location& file_name);
 

@@ -15,20 +15,10 @@
 #include "workspace.h"
 
 #include <filesystem>
-#include <iostream>
 #include <memory>
-#include <string>
 
 #include "file_manager.h"
-#include "lib_config.h"
-#include "library_local.h"
-#include "processor.h"
-#include "utils/content_loader.h"
-#include "utils/encoding.h"
 #include "utils/path.h"
-#include "utils/path_conversions.h"
-#include "utils/platform.h"
-#include "wildcard.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
