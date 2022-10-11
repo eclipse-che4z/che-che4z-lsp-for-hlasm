@@ -16,8 +16,9 @@
 
 #include "diagnostic.h"
 #include "diagnostic_consumer.h"
+#include "utils/unicode_text.h"
 
-using namespace hlasm_plugin::parser_library::context;
+namespace hlasm_plugin::parser_library::context {
 
 bool set_symbol_base::can_read(
     const std::vector<context::A_t>& subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const
@@ -51,3 +52,24 @@ set_symbol_base::set_symbol_base(id_index name, bool is_scalar, bool is_global, 
     , is_scalar(is_scalar)
     , type(type)
 {}
+
+template<>
+A_t set_symbol<A_t>::count(std::vector<size_t> offset) const
+{
+    auto tmp = get_data(std::move(offset));
+    return tmp ? (A_t)utils::length_utf32_no_validation(std::to_string(*tmp)) : (A_t)1;
+}
+
+template<>
+A_t set_symbol<B_t>::count(std::vector<size_t>) const
+{
+    return (A_t)1;
+}
+
+template<>
+A_t set_symbol<C_t>::count(std::vector<size_t> offset) const
+{
+    auto tmp = get_data(std::move(offset));
+    return tmp ? (A_t)utils::length_utf32_no_validation(*tmp) : (A_t)0;
+}
+} // namespace hlasm_plugin::parser_library::context

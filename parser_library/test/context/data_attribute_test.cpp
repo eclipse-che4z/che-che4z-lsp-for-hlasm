@@ -227,6 +227,33 @@ TEST(data_attributes, K_var_syms_good)
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
+TEST(data_attributes, K_var_syms_unicode)
+{
+    std::string input = R"(
+         GBLA  K1,K2
+         MACRO
+         MAC   &C
+         GBLA  K2
+&K2      SETA  K'&C
+         MEND
+
+&C       SETC  '%'
+&K1      SETA  K'&C
+         MAC   %
+)";
+    input.replace(input.find('%'), 1, (const char*)u8"\u00A6\u00A7");
+    input.replace(input.find('%'), 1, (const char*)u8"\u00A6\u00A7");
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "K1"), 2);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "K2"), 2);
+}
+
 TEST(data_attributes, K_var_syms_bad)
 {
     std::string input = R"(

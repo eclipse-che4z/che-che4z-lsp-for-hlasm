@@ -353,3 +353,44 @@ TEST(character_expression, invalid_function)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE012" }));
 }
+
+TEST(character_expression, multi_byte_substr)
+{
+    std::string input = (const char*)u8"&C SETC '\u00A6'(1,1)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C"), std::string((const char*)u8"\u00A6"));
+}
+
+TEST(character_expression, bounds)
+{
+    const std::string input_template = R"(
+&C  SETC  'A'      
+&C  SETC  '&C'%
+)";
+    for (const auto& [replacement, err] : std::initializer_list<std::pair<std::string_view, std::string_view>> {
+             { "(0,*)", "CE008" },
+             { "(1,*)", "" },
+             { "(2,*)", "" },
+             { "(2,1)", "CE009" },
+             { "(3,*)", "CE009" },
+         })
+    {
+        std::string input = input_template;
+        input.replace(input.find('%'), 1, replacement);
+
+        analyzer a(input);
+        a.analyze();
+        a.collect_diags();
+
+        if (err.empty())
+            EXPECT_TRUE(a.diags().empty());
+        else
+            EXPECT_TRUE(matches_message_codes(a.diags(), { std::string(err) }));
+    }
+}

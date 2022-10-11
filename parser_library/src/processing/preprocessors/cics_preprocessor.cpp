@@ -1166,7 +1166,7 @@ public:
 
             asm_xopts_allowed = false;
 
-            auto [line, line_len_chars, _] = create_line_preview(text);
+            auto [line, line_len_chars, _, __] = create_line_preview(text);
 
             if (ignore_line(line))
             {

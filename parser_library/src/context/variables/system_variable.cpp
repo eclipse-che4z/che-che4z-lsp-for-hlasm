@@ -17,6 +17,7 @@
 #include "diagnostic.h"
 #include "diagnostic_consumer.h"
 #include "range.h"
+#include "utils/unicode_text.h"
 
 using namespace hlasm_plugin::parser_library::context;
 
@@ -59,14 +60,14 @@ A_t system_variable::number(std::vector<size_t> offset) const
 A_t system_variable::count(std::vector<size_t> offset) const
 {
     if (offset.empty())
-        return (A_t)data_->get_ith(0)->get_value().size();
+        return (A_t)utils::length_utf32_no_validation(data_->get_ith(0)->get_value());
 
     const macro_param_data_component* tmp = real_data();
     for (size_t i = 0; i < offset.size(); ++i)
     {
         tmp = tmp->get_ith(offset[i] - (i == 0 ? 0 : 1));
     }
-    return (A_t)tmp->get_value().size();
+    return (A_t)utils::length_utf32_no_validation(tmp->get_value());
 }
 
 size_t system_variable::size(std::vector<size_t> offset) const

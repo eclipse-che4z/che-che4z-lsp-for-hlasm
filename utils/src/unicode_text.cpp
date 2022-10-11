@@ -211,7 +211,7 @@ utf8_substr_result utf8_substr(std::string_view s, size_t offset, size_t length)
     if (offset) // not long enough
         return {};
 
-    utf8_substr_result result = { s, 0, 0 };
+    utf8_substr_result result = { s, 0, 0, true };
 
     auto [char_count, utf16_len] = substr_step<validate>(s, length);
     result.char_count = char_count;

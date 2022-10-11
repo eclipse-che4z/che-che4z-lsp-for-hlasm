@@ -18,6 +18,7 @@
 #include "diagnostic_consumer.h"
 #include "range.h"
 #include "system_variable.h"
+#include "utils/unicode_text.h"
 
 using namespace hlasm_plugin::parser_library::context;
 
@@ -85,7 +86,7 @@ A_t macro_param_base::count(std::vector<size_t> offset) const
     {
         tmp = tmp->get_ith(idx - 1);
     }
-    return (A_t)tmp->get_value().size();
+    return (A_t)utils::length_utf32_no_validation(tmp->get_value());
 }
 
 bool macro_param_base::can_read(

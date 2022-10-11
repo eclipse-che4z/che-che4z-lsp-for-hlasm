@@ -162,27 +162,6 @@ private:
     }
 };
 
-
-template<>
-inline A_t set_symbol<A_t>::count(std::vector<size_t> offset) const
-{
-    auto tmp = get_data(std::move(offset));
-    return tmp ? (A_t)std::to_string(*tmp).size() : (A_t)1;
-}
-
-template<>
-inline A_t set_symbol<B_t>::count(std::vector<size_t>) const
-{
-    return (A_t)1;
-}
-
-template<>
-inline A_t set_symbol<C_t>::count(std::vector<size_t> offset) const
-{
-    auto tmp = get_data(std::move(offset));
-    return tmp ? (A_t)tmp->size() : (A_t)0;
-}
-
 } // namespace hlasm_plugin::parser_library::context
 
 #endif

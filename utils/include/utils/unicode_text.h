@@ -43,6 +43,8 @@ extern constinit const std::array<char_size, 256> utf8_prefix_sizes;
 
 constexpr const char substitute_character = 0x1a;
 
+constexpr const size_t max_utf8_sequence_length = 4;
+
 extern constinit const std::array<unsigned char, 128> utf8_valid_multibyte_prefix_table;
 
 inline bool utf8_valid_multibyte_prefix(unsigned char first, unsigned char second)
@@ -68,14 +70,10 @@ struct utf8_substr_result
     std::string_view str;
     size_t char_count;
     size_t utf16_len;
+    bool offset_valid;
+
+    bool operator==(const utf8_substr_result&) const noexcept = default;
 };
-
-inline bool operator==(const utf8_substr_result& l, const utf8_substr_result& r)
-{
-    return l.str == r.str && l.char_count == r.char_count && l.utf16_len == r.utf16_len;
-}
-
-inline bool operator!=(const utf8_substr_result& l, const utf8_substr_result& r) { return !(l == r); }
 
 // utf-8 substr in unicode characters with optional validation
 template<bool validate = false>

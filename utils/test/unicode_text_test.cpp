@@ -25,15 +25,15 @@ TEST(utf8, substr)
 {
     for (const auto& [str, off, len, expected] :
         std::initializer_list<std::tuple<std::string_view, size_t, size_t, utf8_substr_result>> {
-            { "abcdef", 0, 0, { "", 0, 0 } },
-            { "abcdef", 0, 6, { "abcdef", 6, 6 } },
-            { "abcdef", 2, 3, { "cde", 3, 3 } },
-            { "abcdef", 2, 3, { "cde", 3, 3 } },
-            { (const char*)u8"abc\U0001f34cdef", 3, 1, { (const char*)u8"\U0001f34c", 1, 2 } },
-            { (const char*)u8"abc\U0001f34cdef", 2, 3, { (const char*)u8"c\U0001f34cd", 3, 4 } },
-            { "abcdef", 10000, 0, { "", 0, 0 } },
-            { "abcdef", 0, 10000, { "abcdef", 6, 6 } },
-            { (const char*)u8"abc\U0001f34cdef", 0, (size_t)-1, { (const char*)u8"abc\U0001f34cdef", 7, 8 } },
+            { "abcdef", 0, 0, { "", 0, 0, true } },
+            { "abcdef", 0, 6, { "abcdef", 6, 6, true } },
+            { "abcdef", 2, 3, { "cde", 3, 3, true } },
+            { "abcdef", 2, 3, { "cde", 3, 3, true } },
+            { (const char*)u8"abc\U0001f34cdef", 3, 1, { (const char*)u8"\U0001f34c", 1, 2, true } },
+            { (const char*)u8"abc\U0001f34cdef", 2, 3, { (const char*)u8"c\U0001f34cd", 3, 4, true } },
+            { "abcdef", 10000, 0, { "", 0, 0, false } },
+            { "abcdef", 0, 10000, { "abcdef", 6, 6, true } },
+            { (const char*)u8"abc\U0001f34cdef", 0, (size_t)-1, { (const char*)u8"abc\U0001f34cdef", 7, 8, true } },
         })
     {
         EXPECT_EQ(utf8_substr<false>(str, off, len), expected) << str << ":" << off << ":" << len;
