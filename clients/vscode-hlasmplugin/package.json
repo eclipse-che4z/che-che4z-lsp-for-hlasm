@@ -281,12 +281,6 @@
       },
       {
         "command": "extension.hlasm-plugin.commentEditorCommands",
-        "key": "ctrl+/",
-        "mac": "cmd+/",
-        "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
-      },
-      {
-        "command": "extension.hlasm-plugin.commentEditorCommands",
         "key": "ctrl+k ctrl+c",
         "mac": "cmd+k cmd+c",
         "args": "CommentOption.add",
@@ -297,6 +291,12 @@
         "key": "ctrl+k ctrl+u",
         "mac": "cmd+k cmd+u",
         "args": "CommentOption.remove",
+        "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "extension.hlasm-plugin.commentEditorCommands",
+        "key": "ctrl+/",
+        "mac": "cmd+/",
         "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
       },
       {

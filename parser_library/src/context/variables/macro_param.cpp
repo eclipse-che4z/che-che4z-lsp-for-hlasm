@@ -42,7 +42,7 @@ macro_param_base::macro_param_base(macro_param_type param_type, id_index name, b
     , param_type(param_type)
 {}
 
-C_t macro_param_base::get_value(const std::vector<size_t>& offset) const
+C_t macro_param_base::get_value(std::span<const size_t> offset) const
 {
     const macro_param_data_component* tmp = real_data();
 
@@ -57,7 +57,7 @@ C_t macro_param_base::get_value(size_t idx) const { return real_data()->get_ith(
 
 C_t macro_param_base::get_value() const { return real_data()->get_value(); }
 
-const macro_param_data_component* macro_param_base::get_data(const std::vector<size_t>& offset) const
+const macro_param_data_component* macro_param_base::get_data(std::span<const size_t> offset) const
 {
     auto data = real_data();
     for (auto idx : offset)
@@ -67,7 +67,7 @@ const macro_param_data_component* macro_param_base::get_data(const std::vector<s
     return data;
 }
 
-A_t macro_param_base::number(std::vector<size_t> offset) const
+A_t macro_param_base::number(std::span<const size_t> offset) const
 {
     const macro_param_data_component* tmp = real_data();
 
@@ -78,7 +78,7 @@ A_t macro_param_base::number(std::vector<size_t> offset) const
     return (A_t)tmp->number;
 }
 
-A_t macro_param_base::count(std::vector<size_t> offset) const
+A_t macro_param_base::count(std::span<const size_t> offset) const
 {
     const macro_param_data_component* tmp = real_data();
 
@@ -90,7 +90,7 @@ A_t macro_param_base::count(std::vector<size_t> offset) const
 }
 
 bool macro_param_base::can_read(
-    const std::vector<context::A_t>& subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const
+    std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const
 {
     if (subscript.empty())
     {
@@ -119,7 +119,7 @@ bool macro_param_base::can_read(
     return true;
 }
 
-size_t macro_param_base::size(std::vector<size_t> offset) const
+size_t macro_param_base::size(std::span<const size_t> offset) const
 {
     const macro_param_data_component* tmp = real_data();
 

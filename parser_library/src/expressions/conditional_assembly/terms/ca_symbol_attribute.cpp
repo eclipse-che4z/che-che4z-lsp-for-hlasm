@@ -222,7 +222,9 @@ context::C_t get_current_macro_name_field(const context::hlasm_context& ctx)
 
     if (!scope.is_in_macro())
         return {};
-    return scope.this_macro->named_params.at(ctx.ids().well_known.SYSLIST)->get_data({ 0 })->get_value();
+    return scope.this_macro->named_params.at(ctx.ids().well_known.SYSLIST)
+        ->get_data(std::array<size_t, 1> { 0 })
+        ->get_value();
 }
 
 context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, const evaluation_context& eval_ctx) const
@@ -355,7 +357,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
         case context::data_attr_kind::O:
         case context::data_attr_kind::S:
         case context::data_attr_kind::I:
-            return evaluate_substituted(var_name, std::move(expr_subscript), vs->symbol_range, eval_ctx);
+            return evaluate_substituted(var_name, expr_subscript, vs->symbol_range, eval_ctx);
 
         case context::data_attr_kind::T: {
             if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, *var_name))
@@ -382,7 +384,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
                 return std::string { (char)ebcdic_encoding::e2a[tmp_symbol->attributes().type()] };
 
             return evaluate_substituted(
-                var_name, std::move(expr_subscript), vs->symbol_range, eval_ctx); // is type U, must substitute var sym
+                var_name, expr_subscript, vs->symbol_range, eval_ctx); // is type U, must substitute var sym
         }
         case context::data_attr_kind::K:
             if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, *var_name))
@@ -399,7 +401,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
 }
 
 context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_name,
-    std::vector<context::A_t> expr_subscript,
+    std::span<const context::A_t> expr_subscript,
     range var_range,
     const evaluation_context& eval_ctx) const
 {

@@ -24,7 +24,7 @@
 namespace hlasm_plugin::parser_library::debugging {
 // Implementation of variable interface that adapts set symbol
 // representation from context to DAP variable.
-class set_symbol_variable : public variable
+class set_symbol_variable final : public variable
 {
 public:
     set_symbol_variable(const context::set_symbol_base& set_sym, int index);

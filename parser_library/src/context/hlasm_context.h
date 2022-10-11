@@ -20,6 +20,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <span>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -345,14 +346,14 @@ public:
 };
 
 bool test_symbol_for_read(const var_sym_ptr& var,
-    const std::vector<A_t>& subscript,
+    std::span<const A_t> subscript,
     range symbol_range,
     diagnostic_op_consumer& diags,
     std::string_view var_name);
 
 SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
     id_index name,
-    const std::vector<A_t>& subscript,
+    std::span<const A_t> subscript,
     range symbol_range,
     diagnostic_op_consumer& diags);
 

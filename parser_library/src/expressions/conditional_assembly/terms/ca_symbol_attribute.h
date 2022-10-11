@@ -62,7 +62,7 @@ private:
     context::SET_t evaluate_ordsym(context::id_index symbol, const evaluation_context& eval_ctx) const;
     context::SET_t evaluate_varsym(const semantics::vs_ptr& symbol, const evaluation_context& eval_ctx) const;
     context::SET_t evaluate_substituted(context::id_index var_name,
-        std::vector<context::A_t> expr_subscript,
+        std::span<const context::A_t> expr_subscript,
         range var_range,
         const evaluation_context& eval_ctx) const;
     context::SET_t evaluate_literal(const semantics::literal_si& lit, const evaluation_context& eval_ctx) const;

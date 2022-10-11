@@ -36,25 +36,24 @@ public:
     const system_variable* access_system_variable() const;
 
     // gets value of data where parameter is list of nested data offsets
-    virtual C_t get_value(const std::vector<size_t>& offset) const;
+    virtual C_t get_value(std::span<const size_t> offset) const;
     // gets value of data where parameter is offset to data field
     virtual C_t get_value(size_t idx) const;
     // gets value of whole macro parameter
     virtual C_t get_value() const;
 
     // gets param struct
-    virtual const macro_param_data_component* get_data(const std::vector<size_t>& offset) const;
+    virtual const macro_param_data_component* get_data(std::span<const size_t> offset) const;
 
     // N' attribute of the symbol
-    A_t number(std::vector<size_t> offset) const override;
+    A_t number(std::span<const size_t> offset) const override;
     // K' attribute of the symbol
-    A_t count(std::vector<size_t> offset) const override;
+    A_t count(std::span<const size_t> offset) const override;
 
-    bool can_read(const std::vector<context::A_t>& subscript,
-        range symbol_range,
-        diagnostic_consumer<diagnostic_op>& diags) const override;
+    bool can_read(
+        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const override;
 
-    virtual size_t size(std::vector<size_t> offset) const;
+    virtual size_t size(std::span<const size_t> offset) const;
 
 protected:
     macro_param_base(macro_param_type param_type, id_index name, bool is_global);

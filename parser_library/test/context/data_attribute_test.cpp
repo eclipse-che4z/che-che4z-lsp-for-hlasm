@@ -46,30 +46,30 @@ TEST(data_attributes, N)
     data = std::make_unique<macro_param_data_composite>(move(v));
     auto kp = keyword_param(id, std::make_unique<macro_param_data_dummy>(), std::move(data));
     EXPECT_EQ(kp.number({}), 3);
-    EXPECT_EQ(kp.number({ 1 }), 1);
-    EXPECT_EQ(kp.number({ 4 }), 0);
+    EXPECT_EQ(kp.number(std::array<size_t, 1> { 1 }), 1);
+    EXPECT_EQ(kp.number(std::array<size_t, 1> { 4 }), 0);
 
     auto var = ctx.create_local_variable<A_t>(id, true)->access_set_symbol<A_t>();
 
     EXPECT_EQ(var->number({}), 0);
-    EXPECT_EQ(var->number({ 1 }), 0);
+    EXPECT_EQ(var->number(std::array<size_t, 1> { 1 }), 0);
 
     var->set_value(1);
     EXPECT_EQ(var->number({}), 0);
-    EXPECT_EQ(var->number({ 1 }), 0);
+    EXPECT_EQ(var->number(std::array<size_t, 1> { 1 }), 0);
 
     auto var_ns = ctx.create_local_variable<A_t>(id2, false)->access_set_symbol<A_t>();
 
     EXPECT_EQ(var_ns->number({}), 0);
-    EXPECT_EQ(var_ns->number({ 1 }), 0);
+    EXPECT_EQ(var_ns->number(std::array<size_t, 1> { 1 }), 0);
 
     var_ns->set_value(1, 0);
     EXPECT_EQ(var_ns->number({}), 1);
-    EXPECT_EQ(var_ns->number({ 1 }), 1);
+    EXPECT_EQ(var_ns->number(std::array<size_t, 1> { 1 }), 1);
 
     var_ns->set_value(1, 14);
     EXPECT_EQ(var_ns->number({}), 15);
-    EXPECT_EQ(var_ns->number({ 1 }), 15);
+    EXPECT_EQ(var_ns->number(std::array<size_t, 1> { 1 }), 15);
 }
 
 TEST(data_attributes, K)
@@ -99,19 +99,19 @@ TEST(data_attributes, K)
     auto kp = keyword_param(
         idA, std::make_unique<macro_param_data_dummy>(), std::make_unique<macro_param_data_composite>(move(v)));
     EXPECT_EQ(kp.count({}), 20);
-    EXPECT_EQ(kp.count({ 2 }), 6);
-    EXPECT_EQ(kp.count({ 4 }), 0);
+    EXPECT_EQ(kp.count(std::array<size_t, 1> { 2 }), 6);
+    EXPECT_EQ(kp.count(std::array<size_t, 1> { 4 }), 0);
 
     auto varA = ctx.create_local_variable<A_t>(idA, true)->access_set_symbol<A_t>();
     auto varB = ctx.create_local_variable<B_t>(idB, true)->access_set_symbol<B_t>();
     auto varC = ctx.create_local_variable<C_t>(idC, true)->access_set_symbol<C_t>();
 
     EXPECT_EQ(varA->count({}), 1);
-    EXPECT_EQ(varA->count({ 1 }), 1);
+    EXPECT_EQ(varA->count(std::array<size_t, 1> { 1 }), 1);
     EXPECT_EQ(varB->count({}), 1);
-    EXPECT_EQ(varB->count({ 1 }), 1);
+    EXPECT_EQ(varB->count(std::array<size_t, 1> { 1 }), 1);
     EXPECT_EQ(varC->count({}), 0);
-    EXPECT_EQ(varC->count({ 1 }), 0);
+    EXPECT_EQ(varC->count(std::array<size_t, 1> { 1 }), 0);
 
     varA->set_value(1);
     EXPECT_EQ(varA->count({}), 1);

@@ -16,7 +16,7 @@
 #define CONTEXT_VARIABLE_H
 
 #include <memory>
-#include <vector>
+#include <span>
 
 #include "context/common_types.h"
 #include "context/id_storage.h"
@@ -56,13 +56,12 @@ public:
     const macro_param_base* access_macro_param_base() const;
 
     // N' attribute of the symbol
-    virtual A_t number(std::vector<size_t> offset) const = 0;
+    virtual A_t number(std::span<const size_t> offset) const = 0;
     // K' attribute of the symbol
-    virtual A_t count(std::vector<size_t> offset) const = 0;
+    virtual A_t count(std::span<const size_t> offset) const = 0;
 
-    virtual bool can_read(const std::vector<context::A_t>& subscript,
-        range symbol_range,
-        diagnostic_consumer<diagnostic_op>& diags) const = 0;
+    virtual bool can_read(
+        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const = 0;
 
     virtual ~variable_symbol() = default;
 

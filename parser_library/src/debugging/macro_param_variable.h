@@ -22,7 +22,7 @@ namespace hlasm_plugin::parser_library::debugging {
 
 // Implementation of variable interface that adapts macro parameters
 // representation from context to DAP variable.
-class macro_param_variable : public variable
+class macro_param_variable final : public variable
 {
 public:
     macro_param_variable(const context::macro_param_base& param, std::vector<size_t> index);

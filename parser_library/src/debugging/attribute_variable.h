@@ -21,7 +21,7 @@
 namespace hlasm_plugin::parser_library::debugging {
 // Implementation of variable interface that other variables use
 // to show symbol attributes to the user.
-class attribute_variable : public variable
+class attribute_variable final : public variable
 {
 public:
     attribute_variable(std::string name, std::string value);

@@ -53,9 +53,8 @@ public:
     virtual std::vector<size_t> keys() const = 0;
     virtual size_t size() const = 0;
 
-    bool can_read(const std::vector<context::A_t>& subscript,
-        range symbol_range,
-        diagnostic_consumer<diagnostic_op>& diags) const override;
+    bool can_read(
+        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const override;
 
 protected:
     set_symbol_base(id_index name, bool is_scalar, bool is_global, SET_t_enum type);
@@ -128,13 +127,13 @@ public:
     }
 
     // N' attribute of the symbol
-    A_t number(std::vector<size_t>) const override
+    A_t number(std::span<const size_t>) const override
     {
         return (A_t)(is_scalar || data.empty() ? 0 : data.rbegin()->first + 1);
     }
 
     // K' attribute of the symbol
-    A_t count(std::vector<size_t> offset) const override;
+    A_t count(std::span<const size_t> offset) const override;
 
     size_t size() const override { return data.size(); };
 
@@ -148,7 +147,7 @@ public:
     }
 
 private:
-    const T* get_data(std::vector<size_t> offset) const
+    const T* get_data(std::span<const size_t> offset) const
     {
         if ((is_scalar && !offset.empty()) || (!is_scalar && offset.size() != 1))
             return nullptr;
