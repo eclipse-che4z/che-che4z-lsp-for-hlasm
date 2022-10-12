@@ -26,6 +26,7 @@
 - Incorrect ORG instruction behavior when operands contain EQUs
 - Library diagnostics point to a respective configuration file
 - Invalid substring may be generated when conditional assembly string contains multibyte UTF-8 characters
+- Utilize alignment information during dependency evaluation
 
 ## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
 

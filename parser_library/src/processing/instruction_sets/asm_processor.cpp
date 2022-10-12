@@ -923,7 +923,9 @@ void asm_processor::process_CNOP(rebuilt_statement stmt)
         std::optional<int> boundary_value = try_get_abs_value(stmt.operands_ref().value[1].get(), dep_solver);
         // For now, the implementation ignores the instruction, if the operands have dependencies. Most uses of this
         // instruction should by covered anyway. It will still generate the label correctly.
-        if (byte_value.has_value() && boundary_value.has_value())
+        if (byte_value.has_value() && boundary_value.has_value() && *byte_value >= 0 && *boundary_value > 0
+            && ((*boundary_value) & (*boundary_value - 1)) == 0 && *byte_value < *boundary_value
+            && *byte_value % 2 == 0)
             hlasm_ctx.ord_ctx.reserve_storage_area(
                 0, context::alignment { (size_t)*byte_value, (size_t)*boundary_value }, lib_info);
     }

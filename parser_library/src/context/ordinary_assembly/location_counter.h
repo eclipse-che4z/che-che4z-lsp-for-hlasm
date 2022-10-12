@@ -50,7 +50,9 @@ public:
 
     location_counter(id_index name, const section& owner, loctr_kind kind);
 
-    address current_address();
+    address current_address() const;
+
+    address current_address_for_alignment_evaluation(alignment align) const;
 
     // reserves storage area of specified length and alignment
     aligned_addr reserve_storage_area(size_t length, alignment a);

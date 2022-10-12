@@ -476,3 +476,62 @@ TEST(ordinary_symbols, private_sections_invalid)
         }
     }
 }
+
+TEST(ordinary_symbols, reduced_cyclic_dependency)
+{
+    std::string input(R"(
+A   DS    0CL(L)
+AA  DS    0H
+    DS    CL2
+    DS    CL(X)
+    DS    H
+L   EQU   *-AA
+X   EQU   1
+)");
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L"), 6);
+}
+
+TEST(ordinary_symbols, reduced_cyclic_dependency_impossible)
+{
+    std::string input(R"(
+A   DS    0CL(L)
+AA  DS    0H
+    DS    CL2
+    DS    CL(X)
+    DS    F
+L   EQU   *-AA
+X   EQU   1
+)");
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(contains_message_codes(a.diags(), { "E033" }));
+}
+
+TEST(ordinary_symbols, reduced_cyclic_dependency_cnop)
+{
+    std::string input(R"(
+A   DS    0CL(L)
+AA  DS    0FD
+    CNOP  2,8
+    DS    CL(X)
+    CNOP  2,4
+    DS    H
+L   EQU   *-AA
+X   EQU   1
+)");
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L"), 8);
+}

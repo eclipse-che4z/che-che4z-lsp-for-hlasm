@@ -336,7 +336,7 @@ std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_sp
 
     if (curr_section_->current_location_counter().need_space_alignment(align))
     {
-        address addr = curr_section_->current_location_counter().current_address();
+        address addr = curr_section_->current_location_counter().current_address_for_alignment_evaluation(align);
         auto [ret_addr, sp] = curr_section_->current_location_counter().reserve_storage_area(length, align);
         assert(sp);
 
