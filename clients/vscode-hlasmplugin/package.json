@@ -250,17 +250,27 @@
       {
         "command": "extension.hlasm-plugin.downloadDependencies",
         "category": "HLASM",
-        "title": "Download dependencies"
+        "title": "Download Dependencies"
       },
       {
-        "command": "extension.hlasm-plugin.commentEditorCommands",
+        "command": "extension.hlasm-plugin.toggleCommentEditorCommands",
         "category": "HLASM",
-        "title": "Toggle line comment"
+        "title": "Toggle Line Comment"
+      },
+      {
+        "command": "extension.hlasm-plugin.addCommentEditorCommands",
+        "category": "HLASM",
+        "title": "Add Line Comment"
+      },
+      {
+        "command": "extension.hlasm-plugin.removeCommentEditorCommands",
+        "category": "HLASM",
+        "title": "Remove Line Comment"
       },
       {
         "command": "extension.hlasm-plugin.blockCommentEditorCommands",
         "category": "HLASM",
-        "title": "Toggle block comment"
+        "title": "Toggle Block Comment"
       }
     ],
     "keybindings": [
@@ -280,21 +290,19 @@
         "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
       },
       {
-        "command": "extension.hlasm-plugin.commentEditorCommands",
+        "command": "extension.hlasm-plugin.addCommentEditorCommands",
         "key": "ctrl+k ctrl+c",
         "mac": "cmd+k cmd+c",
-        "args": "CommentOption.add",
         "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
       },
       {
-        "command": "extension.hlasm-plugin.commentEditorCommands",
+        "command": "extension.hlasm-plugin.removeCommentEditorCommands",
         "key": "ctrl+k ctrl+u",
         "mac": "cmd+k cmd+u",
-        "args": "CommentOption.remove",
         "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
       },
       {
-        "command": "extension.hlasm-plugin.commentEditorCommands",
+        "command": "extension.hlasm-plugin.toggleCommentEditorCommands",
         "key": "ctrl+/",
         "mac": "cmd+/",
         "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"

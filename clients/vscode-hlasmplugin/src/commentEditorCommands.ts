@@ -186,7 +186,10 @@ export function blockCommentCommand(editor: vscode.TextEditor, edit: vscode.Text
         if (b.addComment) {
             const label = '.SKIP_' + b.commentArea.first + '_' + b.commentArea.last;
             edit.insert(new vscode.Position(b.commentArea.first, 0), '         AGO   ' + label + eol);
-            edit.insert(editor.document.lineAt(b.commentArea.last).range.end, eol + label + ' ANOP');
+            if (b.commentArea.last + 1 < editor.document.lineCount)
+                edit.insert(new vscode.Position(b.commentArea.last + 1, 0), label + ' ANOP' + eol);
+            else
+                edit.insert(editor.document.lineAt(b.commentArea.last).range.end, eol + label + ' ANOP');
         } else {
             for (const sub of b.removeLines)
                 edit.delete(new vscode.Range(new vscode.Position(sub.begin, 0), new vscode.Position(sub.end + 1, 0)))
