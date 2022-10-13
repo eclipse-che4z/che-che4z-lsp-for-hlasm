@@ -124,6 +124,23 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
         lib_info);
 }
 
+struct override_symbol_candidates final : public context::dependency_solver_redirect
+{
+    std::variant<const context::symbol*, context::symbol_candidate> get_symbol_candidate(
+        context::id_index name) const override
+    {
+        if (auto r = dependency_solver_redirect::get_symbol_candidate(name);
+            std::holds_alternative<const context::symbol*>(r) && std::get<const context::symbol*>(r) == nullptr)
+            return context::symbol_candidate { false };
+        else
+            return r;
+    }
+
+    explicit override_symbol_candidates(context::dependency_solver& solver)
+        : dependency_solver_redirect(solver)
+    {}
+};
+
 void asm_processor::process_EQU(rebuilt_statement stmt)
 {
     auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, lib_info);
@@ -159,9 +176,10 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
         auto asm_op = ops[2]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_dependencies(dep_solver, nullptr))
+        override_symbol_candidates dep_solver_override(dep_solver);
+        if (expr_op && !expr_op->has_dependencies(dep_solver_override, nullptr))
         {
-            auto t_value = expr_op->expression->evaluate(dep_solver, *this);
+            auto t_value = expr_op->expression->evaluate(dep_solver_override, *this);
             if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
                 && t_value.get_abs() <= 255)
                 t_attr = (context::symbol_attributes::type_attr)t_value.get_abs();
@@ -179,9 +197,10 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
         auto asm_op = ops[1]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_dependencies(dep_solver, nullptr))
+        override_symbol_candidates dep_solver_override(dep_solver);
+        if (expr_op && !expr_op->has_dependencies(dep_solver_override, nullptr))
         {
-            auto length_value = expr_op->expression->evaluate(dep_solver, *this);
+            auto length_value = expr_op->expression->evaluate(dep_solver_override, *this);
             if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0
                 && length_value.get_abs() <= 65535)
                 length_attr = (context::symbol_attributes::len_attr)length_value.get_abs();

@@ -21,6 +21,8 @@ target_sources(parser_library PRIVATE
 	dependant.h
 	dependency_collector.cpp
 	dependency_collector.h
+	dependency_solver_redirect.cpp
+	dependency_solver_redirect.h
 	location_counter.cpp
 	location_counter.h
 	location_counter_data.cpp

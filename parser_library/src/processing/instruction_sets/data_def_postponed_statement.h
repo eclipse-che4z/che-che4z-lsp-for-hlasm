@@ -17,6 +17,7 @@
 
 #include "checking/data_definition/data_def_type_base.h"
 #include "context/ordinary_assembly/dependable.h"
+#include "context/ordinary_assembly/dependency_solver_redirect.h"
 #include "postponed_statement_impl.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -60,26 +61,16 @@ public:
     const std::vector<data_def_dependency<instr_type>>& get_dependencies() const { return m_dependencies; }
 };
 
-struct data_def_dependency_solver final : public context::dependency_solver
+struct data_def_dependency_solver final : public context::dependency_solver_redirect
 {
     data_def_dependency_solver(context::dependency_solver& base, const context::address* loctr)
-        : base(base)
+        : dependency_solver_redirect(base)
         , loctr(loctr)
     {}
 
-    context::dependency_solver& base;
     const context::address* loctr;
     uint64_t operands_bit_length = 0;
-
-    const context::symbol* get_symbol(context::id_index name) const override;
     std::optional<context::address> get_loctr() const override;
-    context::id_index get_literal_id(const std::shared_ptr<const expressions::data_definition>& dd) override;
-    bool using_active(context::id_index label, const context::section* sect) const override;
-    context::using_evaluate_result using_evaluate(
-        context::id_index label, const context::section* owner, int32_t offset, bool long_offset) const override;
-    std::variant<const context::symbol*, context::symbol_candidate> get_symbol_candidate(
-        context::id_index name) const override;
-    std::string get_opcode_attr(context::id_index name) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

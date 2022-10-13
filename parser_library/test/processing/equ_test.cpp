@@ -254,3 +254,21 @@ A   EQU ,0
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A132" }));
 }
+
+TEST(EQU, t_attr_non_existing_symbol)
+{
+    std::string input = R"(
+A   DS  A
+B   EQU A,*-A,T'TYPO
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    auto b = get_symbol(a.hlasm_ctx(), "B");
+    ASSERT_TRUE(b);
+
+    EXPECT_EQ(b->attributes().type(), ebcdic_encoding::a2e['U']);
+}

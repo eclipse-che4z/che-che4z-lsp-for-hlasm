@@ -104,47 +104,14 @@ template class data_def_postponed_statement<checking::data_instr_type::DS>;
 template class data_def_dependency<checking::data_instr_type::DC>;
 template class data_def_dependency<checking::data_instr_type::DS>;
 
-const context::symbol* data_def_dependency_solver::get_symbol(context::id_index name) const
-{
-    return base.get_symbol(name);
-}
-
 std::optional<context::address> data_def_dependency_solver::get_loctr() const
 {
     if (loctr)
         return *loctr + (int)(operands_bit_length / 8);
-    if (auto l = base.get_loctr(); l.has_value())
+    if (auto l = dependency_solver_redirect::get_loctr(); l.has_value())
         return l.value() + (int)(operands_bit_length / 8);
 
     return std::nullopt;
-}
-
-context::id_index data_def_dependency_solver::get_literal_id(
-    const std::shared_ptr<const expressions::data_definition>& dd)
-{
-    return base.get_literal_id(dd);
-}
-
-bool data_def_dependency_solver::using_active(context::id_index label, const context::section* sect) const
-{
-    return base.using_active(label, sect);
-}
-
-context::using_evaluate_result data_def_dependency_solver::using_evaluate(
-    context::id_index label, const context::section* owner, int32_t offset, bool long_offset) const
-{
-    return base.using_evaluate(label, owner, offset, long_offset);
-}
-
-std::variant<const context::symbol*, context::symbol_candidate> data_def_dependency_solver::get_symbol_candidate(
-    context::id_index name) const
-{
-    return base.get_symbol_candidate(name);
-}
-
-std::string data_def_dependency_solver::get_opcode_attr(context::id_index name) const
-{
-    return base.get_opcode_attr(name);
 }
 
 } // namespace hlasm_plugin::parser_library::processing
