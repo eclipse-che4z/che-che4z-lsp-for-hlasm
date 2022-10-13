@@ -1218,3 +1218,23 @@ MAC   OPSYN
 
     // O'MAC should be evaluated when generating the literal pool (0xD4), no way to test that now
 }
+
+TEST(data_attributes, T_attr_with_using_label)
+{
+    std::string input = R"(
+    MACRO
+&L  USE
+&L  USING *,12
+    MEND
+A   USE
+&T  SETC  T'A
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "U");
+}

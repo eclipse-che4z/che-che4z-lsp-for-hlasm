@@ -29,6 +29,7 @@
 - Invalid substring may be generated when conditional assembly string contains multibyte UTF-8 characters
 - Utilize alignment information during dependency evaluation
 - Incorrect evaluation of the T attribute in EQU statement
+- T attribute of a USING label may be incorrect when the label is mentioned in the macro name field
 
 ## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
 

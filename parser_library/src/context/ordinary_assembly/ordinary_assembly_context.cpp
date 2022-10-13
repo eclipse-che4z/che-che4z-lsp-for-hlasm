@@ -374,6 +374,8 @@ void ordinary_assembly_context::register_using_label(id_index name)
     assert(symbol_can_be_assigned(symbols_, name));
 
     symbols_.insert_or_assign(name, using_label_tag {});
+
+    symbol_refs_.erase(name);
 }
 
 index_t<using_collection> ordinary_assembly_context::current_using() const { return hlasm_ctx_.using_current(); }
