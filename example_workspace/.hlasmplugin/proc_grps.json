@@ -3,11 +3,23 @@
     {
        "name": "P1",
        "libs": [
-          "libs","libs2"
+          "libs/mac",
+          "libs/registers",
+          "${workspaceFolder}/**/g*i?"
         ],
         "asm_options": {
             "SYSPARM": "SEVEN"
         }
+    },
+    {
+      "name": "P2",
+      "libs": [
+        "libs/preproc_members"
+      ],
+      "preprocessor":[
+        "ENDEVOR",
+        {"name": "CICS", "options": ["NOPROLOG","NOEPILOG"]}
+      ]
     },
     {
       "name": "JULSUB_PG",

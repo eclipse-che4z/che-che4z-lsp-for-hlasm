@@ -1,20 +1,21 @@
 {
   "pgms": [
     {
-      "program": "tutorial.hlasm",
+      "program": "tutorial.*",
       "pgroup": "P1"
     },
     {
-      "program": "empty.hlasm",
-      "pgroup": "P1"
+      "program": "factorial.hlasm",
+      "pgroup": "P1",
+      "asm_options": {"SYSPARM": "EIGHT"}
+    },
+    {
+      "program": "virtual_file.hlasm",
+      "pgroup": "P2"
     },
     {
       "program": "JULSUB",
       "pgroup": "JULSUB_PG"
-    },
-    {
-      "program": "factorial.hlasm",
-      "pgroup": "P1"
     }
   ],
   "alwaysRecognize": ["*.hlasm"]

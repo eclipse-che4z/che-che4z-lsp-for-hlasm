@@ -1,7 +1,7 @@
-   MACRO
-   TIME
+         MACRO
+         TIME
    
 * This is just a dummy implementation of the TIME macro described here:
-*https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.ieaa900/iea3a9_Description20.htm
+* https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.ieaa900/iea3a9_Description20.htm
    
-   MEND
+         MEND

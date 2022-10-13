@@ -1,15 +1,21 @@
-* This is an example HLASM workspace
+******************************  TUTORIAL  *****************************
+* This folder represents an example HLASM workspace where you can find 
+* tutorials, configuration tips and more while this file contains a 
+* basic introduction to the HLASM extension. 
 
-* STATEMENTS
-* Source code is divided into statements
-* Each statement constists of:
-* - label/name (yellow)
-* - instruction (red)
-* - parameters of instruction (gray)
-* - remarks (blue)
-LABEL LR 1,1 HERE COME REMARKS
+*****************************  STATEMENTS  ****************************
+* Source code is divided into statements.
+* Each statement consists of:
+* - label/name
+* - instruction
+* - parameters of instruction
+* - remarks
 
-* LSP FEATURES
+* Coloring scheme is applied to provide visual support while working 
+* with the code:
+LABEL    LR    1,1 HERE COME REMARKS
+
+****************************  LSP FEATURES  ***************************
 * You can use 4 different editor commands on instructions, variable,
 * sequence and ordinary symbols:
 * - go to definition - jumps to the definition of the symbol
@@ -17,79 +23,95 @@ LABEL LR 1,1 HERE COME REMARKS
 * - hover - shows information about the symbol
 * - complete - suggests symbols that can be used (not ordinary)
 
-* ERROR MESSAGES
-* If there is a mistake, the incorrect part of statement is underlined
-* You can view the error message in the Problems window
-* LR needs 2 operands, registers from 0 to 15
-    LR 1,16
+***************************  ERROR MESSAGES  **************************
+* If there is a mistake, the incorrect part of statement is underlined.
+* You can view the error message in the Problems tab.
+* LR needs 2 operands, registers from 0 to 15:
+         LR    1,16
 
-* MACHINE INSTRUCTIONS
+************************  MACHINE INSTRUCTIONS  ***********************
 * Basic operations - load register, multiply, etc...
-* M needs register operand and address operand
-    M   2,0(10)
+* M needs register operand and address operand:
+         M     2,0(10)
 
-* ASSEMBLER INSTRUCTIONS
+***********************  ASSEMBLER INSTRUCTIONS  **********************
 * Change code layout - define symbol, reserve space...
 
-* DC (Define Constant) defines symbol SPACE with given attributes
+* DC (Define Constant) defines symbol SPACE with given attributes.
 * Attributes of SPACE are:
 * - L (Length) attribute is equal to 9 (length of word 'SOMETHING')
 * - T (Type) attribute is equal to 'C' (character)
-SPACE DC   C'SOMETHING'
-* EQU defines an ordinary symbol with given value
-* R1 has value 1 and is absolute (does not depend on its position)
-R1    EQU 1
+SPACE    DC    C'SOMETHING'
+* EQU defines an ordinary symbol with given value.
+* R1 has value 1 and is absolute (does not depend on its position):
+R1       EQU   1
 
-* CONDITIONAL ASSEMBLY INSTRUCTIONS
-* Generates code/instructions, language on top of the previous two
+*****************  CONDITIONAL ASSEMBLY INSTRUCTIONS  *****************
+* Generates code/instructions, language on top of the previous two.
 * Capable of creating conditional jumps, substitutions, etc...
 
-* SETA defines a variable symbol (pink) with given value
-&VAR SETA 1
-* Whenever the symbol &VAR is encountered, it is substituted
-    LR &VAR,&VAR
-* Also, parts of symbols may be substituted
-* Here, R&VAR is processed as R1 because &VAR is substituted by 1
-    LR R&VAR,5
-* AIF jump/skips code generation on fullifiling a condition
-* &VAR equals 1, code generations jumps to the sequence symbol .THERE
-* Therefore LR statement is not generated (white)
-    AIF (&VAR EQ 1).THERE
-    LR  1,1
-.THERE ANOP
-* CA instructions may also use ordinary symbols
-* Length of symbol SPACE is indeed 9, the code generation jumps
-    AIF (L'SPACE EQ 9).THERE2
-    LR 1,1
-.THERE2 ANOP
+* SETA defines a variable symbol with given value:
+&VAR     SETA  1
+* Whenever the symbol &VAR is encountered, it is substituted:
+         LR    &VAR,&VAR
+* Also, parts of symbols may be substituted.
+* Here, R&VAR is processed as R1 because &VAR is substituted by 1:
+         LR    R&VAR,5
+* AIF jumps/skips code generation on fulfilling a condition.
+* In the following example, &VAR equals 1, code generations jumps to 
+* the sequence symbol '.THERE' therefore LR statement is not generated:
+         AIF   (&VAR EQ 1).THERE
+         LR    1,1
+.THERE   ANOP
+* CA instructions may also use ordinary symbols.
+* Length of symbol SPACE is indeed 9, the code generation jumps:
+         AIF   (L'SPACE EQ 9).THERE2
+         LR    1,1
+.THERE2  ANOP
 
-* DEPENDENCIES
-* In HLASM, you can use multiple files
+****************************  DEPENDENCIES  ***************************
+* In HLASM, you can use multiple files.
 * For dependency resolution, there are 2 configs in .hlasmplugin folder
 * - proc_grps.json - names of processor groups with their libraries
 * - pgm_conf.json - lists main/open code files and assigns proc groups
-* processor group P1 is assigned to this file (tutorial)
-* P1 has 2 library folders - libs and libs2 - their files may be used
+* Processor group P1 is assigned to this file (tutorial.hlasm).
+* P1 has 2 library folders - libs and libs2 - their files may be used.
 
-* MAC2 is defined in libs/mac2 and is invoked by writing its name
-* It accepts and uses 2 parameters, try 'go to defition' on MAC2
-    MAC2  R1,&VAR
-* copy file REGISTERS is defined in libs2/registers and is invoked by
-* COPY instruction with its name, try 'go to definition' on REGISTERS
-    COPY REGISTERS
-* All symbols defined in REGISTERS file are defined in this file too
-* An error message is issued as symbol R1 is redeclared
+* MAC2 is defined in libs/mac2 and is invoked by writing its name.
+* It accepts and uses 2 parameters, try 'go to definition' on MAC2:
+         MAC2  R1,&VAR
 
-* CONTINUATIONS
-* Longer statements may need more than one line
-* A continuation character is inserted on column 72 to indicate that
-    MAC1 OPERAND1,OPERAND2,OPERAND3, MACROS ACCEPT LOTS OF OPERANDS    X
-               OPERAND4,OPERAND5 AND THAT IS WHY WE NEED THIS
-* In Settings, you may enable option 'Continuation Handling'
-* It helps adjusting parameters/remarks without moving the continuation
+* Copy file REGISTERS is defined in libs2/registers and is invoked by
+* COPY instruction with its name, try 'go to definition' on REGISTERS:
+         COPY  REGISTERS
+* All symbols defined in REGISTERS file are defined in this file too.
+* An error message is issued as symbol R1 is redeclared.
 
-* END
-* Look at the plugin description to find more information
-* Some interesting examples of HLASM usage are in the 'crazy' file
-* An empty open code file is prepared in the 'empty' file
-* Feel free to create files/folders, set configurations and edit code
+* You can even use wildcards and VS Code variables to locate 
+* dependencies.
+* This was done to locate the current file (tutorial.hlasm) in 
+* pgm_conf.json and for the following library in proc_grps.json:
+         GENERIC
+
+* ~ can also be used in configuration files as a substitution for your
+*  home directory.
+
+***************************  CONTINUATIONS  ***************************
+* Longer statements may need more than one line.
+* A continuation character is inserted on column 72 to indicate that:
+         MAC1  OPERAND1,OPERAND2,OPERAND3, Macros accept lots of       X
+               OPERAND4,OPERAND5 operands and that is why we need this
+* In Extension settings, you may enable option 'Continuation Handling'.
+* It helps adjusting parameters/remarks without moving the 
+* continuation.
+
+         END
+
+****************************  ENDING WORDS  ***************************
+* Look at the extension description to find more information and check 
+* the rest of the files to see some interesting examples of HLASM
+* and extension usage.
+
+* Feel free to create files/folders, set configurations and edit code.
+* And don't forget to try using the Macro Tracer as well by clicking 
+* 'Start Debugging' (F5)!

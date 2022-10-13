@@ -1,0 +1,14 @@
+*************************  FORWARD DEPENDENCY  ************************
+* An example of a forward dependency where instruction lengths are 
+* forward dependent on resolved length of different instructions:
+         DS    CL(LEN) Depends on LEN, LEN is not yet defined,         X
+               instruction cannot be resolved
+ADDR     DS    CL(SIZE) Depends on SIZE, SIZE is not yet defined,      X
+               instruction cannot be resolved
+
+HERE     DS    0C        HERE is defined, instruction is resolved
+LEN      EQU   HERE-ADDR Depends on HERE and ADDR,                     X
+                         ADDR is not yet resolved,                     X
+                         instruction cannot be resolved
+
+SIZE     EQU   5 SIZE is defined -> ADDR is resolved -> LEN is resolved

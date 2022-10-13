@@ -10,6 +10,7 @@
 - Add support for the SYSASM variable
 - Add support for SYSM_SEV and SYSM_HSEV system variables
 - Line and block comment handling support
+- Example workspace enhancements
 
 ### Fixed
 - Implement rest of the changes introduced by APAR PH46868

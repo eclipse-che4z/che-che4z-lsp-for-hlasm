@@ -1,0 +1,42 @@
+****************************  VIRTUAL FILE  ***************************
+* This file demonstrates the virtual file and preprocessors feature.
+
+* The following macro uses AINSERT instructions to generate a new macro
+* 'MAC_VIRTUAL' for which the code is generated once MEND is reached 
+* and control is given back to the original caller.
+* The generated code, however, doesn't overwrite the original code
+* and is placed in a virtual file instead.
+         MACRO
+         MAC
+         AINSERT '         MACRO  WELCOME TO THE VIRTUAL FILE!',BACK
+         AINSERT '         MAC_VIRTUAL',BACK
+         AINSERT '         GBLA  &&VAR',BACK
+         AINSERT '&&VAR     SETA  5',BACK
+         AINSERT '         INTENTIONAL_GIBBERISH',BACK
+         AINSERT '         MEND',BACK
+         MEND
+
+* Unknown operation code 'INTENTIONAL_GIBBERISH' message should appear 
+* in the 'PROBLEMS' tab and new file containing the virtual content 
+* should open when the error is selected:
+         GBLA  &VAR
+         MAC
+         MAC_VIRTUAL
+
+* Virtual file can also be accessed by stepping into macro 'MAC' while 
+* using Macro Tracer and then stepping over past 'MEND' instruction.
+
+***************************  PREPROCESSORS  ***************************
+* The extension also has its own implementation of various.
+* preprocessors (e.g. CICS, Endevor and DB2). The preprocessors can be 
+* chained and their ordering matters. Look at proc_grps.json to see how
+* they are configured.
+
+* Preprocessors can generate virtual HLASM files and you can step into 
+* them in a similar fashion as above. Try this with the following:
+START    DS    0C
+-INC     MEMBER
+         LTORG
+DIFF     EQU   *-START
+
+         END

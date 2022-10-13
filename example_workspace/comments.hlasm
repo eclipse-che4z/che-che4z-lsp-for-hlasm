@@ -1,0 +1,33 @@
+***************************  LINE COMMENTS  ***************************
+* This file shows how line and block comments work in the extension.
+
+* Try commenting the following line while using any of the following: 
+*              - Add Line Comment command (CTRL + K, CTRL + C)
+*              - Toggle Line Comment command (CTRL + /)
+
+LABEL1   LR    1,1   Notice that the first character is replaced with *
+
+* Now, try uncommenting the next line while using any of the following:
+*              - Remove Line Comment command (CTRL + K, CTRL + U)
+*              - Toggle Line Comment command (CTRL + /)
+
+*ABEL2   LR    1,1   Notice that the second character replaces         X
+                     the first one
+
+
+* You can also use the same commands for multiple lines:
+*TRY     LR    1,1
+*WITH    LR    1,1
+*SEVERAL LR    1,1
+*LINES   LR    1,1
+
+***************************  BLOCK COMMENTS  **************************
+* If you need to skip a block of code you can use the Toggle Block 
+* Comment command (SHIFT + ALT + A) which will surround the selected  
+* block with AGO instruction. Go ahead, select the following lines and  
+* try the block comment feature. The same command can be used for
+* uncommenting of block of code as well:
+         When Block comment command is applied on these lines,
+         Anything in here is just skipped
+         And the result is a valid hlasm source code
+         Producing no more errors
