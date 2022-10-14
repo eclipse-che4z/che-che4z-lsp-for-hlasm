@@ -450,6 +450,24 @@ TEST_F(workspace_test, did_change_watched_files)
     ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
 }
 
+TEST_F(workspace_test, diagnostics_recollection)
+{
+    file_manager_opt file_manager(file_manager_opt_variant::required);
+    lib_config config;
+    shared_json global_settings = make_empty_shared_json();
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    ws.open();
+
+    ws.did_open_file(source1_loc);
+
+    ws.collect_diags();
+    size_t original_diags_size = collect_and_get_diags_size(ws, file_manager);
+    EXPECT_GE(original_diags_size, (size_t)1);
+
+    ws.collect_diags();
+    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), original_diags_size);
+}
+
 TEST_F(workspace_test, missing_library_required)
 {
     for (auto type : { file_manager_opt_variant::old_school,
