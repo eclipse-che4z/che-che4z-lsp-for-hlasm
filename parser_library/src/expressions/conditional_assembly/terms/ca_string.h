@@ -21,7 +21,7 @@
 namespace hlasm_plugin::parser_library::expressions {
 
 // represents CA expression string
-class ca_string : public ca_expression
+class ca_string final : public ca_expression
 {
 public:
     struct substring_t

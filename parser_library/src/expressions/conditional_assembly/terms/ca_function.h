@@ -25,7 +25,7 @@
 namespace hlasm_plugin::parser_library::expressions {
 
 // represents CA expression built-in function
-class ca_function : public ca_expression
+class ca_function final : public ca_expression
 {
 public:
     context::id_index function_name;

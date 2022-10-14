@@ -20,7 +20,7 @@
 namespace hlasm_plugin::parser_library::expressions {
 
 // represents CA expression ordinary symbol
-class ca_symbol : public ca_expression
+class ca_symbol final : public ca_expression
 {
 public:
     const context::id_index symbol;

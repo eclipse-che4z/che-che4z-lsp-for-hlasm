@@ -40,7 +40,7 @@ public:
     virtual context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const = 0;
 };
 
-class ca_plus_operator : public ca_unary_operator
+class ca_plus_operator final : public ca_unary_operator
 {
 public:
     ca_plus_operator(ca_expr_ptr expr, range expr_range);
@@ -48,7 +48,7 @@ public:
     context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const override;
 };
 
-class ca_minus_operator : public ca_unary_operator
+class ca_minus_operator final : public ca_unary_operator
 {
 public:
     ca_minus_operator(ca_expr_ptr expr, range expr_range);
@@ -56,7 +56,7 @@ public:
     context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const override;
 };
 
-class ca_par_operator : public ca_unary_operator
+class ca_par_operator final : public ca_unary_operator
 {
 public:
     ca_par_operator(ca_expr_ptr expr, range expr_range);
@@ -67,7 +67,7 @@ public:
 };
 
 // NOT, BYTE, ...
-class ca_function_unary_operator : public ca_unary_operator
+class ca_function_unary_operator final : public ca_unary_operator
 {
 public:
     ca_function_unary_operator(ca_expr_ptr expr,

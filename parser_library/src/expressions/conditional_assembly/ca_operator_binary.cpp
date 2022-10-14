@@ -17,6 +17,7 @@
 #include <limits>
 
 #include "ebcdic_encoding.h"
+#include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "expressions/evaluation_context.h"
 #include "semantics/concatenation.h"
 #include "semantics/variable_symbol.h"
@@ -76,6 +77,50 @@ ca_function_binary_operator::ca_function_binary_operator(ca_expr_ptr left_expr,
     , function(function)
     , m_expr_ctx { expr_kind, parent_expr_kind, true }
 {}
+
+// Detects (T'&VAR EQ 'O') condition
+std::optional<undef_sym_set> t_attr_special_case(
+    const expressions::ca_expression* left, const expressions::ca_expression* right, const evaluation_context& eval_ctx)
+{
+    const expressions::ca_symbol_attribute* t_attr = nullptr;
+    const expressions::ca_string* o_string = nullptr;
+
+    if ((t_attr = dynamic_cast<const expressions::ca_symbol_attribute*>(left)) != nullptr)
+        o_string = dynamic_cast<const expressions::ca_string*>(right);
+    else if ((t_attr = dynamic_cast<const expressions::ca_symbol_attribute*>(right)) != nullptr)
+        o_string = dynamic_cast<const expressions::ca_string*>(left);
+
+    if (t_attr == nullptr || o_string == nullptr)
+        return std::nullopt;
+
+    if (t_attr->attribute != context::data_attr_kind::T || !std::holds_alternative<semantics::vs_ptr>(t_attr->symbol))
+        return std::nullopt;
+    auto basic = std::get<semantics::vs_ptr>(t_attr->symbol)->access_basic();
+    if (!basic)
+        return std::nullopt;
+
+    undef_sym_set deps = o_string->get_undefined_attributed_symbols(eval_ctx);
+    for (const auto& expr : basic->subscript)
+        deps.merge(expr->get_undefined_attributed_symbols(eval_ctx));
+
+    if (!deps.empty())
+        return deps;
+
+    if (auto v = o_string->evaluate(eval_ctx); v.type != context::SET_t_enum::C_TYPE || v.access_c() != "O")
+        return std::nullopt;
+
+    return deps;
+}
+
+undef_sym_set ca_function_binary_operator::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+{
+    if (is_relational() && m_expr_ctx.parent_expr_kind == context::SET_t_enum::B_TYPE)
+    {
+        if (auto special = t_attr_special_case(left_expr.get(), right_expr.get(), eval_ctx); special.has_value())
+            return std::move(special).value();
+    }
+    return ca_binary_operator::get_undefined_attributed_symbols(eval_ctx);
+}
 
 void ca_function_binary_operator::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)
 {

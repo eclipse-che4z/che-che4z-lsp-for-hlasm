@@ -24,7 +24,7 @@
 namespace hlasm_plugin::parser_library::expressions {
 
 // represents CA expression attributed ordinary symbol
-class ca_symbol_attribute : public ca_expression
+class ca_symbol_attribute final : public ca_expression
 {
     // variant of ordinary symbol, variable symbol, literal
 

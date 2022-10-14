@@ -1066,3 +1066,175 @@ X     DS    C
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
 }
+
+TEST(lookahead, t_attr_special_case_skip_lookahead)
+{
+    std::string input = R"(
+         MACRO
+         MAC   &P
+&X       SETB  (T'&P EQ 'O')
+         MEND
+.*
+         MACRO
+         MAC2
+         AIF   (L'TEST EQ 5).SKIP
+.SKIP    ANOP
+         MEND
+.*
+         MAC   TEST
+X        EQU   5
+         MAC2
+TEST     DS    CL(X)
+         END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(lookahead, t_attr_special_case_skip_lookahead2)
+{
+    std::string input = R"(
+         MACRO
+         MAC   &P
+         AIF   (T'&P EQ 'O').SKIP
+.SKIP    ANOP
+         MEND
+.*
+         MACRO
+         MAC2
+         AIF   (L'TEST EQ 5).SKIP
+.SKIP    ANOP
+         MEND
+.*
+         MAC   TEST
+X        EQU   5
+         MAC2
+TEST     DS    CL(X)
+         END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(lookahead, t_attr_special_case_go_lookahead)
+{
+    std::string input = R"(
+         MACRO
+         MAC   &P
+&X       SETB  (T'&P EQ 'C')
+         MEND
+.*
+         MACRO
+         MAC2
+         AIF   (L'TEST EQ 5).SKIP
+.SKIP    ANOP
+         MEND
+.*
+         MAC   TEST
+X        EQU   5
+         MAC2
+TEST     DS    CL(X)
+         END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W013" }));
+}
+
+TEST(lookahead, t_attr_special_case_go_lookahead2)
+{
+    std::string input = R"(
+         MACRO
+         MAC   &P
+         AIF   (T'&P EQ 'C').SKIP
+.SKIP    ANOP
+         MEND
+.*
+         MACRO
+         MAC2
+         AIF   (L'TEST EQ 5).SKIP
+.SKIP    ANOP
+         MEND
+.*
+         MAC   TEST
+X        EQU   5
+         MAC2
+TEST     DS    CL(X)
+         END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W013" }));
+}
+
+TEST(lookahead, t_attr_special_case_go_lookahead3)
+{
+    std::string input = R"(
+         MACRO
+         MAC   &P
+         AIF   (T'&P EQ 'O'(L'TEST,*)).SKIP
+.SKIP    ANOP
+         MEND
+.*
+         MACRO
+         MAC2
+         AIF   (L'TEST EQ 5).SKIP
+.SKIP    ANOP
+         MEND
+.*
+         MAC   TEST
+X        EQU   5
+         MAC2
+TEST     DS    CL(X)
+         END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W013", "W013" }));
+}
+
+TEST(lookahead, t_attr_special_case_go_lookahead4)
+{
+    std::string input = R"(
+         MACRO
+         MAC   &P
+         AIF   (T'&P(L'TEST) EQ 'O').SKIP
+.SKIP    ANOP
+         MEND
+.*
+         MACRO
+         MAC2
+         AIF   (L'TEST EQ 5).SKIP
+.SKIP    ANOP
+         MEND
+.*
+         MAC   TEST
+X        EQU   5
+         MAC2
+TEST     DS    CL(X)
+         END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W013", "W013" }));
+}

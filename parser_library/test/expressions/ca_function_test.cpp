@@ -52,7 +52,7 @@ struct stringer
     std::string operator()(::testing::TestParamInfo<func_test_param> p) { return p.param.name; }
 };
 
-class set_expr : public ca_expression
+class set_expr final : public ca_expression
 {
 public:
     context::SET_t value;
