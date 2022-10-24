@@ -1212,6 +1212,7 @@ public:
             {
                 process_exec_cics(m_matches_ll);
 
+                m_result.emplace_back(*it_backup);
                 if (exec_cics_continuation_error)
                 {
                     if (m_diags)
@@ -1237,6 +1238,7 @@ public:
             }
             else if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, dfh_lookup))
             {
+                m_result.emplace_back(*it_backup);
                 auto r = try_substituting_dfh(m_matches_ll);
                 if (r.error())
                 {

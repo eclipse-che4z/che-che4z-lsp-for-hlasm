@@ -81,11 +81,11 @@ public:
                 continue;
             }
             const auto& line = *entry.current;
+            result.push_back(line);
             entry.next();
 
             if (const auto& text = line.text(); !std::regex_search(text.begin(), text.end(), matches, include_regex))
             {
-                result.push_back(line);
                 continue;
             }
 
