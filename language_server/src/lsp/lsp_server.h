@@ -54,7 +54,7 @@ protected:
     void respond(const json& id, const std::string& requested_method, const json& args) override;
     // Sends notification to LSP client using send_message_provider.
     void notify(const std::string& method, const json& args) override;
-    // Sends errorous respond to LSP client using send_message_provider.
+    // Sends erroneous respond to LSP client using send_message_provider.
     void respond_error(const json& id,
         const std::string& requested_method,
         int err_code,
