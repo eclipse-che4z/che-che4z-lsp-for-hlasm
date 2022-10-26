@@ -424,10 +424,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_db2(c
     return nullptr;
 }
 
-std::shared_ptr<const context::hlasm_statement> opencode_provider::process_endevor(const statement_processor& proc,
-    semantics::collector& collector,
-    std::string text,
-    diagnostic_op_consumer* diags)
+std::shared_ptr<const context::hlasm_statement> opencode_provider::process_endevor(
+    const statement_processor& proc, semantics::collector& collector, std::string text, diagnostic_op_consumer* diags)
 {
     std::match_results<std::string::iterator> matches;
     static std::regex include_regex(R"(^(-INC|\+\+INCLUDE)(\s+)(\S+)((\s+)(\S+))?)");
@@ -445,17 +443,10 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_endev
     auto member_start = inc.size() + spaces_1;
     auto member_range = range(position(line_no, member_start), position(line_no, member_start + member.size()));
 
-    size_t spaces_2 = matches[4].str().length();
-    std::string_view remark(std::to_address(matches[5].first), matches[5].length());
+    size_t spaces_2 = matches[5].str().length();
+    std::string_view remark(std::to_address(matches[6].first), matches[6].length());
     auto remark_start = member_start + member.size() + spaces_2;
     auto remark_end = remark_start + remark.size();
-
-    //collector.set_label_field(std::string(member), range(position(line_no, 0), position(line_no, inc.size())));
-    //collector.set_instruction_field(m_ctx->hlasm_ctx->ids().add(std::string(member)),
-    //    range(position(line_no, member_start), position(line_no, member_start + member.size())));
-    //collector.set_operand_remark_field(semantics::operand_list(),
-    //    semantics::remark_list(),
-    //    range(position(line_no, remark_start), position(line_no, remark_start + remark.size())));
 
     collector.set_instruction_field(
         m_ctx->hlasm_ctx->ids().add(std::string(inc)), range(position(line_no, 0), position(line_no, inc.size())));
@@ -467,9 +458,18 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_endev
         std::make_unique<semantics::expr_assembler_operand>(std::move(tmp), std::string(member), member_range));
 
     collector.set_operand_remark_field(std::move(ops),
-        semantics::remark_list(),
-        range(position(line_no, remark_start), position(line_no, remark_start + remark.size())));
+        semantics::remark_list(
+            { range(position(line_no, remark_start), position(line_no, remark_start + remark.size())) }),
+        range(position(line_no, member_start), position(line_no, remark_start + remark.size())));
 
+    m_src_proc->add_hl_symbol(
+        token_info(range(position(line_no, 0), position(line_no, inc.size())), semantics::hl_scopes::instruction));
+
+    m_src_proc->add_hl_symbol(
+        token_info(range(position(line_no, member_start), position(line_no, member_start + member.size())),
+            semantics::hl_scopes::operand));
+
+    m_src_proc->process_hl_symbols(collector.extract_hl_symbols());
     return std::make_shared<semantics::endevor_statement>(
         semantics::instruction_si(collector.current_instruction().field_range),
         std::move(collector.current_operands()),
