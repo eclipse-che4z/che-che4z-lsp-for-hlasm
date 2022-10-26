@@ -688,6 +688,7 @@ class db2_preprocessor : public preprocessor
                 continue;
             }
 
+            m_result.back().set_preprocessor(preprocessor_type::DB2);
             m_source_translated = true;
 
             m_logical_line.clear();

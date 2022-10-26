@@ -37,6 +37,16 @@ semantics::deferred_statement* hlasm_statement::access_deferred()
     return kind == statement_kind::DEFERRED ? static_cast<semantics::deferred_statement*>(this) : nullptr;
 }
 
+const semantics::preprocessor_statement* hlasm_statement::access_preproc() const
+{
+    return dynamic_cast<const semantics::preprocessor_statement*>(this);
+}
+
+semantics::preprocessor_statement* hlasm_statement::access_preproc()
+{
+    return dynamic_cast<semantics::preprocessor_statement*>(this);
+}
+
 hlasm_statement::hlasm_statement(const statement_kind kind)
     : kind(kind)
 {}

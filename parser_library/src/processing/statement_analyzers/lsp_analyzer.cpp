@@ -39,6 +39,13 @@ lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& 
 void lsp_analyzer::analyze(
     const context::hlasm_statement& statement, statement_provider_kind prov_kind, processing_kind proc_kind)
 {
+    if (auto preproc_stmt = statement.access_preproc(); preproc_stmt)
+    {
+        analyze_preproc(preproc_stmt, prov_kind, proc_kind);
+        assign_statement_occurences();
+        return;
+    }
+
     const auto* resolved_stmt = statement.access_resolved();
     switch (proc_kind)
     {
@@ -71,6 +78,22 @@ void lsp_analyzer::analyze(
     }
 
     assign_statement_occurences();
+}
+
+void lsp_analyzer::analyze_preproc(
+    const semantics::preprocessor_statement* statement, statement_provider_kind prov_kind, processing_kind proc_kind)
+{
+    if (auto endevor_stmt = dynamic_cast<const semantics::endevor_statement*>(statement); endevor_stmt)
+    {
+        occurence_collector collector(lsp::occurence_kind::INSTR, hlasm_ctx_, stmt_occurences_);
+        collect_occurence(endevor_stmt->instruction_ref(), collector);
+
+        auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(
+            statement->operands_ref().value.front()->access_asm()->access_expr()->expression.get());
+
+        if (sym_expr)
+            add_copy_operand(sym_expr->value, sym_expr->get_range());
+    }
 }
 
 void lsp_analyzer::macrodef_started(const macrodef_start_data& data)
@@ -253,7 +276,8 @@ void lsp_analyzer::collect_copy_operands(const processing::resolved_statement& s
 {
     const auto& opcode = statement.opcode_ref().value;
     const auto& operands = statement.operands_ref().value;
-    if (opcode == hlasm_ctx_.ids().well_known.COPY && operands.size() == 1 && operands.front()->access_asm())
+    if ((opcode == hlasm_ctx_.ids().well_known.COPY && operands.size() == 1 && operands.front()->access_asm())
+        || (*opcode == "MEMBER" && operands.size() == 1 && operands.front()->access_asm()))
     {
         auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(
             operands.front()->access_asm()->access_expr()->expression.get());

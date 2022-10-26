@@ -87,6 +87,8 @@ class opencode_provider final : public statement_provider
             copy,
             ainsert,
         } source;
+
+        preprocessor_type preproc_type;
     } m_current_logical_line_source;
 
     std::deque<std::string> m_ainsert_buffer;
@@ -158,6 +160,12 @@ private:
         const processing_status& proc_status,
         bool unlimited_line);
 
+    std::shared_ptr<const context::hlasm_statement> process_line(const statement_processor& proc,
+        semantics::collector& collector,
+        const std::optional<std::string>& op_text,
+        const range& op_range,
+        diagnostic_op_consumer* diags,
+        const bool lookahead);
     std::shared_ptr<const context::hlasm_statement> process_lookahead(const statement_processor& proc,
         semantics::collector& collector,
         const std::optional<std::string>& op_text,
@@ -166,6 +174,22 @@ private:
         semantics::collector& collector,
         const std::optional<std::string>& op_text,
         const range& op_range,
+        diagnostic_op_consumer* diags);
+    std::shared_ptr<const context::hlasm_statement> process_preprocessor_line(const statement_processor& proc,
+        semantics::collector& collector,
+        std::string_view text,
+        diagnostic_op_consumer* diags);
+    std::shared_ptr<const context::hlasm_statement> process_db2(const statement_processor& proc,
+        semantics::collector& collector,
+        std::string_view text,
+        diagnostic_op_consumer* diags);
+    std::shared_ptr<const context::hlasm_statement> process_endevor(const statement_processor& proc,
+        semantics::collector& collector,
+        std::string text,
+        diagnostic_op_consumer* diags);
+    std::shared_ptr<const context::hlasm_statement> process_cics(const statement_processor& proc,
+        semantics::collector& collector,
+        std::string_view text,
         diagnostic_op_consumer* diags);
 
     bool try_running_preprocessor();

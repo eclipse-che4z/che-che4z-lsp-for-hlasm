@@ -14,6 +14,8 @@
 
 #include "opencode_provider.h"
 
+#include <regex>
+
 #include "analyzer.h"
 #include "hlasmparser_multiline.h"
 #include "lexing/token_stream.h"
@@ -23,6 +25,7 @@
 #include "processing/error_statement.h"
 #include "semantics/collector.h"
 #include "semantics/range_provider.h"
+#include "semantics/statement.h"
 #include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -206,6 +209,27 @@ void opencode_provider::generate_continuation_error_messages(diagnostic_op_consu
     }
 }
 
+std::shared_ptr<const context::hlasm_statement> opencode_provider::process_line(const statement_processor& proc,
+    semantics::collector& collector,
+    const std::optional<std::string>& op_text,
+    const range& op_range,
+    diagnostic_op_consumer* diags,
+    const bool lookahead)
+{
+    std::shared_ptr<const context::hlasm_statement> ret_val;
+
+    ret_val = lookahead ? process_lookahead(proc, collector, op_text, op_range)
+                        : process_ordinary(proc, collector, op_text, op_range, diags);
+
+    if (ret_val)
+        if (m_current_logical_line.segments.size() > 1)
+            m_ctx->hlasm_ctx->metrics.continued_statements++;
+        else
+            m_ctx->hlasm_ctx->metrics.non_continued_statements++;
+
+    return ret_val;
+}
+
 std::shared_ptr<const context::hlasm_statement> opencode_provider::process_lookahead(const statement_processor& proc,
     semantics::collector& collector,
     const std::optional<std::string>& op_text,
@@ -229,14 +253,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
         collector.append_operand_field(std::move(h.parser->get_collector()));
     }
     range statement_range(position(m_current_logical_line_source.begin_line, 0)); // assign default
-    auto result = collector.extract_statement(proc_status, statement_range);
-
-    if (m_current_logical_line.segments.size() > 1)
-        m_ctx->hlasm_ctx->metrics.continued_statements++;
-    else
-        m_ctx->hlasm_ctx->metrics.non_continued_statements++;
-
-    return result;
+    return collector.extract_statement(proc_status, statement_range);
 }
 
 constexpr bool is_multiline(std::string_view v)
@@ -361,14 +378,112 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
             *m_state_listener))
         return nullptr;
 
-    if (m_current_logical_line.segments.size() > 1)
-        m_ctx->hlasm_ctx->metrics.continued_statements++;
-    else
-        m_ctx->hlasm_ctx->metrics.non_continued_statements++;
-
     m_src_proc->process_hl_symbols(collector.extract_hl_symbols());
 
     return result;
+}
+
+std::shared_ptr<const context::hlasm_statement> opencode_provider::process_preprocessor_line(
+    const statement_processor& proc,
+    semantics::collector& collector,
+    std::string_view text,
+    diagnostic_op_consumer* diags)
+{
+    std::shared_ptr<const context::hlasm_statement> ret_val;
+    m_ctx->hlasm_ctx->set_source_position(position(m_current_logical_line_source.begin_line, 0));
+
+    switch (m_current_logical_line_source.preproc_type)
+    {
+        case preprocessor_type::DB2:
+            ret_val = process_db2(proc, collector, text, diags);
+            break;
+        case preprocessor_type::ENDEVOR:
+            ret_val = process_endevor(proc, collector, std::string(text), diags);
+            break;
+        case preprocessor_type::CICS:
+            ret_val = process_cics(proc, collector, text, diags);
+            break;
+        default:
+            ret_val = nullptr;
+    }
+
+    if (ret_val)
+        if (m_current_logical_line.segments.size() > 1)
+            m_ctx->hlasm_ctx->metrics.continued_statements++;
+        else
+            m_ctx->hlasm_ctx->metrics.non_continued_statements++;
+
+    return ret_val;
+}
+
+std::shared_ptr<const context::hlasm_statement> opencode_provider::process_db2(const statement_processor& proc,
+    semantics::collector& collector,
+    std::string_view text,
+    diagnostic_op_consumer* diags)
+{
+    return nullptr;
+}
+
+std::shared_ptr<const context::hlasm_statement> opencode_provider::process_endevor(const statement_processor& proc,
+    semantics::collector& collector,
+    std::string text,
+    diagnostic_op_consumer* diags)
+{
+    std::match_results<std::string::iterator> matches;
+    static std::regex include_regex(R"(^(-INC|\+\+INCLUDE)(\s+)(\S+)((\s+)(\S+))?)");
+
+    if (!std::regex_search(text.begin(), text.end(), matches, include_regex))
+    {
+        return nullptr;
+    }
+
+    auto line_no = m_current_logical_line_source.begin_line;
+    std::string_view inc(std::to_address(matches[1].first), matches[1].length());
+
+    size_t spaces_1 = matches[2].str().length();
+    std::string_view member(std::to_address(matches[3].first), matches[3].length());
+    auto member_start = inc.size() + spaces_1;
+    auto member_range = range(position(line_no, member_start), position(line_no, member_start + member.size()));
+
+    size_t spaces_2 = matches[4].str().length();
+    std::string_view remark(std::to_address(matches[5].first), matches[5].length());
+    auto remark_start = member_start + member.size() + spaces_2;
+    auto remark_end = remark_start + remark.size();
+
+    //collector.set_label_field(std::string(member), range(position(line_no, 0), position(line_no, inc.size())));
+    //collector.set_instruction_field(m_ctx->hlasm_ctx->ids().add(std::string(member)),
+    //    range(position(line_no, member_start), position(line_no, member_start + member.size())));
+    //collector.set_operand_remark_field(semantics::operand_list(),
+    //    semantics::remark_list(),
+    //    range(position(line_no, remark_start), position(line_no, remark_start + remark.size())));
+
+    collector.set_instruction_field(
+        m_ctx->hlasm_ctx->ids().add(std::string(inc)), range(position(line_no, 0), position(line_no, inc.size())));
+
+    auto tmp = std::make_unique<expressions::mach_expr_symbol>(
+        m_ctx->hlasm_ctx->ids().add(std::string(member)), nullptr, member_range);
+    semantics::operand_list ops;
+    ops.emplace_back(
+        std::make_unique<semantics::expr_assembler_operand>(std::move(tmp), std::string(member), member_range));
+
+    collector.set_operand_remark_field(std::move(ops),
+        semantics::remark_list(),
+        range(position(line_no, remark_start), position(line_no, remark_start + remark.size())));
+
+    return std::make_shared<semantics::endevor_statement>(
+        semantics::instruction_si(collector.current_instruction().field_range),
+        std::move(collector.current_operands()),
+        collector.current_remarks(),
+        range(position(line_no, 0), position(line_no, remark_start + remark.size())),
+        std::vector<diagnostic_op>());
+}
+
+std::shared_ptr<const context::hlasm_statement> opencode_provider::process_cics(const statement_processor& proc,
+    semantics::collector& collector,
+    std::string_view text,
+    diagnostic_op_consumer* diags)
+{
+    return nullptr;
 }
 
 utils::resource::resource_location generate_virtual_file_name(virtual_file_id id, std::string_view name)
@@ -555,6 +670,12 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
     if (!lookahead)
         ph.parser->set_diagnoser(diag_target);
 
+
+    if (auto ret_val =
+            process_preprocessor_line(proc, collector, m_current_logical_line.segments.front().line, diag_target);
+        ret_val)
+        return ret_val;
+
     const auto& [op_text, op_range] = lookahead ? ph.look_lab_instr() : ph.lab_instr();
     ph.parser->get_collector().resolve_first_part();
 
@@ -579,8 +700,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
     m_ctx->hlasm_ctx->set_source_indices(
         m_current_logical_line_source.first_index, m_current_logical_line_source.last_index);
 
-    return lookahead ? process_lookahead(proc, collector, op_text, op_range)
-                     : process_ordinary(proc, collector, op_text, op_range, diag_target);
+    return process_line(proc, collector, op_text, op_range, diag_target, lookahead);
 }
 
 bool opencode_provider::finished() const
@@ -745,6 +865,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
             m_current_logical_line_source.first_index = first_index;
             m_current_logical_line_source.last_index = m_next_line_index;
             m_current_logical_line_source.source = logical_line_origin::source_type::file;
+            m_current_logical_line_source.preproc_type = current_line.preprocessor_used();
 
             return extract_next_logical_line_result::process;
         }
@@ -754,7 +875,10 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
         return extract_next_logical_line_result::failed;
 
     const auto first_index = m_next_line_index;
+
     const auto current_lineno = m_input_document.at(m_next_line_index).lineno().value();
+    m_current_logical_line_source.preproc_type = m_input_document.at(m_next_line_index).preprocessor_used();
+
     while (m_next_line_index < m_input_document.size())
     {
         const auto& current_line = m_input_document.at(m_next_line_index++);

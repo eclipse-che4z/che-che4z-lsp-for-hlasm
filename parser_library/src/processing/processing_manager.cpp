@@ -118,7 +118,8 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
             for (auto& a : stms_analyzers_)
                 a->analyze(*stmt, prov.kind, proc.kind);
 
-            proc.process_statement(std::move(stmt));
+            if (auto prepro_stmt = stmt->access_preproc(); !prepro_stmt)
+                proc.process_statement(std::move(stmt));
         }
     }
 }
