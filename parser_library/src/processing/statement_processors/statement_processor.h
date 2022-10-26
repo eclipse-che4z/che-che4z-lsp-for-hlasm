@@ -29,7 +29,7 @@ using processor_ptr = std::unique_ptr<statement_processor>;
 
 // interface for statement processors
 // they are provided statements which they process in different fashion
-// their processing can be interruped by changing the provider (with 'terminal_condition') and they can end their
+// their processing can be interrupted by changing the provider (with 'terminal_condition') and they can end their
 // processing when their need for statements is satisfied
 class statement_processor : public diagnosable_ctx
 {

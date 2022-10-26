@@ -276,8 +276,7 @@ void lsp_analyzer::collect_copy_operands(const processing::resolved_statement& s
 {
     const auto& opcode = statement.opcode_ref().value;
     const auto& operands = statement.operands_ref().value;
-    if ((opcode == hlasm_ctx_.ids().well_known.COPY && operands.size() == 1 && operands.front()->access_asm())
-        || (*opcode == "MEMBER" && operands.size() == 1 && operands.front()->access_asm()))
+    if (opcode == hlasm_ctx_.ids().well_known.COPY && operands.size() == 1 && operands.front()->access_asm())
     {
         auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(
             operands.front()->access_asm()->access_expr()->expression.get());
