@@ -469,6 +469,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_endev
         token_info(range(position(line_no, member_start), position(line_no, member_start + member.size())),
             semantics::hl_scopes::operand));
 
+    m_ctx->hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
     m_src_proc->process_hl_symbols(collector.extract_hl_symbols());
     return std::make_shared<semantics::endevor_statement>(
         semantics::instruction_si(collector.current_instruction().field_range),
