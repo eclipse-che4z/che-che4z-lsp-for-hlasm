@@ -407,12 +407,6 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_prepr
             ret_val = nullptr;
     }
 
-    if (ret_val)
-        if (m_current_logical_line.segments.size() > 1)
-            m_ctx->hlasm_ctx->metrics.continued_statements++;
-        else
-            m_ctx->hlasm_ctx->metrics.non_continued_statements++;
-
     return ret_val;
 }
 
@@ -558,7 +552,7 @@ bool opencode_provider::try_running_preprocessor()
     }
     else
     {
-        assert(preprocessor_text == new_file->second); // isn't moved if insert fails
+        assert(preprocessor_text == new_file->second); // Visual studio complains but it isn't moved if insert fails
     }
 
     m_ctx->hlasm_ctx->enter_copy_member(virtual_file_name);

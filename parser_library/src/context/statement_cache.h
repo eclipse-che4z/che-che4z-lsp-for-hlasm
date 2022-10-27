@@ -26,7 +26,7 @@ struct complete_statement;
 namespace hlasm_plugin::parser_library::context {
 
 // storage used to store one deferred statement in many parsed formats
-// used by macro and copy definition to avoid multiple re-parsing of a deferrend stataments
+// used by macro and copy definition to avoid multiple re-parsing of a deferred statements
 class statement_cache
 {
 public:
