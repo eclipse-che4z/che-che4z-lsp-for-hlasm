@@ -32,6 +32,9 @@
 - T attribute of a USING label may be incorrect when the label is mentioned in the macro name field
 - Missing special case handling when triggering a lookahead mode
 
+### Changed
+- DB2 preprocessor produces more accurate output
+
 ## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
 
 #### Added

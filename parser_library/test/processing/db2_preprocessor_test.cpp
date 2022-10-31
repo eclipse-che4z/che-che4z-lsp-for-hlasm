@@ -954,3 +954,53 @@ TEST(db2_preprocessor, preprocessor_continuation_overflow)
 
     EXPECT_FALSE(a.diags().empty());
 }
+
+TEST(db2_preprocessor, line_comment)
+{
+    std::string input = R"(
+B   DS   0C
+    EXEC SQL                -- comment                                 X
+               DECLARE C CURSOR FOR SELECT 1 FROM TABLE
+E   DS   0C
+LEN EQU  E-B
+)";
+
+    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 0);
+}
+
+TEST(db2_preprocessor, hostvar_like_string)
+{
+    std::string input = R"(
+    USING *,12
+    USING SQLDSECT,11
+Q1  DS    0C
+    EXEC  SQL SELECT 1 INTO :A FROM TABLE
+L1  EQU   *-Q1
+Q2  DS    0C
+    EXEC  SQL SELECT 1 INTO :A FROM TABLE WHERE X = ': NOT HOSTVAR'
+L2  EQU   *-Q2
+A   DS    F
+    EXEC  SQL INCLUDE SQLCA
+    END
+)";
+
+    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    auto l1 = get_symbol_abs(a.hlasm_ctx(), "L1");
+    auto l2 = get_symbol_abs(a.hlasm_ctx(), "L2");
+
+    EXPECT_TRUE(l1.has_value());
+    EXPECT_TRUE(l2.has_value());
+
+    EXPECT_EQ(l1, l2);
+}
