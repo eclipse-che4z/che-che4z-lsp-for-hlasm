@@ -20,10 +20,12 @@
 #include "statement_analyzers/lsp_analyzer.h"
 #include "statement_processors/copy_processor.h"
 #include "statement_processors/empty_processor.h"
+#include "statement_processors/endevor_processor.h"
 #include "statement_processors/lookahead_processor.h"
 #include "statement_processors/macrodef_processor.h"
 #include "statement_processors/ordinary_processor.h"
 #include "statement_providers/copy_statement_provider.h"
+#include "statement_providers/endevor_statement_provider.h"
 #include "statement_providers/macro_statement_provider.h"
 
 namespace hlasm_plugin::parser_library::processing {

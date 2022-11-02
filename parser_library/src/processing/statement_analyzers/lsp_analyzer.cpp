@@ -39,13 +39,6 @@ lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& 
 void lsp_analyzer::analyze(
     const context::hlasm_statement& statement, statement_provider_kind prov_kind, processing_kind proc_kind)
 {
-    if (auto preproc_stmt = statement.access_preproc(); preproc_stmt)
-    {
-        analyze_preproc(preproc_stmt, prov_kind, proc_kind);
-        assign_statement_occurences();
-        return;
-    }
-
     const auto* resolved_stmt = statement.access_resolved();
     switch (proc_kind)
     {

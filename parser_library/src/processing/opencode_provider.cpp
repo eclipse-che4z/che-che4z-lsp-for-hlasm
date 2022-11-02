@@ -22,10 +22,12 @@
 #include "library_info_transitional.h"
 #include "parsing/error_strategy.h"
 #include "parsing/parser_impl.h"
+#include "preprocessor_analyzer.h"
 #include "processing/error_statement.h"
 #include "semantics/collector.h"
 #include "semantics/range_provider.h"
 #include "semantics/statement.h"
+#include "statement_analyzers/endevor_analyzer.h"
 #include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -509,8 +511,24 @@ size_t extract_current_line(size_t next_line_index, const document& doc)
 
 bool opencode_provider::try_running_preprocessor()
 {
-    if (m_next_line_index >= m_input_document.size() || m_input_document.at(m_next_line_index).is_original())
+    if (m_next_line_index >= m_input_document.size()
+        || (m_input_document.at(m_next_line_index).is_original()
+            && m_input_document.at(m_next_line_index).preprocessor_used() == preprocessor_type::NONE))
         return false;
+
+    if (m_input_document.at(m_next_line_index).preprocessor_used() != preprocessor_type::NONE)
+    {
+        auto cur_line = m_next_line_index++;
+        auto orig_line = m_input_document.at(cur_line).lineno().value();
+        preprocessor_analyzer preproc_analyzer(std::string(m_input_document.at(cur_line).text()),
+            orig_line,
+            *m_ctx,
+            processing_kind::ENDEVOR,
+            *m_lib_provider);
+        preproc_analyzer.analyze();
+        m_src_proc->process_hl_symbols(preproc_analyzer.source_processor().semantic_tokens());
+        m_diagnoser->collect_diags_from_child(preproc_analyzer);
+    }
 
     const auto current_line = extract_current_line(m_next_line_index, m_input_document);
 
@@ -666,10 +684,10 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
         ph.parser->set_diagnoser(diag_target);
 
 
-    if (auto ret_val =
-            process_preprocessor_line(proc, collector, m_current_logical_line.segments.front().line, diag_target);
-        ret_val)
-        return ret_val;
+    // if (auto ret_val =
+    //         process_preprocessor_line(proc, collector, m_current_logical_line.segments.front().line, diag_target);
+    //     ret_val)
+    //     return ret_val;
 
     const auto& [op_text, op_range] = lookahead ? ph.look_lab_instr() : ph.lab_instr();
     ph.parser->get_collector().resolve_first_part();
