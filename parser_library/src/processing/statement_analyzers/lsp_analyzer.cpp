@@ -73,8 +73,6 @@ void lsp_analyzer::analyze(
     assign_statement_occurences();
 }
 
-
-
 void lsp_analyzer::macrodef_started(const macrodef_start_data& data)
 {
     in_macro_ = true;

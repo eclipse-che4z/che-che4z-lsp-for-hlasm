@@ -86,7 +86,6 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
     if (s->kind != context::statement_kind::RESOLVED)
         return;
 
-
     auto statement = std::static_pointer_cast<const processing::resolved_statement>(std::move(s));
 
     if (hlasm_ctx.get_end_reached())
