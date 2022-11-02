@@ -1,3 +1,45 @@
+## [1.5.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.4.0...1.5.0) (2022-11-02)
+
+
+### Features
+
+* Add support for SYSM_SEV and SYSM_HSEV system variables ([a2760c5](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/a2760c5918ac178246b00f241279856d05b85e80))
+* Add support for the SYSASM variable ([bb6e4e0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/bb6e4e0603dd97cf46365ac6b410631196b388d0))
+* Add support for z16 instructions ([af9f01f](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/af9f01f82fb447c78106ad43699ff3a9d7ef9b27))
+* Endevor Bridge for Git integration ([bda2fbc](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/bda2fbc6f6fc1c9e20e5d801a593947d89c0f446))
+* Line and block comment handling support ([fb0cf41](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/fb0cf41f4f0a4443585bd8028713b80cd2f55eca))
+* Support O and T attributes in machine expressions ([2ab7dde](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/2ab7dde27468e33e62fc8e9d701c05f551db06f9))
+
+
+### Other changes
+
+* use span in ca variable functions ([a7b4880](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/a7b4880dd7f50c727156497786e775c4bd58e9d8))
+* Variable concatenation ([a4741d0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/a4741d0bb64e245a5f927a3bd7dd6818c367f3c3))
+
+
+### Fixes
+
+* CA function unary operator ([6cc773f](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/6cc773f5227912f6e5e41acd994164c0f61eb1be))
+* DB2 preprocessor produces more accurate output ([072dca6](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/072dca64bc4d2956066c7c7c975fa0f1cca80a10))
+* Different GBL types of the same variable detection ([c25b963](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/c25b963d9661b22b7d410ef6a107cf4757feb85d))
+* Evaluation of O attribute must use the instruction set available at the point of use ([71d85d3](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/71d85d36e34fc4de8754351e459018e8c4795e48))
+* Evaluation of subscripted expressions in CA statements ([37f6235](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/37f6235d04c11c2d73d7b3ae8ee603820e882e9c))
+* False positive sequence symbol redefinition diagnostics generated ([211a860](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/211a860319f60542bdfd0721590768ba87dec9af))
+* Incorrect evaluation of the T attribute in EQU statement ([72dad69](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/72dad691a818b2c25775198026ced4321d3b3f56))
+* Incorrect implicit length computed for nominal values containing multibyte UTF-8 characters ([35d6d0b](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/35d6d0b5ff9848147016d507ac3f325f0cbdb925))
+* Incorrect ORG instruction behavior when operands contain EQUs ([e728819](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e728819f17da05c4279f6710b0e6eb9b6b121d54))
+* Incorrect parsing of multiline operands in macros ([a255e0a](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/a255e0a6717ff3519ce8054f834e4e2641744d3e))
+* Invalid substring may be generated when conditional assembly string contains multibyte UTF-8 characters ([af0eeb5](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/af0eeb5796eb61e9b2238f1854fa74b5ba2e560f))
+* Library diagnostics point to a respective configuration file ([7c7d7a0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/7c7d7a07360c8245cf5732c6c1be5e9ae40983ad))
+* Missing special case handling when triggering the lookahead mode ([465985c](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/465985ce832a69ca81e855284c17ce4d2d8b632e))
+* Produce only a warning when immediate operand overflows in machine instructions ([0b5806e](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/0b5806e56233cedf8f503669386dc25104d741b5))
+* Relax PROCESS operand validation ([466e690](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/466e690a621ba9e0d0491ad8abe94f2266d5a7bd))
+* Self-defining terms are incorrectly parsed in machine expressions ([886c2c0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/886c2c07d386f7223fcf191c66d71c9a51d2b0a6))
+* Syntax error while parsing the END language operands ([c6b8b97](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/c6b8b976cc00af313735b13251018f0e435f13d5))
+* T attribute of a USING label may be incorrect when the label is mentioned in the macro name field ([2015913](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/201591332b51ef157471c269db17e681794825b9))
+* TITLE instruction name field support ([1df0fa2](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/1df0fa2478a4ad80ef52473f2f6b3c216194bb5e))
+* Utilize alignment information during dependency evaluation ([fd9d73a](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/fd9d73a4d7d959cf4c0a180f7428d29d00167af6))
+
 ## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
 
 
