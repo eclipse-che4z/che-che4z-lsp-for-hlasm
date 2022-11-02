@@ -86,11 +86,6 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
     if (s->kind != context::statement_kind::RESOLVED)
         return;
 
-    if (auto prepro_stmt = s->access_preproc(); prepro_stmt)
-    {
-        asm_proc_.process_copy(*prepro_stmt, ctx, lib_provider, this);
-        return;
-    }
 
     auto statement = std::static_pointer_cast<const processing::resolved_statement>(std::move(s));
 

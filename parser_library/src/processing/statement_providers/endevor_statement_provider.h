@@ -24,8 +24,6 @@ namespace hlasm_plugin::parser_library::processing {
 class endevor_statement_provider : public statement_provider
 {
 public:
-    //endevor_statement_provider(std::string text, analyzing_context ctx);
-
     endevor_statement_provider(
         std::string text, analyzing_context ctx, size_t line_no, semantics::source_info_processor& src_proc);
 

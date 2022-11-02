@@ -56,10 +56,6 @@ public:
     void opencode_finished();
 
 private:
-    void analyze_preproc(const semantics::preprocessor_statement* statement,
-        statement_provider_kind prov_kind,
-        processing_kind proc_kind);
-
     void assign_statement_occurences();
 
     void collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement);
