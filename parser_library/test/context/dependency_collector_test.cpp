@@ -48,15 +48,15 @@ TEST(dependency_collector, uresolved_addresses)
     // ((SYM2-SYM1)/(SYM2-SYM1))+SYM2
     mach_expr_binary<add> expr(std::make_unique<mach_expr_binary<expressions::div>>(
                                    std::make_unique<mach_expr_binary<expressions::sub>>(
-                                       std::make_unique<mach_expr_symbol>(name2, nullptr, range()),
-                                       std::make_unique<mach_expr_symbol>(name1, nullptr, range()),
+                                       std::make_unique<mach_expr_symbol>(name2, id_index(), range()),
+                                       std::make_unique<mach_expr_symbol>(name1, id_index(), range()),
                                        range()),
                                    std::make_unique<mach_expr_binary<expressions::sub>>(
-                                       std::make_unique<mach_expr_symbol>(name2, nullptr, range()),
-                                       std::make_unique<mach_expr_symbol>(name1, nullptr, range()),
+                                       std::make_unique<mach_expr_symbol>(name2, id_index(), range()),
+                                       std::make_unique<mach_expr_symbol>(name1, id_index(), range()),
                                        range()),
                                    range()),
-        std::make_unique<mach_expr_symbol>(name2, nullptr, range()),
+        std::make_unique<mach_expr_symbol>(name2, id_index(), range()),
         range());
 
     context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx, library_info_transitional::empty);

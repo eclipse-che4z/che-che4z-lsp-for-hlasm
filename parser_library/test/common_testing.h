@@ -48,7 +48,11 @@ std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_l
 template<typename T>
 std::optional<T> get_var_value(hlasm_context& ctx, std::string name)
 {
-    auto var = ctx.get_var_sym(ctx.ids().find(name));
+    auto id = ctx.ids().find(name);
+    if (!id.has_value())
+        return std::nullopt;
+
+    auto var = ctx.get_var_sym(id.value());
     if (!var)
         return std::nullopt;
 
@@ -68,7 +72,11 @@ std::optional<T> get_var_value(hlasm_context& ctx, std::string name)
 template<typename T>
 std::optional<std::vector<T>> get_var_vector(hlasm_context& ctx, std::string name)
 {
-    auto var = ctx.get_var_sym(ctx.ids().find(name));
+    auto id = ctx.ids().find(name);
+    if (!id.has_value())
+        return std::nullopt;
+
+    auto var = ctx.get_var_sym(id.value());
     if (!var)
         return std::nullopt;
 
@@ -99,7 +107,11 @@ std::optional<std::vector<T>> get_var_vector(hlasm_context& ctx, std::string nam
 template<typename T>
 std::optional<std::unordered_map<size_t, T>> get_var_vector_map(hlasm_context& ctx, std::string name)
 {
-    auto var = ctx.get_var_sym(ctx.ids().find(name));
+    auto id = ctx.ids().find(name);
+    if (!id.has_value())
+        return std::nullopt;
+
+    auto var = ctx.get_var_sym(id.value());
     if (!var)
         return std::nullopt;
 
@@ -198,28 +210,28 @@ inline bool contains_message_text(const std::vector<Msg>& d, const C& c)
 inline const section* get_section(hlasm_context& ctx, std::string name)
 {
     auto sect = ctx.ids().find(std::move(name));
-    if (!sect)
+    if (!sect.has_value())
         return nullptr;
 
-    return ctx.ord_ctx.get_section(sect);
+    return ctx.ord_ctx.get_section(sect.value());
 }
 
 inline const symbol* get_symbol(hlasm_context& ctx, std::string name)
 {
     auto symbol = ctx.ids().find(std::move(name));
-    if (!symbol)
+    if (!symbol.has_value())
         return nullptr;
 
-    return ctx.ord_ctx.get_symbol(symbol);
+    return ctx.ord_ctx.get_symbol(symbol.value());
 }
 
 inline std::optional<symbol_value::abs_value_t> get_symbol_abs(hlasm_context& ctx, std::string name)
 {
     auto symbol = ctx.ids().find(std::move(name));
-    if (!symbol)
+    if (!symbol.has_value())
         return std::nullopt;
 
-    auto s = ctx.ord_ctx.get_symbol(symbol);
+    auto s = ctx.ord_ctx.get_symbol(symbol.value());
     if (!s || s->kind() != symbol_value_kind::ABS)
         return std::nullopt;
 
@@ -229,10 +241,10 @@ inline std::optional<symbol_value::abs_value_t> get_symbol_abs(hlasm_context& ct
 inline std::optional<symbol_value::reloc_value_t> get_symbol_reloc(hlasm_context& ctx, std::string name)
 {
     auto symbol = ctx.ids().find(std::move(name));
-    if (!symbol)
+    if (!symbol.has_value())
         return std::nullopt;
 
-    auto s = ctx.ord_ctx.get_symbol(symbol);
+    auto s = ctx.ord_ctx.get_symbol(symbol.value());
     if (!s || s->kind() != symbol_value_kind::RELOC)
         return std::nullopt;
 
@@ -242,10 +254,10 @@ inline std::optional<symbol_value::reloc_value_t> get_symbol_reloc(hlasm_context
 inline std::optional<std::pair<int, std::string>> get_symbol_address(hlasm_context& ctx, std::string name)
 {
     auto symbol = ctx.ids().find(std::move(name));
-    if (!symbol)
+    if (!symbol.has_value())
         return std::nullopt;
 
-    auto s = ctx.ord_ctx.get_symbol(symbol);
+    auto s = ctx.ord_ctx.get_symbol(symbol.value());
     if (!s || s->kind() != symbol_value_kind::RELOC)
         return std::nullopt;
 
@@ -254,7 +266,7 @@ inline std::optional<std::pair<int, std::string>> get_symbol_address(hlasm_conte
     if (val.bases().size() != 1 && val.bases().front().second != 1)
         return std::nullopt;
 
-    return std::pair<int, std::string>(val.offset(), *val.bases().front().first.owner->name);
+    return std::pair<int, std::string>(val.offset(), val.bases().front().first.owner->name.to_string());
 }
 
 #endif

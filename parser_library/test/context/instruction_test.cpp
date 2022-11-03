@@ -90,11 +90,11 @@ TEST_P(instruction_sets_fixture, instruction_set_loading)
 
         if (instr.second.find(instr_set) == instr.second.end())
         {
-            EXPECT_TRUE(id == nullptr) << "For instructions: " << instr.first;
+            EXPECT_FALSE(id.has_value()) << "For instructions: " << instr.first;
         }
         else
         {
-            EXPECT_TRUE(id != nullptr) << "For instructions: " << instr.first;
+            EXPECT_TRUE(id.has_value()) << "For instructions: " << instr.first;
         }
     }
 }

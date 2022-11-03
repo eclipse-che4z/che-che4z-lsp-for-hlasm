@@ -548,7 +548,7 @@ public:
         assert(transform.size() <= m_transform.size());
         std::copy(transform.begin(), transform.end(), m_transform.begin());
         const auto insert_count = std::count_if(transform.begin(), transform.end(), [](auto t) { return t.insert; });
-        const auto total = std::accumulate(
+        [[maybe_unused]] const auto total = std::accumulate(
             transform.begin(), transform.end(), (size_t)0, [](size_t res, auto t) { return res + t.skip + t.insert; });
         assert(total <= instr->operands().size());
 
@@ -557,7 +557,7 @@ public:
         assert(m_op_max <= instr->operands().size());
         assert(m_op_min <= m_op_max);
 
-        for (const auto& r : transform)
+        for ([[maybe_unused]] const auto& r : transform)
             assert(!r.has_source() || r.source < m_op_max);
     }
 

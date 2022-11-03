@@ -28,9 +28,8 @@ TEST(ca_symbol, undefined_attributes)
     context::hlasm_context ctx;
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
-    std::string name = "n";
 
-    ca_symbol sym(&name, range());
+    ca_symbol sym(ctx.ids().add("n"), range());
 
     auto res = sym.get_undefined_attributed_symbols(eval_ctx);
 
@@ -41,17 +40,18 @@ TEST(ca_symbol, resolve_expr_tree)
 {
     diagnostic_adder add_diags;
 
-    ca_symbol sym(nullptr, range());
     diagnostic_op_consumer_container diags;
 
-    sym.resolve_expression_tree({ context::SET_t_enum::C_TYPE, context::SET_t_enum::C_TYPE, true }, diags);
+    ca_symbol(context::id_index(), range())
+        .resolve_expression_tree({ context::SET_t_enum::C_TYPE, context::SET_t_enum::C_TYPE, true }, diags);
 
     EXPECT_FALSE(diags.diags.empty());
 }
 
 TEST(ca_symbol, is_char)
 {
-    EXPECT_FALSE(ca_symbol(nullptr, range()).is_character_expression(character_expression_purpose::assignment));
     EXPECT_FALSE(
-        ca_symbol(nullptr, range()).is_character_expression(character_expression_purpose::left_side_of_comparison));
+        ca_symbol(context::id_index(), range()).is_character_expression(character_expression_purpose::assignment));
+    EXPECT_FALSE(ca_symbol(context::id_index(), range())
+                     .is_character_expression(character_expression_purpose::left_side_of_comparison));
 }

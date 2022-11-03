@@ -36,7 +36,7 @@ id_index literal_pool::add_literal(const std::string& literal_text,
     bool align_on_halfword)
 {
     unique_id = dd->references_loctr ? unique_id : 0;
-    if (auto lit = get_literal(m_current_literal_pool_generation, dd, unique_id))
+    if (auto lit = get_literal(m_current_literal_pool_generation, dd, unique_id); !lit.empty())
         return lit;
 
     auto [it, inserted] = m_literals.try_emplace(
@@ -62,7 +62,7 @@ id_index literal_pool::add_literal(const std::string& literal_text,
     }
     it->second.align_on_halfword |= align_on_halfword;
 
-    return &it->second.text;
+    return id_index(&it->second.text);
 }
 
 id_index literal_pool::get_literal(
@@ -71,8 +71,8 @@ id_index literal_pool::get_literal(
     unique_id = dd->references_loctr ? unique_id : 0;
     auto it = m_literals_genmap.find(literal_id { generation, unique_id, dd });
     if (it == m_literals_genmap.end())
-        return nullptr;
-    return &it->second->second.text;
+        return id_index();
+    return id_index(&it->second->second.text);
 }
 
 bool literal_pool::defined_for_ca_expr(std::shared_ptr<const expressions::data_definition> dd) const
@@ -192,7 +192,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
 
         // TODO: warn on align > sectalign
 
-        bool cycle_ok = ord_ctx.create_symbol(&lit_val.text,
+        bool cycle_ok = ord_ctx.create_symbol(id_index(&lit_val.text),
             ord_ctx.align(lit_val.align_on_halfword ? halfword : no_align, li),
             symbol_attributes(symbol_origin::DAT,
                 ebcdic_encoding::a2e[(unsigned char)lit->get_type_attribute()],

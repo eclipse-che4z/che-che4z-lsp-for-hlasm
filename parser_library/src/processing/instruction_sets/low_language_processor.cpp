@@ -45,27 +45,28 @@ context::id_index low_language_processor::find_label_symbol(const rebuilt_statem
     if (const auto& label = stmt.label_ref(); label.type == semantics::label_si_type::ORD)
     {
         diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
-        auto [valid, id] = hlasm_ctx.try_get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol);
+        auto [valid, id] =
+            hlasm_ctx.try_get_symbol_name(std::get<semantics::ord_symbol_string>(label.value).symbol.to_string_view());
         if (!valid)
             diags.add_diagnostic(diagnostic_op::error_E065(label.field_range));
         return id;
     }
     else
-        return context::id_storage::empty_id;
+        return context::id_index();
 }
 
 context::id_index low_language_processor::find_using_label(const rebuilt_statement& stmt) const
 {
     if (const auto& label = stmt.label_ref(); label.type == semantics::label_si_type::ORD)
     {
-        if (auto [valid, id] =
-                hlasm_ctx.try_get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol);
+        if (auto [valid, id] = hlasm_ctx.try_get_symbol_name(
+                std::get<semantics::ord_symbol_string>(label.value).symbol.to_string_view());
             valid)
             return id;
 
         add_diagnostic(diagnostic_op::error_E065(label.field_range));
     }
-    return nullptr;
+    return context::id_index();
 }
 
 bool low_language_processor::create_symbol(
@@ -128,7 +129,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
             }
             break;
         case label_si_type::MAC:
-            if (*stmt.opcode_ref().value != "TITLE")
+            if (stmt.opcode_ref().value.to_string_view() != "TITLE")
                 add_diagnostic(diagnostic_op::error_E057(label_ref.field_range));
             break;
         case label_si_type::SEQ:
@@ -180,7 +181,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     // operands obtained from the user
     const auto& operands = stmt.operands_ref().value;
     // the name of the instruction (mnemonic) obtained from the user
-    const auto& instr_name = *stmt.opcode_ref().value;
+    auto instr_name = stmt.opcode_ref().value.to_string_view();
     // the machine instruction structure associated with the given instruction name
     auto curr_instr = mnemonic.instruction();
 
@@ -331,7 +332,7 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 
     const auto& ev_op = dynamic_cast<const semantics::evaluable_operand&>(*op);
 
-    auto tmp = context::instruction::find_assembler_instructions(*stmt.opcode_ref().value);
+    auto tmp = context::instruction::find_assembler_instructions(stmt.opcode_ref().value.to_string_view());
     const bool can_have_ord_syms = tmp ? tmp->has_ord_symbols() : true;
     const bool postpone_dependencies = tmp ? tmp->postpone_dependencies() : false;
 
@@ -339,7 +340,7 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     if (can_have_ord_syms && !postpone_dependencies && ev_op.has_dependencies(dep_solver, &missing_symbols))
     {
         for (const auto& symbol : missing_symbols)
-            add_diagnostic(diagnostic_op::error_E010("ordinary symbol", *symbol, ev_op.operand_range));
+            add_diagnostic(diagnostic_op::error_E010("ordinary symbol", symbol.to_string_view(), ev_op.operand_range));
         if (missing_symbols.empty()) // this is a fallback message if somehow non-symbolic deps are not resolved
             add_diagnostic(diagnostic_op::error_E016(ev_op.operand_range));
         return nullptr;
@@ -355,8 +356,9 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
         // TODO: this is less than ideal, we should probably create operand structures
         // with the correct "type" while parsing and reject incompatible arguments
         // early when the syntax is incompatible
-        const auto* instr = mnemonic ? mnemonic->instruction()
-                                     : &context::instruction::get_machine_instructions(*stmt.opcode_ref().value);
+        const auto* instr = mnemonic
+            ? mnemonic->instruction()
+            : &context::instruction::get_machine_instructions(stmt.opcode_ref().value.to_string_view());
         if (op_position < instr->operands().size())
         {
             uniq = mach_op->get_operand_value(dep_solver, instr->operands()[op_position], diags);
@@ -387,7 +389,7 @@ bool low_language_processor::check(const resolved_statement& stmt,
     std::vector<const checking::operand*> operand_ptr_vector;
     transform_result operand_vector;
 
-    std::string_view instruction_name = *stmt.opcode_ref().value;
+    std::string_view instruction_name = stmt.opcode_ref().value.to_string_view();
 
     if (auto mnem_tmp = context::instruction::find_mnemonic_codes(instruction_name))
     {

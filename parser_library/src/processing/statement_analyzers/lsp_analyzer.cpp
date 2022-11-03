@@ -186,7 +186,7 @@ void lsp_analyzer::collect_occurence(const semantics::instruction_si& instructio
         auto opcode = hlasm_ctx_.get_operation_code(
             std::get<context::id_index>(instruction.value)); // TODO: collect the instruction at the right time
         auto* macro_def = std::get_if<context::macro_def_ptr>(&opcode.opcode_detail);
-        if (opcode.opcode || macro_def)
+        if (!opcode.opcode.empty() || macro_def)
             collector.occurences.emplace_back(
                 opcode.opcode, macro_def ? std::move(*macro_def) : context::macro_def_ptr {}, instruction.field_range);
     }

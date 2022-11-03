@@ -50,9 +50,9 @@ private:
 
     struct SET_info
     {
-        context::set_symbol_base* symbol;
+        context::set_symbol_base* symbol = nullptr;
         context::id_index name;
-        int index;
+        int index = 0;
     };
 
     struct GLB_LCL_info

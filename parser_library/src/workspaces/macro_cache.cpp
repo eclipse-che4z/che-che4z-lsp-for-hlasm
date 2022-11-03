@@ -34,7 +34,7 @@ std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_
 {
     auto& wn = ctx.ids().well_known;
     // List of instructions that are resolved during macro definition - therefore are affected by OPSYN
-    std::array<context::id_index, 19> cached_instr {
+    std::array<context::id_index, 18> cached_instr {
         wn.COPY,
         wn.ASPACE,
         wn.GBLA,
@@ -57,7 +57,7 @@ std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_
 
     std::vector<cached_opsyn_mnemo> result;
 
-    context::id_index last_from {};
+    context::id_index last_from;
     auto& opcodes = ctx.opcode_mnemo_storage();
     for (auto it = opcodes.rbegin(); it != opcodes.rend(); ++it)
     {

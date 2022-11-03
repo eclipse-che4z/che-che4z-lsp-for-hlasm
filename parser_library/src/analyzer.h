@@ -52,7 +52,7 @@ class analyzer_options
     utils::resource::resource_location file_loc = utils::resource::resource_location("");
     workspaces::parse_lib_provider* lib_provider = nullptr;
     std::variant<asm_option, analyzing_context> ctx_source;
-    workspaces::library_data library_data = { processing::processing_kind::ORDINARY, context::id_storage::empty_id };
+    workspaces::library_data library_data = { processing::processing_kind::ORDINARY, context::id_index() };
     collect_highlighting_info collect_hl_info = collect_highlighting_info::no;
     file_is_opencode parsing_opencode = file_is_opencode::no;
     std::shared_ptr<context::id_storage> ids_init;

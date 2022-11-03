@@ -263,12 +263,12 @@ void lookahead_processor::assign_section_attributes(context::id_index symbol_nam
 
 void lookahead_processor::assign_machine_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
-    const auto& instr = [](const std::string& opcode) {
+    const auto& instr = [](std::string_view opcode) {
         if (auto mnemonic = context::instruction::find_mnemonic_codes(opcode))
             return *mnemonic->instruction();
         else
             return context::instruction::get_machine_instructions(opcode);
-    }(*statement.opcode_ref().value);
+    }(statement.opcode_ref().value.to_string_view());
 
     register_attr_ref(symbol_name,
         context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)instr.size_in_bits() / 8));
@@ -315,7 +315,7 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
         return;
 
     auto name = std::get<semantics::ord_symbol_string>(statement.label_ref().value).symbol;
-    auto [valid, id] = hlasm_ctx.try_get_symbol_name(*name);
+    auto [valid, id] = hlasm_ctx.try_get_symbol_name(name.to_string_view());
     if (!valid)
         return;
 

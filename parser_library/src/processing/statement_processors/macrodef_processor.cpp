@@ -87,8 +87,8 @@ void macrodef_processor::process_statement(context::shared_stmt_ptr statement)
 void macrodef_processor::end_processing()
 {
     if (!finished_flag_)
-        add_diagnostic(
-            diagnostic_op::error_E046(*result_.prototype.macro_name, range(hlasm_ctx.processing_stack_top().pos)));
+        add_diagnostic(diagnostic_op::error_E046(
+            result_.prototype.macro_name.to_string_view(), range(hlasm_ctx.processing_stack_top().pos)));
 
     hlasm_ctx.pop_statement_processing();
 
@@ -140,7 +140,7 @@ processing_status macrodef_processor::get_macro_processing_status(
     {
         processing_format format(processing_kind::MACRO, processing_form::CA, operand_occurence::ABSENT);
 
-        return std::make_pair(format, op_code(context::id_storage::empty_id, context::instruction_type::CA));
+        return std::make_pair(format, op_code(context::id_index(), context::instruction_type::CA));
     }
 
     processing_format format(processing_kind::MACRO, processing_form::DEFERRED);
@@ -165,7 +165,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
         if (!res_stmt || res_stmt->opcode_ref().value != macro_id)
         {
             range r = res_stmt ? res_stmt->stmt_range_ref() : range(statement.statement_position());
-            add_diagnostic(diagnostic_op::error_E059(*start_.external_name, r));
+            add_diagnostic(diagnostic_op::error_E059(start_.external_name.to_string_view(), r));
             result_.invalid = true;
             finished_flag_ = true;
             return;
@@ -245,7 +245,8 @@ void macrodef_processor::process_prototype_instruction(const resolved_statement&
     auto macro_name = statement.opcode_ref().value;
     if (start_.is_external && macro_name != start_.external_name)
     {
-        add_diagnostic(diagnostic_op::error_E060(*start_.external_name, statement.instruction_ref().field_range));
+        add_diagnostic(
+            diagnostic_op::error_E060(start_.external_name.to_string_view(), statement.instruction_ref().field_range));
         result_.invalid = true;
         finished_flag_ = true;
         return;
@@ -262,7 +263,7 @@ void macrodef_processor::process_prototype_operand(
     {
         if (op->type == operand_type::EMPTY)
         {
-            result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
+            result_.prototype.symbolic_params.emplace_back(nullptr);
             continue;
         }
 
@@ -307,7 +308,7 @@ void macrodef_processor::process_prototype_operand(
                 add_diagnostic(diagnostic_op::error_E043(op->operand_range));
         }
         else if (tmp_chain.empty()) // if operand is empty
-            result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
+            result_.prototype.symbolic_params.emplace_back(nullptr);
     }
 }
 
@@ -319,7 +320,7 @@ bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* 
     if (var->created || !var->subscript.empty())
     {
         add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
-        result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
+        result_.prototype.symbolic_params.emplace_back(nullptr);
         return false;
     }
 
@@ -329,7 +330,7 @@ bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* 
     {
         add_diagnostic(diagnostic_op::error_E011("Symbolic parameter", op_range));
         if (add_empty)
-            result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
+            result_.prototype.symbolic_params.emplace_back(nullptr);
         return false;
     }
     return true;

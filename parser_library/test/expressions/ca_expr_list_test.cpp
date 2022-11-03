@@ -34,13 +34,12 @@ TEST(ca_expr_list, unknown_function_to_operator)
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
-    std::string name = "AND";
     auto c = std::make_unique<ca_constant>(1, range());
     auto dupl = std::make_unique<ca_constant>(1, range());
     std::vector<ca_expr_ptr> params;
     params.emplace_back(std::move(c));
-    auto unknown_func =
-        std::make_unique<ca_function>(&name, ca_expr_funcs::UNKNOWN, std::move(params), std::move(dupl), range());
+    auto unknown_func = std::make_unique<ca_function>(
+        ctx.ids().add("AND"), ca_expr_funcs::UNKNOWN, std::move(params), std::move(dupl), range());
 
     std::vector<ca_expr_ptr> list;
     list.emplace_back(std::move(unknown_func));
@@ -61,8 +60,7 @@ TEST(ca_expr_list, resolve_C_type)
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
-    std::string name = "UPPER";
-    auto sym = std::make_unique<ca_symbol>(&name, range());
+    auto sym = std::make_unique<ca_symbol>(ctx.ids().add("UPPER"), range());
 
     concat_chain value;
     value.emplace_back(char_str_conc("low", range()));
@@ -82,8 +80,9 @@ TEST(ca_expr_list, resolve_C_type)
 
 TEST(ca_expr_list, get_undefined_attributed_symbols)
 {
-    std::string name = "X";
-    auto sym = std::make_unique<ca_symbol_attribute>(&name, context::data_attr_kind::L, range(), range());
+    context::hlasm_context ctx;
+
+    auto sym = std::make_unique<ca_symbol_attribute>(ctx.ids().add("X"), context::data_attr_kind::L, range(), range());
 
     concat_chain value;
     value.emplace_back(char_str_conc("low", range()));
@@ -95,7 +94,6 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
     // (L'X 'low')
     ca_expr_list expr_list(std::move(list), range(), true);
 
-    context::hlasm_context ctx;
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
     auto res = expr_list.get_undefined_attributed_symbols(eval_ctx);
@@ -120,6 +118,7 @@ TEST(ca_expr_list, is_character_expression)
 
 TEST(ca_expr_list, unfinished_expressions)
 {
+    context::hlasm_context ctx;
     // ()
     {
         diagnostic_op_consumer_container diags;
@@ -131,8 +130,7 @@ TEST(ca_expr_list, unfinished_expressions)
     // (NOT)
     {
         diagnostic_op_consumer_container diags;
-        std::string name = "NOT";
-        auto sym = std::make_unique<ca_symbol>(&name, range());
+        auto sym = std::make_unique<ca_symbol>(ctx.ids().add("NOT"), range());
 
         std::vector<ca_expr_ptr> list;
         list.emplace_back(std::move(sym));
@@ -147,8 +145,7 @@ TEST(ca_expr_list, unfinished_expressions)
         diagnostic_op_consumer_container diags;
         auto c = std::make_unique<ca_constant>(1, range());
 
-        std::string name = "AND";
-        auto sym = std::make_unique<ca_symbol>(&name, range());
+        auto sym = std::make_unique<ca_symbol>(ctx.ids().add("AND"), range());
 
         std::vector<ca_expr_ptr> list;
         list.emplace_back(std::move(c));
@@ -165,10 +162,8 @@ TEST(ca_expr_list, unfinished_expressions)
         auto c = std::make_unique<ca_constant>(1, range());
         auto c2 = std::make_unique<ca_constant>(1, range());
 
-        std::string and_name = "AND";
-        std::string eq_name = "EQ";
-        auto and_sym = std::make_unique<ca_symbol>(&and_name, range());
-        auto eq_sym = std::make_unique<ca_symbol>(&eq_name, range());
+        auto and_sym = std::make_unique<ca_symbol>(ctx.ids().add("AND"), range());
+        auto eq_sym = std::make_unique<ca_symbol>(ctx.ids().add("EQ"), range());
 
         std::vector<ca_expr_ptr> list;
         list.emplace_back(std::move(c));

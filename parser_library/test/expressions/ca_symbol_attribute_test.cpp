@@ -31,12 +31,11 @@ TEST(ca_symbol_attr, undefined_attributes)
     context::hlasm_context ctx;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
-    std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
 
     subscript.push_back(std::make_unique<ca_constant>(1, range()));
 
-    auto vs = std::make_unique<basic_variable_symbol>(&name, std::move(subscript), range());
+    auto vs = std::make_unique<basic_variable_symbol>(ctx.ids().add("n"), std::move(subscript), range());
 
     ca_symbol_attribute attr(std::move(vs), context::data_attr_kind::D, range(), range());
 

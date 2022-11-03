@@ -46,17 +46,16 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
 
 processing_status ordinary_processor::get_processing_status(const semantics::instruction_si& instruction) const
 {
-    context::id_index id;
-    if (instruction.type == semantics::instruction_si_type::CONC)
-        id = resolve_instruction(std::get<semantics::concat_chain>(instruction.value), instruction.field_range);
-    else
-        id = std::get<context::id_index>(instruction.value);
+    context::id_index id = instruction.type == semantics::instruction_si_type::CONC
+        ? resolve_instruction(std::get<semantics::concat_chain>(instruction.value), instruction.field_range)
+        : std::get<context::id_index>(instruction.value);
 
     auto status = get_instruction_processing_status(id, hlasm_ctx);
 
     if (!status)
     {
-        auto found = lib_provider.parse_library(*id, ctx, workspaces::library_data { processing_kind::MACRO, id });
+        auto found =
+            lib_provider.parse_library(id.to_string(), ctx, workspaces::library_data { processing_kind::MACRO, id });
         processing_form f;
         context::instruction_type t;
         if (found)
@@ -103,8 +102,8 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
     switch (statement->opcode_ref().type)
     {
         case context::instruction_type::UNDEF:
-            add_diagnostic(
-                diagnostic_op::error_E049(*statement->opcode_ref().value, statement->instruction_ref().field_range));
+            add_diagnostic(diagnostic_op::error_E049(
+                statement->opcode_ref().value.to_string_view(), statement->instruction_ref().field_range));
             return;
         case context::instruction_type::CA:
             ca_proc_.process(std::move(statement));
@@ -224,12 +223,12 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
             op_code(instruction, context::instruction_type::MAC));
     }
 
-    if (!code.opcode)
+    if (code.opcode.empty())
     {
-        if (instruction == context::id_storage::empty_id)
+        if (instruction.empty())
             return std::make_pair(
                 processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT),
-                op_code(context::id_storage::empty_id, context::instruction_type::CA));
+                op_code(context::id_index(), context::instruction_type::CA));
         else
             return std::nullopt;
     }
@@ -328,17 +327,17 @@ context::id_index ordinary_processor::resolve_instruction(
     if (tmp.empty())
     {
         add_diagnostic(diagnostic_op::error_E074(instruction_range));
-        return context::id_storage::empty_id;
+        return context::id_index();
     }
     else if (!std::regex_match(tmp, regex))
     {
         add_diagnostic(diagnostic_op::error_E075(tmp, instruction_range));
-        return context::id_storage::empty_id;
+        return context::id_index();
     }
     else if (tmp.find(' ') != std::string::npos)
     {
         add_diagnostic(diagnostic_op::error_E067(instruction_range));
-        return context::id_storage::empty_id;
+        return context::id_index();
     }
 
     return hlasm_ctx.ids().add(std::move(tmp));

@@ -36,7 +36,7 @@ struct opcode_t
         const mnemonic_code*,
         macro_def_ptr>;
 
-    id_index opcode = nullptr;
+    id_index opcode;
     opcode_variant opcode_detail;
 
     explicit operator bool() const { return !std::holds_alternative<std::monostate>(opcode_detail); }

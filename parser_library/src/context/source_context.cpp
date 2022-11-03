@@ -50,7 +50,7 @@ processing_frame_details::processing_frame_details(position pos,
 {}
 
 processing_frame_tree::processing_frame_tree()
-    : m_root(&*m_frames.emplace(processing_frame_node { nullptr, processing_frame({}, {}, {}) }).first)
+    : m_root(&*m_frames.emplace(processing_frame_node { nullptr, processing_frame({}, {}, id_index()) }).first)
 {}
 
 processing_frame_tree::node_pointer processing_frame_tree::step(processing_frame next, node_pointer current)

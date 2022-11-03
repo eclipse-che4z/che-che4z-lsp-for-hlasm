@@ -20,37 +20,43 @@ namespace hlasm_plugin::parser_library::processing {
 
 inline unsigned char get_reladdr_bitmask(context::id_index id)
 {
-    if (!id || id->empty())
+    if (id.empty())
         return 0;
 
-    if (auto p_instr = context::instruction::find_machine_instructions(*id))
+    if (auto p_instr = context::instruction::find_machine_instructions(id.to_string_view()))
         return p_instr->reladdr_mask().mask();
 
-    if (auto p_mnemo = context::instruction::find_mnemonic_codes(*id))
+    if (auto p_mnemo = context::instruction::find_mnemonic_codes(id.to_string_view()))
         return p_mnemo->reladdr_mask().mask();
 
     return 0;
 }
 
 // Generates value of L'* expression
-unsigned char processing_status_cache_key::generate_loctr_len(context::id_index id)
+unsigned char processing_status_cache_key::generate_loctr_len(std::string_view id)
 {
-    if (id && !id->empty())
+    if (!id.empty())
     {
-        if (auto p_instr = context::instruction::find_machine_instructions(*id))
+        if (auto p_instr = context::instruction::find_machine_instructions(id))
             return static_cast<unsigned char>(p_instr->size_in_bits() / 8);
 
-        if (auto p_mnemo = context::instruction::find_mnemonic_codes(*id))
+        if (auto p_mnemo = context::instruction::find_mnemonic_codes(id))
             return static_cast<unsigned char>(p_mnemo->instruction()->size_in_bits() / 8);
     }
     return 1;
 }
 
+unsigned char processing_status_cache_key::generate_loctr_len(context::id_index id)
+{
+    return generate_loctr_len(id.empty() ? std::string_view() : id.to_string_view());
+}
+
 processing_status_cache_key::processing_status_cache_key(const processing_status& s)
     : form(s.first.form)
     , occurence(s.first.occurence)
-    , is_alias(s.second.type == context::instruction_type::ASM && s.second.value && *s.second.value == "ALIAS")
-    , loctr_len(s.second.type != context::instruction_type::MACH ? 1 : generate_loctr_len(s.second.value))
+    , is_alias(s.second.type == context::instruction_type::ASM && s.second.value.to_string_view() == "ALIAS")
+    , loctr_len(
+          s.second.type != context::instruction_type::MACH ? 1 : generate_loctr_len(s.second.value.to_string_view()))
     , rel_addr(s.second.type != context::instruction_type::MACH ? 0 : get_reladdr_bitmask(s.second.value))
 {}
 } // namespace hlasm_plugin::parser_library::processing

@@ -31,7 +31,7 @@ set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym
 set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym)
     : set_symbol_(set_sym)
     , index_()
-    , name_("&" + *set_symbol_.id)
+    , name_("&" + set_symbol_.id.to_string())
 {
     value_ = get_string_value(index_);
 }

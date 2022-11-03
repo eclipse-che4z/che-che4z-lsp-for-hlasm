@@ -28,7 +28,6 @@ struct macrodef_start_data
 
     macrodef_start_data()
         : is_external(false)
-        , external_name(context::id_storage::empty_id)
     {}
     macrodef_start_data(context::id_index external_name)
         : is_external(true)
@@ -39,10 +38,10 @@ struct macrodef_start_data
 // data holding info about prototype statement of a macro
 struct macrodef_prototype
 {
-    context::id_index macro_name = context::id_storage::empty_id;
+    context::id_index macro_name;
     range macro_name_range;
 
-    context::id_index name_param = context::id_storage::empty_id;
+    context::id_index name_param;
     std::vector<context::macro_arg> symbolic_params;
 };
 

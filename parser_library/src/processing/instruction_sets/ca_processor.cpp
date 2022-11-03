@@ -66,7 +66,7 @@ ca_processor::process_table_t ca_processor::create_table(context::hlasm_context&
     table.emplace(h_ctx.ids().add("ACTR"), std::bind(&ca_processor::process_ACTR, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("AGO"), std::bind(&ca_processor::process_AGO, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("AIF"), std::bind(&ca_processor::process_AIF, this, std::placeholders::_1));
-    table.emplace(context::id_storage::empty_id, std::bind(&ca_processor::process_empty, this, std::placeholders::_1));
+    table.emplace(context::id_index(), std::bind(&ca_processor::process_empty, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("MACRO"), std::bind(&ca_processor::process_MACRO, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("MEND"), std::bind(&ca_processor::process_MEND, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("MEXIT"), std::bind(&ca_processor::process_MEXIT, this, std::placeholders::_1));
@@ -130,7 +130,7 @@ ca_processor::SET_info ca_processor::get_SET_symbol(const semantics::complete_st
         auto var = hlasm_ctx.create_local_variable<T>(name, is_scalar_expression);
         if (!var)
         {
-            add_diagnostic(diagnostic_op::error_E051(*name, symbol->symbol_range));
+            add_diagnostic(diagnostic_op::error_E051(name.to_string_view(), symbol->symbol_range));
             return {};
         }
 
@@ -217,22 +217,22 @@ bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, st
         {
             auto [id, subscript] = ca_op->access_var()->variable_symbol->evaluate_symbol(eval_ctx);
 
-            if (id == context::id_storage::empty_id)
+            if (id.empty())
                 continue;
 
             if (auto var_sym = hlasm_ctx.get_var_sym(id))
             {
                 if (var_sym->access_set_symbol_base())
-                    add_diagnostic(diagnostic_op::error_E051(*id, ca_op->operand_range));
+                    add_diagnostic(diagnostic_op::error_E051(id.to_string_view(), ca_op->operand_range));
                 else if (var_sym->access_macro_param_base())
-                    add_diagnostic(diagnostic_op::error_E052(*id, ca_op->operand_range));
+                    add_diagnostic(diagnostic_op::error_E052(id.to_string_view(), ca_op->operand_range));
                 else
                     assert(false);
                 continue;
             }
 
             if (std::find_if(info.begin(), info.end(), [id = id](const auto& i) { return i.id == id; }) != info.end())
-                add_diagnostic(diagnostic_op::error_E051(*id, ca_op->operand_range));
+                add_diagnostic(diagnostic_op::error_E051(id.to_string_view(), ca_op->operand_range));
             else
                 info.emplace_back(id, subscript.empty(), ca_op->operand_range);
         }
@@ -486,7 +486,7 @@ struct AREAD_operand_visitor final : public semantics::operand_visitor
     {}
 
     expressions::evaluation_context* eval_ctx = nullptr;
-    context::id_index value = nullptr;
+    context::id_index value;
 
     void visit(const semantics::empty_operand&) override {}
     void visit(const semantics::model_operand&) override {}
@@ -540,7 +540,7 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
         AREAD_operand_visitor op(&eval_ctx);
         ops.value.at(0)->apply(op);
 
-        if (op.value == nullptr)
+        if (op.value.empty())
             return aread_variant::invalid;
 
         static const std::initializer_list<std::pair<std::string_view, aread_variant>> allowed_operands = {
@@ -551,7 +551,7 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
         };
         auto idx = std::find_if(allowed_operands.begin(),
             allowed_operands.end(),
-            [value = std::string_view(*op.value)](const auto& p) { return p.first == value; });
+            [value = op.value.to_string_view()](const auto& p) { return p.first == value; });
         if (idx == allowed_operands.end())
             return aread_variant::invalid;
         return idx->second;
@@ -643,12 +643,12 @@ void ca_processor::process_GBL_LCL(const semantics::complete_statement& stmt)
         if constexpr (global)
         {
             if (!hlasm_ctx.create_global_variable<T>(i.id, i.scalar))
-                eval_ctx.diags.add_diagnostic(diagnostic_op::error_E078(*i.id, i.r));
+                eval_ctx.diags.add_diagnostic(diagnostic_op::error_E078(i.id.to_string_view(), i.r));
         }
         else
         {
             if (!hlasm_ctx.create_local_variable<T>(i.id, i.scalar))
-                eval_ctx.diags.add_diagnostic(diagnostic_op::error_E051(*i.id, i.r));
+                eval_ctx.diags.add_diagnostic(diagnostic_op::error_E051(i.id.to_string_view(), i.r));
         }
     }
 }

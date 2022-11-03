@@ -27,8 +27,7 @@ namespace hlasm_plugin::parser_library::processing {
 struct op_code
 {
     op_code()
-        : value(context::id_storage::empty_id)
-        , type(context::instruction_type::UNDEF)
+        : type(context::instruction_type::UNDEF)
     {}
     op_code(context::id_index value, context::instruction_type type)
         : value(value)
@@ -58,6 +57,7 @@ public:
 
     explicit processing_status_cache_key(const processing_status& s);
 
+    static unsigned char generate_loctr_len(std::string_view id);
     static unsigned char generate_loctr_len(context::id_index id);
 };
 

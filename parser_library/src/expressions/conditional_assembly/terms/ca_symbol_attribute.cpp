@@ -245,7 +245,7 @@ context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, cons
     else if (attribute == context::data_attr_kind::O)
     {
         auto tmp = eval_ctx.hlasm_ctx.get_attribute_value_ord(attribute, name);
-        if (tmp.access_c() == "U" && eval_ctx.lib_info.has_library(*name))
+        if (tmp.access_c() == "U" && eval_ctx.lib_info.has_library(name.to_string_view()))
             return std::string("S");
         return tmp;
     }
@@ -345,7 +345,8 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
 
     if (!var_symbol)
     {
-        eval_ctx.diags.add_diagnostic(diagnostic_op::error_E010("variable", *var_name, vs->symbol_range));
+        eval_ctx.diags.add_diagnostic(
+            diagnostic_op::error_E010("variable", var_name.to_string_view(), vs->symbol_range));
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
@@ -360,7 +361,8 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
             return evaluate_substituted(var_name, expr_subscript, vs->symbol_range, eval_ctx);
 
         case context::data_attr_kind::T: {
-            if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, *var_name))
+            if (!test_symbol_for_read(
+                    var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, var_name.to_string_view()))
                 return "U";
 
             std::string var_value;
@@ -387,7 +389,8 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
                 var_name, expr_subscript, vs->symbol_range, eval_ctx); // is type U, must substitute var sym
         }
         case context::data_attr_kind::K:
-            if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, *var_name))
+            if (!test_symbol_for_read(
+                    var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, var_name.to_string_view()))
                 return context::symbol_attributes::default_ca_value(attribute);
 
             return var_symbol ? var_symbol->count(transform(expr_subscript)) : 0;

@@ -270,7 +270,7 @@ context::SET_t_enum ca_character_policy::get_operands_type(ca_expr_ops op)
     if (op == #X)                                                                                                      \
     return ca_expr_ops::X
 
-ca_expr_ops get_expr_operator(const std::string& op)
+ca_expr_ops get_expr_operator(std::string_view op)
 {
     S2O(SLA);
     S2O(SLL);
@@ -297,9 +297,9 @@ ca_expr_ops get_expr_operator(const std::string& op)
     return ca_expr_ops::UNKNOWN;
 }
 
-ca_expr_ops ca_arithmetic_policy::get_operator(const std::string& symbol) { return get_expr_operator(symbol); }
+ca_expr_ops ca_arithmetic_policy::get_operator(std::string_view symbol) { return get_expr_operator(symbol); }
 std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_arithmetic_policy::get_operator_properties(
-    const std::string& symbol)
+    std::string_view symbol)
 {
     auto o = get_operator(symbol);
     if (o == ca_expr_ops::UNKNOWN)
@@ -311,9 +311,9 @@ std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_arithmetic_policy
     return ca_expr_op { o, get_priority(o), binary, unary };
 }
 
-ca_expr_ops ca_binary_policy::get_operator(const std::string& symbol) { return get_expr_operator(symbol); }
+ca_expr_ops ca_binary_policy::get_operator(std::string_view symbol) { return get_expr_operator(symbol); }
 std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_binary_policy::get_operator_properties(
-    const std::string& symbol)
+    std::string_view symbol)
 {
     auto o = get_operator(symbol);
     if (o == ca_expr_ops::UNKNOWN)
@@ -325,9 +325,9 @@ std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_binary_policy::ge
     return ca_expr_op { o, get_priority(o), binary, unary };
 }
 
-ca_expr_ops ca_character_policy::get_operator(const std::string& symbol) { return get_expr_operator(symbol); }
+ca_expr_ops ca_character_policy::get_operator(std::string_view symbol) { return get_expr_operator(symbol); }
 std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_character_policy::get_operator_properties(
-    const std::string& symbol)
+    std::string_view symbol)
 {
     auto o = get_operator(symbol);
     if (o == ca_expr_ops::UNKNOWN)
@@ -340,15 +340,15 @@ std::variant<std::monostate, invalid_by_policy, ca_expr_op> ca_character_policy:
 }
 
 
-ca_expr_funcs ca_arithmetic_policy::get_function(const std::string& symbol)
+ca_expr_funcs ca_arithmetic_policy::get_function(std::string_view symbol)
 {
     return ca_common_expr_policy::get_function(symbol);
 }
-ca_expr_funcs ca_binary_policy::get_function(const std::string& symbol)
+ca_expr_funcs ca_binary_policy::get_function(std::string_view symbol)
 {
     return ca_common_expr_policy::get_function(symbol);
 }
-ca_expr_funcs ca_character_policy::get_function(const std::string& symbol)
+ca_expr_funcs ca_character_policy::get_function(std::string_view symbol)
 {
     return ca_common_expr_policy::get_function(symbol);
 }
@@ -400,7 +400,7 @@ context::SET_t_enum ca_common_expr_policy::get_operands_type(ca_expr_ops op, con
     if (op == #X)                                                                                                      \
     return ca_expr_funcs::X
 
-ca_expr_funcs ca_common_expr_policy::get_function(const std::string& op)
+ca_expr_funcs ca_common_expr_policy::get_function(std::string_view op)
 {
     S2F(B2A);
     S2F(C2A);

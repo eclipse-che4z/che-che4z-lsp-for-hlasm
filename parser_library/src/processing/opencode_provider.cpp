@@ -432,7 +432,7 @@ bool opencode_provider::try_running_preprocessor()
             analyzer_options {
                 generate_virtual_file_name(
                     m_vf_handles.emplace_back(m_virtual_file_monitor->file_generated(new_file->second)).file_id(),
-                    *virtual_file_name),
+                    virtual_file_name.to_string_view()),
                 m_lib_provider,
                 *m_ctx,
                 workspaces::library_data { processing_kind::COPY, virtual_file_name },
@@ -506,7 +506,7 @@ void opencode_provider::convert_ainsert_buffer_to_copybook()
         analyzer_options {
             generate_virtual_file_name(
                 m_vf_handles.emplace_back(m_virtual_file_monitor->file_generated(new_file->second)).file_id(),
-                *virtual_copy_name),
+                virtual_copy_name.to_string_view()),
             m_lib_provider,
             *m_ctx,
             workspaces::library_data { processing_kind::COPY, virtual_copy_name },

@@ -68,7 +68,7 @@ hover_result hover_text(const context::symbol& sym)
         const auto& reloc = sym.value().get_reloc();
         for (const auto& [base, d] : reloc.bases())
         {
-            if (*base.owner->name == "" || d == 0)
+            if (base.owner->name.empty() || d == 0)
                 continue;
 
             bool was_first = std::exchange(first, false);
@@ -80,9 +80,9 @@ hover_result hover_text(const context::symbol& sym)
             if (d != 1 && d != -1)
                 markdown.append(std::to_string(-(unsigned)d)).append("*");
 
-            if (base.qualifier)
-                markdown.append(*base.qualifier).append(".");
-            markdown.append(*base.owner->name);
+            if (!base.qualifier.empty())
+                markdown.append(base.qualifier.to_string_view()).append(".");
+            markdown.append(base.owner->name.to_string_view());
         }
         if (!first)
             markdown.append(" + ");
@@ -153,8 +153,7 @@ std::string lsp_context::find_macro_copy_id(const std::vector<context::processin
 {
     assert(i != 0);
     assert(i < stack.size());
-    return stack[i].member_name == context::id_storage::empty_id ? stack[i].resource_loc->get_uri()
-                                                                 : *stack[i].member_name;
+    return stack[i].member_name.empty() ? stack[i].resource_loc->get_uri() : stack[i].member_name.to_string();
 }
 
 void lsp_context::document_symbol_macro(document_symbol_list_s& result,
@@ -179,7 +178,7 @@ void lsp_context::document_symbol_macro(document_symbol_list_s& result,
             break;
         if (!belongs_to_copyfile(document_loc, var.def_position, var.name))
         {
-            result.emplace_back(*var.name, document_symbol_kind::VAR, r.value_or(range(var.def_position)));
+            result.emplace_back(var.name.to_string(), document_symbol_kind::VAR, r.value_or(range(var.def_position)));
             --limit;
         }
         else if (!r.has_value())
@@ -191,7 +190,8 @@ void lsp_context::document_symbol_macro(document_symbol_list_s& result,
             break;
         if (!belongs_to_copyfile(document_loc, seq->symbol_location.pos, name))
         {
-            result.emplace_back(*name, document_symbol_kind::SEQ, r.value_or(range(seq->symbol_location.pos)));
+            result.emplace_back(
+                name.to_string(), document_symbol_kind::SEQ, r.value_or(range(seq->symbol_location.pos)));
             --limit;
         }
         else if (!r.has_value())
@@ -203,7 +203,7 @@ bool lsp_context::belongs_to_copyfile(
     const utils::resource::resource_location& document_loc, position pos, context::id_index id) const
 {
     const auto* aux = find_occurence_with_scope(document_loc, pos).first;
-    return aux == nullptr || *aux->name != *id;
+    return aux == nullptr || aux->name.to_string_view() != id.to_string_view();
 }
 
 void lsp_context::document_symbol_copy(document_symbol_list_s& result,
@@ -220,7 +220,7 @@ void lsp_context::document_symbol_copy(document_symbol_list_s& result,
         {
             position aux = definition(document_loc, occ.occurence_range.start).pos;
             document_symbol_item_s item = {
-                *occ.name,
+                occ.name.to_string(),
                 document_symbol_item_kind_mapping_macro.at(occ.kind),
                 r.value_or(range(aux,
                     position(aux.line, aux.column + occ.occurence_range.end.column - occ.occurence_range.start.column)))
@@ -253,7 +253,7 @@ std::span<const symbol_occurence* const> lsp_context::get_occurences_by_name(
         });
     }
 
-    if (name == nullptr)
+    if (name.empty())
         return occurences_by_name;
 
     struct
@@ -285,7 +285,8 @@ void lsp_context::fill_cache(
             get_occurences_by_name(document, std::get<context::copy_member_ptr>(info->owner)->name, cache))
         {
             lsp_context::vector_set<context::id_index> occurences;
-            for (context::id_index last = nullptr; const auto* new_occ : get_occurences_by_name(*info, nullptr, cache))
+            for (std::optional<context::id_index> last;
+                 const auto* new_occ : get_occurences_by_name(*info, context::id_index(), cache))
             {
                 if (last == new_occ->name)
                     continue;
@@ -324,10 +325,10 @@ void lsp_context::modify_with_copy(document_symbol_list_s& modified,
             continue;
 
         bool have_already = false;
-        document_symbol_item_s sym_item(*sym_name, kind, copy_occ.occurence_range);
+        document_symbol_item_s sym_item(sym_name.to_string(), kind, copy_occ.occurence_range);
         for (auto& item : modified)
         {
-            if (item.name == *copy_occ.name
+            if (item.name == copy_occ.name.to_string_view()
                 && std::none_of(item.children.begin(), item.children.end(), utils::is_similar_to(sym_item)))
             {
                 item.children.push_back(sym_item);
@@ -338,7 +339,7 @@ void lsp_context::modify_with_copy(document_symbol_list_s& modified,
         }
         if (!have_already)
         {
-            modified.emplace_back(*copy_occ.name,
+            modified.emplace_back(copy_occ.name.to_string(),
                 document_symbol_kind::MACRO,
                 copy_occ.occurence_range,
                 document_symbol_list_s { std::move(sym_item) });
@@ -411,7 +412,7 @@ void lsp_context::document_symbol_symbol(document_symbol_list_s& modified,
         }
         i++;
     }
-    i_find->children.emplace_back(*id, kind, i_find->symbol_range, std::move(children));
+    i_find->children.emplace_back(id.to_string(), kind, i_find->symbol_range, std::move(children));
     --limit;
 }
 
@@ -455,7 +456,7 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
         {
             if (sym_stack.size() == 1)
             {
-                result.emplace_back(*id,
+                result.emplace_back(id.to_string(),
                     document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin()),
                     range(sym.symbol_location().pos));
                 --limit;
@@ -481,7 +482,7 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
             unsigned long i = 1;
             if (do_not_need_nodes(sym_stack, sect_sym_stack, i))
             {
-                children.emplace_back(*id,
+                children.emplace_back(id.to_string(),
                     document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin()),
                     range(sym_stack[0].pos));
                 --limit;
@@ -507,7 +508,7 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
 
         if (sym_stack.size() == 1)
         {
-            result.emplace_back(*sect->name,
+            result.emplace_back(sect->name.to_string(),
                 document_symbol_item_kind_mapping_section.at(sect->kind),
                 range(sym.symbol_location().pos),
                 std::move(children));
@@ -559,9 +560,9 @@ void lsp_context::document_symbol_other(document_symbol_list_s& result,
 {
     std::unordered_map<std::string_view, utils::resource::resource_location> name_to_location;
     for (const auto& [def, info] : m_macros)
-        name_to_location.insert_or_assign(*def->id, info->definition_location.resource_loc);
+        name_to_location.insert_or_assign(def->id.to_string_view(), info->definition_location.resource_loc);
     for (const auto& [def, info] : m_hlasm_ctx->copy_members())
-        name_to_location.insert_or_assign(*info->name, info->definition_location.resource_loc);
+        name_to_location.insert_or_assign(info->name.to_string_view(), info->definition_location.resource_loc);
 
     document_symbol_opencode_ord_symbol(result, limit);
     document_symbol_opencode_var_seq_symbol_aux(result, name_to_location, limit, cache);
@@ -572,7 +573,7 @@ void lsp_context::document_symbol_other(document_symbol_list_s& result,
             break;
         if (!belongs_to_copyfile(document_loc, sym.def_position, sym.name))
         {
-            result.emplace_back(*sym.name, document_symbol_kind::VAR, range(sym.def_position));
+            result.emplace_back(sym.name.to_string(), document_symbol_kind::VAR, range(sym.def_position));
             --limit;
         }
     }
@@ -771,8 +772,11 @@ completion_list_s lsp_context::complete_var(const file_info& file, position pos)
     const vardef_storage& var_defs = scope ? scope->var_definitions : m_opencode->variable_definitions;
     for (const auto& vardef : var_defs)
     {
-        items.emplace_back(
-            "&" + *vardef.name, hover_text(vardef), "&" + *vardef.name, "", completion_item_kind::var_sym);
+        items.emplace_back("&" + vardef.name.to_string(),
+            hover_text(vardef),
+            "&" + vardef.name.to_string(),
+            "",
+            completion_item_kind::var_sym);
     }
 
     return items;
@@ -788,7 +792,7 @@ completion_list_s lsp_context::complete_seq(const file_info& file, position pos)
     completion_list_s items;
     for (const auto& [_, sym] : seq_syms)
     {
-        std::string label = "." + *sym->name;
+        std::string label = "." + sym->name.to_string();
         items.emplace_back(label, "Sequence symbol", label, "", completion_item_kind::seq_sym);
     }
     return items;
@@ -797,9 +801,9 @@ completion_list_s lsp_context::complete_seq(const file_info& file, position pos)
 std::string get_macro_signature(const context::macro_definition& m)
 {
     std::stringstream signature;
-    if (*m.get_label_param_name() != "")
-        signature << "&" << *m.get_label_param_name() << " ";
-    signature << *m.id << " ";
+    if (!m.get_label_param_name().empty())
+        signature << "&" << m.get_label_param_name().to_string_view() << " ";
+    signature << m.id.to_string_view() << " ";
 
     bool first = true;
     const auto& pos_params = m.get_positional_params();
@@ -813,7 +817,7 @@ std::string get_macro_signature(const context::macro_definition& m)
         else
             first = false;
 
-        signature << "&" << *pos_params[i]->id;
+        signature << "&" << pos_params[i]->id.to_string_view();
     }
     for (const auto& param : m.get_keyword_params())
     {
@@ -821,7 +825,7 @@ std::string get_macro_signature(const context::macro_definition& m)
             signature << ",";
         else
             first = false;
-        signature << "&" << *param->id << "=" << param->default_data->get_value();
+        signature << "&" << param->id.to_string_view() << "=" << param->default_data->get_value();
     }
     return signature.str();
 }
@@ -890,7 +894,7 @@ completion_list_s lsp_context::complete_instr(const file_info& fi, position pos)
     {
         auto id = m_hlasm_ctx->ids().find(instr.label);
         // TODO: we could provide more precise results here if actual generation is provided
-        if (m_hlasm_ctx->find_opcode_mnemo(id, context::opcode_generation::zero))
+        if (id.has_value() && m_hlasm_ctx->find_opcode_mnemo(id.value(), context::opcode_generation::zero))
         {
             auto& i = result.emplace_back(instr);
             if (auto space = i.insert_text.find(' '); space != std::string::npos)
@@ -905,8 +909,11 @@ completion_list_s lsp_context::complete_instr(const file_info& fi, position pos)
     {
         const context::macro_definition& m = *macro_i->macro_definition;
 
-        result.emplace_back(
-            *m.id, get_macro_signature(m), *m.id, get_macro_documentation(*macro_i), completion_item_kind::macro);
+        result.emplace_back(m.id.to_string(),
+            get_macro_signature(m),
+            m.id.to_string(),
+            get_macro_documentation(*macro_i),
+            completion_item_kind::macro);
     }
 
     return result;
@@ -1047,7 +1054,7 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
             }
             else
             {
-                auto it = completion_item_s::m_instruction_completion_items.find(*occ.name);
+                auto it = completion_item_s::m_instruction_completion_items.find(occ.name.to_string_view());
                 if (it == completion_item_s::m_instruction_completion_items.end())
                     return "";
                 return it->detail + "\n\n" + it->documentation;

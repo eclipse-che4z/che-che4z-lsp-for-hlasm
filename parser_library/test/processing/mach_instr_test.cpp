@@ -258,7 +258,7 @@ TEST(mach_instr_processing, instr_size)
              { "DC", 1 },
          })
     {
-        EXPECT_EQ(processing::processing_status_cache_key::generate_loctr_len(&instr), expected) << instr;
+        EXPECT_EQ(processing::processing_status_cache_key::generate_loctr_len(instr), expected) << instr;
     }
 }
 

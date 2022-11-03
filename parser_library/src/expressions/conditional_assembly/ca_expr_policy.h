@@ -140,13 +140,12 @@ public:
     static bool is_function(ca_expr_funcs func);
 
     // transforms string operator to enum
-    static ca_expr_ops get_operator(const std::string& symbol);
+    static ca_expr_ops get_operator(std::string_view symbol);
 
-    static std::variant<std::monostate, invalid_by_policy, ca_expr_op> get_operator_properties(
-        const std::string& symbol);
+    static std::variant<std::monostate, invalid_by_policy, ca_expr_op> get_operator_properties(std::string_view symbol);
 
     // transforms string function to enum
-    static ca_expr_funcs get_function(const std::string& symbol);
+    static ca_expr_funcs get_function(std::string_view symbol);
 
     // return number of required parameters and return type
     static std::pair<size_t, context::SET_t_enum> get_function_param_info(ca_expr_funcs func);
@@ -177,13 +176,12 @@ public:
     static bool is_function(ca_expr_funcs func);
 
     // transforms string operator to enum
-    static ca_expr_ops get_operator(const std::string& symbol);
+    static ca_expr_ops get_operator(std::string_view symbol);
 
-    static std::variant<std::monostate, invalid_by_policy, ca_expr_op> get_operator_properties(
-        const std::string& symbol);
+    static std::variant<std::monostate, invalid_by_policy, ca_expr_op> get_operator_properties(std::string_view symbol);
 
     // transforms string function to enum
-    static ca_expr_funcs get_function(const std::string& symbol);
+    static ca_expr_funcs get_function(std::string_view symbol);
 
     // return number of required parameters and return type
     static std::pair<size_t, context::SET_t_enum> get_function_param_info(ca_expr_funcs func);
@@ -214,13 +212,12 @@ public:
     static bool is_function(ca_expr_funcs func);
 
     // transforms string operator to enum
-    static ca_expr_ops get_operator(const std::string& symbol);
+    static ca_expr_ops get_operator(std::string_view symbol);
 
-    static std::variant<std::monostate, invalid_by_policy, ca_expr_op> get_operator_properties(
-        const std::string& symbol);
+    static std::variant<std::monostate, invalid_by_policy, ca_expr_op> get_operator_properties(std::string_view symbol);
 
     // transforms string function to enum
-    static ca_expr_funcs get_function(const std::string& symbol);
+    static ca_expr_funcs get_function(std::string_view symbol);
 
     // return number of required parameters and return type
     static std::pair<size_t, context::SET_t_enum> get_function_param_info(ca_expr_funcs func);
@@ -240,7 +237,7 @@ public:
 
     static context::SET_t_enum get_operands_type(ca_expr_ops op, context::SET_t_enum expr_kind);
 
-    static ca_expr_funcs get_function(const std::string& symbol);
+    static ca_expr_funcs get_function(std::string_view symbol);
 };
 
 template<typename T>

@@ -43,7 +43,7 @@ struct hash<hlasm_plugin::parser_library::context::attr_ref>
 {
     std::size_t operator()(const hlasm_plugin::parser_library::context::attr_ref& k) const
     {
-        return std::hash<hlasm_plugin::parser_library::context::id_index>()(k.symbol_id) + (size_t)k.attribute;
+        return k.symbol_id.hash() + (size_t)k.attribute;
     }
 };
 

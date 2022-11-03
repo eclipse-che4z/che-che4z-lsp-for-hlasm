@@ -364,8 +364,8 @@ TEST(macro, macro_name_param_repetition)
 
     {
         std::vector<macro_arg> args;
-        args.push_back({ std::make_unique<macro_param_data_single>("2"), nullptr });
-        args.push_back({ std::make_unique<macro_param_data_single>("3"), nullptr });
+        args.emplace_back(std::make_unique<macro_param_data_single>("2"));
+        args.emplace_back(std::make_unique<macro_param_data_single>("3"));
         auto invo = m1->call(
             std::make_unique<macro_param_data_single>("1"), std::move(args), a.hlasm_ctx().ids().add("SYSLIST"));
         auto n = a.hlasm_ctx().ids().add("n");
@@ -376,8 +376,8 @@ TEST(macro, macro_name_param_repetition)
 
     {
         std::vector<macro_arg> args;
-        args.push_back({ std::make_unique<macro_param_data_single>("1"), nullptr });
-        args.push_back({ std::make_unique<macro_param_data_single>("2"), nullptr });
+        args.emplace_back(std::make_unique<macro_param_data_single>("1"));
+        args.emplace_back(std::make_unique<macro_param_data_single>("2"));
         auto invo = m2->call(nullptr, std::move(args), a.hlasm_ctx().ids().add("SYSLIST"));
         auto n = a.hlasm_ctx().ids().add("a");
         auto b = a.hlasm_ctx().ids().add("b");
@@ -388,9 +388,9 @@ TEST(macro, macro_name_param_repetition)
 
     {
         std::vector<macro_arg> args;
-        args.push_back({ std::make_unique<macro_param_data_single>("1"), nullptr });
-        args.push_back({ std::make_unique<macro_param_data_single>("2"), nullptr });
-        args.push_back({ std::make_unique<macro_param_data_single>("3"), nullptr });
+        args.emplace_back(std::make_unique<macro_param_data_single>("1"));
+        args.emplace_back(std::make_unique<macro_param_data_single>("2"));
+        args.emplace_back(std::make_unique<macro_param_data_single>("3"));
         auto invo = m3->call(nullptr, std::move(args), a.hlasm_ctx().ids().add("SYSLIST"));
         auto n = a.hlasm_ctx().ids().add("a");
         auto b = a.hlasm_ctx().ids().add("b");

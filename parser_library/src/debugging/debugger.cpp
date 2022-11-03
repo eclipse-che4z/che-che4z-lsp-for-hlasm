@@ -185,7 +185,7 @@ public:
             return;
 
         // Continue only for non-empty statements
-        if (resolved_stmt->opcode_ref().value == context::id_storage::empty_id)
+        if (resolved_stmt->opcode_ref().value.empty())
             return;
 
         range stmt_range = resolved_stmt->stmt_range_ref();
@@ -330,7 +330,7 @@ public:
         if (proc_stack_[frame_id].scope.is_in_macro())
             for (auto it : proc_stack_[frame_id].scope.this_macro->named_params)
             {
-                if (it.first == context::id_storage::empty_id)
+                if (it.first.empty())
                     continue;
                 scope_vars.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<size_t> {}));
             }

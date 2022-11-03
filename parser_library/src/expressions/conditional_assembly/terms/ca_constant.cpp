@@ -132,7 +132,13 @@ context::A_t ca_constant::self_defining_term_or_abs_symbol(
         return self_defining_term("D", value, add_diagnostic);
     else
     {
-        auto result = ca_symbol(eval_ctx.hlasm_ctx.ids().find(value), expr_range).evaluate(eval_ctx);
+        auto symbol = eval_ctx.hlasm_ctx.ids().find(value);
+        if (!symbol.has_value())
+        {
+            eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE012(expr_range));
+            return context::object_traits<context::A_t>::default_v();
+        }
+        auto result = ca_symbol(symbol.value(), expr_range).evaluate(eval_ctx);
         assert(result.type == context::SET_t_enum::A_TYPE);
         return result.access_a();
     }

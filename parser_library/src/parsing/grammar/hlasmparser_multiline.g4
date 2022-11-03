@@ -187,10 +187,10 @@ num returns [self_def_t value]
 signed_num_ch
 	: MINUS? NUM+;
 
-id returns [id_index name = nullptr, id_index using_qualifier = nullptr]
+id returns [id_index name, id_index using_qualifier]
 	: f=id_no_dot {$name = $f.name;} (dot s=id_no_dot {$name = $s.name; $using_qualifier = $f.name;})?;
 
-id_no_dot returns [id_index name = id_storage::empty_id] locals [std::string buffer]
+id_no_dot returns [id_index name] locals [std::string buffer]
 	: ORDSYMBOL { $buffer = $ORDSYMBOL->getText(); } (l=(IDENTIFIER|NUM|ORDSYMBOL) {$buffer.append($l->getText());})*
 	{
 		$name = parse_identifier(std::move($buffer),provider.get_range($ORDSYMBOL,$l?$l:$ORDSYMBOL));
