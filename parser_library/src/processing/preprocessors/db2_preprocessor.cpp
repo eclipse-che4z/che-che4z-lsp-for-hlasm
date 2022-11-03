@@ -674,28 +674,27 @@ class db2_preprocessor : public preprocessor
         while (it != end)
         {
             const auto text = it->text();
-            auto cur_it = it;
-            m_result.emplace_back(*it++);
             if (skip_continuation)
             {
+                m_result.emplace_back(*it++);
                 skip_continuation = is_continued(text);
                 continue;
             }
             auto [instruction, first_line_skipped, label] = check_line(text);
             if (instruction == line_type::ignore)
             {
+                m_result.emplace_back(*it++);
                 skip_continuation = is_continued(text);
                 continue;
             }
 
-            m_result.back().set_preprocessor(preprocessor_type::DB2);
             m_source_translated = true;
 
             m_logical_line.clear();
 
-            size_t lineno = cur_it->lineno().value_or(0); // TODO: needs to be addressed for chained preprocessors
+            size_t lineno = it->lineno().value_or(0); // TODO: needs to be addressed for chained preprocessors
 
-            it = extract_nonempty_logical_line(m_logical_line, cur_it, end, lexing::default_ictl);
+            it = extract_nonempty_logical_line(m_logical_line, it, end, lexing::default_ictl);
 
             process_nonempty_line(lineno, include_allowed, instruction, first_line_skipped, label);
         }

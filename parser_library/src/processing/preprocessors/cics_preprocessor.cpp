@@ -1212,8 +1212,6 @@ public:
             {
                 process_exec_cics(m_matches_ll);
 
-                m_result.emplace_back(*it_backup);
-                m_result.back().set_preprocessor(preprocessor_type::CICS);
                 if (exec_cics_continuation_error)
                 {
                     if (m_diags)
@@ -1239,8 +1237,6 @@ public:
             }
             else if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, dfh_lookup))
             {
-                m_result.emplace_back(*it_backup);
-                m_result.back().set_preprocessor(preprocessor_type::CICS);
                 auto r = try_substituting_dfh(m_matches_ll);
                 if (r.error())
                 {
@@ -1280,6 +1276,7 @@ public:
 
 std::unique_ptr<preprocessor> preprocessor::create(
     const cics_preprocessor_options& options, library_fetcher libs, diagnostic_op_consumer* diags)
+    semantics::source_info_processor& src_info)
 {
     return std::make_unique<cics_preprocessor>(options, std::move(libs), diags);
 }
