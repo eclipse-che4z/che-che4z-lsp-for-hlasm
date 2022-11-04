@@ -239,8 +239,8 @@ public:
             do_highlighting(stmt_si);
             provide_occurrences(stmt_si);
 
-            asm_processor::process_copy(stmt_si, m_ctx, m_lib_provider, nullptr); // todo diags
-            m_ctx.hlasm_ctx->leave_copy_member();
+            if (asm_processor::process_copy(stmt_si, m_ctx, m_lib_provider, nullptr)) // todo diags
+                m_ctx.hlasm_ctx->leave_copy_member();
         }
 
         return document(std::move(result));
