@@ -236,16 +236,19 @@ public:
                 continue;
             }
 
-            auto stmt_details = get_statement_details(matches, std::prev(stack.front().current)->lineno().value_or(0));
-            auto stmt_si = get_statement_si(matches, std::prev(stack.front().current)->lineno().value_or(0));
+            if (auto line_no = std::prev(stack.back().current)->lineno(); line_no)
+            {
+                auto stmt_details = get_statement_details(matches, line_no.value());
+                auto stmt_si = get_statement_si(matches, line_no.value());
 
-            process_member(stmt_details.member_name, stack);
+                process_member(stmt_details.member_name, stack);
 
-            do_highlighting(stmt_si);
-            provide_occurrences(stmt_si);
+                do_highlighting(stmt_si);
+                provide_occurrences(stmt_si);
 
-            if (asm_processor::process_copy(stmt_si, m_ctx, m_lib_provider, nullptr)) // todo diags
-                m_ctx.hlasm_ctx->leave_copy_member();
+                if (asm_processor::process_copy(stmt_si, m_ctx, m_lib_provider, nullptr)) // todo diags
+                    m_ctx.hlasm_ctx->leave_copy_member();
+            }
         }
 
         return document(std::move(result));
