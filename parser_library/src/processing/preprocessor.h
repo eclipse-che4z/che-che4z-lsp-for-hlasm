@@ -24,6 +24,7 @@
 #include <variant>
 #include <vector>
 
+#include "analyzing_context.h"
 #include "diagnostic_consumer.h"
 #include "document.h"
 
@@ -36,6 +37,14 @@ namespace lexing {
 struct logical_line;
 struct logical_line_extractor_args;
 } // namespace lexing
+
+namespace semantics {
+class source_info_processor;
+}
+
+namespace workspaces {
+class parse_lib_provider;
+}
 
 } // namespace hlasm_plugin::parser_library
 
@@ -50,14 +59,26 @@ public:
 
     virtual document generate_replacement(document doc) = 0;
 
-    static std::unique_ptr<preprocessor> create(
-        const cics_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
+    static std::unique_ptr<preprocessor> create(const cics_preprocessor_options&,
+        library_fetcher,
+        diagnostic_op_consumer*,
+        semantics::source_info_processor&,
+        analyzing_context&,
+        workspaces::parse_lib_provider&);
 
-    static std::unique_ptr<preprocessor> create(
-        const db2_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
+    static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&,
+        library_fetcher,
+        diagnostic_op_consumer*,
+        semantics::source_info_processor&,
+        analyzing_context&,
+        workspaces::parse_lib_provider&);
 
-    static std::unique_ptr<preprocessor> create(
-        const endevor_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
+    static std::unique_ptr<preprocessor> create(const endevor_preprocessor_options&,
+        library_fetcher,
+        diagnostic_op_consumer*,
+        semantics::source_info_processor&,
+        analyzing_context&,
+        workspaces::parse_lib_provider&);
 
 protected:
     using line_iterator = std::vector<document_line>::const_iterator;

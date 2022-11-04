@@ -18,9 +18,11 @@
 #include <utility>
 #include <variant>
 
+#include "analyzing_context.h"
 #include "lexing/logical_line.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
+#include "semantics/source_info_processor.h"
 #include "utils/concat.h"
 #include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
@@ -1274,9 +1276,12 @@ public:
 
 } // namespace
 
-std::unique_ptr<preprocessor> preprocessor::create(
-    const cics_preprocessor_options& options, library_fetcher libs, diagnostic_op_consumer* diags)
-    semantics::source_info_processor& src_info)
+std::unique_ptr<preprocessor> preprocessor::create(const cics_preprocessor_options& options,
+    library_fetcher libs,
+    diagnostic_op_consumer* diags,
+    semantics::source_info_processor& src_proc,
+    analyzing_context& ctx,
+    workspaces::parse_lib_provider& lib_provider)
 {
     return std::make_unique<cics_preprocessor>(options, std::move(libs), diags);
 }

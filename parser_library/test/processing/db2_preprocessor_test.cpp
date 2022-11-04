@@ -18,6 +18,7 @@
 #include "../mock_parse_lib_provider.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
+#include "semantics/source_info_processor.h"
 // test db2 preprocessor emulator
 
 using namespace hlasm_plugin::parser_library::processing;
@@ -27,11 +28,20 @@ namespace {
 const auto copy1_loc = resource_location("COPY1");
 const auto copy2_loc = resource_location("COPY2");
 const auto member_loc = resource_location("MEMBER");
+semantics::source_info_processor m_src_info(false);
+analyzing_context m_ctx(nullptr, nullptr);
+workspaces::empty_parse_lib_provider m_lib_provider;
 } // namespace
+
 TEST(db2_preprocessor, first_line)
 {
     auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
+        db2_preprocessor_options {},
+        [](std::string_view) { return std::nullopt; },
+        nullptr,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
     std::string_view text = "";
 
     auto result = p->generate_replacement(document());
@@ -46,7 +56,12 @@ TEST(db2_preprocessor, first_line)
 TEST(db2_preprocessor, last_line)
 {
     auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
+        db2_preprocessor_options {},
+        [](std::string_view) { return std::nullopt; },
+        nullptr,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
     std::string_view text = "\n END ";
 
     auto result = p->generate_replacement(document(text));
@@ -66,7 +81,10 @@ TEST(db2_preprocessor, include)
             EXPECT_EQ(s, "MEMBER");
             return "member content";
         },
-        nullptr);
+        nullptr,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
     std::string_view text = "\n EXEC SQL INCLUDE MEMBER ";
 
     auto result = p->generate_replacement(document(text));
@@ -88,7 +106,10 @@ TEST(db2_preprocessor, include_sqlca)
             called = true;
             return std::nullopt;
         },
-        nullptr);
+        nullptr,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
     std::string_view text = "\n EXEC SQL INCLUDE SQLCA ";
 
     auto result = p->generate_replacement(document(text));
@@ -108,7 +129,10 @@ TEST(db2_preprocessor, include_sqlda)
             called = true;
             return std::nullopt;
         },
-        nullptr);
+        nullptr,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
     std::string_view text = "\n EXEC SQL INCLUDE SQLDA ";
 
     auto result = p->generate_replacement(document(text));
@@ -128,7 +152,10 @@ TEST(db2_preprocessor, sql_like)
             called = true;
             return std::nullopt;
         },
-        nullptr);
+        nullptr,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
     std::string_view text = "\n EXEC SQL SELECT 1 INTO :A FROM SYSIBM.SYSDUMMY1";
 
     auto result = p->generate_replacement(document(text));
@@ -144,7 +171,12 @@ TEST(db2_preprocessor, sql_like)
 TEST(db2_preprocessor, with_label)
 {
     auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
+        db2_preprocessor_options {},
+        [](std::string_view) { return std::nullopt; },
+        nullptr,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
     std::string_view text = "\nABC EXEC SQL WHATEVER";
 
     auto result = p->generate_replacement(document(text));
@@ -167,7 +199,12 @@ TEST(db2_preprocessor, missing_member)
 {
     diagnostic_op_consumer_container diags;
     auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
+        db2_preprocessor_options {},
+        [](std::string_view) { return std::nullopt; },
+        &diags,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
 
     std::string_view text = " EXEC SQL INCLUDE MISSING";
 
@@ -181,7 +218,12 @@ TEST(db2_preprocessor, bad_continuation)
 {
     diagnostic_op_consumer_container diags;
     auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
+        db2_preprocessor_options {},
+        [](std::string_view) { return std::nullopt; },
+        &diags,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
 
     std::string_view text = R"( EXEC SQL PRETENT SQL STATEMENT                                        X
 badcontinuation)";
@@ -201,7 +243,10 @@ TEST(db2_preprocessor, no_nested_include)
             EXPECT_EQ(s, "MEMBER");
             return " EXEC SQL INCLUDE MEMBER";
         },
-        &diags);
+        &diags,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
     std::string_view text = " EXEC SQL INCLUDE MEMBER ";
 
     auto doc = p->generate_replacement(document(text));
@@ -635,7 +680,12 @@ TEST(db2_preprocessor, sql_types)
 {
     diagnostic_op_consumer_container diags;
     auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
+        db2_preprocessor_options {},
+        [](std::string_view) { return std::nullopt; },
+        &diags,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
     std::string_view text = R"(
 RE SQL TYPE IS RESULT_SET_LOCATOR VARYING
 RO SQL TYPE IS ROWID
@@ -826,7 +876,12 @@ TEST(db2_preprocessor, sql_type_fails)
     {
         diagnostic_op_consumer_container diags;
         auto p = preprocessor::create(
-            db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
+            db2_preprocessor_options {},
+            [](std::string_view) { return std::nullopt; },
+            &diags,
+            m_src_info,
+            m_ctx,
+            m_lib_provider);
 
         p->generate_replacement(document(text));
 
@@ -840,7 +895,12 @@ TEST(db2_preprocessor, sql_type_warn_on_continuation)
                             "                AS LOCATOR";
     diagnostic_op_consumer_container diags;
     auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
+        db2_preprocessor_options {},
+        [](std::string_view) { return std::nullopt; },
+        &diags,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
 
     p->generate_replacement(document(text));
 
@@ -932,7 +992,12 @@ RO_LEN  EQU *-RO
 TEST(db2_preprocessor, conditional)
 {
     auto p = preprocessor::create(
-        db2_preprocessor_options("", true), [](std::string_view) { return std::nullopt; }, nullptr);
+        db2_preprocessor_options("", true),
+        [](std::string_view) { return std::nullopt; },
+        nullptr,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
     std::string_view text = "";
 
     auto result = p->generate_replacement(document());

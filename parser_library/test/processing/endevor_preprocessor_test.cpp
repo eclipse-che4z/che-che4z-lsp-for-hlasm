@@ -22,6 +22,12 @@
 using namespace hlasm_plugin::parser_library::processing;
 using namespace hlasm_plugin::utils::resource;
 
+namespace {
+semantics::source_info_processor m_src_info(false);
+analyzing_context m_ctx(nullptr, nullptr);
+workspaces::empty_parse_lib_provider m_lib_provider;
+} // namespace
+
 TEST(endevor_preprocessor, basic_inc)
 {
     diagnostic_op_consumer_container diags;
@@ -35,7 +41,10 @@ TEST(endevor_preprocessor, basic_inc)
             ++callback_count;
             return std::string("TEST");
         },
-        &diags);
+        &diags,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
 
     auto result = p->generate_replacement(document("-INC AAA"));
 
@@ -58,7 +67,10 @@ TEST(endevor_preprocessor, basic_include)
             ++callback_count;
             return std::string("TEST");
         },
-        &diags);
+        &diags,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
 
     auto result = p->generate_replacement(document("++INCLUDE AAA"));
 
@@ -81,7 +93,10 @@ TEST(endevor_preprocessor, missing_member)
             ++callback_count;
             return std::nullopt;
         },
-        &diags);
+        &diags,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
 
     auto result = p->generate_replacement(document("++INCLUDE AAA\nBBB"));
 
@@ -104,7 +119,10 @@ TEST(endevor_preprocessor, cycle)
             ++callback_count;
             return std::string("-INC AAA");
         },
-        &diags);
+        &diags,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
 
     auto result = p->generate_replacement(document("++INCLUDE AAA"));
 
@@ -129,7 +147,10 @@ TEST(endevor_preprocessor, nested)
                 return "CCC";
             return std::nullopt;
         },
-        &diags);
+        &diags,
+        m_src_info,
+        m_ctx,
+        m_lib_provider);
 
     auto result = p->generate_replacement(document("AAA\n-INC MEMBER\nEEE"));
 

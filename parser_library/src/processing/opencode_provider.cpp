@@ -395,24 +395,8 @@ size_t extract_current_line(size_t next_line_index, const document& doc)
 
 bool opencode_provider::try_running_preprocessor()
 {
-    if (m_next_line_index >= m_input_document.size()
-        || (m_input_document.at(m_next_line_index).is_original()
-            && m_input_document.at(m_next_line_index).preprocessor_used() == preprocessor_type::NONE))
+    if (m_next_line_index >= m_input_document.size() || m_input_document.at(m_next_line_index).is_original())
         return false;
-
-    if (m_input_document.at(m_next_line_index).preprocessor_used() != preprocessor_type::NONE)
-    {
-        auto cur_line = m_next_line_index++;
-        auto orig_line = m_input_document.at(cur_line).lineno().value();
-        preprocessor_analyzer preproc_analyzer(std::string(m_input_document.at(cur_line).text()),
-            orig_line,
-            *m_ctx,
-            processing_kind::ENDEVOR,
-            *m_lib_provider);
-        preproc_analyzer.analyze();
-        m_src_proc->process_hl_symbols(preproc_analyzer.source_processor().semantic_tokens());
-        m_diagnoser->collect_diags_from_child(preproc_analyzer);
-    }
 
     const auto current_line = extract_current_line(m_next_line_index, m_input_document);
 
