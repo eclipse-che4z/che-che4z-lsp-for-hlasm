@@ -137,7 +137,7 @@ class endevor_preprocessor : public preprocessor
 
         return semantics::statement_si(range(position(line_no, 0), position(line_no, remark_end)),
             semantics::label_si(range()),
-            semantics::instruction_si(inc_range),
+            semantics::instruction_si(inc_range, m_ctx.hlasm_ctx->ids().add(std::string(inc))),
             semantics::operands_si(member_range, std::move(operands)),
             std::move(remarks),
             {});
@@ -168,7 +168,12 @@ class endevor_preprocessor : public preprocessor
                 dynamic_cast<expressions::mach_expr_symbol*>(op->access_asm()->access_expr()->expression.get());
 
             if (sym_expr)
+            {
+                stmt_occurences.emplace_back(lsp::occurence_kind::INSTR,
+                    std::get<context::id_index>(stmt.instruction_ref().value),
+                    stmt.instruction_ref().field_range);
                 stmt_occurences.emplace_back(lsp::occurence_kind::COPY_OP, sym_expr->value, op->operand_range);
+            }
         }
 
         auto& file_occs = opencode_occurences[m_ctx.hlasm_ctx->current_statement_location().resource_loc];
