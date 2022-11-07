@@ -27,7 +27,6 @@ struct diagnostic_op;
 } // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::semantics {
 struct deferred_statement;
-struct preprocessor_statement;
 } // namespace hlasm_plugin::parser_library::semantics
 namespace hlasm_plugin::parser_library::processing {
 class error_statement;
