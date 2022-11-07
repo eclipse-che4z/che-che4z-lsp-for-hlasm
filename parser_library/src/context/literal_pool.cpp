@@ -104,12 +104,11 @@ class literal_pool::literal_postponed_statement : public context::postponed_stat
     static const processing::processing_format dc_format;
 
 public:
-    literal_postponed_statement(const std::shared_ptr<const expressions::data_definition>& dd,
-        const literal_pool::literal_details& details,
-        id_storage& ids)
+    literal_postponed_statement(
+        const std::shared_ptr<const expressions::data_definition>& dd, const literal_pool::literal_details& details)
         : details(&details)
         , op(details.r, {})
-        , op_code(ids.add("DC"), instruction_type::ASM)
+        , op_code(context::id_index("DC"), instruction_type::ASM)
     {
         op.value.push_back(std::make_unique<semantics::data_def_operand>(dd, details.r));
     }
@@ -213,7 +212,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
         else
         {
             auto adder = ord_ctx.symbol_dependencies.add_dependencies(
-                std::make_unique<literal_postponed_statement>(lit, lit_val, hlasm_ctx.ids()),
+                std::make_unique<literal_postponed_statement>(lit, lit_val),
                 dependency_evaluation_context {
                     lit_val.loctr,
                     lit_key.generation,

@@ -219,7 +219,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
         // optimization : if statement has no label and is not COPY, do not even parse operands
         && (collector.has_label() || collector.current_instruction().type != semantics::instruction_si_type::ORD
             || std::get<context::id_index>(collector.current_instruction().value)
-                == m_ctx->hlasm_ctx->ids().well_known.COPY))
+                == context::id_storage::well_known::COPY))
     {
         const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, nullptr, {}, op_range, proc_status, true);
 
@@ -286,11 +286,11 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                     h.op_rem_body_deferred();
                     break;
                 case processing_form::CA: {
-                    const auto& wk = m_ctx->hlasm_ctx->ids().well_known;
-                    bool var_def = opcode.value == wk.GBLA || opcode.value == wk.GBLB || opcode.value == wk.GBLC
-                        || opcode.value == wk.LCLA || opcode.value == wk.LCLB || opcode.value == wk.LCLC;
-                    bool branchlike = opcode.value == wk.AIF || opcode.value == wk.AGO || opcode.value == wk.AIFB
-                        || opcode.value == wk.AGOB;
+                    using wk = context::id_storage::well_known;
+                    bool var_def = opcode.value == wk::GBLA || opcode.value == wk::GBLB || opcode.value == wk::GBLC
+                        || opcode.value == wk::LCLA || opcode.value == wk::LCLB || opcode.value == wk::LCLC;
+                    bool branchlike = opcode.value == wk::AIF || opcode.value == wk::AGO || opcode.value == wk::AIFB
+                        || opcode.value == wk::AGOB;
                     if (var_def)
                         h.op_rem_body_ca_var_def();
                     else if (branchlike)

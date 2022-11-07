@@ -228,7 +228,7 @@ TEST(copy, copy_enter_success)
 
     EXPECT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_sequence_symbol(a.hlasm_ctx().ids().add("A")));
+    EXPECT_TRUE(a.hlasm_ctx().get_sequence_symbol(id_index("A")));
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -356,14 +356,14 @@ TEST(copy, copy_enter_from_macro_call)
 
     EXPECT_EQ(a.hlasm_ctx().macros().size(), (size_t)2);
 
-    auto mac = *a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("M"));
+    auto mac = *a.hlasm_ctx().find_macro(id_index("M"));
     ASSERT_TRUE(mac);
 
-    EXPECT_TRUE(mac->labels.find(a.hlasm_ctx().ids().add("A")) != mac->labels.end());
-    EXPECT_TRUE(mac->labels.find(a.hlasm_ctx().ids().add("B")) != mac->labels.end());
+    EXPECT_TRUE(mac->labels.find(id_index("A")) != mac->labels.end());
+    EXPECT_TRUE(mac->labels.find(id_index("B")) != mac->labels.end());
 
     ASSERT_EQ(mac->used_copy_members.size(), 1U);
-    EXPECT_EQ(mac->used_copy_members.begin()->get()->name, a.hlasm_ctx().ids().add("COPYR"));
+    EXPECT_EQ(mac->used_copy_members.begin()->get()->name, id_index("COPYR"));
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
@@ -409,15 +409,15 @@ TEST(copy, nested_macro_copy_call)
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
     ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
-    auto mac_ptr = a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("MAC"));
+    auto mac_ptr = a.hlasm_ctx().find_macro(id_index("MAC"));
     ASSERT_TRUE(mac_ptr);
     const auto& mac = *mac_ptr;
 
-    EXPECT_TRUE(mac->labels.find(a.hlasm_ctx().ids().add("A")) != mac->labels.end());
+    EXPECT_TRUE(mac->labels.find(id_index("A")) != mac->labels.end());
 
     EXPECT_EQ(a.hlasm_ctx()
                   .globals()
-                  .find(a.hlasm_ctx().ids().add("X"))
+                  .find(id_index("X"))
                   ->second->access_set_symbol_base()
                   ->access_set_symbol<context::A_t>()
                   ->get_value(),
@@ -441,7 +441,7 @@ TEST(copy, macro_from_copy_call)
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
     ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
-    ASSERT_TRUE(a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("M")));
+    ASSERT_TRUE(a.hlasm_ctx().find_macro(id_index("M")));
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
@@ -592,18 +592,18 @@ TEST(copy, copy_empty_file)
 
     EXPECT_EQ(a.hlasm_ctx().macros().size(), (size_t)2);
 
-    auto mac = a.hlasm_ctx().get_macro_definition(a.hlasm_ctx().ids().add("M"));
+    auto mac = a.hlasm_ctx().get_macro_definition(id_index("M"));
     ASSERT_TRUE(mac != nullptr);
 
     ASSERT_EQ(mac->used_copy_members.size(), 2U);
-    EXPECT_EQ(mac->used_copy_members.count(a.hlasm_ctx().get_copy_member(a.hlasm_ctx().ids().add("EMPTY"))), 1U);
-    EXPECT_EQ(mac->used_copy_members.count(a.hlasm_ctx().get_copy_member(a.hlasm_ctx().ids().add("COPYEMPTY"))), 1U);
+    EXPECT_EQ(mac->used_copy_members.count(a.hlasm_ctx().get_copy_member(id_index("EMPTY"))), 1U);
+    EXPECT_EQ(mac->used_copy_members.count(a.hlasm_ctx().get_copy_member(id_index("COPYEMPTY"))), 1U);
 
-    auto mac2 = a.hlasm_ctx().get_macro_definition(a.hlasm_ctx().ids().add("M2"));
+    auto mac2 = a.hlasm_ctx().get_macro_definition(id_index("M2"));
     ASSERT_TRUE(mac2 != nullptr);
 
     ASSERT_EQ(mac2->used_copy_members.size(), 1U);
-    EXPECT_EQ(mac2->used_copy_members.count(a.hlasm_ctx().get_copy_member(a.hlasm_ctx().ids().add("EMPTY"))), 1U);
+    EXPECT_EQ(mac2->used_copy_members.count(a.hlasm_ctx().get_copy_member(id_index("EMPTY"))), 1U);
 
     ASSERT_EQ(a.diags().size(), 0U);
 }

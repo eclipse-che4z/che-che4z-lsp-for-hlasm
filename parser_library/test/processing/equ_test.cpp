@@ -43,7 +43,7 @@ B EQU A+A-10
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("A")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(id_index("A")));
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), -8);
 

@@ -29,7 +29,7 @@ TEST(ca_symbol, undefined_attributes)
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
-    ca_symbol sym(ctx.ids().add("n"), range());
+    ca_symbol sym(context::id_index("N"), range());
 
     auto res = sym.get_undefined_attributed_symbols(eval_ctx);
 

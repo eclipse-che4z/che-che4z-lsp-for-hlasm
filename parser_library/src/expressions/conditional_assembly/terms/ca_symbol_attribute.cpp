@@ -157,7 +157,7 @@ context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx)
 
     return context::SET_t(expr_kind);
 }
-std::string ca_symbol_attribute::try_extract_leading_symbol(std::string_view expr)
+std::string_view ca_symbol_attribute::try_extract_leading_symbol(std::string_view expr)
 {
     // remove parentheses
     while (!expr.empty() && expr.front() == '(' && expr.back() == ')')
@@ -178,7 +178,7 @@ std::string ca_symbol_attribute::try_extract_leading_symbol(std::string_view exp
         if (auto d = expr.find_first_of("+-*/()"); d != std::string_view::npos)
             expr = expr.substr(0, d);
     }
-    return std::string(expr);
+    return expr;
 }
 
 context::SET_t ca_symbol_attribute::retrieve_value(
@@ -222,7 +222,7 @@ context::C_t get_current_macro_name_field(const context::hlasm_context& ctx)
 
     if (!scope.is_in_macro())
         return {};
-    return scope.this_macro->named_params.at(ctx.ids().well_known.SYSLIST)
+    return scope.this_macro->named_params.at(context::id_storage::well_known::SYSLIST)
         ->get_data(std::array<size_t, 1> { 0 })
         ->get_value();
 }
@@ -365,12 +365,11 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
                     var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, var_name.to_string_view()))
                 return "U";
 
-            std::string var_value;
-            if (auto var_value_o = read_string_var_sym(*var_symbol, transform(expr_subscript));
-                !var_value_o.has_value())
+            auto var_value_o = read_string_var_sym(*var_symbol, transform(expr_subscript));
+            if (!var_value_o.has_value())
                 return "N";
-            else
-                var_value = std::move(*var_value_o);
+
+            std::string_view var_value = var_value_o.value();
 
             if (var_value.empty())
                 return "O";
@@ -380,7 +379,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
             if (auto res = expressions::ca_constant::try_self_defining_term(var_value))
                 return "N";
 
-            auto symbol_name = eval_ctx.hlasm_ctx.ids().add(std::move(var_value));
+            auto symbol_name = eval_ctx.hlasm_ctx.ids().add(var_value);
 
             if (auto tmp_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(symbol_name))
                 return std::string { (char)ebcdic_encoding::e2a[tmp_symbol->attributes().type()] };

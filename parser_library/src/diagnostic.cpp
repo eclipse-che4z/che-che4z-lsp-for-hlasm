@@ -2042,7 +2042,7 @@ diagnostic_op diagnostic_op::error_E066(const range& range)
 
 diagnostic_op diagnostic_op::error_E067(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "E067", "Bad symbol in instruction", range);
+    return diagnostic_op(diagnostic_severity::error, "E067", "Blank symbol in instruction", range);
 }
 
 diagnostic_op diagnostic_op::error_E068(const range& range)

@@ -35,7 +35,7 @@ TEST(ca_var_sym_basic, undefined_attributes)
 
     subscript.push_back(std::make_unique<ca_constant>(1, range()));
 
-    auto vs = std::make_unique<basic_variable_symbol>(ctx.ids().add("n"), std::move(subscript), range());
+    auto vs = std::make_unique<basic_variable_symbol>(context::id_index("N"), std::move(subscript), range());
 
     ca_var_sym var(std::move(vs), range());
 

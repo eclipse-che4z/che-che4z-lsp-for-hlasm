@@ -99,7 +99,7 @@ class hlasm_context
     size_t m_ainsert_id = 0;
     bool m_end_reached = false;
 
-    void add_global_system_var_to_scope(id_storage& ids, const std::string& name, code_scope& scope) const;
+    void add_global_system_var_to_scope(id_index id, code_scope& scope) const;
 
     void add_system_vars_to_scope(code_scope& scope);
     void add_global_system_vars(code_scope& scope);

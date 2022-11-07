@@ -27,7 +27,7 @@ S START
     a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(a.hlasm_ctx().ids().add("S"), section_kind::EXECUTABLE));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(id_index("S"), section_kind::EXECUTABLE));
 }
 
 TEST(START, section_with_offset)
@@ -42,7 +42,7 @@ E EQU *
     a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
-    const auto* s = a.hlasm_ctx().ord_ctx.get_section(a.hlasm_ctx().ids().add("S"));
+    const auto* s = a.hlasm_ctx().ord_ctx.get_section(id_index("S"));
     ASSERT_TRUE(s);
     const auto* e = get_symbol(a.hlasm_ctx(), "E");
     ASSERT_TRUE(e);

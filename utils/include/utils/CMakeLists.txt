@@ -21,5 +21,6 @@ target_sources(hlasm_utils PUBLIC
 	platform.h
 	resource_location.h
 	similar.h
+	truth_table.h
 	unicode_text.h
 )

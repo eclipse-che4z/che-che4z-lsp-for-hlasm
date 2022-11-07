@@ -25,8 +25,8 @@ TEST(data_attributes, N)
     hlasm_context ctx;
 
 
-    auto id = ctx.ids().add("id");
-    auto id2 = ctx.ids().add("id2");
+    auto id = context::id_index("ID");
+    auto id2 = context::id_index("ID2");
 
     macro_data_ptr data = std::make_unique<macro_param_data_single>("ada");
     EXPECT_EQ(positional_param(id, 0, *data).number({}), 1);
@@ -77,9 +77,9 @@ TEST(data_attributes, K)
     hlasm_context ctx;
 
 
-    auto idA = ctx.ids().add("id1");
-    auto idB = ctx.ids().add("id2");
-    auto idC = ctx.ids().add("id3");
+    auto idA = context::id_index("ID1");
+    auto idB = context::id_index("ID2");
+    auto idC = context::id_index("ID3");
 
     macro_data_ptr data = std::make_unique<macro_param_data_single>("ada");
     EXPECT_EQ(positional_param(idA, 0, *data).count({}), 3);
@@ -725,8 +725,8 @@ B EQU L'A
     analyzer a(input);
     a.analyze();
 
-    ASSERT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("A")));
-    ASSERT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("B")));
+    ASSERT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(id_index("A")));
+    ASSERT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(id_index("B")));
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 11);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "A")->attributes().length(), (symbol_attributes::len_attr)11);

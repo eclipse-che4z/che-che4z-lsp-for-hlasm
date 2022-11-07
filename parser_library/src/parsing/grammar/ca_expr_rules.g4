@@ -333,7 +333,7 @@ vs_id returns [id_index name]
 		}
 	)*
 	{
-		$name = parse_identifier(text, provider.get_range(first, last));
+		$name = parse_identifier(std::move(text), provider.get_range(first, last));
 	};
 
 var_def returns [vs_ptr vs]

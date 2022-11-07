@@ -36,30 +36,30 @@ TEST(macro, macro_def)
     analyzer a(input);
     a.analyze();
 
-    id_index id = a.hlasm_ctx().ids().add("m1");
+    id_index id = id_index("M1");
 
     auto tmp = a.hlasm_ctx().find_macro(id);
     ASSERT_TRUE(tmp);
 
     auto& m = *tmp;
 
-    auto op = a.hlasm_ctx().ids().add("op");
+    auto op = id_index("OP");
 
     EXPECT_EQ(m->named_params().find(op)->second->access_positional_param()->position, (size_t)1);
 
-    auto op2 = a.hlasm_ctx().ids().add("op2");
+    auto op2 = id_index("OP2");
 
     EXPECT_EQ(m->named_params().find(op2)->second->access_positional_param()->position, (size_t)2);
 
-    auto l = a.hlasm_ctx().ids().add("l");
+    auto l = id_index("L");
 
     EXPECT_EQ(m->named_params().find(l)->second->access_positional_param()->position, (size_t)0);
 
-    auto k = a.hlasm_ctx().ids().add("k");
+    auto k = id_index("K");
 
     EXPECT_EQ(m->named_params().find(k)->second->access_keyword_param()->get_value(), "5");
 
-    auto k2 = a.hlasm_ctx().ids().add("k2");
+    auto k2 = id_index("K2");
 
     EXPECT_EQ(m->named_params().find(k2)->second->access_keyword_param()->get_value(), "(1,2,3)");
 
@@ -92,10 +92,10 @@ TEST(macro, macro_def_count)
 
     id_index id;
 
-    id = a.hlasm_ctx().ids().add("M1");
+    id = id_index("M1");
     EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 
-    id = a.hlasm_ctx().ids().add("m2");
+    id = id_index("M2");
     EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 }
 
@@ -128,13 +128,13 @@ TEST(macro, macro_def_count_inner)
 
     id_index id;
 
-    id = a.hlasm_ctx().ids().add("M1");
+    id = id_index("M1");
     EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 
-    id = a.hlasm_ctx().ids().add("M2");
+    id = id_index("M2");
     EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 
-    id = a.hlasm_ctx().ids().add("INNER_M");
+    id = id_index("INNER_M");
     EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 }
 
@@ -163,7 +163,7 @@ TEST(macro, macro_lookahead_pass)
 
     id_index id;
 
-    id = a.hlasm_ctx().ids().add("M1");
+    id = id_index("M1");
     EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 }
 
@@ -192,10 +192,10 @@ TEST(macro, macro_lookahead_fail)
 
     id_index id;
 
-    id = a.hlasm_ctx().ids().add("M1");
+    id = id_index("M1");
     EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 
-    id = a.hlasm_ctx().ids().add("INNER_M");
+    id = id_index("INNER_M");
     EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 
     a.collect_diags();
@@ -358,18 +358,18 @@ TEST(macro, macro_name_param_repetition)
     EXPECT_EQ(a.diags().size(), (size_t)3);
     EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
-    auto& m1 = *a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("m1"));
-    auto& m2 = *a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("m2"));
-    auto& m3 = *a.hlasm_ctx().find_macro(a.hlasm_ctx().ids().add("m3"));
+    auto& m1 = *a.hlasm_ctx().find_macro(id_index("M1"));
+    auto& m2 = *a.hlasm_ctx().find_macro(id_index("M2"));
+    auto& m3 = *a.hlasm_ctx().find_macro(id_index("M3"));
 
     {
         std::vector<macro_arg> args;
         args.emplace_back(std::make_unique<macro_param_data_single>("2"));
         args.emplace_back(std::make_unique<macro_param_data_single>("3"));
-        auto invo = m1->call(
-            std::make_unique<macro_param_data_single>("1"), std::move(args), a.hlasm_ctx().ids().add("SYSLIST"));
-        auto n = a.hlasm_ctx().ids().add("n");
-        auto b = a.hlasm_ctx().ids().add("b");
+        auto invo =
+            m1->call(std::make_unique<macro_param_data_single>("1"), std::move(args), id_storage::well_known::SYSLIST);
+        auto n = id_index("N");
+        auto b = id_index("B");
         EXPECT_EQ(invo->named_params.find(n)->second->get_value(), "1");
         EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "3");
     }
@@ -378,12 +378,12 @@ TEST(macro, macro_name_param_repetition)
         std::vector<macro_arg> args;
         args.emplace_back(std::make_unique<macro_param_data_single>("1"));
         args.emplace_back(std::make_unique<macro_param_data_single>("2"));
-        auto invo = m2->call(nullptr, std::move(args), a.hlasm_ctx().ids().add("SYSLIST"));
-        auto n = a.hlasm_ctx().ids().add("a");
-        auto b = a.hlasm_ctx().ids().add("b");
+        auto invo = m2->call(nullptr, std::move(args), id_storage::well_known::SYSLIST);
+        auto n = id_index("A");
+        auto b = id_index("B");
         EXPECT_EQ(invo->named_params.find(n)->second->get_value(), "1");
         EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "2");
-        EXPECT_EQ(invo->named_params.find(a.hlasm_ctx().ids().add("SYSLIST"))->second->get_value(1), "1");
+        EXPECT_EQ(invo->named_params.find(id_storage::well_known::SYSLIST)->second->get_value(1), "1");
     }
 
     {
@@ -391,9 +391,9 @@ TEST(macro, macro_name_param_repetition)
         args.emplace_back(std::make_unique<macro_param_data_single>("1"));
         args.emplace_back(std::make_unique<macro_param_data_single>("2"));
         args.emplace_back(std::make_unique<macro_param_data_single>("3"));
-        auto invo = m3->call(nullptr, std::move(args), a.hlasm_ctx().ids().add("SYSLIST"));
-        auto n = a.hlasm_ctx().ids().add("a");
-        auto b = a.hlasm_ctx().ids().add("b");
+        auto invo = m3->call(nullptr, std::move(args), id_storage::well_known::SYSLIST);
+        auto n = id_index("A");
+        auto b = id_index("B");
         EXPECT_EQ(invo->named_params.find(n)->second->access_keyword_param()->get_value(), "5");
         EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "2");
     }
@@ -478,7 +478,7 @@ TEST(macro, arguments_concatenation)
     a.analyze();
     a.collect_diags();
 
-    auto it = a.hlasm_ctx().globals().find(a.hlasm_ctx().ids().add("V"));
+    auto it = a.hlasm_ctx().globals().find(id_index("V"));
 
     ASSERT_NE(it, a.hlasm_ctx().globals().end());
 
@@ -507,8 +507,8 @@ TEST(macro, arguments_continuation)
     a.analyze();
     a.collect_diags();
 
-    auto Q = a.hlasm_ctx().globals().find(a.hlasm_ctx().ids().add("Q"));
-    auto W = a.hlasm_ctx().globals().find(a.hlasm_ctx().ids().add("W"));
+    auto Q = a.hlasm_ctx().globals().find(id_index("Q"));
+    auto W = a.hlasm_ctx().globals().find(id_index("W"));
 
     ASSERT_NE(Q, a.hlasm_ctx().globals().end());
     ASSERT_NE(W, a.hlasm_ctx().globals().end());

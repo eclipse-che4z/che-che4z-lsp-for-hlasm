@@ -100,18 +100,20 @@ TEST_F(workspace_test, parse_lib_provider)
 
     diags().clear();
 
+    auto macro1 = context::id_index("MACRO1");
     ws.parse_library("MACRO1",
         analyzing_context { ctx_1, std::make_shared<lsp::lsp_context>(ctx_1) },
-        library_data { processing::processing_kind::MACRO, ctx_1->ids().add("MACRO1") });
+        library_data { processing::processing_kind::MACRO, macro1 });
 
     // test, that macro1 is parsed, once we are able to parse macros (mby in ctx)
 
     collect_diags_from_child(ws);
     EXPECT_EQ(diags().size(), (size_t)0);
 
+    auto not_existing = context::id_index("NOT_EXISTING");
     ws.parse_library("not_existing",
         analyzing_context { ctx_2, std::make_shared<lsp::lsp_context>(ctx_2) },
-        library_data { processing::processing_kind::MACRO, ctx_2->ids().add("not_existing") });
+        library_data { processing::processing_kind::MACRO, not_existing });
 }
 
 namespace {

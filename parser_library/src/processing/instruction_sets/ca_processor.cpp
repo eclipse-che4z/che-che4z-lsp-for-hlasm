@@ -28,7 +28,7 @@ ca_processor::ca_processor(analyzing_context ctx,
     processing_state_listener& listener,
     opencode_provider& open_code)
     : instruction_processor(ctx, branch_provider, lib_provider)
-    , table_(create_table(*ctx.hlasm_ctx))
+    , table_(create_table())
     , listener_(listener)
     , open_code_(&open_code)
 {}
@@ -41,39 +41,50 @@ void ca_processor::process(std::shared_ptr<const processing::resolved_statement>
     func(*stmt);
 }
 
-ca_processor::process_table_t ca_processor::create_table(context::hlasm_context& h_ctx)
+ca_processor::process_table_t ca_processor::create_table()
 {
     process_table_t table;
-    table.emplace(
-        h_ctx.ids().add("SETA"), std::bind(&ca_processor::process_SET<context::A_t>, this, std::placeholders::_1));
-    table.emplace(
-        h_ctx.ids().add("SETB"), std::bind(&ca_processor::process_SET<context::B_t>, this, std::placeholders::_1));
-    table.emplace(
-        h_ctx.ids().add("SETC"), std::bind(&ca_processor::process_SET<context::C_t>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("LCLA"),
+    table.emplace(context::id_storage::well_known::SETA,
+        std::bind(&ca_processor::process_SET<context::A_t>, this, std::placeholders::_1));
+    table.emplace(context::id_storage::well_known::SETB,
+        std::bind(&ca_processor::process_SET<context::B_t>, this, std::placeholders::_1));
+    table.emplace(context::id_storage::well_known::SETC,
+        std::bind(&ca_processor::process_SET<context::C_t>, this, std::placeholders::_1));
+    table.emplace(context::id_storage::well_known::LCLA,
         std::bind(&ca_processor::process_GBL_LCL<context::A_t, false>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("LCLB"),
+    table.emplace(context::id_storage::well_known::LCLB,
         std::bind(&ca_processor::process_GBL_LCL<context::B_t, false>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("LCLC"),
+    table.emplace(context::id_storage::well_known::LCLC,
         std::bind(&ca_processor::process_GBL_LCL<context::C_t, false>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("GBLA"),
+    table.emplace(context::id_storage::well_known::GBLA,
         std::bind(&ca_processor::process_GBL_LCL<context::A_t, true>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("GBLB"),
+    table.emplace(context::id_storage::well_known::GBLB,
         std::bind(&ca_processor::process_GBL_LCL<context::B_t, true>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("GBLC"),
+    table.emplace(context::id_storage::well_known::GBLC,
         std::bind(&ca_processor::process_GBL_LCL<context::C_t, true>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("ANOP"), std::bind(&ca_processor::process_ANOP, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("ACTR"), std::bind(&ca_processor::process_ACTR, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("AGO"), std::bind(&ca_processor::process_AGO, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("AIF"), std::bind(&ca_processor::process_AIF, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::ANOP, std::bind(&ca_processor::process_ANOP, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::ACTR, std::bind(&ca_processor::process_ACTR, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::AGO, std::bind(&ca_processor::process_AGO, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::AIF, std::bind(&ca_processor::process_AIF, this, std::placeholders::_1));
     table.emplace(context::id_index(), std::bind(&ca_processor::process_empty, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("MACRO"), std::bind(&ca_processor::process_MACRO, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("MEND"), std::bind(&ca_processor::process_MEND, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("MEXIT"), std::bind(&ca_processor::process_MEXIT, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("AREAD"), std::bind(&ca_processor::process_AREAD, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("ASPACE"), std::bind(&ca_processor::process_ASPACE, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("AEJECT"), std::bind(&ca_processor::process_AEJECT, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("MHELP"), [this](const semantics::complete_statement& stmt) { process_MHELP(stmt); });
+    table.emplace(
+        context::id_storage::well_known::MACRO, std::bind(&ca_processor::process_MACRO, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::MEND, std::bind(&ca_processor::process_MEND, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::MEXIT, std::bind(&ca_processor::process_MEXIT, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::AREAD, std::bind(&ca_processor::process_AREAD, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::ASPACE, std::bind(&ca_processor::process_ASPACE, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::AEJECT, std::bind(&ca_processor::process_AEJECT, this, std::placeholders::_1));
+    table.emplace(context::id_storage::well_known::MHELP,
+        [this](const semantics::complete_statement& stmt) { process_MHELP(stmt); });
 
     return table;
 }

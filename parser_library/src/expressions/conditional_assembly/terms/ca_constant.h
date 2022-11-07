@@ -49,11 +49,11 @@ public:
     static context::A_t self_defining_term(
         std::string_view type, std::string_view value, diagnostic_adder& add_diagnostic);
 
-    static context::A_t self_defining_term(const std::string& value, diagnostic_adder& add_diagnostic);
+    static context::A_t self_defining_term(std::string_view value, diagnostic_adder& add_diagnostic);
     static context::A_t self_defining_term_or_abs_symbol(
-        const std::string& value, const evaluation_context& eval_ctx, range expr_range);
+        std::string_view value, const evaluation_context& eval_ctx, range expr_range);
 
-    static std::optional<context::A_t> try_self_defining_term(const std::string& value);
+    static std::optional<context::A_t> try_self_defining_term(std::string_view value);
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

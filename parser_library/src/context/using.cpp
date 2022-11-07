@@ -63,7 +63,10 @@ void using_collection::using_entry::compute_context_correction(
     context.m_state.emplace_back(using_context::entry { u.label, u.owner, u.begin, u.length, u.reg_set, u.reg_offset });
 }
 
-std::string_view convert_diag(id_index id) { return id.to_string_view(); }
+std::string_view convert_diag(const id_index& id) // lifetime! id needs to outlive the return value!
+{
+    return id.to_string_view();
+}
 int convert_diag(using_collection::register_t c) { return c; }
 
 void using_collection::using_entry::compute_context_correction(

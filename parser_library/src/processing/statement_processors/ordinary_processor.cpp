@@ -14,7 +14,6 @@
 
 #include "ordinary_processor.h"
 
-#include <regex>
 #include <stdexcept>
 
 #include "checking/instruction_checker.h"
@@ -23,6 +22,7 @@
 #include "diagnostic_consumer.h"
 #include "ebcdic_encoding.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
+#include "utils/truth_table.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -179,8 +179,7 @@ struct processing_status_visitor
 
     processing_status operator()(const context::assembler_instruction* i) const
     {
-        const auto f =
-            id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS") || id == hlasm_ctx.ids().add("DXD")
+        const auto f = id == context::id_index("DC") || id == context::id_index("DS") || id == context::id_index("DXD")
             ? processing_form::DAT
             : processing_form::ASM;
         const auto o = i->max_operands() == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT;
@@ -322,14 +321,15 @@ context::id_index ordinary_processor::resolve_instruction(
         ;
     tmp.erase(0U, i);
 
-    static const std::regex regex(R"([ \$_#@a-zA-Z0-9]*)");
+    static constexpr auto valid_values =
+        utils::create_truth_table(" $_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
 
     if (tmp.empty())
     {
         add_diagnostic(diagnostic_op::error_E074(instruction_range));
         return context::id_index();
     }
-    else if (!std::regex_match(tmp, regex))
+    else if (auto pos = utils::find_mismatch(tmp, valid_values); pos != std::string_view::npos)
     {
         add_diagnostic(diagnostic_op::error_E075(tmp, instruction_range));
         return context::id_index();

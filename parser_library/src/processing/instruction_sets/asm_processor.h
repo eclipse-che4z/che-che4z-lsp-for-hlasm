@@ -46,7 +46,7 @@ public:
 
 private:
     opencode_provider* open_code_;
-    process_table_t create_table(context::hlasm_context& hlasm_ctx);
+    process_table_t create_table();
 
     context::id_index find_sequence_symbol(const rebuilt_statement& stmt);
 

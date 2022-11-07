@@ -21,9 +21,9 @@ using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library;
 
-concat_chain create_chain(context::hlasm_context& ctx)
+concat_chain create_chain()
 {
-    auto vs = std::make_unique<basic_variable_symbol>(ctx.ids().add("n"), std::vector<ca_expr_ptr>(), range());
+    auto vs = std::make_unique<basic_variable_symbol>(id_index("N"), std::vector<ca_expr_ptr>(), range());
 
     concat_chain created_name;
     created_name.emplace_back(char_str_conc("n", range()));
@@ -52,16 +52,11 @@ concat_chain create_chain(context::hlasm_context& ctx)
 }
 
 
-TEST(concatenation, to_string)
-{
-    context::hlasm_context ctx;
-    EXPECT_EQ(concatenation_point::to_string(create_chain(ctx)), "ada&N.=(ada,ada,&(n))");
-}
+TEST(concatenation, to_string) { EXPECT_EQ(concatenation_point::to_string(create_chain()), "ada&N.=(ada,ada,&(n))"); }
 
 TEST(concatenation, find_var_sym)
 {
-    context::hlasm_context ctx;
-    auto chain = create_chain(ctx);
+    auto chain = create_chain();
 
     {
         auto var = concatenation_point::find_var_sym(chain.cbegin(), chain.cend());

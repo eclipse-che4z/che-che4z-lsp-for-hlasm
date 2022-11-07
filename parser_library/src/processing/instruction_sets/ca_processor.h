@@ -44,7 +44,7 @@ public:
 private:
     opencode_provider* open_code_;
 
-    process_table_t create_table(context::hlasm_context& hlasm_ctx);
+    process_table_t create_table();
 
     void register_seq_sym(const semantics::complete_statement& stmt);
 

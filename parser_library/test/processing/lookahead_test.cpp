@@ -36,7 +36,7 @@ TEST(lookahead, forward_jump_success)
     analyzer a(input);
     a.analyze();
 
-    auto id = a.hlasm_ctx().ids().add("new");
+    auto id = id_index("NEW");
     auto var = a.hlasm_ctx().get_var_sym(id);
     EXPECT_FALSE(var);
 }
@@ -59,8 +59,8 @@ TEST(lookahead, forward_jump_to_continued)
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
-    EXPECT_FALSE(a.hlasm_ctx().get_var_sym(a.hlasm_ctx().ids().add("bad")));
-    EXPECT_TRUE(a.hlasm_ctx().get_var_sym(a.hlasm_ctx().ids().add("good")));
+    EXPECT_FALSE(a.hlasm_ctx().get_var_sym(id_index("BAD")));
+    EXPECT_TRUE(a.hlasm_ctx().get_var_sym(id_index("GOOD")));
 }
 
 TEST(lookahead, forward_jump_from_continued)
@@ -82,8 +82,8 @@ TEST(lookahead, forward_jump_from_continued)
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
 
-    EXPECT_FALSE(a.hlasm_ctx().get_var_sym(a.hlasm_ctx().ids().add("bad")));
-    EXPECT_TRUE(a.hlasm_ctx().get_var_sym(a.hlasm_ctx().ids().add("good")));
+    EXPECT_FALSE(a.hlasm_ctx().get_var_sym(id_index("BAD")));
+    EXPECT_TRUE(a.hlasm_ctx().get_var_sym(id_index("GOOD")));
 }
 
 TEST(lookahead, forward_jump_success_valid_input)
@@ -100,7 +100,7 @@ tr9023-22
     analyzer a(input);
     a.analyze();
 
-    auto id = a.hlasm_ctx().ids().add("new");
+    auto id = id_index("NEW");
     auto var = a.hlasm_ctx().get_var_sym(id);
     EXPECT_FALSE(var);
     EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
@@ -118,7 +118,7 @@ TEST(lookahead, forward_jump_fail)
     analyzer a(input);
     a.analyze();
 
-    auto id = a.hlasm_ctx().ids().add("new");
+    auto id = id_index("NEW");
     auto var = a.hlasm_ctx().get_var_sym(id);
     EXPECT_TRUE(var);
 }
@@ -212,17 +212,17 @@ TEST(attribute_lookahead, nested_lookup_triggered)
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
-    auto v1 = a.hlasm_ctx().create_local_variable<context::C_t>(a.hlasm_ctx().ids().add("V1"), false);
+    auto v1 = a.hlasm_ctx().create_local_variable<context::C_t>(id_index("V1"), false);
     v1->access_set_symbol<context::C_t>()->set_value("A", 0);
-    auto v2 = a.hlasm_ctx().create_local_variable<context::C_t>(a.hlasm_ctx().ids().add("V2"), true);
+    auto v2 = a.hlasm_ctx().create_local_variable<context::C_t>(id_index("V2"), true);
     v2->access_set_symbol<context::C_t>()->set_value("B");
 
     auto res = expr->get_undefined_attributed_symbols(eval_ctx);
     ASSERT_EQ(res.size(), (size_t)1);
-    EXPECT_TRUE(res.find(a.hlasm_ctx().ids().add("B")) != res.end());
+    EXPECT_TRUE(res.find(id_index("B")) != res.end());
 
     a.hlasm_ctx().ord_ctx.add_symbol_reference(
-        context::symbol(a.hlasm_ctx().ids().add("B"),
+        context::symbol(id_index("B"),
             context::symbol_value(),
             context::symbol_attributes(context::symbol_origin::EQU, 'U'_ebcdic, 1),
             location(),
@@ -231,7 +231,7 @@ TEST(attribute_lookahead, nested_lookup_triggered)
 
     res = expr->get_undefined_attributed_symbols(eval_ctx);
     ASSERT_EQ(res.size(), (size_t)1);
-    EXPECT_TRUE(res.find(a.hlasm_ctx().ids().add("A")) != res.end());
+    EXPECT_TRUE(res.find(id_index("A")) != res.end());
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -246,7 +246,7 @@ TEST(attribute_lookahead, lookup_not_triggered)
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
     // define symbol with undefined length
-    auto tmp = a.hlasm_ctx().ord_ctx.create_symbol(a.hlasm_ctx().ids().add("X"),
+    auto tmp = a.hlasm_ctx().ord_ctx.create_symbol(id_index("X"),
         symbol_value(),
         symbol_attributes(symbol_origin::DAT, 200),
         {},
@@ -504,7 +504,7 @@ X EQU 1,2
 
     EXPECT_EQ(a.hlasm_ctx()
                   .globals()
-                  .find(a.hlasm_ctx().ids().add("A"))
+                  .find(id_index("A"))
                   ->second->access_set_symbol_base()
                   ->access_set_symbol<A_t>()
                   ->get_value(),
@@ -767,7 +767,7 @@ C DC C'STH'
     a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    auto var = a.context().hlasm_ctx->get_var_sym(a.context().hlasm_ctx->ids().add("VAR"));
+    auto var = a.context().hlasm_ctx->get_var_sym(id_index("VAR"));
     ASSERT_NE(var, nullptr);
     ASSERT_EQ(var->var_kind, variable_kind::SET_VAR_KIND);
     auto value = var->access_set_symbol_base()->access_set_symbol<int>()->get_value(2);

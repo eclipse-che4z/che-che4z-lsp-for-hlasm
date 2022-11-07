@@ -108,43 +108,42 @@ context::A_t ca_constant::self_defining_term(
     return context::object_traits<context::A_t>::default_v();
 }
 
-context::A_t ca_constant::self_defining_term(const std::string& value, diagnostic_adder& add_diagnostic)
+context::A_t ca_constant::self_defining_term(std::string_view value, diagnostic_adder& add_diagnostic)
 {
     auto q = value.find('\'');
     if (value.size() >= 3 && value.back() == '\'' && q != value.size() - 1)
-        return self_defining_term(std::string_view(value.c_str(), q),
-            std::string_view(value.c_str() + q + 1, value.size() - q - 2),
+        return self_defining_term(std::string_view(value.data(), q),
+            std::string_view(value.data() + q + 1, value.size() - q - 2),
             add_diagnostic);
     else
         return self_defining_term("D", value, add_diagnostic);
 }
 
 context::A_t ca_constant::self_defining_term_or_abs_symbol(
-    const std::string& value, const evaluation_context& eval_ctx, range expr_range)
+    std::string_view value, const evaluation_context& eval_ctx, range expr_range)
 {
     auto add_diagnostic = diagnostic_adder(eval_ctx.diags, expr_range);
     auto q = value.find('\'');
     if (value.size() >= 3 && value.back() == '\'' && q != value.size() - 1)
-        return self_defining_term(std::string_view(value.c_str(), q),
-            std::string_view(value.c_str() + q + 1, value.size() - q - 2),
+        return self_defining_term(std::string_view(value.data(), q),
+            std::string_view(value.data() + q + 1, value.size() - q - 2),
             add_diagnostic);
     else if (value.front() == '+' || value.front() == '-' || std::isdigit((unsigned char)value.front()))
         return self_defining_term("D", value, add_diagnostic);
     else
     {
-        auto symbol = eval_ctx.hlasm_ctx.ids().find(value);
-        if (!symbol.has_value())
+        if (auto symbol = eval_ctx.hlasm_ctx.ids().find(value); symbol.has_value())
         {
-            eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE012(expr_range));
-            return context::object_traits<context::A_t>::default_v();
+            if (auto s = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(symbol.value());
+                s && s->kind() == context::symbol_value_kind::ABS)
+                return s->value().get_abs();
         }
-        auto result = ca_symbol(symbol.value(), expr_range).evaluate(eval_ctx);
-        assert(result.type == context::SET_t_enum::A_TYPE);
-        return result.access_a();
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE012(expr_range));
+        return context::object_traits<context::A_t>::default_v();
     }
 }
 
-std::optional<context::A_t> ca_constant::try_self_defining_term(const std::string& value)
+std::optional<context::A_t> ca_constant::try_self_defining_term(std::string_view value)
 {
     auto empty_add = diagnostic_adder();
     auto ret = self_defining_term(value, empty_add);

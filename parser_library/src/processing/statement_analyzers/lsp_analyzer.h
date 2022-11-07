@@ -76,14 +76,6 @@ private:
 
     void update_macro_nest(const processing::resolved_statement& statement);
 
-    struct LCL_GBL_instr
-    {
-        context::id_index name;
-        context::SET_t_enum type;
-        bool global;
-    };
-    std::array<LCL_GBL_instr, 6> LCL_GBL_instructions_;
-    std::array<std::pair<context::id_index, context::SET_t_enum>, 3> SET_instructions_;
     bool is_LCL_GBL(const processing::resolved_statement& statement, context::SET_t_enum& set_type, bool& global) const;
     bool is_SET(const processing::resolved_statement& statement, context::SET_t_enum& set_type) const;
 };

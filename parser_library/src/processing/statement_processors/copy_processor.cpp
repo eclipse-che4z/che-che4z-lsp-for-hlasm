@@ -45,9 +45,9 @@ void copy_processor::process_statement(context::shared_stmt_ptr statement)
 
     if (auto res_stmt = statement->access_resolved())
     {
-        if (res_stmt->opcode_ref().value == macro_id)
+        if (res_stmt->opcode_ref().value == context::id_storage::well_known::MACRO)
             process_MACRO();
-        else if (res_stmt->opcode_ref().value == mend_id)
+        else if (res_stmt->opcode_ref().value == context::id_storage::well_known::MEND)
             process_MEND();
     }
 
