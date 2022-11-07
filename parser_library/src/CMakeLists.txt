@@ -15,7 +15,6 @@ target_sources(parser_library PRIVATE
 	aread_time.h
 	analyzer.cpp
 	analyzer.h
-	analyzer_if.h
 	analyzing_context.h
 	compiler_options.cpp
 	compiler_options.h
@@ -38,8 +37,6 @@ target_sources(parser_library PRIVATE
 	library_info_transitional.cpp
 	library_info_transitional.h
 	location.h
-	preprocessor_analyzer.cpp
-	preprocessor_analyzer.h
 	preprocessor_options.h
 	protocol.cpp
 	tagged_index.h

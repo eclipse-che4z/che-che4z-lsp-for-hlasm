@@ -21,7 +21,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include "processing/preprocessors/preprocessor_types.h"
 
 namespace hlasm_plugin::parser_library {
 
@@ -34,7 +33,6 @@ struct original_line
 {
     std::string_view m_text;
     size_t m_lineno = 0;
-    processing::preprocessor_type m_preproc_type;
 };
 
 class document_line
@@ -65,20 +63,6 @@ public:
     bool is_original() const noexcept { return std::holds_alternative<original_line>(m_line); }
 
     bool same_type(const document_line& d) const noexcept { return m_line.index() == d.m_line.index(); }
-
-    processing::preprocessor_type preprocessor_used() const noexcept
-    {
-        if (std::holds_alternative<original_line>(m_line))
-            return std::get<original_line>(m_line).m_preproc_type;
-        else
-            return processing::preprocessor_type::NONE;
-    }
-
-    void set_preprocessor(processing::preprocessor_type preproc_type) noexcept
-    {
-        if (std::holds_alternative<original_line>(m_line))
-            std::get<original_line>(m_line).m_preproc_type = preproc_type;
-    }
 };
 
 class document

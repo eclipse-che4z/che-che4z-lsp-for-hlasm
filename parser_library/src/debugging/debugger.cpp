@@ -180,25 +180,15 @@ public:
         if (proc_kind != processing::processing_kind::ORDINARY)
             return;
 
-        range stmt_range;
+        const auto* resolved_stmt = statement.access_resolved();
+        if (!resolved_stmt)
+            return;
 
-        if (auto preproc_stmt = statement.access_preproc(); preproc_stmt)
-        {
-            stmt_range = preproc_stmt->stmt_range_ref();
-        }
-        else
-        {
-            const auto* resolved_stmt = statement.access_resolved();
-            if (!resolved_stmt)
-                return;
+        // Continue only for non-empty statements
+        if (resolved_stmt->opcode_ref().value == context::id_storage::empty_id)
+            return;
 
-            // Continue only for non-empty statements
-            if (resolved_stmt->opcode_ref().value == context::id_storage::empty_id)
-                return;
-
-            stmt_range = resolved_stmt->stmt_range_ref();
-        }
-
+        range stmt_range = resolved_stmt->stmt_range_ref();
 
         bool breakpoint_hit = false;
 

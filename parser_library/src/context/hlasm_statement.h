@@ -54,9 +54,6 @@ struct hlasm_statement
     const semantics::deferred_statement* access_deferred() const;
     semantics::deferred_statement* access_deferred();
 
-    const semantics::preprocessor_statement* access_preproc() const;
-    semantics::preprocessor_statement* access_preproc();
-
     virtual position statement_position() const = 0;
 
     virtual std::span<const diagnostic_op> diagnostics() const = 0;

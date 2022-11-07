@@ -24,8 +24,7 @@ enum class processing_kind : uint8_t
     ORDINARY,
     LOOKAHEAD,
     MACRO,
-    COPY,
-    ENDEVOR
+    COPY
 };
 
 enum class processing_form : uint8_t

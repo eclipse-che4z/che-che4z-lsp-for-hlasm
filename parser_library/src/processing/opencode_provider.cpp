@@ -20,7 +20,6 @@
 #include "library_info_transitional.h"
 #include "parsing/error_strategy.h"
 #include "parsing/parser_impl.h"
-#include "preprocessor_analyzer.h"
 #include "processing/error_statement.h"
 #include "semantics/collector.h"
 #include "semantics/range_provider.h"

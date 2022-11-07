@@ -16,8 +16,6 @@ target_sources(parser_library PRIVATE
 	copy_processor.h
 	empty_processor.cpp
 	empty_processor.h
-	endevor_processor.cpp
-	endevor_processor.h
 	lookahead_processing_info.h
 	lookahead_processor.cpp
 	lookahead_processor.h
