@@ -22,13 +22,13 @@ ca_op_branch returns [operand_ptr op]
 
 		resolve_expression($expr_list.ca_expr);
 		auto r = provider.get_range($expr_list.ctx->getStart(),$seq_symbol.ctx->getStop());
-		if ($seq_symbol.ss.name)
+		if (!$seq_symbol.ss.name.empty())
 			$op = std::make_unique<branch_ca_operand>(std::move($seq_symbol.ss), std::move($expr_list.ca_expr), r);
 	}
 	| seq_symbol
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($seq_symbol.ctx),hl_scopes::seq_symbol));
-		if ($seq_symbol.ss.name)
+		if (!$seq_symbol.ss.name.empty())
 			$op = std::make_unique<seq_ca_operand>(std::move($seq_symbol.ss),provider.get_range($seq_symbol.ctx));
 	};
 	finally

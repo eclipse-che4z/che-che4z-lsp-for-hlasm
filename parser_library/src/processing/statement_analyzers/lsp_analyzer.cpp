@@ -21,19 +21,36 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
+namespace {
+
+struct LCL_GBL_instr
+{
+    context::id_index name;
+    context::SET_t_enum type;
+    bool global;
+};
+
+constexpr std::array<LCL_GBL_instr, 6> LCL_GBL_instructions_ { {
+    { context::id_storage::well_known::LCLA, context::SET_t_enum::A_TYPE, false },
+    { context::id_storage::well_known::LCLB, context::SET_t_enum::B_TYPE, false },
+    { context::id_storage::well_known::LCLC, context::SET_t_enum::C_TYPE, false },
+    { context::id_storage::well_known::GBLA, context::SET_t_enum::A_TYPE, true },
+    { context::id_storage::well_known::GBLB, context::SET_t_enum::B_TYPE, true },
+    { context::id_storage::well_known::GBLC, context::SET_t_enum::C_TYPE, true },
+} };
+
+constexpr std::array<std::pair<context::id_index, context::SET_t_enum>, 3> SET_instructions_ { {
+    { context::id_storage::well_known::SETA, context::SET_t_enum::A_TYPE },
+    { context::id_storage::well_known::SETB, context::SET_t_enum::B_TYPE },
+    { context::id_storage::well_known::SETC, context::SET_t_enum::C_TYPE },
+} };
+
+} // namespace
+
 lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx, const std::string& file_text)
     : hlasm_ctx_(hlasm_ctx)
     , lsp_ctx_(lsp_ctx)
     , file_text_(file_text)
-    , LCL_GBL_instructions_ { { { hlasm_ctx.ids().well_known.LCLA, context::SET_t_enum::A_TYPE, false },
-          { hlasm_ctx.ids().well_known.LCLB, context::SET_t_enum::B_TYPE, false },
-          { hlasm_ctx.ids().well_known.LCLC, context::SET_t_enum::C_TYPE, false },
-          { hlasm_ctx.ids().well_known.GBLA, context::SET_t_enum::A_TYPE, true },
-          { hlasm_ctx.ids().well_known.GBLB, context::SET_t_enum::B_TYPE, true },
-          { hlasm_ctx.ids().well_known.GBLC, context::SET_t_enum::C_TYPE, true } } }
-    , SET_instructions_ { { { hlasm_ctx.ids().well_known.SETA, context::SET_t_enum::A_TYPE },
-          { hlasm_ctx.ids().well_known.SETB, context::SET_t_enum::B_TYPE },
-          { hlasm_ctx.ids().well_known.SETC, context::SET_t_enum::C_TYPE } } }
 {}
 
 void lsp_analyzer::analyze(
@@ -186,7 +203,7 @@ void lsp_analyzer::collect_occurence(const semantics::instruction_si& instructio
         auto opcode = hlasm_ctx_.get_operation_code(
             std::get<context::id_index>(instruction.value)); // TODO: collect the instruction at the right time
         auto* macro_def = std::get_if<context::macro_def_ptr>(&opcode.opcode_detail);
-        if (opcode.opcode || macro_def)
+        if (!opcode.opcode.empty() || macro_def)
             collector.occurences.emplace_back(
                 opcode.opcode, macro_def ? std::move(*macro_def) : context::macro_def_ptr {}, instruction.field_range);
     }
@@ -253,7 +270,7 @@ void lsp_analyzer::collect_copy_operands(const processing::resolved_statement& s
 {
     const auto& opcode = statement.opcode_ref().value;
     const auto& operands = statement.operands_ref().value;
-    if (opcode == hlasm_ctx_.ids().well_known.COPY && operands.size() == 1 && operands.front()->access_asm())
+    if (opcode == context::id_storage::well_known::COPY && operands.size() == 1 && operands.front()->access_asm())
     {
         auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(
             operands.front()->access_asm()->access_expr()->expression.get());
@@ -326,9 +343,9 @@ void lsp_analyzer::add_copy_operand(context::id_index name, const range& operand
 void lsp_analyzer::update_macro_nest(const processing::resolved_statement& statement)
 {
     const auto& opcode = statement.opcode_ref().value;
-    if (opcode == hlasm_ctx_.ids().well_known.MACRO)
+    if (opcode == context::id_storage::well_known::MACRO)
         macro_nest_++;
-    else if (opcode == hlasm_ctx_.ids().well_known.MEND)
+    else if (opcode == context::id_storage::well_known::MEND)
         macro_nest_--;
 }
 

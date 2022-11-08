@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "analyzer.h"
+#include "context/id_storage.h"
 #include "file_with_text.h"
 #include "files_parse_lib_provider.h"
 #include "utils/resource_location.h"
@@ -160,8 +161,8 @@ TEST(macro_cache_test, copy_from_macro)
     opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 0U);
 
-    auto macro_id = file_mngr.hlasm_ctx->ids().add("MAC");
-    auto copy_id = file_mngr.hlasm_ctx->ids().add("COPYFILE");
+    auto macro_id = context::id_index("MAC");
+    auto copy_id = context::id_index("COPYFILE");
 
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
 
@@ -224,12 +225,14 @@ SETA   OPSYN LR
     EXPECT_EQ(opencode->diags().size(), 0U);
 
 
-    auto macro_id = file_mngr.hlasm_ctx->ids().add("MAC");
+    auto macro_id = context::id_index("MAC");
     auto ids = file_mngr.hlasm_ctx->ids_ptr();
+
+    constexpr context::id_index LR("LR");
 
     macro_cache_key macro_key_one_opsyn { opencode_file_loc,
         { processing::processing_kind::MACRO, macro_id },
-        { cached_opsyn_mnemo { ids->well_known.SETA, ids->add("LR"), false } } };
+        { cached_opsyn_mnemo { context::id_storage::well_known::SETA, LR, false } } };
 
 
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, ids);
@@ -250,7 +253,7 @@ SETA   OPSYN LR
 
     macro_cache_key macro_key_two_opsyns = macro_key_one_opsyn;
     macro_key_two_opsyns.opsyn_state.push_back(
-        cached_opsyn_mnemo { file_mngr.hlasm_ctx->ids().add("L"), file_mngr.hlasm_ctx->ids().well_known.SETB, false });
+        cached_opsyn_mnemo { context::id_index("L"), context::id_storage::well_known::SETB, false });
 
     macro_cache_key::sort_opsyn_state(macro_key_two_opsyns.opsyn_state);
 
@@ -277,7 +280,7 @@ TEST(macro_cache_test, empty_macro)
 
     opencode->parse(file_mngr, {}, {}, nullptr);
 
-    auto macro_id = file_mngr.hlasm_ctx->ids().add("MAC");
+    auto macro_id = context::id_index("MAC");
 
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
 
@@ -306,13 +309,14 @@ MAC OPSYN AREAD
     a.analyze();
     auto state = macro_cache_key::get_opsyn_state(a.hlasm_ctx());
 
-    auto& ids = a.hlasm_ctx().ids();
-
+    constexpr context::id_index L("L");
+    constexpr context::id_index LR("LR");
+    constexpr context::id_index MAC("MAC");
     std::vector<cached_opsyn_mnemo> expected {
-        { ids.well_known.SETA, ids.add("LR"), false },
-        { ids.add("L"), ids.well_known.SETB, false },
-        { ids.well_known.SETC, ids.well_known.SETC, true },
-        { ids.add("MAC"), ids.add("AREAD"), false },
+        { context::id_storage::well_known::SETA, LR, false },
+        { L, context::id_storage::well_known::SETB, false },
+        { context::id_storage::well_known::SETC, context::id_storage::well_known::SETC, true },
+        { MAC, context::id_storage::well_known::AREAD, false },
     };
 
     macro_cache_key::sort_opsyn_state(expected);
@@ -404,7 +408,7 @@ TEST(macro_cache_test, inline_depends_on_copy)
     EXPECT_EQ(opencode->diags().size(), 0U);
 
 
-    auto copy_id = file_mngr.hlasm_ctx->ids().add("COPYFILE");
+    auto copy_id = context::id_index("COPYFILE");
 
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
 

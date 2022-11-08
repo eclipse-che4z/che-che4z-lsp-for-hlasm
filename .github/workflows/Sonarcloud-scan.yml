@@ -21,23 +21,6 @@ on:
       - completed
 
 jobs:
-  sonar-prev-job-failure:
-    name: SonarCloud scan - previous job failure
-    runs-on: ubuntu-20.04
-    if: ${{ github.event.workflow_run.conclusion != 'success' }}
-
-    steps:
-     - name: Dump
-       run: |
-            echo 'github.event details:'
-            echo '${{ toJSON(github.event) }}'
-    
-     - name: Issue error
-       uses: actions/github-script@v3
-       with:
-         script: |
-                 core.setFailed('Previous job ended unsuccessfully with the following conclusion: ${{ github.event.workflow_run.conclusion }}')
-
   sonar:
     name: SonarCloud scan
     runs-on: ubuntu-20.04
@@ -47,10 +30,10 @@ jobs:
       - name: Requirements install
         run: sudo apt-get update && sudo apt-get install libc++-12-dev libc++abi-12-dev
       - name: 'Download build output'
-        uses: actions/github-script@v3.1.0
+        uses: actions/github-script@v6
         with:
           script: |
-            var artifacts = await github.actions.listWorkflowRunArtifacts({
+            var artifacts = await github.rest.actions.listWorkflowRunArtifacts({
                owner: context.repo.owner,
                repo: context.repo.repo,
                run_id: ${{github.event.workflow_run.id }},
@@ -58,7 +41,7 @@ jobs:
             var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
               return artifact.name == "bw-output"
             })[0];
-            var download = await github.actions.downloadArtifact({
+            var download = await github.rest.actions.downloadArtifact({
                owner: context.repo.owner,
                repo: context.repo.repo,
                artifact_id: matchArtifact.id,
@@ -70,10 +53,10 @@ jobs:
       - name: Get ref
         run: echo "REF=$(cat pr-info/ref.txt)" >> $GITHUB_ENV
       - run: mv bw-artifact.zip /tmp/bw-artifact.zip
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           persist-credentials: false
-          fetch-depth: 1
+          fetch-depth: 0
           ref: ${{ env.REF }}
       - run: mv /tmp/bw-artifact.zip bw-artifact.zip
       - run: unzip bw-artifact.zip

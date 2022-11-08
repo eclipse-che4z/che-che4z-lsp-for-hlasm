@@ -32,32 +32,31 @@ macro_cache::macro_cache(const file_manager& file_mngr, file& macro_file)
 
 std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_context& ctx)
 {
-    auto& wn = ctx.ids().well_known;
     // List of instructions that are resolved during macro definition - therefore are affected by OPSYN
-    std::array<context::id_index, 19> cached_instr {
-        wn.COPY,
-        wn.ASPACE,
-        wn.GBLA,
-        wn.GBLB,
-        wn.GBLC,
-        wn.LCLA,
-        wn.LCLB,
-        wn.LCLC,
-        wn.SETA,
-        wn.SETB,
-        wn.SETC,
-        wn.MEND,
-        wn.MACRO,
-        wn.MEXIT,
-        wn.AIF,
-        wn.AREAD,
-        wn.ACTR,
-        wn.AGO,
+    static constexpr std::array<context::id_index, 18> cached_instr {
+        context::id_storage::well_known::COPY,
+        context::id_storage::well_known::ASPACE,
+        context::id_storage::well_known::GBLA,
+        context::id_storage::well_known::GBLB,
+        context::id_storage::well_known::GBLC,
+        context::id_storage::well_known::LCLA,
+        context::id_storage::well_known::LCLB,
+        context::id_storage::well_known::LCLC,
+        context::id_storage::well_known::SETA,
+        context::id_storage::well_known::SETB,
+        context::id_storage::well_known::SETC,
+        context::id_storage::well_known::MEND,
+        context::id_storage::well_known::MACRO,
+        context::id_storage::well_known::MEXIT,
+        context::id_storage::well_known::AIF,
+        context::id_storage::well_known::AREAD,
+        context::id_storage::well_known::ACTR,
+        context::id_storage::well_known::AGO,
     };
 
     std::vector<cached_opsyn_mnemo> result;
 
-    context::id_index last_from {};
+    context::id_index last_from;
     auto& opcodes = ctx.opcode_mnemo_storage();
     for (auto it = opcodes.rbegin(); it != opcodes.rend(); ++it)
     {

@@ -54,7 +54,7 @@ processing_status macrodef_processor::get_processing_status(const semantics::ins
         {
             add_diagnostic(diagnostic_op::error_E042(instruction.field_range));
 
-            id = hlasm_ctx.ids().add("ASPACE");
+            id = context::id_storage::well_known::ASPACE;
         }
         else
         {
@@ -62,6 +62,7 @@ processing_status macrodef_processor::get_processing_status(const semantics::ins
                 ? std::get<context::id_index>(instruction.value)
                 : hlasm_ctx.ids().add(
                     semantics::concatenation_point::to_string(std::get<semantics::concat_chain>(instruction.value)));
+            // TODO: should the identifier limit be enforced here?
         }
         return std::make_pair(format, op_code(id, context::instruction_type::MAC));
     }
@@ -87,8 +88,8 @@ void macrodef_processor::process_statement(context::shared_stmt_ptr statement)
 void macrodef_processor::end_processing()
 {
     if (!finished_flag_)
-        add_diagnostic(
-            diagnostic_op::error_E046(*result_.prototype.macro_name, range(hlasm_ctx.processing_stack_top().pos)));
+        add_diagnostic(diagnostic_op::error_E046(
+            result_.prototype.macro_name.to_string_view(), range(hlasm_ctx.processing_stack_top().pos)));
 
     hlasm_ctx.pop_statement_processing();
 
@@ -128,7 +129,7 @@ processing_status macrodef_processor::get_macro_processing_status(
 
             return std::make_pair(format, op_code(code.opcode, context::instruction_type::CA));
         }
-        else if (code.opcode == hlasm_ctx.ids().well_known.COPY)
+        else if (code.opcode == context::id_storage::well_known::COPY)
         {
             processing_format format(processing_kind::MACRO, processing_form::ASM, operand_occurence::PRESENT);
 
@@ -140,7 +141,7 @@ processing_status macrodef_processor::get_macro_processing_status(
     {
         processing_format format(processing_kind::MACRO, processing_form::CA, operand_occurence::ABSENT);
 
-        return std::make_pair(format, op_code(context::id_storage::empty_id, context::instruction_type::CA));
+        return std::make_pair(format, op_code(context::id_index(), context::instruction_type::CA));
     }
 
     processing_format format(processing_kind::MACRO, processing_form::DEFERRED);
@@ -162,10 +163,10 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
     {
         result_.definition_location = hlasm_ctx.processing_stack_top().get_location();
 
-        if (!res_stmt || res_stmt->opcode_ref().value != macro_id)
+        if (!res_stmt || res_stmt->opcode_ref().value != context::id_storage::well_known::MACRO)
         {
             range r = res_stmt ? res_stmt->stmt_range_ref() : range(statement.statement_position());
-            add_diagnostic(diagnostic_op::error_E059(*start_.external_name, r));
+            add_diagnostic(diagnostic_op::error_E059(start_.external_name.to_string_view(), r));
             result_.invalid = true;
             finished_flag_ = true;
             return;
@@ -245,7 +246,8 @@ void macrodef_processor::process_prototype_instruction(const resolved_statement&
     auto macro_name = statement.opcode_ref().value;
     if (start_.is_external && macro_name != start_.external_name)
     {
-        add_diagnostic(diagnostic_op::error_E060(*start_.external_name, statement.instruction_ref().field_range));
+        add_diagnostic(
+            diagnostic_op::error_E060(start_.external_name.to_string_view(), statement.instruction_ref().field_range));
         result_.invalid = true;
         finished_flag_ = true;
         return;
@@ -262,7 +264,7 @@ void macrodef_processor::process_prototype_operand(
     {
         if (op->type == operand_type::EMPTY)
         {
-            result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
+            result_.prototype.symbolic_params.emplace_back(nullptr);
             continue;
         }
 
@@ -307,7 +309,7 @@ void macrodef_processor::process_prototype_operand(
                 add_diagnostic(diagnostic_op::error_E043(op->operand_range));
         }
         else if (tmp_chain.empty()) // if operand is empty
-            result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
+            result_.prototype.symbolic_params.emplace_back(nullptr);
     }
 }
 
@@ -319,7 +321,7 @@ bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* 
     if (var->created || !var->subscript.empty())
     {
         add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
-        result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
+        result_.prototype.symbolic_params.emplace_back(nullptr);
         return false;
     }
 
@@ -329,7 +331,7 @@ bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* 
     {
         add_diagnostic(diagnostic_op::error_E011("Symbolic parameter", op_range));
         if (add_empty)
-            result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
+            result_.prototype.symbolic_params.emplace_back(nullptr);
         return false;
     }
     return true;
@@ -338,27 +340,28 @@ bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* 
 macrodef_processor::process_table_t macrodef_processor::create_table()
 {
     process_table_t table;
-    table.emplace(hlasm_ctx.ids().add("SETA"),
+    table.emplace(context::id_storage::well_known::SETA,
         [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::A_TYPE); });
-    table.emplace(hlasm_ctx.ids().add("SETB"),
+    table.emplace(context::id_storage::well_known::SETB,
         [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::B_TYPE); });
-    table.emplace(hlasm_ctx.ids().add("SETC"),
+    table.emplace(context::id_storage::well_known::SETC,
         [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::C_TYPE); });
-    table.emplace(hlasm_ctx.ids().add("LCLA"),
+    table.emplace(context::id_storage::well_known::LCLA,
         [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, false); });
-    table.emplace(hlasm_ctx.ids().add("LCLB"),
+    table.emplace(context::id_storage::well_known::LCLB,
         [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, false); });
-    table.emplace(hlasm_ctx.ids().add("LCLC"),
+    table.emplace(context::id_storage::well_known::LCLC,
         [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, false); });
-    table.emplace(hlasm_ctx.ids().add("GBLA"),
+    table.emplace(context::id_storage::well_known::GBLA,
         [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, true); });
-    table.emplace(hlasm_ctx.ids().add("GBLB"),
+    table.emplace(context::id_storage::well_known::GBLB,
         [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, true); });
-    table.emplace(hlasm_ctx.ids().add("GBLC"),
+    table.emplace(context::id_storage::well_known::GBLC,
         [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, true); });
-    table.emplace(hlasm_ctx.ids().add("MACRO"), [this](const resolved_statement&) { process_MACRO(); });
-    table.emplace(hlasm_ctx.ids().add("MEND"), [this](const resolved_statement&) { process_MEND(); });
-    table.emplace(hlasm_ctx.ids().add("COPY"), [this](const resolved_statement& stmt) { process_COPY(stmt); });
+    table.emplace(context::id_storage::well_known::MACRO, [this](const resolved_statement&) { process_MACRO(); });
+    table.emplace(context::id_storage::well_known::MEND, [this](const resolved_statement&) { process_MEND(); });
+    table.emplace(
+        context::id_storage::well_known::COPY, [this](const resolved_statement& stmt) { process_COPY(stmt); });
     return table;
 }
 
@@ -386,7 +389,7 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
 
     auto empty = std::make_unique<resolved_statement_impl>(std::move(empty_sem),
         processing_status(processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT),
-            op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA)));
+            op_code(context::id_storage::well_known::ANOP, context::instruction_type::CA)));
 
     result_.definition.push_back(std::move(empty));
     add_correct_copy_nest();

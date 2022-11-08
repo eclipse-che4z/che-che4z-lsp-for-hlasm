@@ -114,7 +114,7 @@ struct concat_point_stringifier
             result.push_back(')');
         }
         else
-            result.append(*v.symbol->access_basic()->name);
+            result.append(v.symbol->access_basic()->name.to_string_view());
     }
 
     void operator()(const dot_conc&) const { result.push_back('.'); }

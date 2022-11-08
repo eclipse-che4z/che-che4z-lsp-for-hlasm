@@ -57,13 +57,16 @@ void using_collection::using_entry::compute_context_correction(
     const using_entry_resolved& u, diagnostic_consumer<diagnostic_op>&)
 {
     // drop conflicting usings
-    if (u.label)
+    if (!u.label.empty())
         compute_context_drop(u.label); // not diagnosed, but maybe we should warn
 
     context.m_state.emplace_back(using_context::entry { u.label, u.owner, u.begin, u.length, u.reg_set, u.reg_offset });
 }
 
-std::string_view convert_diag(id_index id) { return *id; }
+std::string_view convert_diag(const id_index& id) // lifetime! id needs to outlive the return value!
+{
+    return id.to_string_view();
+}
 int convert_diag(using_collection::register_t c) { return c; }
 
 void using_collection::using_entry::compute_context_correction(
@@ -90,7 +93,7 @@ size_t using_collection::using_entry::compute_context_drop(register_t d)
     size_t invalidated = 0;
     for (auto& e : context.m_state)
     {
-        if (e.label == nullptr)
+        if (e.label.empty())
         {
             invalidated += std::count(e.regs.begin(), e.regs.end(), d);
             std::replace(e.regs.begin(), e.regs.end(), d, invalid_register);
@@ -119,7 +122,7 @@ auto using_collection::using_drop_definition::abs_or_reloc(
         {
             return { std::nullopt, rng };
         }
-        return { qualified_address(nullptr, nullptr, v), rng };
+        return { qualified_address(id_index(), nullptr, v), rng };
     }
     if (value.value_kind() == symbol_value_kind::RELOC && value.get_reloc().is_simple())
     {
@@ -138,9 +141,9 @@ auto using_collection::using_drop_definition::reg_or_label(const using_collectio
     const auto& expr = coll.get(e);
     auto rng = expr.expression->get_range();
 
-    if (expr.label)
+    if (!expr.label.empty())
     {
-        return { qualified_id { nullptr, expr.label }, rng };
+        return { qualified_id { id_index(), expr.label }, rng };
     }
 
     if (expr.value.value_kind() == symbol_value_kind::ABS)
@@ -190,7 +193,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
         diag.add_diagnostic(diagnostic_op::error_M113(USING, b_rng));
         return failed_entry_resolved { m_parent };
     }
-    if (b->qualifier)
+    if (!b->qualifier.empty())
     {
         // diagnose and ignore
         diag.add_diagnostic(diagnostic_op::error_U002_label_not_allowed(b_rng));
@@ -207,7 +210,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     std::optional<offset_t> len;
     if (e.has_value())
     {
-        if (e->qualifier)
+        if (!e->qualifier.empty())
         {
             // diagnose and ignore
             diag.add_diagnostic(diagnostic_op::error_U002_label_not_allowed(e_rng));
@@ -216,7 +219,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
         {
             constexpr auto section_name = [](const section* s) {
                 if (s)
-                    return std::string_view(*s->name);
+                    return s->name.to_string_view();
                 else
                     return std::string_view();
             };
@@ -281,7 +284,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
         void operator()(register_t r, range rng) { args.emplace_back(r, rng); }
         void operator()(qualified_id id, range rng)
         {
-            if (id.qualifier)
+            if (!id.qualifier.empty())
                 diag.add_diagnostic(diagnostic_op::error_U002_label_not_allowed(rng));
             args.emplace_back(id.name, rng);
         }
@@ -321,10 +324,10 @@ namespace {
 id_index identify_label(const ordinary_assembly_context& ord_context, const expressions::mach_expression* expression)
 {
     if (auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(expression);
-        sym && sym->qualifier == nullptr && ord_context.is_using_label(sym->value))
+        sym && sym->qualifier.empty() && ord_context.is_using_label(sym->value))
         return sym->value;
 
-    return nullptr;
+    return id_index();
 }
 } // namespace
 
@@ -335,7 +338,7 @@ void using_collection::resolve_all(
 
     const auto evaluate_expression = [&ord_context, &diag, this, &li](expression_value& expr) {
         expr.label = identify_label(ord_context, expr.expression.get());
-        if (!expr.label)
+        if (expr.label.empty())
         {
             const auto& expr_context = get(expr.context);
             ordinary_assembly_dependency_solver solver(ord_context, expr_context.evaluation_ctx, li);
@@ -496,7 +499,7 @@ auto using_collection::using_context::evaluate(id_index label,
     {
         // implicit 0 mapping
         static constexpr entry zero_entry {
-            nullptr,
+            id_index(),
             nullptr,
             0,
             0x1000,

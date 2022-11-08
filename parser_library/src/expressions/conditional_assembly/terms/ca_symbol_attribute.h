@@ -54,7 +54,7 @@ public:
 
     // if expr contains a symbol as a first term, the rest of the string is thrown away
     // used for L'I'S'T' reference of variable symbol
-    static std::string try_extract_leading_symbol(std::string_view expr);
+    static std::string_view try_extract_leading_symbol(std::string_view expr);
 
 private:
     context::SET_t retrieve_value(const context::symbol* ord_symbol, const evaluation_context& eval_ctx) const;

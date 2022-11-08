@@ -615,6 +615,7 @@ void workspace_configuration::copy_diagnostics(const diagnosable& target) const
         pg.collect_diags();
         for (const auto& d : pg.diags())
             target.add_diagnostic(d);
+        pg.diags().clear();
     }
 
     for (const auto& diag : m_config_diags)

@@ -78,17 +78,17 @@ void hlasm_context::init_instruction_map(opcode_map& opcodes, id_storage& ids, i
         if (!instruction_available(instr.instr_set_affiliation(), active_instr_set))
             continue;
 
-        auto id = ids.add(std::string(instr.name()));
+        auto id = ids.add(instr.name());
         opcodes.try_emplace({ id, opcode_generation::zero }, opcode_t { id, &instr });
     }
     for (const auto& instr : instruction::all_assembler_instructions())
     {
-        auto id = ids.add(std::string(instr.name()));
+        auto id = ids.add(instr.name());
         opcodes.try_emplace({ id, opcode_generation::zero }, opcode_t { id, &instr });
     }
     for (const auto& instr : instruction::all_ca_instructions())
     {
-        auto id = ids.add(std::string(instr.name()));
+        auto id = ids.add(instr.name());
         opcodes.try_emplace({ id, opcode_generation::zero }, opcode_t { id, &instr });
     }
     for (const auto& instr : instruction::all_mnemonic_codes())
@@ -96,7 +96,7 @@ void hlasm_context::init_instruction_map(opcode_map& opcodes, id_storage& ids, i
         if (!instruction_available(instr.instr_set_affiliation(), active_instr_set))
             continue;
 
-        auto id = ids.add(std::string(instr.name()));
+        auto id = ids.add(instr.name());
         opcodes.try_emplace({ id, opcode_generation::zero }, opcode_t { id, &instr });
     }
 }
@@ -169,14 +169,9 @@ macro_data_ptr create_macro_data(std::vector<std::string> value)
 macro_data_ptr create_macro_data(std::unique_ptr<macro_param_data_single_dynamic> value) { return value; }
 
 template<typename SYSTEM_VARIABLE_TYPE, typename DATA>
-std::pair<id_index, sys_sym_ptr> create_system_variable(
-    id_storage& ids, std::string name, DATA mac_data, bool is_global)
+std::pair<id_index, sys_sym_ptr> create_system_variable(id_index id, DATA mac_data, bool is_global)
 {
-    auto id = ids.add(std::move(name));
-
-    auto var = std::make_shared<SYSTEM_VARIABLE_TYPE>(id, create_macro_data(std::move(mac_data)), is_global);
-
-    return { id, std::move(var) };
+    return { id, std::make_shared<SYSTEM_VARIABLE_TYPE>(id, create_macro_data(std::move(mac_data)), is_global) };
 }
 } // namespace
 
@@ -185,17 +180,17 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
     if (scope.is_in_macro())
     {
         {
-            auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_storage::empty_id;
+            auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_index();
 
             scope.system_variables.insert(
-                create_system_variable<system_variable, std::string>(ids(), "SYSECT", *sect_name, false));
+                create_system_variable<system_variable, std::string>(id_index("SYSECT"), sect_name.to_string(), false));
         }
 
         {
             std::string value = left_pad(std::to_string(SYSNDX_), 4, '0');
 
             scope.system_variables.insert(
-                create_system_variable<system_variable>(ids(), "SYSNDX", std::move(value), false));
+                create_system_variable<system_variable>(id_index("SYSNDX"), std::move(value), false));
         }
 
         {
@@ -223,7 +218,7 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
             }
 
             scope.system_variables.insert(
-                create_system_variable<system_variable>(ids(), "SYSSTYP", std::move(value), false));
+                create_system_variable<system_variable>(id_index("SYSSTYP"), std::move(value), false));
         }
 
         {
@@ -231,18 +226,18 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 
             if (ord_ctx.current_section())
             {
-                location_counter_name = *ord_ctx.current_section()->current_location_counter().name;
+                location_counter_name = ord_ctx.current_section()->current_location_counter().name.to_string();
             }
 
             scope.system_variables.insert(
-                create_system_variable<system_variable>(ids(), "SYSLOC", std::move(location_counter_name), false));
+                create_system_variable<system_variable>(id_index("SYSLOC"), std::move(location_counter_name), false));
         }
 
         {
             std::string value = std::to_string(scope_stack_.size() - 1);
 
             scope.system_variables.insert(
-                create_system_variable<system_variable>(ids(), "SYSNEST", std::move(value), false));
+                create_system_variable<system_variable>(id_index("SYSNEST"), std::move(value), false));
         }
 
         {
@@ -250,34 +245,30 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
 
             for (auto it = scope_stack_.rbegin(); it != scope_stack_.rend(); ++it)
             {
-                std::string tmp;
                 if (it->is_in_macro())
-                    tmp = *it->this_macro->id;
+                    data.push_back(it->this_macro->id.to_string());
                 else
-                    tmp = "OPEN CODE";
-                data.push_back(std::move(tmp));
+                    data.push_back("OPEN CODE");
             }
 
             scope.system_variables.insert(
-                create_system_variable<system_variable_sysmac>(ids(), "SYSMAC", std::move(data), false));
+                create_system_variable<system_variable_sysmac>(id_index("SYSMAC"), std::move(data), false));
         }
 
         {
             scope.system_variables.insert(
-                create_system_variable<system_variable>(ids(), "SYSIN_DSN", asm_options_.sysin_dsn, false));
+                create_system_variable<system_variable>(id_index("SYSIN_DSN"), asm_options_.sysin_dsn, false));
         }
 
         {
             scope.system_variables.insert(
-                create_system_variable<system_variable>(ids(), "SYSIN_MEMBER", asm_options_.sysin_member, false));
+                create_system_variable<system_variable>(id_index("SYSIN_MEMBER"), asm_options_.sysin_member, false));
         }
     }
 }
 
-void hlasm_context::add_global_system_var_to_scope(id_storage& ids, const std::string& name, code_scope& scope) const
+void hlasm_context::add_global_system_var_to_scope(id_index id, code_scope& scope) const
 {
-    auto id = ids.add(name);
-
     auto glob = globals_.find(id);
 
     sys_sym_ptr temp = std::dynamic_pointer_cast<system_variable>(glob->second);
@@ -324,11 +315,13 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
             date_val.append(year.c_str() + 2);
 
             {
-                globals_.insert(create_system_variable<system_variable>(ids(), "SYSDATC", std::move(datc_val), true));
+                globals_.insert(
+                    create_system_variable<system_variable>(id_index("SYSDATC"), std::move(datc_val), true));
             }
 
             {
-                globals_.insert(create_system_variable<system_variable>(ids(), "SYSDATE", std::move(date_val), true));
+                globals_.insert(
+                    create_system_variable<system_variable>(id_index("SYSDATE"), std::move(date_val), true));
             }
 
             {
@@ -341,66 +334,67 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
                     value.push_back('0');
                 value.append(std::to_string(now->tm_min));
 
-                globals_.insert(create_system_variable<system_variable>(ids(), "SYSTIME", std::move(value), true));
+                globals_.insert(create_system_variable<system_variable>(id_index("SYSTIME"), std::move(value), true));
             }
         }
 
         {
             globals_.insert(create_system_variable<system_variable>(
-                ids(), "SYSOPT_RENT", std::to_string(asm_options_.sysopt_rent), true));
+                id_index("SYSOPT_RENT"), std::to_string(asm_options_.sysopt_rent), true));
         }
 
         {
             globals_.insert(create_system_variable<system_variable>(
-                ids(), "SYSOPT_XOBJECT", std::to_string(asm_options_.sysopt_xobject), true));
+                id_index("SYSOPT_XOBJECT"), std::to_string(asm_options_.sysopt_xobject), true));
         }
 
         {
-            globals_.insert(create_system_variable<system_variable>(ids(), "SYSPARM", asm_options_.sysparm, true));
+            globals_.insert(create_system_variable<system_variable>(id_index("SYSPARM"), asm_options_.sysparm, true));
         }
 
         {
             globals_.insert(create_system_variable<system_variable>(
-                ids(), "SYSSTMT", std::make_unique<sysstmt_macro_param_data>(metrics, scope_stack_), true));
+                id_index("SYSSTMT"), std::make_unique<sysstmt_macro_param_data>(metrics, scope_stack_), true));
         }
 
         {
-            globals_.insert(create_system_variable<system_variable>(ids(), "SYSTEM_ID", asm_options_.system_id, true));
+            globals_.insert(
+                create_system_variable<system_variable>(id_index("SYSTEM_ID"), asm_options_.system_id, true));
         }
 
         {
             static constexpr const auto emulated_hlasm_sysver = "1.6.0";
-            globals_.insert(create_system_variable<system_variable>(ids(), "SYSVER", emulated_hlasm_sysver, true));
+            globals_.insert(create_system_variable<system_variable>(id_index("SYSVER"), emulated_hlasm_sysver, true));
         }
 
         {
             static constexpr const auto emulated_asm_name = "HIGH LEVEL ASSEMBLER";
-            globals_.insert(create_system_variable<system_variable>(ids(), "SYSASM", emulated_asm_name, true));
+            globals_.insert(create_system_variable<system_variable>(id_index("SYSASM"), emulated_asm_name, true));
         }
 
         {
             globals_.insert(create_system_variable<system_variable>(
-                ids(), "SYSM_SEV", std::make_unique<integral_macro_param_data<unsigned, 3>>(mnote_last_max), true));
+                id_index("SYSM_SEV"), std::make_unique<integral_macro_param_data<unsigned, 3>>(mnote_last_max), true));
         }
 
         {
             globals_.insert(create_system_variable<system_variable>(
-                ids(), "SYSM_HSEV", std::make_unique<integral_macro_param_data<unsigned, 3>>(mnote_max), true));
+                id_index("SYSM_HSEV"), std::make_unique<integral_macro_param_data<unsigned, 3>>(mnote_max), true));
         }
     }
 
-    add_global_system_var_to_scope(ids(), "SYSDATC", scope);
-    add_global_system_var_to_scope(ids(), "SYSDATE", scope);
-    add_global_system_var_to_scope(ids(), "SYSTIME", scope);
-    add_global_system_var_to_scope(ids(), "SYSOPT_RENT", scope);
-    add_global_system_var_to_scope(ids(), "SYSOPT_XOBJECT", scope);
-    add_global_system_var_to_scope(ids(), "SYSPARM", scope);
-    add_global_system_var_to_scope(ids(), "SYSSTMT", scope);
-    add_global_system_var_to_scope(ids(), "SYSTEM_ID", scope);
-    add_global_system_var_to_scope(ids(), "SYSVER", scope);
-    add_global_system_var_to_scope(ids(), "SYSASM", scope);
-    add_global_system_var_to_scope(ids(), "SYSM_SEV", scope);
-    add_global_system_var_to_scope(ids(), "SYSM_HSEV", scope);
+    add_global_system_var_to_scope(id_index("SYSDATC"), scope);
+    add_global_system_var_to_scope(id_index("SYSDATE"), scope);
+    add_global_system_var_to_scope(id_index("SYSTIME"), scope);
+    add_global_system_var_to_scope(id_index("SYSOPT_RENT"), scope);
+    add_global_system_var_to_scope(id_index("SYSOPT_XOBJECT"), scope);
+    add_global_system_var_to_scope(id_index("SYSPARM"), scope);
+    add_global_system_var_to_scope(id_index("SYSSTMT"), scope);
+    add_global_system_var_to_scope(id_index("SYSTEM_ID"), scope);
+    add_global_system_var_to_scope(id_index("SYSVER"), scope);
+    add_global_system_var_to_scope(id_index("SYSASM"), scope);
+    add_global_system_var_to_scope(id_index("SYSM_SEV"), scope);
+    add_global_system_var_to_scope(id_index("SYSM_HSEV"), scope);
 }
 
 hlasm_context::hlasm_context(
@@ -514,7 +508,7 @@ processing_stack_t hlasm_context::processing_stack()
     {
         result = m_stack_tree.step(processing_frame(source.current_instruction.pos,
                                        shared_resource_location(source.current_instruction.resource_loc),
-                                       id_storage::empty_id),
+                                       id_index()),
             result);
         for (const auto& member : source.copy_stack)
         {
@@ -573,7 +567,7 @@ processing_frame hlasm_context::processing_stack_top()
 
     return processing_frame(last_source.current_instruction.pos,
         shared_resource_location(last_source.current_instruction.resource_loc),
-        id_storage::empty_id);
+        id_index());
 }
 
 processing_stack_details_t hlasm_context::processing_stack_details()
@@ -586,7 +580,7 @@ processing_stack_details_t hlasm_context::processing_stack_details()
             shared_resource_location(source.current_instruction.resource_loc),
             scope_stack_.front(),
             file_processing_type::OPENCODE,
-            id_storage::empty_id);
+            id_index());
         for (const auto& member : source.copy_stack)
         {
             res.emplace_back(member.current_statement_position(),
@@ -778,7 +772,7 @@ void hlasm_context::add_mnemonic(id_index mnemo, id_index op_code)
 
 void hlasm_context::remove_mnemonic(id_index mnemo)
 {
-    const opcode_t* it;
+    [[maybe_unused]] const opcode_t* it;
     assert((it = find_opcode_mnemo(mnemo, opcode_generation::current)) && *it);
     opcode_mnemo_.try_emplace({ mnemo, ++m_current_opcode_generation }, opcode_t());
 }
@@ -912,7 +906,7 @@ macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_pa
             ord_ctx.symbol_mentioned_on_macro(ids().add(std::move(label)));
     }
 
-    auto invo = macro_def->call(std::move(label_param_data), std::move(params), ids().add("SYSLIST"));
+    auto invo = macro_def->call(std::move(label_param_data), std::move(params), id_storage::well_known::SYSLIST);
     auto& new_scope = scope_stack_.emplace_back(invo, macro_def);
     add_system_vars_to_scope(new_scope);
     add_global_system_vars(new_scope);
@@ -1061,14 +1055,14 @@ void hlasm_context::using_resolve(diagnostic_s_consumer& diag, const library_inf
 
 index_t<using_collection> hlasm_context::using_current() const { return m_active_usings.back(); }
 
-hlasm_context::name_result hlasm_context::try_get_symbol_name(const std::string& symbol)
+hlasm_context::name_result hlasm_context::try_get_symbol_name(std::string_view symbol)
 {
     if (symbol.empty() || symbol.size() > 63 || isdigit((unsigned char)symbol.front()))
-        return std::make_pair(false, context::id_storage::empty_id);
+        return std::make_pair(false, context::id_index());
 
     for (const auto& c : symbol)
         if (!lexing::lexer::ord_char(c))
-            return std::make_pair(false, context::id_storage::empty_id);
+            return std::make_pair(false, context::id_index());
 
     return std::make_pair(true, ids().add(symbol));
 }
@@ -1080,7 +1074,7 @@ SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
     diagnostic_op_consumer& diags)
 {
     auto var = hlasm_ctx.get_var_sym(name);
-    if (!test_symbol_for_read(var, subscript, symbol_range, diags, *name))
+    if (!test_symbol_for_read(var, subscript, symbol_range, diags, name.to_string_view()))
         return SET_t();
 
     if (auto set_sym = var->access_set_symbol_base())

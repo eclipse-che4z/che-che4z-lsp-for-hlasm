@@ -1,6 +1,6 @@
 ******************************  TUTORIAL  *****************************
 * This folder represents an example HLASM workspace where you can find 
-* tutorials, configuration tips and more while this file contains a 
+* tutorials, configuration tips and more. This file contains a 
 * basic introduction to the HLASM extension. 
 
 *****************************  STATEMENTS  ****************************
@@ -11,7 +11,7 @@
 * - parameters of instruction
 * - remarks
 
-* Coloring scheme is applied to provide visual support while working 
+* A coloring scheme is applied to provide visual support while working 
 * with the code:
 LABEL    LR    1,1 HERE COME REMARKS
 
@@ -97,7 +97,7 @@ R1       EQU   1
 *  home directory.
 
 ***************************  CONTINUATIONS  ***************************
-* Longer statements may need more than one line.
+* Longer statements might need more than one line.
 * A continuation character is inserted on column 72 to indicate that:
          MAC1  OPERAND1,OPERAND2,OPERAND3, Macros accept lots of       X
                OPERAND4,OPERAND5 operands and that is why we need this

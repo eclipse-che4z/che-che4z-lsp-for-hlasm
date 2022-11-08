@@ -24,7 +24,7 @@ void using_label_checker::add_diagnostic(diagnostic_op) const {}
 void using_label_checker::visit(const expressions::mach_expr_constant&) {}
 void using_label_checker::visit(const expressions::mach_expr_data_attr& attr)
 {
-    if (!attr.value || !attr.qualifier)
+    if (attr.value.empty() || attr.qualifier.empty())
         return;
     auto symbol = solver.get_symbol(attr.value);
     if (symbol == nullptr || symbol->kind() != context::symbol_value_kind::RELOC)
@@ -34,12 +34,13 @@ void using_label_checker::visit(const expressions::mach_expr_data_attr& attr)
         return;
     const auto* section = reloc.bases().front().first.owner;
     if (!solver.using_active(attr.qualifier, section))
-        diags.add_diagnostic(diagnostic_op::error_ME005(*attr.qualifier, *section->name, attr.get_range()));
+        diags.add_diagnostic(diagnostic_op::error_ME005(
+            attr.qualifier.to_string_view(), section->name.to_string_view(), attr.get_range()));
 }
-void using_label_checker::visit(const expressions::mach_expr_data_attr_literal& attr) {}
+void using_label_checker::visit(const expressions::mach_expr_data_attr_literal&) {}
 void using_label_checker::visit(const expressions::mach_expr_symbol& expr)
 {
-    if (!expr.qualifier)
+    if (expr.qualifier.empty())
         return;
     auto value = expr.evaluate(solver, *this);
     if (value.value_kind() != context::symbol_value_kind::RELOC)
@@ -49,7 +50,8 @@ void using_label_checker::visit(const expressions::mach_expr_symbol& expr)
         return;
     const auto* section = reloc.bases().front().first.owner;
     if (!solver.using_active(expr.qualifier, section))
-        diags.add_diagnostic(diagnostic_op::error_ME005(*expr.qualifier, *section->name, expr.get_range()));
+        diags.add_diagnostic(diagnostic_op::error_ME005(
+            expr.qualifier.to_string_view(), section->name.to_string_view(), expr.get_range()));
 }
 void using_label_checker::visit(const expressions::mach_expr_location_counter&) {}
 void using_label_checker::visit(const expressions::mach_expr_default&) {}

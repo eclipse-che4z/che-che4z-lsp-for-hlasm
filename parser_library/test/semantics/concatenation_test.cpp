@@ -23,8 +23,7 @@ using namespace hlasm_plugin::parser_library;
 
 concat_chain create_chain()
 {
-    static std::string name = "n";
-    auto vs = std::make_unique<basic_variable_symbol>(&name, std::vector<ca_expr_ptr>(), range());
+    auto vs = std::make_unique<basic_variable_symbol>(id_index("N"), std::vector<ca_expr_ptr>(), range());
 
     concat_chain created_name;
     created_name.emplace_back(char_str_conc("n", range()));
@@ -53,7 +52,7 @@ concat_chain create_chain()
 }
 
 
-TEST(concatenation, to_string) { EXPECT_EQ(concatenation_point::to_string(create_chain()), "ada&n.=(ada,ada,&(n))"); }
+TEST(concatenation, to_string) { EXPECT_EQ(concatenation_point::to_string(create_chain()), "ada&N.=(ada,ada,&(n))"); }
 
 TEST(concatenation, find_var_sym)
 {

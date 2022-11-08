@@ -58,7 +58,7 @@ struct test_context : public dependency_solver
 
     std::unique_ptr<mach_expression> create_symbol(const std::string& n, const std::string& q = "")
     {
-        return std::make_unique<mach_expr_symbol>(id(n), q.empty() ? nullptr : id(q), range());
+        return std::make_unique<mach_expr_symbol>(id(n), q.empty() ? id_index() : id(q), range());
     }
 
     std::unique_ptr<mach_expression> number(int n) const { return std::make_unique<mach_expr_constant>(n, range()); }
@@ -126,7 +126,7 @@ TEST(using, basic)
     auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         nullptr,
         args(c.number(1)),
@@ -137,13 +137,13 @@ TEST(using, basic)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(1, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, false), evaluate_result(1, 0));
     EXPECT_EQ(coll.evaluate(with_sect, c.id("LABEL"), sect, 0, false), evaluate_result(invalid_register, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 1000, false), evaluate_result(1, 1000));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4096, false), evaluate_result(invalid_register, 1));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, -1, false), evaluate_result(invalid_register, -1));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4096, true), evaluate_result(1, 4096));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, -1, true), evaluate_result(1, -1));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 1000, false), evaluate_result(1, 1000));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 4096, false), evaluate_result(invalid_register, 1));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, -1, false), evaluate_result(invalid_register, -1));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 4096, true), evaluate_result(1, 4096));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, -1, true), evaluate_result(1, -1));
 }
 
 TEST(using, multiple_registers)
@@ -157,7 +157,7 @@ TEST(using, multiple_registers)
     auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         nullptr,
         args(c.number(2), c.number(1)),
@@ -168,15 +168,15 @@ TEST(using, multiple_registers)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(2, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4096, false), evaluate_result(1, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4100, false), evaluate_result(1, 4));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 8192, false), evaluate_result(invalid_register, 1));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, false), evaluate_result(2, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 4096, false), evaluate_result(1, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 4100, false), evaluate_result(1, 4));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 8192, false), evaluate_result(invalid_register, 1));
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, true), evaluate_result(2, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4096, true), evaluate_result(1, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4100, true), evaluate_result(1, 4));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 8192, true), evaluate_result(1, 4096));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, true), evaluate_result(2, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 4096, true), evaluate_result(1, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 4100, true), evaluate_result(1, 4));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 8192, true), evaluate_result(1, 4096));
 }
 
 TEST(using, with_offset)
@@ -190,7 +190,7 @@ TEST(using, with_offset)
     auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT") + c.number(10),
         nullptr,
         args(c.number(2)),
@@ -201,11 +201,11 @@ TEST(using, with_offset)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(invalid_register, -10));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 10, false), evaluate_result(2, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 20, false), evaluate_result(2, 10));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4106, false), evaluate_result(invalid_register, 1));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, true), evaluate_result(2, -10));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, false), evaluate_result(invalid_register, -10));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 10, false), evaluate_result(2, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 20, false), evaluate_result(2, 10));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 4106, false), evaluate_result(invalid_register, 1));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, true), evaluate_result(2, -10));
 }
 
 TEST(using, with_negative_offset)
@@ -219,7 +219,7 @@ TEST(using, with_negative_offset)
     auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT") - c.number(10),
         nullptr,
         args(c.number(2)),
@@ -230,16 +230,16 @@ TEST(using, with_negative_offset)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, -20, false), evaluate_result(invalid_register, -10));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, -10, false), evaluate_result(2, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(2, 10));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 10, false), evaluate_result(2, 20));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 20, false), evaluate_result(2, 30));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4086, false), evaluate_result(invalid_register, 1));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, -20, true), evaluate_result(2, -10));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, -10, true), evaluate_result(2, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, true), evaluate_result(2, 10));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4086, false), evaluate_result(invalid_register, 1));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, -20, false), evaluate_result(invalid_register, -10));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, -10, false), evaluate_result(2, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, false), evaluate_result(2, 10));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 10, false), evaluate_result(2, 20));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 20, false), evaluate_result(2, 30));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 4086, false), evaluate_result(invalid_register, 1));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, -20, true), evaluate_result(2, -10));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, -10, true), evaluate_result(2, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, true), evaluate_result(2, 10));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 4086, false), evaluate_result(invalid_register, 1));
 }
 
 TEST(using, dependent_using)
@@ -258,14 +258,14 @@ TEST(using, dependent_using)
      */
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT") + c.number(10),
         nullptr,
         args(c.number(12)),
         dependency_evaluation_context(opcode_generation::current),
         {});
     [[maybe_unused]] auto with_sect2 = coll.add(with_sect,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT2") + c.number(5),
         nullptr,
         args(c.create_symbol("SECT") + c.number(20)),
@@ -276,18 +276,18 @@ TEST(using, dependent_using)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 10, false), evaluate_result(12, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 20, false), evaluate_result(12, 10));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect2, 20, false), evaluate_result(invalid_register, 0));
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect2, 20, false), evaluate_result(12, 25));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 10, false), evaluate_result(12, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 20, false), evaluate_result(12, 10));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect2, 20, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect2, 20, false), evaluate_result(12, 25));
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4105, false), evaluate_result(12, 4095));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 4106, false), evaluate_result(invalid_register, 1));
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect, 4105, false), evaluate_result(12, 4095));
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect, 4106, false), evaluate_result(invalid_register, 1));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 4105, false), evaluate_result(12, 4095));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 4106, false), evaluate_result(invalid_register, 1));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect, 4105, false), evaluate_result(12, 4095));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect, 4106, false), evaluate_result(invalid_register, 1));
 
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect2, 4090, false), evaluate_result(12, 4095));
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect2, 4091, false), evaluate_result(invalid_register, 1));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect2, 4090, false), evaluate_result(12, 4095));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect2, 4091, false), evaluate_result(invalid_register, 1));
 }
 
 TEST(using, labeled)
@@ -313,10 +313,10 @@ TEST(using, labeled)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, false), evaluate_result(invalid_register, 0));
     EXPECT_EQ(coll.evaluate(with_sect, label, sect, 0, false), evaluate_result(1, 0));
     EXPECT_EQ(coll.evaluate(with_sect, label, sect, 1000, false), evaluate_result(1, 1000));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 1000, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 1000, false), evaluate_result(invalid_register, 0));
     EXPECT_EQ(coll.evaluate(with_sect, label, sect, 4096, false), evaluate_result(invalid_register, 1));
     EXPECT_EQ(coll.evaluate(with_sect, label, sect, -1, false), evaluate_result(invalid_register, -1));
     EXPECT_EQ(coll.evaluate(with_sect, label, sect, 4096, true), evaluate_result(1, 4096));
@@ -334,7 +334,7 @@ TEST(using, drop_one)
     auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         nullptr,
         args(c.number(2), c.number(1)),
@@ -348,15 +348,15 @@ TEST(using, drop_one)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 0, false), evaluate_result(invalid_register, -4096));
-    EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 4096, false), evaluate_result(1, 0));
-    EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 4100, false), evaluate_result(1, 4));
-    EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 8192, false), evaluate_result(invalid_register, 1));
+    EXPECT_EQ(coll.evaluate(after_drop2, id_index(), sect, 0, false), evaluate_result(invalid_register, -4096));
+    EXPECT_EQ(coll.evaluate(after_drop2, id_index(), sect, 4096, false), evaluate_result(1, 0));
+    EXPECT_EQ(coll.evaluate(after_drop2, id_index(), sect, 4100, false), evaluate_result(1, 4));
+    EXPECT_EQ(coll.evaluate(after_drop2, id_index(), sect, 8192, false), evaluate_result(invalid_register, 1));
 
-    EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 0, true), evaluate_result(1, -4096));
-    EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 4096, true), evaluate_result(1, 0));
-    EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 4100, true), evaluate_result(1, 4));
-    EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 8192, true), evaluate_result(1, 4096));
+    EXPECT_EQ(coll.evaluate(after_drop2, id_index(), sect, 0, true), evaluate_result(1, -4096));
+    EXPECT_EQ(coll.evaluate(after_drop2, id_index(), sect, 4096, true), evaluate_result(1, 0));
+    EXPECT_EQ(coll.evaluate(after_drop2, id_index(), sect, 4100, true), evaluate_result(1, 4));
+    EXPECT_EQ(coll.evaluate(after_drop2, id_index(), sect, 8192, true), evaluate_result(1, 4096));
 }
 
 TEST(using, drop_dependent)
@@ -371,14 +371,14 @@ TEST(using, drop_dependent)
     auto sect2 = c.create_section("SECT2");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         nullptr,
         args(c.number(2)),
         dependency_evaluation_context(opcode_generation::current),
         {});
     [[maybe_unused]] auto with_sect2 = coll.add(with_sect,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT2"),
         nullptr,
         args(c.create_symbol("SECT")),
@@ -392,13 +392,13 @@ TEST(using, drop_dependent)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(2, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect2, 0, false), evaluate_result(invalid_register, 0));
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect, 0, false), evaluate_result(2, 0));
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect2, 0, false), evaluate_result(2, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, false), evaluate_result(2, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect2, 0, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect, 0, false), evaluate_result(2, 0));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect2, 0, false), evaluate_result(2, 0));
 
-    EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 0, false), evaluate_result(invalid_register, 0));
-    EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect2, 0, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(after_drop2, id_index(), sect, 0, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(after_drop2, id_index(), sect2, 0, false), evaluate_result(invalid_register, 0));
 }
 
 TEST(using, override_label)
@@ -432,10 +432,10 @@ TEST(using, override_label)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(invalid_register, 0));
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect, 0, false), evaluate_result(invalid_register, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect2, 0, false), evaluate_result(invalid_register, 0));
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect2, 0, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect, 0, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect2, 0, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect2, 0, false), evaluate_result(invalid_register, 0));
 
     EXPECT_EQ(coll.evaluate(with_sect, label, sect, 0, false), evaluate_result(1, 0));
     EXPECT_EQ(coll.evaluate(with_sect2, label, sect, 0, false), evaluate_result(invalid_register, 0));
@@ -456,7 +456,7 @@ TEST(using, drop_reg_with_labeled_dependent)
     auto sect2 = c.create_section("SECT2");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         nullptr,
         args(c.number(2)),
@@ -477,16 +477,16 @@ TEST(using, drop_reg_with_labeled_dependent)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(2, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, false), evaluate_result(2, 0));
     EXPECT_EQ(coll.evaluate(with_sect, label, sect, 0, false), evaluate_result(invalid_register, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect2, 0, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect2, 0, false), evaluate_result(invalid_register, 0));
     EXPECT_EQ(coll.evaluate(with_sect, label, sect2, 0, false), evaluate_result(invalid_register, 0));
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect, 0, false), evaluate_result(2, 0));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect, 0, false), evaluate_result(2, 0));
     EXPECT_EQ(coll.evaluate(with_sect2, label, sect, 0, false), evaluate_result(invalid_register, 0));
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect2, 0, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect2, 0, false), evaluate_result(invalid_register, 0));
     EXPECT_EQ(coll.evaluate(with_sect2, label, sect2, 0, false), evaluate_result(2, 0));
 
-    EXPECT_EQ(coll.evaluate(after_drop2, nullptr, sect, 0, false), evaluate_result(invalid_register, 0));
+    EXPECT_EQ(coll.evaluate(after_drop2, id_index(), sect, 0, false), evaluate_result(invalid_register, 0));
     EXPECT_EQ(coll.evaluate(after_drop2, label, sect2, 0, false), evaluate_result(2, 0));
 }
 
@@ -517,7 +517,7 @@ TEST(using, use_reg_16)
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         nullptr,
         args(c.number(16)),
@@ -538,7 +538,7 @@ TEST(using, use_non_simple_reloc)
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         nullptr,
         args(c.create_symbol("LABEL") + c.create_symbol("LABEL")),
@@ -625,7 +625,7 @@ TEST(using, dependent_no_active_using)
     [[maybe_unused]] auto sect2 = c.create_section("SECT2");
 
     [[maybe_unused]] auto with_sect2 = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT2") + c.number(5),
         nullptr,
         args(c.create_symbol("SECT") + c.number(20)),
@@ -654,14 +654,14 @@ TEST(using, dependent_no_active_matching_using)
      */
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT") + c.number(10),
         nullptr,
         args(c.number(12)),
         dependency_evaluation_context(opcode_generation::current),
         {});
     [[maybe_unused]] auto with_sect2 = coll.add(with_sect,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT2") + c.number(5),
         nullptr,
         args(c.create_symbol("SECT3") + c.number(20)),
@@ -682,7 +682,7 @@ TEST(using, using_undefined_begin)
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         nullptr,
         args(c.number(1)),
@@ -705,7 +705,7 @@ TEST(using, using_qualified_begin)
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT", "LABEL"),
         nullptr,
         args(c.number(1)),
@@ -728,7 +728,7 @@ TEST(using, using_undefined_end)
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         c.create_symbol("SECT_END"),
         args(c.number(1)),
@@ -751,7 +751,7 @@ TEST(using, using_qualified_end)
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         c.create_symbol("SECT", "LABEL") + c.number(1),
         args(c.number(1)),
@@ -775,14 +775,14 @@ TEST(using, using_bad_range)
     [[maybe_unused]] auto sect2 = c.create_section("SECT2");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         c.create_symbol("SECT"),
         args(c.number(1)),
         dependency_evaluation_context(opcode_generation::current),
         {});
     [[maybe_unused]] auto with_sect2 = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         c.create_symbol("SECT2"),
         args(c.number(1)),
@@ -808,7 +808,7 @@ TEST(using, use_complex_reloc)
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         nullptr,
         args(c.create_symbol("S1") + c.create_symbol("S2")),
@@ -865,7 +865,7 @@ TEST(using, basic_with_limit)
     auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         c.create_symbol("SECT") + c.number(10),
         args(c.number(1)),
@@ -876,9 +876,9 @@ TEST(using, basic_with_limit)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 0, false), evaluate_result(1, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 9, false), evaluate_result(1, 9));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, sect, 20, false), evaluate_result(invalid_register, 11));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 0, false), evaluate_result(1, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 9, false), evaluate_result(1, 9));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), sect, 20, false), evaluate_result(invalid_register, 11));
 }
 
 TEST(using, duplicate_base)
@@ -892,7 +892,7 @@ TEST(using, duplicate_base)
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         nullptr,
         args(c.number(1), c.number(1)),
@@ -913,7 +913,7 @@ TEST(using, absolute)
     diagnostic_consumer_container<diagnostic_s> d_s;
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.number(128),
         nullptr,
         args(c.number(1)),
@@ -924,11 +924,11 @@ TEST(using, absolute)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 0, false), evaluate_result(0, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 10, false), evaluate_result(0, 10));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 128, false), evaluate_result(1, 0));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, 256, false), evaluate_result(1, 128));
-    EXPECT_EQ(coll.evaluate(with_sect, nullptr, nullptr, -100, true), evaluate_result(0, -100));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), nullptr, 0, false), evaluate_result(0, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), nullptr, 10, false), evaluate_result(0, 10));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), nullptr, 128, false), evaluate_result(1, 0));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), nullptr, 256, false), evaluate_result(1, 128));
+    EXPECT_EQ(coll.evaluate(with_sect, id_index(), nullptr, -100, true), evaluate_result(0, -100));
 }
 
 TEST(using, smaller_offset_but_invalid)
@@ -942,14 +942,14 @@ TEST(using, smaller_offset_but_invalid)
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
     [[maybe_unused]] auto with_sect = coll.add(current,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT"),
         nullptr,
         args(c.number(1)),
         dependency_evaluation_context(opcode_generation::current),
         {});
     [[maybe_unused]] auto with_sect2 = coll.add(with_sect,
-        nullptr,
+        id_index(),
         c.create_symbol("SECT") + c.number(100),
         c.create_symbol("SECT") + c.number(120),
         args(c.number(2)),
@@ -960,7 +960,7 @@ TEST(using, smaller_offset_but_invalid)
 
     EXPECT_TRUE(d_s.diags.empty());
 
-    EXPECT_EQ(coll.evaluate(with_sect2, nullptr, sect, 128, false), evaluate_result(1, 128));
+    EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect, 128, false), evaluate_result(1, 128));
 }
 
 TEST(using, simple_using)

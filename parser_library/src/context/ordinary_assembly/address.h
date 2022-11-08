@@ -42,7 +42,7 @@ struct address
     struct base
     {
         const section* owner = nullptr;
-        id_index qualifier = nullptr;
+        id_index qualifier;
 
         friend bool operator==(const base&, const base&) = default;
     };

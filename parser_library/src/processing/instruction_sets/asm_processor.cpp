@@ -80,10 +80,9 @@ void asm_processor::process_sect(const context::section_kind kind, rebuilt_state
         return false;
     };
 
-    if (sect_name != context::id_storage::empty_id && hlasm_ctx.ord_ctx.symbol_defined(sect_name)
+    if (!sect_name.empty() && hlasm_ctx.ord_ctx.symbol_defined(sect_name)
             && !hlasm_ctx.ord_ctx.section_defined(sect_name, kind)
-        || sect_name == context::id_storage::empty_id && kind != section_kind::DUMMY
-            && do_other_private_sections_exist(sect_name, kind))
+        || sect_name.empty() && kind != section_kind::DUMMY && do_other_private_sections_exist(sect_name, kind))
     {
         add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
     }
@@ -104,7 +103,7 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
 {
     auto loctr_name = find_label_symbol(stmt);
 
-    if (loctr_name == context::id_storage::empty_id)
+    if (loctr_name.empty())
         add_diagnostic(diagnostic_op::error_E053(stmt.label_ref().field_range));
 
     if (hlasm_ctx.ord_ctx.symbol_defined(loctr_name) && !hlasm_ctx.ord_ctx.counter_defined(loctr_name))
@@ -148,7 +147,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
     auto symbol_name = find_label_symbol(stmt);
 
-    if (symbol_name == context::id_storage::empty_id)
+    if (symbol_name.empty())
     {
         if (stmt.label_ref().type == semantics::label_si_type::EMPTY)
             add_diagnostic(diagnostic_op::error_E053(stmt.label_ref().field_range));
@@ -293,7 +292,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     // process label
     auto label = find_label_symbol(stmt);
 
-    if (label != context::id_storage::empty_id)
+    if (!label.empty())
     {
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
         {
@@ -331,7 +330,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
 
     const context::resolvable* l_dep = nullptr;
     const context::resolvable* s_dep = nullptr;
-    if (label != context::id_storage::empty_id)
+    if (!label.empty())
     {
         auto data_op = operands.front()->access_data_def();
 
@@ -515,7 +514,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
     auto label = find_label_symbol(stmt);
     auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, lib_info);
 
-    if (label != context::id_storage::empty_id)
+    if (!label.empty())
     {
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
@@ -648,14 +647,14 @@ void asm_processor::process_OPSYN(rebuilt_statement stmt)
     const auto& operands = stmt.operands_ref().value;
 
     auto label = find_label_symbol(stmt);
-    if (label == context::id_storage::empty_id)
+    if (label.empty())
     {
         if (stmt.label_ref().type == semantics::label_si_type::EMPTY)
             add_diagnostic(diagnostic_op::error_E053(stmt.label_ref().field_range));
         return;
     }
 
-    context::id_index operand = context::id_storage::empty_id;
+    context::id_index operand;
     if (operands.size() == 1) // covers also the " , " case
     {
         auto asm_op = operands.front()->access_asm();
@@ -670,12 +669,12 @@ void asm_processor::process_OPSYN(rebuilt_statement stmt)
         }
     }
 
-    if (operand == context::id_storage::empty_id)
+    if (operand.empty())
     {
         if (hlasm_ctx.get_operation_code(label))
             hlasm_ctx.remove_mnemonic(label);
         else
-            add_diagnostic(diagnostic_op::error_E049(*label, stmt.label_ref().field_range));
+            add_diagnostic(diagnostic_op::error_E049(label.to_string_view(), stmt.label_ref().field_range));
     }
     else
     {
@@ -698,7 +697,7 @@ asm_processor::asm_processor(analyzing_context ctx,
     statement_fields_parser& parser,
     opencode_provider& open_code)
     : low_language_processor(ctx, branch_provider, lib_provider, parser)
-    , table_(create_table(*ctx.hlasm_ctx))
+    , table_(create_table())
     , open_code_(&open_code)
 {}
 
@@ -764,7 +763,7 @@ bool asm_processor::process_copy(analyzing_context ctx,
     if (tmp == ctx.hlasm_ctx->copy_members().end())
     {
         bool result = lib_provider.parse_library(
-            *copy_member_id, ctx, workspaces::library_data { processing_kind::COPY, copy_member_id });
+            sym_expr->value.to_string(), ctx, workspaces::library_data { processing_kind::COPY, sym_expr->value });
 
         if (!result)
         {
@@ -788,42 +787,43 @@ bool asm_processor::process_copy(analyzing_context ctx,
     return true;
 }
 
-asm_processor::process_table_t asm_processor::create_table(context::hlasm_context& h_ctx)
+asm_processor::process_table_t asm_processor::create_table()
 {
     process_table_t table;
-    table.emplace(h_ctx.ids().add("CSECT"),
+    table.emplace(context::id_index("CSECT"),
         [this](rebuilt_statement stmt) { process_sect(context::section_kind::EXECUTABLE, std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("DSECT"),
+    table.emplace(context::id_index("DSECT"),
         [this](rebuilt_statement stmt) { process_sect(context::section_kind::DUMMY, std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("RSECT"),
+    table.emplace(context::id_index("RSECT"),
         [this](rebuilt_statement stmt) { process_sect(context::section_kind::READONLY, std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("COM"),
+    table.emplace(context::id_index("COM"),
         [this](rebuilt_statement stmt) { process_sect(context::section_kind::COMMON, std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("LOCTR"), [this](rebuilt_statement stmt) { process_LOCTR(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("EQU"), [this](rebuilt_statement stmt) { process_EQU(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("DC"), [this](rebuilt_statement stmt) { process_DC(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("DS"), [this](rebuilt_statement stmt) { process_DS(std::move(stmt)); });
-    table.emplace(h_ctx.ids().well_known.COPY, [this](rebuilt_statement stmt) { process_COPY(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("EXTRN"), [this](rebuilt_statement stmt) { process_EXTRN(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("WXTRN"), [this](rebuilt_statement stmt) { process_WXTRN(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("ORG"), [this](rebuilt_statement stmt) { process_ORG(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("OPSYN"), [this](rebuilt_statement stmt) { process_OPSYN(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("AINSERT"), [this](rebuilt_statement stmt) { process_AINSERT(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("CCW"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("CCW0"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("CCW1"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("CNOP"), [this](rebuilt_statement stmt) { process_CNOP(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("START"), [this](rebuilt_statement stmt) { process_START(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("ALIAS"), [this](rebuilt_statement stmt) { process_ALIAS(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("END"), [this](rebuilt_statement stmt) { process_END(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("LTORG"), [this](rebuilt_statement stmt) { process_LTORG(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("USING"), [this](rebuilt_statement stmt) { process_USING(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("DROP"), [this](rebuilt_statement stmt) { process_DROP(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("PUSH"), [this](rebuilt_statement stmt) { process_PUSH(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("POP"), [this](rebuilt_statement stmt) { process_POP(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("MNOTE"), [this](rebuilt_statement stmt) { process_MNOTE(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("CXD"), [this](rebuilt_statement stmt) { process_CXD(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("TITLE"), [this](rebuilt_statement stmt) { process_TITLE(std::move(stmt)); });
+    table.emplace(context::id_index("LOCTR"), [this](rebuilt_statement stmt) { process_LOCTR(std::move(stmt)); });
+    table.emplace(context::id_index("EQU"), [this](rebuilt_statement stmt) { process_EQU(std::move(stmt)); });
+    table.emplace(context::id_index("DC"), [this](rebuilt_statement stmt) { process_DC(std::move(stmt)); });
+    table.emplace(context::id_index("DS"), [this](rebuilt_statement stmt) { process_DS(std::move(stmt)); });
+    table.emplace(
+        context::id_storage::well_known::COPY, [this](rebuilt_statement stmt) { process_COPY(std::move(stmt)); });
+    table.emplace(context::id_index("EXTRN"), [this](rebuilt_statement stmt) { process_EXTRN(std::move(stmt)); });
+    table.emplace(context::id_index("WXTRN"), [this](rebuilt_statement stmt) { process_WXTRN(std::move(stmt)); });
+    table.emplace(context::id_index("ORG"), [this](rebuilt_statement stmt) { process_ORG(std::move(stmt)); });
+    table.emplace(context::id_index("OPSYN"), [this](rebuilt_statement stmt) { process_OPSYN(std::move(stmt)); });
+    table.emplace(context::id_index("AINSERT"), [this](rebuilt_statement stmt) { process_AINSERT(std::move(stmt)); });
+    table.emplace(context::id_index("CCW"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(context::id_index("CCW0"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(context::id_index("CCW1"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(context::id_index("CNOP"), [this](rebuilt_statement stmt) { process_CNOP(std::move(stmt)); });
+    table.emplace(context::id_index("START"), [this](rebuilt_statement stmt) { process_START(std::move(stmt)); });
+    table.emplace(context::id_index("ALIAS"), [this](rebuilt_statement stmt) { process_ALIAS(std::move(stmt)); });
+    table.emplace(context::id_index("END"), [this](rebuilt_statement stmt) { process_END(std::move(stmt)); });
+    table.emplace(context::id_index("LTORG"), [this](rebuilt_statement stmt) { process_LTORG(std::move(stmt)); });
+    table.emplace(context::id_index("USING"), [this](rebuilt_statement stmt) { process_USING(std::move(stmt)); });
+    table.emplace(context::id_index("DROP"), [this](rebuilt_statement stmt) { process_DROP(std::move(stmt)); });
+    table.emplace(context::id_index("PUSH"), [this](rebuilt_statement stmt) { process_PUSH(std::move(stmt)); });
+    table.emplace(context::id_index("POP"), [this](rebuilt_statement stmt) { process_POP(std::move(stmt)); });
+    table.emplace(context::id_index("MNOTE"), [this](rebuilt_statement stmt) { process_MNOTE(std::move(stmt)); });
+    table.emplace(context::id_index("CXD"), [this](rebuilt_statement stmt) { process_CXD(std::move(stmt)); });
+    table.emplace(context::id_index("TITLE"), [this](rebuilt_statement stmt) { process_TITLE(std::move(stmt)); });
 
     return table;
 }
@@ -838,7 +838,7 @@ context::id_index asm_processor::find_sequence_symbol(const rebuilt_statement& s
             branch_provider.register_sequence_symbol(symbol.name, symbol.symbol_range);
             return symbol.name;
         default:
-            return context::id_storage::empty_id;
+            return context::id_index();
     }
 }
 
@@ -855,7 +855,7 @@ public:
     void visit(const expressions::mach_expr_default&) override {}
     void visit(const expressions::mach_expr_literal&) override {}
 
-    context::id_index value = nullptr;
+    context::id_index value;
 };
 } // namespace
 
@@ -879,14 +879,14 @@ void asm_processor::process_AINSERT(rebuilt_statement stmt)
 
     AINSERT_operand_visitor visitor;
     second_op->expression->apply(visitor);
-    auto [value] = visitor;
+    const auto& [value] = visitor;
 
-    if (!value)
+    if (value.empty())
         return;
     processing::ainsert_destination dest;
-    if (*value == "FRONT")
+    if (value.to_string_view() == "FRONT")
         dest = processing::ainsert_destination::front;
-    else if (*value == "BACK")
+    else if (value.to_string_view() == "BACK")
         dest = processing::ainsert_destination::back;
     else
     {
@@ -925,7 +925,7 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr, lib_info);
     find_sequence_symbol(stmt);
 
-    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
+    if (auto label = find_label_symbol(stmt); !label.empty())
     {
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
@@ -947,7 +947,7 @@ void asm_processor::process_CNOP(rebuilt_statement stmt)
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr, lib_info);
     find_sequence_symbol(stmt);
 
-    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
+    if (auto label = find_label_symbol(stmt); !label.empty())
     {
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
@@ -1064,7 +1064,7 @@ void asm_processor::process_END(rebuilt_statement stmt)
 void asm_processor::process_ALIAS(rebuilt_statement stmt)
 {
     auto symbol_name = find_label_symbol(stmt);
-    if (symbol_name->empty())
+    if (symbol_name.empty())
     {
         add_diagnostic(diagnostic_op::error_A163_ALIAS_mandatory_label(stmt.stmt_range_ref()));
         return;
@@ -1084,7 +1084,7 @@ void asm_processor::process_LTORG(rebuilt_statement stmt)
     find_sequence_symbol(stmt);
 
 
-    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
+    if (auto label = find_label_symbol(stmt); !label.empty())
     {
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
@@ -1113,7 +1113,7 @@ void asm_processor::process_USING(rebuilt_statement stmt)
 
     auto label = find_using_label(stmt);
 
-    if (label)
+    if (!label.empty())
     {
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
         {
@@ -1192,7 +1192,7 @@ void asm_processor::process_DROP(rebuilt_statement stmt)
     auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, lib_info);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr, lib_info);
 
-    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
+    if (auto label = find_label_symbol(stmt); !label.empty())
     {
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
         {
@@ -1370,7 +1370,7 @@ void asm_processor::process_CXD(rebuilt_statement stmt)
     constexpr uint32_t cxd_length = 4;
 
     // process label
-    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
+    if (auto label = find_label_symbol(stmt); !label.empty())
     {
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
         {

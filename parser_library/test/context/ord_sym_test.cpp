@@ -31,8 +31,8 @@ lbl lr 1,1
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("lbl")));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("lcl")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("LBL")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("LCL")));
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)1);
@@ -48,8 +48,8 @@ B DSECT
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(a.hlasm_ctx().ids().add("A"), section_kind::EXECUTABLE));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(a.hlasm_ctx().ids().add("B"), section_kind::DUMMY));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(context::id_index("A"), section_kind::EXECUTABLE));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(context::id_index("B"), section_kind::DUMMY));
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -63,7 +63,7 @@ A DSECT
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(a.hlasm_ctx().ids().add("A"), section_kind::EXECUTABLE));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(context::id_index("A"), section_kind::EXECUTABLE));
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)1);
@@ -80,9 +80,9 @@ C EQU 10
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("A")));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("B")));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("C")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("A")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("B")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("C")));
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 12);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 11);
@@ -104,9 +104,9 @@ Y LR 1,1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("D")));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("X")));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("Y")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("D")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("X")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("Y")));
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "D"), 2);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->value().value_kind(), symbol_value_kind::RELOC);
@@ -126,9 +126,9 @@ C EQU A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("A")));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("B")));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("C")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("A")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("B")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("C")));
 
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "A")->kind() == symbol_value_kind::ABS);
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "B")->kind() == symbol_value_kind::ABS);
@@ -148,8 +148,8 @@ B EQU 100
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("A")));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("B")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("A")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("B")));
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 101);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 100);
@@ -167,7 +167,7 @@ A LR 1,1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("A")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("A")));
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "A")->kind() == symbol_value_kind::RELOC);
 
     a.collect_diags();
@@ -183,8 +183,8 @@ B LR A*2,1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("A")));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("B")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("A")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("B")));
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "A")->kind() == symbol_value_kind::RELOC);
 
     a.collect_diags();
@@ -201,8 +201,8 @@ Y LR 1,1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("X")));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("Y")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("X")));
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("Y")));
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "X")->kind() == symbol_value_kind::RELOC);
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "Y")->kind() == symbol_value_kind::RELOC);
 

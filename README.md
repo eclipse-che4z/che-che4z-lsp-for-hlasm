@@ -10,8 +10,7 @@ HLASM Language Support is an extension for [Visual Studio Code](https://code.vis
 
 The extension is available on the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.hlasm-language-support). You can install it in a standard way from within the Visual Studio Code.
 
-HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack), an all-round package that offers a modern experience for mainframe application developers, including [COBOL Language Support](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.cobol-language-support), [Explorer for Endevor](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.explorer-for-endevor), [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe), [Debugger for Mainframe](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.debugger-for-mainframe) and [COBOL Control Flow](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.ccf) extensions.
-
+HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack), an all-round package that offers a modern experience for mainframe application developers, including extensions for language support, data editing, testing, and source code management.
 
 ## Useful Information
 - If you have a question about the functionalities of the extension, or come across a problem, [file an issue](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues).

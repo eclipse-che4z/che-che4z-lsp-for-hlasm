@@ -41,7 +41,8 @@ void macro_processor::process(std::shared_ptr<const processing::resolved_stateme
 
     if (const auto& label = stmt->label_ref(); label.type == semantics::label_si_type::ORD)
     {
-        auto [valid, id] = hlasm_ctx.try_get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol);
+        auto [valid, id] =
+            hlasm_ctx.try_get_symbol_name(std::get<semantics::ord_symbol_string>(label.value).symbol.to_string_view());
         if (valid && !hlasm_ctx.ord_ctx.get_symbol(id))
         {
             hlasm_ctx.ord_ctx.add_symbol_reference(
@@ -282,7 +283,7 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
     {
         if (op->type == semantics::operand_type::EMPTY)
         {
-            args.push_back({ std::make_unique<context::macro_param_data_dummy>(), nullptr });
+            args.emplace_back(std::make_unique<context::macro_param_data_dummy>());
             continue;
         }
 
@@ -297,15 +298,13 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
         }
         else if (can_chain_be_forwarded(tmp_chain)) // single varsym
         {
-            context::macro_data_ptr data = string_to_macrodata(semantics::var_sym_conc::evaluate(
-                std::get<semantics::var_sym_conc>(tmp_chain.front().value).symbol->evaluate(eval_ctx)));
-
-            args.push_back({ std::move(data), nullptr });
+            args.emplace_back(string_to_macrodata(semantics::var_sym_conc::evaluate(
+                std::get<semantics::var_sym_conc>(tmp_chain.front().value).symbol->evaluate(eval_ctx))));
         }
         else // rest
         {
             diagnostic_adder add_diags(this->eval_ctx.diags, statement.operands_ref().field_range);
-            args.push_back({ create_macro_data(tmp_chain.begin(), tmp_chain.end(), eval_ctx, add_diags), nullptr });
+            args.emplace_back(create_macro_data(tmp_chain.begin(), tmp_chain.end(), eval_ctx, add_diags));
         }
     }
 
@@ -319,7 +318,7 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
     range op_range) const
 {
     auto id = hlasm_ctx.try_get_symbol_name(std::get<semantics::char_str_conc>(chain[0].value).value).second;
-    assert(id != context::id_storage::empty_id);
+    assert(!id.empty());
 
     auto named = hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().find(id);
     if (named == hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().end()
@@ -330,9 +329,8 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
         // MACROCASE TODO
         auto name = std::get<semantics::char_str_conc>(chain[0].value).value;
 
-        args.push_back({ std::make_unique<context::macro_param_data_single>(
-                             name + "=" + semantics::concatenation_point::to_string(chain.begin() + 2, chain.end())),
-            nullptr });
+        args.emplace_back(std::make_unique<context::macro_param_data_single>(
+            name + "=" + semantics::concatenation_point::to_string(chain.begin() + 2, chain.end())));
     }
     else
     {
@@ -353,7 +351,7 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
         else
             data = string_to_macrodata(semantics::concatenation_point::evaluate(chain_begin, chain_end, eval_ctx));
 
-        args.push_back({ std::move(data), id });
+        args.emplace_back(std::move(data), id);
     }
 }
 

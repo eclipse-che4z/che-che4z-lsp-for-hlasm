@@ -141,9 +141,9 @@ bool parser_impl::is_self_def()
 bool parser_impl::is_var_def()
 {
     auto [_, opcode] = *proc_status;
-    const auto& wk = hlasm_ctx->ids().well_known;
-    return opcode.value == wk.GBLA || opcode.value == wk.GBLB || opcode.value == wk.GBLC || opcode.value == wk.LCLA
-        || opcode.value == wk.LCLB || opcode.value == wk.LCLC;
+    using wk = id_storage::well_known;
+    return opcode.value == wk::GBLA || opcode.value == wk::GBLB || opcode.value == wk::GBLC || opcode.value == wk::LCLA
+        || opcode.value == wk::LCLB || opcode.value == wk::LCLC;
 }
 
 self_def_t parser_impl::parse_self_def_term(const std::string& option, const std::string& value, range term_range)
@@ -268,29 +268,29 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
             diagnoser_->add_diagnostic(std::move(d));
     });
     auto [_, opcode] = *proc_status;
-    const auto& wk = hlasm_ctx->ids().well_known;
-    if (opcode.value == wk.SETA || opcode.value == wk.ACTR || opcode.value == wk.ASPACE || opcode.value == wk.AGO
-        || opcode.value == wk.MHELP)
+    using wk = id_storage::well_known;
+    if (opcode.value == wk::SETA || opcode.value == wk::ACTR || opcode.value == wk::ASPACE || opcode.value == wk::AGO
+        || opcode.value == wk::MHELP)
         resolve_expression(expr, context::SET_t_enum::A_TYPE);
-    else if (opcode.value == wk.SETB)
+    else if (opcode.value == wk::SETB)
     {
         if (!expr->is_compatible(ca_expression_compatibility::setb))
             diags.add_diagnostic(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
 
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     }
-    else if (opcode.value == wk.AIF)
+    else if (opcode.value == wk::AIF)
     {
         if (!expr->is_compatible(ca_expression_compatibility::aif))
             diags.add_diagnostic(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
 
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     }
-    else if (opcode.value == wk.SETC)
+    else if (opcode.value == wk::SETC)
     {
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
     }
-    else if (opcode.value == wk.AREAD)
+    else if (opcode.value == wk::AREAD)
     {
         // aread operand is just enumeration
     }
@@ -332,13 +332,13 @@ bool parser_impl::DAT()
 bool parser_impl::ALIAS()
 {
     auto& [_, opcode] = *proc_status;
-    return opcode.type == instruction_type::ASM && opcode.value == hlasm_ctx->ids().well_known.ALIAS;
+    return opcode.type == instruction_type::ASM && opcode.value == id_storage::well_known::ALIAS;
 }
 
 bool parser_impl::END()
 {
     auto& [_, opcode] = *proc_status;
-    return opcode.type == instruction_type::ASM && opcode.value == hlasm_ctx->ids().well_known.END;
+    return opcode.type == instruction_type::ASM && opcode.value == id_storage::well_known::END;
 }
 
 bool parser_impl::NOT(const antlr4::Token* token) const
@@ -405,7 +405,8 @@ void parser_impl::add_diagnostic(diagnostic_op d) const
         diagnoser_->add_diagnostic(std::move(d));
 }
 
-context::id_index parser_impl::add_id(std::string s) { return hlasm_ctx->ids().add(std::move(s)); }
+context::id_index parser_impl::add_id(std::string s) const { return hlasm_ctx->ids().add(std::move(s)); }
+context::id_index parser_impl::add_id(std::string_view s) const { return hlasm_ctx->ids().add(s); }
 
 parser_holder::~parser_holder() = default;
 

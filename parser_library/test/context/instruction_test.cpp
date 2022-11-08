@@ -90,11 +90,14 @@ TEST_P(instruction_sets_fixture, instruction_set_loading)
 
         if (instr.second.find(instr_set) == instr.second.end())
         {
-            EXPECT_TRUE(id == nullptr) << "For instructions: " << instr.first;
+            EXPECT_TRUE(
+                !id.has_value() || !a.hlasm_ctx().find_opcode_mnemo(id.value(), context::opcode_generation::zero))
+                << "For instructions: " << instr.first;
         }
         else
         {
-            EXPECT_TRUE(id != nullptr) << "For instructions: " << instr.first;
+            EXPECT_TRUE(id.has_value() && a.hlasm_ctx().find_opcode_mnemo(id.value(), context::opcode_generation::zero))
+                << "For instructions: " << instr.first;
         }
     }
 }

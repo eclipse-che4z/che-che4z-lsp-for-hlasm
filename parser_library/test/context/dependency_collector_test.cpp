@@ -24,10 +24,10 @@
 TEST(dependency_collector, uresolved_addresses)
 {
     hlasm_context ctx;
-    auto name1 = ctx.ids().add("SYM1");
-    auto name2 = ctx.ids().add("SYM2");
+    id_index name1("SYM1");
+    id_index name2("SYM2");
 
-    ctx.ord_ctx.set_section(ctx.ids().add("TEST"), section_kind::COMMON, location(), library_info_transitional::empty);
+    ctx.ord_ctx.set_section(id_index("TEST"), section_kind::COMMON, location(), library_info_transitional::empty);
     auto addr1 = ctx.ord_ctx.current_section()->current_location_counter().current_address();
 
     (void)ctx.ord_ctx.create_symbol(name1,
@@ -48,15 +48,15 @@ TEST(dependency_collector, uresolved_addresses)
     // ((SYM2-SYM1)/(SYM2-SYM1))+SYM2
     mach_expr_binary<add> expr(std::make_unique<mach_expr_binary<expressions::div>>(
                                    std::make_unique<mach_expr_binary<expressions::sub>>(
-                                       std::make_unique<mach_expr_symbol>(name2, nullptr, range()),
-                                       std::make_unique<mach_expr_symbol>(name1, nullptr, range()),
+                                       std::make_unique<mach_expr_symbol>(name2, id_index(), range()),
+                                       std::make_unique<mach_expr_symbol>(name1, id_index(), range()),
                                        range()),
                                    std::make_unique<mach_expr_binary<expressions::sub>>(
-                                       std::make_unique<mach_expr_symbol>(name2, nullptr, range()),
-                                       std::make_unique<mach_expr_symbol>(name1, nullptr, range()),
+                                       std::make_unique<mach_expr_symbol>(name2, id_index(), range()),
+                                       std::make_unique<mach_expr_symbol>(name1, id_index(), range()),
                                        range()),
                                    range()),
-        std::make_unique<mach_expr_symbol>(name2, nullptr, range()),
+        std::make_unique<mach_expr_symbol>(name2, id_index(), range()),
         range());
 
     context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx, library_info_transitional::empty);

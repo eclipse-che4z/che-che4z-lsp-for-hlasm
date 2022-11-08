@@ -42,11 +42,11 @@ TEST(context_id_storage, add)
 {
     hlasm_context ctx;
 
-    ASSERT_FALSE(!ctx.ids().find(""));
+    ASSERT_TRUE(ctx.ids().find("").has_value());
 
-    auto it1 = ctx.ids().add("var");
+    auto it1 = ctx.ids().add(std::string_view("var"));
     auto it2 = ctx.ids().find("var");
-    auto it3 = ctx.ids().add("var");
+    auto it3 = ctx.ids().add(std::string_view("var"));
     ASSERT_TRUE(it1 == it2);
     ASSERT_TRUE(it1 == it3);
 }
@@ -55,9 +55,9 @@ TEST(context_id_storage, case_insensitive)
 {
     hlasm_context ctx;
 
-    auto it1 = ctx.ids().add("var");
-    auto it2 = ctx.ids().add("vaR");
-    auto it3 = ctx.ids().add("Var");
+    auto it1 = ctx.ids().add(std::string_view("var"));
+    auto it2 = ctx.ids().add(std::string_view("vaR"));
+    auto it3 = ctx.ids().add(std::string_view("Var"));
     ASSERT_TRUE(it1 == it2);
     ASSERT_TRUE(it1 == it3);
 }
@@ -67,7 +67,7 @@ TEST(context, create_global_var)
     hlasm_context ctx;
     diagnostic_op_consumer_container diag;
 
-    auto idx = ctx.ids().add("var");
+    auto idx = ctx.ids().add(std::string_view("var"));
 
     auto glob = ctx.create_global_variable<C_t>(idx, true);
 
@@ -87,7 +87,7 @@ TEST(context, create_global_var_different_types)
     hlasm_context ctx;
     diagnostic_op_consumer_container diag;
 
-    auto idx = ctx.ids().add("var");
+    auto idx = ctx.ids().add(std::string_view("var"));
     auto glob_a = ctx.create_global_variable<A_t>(idx, true);
     auto glob_b = ctx.create_global_variable<B_t>(idx, true);
     auto found = ctx.get_var_sym(idx);
@@ -109,11 +109,13 @@ TEST(context, find_global_system_var)
 
     auto idx = ctx.ids().find("SYSDATC");
 
-    auto scope_var_ptr = ctx.get_var_sym(idx);
+    ASSERT_TRUE(idx.has_value());
+
+    auto scope_var_ptr = ctx.get_var_sym(idx.value());
 
 
     EXPECT_TRUE(scope_var_ptr);
-    EXPECT_TRUE(ctx.globals().find(idx) != ctx.globals().end());
+    EXPECT_TRUE(ctx.globals().find(idx.value()) != ctx.globals().end());
 }
 
 TEST(context, create_local_var)
@@ -121,7 +123,7 @@ TEST(context, create_local_var)
     hlasm_context ctx;
 
 
-    auto idx = ctx.ids().add("var");
+    auto idx = ctx.ids().add(std::string_view("var"));
 
     auto loc = ctx.create_local_variable<int>(idx, true);
 
@@ -138,10 +140,10 @@ TEST(context, OPSYN)
     hlasm_context ctx;
 
 
-    auto lr = ctx.ids().add("LR");
-    auto mvc = ctx.ids().add("MVC");
-    auto st = ctx.ids().add("ST");
-    auto mv = ctx.ids().add("MV");
+    auto lr = ctx.ids().add(std::string_view("LR"));
+    auto mvc = ctx.ids().add(std::string_view("MVC"));
+    auto st = ctx.ids().add(std::string_view("ST"));
+    auto mv = ctx.ids().add(std::string_view("MV"));
 
     ctx.add_mnemonic(lr, st);
     EXPECT_EQ(ctx.get_operation_code(lr).opcode, st);
@@ -150,7 +152,7 @@ TEST(context, OPSYN)
     EXPECT_EQ(ctx.get_operation_code(mv).opcode, st);
 
     ctx.remove_mnemonic(lr);
-    EXPECT_EQ(ctx.get_operation_code(lr).opcode, nullptr);
+    EXPECT_EQ(ctx.get_operation_code(lr).opcode, id_index());
 
     EXPECT_EQ(ctx.get_operation_code(mvc).opcode, mvc);
 }
@@ -160,7 +162,7 @@ TEST(context_set_vars, set_scalar)
     hlasm_context ctx;
 
 
-    auto idx = ctx.ids().add("var");
+    auto idx = ctx.ids().add(std::string_view("var"));
 
     set_symbol<int> var(idx, true, false);
 
@@ -186,7 +188,7 @@ TEST(context_set_vars, set_non_scalar)
     hlasm_context ctx;
 
 
-    auto idx = ctx.ids().add("var");
+    auto idx = ctx.ids().add(std::string_view("var"));
 
     set_symbol<string> var(idx, false, false);
 
@@ -287,11 +289,11 @@ TEST(context_macro, add_macro)
 
 
     // creating names of params
-    auto idx = ctx.ids().add("mac");
-    auto lbl = ctx.ids().add("lbl");
-    auto key = ctx.ids().add("key");
-    auto op1 = ctx.ids().add("op1");
-    auto op3 = ctx.ids().add("op3");
+    auto idx = ctx.ids().add(std::string_view("mac"));
+    auto lbl = ctx.ids().add(std::string_view("lbl"));
+    auto key = ctx.ids().add(std::string_view("key"));
+    auto op1 = ctx.ids().add(std::string_view("op1"));
+    auto op3 = ctx.ids().add(std::string_view("op3"));
 
     // creating data of params
     macro_data_ptr p1(make_unique<macro_param_data_single>(""));
@@ -300,9 +302,9 @@ TEST(context_macro, add_macro)
     macro_arg a(move(p1), key);
     vector<macro_arg> args;
     args.push_back(move(a));
-    args.push_back({ nullptr, op1 });
-    args.push_back({ nullptr });
-    args.push_back({ nullptr, op3 });
+    args.emplace_back(nullptr, op1);
+    args.emplace_back(nullptr);
+    args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
     auto& m = *ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {}, {});
@@ -320,10 +322,10 @@ TEST(context_macro, call_and_leave_macro)
 
 
     // creating names of params
-    auto idx = ctx.ids().add("mac");
-    auto key = ctx.ids().add("key");
-    auto op1 = ctx.ids().add("op1");
-    auto op3 = ctx.ids().add("op3");
+    auto idx = ctx.ids().add(std::string_view("mac"));
+    auto key = ctx.ids().add(std::string_view("key"));
+    auto op1 = ctx.ids().add(std::string_view("op1"));
+    auto op3 = ctx.ids().add(std::string_view("op3"));
 
     // creating data of params
     macro_data_ptr p1(make_unique<macro_param_data_single>(""));
@@ -332,12 +334,12 @@ TEST(context_macro, call_and_leave_macro)
     macro_arg a(move(p1), key);
     vector<macro_arg> args;
     args.push_back(move(a));
-    args.push_back({ nullptr, op1 });
-    args.push_back({ nullptr });
-    args.push_back({ nullptr, op3 });
+    args.emplace_back(nullptr, op1);
+    args.emplace_back(nullptr);
+    args.emplace_back(nullptr, op3);
 
     // prototype->|		MAC		&KEY=,&OP1,,&OP3
-    auto& m = *ctx.add_macro(idx, nullptr, move(args), {}, {}, {}, {}, {});
+    auto& m = *ctx.add_macro(idx, context::id_index(), move(args), {}, {}, {}, {}, {});
 
     // creating param data
     macro_data_ptr p2(make_unique<macro_param_data_single>("ada"));
@@ -346,9 +348,9 @@ TEST(context_macro, call_and_leave_macro)
 
     // creating vector of param data for entering macro
     vector<macro_arg> params;
-    params.push_back({ move(p2) });
-    params.push_back({ move(p3) });
-    params.push_back({ move(p4) });
+    params.emplace_back(move(p2));
+    params.emplace_back(move(p3));
+    params.emplace_back(move(p4));
 
     // call->|		MAC		ada,mko,
     auto m2 = ctx.enter_macro(idx, nullptr, move(params));
@@ -357,7 +359,7 @@ TEST(context_macro, call_and_leave_macro)
     ASSERT_TRUE(ctx.is_in_macro());
     ASSERT_TRUE(ctx.this_macro() == m2);
 
-    auto SYSLIST = m2->named_params.find(ctx.ids().add("SYSLIST"))->second->access_system_variable();
+    auto SYSLIST = m2->named_params.find(id_storage::well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST);
     // testing syslist
     EXPECT_EQ(SYSLIST->get_value((size_t)0), "");
@@ -381,11 +383,11 @@ TEST(context_macro, repeat_call_same_macro)
 
 
     // creating names of params
-    auto idx = ctx.ids().add("mac");
-    auto key = ctx.ids().add("key");
-    auto op1 = ctx.ids().add("op1");
-    auto op3 = ctx.ids().add("op3");
-    auto lbl = ctx.ids().add("lbl");
+    auto idx = ctx.ids().add(std::string_view("mac"));
+    auto key = ctx.ids().add(std::string_view("key"));
+    auto op1 = ctx.ids().add(std::string_view("op1"));
+    auto op3 = ctx.ids().add(std::string_view("op3"));
+    auto lbl = ctx.ids().add(std::string_view("lbl"));
 
     // creating data of params
     macro_data_ptr p1(make_unique<macro_param_data_single>(""));
@@ -394,9 +396,9 @@ TEST(context_macro, repeat_call_same_macro)
     macro_arg a(move(p1), key);
     vector<macro_arg> args;
     args.push_back(move(a));
-    args.push_back({ nullptr, op1 });
-    args.push_back({ nullptr });
-    args.push_back({ nullptr, op3 });
+    args.emplace_back(nullptr, op1);
+    args.emplace_back(nullptr);
+    args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
     ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {}, {});
@@ -409,9 +411,9 @@ TEST(context_macro, repeat_call_same_macro)
 
     // creating vector of param data for entering macro
     vector<macro_arg> params;
-    params.push_back({ move(p2) });
-    params.push_back({ move(p3) });
-    params.push_back({ move(p4) });
+    params.emplace_back(move(p2));
+    params.emplace_back(move(p3));
+    params.emplace_back(move(p4));
 
     // calling macro
     // call->|lbl		MAC		ada,mko,
@@ -439,17 +441,17 @@ TEST(context_macro, repeat_call_same_macro)
     macro_data_ptr dat(make_unique<macro_param_data_composite>(move(v)));
 
     // creating another vector for macro call
-    params.push_back({ move(np2) });
-    params.push_back({ move(np4), key });
-    params.push_back({ move(np3) });
-    params.push_back({ move(dat) });
+    params.emplace_back(move(np2));
+    params.emplace_back(move(np4), key);
+    params.emplace_back(move(np3));
+    params.emplace_back(move(dat));
 
     // call->|		MAC		,KEY=cas,,(first,second,third)
     auto m3 = ctx.enter_macro(idx, nullptr, move(params));
 
     ASSERT_TRUE(m2 != m3);
 
-    auto SYSLIST = m3->named_params.find(ctx.ids().add("SYSLIST"))->second->access_system_variable();
+    auto SYSLIST = m3->named_params.find(id_storage::well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST);
 
     for (size_t i = 0; i < 3; i++)
@@ -475,11 +477,11 @@ TEST(context_macro, recurr_call)
 
 
     // creating names of params
-    auto idx = ctx.ids().add("mac");
-    auto key = ctx.ids().add("key");
-    auto op1 = ctx.ids().add("op1");
-    auto op3 = ctx.ids().add("op3");
-    auto lbl = ctx.ids().add("lbl");
+    auto idx = ctx.ids().add(std::string_view("mac"));
+    auto key = ctx.ids().add(std::string_view("key"));
+    auto op1 = ctx.ids().add(std::string_view("op1"));
+    auto op3 = ctx.ids().add(std::string_view("op3"));
+    auto lbl = ctx.ids().add(std::string_view("lbl"));
 
     // creating data of params
     macro_data_ptr p1(make_unique<macro_param_data_single>(""));
@@ -488,9 +490,9 @@ TEST(context_macro, recurr_call)
     macro_arg a(move(p1), key);
     vector<macro_arg> args;
     args.push_back(move(a));
-    args.push_back({ nullptr, op1 });
-    args.push_back({ nullptr });
-    args.push_back({ nullptr, op3 });
+    args.emplace_back(nullptr, op1);
+    args.emplace_back(nullptr);
+    args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
     ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {}, {});
@@ -504,9 +506,9 @@ TEST(context_macro, recurr_call)
 
     // creating vector of param data for entering macro
     vector<macro_arg> params;
-    params.push_back({ move(p2) });
-    params.push_back({ move(p3) });
-    params.push_back({ move(p4) });
+    params.emplace_back(move(p2));
+    params.emplace_back(move(p3));
+    params.emplace_back(move(p4));
 
     // calling macro
     // call->|lbl		MAC		ada,mko,
@@ -535,10 +537,10 @@ TEST(context_macro, recurr_call)
     macro_data_ptr dat(make_unique<macro_param_data_composite>(move(v)));
 
     // creating another vector for macro call
-    params.push_back({ move(np2) });
-    params.push_back({ move(np4), key });
-    params.push_back({ move(np3) });
-    params.push_back({ move(dat) });
+    params.emplace_back(move(np2));
+    params.emplace_back(move(np4), key);
+    params.emplace_back(move(np3));
+    params.emplace_back(move(dat));
 
     // call->|		MAC		,KEY=cas,,(first,second,third)
     auto m3 = ctx.enter_macro(idx, nullptr, move(params));
@@ -548,9 +550,9 @@ TEST(context_macro, recurr_call)
     ASSERT_TRUE(ctx.is_in_macro());
     ASSERT_FALSE(m2 == m3);
 
-    auto SYSLIST2 = m2->named_params.find(ctx.ids().add("SYSLIST"))->second->access_system_variable();
+    auto SYSLIST2 = m2->named_params.find(id_storage::well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST2);
-    auto SYSLIST3 = m3->named_params.find(ctx.ids().add("SYSLIST"))->second->access_system_variable();
+    auto SYSLIST3 = m3->named_params.find(id_storage::well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST3);
 
     for (size_t i = 0; i < 2; i++)

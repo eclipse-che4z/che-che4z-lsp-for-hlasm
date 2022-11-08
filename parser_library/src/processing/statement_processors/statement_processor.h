@@ -39,9 +39,6 @@ public:
         , kind(kind)
         , ctx(ctx)
         , hlasm_ctx(*ctx.hlasm_ctx)
-        , macro_id(hlasm_ctx.ids().add("MACRO"))
-        , mend_id(hlasm_ctx.ids().add("MEND"))
-        , copy_id(hlasm_ctx.ids().add("COPY"))
     {}
 
     // infers processing status of rest of the statement from instruction field
@@ -59,7 +56,6 @@ public:
 protected:
     analyzing_context ctx;
     context::hlasm_context& hlasm_ctx;
-    const context::id_index macro_id, mend_id, copy_id;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

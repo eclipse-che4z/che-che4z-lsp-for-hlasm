@@ -19,11 +19,12 @@ label
 	: l_char_string
 	{
 		range r = provider.get_range( $l_char_string.ctx);
-		auto label = $l_char_string.value;
+		auto& label = $l_char_string.value;
 		if (label.size() > 1 && label[0] == '.')
 		{
 			collector.add_hl_symbol(token_info(r,hl_scopes::seq_symbol));
-			auto id = parse_identifier(label.substr(1),r);
+			label.erase(0, 1);
+			auto id = parse_identifier(std::move(label),r);
 
 			collector.set_label_field({id,r},r);
 		}
@@ -31,8 +32,8 @@ label
 		{
 			if (!label.empty() && label[0] != '&')
 				collector.add_hl_symbol(token_info(r,hl_scopes::label));
-			auto id = add_id($l_char_string.value);
-			collector.set_label_field(id,std::move($l_char_string.value),$l_char_string.ctx,r);
+			auto id = add_id(label);
+			collector.set_label_field(id,std::move(label),$l_char_string.ctx,r);
 		}
 	}
 	| l_char_string_sp l_char_string_o

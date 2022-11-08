@@ -100,18 +100,20 @@ TEST_F(workspace_test, parse_lib_provider)
 
     diags().clear();
 
+    auto macro1 = context::id_index("MACRO1");
     ws.parse_library("MACRO1",
         analyzing_context { ctx_1, std::make_shared<lsp::lsp_context>(ctx_1) },
-        library_data { processing::processing_kind::MACRO, ctx_1->ids().add("MACRO1") });
+        library_data { processing::processing_kind::MACRO, macro1 });
 
     // test, that macro1 is parsed, once we are able to parse macros (mby in ctx)
 
     collect_diags_from_child(ws);
     EXPECT_EQ(diags().size(), (size_t)0);
 
+    auto not_existing = context::id_index("NOT_EXISTING");
     ws.parse_library("not_existing",
         analyzing_context { ctx_2, std::make_shared<lsp::lsp_context>(ctx_2) },
-        library_data { processing::processing_kind::MACRO, ctx_2->ids().add("not_existing") });
+        library_data { processing::processing_kind::MACRO, not_existing });
 }
 
 namespace {
@@ -448,6 +450,24 @@ TEST_F(workspace_test, did_change_watched_files)
     changes.push_back(document_change({ { 0, 0 }, { 0, 0 } }, new_text.c_str(), new_text.size()));
     ws.did_change_file(source3_loc, changes.data(), changes.size());
     ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
+}
+
+TEST_F(workspace_test, diagnostics_recollection)
+{
+    file_manager_opt file_manager(file_manager_opt_variant::required);
+    lib_config config;
+    shared_json global_settings = make_empty_shared_json();
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    ws.open();
+
+    ws.did_open_file(source1_loc);
+
+    ws.collect_diags();
+    size_t original_diags_size = collect_and_get_diags_size(ws, file_manager);
+    EXPECT_GE(original_diags_size, (size_t)1);
+
+    ws.collect_diags();
+    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), original_diags_size);
 }
 
 TEST_F(workspace_test, missing_library_required)

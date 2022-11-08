@@ -55,19 +55,19 @@ void lookahead_processor::process_statement(context::shared_stmt_ptr statement)
             find_seq(*resolved);
             find_ord(*resolved);
         }
-        if (opcode == macro_id)
+        if (opcode == context::id_storage::well_known::MACRO)
         {
             process_MACRO();
         }
-        else if (opcode == mend_id)
+        else if (opcode == context::id_storage::well_known::MEND)
         {
             process_MEND();
         }
-        else if (macro_nest_ == 0 && opcode == copy_id)
+        else if (macro_nest_ == 0 && opcode == context::id_storage::well_known::COPY)
         {
             process_COPY(*resolved);
         }
-        else if (opcode == hlasm_ctx.ids().well_known.END)
+        else if (opcode == context::id_storage::well_known::END)
         {
             finished_flag_ = true;
         }
@@ -110,7 +110,7 @@ lookahead_processor::lookahead_processor(analyzing_context ctx,
     , to_find_(std::move(start.targets))
     , target_(start.target)
     , action(start.action)
-    , asm_proc_table_(create_table(*ctx.hlasm_ctx))
+    , asm_proc_table_(create_table())
 {}
 
 void lookahead_processor::process_MACRO() { ++macro_nest_; }
@@ -123,30 +123,30 @@ void lookahead_processor::process_COPY(const resolved_statement& statement)
     }
 }
 
-lookahead_processor::process_table_t lookahead_processor::create_table(context::hlasm_context& h_ctx)
+lookahead_processor::process_table_t lookahead_processor::create_table()
 {
     process_table_t table;
-    table.emplace(h_ctx.ids().add("CSECT"),
+    table.emplace(context::id_index("CSECT"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(h_ctx.ids().add("DSECT"),
+    table.emplace(context::id_index("DSECT"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(h_ctx.ids().add("RSECT"),
+    table.emplace(context::id_index("RSECT"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(h_ctx.ids().add("COM"),
+    table.emplace(context::id_index("COM"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(h_ctx.ids().add("DXD"),
+    table.emplace(context::id_index("DXD"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(h_ctx.ids().add("LOCTR"),
+    table.emplace(context::id_index("LOCTR"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(h_ctx.ids().add("EQU"),
+    table.emplace(context::id_index("EQU"),
         std::bind(&lookahead_processor::assign_EQU_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(h_ctx.ids().add("DC"),
+    table.emplace(context::id_index("DC"),
         std::bind(
             &lookahead_processor::assign_data_def_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(h_ctx.ids().add("DS"),
+    table.emplace(context::id_index("DS"),
         std::bind(
             &lookahead_processor::assign_data_def_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(h_ctx.ids().add("CXD"),
+    table.emplace(context::id_index("CXD"),
         std::bind(&lookahead_processor::assign_cxd_attributes, this, std::placeholders::_1, std::placeholders::_2));
 
     return table;
@@ -263,12 +263,12 @@ void lookahead_processor::assign_section_attributes(context::id_index symbol_nam
 
 void lookahead_processor::assign_machine_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
-    const auto& instr = [](const std::string& opcode) {
+    const auto& instr = [](std::string_view opcode) {
         if (auto mnemonic = context::instruction::find_mnemonic_codes(opcode))
             return *mnemonic->instruction();
         else
             return context::instruction::get_machine_instructions(opcode);
-    }(*statement.opcode_ref().value);
+    }(statement.opcode_ref().value.to_string_view());
 
     register_attr_ref(symbol_name,
         context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)instr.size_in_bits() / 8));
@@ -315,7 +315,7 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
         return;
 
     auto name = std::get<semantics::ord_symbol_string>(statement.label_ref().value).symbol;
-    auto [valid, id] = hlasm_ctx.try_get_symbol_name(*name);
+    auto [valid, id] = hlasm_ctx.try_get_symbol_name(name.to_string_view());
     if (!valid)
         return;
 

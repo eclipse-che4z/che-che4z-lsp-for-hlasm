@@ -168,7 +168,7 @@ symbol_value symbol_value::ignore_qualification() const
     auto result = get_reloc();
     auto& bases = result.bases();
 
-    std::for_each(bases.begin(), bases.end(), [](auto& e) { e.first.qualifier = nullptr; });
+    std::for_each(bases.begin(), bases.end(), [](auto& e) { e.first.qualifier = id_index(); });
 
     std::sort(bases.begin(), bases.end(), [](const auto& l, const auto& r) { return l.first.owner < r.first.owner; });
 

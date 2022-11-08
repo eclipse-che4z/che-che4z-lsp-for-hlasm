@@ -222,7 +222,7 @@ void processing_manager::finish_lookahead(lookahead_processing_result result)
         {
             perform_opencode_jump(result.statement_position, std::move(result.snapshot));
 
-            add_diagnostic(diagnostic_op::error_E047(*result.symbol_name, result.symbol_range));
+            add_diagnostic(diagnostic_op::error_E047(result.symbol_name.to_string_view(), result.symbol_range));
         }
     }
     else
@@ -270,7 +270,7 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
     {
         if (hlasm_ctx_.is_in_macro())
         {
-            add_diagnostic(diagnostic_op::error_E047(*target, symbol_range));
+            add_diagnostic(diagnostic_op::error_E047(target.to_string_view(), symbol_range));
         }
         else
         {
@@ -325,7 +325,7 @@ void processing_manager::register_sequence_symbol(context::id_index target, rang
     else if (!(*symbol->access_opencode_symbol() == *new_symbol))
     {
         if (!lookahead_active())
-            add_diagnostic(diagnostic_op::error_E045(*target, symbol_range));
+            add_diagnostic(diagnostic_op::error_E045(target.to_string_view(), symbol_range));
         else if (auto it = m_lookahead_seq_redifinitions.find(target); it == m_lookahead_seq_redifinitions.end()
                  || it->second.first != pending_seq_redifinition_state::lookahead_pending)
         {
@@ -333,8 +333,8 @@ void processing_manager::register_sequence_symbol(context::id_index target, rang
         }
         else
         {
-            it->second.second.push_back(
-                add_stack_details(diagnostic_op::error_E045(*target, symbol_range), hlasm_ctx_.processing_stack()));
+            it->second.second.push_back(add_stack_details(
+                diagnostic_op::error_E045(target.to_string_view(), symbol_range), hlasm_ctx_.processing_stack()));
         }
     }
 }

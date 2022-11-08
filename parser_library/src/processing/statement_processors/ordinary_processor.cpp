@@ -14,7 +14,6 @@
 
 #include "ordinary_processor.h"
 
-#include <regex>
 #include <stdexcept>
 
 #include "checking/instruction_checker.h"
@@ -23,6 +22,7 @@
 #include "diagnostic_consumer.h"
 #include "ebcdic_encoding.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
+#include "utils/truth_table.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -46,17 +46,16 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
 
 processing_status ordinary_processor::get_processing_status(const semantics::instruction_si& instruction) const
 {
-    context::id_index id;
-    if (instruction.type == semantics::instruction_si_type::CONC)
-        id = resolve_instruction(std::get<semantics::concat_chain>(instruction.value), instruction.field_range);
-    else
-        id = std::get<context::id_index>(instruction.value);
+    context::id_index id = instruction.type == semantics::instruction_si_type::CONC
+        ? resolve_instruction(std::get<semantics::concat_chain>(instruction.value), instruction.field_range)
+        : std::get<context::id_index>(instruction.value);
 
     auto status = get_instruction_processing_status(id, hlasm_ctx);
 
     if (!status)
     {
-        auto found = lib_provider.parse_library(*id, ctx, workspaces::library_data { processing_kind::MACRO, id });
+        auto found =
+            lib_provider.parse_library(id.to_string(), ctx, workspaces::library_data { processing_kind::MACRO, id });
         processing_form f;
         context::instruction_type t;
         if (found)
@@ -103,8 +102,8 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
     switch (statement->opcode_ref().type)
     {
         case context::instruction_type::UNDEF:
-            add_diagnostic(
-                diagnostic_op::error_E049(*statement->opcode_ref().value, statement->instruction_ref().field_range));
+            add_diagnostic(diagnostic_op::error_E049(
+                statement->opcode_ref().value.to_string_view(), statement->instruction_ref().field_range));
             return;
         case context::instruction_type::CA:
             ca_proc_.process(std::move(statement));
@@ -180,8 +179,7 @@ struct processing_status_visitor
 
     processing_status operator()(const context::assembler_instruction* i) const
     {
-        const auto f =
-            id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS") || id == hlasm_ctx.ids().add("DXD")
+        const auto f = id == context::id_index("DC") || id == context::id_index("DS") || id == context::id_index("DXD")
             ? processing_form::DAT
             : processing_form::ASM;
         const auto o = i->max_operands() == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT;
@@ -224,12 +222,12 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
             op_code(instruction, context::instruction_type::MAC));
     }
 
-    if (!code.opcode)
+    if (code.opcode.empty())
     {
-        if (instruction == context::id_storage::empty_id)
+        if (instruction.empty())
             return std::make_pair(
                 processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT),
-                op_code(context::id_storage::empty_id, context::instruction_type::CA));
+                op_code(context::id_index(), context::instruction_type::CA));
         else
             return std::nullopt;
     }
@@ -323,22 +321,23 @@ context::id_index ordinary_processor::resolve_instruction(
         ;
     tmp.erase(0U, i);
 
-    static const std::regex regex(R"([ \$_#@a-zA-Z0-9]*)");
+    static constexpr auto valid_values =
+        utils::create_truth_table(" $_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
 
     if (tmp.empty())
     {
         add_diagnostic(diagnostic_op::error_E074(instruction_range));
-        return context::id_storage::empty_id;
+        return context::id_index();
     }
-    else if (!std::regex_match(tmp, regex))
+    else if (auto pos = utils::find_mismatch(tmp, valid_values); pos != std::string_view::npos)
     {
         add_diagnostic(diagnostic_op::error_E075(tmp, instruction_range));
-        return context::id_storage::empty_id;
+        return context::id_index();
     }
     else if (tmp.find(' ') != std::string::npos)
     {
         add_diagnostic(diagnostic_op::error_E067(instruction_range));
-        return context::id_storage::empty_id;
+        return context::id_index();
     }
 
     return hlasm_ctx.ids().add(std::move(tmp));

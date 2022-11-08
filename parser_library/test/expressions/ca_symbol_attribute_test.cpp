@@ -31,12 +31,11 @@ TEST(ca_symbol_attr, undefined_attributes)
     context::hlasm_context ctx;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
-    std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
 
     subscript.push_back(std::make_unique<ca_constant>(1, range()));
 
-    auto vs = std::make_unique<basic_variable_symbol>(&name, std::move(subscript), range());
+    auto vs = std::make_unique<basic_variable_symbol>(context::id_index("N"), std::move(subscript), range());
 
     ca_symbol_attribute attr(std::move(vs), context::data_attr_kind::D, range(), range());
 
@@ -58,7 +57,7 @@ TEST(ca_symbol_attr, evaluate_undef_varsym)
     context::hlasm_context ctx;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
-    auto res = create_var_sym_attr(context::data_attr_kind::D, ctx.ids().add("n")).evaluate(eval_ctx);
+    auto res = create_var_sym_attr(context::data_attr_kind::D, context::id_index("N")).evaluate(eval_ctx);
 
     ASSERT_TRUE(matches_message_codes(diags.diags, { "E010" }));
     EXPECT_TRUE(diags.diags[0].message.ends_with(": N"));
@@ -70,7 +69,7 @@ TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)
     context::hlasm_context ctx;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
-    auto name = ctx.ids().add("n");
+    auto name = context::id_index("N");
 
     auto var = ctx.create_local_variable<int>(name, true);
     var->access_set_symbol<int>()->set_value(12);
@@ -86,7 +85,7 @@ TEST(ca_symbol_attr, evaluate_substituted_varsym_char_not_sym)
     context::hlasm_context ctx;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
-    auto name = ctx.ids().add("n");
+    auto name = context::id_index("N");
 
     auto var = ctx.create_local_variable<context::C_t>(name, true);
     var->access_set_symbol<context::C_t>()->set_value("(abc");
@@ -138,15 +137,15 @@ INSTANTIATE_TEST_SUITE_P(ca_attr_suite,
 
 TEST_P(ca_attr, test)
 {
-    auto name = hlasm_ctx->ids().add("VAR");
+    auto name = id_index("VAR");
 
-    (void)hlasm_ctx->ord_ctx.create_symbol(hlasm_ctx->ids().add("C"),
+    (void)hlasm_ctx->ord_ctx.create_symbol(id_index("C"),
         context::symbol_value(),
         context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10),
         location(),
         library_info_transitional::empty);
 
-    (void)hlasm_ctx->ord_ctx.create_symbol(hlasm_ctx->ids().add("T"),
+    (void)hlasm_ctx->ord_ctx.create_symbol(id_index("T"),
         context::symbol_value(),
         context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10),
         location(),

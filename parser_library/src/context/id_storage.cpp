@@ -18,65 +18,42 @@
 
 using namespace hlasm_plugin::parser_library::context;
 
-const std::string id_storage::empty_string_("");
-
-const id_storage::const_pointer id_storage::empty_id = &id_storage::empty_string_;
-
-hlasm_plugin::parser_library::context::id_storage::id_storage()
-    : well_known(lit_)
-{}
+id_index id_storage::small_id(std::string_view value)
+{
+    char buffer[id_index::buffer_size];
+    char* end = std::transform(value.begin(), value.end(), buffer, [](unsigned char c) { return (char)toupper(c); });
+    return id_index(std::string_view(buffer, end - buffer));
+}
 
 size_t id_storage::size() const { return lit_.size(); }
 
-id_storage::const_iterator id_storage::begin() const { return lit_.begin(); }
-
-id_storage::const_iterator id_storage::end() const { return lit_.end(); }
-
 bool id_storage::empty() const { return lit_.empty(); }
 
-id_storage::const_pointer id_storage::find(std::string val) const
+std::optional<id_index> id_storage::find(std::string_view value) const
 {
-    if (val.empty())
-        return empty_id;
+    if (value.size() < id_index::buffer_size)
+        return small_id(value);
 
-    to_upper(val);
-
-    const_iterator tmp = lit_.find(val);
-
-    return tmp == lit_.end() ? nullptr : &*tmp;
+    if (auto tmp = lit_.find(to_upper_copy(std::string(value))); tmp != lit_.end())
+        return id_index(&*tmp);
+    else
+        return std::nullopt;
 }
 
-id_storage::const_pointer id_storage::add(std::string value)
+id_index id_storage::add(std::string_view value)
 {
-    if (value.empty())
-        return empty_id;
+    if (value.size() < id_index::buffer_size)
+        return small_id(value);
+
+    return id_index(&*lit_.insert(to_upper_copy(std::string(value))).first);
+}
+
+id_index id_storage::add(std::string&& value)
+{
+    if (value.size() < id_index::buffer_size)
+        return small_id(value);
+
     to_upper(value);
-    return &*lit_.insert(std::move(value)).first;
-}
 
-id_storage::well_known_strings::well_known_strings(std::unordered_set<std::string>& ptr)
-    : COPY(&*ptr.emplace("COPY").first)
-    , SETA(&*ptr.emplace("SETA").first)
-    , SETB(&*ptr.emplace("SETB").first)
-    , SETC(&*ptr.emplace("SETC").first)
-    , GBLA(&*ptr.emplace("GBLA").first)
-    , GBLB(&*ptr.emplace("GBLB").first)
-    , GBLC(&*ptr.emplace("GBLC").first)
-    , LCLA(&*ptr.emplace("LCLA").first)
-    , LCLB(&*ptr.emplace("LCLB").first)
-    , LCLC(&*ptr.emplace("LCLC").first)
-    , MACRO(&*ptr.emplace("MACRO").first)
-    , MEND(&*ptr.emplace("MEND").first)
-    , MEXIT(&*ptr.emplace("MEXIT").first)
-    , MHELP(&*ptr.emplace("MHELP").first)
-    , ASPACE(&*ptr.emplace("ASPACE").first)
-    , AIF(&*ptr.emplace("AIF").first)
-    , AIFB(&*ptr.emplace("AIFB").first)
-    , AGO(&*ptr.emplace("AGO").first)
-    , AGOB(&*ptr.emplace("AGOB").first)
-    , ACTR(&*ptr.emplace("ACTR").first)
-    , AREAD(&*ptr.emplace("AREAD").first)
-    , ALIAS(&*ptr.emplace("ALIAS").first)
-    , END(&*ptr.emplace("END").first)
-    , SYSLIST(&*ptr.emplace("SYSLIST").first)
-{}
+    return id_index(&*lit_.insert(std::move(value)).first);
+}

@@ -157,7 +157,7 @@ context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx)
 
     return context::SET_t(expr_kind);
 }
-std::string ca_symbol_attribute::try_extract_leading_symbol(std::string_view expr)
+std::string_view ca_symbol_attribute::try_extract_leading_symbol(std::string_view expr)
 {
     // remove parentheses
     while (!expr.empty() && expr.front() == '(' && expr.back() == ')')
@@ -178,7 +178,7 @@ std::string ca_symbol_attribute::try_extract_leading_symbol(std::string_view exp
         if (auto d = expr.find_first_of("+-*/()"); d != std::string_view::npos)
             expr = expr.substr(0, d);
     }
-    return std::string(expr);
+    return expr;
 }
 
 context::SET_t ca_symbol_attribute::retrieve_value(
@@ -222,7 +222,7 @@ context::C_t get_current_macro_name_field(const context::hlasm_context& ctx)
 
     if (!scope.is_in_macro())
         return {};
-    return scope.this_macro->named_params.at(ctx.ids().well_known.SYSLIST)
+    return scope.this_macro->named_params.at(context::id_storage::well_known::SYSLIST)
         ->get_data(std::array<size_t, 1> { 0 })
         ->get_value();
 }
@@ -245,7 +245,7 @@ context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, cons
     else if (attribute == context::data_attr_kind::O)
     {
         auto tmp = eval_ctx.hlasm_ctx.get_attribute_value_ord(attribute, name);
-        if (tmp.access_c() == "U" && eval_ctx.lib_info.has_library(*name))
+        if (tmp.access_c() == "U" && eval_ctx.lib_info.has_library(name.to_string_view()))
             return std::string("S");
         return tmp;
     }
@@ -345,7 +345,8 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
 
     if (!var_symbol)
     {
-        eval_ctx.diags.add_diagnostic(diagnostic_op::error_E010("variable", *var_name, vs->symbol_range));
+        eval_ctx.diags.add_diagnostic(
+            diagnostic_op::error_E010("variable", var_name.to_string_view(), vs->symbol_range));
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
@@ -360,15 +361,15 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
             return evaluate_substituted(var_name, expr_subscript, vs->symbol_range, eval_ctx);
 
         case context::data_attr_kind::T: {
-            if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, *var_name))
+            if (!test_symbol_for_read(
+                    var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, var_name.to_string_view()))
                 return "U";
 
-            std::string var_value;
-            if (auto var_value_o = read_string_var_sym(*var_symbol, transform(expr_subscript));
-                !var_value_o.has_value())
+            auto var_value_o = read_string_var_sym(*var_symbol, transform(expr_subscript));
+            if (!var_value_o.has_value())
                 return "N";
-            else
-                var_value = std::move(*var_value_o);
+
+            std::string_view var_value = var_value_o.value();
 
             if (var_value.empty())
                 return "O";
@@ -378,7 +379,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
             if (auto res = expressions::ca_constant::try_self_defining_term(var_value))
                 return "N";
 
-            auto symbol_name = eval_ctx.hlasm_ctx.ids().add(std::move(var_value));
+            auto symbol_name = eval_ctx.hlasm_ctx.ids().add(var_value);
 
             if (auto tmp_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(symbol_name))
                 return std::string { (char)ebcdic_encoding::e2a[tmp_symbol->attributes().type()] };
@@ -387,7 +388,8 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
                 var_name, expr_subscript, vs->symbol_range, eval_ctx); // is type U, must substitute var sym
         }
         case context::data_attr_kind::K:
-            if (!test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, *var_name))
+            if (!test_symbol_for_read(
+                    var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, var_name.to_string_view()))
                 return context::symbol_attributes::default_ca_value(attribute);
 
             return var_symbol ? var_symbol->count(transform(expr_subscript)) : 0;

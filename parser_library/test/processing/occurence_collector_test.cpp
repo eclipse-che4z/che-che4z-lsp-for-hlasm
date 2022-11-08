@@ -51,7 +51,7 @@ struct operand_occurence_analyzer_mock : public processing::statement_analyzer
 
 auto tie_occurence(const lsp::symbol_occurence& lhs)
 {
-    return std::tie(*lhs.name,
+    return std::make_tuple(lhs.name.to_string_view(),
         lhs.kind,
         lhs.occurence_range.start.line,
         lhs.occurence_range.start.column,
@@ -74,7 +74,7 @@ TEST(occurence_collector, ord_mach_expr_simple)
 
     ASSERT_EQ(oa.st.size(), 1U);
     EXPECT_EQ(oa.st[0].kind, lsp::occurence_kind::ORD);
-    EXPECT_EQ(*oa.st[0].name, "SYM");
+    EXPECT_EQ(oa.st[0].name.to_string_view(), "SYM");
     EXPECT_EQ(oa.st[0].occurence_range, range({ 0, 6 }, { 0, 9 }));
 }
 

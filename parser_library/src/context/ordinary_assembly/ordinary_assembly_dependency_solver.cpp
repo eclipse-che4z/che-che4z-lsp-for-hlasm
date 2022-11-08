@@ -87,7 +87,7 @@ std::string ordinary_assembly_dependency_solver::get_opcode_attr(id_index name) 
 {
     auto result = ord_context.hlasm_ctx_.get_opcode_attr(name, opcode_gen);
 
-    if (result == "U" && lib_info.has_library(*name))
+    if (result == "U" && lib_info.has_library(name.to_string_view()))
         return "S";
 
     return result;

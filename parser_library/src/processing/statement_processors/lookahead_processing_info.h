@@ -59,7 +59,6 @@ struct lookahead_start_data
         : action(lookahead_action::ORD)
         , statement_position(statement_position)
         , snapshot(std::move(snapshot))
-        , target(nullptr)
         , targets(targets)
     {}
 };

@@ -44,15 +44,15 @@ public:
 private:
     opencode_provider* open_code_;
 
-    process_table_t create_table(context::hlasm_context& hlasm_ctx);
+    process_table_t create_table();
 
     void register_seq_sym(const semantics::complete_statement& stmt);
 
     struct SET_info
     {
-        context::set_symbol_base* symbol;
+        context::set_symbol_base* symbol = nullptr;
         context::id_index name;
-        int index;
+        int index = 0;
     };
 
     struct GLB_LCL_info

@@ -24,11 +24,9 @@ copy_processor::copy_processor(analyzing_context ctx, processing_state_listener&
     , listener_(listener)
     , start_(std::move(start))
     , macro_nest_(0)
+    , result_ { {}, {}, start_.member_name, false }
     , first_statement_(true)
-{
-    result_.member_name = start_.member_name;
-    result_.invalid_member = false;
-}
+{}
 
 processing_status copy_processor::get_processing_status(const semantics::instruction_si& instruction) const
 {
@@ -47,9 +45,9 @@ void copy_processor::process_statement(context::shared_stmt_ptr statement)
 
     if (auto res_stmt = statement->access_resolved())
     {
-        if (res_stmt->opcode_ref().value == macro_id)
+        if (res_stmt->opcode_ref().value == context::id_storage::well_known::MACRO)
             process_MACRO();
-        else if (res_stmt->opcode_ref().value == mend_id)
+        else if (res_stmt->opcode_ref().value == context::id_storage::well_known::MEND)
             process_MEND();
     }
 
@@ -66,7 +64,7 @@ void copy_processor::end_processing()
     if (macro_nest_ > 0)
     {
         range r(hlasm_ctx.processing_stack_top().pos);
-        add_diagnostic(diagnostic_op::error_E061(*start_.member_name, r));
+        add_diagnostic(diagnostic_op::error_E061(start_.member_name.to_string_view(), r));
         result_.invalid_member = true;
     }
 
@@ -92,7 +90,7 @@ void copy_processor::process_MEND()
     if (macro_nest_ < 0)
     {
         range r(hlasm_ctx.processing_stack_top().pos);
-        add_diagnostic(diagnostic_op::error_E061(*start_.member_name, r));
+        add_diagnostic(diagnostic_op::error_E061(start_.member_name.to_string_view(), r));
         result_.invalid_member = true;
     }
 }

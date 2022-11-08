@@ -67,7 +67,7 @@ void collector::set_label_field(seq_sym sequence_symbol, range symbol_range)
 }
 
 void collector::set_label_field(
-    const std::string* label, std::string mixed_case_label, antlr4::ParserRuleContext* parser_ctx, range symbol_range)
+    context::id_index label, std::string mixed_case_label, antlr4::ParserRuleContext* parser_ctx, range symbol_range)
 {
     if (lbl_)
         throw std::runtime_error("field already assigned");

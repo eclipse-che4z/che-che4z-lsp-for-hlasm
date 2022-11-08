@@ -58,8 +58,8 @@ namespace hlasm_plugin::parser_library::lsp {
 
 inline std::ostream& operator<<(std::ostream& stream, const symbol_occurence& item)
 {
-    return stream << "{ kind: " << (int)item.kind << "\n name: " << *item.name << "\n range: " << item.occurence_range
-                  << " }";
+    return stream << "{ kind: " << (int)item.kind << "\n name: " << item.name.to_string_view()
+                  << "\n range: " << item.occurence_range << " }";
 }
 
 inline std::ostream& operator<<(std::ostream& stream, const lsp::completion_item_s& item)

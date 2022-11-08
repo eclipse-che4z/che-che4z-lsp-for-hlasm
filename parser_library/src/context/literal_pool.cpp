@@ -36,7 +36,7 @@ id_index literal_pool::add_literal(const std::string& literal_text,
     bool align_on_halfword)
 {
     unique_id = dd->references_loctr ? unique_id : 0;
-    if (auto lit = get_literal(m_current_literal_pool_generation, dd, unique_id))
+    if (auto lit = get_literal(m_current_literal_pool_generation, dd, unique_id); !lit.empty())
         return lit;
 
     auto [it, inserted] = m_literals.try_emplace(
@@ -62,7 +62,7 @@ id_index literal_pool::add_literal(const std::string& literal_text,
     }
     it->second.align_on_halfword |= align_on_halfword;
 
-    return &it->second.text;
+    return id_index(&it->second.text);
 }
 
 id_index literal_pool::get_literal(
@@ -71,8 +71,8 @@ id_index literal_pool::get_literal(
     unique_id = dd->references_loctr ? unique_id : 0;
     auto it = m_literals_genmap.find(literal_id { generation, unique_id, dd });
     if (it == m_literals_genmap.end())
-        return nullptr;
-    return &it->second->second.text;
+        return id_index();
+    return id_index(&it->second->second.text);
 }
 
 bool literal_pool::defined_for_ca_expr(std::shared_ptr<const expressions::data_definition> dd) const
@@ -104,12 +104,11 @@ class literal_pool::literal_postponed_statement : public context::postponed_stat
     static const processing::processing_format dc_format;
 
 public:
-    literal_postponed_statement(const std::shared_ptr<const expressions::data_definition>& dd,
-        const literal_pool::literal_details& details,
-        id_storage& ids)
+    literal_postponed_statement(
+        const std::shared_ptr<const expressions::data_definition>& dd, const literal_pool::literal_details& details)
         : details(&details)
         , op(details.r, {})
-        , op_code(ids.add("DC"), instruction_type::ASM)
+        , op_code(context::id_index("DC"), instruction_type::ASM)
     {
         op.value.push_back(std::make_unique<semantics::data_def_operand>(dd, details.r));
     }
@@ -192,7 +191,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
 
         // TODO: warn on align > sectalign
 
-        bool cycle_ok = ord_ctx.create_symbol(&lit_val.text,
+        bool cycle_ok = ord_ctx.create_symbol(id_index(&lit_val.text),
             ord_ctx.align(lit_val.align_on_halfword ? halfword : no_align, li),
             symbol_attributes(symbol_origin::DAT,
                 ebcdic_encoding::a2e[(unsigned char)lit->get_type_attribute()],
@@ -213,7 +212,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
         else
         {
             auto adder = ord_ctx.symbol_dependencies.add_dependencies(
-                std::make_unique<literal_postponed_statement>(lit, lit_val, hlasm_ctx.ids()),
+                std::make_unique<literal_postponed_statement>(lit, lit_val),
                 dependency_evaluation_context {
                     lit_val.loctr,
                     lit_key.generation,

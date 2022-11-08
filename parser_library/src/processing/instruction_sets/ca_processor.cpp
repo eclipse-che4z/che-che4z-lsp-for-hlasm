@@ -28,7 +28,7 @@ ca_processor::ca_processor(analyzing_context ctx,
     processing_state_listener& listener,
     opencode_provider& open_code)
     : instruction_processor(ctx, branch_provider, lib_provider)
-    , table_(create_table(*ctx.hlasm_ctx))
+    , table_(create_table())
     , listener_(listener)
     , open_code_(&open_code)
 {}
@@ -41,39 +41,50 @@ void ca_processor::process(std::shared_ptr<const processing::resolved_statement>
     func(*stmt);
 }
 
-ca_processor::process_table_t ca_processor::create_table(context::hlasm_context& h_ctx)
+ca_processor::process_table_t ca_processor::create_table()
 {
     process_table_t table;
-    table.emplace(
-        h_ctx.ids().add("SETA"), std::bind(&ca_processor::process_SET<context::A_t>, this, std::placeholders::_1));
-    table.emplace(
-        h_ctx.ids().add("SETB"), std::bind(&ca_processor::process_SET<context::B_t>, this, std::placeholders::_1));
-    table.emplace(
-        h_ctx.ids().add("SETC"), std::bind(&ca_processor::process_SET<context::C_t>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("LCLA"),
+    table.emplace(context::id_storage::well_known::SETA,
+        std::bind(&ca_processor::process_SET<context::A_t>, this, std::placeholders::_1));
+    table.emplace(context::id_storage::well_known::SETB,
+        std::bind(&ca_processor::process_SET<context::B_t>, this, std::placeholders::_1));
+    table.emplace(context::id_storage::well_known::SETC,
+        std::bind(&ca_processor::process_SET<context::C_t>, this, std::placeholders::_1));
+    table.emplace(context::id_storage::well_known::LCLA,
         std::bind(&ca_processor::process_GBL_LCL<context::A_t, false>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("LCLB"),
+    table.emplace(context::id_storage::well_known::LCLB,
         std::bind(&ca_processor::process_GBL_LCL<context::B_t, false>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("LCLC"),
+    table.emplace(context::id_storage::well_known::LCLC,
         std::bind(&ca_processor::process_GBL_LCL<context::C_t, false>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("GBLA"),
+    table.emplace(context::id_storage::well_known::GBLA,
         std::bind(&ca_processor::process_GBL_LCL<context::A_t, true>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("GBLB"),
+    table.emplace(context::id_storage::well_known::GBLB,
         std::bind(&ca_processor::process_GBL_LCL<context::B_t, true>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("GBLC"),
+    table.emplace(context::id_storage::well_known::GBLC,
         std::bind(&ca_processor::process_GBL_LCL<context::C_t, true>, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("ANOP"), std::bind(&ca_processor::process_ANOP, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("ACTR"), std::bind(&ca_processor::process_ACTR, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("AGO"), std::bind(&ca_processor::process_AGO, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("AIF"), std::bind(&ca_processor::process_AIF, this, std::placeholders::_1));
-    table.emplace(context::id_storage::empty_id, std::bind(&ca_processor::process_empty, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("MACRO"), std::bind(&ca_processor::process_MACRO, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("MEND"), std::bind(&ca_processor::process_MEND, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("MEXIT"), std::bind(&ca_processor::process_MEXIT, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("AREAD"), std::bind(&ca_processor::process_AREAD, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("ASPACE"), std::bind(&ca_processor::process_ASPACE, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("AEJECT"), std::bind(&ca_processor::process_AEJECT, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("MHELP"), [this](const semantics::complete_statement& stmt) { process_MHELP(stmt); });
+    table.emplace(
+        context::id_storage::well_known::ANOP, std::bind(&ca_processor::process_ANOP, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::ACTR, std::bind(&ca_processor::process_ACTR, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::AGO, std::bind(&ca_processor::process_AGO, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::AIF, std::bind(&ca_processor::process_AIF, this, std::placeholders::_1));
+    table.emplace(context::id_index(), std::bind(&ca_processor::process_empty, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::MACRO, std::bind(&ca_processor::process_MACRO, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::MEND, std::bind(&ca_processor::process_MEND, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::MEXIT, std::bind(&ca_processor::process_MEXIT, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::AREAD, std::bind(&ca_processor::process_AREAD, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::ASPACE, std::bind(&ca_processor::process_ASPACE, this, std::placeholders::_1));
+    table.emplace(
+        context::id_storage::well_known::AEJECT, std::bind(&ca_processor::process_AEJECT, this, std::placeholders::_1));
+    table.emplace(context::id_storage::well_known::MHELP,
+        [this](const semantics::complete_statement& stmt) { process_MHELP(stmt); });
 
     return table;
 }
@@ -130,7 +141,7 @@ ca_processor::SET_info ca_processor::get_SET_symbol(const semantics::complete_st
         auto var = hlasm_ctx.create_local_variable<T>(name, is_scalar_expression);
         if (!var)
         {
-            add_diagnostic(diagnostic_op::error_E051(*name, symbol->symbol_range));
+            add_diagnostic(diagnostic_op::error_E051(name.to_string_view(), symbol->symbol_range));
             return {};
         }
 
@@ -217,22 +228,22 @@ bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, st
         {
             auto [id, subscript] = ca_op->access_var()->variable_symbol->evaluate_symbol(eval_ctx);
 
-            if (id == context::id_storage::empty_id)
+            if (id.empty())
                 continue;
 
             if (auto var_sym = hlasm_ctx.get_var_sym(id))
             {
                 if (var_sym->access_set_symbol_base())
-                    add_diagnostic(diagnostic_op::error_E051(*id, ca_op->operand_range));
+                    add_diagnostic(diagnostic_op::error_E051(id.to_string_view(), ca_op->operand_range));
                 else if (var_sym->access_macro_param_base())
-                    add_diagnostic(diagnostic_op::error_E052(*id, ca_op->operand_range));
+                    add_diagnostic(diagnostic_op::error_E052(id.to_string_view(), ca_op->operand_range));
                 else
                     assert(false);
                 continue;
             }
 
             if (std::find_if(info.begin(), info.end(), [id = id](const auto& i) { return i.id == id; }) != info.end())
-                add_diagnostic(diagnostic_op::error_E051(*id, ca_op->operand_range));
+                add_diagnostic(diagnostic_op::error_E051(id.to_string_view(), ca_op->operand_range));
             else
                 info.emplace_back(id, subscript.empty(), ca_op->operand_range);
         }
@@ -486,7 +497,7 @@ struct AREAD_operand_visitor final : public semantics::operand_visitor
     {}
 
     expressions::evaluation_context* eval_ctx = nullptr;
-    context::id_index value = nullptr;
+    context::id_index value;
 
     void visit(const semantics::empty_operand&) override {}
     void visit(const semantics::model_operand&) override {}
@@ -540,7 +551,7 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
         AREAD_operand_visitor op(&eval_ctx);
         ops.value.at(0)->apply(op);
 
-        if (op.value == nullptr)
+        if (op.value.empty())
             return aread_variant::invalid;
 
         static const std::initializer_list<std::pair<std::string_view, aread_variant>> allowed_operands = {
@@ -551,7 +562,7 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
         };
         auto idx = std::find_if(allowed_operands.begin(),
             allowed_operands.end(),
-            [value = std::string_view(*op.value)](const auto& p) { return p.first == value; });
+            [value = op.value.to_string_view()](const auto& p) { return p.first == value; });
         if (idx == allowed_operands.end())
             return aread_variant::invalid;
         return idx->second;
@@ -643,12 +654,12 @@ void ca_processor::process_GBL_LCL(const semantics::complete_statement& stmt)
         if constexpr (global)
         {
             if (!hlasm_ctx.create_global_variable<T>(i.id, i.scalar))
-                eval_ctx.diags.add_diagnostic(diagnostic_op::error_E078(*i.id, i.r));
+                eval_ctx.diags.add_diagnostic(diagnostic_op::error_E078(i.id.to_string_view(), i.r));
         }
         else
         {
             if (!hlasm_ctx.create_local_variable<T>(i.id, i.scalar))
-                eval_ctx.diags.add_diagnostic(diagnostic_op::error_E051(*i.id, i.r));
+                eval_ctx.diags.add_diagnostic(diagnostic_op::error_E051(i.id.to_string_view(), i.r));
         }
     }
 }

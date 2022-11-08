@@ -147,7 +147,7 @@ term returns [ca_expr_ptr ca_expr]
 		collector.add_hl_symbol(token_info(provider.get_range( $id_no_dot.ctx),hl_scopes::operand));
 		
 		auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $subscript_ne.ctx->getStop());
-		auto func = ca_common_expr_policy::get_function(*$id_no_dot.name);
+		auto func = ca_common_expr_policy::get_function($id_no_dot.name.to_string_view());
 		$ca_expr = std::make_unique<ca_function>($id_no_dot.name, func, std::move($subscript_ne.value), std::move($ca_dupl_factor.value), r);
 	}
 	| id_no_dot
@@ -312,7 +312,7 @@ data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr,
 		$value = $id.name;
 	};
 
-vs_id returns [id_index name = id_storage::empty_id]
+vs_id returns [id_index name]
 	: ORDSYMBOL
 	{
 		std::string text = $ORDSYMBOL->getText();
@@ -333,7 +333,7 @@ vs_id returns [id_index name = id_storage::empty_id]
 		}
 	)*
 	{
-		$name = parse_identifier(text, provider.get_range(first, last));
+		$name = parse_identifier(std::move(text), provider.get_range(first, last));
 	};
 
 var_def returns [vs_ptr vs]
@@ -349,7 +349,7 @@ var_def returns [vs_ptr vs]
 			$vs = std::make_unique<created_variable_symbol>(std::move($var_def_name.created_name), std::move($var_def_substr.value), r);	
 	};
 
-var_def_name returns [id_index name = id_storage::empty_id, concat_chain created_name]
+var_def_name returns [id_index name, concat_chain created_name]
 	: AMPERSAND?
 	(
 		vs_id									{$name = $vs_id.name;}

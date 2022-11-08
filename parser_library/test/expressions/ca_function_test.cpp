@@ -87,7 +87,7 @@ protected:
             params.push_back(std::make_unique<set_expr>(std::move(param)));
 
 
-        ca_function f(nullptr, GetParam().function, std::move(params), nullptr, range());
+        ca_function f(context::id_index(), GetParam().function, std::move(params), nullptr, range());
 
         return f.evaluate(eval_ctx);
     }

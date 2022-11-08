@@ -21,7 +21,7 @@
 
 #define SETCEQ(X, Y)                                                                                                   \
     EXPECT_EQ(a.hlasm_ctx()                                                                                            \
-                  .get_var_sym(a.hlasm_ctx().ids().add(X))                                                             \
+                  .get_var_sym(context::id_index(X))                                                                   \
                   ->access_set_symbol_base()                                                                           \
                   ->access_set_symbol<C_t>()                                                                           \
                   ->get_value(),                                                                                       \

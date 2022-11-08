@@ -125,7 +125,7 @@ private:
     {
         index_t<using_collection> parent;
 
-        id_index label = nullptr;
+        id_index label;
 
         const section* owner = nullptr;
         offset_t begin = 0;
@@ -198,7 +198,7 @@ private:
         using_drop_definition(index_t<using_collection> parent,
             index_t<mach_expression> begin,
             std::vector<index_t<mach_expression>> base,
-            id_index label = nullptr,
+            id_index label = {},
             index_t<mach_expression> end = {})
             : m_parent(parent)
             , m_label(label)
@@ -266,7 +266,7 @@ private:
             index_t<instruction_context> instruction_ctx,
             index_t<mach_expression> begin,
             std::vector<index_t<mach_expression>> base,
-            id_index label = nullptr,
+            id_index label,
             index_t<mach_expression> end = {})
             : definition(parent, begin, std::move(base), label, end)
             , instruction_ctx(instruction_ctx)

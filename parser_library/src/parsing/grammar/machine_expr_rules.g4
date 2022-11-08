@@ -184,7 +184,7 @@ mach_data_attribute_value returns [std::variant<std::monostate, std::pair<id_ind
 	| id
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($id.ctx), hl_scopes::ordinary_symbol));
-		if (auto name = $id.name)
+		if (auto name = $id.name; !name.empty())
 			$data = std::make_pair(name, $id.using_qualifier);
 	};
 
