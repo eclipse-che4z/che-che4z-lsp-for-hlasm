@@ -50,12 +50,20 @@ struct stack_entry
 
 struct statement_details
 {
-    range instr_range;
-    range operand_range;
-    range remark_range;
-    std::string_view member_name;
+    struct stmt_part
+    {
+        std::string_view value;
+        range r;
+    };
 
-    range get_stmt_range() { return range(instr_range.start, operand_range.end); }
+    stmt_part instr;
+    std::vector<stmt_part> operands;
+    std::optional<stmt_part> remark;
+
+    range get_stmt_range()
+    {
+        return remark ? range(instr.r.start, remark.value().r.end) : range(instr.r.start, operands.front().r.end);
+    }
 };
 
 statement_details get_statement_details(std::match_results<std::string_view::iterator>& matches, size_t line_no)
@@ -70,12 +78,19 @@ statement_details get_statement_details(std::match_results<std::string_view::ite
     auto member_start = inc.size() + matches[2].str().length();
     auto member_range = range(position(line_no, member_start), position(line_no, member_start + member.size()));
 
-    std::string_view remark(std::to_address(matches[5].first), matches[5].length());
-    auto remark_start = member_start + member.size() + matches[4].str().length();
-    auto remark_end = remark_start + remark.size();
-    auto remark_range = range(position(line_no, remark_start), position(line_no, remark_end));
+    std::optional<statement_details::stmt_part> remark = std::nullopt;
 
-    return { std::move(inc_range), std::move(member_range), std::move(remark_range), member };
+    if (matches[4].length())
+    {
+        statement_details::stmt_part tmp;
+        tmp.value = std::string_view(std::to_address(matches[5].first), matches[5].length());
+        auto remark_start = member_start + member.size() + matches[4].str().length();
+        auto remark_end = remark_start + tmp.value.length();
+        tmp.r = range(position(line_no, remark_start), position(line_no, remark_end));
+        remark = tmp;
+    }
+
+    return { { inc, std::move(inc_range) }, { { member, std::move(member_range) } }, std::move(remark) };
 }
 } // namespace
 
@@ -115,67 +130,32 @@ class endevor_preprocessor : public preprocessor
         }
     }
 
-    semantics::statement_si get_statement_si(std::match_results<std::string_view::iterator>& matches, size_t line_no)
+    void do_highlighting(const statement_details& stmt)
     {
-        std::string_view inc(std::to_address(matches[1].first), matches[1].length());
-        auto inc_range = range(position(line_no, 0), position(line_no, inc.size()));
+        m_src_proc.add_hl_symbol(token_info(stmt.instr.r, semantics::hl_scopes::instruction));
 
-        std::string_view member(std::to_address(matches[3].first), matches[3].length());
-        auto member_start = inc.size() + matches[2].str().length();
-        auto member_range = range(position(line_no, member_start), position(line_no, member_start + member.size()));
-
-        std::string_view remark(std::to_address(matches[5].first), matches[5].length());
-        auto remark_start = member_start + member.size() + matches[4].str().length();
-        auto remark_end = remark_start + remark.size();
-        auto remark_range = range(position(line_no, remark_start), position(line_no, remark_end));
-
-        semantics::operand_list operands;
-        auto symbol = std::make_unique<expressions::mach_expr_symbol>(
-            m_ctx.hlasm_ctx->ids().add(std::string(member)), nullptr, member_range);
-        operands.push_back(
-            std::make_unique<semantics::expr_assembler_operand>(std::move(symbol), std::string(member), member_range));
-
-        semantics::remarks_si remarks(remark_range, { remark_range });
-
-        return semantics::statement_si(range(position(line_no, 0), position(line_no, remark_end)),
-            semantics::label_si(range()),
-            semantics::instruction_si(inc_range, m_ctx.hlasm_ctx->ids().add(std::string(inc))),
-            semantics::operands_si(member_range, std::move(operands)),
-            std::move(remarks),
-            {});
-    }
-
-    void do_highlighting(const semantics::statement_si& stmt)
-    {
-        m_src_proc.add_hl_symbol(token_info(stmt.instruction_ref().field_range, semantics::hl_scopes::instruction));
-
-        for (const auto& op : stmt.operands.value)
+        for (const auto& op : stmt.operands)
         {
-            m_src_proc.add_hl_symbol(token_info(op->operand_range, semantics::hl_scopes::operand));
+            m_src_proc.add_hl_symbol(token_info(op.r, semantics::hl_scopes::operand));
         }
 
-        m_src_proc.add_hl_symbol(token_info(stmt.remarks_ref().field_range, semantics::hl_scopes::remark));
+        if (stmt.remark)
+            m_src_proc.add_hl_symbol(token_info(stmt.remark.value().r, semantics::hl_scopes::remark));
     }
 
-    void provide_occurrences(const semantics::statement_si& stmt)
+    void provide_occurrences(const statement_details& stmt)
     {
         lsp::file_occurences_t opencode_occurences;
         lsp::vardef_storage opencode_var_defs;
         lsp::occurence_storage stmt_occurences;
         static std::string empty_text;
 
-        for (const auto& op : stmt.operands.value)
+        for (const auto& op : stmt.operands)
         {
-            auto sym_expr =
-                dynamic_cast<expressions::mach_expr_symbol*>(op->access_asm()->access_expr()->expression.get());
-
-            if (sym_expr)
-            {
-                stmt_occurences.emplace_back(lsp::occurence_kind::INSTR,
-                    std::get<context::id_index>(stmt.instruction_ref().value),
-                    stmt.instruction_ref().field_range);
-                stmt_occurences.emplace_back(lsp::occurence_kind::COPY_OP, sym_expr->value, op->operand_range);
-            }
+            stmt_occurences.emplace_back(
+                lsp::occurence_kind::INSTR, m_ctx.hlasm_ctx->ids().add(std::string(stmt.instr.value)), stmt.instr.r);
+            stmt_occurences.emplace_back(
+                lsp::occurence_kind::COPY_OP, m_ctx.hlasm_ctx->ids().add(std::string(op.value)), op.r);
         }
 
         auto& file_occs = opencode_occurences[m_ctx.hlasm_ctx->current_statement_location().resource_loc];
@@ -240,19 +220,18 @@ public:
 
             auto line_no = std::prev(stack.back().current)->lineno();
             auto stmt_details = get_statement_details(matches, line_no.value_or(0));
-            auto stmt_si = get_statement_si(matches, line_no.value_or(0));
 
-            process_member(stmt_details.member_name, stack);
+            process_member(stmt_details.operands.front().value, stack);
 
             if (line_no)
             {
-                do_highlighting(stmt_si);
-                provide_occurrences(stmt_si);
+                do_highlighting(stmt_details);
+                provide_occurrences(stmt_details);
 
                 asm_processor::process_copy(m_ctx,
                     m_lib_provider,
-                    m_ctx.hlasm_ctx->ids().add(std::string(stmt_details.member_name)),
-                    stmt_details.operand_range,
+                    m_ctx.hlasm_ctx->ids().add(std::string(stmt_details.operands.front().value)),
+                    stmt_details.operands.front().r,
                     stmt_details.get_stmt_range(),
                     nullptr);
             }
