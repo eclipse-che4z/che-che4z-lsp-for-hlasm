@@ -763,7 +763,7 @@ bool asm_processor::process_copy(analyzing_context ctx,
     if (tmp == ctx.hlasm_ctx->copy_members().end())
     {
         bool result = lib_provider.parse_library(
-            sym_expr->value.to_string(), ctx, workspaces::library_data { processing_kind::COPY, sym_expr->value });
+            copy_member_id.to_string(), ctx, workspaces::library_data { processing_kind::COPY, copy_member_id });
 
         if (!result)
         {
