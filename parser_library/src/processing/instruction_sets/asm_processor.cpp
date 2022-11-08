@@ -739,32 +739,51 @@ bool asm_processor::process_copy(const semantics::complete_statement& stmt,
         return false;
     }
 
-    auto tmp = ctx.hlasm_ctx->copy_members().find(sym_expr->value);
+    auto result = process_copy(ctx,
+        lib_provider,
+        sym_expr->value,
+        stmt.operands_ref().value.front()->operand_range,
+        stmt.stmt_range_ref(),
+        diagnoser);
+
+    if (result)
+        ctx.hlasm_ctx->enter_copy_member(sym_expr->value);
+
+    return result;
+}
+
+bool asm_processor::process_copy(analyzing_context ctx,
+    workspaces::parse_lib_provider& lib_provider,
+    context::id_index copy_member_id,
+    const range& operand_range,
+    const range& stmt_range,
+    diagnosable_ctx* diagnoser)
+{
+    auto tmp = ctx.hlasm_ctx->copy_members().find(copy_member_id);
 
     if (tmp == ctx.hlasm_ctx->copy_members().end())
     {
         bool result = lib_provider.parse_library(
-            *sym_expr->value, ctx, workspaces::library_data { processing_kind::COPY, sym_expr->value });
+            *copy_member_id, ctx, workspaces::library_data { processing_kind::COPY, copy_member_id });
 
         if (!result)
         {
             if (diagnoser)
-                diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
+                diagnoser->add_diagnostic(diagnostic_op::error_E058(operand_range));
             return false;
         }
     }
+
     auto whole_copy_stack = ctx.hlasm_ctx->whole_copy_stack();
 
-    auto cycle_tmp = std::find(whole_copy_stack.begin(), whole_copy_stack.end(), sym_expr->value);
+    auto cycle_tmp = std::find(whole_copy_stack.begin(), whole_copy_stack.end(), copy_member_id);
 
     if (cycle_tmp != whole_copy_stack.end())
     {
         if (diagnoser)
-            diagnoser->add_diagnostic(diagnostic_op::error_E062(stmt.stmt_range_ref()));
+            diagnoser->add_diagnostic(diagnostic_op::error_E062(stmt_range));
         return false;
     }
-
-    ctx.hlasm_ctx->enter_copy_member(sym_expr->value);
 
     return true;
 }

@@ -44,6 +44,13 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         diagnosable_ctx* diagnoser);
 
+    static bool process_copy(analyzing_context ctx,
+        workspaces::parse_lib_provider& lib_provider,
+        context::id_index copy_member_id,
+        const range& operand_range,
+        const range& stmt_range,
+        diagnosable_ctx* diagnoser);
+
 private:
     opencode_provider* open_code_;
     process_table_t create_table(context::hlasm_context& hlasm_ctx);

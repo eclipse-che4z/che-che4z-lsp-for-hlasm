@@ -54,6 +54,8 @@ struct statement_details
     range operand_range;
     range remark_range;
     std::string_view member_name;
+
+    range get_stmt_range() { return range(instr_range.start, operand_range.end); }
 };
 
 statement_details get_statement_details(std::match_results<std::string_view::iterator>& matches, size_t line_no)
@@ -247,8 +249,12 @@ public:
                 do_highlighting(stmt_si);
                 provide_occurrences(stmt_si);
 
-                if (asm_processor::process_copy(stmt_si, m_ctx, m_lib_provider, nullptr)) // todo diags
-                    m_ctx.hlasm_ctx->leave_copy_member();
+                asm_processor::process_copy(m_ctx,
+                    m_lib_provider,
+                    m_ctx.hlasm_ctx->ids().add(std::string(stmt_details.member_name)),
+                    stmt_details.operand_range,
+                    stmt_details.get_stmt_range(),
+                    nullptr);
             }
         }
 
