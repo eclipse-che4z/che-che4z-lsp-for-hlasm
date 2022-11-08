@@ -361,12 +361,12 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
             *m_state_listener))
         return nullptr;
 
-    m_src_proc->process_hl_symbols(collector.extract_hl_symbols());
-
     if (m_current_logical_line.segments.size() > 1)
         m_ctx->hlasm_ctx->metrics.continued_statements++;
     else
         m_ctx->hlasm_ctx->metrics.non_continued_statements++;
+
+    m_src_proc->process_hl_symbols(collector.extract_hl_symbols());
 
     return result;
 }
