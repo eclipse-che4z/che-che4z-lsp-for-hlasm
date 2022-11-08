@@ -446,7 +446,7 @@ class db2_preprocessor : public preprocessor
                 add_ds_line(label, "_DATA", li.prefix + std::to_string(len <= li.limit ? len : li.limit), false);
                 if (len > li.limit)
                     m_result.emplace_back(replaced_line { concat(" ORG   *+(",
-                        // there seems be this strage artifical limit
+                        // there seems be this strange artificial limit
                         std::min(len - li.limit, 1073676289ULL),
                         ")\n") });
                 break;
