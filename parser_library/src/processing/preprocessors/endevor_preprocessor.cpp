@@ -140,7 +140,10 @@ class endevor_preprocessor : public preprocessor
         }
 
         if (stmt.remark)
+        {
             m_src_proc.add_hl_symbol(token_info(stmt.remark.value().r, semantics::hl_scopes::remark));
+            m_diags->add_diagnostic(diagnostic_op::fade(range(stmt.instr.r.start, stmt.remark.value().r.end)));
+        }
     }
 
     void provide_occurrences(const statement_details& stmt)

@@ -2516,6 +2516,11 @@ diagnostic_op diagnostic_op::error_S0012(const range& range)
     return diagnostic_op(diagnostic_severity::error, "S0012", "Right parenthesis has no left match", range);
 }
 
+diagnostic_op diagnostic_op::fade(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::hint, "", "", range, diagnostic_tag::unnecessary);
+}
+
 diagnostic_s diagnostic_s::error_W0001(const utils::resource::resource_location& file_name)
 {
     return diagnostic_s(file_name.get_uri(),
