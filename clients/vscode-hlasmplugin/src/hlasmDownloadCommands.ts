@@ -552,6 +552,23 @@ export function gatherDownloadList(availableConfigs: { workspaceUri: vscode.Uri,
     return thingsToDownload;
 }
 
+async function filterDownloadList(downloadCandidates: JobDetail[]): Promise<JobDetail[]> {
+    const input = vscode.window.createQuickPick();
+    return new Promise<JobDetail[]>((resolve, reject) => {
+        input.ignoreFocusOut = true;
+        input.title = 'Select data sets to download';
+        input.items = downloadCandidates.map(x => { return { label: x.dsn }; });
+        input.canSelectMany = true;
+        input.selectedItems = input.items;
+        input.onDidHide(() => reject(Error(cancelMessage)));
+        input.onDidAccept(() => {
+            const selected = new Set(input.selectedItems.map(x => x.label));
+            resolve(downloadCandidates.filter(x => selected.has(x.dsn)));
+        });
+        input.show();
+    }).finally(() => { input.dispose(); });
+}
+
 enum connectionSecurityLevel {
     "rejectUnauthorized",
     "acceptUnauthorized",
@@ -698,7 +715,7 @@ export async function downloadDependencies(context: vscode.ExtensionContext) {
 
         await context.globalState.update(mementoKey, { host: hostInput, user: user, jobcard: jobcardPattern });
 
-        const thingsToDownload = gatherDownloadList(await gatherAvailableConfigs());
+        const thingsToDownload = await filterDownloadList(gatherDownloadList(await gatherAvailableConfigs()));
 
         const dirsWithFiles = await checkForExistingFiles(thingsToDownload);
         if (dirsWithFiles.size > 0) {

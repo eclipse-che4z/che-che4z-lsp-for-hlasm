@@ -2,6 +2,9 @@
 
 ## ****Unreleased****
 
+#### Added
+- Command for downloading copybooks allows selections of data sets which should be downloaded
+
 ## [1.5.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.4.0...1.5.0) (2022-11-02)
 
 #### Added
