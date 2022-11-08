@@ -60,7 +60,7 @@ struct statement_details
     std::vector<stmt_part> operands;
     std::optional<stmt_part> remark;
 
-    range get_stmt_range()
+    range get_stmt_range() const
     {
         return remark ? range(instr.r.start, remark.value().r.end) : range(instr.r.start, operands.front().r.end);
     }
@@ -68,7 +68,7 @@ struct statement_details
 
 statement_details get_statement_details(std::match_results<std::string_view::iterator>& matches, size_t line_no)
 {
-    if (matches.size() != 6)
+    if (matches.size() != 5)
         return {};
 
     std::string_view inc(std::to_address(matches[1].first), matches[1].length());
@@ -83,8 +83,8 @@ statement_details get_statement_details(std::match_results<std::string_view::ite
     if (matches[4].length())
     {
         statement_details::stmt_part tmp;
-        tmp.value = std::string_view(std::to_address(matches[5].first), matches[5].length());
-        auto remark_start = member_start + member.size() + matches[4].str().length();
+        tmp.value = std::string_view(std::to_address(matches[4].first), matches[4].length());
+        auto remark_start = member_start + member.size();
         auto remark_end = remark_start + tmp.value.length();
         tmp.r = range(position(line_no, remark_start), position(line_no, remark_end));
         remark = tmp;
@@ -142,8 +142,9 @@ class endevor_preprocessor : public preprocessor
         if (stmt.remark)
         {
             m_src_proc.add_hl_symbol(token_info(stmt.remark.value().r, semantics::hl_scopes::remark));
-            m_diags->add_diagnostic(diagnostic_op::fade(range(stmt.instr.r.start, stmt.remark.value().r.end)));
         }
+
+        m_diags->add_diagnostic(diagnostic_op::fade(stmt.get_stmt_range()));
     }
 
     void provide_occurrences(const statement_details& stmt)
@@ -194,7 +195,7 @@ public:
             }))
             return doc;
 
-        static std::regex include_regex(R"(^(-INC|\+\+INCLUDE)(\s+)(\S+)(?:(\s+)(\S+))?)");
+        static std::regex include_regex(R"(^(-INC|\+\+INCLUDE)(\s+)(\S+)(?:(.*))?)");
 
         std::vector<document_line> result;
         result.reserve(doc.size());
