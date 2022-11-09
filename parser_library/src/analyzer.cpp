@@ -88,7 +88,7 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
 
             for (const auto& p : pp)
             {
-                auto p_statements = p->get_statements();
+                const auto& p_statements = p->get_statements();
                 statements.insert(std::end(statements), std::begin(p_statements), std::end(p_statements));
             }
 
