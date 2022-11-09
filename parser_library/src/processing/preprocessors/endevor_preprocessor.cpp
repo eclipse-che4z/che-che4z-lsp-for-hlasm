@@ -103,14 +103,14 @@ class endevor_preprocessor : public preprocessor
     analyzing_context& m_ctx;
     workspaces::parse_lib_provider& m_lib_provider;
 
-    void process_member(std::string_view member, std::vector<stack_entry>& stack)
+    bool process_member(std::string_view member, std::vector<stack_entry>& stack)
     {
         if (std::any_of(stack.begin(), stack.end(), [&member](const auto& e) { return e.name == member; }))
         {
             if (m_diags)
                 m_diags->add_diagnostic(diagnostic_op::error_END002(
                     range(position(std::prev(stack.front().current)->lineno().value_or(0), 0)), member));
-            return;
+            return false;
         }
 
         auto lib = m_libs(member);
@@ -128,6 +128,8 @@ class endevor_preprocessor : public preprocessor
             member_doc.convert_to_replaced();
             stack.emplace_back(std::string(member), std::move(member_doc));
         }
+
+        return true;
     }
 
     void do_highlighting(const statement_details& stmt)
@@ -225,7 +227,8 @@ public:
             auto line_no = std::prev(stack.back().current)->lineno();
             auto stmt_details = get_statement_details(matches, line_no.value_or(0));
 
-            process_member(stmt_details.operands.front().value, stack);
+            if (!process_member(stmt_details.operands.front().value, stack))
+                break;
 
             if (line_no)
             {
