@@ -52,17 +52,12 @@ workspaces::parse_lib_provider& analyzer_options::get_lib_provider() const
 
 std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(processing::library_fetcher asm_lf,
     diagnostic_op_consumer& diag_consumer,
-    semantics::source_info_processor& src_proc,
-    analyzing_context& ctx,
-    workspaces::parse_lib_provider& lib_provider) const
+    semantics::source_info_processor& src_proc) const
 {
-    const auto transform_preprocessor = [&asm_lf, &diag_consumer, &src_proc, &ctx, &lib_provider](
-                                            const preprocessor_options& po) {
+    const auto transform_preprocessor = [&asm_lf, &diag_consumer, &src_proc](const preprocessor_options& po) {
         return std::visit(
-            [&asm_lf, &diag_consumer, &src_proc, &ctx, &lib_provider](
-                const auto& p) -> std::unique_ptr<processing::preprocessor> {
-                return processing::preprocessor::create(
-                    p, std::move(asm_lf), &diag_consumer, src_proc, ctx, lib_provider);
+            [&asm_lf, &diag_consumer, &src_proc](const auto& p) -> std::unique_ptr<processing::preprocessor> {
+                return processing::preprocessor::create(p, std::move(asm_lf), &diag_consumer, src_proc);
             },
             po);
     };
@@ -130,9 +125,7 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
                         return result;
                     },
                     *this,
-                    src_proc_,
-                    ctx_,
-                    opts.get_lib_provider()),
+                    src_proc_),
                 opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
                                                                : processing::opencode_provider_options {},
                 opts.vf_monitor),

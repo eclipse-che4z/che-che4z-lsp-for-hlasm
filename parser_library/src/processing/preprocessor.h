@@ -43,10 +43,6 @@ class source_info_processor;
 struct statement_details;
 } // namespace semantics
 
-namespace workspaces {
-class parse_lib_provider;
-}
-
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::processing {
@@ -63,23 +59,17 @@ public:
     static std::unique_ptr<preprocessor> create(const cics_preprocessor_options&,
         library_fetcher,
         diagnostic_op_consumer*,
-        semantics::source_info_processor&,
-        analyzing_context&,
-        workspaces::parse_lib_provider&);
+        semantics::source_info_processor&);
 
     static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&,
         library_fetcher,
         diagnostic_op_consumer*,
-        semantics::source_info_processor&,
-        analyzing_context&,
-        workspaces::parse_lib_provider&);
+        semantics::source_info_processor&);
 
     static std::unique_ptr<preprocessor> create(const endevor_preprocessor_options&,
         library_fetcher,
         diagnostic_op_consumer*,
-        semantics::source_info_processor&,
-        analyzing_context&,
-        workspaces::parse_lib_provider&);
+        semantics::source_info_processor&);
 
     virtual void finished() = 0;
 

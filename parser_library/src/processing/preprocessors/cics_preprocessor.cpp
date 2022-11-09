@@ -1287,9 +1287,7 @@ public:
 std::unique_ptr<preprocessor> preprocessor::create(const cics_preprocessor_options& options,
     library_fetcher libs,
     diagnostic_op_consumer* diags,
-    semantics::source_info_processor& src_proc,
-    analyzing_context& ctx,
-    workspaces::parse_lib_provider& lib_provider)
+    semantics::source_info_processor& src_proc)
 {
     return std::make_unique<cics_preprocessor>(options, std::move(libs), diags);
 }

@@ -31,8 +31,6 @@ std::pair<int, std::string> test_cics_miniparser(const std::vector<std::string_v
 
 namespace {
 semantics::source_info_processor m_src_info(false);
-analyzing_context m_ctx(nullptr, nullptr);
-workspaces::empty_parse_lib_provider m_lib_provider;
 } // namespace
 
 TEST(cics_preprocessor, asm_xopts_parsing)
@@ -56,9 +54,7 @@ TEST(cics_preprocessor, asm_xopts_parsing)
             cics_preprocessor_options {},
             [](std::string_view) { return std::nullopt; },
             nullptr,
-            m_src_info,
-            m_ctx,
-            m_lib_provider);
+            m_src_info);
 
         auto result = p->generate_replacement(document(text_template));
         EXPECT_GT(result.size(), 0);
@@ -92,7 +88,7 @@ TEST_P(cics_preprocessor_tests, basics)
     const auto& [input, expected] = GetParam();
     auto [text_template, config] = input;
     auto p = preprocessor::create(
-        config, [](std::string_view) { return std::nullopt; }, nullptr, m_src_info, m_ctx, m_lib_provider);
+        config, [](std::string_view) { return std::nullopt; }, nullptr, m_src_info);
 
     auto result = p->generate_replacement(document(text_template));
 
