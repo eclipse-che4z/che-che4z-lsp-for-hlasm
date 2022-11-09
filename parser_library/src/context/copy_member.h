@@ -26,7 +26,7 @@ struct copy_member;
 // structure represents COPY member in HLASM macro library
 struct copy_member
 {
-    // member idenifier
+    // member identifier
     const id_index name;
     // block of statements defining the member
     cached_block cached_definition;
