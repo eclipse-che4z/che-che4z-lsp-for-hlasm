@@ -40,7 +40,8 @@ struct logical_line_extractor_args;
 
 namespace semantics {
 class source_info_processor;
-}
+struct statement_details;
+} // namespace semantics
 
 namespace workspaces {
 class parse_lib_provider;
@@ -79,6 +80,10 @@ public:
         semantics::source_info_processor&,
         analyzing_context&,
         workspaces::parse_lib_provider&);
+
+    virtual void finished() = 0;
+
+    virtual const std::vector<semantics::statement_details>& get_statements() const = 0;
 
 protected:
     using line_iterator = std::vector<document_line>::const_iterator;

@@ -56,10 +56,13 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
     analyzing_context& ctx,
     workspaces::parse_lib_provider& lib_provider) const
 {
-    const auto transform_preprocessor = [&asm_lf, &diag_consumer, &src_proc, &ctx, &lib_provider](const preprocessor_options& po) {
+    const auto transform_preprocessor = [&asm_lf, &diag_consumer, &src_proc, &ctx, &lib_provider](
+                                            const preprocessor_options& po) {
         return std::visit(
-            [&asm_lf, &diag_consumer, &src_proc, &ctx, &lib_provider](const auto& p) -> std::unique_ptr<processing::preprocessor> {
-                return processing::preprocessor::create(p, std::move(asm_lf), &diag_consumer, src_proc, ctx, lib_provider);
+            [&asm_lf, &diag_consumer, &src_proc, &ctx, &lib_provider](
+                const auto& p) -> std::unique_ptr<processing::preprocessor> {
+                return processing::preprocessor::create(
+                    p, std::move(asm_lf), &diag_consumer, src_proc, ctx, lib_provider);
             },
             po);
     };
@@ -77,6 +80,26 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
                 doc = p->generate_replacement(std::move(doc));
             return doc;
         }
+
+        void finished() override
+        {
+            for (const auto& p : pp)
+                p->finished();
+        }
+
+        const std::vector<semantics::statement_details>& get_statements() const override
+        {
+            std::vector<semantics::statement_details> statements;
+
+            for (const auto& p : pp)
+            {
+                auto p_statements = p->get_statements();
+                statements.insert(std::end(statements), std::begin(p_statements), std::end(p_statements));
+            }
+
+            return statements;
+        }
+
     } tmp;
     std::transform(
         preprocessor_args.begin(), preprocessor_args.end(), std::back_inserter(tmp.pp), transform_preprocessor);
@@ -89,6 +112,7 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
     , ctx_(std::move(opts.get_context()))
     , src_proc_(opts.collect_hl_info == collect_highlighting_info::yes)
     , field_parser_(ctx_.hlasm_ctx.get())
+    , lsp_analyzer_(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, text)
     , mngr_(std::make_unique<processing::opencode_provider>(text,
                 ctx_,
                 opts.get_lib_provider(),
@@ -116,9 +140,9 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
           ctx_,
           opts.library_data,
           opts.file_loc,
-          text,
           opts.get_lib_provider(),
-          field_parser_)
+          field_parser_,
+          lsp_analyzer_)
 {}
 
 analyzing_context analyzer::context() const { return ctx_; }

@@ -597,6 +597,11 @@ bool opencode_provider::finished() const
     return std::none_of(o.begin(), o.end(), [](const auto& c) { return c.suspended(); });
 }
 
+std::vector<semantics::statement_details> opencode_provider::get_preprocessor_statements()
+{
+    return m_preprocessor->get_statements();
+}
+
 parsing::hlasmparser_multiline& opencode_provider::parser()
 {
     if (!m_line_fed)

@@ -48,6 +48,8 @@ public:
         statement_provider_kind prov_kind,
         processing_kind proc_kind) override;
 
+    void analyze(const semantics::statement_details& statement);
+
     void macrodef_started(const macrodef_start_data& data);
     void macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result&& result);
 

@@ -28,6 +28,7 @@ namespace {
 const auto copy1_loc = resource_location("COPY1");
 const auto copy2_loc = resource_location("COPY2");
 const auto member_loc = resource_location("MEMBER");
+
 semantics::source_info_processor m_src_info(false);
 analyzing_context m_ctx(nullptr, nullptr);
 workspaces::empty_parse_lib_provider m_lib_provider;

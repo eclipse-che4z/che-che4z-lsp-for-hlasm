@@ -22,6 +22,7 @@
 #include "preprocessor_options.h"
 #include "processing/instruction_sets/asm_processor.h"
 #include "processing/preprocessor.h"
+#include "processing/statement_analyzers/lsp_analyzer.h"
 #include "semantics/collector.h"
 #include "semantics/operand_impls.h"
 #include "semantics/source_info_processor.h"
@@ -48,25 +49,8 @@ struct stack_entry
     bool end() const { return current == doc.end(); }
 };
 
-struct statement_details
-{
-    struct stmt_part
-    {
-        std::string_view value;
-        range r;
-    };
-
-    stmt_part instr;
-    std::vector<stmt_part> operands;
-    std::optional<stmt_part> remark;
-
-    range get_stmt_range() const
-    {
-        return remark ? range(instr.r.start, remark.value().r.end) : range(instr.r.start, operands.front().r.end);
-    }
-};
-
-statement_details get_statement_details(std::match_results<std::string_view::iterator>& matches, size_t line_no)
+semantics::statement_details get_statement_details(
+    std::match_results<std::string_view::iterator>& matches, size_t line_no)
 {
     if (matches.size() != 5)
         return {};
@@ -78,11 +62,11 @@ statement_details get_statement_details(std::match_results<std::string_view::ite
     auto member_start = inc.size() + matches[2].str().length();
     auto member_range = range(position(line_no, member_start), position(line_no, member_start + member.size()));
 
-    std::optional<statement_details::stmt_part> remark = std::nullopt;
+    std::optional<semantics::statement_details::stmt_part> remark = std::nullopt;
 
     if (matches[4].length())
     {
-        statement_details::stmt_part tmp;
+        semantics::statement_details::stmt_part tmp;
         tmp.value = std::string_view(std::to_address(matches[4].first), matches[4].length());
         auto remark_start = member_start + member.size();
         auto remark_end = remark_start + tmp.value.length();
@@ -102,6 +86,7 @@ class endevor_preprocessor : public preprocessor
     semantics::source_info_processor& m_src_proc;
     analyzing_context& m_ctx;
     workspaces::parse_lib_provider& m_lib_provider;
+    std::vector<semantics::statement_details> m_statements;
 
     bool process_member(std::string_view member, std::vector<stack_entry>& stack)
     {
@@ -132,7 +117,7 @@ class endevor_preprocessor : public preprocessor
         return true;
     }
 
-    void do_highlighting(const statement_details& stmt)
+    void do_highlighting(const semantics::statement_details& stmt)
     {
         m_src_proc.add_hl_symbol(token_info(stmt.instr.r, semantics::hl_scopes::instruction));
 
@@ -147,30 +132,6 @@ class endevor_preprocessor : public preprocessor
         }
 
         m_diags->add_diagnostic(diagnostic_op::fade(stmt.get_stmt_range()));
-    }
-
-    void provide_occurrences(const statement_details& stmt)
-    {
-        lsp::file_occurences_t opencode_occurences;
-        lsp::vardef_storage opencode_var_defs;
-        lsp::occurence_storage stmt_occurences;
-        static std::string empty_text;
-
-        for (const auto& op : stmt.operands)
-        {
-            stmt_occurences.emplace_back(
-                lsp::occurence_kind::INSTR, m_ctx.hlasm_ctx->ids().add(std::string(stmt.instr.value)), stmt.instr.r);
-            stmt_occurences.emplace_back(
-                lsp::occurence_kind::COPY_OP, m_ctx.hlasm_ctx->ids().add(std::string(op.value)), op.r);
-        }
-
-        auto& file_occs = opencode_occurences[m_ctx.hlasm_ctx->current_statement_location().resource_loc];
-        file_occs.insert(
-            file_occs.end(), std::move_iterator(stmt_occurences.begin()), std::move_iterator(stmt_occurences.end()));
-
-        m_ctx.lsp_ctx->add_opencode(
-            std::make_unique<lsp::opencode_info>(std::move(opencode_var_defs), std::move(opencode_occurences)),
-            lsp::text_data_ref_t(empty_text));
     }
 
 public:
@@ -191,6 +152,8 @@ public:
     // Inherited via preprocessor
     document generate_replacement(document doc) override
     {
+        m_statements.clear();
+
         if (std::none_of(doc.begin(), doc.end(), [](const auto& l) {
                 auto text = l.text();
                 return text.starts_with("-INC ") || text.starts_with("++INCLUDE ");
@@ -233,7 +196,7 @@ public:
             if (line_no)
             {
                 do_highlighting(stmt_details);
-                provide_occurrences(stmt_details);
+                m_statements.emplace_back(stmt_details);
 
                 asm_processor::parse_copy(m_ctx,
                     m_lib_provider,
@@ -246,6 +209,10 @@ public:
 
         return document(std::move(result));
     }
+
+    void finished() override {}
+
+    const std::vector<semantics::statement_details>& get_statements() const override { return m_statements; }
 };
 
 std::unique_ptr<preprocessor> preprocessor::create(const endevor_preprocessor_options& opts,
@@ -255,6 +222,7 @@ std::unique_ptr<preprocessor> preprocessor::create(const endevor_preprocessor_op
     analyzing_context& ctx,
     workspaces::parse_lib_provider& lib_provider)
 {
-    return std::make_unique<endevor_preprocessor>(opts, std::move(lf), diags, src_proc, ctx, lib_provider);
+    return std::make_unique<endevor_preprocessor>(
+        opts, std::move(lf), diags, src_proc, ctx, lib_provider);
 }
 } // namespace hlasm_plugin::parser_library::processing

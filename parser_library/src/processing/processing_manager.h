@@ -38,9 +38,9 @@ public:
         analyzing_context ctx,
         workspaces::library_data data,
         utils::resource::resource_location file_loc,
-        const std::string& file_text,
         workspaces::parse_lib_provider& lib_provider,
-        statement_fields_parser& parser);
+        statement_fields_parser& parser,
+        lsp_analyzer& lsp_analyzer_);
 
     // method that starts the processing loop
     void start_processing(std::atomic<bool>* cancel);
@@ -60,7 +60,7 @@ private:
     std::vector<processor_ptr> procs_;
     std::vector<provider_ptr> provs_;
 
-    lsp_analyzer lsp_analyzer_;
+    lsp_analyzer& lsp_analyzer_;
     std::vector<statement_analyzer*> stms_analyzers_;
 
     context::source_snapshot lookahead_stop_;

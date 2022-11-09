@@ -90,6 +90,19 @@ void lsp_analyzer::analyze(
     assign_statement_occurences();
 }
 
+void lsp_analyzer::analyze(const semantics::statement_details& statement)
+{
+    stmt_occurences_.emplace_back(
+        lsp::occurence_kind::INSTR, hlasm_ctx_.ids().add(std::string(statement.instr.value)), statement.instr.r); // todo ids should already be set in the provided statement
+
+    for (const auto& op : statement.operands)
+    {
+        stmt_occurences_.emplace_back(lsp::occurence_kind::COPY_OP, hlasm_ctx_.ids().add(std::string(op.value)), op.r);
+    }
+
+    assign_statement_occurences();
+}
+
 void lsp_analyzer::macrodef_started(const macrodef_start_data& data)
 {
     in_macro_ = true;

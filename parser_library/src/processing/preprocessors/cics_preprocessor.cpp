@@ -23,6 +23,7 @@
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
 #include "semantics/source_info_processor.h"
+#include "semantics/statement.h"
 #include "utils/concat.h"
 #include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
@@ -852,6 +853,8 @@ class cics_preprocessor : public preprocessor
 
     mini_parser<lexing::logical_line::const_iterator> m_mini_parser;
 
+    std::vector<semantics::statement_details> m_statements;
+
 public:
     cics_preprocessor(const cics_preprocessor_options& options, library_fetcher libs, diagnostic_op_consumer* diags)
         : m_libs(std::move(libs))
@@ -1126,6 +1129,7 @@ public:
     // Inherited via preprocessor
     document generate_replacement(document doc) override
     {
+        m_statements.clear();
         m_result.clear();
         m_result.reserve(doc.size());
 
@@ -1272,6 +1276,10 @@ public:
     }
 
     cics_preprocessor_options current_options() const { return m_options; }
+
+    void finished() override {}
+
+    const std::vector<semantics::statement_details>& get_statements() const override { return m_statements; }
 };
 
 } // namespace
