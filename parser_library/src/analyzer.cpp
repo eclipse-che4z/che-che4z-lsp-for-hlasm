@@ -112,7 +112,6 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
     , ctx_(std::move(opts.get_context()))
     , src_proc_(opts.collect_hl_info == collect_highlighting_info::yes)
     , field_parser_(ctx_.hlasm_ctx.get())
-    , lsp_analyzer_(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, text)
     , mngr_(std::make_unique<processing::opencode_provider>(text,
                 ctx_,
                 opts.get_lib_provider(),
@@ -140,9 +139,9 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
           ctx_,
           opts.library_data,
           opts.file_loc,
+          text,
           opts.get_lib_provider(),
-          field_parser_,
-          lsp_analyzer_)
+          field_parser_)
 {}
 
 analyzing_context analyzer::context() const { return ctx_; }

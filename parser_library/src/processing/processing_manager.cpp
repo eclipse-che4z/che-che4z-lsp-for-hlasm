@@ -32,15 +32,15 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     analyzing_context ctx,
     workspaces::library_data data,
     utils::resource::resource_location file_loc,
+    const std::string& file_text,
     workspaces::parse_lib_provider& lib_provider,
-    statement_fields_parser& parser,
-    lsp_analyzer& lsp_analyzer)
+    statement_fields_parser& parser)
     : diagnosable_ctx(*ctx.hlasm_ctx)
     , ctx_(std::move(ctx))
     , hlasm_ctx_(*ctx_.hlasm_ctx)
     , lib_provider_(lib_provider)
     , opencode_prov_(*base_provider)
-    , lsp_analyzer_(lsp_analyzer)
+    , lsp_analyzer_(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, file_text)
     , stms_analyzers_({ &lsp_analyzer_ })
 {
     switch (data.proc_kind)
@@ -251,10 +251,16 @@ void processing_manager::finish_copy_member(copy_processing_result result)
 
 void processing_manager::finish_opencode()
 {
-    auto preproc_stmts = opencode_prov_.get_preprocessor_statements();
-    for (auto stmt : preproc_stmts)
+    for (const auto& stmt : opencode_prov_.get_preprocessor_statements())
     {
         lsp_analyzer_.analyze(stmt);
+
+        asm_processor::parse_copy(ctx_,
+            lib_provider_,
+            ctx_.hlasm_ctx->ids().add(std::string(stmt.operands.front().value)),
+            stmt.operands.front().r,
+            stmt.get_stmt_range(),
+            nullptr);
     }
 
     lsp_analyzer_.opencode_finished();

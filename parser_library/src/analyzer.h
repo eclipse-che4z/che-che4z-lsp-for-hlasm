@@ -131,8 +131,6 @@ class analyzer : public diagnosable_ctx
 
     processing::statement_fields_parser field_parser_;
 
-    processing::lsp_analyzer lsp_analyzer_;
-
     processing::processing_manager mngr_;
 
 public:

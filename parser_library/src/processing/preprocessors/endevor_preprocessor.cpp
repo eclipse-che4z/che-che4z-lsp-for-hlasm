@@ -197,13 +197,6 @@ public:
             {
                 do_highlighting(stmt_details);
                 m_statements.emplace_back(stmt_details);
-
-                asm_processor::parse_copy(m_ctx,
-                    m_lib_provider,
-                    m_ctx.hlasm_ctx->ids().add(std::string(stmt_details.operands.front().value)),
-                    stmt_details.operands.front().r,
-                    stmt_details.get_stmt_range(),
-                    nullptr);
             }
         }
 
