@@ -21,7 +21,6 @@
 #include <tuple>
 #include <utility>
 
-#include "analyzing_context.h"
 #include "lexing/logical_line.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"

@@ -24,7 +24,6 @@
 #include <variant>
 #include <vector>
 
-#include "analyzing_context.h"
 #include "diagnostic_consumer.h"
 #include "document.h"
 

@@ -18,7 +18,6 @@
 #include <utility>
 #include <variant>
 
-#include "analyzing_context.h"
 #include "lexing/logical_line.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"

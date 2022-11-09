@@ -12,19 +12,13 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include <memory>
 #include <regex>
 #include <utility>
 #include <vector>
 
-#include "analyzing_context.h"
-#include "expressions/mach_expr_term.h"
 #include "preprocessor_options.h"
-#include "processing/instruction_sets/asm_processor.h"
 #include "processing/preprocessor.h"
-#include "processing/statement_analyzers/lsp_analyzer.h"
 #include "semantics/collector.h"
-#include "semantics/operand_impls.h"
 #include "semantics/source_info_processor.h"
 #include "semantics/statement.h"
 
