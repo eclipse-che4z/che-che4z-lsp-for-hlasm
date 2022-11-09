@@ -235,7 +235,7 @@ public:
                 do_highlighting(stmt_details);
                 provide_occurrences(stmt_details);
 
-                asm_processor::process_copy(m_ctx,
+                asm_processor::parse_copy(m_ctx,
                     m_lib_provider,
                     m_ctx.hlasm_ctx->ids().add(std::string(stmt_details.operands.front().value)),
                     stmt_details.operands.front().r,

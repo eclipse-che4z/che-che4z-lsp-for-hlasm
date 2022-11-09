@@ -723,35 +723,7 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
     }
 }
 
-bool asm_processor::process_copy(const semantics::complete_statement& stmt,
-    analyzing_context ctx,
-    workspaces::parse_lib_provider& lib_provider,
-    diagnosable_ctx* diagnoser)
-{
-    auto& expr = stmt.operands_ref().value.front()->access_asm()->access_expr()->expression;
-    auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(expr.get());
-
-    if (!sym_expr)
-    {
-        if (diagnoser)
-            diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
-        return false;
-    }
-
-    auto result = process_copy(ctx,
-        lib_provider,
-        sym_expr->value,
-        stmt.operands_ref().value.front()->operand_range,
-        stmt.stmt_range_ref(),
-        diagnoser);
-
-    if (result)
-        ctx.hlasm_ctx->enter_copy_member(sym_expr->value);
-
-    return result;
-}
-
-bool asm_processor::process_copy(analyzing_context ctx,
+bool asm_processor::parse_copy(analyzing_context ctx,
     workspaces::parse_lib_provider& lib_provider,
     context::id_index copy_member_id,
     const range& operand_range,
@@ -785,6 +757,34 @@ bool asm_processor::process_copy(analyzing_context ctx,
     }
 
     return true;
+}
+
+bool asm_processor::process_copy(const semantics::complete_statement& stmt,
+    analyzing_context ctx,
+    workspaces::parse_lib_provider& lib_provider,
+    diagnosable_ctx* diagnoser)
+{
+    auto& expr = stmt.operands_ref().value.front()->access_asm()->access_expr()->expression;
+    auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(expr.get());
+
+    if (!sym_expr)
+    {
+        if (diagnoser)
+            diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
+        return false;
+    }
+
+    auto result = parse_copy(ctx,
+        lib_provider,
+        sym_expr->value,
+        stmt.operands_ref().value.front()->operand_range,
+        stmt.stmt_range_ref(),
+        diagnoser);
+
+    if (result)
+        ctx.hlasm_ctx->enter_copy_member(sym_expr->value);
+
+    return result;
 }
 
 asm_processor::process_table_t asm_processor::create_table()
