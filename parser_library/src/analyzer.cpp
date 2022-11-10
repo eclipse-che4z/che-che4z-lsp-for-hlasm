@@ -84,7 +84,7 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
 
         const std::vector<semantics::preprocessor_statement>& get_statements() const override
         {
-            std::vector<semantics::preprocessor_statement> statements;
+            std::vector<semantics::preprocessor_statement> statements; // todo think of a way to do this without copy
 
             for (const auto& p : pp)
             {

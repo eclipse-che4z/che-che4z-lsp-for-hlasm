@@ -852,13 +852,18 @@ class cics_preprocessor : public preprocessor
 
     mini_parser<lexing::logical_line::const_iterator> m_mini_parser;
 
+    semantics::source_info_processor& m_src_proc;
     std::vector<semantics::preprocessor_statement> m_statements;
 
 public:
-    cics_preprocessor(const cics_preprocessor_options& options, library_fetcher libs, diagnostic_op_consumer* diags)
+    cics_preprocessor(const cics_preprocessor_options& options,
+        library_fetcher libs,
+        diagnostic_op_consumer* diags,
+        semantics::source_info_processor& src_proc)
         : m_libs(std::move(libs))
         , m_diags(diags)
         , m_options(options)
+        , m_src_proc(src_proc)
     {}
 
     void inject_no_end_warning()
@@ -1006,6 +1011,27 @@ public:
 
     static bool ignore_line(std::string_view s) { return s.empty() || s.front() == '*' || s.substr(0, 2) == ".*"; }
 
+    bool is_ignored_line(std::string_view line, size_t line_len_chars)
+    {
+        if (ignore_line(line))
+            return true;
+
+        // apparently lines full of characters are ignored
+        if (line_len_chars == valid_cols && line.find(' ') == std::string_view::npos)
+            return true;
+
+        return false;
+    }
+
+    bool is_line_of_interest(std::string_view line)
+    {
+        static const std::regex line_of_interest("([^ ]*)[ ]+(START|CSECT|RSECT|DSECT|DFHEIENT|DFHEISTG|END)(?: .+)?");
+
+        return (std::regex_match(line.begin(), line.end(), m_matches_sv, line_of_interest)
+            && process_asm_statement(std::string_view(std::to_address(m_matches_sv[2].first), m_matches_sv[2].length()),
+                std::string_view(std::to_address(m_matches_sv[1].first), m_matches_sv[1].length())));
+    }
+
     struct label_info
     {
         size_t byte_length;
@@ -1071,6 +1097,36 @@ public:
         inject_call(label_b, label_e, li);
     }
 
+    bool try_exec_cics(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
+    {
+        static const std::regex exec_cics("([^ ]*)[ ]+(?:[eE][xX][eE][cC][ ]+[cC][iI][cC][sS])(?: .+)?");
+
+        it = extract_nonempty_logical_line(m_logical_line, it, end, cics_extract);
+        bool exec_cics_continuation_error = false;
+        if (m_logical_line.continuation_error)
+        {
+            exec_cics_continuation_error = true;
+            // keep 1st line only
+            m_logical_line.segments.erase(m_logical_line.segments.begin() + 1, m_logical_line.segments.end());
+        }
+
+        if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, exec_cics))
+        {
+            process_exec_cics(m_matches_ll);
+
+            if (exec_cics_continuation_error)
+            {
+                if (m_diags)
+                    m_diags->add_diagnostic(diagnostic_op::warn_CIC001(range(position(lineno, 0))));
+                m_result.emplace_back(replaced_line { "*DFH7080I W  CONTINUATION OF EXEC COMMAND IGNORED.\n" });
+                m_result.emplace_back(replaced_line { "         DFHEIMSG 4\n" });
+            }
+            return true;
+        }
+
+        return false;
+    }
+
     auto try_substituting_dfh(const std::match_results<lexing::logical_line::const_iterator>& matches)
     {
         auto events = m_mini_parser.parse_and_substitute(matches[3].first, matches[3].second);
@@ -1116,6 +1172,38 @@ public:
         return events;
     }
 
+    bool try_fdh_lookup(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
+    {
+        static const std::regex dfh_lookup(
+            "([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+(.*?(DFHRESP|DFHVALUE)[ ]*\\([ ]*[A-Z0-9]*[ ]*\\).*)",
+            std::regex_constants::icase);
+
+        it = extract_nonempty_logical_line(m_logical_line, it, end, lexing::default_ictl);
+
+        if (m_logical_line.continuation_error)
+        {
+            if (m_diags)
+                m_diags->add_diagnostic(diagnostic_op::warn_CIC001(range(position(lineno, 0))));
+        }
+        else if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, dfh_lookup))
+        {
+            auto r = try_substituting_dfh(m_matches_ll);
+            if (r.error())
+            {
+                if (m_diags)
+                    m_diags->add_diagnostic(
+                        diagnostic_op::warn_CIC002(range(position(lineno, 0)), r.error_variable_name()));
+                m_pending_dfh_null_error = r.error_variable_name();
+            }
+            else if (r.substitutions_performed() > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     static bool is_process_line(std::string_view s)
     {
         static constexpr const std::string_view PROCESS = "*PROCESS ";
@@ -1123,6 +1211,16 @@ public:
             && std::equal(PROCESS.begin(), PROCESS.end(), s.begin(), [](unsigned char l, unsigned char r) {
                    return l == toupper(r);
                });
+    }
+
+    void try_general_injections()
+    {
+        if (std::exchange(m_pending_prolog, false))
+            inject_prolog();
+        if (std::exchange(m_pending_dfheistg_prolog, false))
+            inject_DFHEISTG();
+        if (!m_pending_dfh_null_error.empty())
+            inject_dfh_null_error(std::exchange(m_pending_dfh_null_error, std::string_view()));
     }
 
     // Inherited via preprocessor
@@ -1146,12 +1244,8 @@ public:
                 skip_continuation = is_continued(text);
                 continue;
             }
-            if (std::exchange(m_pending_prolog, false))
-                inject_prolog();
-            if (std::exchange(m_pending_dfheistg_prolog, false))
-                inject_DFHEISTG();
-            if (!m_pending_dfh_null_error.empty())
-                inject_dfh_null_error(std::exchange(m_pending_dfh_null_error, std::string_view()));
+
+            try_general_injections();
 
             const auto lineno = it->lineno().value_or(0); // TODO: preprocessor chaining
 
@@ -1171,29 +1265,8 @@ public:
 
             asm_xopts_allowed = false;
 
-            auto [line, line_len_chars, _, __] = create_line_preview(text);
-
-            if (ignore_line(line))
-            {
-                m_result.emplace_back(*it++);
-                skip_continuation = is_continued(text);
-                continue;
-            }
-            // apparently lines full of characters are ignored
-            if (line_len_chars == valid_cols && line.find(' ') == std::string_view::npos)
-            {
-                m_result.emplace_back(*it++);
-                skip_continuation = is_continued(text);
-                continue;
-            }
-
-            static const std::regex line_of_interest(
-                "([^ ]*)[ ]+(START|CSECT|RSECT|DSECT|DFHEIENT|DFHEISTG|END)(?: .+)?");
-
-            if (std::regex_match(line.begin(), line.end(), m_matches_sv, line_of_interest)
-                && process_asm_statement(
-                    std::string_view(std::to_address(m_matches_sv[2].first), m_matches_sv[2].length()),
-                    std::string_view(std::to_address(m_matches_sv[1].first), m_matches_sv[1].length())))
+            if (auto [line, line_len_chars, _, __] = create_line_preview(text);
+                is_ignored_line(line, line_len_chars) || is_line_of_interest(line))
             {
                 m_result.emplace_back(*it++);
                 skip_continuation = is_continued(text);
@@ -1201,60 +1274,12 @@ public:
             }
 
             const auto it_backup = it;
-
-            it = extract_nonempty_logical_line(m_logical_line, it, end, cics_extract);
-            bool exec_cics_continuation_error = false;
-            if (m_logical_line.continuation_error)
-            {
-                exec_cics_continuation_error = true;
-                // keep 1st line only
-                m_logical_line.segments.erase(m_logical_line.segments.begin() + 1, m_logical_line.segments.end());
-            }
-
-            static const std::regex exec_cics("([^ ]*)[ ]+(?:[eE][xX][eE][cC][ ]+[cC][iI][cC][sS])(?: .+)?");
-
-            if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, exec_cics))
-            {
-                process_exec_cics(m_matches_ll);
-
-                if (exec_cics_continuation_error)
-                {
-                    if (m_diags)
-                        m_diags->add_diagnostic(diagnostic_op::warn_CIC001(range(position(lineno, 0))));
-                    m_result.emplace_back(replaced_line { "*DFH7080I W  CONTINUATION OF EXEC COMMAND IGNORED.\n" });
-                    m_result.emplace_back(replaced_line { "         DFHEIMSG 4\n" });
-                }
+            if (try_exec_cics(it, end, lineno))
                 continue;
-            }
-
-            static const std::regex dfh_lookup(
-                "([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+(.*?(DFHRESP|DFHVALUE)[ ]*\\([ ]*[A-Z0-9]*[ ]*\\).*)",
-                std::regex_constants::icase);
 
             it = it_backup;
-
-            it = extract_nonempty_logical_line(m_logical_line, it, end, lexing::default_ictl);
-
-            if (m_logical_line.continuation_error)
-            {
-                if (m_diags)
-                    m_diags->add_diagnostic(diagnostic_op::warn_CIC001(range(position(lineno, 0))));
-            }
-            else if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, dfh_lookup))
-            {
-                auto r = try_substituting_dfh(m_matches_ll);
-                if (r.error())
-                {
-                    if (m_diags)
-                        m_diags->add_diagnostic(
-                            diagnostic_op::warn_CIC002(range(position(lineno, 0)), r.error_variable_name()));
-                    m_pending_dfh_null_error = r.error_variable_name();
-                }
-                else if (r.substitutions_performed() > 0)
-                {
-                    continue;
-                }
-            }
+            if (try_fdh_lookup(it, end, lineno))
+                continue;
 
             it = it_backup;
 
@@ -1262,12 +1287,7 @@ public:
             skip_continuation = is_continued(text);
         }
 
-        if (std::exchange(m_pending_prolog, false))
-            inject_prolog();
-        if (std::exchange(m_pending_dfheistg_prolog, false))
-            inject_DFHEISTG();
-        if (!m_pending_dfh_null_error.empty())
-            inject_dfh_null_error(std::exchange(m_pending_dfh_null_error, std::string_view()));
+        try_general_injections();
         if (!std::exchange(m_end_seen, true) && !asm_xopts_allowed) // actual code encountered
             inject_no_end_warning();
 
@@ -1288,7 +1308,7 @@ std::unique_ptr<preprocessor> preprocessor::create(const cics_preprocessor_optio
     diagnostic_op_consumer* diags,
     semantics::source_info_processor& src_proc)
 {
-    return std::make_unique<cics_preprocessor>(options, std::move(libs), diags);
+    return std::make_unique<cics_preprocessor>(options, std::move(libs), diags, src_proc);
 }
 
 namespace test {
