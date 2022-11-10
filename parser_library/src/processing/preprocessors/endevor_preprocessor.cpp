@@ -43,7 +43,7 @@ struct stack_entry
     bool end() const { return current == doc.end(); }
 };
 
-semantics::statement_details get_statement_details(
+semantics::preprocessor_statement get_statement_details(
     std::match_results<std::string_view::iterator>& matches, size_t line_no)
 {
     if (matches.size() != 5)
@@ -56,11 +56,11 @@ semantics::statement_details get_statement_details(
     auto member_start = inc.size() + matches[2].str().length();
     auto member_range = range(position(line_no, member_start), position(line_no, member_start + member.size()));
 
-    std::optional<semantics::statement_details::stmt_part> remark = std::nullopt;
+    std::optional<semantics::preprocessor_statement::stmt_part> remark = std::nullopt;
 
     if (matches[4].length())
     {
-        semantics::statement_details::stmt_part tmp;
+        semantics::preprocessor_statement::stmt_part tmp;
         tmp.value = std::string_view(std::to_address(matches[4].first), matches[4].length());
         auto remark_start = member_start + member.size();
         auto remark_end = remark_start + tmp.value.length();
@@ -78,7 +78,7 @@ class endevor_preprocessor : public preprocessor
     diagnostic_op_consumer* m_diags = nullptr;
     endevor_preprocessor_options m_options;
     semantics::source_info_processor& m_src_proc;
-    std::vector<semantics::statement_details> m_statements;
+    std::vector<semantics::preprocessor_statement> m_statements;
 
     bool process_member(std::string_view member, std::vector<stack_entry>& stack)
     {
@@ -109,7 +109,7 @@ class endevor_preprocessor : public preprocessor
         return true;
     }
 
-    void do_highlighting(const semantics::statement_details& stmt)
+    void do_highlighting(const semantics::preprocessor_statement& stmt)
     {
         m_src_proc.add_hl_symbol(token_info(stmt.instr.r, semantics::hl_scopes::instruction));
 
@@ -193,7 +193,7 @@ public:
 
     void finished() override {}
 
-    const std::vector<semantics::statement_details>& get_statements() const override { return m_statements; }
+    const std::vector<semantics::preprocessor_statement>& get_statements() const override { return m_statements; }
 };
 
 std::unique_ptr<preprocessor> preprocessor::create(const endevor_preprocessor_options& opts,

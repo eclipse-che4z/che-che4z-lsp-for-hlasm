@@ -158,7 +158,7 @@ struct statement_si_defer_done : public complete_statement
     const range& stmt_range_ref() const override { return deferred_stmt->stmt_range_ref(); }
 };
 
-struct statement_details
+struct preprocessor_statement
 {
     struct stmt_part
     {

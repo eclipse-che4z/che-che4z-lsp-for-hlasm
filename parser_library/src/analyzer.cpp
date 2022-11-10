@@ -82,9 +82,9 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
                 p->finished();
         }
 
-        const std::vector<semantics::statement_details>& get_statements() const override
+        const std::vector<semantics::preprocessor_statement>& get_statements() const override
         {
-            std::vector<semantics::statement_details> statements;
+            std::vector<semantics::preprocessor_statement> statements;
 
             for (const auto& p : pp)
             {
