@@ -597,9 +597,9 @@ bool opencode_provider::finished() const
     return std::none_of(o.begin(), o.end(), [](const auto& c) { return c.suspended(); });
 }
 
-std::vector<semantics::statement_details> opencode_provider::get_preprocessor_statements()
+const std::vector<semantics::statement_details>* opencode_provider::get_preprocessor_statements() const
 {
-    return m_preprocessor->get_statements();
+    return m_preprocessor ? &m_preprocessor->get_statements() : nullptr;
 }
 
 parsing::hlasmparser_multiline& opencode_provider::parser()

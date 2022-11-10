@@ -251,16 +251,19 @@ void processing_manager::finish_copy_member(copy_processing_result result)
 
 void processing_manager::finish_opencode()
 {
-    for (const auto& stmt : opencode_prov_.get_preprocessor_statements())
+    if (auto statements = opencode_prov_.get_preprocessor_statements())
     {
-        lsp_analyzer_.analyze(stmt);
+        for (const auto& stmt : *statements)
+        {
+            lsp_analyzer_.analyze(stmt);
 
-        asm_processor::parse_copy(ctx_,
-            lib_provider_,
-            ctx_.hlasm_ctx->ids().add(std::string(stmt.operands.front().value)),
-            stmt.operands.front().r,
-            stmt.get_stmt_range(),
-            nullptr);
+            asm_processor::parse_copy(ctx_,
+                lib_provider_,
+                ctx_.hlasm_ctx->ids().add(std::string(stmt.operands.front().value)),
+                stmt.operands.front().r,
+                stmt.get_stmt_range(),
+                nullptr);
+        }
     }
 
     lsp_analyzer_.opencode_finished();

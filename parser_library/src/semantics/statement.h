@@ -158,28 +158,6 @@ struct statement_si_defer_done : public complete_statement
     const range& stmt_range_ref() const override { return deferred_stmt->stmt_range_ref(); }
 };
 
-//// struct holding full semantic information (si) about whole instruction statement, whole logical line
-//struct preprocessor_statement_si
-//{
-//    preprocessor_statement_si(range stmt_range, instruction_si instruction, operands_si operands, remarks_si remarks)
-//        : stmt_range(std::move(stmt_range))
-//        , instruction(std::move(instruction))
-//        , operands(std::move(operands))
-//        , remarks(std::move(remarks))
-//    {}
-//
-//    range stmt_range;
-//
-//    instruction_si instruction;
-//    operands_si operands;
-//    remarks_si remarks;
-//
-//    const instruction_si& instruction_ref() const { return instruction; }
-//    const operands_si& operands_ref() const { return operands; }
-//    const remarks_si& remarks_ref() const { return remarks; }
-//    const range& stmt_range_ref() const { return stmt_range; }
-//};
-
 struct statement_details
 {
     struct stmt_part

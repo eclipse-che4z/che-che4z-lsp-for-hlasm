@@ -350,7 +350,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     // Why is this so complicated?
     // 1. We cannot represent the individual operands because of bitfields.
     // 2. We cannot represent the whole area as a single dependency when the alignment requirements are growing.
-    // Therefore, we split the operands into chunks depending on the alignent.
+    // Therefore, we split the operands into chunks depending on the alignment.
     // Whenever the alignment requirement increases between consecutive operands, we start a new chunk.
     for (auto it = operands.begin(); it != operands.end();)
     {
