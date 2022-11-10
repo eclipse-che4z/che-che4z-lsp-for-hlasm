@@ -677,21 +677,13 @@ location lsp_context::definition(const utils::resource::resource_location& docum
     return { pos, document_loc };
 }
 
-void collect_references(location_list& refs,
-    const symbol_occurence& occ,
-    const occurence_storage& occ_storage,
-    const utils::resource::resource_location& file)
-{
-    auto file_refs = file_info::find_references(occ, occ_storage);
-    for (auto&& ref : file_refs)
-        refs.emplace_back(std::move(ref), file);
-}
-
 void collect_references(location_list& refs, const symbol_occurence& occ, const file_occurences_t& file_occs)
 {
     for (const auto& [file, occs] : file_occs)
     {
-        collect_references(refs, occ, occs, file);
+        auto file_refs = file_info::find_references(occ, occs);
+        for (auto&& ref : file_refs)
+            refs.emplace_back(std::move(ref), file);
     }
 }
 
@@ -716,12 +708,6 @@ location_list lsp_context::references(const utils::resource::resource_location& 
         for (const auto& [_, mac_i] : m_macros)
             collect_references(result, *occ, mac_i->file_occurences_);
         collect_references(result, *occ, m_opencode->file_occurences);
-
-        if (auto file_info = m_files.find(document_loc); file_info != m_files.end() && file_info->second)
-        {
-            const auto& occs = file_info->second->get_occurences();
-            collect_references(result, *occ, occs, document_loc);
-        }
     }
 
     return result;
