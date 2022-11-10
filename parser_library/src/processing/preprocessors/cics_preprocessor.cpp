@@ -1172,7 +1172,7 @@ public:
         return events;
     }
 
-    bool try_fdh_lookup(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
+    bool try_dfh_lookup(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
     {
         static const std::regex dfh_lookup(
             "([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+(.*?(DFHRESP|DFHVALUE)[ ]*\\([ ]*[A-Z0-9]*[ ]*\\).*)",
@@ -1278,7 +1278,7 @@ public:
                 continue;
 
             it = it_backup;
-            if (try_fdh_lookup(it, end, lineno))
+            if (try_dfh_lookup(it, end, lineno))
                 continue;
 
             it = it_backup;
