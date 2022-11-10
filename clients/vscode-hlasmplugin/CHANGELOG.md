@@ -4,6 +4,7 @@
 
 #### Added
 - Command for downloading copybooks allows selections of data sets which should be downloaded
+- Code actions for an unknown operation code
 
 ## [1.5.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.4.0...1.5.0) (2022-11-02)
 
@@ -43,7 +44,7 @@
 ## [1.4.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.3.0...1.4.0) (2022-08-30)
 
 #### Added
-- Command for downloading copybook datasets from the mainframe
+- Command for downloading copybook data sets from the mainframe
 - Support for multiple preprocessors
 - Preprocessor for expanding Endevor includes
 - Code completion for machine instructions and mnemonics utilizes snippets

@@ -104,23 +104,3 @@ TEST(workspace_manager, did_change_file)
 
     EXPECT_GT(consumer.diags.diagnostics_size(), (size_t)0);
 }
-
-
-TEST(workspace_manager, set_message_consumer)
-{
-    workspace_manager mngr;
-    mngr.configuration_changed(lib_config::load_from_json(R"({"diagnosticsSuppressLimit":0})"_json), "{}");
-    mngr.add_workspace("ws1", "file:///ws1");
-
-    message_consumer_mock msg_consumer;
-
-    mngr.set_message_consumer(&msg_consumer);
-
-    std::string error_file_text = "someerror";
-    mngr.did_open_file("file:///no_workspace_file", 0, error_file_text.c_str(), error_file_text.size());
-    ASSERT_EQ(msg_consumer.messages.size(), 1U);
-    msg_consumer.messages.clear();
-
-    mngr.did_open_file("file:///ws1/no_workspace_file", 0, error_file_text.c_str(), error_file_text.size());
-    ASSERT_EQ(msg_consumer.messages.size(), 1U);
-}

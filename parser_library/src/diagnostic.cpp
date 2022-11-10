@@ -1944,6 +1944,7 @@ diagnostic_op diagnostic_op::error_E048(std::string_view message, const range& r
 
 diagnostic_op diagnostic_op::error_E049(std::string_view message, const range& range)
 {
+    // E049 code utilized in the extension code
     return diagnostic_op(diagnostic_severity::error, "E049", concat("Operation code not found - ", message), range);
 }
 
@@ -2625,6 +2626,17 @@ diagnostic_s diagnostic_s::error_B4G002(const utils::resource::resource_location
         concat("The .bridge.json file refers to a processor group \"",
             grp_name,
             "\", that is not defined in proc_grps.json"),
+        {},
+        diagnostic_tag::none);
+}
+
+diagnostic_s diagnostic_s::info_SUP(const utils::resource::resource_location& file_name)
+{
+    return diagnostic_s(file_name.get_uri(),
+        range(position(), position((size_t)-1, (size_t)-1)),
+        diagnostic_severity::hint,
+        "SUP",
+        concat("Diagnostics suppressed, no configuration available."),
         {},
         diagnostic_tag::none);
 }

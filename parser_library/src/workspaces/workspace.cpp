@@ -90,11 +90,7 @@ void workspace::delete_diags(processor_file_ptr file)
             dep_file->diags().clear();
     }
 
-    auto [notified_found, _] = diag_suppress_notified_.try_emplace(file->get_location(), false);
-    if (!notified_found->second)
-        show_message("Diagnostics suppressed from " + file->get_location().to_presentable()
-            + ", because there is no configuration.");
-    notified_found->second = true;
+    file->diags().push_back(diagnostic_s::info_SUP(file->get_location()));
 }
 
 void workspace::show_message(const std::string& message)
@@ -197,8 +193,6 @@ workspace_file_info workspace::parse_successful(const processor_file_ptr& f)
         ws_file_info.diagnostics_suppressed = true;
         delete_diags(f);
     }
-    else
-        diag_suppress_notified_[f->get_location()] = false;
 
     return ws_file_info;
 }
@@ -215,8 +209,6 @@ workspace_file_info workspace::did_open_file(const utils::resource::resource_loc
 
 void workspace::did_close_file(const utils::resource::resource_location& file_location)
 {
-    diag_suppress_notified_[file_location] = false;
-
     opened_files_.erase(file_location);
 
     // first check whether the file is a dependency

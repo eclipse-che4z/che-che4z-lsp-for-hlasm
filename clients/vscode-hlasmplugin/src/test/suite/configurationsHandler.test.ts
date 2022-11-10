@@ -17,27 +17,22 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { ConfigurationsHandler } from '../../configurationsHandler';
+import { hlasmplugin_folder, pgm_conf_file, proc_grps_file } from '../../constants';
 
 suite('Configurations Handler Test Suite', () => {
     const handler = new ConfigurationsHandler();
-    const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-
-    // configuration files paths
-    test('Check configs test', () => {
-        const configPaths = handler.checkConfigs();
-        assert.equal(configPaths[0], path.join(workspacePath, '.hlasmplugin', 'pgm_conf.json'));
-        assert.equal(configPaths[1], path.join(workspacePath, '.hlasmplugin', 'proc_grps.json'));
-    });
+    const workspaceUri = vscode.workspace.workspaceFolders[0].uri;
 
     // 20 expressions - 2 for always recognize, 9 open codes (pgm_conf.json) and 9 library definitions (proc_grps.json)
-    test('Update wildcards test', () => {
-        const wildcards = handler.updateWildcards();
+    test('Update wildcards test', async () => {
+        const wildcards = await handler.generateWildcards(workspaceUri);
         assert.equal(wildcards.length, 20);
     });
 
     // 2 files matching the wildcards
-    test('Check language test', () => {
-        assert.ok(handler.match(path.join(workspacePath, 'file.asm')));
-        assert.ok(handler.match(path.join(workspacePath, 'pgms/file')));
+    test('Check language test', async () => {
+        handler.setWildcards((await handler.generateWildcards(workspaceUri)).map(regex => { return { regex, workspaceUri }; }));
+        assert.ok(handler.match(vscode.Uri.joinPath(workspaceUri, 'file.asm')));
+        assert.ok(handler.match(vscode.Uri.joinPath(workspaceUri, 'pgms/file')));
     });
 });

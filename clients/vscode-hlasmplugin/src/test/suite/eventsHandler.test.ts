@@ -16,20 +16,23 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 
 import { EventsHandler } from '../../eventsHandler';
-import { LanguageClientMock, LanguageClientOptionsMock, 
-    TextEditorMock, TextDocumentMock, ConfigurationChangeEventMock, 
-    TextDocumentChangeEventMock, TextDocumentContentChangeEventMock,} from '../mocks';
+import {
+    LanguageClientMock, LanguageClientOptionsMock,
+    TextEditorMock, TextDocumentMock, ConfigurationChangeEventMock,
+    TextDocumentChangeEventMock, TextDocumentContentChangeEventMock,
+} from '../mocks';
 
 suite('Events Handler Test Suite', () => {
     const options = new LanguageClientOptionsMock();
     const client = new LanguageClientMock('client', 'mock', options);
     const handler = new EventsHandler('editor.action.triggerSuggest');
 
-    test('Active Text Editor Change test', () => {
+    test('Active Text Editor Change test', async () => {
         const document = new TextDocumentMock();
         document.languageId = 'hlasm';
+        document.uri = vscode.Uri.file('hlasm')
         const editor = new TextEditorMock(document);
-        handler.onDidChangeActiveTextEditor(editor);
+        await handler.onDidChangeActiveTextEditor(editor);
     });
 
     test('Configuration Change test', () => {
@@ -51,23 +54,25 @@ suite('Events Handler Test Suite', () => {
         const event = new TextDocumentChangeEventMock([change]);
         event.document = document;
         // get completion results
-        assert.ok(handler.onDidChangeTextDocument(event,71));
+        assert.ok(handler.onDidChangeTextDocument(event, 71));
     });
 
-    test('Text Document Open test', () => {
+    test('Text Document Open test', async () => {
         // prepare highlighting feature
         const options = new LanguageClientOptionsMock();
         const client = new LanguageClientMock('client', 'mock', options);
         // prepare document
         const document = new TextDocumentMock();
         document.languageId = 'hlasm';
-        handler.onDidOpenTextDocument(document);
+        document.uri = vscode.Uri.file('hlasm')
+        await handler.onDidOpenTextDocument(document);
     });
 
-    test('Text Document Saved test', () => {
+    test('Text Document Saved test', async () => {
         // prepare document
         const document = new TextDocumentMock();
         document.fileName = 'file';
-        handler.onDidSaveTextDocument(document);
+        document.uri = vscode.Uri.file('file')
+        await handler.onDidSaveTextDocument(document);
     })
 });

@@ -17,7 +17,7 @@ import { Uri } from 'vscode';
 
 import { convertBuffer, downloadDependenciesWithClient, extractDsn, gatherDownloadList, JobDescription, replaceVariables, adjustJobHeader } from '../../hlasmDownloadCommands';
 
-suite('HLASM Download datasets', () => {
+suite('HLASM Download data sets', () => {
     const getClient = (listResponses: JobDescription[][]) => {
         return {
             setListMaskCalls: new Array<string>(),
@@ -177,7 +177,7 @@ suite('HLASM Download datasets', () => {
     });
 
 
-    test('Multiple datasets', async () => {
+    test('Multiple data sets', async () => {
         const client = getClient([
             [{ jobname: "JOBNAME0", id: "JOBID0", details: "RC=0000 3 spool files" }],
             [

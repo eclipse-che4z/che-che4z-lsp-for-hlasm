@@ -49,7 +49,7 @@ suite('Integration Test Suite', () => {
             edit.delete(new vscode.Range(new vscode.Position(2, 6), new vscode.Position(2, 7)));
         });
 
-        const allDiags = await diagnostic_event;
+        const allDiags = (await diagnostic_event).filter(x => x[0].path.endsWith('/open'));
         assert.ok(allDiags.length === 1, 'Wrong number of diagnosed files');
         assert.ok(allDiags[0][0].path === editor.document.uri.path, 'Wrong path');
 
