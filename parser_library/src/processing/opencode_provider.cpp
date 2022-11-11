@@ -597,7 +597,8 @@ bool opencode_provider::finished() const
     return std::none_of(o.begin(), o.end(), [](const auto& c) { return c.suspended(); });
 }
 
-const std::vector<semantics::preprocessor_statement>* opencode_provider::get_preprocessor_statements() const
+const std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>*
+opencode_provider::get_preprocessor_statements() const
 {
     return m_preprocessor ? &m_preprocessor->get_statements() : nullptr;
 }

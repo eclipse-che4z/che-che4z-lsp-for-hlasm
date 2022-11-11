@@ -853,17 +853,20 @@ class cics_preprocessor : public preprocessor
     mini_parser<lexing::logical_line::const_iterator> m_mini_parser;
 
     semantics::source_info_processor& m_src_proc;
-    std::vector<semantics::preprocessor_statement> m_statements;
+    std::vector<std::unique_ptr<semantics::preprocessor_statement_si>> m_statements;
+    context::id_storage& m_ids;
 
 public:
     cics_preprocessor(const cics_preprocessor_options& options,
         library_fetcher libs,
         diagnostic_op_consumer* diags,
-        semantics::source_info_processor& src_proc)
+        semantics::source_info_processor& src_proc,
+        context::id_storage& ids)
         : m_libs(std::move(libs))
         , m_diags(diags)
         , m_options(options)
         , m_src_proc(src_proc)
+        , m_ids(ids)
     {}
 
     void inject_no_end_warning()
@@ -1085,6 +1088,53 @@ public:
         // TODO: generate correct calls
     }
 
+    std::unique_ptr<semantics::cics_statement_si> get_preproc_statement_exec_cics(
+        std::match_results<lexing::logical_line::const_iterator> matches, size_t lineno, context::id_storage& ids)
+    {
+        if (matches.size() < 2)
+            return nullptr;
+
+        auto stmt_r = range({ lineno, 0 }, { lineno, matches[0].str().length() });
+
+        std::string label(matches[1].first, matches[1].second);
+        auto label_r = range({ lineno, 0 }, { lineno, static_cast<size_t>(matches[1].length()) });
+
+        std::string instr(matches[2].first, matches[2].second);
+        auto instr_r = range(position(lineno, std::distance(matches[0].first, matches[2].first)),
+            position(lineno, std::distance(matches[0].first, matches[2].second)));
+
+        std::vector<std::pair<std::string, range>> operands;
+        auto operands_r = range();
+
+        if (matches.size() >= 3)
+        {
+            for (size_t i = 3; i <= matches.size(); ++i)
+            {
+                operands.emplace_back(std::string(matches[i].first, matches[i].second),
+                    range(position(lineno, std::distance(matches[0].first, matches[i].first)),
+                        position(lineno, std::distance(matches[0].first, matches[i].second))));
+            }
+
+            operands_r = range(position(lineno, std::distance(matches[0].first, matches[matches.size()].first)),
+                position(lineno, std::distance(matches[0].first, matches[matches.size()].second)));
+        }
+
+
+        auto remarks_r = range();
+        std::vector<range> rems;
+        auto remarks = semantics::remarks_si(std::move(remarks_r), std::move(rems));
+
+        return std::make_unique<semantics::cics_statement_si>(std::move(stmt_r),
+            label,
+            std::move(label_r),
+            instr,
+            std::move(instr_r),
+            operands,
+            std::move(operands_r),
+            std::move(remarks),
+            ids);
+    }
+
     void process_exec_cics(const std::match_results<lexing::logical_line::const_iterator>& matches)
     {
         auto label_b = matches[1].first;
@@ -1099,7 +1149,7 @@ public:
 
     bool try_exec_cics(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
     {
-        static const std::regex exec_cics("([^ ]*)[ ]+(?:[eE][xX][eE][cC][ ]+[cC][iI][cC][sS])(?: .+)?");
+        static const std::regex exec_cics("([^ ]*)[ ]+([eE][xX][eE][cC][ ]+[cC][iI][cC][sS])( .+)?");
 
         it = extract_nonempty_logical_line(m_logical_line, it, end, cics_extract);
         bool exec_cics_continuation_error = false;
@@ -1121,6 +1171,13 @@ public:
                 m_result.emplace_back(replaced_line { "*DFH7080I W  CONTINUATION OF EXEC COMMAND IGNORED.\n" });
                 m_result.emplace_back(replaced_line { "         DFHEIMSG 4\n" });
             }
+
+            if (auto stmt = get_preproc_statement_exec_cics(m_matches_ll, lineno, m_ids))
+            {
+                do_highlighting(*stmt, m_src_proc);
+                m_statements.emplace_back(std::move(stmt));
+            }
+
             return true;
         }
 
@@ -1172,12 +1229,65 @@ public:
         return events;
     }
 
+    std::unique_ptr<semantics::cics_statement_si> get_preproc_statement_dfh(
+        std::match_results<lexing::logical_line::const_iterator> matches, size_t lineno, context::id_storage& ids)
+    {
+        if (matches.size() != 7)
+            return nullptr;
+
+        auto stmt_r = range({ lineno, 0 }, { lineno, matches[0].str().length() });
+
+        std::string label(matches[1].first, matches[1].second);
+        auto label_r = range({ lineno, 0 }, { lineno, static_cast<size_t>(matches[1].length()) });
+
+        std::string instr(matches[2].first, matches[2].second);
+        auto instr_r = range(position(lineno, std::distance(matches[0].first, matches[2].first)),
+            position(lineno, std::distance(matches[1].second, matches[2].second)));
+
+        std::vector<std::pair<std::string, range>> operands;
+        operands.emplace_back(std::string(matches[3].first, matches[3].second),
+            range(position(lineno, std::distance(matches[0].first, matches[3].first)),
+                position(lineno, std::distance(matches[0].first, matches[3].second))));
+        operands.emplace_back(std::string(matches[4].first, matches[4].second),
+            range(position(lineno, std::distance(matches[0].first, matches[4].first)),
+                position(lineno, std::distance(matches[0].first, matches[4].second))));
+        operands.emplace_back(std::string(matches[5].first, matches[5].second),
+            range(position(lineno, std::distance(matches[0].first, matches[5].first)),
+                position(lineno, std::distance(matches[0].first, matches[5].second))));
+
+        auto operands_r = range(position(lineno, std::distance(matches[0].first, matches[3].first)),
+            position(lineno, std::distance(matches[0].first, matches[5].second)));
+
+        auto remarks_r = range();
+        std::vector<range> rems;
+        if (matches[6].length())
+        {
+            remarks_r = range(position(lineno, std::distance(matches[0].first, matches[6].first)),
+                position(lineno, std::distance(matches[0].first, matches[6].second)));
+
+            rems.emplace_back(remarks_r);
+        }
+
+        auto remarks = semantics::remarks_si(std::move(remarks_r), std::move(rems));
+
+        return std::make_unique<semantics::cics_statement_si>(std::move(stmt_r),
+            label,
+            std::move(label_r),
+            instr,
+            std::move(instr_r),
+            operands,
+            std::move(operands_r),
+            std::move(remarks),
+            ids);
+    }
+
     bool try_dfh_lookup(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
     {
         static const std::regex dfh_lookup(
-            "([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+(.*?(DFHRESP|DFHVALUE)[ ]*\\([ ]*[A-Z0-9]*[ ]*\\).*)",
+            "([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+(.*?(DFHRESP|DFHVALUE)[ ]*(\\([ ]*[A-Z0-9]*[ ]*\\))(:?.*))",
             std::regex_constants::icase);
 
+        bool ret_val = false;
         it = extract_nonempty_logical_line(m_logical_line, it, end, lexing::default_ictl);
 
         if (m_logical_line.continuation_error)
@@ -1196,12 +1306,16 @@ public:
                 m_pending_dfh_null_error = r.error_variable_name();
             }
             else if (r.substitutions_performed() > 0)
-            {
-                return true;
-            }
+                ret_val = true;
         }
 
-        return false;
+        if (auto stmt = get_preproc_statement_dfh(m_matches_ll, lineno, m_ids))
+        {
+            do_highlighting(*stmt, m_src_proc);
+            m_statements.emplace_back(std::move(stmt));
+        }
+
+        return ret_val;
     }
 
     static bool is_process_line(std::string_view s)
@@ -1298,7 +1412,18 @@ public:
 
     void finished() override {}
 
-    const std::vector<semantics::preprocessor_statement>& get_statements() const override { return m_statements; }
+    void collect_statements(
+        std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& statement_collector) override
+    {
+        statement_collector.insert(statement_collector.end(),
+            std::make_move_iterator(m_statements.begin()),
+            std::make_move_iterator(m_statements.end()));
+    }
+
+    const std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& get_statements() const override
+    {
+        return m_statements;
+    }
 };
 
 } // namespace
@@ -1306,9 +1431,10 @@ public:
 std::unique_ptr<preprocessor> preprocessor::create(const cics_preprocessor_options& options,
     library_fetcher libs,
     diagnostic_op_consumer* diags,
-    semantics::source_info_processor& src_proc)
+    semantics::source_info_processor& src_proc,
+    context::id_storage& ids)
 {
-    return std::make_unique<cics_preprocessor>(options, std::move(libs), diags, src_proc);
+    return std::make_unique<cics_preprocessor>(options, std::move(libs), diags, src_proc, ids);
 }
 
 namespace test {

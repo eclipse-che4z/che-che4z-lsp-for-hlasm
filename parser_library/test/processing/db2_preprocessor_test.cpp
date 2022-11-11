@@ -30,6 +30,7 @@ const auto copy2_loc = resource_location("COPY2");
 const auto member_loc = resource_location("MEMBER");
 
 semantics::source_info_processor m_src_info(false);
+context::id_storage m_ids;
 } // namespace
 
 TEST(db2_preprocessor, first_line)
@@ -37,8 +38,7 @@ TEST(db2_preprocessor, first_line)
     auto p = preprocessor::create(
         db2_preprocessor_options {},
         [](std::string_view) { return std::nullopt; },
-        nullptr,
-        m_src_info);
+        nullptr, m_src_info, m_ids);
     std::string_view text = "";
 
     auto result = p->generate_replacement(document());
@@ -55,8 +55,7 @@ TEST(db2_preprocessor, last_line)
     auto p = preprocessor::create(
         db2_preprocessor_options {},
         [](std::string_view) { return std::nullopt; },
-        nullptr,
-        m_src_info);
+        nullptr, m_src_info, m_ids);
     std::string_view text = "\n END ";
 
     auto result = p->generate_replacement(document(text));
@@ -77,7 +76,8 @@ TEST(db2_preprocessor, include)
             return "member content";
         },
         nullptr,
-        m_src_info);
+        m_src_info,
+        m_ids);
     std::string_view text = "\n EXEC SQL INCLUDE MEMBER ";
 
     auto result = p->generate_replacement(document(text));
@@ -100,7 +100,8 @@ TEST(db2_preprocessor, include_sqlca)
             return std::nullopt;
         },
         nullptr,
-        m_src_info);
+        m_src_info,
+        m_ids);
     std::string_view text = "\n EXEC SQL INCLUDE SQLCA ";
 
     auto result = p->generate_replacement(document(text));
@@ -121,7 +122,8 @@ TEST(db2_preprocessor, include_sqlda)
             return std::nullopt;
         },
         nullptr,
-        m_src_info);
+        m_src_info,
+        m_ids);
     std::string_view text = "\n EXEC SQL INCLUDE SQLDA ";
 
     auto result = p->generate_replacement(document(text));
@@ -142,7 +144,8 @@ TEST(db2_preprocessor, sql_like)
             return std::nullopt;
         },
         nullptr,
-        m_src_info);
+        m_src_info,
+        m_ids);
     std::string_view text = "\n EXEC SQL SELECT 1 INTO :A FROM SYSIBM.SYSDUMMY1";
 
     auto result = p->generate_replacement(document(text));
@@ -160,8 +163,7 @@ TEST(db2_preprocessor, with_label)
     auto p = preprocessor::create(
         db2_preprocessor_options {},
         [](std::string_view) { return std::nullopt; },
-        nullptr,
-        m_src_info);
+        nullptr, m_src_info, m_ids);
     std::string_view text = "\nABC EXEC SQL WHATEVER";
 
     auto result = p->generate_replacement(document(text));
@@ -186,8 +188,7 @@ TEST(db2_preprocessor, missing_member)
     auto p = preprocessor::create(
         db2_preprocessor_options {},
         [](std::string_view) { return std::nullopt; },
-        &diags,
-        m_src_info);
+        &diags, m_src_info, m_ids);
 
     std::string_view text = " EXEC SQL INCLUDE MISSING";
 
@@ -203,8 +204,7 @@ TEST(db2_preprocessor, bad_continuation)
     auto p = preprocessor::create(
         db2_preprocessor_options {},
         [](std::string_view) { return std::nullopt; },
-        &diags,
-        m_src_info);
+        &diags, m_src_info, m_ids);
 
     std::string_view text = R"( EXEC SQL PRETENT SQL STATEMENT                                        X
 badcontinuation)";
@@ -225,7 +225,8 @@ TEST(db2_preprocessor, no_nested_include)
             return " EXEC SQL INCLUDE MEMBER";
         },
         &diags,
-        m_src_info);
+        m_src_info,
+        m_ids);
     std::string_view text = " EXEC SQL INCLUDE MEMBER ";
 
     auto doc = p->generate_replacement(document(text));
@@ -661,8 +662,7 @@ TEST(db2_preprocessor, sql_types)
     auto p = preprocessor::create(
         db2_preprocessor_options {},
         [](std::string_view) { return std::nullopt; },
-        &diags,
-        m_src_info);
+        &diags, m_src_info, m_ids);
     std::string_view text = R"(
 RE SQL TYPE IS RESULT_SET_LOCATOR VARYING
 RO SQL TYPE IS ROWID
@@ -855,8 +855,7 @@ TEST(db2_preprocessor, sql_type_fails)
         auto p = preprocessor::create(
             db2_preprocessor_options {},
             [](std::string_view) { return std::nullopt; },
-            &diags,
-            m_src_info);
+            &diags, m_src_info, m_ids);
 
         p->generate_replacement(document(text));
 
@@ -872,8 +871,7 @@ TEST(db2_preprocessor, sql_type_warn_on_continuation)
     auto p = preprocessor::create(
         db2_preprocessor_options {},
         [](std::string_view) { return std::nullopt; },
-        &diags,
-        m_src_info);
+        &diags, m_src_info, m_ids);
 
     p->generate_replacement(document(text));
 
@@ -968,7 +966,8 @@ TEST(db2_preprocessor, conditional)
         db2_preprocessor_options("", true),
         [](std::string_view) { return std::nullopt; },
         nullptr,
-        m_src_info);
+        m_src_info,
+        m_ids);
     std::string_view text = "";
 
     auto result = p->generate_replacement(document());

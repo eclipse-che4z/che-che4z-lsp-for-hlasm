@@ -52,12 +52,13 @@ workspaces::parse_lib_provider& analyzer_options::get_lib_provider() const
 
 std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(processing::library_fetcher asm_lf,
     diagnostic_op_consumer& diag_consumer,
-    semantics::source_info_processor& src_proc) const
+    semantics::source_info_processor& src_proc,
+    context::id_storage& ids) const
 {
-    const auto transform_preprocessor = [&asm_lf, &diag_consumer, &src_proc](const preprocessor_options& po) {
+    const auto transform_preprocessor = [&asm_lf, &diag_consumer, &src_proc, &ids](const preprocessor_options& po) {
         return std::visit(
-            [&asm_lf, &diag_consumer, &src_proc](const auto& p) -> std::unique_ptr<processing::preprocessor> {
-                return processing::preprocessor::create(p, std::move(asm_lf), &diag_consumer, src_proc);
+            [&asm_lf, &diag_consumer, &src_proc, &ids](const auto& p) -> std::unique_ptr<processing::preprocessor> {
+                return processing::preprocessor::create(p, std::move(asm_lf), &diag_consumer, src_proc, ids);
             },
             po);
     };
@@ -68,9 +69,13 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
 
     struct combined_preprocessor : processing::preprocessor
     {
+        mutable std::vector<std::unique_ptr<semantics::preprocessor_statement_si>> m_statements;
+
         std::vector<std::unique_ptr<processing::preprocessor>> pp;
         document generate_replacement(document doc) override
         {
+            m_statements.clear();
+
             for (const auto& p : pp)
                 doc = p->generate_replacement(std::move(doc));
             return doc;
@@ -82,17 +87,22 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
                 p->finished();
         }
 
-        const std::vector<semantics::preprocessor_statement>& get_statements() const override
+        void collect_statements(
+            std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& statement_collector) override
         {
-            std::vector<semantics::preprocessor_statement> statements; // todo think of a way to do this without copy
+            statement_collector.insert(statement_collector.end(),
+                std::make_move_iterator(m_statements.begin()),
+                std::make_move_iterator(m_statements.end()));
+        }
 
+        const std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& get_statements() const override
+        {
             for (const auto& p : pp)
             {
-                const auto& p_statements = p->get_statements();
-                statements.insert(std::end(statements), std::begin(p_statements), std::end(p_statements));
+                p->collect_statements(m_statements);
             }
 
-            return statements;
+            return m_statements;
         }
 
     } tmp;
@@ -125,7 +135,8 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
                         return result;
                     },
                     *this,
-                    src_proc_),
+                    src_proc_,
+                    *ctx_.hlasm_ctx->ids_ptr()),
                 opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
                                                                : processing::opencode_provider_options {},
                 opts.vf_monitor),

@@ -39,8 +39,12 @@ struct logical_line_extractor_args;
 
 namespace semantics {
 class source_info_processor;
-struct preprocessor_statement;
+struct preprocessor_statement_si;
 } // namespace semantics
+
+namespace context {
+class id_storage;
+}
 
 } // namespace hlasm_plugin::parser_library
 
@@ -58,21 +62,26 @@ public:
     static std::unique_ptr<preprocessor> create(const cics_preprocessor_options&,
         library_fetcher,
         diagnostic_op_consumer*,
-        semantics::source_info_processor&);
+        semantics::source_info_processor&,
+        context::id_storage&);
 
     static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&,
         library_fetcher,
         diagnostic_op_consumer*,
-        semantics::source_info_processor&);
+        semantics::source_info_processor&,
+        context::id_storage&);
 
     static std::unique_ptr<preprocessor> create(const endevor_preprocessor_options&,
         library_fetcher,
         diagnostic_op_consumer*,
-        semantics::source_info_processor&);
+        semantics::source_info_processor&,
+        context::id_storage&);
 
     virtual void finished() = 0;
 
-    virtual const std::vector<semantics::preprocessor_statement>& get_statements() const = 0;
+    virtual void collect_statements(
+        std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& statement_collector) = 0;
+    virtual const std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& get_statements() const = 0;
 
 protected:
     using line_iterator = std::vector<document_line>::const_iterator;
@@ -83,6 +92,9 @@ protected:
         const lexing::logical_line_extractor_args& opts);
 
     static bool is_continued(std::string_view s);
+
+    static void do_highlighting(
+        const semantics::preprocessor_statement_si& stmt, semantics::source_info_processor& src_proc);
 };
 } // namespace hlasm_plugin::parser_library::processing
 

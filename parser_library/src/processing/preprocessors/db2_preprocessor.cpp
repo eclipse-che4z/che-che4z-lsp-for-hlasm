@@ -55,7 +55,7 @@ class db2_preprocessor : public preprocessor
     diagnostic_op_consumer* m_diags = nullptr;
     std::vector<document_line> m_result;
     bool m_source_translated = false;
-    std::vector<semantics::preprocessor_statement> m_statements;
+    std::vector<std::unique_ptr<semantics::preprocessor_statement_si>> m_statements;
 
     static bool remove_space(std::string_view& s)
     {
@@ -821,14 +821,26 @@ public:
 
     void finished() override {}
 
-    const std::vector<semantics::preprocessor_statement>& get_statements() const override { return m_statements; }
+    void collect_statements(
+        std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& statement_collector) override
+    {
+        statement_collector.insert(statement_collector.end(),
+            std::make_move_iterator(m_statements.begin()),
+            std::make_move_iterator(m_statements.end()));
+    }
+
+    const std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& get_statements() const override
+    {
+        return m_statements;
+    }
 };
 } // namespace
 
 std::unique_ptr<preprocessor> preprocessor::create(const db2_preprocessor_options& opts,
     library_fetcher libs,
     diagnostic_op_consumer* diags,
-    semantics::source_info_processor& src_proc)
+    semantics::source_info_processor& src_proc,
+    context::id_storage& ids)
 {
     return std::make_unique<db2_preprocessor>(opts, std::move(libs), diags);
 }

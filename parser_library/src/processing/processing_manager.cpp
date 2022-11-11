@@ -42,6 +42,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     , opencode_prov_(*base_provider)
     , lsp_analyzer_(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, file_text)
     , stms_analyzers_({ &lsp_analyzer_ })
+    , file_loc_(file_loc)
 {
     switch (data.proc_kind)
     {
@@ -255,14 +256,15 @@ void processing_manager::finish_opencode()
     {
         for (const auto& stmt : *statements)
         {
-            lsp_analyzer_.analyze(stmt);
+            if (!stmt)
+                continue;
 
-            asm_processor::parse_copy(ctx_,
-                lib_provider_,
-                ctx_.hlasm_ctx->ids().add(std::string(stmt.operands.front().value)),
-                stmt.operands.front().r,
-                stmt.get_stmt_range(),
-                nullptr);
+            lsp_analyzer_.analyze(*stmt);
+
+            if (stmt->m_resemblence == context::id_storage::well_known::COPY)
+                asm_processor::process_copy(*stmt, ctx_, lib_provider_, nullptr, false);
+
+            diagnosable_impl::add_diagnostic(diagnostic_s::fade(file_loc_, stmt->stmt_range_ref()));
         }
     }
 

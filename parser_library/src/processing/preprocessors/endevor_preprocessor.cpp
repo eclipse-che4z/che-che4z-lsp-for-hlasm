@@ -43,32 +43,43 @@ struct stack_entry
     bool end() const { return current == doc.end(); }
 };
 
-semantics::preprocessor_statement get_statement_details(
-    std::match_results<std::string_view::iterator>& matches, size_t line_no)
+std::string_view get_copy_member(std::match_results<std::string_view::iterator>& matches)
 {
-    if (matches.size() != 5)
-        return {};
+    if (matches.size() != 4)
+        return "";
+
+    return std::string_view(std::to_address(matches[2].first), matches[2].length());
+}
+
+std::unique_ptr<semantics::endevor_statement_si> get_preproc_statement(
+    std::match_results<std::string_view::iterator>& matches, size_t line_no, context::id_storage& ids)
+{
+    if (matches.size() != 4)
+        return nullptr;
+
+    auto stmt_r = range({ line_no, 0 }, { line_no, matches[0].str().length() });
 
     std::string_view inc(std::to_address(matches[1].first), matches[1].length());
     auto inc_range = range(position(line_no, 0), position(line_no, inc.size()));
 
-    std::string_view member(std::to_address(matches[3].first), matches[3].length());
-    auto member_start = inc.size() + matches[2].str().length();
-    auto member_range = range(position(line_no, member_start), position(line_no, member_start + member.size()));
+    std::string_view member(std::to_address(matches[2].first), matches[2].length());
+    auto member_range = range(position(line_no, std::distance(matches[0].first, matches[2].first)),
+        position(line_no, std::distance(matches[0].first, matches[2].second)));
 
-    std::optional<semantics::preprocessor_statement::stmt_part> remark = std::nullopt;
-
-    if (matches[4].length())
+    auto remarks_r = range();
+    std::vector<range> rems;
+    if (matches[3].length())
     {
-        semantics::preprocessor_statement::stmt_part tmp;
-        tmp.value = std::string_view(std::to_address(matches[4].first), matches[4].length());
-        auto remark_start = member_start + member.size();
-        auto remark_end = remark_start + tmp.value.length();
-        tmp.r = range(position(line_no, remark_start), position(line_no, remark_end));
-        remark = tmp;
+        remarks_r = range(position(line_no, std::distance(matches[0].first, matches[3].first)),
+            position(line_no, std::distance(matches[0].first, matches[3].second)));
+
+        rems.emplace_back(remarks_r);
     }
 
-    return { { inc, std::move(inc_range) }, { { member, std::move(member_range) } }, std::move(remark) };
+    auto remarks_si = semantics::remarks_si(std::move(remarks_r), std::move(rems));
+
+    return std::make_unique<semantics::endevor_statement_si>(
+        std::move(stmt_r), inc, std::move(inc_range), member, std::move(member_range), std::move(remarks_si), ids);
 }
 } // namespace
 
@@ -78,7 +89,8 @@ class endevor_preprocessor : public preprocessor
     diagnostic_op_consumer* m_diags = nullptr;
     endevor_preprocessor_options m_options;
     semantics::source_info_processor& m_src_proc;
-    std::vector<semantics::preprocessor_statement> m_statements;
+    std::vector<std::unique_ptr<semantics::preprocessor_statement_si>> m_statements;
+    context::id_storage& m_ids;
 
     bool process_member(std::string_view member, std::vector<stack_entry>& stack)
     {
@@ -109,32 +121,17 @@ class endevor_preprocessor : public preprocessor
         return true;
     }
 
-    void do_highlighting(const semantics::preprocessor_statement& stmt)
-    {
-        m_src_proc.add_hl_symbol(token_info(stmt.instr.r, semantics::hl_scopes::instruction));
-
-        for (const auto& op : stmt.operands)
-        {
-            m_src_proc.add_hl_symbol(token_info(op.r, semantics::hl_scopes::operand));
-        }
-
-        if (stmt.remark)
-        {
-            m_src_proc.add_hl_symbol(token_info(stmt.remark.value().r, semantics::hl_scopes::remark));
-        }
-
-        m_diags->add_diagnostic(diagnostic_op::fade(stmt.get_stmt_range()));
-    }
-
 public:
     endevor_preprocessor(const endevor_preprocessor_options& options,
         library_fetcher libs,
         diagnostic_op_consumer* diags,
-        semantics::source_info_processor& src_proc)
+        semantics::source_info_processor& src_proc,
+        context::id_storage& ids)
         : m_libs(std::move(libs))
         , m_diags(diags)
         , m_options(options)
         , m_src_proc(src_proc)
+        , m_ids(ids)
     {}
 
     // Inherited via preprocessor
@@ -148,7 +145,7 @@ public:
             }))
             return doc;
 
-        static std::regex include_regex(R"(^(-INC|\+\+INCLUDE)(\s+)(\S+)(?:(.*))?)");
+        static std::regex include_regex(R"(^(-INC|\+\+INCLUDE)(?:\s+)(\S+)(?:(.*))?)"); // TODO don't include spaces anymore
 
         std::vector<document_line> result;
         result.reserve(doc.size());
@@ -175,16 +172,17 @@ public:
                 continue;
             }
 
+            auto copy_member = get_copy_member(matches);
             auto line_no = std::prev(stack.back().current)->lineno();
-            auto stmt_details = get_statement_details(matches, line_no.value_or(0));
 
-            if (!process_member(stmt_details.operands.front().value, stack))
+            if (!process_member(copy_member, stack))
                 break;
 
             if (line_no)
             {
-                do_highlighting(stmt_details);
-                m_statements.emplace_back(stmt_details);
+                auto stmt = get_preproc_statement(matches, *line_no, m_ids);
+                do_highlighting(*stmt, m_src_proc);
+                m_statements.emplace_back(std::move(stmt));
             }
         }
 
@@ -193,14 +191,26 @@ public:
 
     void finished() override {}
 
-    const std::vector<semantics::preprocessor_statement>& get_statements() const override { return m_statements; }
+    void collect_statements(
+        std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& statement_collector) override
+    {
+        statement_collector.insert(statement_collector.end(),
+            std::make_move_iterator(m_statements.begin()),
+            std::make_move_iterator(m_statements.end()));
+    }
+
+    const std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& get_statements() const override
+    {
+        return m_statements;
+    }
 };
 
 std::unique_ptr<preprocessor> preprocessor::create(const endevor_preprocessor_options& opts,
     library_fetcher lf,
     diagnostic_op_consumer* diags,
-    semantics::source_info_processor& src_proc)
+    semantics::source_info_processor& src_proc,
+    context::id_storage& ids)
 {
-    return std::make_unique<endevor_preprocessor>(opts, std::move(lf), diags, src_proc);
+    return std::make_unique<endevor_preprocessor>(opts, std::move(lf), diags, src_proc, ids);
 }
 } // namespace hlasm_plugin::parser_library::processing

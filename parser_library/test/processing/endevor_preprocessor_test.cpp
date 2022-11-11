@@ -24,6 +24,7 @@ using namespace hlasm_plugin::utils::resource;
 
 namespace {
 semantics::source_info_processor m_src_info(false);
+context::id_storage m_ids;
 } // namespace
 
 TEST(endevor_preprocessor, basic_inc)
@@ -40,7 +41,8 @@ TEST(endevor_preprocessor, basic_inc)
             return std::string("TEST");
         },
         &diags,
-        m_src_info);
+        m_src_info,
+        m_ids);
 
     auto result = p->generate_replacement(document("-INC AAA"));
 
@@ -64,7 +66,8 @@ TEST(endevor_preprocessor, basic_include)
             return std::string("TEST");
         },
         &diags,
-        m_src_info);
+        m_src_info,
+        m_ids);
 
     auto result = p->generate_replacement(document("++INCLUDE AAA"));
 
@@ -88,7 +91,8 @@ TEST(endevor_preprocessor, missing_member)
             return std::nullopt;
         },
         &diags,
-        m_src_info);
+        m_src_info,
+        m_ids);
 
     auto result = p->generate_replacement(document("++INCLUDE AAA\nBBB"));
 
@@ -112,7 +116,8 @@ TEST(endevor_preprocessor, cycle)
             return std::string("-INC AAA");
         },
         &diags,
-        m_src_info);
+        m_src_info,
+        m_ids);
 
     auto result = p->generate_replacement(document("++INCLUDE AAA"));
 
@@ -138,7 +143,8 @@ TEST(endevor_preprocessor, nested)
             return std::nullopt;
         },
         &diags,
-        m_src_info);
+        m_src_info,
+        m_ids);
 
     auto result = p->generate_replacement(document("AAA\n-INC MEMBER\nEEE"));
 

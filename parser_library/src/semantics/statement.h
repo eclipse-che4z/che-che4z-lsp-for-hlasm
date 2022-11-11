@@ -158,22 +158,48 @@ struct statement_si_defer_done : public complete_statement
     const range& stmt_range_ref() const override { return deferred_stmt->stmt_range_ref(); }
 };
 
-struct preprocessor_statement
+struct preprocessor_statement_si : public statement_si
 {
-    struct stmt_part
-    {
-        std::string_view value;
-        range r;
-    };
+    context::id_index m_resemblence;
 
-    stmt_part instr;
-    std::vector<stmt_part> operands;
-    std::optional<stmt_part> remark;
+    preprocessor_statement_si(range stmt_range,
+        label_si label,
+        instruction_si instruction,
+        operands_si operands,
+        remarks_si remarks,
+        context::id_index resemblence)
+        : statement_si(std::move(stmt_range),
+            std::move(label),
+            std::move(instruction),
+            std::move(operands),
+            std::move(remarks),
+            {})
+        , m_resemblence(resemblence)
+    {}
+};
 
-    range get_stmt_range() const
-    {
-        return remark ? range(instr.r.start, remark.value().r.end) : range(instr.r.start, operands.front().r.end);
-    }
+struct endevor_statement_si : public preprocessor_statement_si
+{
+    endevor_statement_si(range stmt_range,
+        std::string_view instruction,
+        range instruction_range,
+        std::string_view copy_member,
+        range copy_member_range,
+        remarks_si remarks,
+        context::id_storage& ids);
+};
+
+struct cics_statement_si : public preprocessor_statement_si
+{
+    cics_statement_si(range stmt_range,
+        std::string_view label,
+        range label_range,
+        std::string_view instruction,
+        range instruction_range,
+        std::vector<std::pair<std::string, range>>& operands,
+        range operands_range,
+        remarks_si remarks,
+        context::id_storage& ids);
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

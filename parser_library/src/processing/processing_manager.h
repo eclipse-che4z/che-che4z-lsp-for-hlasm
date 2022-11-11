@@ -57,6 +57,8 @@ private:
     workspaces::parse_lib_provider& lib_provider_;
     opencode_provider& opencode_prov_;
 
+    const utils::resource::resource_location file_loc_;
+
     std::vector<processor_ptr> procs_;
     std::vector<provider_ptr> provs_;
 

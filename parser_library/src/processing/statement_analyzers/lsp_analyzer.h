@@ -48,7 +48,7 @@ public:
         statement_provider_kind prov_kind,
         processing_kind proc_kind) override;
 
-    void analyze(const semantics::preprocessor_statement& statement);
+    void analyze(const semantics::preprocessor_statement_si& statement);
 
     void macrodef_started(const macrodef_start_data& data);
     void macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result&& result);
@@ -58,9 +58,10 @@ public:
     void opencode_finished();
 
 private:
-    void assign_statement_occurences();
+    void assign_statement_occurences(const utils::resource::resource_location& doc_location);
 
     void collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement);
+    void collect_occurences(lsp::occurence_kind kind, const semantics::preprocessor_statement_si& statement);
 
     void collect_occurence(const semantics::label_si& label, occurence_collector& collector);
     void collect_occurence(const semantics::instruction_si& instruction, occurence_collector& collector);
