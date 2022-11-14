@@ -1172,7 +1172,8 @@ public:
                 m_result.emplace_back(replaced_line { "         DFHEIMSG 4\n" });
             }
 
-            if (auto stmt = get_preproc_statement_exec_cics(m_matches_ll, lineno, m_ids))
+            if (auto stmt =
+                    get_preproc_statement_exec_cics(m_matches_ll, lineno, m_ids)) // todo match individual operands
             {
                 do_highlighting(*stmt, m_src_proc);
                 m_statements.emplace_back(std::move(stmt));
