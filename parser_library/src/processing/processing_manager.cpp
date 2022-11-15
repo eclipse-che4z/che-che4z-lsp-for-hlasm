@@ -264,7 +264,7 @@ void processing_manager::finish_opencode()
             if (stmt->m_resemblence == context::id_storage::well_known::COPY)
                 asm_processor::process_copy(*stmt, ctx_, lib_provider_, nullptr, false);
 
-            diagnosable_impl::add_diagnostic(diagnostic_s::fade(file_loc_, stmt->stmt_range_ref()));
+            // diagnosable_impl::add_diagnostic(diagnostic_s::fade(file_loc_, stmt->stmt_range_ref())); // todo create separate 'fade' container
         }
     }
 
