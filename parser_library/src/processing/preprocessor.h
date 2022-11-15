@@ -77,8 +77,6 @@ public:
         semantics::source_info_processor&,
         context::id_storage&);
 
-    virtual void finished() = 0;
-
     virtual void collect_statements(
         std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& statement_collector) = 0;
     virtual const std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& get_statements() const = 0;

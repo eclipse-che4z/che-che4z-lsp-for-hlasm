@@ -1411,8 +1411,6 @@ public:
 
     cics_preprocessor_options current_options() const { return m_options; }
 
-    void finished() override {}
-
     void collect_statements(
         std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& statement_collector) override
     {

@@ -17,7 +17,6 @@
 #include "lexing/logical_line.h"
 #include "semantics/source_info_processor.h"
 #include "semantics/statement.h"
-#include "semantics/statement_fields.h"
 #include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::processing {

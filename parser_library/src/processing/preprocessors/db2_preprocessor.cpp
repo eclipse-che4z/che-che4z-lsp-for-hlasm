@@ -819,8 +819,6 @@ public:
         , m_diags(diags)
     {}
 
-    void finished() override {}
-
     void collect_statements(
         std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& statement_collector) override
     {
