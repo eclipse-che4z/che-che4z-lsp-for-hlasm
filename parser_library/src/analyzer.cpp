@@ -81,12 +81,6 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
             return doc;
         }
 
-        void finished() override
-        {
-            for (const auto& p : pp)
-                p->finished();
-        }
-
         void collect_statements(
             std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& statement_collector) override
         {
