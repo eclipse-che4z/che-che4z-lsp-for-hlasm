@@ -152,9 +152,9 @@ void ordinary_processor::end_processing()
 
     check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
 
-    listener_.finish_opencode();
-
     hlasm_ctx.pop_statement_processing();
+
+    listener_.finish_opencode();
 
     finished_flag_ = true;
 }
