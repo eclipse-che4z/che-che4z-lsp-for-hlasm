@@ -762,8 +762,6 @@ struct diagnostic_op
     static diagnostic_op error_S0011(const range& range);
 
     static diagnostic_op error_S0012(const range& range);
-
-    static diagnostic_op fade(const range& range);
 };
 
 std::string diagnostic_decorate_message(std::string_view field, std::string_view message);
