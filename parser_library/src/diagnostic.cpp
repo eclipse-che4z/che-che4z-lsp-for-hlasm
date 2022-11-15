@@ -2519,7 +2519,11 @@ diagnostic_op diagnostic_op::error_S0012(const range& range)
 
 diagnostic_op diagnostic_op::fade(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::hint, "PREPROC", "Statement overwritten by preprocessor", range, diagnostic_tag::unnecessary); // todo move and make more verbose
+    return diagnostic_op(diagnostic_severity::hint,
+        "PREPROC",
+        "Statement overwritten by preprocessor",
+        range,
+        diagnostic_tag::unnecessary); // todo move and make more verbose
 }
 
 diagnostic_s diagnostic_s::error_W0001(const utils::resource::resource_location& file_name)

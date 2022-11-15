@@ -52,11 +52,7 @@ TEST(cics_preprocessor, asm_xopts_parsing)
         })
     {
         auto p = preprocessor::create(
-            cics_preprocessor_options {},
-            [](std::string_view) { return std::nullopt; },
-            nullptr,
-            m_src_info,
-            m_ids);
+            cics_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr, m_src_info, m_ids);
 
         auto result = p->generate_replacement(document(text_template));
         EXPECT_GT(result.size(), 0);

@@ -145,7 +145,8 @@ public:
             }))
             return doc;
 
-        static std::regex include_regex(R"(^(-INC|\+\+INCLUDE)(?:\s+)(\S+)(?:(.*))?)"); // TODO don't include spaces anymore
+        static std::regex include_regex(
+            R"(^(-INC|\+\+INCLUDE)(?:\s+)(\S+)(?:(.*))?)"); // TODO don't include spaces anymore
 
         std::vector<document_line> result;
         result.reserve(doc.size());
