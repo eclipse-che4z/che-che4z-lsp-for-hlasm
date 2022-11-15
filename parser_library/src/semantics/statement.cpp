@@ -28,7 +28,7 @@ endevor_statement_si::endevor_statement_si(range stmt_range,
     context::id_storage& ids)
     : preprocessor_statement_si(std::move(stmt_range),
         label_si(range()),
-        instruction_si(std::move(instruction_range), ids.add(instruction)),
+        instruction_si(std::move(instruction_range), ids.add(instruction), true),
         operands_si(copy_member_range, {}),
         std::move(remarks),
         context::id_storage::well_known::COPY)
@@ -50,7 +50,7 @@ cics_statement_si::cics_statement_si(range stmt_range,
     context::id_storage& ids)
     : preprocessor_statement_si(std::move(stmt_range),
         label_si(label_range, ord_symbol_string { ids.add(label), std::string(label) }),
-        instruction_si(std::move(instruction_range), ids.add(instruction)),
+        instruction_si(std::move(instruction_range), ids.add(instruction), true),
         operands_si(operands_range, {}),
         std::move(remarks),
         context::id_index())

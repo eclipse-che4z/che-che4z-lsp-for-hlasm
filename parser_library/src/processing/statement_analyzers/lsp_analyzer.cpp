@@ -237,6 +237,9 @@ void lsp_analyzer::collect_occurence(const semantics::instruction_si& instructio
             collector.occurences.emplace_back(
                 opcode.opcode, macro_def ? std::move(*macro_def) : context::macro_def_ptr {}, instruction.field_range);
     }
+    else if (instruction.type == semantics::instruction_si_type::PREPROC)
+        collector.occurences.emplace_back(
+            std::get<context::id_index>(instruction.value), context::macro_def_ptr {}, instruction.field_range);
 }
 
 void lsp_analyzer::collect_occurence(const semantics::operands_si& operands, occurence_collector& collector)
