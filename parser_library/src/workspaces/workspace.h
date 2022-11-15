@@ -142,9 +142,6 @@ private:
 
     message_consumer* message_consumer_ = nullptr;
 
-    // A map that holds true values for files that have diags suppressed and the user was already notified about it
-    std::unordered_map<utils::resource::resource_location, bool, utils::resource::resource_location_hasher>
-        diag_suppress_notified_;
     const lib_config& global_config_;
 
     lib_config get_config() const;

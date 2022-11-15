@@ -40,20 +40,11 @@ export class EventsHandler {
         this.completeCommand = completeCommand;
         this.configSetup = new ConfigurationsHandler();
         this.langDetect = new HLASMLanguageDetection(this.configSetup);
-        this.initialize();
+
+        this.onDidChangeWorkspaceFolders(undefined);
     }
 
     dispose() { }
-
-    // invoked on extension activation
-    private initialize() {
-        // initialize wildcards
-        this.configSetup.updateWildcards();
-        // first run, simulate ondidopen
-        if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.languageId == 'hlasm') {
-            this.onDidOpenTextDocument(vscode.window.activeTextEditor.document);
-        }
-    }
 
     // when contents of a document change, issue a completion request
     onDidChangeTextDocument(event: vscode.TextDocumentChangeEvent, continuationOffset: number): boolean {
@@ -88,8 +79,8 @@ export class EventsHandler {
     }
 
     // when document opens, show parse progress
-    onDidOpenTextDocument(document: vscode.TextDocument) {
-        this.editorChanged(document);
+    async onDidOpenTextDocument(document: vscode.TextDocument) {
+        await this.editorChanged(document);
     }
 
     onDidChangeConfiguration(event: vscode.ConfigurationChangeEvent) {
@@ -98,20 +89,39 @@ export class EventsHandler {
     }
 
     // when active editor changes, try to set a language for it
-    onDidChangeActiveTextEditor(editor: vscode.TextEditor) {
+    async onDidChangeActiveTextEditor(editor: vscode.TextEditor) {
         if (editor)
-            this.editorChanged(editor.document);
+            await this.editorChanged(editor.document);
     }
 
     // when pgm_conf changes, update wildcards
-    onDidSaveTextDocument(document: vscode.TextDocument) {
-        this.configSetup.updateWildcards(document.fileName);
+    async onDidSaveTextDocument(document: vscode.TextDocument) {
+        const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
+        if (workspace) {
+            await this.configSetup.generateWildcards(workspace.uri, document.uri).then(wildcards =>
+                this.configSetup.updateWildcards(workspace.uri, wildcards || [])
+            );
+        }
     }
 
     // should the configs be checked
-    private editorChanged(document: vscode.TextDocument) {
-        if (this.configSetup.shouldCheckConfigs && !document.isClosed && this.langDetect.setHlasmLanguage(document))
-            this.configSetup.checkConfigs();
+    private async editorChanged(document: vscode.TextDocument) {
+        if (this.configSetup.shouldCheckConfigs && !document.isClosed && this.langDetect.setHlasmLanguage(document)) {
+            const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
+            if (workspace)
+                await this.configSetup.checkConfigs(workspace.uri);
+        }
+    }
+
+    async onDidChangeWorkspaceFolders(wsChanges: vscode.WorkspaceFoldersChangeEvent) {
+        this.configSetup.setWildcards(
+            (await Promise.all(
+                vscode.workspace.workspaceFolders.map(
+                    x => this.configSetup.generateWildcards(x.uri).then((regset) => regset.map(regex => { return { regex, workspaceUri: x.uri }; }))
+                )
+            )
+            ).flat()
+        );
     }
 }
 

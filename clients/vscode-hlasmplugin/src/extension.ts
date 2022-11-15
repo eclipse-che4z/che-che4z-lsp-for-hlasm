@@ -27,6 +27,9 @@ import { LanguageClientErrorHandler } from './languageClientErrorHandler';
 import { HLASMVirtualFileContentProvider } from './hlasmVirtualFileContentProvider';
 import { downloadDependencies } from './hlasmDownloadCommands';
 import { blockCommentCommand, CommentOption, lineCommentCommand } from './commentEditorCommands';
+import { HLASMCodeActionsProvider } from './hlasmCodeActionsProvider';
+import { hlasmplugin_folder } from './constants';
+import { ConfigurationsHandler } from './configurationsHandler';
 
 const offset = 71;
 const continueColumn = 15;
@@ -72,7 +75,7 @@ export async function activate(context: vscode.ExtensionContext) {
         synchronize: !syncFileEvents ? undefined : {
             fileEvents: [
                 vscode.workspace.createFileSystemWatcher(filePattern),
-                vscode.workspace.createFileSystemWatcher('.hlasmplugin/*.json'),
+                vscode.workspace.createFileSystemWatcher(hlasmplugin_folder + '/*.json'),
             ]
         },
         errorHandler: clientErrorHandler
@@ -159,6 +162,7 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
     // register provider for all hlasm debug configurations
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('hlasm', new HLASMConfigurationProvider()));
     context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('hlasm', new HLASMDebugAdapterFactory(client)));
+    context.subscriptions.push(vscode.languages.registerCodeActionsProvider('hlasm', new HLASMCodeActionsProvider()));
 
     // register continuation handlers
     if (!commandsRegistered) {
@@ -198,6 +202,7 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => handler.onDidChangeConfiguration(e)));
     context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(e => handler.onDidSaveTextDocument(e)));
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(e => handler.onDidChangeActiveTextEditor(e)));
+    context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(e => handler.onDidChangeWorkspaceFolders(e)));
 
     // register filename retrieve functions for debug sessions
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', () => getProgramName()));
@@ -205,7 +210,9 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
 
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("hlasm", new HLASMVirtualFileContentProvider(client)));
 
-    context.subscriptions.push(vscode.commands.registerCommand("extension.hlasm-plugin.downloadDependencies", () => downloadDependencies(context)));
+    context.subscriptions.push(vscode.commands.registerCommand("extension.hlasm-plugin.downloadDependencies", (...args: any[]) => downloadDependencies(context, ...args)));
+
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.createCompleteConfig', ConfigurationsHandler.createCompleteConfig));
 
     return handler;
 }

@@ -896,6 +896,8 @@ public:
 
     static diagnostic_s error_B4G002(const utils::resource::resource_location&, std::string_view grp_name);
 
+    static diagnostic_s info_SUP(const utils::resource::resource_location& file_name);
+
     static diagnostic_s fade(const utils::resource::resource_location& loc, const range& range);
 
     /*

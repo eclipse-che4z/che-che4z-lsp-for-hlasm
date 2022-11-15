@@ -19,6 +19,7 @@
 
 #include "gtest/gtest.h"
 
+#include "../common_testing.h"
 #include "../message_consumer_mock.h"
 #include "../workspace/empty_configs.h"
 #include "empty_configs.h"
@@ -102,12 +103,8 @@ TEST(diags_suppress, do_suppress)
     ASSERT_TRUE(pfile);
 
     pfile->collect_diags();
-    EXPECT_EQ(pfile->diags().size(), 0U);
-
-    ASSERT_EQ(msg_consumer.messages.size(), 1U);
-    EXPECT_EQ(msg_consumer.messages[0].first,
-        "Diagnostics suppressed from " + file_loc.to_presentable() + ", because there is no configuration.");
-    EXPECT_EQ(msg_consumer.messages[0].second, message_type::MT_INFO);
+    EXPECT_TRUE(matches_message_codes(pfile->diags(), { "SUP" }));
+    EXPECT_TRUE(msg_consumer.messages.empty());
 }
 
 TEST(diags_suppress, pgm_supress_limit_changed)
@@ -150,7 +147,7 @@ TEST(diags_suppress, pgm_supress_limit_changed)
     pfile = fm.find(file_loc);
     ASSERT_TRUE(pfile);
     pfile->collect_diags();
-    EXPECT_EQ(pfile->diags().size(), 0U);
+    EXPECT_TRUE(matches_message_codes(pfile->diags(), { "SUP" }));
 }
 
 TEST(diags_suppress, cancel_token)
@@ -180,5 +177,5 @@ TEST(diags_suppress, cancel_token)
     ASSERT_TRUE(pfile);
 
     pfile->collect_diags();
-    EXPECT_EQ(pfile->diags().size(), 0U);
+    EXPECT_TRUE(matches_message_codes(pfile->diags(), { "SUP" }));
 }

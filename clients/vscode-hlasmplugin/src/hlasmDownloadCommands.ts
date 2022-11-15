@@ -19,6 +19,7 @@ import { Readable, Writable } from 'stream';
 import { EOL, homedir } from 'os';
 import path = require('node:path');
 import { promises as fsp } from "fs";
+import { hlasmplugin_folder, proc_grps_file } from './constants';
 
 const cancelMessage = "Action was cancelled";
 
@@ -491,7 +492,7 @@ async function gatherAvailableConfigs() {
     if (vscode.workspace.workspaceFolders === undefined) return [];
     const availableConfigs = (await Promise.all(vscode.workspace.workspaceFolders.map(x => {
         return new Promise<{ workspace: vscode.WorkspaceFolder, config: any } | null>((resolve) => {
-            vscode.workspace.openTextDocument(vscode.Uri.joinPath(x.uri, ".hlasmplugin", "proc_grps.json")).then((doc) => resolve({ workspace: x, config: JSON.parse(doc.getText()) }), _ => resolve(null))
+            vscode.workspace.openTextDocument(vscode.Uri.joinPath(x.uri, hlasmplugin_folder, proc_grps_file)).then((doc) => resolve({ workspace: x, config: JSON.parse(doc.getText()) }), _ => resolve(null))
         })
     }))).filter(x => !!x).map(x => x!);
 
@@ -550,6 +551,35 @@ export function gatherDownloadList(availableConfigs: { workspaceUri: vscode.Uri,
         thingsToDownload.push({ dsn: key, dirs: [... new Set<string>(collectedDsnAndPath[key])] });
 
     return thingsToDownload;
+}
+
+async function filterDownloadList(downloadCandidates: JobDetail[], newOnly: boolean): Promise<JobDetail[]> {
+    const input = vscode.window.createQuickPick();
+
+    const interestingDsn = new Set<string>();
+    if (newOnly) {
+        for (const job of downloadCandidates) {
+            for (const dir of job.dirs) {
+                if (await isDirectoryEmpty(dir)) {
+                    interestingDsn.add(job.dsn);
+                    break;
+                }
+            };
+        }
+    }
+    return new Promise<JobDetail[]>(async (resolve, reject) => {
+        input.ignoreFocusOut = true;
+        input.title = 'Select data sets to download';
+        input.items = downloadCandidates.map(x => { return { label: x.dsn }; });
+        input.canSelectMany = true;
+        input.selectedItems = newOnly ? input.items.filter(x => interestingDsn.has(x.label)) : input.items;
+        input.onDidHide(() => reject(Error(cancelMessage)));
+        input.onDidAccept(() => {
+            const selected = new Set(input.selectedItems.map(x => x.label));
+            resolve(downloadCandidates.filter(x => selected.has(x.dsn)));
+        });
+        input.show();
+    }).finally(() => { input.dispose(); });
 }
 
 enum connectionSecurityLevel {
@@ -689,8 +719,9 @@ class ProgressReporter implements StageProgressReporter {
     }
 }
 
-export async function downloadDependencies(context: vscode.ExtensionContext) {
+export async function downloadDependencies(context: vscode.ExtensionContext, ...args: any[]) {
     try {
+        const newOnly = args.length === 1 && args[0] === "newOnly";
         const lastInput = getLastRunConfig(context);
         const { host, port, user, password, hostInput, securityLevel } = await gatherConnectionInfo(lastInput);
 
@@ -698,7 +729,7 @@ export async function downloadDependencies(context: vscode.ExtensionContext) {
 
         await context.globalState.update(mementoKey, { host: hostInput, user: user, jobcard: jobcardPattern });
 
-        const thingsToDownload = gatherDownloadList(await gatherAvailableConfigs());
+        const thingsToDownload = await filterDownloadList(gatherDownloadList(await gatherAvailableConfigs()), newOnly);
 
         const dirsWithFiles = await checkForExistingFiles(thingsToDownload);
         if (dirsWithFiles.size > 0) {
@@ -732,7 +763,7 @@ export async function downloadDependencies(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage(result.failed.length + " jobs out of " + result.total + " failed", showFailedJobs).then((choice) => {
                 if (choice !== showFailedJobs) return;
                 const channel: vscode.OutputChannel = context.extension.exports.getExtension().outputChannel;
-                channel.appendLine("The following datasets could not have been downloaded:");
+                channel.appendLine("The following data sets could not have been downloaded:");
                 result.failed.forEach(x => { channel.append('  '); channel.appendLine(x.dsn) });
                 channel.show();
             });

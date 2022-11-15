@@ -47,13 +47,13 @@ export class HLASMLanguageDetection {
         return document.languageId == 'hlasm';
     }
     //Checks for extension for plaintext files
-    EndsWithExtension(document: vscode.TextDocument): boolean { 
+    EndsWithExtension(document: vscode.TextDocument): boolean {
         return /^\.\w+$/.test(path.extname(document.fileName));
     }
 
     private checkHlasmLanguage(document: vscode.TextDocument) {
         // check if the current active editor document matches any of the wildcards
-        if (this.configSetup.match(document.uri.fsPath))
+        if (this.configSetup.match(document.uri))
             return true;
 
         const text = document.getText();
