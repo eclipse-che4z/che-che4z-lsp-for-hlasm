@@ -765,6 +765,14 @@ bool asm_processor::process_copy(const semantics::complete_statement& stmt,
     diagnosable_ctx* diagnoser,
     bool enter_copy)
 {
+    if (stmt.operands_ref().value.size() != 1 || !stmt.operands_ref().value.front()->access_asm()
+        || !stmt.operands_ref().value.front()->access_asm()->access_expr())
+    {
+        if (diagnoser)
+            diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().field_range));
+        return false;
+    }
+
     auto& expr = stmt.operands_ref().value.front()->access_asm()->access_expr()->expression;
     auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(expr.get());
 
