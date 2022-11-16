@@ -90,6 +90,17 @@ void library_local::refresh()
     load_files();
 }
 
+std::vector<std::string> library_local::list_files()
+{
+    if (!m_files_loaded)
+        load_files();
+
+    std::vector<std::string> result;
+    result.reserve(m_files.size());
+    std::transform(m_files.begin(), m_files.end(), std::back_inserter(result), [](const auto& f) { return f.first; });
+    return result;
+}
+
 const utils::resource::resource_location& library_local::get_location() const { return m_lib_loc; }
 
 std::shared_ptr<processor> library_local::find_file(const std::string& file_name)

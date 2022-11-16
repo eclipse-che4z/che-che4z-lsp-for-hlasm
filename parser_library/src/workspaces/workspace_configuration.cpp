@@ -291,7 +291,6 @@ void workspace_configuration::process_processor_group(const config::processor_gr
                 lib_local_opts,
                 diags);
     }
-
     m_proc_grps.try_emplace(std::make_pair(prc_grp.name(), alternative_root), std::move(prc_grp));
 }
 
@@ -647,12 +646,18 @@ void workspace_configuration::refresh_libraries()
         {
             lib->refresh();
         }
+        proc_grp.generate_suggestions();
     }
 }
 
 const processor_group& workspace_configuration::get_proc_grp_by_program(const program& pgm) const
 {
-    return get_proc_grp(pgm.pgroup);
+    return m_proc_grps.at(pgm.pgroup);
+}
+
+processor_group& workspace_configuration::get_proc_grp_by_program(const program& pgm)
+{
+    return m_proc_grps.at(pgm.pgroup);
 }
 
 const processor_group& workspace_configuration::get_proc_grp(const proc_grp_id& p) const { return m_proc_grps.at(p); }

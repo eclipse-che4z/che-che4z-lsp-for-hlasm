@@ -37,7 +37,7 @@ struct assembler_options
 
     bool operator==(const assembler_options&) const = default;
     bool valid() const noexcept;
-    void apply(asm_option& opts) const;
+    void apply_options_to(asm_option& opts) const;
     bool has_value() const noexcept;
 };
 void to_json(nlohmann::json& j, const assembler_options& p);

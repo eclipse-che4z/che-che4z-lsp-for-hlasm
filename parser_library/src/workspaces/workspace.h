@@ -111,6 +111,9 @@ public:
     const processor_group& get_proc_grp_by_program(const utils::resource::resource_location& file) const;
     const processor_group& get_proc_grp(const proc_grp_id& id) const; // test only
 
+    std::vector<std::pair<std::string, size_t>> make_opcode_suggestion(
+        const utils::resource::resource_location& file, std::string_view opcode, bool extended);
+
 private:
     std::atomic<bool>* cancel_;
 

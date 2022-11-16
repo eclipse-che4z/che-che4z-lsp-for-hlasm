@@ -187,7 +187,7 @@ std::optional<instruction_set_version> find_instruction_set(
 }
 } // namespace
 
-void assembler_options::apply(asm_option& opts) const
+void assembler_options::apply_options_to(asm_option& opts) const
 {
     if (sysparm.has_value())
         opts.sysparm = sysparm.value();

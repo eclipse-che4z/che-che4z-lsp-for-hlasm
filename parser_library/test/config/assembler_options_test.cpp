@@ -199,7 +199,7 @@ TEST(assembler_options, apply)
     {
         asm_option result;
         for (const auto& opt : input)
-            opt.apply(result);
+            opt.apply_options_to(result);
         EXPECT_EQ(result, expected) << nlohmann::json(input).dump(2);
     }
 }

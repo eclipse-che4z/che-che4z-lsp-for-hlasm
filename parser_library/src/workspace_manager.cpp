@@ -150,4 +150,10 @@ continuous_sequence<char> workspace_manager::get_virtual_file_content(unsigned l
     return impl_->get_virtual_file_content(id);
 }
 
+continuous_sequence<opcode_suggestion> workspace_manager::make_opcode_suggestion(
+    const char* document_uri, const char* opcode, bool extended) const
+{
+    return impl_->make_opcode_suggestion(document_uri, opcode, extended);
+}
+
 } // namespace hlasm_plugin::parser_library

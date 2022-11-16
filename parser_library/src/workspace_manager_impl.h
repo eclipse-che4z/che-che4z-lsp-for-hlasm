@@ -262,6 +262,21 @@ public:
         return make_continuous_sequence(file_manager_.get_virtual_file(id));
     }
 
+    continuous_sequence<opcode_suggestion> make_opcode_suggestion(
+        const std::string& document_uri, const std::string& opcode, bool extended)
+    {
+        auto suggestions =
+            ws_path_match(document_uri)
+                .make_opcode_suggestion(utils::resource::resource_location(document_uri), opcode, extended);
+
+        std::vector<opcode_suggestion> res;
+
+        for (auto&& [suggestion, distance] : suggestions)
+            res.emplace_back(opcode_suggestion { make_continuous_sequence(std::move(suggestion)), distance });
+
+        return make_continuous_sequence(std::move(res));
+    }
+
 private:
     void collect_diags() const override
     {

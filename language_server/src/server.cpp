@@ -37,8 +37,6 @@ void server::register_feature_methods()
     }
 }
 
-
-
 void server::call_method(const std::string& method, const json& id, const json& args)
 {
     if (shutdown_request_received_)
@@ -52,7 +50,7 @@ void server::call_method(const std::string& method, const json& id, const json& 
         try
         {
             auto start = std::chrono::steady_clock::now();
-            (*found).second.handler(id, args);
+            (*found).second.handler(id.is_null() ? /* for compatibility */ json("") : id, args);
             std::chrono::duration<double> duration = std::chrono::steady_clock::now() - start;
 
             telemetry_method_call(method, (*found).second.telemetry_level, duration.count());
@@ -63,6 +61,23 @@ void server::call_method(const std::string& method, const json& id, const json& 
             LOG_WARNING("There is an error regarding the JSON or LSP:" + std::string(e.what()));
             send_telemetry_error("call_method/json_error");
         }
+    }
+    else if (method.starts_with("$/"))
+    {
+        // LSP spec says:
+        // - notification can be ignored
+        // - requests should be responded to with MethodNotFound
+        if (!id.is_null())
+            send_message_->reply(json {
+                { "id", id },
+                {
+                    "error",
+                    {
+                        { "code", -32601 },
+                        { "message", "MethodNotFound" },
+                    },
+                },
+            });
     }
     else
     {

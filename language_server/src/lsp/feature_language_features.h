@@ -43,6 +43,7 @@ private:
     void completion(const json& id, const json& params);
     void semantic_tokens(const json& id, const json& params);
     void document_symbol(const json& id, const json& params);
+    void opcode_suggestion(const json& id, const json& params);
 
     static json get_markup_content(std::string_view content);
     json document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol);

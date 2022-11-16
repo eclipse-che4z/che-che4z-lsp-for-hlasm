@@ -14,9 +14,69 @@
 
 import { relative } from 'path';
 import * as vscode from 'vscode';
+import * as vscodelc from 'vscode-languageclient/node';
 import { configurationExists } from './helpers';
 
+
+type OpcodeSuggestionList = {
+    [key: string]: {
+        opcode: string;
+        distance: number;
+    }[]
+};
+interface OpcodeSuggestionResponse {
+    uri: string;
+    suggestions: OpcodeSuggestionList;
+};
+
+function unique(a: string[]) {
+    return [...new Set(a)];
+}
+
+async function gatherOpcodeSuggestions(opcodes: string[], client: vscodelc.BaseLanguageClient, uri: vscode.Uri): Promise<OpcodeSuggestionList> {
+    await client.onReady();
+    const suggestionsResponse = await client.sendRequest<OpcodeSuggestionResponse>("textDocument/$/opcode_suggestion", {
+        textDocument: { uri: uri.toString() },
+        opcodes: opcodes,
+        extended: false,
+    });
+
+    return suggestionsResponse.suggestions;
+
+}
+
+async function opcodeTimeout(timeout: number): Promise<OpcodeSuggestionList> {
+    return new Promise<OpcodeSuggestionList>((resolve, _) => { setTimeout(() => { resolve({}); }, timeout); })
+}
+
+async function generateOpcodeCodeActions(opcodeTasks: {
+    diag: vscode.Diagnostic;
+    opcode: string;
+}[], client: vscodelc.BaseLanguageClient, uri: vscode.Uri, timeout: number): Promise<vscode.CodeAction[]> {
+    const result: vscode.CodeAction[] = [];
+    const suggestions = await Promise.race([gatherOpcodeSuggestions(unique(opcodeTasks.map(x => x.opcode)), client, uri), opcodeTimeout(timeout)]);
+
+    for (const { diag, opcode } of opcodeTasks) {
+        if (opcode in suggestions) {
+            const subst = suggestions[opcode];
+            for (const s of subst) {
+                const edit = new vscode.WorkspaceEdit();
+                edit.replace(uri, diag.range, s.opcode)
+                result.push({
+                    title: `Did you mean '${s.opcode}'?`,
+                    diagnostics: [diag],
+                    kind: vscode.CodeActionKind.QuickFix,
+                    edit: edit
+                });
+            }
+        }
+    }
+    return result;
+}
+
 export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
+    constructor(private client: vscodelc.BaseLanguageClient) { }
+
     async provideCodeActions(document: vscode.TextDocument, range: vscode.Range | vscode.Selection, context: vscode.CodeActionContext, token: vscode.CancellationToken): Promise<(vscode.CodeAction | vscode.Command)[]> {
         const result: vscode.CodeAction[] = [];
         const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
@@ -27,8 +87,12 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
         let suggestProcGrpsChange = false;
         let suggestPgmConfChange = false;
 
-        if (context.diagnostics.some(x => x.code === 'E049')) {
+        const E049 = context.diagnostics.filter(x => x.code === 'E049');
+
+        if (E049.length > 0) {
             if (procGrps.exists) {
+                result.push(...await generateOpcodeCodeActions(E049.map(diag => { return { diag, opcode: document.getText(diag.range).toUpperCase() }; }), this.client, document.uri, 1000));
+
                 result.push({
                     title: 'Download missing dependencies',
                     command: {
@@ -49,7 +113,7 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
             }
             suggestProcGrpsChange = true;
         }
-        if (context.diagnostics.some(x => x.code === 'SUP' || x.code === 'E049')) {
+        if (E049.length > 0 || context.diagnostics.some(x => x.code === 'SUP')) {
             suggestPgmConfChange = true;
         }
 
