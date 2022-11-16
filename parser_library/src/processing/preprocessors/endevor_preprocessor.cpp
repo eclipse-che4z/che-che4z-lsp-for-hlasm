@@ -51,28 +51,32 @@ std::string_view get_copy_member(const std::match_results<std::string_view::iter
     return std::string_view(std::to_address(matches[2].first), matches[2].length());
 }
 
+std::pair<std::string_view, range> get_stmt_part_pair(
+    const std::match_results<std::string_view::iterator>& matches, size_t index, size_t line_no)
+{
+    std::string_view name(std::to_address(matches[index].first), matches[index].length());
+    auto r = range(position(line_no, std::distance(matches[0].first, matches[index].first)),
+        position(line_no, std::distance(matches[0].first, matches[index].second)));
+
+    return { name, std::move(r) };
+}
+
 std::unique_ptr<semantics::endevor_statement_si> get_preproc_statement(
-    std::match_results<std::string_view::iterator>& matches, size_t line_no, context::id_storage& ids)
+    const std::match_results<std::string_view::iterator>& matches, size_t line_no, context::id_storage& ids)
 {
     if (matches.size() != 4)
         return nullptr;
 
     auto stmt_r = range({ line_no, 0 }, { line_no, matches[0].str().length() });
 
-    std::string_view inc(std::to_address(matches[1].first), matches[1].length());
-    auto inc_range = range(position(line_no, 0), position(line_no, inc.size()));
-
-    std::string_view member(std::to_address(matches[2].first), matches[2].length());
-    auto member_range = range(position(line_no, std::distance(matches[0].first, matches[2].first)),
-        position(line_no, std::distance(matches[0].first, matches[2].second)));
+    auto [inc, inc_range] = get_stmt_part_pair(matches, 1, line_no);
+    auto [member, member_range] = get_stmt_part_pair(matches, 2, line_no);
 
     auto remarks_r = range();
     std::vector<range> rems;
     if (matches[3].length())
     {
-        remarks_r = range(position(line_no, std::distance(matches[0].first, matches[3].first)),
-            position(line_no, std::distance(matches[0].first, matches[3].second)));
-
+        remarks_r = get_stmt_part_pair(matches, 3, line_no).second;
         rems.emplace_back(remarks_r);
     }
 
@@ -144,8 +148,7 @@ public:
             }))
             return doc;
 
-        static std::regex include_regex(
-            R"(^(-INC|\+\+INCLUDE)(?:\s+)(\S+)(?:(.*))?)"); // TODO don't include spaces anymore
+        static std::regex include_regex(R"(^(-INC|\+\+INCLUDE)\s+(\S+)(?:\s+(.*))?)");
 
         std::vector<document_line> result;
         result.reserve(doc.size());
