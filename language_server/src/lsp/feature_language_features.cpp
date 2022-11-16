@@ -16,9 +16,67 @@
 #include "feature_language_features.h"
 
 #include <stack>
+#include <utility>
 
 #include "../feature.h"
 #include "utils/resource_location.h"
+
+namespace {
+using namespace hlasm_plugin::parser_library;
+std::string extract_document_uri(const nlohmann::json& j)
+{
+    auto doc = j.find("textDocument");
+    if (doc == j.end() || !doc->is_object())
+        return {};
+    auto uri = doc->find("uri");
+    if (uri == doc->end() || !uri->is_string())
+        return {};
+
+    return uri->get<std::string>();
+}
+position extract_position(const nlohmann::json& j)
+{
+    auto pos = j.find("position");
+    if (pos == j.end() || !pos->is_object())
+        return {};
+    auto line = pos->find("line");
+    auto character = pos->find("character");
+    if (line == pos->end() || character == pos->end() || !line->is_number() || !character->is_number())
+        return {};
+
+    return position(line->get<int>(), character->get<int>());
+}
+
+auto extract_trigger(const nlohmann::json& j)
+{
+    std::pair<completion_trigger_kind, char> result(completion_trigger_kind::invoked, '\0');
+
+    auto context = j.find("context");
+    if (context == j.end() || !context->is_object())
+        return result;
+
+    auto triggerKind = context->find("triggerKind");
+    if (triggerKind == context->end() || !triggerKind->is_number())
+        return result;
+
+    if (auto val = triggerKind->get<int>(); val >= 1 && val <= 3)
+        result.first = (completion_trigger_kind)val;
+
+    if (result.first == completion_trigger_kind::trigger_character)
+    {
+        auto triggerCharacter = context->find("triggerCharacter");
+        if (triggerCharacter != context->end() && triggerCharacter->is_string())
+        {
+            auto sv = triggerCharacter->get<std::string_view>();
+            if (!sv.empty())
+                result.second = sv.front();
+        }
+    }
+
+    return result;
+}
+
+} // namespace
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -44,6 +102,8 @@ void feature_language_features::register_methods(std::map<std::string, method>& 
         this_bind(&feature_language_features::semantic_tokens, telemetry_log_level::NO_TELEMETRY));
     methods.emplace("textDocument/documentSymbol",
         this_bind(&feature_language_features::document_symbol, telemetry_log_level::NO_TELEMETRY));
+    methods.try_emplace("textDocument/$/opcode_suggestion",
+        this_bind(&feature_language_features::opcode_suggestion, telemetry_log_level::LOG_EVENT));
 }
 
 json feature_language_features::register_capabilities()
@@ -101,9 +161,8 @@ void feature_language_features::initialize_feature(const json&)
 
 void feature_language_features::definition(const json& id, const json& params)
 {
-    auto document_uri = params["textDocument"]["uri"].get<std::string>();
-    auto pos =
-        parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
+    auto document_uri = extract_document_uri(params);
+    auto pos = extract_position(params);
 
     auto definition_position_uri = ws_mngr_.definition(document_uri.c_str(), pos);
     json to_ret {
@@ -115,9 +174,8 @@ void feature_language_features::definition(const json& id, const json& params)
 
 void feature_language_features::references(const json& id, const json& params)
 {
-    auto document_uri = params["textDocument"]["uri"].get<std::string>();
-    auto pos =
-        parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
+    auto document_uri = extract_document_uri(params);
+    auto pos = extract_position(params);
     json to_ret = json::array();
     auto references = ws_mngr_.references(document_uri.c_str(), pos);
     for (size_t i = 0; i < references.size(); ++i)
@@ -129,9 +187,8 @@ void feature_language_features::references(const json& id, const json& params)
 }
 void feature_language_features::hover(const json& id, const json& params)
 {
-    auto document_uri = params["textDocument"]["uri"].get<std::string>();
-    auto pos =
-        parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
+    auto document_uri = extract_document_uri(params);
+    auto pos = extract_position(params);
 
 
     auto hover_list = std::string_view(ws_mngr_.hover(document_uri.c_str(), pos));
@@ -187,19 +244,10 @@ json feature_language_features::get_markup_content(std::string_view content)
 
 void feature_language_features::completion(const json& id, const json& params)
 {
-    auto document_uri = params["textDocument"]["uri"].get<std::string>();
-    auto pos =
-        parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
+    auto document_uri = extract_document_uri(params);
+    auto pos = extract_position(params);
 
-    int trigger_kind_int = params["context"]["triggerKind"].get<int>();
-    parser_library::completion_trigger_kind trigger_kind = (trigger_kind_int >= 1 && trigger_kind_int <= 3)
-        ? (parser_library::completion_trigger_kind)trigger_kind_int
-        : parser_library::completion_trigger_kind::invoked;
-
-    // no trigger character
-    char trigger_char = '\0';
-    if (trigger_kind == parser_library::completion_trigger_kind::trigger_character)
-        trigger_char = params["context"]["triggerCharacter"].get<std::string>()[0];
+    auto [trigger_kind, trigger_char] = extract_trigger(params);
 
     auto completion_list = ws_mngr_.completion(document_uri.c_str(), pos, trigger_char, trigger_kind);
     json to_ret = json::value_t::null;
@@ -323,7 +371,7 @@ json feature_language_features::convert_tokens_to_num_array(const std::vector<pa
 
 void feature_language_features::semantic_tokens(const json& id, const json& params)
 {
-    auto document_uri = params["textDocument"]["uri"].get<std::string>();
+    auto document_uri = extract_document_uri(params);
 
     auto tokens = std::vector<parser_library::token_info>(ws_mngr_.semantic_tokens(document_uri.c_str()));
     json num_array = convert_tokens_to_num_array(tokens);
@@ -382,11 +430,13 @@ const std::unordered_map<parser_library::document_symbol_kind, lsp_document_symb
 
 json feature_language_features::document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol)
 {
-    return { { "name", symbol.name() },
+    return {
+        { "name", symbol.name() },
         { "kind", document_symbol_item_kind_mapping.at(symbol.kind()) },
         { "range", range_to_json(symbol.symbol_range()) },
         { "selectionRange", range_to_json(symbol.symbol_selection_range()) },
-        { "children", document_symbol_list_json(symbol.children()) } };
+        { "children", document_symbol_list_json(symbol.children()) },
+    };
 }
 
 json feature_language_features::document_symbol_list_json(
@@ -402,7 +452,7 @@ json feature_language_features::document_symbol_list_json(
 
 void feature_language_features::document_symbol(const json& id, const json& params)
 {
-    auto document_uri = params["textDocument"]["uri"].get<std::string>();
+    auto document_uri = extract_document_uri(params);
 
     const auto limit = 5000LL;
     auto symbol_list = ws_mngr_.document_symbol(document_uri.c_str(), limit);
@@ -410,5 +460,42 @@ void feature_language_features::document_symbol(const json& id, const json& para
     response_->respond(id, "", document_symbol_list_json(symbol_list));
 }
 
+void feature_language_features::opcode_suggestion(const json& id, const json& params)
+{
+    auto document_uri = extract_document_uri(params);
+
+    auto suggestions = json::object();
+
+    bool extended = false;
+    if (auto e = params.find("extended"); e != params.end() && e->is_boolean())
+        extended = e->get<bool>();
+
+    if (auto opcodes = params.find("opcodes"); opcodes != params.end() && opcodes->is_array())
+    {
+        for (const auto& opcode : *opcodes)
+        {
+            if (!opcode.is_string())
+                continue;
+            auto op = opcode.get<std::string>();
+            auto opcode_suggestions = ws_mngr_.make_opcode_suggestion(document_uri.c_str(), op.c_str(), extended);
+            if (opcode_suggestions.size() == 0)
+                continue;
+            auto& ar = suggestions[op] = json::array();
+            for (const auto& s : opcode_suggestions)
+            {
+                ar.push_back(nlohmann::json {
+                    { "opcode", std::string_view(s.opcode.data(), s.opcode.size()) },
+                    { "distance", s.distance },
+                });
+            }
+        }
+    }
+
+    json to_ret {
+        { "uri", document_uri },
+        { "suggestions", std::move(suggestions) },
+    };
+    response_->respond(id, "", to_ret);
+}
 
 } // namespace hlasm_plugin::language_server::lsp

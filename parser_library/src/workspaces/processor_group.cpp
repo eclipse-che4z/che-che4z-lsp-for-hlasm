@@ -14,6 +14,8 @@
 
 #include "processor_group.h"
 
+#include <span>
+
 namespace hlasm_plugin::parser_library::workspaces {
 
 namespace {
@@ -52,7 +54,58 @@ processor_group::processor_group(const std::string& pg_name,
     , m_prep_opts(translate_pp_configs(pp))
 {}
 
-void processor_group::update_asm_options(asm_option& opts) const { m_asm_opts.apply(opts); }
+void processor_group::apply_options_to(asm_option& opts) const { m_asm_opts.apply_options_to(opts); }
+
+void processor_group::generate_suggestions(bool force)
+{
+    if (m_suggestions.has_value())
+    {
+        if (!force)
+            return;
+        m_suggestions->clear();
+    }
+    else
+        m_suggestions.emplace();
+
+    for (const auto& l : m_libs)
+    {
+        for (auto&& filename : l->list_files())
+        {
+            if (filename.size() > suggestion_limit)
+                continue;
+            m_suggestions->insert(std::move(filename));
+        }
+    }
+}
+
+std::vector<std::pair<std::string, size_t>> processor_group::suggest(std::string_view opcode, bool extended)
+{
+    generate_suggestions(false);
+
+    constexpr auto process = [](std::span<std::pair<const std::string*, size_t>> input) {
+        std::vector<std::pair<std::string, size_t>> result;
+        for (const auto& [suggestion, distance] : input)
+        {
+            if (!suggestion)
+                break;
+            if (distance == 0) // exact match
+                break;
+            result.emplace_back(*suggestion, distance);
+        }
+        return result;
+    };
+
+    if (!extended)
+    {
+        auto suggestions = m_suggestions->find<3>(opcode, 3); // dist = 3 <=> 1 character swap + 1 typo
+        return process(suggestions);
+    }
+    else
+    {
+        auto suggestions = m_suggestions->find<10>(opcode, 4); // one extra typo
+        return process(suggestions);
+    }
+}
 
 void processor_group::collect_diags() const
 {

@@ -250,10 +250,10 @@ SETA   OPSYN LR
     analyzing_context ctx_second_opsyn1 = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
     EXPECT_TRUE(macro_c.load_from_cache(macro_key_one_opsyn, ctx_second_opsyn1));
 
+    constexpr context::id_index L("L");
 
     macro_cache_key macro_key_two_opsyns = macro_key_one_opsyn;
-    macro_key_two_opsyns.opsyn_state.push_back(
-        cached_opsyn_mnemo { context::id_index("L"), context::id_storage::well_known::SETB, false });
+    macro_key_two_opsyns.opsyn_state.push_back(cached_opsyn_mnemo { L, context::id_storage::well_known::SETB, false });
 
     macro_cache_key::sort_opsyn_state(macro_key_two_opsyns.opsyn_state);
 

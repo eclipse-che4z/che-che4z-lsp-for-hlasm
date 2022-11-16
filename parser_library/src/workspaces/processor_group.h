@@ -20,6 +20,8 @@
 #include "file_manager.h"
 #include "library.h"
 #include "preprocessor_options.h"
+#include "utils/bk_tree.h"
+#include "utils/levenshtein_distance.h"
 
 namespace hlasm_plugin::parser_library::config {
 struct assembler_options;
@@ -44,15 +46,23 @@ public:
 
     const std::vector<std::unique_ptr<library>>& libraries() const { return m_libs; }
 
-    void update_asm_options(asm_option& opts) const;
+    void apply_options_to(asm_option& opts) const;
 
     const std::vector<preprocessor_options>& preprocessors() const { return m_prep_opts; }
+
+    void generate_suggestions(bool force = true);
+
+    std::vector<std::pair<std::string, size_t>> suggest(std::string_view s, bool extended);
 
 private:
     std::vector<std::unique_ptr<library>> m_libs;
     std::string m_pg_name;
     config::assembler_options m_asm_opts;
     std::vector<preprocessor_options> m_prep_opts;
+
+    static constexpr size_t suggestion_limit = 32;
+
+    std::optional<utils::bk_tree<std::string, utils::levenshtein_distance_t<suggestion_limit>>> m_suggestions;
 };
 } // namespace hlasm_plugin::parser_library::workspaces
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H

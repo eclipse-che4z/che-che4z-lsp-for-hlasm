@@ -77,6 +77,12 @@ struct fs_change
     fs_change_type change_type;
 };
 
+struct opcode_suggestion
+{
+    continuous_sequence<char> opcode;
+    size_t distance;
+};
+
 // The main class that encapsulates all functionality of parser library.
 // All the methods are C++ version of LSP and DAP methods.
 class PARSER_LIBRARY_EXPORT workspace_manager
@@ -127,6 +133,9 @@ public:
     virtual void set_message_consumer(message_consumer* consumer);
 
     virtual continuous_sequence<char> get_virtual_file_content(unsigned long long id) const;
+
+    virtual continuous_sequence<opcode_suggestion> make_opcode_suggestion(
+        const char* document_uri, const char* opcode, bool extended) const;
 
 private:
     impl* impl_;

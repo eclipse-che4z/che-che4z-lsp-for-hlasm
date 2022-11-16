@@ -534,3 +534,25 @@ TEST(workspace, refresh_settings)
     EXPECT_EQ(ws.get_asm_options(resource_location::join(resource_location("test"), "different_file")).sysparm,
         "RELEASERELEASE");
 }
+
+TEST(workspace, opcode_suggestions)
+{
+    file_manager_impl fm;
+
+    fm.did_open_file(pgm_conf_name, 0, R"({"pgms":[{"program":"pgm","pgroup":"P1"}]})");
+    fm.did_open_file(proc_grps_name, 0, R"({"pgroups":[{"name": "P1","libs":[]}]})");
+
+    lib_config config;
+    shared_json global_settings = make_empty_shared_json();
+    workspace ws(fm, config, global_settings);
+    ws.open();
+    ws.collect_diags();
+
+    EXPECT_TRUE(ws.diags().empty());
+
+    using hlasm_plugin::utils::resource::resource_location;
+    std::vector<std::pair<std::string, size_t>> expected { { "LHI", 3 } };
+
+    EXPECT_EQ(ws.make_opcode_suggestion(resource_location("pgm"), "LHIXXX", false), expected);
+    EXPECT_EQ(ws.make_opcode_suggestion(resource_location("pgm_implicit"), "LHIXXX", false), expected);
+}

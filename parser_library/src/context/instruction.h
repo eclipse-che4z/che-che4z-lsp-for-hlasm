@@ -62,6 +62,44 @@ struct instruction_set_affiliation
     uint16_t uni : 1;
 };
 
+constexpr bool operator<=(z_arch_affiliation z_affil, instruction_set_version instr_set)
+{
+    return static_cast<uint16_t>(z_affil) <= static_cast<uint16_t>(instr_set);
+}
+
+constexpr bool instruction_available(
+    instruction_set_affiliation instr_set_affiliation, instruction_set_version active_instr_set)
+{
+    switch (active_instr_set)
+    {
+        case instruction_set_version::UNI:
+            return instr_set_affiliation.uni;
+        case instruction_set_version::DOS:
+            return instr_set_affiliation.dos;
+        case instruction_set_version::_370:
+            return instr_set_affiliation._370;
+        case instruction_set_version::XA:
+            return instr_set_affiliation.xa;
+        case instruction_set_version::ESA:
+            return instr_set_affiliation.esa;
+        case instruction_set_version::ZOP:
+        case instruction_set_version::YOP:
+        case instruction_set_version::Z9:
+        case instruction_set_version::Z10:
+        case instruction_set_version::Z11:
+        case instruction_set_version::Z12:
+        case instruction_set_version::Z13:
+        case instruction_set_version::Z14:
+        case instruction_set_version::Z15:
+        case instruction_set_version::Z16:
+            return instr_set_affiliation.z_arch == z_arch_affiliation::NO_AFFILIATION
+                ? false
+                : instr_set_affiliation.z_arch <= active_instr_set;
+        default:
+            return false;
+    }
+}
+
 // all mach_format types for operands of machine instructions:
 // formats with length 16 are arranged in range (0,2),formats with length 32 are arranged in range(3,20),formats with
 // length 48 are arranged in range (21,77)

@@ -175,6 +175,7 @@ public:
 
     const program* get_program(const utils::resource::resource_location& program) const;
     const processor_group& get_proc_grp_by_program(const program& p) const;
+    processor_group& get_proc_grp_by_program(const program& p);
     const lib_config& get_config() const { return m_local_config; }
 
     bool settings_updated() const;

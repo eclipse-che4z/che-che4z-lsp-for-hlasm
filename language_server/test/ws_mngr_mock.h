@@ -49,6 +49,12 @@ public:
         (override));
 
     MOCK_METHOD(continuous_sequence<char>, get_virtual_file_content, (unsigned long long id), (const override));
+
+
+    MOCK_METHOD(continuous_sequence<opcode_suggestion>,
+        make_opcode_suggestion,
+        (const char* document_uri, const char* opcode, bool extended),
+        (const override));
 };
 
 } // namespace hlasm_plugin::language_server::test

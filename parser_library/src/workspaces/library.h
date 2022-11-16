@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "diagnosable.h"
 
@@ -27,9 +28,10 @@ class processor;
 class library : public virtual diagnosable
 {
 public:
+    virtual ~library() = default;
     virtual std::shared_ptr<processor> find_file(const std::string& file) = 0;
     virtual void refresh() = 0;
-    virtual ~library() = default;
+    virtual std::vector<std::string> list_files() = 0;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

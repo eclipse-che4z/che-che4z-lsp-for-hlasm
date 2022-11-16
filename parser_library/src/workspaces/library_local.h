@@ -61,6 +61,8 @@ public:
 
     bool is_once_only() const override { return false; }
 
+    std::vector<std::string> list_files() override;
+
 private:
     file_manager& m_file_manager;
 

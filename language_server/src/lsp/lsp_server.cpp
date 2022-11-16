@@ -102,7 +102,7 @@ void server::message_received(const json& message)
         if (id_found == message.end())
         {
             // notification
-            call_method(method_found.value().get<std::string>(), "", params_found.value());
+            call_method(method_found.value().get<std::string>(), nlohmann::json(), params_found.value());
         }
         else
         {
@@ -165,11 +165,6 @@ void server::register_methods()
     methods_.try_emplace("exit",
         method {
             [this](const json& id, const json& params) { on_exit(id, params); }, telemetry_log_level::NO_TELEMETRY });
-    methods_.try_emplace("$/setTraceNotification",
-        method { [](const json&, const json&) {
-                    /*no implementation, silences reporting of VS Code implementation-specific notification*/
-                },
-            telemetry_log_level::NO_TELEMETRY });
     methods_.try_emplace("$/cancelRequest",
         method { [](const json&, const json&) {
                     /*no implementation, silences telemetry reporting*/
