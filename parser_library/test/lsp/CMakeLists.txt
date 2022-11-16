@@ -21,8 +21,9 @@ target_sources(library_test PRIVATE
 	lsp_context_macro_in_opencode_test.cpp
 	lsp_context_nested_macro_test.cpp
 	lsp_context_ord_sym_test.cpp
-	lsp_context_test_helper.h
+	lsp_context_preprocessor_test.cpp
 	lsp_context_seq_sym_test.cpp
+	lsp_context_test_helper.h
 	lsp_context_var_sym_test.cpp
 	lsp_features_test.cpp
 )
