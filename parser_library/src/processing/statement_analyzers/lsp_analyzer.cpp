@@ -93,9 +93,6 @@ void lsp_analyzer::analyze(
 void lsp_analyzer::analyze(const semantics::preprocessor_statement_si& statement)
 {
     collect_occurences(lsp::occurence_kind::ORD, statement);
-    collect_occurences(lsp::occurence_kind::INSTR, statement);
-    collect_occurences(lsp::occurence_kind::VAR, statement);
-    collect_occurences(lsp::occurence_kind::SEQ, statement);
 
     const auto& opcode = statement.m_resemblence;
     const auto& operands = statement.operands_ref().value;
