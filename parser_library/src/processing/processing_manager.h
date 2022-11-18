@@ -57,13 +57,13 @@ private:
     workspaces::parse_lib_provider& lib_provider_;
     opencode_provider& opencode_prov_;
 
-    const utils::resource::resource_location file_loc_;
-
     std::vector<processor_ptr> procs_;
     std::vector<provider_ptr> provs_;
 
     lsp_analyzer lsp_analyzer_;
     std::vector<statement_analyzer*> stms_analyzers_;
+
+    const utils::resource::resource_location file_loc_;
 
     context::source_snapshot lookahead_stop_;
     size_t lookahead_stop_ainsert_id = 0;

@@ -43,7 +43,7 @@ struct stack_entry
     bool end() const { return current == doc.end(); }
 };
 
-std::string_view get_copy_member(std::match_results<std::string_view::iterator>& matches)
+std::string_view get_copy_member(const std::match_results<std::string_view::iterator>& matches)
 {
     if (matches.size() != 4)
         return "";
@@ -92,7 +92,7 @@ class endevor_preprocessor : public preprocessor
     std::vector<std::unique_ptr<semantics::preprocessor_statement_si>> m_statements;
     context::id_storage& m_ids;
 
-    bool process_member(std::string_view member, std::vector<stack_entry>& stack)
+    bool process_member(std::string_view member, std::vector<stack_entry>& stack) const
     {
         if (std::any_of(stack.begin(), stack.end(), [&member](const auto& e) { return e.name == member; }))
         {
@@ -102,8 +102,7 @@ class endevor_preprocessor : public preprocessor
             return false;
         }
 
-        auto lib = m_libs(member);
-        if (!lib.has_value())
+        if (auto lib = m_libs(member); !lib.has_value())
         {
             if (m_diags)
                 m_diags->add_diagnostic(diagnostic_op::error_END001(
