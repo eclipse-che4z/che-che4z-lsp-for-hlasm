@@ -19,6 +19,7 @@
 
 #include "context/instruction.h"
 #include "file_manager.h"
+#include "lsp/item_convertors.h"
 #include "utils/bk_tree.h"
 #include "utils/levenshtein_distance.h"
 #include "utils/path.h"
@@ -257,43 +258,147 @@ void workspace::did_change_watched_files(const std::vector<utils::resource::reso
         parse_file(file_location);
 }
 
-location workspace::definition(const utils::resource::resource_location& document_loc, const position pos) const
+location workspace::definition(const utils::resource::resource_location& document_loc, position pos) const
 {
     auto opencodes = find_related_opencodes(document_loc);
     if (opencodes.empty())
         return { pos, document_loc };
     // for now take last opencode
-    return opencodes.back()->get_lsp_feature_provider().definition(document_loc, pos);
+    if (const auto* lsp_context = opencodes.back()->get_lsp_context())
+        return lsp_context->definition(document_loc, pos);
+    else
+        return { pos, document_loc };
 }
 
-location_list workspace::references(const utils::resource::resource_location& document_loc, const position pos) const
+location_list workspace::references(const utils::resource::resource_location& document_loc, position pos) const
 {
     auto opencodes = find_related_opencodes(document_loc);
     if (opencodes.empty())
         return {};
     // for now take last opencode
-    return opencodes.back()->get_lsp_feature_provider().references(document_loc, pos);
+    if (const auto* lsp_context = opencodes.back()->get_lsp_context())
+        return lsp_context->references(document_loc, pos);
+    else
+        return {};
 }
 
-lsp::hover_result workspace::hover(const utils::resource::resource_location& document_loc, const position pos) const
+std::string workspace::hover(const utils::resource::resource_location& document_loc, position pos) const
 {
     auto opencodes = find_related_opencodes(document_loc);
     if (opencodes.empty())
         return {};
     // for now take last opencode
-    return opencodes.back()->get_lsp_feature_provider().hover(document_loc, pos);
+    if (const auto* lsp_context = opencodes.back()->get_lsp_context())
+        return lsp_context->hover(document_loc, pos);
+    else
+        return {};
 }
 
 lsp::completion_list_s workspace::completion(const utils::resource::resource_location& document_loc,
-    const position pos,
+    position pos,
     const char trigger_char,
-    completion_trigger_kind trigger_kind) const
+    completion_trigger_kind trigger_kind)
 {
     auto opencodes = find_related_opencodes(document_loc);
     if (opencodes.empty())
         return {};
     // for now take last opencode
-    return opencodes.back()->get_lsp_feature_provider().completion(document_loc, pos, trigger_char, trigger_kind);
+    const auto* lsp_context = opencodes.back()->get_lsp_context();
+    if (!lsp_context)
+        return {};
+
+    return generate_completion(lsp_context->completion(document_loc, pos, trigger_char, trigger_kind),
+        [&document_loc, this](std::string_view opcode) {
+            auto suggestions = make_opcode_suggestion(document_loc, opcode, true);
+            std::vector<std::string> result;
+            std::transform(suggestions.begin(), suggestions.end(), std::back_inserter(result), [](auto& e) {
+                return std::move(e.first);
+            });
+            return result;
+        });
+}
+
+lsp::completion_list_s workspace::generate_completion(const lsp::completion_list_source& cls,
+    std::function<std::vector<std::string>(std::string_view)> instruction_suggestions)
+{
+    return std::visit(
+        [&instruction_suggestions](auto v) { return generate_completion(v, instruction_suggestions); }, cls);
+}
+
+lsp::completion_list_s workspace::generate_completion(
+    std::monostate, const std::function<std::vector<std::string>(std::string_view)>&)
+{
+    return lsp::completion_list_s();
+}
+
+lsp::completion_list_s workspace::generate_completion(
+    const lsp::vardef_storage* var_defs, const std::function<std::vector<std::string>(std::string_view)>&)
+{
+    lsp::completion_list_s items;
+    for (const auto& vardef : *var_defs)
+    {
+        items.emplace_back(lsp::generate_completion_item(vardef));
+    }
+
+    return items;
+}
+
+lsp::completion_list_s workspace::generate_completion(
+    const context::label_storage* seq_syms, const std::function<std::vector<std::string>(std::string_view)>&)
+{
+    lsp::completion_list_s items;
+    items.reserve(seq_syms->size());
+    for (const auto& [_, sym] : *seq_syms)
+    {
+        items.emplace_back(lsp::generate_completion_item(*sym));
+    }
+    return items;
+}
+
+lsp::completion_list_s workspace::generate_completion(const lsp::completion_list_instructions& cli,
+    const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions)
+{
+    lsp::completion_list_s result;
+
+    assert(cli.lsp_ctx);
+
+    const auto& hlasm_ctx = cli.lsp_ctx->get_related_hlasm_context();
+
+    auto suggestions = !cli.completed_text.empty() && instruction_suggestions
+        ? instruction_suggestions(cli.completed_text)
+        : std::vector<std::string>();
+
+    // Store only instructions from the currently active instruction set
+    for (const auto& instr : lsp::completion_item_s::m_instruction_completion_items)
+    {
+        auto id = hlasm_ctx.ids().find(instr.label);
+        // TODO: we could provide more precise results here if actual generation is provided
+        if (id.has_value() && hlasm_ctx.find_opcode_mnemo(id.value(), context::opcode_generation::zero))
+        {
+            auto& i = result.emplace_back(instr);
+            if (auto space = i.insert_text.find(' '); space != std::string::npos)
+            {
+                if (auto col_pos = cli.completed_text_start_column + space; col_pos < 15)
+                    i.insert_text.insert(i.insert_text.begin() + space, 15 - col_pos, ' ');
+            }
+            if (std::find(suggestions.begin(), suggestions.end(), i.label) != suggestions.end())
+            {
+                i.suggestion_for = cli.completed_text;
+            }
+        }
+    }
+
+    for (const auto& [_, macro_i] : *cli.macros)
+    {
+        auto& i = result.emplace_back(lsp::generate_completion_item(
+            *macro_i, cli.lsp_ctx->get_file_info(macro_i->definition_location.resource_loc)));
+        if (std::find(suggestions.begin(), suggestions.end(), i.label) != suggestions.end())
+        {
+            i.suggestion_for = cli.completed_text;
+        }
+    }
+
+    return result;
 }
 
 lsp::document_symbol_list_s workspace::document_symbol(
@@ -303,7 +408,10 @@ lsp::document_symbol_list_s workspace::document_symbol(
     if (opencodes.empty())
         return {};
     // for now take last opencode
-    return opencodes.back()->get_lsp_feature_provider().document_symbol(document_loc, limit);
+    if (const auto* lsp_context = opencodes.back()->get_lsp_context())
+        return lsp_context->document_symbol(document_loc, limit);
+    else
+        return {};
 }
 
 void workspace::open()
@@ -386,30 +494,46 @@ constexpr const utils::bk_tree<std::string_view, utils::levenshtein_distance_t<1
 };
 
 std::vector<std::pair<std::string, size_t>> generate_instruction_suggestions(
-    std::string_view opcode, instruction_set_version set)
+    std::string_view opcode, instruction_set_version set, bool extended)
 {
-    std::vector<std::pair<std::string, size_t>> result;
-
     const auto iset_id = static_cast<int>(set);
     assert(0 < iset_id && iset_id <= static_cast<int>(instruction_set_version::UNI));
 
-    for (const auto& [suggestion, distance] : instruction_bk_trees[iset_id]().find<2>(opcode, 3))
-    {
-        if (!suggestion)
-            break;
-        if (distance == 0)
-            break;
-        result.emplace_back(*suggestion, distance);
-    }
+    constexpr auto process = [](std::span<const std::pair<const std::string_view*, size_t>> suggestions) {
+        std::vector<std::pair<std::string, size_t>> result;
+        for (const auto& [suggestion, distance] : suggestions)
+        {
+            if (!suggestion)
+                break;
+            if (distance == 0)
+                break;
+            result.emplace_back(*suggestion, distance);
+        }
 
-    return result;
+        return result;
+    };
+
+    if (extended)
+    {
+        auto suggestion = instruction_bk_trees[iset_id]().find<10>(opcode, 4);
+        return process(suggestion);
+    }
+    else
+    {
+        auto suggestion = instruction_bk_trees[iset_id]().find<3>(opcode, 3);
+        return process(suggestion);
+    }
 }
 
 } // namespace
 
 std::vector<std::pair<std::string, size_t>> workspace::make_opcode_suggestion(
-    const utils::resource::resource_location& file, std::string_view opcode, bool extended)
+    const utils::resource::resource_location& file, std::string_view opcode_, bool extended)
 {
+    std::string opcode(opcode_);
+    for (auto& c : opcode)
+        c = static_cast<char>(std::toupper((unsigned char)c));
+
     std::vector<std::pair<std::string, size_t>> result;
 
     asm_option opts;
@@ -426,7 +550,7 @@ std::vector<std::pair<std::string, size_t>> workspace::make_opcode_suggestion(
         implicit_proc_grp.apply_options_to(opts);
     }
 
-    for (auto&& s : generate_instruction_suggestions(opcode, opts.instr_set))
+    for (auto&& s : generate_instruction_suggestions(opcode, opts.instr_set, extended))
         result.emplace_back(std::move(s));
     std::stable_sort(result.begin(), result.end(), [](const auto& l, const auto& r) { return l.second < r.second; });
 

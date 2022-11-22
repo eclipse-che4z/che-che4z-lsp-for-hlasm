@@ -40,12 +40,12 @@ public:
 
     MOCK_METHOD2(configuration_changed, void(const lib_config& new_config, const char* whole_settings));
 
-    MOCK_METHOD(position_uri, definition, (const char* document_uri, const position pos), (override));
-    MOCK_METHOD(position_uri_list, references, (const char* document_uri, const position pos), (override));
-    MOCK_METHOD(sequence<char>, hover, (const char* document_uri, const position pos), (override));
+    MOCK_METHOD(position_uri, definition, (const char* document_uri, position pos), (override));
+    MOCK_METHOD(position_uri_list, references, (const char* document_uri, position pos), (override));
+    MOCK_METHOD(sequence<char>, hover, (const char* document_uri, position pos), (override));
     MOCK_METHOD(completion_list,
         completion,
-        (const char* document_uri, const position pos, const char trigger_char, completion_trigger_kind trigger_kind),
+        (const char* document_uri, position pos, const char trigger_char, completion_trigger_kind trigger_kind),
         (override));
 
     MOCK_METHOD(continuous_sequence<char>, get_virtual_file_content, (unsigned long long id), (const override));

@@ -16,17 +16,30 @@
 #define LSP_CONTEXT_H
 
 #include <algorithm>
+#include <variant>
 
 #include "completion_item.h"
 #include "document_symbol_item.h"
-#include "feature_provider.h"
 #include "file_info.h"
 #include "location.h"
 #include "opencode_info.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
-class lsp_context final : public feature_provider
+class lsp_context;
+
+struct completion_list_instructions
+{
+    std::string_view completed_text;
+    size_t completed_text_start_column;
+    const std::unordered_map<context::macro_def_ptr, macro_info_ptr>* macros;
+    const lsp_context* lsp_ctx;
+};
+
+using completion_list_source =
+    std::variant<std::monostate, const vardef_storage*, const context::label_storage*, completion_list_instructions>;
+
+class lsp_context final
 {
     opencode_info_ptr m_opencode;
     std::unordered_map<utils::resource::resource_location, file_info_ptr, utils::resource::resource_location_hasher>
@@ -64,15 +77,17 @@ public:
         context::id_index macro_name, context::opcode_generation gen = context::opcode_generation::current) const;
     [[nodiscard]] const file_info* get_file_info(const utils::resource::resource_location& file_loc) const;
 
-    location definition(const utils::resource::resource_location& document_loc, position pos) const override;
-    location_list references(const utils::resource::resource_location& document_loc, position pos) const override;
-    hover_result hover(const utils::resource::resource_location& document_loc, position pos) const override;
-    completion_list_s completion(const utils::resource::resource_location& document_uri,
+    location definition(const utils::resource::resource_location& document_loc, position pos) const;
+    location_list references(const utils::resource::resource_location& document_loc, position pos) const;
+    std::string hover(const utils::resource::resource_location& document_loc, position pos) const;
+    completion_list_source completion(const utils::resource::resource_location& document_uri,
         position pos,
         char trigger_char,
-        completion_trigger_kind trigger_kind) const override;
+        completion_trigger_kind trigger_kind) const;
     document_symbol_list_s document_symbol(
-        const utils::resource::resource_location& document_loc, long long limit) const override;
+        const utils::resource::resource_location& document_loc, long long limit) const;
+
+    const context::hlasm_context& get_related_hlasm_context() const { return *m_hlasm_ctx; }
 
 private:
     void add_file(file_info file_i);
@@ -80,18 +95,16 @@ private:
     void distribute_file_occurences(const file_occurences_t& occurences);
 
     occurence_scope_t find_occurence_with_scope(
-        const utils::resource::resource_location& document_loc, const position pos) const;
+        const utils::resource::resource_location& document_loc, position pos) const;
 
     std::optional<location> find_definition_location(const symbol_occurence& occ, macro_info_ptr macro_i) const;
-    hover_result find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const;
+    std::string find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const;
 
-    completion_list_s complete_var(const file_info& file, position pos) const;
-    completion_list_s complete_seq(const file_info& file, position pos) const;
-    completion_list_s complete_instr(const file_info& file, position pos) const;
+    completion_list_source complete_var(const file_info& file, position pos) const;
+    completion_list_source complete_seq(const file_info& file, position pos) const;
+    completion_list_source complete_instr(const file_info& file, position pos) const;
 
-    bool is_continued_line(std::string_view line) const;
-    bool should_complete_instr(const text_data_ref_t& text, const position pos) const;
-    std::string get_macro_documentation(const macro_info& m) const;
+    bool should_complete_instr(const text_data_ref_t& text, position pos) const;
 
     void document_symbol_macro(document_symbol_list_s& result,
         const utils::resource::resource_location& document_loc,

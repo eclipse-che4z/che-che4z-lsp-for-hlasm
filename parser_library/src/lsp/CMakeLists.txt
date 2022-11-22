@@ -15,7 +15,8 @@ target_sources(parser_library PRIVATE
 	completion_item.h
 	document_symbol_item.cpp
 	document_symbol_item.h
-	feature_provider.h
+	item_convertors.cpp
+	item_convertors.h
 	file_info.cpp
 	file_info.h
 	lsp_context.cpp

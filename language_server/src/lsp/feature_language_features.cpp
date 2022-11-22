@@ -242,6 +242,16 @@ json feature_language_features::get_markup_content(std::string_view content)
     return json { { "kind", "markdown" }, { "value", content } };
 }
 
+std::string decorate_suggestion(std::string_view s)
+{
+    std::string result("##");
+
+    for (char c : s)
+        result.append(1, c).append(2, '#');
+
+    return result;
+}
+
 void feature_language_features::completion(const json& id, const json& params)
 {
     auto document_uri = extract_document_uri(params);
@@ -250,12 +260,12 @@ void feature_language_features::completion(const json& id, const json& params)
     auto [trigger_kind, trigger_char] = extract_trigger(params);
 
     auto completion_list = ws_mngr_.completion(document_uri.c_str(), pos, trigger_char, trigger_kind);
-    json to_ret = json::value_t::null;
+    json to_ret = json::value_t::object;
     json completion_item_array = json::array();
     for (size_t i = 0; i < completion_list.size(); ++i)
     {
         const auto& item = completion_list.item(i);
-        completion_item_array.push_back(json {
+        auto& json_item = completion_item_array.emplace_back(json {
             { "label", item.label() },
             { "kind", completion_item_kind_mapping.at(item.kind()) },
             { "detail", item.detail() },
@@ -263,8 +273,16 @@ void feature_language_features::completion(const json& id, const json& params)
             { "insertText", item.insert_text() },
             { "insertTextFormat", 1 + (int)item.is_snippet() },
         });
+        if (auto suggestion = item.suggestion_for(); !suggestion.empty())
+        {
+            json_item["filterText"] = std::string("~~~") + decorate_suggestion(suggestion);
+            json_item["sortText"] = std::string("~~~") + std::string(item.label());
+        }
     }
-    to_ret = json { { "isIncomplete", false }, { "items", completion_item_array } };
+    // needs to be incomplete, otherwise we are unable to include new suggestions
+    // when user continues typing (vscode keeps using the first list)
+    to_ret["isIncomplete"] = true;
+    to_ret["items"] = std::move(completion_item_array);
 
     response_->respond(id, "", to_ret);
 }

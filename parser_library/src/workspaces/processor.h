@@ -20,7 +20,6 @@
 #include "compiler_options.h"
 #include "diagnosable.h"
 #include "file.h"
-#include "lsp/feature_provider.h"
 #include "parse_lib_provider.h"
 #include "preprocessor_options.h"
 #include "semantics/highlighting_info.h"
@@ -54,7 +53,7 @@ class processor_file : public virtual file, public processor
 public:
     virtual const std::set<utils::resource::resource_location>& dependencies() = 0;
     virtual const semantics::lines_info& get_hl_info() = 0;
-    virtual const lsp::feature_provider& get_lsp_feature_provider() = 0;
+    virtual const lsp::lsp_context* get_lsp_context() = 0;
     virtual const std::set<utils::resource::resource_location>& files_to_close() = 0;
     virtual const performance_metrics& get_metrics() = 0;
     virtual void erase_cache_of_opencode(const utils::resource::resource_location& opencode_file_location) = 0;

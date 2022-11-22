@@ -160,7 +160,7 @@ public:
     }
 
     location definition_result;
-    position_uri definition(const std::string& document_uri, const position pos)
+    position_uri definition(const std::string& document_uri, position pos)
     {
         auto doc_loc = utils::resource::resource_location(document_uri);
 
@@ -176,7 +176,7 @@ public:
     }
 
     location_list references_result;
-    position_uri_list references(const std::string& document_uri, const position pos)
+    position_uri_list references(const std::string& document_uri, position pos)
     {
         if (cancel_ && *cancel_)
             return {};
@@ -188,7 +188,7 @@ public:
     }
 
     std::string hover_result;
-    std::string_view hover(const std::string& document_uri, const position pos)
+    std::string_view hover(const std::string& document_uri, position pos)
     {
         if (cancel_ && *cancel_)
             return "";
@@ -200,10 +200,8 @@ public:
 
 
     lsp::completion_list_s completion_result;
-    completion_list completion(const std::string& document_uri,
-        const position pos,
-        const char trigger_char,
-        completion_trigger_kind trigger_kind)
+    completion_list completion(
+        const std::string& document_uri, position pos, const char trigger_char, completion_trigger_kind trigger_kind)
     {
         if (cancel_ && *cancel_)
             return completion_list { nullptr, 0 };

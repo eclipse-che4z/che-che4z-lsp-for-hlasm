@@ -16,6 +16,7 @@
 
 #include "analyzer_fixture.h"
 #include "lsp_context_test_helper.h"
+#include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
@@ -79,14 +80,15 @@ TEST_F(lsp_context_macro_documentation, hover)
 
 TEST_F(lsp_context_macro_documentation, completion)
 {
-    auto res = a.context().lsp_ctx->completion(opencode_loc, { 11, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 11, 1 }, '\0', completion_trigger_kind::invoked);
 
-    std::string macro_signature = "MAC &FIRST_PARAM,&SECOND_PARAM=1";
-    lsp::completion_item_s expected("MAC", macro_signature, "MAC", macro_documentation, completion_item_kind::macro);
-    auto it = std::find_if(res.begin(), res.end(), [&](const auto& item) { return item.label == expected.label; });
+    ASSERT_TRUE(std::holds_alternative<completion_list_instructions>(res_v));
 
-    ASSERT_NE(it, res.end()) << "The following item was not found in result: \n" << expected;
-    EXPECT_EQ(*it, expected);
+    const auto& res = std::get<completion_list_instructions>(res_v);
+
+    ASSERT_TRUE(res.macros);
+    EXPECT_TRUE(std::any_of(
+        res.macros->begin(), res.macros->end(), [](const auto& m) { return m.first->id.to_string_view() == "MAC"; }));
 }
 
 TEST(lsp_context_macro_documentation_incomplete, incomplete_macro)
@@ -97,13 +99,7 @@ TEST(lsp_context_macro_documentation_incomplete, incomplete_macro)
  )";
     analyzer a(input, analyzer_options { file_loc });
     a.analyze();
-    auto res = a.context().lsp_ctx->completion(file_loc, { 0, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(file_loc, { 0, 1 }, '\0', completion_trigger_kind::invoked);
 
-    lsp::completion_item_s expected("ASPACE", "ASPACE ", "ASPACE", "```\n \n```\n", completion_item_kind::macro);
-    auto it = std::find_if(res.begin(), res.end(), [&](const auto& item) {
-        return item.label == expected.label && item.kind == completion_item_kind::macro;
-    });
-
-    ASSERT_NE(it, res.end()) << "The following item was not found in result: \n" << expected;
-    EXPECT_EQ(*it, expected);
+    EXPECT_TRUE(std::holds_alternative<completion_list_instructions>(res_v));
 }

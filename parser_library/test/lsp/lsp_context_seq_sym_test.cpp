@@ -16,6 +16,7 @@
 
 #include "analyzer_fixture.h"
 #include "lsp_context_test_helper.h"
+#include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
@@ -88,27 +89,27 @@ TEST_F(lsp_context_seq_sym, hover)
 
 TEST_F(lsp_context_seq_sym, completion_in_macro)
 {
-    auto res = a.context().lsp_ctx->completion(opencode_loc, { 6, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 6, 1 }, '\0', completion_trigger_kind::invoked);
 
+    ASSERT_TRUE(std::holds_alternative<const context::label_storage*>(res_v));
 
-    lsp::completion_item_s expected(".INMAC", "Sequence symbol", ".INMAC", "", completion_item_kind::seq_sym);
+    const auto& res = *std::get<const context::label_storage*>(res_v);
 
     ASSERT_EQ(res.size(), 1U);
-    EXPECT_EQ(res[0], expected);
+    EXPECT_EQ(res.begin()->first.to_string_view(), "INMAC");
 }
 
 TEST_F(lsp_context_seq_sym, completion_out_of_macro)
 {
-    auto res = a.context().lsp_ctx->completion(opencode_loc, { 13, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 13, 1 }, '\0', completion_trigger_kind::invoked);
 
+    ASSERT_TRUE(std::holds_alternative<const context::label_storage*>(res_v));
 
-    lsp::completion_item_s expected(".OUTMAC", "Sequence symbol", ".OUTMAC", "", completion_item_kind::seq_sym);
+    const auto& res = *std::get<const context::label_storage*>(res_v);
 
     ASSERT_EQ(res.size(), 1U);
-    EXPECT_EQ(res[0], expected);
+    EXPECT_EQ(res.begin()->first.to_string_view(), "OUTMAC");
 }
-
-
 
 TEST_F(lsp_context_seq_sym, definition_no_definition)
 {

@@ -36,7 +36,7 @@ suite('Code actions', () => {
 
         const codeActionsList: vscode.CodeAction[] = await vscode.commands.executeCommand('vscode.executeCodeActionProvider', editor.document.uri, new vscode.Range(0, 10, 0, 15));
 
-        assert.equal(codeActionsList.length, 4 + 2);
+        assert.equal(codeActionsList.length, 4 + 3);
     }).timeout(5000).slow(2000);
 
     test('Diagnostics suppressed', async () => {

@@ -79,20 +79,17 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
 
     async provideCodeActions(document: vscode.TextDocument, range: vscode.Range | vscode.Selection, context: vscode.CodeActionContext, token: vscode.CancellationToken): Promise<(vscode.CodeAction | vscode.Command)[]> {
         const result: vscode.CodeAction[] = [];
-        const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
-        if (!workspace) return null;
-
-        const [procGrps, pgmConf, ebgConf] = await configurationExists(workspace.uri);
-
-        let suggestProcGrpsChange = false;
-        let suggestPgmConfChange = false;
 
         const E049 = context.diagnostics.filter(x => x.code === 'E049');
+        if (E049.length > 0)
+            result.push(...await generateOpcodeCodeActions(E049.map(diag => { return { diag, opcode: document.getText(diag.range).toUpperCase() }; }), this.client, document.uri, 1000));
+
+        const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
+        if (!workspace) return result;
+        const [procGrps, pgmConf, ebgConf] = await configurationExists(workspace.uri);
 
         if (E049.length > 0) {
             if (procGrps.exists) {
-                result.push(...await generateOpcodeCodeActions(E049.map(diag => { return { diag, opcode: document.getText(diag.range).toUpperCase() }; }), this.client, document.uri, 1000));
-
                 result.push({
                     title: 'Download missing dependencies',
                     command: {
@@ -111,11 +108,10 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
                     kind: vscode.CodeActionKind.QuickFix
                 });
             }
-            suggestProcGrpsChange = true;
         }
-        if (E049.length > 0 || context.diagnostics.some(x => x.code === 'SUP')) {
-            suggestPgmConfChange = true;
-        }
+
+        let suggestProcGrpsChange = E049.length > 0;
+        let suggestPgmConfChange = E049.length > 0 || context.diagnostics.some(x => x.code === 'SUP');
 
         if (suggestProcGrpsChange || suggestPgmConfChange) {
             if (!procGrps.exists && !pgmConf.exists && !ebgConf.exists) {

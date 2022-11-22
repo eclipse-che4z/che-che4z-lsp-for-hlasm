@@ -16,6 +16,7 @@
 
 #include "analyzer_fixture.h"
 #include "instruction_set_version.h"
+#include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
@@ -52,8 +53,8 @@ struct lsp_context_instr : public ::testing::Test
 
         a.analyze();
 
-        return a.context().lsp_ctx->completion(
-            opencode_file_loc, { 2, 3 }, 'R', completion_trigger_kind::trigger_character);
+        return workspaces::workspace::generate_completion(a.context().lsp_ctx->completion(
+            opencode_file_loc, { 2, 3 }, 'R', completion_trigger_kind::trigger_character));
     }
 };
 

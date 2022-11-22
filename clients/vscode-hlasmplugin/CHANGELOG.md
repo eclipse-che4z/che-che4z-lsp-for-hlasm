@@ -7,6 +7,7 @@
 - Code actions for an unknown operation code
 - Quick fixes for typos in instruction and macro names added to the code actions
 - Endevor preprocessor statements highlighting and parsing
+- Instruction suggestions are included in the completion list
 
 ## [1.5.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.4.0...1.5.0) (2022-11-02)
 

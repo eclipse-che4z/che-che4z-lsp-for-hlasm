@@ -16,6 +16,7 @@
 
 #include "analyzer_fixture.h"
 #include "lsp_context_test_helper.h"
+#include "workspaces/workspace.h"
 
 
 using namespace hlasm_plugin::parser_library;
@@ -155,32 +156,36 @@ void sort_occurence_vector(std::vector<lsp::completion_item_s>& v)
 
 TEST_F(lsp_context_macro_in_opencode, completion_var_in_macro)
 {
-    auto res = a.context().lsp_ctx->completion(opencode_loc, { 4, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 4, 1 }, '\0', completion_trigger_kind::invoked);
 
-    std::vector<completion_item_s> expected {
-        { "&LABEL", "MACRO parameter", "&LABEL", "", completion_item_kind::var_sym },
-        { "&POS_PAR", "MACRO parameter", "&POS_PAR", "", completion_item_kind::var_sym },
-        { "&KEY_PAR", "MACRO parameter", "&KEY_PAR", "", completion_item_kind::var_sym }
-    };
+    ASSERT_TRUE(std::holds_alternative<const vardef_storage*>(res_v));
 
-    sort_occurence_vector(res);
-    sort_occurence_vector(expected);
+    const auto& res_map = *std::get<const vardef_storage*>(res_v);
+    std::vector<std::string_view> res;
+    std::transform(
+        res_map.begin(), res_map.end(), std::back_inserter(res), [](const auto& v) { return v.name.to_string_view(); });
 
-    EXPECT_EQ(res, expected);
+    const std::vector<std::string_view> expected { "KEY_PAR", "LABEL", "POS_PAR" };
+
+    EXPECT_TRUE(std::is_permutation(res.begin(), res.end(), expected.begin(), expected.end()));
+    EXPECT_TRUE(std::all_of(res_map.begin(), res_map.end(), [](const auto& v) { return v.macro_param; }));
 }
 
 TEST_F(lsp_context_macro_in_opencode, completion_var_outside_macro)
 {
-    auto res = a.context().lsp_ctx->completion(opencode_loc, { 11, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 11, 1 }, '\0', completion_trigger_kind::invoked);
 
-    std::vector<completion_item_s> expected {
-        { "&KEY_PAR", "SETA variable", "&KEY_PAR", "", completion_item_kind::var_sym }
-    };
+    ASSERT_TRUE(std::holds_alternative<const vardef_storage*>(res_v));
 
-    sort_occurence_vector(res);
-    sort_occurence_vector(expected);
+    const auto& res_map = *std::get<const vardef_storage*>(res_v);
+    std::vector<std::string_view> res;
+    std::transform(
+        res_map.begin(), res_map.end(), std::back_inserter(res), [](const auto& v) { return v.name.to_string_view(); });
 
-    EXPECT_EQ(res, expected);
+    const std::vector<std::string_view> expected { "KEY_PAR" };
+
+    EXPECT_TRUE(std::is_permutation(res.begin(), res.end(), expected.begin(), expected.end()));
+    EXPECT_TRUE(std::none_of(res_map.begin(), res_map.end(), [](const auto& v) { return v.macro_param; }));
 }
 
 TEST_F(lsp_context_macro_in_opencode, hover_unknown_macro)

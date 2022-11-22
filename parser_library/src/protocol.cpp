@@ -35,6 +35,7 @@ std::string_view completion_item::detail() const { return item_.detail; }
 std::string_view completion_item::documentation() const { return item_.documentation; }
 std::string_view completion_item::insert_text() const { return item_.insert_text; }
 bool completion_item::is_snippet() const { return item_.snippet; }
+std::string_view completion_item::suggestion_for() const { return item_.suggestion_for; }
 
 completion_item sequence_item_get(const sequence<completion_item, const lsp::completion_item_s*>* self, size_t index)
 {
