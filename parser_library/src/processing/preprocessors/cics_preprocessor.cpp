@@ -832,7 +832,7 @@ public:
     }
 };
 
-class cics_preprocessor : public preprocessor
+class cics_preprocessor final : public preprocessor
 {
     lexing::logical_line m_logical_line;
     std::string m_operands;
@@ -1341,7 +1341,7 @@ public:
     // Inherited via preprocessor
     document generate_replacement(document doc) override
     {
-        m_statements.clear();
+        clear_statements();
         m_result.clear();
         m_result.reserve(doc.size());
 
@@ -1410,19 +1410,6 @@ public:
     }
 
     cics_preprocessor_options current_options() const { return m_options; }
-
-    void collect_statements(
-        std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& statement_collector) override
-    {
-        statement_collector.insert(statement_collector.end(),
-            std::make_move_iterator(m_statements.begin()),
-            std::make_move_iterator(m_statements.end()));
-    }
-
-    const std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& get_statements() const override
-    {
-        return m_statements;
-    }
 };
 
 } // namespace

@@ -28,15 +28,32 @@ namespace {
 const auto copy1_loc = resource_location("COPY1");
 const auto copy2_loc = resource_location("COPY2");
 const auto member_loc = resource_location("MEMBER");
-
-semantics::source_info_processor m_src_info(false);
-context::id_storage m_ids;
 } // namespace
 
-TEST(db2_preprocessor, first_line)
+class db2_preprocessor_test : public testing::Test
 {
-    auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr, m_src_info, m_ids);
+public:
+    db2_preprocessor_test()
+        : m_src_info(false)
+    {}
+
+    std::unique_ptr<preprocessor> create_preprocessor(
+        db2_preprocessor_options opts, library_fetcher libs, diagnostic_op_consumer_container* diags)
+    {
+        return preprocessor::create(opts, libs, diags, m_src_info, m_ids);
+    }
+
+protected:
+    semantics::source_info_processor m_src_info;
+    context::id_storage m_ids;
+    diagnostic_op_consumer_container m_diags;
+};
+
+
+TEST_F(db2_preprocessor_test, first_line)
+{
+    auto p = create_preprocessor(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
     std::string_view text = "";
 
     auto result = p->generate_replacement(document());
@@ -48,10 +65,10 @@ TEST(db2_preprocessor, first_line)
     EXPECT_TRUE(std::all_of(result.begin(), result.end(), [](const auto& l) { return !l.is_original(); }));
 }
 
-TEST(db2_preprocessor, last_line)
+TEST_F(db2_preprocessor_test, last_line)
 {
-    auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr, m_src_info, m_ids);
+    auto p = create_preprocessor(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
     std::string_view text = "\n END ";
 
     auto result = p->generate_replacement(document(text));
@@ -63,17 +80,15 @@ TEST(db2_preprocessor, last_line)
     EXPECT_EQ(std::count_if(result.begin(), result.end(), [](const auto& l) { return l.text() == " END "; }), 1);
 }
 
-TEST(db2_preprocessor, include)
+TEST_F(db2_preprocessor_test, include)
 {
-    auto p = preprocessor::create(
+    auto p = create_preprocessor(
         db2_preprocessor_options {},
         [](std::string_view s) {
             EXPECT_EQ(s, "MEMBER");
             return "member content";
         },
-        nullptr,
-        m_src_info,
-        m_ids);
+        nullptr);
     std::string_view text = "\n EXEC SQL INCLUDE MEMBER ";
 
     auto result = p->generate_replacement(document(text));
@@ -86,19 +101,17 @@ TEST(db2_preprocessor, include)
         0);
 }
 
-TEST(db2_preprocessor, include_sqlca)
+TEST_F(db2_preprocessor_test, include_sqlca)
 {
     bool called = false;
-    auto p = preprocessor::create(
+    auto p = create_preprocessor(
         db2_preprocessor_options {},
         [&called](std::string_view) {
             called = true;
             return std::nullopt;
         },
-        nullptr,
-        m_src_info,
-        m_ids);
-    std::string_view text = "\n EXEC SQL INCLUDE SQLCA ";
+        nullptr);
+    std::string_view text = "\n EXEC SQL INCLUDE SqLcA ";
 
     auto result = p->generate_replacement(document(text));
 
@@ -108,19 +121,17 @@ TEST(db2_preprocessor, include_sqlca)
         1);
 }
 
-TEST(db2_preprocessor, include_sqlda)
+TEST_F(db2_preprocessor_test, include_sqlda)
 {
     bool called = false;
-    auto p = preprocessor::create(
+    auto p = create_preprocessor(
         db2_preprocessor_options {},
         [&called](std::string_view) {
             called = true;
             return std::nullopt;
         },
-        nullptr,
-        m_src_info,
-        m_ids);
-    std::string_view text = "\n EXEC SQL INCLUDE SQLDA ";
+        nullptr);
+    std::string_view text = "\n EXEC SQL INCLUDE SqLdA ";
 
     auto result = p->generate_replacement(document(text));
 
@@ -130,18 +141,16 @@ TEST(db2_preprocessor, include_sqlda)
         1);
 }
 
-TEST(db2_preprocessor, sql_like)
+TEST_F(db2_preprocessor_test, sql_like)
 {
     bool called = false;
-    auto p = preprocessor::create(
+    auto p = create_preprocessor(
         db2_preprocessor_options {},
         [&called](std::string_view) {
             called = true;
             return std::nullopt;
         },
-        nullptr,
-        m_src_info,
-        m_ids);
+        nullptr);
     std::string_view text = "\n EXEC SQL SELECT 1 INTO :A FROM SYSIBM.SYSDUMMY1";
 
     auto result = p->generate_replacement(document(text));
@@ -154,10 +163,10 @@ TEST(db2_preprocessor, sql_like)
         result.end());
 }
 
-TEST(db2_preprocessor, with_label)
+TEST_F(db2_preprocessor_test, with_label)
 {
-    auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr, m_src_info, m_ids);
+    auto p = create_preprocessor(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
     std::string_view text = "\nABC EXEC SQL WHATEVER";
 
     auto result = p->generate_replacement(document(text));
@@ -176,25 +185,23 @@ TEST(db2_preprocessor, with_label)
         result.end());
 }
 
-TEST(db2_preprocessor, missing_member)
+TEST_F(db2_preprocessor_test, missing_member)
 {
-    diagnostic_op_consumer_container diags;
-    auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags, m_src_info, m_ids);
+    auto p = create_preprocessor(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &m_diags);
 
     std::string_view text = " EXEC SQL INCLUDE MISSING";
 
     auto doc = p->generate_replacement(document(text));
 
     EXPECT_NE(doc.size(), 0);
-    EXPECT_TRUE(matches_message_codes(diags.diags, { "DB002" }));
+    EXPECT_TRUE(matches_message_codes(m_diags.diags, { "DB002" }));
 }
 
-TEST(db2_preprocessor, bad_continuation)
+TEST_F(db2_preprocessor_test, bad_continuation)
 {
-    diagnostic_op_consumer_container diags;
-    auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags, m_src_info, m_ids);
+    auto p = create_preprocessor(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &m_diags);
 
     std::string_view text = R"( EXEC SQL PRETENT SQL STATEMENT                                        X
 badcontinuation)";
@@ -202,27 +209,24 @@ badcontinuation)";
     auto doc = p->generate_replacement(document(text));
 
     EXPECT_NE(doc.size(), 0);
-    EXPECT_TRUE(matches_message_codes(diags.diags, { "DB001" }));
+    EXPECT_TRUE(matches_message_codes(m_diags.diags, { "DB001" }));
 }
 
-TEST(db2_preprocessor, no_nested_include)
+TEST_F(db2_preprocessor_test, no_nested_include)
 {
-    diagnostic_op_consumer_container diags;
-    auto p = preprocessor::create(
+    auto p = create_preprocessor(
         db2_preprocessor_options {},
         [](std::string_view s) {
             EXPECT_EQ(s, "MEMBER");
             return " EXEC SQL INCLUDE MEMBER";
         },
-        &diags,
-        m_src_info,
-        m_ids);
+        &m_diags);
     std::string_view text = " EXEC SQL INCLUDE MEMBER ";
 
     auto doc = p->generate_replacement(document(text));
     EXPECT_NE(doc.size(), 0);
 
-    EXPECT_TRUE(matches_message_codes(diags.diags, { "DB003" }));
+    EXPECT_TRUE(matches_message_codes(m_diags.diags, { "DB003" }));
 }
 
 TEST(db2_preprocessor, sqlsect_available)
@@ -357,6 +361,22 @@ TEST(db2_preprocessor, include_empty)
         { "MEMBER", "" },
     });
     std::string input = " EXEC SQL INCLUDE MEMBER ";
+
+    analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
+}
+
+TEST(db2_preprocessor, include_insensitive)
+{
+    mock_parse_lib_provider libs({
+        { "MEMBER", "" },
+    });
+    std::string input = " EXEC SQL INCLUDE MeMbEr";
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
@@ -646,11 +666,10 @@ TEST(db2_preprocessor, end_sqldsect_injection)
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
-TEST(db2_preprocessor, sql_types)
+TEST_F(db2_preprocessor_test, sql_types)
 {
-    diagnostic_op_consumer_container diags;
-    auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags, m_src_info, m_ids);
+    auto p = create_preprocessor(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &m_diags);
     std::string_view text = R"(
 RE SQL TYPE IS RESULT_SET_LOCATOR VARYING
 RO SQL TYPE IS ROWID
@@ -771,7 +790,7 @@ DFILE_NAME DS CL255
 
     EXPECT_NE(doc.text().find(expected), std::string_view::npos);
 
-    EXPECT_TRUE(diags.diags.empty());
+    EXPECT_TRUE(m_diags.diags.empty());
 }
 
 TEST(db2_preprocessor, sql_types_with_space)
@@ -839,9 +858,11 @@ TEST(db2_preprocessor, sql_type_fails)
              "A SQL TYPE IS TABLE LIKE AAA AS LOCATORR",
          })
     {
+        semantics::source_info_processor src_info(false);
+        context::id_storage ids;
         diagnostic_op_consumer_container diags;
         auto p = preprocessor::create(
-            db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags, m_src_info, m_ids);
+            db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags, src_info, ids);
 
         p->generate_replacement(document(text));
 
@@ -849,17 +870,16 @@ TEST(db2_preprocessor, sql_type_fails)
     }
 }
 
-TEST(db2_preprocessor, sql_type_warn_on_continuation)
+TEST_F(db2_preprocessor_test, sql_type_warn_on_continuation)
 {
     std::string_view text = "A SQL TYPE IS TABLE LIKE AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n"
                             "                AS LOCATOR";
-    diagnostic_op_consumer_container diags;
-    auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags, m_src_info, m_ids);
+    auto p = create_preprocessor(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &m_diags);
 
     p->generate_replacement(document(text));
 
-    EXPECT_TRUE(matches_message_codes(diags.diags, { "DB005" }));
+    EXPECT_TRUE(matches_message_codes(m_diags.diags, { "DB005" }));
 }
 
 TEST(db2_preprocessor, no_codegen_for_unacceptable_sql_statement)
@@ -944,10 +964,10 @@ RO_LEN  EQU *-RO
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "RO_LEN"), 42);
 }
 
-TEST(db2_preprocessor, conditional)
+TEST_F(db2_preprocessor_test, conditional)
 {
-    auto p = preprocessor::create(
-        db2_preprocessor_options("", true), [](std::string_view) { return std::nullopt; }, nullptr, m_src_info, m_ids);
+    auto p = create_preprocessor(
+        db2_preprocessor_options("", true), [](std::string_view) { return std::nullopt; }, nullptr);
     std::string_view text = "";
 
     auto result = p->generate_replacement(document());

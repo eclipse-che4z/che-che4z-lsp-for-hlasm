@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Broadcom.
+ * Copyright (c) 2022 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -83,18 +83,19 @@ TEST_F(lsp_context_endevor_preprocessor_test, go_to)
 
 TEST_F(lsp_context_endevor_preprocessor_test, refs)
 {
-    location_list expected_inc_locations { location(position(1, 0), source_loc), location(position(3, 0), source_loc) };
-    location_list expected_include_locations { location(position(2, 0), source_loc) };
+    location_list expected_inc_locations {
+        location(position(1, 0), source_loc), location(position(2, 0), source_loc), location(position(3, 0), source_loc)
+    };
     location_list expected_member_locations { location(position(1, 6), source_loc),
         location(position(2, 11), source_loc) };
     location_list expected_member2_locations { location(position(3, 6), source_loc) };
     location_list expected_blabla_locations {};
 
-    // -INC reference
+    // -INC/++INCLUDE reference
     EXPECT_EQ(expected_inc_locations, a.context().lsp_ctx->references(source_loc, position(1, 1)));
-    // ++INCLUDE reference
-    EXPECT_EQ(expected_include_locations, a.context().lsp_ctx->references(source_loc, position(2, 5)));
-    // -INC reference
+    // -INC/++INCLUDE reference
+    EXPECT_EQ(expected_inc_locations, a.context().lsp_ctx->references(source_loc, position(2, 5)));
+    // -INC/++INCLUDE reference
     EXPECT_EQ(expected_inc_locations, a.context().lsp_ctx->references(source_loc, position(3, 2)));
 
     // MEMBER reference

@@ -22,134 +22,104 @@
 using namespace hlasm_plugin::parser_library::processing;
 using namespace hlasm_plugin::utils::resource;
 
-namespace {
-semantics::source_info_processor m_src_info(false);
-context::id_storage m_ids;
-} // namespace
-
-TEST(endevor_preprocessor, basic_inc)
+class endevor_preprocessor_test : public testing::Test
 {
-    diagnostic_op_consumer_container diags;
+public:
+    endevor_preprocessor_test()
+        : m_src_info(false)
+    {}
 
-    int callback_count = 0;
+    std::unique_ptr<preprocessor> create_preprocessor(library_fetcher libs)
+    {
+        return preprocessor::create(endevor_preprocessor_options(), libs, &m_diags, m_src_info, m_ids);
+    }
 
-    auto p = preprocessor::create(
-        endevor_preprocessor_options(),
-        [&callback_count](std::string_view s) {
-            EXPECT_EQ(s, "AAA");
-            ++callback_count;
-            return std::string("TEST");
-        },
-        &diags,
-        m_src_info,
-        m_ids);
+protected:
+    semantics::source_info_processor m_src_info;
+    context::id_storage m_ids;
+    diagnostic_op_consumer_container m_diags;
+    int m_callback_count = 0;
+};
+
+TEST_F(endevor_preprocessor_test, basic_inc)
+{
+    auto p = create_preprocessor([&callback_count = m_callback_count](std::string_view s) {
+        EXPECT_EQ(s, "AAA");
+        ++callback_count;
+        return std::string("TEST");
+    });
 
     auto result = p->generate_replacement(document("-INC AAA"));
 
-    EXPECT_EQ(callback_count, 1);
-    EXPECT_TRUE(diags.diags.empty());
+    EXPECT_EQ(m_callback_count, 1);
+    EXPECT_TRUE(m_diags.diags.empty());
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.at(0).text(), "TEST");
 }
 
-TEST(endevor_preprocessor, basic_include)
+TEST_F(endevor_preprocessor_test, basic_include)
 {
-    diagnostic_op_consumer_container diags;
-
-    int callback_count = 0;
-
-    auto p = preprocessor::create(
-        endevor_preprocessor_options(),
-        [&callback_count](std::string_view s) {
-            EXPECT_EQ(s, "AAA");
-            ++callback_count;
-            return std::string("TEST");
-        },
-        &diags,
-        m_src_info,
-        m_ids);
+    auto p = create_preprocessor([&callback_count = m_callback_count](std::string_view s) {
+        EXPECT_EQ(s, "AAA");
+        ++callback_count;
+        return std::string("TEST");
+    });
 
     auto result = p->generate_replacement(document("++INCLUDE AAA"));
 
-    EXPECT_EQ(callback_count, 1);
-    EXPECT_TRUE(diags.diags.empty());
+    EXPECT_EQ(m_callback_count, 1);
+    EXPECT_TRUE(m_diags.diags.empty());
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.at(0).text(), "TEST");
 }
 
-TEST(endevor_preprocessor, missing_member)
+TEST_F(endevor_preprocessor_test, missing_member)
 {
-    diagnostic_op_consumer_container diags;
-
-    int callback_count = 0;
-
-    auto p = preprocessor::create(
-        endevor_preprocessor_options(),
-        [&callback_count](std::string_view s) {
-            EXPECT_EQ(s, "AAA");
-            ++callback_count;
-            return std::nullopt;
-        },
-        &diags,
-        m_src_info,
-        m_ids);
+    auto p = create_preprocessor([&callback_count = m_callback_count](std::string_view s) {
+        EXPECT_EQ(s, "AAA");
+        ++callback_count;
+        return std::nullopt;
+    });
 
     auto result = p->generate_replacement(document("++INCLUDE AAA\nBBB"));
 
-    EXPECT_EQ(callback_count, 1);
+    EXPECT_EQ(m_callback_count, 1);
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.at(0).text(), "BBB");
-    EXPECT_TRUE(matches_message_codes(diags.diags, { "END001" }));
+    EXPECT_TRUE(matches_message_codes(m_diags.diags, { "END001" }));
 }
 
-TEST(endevor_preprocessor, cycle)
+TEST_F(endevor_preprocessor_test, cycle)
 {
-    diagnostic_op_consumer_container diags;
-
-    int callback_count = 0;
-
-    auto p = preprocessor::create(
-        endevor_preprocessor_options(),
-        [&callback_count](std::string_view s) {
-            EXPECT_EQ(s, "AAA");
-            ++callback_count;
-            return std::string("-INC AAA");
-        },
-        &diags,
-        m_src_info,
-        m_ids);
+    auto p = create_preprocessor([&callback_count = m_callback_count](std::string_view s) {
+        EXPECT_EQ(s, "AAA");
+        ++callback_count;
+        return std::string("-INC AaA");
+    });
 
     auto result = p->generate_replacement(document("++INCLUDE AAA"));
 
-    EXPECT_EQ(callback_count, 1);
+    EXPECT_EQ(m_callback_count, 1);
     EXPECT_EQ(result.size(), 0);
-    EXPECT_TRUE(matches_message_codes(diags.diags, { "END002" }));
+    EXPECT_TRUE(matches_message_codes(m_diags.diags, { "END002" }));
 }
 
-TEST(endevor_preprocessor, nested)
+TEST_F(endevor_preprocessor_test, nested)
 {
-    diagnostic_op_consumer_container diags;
-
-    int callback_count = 0;
-
-    auto p = preprocessor::create(
-        endevor_preprocessor_options(),
-        [&callback_count](std::string_view s) -> std::optional<std::string> {
+    auto p =
+        create_preprocessor([&callback_count = m_callback_count](std::string_view s) -> std::optional<std::string> {
             ++callback_count;
             if (s == "MEMBER")
                 return "BBB\n-INC NESTED\nDDD";
             if (s == "NESTED")
                 return "CCC";
             return std::nullopt;
-        },
-        &diags,
-        m_src_info,
-        m_ids);
+        });
 
     auto result = p->generate_replacement(document("AAA\n-INC MEMBER\nEEE"));
 
-    EXPECT_EQ(callback_count, 2);
-    EXPECT_TRUE(diags.diags.empty());
+    EXPECT_EQ(m_callback_count, 2);
+    EXPECT_TRUE(m_diags.diags.empty());
     EXPECT_EQ(result.size(), 5);
     EXPECT_EQ(result.text(), "AAA\nBBB\nCCC\nDDD\nEEE\n");
 }
@@ -162,7 +132,7 @@ TESTVAL EQU 42
 )" },
     });
     std::string input = R"(
--INC MEMBER
+-INC MeMbEr
 )";
 
     analyzer a(input, analyzer_options { &libs, endevor_preprocessor_options {} });

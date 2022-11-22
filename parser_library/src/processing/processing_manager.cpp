@@ -252,21 +252,18 @@ void processing_manager::finish_copy_member(copy_processing_result result)
 
 void processing_manager::finish_opencode()
 {
-    if (auto statements = opencode_prov_.get_preprocessor_statements())
+    for (const auto& stmt : opencode_prov_.get_preprocessor_statements())
     {
-        for (const auto& stmt : *statements)
-        {
-            if (!stmt)
-                continue;
+        if (!stmt)
+            continue;
 
-            lsp_analyzer_.analyze(*stmt);
+        lsp_analyzer_.analyze(*stmt);
 
-            if (stmt->m_resemblence == context::id_storage::well_known::COPY)
-                asm_processor::process_copy(*stmt, ctx_, lib_provider_, nullptr, false);
+        if (stmt->m_resemblence == context::id_storage::well_known::COPY)
+            asm_processor::process_copy(*stmt, ctx_, lib_provider_, nullptr, false);
 
-            // diagnosable_impl::add_diagnostic(diagnostic_s::fade(file_loc_, stmt->stmt_range_ref())); // todo create
-            // separate 'fade' container
-        }
+        // diagnosable_impl::add_diagnostic(diagnostic_s::fade(file_loc_, stmt->stmt_range_ref())); // todo create
+        // separate 'fade' container
     }
 
     lsp_analyzer_.opencode_finished();

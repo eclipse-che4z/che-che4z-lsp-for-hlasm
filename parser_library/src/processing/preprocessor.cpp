@@ -44,6 +44,24 @@ bool preprocessor::is_continued(std::string_view s)
     return !cont.empty() && cont != " ";
 }
 
+void preprocessor::clear_statements() { m_statements.clear(); }
+
+void preprocessor::set_statement(std::shared_ptr<semantics::preprocessor_statement_si> stmt)
+{
+    m_statements.emplace_back(std::move(stmt));
+}
+
+void preprocessor::set_statements(std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> stmts)
+{
+    m_statements.insert(
+        m_statements.end(), std::make_move_iterator(stmts.begin()), std::make_move_iterator(stmts.end()));
+}
+
+std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> preprocessor::take_statements()
+{
+    return std::move(m_statements);
+}
+
 void preprocessor::do_highlighting(
     const semantics::preprocessor_statement_si& stmt, semantics::source_info_processor& src_proc)
 {

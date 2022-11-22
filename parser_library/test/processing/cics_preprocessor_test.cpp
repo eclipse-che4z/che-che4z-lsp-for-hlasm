@@ -29,11 +29,6 @@ cics_preprocessor_options test_cics_current_options(const preprocessor& p);
 std::pair<int, std::string> test_cics_miniparser(const std::vector<std::string_view>& list);
 } // namespace hlasm_plugin::parser_library::processing::test
 
-namespace {
-semantics::source_info_processor m_src_info(false);
-context::id_storage m_ids;
-} // namespace
-
 TEST(cics_preprocessor, asm_xopts_parsing)
 {
     for (const auto& [text_template, expected] :
@@ -51,8 +46,11 @@ TEST(cics_preprocessor, asm_xopts_parsing)
             { "*ASM XOPTS(SP)", cics_preprocessor_options() },
         })
     {
+        semantics::source_info_processor src_info(false);
+        context::id_storage ids;
+
         auto p = preprocessor::create(
-            cics_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr, m_src_info, m_ids);
+            cics_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr, src_info, ids);
 
         auto result = p->generate_replacement(document(text_template));
         EXPECT_GT(result.size(), 0);
@@ -83,10 +81,13 @@ std::ostream& operator<<(std::ostream& os, const cics_preprocessor_tests_basics_
 
 TEST_P(cics_preprocessor_tests, basics)
 {
+    semantics::source_info_processor src_info(false);
+    context::id_storage ids;
     const auto& [input, expected] = GetParam();
     auto [text_template, config] = input;
+
     auto p = preprocessor::create(
-        config, [](std::string_view) { return std::nullopt; }, nullptr, m_src_info, m_ids);
+        config, [](std::string_view) { return std::nullopt; }, nullptr, src_info, ids);
 
     auto result = p->generate_replacement(document(text_template));
 

@@ -139,7 +139,7 @@ public:
 
     bool finished() const override;
 
-    const std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>* get_preprocessor_statements() const;
+    std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> get_preprocessor_statements() const;
 
 private:
     void feed_line(const parsing::parser_holder& p, bool is_process);

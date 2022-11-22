@@ -67,39 +67,31 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
     else if (preprocessor_args.size() == 1)
         return transform_preprocessor(preprocessor_args.front());
 
-    struct combined_preprocessor : processing::preprocessor
+    struct combined_preprocessor final : processing::preprocessor
     {
         mutable std::vector<std::unique_ptr<semantics::preprocessor_statement_si>> m_statements;
 
         std::vector<std::unique_ptr<processing::preprocessor>> pp;
+
         document generate_replacement(document doc) override
         {
-            m_statements.clear();
+            clear_statements();
 
             for (const auto& p : pp)
                 doc = p->generate_replacement(std::move(doc));
+
             return doc;
         }
 
-        void collect_statements(
-            std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& statement_collector) override
-        {
-            statement_collector.insert(statement_collector.end(),
-                std::make_move_iterator(m_statements.begin()),
-                std::make_move_iterator(m_statements.end()));
-        }
-
-        const std::vector<std::unique_ptr<semantics::preprocessor_statement_si>>& get_statements() const override
+        std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> take_statements() override
         {
             for (const auto& p : pp)
-            {
-                p->collect_statements(m_statements);
-            }
+                set_statements(p->take_statements());
 
-            return m_statements;
+            return preprocessor::take_statements();
         }
-
     } tmp;
+
     std::transform(
         preprocessor_args.begin(), preprocessor_args.end(), std::back_inserter(tmp.pp), transform_preprocessor);
 
@@ -130,7 +122,7 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
                     },
                     *this,
                     src_proc_,
-                    *ctx_.hlasm_ctx->ids_ptr()),
+                    ctx_.hlasm_ctx->ids()),
                 opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
                                                                : processing::opencode_provider_options {},
                 opts.vf_monitor),

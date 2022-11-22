@@ -774,7 +774,7 @@ bool asm_processor::process_copy(const semantics::complete_statement& stmt,
     }
 
     auto& expr = stmt.operands_ref().value.front()->access_asm()->access_expr()->expression;
-    auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(expr.get());
+    auto sym_expr = dynamic_cast<const expressions::mach_expr_symbol*>(expr.get());
 
     if (!sym_expr)
     {

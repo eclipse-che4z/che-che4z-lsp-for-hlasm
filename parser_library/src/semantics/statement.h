@@ -158,7 +158,8 @@ struct statement_si_defer_done : public complete_statement
     const range& stmt_range_ref() const override { return deferred_stmt->stmt_range_ref(); }
 };
 
-struct preprocessor_statement_si : public statement_si
+struct preprocessor_statement_si
+    : public statement_si // todo think if the statement_si inheritance is too heavy for preprocessor statements
 {
     context::id_index m_resemblence;
 
@@ -181,7 +182,6 @@ struct preprocessor_statement_si : public statement_si
 struct endevor_statement_si : public preprocessor_statement_si
 {
     endevor_statement_si(range stmt_range,
-        std::string_view instruction,
         range instruction_range,
         std::string_view copy_member,
         range copy_member_range,
