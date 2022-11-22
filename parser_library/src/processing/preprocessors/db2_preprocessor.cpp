@@ -24,6 +24,8 @@
 #include "lexing/logical_line.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
+#include "semantics/source_info_processor.h"
+#include "semantics/statement.h"
 #include "utils/concat.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -43,7 +45,7 @@ namespace hlasm_plugin::parser_library::processing {
 namespace {
 using utils::concat;
 
-class db2_preprocessor : public preprocessor
+class db2_preprocessor final : public preprocessor
 {
     lexing::logical_line m_logical_line;
     std::string m_operands;
@@ -232,12 +234,14 @@ class db2_preprocessor : public preprocessor
 
     void process_include(std::string_view operands, size_t lineno)
     {
-        if (operands == "SQLCA")
+        auto operands_upper = context::to_upper_copy(std::string(operands));
+
+        if (operands_upper == "SQLCA")
         {
             inject_SQLCA();
             return;
         }
-        if (operands == "SQLDA")
+        if (operands_upper == "SQLDA")
         {
             inject_SQLDA();
             return;
@@ -246,7 +250,7 @@ class db2_preprocessor : public preprocessor
 
         std::optional<std::string> include_text;
         if (m_libs)
-            include_text = m_libs(operands);
+            include_text = m_libs(operands_upper);
         if (!include_text.has_value())
         {
             if (m_diags)
@@ -445,7 +449,7 @@ class db2_preprocessor : public preprocessor
                 add_ds_line(label, "_DATA", li.prefix + std::to_string(len <= li.limit ? len : li.limit), false);
                 if (len > li.limit)
                     m_result.emplace_back(replaced_line { concat(" ORG   *+(",
-                        // there seems be this strage artifical limit
+                        // there seems be this strange artificial limit
                         std::min(len - li.limit, 1073676289ULL),
                         ")\n") });
                 break;
@@ -788,6 +792,7 @@ class db2_preprocessor : public preprocessor
     // Inherited via preprocessor
     document generate_replacement(document doc) override
     {
+        clear_statements();
         m_source_translated = false;
         m_result.clear();
         m_result.reserve(doc.size());
@@ -817,8 +822,11 @@ public:
 };
 } // namespace
 
-std::unique_ptr<preprocessor> preprocessor::create(
-    const db2_preprocessor_options& opts, library_fetcher libs, diagnostic_op_consumer* diags)
+std::unique_ptr<preprocessor> preprocessor::create(const db2_preprocessor_options& opts,
+    library_fetcher libs,
+    diagnostic_op_consumer* diags,
+    semantics::source_info_processor& src_proc,
+    context::id_storage& ids)
 {
     return std::make_unique<db2_preprocessor>(opts, std::move(libs), diags);
 }

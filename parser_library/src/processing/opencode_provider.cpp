@@ -212,7 +212,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
     const range& op_range)
 {
     m_ctx->hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
-    auto proc_status = proc.get_processing_status(collector.peek_instruction());
+    auto proc_status = proc.get_processing_status(collector.current_instruction());
 
     if (op_text
         && proc_status.first.form != processing_form::IGNORED
@@ -265,7 +265,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
         return nullptr;
 
     m_ctx->hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
-    auto proc_status = proc.get_processing_status(collector.peek_instruction());
+    auto proc_status = proc.get_processing_status(collector.current_instruction());
 
     if (op_text)
     {
@@ -595,6 +595,13 @@ bool opencode_provider::finished() const
     if (o.empty())
         return true;
     return std::none_of(o.begin(), o.end(), [](const auto& c) { return c.suspended(); });
+}
+
+std::vector<std::shared_ptr<semantics::preprocessor_statement_si>>
+opencode_provider::get_preprocessor_statements() const
+{
+    return m_preprocessor ? m_preprocessor->take_statements()
+                          : std::vector<std::shared_ptr<semantics::preprocessor_statement_si>>();
 }
 
 parsing::hlasmparser_multiline& opencode_provider::parser()

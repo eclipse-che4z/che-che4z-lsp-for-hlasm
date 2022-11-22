@@ -22,7 +22,7 @@
 
 namespace hlasm_plugin::parser_library::semantics {
 
-// Stores info that are generated during parsing and do not require access to context (currently only highligting)
+// Stores info that are generated during parsing and do not require access to context (currently only highlighting)
 class source_info_processor
 {
 public:

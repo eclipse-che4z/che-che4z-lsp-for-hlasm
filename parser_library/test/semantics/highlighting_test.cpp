@@ -384,3 +384,22 @@ TEST(highlighting, multiline_macro_param)
 
     EXPECT_EQ(tokens, expected);
 }
+
+TEST(highlighting, endevor_preprocessor_statement)
+{
+    const std::string contents = R"(
+-INC  MEMBER bla bla)";
+
+    analyzer a(
+        contents, analyzer_options { source_file_loc, endevor_preprocessor_options(), collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.source_processor().semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 1, 0 }, { 1, 4 } }, hl_scopes::instruction),
+        token_info({ { 1, 6 }, { 1, 12 } }, hl_scopes::operand),
+        token_info({ { 1, 13 }, { 1, 20 } }, hl_scopes::remark),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}

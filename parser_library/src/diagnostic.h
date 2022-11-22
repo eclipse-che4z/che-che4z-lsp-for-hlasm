@@ -896,6 +896,8 @@ public:
 
     static diagnostic_s info_SUP(const utils::resource::resource_location& file_name);
 
+    static diagnostic_s fade(const utils::resource::resource_location& loc, const range& range);
+
     /*
     E01x - wrong format
     - E010 - unknown name

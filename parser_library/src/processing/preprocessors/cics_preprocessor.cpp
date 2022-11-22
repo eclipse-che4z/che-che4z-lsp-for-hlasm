@@ -21,6 +21,8 @@
 #include "lexing/logical_line.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
+#include "semantics/source_info_processor.h"
+#include "semantics/statement.h"
 #include "utils/concat.h"
 #include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
@@ -830,7 +832,7 @@ public:
     }
 };
 
-class cics_preprocessor : public preprocessor
+class cics_preprocessor final : public preprocessor
 {
     lexing::logical_line m_logical_line;
     std::string m_operands;
@@ -1124,6 +1126,7 @@ public:
     // Inherited via preprocessor
     document generate_replacement(document doc) override
     {
+        clear_statements();
         m_result.clear();
         m_result.reserve(doc.size());
 
@@ -1274,8 +1277,11 @@ public:
 
 } // namespace
 
-std::unique_ptr<preprocessor> preprocessor::create(
-    const cics_preprocessor_options& options, library_fetcher libs, diagnostic_op_consumer* diags)
+std::unique_ptr<preprocessor> preprocessor::create(const cics_preprocessor_options& options,
+    library_fetcher libs,
+    diagnostic_op_consumer* diags,
+    semantics::source_info_processor& src_proc,
+    context::id_storage& ids)
 {
     return std::make_unique<cics_preprocessor>(options, std::move(libs), diags);
 }

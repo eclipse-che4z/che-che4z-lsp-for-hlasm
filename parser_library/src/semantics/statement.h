@@ -158,6 +158,37 @@ struct statement_si_defer_done : public complete_statement
     const range& stmt_range_ref() const override { return deferred_stmt->stmt_range_ref(); }
 };
 
+struct preprocessor_statement_si
+    : public statement_si // todo think if the statement_si inheritance is too heavy for preprocessor statements
+{
+    context::id_index m_resemblence;
+
+    preprocessor_statement_si(range stmt_range,
+        label_si label,
+        instruction_si instruction,
+        operands_si operands,
+        remarks_si remarks,
+        context::id_index resemblence)
+        : statement_si(std::move(stmt_range),
+            std::move(label),
+            std::move(instruction),
+            std::move(operands),
+            std::move(remarks),
+            {})
+        , m_resemblence(resemblence)
+    {}
+};
+
+struct endevor_statement_si : public preprocessor_statement_si
+{
+    endevor_statement_si(range stmt_range,
+        range instruction_range,
+        std::string_view copy_member,
+        range copy_member_range,
+        remarks_si remarks,
+        context::id_storage& ids);
+};
+
 } // namespace hlasm_plugin::parser_library::semantics
 
 #endif

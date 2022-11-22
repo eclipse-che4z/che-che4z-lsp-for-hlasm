@@ -15,6 +15,8 @@
 #include "preprocessor.h"
 
 #include "lexing/logical_line.h"
+#include "semantics/source_info_processor.h"
+#include "semantics/statement.h"
 #include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -40,6 +42,42 @@ bool preprocessor::is_continued(std::string_view s)
 {
     const auto cont = utils::utf8_substr(s, lexing::default_ictl_copy.end, 1).str;
     return !cont.empty() && cont != " ";
+}
+
+void preprocessor::clear_statements() { m_statements.clear(); }
+
+void preprocessor::set_statement(std::shared_ptr<semantics::preprocessor_statement_si> stmt)
+{
+    m_statements.emplace_back(std::move(stmt));
+}
+
+void preprocessor::set_statements(std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> stmts)
+{
+    m_statements.insert(
+        m_statements.end(), std::make_move_iterator(stmts.begin()), std::make_move_iterator(stmts.end()));
+}
+
+std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> preprocessor::take_statements()
+{
+    return std::move(m_statements);
+}
+
+void preprocessor::do_highlighting(
+    const semantics::preprocessor_statement_si& stmt, semantics::source_info_processor& src_proc)
+{
+    if (stmt.label_ref().type != semantics::label_si_type::EMPTY)
+        src_proc.add_hl_symbol(token_info(stmt.label_ref().field_range, semantics::hl_scopes::label));
+
+    src_proc.add_hl_symbol(token_info(stmt.instruction_ref().field_range, semantics::hl_scopes::instruction));
+
+    for (const auto& op : stmt.operands_ref().value)
+    {
+        if (op)
+            src_proc.add_hl_symbol(token_info(op->operand_range, semantics::hl_scopes::operand));
+    }
+
+    if (stmt.remarks_ref().value.size())
+        src_proc.add_hl_symbol(token_info(stmt.remarks_ref().field_range, semantics::hl_scopes::remark));
 }
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -50,13 +50,15 @@ workspaces::parse_lib_provider& analyzer_options::get_lib_provider() const
         return workspaces::empty_parse_lib_provider::instance;
 }
 
-std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(
-    processing::library_fetcher asm_lf, diagnostic_op_consumer& diag_consumer) const
+std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(processing::library_fetcher asm_lf,
+    diagnostic_op_consumer& diag_consumer,
+    semantics::source_info_processor& src_proc,
+    context::id_storage& ids) const
 {
-    const auto transform_preprocessor = [&asm_lf, &diag_consumer](const preprocessor_options& po) {
+    const auto transform_preprocessor = [&asm_lf, &diag_consumer, &src_proc, &ids](const preprocessor_options& po) {
         return std::visit(
-            [&asm_lf, &diag_consumer](const auto& p) -> std::unique_ptr<processing::preprocessor> {
-                return processing::preprocessor::create(p, std::move(asm_lf), &diag_consumer);
+            [&asm_lf, &diag_consumer, &src_proc, &ids](const auto& p) -> std::unique_ptr<processing::preprocessor> {
+                return processing::preprocessor::create(p, std::move(asm_lf), &diag_consumer, src_proc, ids);
             },
             po);
     };
@@ -65,16 +67,29 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(
     else if (preprocessor_args.size() == 1)
         return transform_preprocessor(preprocessor_args.front());
 
-    struct combined_preprocessor : processing::preprocessor
+    struct combined_preprocessor final : processing::preprocessor
     {
         std::vector<std::unique_ptr<processing::preprocessor>> pp;
+
         document generate_replacement(document doc) override
         {
+            clear_statements();
+
             for (const auto& p : pp)
                 doc = p->generate_replacement(std::move(doc));
+
             return doc;
         }
+
+        std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> take_statements() override
+        {
+            for (const auto& p : pp)
+                set_statements(p->take_statements());
+
+            return preprocessor::take_statements();
+        }
     } tmp;
+
     std::transform(
         preprocessor_args.begin(), preprocessor_args.end(), std::back_inserter(tmp.pp), transform_preprocessor);
 
@@ -103,7 +118,9 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
 
                         return result;
                     },
-                    *this),
+                    *this,
+                    src_proc_,
+                    ctx_.hlasm_ctx->ids()),
                 opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
                                                                : processing::opencode_provider_options {},
                 opts.vf_monitor),

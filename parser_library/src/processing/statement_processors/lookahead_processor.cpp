@@ -117,10 +117,7 @@ void lookahead_processor::process_MACRO() { ++macro_nest_; }
 void lookahead_processor::process_MEND() { macro_nest_ -= macro_nest_ == 0 ? 0 : 1; }
 void lookahead_processor::process_COPY(const resolved_statement& statement)
 {
-    if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())
-    {
-        asm_processor::process_copy(statement, ctx, lib_provider_, nullptr);
-    }
+    asm_processor::process_copy(statement, ctx, lib_provider_, nullptr);
 }
 
 lookahead_processor::process_table_t lookahead_processor::create_table()

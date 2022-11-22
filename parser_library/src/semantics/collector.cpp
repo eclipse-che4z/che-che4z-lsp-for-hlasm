@@ -188,8 +188,6 @@ void collector::append_operand_field(collector&& c)
     lit_.insert(lit_.end(), std::make_move_iterator(c.lit_.begin()), std::make_move_iterator(c.lit_.end()));
 }
 
-const instruction_si& collector::peek_instruction() { return *instr_; }
-
 context::shared_stmt_ptr collector::extract_statement(processing::processing_status status, range& statement_range)
 {
     if (!lbl_)

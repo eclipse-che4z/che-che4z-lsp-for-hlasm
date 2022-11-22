@@ -63,6 +63,8 @@ private:
     lsp_analyzer lsp_analyzer_;
     std::vector<statement_analyzer*> stms_analyzers_;
 
+    const utils::resource::resource_location file_loc_;
+
     context::source_snapshot lookahead_stop_;
     size_t lookahead_stop_ainsert_id = 0;
     enum class pending_seq_redifinition_state

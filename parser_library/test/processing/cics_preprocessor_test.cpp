@@ -18,6 +18,7 @@
 #include "../mock_parse_lib_provider.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
+#include "semantics/source_info_processor.h"
 
 // test cics preprocessor emulator
 
@@ -45,8 +46,11 @@ TEST(cics_preprocessor, asm_xopts_parsing)
             { "*ASM XOPTS(SP)", cics_preprocessor_options() },
         })
     {
+        semantics::source_info_processor src_info(false);
+        context::id_storage ids;
+
         auto p = preprocessor::create(
-            cics_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
+            cics_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr, src_info, ids);
 
         auto result = p->generate_replacement(document(text_template));
         EXPECT_GT(result.size(), 0);
@@ -77,10 +81,13 @@ std::ostream& operator<<(std::ostream& os, const cics_preprocessor_tests_basics_
 
 TEST_P(cics_preprocessor_tests, basics)
 {
+    semantics::source_info_processor src_info(false);
+    context::id_storage ids;
     const auto& [input, expected] = GetParam();
     auto [text_template, config] = input;
+
     auto p = preprocessor::create(
-        config, [](std::string_view) { return std::nullopt; }, nullptr);
+        config, [](std::string_view) { return std::nullopt; }, nullptr, src_info, ids);
 
     auto result = p->generate_replacement(document(text_template));
 

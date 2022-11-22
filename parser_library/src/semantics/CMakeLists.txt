@@ -24,6 +24,7 @@ target_sources(parser_library PRIVATE
 	range_provider.h
 	source_info_processor.cpp
 	source_info_processor.h
+	statement.cpp
 	statement.h
 	statement_fields.cpp
 	statement_fields.h

@@ -139,6 +139,8 @@ public:
 
     bool finished() const override;
 
+    std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> get_preprocessor_statements() const;
+
 private:
     void feed_line(const parsing::parser_holder& p, bool is_process);
     bool is_comment();

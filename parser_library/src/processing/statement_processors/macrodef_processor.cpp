@@ -394,15 +394,10 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
     result_.definition.push_back(std::move(empty));
     add_correct_copy_nest();
 
-    if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())
+    if (asm_processor::process_copy(statement, ctx, provider_, this))
     {
-        if (asm_processor::process_copy(statement, ctx, provider_, this))
-        {
-            result_.used_copy_members.insert(ctx.hlasm_ctx->current_copy_stack().back().copy_member_definition);
-        }
+        result_.used_copy_members.insert(ctx.hlasm_ctx->current_copy_stack().back().copy_member_definition);
     }
-    else
-        add_diagnostic(diagnostic_op::error_E058(statement.operands_ref().field_range));
 
     omit_next_ = true;
 }

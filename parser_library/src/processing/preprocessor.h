@@ -37,6 +37,15 @@ struct logical_line;
 struct logical_line_extractor_args;
 } // namespace lexing
 
+namespace semantics {
+class source_info_processor;
+struct preprocessor_statement_si;
+} // namespace semantics
+
+namespace context {
+class id_storage;
+}
+
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::processing {
@@ -50,16 +59,31 @@ public:
 
     virtual document generate_replacement(document doc) = 0;
 
-    static std::unique_ptr<preprocessor> create(
-        const cics_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
+    static std::unique_ptr<preprocessor> create(const cics_preprocessor_options&,
+        library_fetcher,
+        diagnostic_op_consumer*,
+        semantics::source_info_processor&,
+        context::id_storage&);
 
-    static std::unique_ptr<preprocessor> create(
-        const db2_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
+    static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&,
+        library_fetcher,
+        diagnostic_op_consumer*,
+        semantics::source_info_processor&,
+        context::id_storage&);
 
-    static std::unique_ptr<preprocessor> create(
-        const endevor_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
+    static std::unique_ptr<preprocessor> create(const endevor_preprocessor_options&,
+        library_fetcher,
+        diagnostic_op_consumer*,
+        semantics::source_info_processor&,
+        context::id_storage&);
+
+    virtual std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> take_statements();
 
 protected:
+    preprocessor() = default;
+    preprocessor(const preprocessor&) = default;
+    preprocessor(preprocessor&&) = default;
+
     using line_iterator = std::vector<document_line>::const_iterator;
 
     static line_iterator extract_nonempty_logical_line(lexing::logical_line& out,
@@ -67,7 +91,17 @@ protected:
         line_iterator end,
         const lexing::logical_line_extractor_args& opts);
 
+    void clear_statements();
+    void set_statement(std::shared_ptr<semantics::preprocessor_statement_si> stmt);
+    void set_statements(std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> stmts);
+
     static bool is_continued(std::string_view s);
+
+    static void do_highlighting(
+        const semantics::preprocessor_statement_si& stmt, semantics::source_info_processor& src_proc);
+
+private:
+    std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> m_statements;
 };
 } // namespace hlasm_plugin::parser_library::processing
 

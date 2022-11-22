@@ -87,7 +87,25 @@ void lsp_analyzer::analyze(
             break;
     }
 
-    assign_statement_occurences();
+    assign_statement_occurences(hlasm_ctx_.current_statement_location().resource_loc);
+}
+
+void lsp_analyzer::analyze(const semantics::preprocessor_statement_si& statement)
+{
+    collect_occurences(lsp::occurence_kind::ORD, statement);
+
+    const auto& opcode = statement.m_resemblence;
+    const auto& operands = statement.operands_ref().value;
+    if (opcode == context::id_storage::well_known::COPY && operands.size() == 1 && operands.front()->access_asm())
+    {
+        auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(
+            operands.front()->access_asm()->access_expr()->expression.get());
+
+        if (sym_expr)
+            add_copy_operand(sym_expr->value, sym_expr->get_range());
+    }
+
+    assign_statement_occurences(hlasm_ctx_.opencode_location());
 }
 
 void lsp_analyzer::macrodef_started(const macrodef_start_data& data)
@@ -137,17 +155,17 @@ void lsp_analyzer::opencode_finished()
         lsp::text_data_ref_t(file_text_));
 }
 
-void lsp_analyzer::assign_statement_occurences()
+void lsp_analyzer::assign_statement_occurences(const utils::resource::resource_location& doc_location)
 {
     if (in_macro_)
     {
-        auto& file_occs = macro_occurences_[hlasm_ctx_.current_statement_location().resource_loc];
+        auto& file_occs = macro_occurences_[doc_location];
         file_occs.insert(
             file_occs.end(), std::move_iterator(stmt_occurences_.begin()), std::move_iterator(stmt_occurences_.end()));
     }
     else
     {
-        auto& file_occs = opencode_occurences_[hlasm_ctx_.current_statement_location().resource_loc];
+        auto& file_occs = opencode_occurences_[doc_location];
         file_occs.insert(
             file_occs.end(), std::move_iterator(stmt_occurences_.begin()), std::move_iterator(stmt_occurences_.end()));
     }
@@ -170,6 +188,15 @@ void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const context::h
         collect_occurence(res_stmt->instruction_ref(), collector);
         collect_occurence(res_stmt->operands_ref(), collector);
     }
+}
+
+void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const semantics::preprocessor_statement_si& statement)
+{
+    occurence_collector collector(kind, hlasm_ctx_, stmt_occurences_);
+
+    collect_occurence(statement.label_ref(), collector);
+    collect_occurence(statement.instruction_ref(), collector);
+    collect_occurence(statement.operands_ref(), collector);
 }
 
 void lsp_analyzer::collect_occurence(const semantics::label_si& label, occurence_collector& collector)
@@ -207,6 +234,9 @@ void lsp_analyzer::collect_occurence(const semantics::instruction_si& instructio
             collector.occurences.emplace_back(
                 opcode.opcode, macro_def ? std::move(*macro_def) : context::macro_def_ptr {}, instruction.field_range);
     }
+    else if (instruction.type == semantics::instruction_si_type::PREPROC)
+        collector.occurences.emplace_back(
+            std::get<context::id_index>(instruction.value), context::macro_def_ptr {}, instruction.field_range);
 }
 
 void lsp_analyzer::collect_occurence(const semantics::operands_si& operands, occurence_collector& collector)

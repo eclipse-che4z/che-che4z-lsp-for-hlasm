@@ -350,7 +350,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     // Why is this so complicated?
     // 1. We cannot represent the individual operands because of bitfields.
     // 2. We cannot represent the whole area as a single dependency when the alignment requirements are growing.
-    // Therefore, we split the operands into chunks depending on the alignent.
+    // Therefore, we split the operands into chunks depending on the alignment.
     // Whenever the alignment requirement increases between consecutive operands, we start a new chunk.
     for (auto it = operands.begin(); it != operands.end();)
     {
@@ -723,13 +723,58 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
     }
 }
 
+bool asm_processor::parse_copy(analyzing_context ctx,
+    workspaces::parse_lib_provider& lib_provider,
+    context::id_index copy_member_id,
+    const range& operand_range,
+    const range& stmt_range,
+    diagnosable_ctx* diagnoser)
+{
+    auto tmp = ctx.hlasm_ctx->copy_members().find(copy_member_id);
+
+    if (tmp == ctx.hlasm_ctx->copy_members().end())
+    {
+        bool result = lib_provider.parse_library(
+            copy_member_id.to_string(), ctx, workspaces::library_data { processing_kind::COPY, copy_member_id });
+
+        if (!result)
+        {
+            if (diagnoser)
+                diagnoser->add_diagnostic(diagnostic_op::error_E058(operand_range));
+            return false;
+        }
+    }
+
+    auto whole_copy_stack = ctx.hlasm_ctx->whole_copy_stack();
+
+    auto cycle_tmp = std::find(whole_copy_stack.begin(), whole_copy_stack.end(), copy_member_id);
+
+    if (cycle_tmp != whole_copy_stack.end())
+    {
+        if (diagnoser)
+            diagnoser->add_diagnostic(diagnostic_op::error_E062(stmt_range));
+        return false;
+    }
+
+    return true;
+}
+
 bool asm_processor::process_copy(const semantics::complete_statement& stmt,
     analyzing_context ctx,
     workspaces::parse_lib_provider& lib_provider,
-    diagnosable_ctx* diagnoser)
+    diagnosable_ctx* diagnoser,
+    bool enter_copy)
 {
+    if (stmt.operands_ref().value.size() != 1 || !stmt.operands_ref().value.front()->access_asm()
+        || !stmt.operands_ref().value.front()->access_asm()->access_expr())
+    {
+        if (diagnoser)
+            diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().field_range));
+        return false;
+    }
+
     auto& expr = stmt.operands_ref().value.front()->access_asm()->access_expr()->expression;
-    auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(expr.get());
+    auto sym_expr = dynamic_cast<const expressions::mach_expr_symbol*>(expr.get());
 
     if (!sym_expr)
     {
@@ -738,34 +783,17 @@ bool asm_processor::process_copy(const semantics::complete_statement& stmt,
         return false;
     }
 
-    auto tmp = ctx.hlasm_ctx->copy_members().find(sym_expr->value);
+    auto result = parse_copy(ctx,
+        lib_provider,
+        sym_expr->value,
+        stmt.operands_ref().value.front()->operand_range,
+        stmt.stmt_range_ref(),
+        diagnoser);
 
-    if (tmp == ctx.hlasm_ctx->copy_members().end())
-    {
-        bool result = lib_provider.parse_library(
-            sym_expr->value.to_string(), ctx, workspaces::library_data { processing_kind::COPY, sym_expr->value });
+    if (result && enter_copy)
+        ctx.hlasm_ctx->enter_copy_member(sym_expr->value);
 
-        if (!result)
-        {
-            if (diagnoser)
-                diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
-            return false;
-        }
-    }
-    auto whole_copy_stack = ctx.hlasm_ctx->whole_copy_stack();
-
-    auto cycle_tmp = std::find(whole_copy_stack.begin(), whole_copy_stack.end(), sym_expr->value);
-
-    if (cycle_tmp != whole_copy_stack.end())
-    {
-        if (diagnoser)
-            diagnoser->add_diagnostic(diagnostic_op::error_E062(stmt.stmt_range_ref()));
-        return false;
-    }
-
-    ctx.hlasm_ctx->enter_copy_member(sym_expr->value);
-
-    return true;
+    return result;
 }
 
 asm_processor::process_table_t asm_processor::create_table()
