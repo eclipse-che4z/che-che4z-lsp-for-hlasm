@@ -403,3 +403,32 @@ TEST(highlighting, endevor_preprocessor_statement)
 
     EXPECT_EQ(tokens, expected);
 }
+
+TEST(highlighting, cics_preprocessor_statement)
+{
+    const std::string contents = R"(
+A   EXEC CICS ABEND ABCODE('1234') NODUMP
+B   LARL 0,DFHRESP(NORMAL) bla bla)";
+
+    analyzer a(
+        contents, analyzer_options { source_file_loc, endevor_preprocessor_options(), collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.source_processor().semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 1, 0 }, { 1, 1 } }, hl_scopes::label),
+        token_info({ { 1, 4 }, { 1, 19 } }, hl_scopes::instruction),
+        token_info({ { 1, 20 }, { 1, 26 } }, hl_scopes::operand),
+        token_info({ { 1, 27 }, { 1, 33 } }, hl_scopes::operand),
+        token_info({ { 1, 35 }, { 1, 51 } }, hl_scopes::operand),
+        token_info({ { 2, 0 }, { 2, 1 } }, hl_scopes::label),
+        token_info({ { 2, 4 }, { 2, 8 } }, hl_scopes::instruction),
+        token_info({ { 2, 9 }, { 2, 10 } }, hl_scopes::operand),
+        token_info({ { 2, 11 }, { 2, 18 } }, hl_scopes::operand),
+        token_info({ { 2, 19 }, { 2, 25 } }, hl_scopes::operand),
+        token_info({ { 2, 26 }, { 2, 29 } }, hl_scopes::remark),
+        token_info({ { 2, 30 }, { 2, 33 } }, hl_scopes::remark),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}
