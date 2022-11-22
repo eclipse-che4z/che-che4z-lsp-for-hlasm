@@ -853,7 +853,6 @@ class cics_preprocessor final : public preprocessor
     mini_parser<lexing::logical_line::const_iterator> m_mini_parser;
 
     semantics::source_info_processor& m_src_proc;
-    std::vector<std::unique_ptr<semantics::preprocessor_statement_si>> m_statements;
     context::id_storage& m_ids;
 
 public:
@@ -1176,7 +1175,7 @@ public:
                     get_preproc_statement_exec_cics(m_matches_ll, lineno, m_ids)) // todo match individual operands
             {
                 do_highlighting(*stmt, m_src_proc);
-                m_statements.emplace_back(std::move(stmt));
+                set_statement(std::move(stmt));
             }
 
             return true;
@@ -1313,7 +1312,7 @@ public:
         if (auto stmt = get_preproc_statement_dfh(m_matches_ll, lineno, m_ids))
         {
             do_highlighting(*stmt, m_src_proc);
-            m_statements.emplace_back(std::move(stmt));
+            set_statement(std::move(stmt));
         }
 
         return ret_val;
