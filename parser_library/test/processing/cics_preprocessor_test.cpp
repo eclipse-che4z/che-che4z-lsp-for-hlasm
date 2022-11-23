@@ -481,16 +481,14 @@ TEST(cics_preprocessor, check_missing_command)
          DFHEIMSG
          MEND
 
-         EXEC CICS
-
-         END
-)";
+SPACE    EXEC CICS 
+NOSPACE  EXEC CICS)";
     analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
 
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "CIC003" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CIC003", "CIC003" }));
 }
 
 TEST(cics_preprocessor, check_null_argument_message)
