@@ -70,11 +70,14 @@ void preprocessor::do_highlighting(
 
     src_proc.add_hl_symbol(token_info(stmt.instruction_ref().field_range, semantics::hl_scopes::instruction));
 
-    for (const auto& op : stmt.operands_ref().value)
-    {
-        if (op)
-            src_proc.add_hl_symbol(token_info(op->operand_range, semantics::hl_scopes::operand));
-    }
+    if (stmt.operands_ref().value.size())
+        src_proc.add_hl_symbol(token_info(stmt.operands_ref().field_range, semantics::hl_scopes::operand));
+
+    // for (const auto& op : stmt.operands_ref().value)
+    //{
+    //     if (op)
+    //         src_proc.add_hl_symbol(token_info(op->operand_range, semantics::hl_scopes::operand));
+    // }
 
     if (stmt.remarks_ref().value.size())
         src_proc.add_hl_symbol(token_info(stmt.remarks_ref().field_range, semantics::hl_scopes::remark));

@@ -411,16 +411,14 @@ A   EXEC CICS ABEND ABCODE('1234') NODUMP
 B   LARL 0,DFHRESP(NORMAL) bla bla)";
 
     analyzer a(
-        contents, analyzer_options { source_file_loc, endevor_preprocessor_options(), collect_highlighting_info::yes });
+        contents, analyzer_options { source_file_loc, cics_preprocessor_options(), collect_highlighting_info::yes });
     a.analyze();
 
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = {
         token_info({ { 1, 0 }, { 1, 1 } }, hl_scopes::label),
         token_info({ { 1, 4 }, { 1, 19 } }, hl_scopes::instruction),
-        token_info({ { 1, 20 }, { 1, 26 } }, hl_scopes::operand),
-        token_info({ { 1, 27 }, { 1, 33 } }, hl_scopes::operand),
-        token_info({ { 1, 35 }, { 1, 51 } }, hl_scopes::operand),
+        token_info({ { 1, 20 }, { 1, 41 } }, hl_scopes::operand),
         token_info({ { 2, 0 }, { 2, 1 } }, hl_scopes::label),
         token_info({ { 2, 4 }, { 2, 8 } }, hl_scopes::instruction),
         token_info({ { 2, 9 }, { 2, 10 } }, hl_scopes::operand),

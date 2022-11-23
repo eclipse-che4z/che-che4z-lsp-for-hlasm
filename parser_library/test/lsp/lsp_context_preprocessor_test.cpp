@@ -135,27 +135,16 @@ B   LARL 0,DFHRESP(NORMAL)
 
 TEST_F(lsp_context_cics_preprocessor_test, go_to_exec_cics)
 {
-    // jump to start of label; label A
-    EXPECT_EQ(location(position(1, 0), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 1)));
+    // no jump; A
+    EXPECT_EQ(location(position(1, 1), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 1)));
     // no jump, EXEC CICS ABEND
-    EXPECT_EQ(location(position(1, 7), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 16)));
-    // jump to start of operand, operand ABCODE
-    EXPECT_EQ(location(position(1, 20), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 23)));
-    // jump to start of operand, operand 1234
-    EXPECT_EQ(location(position(1, 28), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 30)));
-    // jump to start of operand, operand NODUMP
-    EXPECT_EQ(location(position(1, 35), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 41)));
-
-    // no jump, empty label
-    EXPECT_EQ(location(), a.context().lsp_ctx->definition(source_loc, position(2, 1)));
-    // no jump, EXEC  CICS  ALLOCATE
-    EXPECT_EQ(location(position(2, 7), source_loc), a.context().lsp_ctx->definition(source_loc, position(2, 13)));
-    // jump to start of operand, operand SYSID
-    EXPECT_EQ(location(position(2, 23), source_loc), a.context().lsp_ctx->definition(source_loc, position(2, 26)));
-    // jump to start of operand, operand 4321
-    EXPECT_EQ(location(position(2, 30), source_loc), a.context().lsp_ctx->definition(source_loc, position(2, 34)));
-    // jump to start of operand, operand NOQUEUE
-    EXPECT_EQ(location(position(2, 38), source_loc), a.context().lsp_ctx->definition(source_loc, position(2, 38)));
+    EXPECT_EQ(location(position(1, 16), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 16)));
+    // no jump, operand ABCODE
+    EXPECT_EQ(location(position(1, 23), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 23)));
+    // no jump, operand 1234
+    EXPECT_EQ(location(position(1, 30), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 30)));
+    // no jump, operand NODUMP
+    EXPECT_EQ(location(position(1, 41), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 41)));
 }
 
 TEST_F(lsp_context_cics_preprocessor_test, refs_exec_cics)

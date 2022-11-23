@@ -1103,6 +1103,40 @@ public:
         return { name, std::move(r) };
     }
 
+    std::vector<std::pair<std::string_view, range>> get_operands_list(
+        std::string_view operands, size_t column_offset, size_t lineno)
+    {
+        std::vector<std::pair<std::string_view, range>> operand_list;
+
+        while (operands.size())
+        {
+            auto space = operands.find_first_of(" ()'");
+
+            if (space == std::string_view::npos)
+            {
+                operand_list.emplace_back(operands,
+                    range((position(lineno, column_offset)), (position(lineno, column_offset + operands.length()))));
+                break;
+            }
+
+            operand_list.emplace_back(operands.substr(0, space),
+                range((position(lineno, column_offset)), (position(lineno, column_offset + space))));
+
+
+            operands.remove_prefix(space);
+            column_offset += space;
+
+            space = operands.find_first_not_of(" ()'");
+            if (space == std::string_view::npos)
+                break;
+
+            operands.remove_prefix(space);
+            column_offset += space;
+        }
+
+        return operand_list;
+    }
+
     std::unique_ptr<semantics::cics_statement_si> get_preproc_statement_exec_cics(
         std::match_results<lexing::logical_line::const_iterator> matches, size_t lineno, context::id_storage& ids)
     {
@@ -1117,18 +1151,16 @@ public:
 
         std::vector<std::pair<std::string_view, range>> operands;
 
-        for (size_t i = 4; i < matches.size(); ++i)
-            operands.emplace_back(get_stmt_part_pair(matches, i, lineno));
+        if (matches[4].matched && matches[4].length())
+        {
+            auto [ops_text, op_range] = get_stmt_part_pair(matches, 4, lineno);
+            operands = get_operands_list(ops_text, op_range.start.column, lineno);
+        }
 
         auto remarks = semantics::remarks_si(range(), {});
 
-        return std::make_unique<semantics::cics_statement_si>(std::move(stmt_r),
-            label,
-            std::move(label_r), instr,
-            std::move(instr_r),
-            operands,
-            std::move(remarks),
-            ids);
+        return std::make_unique<semantics::cics_statement_si>(
+            std::move(stmt_r), label, std::move(label_r), instr, std::move(instr_r), operands, std::move(remarks), ids);
     }
 
     void process_exec_cics(const std::match_results<lexing::logical_line::const_iterator>& matches)
@@ -1151,7 +1183,7 @@ public:
     bool try_exec_cics(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
     {
         static const std::regex exec_cics(
-            "([^ ]*)[ ]+([eE][xX][eE][cC][ ]+[cC][iI][cC][sS](?:[ ]+(\\S+))?)([ ]+(.*))?");
+            "([^ ]*)[ ]+([eE][xX][eE][cC][ ]+[cC][iI][cC][sS](?:[ ]+(\\S+))?)(?:[ ]+(.*))?");
 
         it = extract_nonempty_logical_line(m_logical_line, it, end, cics_extract);
         bool exec_cics_continuation_error = false;
