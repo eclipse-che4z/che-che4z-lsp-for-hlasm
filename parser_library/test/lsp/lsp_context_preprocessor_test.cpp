@@ -30,6 +30,7 @@ const resource_location mac_loc("MAC");
 const resource_location source_loc("OPEN");
 const resource_location member_loc("MEMBER");
 const resource_location member2_loc("MEMBER2");
+const resource_location preproc5_loc("PREPROCESSOR:5.hlasm");
 } // namespace
 
 class lsp_context_endevor_preprocessor_test : public testing::Test
@@ -135,8 +136,8 @@ B   LARL 0,DFHRESP(NORMAL)
 
 TEST_F(lsp_context_cics_preprocessor_test, go_to_exec_cics)
 {
-    // no jump; A
-    EXPECT_EQ(location(position(1, 1), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 1)));
+    // jump to virtual file, label A
+    EXPECT_EQ(location(position(1, 0), preproc5_loc), a.context().lsp_ctx->definition(source_loc, position(1, 1)));
     // no jump, EXEC CICS ABEND
     EXPECT_EQ(location(position(1, 16), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 16)));
     // no jump, operand ABCODE
@@ -191,16 +192,16 @@ TEST_F(lsp_context_cics_preprocessor_test, refs_exec_cics)
 
 TEST_F(lsp_context_cics_preprocessor_test, go_to_dfh)
 {
-    // jump to start of label; label B
-    EXPECT_EQ(location(position(5, 0), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 1)));
+    // jump to virtual file, label B
+    EXPECT_EQ(location(position(1, 0), preproc5_loc), a.context().lsp_ctx->definition(source_loc, position(5, 1)));
     // no jump, instr LARL
-    EXPECT_EQ(location(position(5, 5), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 7)));
-    // jump to start of operand, operand 0
-    EXPECT_EQ(location(position(5, 10), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 11)));
-    // jump to start of operand, operand DFHRESP
-    EXPECT_EQ(location(position(5, 12), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 17)));
-    // jump to start of operand, operand NORMAL
-    EXPECT_EQ(location(position(5, 20), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 25)));
+    EXPECT_EQ(location(position(5, 7), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 7)));
+    // no jump, operand 0
+    EXPECT_EQ(location(position(5, 11), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 11)));
+    // no jump, operand DFHRESP
+    EXPECT_EQ(location(position(5, 17), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 17)));
+    // no jump, operand NORMAL
+    EXPECT_EQ(location(position(5, 25), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 25)));
 }
 
 TEST_F(lsp_context_cics_preprocessor_test, refs_dfh)
@@ -208,22 +209,25 @@ TEST_F(lsp_context_cics_preprocessor_test, refs_dfh)
     const location_list expected_larl_locations {
         location(position(5, 4), source_loc),
         location(position(7, 4), source_loc),
+        location(position(1, 9), preproc5_loc),
+        location(position(5, 9), preproc5_loc),
     };
     const location_list expected_l_locations {
         location(position(6, 4), source_loc),
+        location(position(3, 9), preproc5_loc),
     };
     const location_list expected_dfhresp_locations {
         location(position(5, 11), source_loc),
         location(position(6, 10), source_loc),
     };
     const location_list expected_dfhvalue_locations {
-        location(position(7, 13), source_loc),
+        location(position(7, 12), source_loc),
     };
     const location_list expected_normal_locations {
-        location(position(5, 20), source_loc),
+        location(position(5, 19), source_loc),
     };
     const location_list expected_busy_locations {
-        location(position(5, 18), source_loc),
+        location(position(6, 18), source_loc),
         location(position(7, 23), source_loc),
     };
 
@@ -238,5 +242,5 @@ TEST_F(lsp_context_cics_preprocessor_test, refs_dfh)
     // NORMAL reference
     EXPECT_EQ(expected_normal_locations, a.context().lsp_ctx->references(source_loc, position(5, 23)));
     // BUSY reference
-    EXPECT_EQ(expected_busy_locations, a.context().lsp_ctx->references(source_loc, position(5, 26)));
+    EXPECT_EQ(expected_busy_locations, a.context().lsp_ctx->references(source_loc, position(6, 20)));
 }
