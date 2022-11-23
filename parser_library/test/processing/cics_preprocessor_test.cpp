@@ -471,6 +471,28 @@ AAAAAA   SAM31
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CIC001" }));
 }
 
+TEST(cics_preprocessor, check_missing_command)
+{
+    std::string input = R"(
+         MACRO
+         DFHECALL
+         MEND
+         MACRO
+         DFHEIMSG
+         MEND
+
+         EXEC CICS
+
+         END
+)";
+    analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CIC003" }));
+}
+
 TEST(cics_preprocessor, check_null_argument_message)
 {
     std::string input = R"(
