@@ -1087,6 +1087,22 @@ public:
         // TODO: generate correct calls
     }
 
+    std::pair<std::string_view, range> get_stmt_part_pair(
+        const std::match_results<lexing::logical_line::const_iterator>& matches, size_t index, size_t line_no)
+    {
+        std::string_view name;
+        range r;
+
+        if (matches[index].matched && matches[index].length())
+        {
+            name = std::string_view(std::to_address(&*matches[index].first), matches[index].length());
+            r = range(position(line_no, std::distance(matches[0].first, matches[index].first)),
+                position(line_no, std::distance(matches[0].first, matches[index].second)));
+        }
+
+        return { name, std::move(r) };
+    }
+
     std::unique_ptr<semantics::cics_statement_si> get_preproc_statement_exec_cics(
         std::match_results<lexing::logical_line::const_iterator> matches, size_t lineno, context::id_storage& ids)
     {
@@ -1095,41 +1111,22 @@ public:
 
         auto stmt_r = range({ lineno, 0 }, { lineno, matches[0].str().length() });
 
-        std::string label(matches[1].first, matches[1].second);
-        auto label_r = range({ lineno, 0 }, { lineno, static_cast<size_t>(matches[1].length()) });
+        auto [label, label_r] = get_stmt_part_pair(matches, 1, lineno);
+        auto instr_r = get_stmt_part_pair(matches, 2, lineno).second;
+        std::string instr = std::string("EXEC CICS ").append(get_stmt_part_pair(matches, 3, lineno).first);
 
-        auto instr = std::string(matches[2].first, matches[2].second);
-        auto instr_r = range(position(lineno, std::distance(matches[0].first, matches[2].first)),
-            position(lineno, std::distance(matches[0].first, matches[2].second)));
+        std::vector<std::pair<std::string_view, range>> operands;
 
-        std::vector<std::pair<std::string, range>> operands;
-        auto operands_r = range();
+        for (size_t i = 4; i < matches.size(); ++i)
+            operands.emplace_back(get_stmt_part_pair(matches, i, lineno));
 
-        if (matches.size() >= 4)
-        {
-            for (size_t i = 4; i <= matches.size(); ++i)
-            {
-                operands.emplace_back(std::string(matches[i].first, matches[i].second),
-                    range(position(lineno, std::distance(matches[0].first, matches[i].first)),
-                        position(lineno, std::distance(matches[0].first, matches[i].second))));
-            }
-
-            operands_r = range(position(lineno, std::distance(matches[0].first, matches[matches.size()].first)),
-                position(lineno, std::distance(matches[0].first, matches[matches.size()].second)));
-        }
-
-
-        auto remarks_r = range();
-        std::vector<range> rems;
-        auto remarks = semantics::remarks_si(std::move(remarks_r), std::move(rems));
+        auto remarks = semantics::remarks_si(range(), {});
 
         return std::make_unique<semantics::cics_statement_si>(std::move(stmt_r),
             label,
-            std::move(label_r),
-            instr,
+            std::move(label_r), instr,
             std::move(instr_r),
             operands,
-            std::move(operands_r),
             std::move(remarks),
             ids);
     }
@@ -1251,26 +1248,13 @@ public:
 
         auto stmt_r = range({ lineno, 0 }, { lineno, matches[0].str().length() });
 
-        std::string label(matches[1].first, matches[1].second);
-        auto label_r = range({ lineno, 0 }, { lineno, static_cast<size_t>(matches[1].length()) });
+        auto [label, label_r] = get_stmt_part_pair(matches, 1, lineno);
+        auto [instr, instr_r] = get_stmt_part_pair(matches, 2, lineno);
 
-        std::string instr(matches[2].first, matches[2].second);
-        auto instr_r = range(position(lineno, std::distance(matches[0].first, matches[2].first)),
-            position(lineno, std::distance(matches[1].second, matches[2].second)));
-
-        std::vector<std::pair<std::string, range>> operands;
-        operands.emplace_back(std::string(matches[3].first, matches[3].second),
-            range(position(lineno, std::distance(matches[0].first, matches[3].first)),
-                position(lineno, std::distance(matches[0].first, matches[3].second))));
-        operands.emplace_back(std::string(matches[4].first, matches[4].second),
-            range(position(lineno, std::distance(matches[0].first, matches[4].first)),
-                position(lineno, std::distance(matches[0].first, matches[4].second))));
-        operands.emplace_back(std::string(matches[5].first, matches[5].second),
-            range(position(lineno, std::distance(matches[0].first, matches[5].first)),
-                position(lineno, std::distance(matches[0].first, matches[5].second))));
-
-        auto operands_r = range(position(lineno, std::distance(matches[0].first, matches[3].first)),
-            position(lineno, std::distance(matches[0].first, matches[5].second)));
+        std::vector<std::pair<std::string_view, range>> operands;
+        operands.emplace_back(get_stmt_part_pair(matches, 3, lineno));
+        operands.emplace_back(get_stmt_part_pair(matches, 4, lineno));
+        operands.emplace_back(get_stmt_part_pair(matches, 5, lineno));
 
         auto remarks_r = range();
         std::vector<range> rems;
@@ -1284,15 +1268,8 @@ public:
 
         auto remarks = semantics::remarks_si(std::move(remarks_r), std::move(rems));
 
-        return std::make_unique<semantics::cics_statement_si>(std::move(stmt_r),
-            label,
-            std::move(label_r),
-            instr,
-            std::move(instr_r),
-            operands,
-            std::move(operands_r),
-            std::move(remarks),
-            ids);
+        return std::make_unique<semantics::cics_statement_si>(
+            std::move(stmt_r), label, std::move(label_r), instr, std::move(instr_r), operands, std::move(remarks), ids);
     }
 
     bool try_dfh_lookup(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
