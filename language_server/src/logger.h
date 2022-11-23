@@ -15,9 +15,8 @@
 #ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_LOGGER_H
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_LOGGER_H
 
-#include <fstream>
 #include <mutex>
-#include <string>
+#include <string_view>
 
 namespace hlasm_plugin::language_server {
 
@@ -49,20 +48,10 @@ public:
     }
 
     // Writes a message to log file.
-    void log(const std::string& data);
-    // Writes a message to log file.
-    void log(const char* data);
-
-protected:
-    std::string current_time();
+    void log(std::string_view data);
 
 private:
-    // Logger should only be accessed byt get_instance, thus the private constructor.
-    logger();
-    ~logger();
-
     // File to write the log into.
-    std::ofstream file_;
     std::mutex mutex_;
 };
 

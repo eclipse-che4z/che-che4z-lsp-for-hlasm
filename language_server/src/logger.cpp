@@ -15,48 +15,16 @@
 
 #include <cstdlib>
 #define __STDC_WANT_LIB_EXT1__ 1
-#include <filesystem>
+#include <iostream>
 #include <time.h>
 
 #include "logger.h"
 
-using namespace std;
 using namespace hlasm_plugin::language_server;
 
-constexpr const char* log_filename = "hlasmplugin.log";
-
-
-logger::logger()
+std::string current_time()
 {
-    std::error_code err {};
-    auto log_folder = std::filesystem::temp_directory_path(err);
-    if (!err)
-    {
-        auto log_path = log_folder / log_filename;
-        file_.open(log_path, ios::out);
-    }
-}
-
-logger::~logger() { file_.close(); }
-
-
-void logger::log(const std::string& data)
-{
-    std::lock_guard g(mutex_);
-    if (file_.is_open())
-        file_ << current_time() << "  " << data << endl;
-}
-
-void logger::log(const char* data)
-{
-    std::lock_guard g(mutex_);
-    if (file_.is_open())
-        file_ << current_time() << "  " << data << endl;
-}
-
-string logger::current_time()
-{
-    string curr_time;
+    std::string curr_time;
     // Current date/time based on current time
     time_t now = time(0);
     // Convert current time to string
@@ -70,5 +38,15 @@ string logger::current_time()
 #endif
 
     // Last charactor of currentTime is "\n", so remove it
-    return curr_time.substr(0, curr_time.size() - 1);
+    if (!curr_time.empty())
+        curr_time.pop_back();
+
+    return curr_time;
+}
+
+void logger::log(std::string_view data)
+{
+    std::lock_guard g(mutex_);
+
+    std::clog << current_time() << " " << data << '\n';
 }
