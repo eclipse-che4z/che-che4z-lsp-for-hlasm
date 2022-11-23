@@ -1110,7 +1110,7 @@ public:
 
         while (operands.size())
         {
-            auto space = operands.find_first_of(" ()'");
+            auto space = operands.find_first_of(" (),'");
 
             if (space == std::string_view::npos)
             {
@@ -1126,7 +1126,7 @@ public:
             operands.remove_prefix(space);
             column_offset += space;
 
-            space = operands.find_first_not_of(" ()'");
+            space = operands.find_first_not_of(" (),'");
             if (space == std::string_view::npos)
                 break;
 
@@ -1150,17 +1150,25 @@ public:
         std::string instr = std::string("EXEC CICS ").append(get_stmt_part_pair(matches, 3, lineno).first);
 
         std::vector<std::pair<std::string_view, range>> operands;
-
+        auto operands_range = range();
         if (matches[4].matched && matches[4].length())
         {
             auto [ops_text, op_range] = get_stmt_part_pair(matches, 4, lineno);
             operands = get_operands_list(ops_text, op_range.start.column, lineno);
+            operands_range = std::move(op_range);
         }
 
         auto remarks = semantics::remarks_si(range(), {});
 
-        return std::make_unique<semantics::cics_statement_si>(
-            std::move(stmt_r), label, std::move(label_r), instr, std::move(instr_r), operands, std::move(remarks), ids);
+        return std::make_unique<semantics::cics_statement_si>(std::move(stmt_r),
+            label,
+            std::move(label_r),
+            instr,
+            std::move(instr_r),
+            operands,
+            std::move(operands_range),
+            std::move(remarks),
+            ids);
     }
 
     void process_exec_cics(const std::match_results<lexing::logical_line::const_iterator>& matches)
@@ -1218,7 +1226,7 @@ public:
             m_result.emplace_back(replaced_line { "         DFHEIMSG 12\n" });
         }
 
-        if (auto stmt = get_preproc_statement_exec_cics(m_matches_ll, lineno, m_ids)) // todo match individual operands
+        if (auto stmt = get_preproc_statement_exec_cics(m_matches_ll, lineno, m_ids))
         {
             do_highlighting(*stmt, m_src_proc);
             set_statement(std::move(stmt));
@@ -1275,7 +1283,7 @@ public:
     std::unique_ptr<semantics::cics_statement_si> get_preproc_statement_dfh(
         std::match_results<lexing::logical_line::const_iterator> matches, size_t lineno, context::id_storage& ids)
     {
-        if (matches.size() != 7)
+        if (matches.size() != 5)
             return nullptr;
 
         auto stmt_r = range({ lineno, 0 }, { lineno, matches[0].str().length() });
@@ -1284,30 +1292,39 @@ public:
         auto [instr, instr_r] = get_stmt_part_pair(matches, 2, lineno);
 
         std::vector<std::pair<std::string_view, range>> operands;
-        operands.emplace_back(get_stmt_part_pair(matches, 3, lineno));
-        operands.emplace_back(get_stmt_part_pair(matches, 4, lineno));
-        operands.emplace_back(get_stmt_part_pair(matches, 5, lineno));
+        auto operands_range = range();
+        if (matches[3].matched && matches[3].length())
+        {
+            auto [ops_text, op_range] = get_stmt_part_pair(matches, 3, lineno);
+            operands = get_operands_list(ops_text, op_range.start.column, lineno);
+            operands_range = std::move(op_range);
+        }
 
         auto remarks_r = range();
         std::vector<range> rems;
-        if (matches[6].length())
+        if (matches[4].matched && matches[4].length())
         {
-            remarks_r = range(position(lineno, std::distance(matches[0].first, matches[6].first)),
-                position(lineno, std::distance(matches[0].first, matches[6].second)));
+            remarks_r = get_stmt_part_pair(matches, 4, lineno).second;
 
             rems.emplace_back(remarks_r);
         }
 
         auto remarks = semantics::remarks_si(std::move(remarks_r), std::move(rems));
 
-        return std::make_unique<semantics::cics_statement_si>(
-            std::move(stmt_r), label, std::move(label_r), instr, std::move(instr_r), operands, std::move(remarks), ids);
+        return std::make_unique<semantics::cics_statement_si>(std::move(stmt_r),
+            label,
+            std::move(label_r),
+            instr,
+            std::move(instr_r),
+            operands,
+            std::move(operands_range),
+            std::move(remarks),
+            ids);
     }
 
     bool try_dfh_lookup(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
     {
-        static const std::regex dfh_lookup(
-            "([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+(.*?(DFHRESP|DFHVALUE)[ ]*(\\([ ]*[A-Z0-9]*[ ]*\\))(:?.*))",
+        static const std::regex dfh_lookup("([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+((?:\\S+,)?(?:DFHRESP|DFHVALUE)[ ]*\\([ ]*[A-Z0-9]*[ ]*\\))(?:[ ]+(.*))?",
             std::regex_constants::icase);
 
         bool ret_val = false;

@@ -197,6 +197,7 @@ struct cics_statement_si : public preprocessor_statement_si
         std::string_view instruction,
         range instruction_range,
         std::vector<std::pair<std::string_view, range>>& operands,
+        range operands_range,
         remarks_si remarks,
         context::id_storage& ids);
 };

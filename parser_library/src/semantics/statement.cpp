@@ -44,18 +44,16 @@ cics_statement_si::cics_statement_si(range stmt_range,
     std::string_view instruction,
     range instruction_range,
     std::vector<std::pair<std::string_view, range>>& operands,
+    range operands_range,
     remarks_si remarks,
     context::id_storage& ids)
     : preprocessor_statement_si(std::move(stmt_range),
         label_si(label_range, ord_symbol_string { ids.add(label), std::string(label) }),
         instruction_si(std::move(instruction_range), ids.add(instruction), true),
-        operands_si(range(), {}),
+        operands_si(std::move(operands_range), {}),
         std::move(remarks),
         context::id_index())
 {
-    if (operands.size())
-        this->operands.field_range = range(operands.front().second.start, operands.back().second.end);
-
     for (auto& op : operands)
         this->operands.value.emplace_back(std::make_unique<expr_machine_operand>(
             std::make_unique<expressions::mach_expr_symbol>(ids.add(op.first), context::id_index(), op.second),
