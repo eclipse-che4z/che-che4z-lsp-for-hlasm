@@ -1093,7 +1093,7 @@ public:
         std::string_view name;
         range r;
 
-        if (matches[index].matched && matches[index].length())
+        if (matches[index].length())
         {
             name = std::string_view(std::to_address(&*matches[index].first), matches[index].length());
             r = range(position(line_no, std::distance(matches[0].first, matches[index].first)),
@@ -1137,35 +1137,54 @@ public:
         return operand_list;
     }
 
-    std::unique_ptr<semantics::cics_statement_si> get_preproc_statement_exec_cics(
-        std::match_results<lexing::logical_line::const_iterator> matches, size_t lineno, context::id_storage& ids)
+    std::unique_ptr<semantics::cics_statement_si> get_preproc_statement(
+        std::match_results<lexing::logical_line::const_iterator> matches,
+        std::optional<size_t> label_id,
+        std::vector<size_t> instruction_ids,
+        size_t operands_id,
+        std::optional<size_t> remarks_id,
+        size_t lineno,
+        context::id_storage& ids)
     {
-        if (matches.size() < 2)
+        if (!matches.size())
             return nullptr;
 
         auto stmt_r = range({ lineno, 0 }, { lineno, matches[0].str().length() });
 
-        auto [label, label_r] = get_stmt_part_pair(matches, 1, lineno);
-        auto instr_r = get_stmt_part_pair(matches, 2, lineno).second;
-        std::string instr = std::string("EXEC CICS ").append(get_stmt_part_pair(matches, 3, lineno).first);
+        std::pair<std::string_view, range> label_details;
+        if (label_id)
+            label_details = get_stmt_part_pair(matches, *label_id, lineno);
+
+        std::pair<std::string_view, range> instruction_details;
+        if (instruction_ids.size())
+        {
+            instruction_details = get_stmt_part_pair(matches, instruction_ids.front(), lineno);
+            instruction_details.first = get_stmt_part_pair(matches, instruction_ids.back(), lineno).first;
+        }
 
         std::vector<std::pair<std::string_view, range>> operands;
         auto operands_range = range();
-        if (matches[4].matched && matches[4].length())
+        if (matches[operands_id].length())
         {
-            auto [ops_text, op_range] = get_stmt_part_pair(matches, 4, lineno);
+            auto [ops_text, op_range] = get_stmt_part_pair(matches, operands_id, lineno);
             operands = get_operands_list(ops_text, op_range.start.column, lineno);
             operands_range = std::move(op_range);
         }
 
-        auto remarks = semantics::remarks_si(range(), {});
+        auto remarks_r = range();
+        std::vector<range> rems;
+        if (remarks_id && matches.size() == *remarks_id + 1 && matches[*remarks_id].length())
+        {
+            remarks_r = get_stmt_part_pair(matches, *remarks_id, lineno).second;
+
+            rems.emplace_back(remarks_r);
+        }
+        auto remarks = semantics::remarks_si(std::move(remarks_r), std::move(rems));
 
         return std::make_unique<semantics::cics_statement_si>(std::move(stmt_r),
-            label,
-            std::move(label_r),
-            instr,
-            std::move(instr_r),
-            operands,
+            std::move(label_details),
+            std::move(instruction_details),
+            std::move(operands),
             std::move(operands_range),
             std::move(remarks),
             ids);
@@ -1226,7 +1245,7 @@ public:
             m_result.emplace_back(replaced_line { "         DFHEIMSG 12\n" });
         }
 
-        if (auto stmt = get_preproc_statement_exec_cics(m_matches_ll, lineno, m_ids))
+        if (auto stmt = get_preproc_statement(m_matches_ll, 1, { 2, 3 }, { 4 }, std::nullopt, lineno, m_ids))
         {
             do_highlighting(*stmt, m_src_proc);
             set_statement(std::move(stmt));
@@ -1280,51 +1299,10 @@ public:
         return events;
     }
 
-    std::unique_ptr<semantics::cics_statement_si> get_preproc_statement_dfh(
-        std::match_results<lexing::logical_line::const_iterator> matches, size_t lineno, context::id_storage& ids)
-    {
-        if (matches.size() != 5)
-            return nullptr;
-
-        auto stmt_r = range({ lineno, 0 }, { lineno, matches[0].str().length() });
-
-        auto [label, label_r] = get_stmt_part_pair(matches, 1, lineno);
-        auto [instr, instr_r] = get_stmt_part_pair(matches, 2, lineno);
-
-        std::vector<std::pair<std::string_view, range>> operands;
-        auto operands_range = range();
-        if (matches[3].matched && matches[3].length())
-        {
-            auto [ops_text, op_range] = get_stmt_part_pair(matches, 3, lineno);
-            operands = get_operands_list(ops_text, op_range.start.column, lineno);
-            operands_range = std::move(op_range);
-        }
-
-        auto remarks_r = range();
-        std::vector<range> rems;
-        if (matches[4].matched && matches[4].length())
-        {
-            remarks_r = get_stmt_part_pair(matches, 4, lineno).second;
-
-            rems.emplace_back(remarks_r);
-        }
-
-        auto remarks = semantics::remarks_si(std::move(remarks_r), std::move(rems));
-
-        return std::make_unique<semantics::cics_statement_si>(std::move(stmt_r),
-            label,
-            std::move(label_r),
-            instr,
-            std::move(instr_r),
-            operands,
-            std::move(operands_range),
-            std::move(remarks),
-            ids);
-    }
-
     bool try_dfh_lookup(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
     {
-        static const std::regex dfh_lookup("([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+((?:\\S+,)?(?:DFHRESP|DFHVALUE)[ ]*\\([ ]*[A-Z0-9]*[ ]*\\))(?:[ ]+(.*))?",
+        static const std::regex dfh_lookup("([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+((?:\\S+,)?(?:DFHRESP|DFHVALUE)[ "
+                                           "]*\\([ ]*[A-Z0-9]*[ ]*\\))(?:[ ]+(.*))?",
             std::regex_constants::icase);
 
         bool ret_val = false;
@@ -1349,7 +1327,7 @@ public:
                 ret_val = true;
         }
 
-        if (auto stmt = get_preproc_statement_dfh(m_matches_ll, lineno, m_ids))
+        if (auto stmt = get_preproc_statement(m_matches_ll, 1, { 2 }, 3, 4, lineno, m_ids))
         {
             do_highlighting(*stmt, m_src_proc);
             set_statement(std::move(stmt));

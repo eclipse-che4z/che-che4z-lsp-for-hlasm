@@ -39,17 +39,16 @@ endevor_statement_si::endevor_statement_si(range stmt_range,
 }
 
 cics_statement_si::cics_statement_si(range stmt_range,
-    std::string_view label,
-    range label_range,
-    std::string_view instruction,
-    range instruction_range,
-    std::vector<std::pair<std::string_view, range>>& operands,
+    std::pair<std::string_view, range> label_details,
+    std::pair<std::string_view, range> instruction_details,
+    std::vector<std::pair<std::string_view, range>> operands,
     range operands_range,
     remarks_si remarks,
     context::id_storage& ids)
     : preprocessor_statement_si(std::move(stmt_range),
-        label_si(label_range, ord_symbol_string { ids.add(label), std::string(label) }),
-        instruction_si(std::move(instruction_range), ids.add(instruction), true),
+        label_si(
+            label_details.second, ord_symbol_string { ids.add(label_details.first), std::string(label_details.first) }),
+        instruction_si(std::move(instruction_details.second), ids.add(instruction_details.first), true),
         operands_si(std::move(operands_range), {}),
         std::move(remarks),
         context::id_index())
