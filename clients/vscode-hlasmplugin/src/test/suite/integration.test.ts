@@ -16,12 +16,14 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as helper from './testHelper';
+import { activate } from '../../extension';
 
 suite('Integration Test Suite', () => {
     const workspace_file = 'open';
     let editor: vscode.TextEditor;
 
     suiteSetup(async function () {
+        const _ = activate;
         this.timeout(30000);
 
         await helper.showDocument(workspace_file);
