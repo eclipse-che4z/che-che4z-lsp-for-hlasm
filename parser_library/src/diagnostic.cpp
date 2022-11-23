@@ -2379,6 +2379,12 @@ diagnostic_op diagnostic_op::warn_CIC002(const range& range, std::string_view va
         range);
 }
 
+diagnostic_op diagnostic_op::warn_CIC003(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::warning, "CIC003", std::string("CICS preprocessor - missing CICS command"), range);
+}
+
 diagnostic_op diagnostic_op::error_END001(const range& range, std::string_view lib)
 {
     return diagnostic_op(diagnostic_severity::error,

@@ -1098,16 +1098,16 @@ public:
         std::string label(matches[1].first, matches[1].second);
         auto label_r = range({ lineno, 0 }, { lineno, static_cast<size_t>(matches[1].length()) });
 
-        std::string instr(matches[2].first, matches[2].second);
+        auto instr = std::string(matches[2].first, matches[2].second);
         auto instr_r = range(position(lineno, std::distance(matches[0].first, matches[2].first)),
             position(lineno, std::distance(matches[0].first, matches[2].second)));
 
         std::vector<std::pair<std::string, range>> operands;
         auto operands_r = range();
 
-        if (matches.size() >= 3)
+        if (matches.size() >= 4)
         {
-            for (size_t i = 3; i <= matches.size(); ++i)
+            for (size_t i = 4; i <= matches.size(); ++i)
             {
                 operands.emplace_back(std::string(matches[i].first, matches[i].second),
                     range(position(lineno, std::distance(matches[0].first, matches[i].first)),
@@ -1146,9 +1146,15 @@ public:
         inject_call(label_b, label_e, li);
     }
 
+    bool is_command_present(std::match_results<lexing::logical_line::const_iterator> matches)
+    {
+        return matches[3].matched;
+    }
+
     bool try_exec_cics(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
     {
-        static const std::regex exec_cics("([^ ]*)[ ]+([eE][xX][eE][cC][ ]+[cC][iI][cC][sS])( .+)?");
+        static const std::regex exec_cics(
+            "([^ ]*)[ ]+([eE][xX][eE][cC][ ]+[cC][iI][cC][sS](?:[ ]+(\\S+))?)([ ]+(.*))?");
 
         it = extract_nonempty_logical_line(m_logical_line, it, end, cics_extract);
         bool exec_cics_continuation_error = false;
@@ -1159,7 +1165,10 @@ public:
             m_logical_line.segments.erase(m_logical_line.segments.begin() + 1, m_logical_line.segments.end());
         }
 
-        if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, exec_cics))
+        if (!std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, exec_cics))
+            return false;
+
+        if (is_command_present(m_matches_ll))
         {
             process_exec_cics(m_matches_ll);
 
@@ -1170,18 +1179,23 @@ public:
                 m_result.emplace_back(replaced_line { "*DFH7080I W  CONTINUATION OF EXEC COMMAND IGNORED.\n" });
                 m_result.emplace_back(replaced_line { "         DFHEIMSG 4\n" });
             }
-
-            if (auto stmt =
-                    get_preproc_statement_exec_cics(m_matches_ll, lineno, m_ids)) // todo match individual operands
-            {
-                do_highlighting(*stmt, m_src_proc);
-                set_statement(std::move(stmt));
-            }
-
-            return true;
+        }
+        else
+        {
+            if (m_diags)
+                m_diags->add_diagnostic(diagnostic_op::warn_CIC003(range(position(lineno, 0))));
+            m_result.emplace_back(replaced_line { "*DFH7237I S  INCORRECT SYNTAX AFTER 'EXEC CICS'. COMMAND NOT\n" });
+            m_result.emplace_back(replaced_line { "*            TRANSLATED.\n" });
+            m_result.emplace_back(replaced_line { "         DFHEIMSG 12\n" });
         }
 
-        return false;
+        if (auto stmt = get_preproc_statement_exec_cics(m_matches_ll, lineno, m_ids)) // todo match individual operands
+        {
+            do_highlighting(*stmt, m_src_proc);
+            set_statement(std::move(stmt));
+        }
+
+        return true;
     }
 
     auto try_substituting_dfh(const std::match_results<lexing::logical_line::const_iterator>& matches)

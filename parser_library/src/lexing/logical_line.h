@@ -32,7 +32,7 @@ enum class logical_line_segment_eol : uint8_t
     cr,
 };
 
-// HLASM logical line/statment representation
+// HLASM logical line/statement representation
 // segment 1: <code..............................><continuation><ignore...><logical_line_segment_eol>
 // segment 2:              <code.................><continuation><ignore...><logical_line_segment_eol>
 // segment 3:              <code.................><ignore.................><logical_line_segment_eol>
@@ -179,7 +179,7 @@ constexpr const logical_line_extractor_args default_ictl_dbcs_copy = { 1, 71, 16
 // remove and return a single line from the input (terminated by LF, CRLF, CR, EOF)
 std::pair<std::string_view, logical_line_segment_eol> extract_line(std::string_view& input);
 
-// extract a logical line (extacting lines while continued and not EOF)
+// extract a logical line (extracting lines while continued and not EOF)
 // returns true when a logical line was extracted
 bool extract_logical_line(logical_line& out, std::string_view& input, const logical_line_extractor_args& opts);
 
