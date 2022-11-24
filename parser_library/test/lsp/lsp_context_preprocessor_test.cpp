@@ -177,10 +177,18 @@ TEST_F(lsp_context_cics_preprocessor_test, refs_exec_cics)
         location(position(1, 35), source_loc),
         location(position(3, 40), source_loc),
     };
-    const location_list expected_exec_cics_allocate_locations { location(position(2, 2), source_loc) };
-    const location_list expected_sysid_locations { location(position(2, 23), source_loc) };
-    const location_list expected_4321_locations { location(position(2, 30), source_loc) };
-    const location_list expected_noqueue_locations { location(position(2, 37), source_loc) };
+    const location_list expected_exec_cics_allocate_locations {
+        location(position(2, 2), source_loc),
+    };
+    const location_list expected_sysid_locations {
+        location(position(2, 23), source_loc),
+    };
+    const location_list expected_4321_locations {
+        location(position(2, 30), source_loc),
+    };
+    const location_list expected_noqueue_locations {
+        location(position(2, 37), source_loc),
+    };
 
     // EXEC CICS ABEND reference
     EXPECT_EQ(expected_exec_cics_abend_locations, a.context().lsp_ctx->references(source_loc, position(1, 7)));
