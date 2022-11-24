@@ -180,7 +180,7 @@ struct preprocessor_statement_si
 
     preprocessor_statement_si(preproc_details details, context::id_index resemblence)
         : m_details(details)
-        , m_resemblence(resemblence)
+        , m_resemblance(resemblence)
     {}
 };
 
