@@ -19,13 +19,13 @@
 
 namespace hlasm_plugin::parser_library::semantics {
 
-endevor_statement_si::endevor_statement_si(preproc_details details, context::id_storage& ids)
+endevor_statement_si::endevor_statement_si(preproc_details details)
     : preprocessor_statement_si(std::move(details), context::id_storage::well_known::COPY)
 {
     m_details.instruction.name = "-INC";
 }
 
-cics_statement_si::cics_statement_si(preproc_details details, context::id_storage& ids)
+cics_statement_si::cics_statement_si(preproc_details details)
     : preprocessor_statement_si(std::move(details), context::id_index())
 {}
 

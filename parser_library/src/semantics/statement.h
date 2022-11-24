@@ -186,12 +186,12 @@ struct preprocessor_statement_si
 
 struct endevor_statement_si : public preprocessor_statement_si
 {
-    endevor_statement_si(preproc_details details, context::id_storage& ids);
+    endevor_statement_si(preproc_details details);
 };
 
 struct cics_statement_si : public preprocessor_statement_si
 {
-    cics_statement_si(preproc_details details, context::id_storage& ids);
+    cics_statement_si(preproc_details details);
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

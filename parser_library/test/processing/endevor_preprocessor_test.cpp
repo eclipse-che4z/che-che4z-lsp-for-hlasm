@@ -31,12 +31,11 @@ public:
 
     std::unique_ptr<preprocessor> create_preprocessor(library_fetcher libs)
     {
-        return preprocessor::create(endevor_preprocessor_options(), libs, &m_diags, m_src_info, m_ids);
+        return preprocessor::create(endevor_preprocessor_options(), libs, &m_diags, m_src_info);
     }
 
 protected:
     semantics::source_info_processor m_src_info;
-    context::id_storage m_ids;
     diagnostic_op_consumer_container m_diags;
     int m_callback_count = 0;
 };

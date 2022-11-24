@@ -55,7 +55,6 @@ class endevor_preprocessor final : public preprocessor
     diagnostic_op_consumer* m_diags = nullptr;
     endevor_preprocessor_options m_options;
     semantics::source_info_processor& m_src_proc;
-    context::id_storage& m_ids;
 
     bool process_member(std::string_view member, std::vector<stack_entry>& stack) const
     {
@@ -93,13 +92,11 @@ public:
     endevor_preprocessor(const endevor_preprocessor_options& options,
         library_fetcher libs,
         diagnostic_op_consumer* diags,
-        semantics::source_info_processor& src_proc,
-        context::id_storage& ids)
+        semantics::source_info_processor& src_proc)
         : m_libs(std::move(libs))
         , m_diags(diags)
         , m_options(options)
         , m_src_proc(src_proc)
-        , m_ids(ids)
     {}
 
     // Inherited via preprocessor
@@ -149,7 +146,7 @@ public:
             if (line_no)
             {
                 auto stmt = get_preproc_statement<semantics::endevor_statement_si, std::string_view::iterator>(
-                    matches, { std::nullopt, { 1 }, 2, 3 }, *line_no, m_ids);
+                    matches, { std::nullopt, { 1 }, 2, 3 }, *line_no);
                 do_highlighting(*stmt, m_src_proc);
                 set_statement(std::move(stmt));
             }
@@ -162,9 +159,8 @@ public:
 std::unique_ptr<preprocessor> preprocessor::create(const endevor_preprocessor_options& opts,
     library_fetcher lf,
     diagnostic_op_consumer* diags,
-    semantics::source_info_processor& src_proc,
-    context::id_storage& ids)
+    semantics::source_info_processor& src_proc)
 {
-    return std::make_unique<endevor_preprocessor>(opts, std::move(lf), diags, src_proc, ids);
+    return std::make_unique<endevor_preprocessor>(opts, std::move(lf), diags, src_proc);
 }
 } // namespace hlasm_plugin::parser_library::processing

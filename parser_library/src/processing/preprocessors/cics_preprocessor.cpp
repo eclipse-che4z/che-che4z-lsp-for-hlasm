@@ -853,19 +853,16 @@ class cics_preprocessor final : public preprocessor
     mini_parser<lexing::logical_line::const_iterator> m_mini_parser;
 
     semantics::source_info_processor& m_src_proc;
-    context::id_storage& m_ids;
 
 public:
     cics_preprocessor(const cics_preprocessor_options& options,
         library_fetcher libs,
         diagnostic_op_consumer* diags,
-        semantics::source_info_processor& src_proc,
-        context::id_storage& ids)
+        semantics::source_info_processor& src_proc)
         : m_libs(std::move(libs))
         , m_diags(diags)
         , m_options(options)
         , m_src_proc(src_proc)
-        , m_ids(ids)
     {}
 
     void inject_no_end_warning()
@@ -1143,7 +1140,7 @@ public:
         }
 
         if (auto stmt = get_preproc_statement<semantics::cics_statement_si, lexing::logical_line::const_iterator>(
-                m_matches_ll, { 1, { 2, 3 }, { 4 }, std::nullopt }, lineno, m_ids))
+                m_matches_ll, { 1, { 2, 3 }, { 4 }, std::nullopt }, lineno))
         {
             do_highlighting(*stmt, m_src_proc);
             set_statement(std::move(stmt));
@@ -1226,7 +1223,7 @@ public:
         }
 
         if (auto stmt = get_preproc_statement<semantics::cics_statement_si, lexing::logical_line::const_iterator>(
-                m_matches_ll, { 1, { 2 }, 3, 4 }, lineno, m_ids))
+                m_matches_ll, { 1, { 2 }, 3, 4 }, lineno))
         {
             do_highlighting(*stmt, m_src_proc);
             set_statement(std::move(stmt));
@@ -1333,10 +1330,9 @@ public:
 std::unique_ptr<preprocessor> preprocessor::create(const cics_preprocessor_options& options,
     library_fetcher libs,
     diagnostic_op_consumer* diags,
-    semantics::source_info_processor& src_proc,
-    context::id_storage& ids)
+    semantics::source_info_processor& src_proc)
 {
-    return std::make_unique<cics_preprocessor>(options, std::move(libs), diags, src_proc, ids);
+    return std::make_unique<cics_preprocessor>(options, std::move(libs), diags, src_proc);
 }
 
 namespace test {

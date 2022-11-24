@@ -42,11 +42,6 @@ namespace semantics {
 class source_info_processor;
 struct preprocessor_statement_si;
 } // namespace semantics
-
-namespace context {
-class id_storage;
-}
-
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::processing {
@@ -60,23 +55,16 @@ public:
 
     virtual document generate_replacement(document doc) = 0;
 
-    static std::unique_ptr<preprocessor> create(const cics_preprocessor_options&,
-        library_fetcher,
-        diagnostic_op_consumer*,
-        semantics::source_info_processor&,
-        context::id_storage&);
+    static std::unique_ptr<preprocessor> create(
+        const cics_preprocessor_options&, library_fetcher, diagnostic_op_consumer*, semantics::source_info_processor&);
 
-    static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&,
-        library_fetcher,
-        diagnostic_op_consumer*,
-        semantics::source_info_processor&,
-        context::id_storage&);
+    static std::unique_ptr<preprocessor> create(
+        const db2_preprocessor_options&, library_fetcher, diagnostic_op_consumer*, semantics::source_info_processor&);
 
     static std::unique_ptr<preprocessor> create(const endevor_preprocessor_options&,
         library_fetcher,
         diagnostic_op_consumer*,
-        semantics::source_info_processor&,
-        context::id_storage&);
+        semantics::source_info_processor&);
 
     virtual std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> take_statements();
 
@@ -110,10 +98,8 @@ protected:
         const semantics::preprocessor_statement_si& stmt, semantics::source_info_processor& src_proc) const;
 
     template<typename PREPROC_STATEMENT, typename ITERATOR>
-    std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(const std::match_results<ITERATOR>& matches,
-        stmt_part_ids part_ids,
-        size_t lineno,
-        context::id_storage& id_store) const;
+    std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(
+        const std::match_results<ITERATOR>& matches, stmt_part_ids part_ids, size_t lineno) const;
 
 private:
     std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> m_statements;

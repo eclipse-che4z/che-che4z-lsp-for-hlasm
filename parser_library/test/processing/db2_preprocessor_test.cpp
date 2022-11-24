@@ -40,12 +40,11 @@ public:
     std::unique_ptr<preprocessor> create_preprocessor(
         db2_preprocessor_options opts, library_fetcher libs, diagnostic_op_consumer_container* diags)
     {
-        return preprocessor::create(opts, libs, diags, m_src_info, m_ids);
+        return preprocessor::create(opts, libs, diags, m_src_info);
     }
 
 protected:
     semantics::source_info_processor m_src_info;
-    context::id_storage m_ids;
     diagnostic_op_consumer_container m_diags;
 };
 
@@ -859,10 +858,9 @@ TEST(db2_preprocessor, sql_type_fails)
          })
     {
         semantics::source_info_processor src_info(false);
-        context::id_storage ids;
         diagnostic_op_consumer_container diags;
         auto p = preprocessor::create(
-            db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags, src_info, ids);
+            db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags, src_info);
 
         p->generate_replacement(document(text));
 

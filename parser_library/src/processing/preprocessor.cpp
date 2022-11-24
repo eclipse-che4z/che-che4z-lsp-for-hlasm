@@ -177,7 +177,7 @@ std::optional<semantics::preproc_details> get_preproc_details(const std::match_r
 
 template<typename PREPROC_STATEMENT, typename ITERATOR>
 std::shared_ptr<PREPROC_STATEMENT> preprocessor::get_preproc_statement(
-    const std::match_results<ITERATOR>& matches, stmt_part_ids part_ids, size_t lineno, context::id_storage& ids) const
+    const std::match_results<ITERATOR>& matches, stmt_part_ids part_ids, size_t lineno) const
 {
     if (!matches.size())
         return nullptr;
@@ -211,21 +211,17 @@ std::shared_ptr<PREPROC_STATEMENT> preprocessor::get_preproc_statement(
         details.remarks.first.emplace_back(details.remarks.second);
     }
 
-    return std::make_shared<PREPROC_STATEMENT>(std::move(details), ids);
+    return std::make_shared<PREPROC_STATEMENT>(std::move(details));
 }
 
 template std::shared_ptr<semantics::endevor_statement_si>
 preprocessor::get_preproc_statement<semantics::endevor_statement_si, std::string_view::iterator>(
-    const std::match_results<std::string_view::iterator>& matches,
-    stmt_part_ids part_ids,
-    size_t lineno,
-    context::id_storage& ids) const;
+    const std::match_results<std::string_view::iterator>& matches, stmt_part_ids part_ids, size_t lineno) const;
 
 template std::shared_ptr<semantics::cics_statement_si>
 preprocessor::get_preproc_statement<semantics::cics_statement_si, lexing::logical_line::const_iterator>(
     const std::match_results<lexing::logical_line::const_iterator>& matches,
     stmt_part_ids part_ids,
-    size_t lineno,
-    context::id_storage& ids) const;
+    size_t lineno) const;
 
 } // namespace hlasm_plugin::parser_library::processing

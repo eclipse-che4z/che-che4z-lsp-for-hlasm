@@ -825,8 +825,7 @@ public:
 std::unique_ptr<preprocessor> preprocessor::create(const db2_preprocessor_options& opts,
     library_fetcher libs,
     diagnostic_op_consumer* diags,
-    semantics::source_info_processor& src_proc,
-    context::id_storage& ids)
+    semantics::source_info_processor& src_proc)
 {
     return std::make_unique<db2_preprocessor>(opts, std::move(libs), diags);
 }
