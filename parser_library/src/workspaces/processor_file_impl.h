@@ -50,7 +50,7 @@ public:
     const std::set<utils::resource::resource_location>& dependencies() override;
 
     const semantics::lines_info& get_hl_info() override;
-    const lsp::feature_provider& get_lsp_feature_provider() override;
+    const lsp::lsp_context* get_lsp_context() override;
     const std::set<utils::resource::resource_location>& files_to_close() override;
     const performance_metrics& get_metrics() override;
 

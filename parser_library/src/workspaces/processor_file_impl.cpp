@@ -147,41 +147,12 @@ const semantics::lines_info& processor_file_impl::get_hl_info()
     return empty_lines;
 }
 
-namespace {
-class empty_feature_provider final : public lsp::feature_provider
-{
-    // Inherited via feature_provider
-    location definition(const utils::resource::resource_location& document_loc, position pos) const override
-    {
-        return location(pos, document_loc);
-    }
-    location_list references(const utils::resource::resource_location&, position) const override
-    {
-        return location_list();
-    }
-    lsp::hover_result hover(const utils::resource::resource_location&, position) const override
-    {
-        return lsp::hover_result();
-    }
-    lsp::completion_list_s completion(
-        const utils::resource::resource_location&, position, char, completion_trigger_kind) const override
-    {
-        return {};
-    }
-    lsp::document_symbol_list_s document_symbol(const utils::resource::resource_location&, long long) const override
-    {
-        return {};
-    }
-};
-} // namespace
-
-const lsp::feature_provider& processor_file_impl::get_lsp_feature_provider()
+const lsp::lsp_context* processor_file_impl::get_lsp_context()
 {
     if (last_analyzer_)
-        return *last_analyzer_->context().lsp_ctx;
+        return last_analyzer_->context().lsp_ctx.get();
 
-    const static empty_feature_provider empty_res;
-    return empty_res;
+    return nullptr;
 }
 
 const std::set<utils::resource::resource_location>& processor_file_impl::files_to_close() { return files_to_close_; }

@@ -556,3 +556,27 @@ TEST(workspace, opcode_suggestions)
     EXPECT_EQ(ws.make_opcode_suggestion(resource_location("pgm"), "LHIXXX", false), expected);
     EXPECT_EQ(ws.make_opcode_suggestion(resource_location("pgm_implicit"), "LHIXXX", false), expected);
 }
+
+TEST(workspace, lsp_file_not_processed_yet)
+{
+    file_manager_impl mngr;
+    lib_config config;
+    shared_json global_settings = make_empty_shared_json();
+    workspace ws(mngr, config, global_settings);
+    ws.open();
+
+    mngr.did_open_file(file_loc, 0, " LR 1,1");
+    auto file = mngr.add_processor_file(file_loc);
+
+    // Prior to parsing, it should return default values
+    const auto* fp = file->get_lsp_context();
+    ASSERT_FALSE(fp);
+
+    EXPECT_EQ(ws.definition(file_loc, { 0, 5 }), location({ 0, 5 }, file_loc));
+    EXPECT_EQ(ws.references(file_loc, { 0, 5 }), location_list());
+    EXPECT_EQ(ws.hover(file_loc, { 0, 5 }), "");
+    EXPECT_EQ(ws.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked), lsp::completion_list_s());
+
+    EXPECT_EQ(file->get_hl_info(), semantics::lines_info());
+    EXPECT_EQ(file->get_metrics(), performance_metrics());
+}

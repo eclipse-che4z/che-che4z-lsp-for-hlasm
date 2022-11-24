@@ -20,6 +20,7 @@ import { EOL, homedir } from 'os';
 import path = require('node:path');
 import { promises as fsp } from "fs";
 import { hlasmplugin_folder, proc_grps_file } from './constants';
+import { Telemetry } from './telemetry';
 
 const cancelMessage = "Action was cancelled";
 
@@ -595,6 +596,8 @@ interface ConnectionInfo {
     password: string;
     hostInput: string;
     securityLevel: connectionSecurityLevel;
+
+    zowe: boolean;
 }
 
 function gatherSecurityLevelFromZowe(profile: any) {
@@ -629,7 +632,8 @@ async function gatherConnectionInfoFromZowe(zowe: vscode.Extension<any>, profile
         user: loadedProfile.profile.user,
         password: loadedProfile.profile.password,
         hostInput: '@' + profileName,
-        securityLevel: gatherSecurityLevelFromZowe(loadedProfile.profile)
+        securityLevel: gatherSecurityLevelFromZowe(loadedProfile.profile),
+        zowe: true,
     };
 }
 
@@ -653,7 +657,7 @@ async function gatherConnectionInfo(lastInput: DownloadDependenciesInputMemento)
         { label: "Use TLS, accept unauthorized certificated", value: connectionSecurityLevel.acceptUnauthorized },
         { label: "Unsecured connection", value: connectionSecurityLevel.unsecure },
     ]);
-    return { host, port, user, password, hostInput, securityLevel };
+    return { host, port, user, password, hostInput, securityLevel, zowe: false };
 }
 
 interface DownloadDependenciesInputMemento {
@@ -719,11 +723,13 @@ class ProgressReporter implements StageProgressReporter {
     }
 }
 
-export async function downloadDependencies(context: vscode.ExtensionContext, ...args: any[]) {
+export async function downloadDependencies(context: vscode.ExtensionContext, telemetry: Telemetry, ...args: any[]) {
     try {
+        telemetry.reportEvent("downloadDependencies/started");
+
         const newOnly = args.length === 1 && args[0] === "newOnly";
         const lastInput = getLastRunConfig(context);
-        const { host, port, user, password, hostInput, securityLevel } = await gatherConnectionInfo(lastInput);
+        const { host, port, user, password, hostInput, securityLevel, zowe } = await gatherConnectionInfo(lastInput);
 
         const jobcardPattern = await askUser("Enter jobcard pattern (? will be substituted)", false, lastInput.jobcard || "//" + user.slice(0, 7).padEnd(8, '?').toUpperCase() + " JOB ACCTNO");
 
@@ -742,6 +748,8 @@ export async function downloadDependencies(context: vscode.ExtensionContext, ...
                 await removeFilesFromDirectory(d);
         }
 
+        const startTime = Date.now();
+
         const result = await vscode.window.withProgress({ title: "Downloading dependencies", location: vscode.ProgressLocation.Notification, cancellable: true }, async (p, t) => {
             return downloadDependenciesWithClient(
                 await basicFtpJobClient({
@@ -758,6 +766,9 @@ export async function downloadDependencies(context: vscode.ExtensionContext, ...
                 () => t.isCancellationRequested);
         });
 
+        const endTime = Date.now();
+
+
         const showFailedJobs = "Show failed jobs";
         if (result.failed.length > 0) // TODO: offer re-run?
             vscode.window.showErrorMessage(result.failed.length + " jobs out of " + result.total + " failed", showFailedJobs).then((choice) => {
@@ -769,6 +780,8 @@ export async function downloadDependencies(context: vscode.ExtensionContext, ...
             });
         else
             vscode.window.showInformationMessage("All jobs (" + result.total + ") completed successfully");
+
+        telemetry.reportEvent("downloadDependencies/finished", { zowe: zowe ? 'yes' : 'no' }, { failed: result.failed.length, total: result.total, elapsedTime: (endTime - startTime) / 1000 });
     }
     catch (e) {
         if (e.message !== cancelMessage)

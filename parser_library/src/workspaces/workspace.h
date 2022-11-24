@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_H
 
 #include <atomic>
+#include <functional>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -39,7 +40,7 @@ using ws_highlight_info = std::unordered_map<std::string, semantics::highlightin
 // Represents a LSP workspace. It solves all dependencies between files -
 // implements parse lib provider and decides which files are to be parsed
 // when a particular file has been changed in the editor.
-class workspace : public diagnosable_impl, public parse_lib_provider, public lsp::feature_provider
+class workspace : public diagnosable_impl, public parse_lib_provider
 {
 public:
     // Creates just a dummy workspace with no libraries - no dependencies
@@ -77,15 +78,15 @@ public:
         const utils::resource::resource_location& file_location, const document_change* changes, size_t ch_size);
     void did_change_watched_files(const std::vector<utils::resource::resource_location>& file_locations);
 
-    location definition(const utils::resource::resource_location& document_loc, position pos) const override;
-    location_list references(const utils::resource::resource_location& document_loc, position pos) const override;
-    lsp::hover_result hover(const utils::resource::resource_location& document_loc, position pos) const override;
+    location definition(const utils::resource::resource_location& document_loc, position pos) const;
+    location_list references(const utils::resource::resource_location& document_loc, position pos) const;
+    std::string hover(const utils::resource::resource_location& document_loc, position pos) const;
     lsp::completion_list_s completion(const utils::resource::resource_location& document_loc,
         position pos,
         char trigger_char,
-        completion_trigger_kind trigger_kind) const override;
+        completion_trigger_kind trigger_kind);
     lsp::document_symbol_list_s document_symbol(
-        const utils::resource::resource_location& document_loc, long long limit) const override;
+        const utils::resource::resource_location& document_loc, long long limit) const;
 
     parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override;
     bool has_library(const std::string& library, const utils::resource::resource_location& program) const override;
@@ -113,6 +114,9 @@ public:
 
     std::vector<std::pair<std::string, size_t>> make_opcode_suggestion(
         const utils::resource::resource_location& file, std::string_view opcode, bool extended);
+
+    static lsp::completion_list_s generate_completion(const lsp::completion_list_source& cls,
+        std::function<std::vector<std::string>(std::string_view)> instruction_suggestions = {});
 
 private:
     std::atomic<bool>* cancel_;
@@ -150,6 +154,15 @@ private:
     lib_config get_config() const;
 
     workspace_configuration m_configuration;
+
+    static lsp::completion_list_s generate_completion(
+        std::monostate, const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
+    static lsp::completion_list_s generate_completion(const lsp::vardef_storage*,
+        const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
+    static lsp::completion_list_s generate_completion(const context::label_storage*,
+        const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
+    static lsp::completion_list_s generate_completion(const lsp::completion_list_instructions&,
+        const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

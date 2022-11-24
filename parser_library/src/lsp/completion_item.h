@@ -35,7 +35,8 @@ struct completion_item_s
         std::string insert_text,
         std::string documentation,
         completion_item_kind kind = completion_item_kind::mach_instr,
-        bool snippet = false);
+        bool snippet = false,
+        std::string suggestion_for = {});
 
     // several features of completion item from LSP
     std::string label;
@@ -44,6 +45,7 @@ struct completion_item_s
     std::string documentation;
     completion_item_kind kind;
     bool snippet = false;
+    std::string suggestion_for;
 
     struct label_comparer
     {

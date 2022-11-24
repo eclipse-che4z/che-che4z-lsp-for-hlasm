@@ -374,6 +374,7 @@ The current release of HLASM Language Support collects anonymous data for the fo
 * Invocation of the following features: Autocomplete, Go to definition, Find all references and Hover
 * Launch of Macro tracer and subsequent user interactions with the debugging interface (step into, step over, continue, set breakpoints)
 * Malfunctions of the extension
+* Dependency download command usage
 
 Each such event is logged with the following information:
 * Event time

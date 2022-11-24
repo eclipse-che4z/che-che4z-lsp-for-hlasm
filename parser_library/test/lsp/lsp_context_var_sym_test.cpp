@@ -16,6 +16,7 @@
 
 #include "analyzer_fixture.h"
 #include "lsp_context_test_helper.h"
+#include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
@@ -60,11 +61,15 @@ TEST_F(lsp_context_var_symbol_SET, hover)
 
 TEST_F(lsp_context_var_symbol_SET, completion)
 {
-    auto res = a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+    auto res_v =
+        a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+
+    ASSERT_TRUE(std::holds_alternative<const lsp::vardef_storage*>(res_v));
+
+    const auto& res = *std::get<const lsp::vardef_storage*>(res_v);
 
     ASSERT_EQ(res.size(), 1U);
-    lsp::completion_item_s expected("&VAR", "SETA variable", "&VAR", "", completion_item_kind::var_sym);
-    EXPECT_EQ(res[0], expected);
+    EXPECT_EQ(res.begin()->name.to_string_view(), "VAR");
 }
 
 
@@ -107,11 +112,15 @@ TEST_F(lsp_context_var_symbol_GBL, hover)
 
 TEST_F(lsp_context_var_symbol_GBL, completion)
 {
-    auto res = a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+    auto res_v =
+        a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+
+    ASSERT_TRUE(std::holds_alternative<const vardef_storage*>(res_v));
+
+    const auto& res = *std::get<const vardef_storage*>(res_v);
 
     ASSERT_EQ(res.size(), 1U);
-    lsp::completion_item_s expected("&VAR", "SETC variable", "&VAR", "", completion_item_kind::var_sym);
-    EXPECT_EQ(res[0], expected);
+    EXPECT_EQ(res.begin()->name.to_string_view(), "VAR");
 }
 
 
@@ -153,11 +162,15 @@ TEST_F(lsp_context_var_symbol_LCL, hover)
 
 TEST_F(lsp_context_var_symbol_LCL, completion)
 {
-    auto res = a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+    auto res_v =
+        a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+
+    ASSERT_TRUE(std::holds_alternative<const vardef_storage*>(res_v));
+
+    const auto& res = *std::get<const vardef_storage*>(res_v);
 
     ASSERT_EQ(res.size(), 1U);
-    lsp::completion_item_s expected("&VAR", "SETB variable", "&VAR", "", completion_item_kind::var_sym);
-    EXPECT_EQ(res[0], expected);
+    EXPECT_EQ(res.begin()->name.to_string_view(), "VAR");
 }
 
 struct lsp_context_var_symbol_no_definition : public analyzer_fixture

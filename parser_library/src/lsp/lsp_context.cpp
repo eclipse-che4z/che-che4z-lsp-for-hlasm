@@ -24,110 +24,11 @@
 
 #include "context/instruction.h"
 #include "ebcdic_encoding.h"
+#include "item_convertors.h"
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 namespace {
-
-template</*std::integral*/ typename T>
-std::string& append_hex_and_dec(std::string& t, T value)
-{
-    using UT = std::make_unsigned_t<T>;
-    char buffer[(std::numeric_limits<UT>::digits + 3) / 4];
-    char* p = std::end(buffer);
-    auto convert = (UT)value;
-
-    do
-    {
-        *--p = "0123456789ABCDEF"[convert & 0xf];
-        convert >>= 4;
-    } while (convert);
-
-    t.append("X'");
-    t.append(p, std::end(buffer));
-    t.append("'");
-    t.push_back(' ');
-    t.append("(").append(std::to_string(value)).append(")");
-    return t;
-}
-
-hover_result hover_text(const context::symbol& sym)
-{
-    if (sym.value().value_kind() == context::symbol_value_kind::UNDEF)
-        return "";
-    std::string markdown = "";
-
-    if (sym.value().value_kind() == context::symbol_value_kind::ABS)
-    {
-        append_hex_and_dec(markdown, sym.value().get_abs());
-        markdown.append("\n\n---\n\nAbsolute Symbol\n\n---\n\n");
-    }
-    else if (sym.value().value_kind() == context::symbol_value_kind::RELOC)
-    {
-        bool first = true;
-        const auto& reloc = sym.value().get_reloc();
-        for (const auto& [base, d] : reloc.bases())
-        {
-            if (base.owner->name.empty() || d == 0)
-                continue;
-
-            bool was_first = std::exchange(first, false);
-            if (d < 0)
-                markdown.append(was_first ? "-" : " - ");
-            else if (!was_first)
-                markdown.append(" + ");
-
-            if (d != 1 && d != -1)
-                markdown.append(std::to_string(-(unsigned)d)).append("*");
-
-            if (!base.qualifier.empty())
-                markdown.append(base.qualifier.to_string_view()).append(".");
-            markdown.append(base.owner->name.to_string_view());
-        }
-        if (!first)
-            markdown.append(" + ");
-        append_hex_and_dec(markdown, reloc.offset());
-        markdown.append("\n\n---\n\nRelocatable Symbol\n\n---\n\n");
-    }
-
-    const auto& attrs = sym.attributes();
-    if (attrs.is_defined(context::data_attr_kind::L))
-    {
-        markdown.append("L: ");
-        append_hex_and_dec(markdown, attrs.length());
-        markdown.append("  \n");
-    }
-    if (attrs.is_defined(context::data_attr_kind::I))
-        markdown.append("I: " + std::to_string(attrs.integer()) + "  \n");
-    if (attrs.is_defined(context::data_attr_kind::S))
-        markdown.append("S: " + std::to_string(attrs.scale()) + "  \n");
-    if (attrs.is_defined(context::data_attr_kind::T))
-        markdown.append("T: " + ebcdic_encoding::to_ascii((unsigned char)attrs.type()) + "  \n");
-
-    return markdown;
-}
-
-hover_result hover_text(const variable_symbol_definition& sym)
-{
-    if (sym.macro_param)
-        return "MACRO parameter";
-    else
-    {
-        switch (sym.type)
-        {
-            case context::SET_t_enum::A_TYPE:
-                return "SETA variable";
-            case context::SET_t_enum::B_TYPE:
-                return "SETB variable";
-            case context::SET_t_enum::C_TYPE:
-                return "SETC variable";
-            default:
-                return "";
-        }
-    }
-}
-} // namespace
-
 const std::unordered_map<context::symbol_origin, document_symbol_kind> document_symbol_item_kind_mapping_symbol {
     { context::symbol_origin::DAT, document_symbol_kind::DAT },
     { context::symbol_origin::EQU, document_symbol_kind::EQU },
@@ -148,6 +49,7 @@ const std::unordered_map<context::section_kind, document_symbol_kind> document_s
 const std::unordered_map<occurence_kind, document_symbol_kind> document_symbol_item_kind_mapping_macro {
     { occurence_kind::VAR, document_symbol_kind::VAR }, { occurence_kind::SEQ, document_symbol_kind::SEQ }
 };
+} // namespace
 
 std::string lsp_context::find_macro_copy_id(const std::vector<context::processing_frame>& stack, unsigned long i) const
 {
@@ -665,7 +567,7 @@ const file_info* lsp_context::get_file_info(const utils::resource::resource_loca
         return nullptr;
 }
 
-location lsp_context::definition(const utils::resource::resource_location& document_loc, const position pos) const
+location lsp_context::definition(const utils::resource::resource_location& document_loc, position pos) const
 {
     auto [occ, macro_scope] = find_occurence_with_scope(document_loc, pos);
 
@@ -687,7 +589,7 @@ void collect_references(location_list& refs, const symbol_occurence& occ, const 
     }
 }
 
-location_list lsp_context::references(const utils::resource::resource_location& document_loc, const position pos) const
+location_list lsp_context::references(const utils::resource::resource_location& document_loc, position pos) const
 {
     location_list result;
 
@@ -713,7 +615,7 @@ location_list lsp_context::references(const utils::resource::resource_location& 
     return result;
 }
 
-hover_result lsp_context::hover(const utils::resource::resource_location& document_loc, const position pos) const
+std::string lsp_context::hover(const utils::resource::resource_location& document_loc, position pos) const
 {
     auto [occ, macro_scope] = find_occurence_with_scope(document_loc, pos);
 
@@ -723,14 +625,7 @@ hover_result lsp_context::hover(const utils::resource::resource_location& docume
     return find_hover(*occ, macro_scope);
 }
 
-size_t constexpr continuation_column = 71;
-
-bool lsp_context::is_continued_line(std::string_view line) const
-{
-    return line.size() > continuation_column && !isspace((unsigned char)line[continuation_column]);
-}
-
-bool lsp_context::should_complete_instr(const text_data_ref_t& text, const position pos) const
+bool lsp_context::should_complete_instr(const text_data_ref_t& text, position pos) const
 {
     bool line_before_continued = pos.line > 0 ? is_continued_line(text.get_line(pos.line - 1)) : false;
 
@@ -740,184 +635,65 @@ bool lsp_context::should_complete_instr(const text_data_ref_t& text, const posit
     return !line_before_continued && std::regex_match(line_so_far.begin(), line_so_far.end(), instruction_regex);
 }
 
-completion_list_s lsp_context::completion(const utils::resource::resource_location& document_uri,
-    const position pos,
+completion_list_source lsp_context::completion(const utils::resource::resource_location& document_uri,
+    position pos,
     const char trigger_char,
     completion_trigger_kind trigger_kind) const
 {
-    auto file_it = m_files.find(document_uri);
-    if (file_it == m_files.end())
-        return completion_list_s();
-    const text_data_ref_t& text = file_it->second->data;
+    const auto* file_info = get_file_info(document_uri);
+    if (!file_info)
+        return {};
+    const text_data_ref_t& text = file_info->data;
 
     char last_char =
         (trigger_kind == completion_trigger_kind::trigger_character) ? trigger_char : text.get_character_before(pos);
 
     if (last_char == '&')
-        return complete_var(*file_it->second, pos);
+        return complete_var(*file_info, pos);
     else if (last_char == '.')
-        return complete_seq(*file_it->second, pos);
+        return complete_seq(*file_info, pos);
     else if (should_complete_instr(text, pos))
-        return complete_instr(*file_it->second, pos);
+        return complete_instr(*file_info, pos);
 
-    return completion_list_s();
+    return {};
 }
 
-completion_list_s lsp_context::complete_var(const file_info& file, position pos) const
+completion_list_source lsp_context::complete_var(const file_info& file, position pos) const
 {
     auto scope = file.find_scope(pos);
 
-
-    completion_list_s items;
-    const vardef_storage& var_defs = scope ? scope->var_definitions : m_opencode->variable_definitions;
-    for (const auto& vardef : var_defs)
-    {
-        items.emplace_back("&" + vardef.name.to_string(),
-            hover_text(vardef),
-            "&" + vardef.name.to_string(),
-            "",
-            completion_item_kind::var_sym);
-    }
-
-    return items;
+    return scope ? &scope->var_definitions : &m_opencode->variable_definitions;
 }
 
-completion_list_s lsp_context::complete_seq(const file_info& file, position pos) const
+completion_list_source lsp_context::complete_seq(const file_info& file, position pos) const
 {
     auto macro_i = file.find_scope(pos);
 
-    const context::label_storage& seq_syms =
-        macro_i ? macro_i->macro_definition->labels : m_hlasm_ctx->current_scope().sequence_symbols;
-
-    completion_list_s items;
-    for (const auto& [_, sym] : seq_syms)
-    {
-        std::string label = "." + sym->name.to_string();
-        items.emplace_back(label, "Sequence symbol", label, "", completion_item_kind::seq_sym);
-    }
-    return items;
+    return macro_i ? &macro_i->macro_definition->labels : &m_hlasm_ctx->current_scope().sequence_symbols;
 }
 
-std::string get_macro_signature(const context::macro_definition& m)
+completion_list_source lsp_context::complete_instr(const file_info& fi, position pos) const
 {
-    std::stringstream signature;
-    if (!m.get_label_param_name().empty())
-        signature << "&" << m.get_label_param_name().to_string_view() << " ";
-    signature << m.id.to_string_view() << " ";
+    completion_list_source result(std::in_place_type<completion_list_instructions>);
 
-    bool first = true;
-    const auto& pos_params = m.get_positional_params();
-    // First positional parameter is always label, even when empty
-    for (size_t i = 1; i < pos_params.size(); ++i)
-    {
-        if (pos_params[i] == nullptr)
-            continue;
-        if (!first)
-            signature << ",";
-        else
-            first = false;
+    auto& value = std::get<completion_list_instructions>(result);
 
-        signature << "&" << pos_params[i]->id.to_string_view();
-    }
-    for (const auto& param : m.get_keyword_params())
-    {
-        if (!first)
-            signature << ",";
-        else
-            first = false;
-        signature << "&" << param->id.to_string_view() << "=" << param->default_data->get_value();
-    }
-    return signature.str();
-}
+    value.completed_text = fi.data.get_line(pos.line).substr(0, pos.column);
+    value.lsp_ctx = this;
 
-
-bool is_comment(std::string_view line) { return line.substr(0, 1) == "*" || line.substr(0, 2) == ".*"; }
-
-
-std::string lsp_context::get_macro_documentation(const macro_info& m) const
-{
-    // Get file, where the macro is defined
-    auto it = m_files.find(m.definition_location.resource_loc);
-    if (it == m_files.end())
-        return "";
-    const text_data_ref_t& text = it->second->data;
-
-    // We start at line where the name of the macro is written
-    size_t MACRO_line = m.definition_location.pos.line - 1;
-    // Skip over MACRO statement
-    size_t doc_before_begin_line = MACRO_line - 1;
-    // Find the beginning line of documentation written in front of macro definition
-    while (doc_before_begin_line != (size_t)-1 && is_comment(text.get_line(doc_before_begin_line)))
-        --doc_before_begin_line;
-    ++doc_before_begin_line;
-
-    std::string_view doc_before = text.get_range_content({ { doc_before_begin_line, 0 }, { MACRO_line, 0 } });
-
-    // Find the end line of macro definition
-    size_t macro_def_end_line = m.definition_location.pos.line;
-    while (macro_def_end_line < text.get_number_of_lines() && is_continued_line(text.get_line(macro_def_end_line)))
-        ++macro_def_end_line;
-    ++macro_def_end_line;
-
-    std::string_view macro_def =
-        text.get_range_content({ { m.definition_location.pos.line, 0 }, { macro_def_end_line, 0 } });
-
-    // Find the end line of documentation that comes after the macro definition
-    size_t doc_after_end_line = macro_def_end_line;
-
-    while (doc_after_end_line < text.get_number_of_lines() && is_comment(text.get_line(doc_after_end_line)))
-        ++doc_after_end_line;
-
-    std::string_view doc_after = text.get_range_content({ { macro_def_end_line, 0 }, { doc_after_end_line, 0 } });
-
-    std::string result = "```\n";
-    result.append(macro_def);
-    result.append(doc_before);
-    result.append(doc_after);
-    result.append("\n```\n");
-
-    return result;
-}
-
-completion_list_s lsp_context::complete_instr(const file_info& fi, position pos) const
-{
-    completion_list_s result;
-
-    auto completion_start = fi.data.get_line(pos.line).substr(0, pos.column).rfind(' ');
-    if (completion_start == std::string_view::npos)
-        completion_start = pos.column;
+    if (auto completion_start = value.completed_text.rfind(' '); completion_start == std::string_view::npos)
+        value.completed_text_start_column = pos.column;
     else
-        completion_start += 2; // after and turn to column
-
-    // Store only instructions from the currently active instruction set
-    for (const auto& instr : completion_item_s::m_instruction_completion_items)
     {
-        auto id = m_hlasm_ctx->ids().find(instr.label);
-        // TODO: we could provide more precise results here if actual generation is provided
-        if (id.has_value() && m_hlasm_ctx->find_opcode_mnemo(id.value(), context::opcode_generation::zero))
-        {
-            auto& i = result.emplace_back(instr);
-            if (auto space = i.insert_text.find(' '); space != std::string::npos)
-            {
-                if (completion_start + space < 15)
-                    i.insert_text.insert(i.insert_text.begin() + space, 15 - (completion_start + space), ' ');
-            }
-        }
+        value.completed_text_start_column = completion_start + 2; // after and turn to column
+        value.completed_text.remove_prefix(completion_start + 1);
     }
 
-    for (const auto& [_, macro_i] : m_macros)
-    {
-        const context::macro_definition& m = *macro_i->macro_definition;
-
-        result.emplace_back(m.id.to_string(),
-            get_macro_signature(m),
-            m.id.to_string(),
-            get_macro_documentation(*macro_i),
-            completion_item_kind::macro);
-    }
+    value.macros = &m_macros;
 
     return result;
 }
+
 
 template<typename T>
 bool files_present(const std::unordered_map<utils::resource::resource_location,
@@ -950,7 +726,7 @@ void lsp_context::distribute_file_occurences(const file_occurences_t& occurences
 }
 
 occurence_scope_t lsp_context::find_occurence_with_scope(
-    const utils::resource::resource_location& document_loc, const position pos) const
+    const utils::resource::resource_location& document_loc, position pos) const
 {
     if (auto file = m_files.find(document_loc); file != m_files.end())
         return file->second->find_occurence_with_scope(pos);
@@ -1022,7 +798,7 @@ std::optional<location> lsp_context::find_definition_location(
     return std::nullopt;
 }
 
-hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr macro_scope_i) const
+std::string lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr macro_scope_i) const
 {
     switch (occ.kind)
     {
@@ -1050,7 +826,13 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
             {
                 auto it = m_macros.find(occ.opcode);
                 assert(it != m_macros.end());
-                return get_macro_documentation(*it->second);
+
+                // Get file, where the macro is defined
+                auto mit = m_files.find(it->second->definition_location.resource_loc);
+                if (mit == m_files.end())
+                    return "";
+
+                return get_macro_documentation(mit->second->data, it->second->definition_location.pos.line);
             }
             else
             {

@@ -24,24 +24,17 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
 using namespace hlasm_plugin::utils::resource;
 
-TEST(processor_file, empty_file_feature_provider)
+TEST(processor_file, no_lsp_context)
 {
     resource_location file_loc("filename");
     file_manager_impl mngr;
     mngr.did_open_file(file_loc, 0, " LR 1,1");
     auto file = mngr.add_processor_file(file_loc);
 
-    // Prior to parsing, it should return default values
+    // Prior to parsing, there is no lsp_context available
 
-    auto& fp = file->get_lsp_feature_provider();
-
-    EXPECT_EQ(fp.definition(file_loc, { 0, 5 }), location({ 0, 5 }, file_loc));
-    EXPECT_EQ(fp.references(file_loc, { 0, 5 }), location_list());
-    EXPECT_EQ(fp.hover(file_loc, { 0, 5 }), "");
-    EXPECT_EQ(fp.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked), lsp::completion_list_s());
-
-    EXPECT_EQ(file->get_hl_info(), semantics::lines_info());
-    EXPECT_EQ(file->get_metrics(), performance_metrics());
+    const auto* fp = file->get_lsp_context();
+    ASSERT_FALSE(fp);
 }
 
 TEST(processor_file, parse_macro)
@@ -64,16 +57,19 @@ TEST(processor_file, parse_macro)
     opencode->parse(provider, {}, {}, nullptr);
 
     // Opencode file tests
-    auto& open_fp = opencode->get_lsp_feature_provider();
+    const auto* open_fp = opencode->get_lsp_context();
+    ASSERT_TRUE(open_fp);
 
-    EXPECT_EQ(open_fp.definition(opencode_loc, { 1, 2 }), location({ 1, 1 }, macro_loc));
+    EXPECT_EQ(open_fp->definition(opencode_loc, { 1, 2 }), location({ 1, 1 }, macro_loc));
 
     const std::string sam31_hover_message = "Operands: \n\nMachine instruction \n\nInstruction format: E";
-    EXPECT_EQ(open_fp.hover(opencode_loc, { 0, 2 }), sam31_hover_message);
-    EXPECT_EQ(open_fp.hover(macro_loc, { 2, 2 }), sam31_hover_message);
+    EXPECT_EQ(open_fp->hover(opencode_loc, { 0, 2 }), sam31_hover_message);
+    EXPECT_EQ(open_fp->hover(macro_loc, { 2, 2 }), sam31_hover_message);
 
-    semantics::lines_info open_expected_hl { { 0, 1, 0, 6, semantics::hl_scopes::instruction },
-        { 1, 1, 1, 4, semantics::hl_scopes::instruction } };
+    semantics::lines_info open_expected_hl {
+        { 0, 1, 0, 6, semantics::hl_scopes::instruction },
+        { 1, 1, 1, 4, semantics::hl_scopes::instruction },
+    };
 
     EXPECT_EQ(opencode->get_hl_info(), open_expected_hl);
 
@@ -88,15 +84,18 @@ TEST(processor_file, parse_macro)
 
 
     // Macro file tests
-    auto& macro_fp = macro->get_lsp_feature_provider();
-    EXPECT_EQ(macro_fp.definition(opencode_loc, { 1, 2 }), location({ 1, 1 }, macro_loc));
-    EXPECT_EQ(macro_fp.hover(opencode_loc, { 0, 2 }), sam31_hover_message);
-    EXPECT_EQ(macro_fp.hover(macro_loc, { 2, 2 }), sam31_hover_message);
+    const auto* macro_fp = macro->get_lsp_context();
+    ASSERT_TRUE(macro_fp);
+    EXPECT_EQ(macro_fp->definition(opencode_loc, { 1, 2 }), location({ 1, 1 }, macro_loc));
+    EXPECT_EQ(macro_fp->hover(opencode_loc, { 0, 2 }), sam31_hover_message);
+    EXPECT_EQ(macro_fp->hover(macro_loc, { 2, 2 }), sam31_hover_message);
 
-    semantics::lines_info macro_expected_hl { { 0, 1, 0, 6, semantics::hl_scopes::instruction },
+    semantics::lines_info macro_expected_hl {
+        { 0, 1, 0, 6, semantics::hl_scopes::instruction },
         { 1, 1, 1, 4, semantics::hl_scopes::instruction },
         { 2, 1, 2, 6, semantics::hl_scopes::instruction },
-        { 3, 1, 3, 5, semantics::hl_scopes::instruction } };
+        { 3, 1, 3, 5, semantics::hl_scopes::instruction },
+    };
 
     EXPECT_EQ(macro->get_hl_info(), macro_expected_hl);
     EXPECT_EQ(macro->get_metrics(), expected_metrics);

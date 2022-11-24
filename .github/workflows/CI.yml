@@ -169,17 +169,20 @@ jobs:
       - name: NPM CI
         run: npm --prefix clients/vscode-hlasmplugin ci
       - name: Extension Test
-        uses: GabrielBB/xvfb-action@v1.0
+        uses: GabrielBB/xvfb-action@v1
         with:
-          run: npm --prefix clients/vscode-hlasmplugin run test
+          run: npm run test
+          working-directory: clients/vscode-hlasmplugin
       - name: Extension Test WASM
-        uses: GabrielBB/xvfb-action@v1.0
+        uses: GabrielBB/xvfb-action@v1
         with:
-          run: npm --prefix clients/vscode-hlasmplugin run test:wasm
+          run: npm run test:wasm
+          working-directory: clients/vscode-hlasmplugin
       - name: Extension Test Insiders
-        uses: GabrielBB/xvfb-action@v1.0
+        uses: GabrielBB/xvfb-action@v1
         with:
-          run: npm --prefix clients/vscode-hlasmplugin run test:insiders
+          run: npm run test:insiders
+          working-directory: clients/vscode-hlasmplugin
 
   VSIX:
     runs-on: ubuntu-20.04

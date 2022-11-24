@@ -13,7 +13,7 @@
  */
 import * as vscode from "vscode";
 
-import TelemetryReporter from 'vscode-extension-telemetry';
+import TelemetryReporter, { TelemetryEventMeasurements, TelemetryEventProperties } from 'vscode-extension-telemetry';
 
 const EXTENSION_ID = "broadcommfd.hlasm-language-support";
 const TELEMETRY_DEFAULT_KEY = "NOT_TELEMETRY_KEY";
@@ -40,7 +40,7 @@ export class Telemetry {
         this.reporter = new TelemetryReporter(EXTENSION_ID, this.getExtensionVersion(), this.getTelemetryKey());
     }
 
-    public reportEvent(eventName: string, properties? : any, measurements? : any): void {
+    public reportEvent(eventName: string, properties?: TelemetryEventProperties, measurements?: TelemetryEventMeasurements): void {
         if (this.isValidTelemetryKey()) {
             this.reporter.sendTelemetryEvent(eventName, properties, measurements);
         }

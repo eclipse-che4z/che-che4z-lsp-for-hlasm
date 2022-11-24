@@ -56,7 +56,7 @@ function objectToString(o: any) {
 export async function activate(context: vscode.ExtensionContext) {
     const serverVariant = getConfig<ServerVariant>('serverVariant', 'native');
 
-    var telemetry = new Telemetry();
+    const telemetry = new Telemetry();
     context.subscriptions.push(telemetry);
 
     // setTimeout is needed, because telemetry initialization is asynchronous
@@ -96,7 +96,7 @@ export async function activate(context: vscode.ExtensionContext) {
     hlasmpluginClient.onTelemetry((object) => { telemetry.reportEvent(object.method_name, objectToString(object.properties), object.measurements) });
 
     // register all commands and objects to context
-    await registerToContext(context, hlasmpluginClient);
+    await registerToContext(context, hlasmpluginClient, telemetry);
 
     //give the server some time to start listening when using TCP
     if (serverVariant === 'tcp')
@@ -142,7 +142,7 @@ function startCheckingNativeClient(hlasmpluginClient: vscodelc.LanguageClient) {
     });
 }
 
-async function registerToContext(context: vscode.ExtensionContext, client: vscodelc.LanguageClient) {
+async function registerToContext(context: vscode.ExtensionContext, client: vscodelc.LanguageClient, telemetry: Telemetry) {
     const completeCommand = "editor.action.triggerSuggest";
     const commandList = await vscode.commands.getCommands();
 
@@ -185,16 +185,18 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
 
     // overrides should happen only if the user wishes
     if (getConfig<boolean>('continuationHandling', false)) {
-        context.subscriptions.push(vscode.commands.registerTextEditorCommand("type",
-            (editor, edit, args) => commands.insertChars(editor, edit, args, offset)));
-        context.subscriptions.push(vscode.commands.registerTextEditorCommand("paste",
-            (editor, edit, args) => commands.insertChars(editor, edit, args, offset)));
-        context.subscriptions.push(vscode.commands.registerTextEditorCommand("cut",
-            (editor, edit) => commands.cut(editor, edit, offset)));
-        context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteLeft",
-            (editor, edit) => commands.deleteLeft(editor, edit, offset)));
-        context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteRight",
-            (editor, edit) => commands.deleteRight(editor, edit, offset)));
+        try {
+            context.subscriptions.push(vscode.commands.registerTextEditorCommand("type",
+                (editor, edit, args) => commands.insertChars(editor, edit, args, offset)));
+            context.subscriptions.push(vscode.commands.registerTextEditorCommand("paste",
+                (editor, edit, args) => commands.insertChars(editor, edit, args, offset)));
+            context.subscriptions.push(vscode.commands.registerTextEditorCommand("cut",
+                (editor, edit) => commands.cut(editor, edit, offset)));
+            context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteLeft",
+                (editor, edit) => commands.deleteLeft(editor, edit, offset)));
+            context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteRight",
+                (editor, edit) => commands.deleteRight(editor, edit, offset)));
+        } catch (e) { /* just ignore */ }
     }
     // register event handlers
     context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => handler.onDidChangeTextDocument(e, offset)));
@@ -210,7 +212,7 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
 
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("hlasm", new HLASMVirtualFileContentProvider(client)));
 
-    context.subscriptions.push(vscode.commands.registerCommand("extension.hlasm-plugin.downloadDependencies", (...args: any[]) => downloadDependencies(context, ...args)));
+    context.subscriptions.push(vscode.commands.registerCommand("extension.hlasm-plugin.downloadDependencies", (...args: any[]) => downloadDependencies(context, telemetry, ...args)));
 
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.createCompleteConfig', ConfigurationsHandler.createCompleteConfig));
 

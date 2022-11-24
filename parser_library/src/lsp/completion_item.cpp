@@ -84,13 +84,15 @@ completion_item_s::completion_item_s(std::string label,
     std::string insert_text,
     std::string documentation,
     completion_item_kind kind,
-    bool snippet)
+    bool snippet,
+    std::string suggestion_for)
     : label(std::move(label))
     , detail(std::move(detail))
     , insert_text(std::move(insert_text))
     , documentation(std::move(documentation))
     , kind(kind)
     , snippet(snippet)
+    , suggestion_for(std::move(suggestion_for))
 {}
 
 namespace {
