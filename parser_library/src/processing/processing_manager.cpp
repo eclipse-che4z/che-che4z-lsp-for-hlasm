@@ -275,7 +275,7 @@ void processing_manager::finish_opencode()
         add_preproc_ids(stmt->m_details, hlasm_ctx_.ids());
         lsp_analyzer_.analyze(*stmt);
 
-        if (stmt->m_resemblence == context::id_storage::well_known::COPY && stmt->m_details.operands.first.size() == 1)
+        if (stmt->m_resemblance == context::id_storage::well_known::COPY && stmt->m_details.operands.first.size() == 1)
         {
             if (const auto& id = hlasm_ctx_.ids().find(stmt->m_details.operands.first.front().name); id)
                 asm_processor::parse_copy(ctx_,

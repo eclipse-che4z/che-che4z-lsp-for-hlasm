@@ -176,7 +176,7 @@ struct preproc_details
 struct preprocessor_statement_si
 {
     preproc_details m_details;
-    context::id_index m_resemblence;
+    context::id_index m_resemblance;
 
     preprocessor_statement_si(preproc_details details, context::id_index resemblence)
         : m_details(details)

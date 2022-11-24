@@ -94,7 +94,7 @@ void lsp_analyzer::analyze(const semantics::preprocessor_statement_si& statement
 {
     collect_occurences(lsp::occurence_kind::ORD, statement);
 
-    const auto& opcode = statement.m_resemblence;
+    const auto& opcode = statement.m_resemblance;
     const auto& operands = statement.m_details.operands.first;
     if (opcode == context::id_storage::well_known::COPY && operands.size() == 1)
     {
