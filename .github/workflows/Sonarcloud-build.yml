@@ -63,9 +63,10 @@ jobs:
           LLVM_PROFILE_FILE="server.rawprof" ./server_test
           LLVM_PROFILE_FILE="utils.rawprof" ./hlasm_utils_test
       - name: Extension Test
-        uses: GabrielBB/xvfb-action@v1.0
+        uses: GabrielBB/xvfb-action@v1
         with:
-          run: npm --prefix clients/vscode-hlasmplugin test
+          run: npx c8 --reporter=lcovonly --allowExternal --exclude='**/.vscode-test/**' --exclude='**/test/**' --exclude='**/build/**' npm test
+          working-directory: clients/vscode-hlasmplugin
       - name: Merge raw profiles
         run: cd build/bin && llvm-profdata-12 merge -o hlasm_profile library.rawprof server.rawprof utils.rawprof
       - name: Generate lcov coverage

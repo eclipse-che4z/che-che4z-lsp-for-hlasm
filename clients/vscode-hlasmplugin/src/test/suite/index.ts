@@ -19,31 +19,7 @@ import * as vscode from 'vscode';
 import * as process from 'process';
 
 export async function run(): Promise<void> {
-	const sourceRoot = path.join(__dirname, '..', '..');
-
-	// initialize nyc code coverage
-	const NYC = require('nyc');
-	const nyc = new NYC({
-		cwd: path.join(sourceRoot, '..'),
-		reporter: ['lcov'],
-		hookRequire: true,
-		exclude: ['**/test/**', '.vscode-test/**']
-	});
-
 	const is_vscode = process.execPath.includes('Code');
-	// only on VSCode
-	if (is_vscode) {
-		// decache files on windows to be hookable by nyc
-		let decache = require("decache");
-		glob.sync("**/**.js", {
-			cwd: sourceRoot
-		}).forEach(file => {
-			decache(path.join(sourceRoot, file));
-		});
-
-		nyc.createTempDirectory();
-		nyc.wrap();
-	}
 
 	// Create the mocha test
 	const mocha = new Mocha({ ui: 'tdd', color: true });
@@ -75,12 +51,6 @@ export async function run(): Promise<void> {
 		});
 	});
 
-	if (is_vscode) {
-		// report code coverage
-		nyc.writeCoverageFile();
-		await nyc.report();
-		console.log('Report created');
-	}
-	else
+	if (!is_vscode)
 		console.log('>>>THEIA TESTS PASSED<<<');
 }
