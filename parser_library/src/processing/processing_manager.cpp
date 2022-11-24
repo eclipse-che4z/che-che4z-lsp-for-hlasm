@@ -250,6 +250,21 @@ void processing_manager::finish_copy_member(copy_processing_result result)
     lsp_analyzer_.copydef_finished(member, std::move(result));
 }
 
+namespace {
+void add_preproc_ids(const semantics::preproc_details& details, context::id_storage& ids)
+{
+    if (!details.label.name.empty())
+        ids.add(details.label.name);
+
+    ids.add(details.label.name);
+
+    for (const auto& op : details.operands.first)
+    {
+        ids.add(op.name);
+    }
+}
+} // namespace
+
 void processing_manager::finish_opencode()
 {
     for (const auto& stmt : opencode_prov_.get_preprocessor_statements())
@@ -257,10 +272,19 @@ void processing_manager::finish_opencode()
         if (!stmt)
             continue;
 
+        add_preproc_ids(stmt->m_details, hlasm_ctx_.ids());
         lsp_analyzer_.analyze(*stmt);
 
-        if (stmt->m_resemblence == context::id_storage::well_known::COPY)
-            asm_processor::process_copy(*stmt, ctx_, lib_provider_, nullptr, false);
+        if (stmt->m_resemblence == context::id_storage::well_known::COPY && stmt->m_details.operands.first.size() == 1)
+        {
+            if (const auto& id = hlasm_ctx_.ids().find(stmt->m_details.operands.first.front().name); id)
+                asm_processor::parse_copy(ctx_,
+                    lib_provider_,
+                    *id,
+                    stmt->m_details.operands.first.front().r,
+                    stmt->m_details.stmt_r,
+                    nullptr);
+        }
 
         // diagnosable_impl::add_diagnostic(diagnostic_s::fade(file_loc_, stmt->stmt_range_ref())); // todo create
         // separate 'fade' container

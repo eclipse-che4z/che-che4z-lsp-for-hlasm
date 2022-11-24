@@ -65,16 +65,18 @@ std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> preprocessor:
 void preprocessor::do_highlighting(
     const semantics::preprocessor_statement_si& stmt, semantics::source_info_processor& src_proc) const
 {
-    if (stmt.label_ref().type != semantics::label_si_type::EMPTY)
-        src_proc.add_hl_symbol(token_info(stmt.label_ref().field_range, semantics::hl_scopes::label));
+    const auto& details = stmt.m_details;
 
-    src_proc.add_hl_symbol(token_info(stmt.instruction_ref().field_range, semantics::hl_scopes::instruction));
+    if (!details.label.name.empty())
+        src_proc.add_hl_symbol(token_info(details.label.r, semantics::hl_scopes::label));
 
-    if (stmt.operands_ref().value.size())
-        src_proc.add_hl_symbol(token_info(stmt.operands_ref().field_range, semantics::hl_scopes::operand));
+    src_proc.add_hl_symbol(token_info(details.instruction.r, semantics::hl_scopes::instruction));
 
-    if (stmt.remarks_ref().value.size())
-        src_proc.add_hl_symbol(token_info(stmt.remarks_ref().field_range, semantics::hl_scopes::remark));
+    if (!details.operands.first.empty())
+        src_proc.add_hl_symbol(token_info(details.operands.second, semantics::hl_scopes::operand));
+
+    if (!details.remarks.first.empty())
+        src_proc.add_hl_symbol(token_info(details.remarks.second, semantics::hl_scopes::remark));
 }
 
 namespace {
@@ -89,12 +91,12 @@ std::vector<semantics::preproc_details::name_range> get_operands_list(
 
         if (space == std::string_view::npos)
         {
-            operand_list.emplace_back(operands,
+            operand_list.emplace_back(std::string(operands),
                 range((position(lineno, column_offset)), (position(lineno, column_offset + operands.length()))));
             break;
         }
 
-        operand_list.emplace_back(operands.substr(0, space),
+        operand_list.emplace_back(std::string(operands.substr(0, space)),
             range((position(lineno, column_offset)), (position(lineno, column_offset + space))));
 
 

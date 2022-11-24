@@ -162,7 +162,7 @@ struct preproc_details
 {
     struct name_range
     {
-        std::string_view name;
+        std::string name;
         range r;
     };
 
@@ -174,22 +174,12 @@ struct preproc_details
 };
 
 struct preprocessor_statement_si
-    : public statement_si // todo think if the statement_si inheritance is too heavy for preprocessor statements
 {
+    preproc_details m_details;
     context::id_index m_resemblence;
 
-    preprocessor_statement_si(range stmt_range,
-        label_si label,
-        instruction_si instruction,
-        operands_si operands,
-        remarks_si remarks,
-        context::id_index resemblence)
-        : statement_si(std::move(stmt_range),
-            std::move(label),
-            std::move(instruction),
-            std::move(operands),
-            std::move(remarks),
-            {})
+    preprocessor_statement_si(preproc_details details, context::id_index resemblence)
+        : m_details(details)
         , m_resemblence(resemblence)
     {}
 };
