@@ -134,10 +134,10 @@ B   LARL 0,DFHRESP(NORMAL)
     analyzer a;
 };
 
-TEST_F(lsp_context_cics_preprocessor_test, go_to_exec_cics)
+TEST_F(lsp_context_cics_preprocessor_test, go_to)
 {
-    // jump to virtual file, label A
-    EXPECT_EQ(location(position(1, 0), preproc5_loc), a.context().lsp_ctx->definition(source_loc, position(1, 1)));
+    // no jump, label A
+    EXPECT_EQ(location(position(1, 1), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 1)));
     // no jump, EXEC CICS ABEND
     EXPECT_EQ(location(position(1, 16), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 16)));
     // no jump, operand ABCODE
@@ -146,6 +146,17 @@ TEST_F(lsp_context_cics_preprocessor_test, go_to_exec_cics)
     EXPECT_EQ(location(position(1, 30), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 30)));
     // no jump, operand NODUMP
     EXPECT_EQ(location(position(1, 41), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 41)));
+
+    // jump to virtual file, label B
+    EXPECT_EQ(location(position(1, 0), preproc5_loc), a.context().lsp_ctx->definition(source_loc, position(5, 1)));
+    // no jump, instr LARL
+    EXPECT_EQ(location(position(5, 7), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 7)));
+    // no jump, operand 0
+    EXPECT_EQ(location(position(5, 11), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 11)));
+    // no jump, operand DFHRESP
+    EXPECT_EQ(location(position(5, 17), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 17)));
+    // no jump, operand NORMAL
+    EXPECT_EQ(location(position(5, 25), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 25)));
 }
 
 TEST_F(lsp_context_cics_preprocessor_test, refs_exec_cics)
@@ -188,20 +199,6 @@ TEST_F(lsp_context_cics_preprocessor_test, refs_exec_cics)
     EXPECT_EQ(expected_4321_locations, a.context().lsp_ctx->references(source_loc, position(2, 31)));
     // NOQUEUE reference
     EXPECT_EQ(expected_noqueue_locations, a.context().lsp_ctx->references(source_loc, position(2, 42)));
-}
-
-TEST_F(lsp_context_cics_preprocessor_test, go_to_dfh)
-{
-    // jump to virtual file, label B
-    EXPECT_EQ(location(position(1, 0), preproc5_loc), a.context().lsp_ctx->definition(source_loc, position(5, 1)));
-    // no jump, instr LARL
-    EXPECT_EQ(location(position(5, 7), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 7)));
-    // no jump, operand 0
-    EXPECT_EQ(location(position(5, 11), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 11)));
-    // no jump, operand DFHRESP
-    EXPECT_EQ(location(position(5, 17), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 17)));
-    // no jump, operand NORMAL
-    EXPECT_EQ(location(position(5, 25), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 25)));
 }
 
 TEST_F(lsp_context_cics_preprocessor_test, refs_dfh)

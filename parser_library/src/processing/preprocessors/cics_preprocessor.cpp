@@ -1158,8 +1158,10 @@ public:
         std::pair<std::string_view, range> instruction_details;
         if (instruction_ids.size())
         {
-            instruction_details = get_stmt_part_pair(matches, instruction_ids.front(), lineno);
-            instruction_details.first = get_stmt_part_pair(matches, instruction_ids.back(), lineno).first;
+            // Let's store the complete instruction range and only the last instruction part which is unique
+            instruction_details = get_stmt_part_pair(matches, instruction_ids.back(), lineno);
+            instruction_details.second.start =
+                get_stmt_part_pair(matches, instruction_ids.front(), lineno).second.start;
         }
 
         std::vector<std::pair<std::string_view, range>> operands;
