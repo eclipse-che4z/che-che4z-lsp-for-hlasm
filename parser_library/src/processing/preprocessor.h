@@ -19,6 +19,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <regex>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -84,6 +85,14 @@ protected:
     preprocessor(const preprocessor&) = default;
     preprocessor(preprocessor&&) = default;
 
+    struct stmt_part_ids
+    {
+        std::optional<size_t> label;
+        std::vector<size_t> instruction;
+        size_t operands;
+        std::optional<size_t> remarks;
+    };
+
     using line_iterator = std::vector<document_line>::const_iterator;
 
     static line_iterator extract_nonempty_logical_line(lexing::logical_line& out,
@@ -97,8 +106,14 @@ protected:
 
     static bool is_continued(std::string_view s);
 
-    static void do_highlighting(
-        const semantics::preprocessor_statement_si& stmt, semantics::source_info_processor& src_proc);
+    void do_highlighting(
+        const semantics::preprocessor_statement_si& stmt, semantics::source_info_processor& src_proc) const;
+
+    template<typename PREPROC_STATEMENT, typename ITERATOR>
+    std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(const std::match_results<ITERATOR>& matches,
+        stmt_part_ids part_ids,
+        size_t lineno,
+        context::id_storage& id_store) const;
 
 private:
     std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> m_statements;

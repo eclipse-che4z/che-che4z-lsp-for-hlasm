@@ -47,41 +47,6 @@ std::string_view get_copy_member(const std::match_results<std::string_view::iter
 
     return std::string_view(std::to_address(matches[2].first), matches[2].length());
 }
-
-std::pair<std::string_view, range> get_stmt_part_pair(
-    const std::match_results<std::string_view::iterator>& matches, size_t index, size_t line_no)
-{
-    std::string_view name(std::to_address(matches[index].first), matches[index].length());
-    auto r = range(position(line_no, std::distance(matches[0].first, matches[index].first)),
-        position(line_no, std::distance(matches[0].first, matches[index].second)));
-
-    return { name, std::move(r) };
-}
-
-std::shared_ptr<semantics::endevor_statement_si> get_preproc_statement(
-    const std::match_results<std::string_view::iterator>& matches, size_t line_no, context::id_storage& ids)
-{
-    if (matches.size() != 4)
-        return nullptr;
-
-    auto stmt_r = range({ line_no, 0 }, { line_no, matches[0].str().length() });
-
-    auto inc_range = get_stmt_part_pair(matches, 1, line_no).second;
-    auto [member, member_range] = get_stmt_part_pair(matches, 2, line_no);
-
-    auto remarks_r = range();
-    std::vector<range> rems;
-    if (matches[3].length())
-    {
-        remarks_r = get_stmt_part_pair(matches, 3, line_no).second;
-        rems.emplace_back(remarks_r);
-    }
-
-    auto remarks_si = semantics::remarks_si(std::move(remarks_r), std::move(rems));
-
-    return std::make_shared<semantics::endevor_statement_si>(
-        std::move(stmt_r), std::move(inc_range), member, std::move(member_range), std::move(remarks_si), ids);
-}
 } // namespace
 
 class endevor_preprocessor final : public preprocessor
@@ -183,7 +148,8 @@ public:
 
             if (line_no)
             {
-                auto stmt = get_preproc_statement(matches, *line_no, m_ids);
+                auto stmt = get_preproc_statement<semantics::endevor_statement_si, std::string_view::iterator>(
+                    matches, { std::nullopt, { 1 }, 2, 3 }, *line_no, m_ids);
                 do_highlighting(*stmt, m_src_proc);
                 set_statement(std::move(stmt));
             }

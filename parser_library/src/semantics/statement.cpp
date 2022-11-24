@@ -19,44 +19,33 @@
 
 namespace hlasm_plugin::parser_library::semantics {
 
-endevor_statement_si::endevor_statement_si(range stmt_range,
-    range instruction_range,
-    std::string_view copy_member,
-    range copy_member_range,
-    remarks_si remarks,
-    context::id_storage& ids)
+endevor_statement_si::endevor_statement_si(preproc_details details, context::id_storage& ids)
     : preprocessor_statement_si(std::move(stmt_range),
         label_si(range()),
-        instruction_si(std::move(instruction_range), context::id_index("-INC"), true),
-        operands_si(copy_member_range, {}),
-        std::move(remarks),
+        instruction_si(std::move(details.instruction.r), context::id_index("-INC"), true),
+        operands_si(std::move(details.operands.second), {}),
+        std::move(semantics::remarks_si(std::move(details.remarks.second), std::move(details.remarks.first))),
         context::id_storage::well_known::COPY)
 {
     operands.value.emplace_back(std::make_unique<expr_assembler_operand>(
-        std::make_unique<expressions::mach_expr_symbol>(ids.add(copy_member), context::id_index(), copy_member_range),
-        std::string(copy_member),
-        std::move(copy_member_range)));
+        std::make_unique<expressions::mach_expr_symbol>(
+            ids.add(details.operands.first.front().name), context::id_index(), details.operands.first.front().r),
+        std::string(details.operands.first.front().name),
+        std::move(details.operands.first.front().r)));
 }
 
-cics_statement_si::cics_statement_si(range stmt_range,
-    std::pair<std::string_view, range> label_details,
-    std::pair<std::string_view, range> instruction_details,
-    std::vector<std::pair<std::string_view, range>> operands,
-    range operands_range,
-    remarks_si remarks,
-    context::id_storage& ids)
+cics_statement_si::cics_statement_si(preproc_details details, context::id_storage& ids)
     : preprocessor_statement_si(std::move(stmt_range),
-        label_si(
-            label_details.second, ord_symbol_string { ids.add(label_details.first), std::string(label_details.first) }),
-        instruction_si(std::move(instruction_details.second), ids.add(instruction_details.first), true),
-        operands_si(std::move(operands_range), {}),
-        std::move(remarks),
+        label_si(details.label.r, ord_symbol_string { ids.add(details.label.name), std::string(details.label.name) }),
+        instruction_si(std::move(details.instruction.r), ids.add(details.instruction.name), true),
+        operands_si(std::move(details.operands.second), {}),
+        std::move(semantics::remarks_si(std::move(details.remarks.second), std::move(details.remarks.first))),
         context::id_index())
 {
-    for (auto& op : operands)
+    for (auto& op : details.operands.first)
         this->operands.value.emplace_back(std::make_unique<expr_machine_operand>(
-            std::make_unique<expressions::mach_expr_symbol>(ids.add(op.first), context::id_index(), op.second),
-            std::move(op.second)));
+            std::make_unique<expressions::mach_expr_symbol>(ids.add(op.name), context::id_index(), op.r),
+            std::move(op.r)));
 }
 
 } // namespace hlasm_plugin::parser_library::semantics

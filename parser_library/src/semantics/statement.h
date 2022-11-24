@@ -158,6 +158,21 @@ struct statement_si_defer_done : public complete_statement
     const range& stmt_range_ref() const override { return deferred_stmt->stmt_range_ref(); }
 };
 
+struct preproc_details
+{
+    struct name_range
+    {
+        std::string_view name;
+        range r;
+    };
+
+    range stmt_r;
+    name_range label;
+    name_range instruction;
+    std::pair<std::vector<name_range>, range> operands;
+    std::pair<std::vector<range>, range> remarks;
+};
+
 struct preprocessor_statement_si
     : public statement_si // todo think if the statement_si inheritance is too heavy for preprocessor statements
 {
@@ -181,23 +196,12 @@ struct preprocessor_statement_si
 
 struct endevor_statement_si : public preprocessor_statement_si
 {
-    endevor_statement_si(range stmt_range,
-        range instruction_range,
-        std::string_view copy_member,
-        range copy_member_range,
-        remarks_si remarks,
-        context::id_storage& ids);
+    endevor_statement_si(preproc_details details, context::id_storage& ids);
 };
 
 struct cics_statement_si : public preprocessor_statement_si
 {
-    cics_statement_si(range stmt_range,
-        std::pair<std::string_view, range> label_details,
-        std::pair<std::string_view, range> instruction_details,
-        std::vector<std::pair<std::string_view, range>> operands,
-        range operands_range,
-        remarks_si remarks,
-        context::id_storage& ids);
+    cics_statement_si(preproc_details details, context::id_storage& ids);
 };
 
 } // namespace hlasm_plugin::parser_library::semantics
