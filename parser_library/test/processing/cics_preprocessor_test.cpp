@@ -471,7 +471,7 @@ AAAAAA   SAM31
 
 TEST(cics_preprocessor, check_missing_command)
 {
-    std::string input = R"(
+    const std::string input = R"(
          MACRO
          DFHECALL
          MEND

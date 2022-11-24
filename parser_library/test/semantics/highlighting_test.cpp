@@ -415,7 +415,7 @@ B   L 0,DFHRESP ( NORMAL ) bla bla)";
     a.analyze();
 
     const auto& tokens = a.source_processor().semantic_tokens();
-    semantics::lines_info expected = {
+    const semantics::lines_info expected = {
         token_info({ { 1, 0 }, { 1, 1 } }, hl_scopes::label),
         token_info({ { 1, 4 }, { 1, 19 } }, hl_scopes::instruction),
         token_info({ { 1, 20 }, { 1, 34 } }, hl_scopes::operand),

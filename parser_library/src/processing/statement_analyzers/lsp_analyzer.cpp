@@ -97,10 +97,8 @@ void lsp_analyzer::analyze(const semantics::preprocessor_statement_si& statement
     const auto& opcode = statement.m_resemblance;
     const auto& operands = statement.m_details.operands.first;
     if (opcode == context::id_storage::well_known::COPY && operands.size() == 1)
-    {
         if (const auto& copy_id = hlasm_ctx_.ids().find(operands.front().name); copy_id)
             add_copy_operand(*copy_id, operands.front().r);
-    }
 
     assign_statement_occurences(hlasm_ctx_.opencode_location());
 }

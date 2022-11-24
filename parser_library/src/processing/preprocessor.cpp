@@ -87,28 +87,27 @@ std::vector<semantics::preproc_details::name_range> get_operands_list(
 
     while (operands.size())
     {
-        auto space = operands.find_first_of(" (),'");
+        auto pos = operands.find_first_of(" (),'");
 
-        if (space == std::string_view::npos)
+        if (pos == std::string_view::npos)
         {
             operand_list.emplace_back(std::string(operands),
                 range((position(lineno, column_offset)), (position(lineno, column_offset + operands.length()))));
             break;
         }
 
-        operand_list.emplace_back(std::string(operands.substr(0, space)),
-            range((position(lineno, column_offset)), (position(lineno, column_offset + space))));
+        operand_list.emplace_back(std::string(operands.substr(0, pos)),
+            range((position(lineno, column_offset)), (position(lineno, column_offset + pos))));
 
+        operands.remove_prefix(pos);
+        column_offset += pos;
 
-        operands.remove_prefix(space);
-        column_offset += space;
-
-        space = operands.find_first_not_of(" (),'");
-        if (space == std::string_view::npos)
+        pos = operands.find_first_not_of(" (),'");
+        if (pos == std::string_view::npos)
             break;
 
-        operands.remove_prefix(space);
-        column_offset += space;
+        operands.remove_prefix(pos);
+        column_offset += pos;
     }
 
     return operand_list;
@@ -129,55 +128,11 @@ semantics::preproc_details::name_range get_stmt_part_name_range(
 
     return nr;
 }
-
-template<typename ITERATOR>
-std::optional<semantics::preproc_details> get_preproc_details(const std::match_results<ITERATOR>& matches,
-    std::optional<size_t> label_id,
-    std::vector<size_t> instruction_ids,
-    size_t operands_id,
-    std::optional<size_t> remarks_id,
-    size_t lineno,
-    context::id_storage& ids)
-{
-    if (!matches.size())
-        return std::nullopt;
-
-    semantics::preproc_details details;
-
-    details.stmt_r = range({ lineno, 0 }, { lineno, matches[0].str().length() });
-
-    if (label_id)
-        details.label = get_stmt_part_name_range<ITERATOR>(matches, *label_id, lineno);
-
-    if (instruction_ids.size())
-    {
-        // Let's store the complete instruction range and only the last instruction part which is unique
-        details.instruction = get_stmt_part_name_range<ITERATOR>(matches, instruction_ids.back(), lineno);
-        details.instruction.r.start =
-            get_stmt_part_name_range<ITERATOR>(matches, instruction_ids.front(), lineno).r.start;
-    }
-
-    if (matches[operands_id].length())
-    {
-        auto [ops_text, op_range] = get_stmt_part_name_range<ITERATOR>(matches, operands_id, lineno);
-        details.operands.first = get_operands_list(ops_text, op_range.start.column, lineno);
-        details.operands.second = std::move(op_range);
-    }
-
-    if (remarks_id && matches.size() == *remarks_id + 1 && matches[*remarks_id].length())
-    {
-        details.remarks.second = get_stmt_part_name_range<ITERATOR>(matches, *remarks_id, lineno).r;
-
-        details.remarks.first.emplace_back(details.remarks.second);
-    }
-
-    return details;
-}
 } // namespace
 
 template<typename PREPROC_STATEMENT, typename ITERATOR>
 std::shared_ptr<PREPROC_STATEMENT> preprocessor::get_preproc_statement(
-    const std::match_results<ITERATOR>& matches, stmt_part_ids part_ids, size_t lineno) const
+    const std::match_results<ITERATOR>& matches, stmt_part_ids ids, size_t lineno) const
 {
     if (!matches.size())
         return nullptr;
@@ -186,27 +141,27 @@ std::shared_ptr<PREPROC_STATEMENT> preprocessor::get_preproc_statement(
 
     details.stmt_r = range({ lineno, 0 }, { lineno, matches[0].str().length() });
 
-    if (part_ids.label)
-        details.label = get_stmt_part_name_range<ITERATOR>(matches, *part_ids.label, lineno);
+    if (ids.label)
+        details.label = get_stmt_part_name_range<ITERATOR>(matches, *ids.label, lineno);
 
-    if (part_ids.instruction.size())
+    if (ids.instruction.size())
     {
-        // Let's store the complete instruction range and only the last instruction part which is unique
-        details.instruction = get_stmt_part_name_range<ITERATOR>(matches, part_ids.instruction.back(), lineno);
+        // Let's store the complete instruction range and only the last word of the instruction as it is unique
+        details.instruction = get_stmt_part_name_range<ITERATOR>(matches, ids.instruction.back(), lineno);
         details.instruction.r.start =
-            get_stmt_part_name_range<ITERATOR>(matches, part_ids.instruction.front(), lineno).r.start;
+            get_stmt_part_name_range<ITERATOR>(matches, ids.instruction.front(), lineno).r.start;
     }
 
-    if (matches[part_ids.operands].length())
+    if (ids.operands < matches.size() && matches[ids.operands].length())
     {
-        auto [ops_text, op_range] = get_stmt_part_name_range<ITERATOR>(matches, part_ids.operands, lineno);
+        auto [ops_text, op_range] = get_stmt_part_name_range<ITERATOR>(matches, ids.operands, lineno);
         details.operands.first = get_operands_list(ops_text, op_range.start.column, lineno);
         details.operands.second = std::move(op_range);
     }
 
-    if (part_ids.remarks && matches.size() == *part_ids.remarks + 1 && matches[*part_ids.remarks].length())
+    if (ids.remarks && *ids.remarks < matches.size() && matches[*ids.remarks].length())
     {
-        details.remarks.second = get_stmt_part_name_range<ITERATOR>(matches, *part_ids.remarks, lineno).r;
+        details.remarks.second = get_stmt_part_name_range<ITERATOR>(matches, *ids.remarks, lineno).r;
 
         details.remarks.first.emplace_back(details.remarks.second);
     }
@@ -216,12 +171,10 @@ std::shared_ptr<PREPROC_STATEMENT> preprocessor::get_preproc_statement(
 
 template std::shared_ptr<semantics::endevor_statement_si>
 preprocessor::get_preproc_statement<semantics::endevor_statement_si, std::string_view::iterator>(
-    const std::match_results<std::string_view::iterator>& matches, stmt_part_ids part_ids, size_t lineno) const;
+    const std::match_results<std::string_view::iterator>& matches, stmt_part_ids ids, size_t lineno) const;
 
 template std::shared_ptr<semantics::cics_statement_si>
 preprocessor::get_preproc_statement<semantics::cics_statement_si, lexing::logical_line::const_iterator>(
-    const std::match_results<lexing::logical_line::const_iterator>& matches,
-    stmt_part_ids part_ids,
-    size_t lineno) const;
+    const std::match_results<lexing::logical_line::const_iterator>& matches, stmt_part_ids ids, size_t lineno) const;
 
 } // namespace hlasm_plugin::parser_library::processing

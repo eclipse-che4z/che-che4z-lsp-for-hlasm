@@ -1010,7 +1010,7 @@ public:
 
     static bool ignore_line(std::string_view s) { return s.empty() || s.front() == '*' || s.substr(0, 2) == ".*"; }
 
-    bool is_ignored_line(std::string_view line, size_t line_len_chars)
+    static bool is_ignored_line(std::string_view line, size_t line_len_chars)
     {
         if (ignore_line(line))
             return true;
@@ -1096,7 +1096,7 @@ public:
         inject_call(label_b, label_e, li);
     }
 
-    bool is_command_present(std::match_results<lexing::logical_line::const_iterator> matches)
+    static bool is_command_present(std::match_results<lexing::logical_line::const_iterator> matches)
     {
         return matches[3].matched;
     }

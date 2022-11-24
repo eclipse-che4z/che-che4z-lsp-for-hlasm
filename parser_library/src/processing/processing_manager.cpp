@@ -256,7 +256,7 @@ void add_preproc_ids(const semantics::preproc_details& details, context::id_stor
     if (!details.label.name.empty())
         ids.add(details.label.name);
 
-    ids.add(details.label.name);
+    ids.add(details.instruction.name);
 
     for (const auto& op : details.operands.first)
     {

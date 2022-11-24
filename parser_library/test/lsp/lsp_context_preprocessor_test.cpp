@@ -44,7 +44,6 @@ public:
         , a(contents, analyzer_options { source_loc, &lib_provider, endevor_preprocessor_options() }) {};
 
     void SetUp() override { a.analyze(); }
-    void TearDown() override {}
 
 protected:
     const std::string contents =
@@ -118,7 +117,6 @@ public:
         : a(contents, analyzer_options { source_loc, cics_preprocessor_options() }) {};
 
     void SetUp() override { a.analyze(); }
-    void TearDown() override {}
 
 protected:
     const std::string contents =

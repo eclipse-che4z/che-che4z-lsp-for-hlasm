@@ -49,8 +49,7 @@ public:
     static bool process_copy(const semantics::complete_statement& stmt,
         analyzing_context ctx,
         workspaces::parse_lib_provider& lib_provider,
-        diagnosable_ctx* diagnoser,
-        bool enter_copy = true);
+        diagnosable_ctx* diagnoser);
 
 private:
     opencode_provider* open_code_;

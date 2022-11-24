@@ -99,7 +99,7 @@ protected:
 
     template<typename PREPROC_STATEMENT, typename ITERATOR>
     std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(
-        const std::match_results<ITERATOR>& matches, stmt_part_ids part_ids, size_t lineno) const;
+        const std::match_results<ITERATOR>& matches, stmt_part_ids ids, size_t lineno) const;
 
 private:
     std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> m_statements;

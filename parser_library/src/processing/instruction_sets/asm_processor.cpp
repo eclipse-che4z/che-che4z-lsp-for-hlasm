@@ -762,8 +762,7 @@ bool asm_processor::parse_copy(analyzing_context ctx,
 bool asm_processor::process_copy(const semantics::complete_statement& stmt,
     analyzing_context ctx,
     workspaces::parse_lib_provider& lib_provider,
-    diagnosable_ctx* diagnoser,
-    bool enter_copy)
+    diagnosable_ctx* diagnoser)
 {
     if (stmt.operands_ref().value.size() != 1 || !stmt.operands_ref().value.front()->access_asm()
         || !stmt.operands_ref().value.front()->access_asm()->access_expr())
@@ -790,7 +789,7 @@ bool asm_processor::process_copy(const semantics::complete_statement& stmt,
         stmt.stmt_range_ref(),
         diagnoser);
 
-    if (result && enter_copy)
+    if (result)
         ctx.hlasm_ctx->enter_copy_member(sym_expr->value);
 
     return result;
