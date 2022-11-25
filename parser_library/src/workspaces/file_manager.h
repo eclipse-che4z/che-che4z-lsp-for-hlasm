@@ -78,9 +78,11 @@ public:
         const file_location& document_loc, version_t version, const document_change* changes, size_t ch_size) = 0;
     virtual void did_close_file(const file_location& document_loc) = 0;
 
-    virtual void put_virtual_file(unsigned long long id, std::string_view text) = 0;
+    virtual void put_virtual_file(
+        unsigned long long id, std::string_view text, utils::resource::resource_location related_workspace) = 0;
     virtual void remove_virtual_file(unsigned long long id) = 0;
     virtual std::string get_virtual_file(unsigned long long id) const = 0;
+    virtual utils::resource::resource_location get_virtual_file_workspace(unsigned long long id) const = 0;
 
 protected:
     ~file_manager() = default;

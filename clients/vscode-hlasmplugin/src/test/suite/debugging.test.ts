@@ -86,12 +86,12 @@ suite('Debugging Test Suite', () => {
 
         // Step into a virtual file
         await helper.debugStepInto();
-        assert.ok(vscode.window.activeTextEditor.document.uri.path === '/AINSERT:1.hlasm', 'Expected to be in the virtual AINSERT file');
+        assert.ok(vscode.window.activeTextEditor.document.uri.path === '/AINSERT_1.hlasm', 'Expected to be in the virtual AINSERT file');
 
         // Continue until breakpoint is hit and enter the virtual file again
         await helper.debugContinue();
         await helper.debugStepInto();
-        assert.ok(vscode.window.activeTextEditor.document.uri.path === '/AINSERT:1.hlasm', 'Expected to be in the virtual AINSERT file');
+        assert.ok(vscode.window.activeTextEditor.document.uri.path === '/AINSERT_1.hlasm', 'Expected to be in the virtual AINSERT file');
 
         // Continue until breakpoint is hit and enter virtual file through generated macro
         await helper.debugContinue();

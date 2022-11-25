@@ -9,6 +9,9 @@
 - Endevor preprocessor statements highlighting and parsing
 - Instruction suggestions are included in the completion list
 
+#### Fixed
+- LSP requests on virtual files are evaluated in the correct workspace context
+
 ## [1.5.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.4.0...1.5.0) (2022-11-02)
 
 #### Added

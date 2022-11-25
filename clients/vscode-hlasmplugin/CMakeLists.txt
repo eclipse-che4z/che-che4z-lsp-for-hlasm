@@ -12,7 +12,8 @@
 
 PROJECT(vscode-hlasmplugin)
 
-set(CHECK "${GLOBAL_OUTPUT_PATH}/npm_install.stamp")
+set(CHECK_CI "${GLOBAL_OUTPUT_PATH}/npm_ci.stamp")
+set(CHECK_BUILD "${GLOBAL_OUTPUT_PATH}/npm_build.stamp")
 
 if (WIN32)
 	set(CALL "call")
@@ -56,10 +57,21 @@ endif()
 
 add_custom_command(
 		OUTPUT
-			${CHECK}
+			${CHECK_CI}
 		COMMAND
 			${CALL} npm --unsafe-perm ci
 			#the --unsafe-perm is needed when user with root rights runs the build on linux
+		COMMAND
+			${CMAKE_COMMAND} -E touch ${CHECK_CI}
+		DEPENDS
+			package.json package-lock.json build/bin/postinstall.js terse/terse.wasm terse/terse.js
+		WORKING_DIRECTORY
+			${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_custom_command(
+		OUTPUT
+			${CHECK_BUILD}
 		COMMAND
 			${CALL} npm --unsafe-perm run compile
 			#the --unsafe-perm is needed when user with root rights runs the build on linux
@@ -74,9 +86,9 @@ add_custom_command(
 		COMMAND
 			npm run-script package -- -o ${GLOBAL_OUTPUT_PATH}/vscode-hlasmplugin.vsix
 		COMMAND 
-			${CMAKE_COMMAND} -E touch ${CHECK}
+			${CMAKE_COMMAND} -E touch ${CHECK_BUILD}
 		DEPENDS
-			${CHECK1} ${CMAKE_CURRENT_SOURCE_DIR} parser_library language_server
+			${CHECK_CI} ${CMAKE_CURRENT_SOURCE_DIR} parser_library language_server
 		WORKING_DIRECTORY
 			${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -84,7 +96,7 @@ add_custom_command(
 add_custom_target(vsix
 		ALL
 		DEPENDS
-			${CHECK}
+			${CHECK_BUILD}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

@@ -126,8 +126,8 @@ TEST(resource_location, file_uri_non_standard_2)
 
 TEST(resource_location, non_file_uri)
 {
-    resource_location res("hlasm://0/AINSERT:1");
-    EXPECT_EQ(res.get_uri(), "hlasm://0/AINSERT:1");
+    resource_location res("hlasm://0/AINSERT_1");
+    EXPECT_EQ(res.get_uri(), "hlasm://0/AINSERT_1");
     EXPECT_EQ(res.get_path(), "");
 }
 

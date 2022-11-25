@@ -21,7 +21,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <version>
 
 #include "diagnosable_impl.h"
 #include "file_manager_vfm.h"
@@ -163,6 +162,8 @@ private:
         const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
     static lsp::completion_list_s generate_completion(const lsp::completion_list_instructions&,
         const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
+
+    std::vector<processor_file_ptr> collect_dependants(const utils::resource::resource_location& file_location) const;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

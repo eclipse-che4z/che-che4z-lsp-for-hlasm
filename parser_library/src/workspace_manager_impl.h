@@ -17,6 +17,10 @@
 
 #include <algorithm>
 #include <atomic>
+#include <charconv>
+#include <limits>
+#include <optional>
+#include <string_view>
 
 #include "debugging/debug_lib_provider.h"
 #include "workspace_manager.h"
@@ -284,18 +288,47 @@ private:
             collect_diags_from_child(it.second);
     }
 
-    // returns implicit workspace, if the file does not belong to any workspace
-    workspaces::workspace& ws_path_match(const std::string& document_uri)
+    static std::optional<unsigned long long> extract_hlasm_id(std::string_view uri)
     {
+        static constexpr std::string_view prefix = "hlasm://";
+        if (!uri.starts_with(prefix))
+            return std::nullopt;
+        uri.remove_prefix(prefix.size());
+        if (auto slash = uri.find('/'); slash == std::string_view::npos)
+            return std::nullopt;
+        else
+            uri = uri.substr(0, slash);
+
+        unsigned long long result = 0;
+
+        auto [p, err] = std::from_chars(uri.data(), uri.data() + uri.size(), result);
+        if (err != std::errc() || p != uri.data() + uri.size())
+            return std::nullopt;
+        else
+            return result;
+    }
+
+    // returns implicit workspace, if the file does not belong to any workspace
+    workspaces::workspace& ws_path_match(std::string_view document_uri)
+    {
+        if (auto hlasm_id = extract_hlasm_id(document_uri); hlasm_id.has_value())
+        {
+            auto related_ws = file_manager_.get_virtual_file_workspace(hlasm_id.value());
+            if (!related_ws.get_uri().empty())
+                for (auto& [_, ws] : workspaces_)
+                    if (ws.uri() == related_ws.get_uri())
+                        return ws;
+        }
+
         size_t max = 0;
         workspaces::workspace* max_ws = nullptr;
-        for (auto& ws : workspaces_)
+        for (auto& [name, ws] : workspaces_)
         {
-            size_t match = prefix_match(document_uri, ws.second.uri());
-            if (match > max && match >= ws.first.size())
+            size_t match = prefix_match(document_uri, ws.uri());
+            if (match > max && match >= name.size())
             {
                 max = match;
-                max_ws = &ws.second;
+                max_ws = &ws;
             }
         }
         if (max_ws != nullptr)
@@ -332,7 +365,7 @@ private:
         }
     }
 
-    static size_t prefix_match(const std::string& first, const std::string& second)
+    static size_t prefix_match(std::string_view first, std::string_view second)
     {
         auto [f, s] = std::mismatch(first.begin(), first.end(), second.begin(), second.end());
         return static_cast<size_t>(std::min(f - first.begin(), s - second.begin()));

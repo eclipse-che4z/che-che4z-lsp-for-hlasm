@@ -416,7 +416,7 @@ bool opencode_provider::try_running_preprocessor()
     const size_t stop_line = it != m_input_document.end() ? it->lineno().value() : current_line;
     const auto last_index = it - m_input_document.begin();
 
-    auto virtual_file_name = m_ctx->hlasm_ctx->ids().add("preprocessor:" + std::to_string(current_line));
+    auto virtual_file_name = m_ctx->hlasm_ctx->ids().add("PREPROCESSOR_" + std::to_string(current_line));
 
     auto [new_file, inserted] = m_virtual_files.try_emplace(virtual_file_name, std::move(preprocessor_text));
 
@@ -498,7 +498,7 @@ void opencode_provider::convert_ainsert_buffer_to_copybook()
     m_ainsert_buffer.clear();
 
     auto virtual_copy_name =
-        m_ctx->hlasm_ctx->ids().add("AINSERT:" + std::to_string(m_ctx->hlasm_ctx->obtain_ainsert_id()));
+        m_ctx->hlasm_ctx->ids().add("AINSERT_" + std::to_string(m_ctx->hlasm_ctx->obtain_ainsert_id()));
 
     auto new_file = m_virtual_files.try_emplace(virtual_copy_name, std::move(result)).first;
 

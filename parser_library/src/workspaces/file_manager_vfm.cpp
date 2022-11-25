@@ -45,7 +45,7 @@ virtual_file_handle file_manager_vfm::file_generated(std::string_view content)
     };
     auto complete_handle = std::make_shared<result_t>(fm, virtual_file_id(next_virtual_file_id()));
 
-    fm.put_virtual_file(complete_handle->id.value(), content);
+    fm.put_virtual_file(complete_handle->id.value(), content, related_workspace);
 
     return virtual_file_handle(
         std::shared_ptr<const virtual_file_id>(std::move(complete_handle), &complete_handle->id));

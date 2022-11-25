@@ -75,9 +75,18 @@ public:
         (const file_location& document_loc, version_t version, const document_change* changes, size_t ch_size),
         (override));
     MOCK_METHOD(void, did_close_file, (const file_location& document_loc), (override));
-    MOCK_METHOD(void, put_virtual_file, (unsigned long long id, std::string_view text), (override));
+    MOCK_METHOD(void,
+        put_virtual_file,
+        (unsigned long long id,
+            std::string_view text,
+            hlasm_plugin::utils::resource::resource_location related_workspace),
+        (override));
     MOCK_METHOD(void, remove_virtual_file, (unsigned long long id), (override));
     MOCK_METHOD(std::string, get_virtual_file, (unsigned long long id), (const override));
+    MOCK_METHOD(hlasm_plugin::utils::resource::resource_location,
+        get_virtual_file_workspace,
+        (unsigned long long id),
+        (const override));
 };
 
 } // namespace
@@ -115,6 +124,7 @@ TEST(virtual_files, file_manager)
 {
     constexpr std::string_view empty;
     constexpr std::string_view content = "content";
+    const hlasm_plugin::utils::resource::resource_location related_workspace("workspace");
     file_manager_impl fm;
 
     EXPECT_EQ(fm.get_virtual_file(0), empty);
@@ -123,13 +133,15 @@ TEST(virtual_files, file_manager)
 
     EXPECT_EQ(fm.get_virtual_file(0), empty);
 
-    fm.put_virtual_file(0, content);
+    fm.put_virtual_file(0, content, related_workspace);
 
     EXPECT_EQ(fm.get_virtual_file(0), content);
+    EXPECT_EQ(fm.get_virtual_file_workspace(0), related_workspace);
 
     fm.remove_virtual_file(0);
 
     EXPECT_EQ(fm.get_virtual_file(0), empty);
+    EXPECT_EQ(fm.get_virtual_file_workspace(0).get_uri(), empty);
 }
 TEST(virtual_files, callback_test_ainsert_valid_vfm)
 {
@@ -147,20 +159,21 @@ TEST(virtual_files, callback_test_ainsert_valid_vfm)
 
     const auto& d = a.diags();
     ASSERT_EQ(d.size(), 1);
-    EXPECT_EQ(d[0].file_uri, "hlasm://0/AINSERT:1.hlasm");
+    EXPECT_EQ(d[0].file_uri, "hlasm://0/AINSERT_1.hlasm");
 }
 
 TEST(virtual_files, file_manager_vfm)
 {
+    const hlasm_plugin::utils::resource::resource_location related_workspace("workspace");
     fm_mock fm;
-    file_manager_vfm vfm(fm);
+    file_manager_vfm vfm(fm, related_workspace);
 
     constexpr std::string_view test_content = "test content";
 
     constexpr auto id_initial = ~0ULL;
     auto id = id_initial;
 
-    EXPECT_CALL(fm, put_virtual_file(_, Eq(test_content))).WillOnce(SaveArg<0>(&id));
+    EXPECT_CALL(fm, put_virtual_file(_, Eq(test_content), Eq(related_workspace))).WillOnce(SaveArg<0>(&id));
     EXPECT_CALL(fm, remove_virtual_file(Eq(std::cref(id)))).Times(1);
 
     auto file_id = vfm.file_generated(test_content).file_id();
@@ -190,4 +203,37 @@ TEST(virtual_files, workspace_auto_cleanup)
     AINSERT 'A DC H',BACK
 )";
     wm.did_open_file("ws/file", 1, input.data(), input.size());
+}
+
+TEST(virtual_files, hover)
+{
+    class diag_consumer_mock : public diagnostics_consumer
+    {
+    public:
+        // Inherited via diagnostics_consumer
+        void consume_diagnostics(diagnostic_list diagnostics) override { diags = diagnostics; }
+
+        diagnostic_list diags;
+    } diag_mock;
+
+    workspace_manager wm;
+    wm.add_workspace("ws", "ws");
+    std::string_view input = R"(
+MY  DSECT
+    DS  F
+    AINSERT 'A DC H',BACK
+)";
+    wm.register_diagnostics_consumer(&diag_mock);
+    wm.did_open_file("ws/file", 1, input.data(), input.size());
+
+    ASSERT_EQ(diag_mock.diags.diagnostics_size(), 1);
+
+    auto diag = diag_mock.diags.diagnostics(0);
+    std::string vf = diag.file_uri();
+
+    ASSERT_TRUE(vf.starts_with("hlasm://"));
+
+    std::string hover_text(wm.hover(vf.c_str(), position(0, 0)));
+
+    EXPECT_NE(hover_text.find("MY + X'4' (4)"), std::string::npos);
 }

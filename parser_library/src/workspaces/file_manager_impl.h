@@ -68,12 +68,28 @@ public:
 
     virtual ~file_manager_impl() = default;
 
-    void put_virtual_file(unsigned long long id, std::string_view text) override;
+    void put_virtual_file(
+        unsigned long long id, std::string_view text, utils::resource::resource_location related_workspace) override;
     void remove_virtual_file(unsigned long long id) override;
     std::string get_virtual_file(unsigned long long id) const override;
+    utils::resource::resource_location get_virtual_file_workspace(unsigned long long id) const override;
 
 private:
-    std::unordered_map<unsigned long long, std::string> m_virtual_files;
+    struct virtual_file_entry
+    {
+        std::string text;
+        utils::resource::resource_location related_workspace;
+
+        virtual_file_entry(std::string_view text, utils::resource::resource_location related_workspace)
+            : text(text)
+            , related_workspace(std::move(related_workspace))
+        {}
+        virtual_file_entry(std::string text, utils::resource::resource_location related_workspace)
+            : text(std::move(text))
+            , related_workspace(std::move(related_workspace))
+        {}
+    };
+    std::unordered_map<unsigned long long, virtual_file_entry> m_virtual_files;
     // m_virtual_files must outlive the files_
     std::unordered_map<utils::resource::resource_location,
         std::shared_ptr<file_impl>,

@@ -142,7 +142,8 @@ public:
                                                               // it is stopped and waiting in the statement method
             debug_lib_provider debug_provider(workspace);
 
-            workspaces::file_manager_vfm vfm(workspace.get_file_manager());
+            workspaces::file_manager_vfm vfm(
+                workspace.get_file_manager(), utils::resource::resource_location(workspace.uri()));
             // TODO: it would probably be better to implement Sources request and keep everything locally
 
             analyzer a(open_code->get_text(),

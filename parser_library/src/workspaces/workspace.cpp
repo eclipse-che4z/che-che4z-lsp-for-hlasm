@@ -36,7 +36,7 @@ workspace::workspace(const utils::resource::resource_location& location,
     , name_(name)
     , location_(location.lexically_normal())
     , file_manager_(file_manager)
-    , fm_vfm_(file_manager_)
+    , fm_vfm_(file_manager_, location)
     , implicit_proc_grp("pg_implicit", {}, {})
     , global_config_(global_config)
     , m_configuration(file_manager, location_, global_settings)
@@ -129,6 +129,36 @@ void workspace::reparse_after_config_refresh()
     }
 }
 
+namespace {
+bool trigger_reparse(const utils::resource::resource_location& file_location)
+{
+    return !file_location.get_uri().starts_with("hlasm:");
+}
+} // namespace
+
+std::vector<processor_file_ptr> workspace::collect_dependants(
+    const utils::resource::resource_location& file_location) const
+{
+    std::vector<processor_file_ptr> result;
+
+    for (const auto& dep : dependants_)
+    {
+        auto f = file_manager_.find_processor_file(dep);
+        if (!f)
+            continue;
+        for (auto& dep_location : f->dependencies())
+        {
+            if (dep_location == file_location)
+            {
+                result.push_back(f);
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
 workspace_file_info workspace::parse_file(const utils::resource::resource_location& file_location)
 {
     workspace_file_info ws_file_info;
@@ -145,20 +175,9 @@ workspace_file_info workspace::parse_file(const utils::resource::resource_locati
     // TODO: what about removing files??? what if depentands_ points to not existing file?
     std::vector<processor_file_ptr> files_to_parse;
 
-    for (const auto& dep : dependants_)
-    {
-        auto f = file_manager_.find_processor_file(dep);
-        if (!f)
-            continue;
-        for (auto& dep_location : f->dependencies())
-        {
-            if (dep_location == file_location)
-            {
-                files_to_parse.push_back(f);
-                break;
-            }
-        }
-    }
+    // TODO: apparently just opening a file without changing it triggers reparse
+    if (trigger_reparse(file_location))
+        files_to_parse = collect_dependants(file_location);
 
     if (files_to_parse.empty())
     {
