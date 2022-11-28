@@ -38,6 +38,8 @@ LAB    MAC 1,KEY_PAR=1
  LR &KEY_PAR,1
 &
        UNKNOWN
+
+       LARL 0,LAB
 )";
 
     lsp_context_macro_in_opencode()
@@ -193,4 +195,13 @@ TEST_F(lsp_context_macro_in_opencode, hover_unknown_macro)
     auto res = a.context().lsp_ctx->hover(opencode_loc, { 12, 10 });
 
     EXPECT_EQ(res, "");
+}
+
+TEST_F(lsp_context_macro_in_opencode, definition_macro_label)
+{
+    location macro_call = a.context().lsp_ctx->definition(opencode_loc, { 14, 15 });
+    check_location_with_position(macro_call, opencode_loc, 7, 0);
+
+    location in_macro = a.context().lsp_ctx->definition(opencode_loc, { 7, 0 });
+    check_location_with_position(in_macro, opencode_loc, 3, 0);
 }

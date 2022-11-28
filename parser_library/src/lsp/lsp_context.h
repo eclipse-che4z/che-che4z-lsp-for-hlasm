@@ -97,7 +97,12 @@ private:
     occurence_scope_t find_occurence_with_scope(
         const utils::resource::resource_location& document_loc, position pos) const;
 
-    std::optional<location> find_definition_location(const symbol_occurence& occ, macro_info_ptr macro_i) const;
+    std::optional<location> find_definition_location(const symbol_occurence& occ,
+        macro_info_ptr macro_i,
+        const utils::resource::resource_location& document_loc,
+        position pos) const;
+    location find_symbol_definition_location(
+        const context::symbol& sym, const utils::resource::resource_location& document_loc, position pos) const;
     std::string find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const;
 
     completion_list_source complete_var(const file_info& file, position pos) const;
