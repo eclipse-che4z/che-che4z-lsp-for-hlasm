@@ -107,6 +107,16 @@ std::vector<std::pair<std::string, size_t>> processor_group::suggest(std::string
     }
 }
 
+bool processor_group::refresh_needed(const std::vector<utils::resource::resource_location>& urls) const
+{
+    return std::any_of(urls.begin(), urls.end(), [this](const auto& url) {
+        auto candidate = m_refresh_prefix.lower_bound(url.get_uri());
+        if (candidate == m_refresh_prefix.begin())
+            return false;
+        return url.get_uri().starts_with(*std::prev(candidate));
+    });
+}
+
 void processor_group::collect_diags() const
 {
     for (auto&& lib : m_libs)
@@ -115,6 +125,10 @@ void processor_group::collect_diags() const
     }
 }
 
-void processor_group::add_library(std::unique_ptr<library> library) { m_libs.push_back(std::move(library)); }
+void processor_group::add_library(std::unique_ptr<library> library)
+{
+    const auto& lib = m_libs.emplace_back(std::move(library));
+    m_refresh_prefix.emplace(lib->refresh_url_prefix());
+}
 
 } // namespace hlasm_plugin::parser_library::workspaces

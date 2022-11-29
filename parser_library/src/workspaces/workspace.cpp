@@ -159,13 +159,16 @@ std::vector<processor_file_ptr> workspace::collect_dependants(
     return result;
 }
 
-workspace_file_info workspace::parse_file(const utils::resource::resource_location& file_location)
+workspace_file_info workspace::parse_file(
+    const utils::resource::resource_location& file_location, open_file_result file_content_status)
 {
     workspace_file_info ws_file_info;
 
     // TODO: add support for hlasm to vscode (auto detection??) and do the decision based on languageid
     if (m_configuration.is_configuration_file(file_location))
     {
+        if (file_content_status == open_file_result::identical)
+            return {};
         if (m_configuration.parse_configuration_file(file_location) == parse_config_file_result::parsed)
             reparse_after_config_refresh();
         ws_file_info.config_parsing = true;
@@ -176,27 +179,31 @@ workspace_file_info workspace::parse_file(const utils::resource::resource_locati
     std::vector<processor_file_ptr> files_to_parse;
 
     // TODO: apparently just opening a file without changing it triggers reparse
-    if (trigger_reparse(file_location))
-        files_to_parse = collect_dependants(file_location);
 
-    if (files_to_parse.empty())
+    if (auto this_file = file_manager_.find_processor_file(file_location);
+        file_content_status == open_file_result::changed_content
+        || file_content_status == open_file_result::changed_lsp && !(this_file && this_file->has_lsp_info()))
     {
-        if (auto f = file_manager_.find_processor_file(file_location); f)
-            files_to_parse.push_back(f);
+        if (trigger_reparse(file_location))
+            files_to_parse = collect_dependants(file_location);
+
+        if (files_to_parse.empty() && this_file)
+            files_to_parse.push_back(std::move(this_file));
+
+        for (const auto& f : files_to_parse)
+        {
+            m_configuration.load_alternative_config_if_needed(file_location);
+            if (!f->parse(
+                    *this, get_asm_options(f->get_location()), get_preprocessor_options(f->get_location()), &fm_vfm_))
+                continue;
+
+            ws_file_info = parse_successful(f);
+        }
+
+        // second check after all dependants are there to close all files that used to be dependencies
+        for (const auto& f : files_to_parse)
+            filter_and_close_dependencies_(f->files_to_close(), f);
     }
-
-    for (const auto& f : files_to_parse)
-    {
-        m_configuration.load_alternative_config_if_needed(file_location);
-        if (!f->parse(*this, get_asm_options(f->get_location()), get_preprocessor_options(f->get_location()), &fm_vfm_))
-            continue;
-
-        ws_file_info = parse_successful(f);
-    }
-
-    // second check after all dependants are there to close all files that used to be dependencies
-    for (const auto& f : files_to_parse)
-        filter_and_close_dependencies_(f->files_to_close(), f);
 
     return ws_file_info;
 }
@@ -220,14 +227,18 @@ workspace_file_info workspace::parse_successful(const processor_file_ptr& f)
     return ws_file_info;
 }
 
-void workspace::refresh_libraries() { m_configuration.refresh_libraries(); }
+bool workspace::refresh_libraries(const std::vector<utils::resource::resource_location>& file_locations)
+{
+    return m_configuration.refresh_libraries(file_locations);
+}
 
-workspace_file_info workspace::did_open_file(const utils::resource::resource_location& file_location)
+workspace_file_info workspace::did_open_file(
+    const utils::resource::resource_location& file_location, open_file_result file_content_status)
 {
     if (!m_configuration.is_configuration_file(file_location))
         opened_files_.emplace(file_location);
 
-    return parse_file(file_location);
+    return parse_file(file_location, file_content_status);
 }
 
 void workspace::did_close_file(const utils::resource::resource_location& file_location)
@@ -265,16 +276,20 @@ void workspace::did_close_file(const utils::resource::resource_location& file_lo
     file_manager_.remove_file(file_location);
 }
 
-void workspace::did_change_file(const utils::resource::resource_location& file_location, const document_change*, size_t)
+void workspace::did_change_file(
+    const utils::resource::resource_location& file_location, const document_change*, size_t cnt)
 {
-    parse_file(file_location);
+    parse_file(file_location, cnt ? open_file_result::changed_content : open_file_result::identical);
 }
 
 void workspace::did_change_watched_files(const std::vector<utils::resource::resource_location>& file_locations)
 {
-    refresh_libraries();
+    bool refreshed = refresh_libraries(file_locations);
     for (const auto& file_location : file_locations)
-        parse_file(file_location);
+    {
+        parse_file(
+            file_location, refreshed ? open_file_result::changed_content : file_manager_.update_file(file_location));
+    }
 }
 
 location workspace::definition(const utils::resource::resource_location& document_loc, position pos) const

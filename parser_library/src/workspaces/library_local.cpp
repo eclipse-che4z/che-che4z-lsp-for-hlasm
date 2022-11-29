@@ -101,6 +101,8 @@ std::vector<std::string> library_local::list_files()
     return result;
 }
 
+std::string library_local::refresh_url_prefix() const { return m_lib_loc.get_uri(); }
+
 const utils::resource::resource_location& library_local::get_location() const { return m_lib_loc; }
 
 std::shared_ptr<processor> library_local::find_file(const std::string& file_name)

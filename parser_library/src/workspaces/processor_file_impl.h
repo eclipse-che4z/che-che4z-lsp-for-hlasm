@@ -56,10 +56,13 @@ public:
 
     void erase_cache_of_opencode(const utils::resource::resource_location& opencode_file_location) override;
 
+    bool has_lsp_info() const override;
+
 private:
     std::unique_ptr<analyzer> last_analyzer_ = nullptr;
     std::shared_ptr<context::id_storage> last_opencode_id_storage_;
     bool last_analyzer_opencode_ = false;
+    bool last_analyzer_with_lsp = false;
 
     bool parse_inner(analyzer&);
 
@@ -69,6 +72,8 @@ private:
     std::set<utils::resource::resource_location> files_to_close_;
 
     macro_cache macro_cache_;
+
+    bool should_collect_hl(context::hlasm_context* ctx = nullptr) const;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

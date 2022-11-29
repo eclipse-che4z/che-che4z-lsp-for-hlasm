@@ -35,6 +35,12 @@ using file_ptr = std::shared_ptr<file>;
 using processor_file_ptr = std::shared_ptr<processor_file>;
 using list_directory_result =
     std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>, utils::path::list_directory_rc>;
+enum class open_file_result
+{
+    identical,
+    changed_lsp,
+    changed_content,
+};
 
 // Wraps an associative array of file names and files.
 // Implements LSP text synchronization methods.
@@ -73,7 +79,7 @@ public:
 
     virtual bool dir_exists(const utils::resource::resource_location& dir_loc) const = 0;
 
-    virtual void did_open_file(const file_location& document_loc, version_t version, std::string text) = 0;
+    virtual open_file_result did_open_file(const file_location& document_loc, version_t version, std::string text) = 0;
     virtual void did_change_file(
         const file_location& document_loc, version_t version, const document_change* changes, size_t ch_size) = 0;
     virtual void did_close_file(const file_location& document_loc) = 0;
@@ -83,6 +89,8 @@ public:
     virtual void remove_virtual_file(unsigned long long id) = 0;
     virtual std::string get_virtual_file(unsigned long long id) const = 0;
     virtual utils::resource::resource_location get_virtual_file_workspace(unsigned long long id) const = 0;
+
+    virtual open_file_result update_file(const file_location& document_loc) = 0;
 
 protected:
     ~file_manager() = default;

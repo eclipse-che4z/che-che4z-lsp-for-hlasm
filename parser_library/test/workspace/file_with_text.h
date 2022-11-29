@@ -29,9 +29,12 @@ public:
         did_open(text, 1);
     }
 
-    virtual const std::string& get_text() override { return get_text_ref(); }
+    const std::string& get_text() override { return get_text_ref(); }
 
-    virtual bool update_and_get_bad() override { return false; }
+    hlasm_plugin::parser_library::workspaces::update_file_result update_and_get_bad() override
+    {
+        return hlasm_plugin::parser_library::workspaces::update_file_result::changed;
+    }
 };
 
 #endif

@@ -88,12 +88,12 @@ public:
 
     void did_open_file(const utils::resource::resource_location& document_loc, version_t version, std::string text)
     {
-        file_manager_.did_open_file(document_loc, version, std::move(text));
+        auto file_changed = file_manager_.did_open_file(document_loc, version, std::move(text));
         if (cancel_ && *cancel_)
             return;
 
         workspaces::workspace& ws = ws_path_match(document_loc.get_uri());
-        auto metadata = ws.did_open_file(document_loc);
+        auto metadata = ws.did_open_file(document_loc, file_changed);
         if (cancel_ && *cancel_)
             return;
 

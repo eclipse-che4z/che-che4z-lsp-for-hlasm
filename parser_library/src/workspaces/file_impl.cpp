@@ -22,6 +22,7 @@
 #include <locale>
 #include <string>
 
+#include "file_manager.h"
 #include "utils/content_loader.h"
 #include "utils/unicode_text.h"
 
@@ -44,15 +45,20 @@ const std::string& file_impl::get_text()
     return text_;
 }
 
-void file_impl::load_text()
+update_file_result file_impl::load_text()
 {
     if (auto loaded_text = utils::resource::load_text(file_location_); loaded_text.has_value())
     {
-        text_ = std::move(loaded_text.value());
-        text_ = utils::replace_non_utf8_chars(text_);
+        bool was_up_to_date = up_to_date_;
+        bool identical = text_ == loaded_text.value();
+        if (!identical)
+        {
+            text_ = std::move(loaded_text.value());
+            text_ = utils::replace_non_utf8_chars(text_);
+        }
         up_to_date_ = true;
         bad_ = false;
-        return;
+        return identical && was_up_to_date ? update_file_result::identical : update_file_result::changed;
     }
 
     text_ = "";
@@ -62,6 +68,8 @@ void file_impl::load_text()
     // TODO Figure out how to present this error in VSCode.
     // Also think about the lifetime of the error as it seems that it will stay in Problem panel forever
     // add_diagnostic(diagnostic_s::error_W0001(file_location_.to_presentable()));
+
+    return update_file_result::bad;
 }
 
 // adds positions of newlines into vector 'lines'
@@ -102,8 +110,9 @@ size_t find_newlines(const std::string& text, std::vector<size_t>& lines)
     return lines.size() - before;
 }
 
-void file_impl::did_open(std::string new_text, version_t version)
+open_file_result file_impl::did_open(std::string new_text, version_t version)
 {
+    bool identical = text_ == new_text;
     text_ = std::move(new_text);
     version_ = version;
 
@@ -114,9 +123,11 @@ void file_impl::did_open(std::string new_text, version_t version)
     up_to_date_ = true;
     bad_ = false;
     editing_ = true;
+
+    return identical ? open_file_result::changed_lsp : open_file_result::changed_content;
 }
 
-bool file_impl::get_lsp_editing() { return editing_; }
+bool file_impl::get_lsp_editing() const { return editing_; }
 
 
 // applies a change to the text and updates line beginnings
@@ -189,14 +200,13 @@ const std::string& file_impl::get_text_ref() { return text_; }
 
 version_t file_impl::get_version() { return version_; }
 
-bool file_impl::update_and_get_bad()
+update_file_result file_impl::update_and_get_bad()
 {
     // If user is editing file through LSP, do not load from disk.
     if (editing_)
-        return false;
+        return update_file_result::identical;
 
-    load_text();
-    return bad_;
+    return load_text();
 }
 
 size_t file_impl::index_from_position(const std::string& text, const std::vector<size_t>& line_indices, position loc)

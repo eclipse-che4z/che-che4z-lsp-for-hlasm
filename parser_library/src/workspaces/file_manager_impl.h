@@ -59,7 +59,7 @@ public:
 
     std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec) const override;
 
-    void did_open_file(const file_location& document_loc, version_t version, std::string text) override;
+    open_file_result did_open_file(const file_location& document_loc, version_t version, std::string text) override;
     void did_change_file(
         const file_location& document_loc, version_t version, const document_change* changes, size_t ch_size) override;
     void did_close_file(const file_location& document_loc) override;
@@ -73,6 +73,8 @@ public:
     void remove_virtual_file(unsigned long long id) override;
     std::string get_virtual_file(unsigned long long id) const override;
     utils::resource::resource_location get_virtual_file_workspace(unsigned long long id) const override;
+
+    open_file_result update_file(const file_location& document_loc) override;
 
 private:
     struct virtual_file_entry

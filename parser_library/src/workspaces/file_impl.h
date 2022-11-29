@@ -42,10 +42,10 @@ public:
     const file_location& get_location() override;
     const std::string& get_text() override;
     version_t get_version() override;
-    bool update_and_get_bad() override;
-    bool get_lsp_editing() override;
+    update_file_result update_and_get_bad() override;
+    bool get_lsp_editing() const override;
 
-    void did_open(std::string new_text, version_t version) override;
+    open_file_result did_open(std::string new_text, version_t version) override;
     void did_change(std::string new_text) override;
     void did_change(range range, std::string new_text) override;
     void did_close() override;
@@ -73,7 +73,7 @@ private:
 
     version_t version_ = 0;
 
-    void load_text();
+    update_file_result load_text();
 };
 
 #pragma warning(pop)

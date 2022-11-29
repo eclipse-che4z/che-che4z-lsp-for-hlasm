@@ -136,12 +136,14 @@ void file_manager_impl::prepare_file_for_change_(std::shared_ptr<file_impl>& fil
         file = std::make_shared<file_impl>(*file);
 }
 
-void file_manager_impl::did_open_file(const file_location& document_loc, version_t version, std::string text)
+open_file_result file_manager_impl::did_open_file(
+    const file_location& document_loc, version_t version, std::string text)
 {
     std::lock_guard guard(files_mutex);
-    auto [ret, _] = files_.try_emplace(document_loc, std::make_shared<file_impl>(document_loc));
+    auto [ret, inserted] = files_.try_emplace(document_loc, std::make_shared<file_impl>(document_loc));
     prepare_file_for_change_(ret->second);
-    ret->second->did_open(std::move(text), version);
+    auto changed = ret->second->did_open(std::move(text), version);
+    return inserted ? open_file_result::changed_content : changed;
 }
 
 void file_manager_impl::did_change_file(
@@ -216,6 +218,19 @@ utils::resource::resource_location file_manager_impl::get_virtual_file_workspace
     if (auto it = m_virtual_files.find(id); it != m_virtual_files.end())
         return it->second.related_workspace;
     return utils::resource::resource_location();
+}
+
+open_file_result file_manager_impl::update_file(const file_location& document_loc)
+{
+    std::lock_guard guard(files_mutex);
+    auto f = files_.find(document_loc);
+    if (f == files_.end())
+        return open_file_result::identical;
+
+    if (f->second->update_and_get_bad() == update_file_result::identical)
+        return open_file_result::identical;
+    else
+        return open_file_result::changed_content;
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

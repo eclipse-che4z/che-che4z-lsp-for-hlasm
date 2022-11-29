@@ -57,6 +57,7 @@ public:
     virtual const std::set<utils::resource::resource_location>& files_to_close() = 0;
     virtual const performance_metrics& get_metrics() = 0;
     virtual void erase_cache_of_opencode(const utils::resource::resource_location& opencode_file_location) = 0;
+    virtual bool has_lsp_info() const = 0;
 
 protected:
     ~processor_file() = default;

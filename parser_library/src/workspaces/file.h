@@ -15,8 +15,6 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_FILE_H
 #define HLASMPLUGIN_PARSERLIBRARY_FILE_H
 
-#include <filesystem>
-#include <istream>
 #include <string>
 
 #include "diagnosable.h"
@@ -24,8 +22,15 @@
 #include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
-
+enum class open_file_result;
 using file_location = utils::resource::resource_location;
+
+enum class update_file_result
+{
+    identical,
+    changed,
+    bad,
+};
 
 // Interface that represents both file opened in LSP
 // as well as a file opened by parser library from the disk.
@@ -37,15 +42,15 @@ public:
     virtual const std::string& get_text() = 0;
     // Returns whether file is bad - bad file cannot be loaded from disk.
     // LSP files are never bad.
-    virtual bool update_and_get_bad() = 0;
+    virtual update_file_result update_and_get_bad() = 0;
     // Returns whether file is open by LSP.
-    virtual bool get_lsp_editing() = 0;
+    virtual bool get_lsp_editing() const = 0;
 
     // Gets LSP version of file.
     virtual version_t get_version() = 0;
 
     // LSP notifications
-    virtual void did_open(std::string new_text, version_t version) = 0;
+    virtual open_file_result did_open(std::string new_text, version_t version) = 0;
     virtual void did_change(std::string new_text) = 0;
     virtual void did_change(range range, std::string new_text) = 0;
     virtual void did_close() = 0;

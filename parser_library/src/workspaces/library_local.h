@@ -63,6 +63,8 @@ public:
 
     std::vector<std::string> list_files() override;
 
+    std::string refresh_url_prefix() const override;
+
 private:
     file_manager& m_file_manager;
 

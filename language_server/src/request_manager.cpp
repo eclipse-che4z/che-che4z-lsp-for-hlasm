@@ -14,6 +14,8 @@
 
 #include "request_manager.h"
 
+#include <string_view>
+
 using namespace hlasm_plugin::language_server;
 
 request::request(json message, server* executing_server)
@@ -39,17 +41,18 @@ void request_manager::add_request(server* server, json message)
     // add request to q
     {
         std::unique_lock<std::mutex> lock(q_mtx_);
-        bool is_parsing_required = false;
         // get new file
-        auto file = get_request_file_(message, &is_parsing_required);
+        auto [file, is_parsing_required] = get_request_file_(message);
         // if the new file is the same as the currently running one, cancel the old one
-        if (currently_running_file_ == file && currently_running_file_ != "" && is_parsing_required)
+        if (currently_running_file_ == file && currently_running_file_ != ""
+            && (is_parsing_required == request_parsing_implication::parsing_required
+                || is_parsing_required == request_parsing_implication::stop_parsing))
         {
             *cancel_ = true;
             // mark redundant requests as non valid
             for (auto& req : requests_)
             {
-                if (req.valid && get_request_file_(req.message) == file)
+                if (req.valid && get_request_file_(req.message).first == file)
                     req.valid = false;
             }
         }
@@ -93,7 +96,7 @@ void request_manager::handle_request_(const std::atomic<bool>* end_loop)
         auto to_run = std::move(requests_.front());
         requests_.pop_front();
         // remember file name that is about to be parsed
-        currently_running_file_ = get_request_file_(to_run.message);
+        currently_running_file_ = get_request_file_(to_run.message).first;
         // if the request is valid, do not cancel
         // if not, cancel the parsing right away, only the file manager should update the data
         if (cancel_)
@@ -139,35 +142,31 @@ void request_manager::finish_server_requests(server* to_finish)
         requests_.end());
 }
 
-
-std::string request_manager::get_request_file_(const json& r, bool* is_parsing_required) const
+std::pair<std::string, request_manager::request_parsing_implication> request_manager::get_request_file_(
+    const json& r) const
 {
-    constexpr const char* didOpen = "textDocument/didOpen";
-    constexpr const char* didChange = "textDocument/didChange";
+    constexpr auto parsing_implication = [](std::string_view method) {
+        if (method == "textDocument/didOpen" || method == "textDocument/didChange")
+            return request_parsing_implication::parsing_required;
+        if (method == "textDocument/didClose")
+            return request_parsing_implication::stop_parsing;
+        return request_parsing_implication::parsing_not_required;
+    };
 
     auto found = r.find("method");
     if (found == r.end())
-        return "";
+        return {};
     auto method = found->get<std::string>();
-    if (method.substr(0, 12) == "textDocument")
-    {
-        if (is_parsing_required)
-        {
-            if (method == didOpen || method == didChange)
-                *is_parsing_required = true;
-            else
-                *is_parsing_required = false;
-        }
-        const auto params = r.find("params");
-        if (params == r.end())
-            return "";
-        const auto textDocument = params->find("textDocument");
-        if (textDocument == params->end())
-            return "";
-        const auto uri = textDocument->find("uri");
-        if (uri == textDocument->end())
-            return "";
-        return uri->get<std::string>();
-    }
-    return "";
+    if (!method.starts_with("textDocument"))
+        return {};
+    const auto params = r.find("params");
+    if (params == r.end())
+        return {};
+    const auto textDocument = params->find("textDocument");
+    if (textDocument == params->end())
+        return {};
+    const auto uri = textDocument->find("uri");
+    if (uri == textDocument->end())
+        return {};
+    return { uri->get<std::string>(), parsing_implication(method) };
 }

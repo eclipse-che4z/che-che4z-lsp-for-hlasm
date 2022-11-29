@@ -18,6 +18,7 @@
 #include <deque>
 #include <mutex>
 #include <thread>
+#include <utility>
 
 #include "server.h"
 
@@ -66,7 +67,15 @@ private:
     std::atomic<server*> currently_running_server_ = nullptr;
 
     void handle_request_(const std::atomic<bool>* end_loop);
-    std::string get_request_file_(const json& r, bool* is_parsing_required = nullptr) const;
+
+    enum class request_parsing_implication
+    {
+        parsing_not_required,
+        parsing_required,
+        stop_parsing,
+    };
+
+    std::pair<std::string, request_parsing_implication> get_request_file_(const json& r) const;
 
     std::deque<request> requests_;
 

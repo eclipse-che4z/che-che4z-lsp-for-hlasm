@@ -68,8 +68,10 @@ public:
         (const hlasm_plugin::utils::resource::resource_location& lib_root, std::string_view file_name),
         (const override));
     MOCK_METHOD(bool, dir_exists, (const hlasm_plugin::utils::resource::resource_location& dir_loc), (const override));
-    MOCK_METHOD(
-        void, did_open_file, (const file_location& document_loc, version_t version, std::string text), (override));
+    MOCK_METHOD(open_file_result,
+        did_open_file,
+        (const file_location& document_loc, version_t version, std::string text),
+        (override));
     MOCK_METHOD(void,
         did_change_file,
         (const file_location& document_loc, version_t version, const document_change* changes, size_t ch_size),
@@ -87,6 +89,8 @@ public:
         get_virtual_file_workspace,
         (unsigned long long id),
         (const override));
+
+    MOCK_METHOD(open_file_result, update_file, (const file_location& document_loc), (override));
 };
 
 } // namespace

@@ -388,7 +388,7 @@ parse_config_file_result workspace_configuration::load_proc_config(config::proc_
 
     // proc_grps.json parse
     proc_grps_file = m_file_manager.add_file(m_proc_grps_loc);
-    if (proc_grps_file->update_and_get_bad())
+    if (proc_grps_file->update_and_get_bad() == update_file_result::bad)
         return parse_config_file_result::not_found;
 
     try
@@ -431,7 +431,7 @@ parse_config_file_result workspace_configuration::load_pgm_config(config::pgm_co
 
     // pgm_conf.json parse
     pgm_conf_file = m_file_manager.add_file(m_pgm_conf_loc);
-    if (pgm_conf_file->update_and_get_bad())
+    if (pgm_conf_file->update_and_get_bad() == update_file_result::bad)
         return parse_config_file_result::not_found;
 
     try
@@ -485,7 +485,7 @@ parse_config_file_result workspace_configuration::parse_b4g_config_file(
     }
 
     auto b4g_config_file = m_file_manager.add_file(file_location);
-    if (b4g_config_file->update_and_get_bad())
+    if (b4g_config_file->update_and_get_bad() == update_file_result::bad)
         return parse_config_file_result::not_found;
 
     const void* new_tag = &*it;
@@ -638,16 +638,21 @@ parse_config_file_result workspace_configuration::parse_configuration_file(
     return parse_config_file_result::not_found;
 }
 
-void workspace_configuration::refresh_libraries()
+bool workspace_configuration::refresh_libraries(const std::vector<utils::resource::resource_location>& file_locations)
 {
+    bool refreshed = false;
     for (auto& [_, proc_grp] : m_proc_grps)
     {
+        if (!proc_grp.refresh_needed(file_locations))
+            continue;
+        refreshed = true;
         for (auto& lib : proc_grp.libraries())
         {
             lib->refresh();
         }
         proc_grp.generate_suggestions();
     }
+    return refreshed;
 }
 
 const processor_group& workspace_configuration::get_proc_grp_by_program(const program& pgm) const

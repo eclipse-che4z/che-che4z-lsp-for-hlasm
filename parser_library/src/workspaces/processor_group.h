@@ -15,6 +15,10 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H
 
+#include <set>
+#include <string>
+#include <vector>
+
 #include "config/proc_grps.h"
 #include "diagnosable_impl.h"
 #include "file_manager.h"
@@ -54,6 +58,8 @@ public:
 
     std::vector<std::pair<std::string, size_t>> suggest(std::string_view s, bool extended);
 
+    bool refresh_needed(const std::vector<utils::resource::resource_location>& urls) const;
+
 private:
     std::vector<std::unique_ptr<library>> m_libs;
     std::string m_pg_name;
@@ -63,6 +69,8 @@ private:
     static constexpr size_t suggestion_limit = 32;
 
     std::optional<utils::bk_tree<std::string, utils::levenshtein_distance_t<suggestion_limit>>> m_suggestions;
+
+    std::set<std::string, std::less<>> m_refresh_prefix;
 };
 } // namespace hlasm_plugin::parser_library::workspaces
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H

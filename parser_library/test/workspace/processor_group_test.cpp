@@ -227,6 +227,7 @@ TEST(processor_group, opcode_suggestions)
 
         // diag iface
         void collect_diags() const override {}
+        std::string refresh_url_prefix() const override { return {}; }
     };
     processor_group grp("", {}, {});
     grp.add_library(std::make_unique<library_mock>());

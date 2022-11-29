@@ -68,10 +68,12 @@ public:
 
     void collect_diags() const override;
 
-    workspace_file_info parse_file(const utils::resource::resource_location& file_location);
+    workspace_file_info parse_file(
+        const utils::resource::resource_location& file_location, open_file_result file_content_status);
     workspace_file_info parse_successful(const processor_file_ptr& f);
-    void refresh_libraries();
-    workspace_file_info did_open_file(const utils::resource::resource_location& file_location);
+    bool refresh_libraries(const std::vector<utils::resource::resource_location>& file_locations);
+    workspace_file_info did_open_file(const utils::resource::resource_location& file_location,
+        open_file_result file_content_status = open_file_result::changed_content);
     void did_close_file(const utils::resource::resource_location& file_location);
     void did_change_file(
         const utils::resource::resource_location& file_location, const document_change* changes, size_t ch_size);

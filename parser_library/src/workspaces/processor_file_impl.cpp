@@ -53,12 +53,13 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider,
     if (!last_analyzer_opencode_)
         last_opencode_id_storage_ = std::make_shared<context::id_storage>();
 
+    const bool collect_hl = should_collect_hl();
     auto new_analyzer = std::make_unique<analyzer>(get_text(),
         analyzer_options {
             get_location(),
             &lib_provider,
             std::move(asm_opts),
-            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+            collect_hl ? collect_highlighting_info::yes : collect_highlighting_info::no,
             file_is_opencode::yes,
             last_opencode_id_storage_,
             std::move(pp),
@@ -74,6 +75,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider,
     {
         last_analyzer_ = std::move(new_analyzer);
         last_analyzer_opencode_ = true;
+        last_analyzer_with_lsp = collect_hl;
 
         dependencies_.clear();
         for (auto& file : last_analyzer_->hlasm_ctx().get_visited_files())
@@ -100,13 +102,14 @@ parse_result processor_file_impl::parse_macro(
     if (macro_cache_.load_from_cache(cache_key, ctx))
         return true;
 
+    const bool collect_hl = should_collect_hl(ctx.hlasm_ctx.get());
     auto a = std::make_unique<analyzer>(get_text(),
         analyzer_options {
             get_location(),
             &lib_provider,
             std::move(ctx),
             data,
-            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+            collect_hl ? collect_highlighting_info::yes : collect_highlighting_info::no,
         });
 
     auto ret = parse_inner(*a);
@@ -117,6 +120,7 @@ parse_result processor_file_impl::parse_macro(
     macro_cache_.save_macro(cache_key, *a);
     last_analyzer_ = std::move(a);
     last_analyzer_opencode_ = false;
+    last_analyzer_with_lsp = collect_hl;
 
     return ret;
 }
@@ -130,7 +134,7 @@ parse_result processor_file_impl::parse_no_lsp_update(
             &lib_provider,
             std::move(ctx),
             data,
-            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+            should_collect_hl(ctx.hlasm_ctx.get()) ? collect_highlighting_info::yes : collect_highlighting_info::no,
         });
     no_update_analyzer_->analyze();
     return true;
@@ -181,5 +185,16 @@ bool processor_file_impl::parse_inner(analyzer& new_analyzer)
     collect_diags_from_child(new_analyzer);
     return true;
 }
+
+bool processor_file_impl::should_collect_hl(context::hlasm_context* ctx) const
+{
+    // collect highlighting information in any of the following cases:
+    // 1) The file is opened in the editor
+    // 2) HL information was previously requested
+    // 3) this macro is a top-level macro
+    return get_lsp_editing() || last_analyzer_with_lsp || ctx && ctx->processing_stack().parent().empty();
+}
+
+bool processor_file_impl::has_lsp_info() const { return last_analyzer_with_lsp; }
 
 } // namespace hlasm_plugin::parser_library::workspaces

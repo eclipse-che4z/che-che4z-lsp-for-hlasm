@@ -61,7 +61,7 @@ public:
 
     const std::string& get_text() override { return file; }
 
-    bool update_and_get_bad() override { return false; }
+    update_file_result update_and_get_bad() override { return update_file_result::changed; }
 
     std::string file = is_windows() ?
                                     R"({
@@ -133,7 +133,7 @@ public:
 
     const std::string& get_text() override { return file; }
 
-    bool update_and_get_bad() override { return false; }
+    update_file_result update_and_get_bad() override { return update_file_result::changed; }
 
     std::string file = is_windows() ? R"({
   "pgms": [
@@ -193,7 +193,10 @@ public:
 
 
     // Inherited via file_manager
-    void did_open_file(const resource_location&, version_t, std::string) override {}
+    open_file_result did_open_file(const resource_location&, version_t, std::string) override
+    {
+        return open_file_result::changed_content;
+    }
     void did_change_file(const resource_location&, version_t, const document_change*, size_t) override {}
     void did_close_file(const resource_location&) override {}
 };

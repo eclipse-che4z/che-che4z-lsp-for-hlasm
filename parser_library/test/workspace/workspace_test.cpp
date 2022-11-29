@@ -276,8 +276,8 @@ label
 
 std::string source_using_macro_file_no_error = R"( CORRECT)";
 
-const char* faulty_macro_path = is_windows() ? "lib\\ERROR" : "lib/ERROR";
-const char* correct_macro_path = is_windows() ? "lib\\CORRECT" : "lib/CORRECT";
+const char* faulty_macro_path = "lib/ERROR";
+const char* correct_macro_path = "lib/CORRECT";
 const std::string hlasmplugin_folder = ".hlasmplugin";
 
 const resource_location empty_loc = resource_location("");

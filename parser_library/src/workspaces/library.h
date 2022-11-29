@@ -32,6 +32,7 @@ public:
     virtual std::shared_ptr<processor> find_file(const std::string& file) = 0;
     virtual void refresh() = 0;
     virtual std::vector<std::string> list_files() = 0;
+    virtual std::string refresh_url_prefix() const = 0;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

@@ -180,7 +180,7 @@ public:
     const lib_config& get_config() const { return m_local_config; }
 
     bool settings_updated() const;
-    void refresh_libraries();
+    bool refresh_libraries(const std::vector<utils::resource::resource_location>& file_locations);
 
     void copy_diagnostics(const diagnosable& target) const;
 
