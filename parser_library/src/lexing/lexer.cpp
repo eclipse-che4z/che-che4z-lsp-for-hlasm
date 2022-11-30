@@ -207,14 +207,10 @@ void lexer::lex_tokens()
     switch (input_state_->c)
     {
         case '*':
-            if (input_state_->char_position_in_line == begin_)
+            if (input_state_->char_position_in_line == begin_ && is_process())
             {
-                if (is_process())
-                {
-                    lex_process();
-                    break;
-                }
-                lex_comment();
+                lex_process();
+                break;
             }
             else
             {
@@ -224,16 +220,8 @@ void lexer::lex_tokens()
             break;
 
         case '.':
-            /* macro comment */
-            if (input_state_->char_position_in_line == begin_ && input_->LA(2) == '*')
-            {
-                lex_comment();
-            }
-            else
-            {
-                consume();
-                create_token(DOT);
-            }
+            consume();
+            create_token(DOT);
             break;
 
         case ' ':
@@ -366,35 +354,6 @@ void lexer::lex_end()
     if (double_byte_enabled_)
         check_continuation();
     create_token(IGNORED, HIDDEN_CHANNEL);
-}
-
-void lexer::lex_comment()
-{
-    while (true)
-    {
-        start_token();
-        while (input_state_->char_position_in_line < end_ && !eof() && input_state_->c != '\n')
-            consume();
-        create_token(COMMENT, HIDDEN_CHANNEL);
-
-        if (!isspace32(input_state_->c) && !eof() && continuation_enabled_)
-            lex_continuation();
-        else
-        {
-            lex_end();
-
-            break;
-        }
-    }
-}
-
-void lexer::consume_new_line()
-{
-    // we accept both separately and combine
-    if (input_state_->c == '\r')
-        consume();
-    if (input_state_->c == '\n')
-        consume();
 }
 
 /* lex continuation and ignores */

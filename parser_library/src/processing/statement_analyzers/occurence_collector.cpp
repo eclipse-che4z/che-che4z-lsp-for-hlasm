@@ -19,11 +19,14 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-occurence_collector::occurence_collector(
-    lsp::occurence_kind collector_kind, context::hlasm_context& hlasm_ctx, lsp::occurence_storage& storage)
+occurence_collector::occurence_collector(lsp::occurence_kind collector_kind,
+    context::hlasm_context& hlasm_ctx,
+    lsp::occurence_storage& storage,
+    bool evaluated_model)
     : collector_kind(collector_kind)
     , hlasm_ctx(hlasm_ctx)
     , occurences(storage)
+    , evaluated_model(evaluated_model)
 {}
 
 void occurence_collector::visit(const semantics::empty_operand&) {}
@@ -93,20 +96,21 @@ void occurence_collector::get_occurence(const semantics::variable_symbol& var)
         if (var.created)
             get_occurence(var.access_created()->created_name);
         else
-            occurences.emplace_back(lsp::occurence_kind::VAR, var.access_basic()->name, var.symbol_range);
+            occurences.emplace_back(
+                lsp::occurence_kind::VAR, var.access_basic()->name, var.symbol_range, evaluated_model);
     }
 }
 
 void occurence_collector::get_occurence(const semantics::seq_sym& seq)
 {
     if (collector_kind == lsp::occurence_kind::SEQ)
-        occurences.emplace_back(lsp::occurence_kind::SEQ, seq.name, seq.symbol_range);
+        occurences.emplace_back(lsp::occurence_kind::SEQ, seq.name, seq.symbol_range, evaluated_model);
 }
 
 void occurence_collector::get_occurence(context::id_index ord, const range& ord_range)
 {
     if (collector_kind == lsp::occurence_kind::ORD)
-        occurences.emplace_back(lsp::occurence_kind::ORD, ord, ord_range);
+        occurences.emplace_back(lsp::occurence_kind::ORD, ord, ord_range, evaluated_model);
 }
 
 void occurence_collector::get_occurence(const semantics::concat_chain& chain)
@@ -119,7 +123,7 @@ void occurence_collector::get_occurence(const semantics::concat_chain& chain)
             {
                 auto [valid, name] = hlasm_ctx.try_get_symbol_name(str->value);
                 if (valid)
-                    occurences.emplace_back(lsp::occurence_kind::ORD, name, str->conc_range);
+                    occurences.emplace_back(lsp::occurence_kind::ORD, name, str->conc_range, evaluated_model);
             }
         }
         else if (const auto* var = std::get_if<semantics::var_sym_conc>(&point.value))

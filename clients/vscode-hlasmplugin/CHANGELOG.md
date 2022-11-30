@@ -12,6 +12,7 @@
 #### Fixed
 - LSP requests on virtual files are evaluated in the correct workspace context
 - Enhance language server response times
+- Missing references and hover text in model statements
 
 #### Changed
 - Macro label is the preferred go to definition target unless the request is made from the label itself

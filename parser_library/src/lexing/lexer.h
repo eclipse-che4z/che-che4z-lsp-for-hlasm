@@ -156,7 +156,6 @@ private:
     void lex_begin();
     // lex last part of line
     void lex_end();
-    void lex_comment();
     // lex continuation & everything until the EOL (which is lexed as IGNORED token)
     void lex_continuation();
     // lex whitespace
@@ -171,8 +170,6 @@ private:
 
     // lexes everything not lexed in nextToken()
     void lex_tokens();
-    // consumes '\r' and/or '\n'
-    void consume_new_line();
     // lexes PROCESS instruction
     void lex_process();
 

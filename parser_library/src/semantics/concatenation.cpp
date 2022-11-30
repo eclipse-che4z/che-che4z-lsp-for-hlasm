@@ -23,20 +23,26 @@ std::string concatenation_point::evaluate(const concat_chain& chain, const expre
     return evaluate(chain.begin(), chain.end(), eval_ctx);
 }
 
+template<bool collect_ranges>
 struct concatenation_point_evaluator
 {
     std::string& result;
     const expressions::evaluation_context& eval_ctx;
     bool was_var = false;
+    std::vector<std::pair<std::pair<size_t, bool>, range>> ranges;
 
     void operator()(const char_str_conc& v)
     {
+        if constexpr (collect_ranges)
+            ranges.emplace_back(std::pair(result.size(), false), v.conc_range);
         result.append(v.evaluate(eval_ctx));
         was_var = false;
     }
 
     void operator()(const var_sym_conc& v)
     {
+        if constexpr (collect_ranges)
+            ranges.emplace_back(std::pair(result.size(), true), v.symbol->symbol_range);
         result.append(v.evaluate(eval_ctx));
         was_var = true;
     }
@@ -44,18 +50,25 @@ struct concatenation_point_evaluator
     void operator()(const dot_conc& v)
     {
         if (!was_var)
+        {
+            if constexpr (collect_ranges)
+                ranges.emplace_back(std::pair(result.size(), false), v.conc_range);
             result.append(v.evaluate(eval_ctx));
+        }
         was_var = false;
     }
 
     void operator()(const sublist_conc& v)
     {
+        assert(!collect_ranges);
         result.append(v.evaluate(eval_ctx));
         was_var = false;
     }
 
     void operator()(const equals_conc& v)
     {
+        if constexpr (collect_ranges)
+            ranges.emplace_back(std::pair(result.size(), false), v.conc_range);
         result.append(v.evaluate(eval_ctx));
         was_var = false;
     }
@@ -66,12 +79,30 @@ std::string concatenation_point::evaluate(concat_chain::const_iterator begin,
     const expressions::evaluation_context& eval_ctx)
 {
     std::string ret;
-    concatenation_point_evaluator evaluator { ret, eval_ctx };
+    concatenation_point_evaluator<false> evaluator { ret, eval_ctx };
 
     for (auto it = begin; it != end; ++it)
         std::visit(evaluator, it->value);
 
     return ret;
+}
+std::pair<std::string, std::vector<std::pair<std::pair<size_t, bool>, range>>>
+concatenation_point::evaluate_with_range_map(const concat_chain& chain, const expressions::evaluation_context& eval_ctx)
+{
+    return evaluate_with_range_map(chain.begin(), chain.end(), eval_ctx);
+}
+std::pair<std::string, std::vector<std::pair<std::pair<size_t, bool>, range>>>
+concatenation_point::evaluate_with_range_map(concat_chain::const_iterator begin,
+    concat_chain::const_iterator end,
+    const expressions::evaluation_context& eval_ctx)
+{
+    std::string ret;
+    concatenation_point_evaluator<true> evaluator { ret, eval_ctx };
+
+    for (auto it = begin; it != end; ++it)
+        std::visit(evaluator, it->value);
+
+    return { std::move(ret), std::move(evaluator.ranges) };
 }
 
 std::string concatenation_point::evaluate(const expressions::evaluation_context& eval_ctx) const

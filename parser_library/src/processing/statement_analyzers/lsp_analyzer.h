@@ -46,7 +46,8 @@ public:
 
     void analyze(const context::hlasm_statement& statement,
         statement_provider_kind prov_kind,
-        processing_kind proc_kind) override;
+        processing_kind proc_kind,
+        bool evaluated_model) override;
 
     void analyze(const semantics::preprocessor_statement_si& statement);
 
@@ -60,7 +61,7 @@ public:
 private:
     void assign_statement_occurences(const utils::resource::resource_location& doc_location);
 
-    void collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement);
+    void collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement, bool evaluated_model);
     void collect_occurences(lsp::occurence_kind kind, const semantics::preprocessor_statement_si& statement);
 
     void collect_occurence(const semantics::label_si& label, occurence_collector& collector);
@@ -69,13 +70,13 @@ private:
     void collect_occurence(const semantics::deferred_operands_si& operands, occurence_collector& collector);
 
     void collect_var_definition(const processing::resolved_statement& statement);
-    void collect_copy_operands(const processing::resolved_statement& statement);
+    void collect_copy_operands(const processing::resolved_statement& statement, bool evaluated_model);
 
     void collect_SET_defs(const processing::resolved_statement& statement, context::SET_t_enum type);
     void collect_LCL_GBL_defs(const processing::resolved_statement& statement, context::SET_t_enum type, bool global);
     void add_var_def(const semantics::variable_symbol* var, context::SET_t_enum type, bool global);
 
-    void add_copy_operand(context::id_index name, const range& operand_range);
+    void add_copy_operand(context::id_index name, const range& operand_range, bool evaluated_model);
 
     void update_macro_nest(const processing::resolved_statement& statement);
 

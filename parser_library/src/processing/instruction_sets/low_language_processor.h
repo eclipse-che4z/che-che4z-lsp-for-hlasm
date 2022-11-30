@@ -20,6 +20,7 @@
 #include "processing/statement_fields_parser.h"
 
 namespace hlasm_plugin::parser_library::processing {
+class processing_manager;
 
 // common ancestor for ASM and MACH processing containing useful methods
 class low_language_processor : public instruction_processor
@@ -33,11 +34,13 @@ public:
 
 protected:
     statement_fields_parser& parser;
+    const processing_manager& proc_mgr;
 
     low_language_processor(analyzing_context ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
-        statement_fields_parser& parser);
+        statement_fields_parser& parser,
+        const processing_manager& proc_mgr);
 
     rebuilt_statement preprocess(std::shared_ptr<const processing::resolved_statement> stmt);
 
@@ -59,6 +62,7 @@ private:
         std::optional<semantics::label_si> label;
         std::optional<semantics::operands_si> operands;
         std::optional<std::vector<semantics::literal_si>> literals;
+        bool was_model = false;
     };
     preprocessed_part preprocess_inner(const resolved_statement& stmt);
 

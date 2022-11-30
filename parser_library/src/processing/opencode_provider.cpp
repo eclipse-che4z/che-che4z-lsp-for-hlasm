@@ -221,7 +221,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
             || std::get<context::id_index>(collector.current_instruction().value)
                 == context::id_storage::well_known::COPY))
     {
-        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, nullptr, {}, op_range, proc_status, true);
+        const auto& h = prepare_operand_parser(
+            *op_text, *m_ctx->hlasm_ctx, nullptr, semantics::range_provider(), op_range, proc_status, true);
 
         h.lookahead_operands_and_remarks();
 
@@ -270,7 +271,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     if (op_text)
     {
         collector.starting_operand_parsing();
-        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, diags, {}, op_range, proc_status, false);
+        const auto& h = prepare_operand_parser(
+            *op_text, *m_ctx->hlasm_ctx, diags, semantics::range_provider(), op_range, proc_status, false);
 
         const auto& [format, opcode] = proc_status;
         if (format.occurence == operand_occurence::ABSENT || format.form == processing_form::UNKNOWN)

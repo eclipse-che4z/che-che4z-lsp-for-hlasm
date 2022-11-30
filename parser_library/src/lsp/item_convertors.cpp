@@ -14,6 +14,8 @@
 
 #include "item_convertors.h"
 
+#include <limits>
+
 #include "completion_item.h"
 #include "context/ordinary_assembly/address.h"
 #include "context/ordinary_assembly/section.h"

@@ -695,8 +695,9 @@ asm_processor::asm_processor(analyzing_context ctx,
     branching_provider& branch_provider,
     workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
-    opencode_provider& open_code)
-    : low_language_processor(ctx, branch_provider, lib_provider, parser)
+    opencode_provider& open_code,
+    const processing_manager& proc_mgr)
+    : low_language_processor(ctx, branch_provider, lib_provider, parser, proc_mgr)
     , table_(create_table())
     , open_code_(&open_code)
 {}

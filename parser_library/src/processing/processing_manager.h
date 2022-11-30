@@ -47,6 +47,12 @@ public:
 
     void register_stmt_analyzer(statement_analyzer* stmt_analyzer);
 
+    void run_anayzers(const context::hlasm_statement& statement, bool evaluated_model) const;
+    void run_anayzers(const context::hlasm_statement& statement,
+        statement_provider_kind prov_kind,
+        processing_kind proc_kind,
+        bool evaluated_model) const;
+
     void collect_diags() const override;
 
     auto& opencode_parser() { return opencode_prov_.parser(); } // for testing only
@@ -81,7 +87,7 @@ private:
     bool seq_lookahead_active() const;
     bool lookahead_active() const;
 
-    statement_provider& find_provider();
+    statement_provider& find_provider() const;
     void finish_processor();
 
     void start_macro_definition(macrodef_start_data start) override;

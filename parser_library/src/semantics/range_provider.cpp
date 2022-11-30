@@ -66,8 +66,41 @@ range range_provider::adjust_range(range r) const
         return original_range;
     else if (state == adjusting_state::NONE)
         return r;
+    else if (state == adjusting_state::MODEL_REPARSE)
+    {
+        assert(r.start.line == 0 && r.end.line == 0);
+        if (r.start != r.end)
+            return range(adjust_model_position(r.start, false), adjust_model_position(r.end, true));
+
+        auto adjusted = adjust_model_position(r.end, true);
+        return range(adjusted, adjusted);
+    }
     assert(false);
     return r;
+}
+
+position range_provider::adjust_model_position(position pos, bool end) const
+{
+    const auto& [d, r] = *std::prev(std::find_if(std::next(model_substitutions.begin()),
+        model_substitutions.end(),
+        [pos, end](const auto& s) { return pos.column < s.first.first + end; }));
+    const auto& [offset, var] = d;
+    if (var)
+        return end ? r.end : r.start;
+
+    pos.column -= offset;
+    pos.column += r.start.column;
+    pos.line += r.start.line;
+    while (pos.column >= 71 + end)
+    {
+        pos.column -= 71 - 15;
+        pos.line += 1;
+    }
+
+    if (auto cmp = pos <=> r.end; cmp > 0 || end == false && cmp >= 0)
+        pos = r.end;
+
+    return pos;
 }
 
 position range_provider::adjust_position(position pos, bool end) const
@@ -118,6 +151,14 @@ range_provider::range_provider(
     , state(state)
 {
     assert(original_operand_ranges.empty() || original_range.start == original_operand_ranges.front().start);
+}
+
+hlasm_plugin::parser_library::semantics::range_provider::range_provider(
+    std::vector<std::pair<std::pair<size_t, bool>, range>> ms)
+    : model_substitutions(std::move(ms))
+    , state(adjusting_state::MODEL_REPARSE)
+{
+    assert(!model_substitutions.empty());
 }
 
 range_provider::range_provider()

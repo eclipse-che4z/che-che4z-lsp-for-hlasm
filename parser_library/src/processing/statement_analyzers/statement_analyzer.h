@@ -30,8 +30,10 @@ using analyzer_ptr = std::unique_ptr<statement_analyzer>;
 class statement_analyzer
 {
 public:
-    virtual void analyze(
-        const context::hlasm_statement& statement, statement_provider_kind prov_kind, processing_kind proc_kind) = 0;
+    virtual void analyze(const context::hlasm_statement& statement,
+        statement_provider_kind prov_kind,
+        processing_kind proc_kind,
+        bool evaluated_model) = 0;
 
 protected:
     ~statement_analyzer() = default;

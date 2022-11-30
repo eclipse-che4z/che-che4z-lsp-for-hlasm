@@ -174,7 +174,9 @@ json parse_one_file(const std::string& source_file,
         // open file/parse
         try
         {
-            ws.did_change_file(source_path.c_str(), 1, nullptr, 0);
+            // pass in a dummy change, as to not skew reparse results by optimizations
+            hlasm_plugin::parser_library::document_change dummy({}, "", 0);
+            ws.did_change_file(source_path.c_str(), 1, &dummy, 1);
         }
         catch (const std::exception& e)
         {

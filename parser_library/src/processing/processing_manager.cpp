@@ -49,7 +49,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
         case processing_kind::ORDINARY:
             provs_.emplace_back(std::make_unique<macro_statement_provider>(ctx_, parser, lib_provider, *this, *this));
             procs_.emplace_back(
-                std::make_unique<ordinary_processor>(ctx_, *this, lib_provider, *this, parser, opencode_prov_));
+                std::make_unique<ordinary_processor>(ctx_, *this, lib_provider, *this, parser, opencode_prov_, *this));
             break;
         case processing_kind::COPY:
             start_copy_member(copy_start_data { data.library_member, std::move(file_loc) });
@@ -116,8 +116,7 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
         if (stmt)
         {
             update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
-            for (auto& a : stms_analyzers_)
-                a->analyze(*stmt, prov.kind, proc.kind);
+            run_anayzers(*stmt, prov.kind, proc.kind, false);
 
             proc.process_statement(std::move(stmt));
         }
@@ -127,6 +126,20 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
 void processing_manager::register_stmt_analyzer(statement_analyzer* stmt_analyzer)
 {
     stms_analyzers_.push_back(stmt_analyzer);
+}
+
+void processing_manager::run_anayzers(const context::hlasm_statement& statement, bool evaluated_model) const
+{
+    run_anayzers(statement, find_provider().kind, procs_.back()->kind, evaluated_model);
+}
+
+void processing_manager::run_anayzers(const context::hlasm_statement& statement,
+    statement_provider_kind prov_kind,
+    processing_kind proc_kind,
+    bool evaluated_model) const
+{
+    for (auto& a : stms_analyzers_)
+        a->analyze(statement, prov_kind, proc_kind, evaluated_model);
 }
 
 bool processing_manager::attr_lookahead_active() const
@@ -143,7 +156,7 @@ bool processing_manager::seq_lookahead_active() const
 
 bool processing_manager::lookahead_active() const { return procs_.back()->kind == processing_kind::LOOKAHEAD; }
 
-statement_provider& processing_manager::find_provider()
+statement_provider& processing_manager::find_provider() const
 {
     if (attr_lookahead_active())
     {

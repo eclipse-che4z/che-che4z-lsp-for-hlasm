@@ -26,7 +26,8 @@ public:
     mach_processor(analyzing_context ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
-        statement_fields_parser& parser);
+        statement_fields_parser& parser,
+        const processing_manager& proc_mgr);
 
     void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 };

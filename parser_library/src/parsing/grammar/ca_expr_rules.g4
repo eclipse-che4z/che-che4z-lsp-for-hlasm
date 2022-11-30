@@ -259,7 +259,7 @@ created_set_body returns [concat_chain concat_list]
 		|
 		dot
 		{
-			$concat_list.emplace_back(dot_conc());
+			$concat_list.emplace_back(dot_conc(provider.get_range($dot.ctx)));
 		}
 	)+
 	;

@@ -50,7 +50,8 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         processing_state_listener& state_listener,
         statement_fields_parser& parser,
-        opencode_provider& open_code);
+        opencode_provider& open_code,
+        const processing_manager& proc_mgr);
 
     processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
     void process_statement(context::shared_stmt_ptr statement) override;

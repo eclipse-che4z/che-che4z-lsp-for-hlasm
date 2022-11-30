@@ -34,10 +34,13 @@ public:
     lsp::occurence_kind collector_kind;
     context::hlasm_context& hlasm_ctx;
     std::vector<lsp::symbol_occurence>& occurences;
+    bool evaluated_model;
 
 
-    occurence_collector(
-        lsp::occurence_kind collector_kind, context::hlasm_context& hlasm_ctx, lsp::occurence_storage& storage);
+    occurence_collector(lsp::occurence_kind collector_kind,
+        context::hlasm_context& hlasm_ctx,
+        lsp::occurence_storage& storage,
+        bool evaluated_model);
 
     void visit(const semantics::empty_operand& op) override;
     void visit(const semantics::model_operand& op) override;

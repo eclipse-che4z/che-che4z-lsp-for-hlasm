@@ -133,12 +133,12 @@ common_ch_v [concat_chain* chain]
 	| LT													{$chain->emplace_back(char_str_conc("<", provider.get_range($LT)));}
 	| GT													{$chain->emplace_back(char_str_conc(">", provider.get_range($GT)));}
 	| SLASH													{$chain->emplace_back(char_str_conc("/", provider.get_range($SLASH)));}
-	| EQUALS												{$chain->emplace_back(equals_conc());}
+	| EQUALS												{$chain->emplace_back(equals_conc(provider.get_range($EQUALS)));}
 	| VERTICAL												{$chain->emplace_back(char_str_conc("|", provider.get_range($VERTICAL)));}
 	| IDENTIFIER											{$chain->emplace_back(char_str_conc($IDENTIFIER->getText(), provider.get_range($IDENTIFIER)));}
 	| NUM													{$chain->emplace_back(char_str_conc($NUM->getText(), provider.get_range($NUM)));}
 	| ORDSYMBOL												{$chain->emplace_back(char_str_conc($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL)));}
-	| DOT													{$chain->emplace_back(dot_conc());}
+	| DOT													{$chain->emplace_back(dot_conc(provider.get_range($DOT)));}
 	|
 	(
 		l=AMPERSAND r=AMPERSAND								{$chain->emplace_back(char_str_conc("&&", provider.get_range($l,$r)));}

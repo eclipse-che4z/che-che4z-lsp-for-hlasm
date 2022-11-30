@@ -19,6 +19,7 @@
 #include <type_traits>
 
 #include "checking/using_label_checker.h"
+#include "processing/processing_manager.h"
 #include "processing/statement_processors/ordinary_processor.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -28,16 +29,21 @@ using namespace workspaces;
 low_language_processor::low_language_processor(analyzing_context ctx,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
-    statement_fields_parser& parser)
+    statement_fields_parser& parser,
+    const processing_manager& proc_mgr)
     : instruction_processor(std::move(ctx), branch_provider, lib_provider)
     , parser(parser)
+    , proc_mgr(proc_mgr)
 {}
 
 rebuilt_statement low_language_processor::preprocess(std::shared_ptr<const processing::resolved_statement> statement)
 {
     auto stmt = std::static_pointer_cast<const resolved_statement>(statement);
-    auto [label, ops, literals] = preprocess_inner(*stmt);
-    return rebuilt_statement(std::move(stmt), std::move(label), std::move(ops), std::move(literals));
+    auto [label, ops, literals, was_model] = preprocess_inner(*stmt);
+    rebuilt_statement result(std::move(stmt), std::move(label), std::move(ops), std::move(literals));
+    if (was_model)
+        proc_mgr.run_anayzers(result, true);
+    return result;
 }
 
 context::id_index low_language_processor::find_label_symbol(const rebuilt_statement& stmt) const
@@ -145,14 +151,16 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
         !operands_ref.value.empty() && operands_ref.value[0]->type == operand_type::MODEL)
     {
         assert(operands_ref.value.size() == 1);
-        std::string field(concatenation_point::evaluate(operands_ref.value[0]->access_model()->chain, eval_ctx));
+        auto [field, map] =
+            concatenation_point::evaluate_with_range_map(operands_ref.value[0]->access_model()->chain, eval_ctx);
         auto [operands, _, literals] = parser.parse_operand_field(std::move(field),
             true,
-            range_provider(operands_ref.value[0]->operand_range, adjusting_state::SUBSTITUTION),
+            range_provider(std::move(map)),
             processing_status(stmt.format_ref(), stmt.opcode_ref()),
             *this);
         result.operands.emplace(std::move(operands));
         result.literals.emplace(std::move(literals));
+        result.was_model = true;
     }
 
     return result;

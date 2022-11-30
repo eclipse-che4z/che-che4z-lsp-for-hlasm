@@ -73,6 +73,11 @@ struct var_sym_conc
 // concatenation point representing dot
 struct dot_conc
 {
+    explicit dot_conc(range r)
+        : conc_range(r)
+    {}
+    range conc_range;
+
     std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
     void resolve(diagnostic_op_consumer& diag) const;
 };
@@ -80,6 +85,10 @@ struct dot_conc
 // concatenation point representing equals sign
 struct equals_conc
 {
+    explicit equals_conc(range r)
+        : conc_range(r)
+    {}
+    range conc_range;
     std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
     void resolve(diagnostic_op_consumer& diag) const;
 };
@@ -133,6 +142,12 @@ struct concatenation_point
 
     static std::string evaluate(const concat_chain& chain, const expressions::evaluation_context& eval_ctx);
     static std::string evaluate(concat_chain::const_iterator begin,
+        concat_chain::const_iterator end,
+        const expressions::evaluation_context& eval_ctx);
+    static std::pair<std::string, std::vector<std::pair<std::pair<size_t, bool>, range>>> evaluate_with_range_map(
+        const concat_chain& chain, const expressions::evaluation_context& eval_ctx);
+    static std::pair<std::string, std::vector<std::pair<std::pair<size_t, bool>, range>>> evaluate_with_range_map(
+        concat_chain::const_iterator begin,
         concat_chain::const_iterator end,
         const expressions::evaluation_context& eval_ctx);
 

@@ -94,8 +94,8 @@ mac_entry_basic_tokens [concat_chain* chain]
 		{
 			$chain->emplace_back(char_str_conc($token.text, provider.get_range($token)));
 		}
-		| equals		{$chain->emplace_back(equals_conc());}
-		| dot			{$chain->emplace_back(dot_conc());}
+		| equals		{$chain->emplace_back(equals_conc(provider.get_range($equals.ctx)));}
+		| dot			{$chain->emplace_back(dot_conc(provider.get_range($dot.ctx)));}
 		| token=(IDENTIFIER|NUM|ORDSYMBOL)
 		{
 			auto r = provider.get_range($token);
@@ -204,7 +204,7 @@ mac_entry returns [concat_chain chain]
 				(
 					equals
 					{
-						$chain.emplace_back(equals_conc());
+						$chain.emplace_back(equals_conc(provider.get_range($equals.ctx)));
 					}
 				)?
 				ORDSYMBOL

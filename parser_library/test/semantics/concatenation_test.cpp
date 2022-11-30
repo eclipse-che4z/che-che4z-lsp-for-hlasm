@@ -34,8 +34,8 @@ concat_chain create_chain()
 
     chain.emplace_back(char_str_conc("ada", range()));
     chain.emplace_back(var_sym_conc(std::move(vs)));
-    chain.emplace_back(dot_conc());
-    chain.emplace_back(equals_conc());
+    chain.emplace_back(dot_conc(range()));
+    chain.emplace_back(equals_conc(range()));
 
     std::vector<concat_chain> list;
     concat_chain elem;

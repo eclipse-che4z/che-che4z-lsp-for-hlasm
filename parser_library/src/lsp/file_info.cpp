@@ -54,7 +54,8 @@ bool file_info::is_in_range(const position& pos, const range& r)
 
 occurence_scope_t file_info::find_occurence_with_scope(position pos) const
 {
-    const symbol_occurence* found = nullptr;
+    std::pair<const symbol_occurence*, bool> found_pair;
+    auto& [found, found_in_evaluated_model] = found_pair;
 
     auto l = std::lower_bound(occurences.begin(), occurences.end(), pos, [](const auto& occ, const auto& p) {
         return occ.occurence_range.end.line < p.line;
@@ -66,8 +67,10 @@ occurence_scope_t file_info::find_occurence_with_scope(position pos) const
         const auto& occ = *it;
         if (is_in_range(pos, occ.occurence_range))
         {
-            found = &occ;
-            break;
+            if (!found || !occ.evaluated_model && found_in_evaluated_model)
+                found_pair = { &occ, occ.evaluated_model };
+            if (!found_in_evaluated_model)
+                break;
         }
     }
 
@@ -154,8 +157,8 @@ const std::vector<symbol_occurence>& file_info::get_occurences() const { return 
 void file_info::process_occurrences()
 {
     std::sort(occurences.begin(), occurences.end(), [](const auto& l, const auto& r) {
-        return std::tie(l.occurence_range.end.line, l.occurence_range.start.line)
-            < std::tie(r.occurence_range.end.line, r.occurence_range.start.line);
+        return std::tie(l.occurence_range.end.line, l.occurence_range.start.line, l.evaluated_model)
+            < std::tie(r.occurence_range.end.line, r.occurence_range.start.line, r.evaluated_model);
     });
 
     occurences_start_limit.resize(occurences.size());

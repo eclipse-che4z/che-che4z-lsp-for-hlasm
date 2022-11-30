@@ -35,7 +35,8 @@ public:
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
-        opencode_provider& open_code);
+        opencode_provider& open_code,
+        const processing_manager& proc_mgr);
 
     void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 

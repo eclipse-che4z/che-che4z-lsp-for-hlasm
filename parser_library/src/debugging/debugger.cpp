@@ -171,10 +171,14 @@ public:
 
     void analyze(const context::hlasm_statement& statement,
         processing::statement_provider_kind,
-        processing::processing_kind proc_kind) override
+        processing::processing_kind proc_kind,
+        bool evaluated_model) override
     {
         if (disconnected_)
             return;
+
+        if (evaluated_model)
+            return; // we already stopped on the model itself
 
         // Continue only for ordinary processing kind (i.e. when the statement is executed, skip
         // lookahead and copy/macro definitions)
