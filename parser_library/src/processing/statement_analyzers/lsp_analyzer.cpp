@@ -92,18 +92,28 @@ void lsp_analyzer::analyze(const context::hlasm_statement& statement,
     assign_statement_occurences(hlasm_ctx_.current_statement_location().resource_loc);
 }
 
+namespace {
+const expressions::mach_expr_symbol* get_single_mach_symbol(const semantics::operand_list& operands)
+{
+    if (operands.size() != 1)
+        return nullptr;
+    auto* asm_op = operands.front()->access_asm();
+    if (!asm_op)
+        return nullptr;
+    auto* expr = asm_op->access_expr();
+    if (!expr)
+        return nullptr;
+    return dynamic_cast<const expressions::mach_expr_symbol*>(expr->expression.get());
+}
+} // namespace
+
 void lsp_analyzer::analyze(const semantics::preprocessor_statement_si& statement)
 {
     collect_occurences(lsp::occurence_kind::ORD, statement);
 
-    const auto& opcode = statement.m_resemblence;
-    const auto& operands = statement.operands_ref().value;
-    if (opcode == context::id_storage::well_known::COPY && operands.size() == 1 && operands.front()->access_asm())
+    if (statement.m_resemblence == context::id_storage::well_known::COPY)
     {
-        auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(
-            operands.front()->access_asm()->access_expr()->expression.get());
-
-        if (sym_expr)
+        if (auto sym_expr = get_single_mach_symbol(statement.operands_ref().value))
             add_copy_operand(sym_expr->value, sym_expr->get_range(), false);
     }
 
@@ -301,16 +311,10 @@ void lsp_analyzer::collect_var_definition(const processing::resolved_statement& 
 
 void lsp_analyzer::collect_copy_operands(const processing::resolved_statement& statement, bool evaluated_model)
 {
-    const auto& opcode = statement.opcode_ref().value;
-    const auto& operands = statement.operands_ref().value;
-    if (opcode == context::id_storage::well_known::COPY && operands.size() == 1 && operands.front()->access_asm())
-    {
-        auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(
-            operands.front()->access_asm()->access_expr()->expression.get());
-
-        if (sym_expr)
-            add_copy_operand(sym_expr->value, sym_expr->get_range(), evaluated_model);
-    }
+    if (statement.opcode_ref().value != context::id_storage::well_known::COPY)
+        return;
+    if (auto sym_expr = get_single_mach_symbol(statement.operands_ref().value))
+        add_copy_operand(sym_expr->value, sym_expr->get_range(), evaluated_model);
 }
 
 void lsp_analyzer::collect_SET_defs(const processing::resolved_statement& statement, context::SET_t_enum type)
