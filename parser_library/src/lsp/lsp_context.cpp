@@ -166,10 +166,7 @@ std::span<const symbol_occurence* const> lsp_context::get_occurences_by_name(
 
     auto [low, high] = std::equal_range(occurences_by_name.begin(), occurences_by_name.end(), name, search_predicate);
 
-    if (low == high) // missing c++20 ctor in libc++ 12 and broken std::to_address
-        return std::span<const symbol_occurence* const>();
-    else
-        return std::span<const symbol_occurence* const>(&*low, std::distance(low, high));
+    return std::span<const symbol_occurence* const>(low, high);
 }
 
 void lsp_context::fill_cache(

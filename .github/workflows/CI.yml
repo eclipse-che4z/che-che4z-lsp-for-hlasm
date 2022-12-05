@@ -28,11 +28,11 @@ on:
 jobs:
   formal-checks:
     name: Checks
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: Run clang-format
-        run: clang-format-12 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
+        run: clang-format-14 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
       - name: Upload clang-format-output.txt
         uses: actions/upload-artifact@v3
         with:
@@ -54,7 +54,7 @@ jobs:
 
   sanitizer-builds:
     name: Build with sanitizers
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [formal-checks]
     strategy:
       matrix:
@@ -70,9 +70,9 @@ jobs:
           java-version: 11
           distribution: 'temurin'
       - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-12-dev libc++abi-12-dev
+        run: sudo apt-get update && sudo apt-get install ninja-build
       - name: Configure
-        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-12 -DCMAKE_CXX_COMPILER=clang++-12 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" ../
+        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off ../
       - name: Build
         run: cd build && cmake --build .
       - name: Test
@@ -85,13 +85,16 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             native: linux
-            prereq: sudo apt-get update && sudo apt-get install -y ninja-build
-            config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10 -DBUILD_VSIX=Off ../
-          - os: ubuntu-20.04
+            container: alpine:3.16
+            prereq: apk update && apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk11 maven
+            config: cmake -G Ninja -DCMAKE_EXE_LINKER_FLAGS="-static" ../
+            dbg-strip: cd build/bin && objcopy --only-keep-debug language_server language_server.dbg && objcopy --strip-unneeded language_server && objcopy --add-gnu-debuglink=language_server.dbg language_server
+            dbg-pattern: build/bin/language_server.dbg
+          - os: ubuntu-22.04
             native: wasm
-            container: emscripten/emsdk:3.1.3
+            container: emscripten/emsdk:3.1.13
             prereq: sudo apt-get update && sudo apt-get install -y ninja-build maven
             config: >
               emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DDISCOVER_TESTS=Off
@@ -101,12 +104,12 @@ jobs:
               -Dgtest_disable_pthreads=On -DBUILD_VSIX=Off ../
             test: node --experimental-wasm-threads --experimental-wasm-bulk-memory ./server_test.js && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./library_test.js && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./hlasm_utils_test.js
             artifacts-ext: .*
-          - os: windows-2019
+          - os: windows-2022
             native: win32
             config: cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_VSIX=Off ../
             build-extra: --parallel --config Release
             artifacts-ext: .exe
-          - os: macos-11
+          - os: macos-12
             native: darwin
             prereq: brew install ninja
             config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=$(brew --prefix llvm@14)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@14)/bin/clang++ -DLLVM_PATH=$(brew --prefix llvm@14) -DBUILD_VSIX=Off ../
@@ -128,17 +131,27 @@ jobs:
         run: cd build && cmake --build . ${{ matrix.build-extra }}
       - name: Server Test
         run: cd build/bin && ${{ matrix.test || './library_test && ./server_test && ./hlasm_utils_test' }}
+      - name: Strip debug info
+        if: ${{ matrix.dbg-strip }}
+        run: ${{ matrix.dbg-strip }}
       - name: Actions artifact
         uses: actions/upload-artifact@v3
         with:
           name: language_server_${{ matrix.native }}
           path: build/bin/language_server${{ matrix.artifacts-ext }}
+      - name: Actions artifact
+        if: ${{ matrix.dbg-pattern }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: language_server_${{ matrix.native }}_dbg
+          path: ${{ matrix.dbg-pattern }}
 
   test-matrix:
     name: Test
     runs-on: ${{ matrix.os }}
     needs: [build-matrix]
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-20.04
@@ -148,6 +161,15 @@ jobs:
             native: win32
             chmod: false
           - os: macos-11
+            native: darwin
+            chmod: true
+          - os: ubuntu-22.04
+            native: linux
+            chmod: true
+          - os: windows-2022
+            native: win32
+            chmod: false
+          - os: macos-12
             native: darwin
             chmod: true
 
@@ -185,7 +207,7 @@ jobs:
           working-directory: clients/vscode-hlasmplugin
 
   VSIX:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [test-matrix]
 
     steps:
@@ -238,56 +260,11 @@ jobs:
           name: hlasm-language-support-${{ env.VERSION }}.vsix
           path: ${{ env.VSIX_FILENAME }}
 
-  alpine-VSIX:
-    name: Alpine VSIX
-    needs: [formal-checks]
-    runs-on: ubuntu-20.04
-    container:
-      image: alpine:3.15
-
-    steps:
-      - name: Requirements install
-        run: |
-          apk update
-          apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk11 maven
-      - name: Workaround for git safe.directory feature
-        run: git config --global --add safe.directory '*'
-      - uses: actions/checkout@v3
-      - name: Extract branch name
-        run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
-      - name: Update version
-        if: env.BRANCH == 'master' || startsWith(env.BRANCH, 'release')
-        run: cd clients/vscode-hlasmplugin && npm ci && npm run compile && npx semantic-release --dry-run
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Inject telemetry key
-        run: |
-          cd clients/vscode-hlasmplugin/src
-          export TEL_KEY=`node -e "console.log(Buffer.from('${{ secrets.TELEMETRY_KEY }}').toString('base64'))"`
-          sed -i "s/const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY/const TELEMETRY_KEY_ENCODED = '$TEL_KEY'/" telemetry.ts
-      - name: Configure
-        run: mkdir build && cd build && cmake -G Ninja ../
-      - name: Build
-        run: chown `id -u`:`id -g` ./clients/vscode-hlasmplugin && cd build && cmake --build .
-      - name: Server Test
-        run: cd build/bin && ./server_test && ./library_test && ./hlasm_utils_test
-      - name: Get VSIX filename
-        run: echo VSIX_FILENAME=$(ls build/bin/*.vsix) >> $GITHUB_ENV
-      - name: Get version
-        run: echo VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") >> $GITHUB_ENV
-      - name: Rename VSIX
-        run: mv ${{ env.VSIX_FILENAME }} hlasm-language-support-${{ env.VERSION }}-alpine.vsix
-      - name: Upload VSIX
-        uses: actions/upload-artifact@v3
-        with:
-          name: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
-          path: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
-
   release:
     name: Release VSIXs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release'))
-    needs: [alpine-VSIX, VSIX]
+    needs: [VSIX]
 
     steps:
       - uses: actions/checkout@v3
@@ -302,16 +279,10 @@ jobs:
         with:
           name: hlasm-language-support-${{ env.VERSION }}.vsix
           path: clients/vscode-hlasmplugin/
-      - name: Download alpine VSIX
-        uses: actions/download-artifact@v3
-        with:
-          name: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
-          path: clients/vscode-hlasmplugin/
       - name: Rename VSIXs
         run: |
           cd clients/vscode-hlasmplugin/
           mv hlasm-language-support-${{ env.VERSION }}.vsix         multi.vsix
-          mv hlasm-language-support-${{ env.VERSION }}-alpine.vsix  alpine.vsix
 
       - name: Commit changes
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -359,8 +330,8 @@ jobs:
 
   theia-test:
     name: Theia Integration Test
-    runs-on: ubuntu-20.04
-    needs: alpine-VSIX
+    runs-on: ubuntu-22.04
+    needs: VSIX
     strategy:
       matrix:
         theia: ["quay.io/zowe-explorer/theia:1.25.0"] 
@@ -389,7 +360,7 @@ jobs:
       - name: Download VSIX
         uses: actions/download-artifact@v3
         with:
-          name: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
+          name: hlasm-language-support-${{ env.VERSION }}.vsix
           path: clients/vscode-hlasmplugin/plugin/
       - name: npm ci
         run: cd clients/vscode-hlasmplugin && npm ci

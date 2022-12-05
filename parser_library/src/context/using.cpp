@@ -293,8 +293,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 
     constexpr index_t<mach_expression> empty;
 
-    // TODO: fix once libc++ catches up std::span(m_base.begin(), std::find(m_base.begin(), m_base.end(), empty))
-    for (const auto& expr : std::span(m_base.data(), std::find(m_base.begin(), m_base.end(), empty) - m_base.begin()))
+    for (const auto& expr : std::span(m_base.begin(), std::find(m_base.begin(), m_base.end(), empty)))
     {
         auto [v, rng] = reg_or_label(coll, expr);
         std::visit([&transform, &rng = rng](auto value) { transform(value, rng); }, v);

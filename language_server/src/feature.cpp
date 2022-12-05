@@ -14,15 +14,6 @@
 
 #include "feature.h"
 
-#include <filesystem>
-#include <regex>
-
-#include "network/uri/uri.hpp"
-
-#include "logger.h"
-#include "utils/path.h"
-#include "utils/platform.h"
-
 namespace hlasm_plugin::language_server {
 
 parser_library::range feature::parse_range(const json& range_json)

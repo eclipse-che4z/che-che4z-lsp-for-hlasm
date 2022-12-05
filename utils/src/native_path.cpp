@@ -21,6 +21,8 @@ bool is_absolute(const std::filesystem::path& p) { return p.is_absolute(); }
 
 std::filesystem::path absolute(const std::filesystem::path& p) { return std::filesystem::absolute(p); }
 
+std::filesystem::path current_path() { return std::filesystem::current_path(); }
+
 std::filesystem::path join(const std::filesystem::path& left, const std::filesystem::path& right)
 {
     return left / right;

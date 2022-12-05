@@ -12,8 +12,6 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include <filesystem>
-
 #include "gtest/gtest.h"
 
 #include "lib_config.h"

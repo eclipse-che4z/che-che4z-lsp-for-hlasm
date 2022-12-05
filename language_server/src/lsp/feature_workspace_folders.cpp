@@ -14,10 +14,6 @@
 
 #include "feature_workspace_folders.h"
 
-#include <filesystem>
-
-#include "network/uri/uri.hpp"
-
 #include "../logger.h"
 #include "lib_config.h"
 #include "utils/path.h"

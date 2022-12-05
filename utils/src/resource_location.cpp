@@ -20,6 +20,7 @@
 #include <deque>
 #include <iterator>
 #include <regex>
+#include <utility>
 
 #include "utils/encoding.h"
 #include "utils/path_conversions.h"

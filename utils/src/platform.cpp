@@ -14,12 +14,12 @@
 
 #include "utils/platform.h"
 
-#include <optional>
-
 #ifdef __EMSCRIPTEN__
 #    include <emscripten.h>
 
 #    include <emscripten/bind.h>
+#else
+#    include <fstream>
 #endif
 
 namespace hlasm_plugin::utils::platform {
@@ -103,6 +103,68 @@ const std::string& home()
     }();
 #endif
     return home_dir;
+}
+
+
+std::optional<std::string> read_file(const std::string& file)
+{
+#if __EMSCRIPTEN__
+    std::optional<std::string> s;
+
+    [[maybe_unused]] thread_local const bool prepare_buffer_registered = []() {
+        auto prepare_buffer = +[](intptr_t ptr, ssize_t size) {
+            auto& str = *(std::optional<std::string>*)ptr;
+            str.emplace((size_t)size, '\0');
+            return (intptr_t)str->data();
+        };
+        emscripten::function("read_file_prepare_buffer", prepare_buffer);
+        return true;
+    }();
+    // clang-format off
+        EM_ASM(
+            {
+                try
+                {
+                    const content = require('fs').readFileSync(UTF8ToString($1));
+                    const ptr = Module.read_file_prepare_buffer($0, content.length);
+                    content.copy(new Uint8Array(Module.HEAPU8.buffer, ptr, content.length));
+                }
+                catch (e) {}
+            },
+            (intptr_t)&s, (intptr_t)file.c_str());
+    // clang-format on
+
+    return s;
+#else
+    std::ifstream fin(file, std::ios::in | std::ios::binary);
+
+    if (fin)
+    {
+        try
+        {
+            fin.seekg(0, std::ios::end);
+            auto file_size = fin.tellg();
+
+            if (file_size == -1)
+                return std::nullopt;
+
+            std::optional<std::string> text(std::in_place, (size_t)file_size, '\0');
+            fin.seekg(0, std::ios::beg);
+            fin.read(text->data(), text->size());
+            fin.close();
+
+            return text;
+        }
+        catch (const std::exception&)
+        {
+            return std::nullopt;
+        }
+    }
+    else
+    {
+        return std::nullopt;
+    }
+#endif
 }
 
 } // namespace hlasm_plugin::utils::platform

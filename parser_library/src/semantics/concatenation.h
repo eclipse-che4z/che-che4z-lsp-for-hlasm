@@ -96,9 +96,7 @@ struct equals_conc
 // concatenation point representing macro operand sublist
 struct sublist_conc
 {
-    explicit sublist_conc(std::vector<concat_chain> list)
-        : list(std::move(list))
-    {}
+    explicit sublist_conc(std::vector<concat_chain> list);
 
     std::vector<concat_chain> list;
 
@@ -179,6 +177,11 @@ template<typename... Ts>
 constexpr const concat_chain_matcher<true, Ts...> concat_chain_matches;
 template<typename... Ts>
 constexpr const concat_chain_matcher<false, Ts...> concat_chain_starts_with;
+
+
+inline sublist_conc::sublist_conc(std::vector<concat_chain> list)
+    : list(std::move(list))
+{}
 
 } // namespace hlasm_plugin::parser_library::semantics
 

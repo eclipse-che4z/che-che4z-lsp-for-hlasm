@@ -14,45 +14,16 @@
 
 #include "utils/filesystem_content_loader.h"
 
-#include <fstream>
-
 #include "utils/path.h"
 #include "utils/path_conversions.h"
+#include "utils/platform.h"
 #include "utils/unicode_text.h"
 
 namespace hlasm_plugin::utils::resource {
 
 std::optional<std::string> filesystem_content_loader::load_text(const resource_location& resource) const
 {
-    std::ifstream fin(resource.get_path(), std::ios::in | std::ios::binary);
-    std::string text;
-
-    if (fin)
-    {
-        try
-        {
-            fin.seekg(0, std::ios::end);
-            auto file_size = fin.tellg();
-
-            if (file_size == -1)
-                return std::nullopt;
-
-            text.resize(file_size);
-            fin.seekg(0, std::ios::beg);
-            fin.read(&text[0], text.size());
-            fin.close();
-
-            return text;
-        }
-        catch (const std::exception&)
-        {
-            return std::nullopt;
-        }
-    }
-    else
-    {
-        return std::nullopt;
-    }
+    return platform::read_file(resource.get_path());
 }
 
 list_directory_result filesystem_content_loader::list_directory_files(

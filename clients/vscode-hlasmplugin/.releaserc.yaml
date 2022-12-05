@@ -44,7 +44,4 @@ plugins:
       - path: "multi.vsix"
         label: "hlasm-language-support-${nextRelease.version}.vsix"
         name: "hlasm-language-support-${nextRelease.version}.vsix"
-      - path: "alpine.vsix"
-        label: "hlasm-language-support-${nextRelease.version}-alpine.vsix"
-        name: "hlasm-language-support-${nextRelease.version}-alpine.vsix"
   

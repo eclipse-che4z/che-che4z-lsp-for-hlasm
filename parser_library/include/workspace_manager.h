@@ -20,7 +20,6 @@
 // It implements LSP requests and notifications and is used by the language server.
 
 #include <atomic>
-#include <fstream>
 #include <set>
 #include <string>
 #include <unordered_map>

@@ -25,7 +25,6 @@ add_subdirectory(src)
 
 # link executable with libraries
 target_link_libraries(language_server_base nlohmann_json::nlohmann_json)
-target_link_libraries(language_server_base network-uri)
 target_link_libraries(language_server_base parser_library)
 target_link_libraries(language_server_base boost-asio)
 

@@ -27,7 +27,7 @@ on:
 jobs:
   sonarcloud-build:
     name: SonarCloud build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v3
@@ -39,14 +39,15 @@ jobs:
       - name: Get version
         run: echo "VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")" >> $GITHUB_ENV
       - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install ninja-build libc++-12-dev libc++abi-12-dev
+        run: sudo apt-get update && sudo apt-get install ninja-build
       - name: Configure
         run: >
           mkdir build && cd build &&
           cmake -DCMAKE_BUILD_TYPE=Debug
-          -DCMAKE_C_COMPILER=clang-12
-          -DCMAKE_CXX_COMPILER=clang++-12
+          -DCMAKE_C_COMPILER=clang-14
+          -DCMAKE_CXX_COMPILER=clang++-14
           -DCMAKE_CXX_FLAGS="-fprofile-instr-generate -fcoverage-mapping"
+          -DWITH_LIBCXX=Off
           ../
       - name: Sonar build wrapper download
         run: >
@@ -68,9 +69,9 @@ jobs:
           run: npx c8 --reporter=lcovonly --allowExternal --exclude='**/.vscode-test/**' --exclude='**/test/**' --exclude='**/build/**' npm test
           working-directory: clients/vscode-hlasmplugin
       - name: Merge raw profiles
-        run: cd build/bin && llvm-profdata-12 merge -o hlasm_profile library.rawprof server.rawprof utils.rawprof
+        run: cd build/bin && llvm-profdata-14 merge -o hlasm_profile library.rawprof server.rawprof utils.rawprof
       - name: Generate lcov coverage
-        run: cd build/bin && llvm-cov-12 show -instr-profile hlasm_profile library_test -object server_test -object hlasm_utils_test > ../coverage.txt
+        run: cd build/bin && llvm-cov-14 show -instr-profile hlasm_profile library_test -object server_test -object hlasm_utils_test > ../coverage.txt
       - name: Pull request event info
         if: github.event_name == 'pull_request'
         run: |

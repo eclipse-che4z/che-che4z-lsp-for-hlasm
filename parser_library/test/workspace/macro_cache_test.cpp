@@ -13,7 +13,6 @@
  */
 
 #include <algorithm>
-#include <fstream>
 #include <iterator>
 
 #include "gtest/gtest.h"

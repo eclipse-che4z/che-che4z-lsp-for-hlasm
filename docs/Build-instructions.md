@@ -11,7 +11,7 @@ In order to build the project on any platform, the following software needs to b
 
 -   C++ compiler with support for C++20
 
--   Java Development Kit (JDK) 8 or higher (the ANTLR project written in Java is built from sources)
+-   Java Development Kit (JDK) 11 or higher (the ANTLR project written in Java is built from sources)
 
 -   Maven (the build system of ANTLR)
 
@@ -38,24 +38,24 @@ In addition to the prerequisites listed in \[prereq\], the Linux build has two m
 
 -   UUID library
 
-We build the project for Ubuntu 20.04 and for the Alpine Linux.
+We build the project for Ubuntu 22.04 and for the Alpine Linux.
 
 ### Ubuntu
 
-On Ubuntu 20.04 the following commands install all prerequisites and then build the project into the `build` folder:
+On Ubuntu 22.04 the following commands install all prerequisites and then build the project into the `build` folder:
 
-    apt update && sudo apt install cmake g++-10 uuid-dev npm default-jdk
+    apt update && sudo apt install cmake g++-11 uuid-dev npm default-jdk
                            pkg-config maven
     mkdir build && cd build
-    cmake -DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10 ../
+    cmake -DCMAKE_C_COMPILER=gcc-11 -DCMAKE_CXX_COMPILER=g++-11 ../
     cmake --build .
 
 ### Alpine Linux
 
-The build works on Alpine Linux version 3.10. The following commands install all prerequisites and then build the project into the `build` folder:
+The build works on Alpine Linux version 3.16. The following commands install all prerequisites and then build the project into the `build` folder:
 
     apk update && apk add linux-headers git g++ cmake util-linux-dev npm ninja
-                          pkgconfig openjdk8 maven
+                          pkgconfig openjdk11 maven
     mkdir build && cd build
     cmake ../
     cmake --build .
@@ -63,7 +63,7 @@ The build works on Alpine Linux version 3.10. The following commands install all
 WASM
 ----
 
-The project can be built for the WASM target using the Emscripten SDK. Currently the only verified docker image is emscripten/emsdk:2.0.12, also utilized in the CI pipeline.
+The project can be built for the WASM target using the Emscripten SDK. Currently the only verified docker image is emscripten/emsdk:3.1.13, also utilized in the CI pipeline.
 
     apt update && apt-get install -y ninja-build maven
     mkdir build && cd build
@@ -77,7 +77,7 @@ The project tests or the language server itself then needs to be run in the Node
 Mac OS
 ------
 
-We have only built the project on MacOS 10.14. In order to successfully build, first install LLVM 8 or 10+ using homebrew.
+We build the project on MacOS 12. In order to successfully build, first install LLVM 14+ using homebrew.
 
 The project can be built with a snippet like this:
 

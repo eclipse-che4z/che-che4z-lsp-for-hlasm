@@ -102,8 +102,7 @@ class processing_frame_tree
     {
         size_t operator()(const processing_frame_node& n) const
         {
-            constexpr auto hash = []<typename... T>(const T&... v)
-            {
+            constexpr auto hash = []<typename... T>(const T&... v) {
                 constexpr auto hash_combine = [](size_t old, size_t next) {
                     return old ^ (next + 0x9e3779b9 + (old << 6) + (old >> 2));
                 };

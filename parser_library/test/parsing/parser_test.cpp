@@ -16,6 +16,7 @@
 
 #include "../common_testing.h"
 #include "parsing/parser_tools.h"
+#include "utils/platform.h"
 
 // tests for
 // parsing various files
@@ -26,19 +27,11 @@ class library_test : public testing::Test
 public:
     virtual void setup(std::string param)
     {
-        get_content("test/library/input/" + param + ".in", input);
+        input = hlasm_plugin::utils::platform::read_file("test/library/input/" + param + ".in").value();
         holder = std::make_unique<analyzer>(input);
     }
 
 protected:
-    void get_content(const std::string& file_name, std::string& content)
-    {
-        std::ifstream ifs(file_name);
-        ASSERT_TRUE(ifs.good()) << "Could not open file '" << file_name
-                                << "'. Tests must be started from the bin/ folder.\n";
-        std::string read((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-        content = std::move(read);
-    }
     std::unique_ptr<analyzer> holder;
     std::string input;
 };

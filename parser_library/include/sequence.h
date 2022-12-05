@@ -174,11 +174,7 @@ public:
             return sequence_item_get(this, index);
     }
 
-    [[nodiscard]] auto data() const noexcept requires(trivial_storage_sequence<storage>)
-    {
-        if constexpr (trivial_storage_sequence<storage>) // clang-12 :(
-            return stor_.data();
-    }
+    [[nodiscard]] auto data() const noexcept requires(trivial_storage_sequence<storage>) { return stor_.data(); }
     [[nodiscard]] size_t size() const noexcept { return size_; }
 
     [[nodiscard]] auto begin() const noexcept

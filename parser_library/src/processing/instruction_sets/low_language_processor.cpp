@@ -213,7 +213,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 
     std::array<checking::check_op_ptr, context::machine_instruction::max_operand_count> po;
     std::array<operand_info, context::machine_instruction::max_operand_count> provided_operand_values {};
-    for (size_t op_id = 0, po_id = 0, repl_id = 0, processed = 0; const auto &operand : operands)
+    for (size_t op_id = 0, po_id = 0, repl_id = 0, processed = 0; const auto& operand : operands)
     {
         while (repl_id < transforms.size() && processed == transforms[repl_id].skip && transforms[repl_id].insert)
         {

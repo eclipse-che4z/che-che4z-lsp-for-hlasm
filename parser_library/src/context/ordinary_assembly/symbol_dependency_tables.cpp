@@ -546,7 +546,7 @@ bool symbol_dependency_tables::check_loctr_cycle(const library_info& li)
                 path.push_back(next);
                 next_steps.emplace_front(nullptr);
                 for (auto d = it->second.rbegin(); d != it->second.rend(); ++d)
-                    next_steps.emplace_front(&*d); // to_address broken in libc++-12
+                    next_steps.emplace_front(std::to_address(d));
             }
         }
         assert(path.empty());

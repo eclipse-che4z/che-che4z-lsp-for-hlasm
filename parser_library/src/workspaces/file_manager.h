@@ -15,9 +15,9 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_FILE_MANAGER_H
 #define HLASMPLUGIN_PARSERLIBRARY_FILE_MANAGER_H
 
-#include <filesystem>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
 #include <vector>

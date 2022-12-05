@@ -15,11 +15,14 @@
 #ifndef HLASMPLUGIN_UTILS_PLATFORM_H
 #define HLASMPLUGIN_UTILS_PLATFORM_H
 
+#include <optional>
 #include <string>
 
 namespace hlasm_plugin::utils::platform {
 bool is_windows();
 const std::string& home();
+std::optional<std::string> read_file(const std::string& file);
+
 } // namespace hlasm_plugin::utils::platform
 
 #endif

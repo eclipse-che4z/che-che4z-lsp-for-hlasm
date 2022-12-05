@@ -57,6 +57,8 @@ std::filesystem::path absolute(const std::filesystem::path& p)
     return join(std::filesystem::current_path(), p);
 }
 
+std::filesystem::path current_path() { return std::filesystem::current_path(); }
+
 std::filesystem::path join(const std::filesystem::path& left, const std::filesystem::path& right)
 {
     // emscripten implementation seems to be broken on windows

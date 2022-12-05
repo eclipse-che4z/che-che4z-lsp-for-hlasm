@@ -15,8 +15,6 @@
 #include "library_local.h"
 
 #include <algorithm>
-#include <filesystem>
-#include <iostream>
 #include <locale>
 
 #include "utils/path.h"
