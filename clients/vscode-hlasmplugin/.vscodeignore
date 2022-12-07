@@ -11,3 +11,4 @@ lib/test/**
 terse/**
 prepare_release.sh
 start_release.sh
+.releaserc.yaml
