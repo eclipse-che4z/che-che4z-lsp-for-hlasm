@@ -1238,3 +1238,58 @@ TEST     DS    CL(X)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W013", "W013" }));
 }
+
+TEST(lookahead, seq_symbol_location)
+{
+    mock_parse_lib_provider libs {
+        std::pair<std::string, std::string>("COPY1", R"(
+         AGO   .INHERE1
+.INHERE1 ANOP
+)"),
+        std::pair<std::string, std::string>("COPY2", R"(
+         AIF   (L'X EQ 1).INHERE2
+
+.INHERE2 ANOP
+)"),
+        std::pair<std::string, std::string>("MAC", R"( MACRO
+         MAC
+         AIF   (L'Y EQ 1).INMACRO
+
+.INMACRO ANOP
+         MEND
+)"),
+    };
+
+    std::string input = R"(
+         COPY  COPY1
+         COPY  COPY2
+
+         AIF   (1 EQ 0).OUTHERE1
+.OUTHERE1 ANOP  ,
+X        DS    C
+         MAC
+         AIF   (1 EQ 0).OUTHERE2
+.OUTHERE2 ANOP  ,
+Y        DS    C
+)";
+
+    const hlasm_plugin::utils::resource::resource_location copy1("COPY1"), copy2("COPY2"), mac("MAC"), opencode("OPEN");
+
+    analyzer a(input, analyzer_options(opencode, &libs));
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto inhere1 = a.context().lsp_ctx->definition(copy1, { 1, 16 });
+    auto inhere2 = a.context().lsp_ctx->definition(copy2, { 1, 30 });
+    auto inmacro = a.context().lsp_ctx->definition(mac, { 2, 30 });
+    auto outhere1 = a.context().lsp_ctx->definition(opencode, { 4, 30 });
+    auto outhere2 = a.context().lsp_ctx->definition(opencode, { 8, 30 });
+
+    EXPECT_EQ(inhere1, location(position(2, 0), copy1));
+    EXPECT_EQ(inhere2, location(position(3, 0), copy2));
+    EXPECT_EQ(inmacro, location(position(4, 0), mac));
+    EXPECT_EQ(outhere1, location(position(5, 0), opencode));
+    EXPECT_EQ(outhere2, location(position(9, 0), opencode));
+}

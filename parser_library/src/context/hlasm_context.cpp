@@ -498,14 +498,14 @@ processing_stack_t hlasm_context::processing_stack()
     return result;
 }
 
-processing_frame hlasm_context::processing_stack_top()
+processing_frame hlasm_context::processing_stack_top(bool consider_macros)
 {
     // this is an inverted version of the loop from processing_stack()
     // terminating after finding the first (originally last) element
 
     assert(!source_stack_.empty());
 
-    if (source_stack_.size() == 1 && scope_stack_.size() > 1)
+    if (consider_macros && source_stack_.size() == 1 && scope_stack_.size() > 1)
     {
         const auto& last_macro = scope_stack_.back().this_macro;
 

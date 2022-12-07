@@ -373,10 +373,10 @@ void processing_manager::register_sequence_symbol(context::id_index target, rang
 std::unique_ptr<context::opencode_sequence_symbol> processing_manager::create_opencode_sequence_symbol(
     context::id_index name, range symbol_range)
 {
-    auto loc = hlasm_ctx_.processing_stack_top().get_location();
+    auto loc = hlasm_ctx_.processing_stack_top(false).get_location();
     loc.pos = symbol_range.start;
 
-    auto&& [statement_position, snapshot] = hlasm_ctx_.get_begin_snapshot(attr_lookahead_active());
+    auto&& [statement_position, snapshot] = hlasm_ctx_.get_begin_snapshot(lookahead_active());
 
     return std::make_unique<context::opencode_sequence_symbol>(
         name, std::move(loc), statement_position, std::move(snapshot));
