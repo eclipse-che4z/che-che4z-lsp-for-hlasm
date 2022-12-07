@@ -23,6 +23,7 @@
 #include <span>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <version>
@@ -146,7 +147,8 @@ class workspace_configuration
 
     parse_config_file_result parse_b4g_config_file(const utils::resource::resource_location& file_location);
 
-    bool try_loading_alternative_configuration(const utils::resource::resource_location& file_location);
+    std::pair<parse_config_file_result, utils::resource::resource_location> try_loading_alternative_configuration(
+        const utils::resource::resource_location& file_location);
 
     parse_config_file_result load_and_process_config(std::vector<diagnostic_s>& diags);
 
@@ -172,7 +174,8 @@ public:
     bool is_configuration_file(const utils::resource::resource_location& file) const;
     parse_config_file_result parse_configuration_file(
         std::optional<utils::resource::resource_location> file = std::nullopt);
-    void load_alternative_config_if_needed(const utils::resource::resource_location& file_location);
+    utils::resource::resource_location load_alternative_config_if_needed(
+        const utils::resource::resource_location& file_location);
 
     const program* get_program(const utils::resource::resource_location& program) const;
     const processor_group& get_proc_grp_by_program(const program& p) const;
@@ -182,7 +185,9 @@ public:
     bool settings_updated() const;
     bool refresh_libraries(const std::vector<utils::resource::resource_location>& file_locations);
 
-    void copy_diagnostics(const diagnosable& target) const;
+    void copy_diagnostics(const diagnosable& target,
+        const std::unordered_set<utils::resource::resource_location, utils::resource::resource_location_hasher>&
+            b4g_filter) const;
 
     const processor_group& get_proc_grp(const proc_grp_id& p) const; // test only
 };

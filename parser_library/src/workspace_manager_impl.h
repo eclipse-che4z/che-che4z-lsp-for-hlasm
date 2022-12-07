@@ -313,8 +313,7 @@ private:
     {
         if (auto hlasm_id = extract_hlasm_id(document_uri); hlasm_id.has_value())
         {
-            auto related_ws = file_manager_.get_virtual_file_workspace(hlasm_id.value());
-            if (!related_ws.get_uri().empty())
+            if (auto related_ws = file_manager_.get_virtual_file_workspace(hlasm_id.value()); !related_ws.empty())
                 for (auto& [_, ws] : workspaces_)
                     if (ws.uri() == related_ws.get_uri())
                         return ws;

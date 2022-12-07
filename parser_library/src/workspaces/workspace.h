@@ -18,6 +18,7 @@
 #include <atomic>
 #include <functional>
 #include <optional>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -136,7 +137,19 @@ private:
     // files, that depend on others (e.g. open code files that use macros)
     std::set<utils::resource::resource_location> dependants_;
 
-    std::set<utils::resource::resource_location> opened_files_;
+    struct opened_file_details
+    {
+        opened_file_details() = default;
+        explicit opened_file_details(utils::resource::resource_location alternative_config)
+            : alternative_config(std::move(alternative_config))
+        {}
+        utils::resource::resource_location alternative_config;
+    };
+
+    std::unordered_map<utils::resource::resource_location,
+        opened_file_details,
+        utils::resource::resource_location_hasher>
+        opened_files_;
 
     void filter_and_close_dependencies_(
         const std::set<utils::resource::resource_location>& dependencies, processor_file_ptr file);

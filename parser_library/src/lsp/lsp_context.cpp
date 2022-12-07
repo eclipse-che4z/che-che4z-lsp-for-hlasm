@@ -437,7 +437,7 @@ void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_li
             continue;
 
         auto location = name_to_location_cache.find(item.name);
-        if (location == name_to_location_cache.end() || location->second.get_uri().empty())
+        if (location == name_to_location_cache.end() || location->second.empty())
             return;
 
         if (const auto& file = m_files.find(location->second); file != m_files.end())

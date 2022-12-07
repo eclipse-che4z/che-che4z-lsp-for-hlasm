@@ -32,6 +32,8 @@ public:
     std::string get_path() const;
     std::string to_presentable(bool debug = false) const;
 
+    bool empty() const { return m_uri.empty(); }
+
     bool is_local() const;
     static bool is_local(std::string_view uri);
 

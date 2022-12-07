@@ -59,7 +59,15 @@ workspace::workspace(file_manager& file_manager,
     opened_ = true;
 }
 
-void workspace::collect_diags() const { m_configuration.copy_diagnostics(*this); }
+void workspace::collect_diags() const
+{
+    std::unordered_set<utils::resource::resource_location, utils::resource::resource_location_hasher> used_b4g_configs;
+
+    for (const auto& [_, details] : opened_files_)
+        used_b4g_configs.emplace(details.alternative_config);
+
+    m_configuration.copy_diagnostics(*this, used_b4g_configs);
+}
 
 std::vector<processor_file_ptr> workspace::find_related_opencodes(
     const utils::resource::resource_location& document_loc) const
@@ -110,12 +118,12 @@ const ws_uri& workspace::uri() const { return location_.get_uri(); }
 void workspace::reparse_after_config_refresh()
 {
     // Reparse every opened file when configuration is changed
-    for (const auto& fname : opened_files_)
+    for (auto& [fname, details] : opened_files_)
     {
         auto found = file_manager_.find_processor_file(fname);
         if (!found)
             continue;
-        m_configuration.load_alternative_config_if_needed(fname);
+        details.alternative_config = m_configuration.load_alternative_config_if_needed(fname);
         if (!found->parse(*this, get_asm_options(fname), get_preprocessor_options(fname), &fm_vfm_))
             continue;
 
@@ -192,9 +200,13 @@ workspace_file_info workspace::parse_file(
 
         for (const auto& f : files_to_parse)
         {
-            m_configuration.load_alternative_config_if_needed(file_location);
-            if (!f->parse(
-                    *this, get_asm_options(f->get_location()), get_preprocessor_options(f->get_location()), &fm_vfm_))
+            const auto& f_loc = f->get_location();
+
+            auto alt_cfg = m_configuration.load_alternative_config_if_needed(f_loc);
+            if (auto opened_it = opened_files_.find(f_loc); opened_it != opened_files_.end())
+                opened_it->second.alternative_config = std::move(alt_cfg);
+
+            if (!f->parse(*this, get_asm_options(f_loc), get_preprocessor_options(f_loc), &fm_vfm_))
                 continue;
 
             ws_file_info = parse_successful(f);
@@ -236,7 +248,7 @@ workspace_file_info workspace::did_open_file(
     const utils::resource::resource_location& file_location, open_file_result file_content_status)
 {
     if (!m_configuration.is_configuration_file(file_location))
-        opened_files_.emplace(file_location);
+        opened_files_.try_emplace(file_location);
 
     return parse_file(file_location, file_content_status);
 }
