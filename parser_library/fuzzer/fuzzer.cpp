@@ -12,15 +12,19 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <array>
+#include <bitset>
 #include <charconv>
 #include <cstring>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "analyzer.h"
 #include "analyzing_context.h"
+#include "preprocessor_options.h"
 #include "utils/resource_location.h"
 #include "utils/unicode_text.h"
 #include "workspaces/file_impl.h"
@@ -28,8 +32,6 @@
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
-
-
 
 class fuzzer_lib_provider : public parse_lib_provider
 {
@@ -80,11 +82,31 @@ public:
     std::vector<std::string> files;
 };
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
+namespace {
+static const std::array<preprocessor_options, 3> preproc_options = {
+    endevor_preprocessor_options(),
+    cics_preprocessor_options(),
+    db2_preprocessor_options(),
+};
+
+std::vector<preprocessor_options> get_preprocessor_options(std::bitset<3> b)
+{
+    static_assert(b.size() == preproc_options.size());
+
+    std::vector<preprocessor_options> opts;
+    for (size_t i = 0; i < preproc_options.size(); ++i)
+    {
+        if (b[i])
+            opts.emplace_back(preproc_options[i]);
+    }
+
+    return opts;
+}
+
+std::string get_content(const uint8_t* data, size_t size, fuzzer_lib_provider& lib)
 {
     std::string source;
     std::string* target = &source;
-    fuzzer_lib_provider lib;
 
     while (auto next = (const uint8_t*)memchr(data, 0xff, size))
     {
@@ -96,7 +118,18 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     }
     *target = hlasm_plugin::utils::replace_non_utf8_chars(std::string_view((const char*)data, size));
 
-    analyzer a(source, analyzer_options(&lib, db2_preprocessor_options()));
+    return source;
+}
+} // namespace
+
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
+{
+    if (!data || size <= 1)
+        return 0;
+
+    fuzzer_lib_provider lib;
+    auto source = get_content(data + 1, size - 1, lib);
+    analyzer a(source, analyzer_options(&lib, get_preprocessor_options(std::bitset<3>(data[0]))));
     a.analyze();
 
     return 0; // Non-zero return values are reserved for future use.
