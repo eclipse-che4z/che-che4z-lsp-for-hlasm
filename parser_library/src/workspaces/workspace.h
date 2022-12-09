@@ -20,7 +20,9 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "diagnosable_impl.h"
@@ -92,9 +94,8 @@ public:
 
     parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override;
     bool has_library(const std::string& library, const utils::resource::resource_location& program) const override;
-    std::optional<std::string> get_library(const std::string& library,
-        const utils::resource::resource_location& program,
-        std::optional<utils::resource::resource_location>& location) const override;
+    std::optional<std::pair<std::string, utils::resource::resource_location>> get_library(
+        const std::string& library, const utils::resource::resource_location& program) const override;
     virtual asm_option get_asm_options(const utils::resource::resource_location& file_location) const;
     virtual std::vector<preprocessor_options> get_preprocessor_options(
         const utils::resource::resource_location& file_location) const;

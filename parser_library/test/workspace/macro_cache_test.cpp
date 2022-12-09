@@ -96,16 +96,15 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
     {
         return files_by_library_.count(library) > 0;
     };
-    std::optional<std::string> get_library(const std::string& library,
-        const resource_location&,
-        std::optional<resource_location>& lib_location) const override
-    {
-        lib_location = std::nullopt;
 
+    std::optional<std::pair<std::string, resource_location>> get_library(
+        const std::string& library, const resource_location&) const override
+    {
         auto it = files_by_library_.find(library);
         if (it == files_by_library_.end())
             return std::nullopt;
-        return it->second.first->get_text();
+        return std::pair<std::string, resource_location>(
+            it->second.first->get_text(), it->second.first->get_location());
     }
 };
 
@@ -118,7 +117,7 @@ analyzing_context create_analyzing_context(std::string file_name, std::shared_pt
         std::make_shared<lsp::lsp_context>(hlasm_ctx),
     };
     lsp::opencode_info_ptr oip = std::make_unique<lsp::opencode_info>(lsp::vardef_storage(), lsp::file_occurences_t {});
-    new_ctx.lsp_ctx->add_opencode(std::move(oip), lsp::text_data_ref_t(""));
+    new_ctx.lsp_ctx->add_opencode(std::move(oip), lsp::text_data_view(""));
 
     return new_ctx;
 }

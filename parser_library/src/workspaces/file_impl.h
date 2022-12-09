@@ -15,10 +15,12 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_FILE_IMPL_H
 #define HLASMPLUGIN_PARSERLIBRARY_FILE_IMPL_H
 
+#include <string>
+#include <string_view>
+#include <vector>
+
 #include "diagnosable_impl.h"
 #include "file.h"
-#include "processor.h"
-#include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -50,11 +52,11 @@ public:
     void did_change(range range, std::string new_text) override;
     void did_close() override;
 
-    static std::vector<size_t> create_line_indices(const std::string& text);
+    static std::vector<size_t> create_line_indices(std::string_view text);
 
     // Returns the location in text that corresponds to utf-16 based location
     // The position may point beyond the last character -> returns text.size()
-    static size_t index_from_position(const std::string& text, const std::vector<size_t>& line_indices, position pos);
+    static size_t index_from_position(std::string_view text, const std::vector<size_t>& line_indices, position pos);
 
     virtual ~file_impl() = default;
 

@@ -15,15 +15,15 @@ target_sources(parser_library PRIVATE
 	completion_item.h
 	document_symbol_item.cpp
 	document_symbol_item.h
-	item_convertors.cpp
-	item_convertors.h
 	file_info.cpp
 	file_info.h
+	item_convertors.cpp
+	item_convertors.h
 	lsp_context.cpp
 	lsp_context.h
 	macro_info.h
 	opencode_info.h
 	symbol_occurence.h
-	text_data_ref_t.cpp
-	text_data_ref_t.h
+	text_data_view.cpp
+	text_data_view.h
 )

@@ -15,6 +15,15 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DEBUG_LIB_PROVIDER_H
 #define HLASMPLUGIN_PARSERLIBRARY_DEBUG_LIB_PROVIDER_H
 
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <utility>
+
+#include "analyzing_context.h"
+#include "workspaces/parse_lib_provider.h"
+#include "workspaces/processor.h"
 #include "workspaces/workspace.h"
 
 namespace hlasm_plugin::parser_library::debugging {
@@ -50,11 +59,10 @@ public:
         return ws_.has_library(library, program);
     }
 
-    std::optional<std::string> get_library(const std::string& library,
-        const utils::resource::resource_location& program,
-        std::optional<utils::resource::resource_location>& lib_location) const override
+    std::optional<std::pair<std::string, utils::resource::resource_location>> get_library(
+        const std::string& library, const utils::resource::resource_location& program) const override
     {
-        return ws_.get_library(library, program, lib_location);
+        return ws_.get_library(library, program);
     }
 };
 

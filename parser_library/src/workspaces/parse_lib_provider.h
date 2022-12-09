@@ -17,8 +17,11 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
+#include <utility>
 
 #include "analyzing_context.h"
+#include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -39,9 +42,8 @@ public:
 
     virtual bool has_library(const std::string& library, const utils::resource::resource_location& program) const = 0;
 
-    virtual std::optional<std::string> get_library(const std::string& library,
-        const utils::resource::resource_location& program,
-        std::optional<utils::resource::resource_location>& lib_location) const = 0;
+    virtual std::optional<std::pair<std::string, utils::resource::resource_location>> get_library(
+        const std::string& library, const utils::resource::resource_location& program) const = 0;
 
 protected:
     ~parse_lib_provider() = default;
@@ -53,11 +55,9 @@ class empty_parse_lib_provider final : public parse_lib_provider
 public:
     parse_result parse_library(const std::string&, analyzing_context, library_data) override { return false; };
     bool has_library(const std::string&, const utils::resource::resource_location&) const override { return false; };
-    std::optional<std::string> get_library(const std::string&,
-        const utils::resource::resource_location&,
-        std::optional<utils::resource::resource_location>& lib_location) const override
+    std::optional<std::pair<std::string, utils::resource::resource_location>> get_library(
+        const std::string&, const utils::resource::resource_location&) const override
     {
-        lib_location = std::nullopt;
         return std::nullopt;
     }
 

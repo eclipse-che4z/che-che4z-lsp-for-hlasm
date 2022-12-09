@@ -17,21 +17,26 @@
 
 #include <deque>
 #include <memory>
+#include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #include "context/source_snapshot.h"
 #include "lexing/logical_line.h"
 #include "parsing/parser_error_listener.h"
 #include "preprocessor.h"
+#include "range.h"
 #include "statement_providers/statement_provider.h"
 #include "virtual_file_monitor.h"
 
+namespace hlasm_plugin::parser_library {
+class diagnosable_ctx;
+} // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::parsing {
 class hlasmparser_multiline;
 class parser_error_listener;
 class parser_error_listener_ctx;
-
 struct parser_holder;
 } // namespace hlasm_plugin::parser_library::parsing
 namespace hlasm_plugin::parser_library::semantics {
@@ -139,7 +144,7 @@ public:
 
     bool finished() const override;
 
-    std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> get_preprocessor_statements() const;
+    processing::preprocessor* get_preprocessor();
 
 private:
     void feed_line(const parsing::parser_holder& p, bool is_process);

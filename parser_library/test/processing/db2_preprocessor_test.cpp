@@ -12,13 +12,19 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <memory>
+#include <string_view>
 #include <unordered_map>
+#include <utility>
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
+#include "analyzer.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
 #include "semantics/source_info_processor.h"
+#include "utils/resource_location.h"
+
 // test db2 preprocessor emulator
 
 using namespace hlasm_plugin::parser_library::processing;
@@ -86,7 +92,8 @@ TEST_F(db2_preprocessor_test, include)
         db2_preprocessor_options {},
         [](std::string_view s) {
             EXPECT_EQ(s, "MEMBER");
-            return "member content";
+            return std::pair<std::string, hlasm_plugin::utils::resource::resource_location>(
+                "member content", hlasm_plugin::utils::resource::resource_location());
         },
         nullptr);
     std::string_view text = "\n EXEC SQL INCLUDE MEMBER ";
@@ -218,7 +225,8 @@ TEST_F(db2_preprocessor_test, no_nested_include)
         db2_preprocessor_options {},
         [](std::string_view s) {
             EXPECT_EQ(s, "MEMBER");
-            return " EXEC SQL INCLUDE MEMBER";
+            return std::pair<std::string, hlasm_plugin::utils::resource::resource_location>(
+                " EXEC SQL INCLUDE MEMBER", hlasm_plugin::utils::resource::resource_location());
         },
         &m_diags);
     std::string_view text = " EXEC SQL INCLUDE MEMBER ";

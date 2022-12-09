@@ -24,7 +24,7 @@
 #include "ebcdic_encoding.h"
 #include "file_info.h"
 #include "macro_info.h"
-#include "text_data_ref_t.h"
+#include "text_data_view.h"
 #include "utils/concat.h"
 
 namespace hlasm_plugin::parser_library::lsp {
@@ -174,7 +174,7 @@ std::string get_macro_signature(const context::macro_definition& m)
     return result;
 }
 
-std::string get_macro_documentation(const text_data_ref_t& text, size_t definition_line)
+std::string get_macro_documentation(const text_data_view& text, size_t definition_line)
 {
     // We start at line where the name of the macro is written
     size_t MACRO_line = definition_line - 1;

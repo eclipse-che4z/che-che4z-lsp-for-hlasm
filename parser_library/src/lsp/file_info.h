@@ -17,13 +17,17 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <span>
+#include <utility>
 #include <variant>
+#include <vector>
 
 #include "context/copy_member.h"
 #include "macro_info.h"
 #include "symbol_occurence.h"
-#include "text_data_ref_t.h"
+#include "text_data_view.h"
+#include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
@@ -80,12 +84,12 @@ public:
     utils::resource::resource_location location;
     file_type type;
     owner_t owner;
-    text_data_ref_t data;
+    text_data_view data;
 
 
-    explicit file_info(utils::resource::resource_location location, text_data_ref_t text_data);
-    explicit file_info(context::macro_def_ptr owner, text_data_ref_t text_data);
-    explicit file_info(context::copy_member_ptr owner, text_data_ref_t text_data);
+    explicit file_info(utils::resource::resource_location location, text_data_view text_data);
+    explicit file_info(context::macro_def_ptr owner, text_data_view text_data);
+    explicit file_info(context::copy_member_ptr owner, text_data_view text_data);
 
     static bool is_in_range(const position& pos, const range& r);
 

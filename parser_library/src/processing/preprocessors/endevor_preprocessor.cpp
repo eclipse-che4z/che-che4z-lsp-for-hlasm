@@ -92,7 +92,7 @@ class endevor_preprocessor final : public preprocessor
     semantics::source_info_processor& m_src_proc;
     context::id_storage& m_ids;
 
-    bool process_member(std::string_view member, std::vector<stack_entry>& stack) const
+    bool process_member(std::string_view member, std::vector<stack_entry>& stack)
     {
         std::string member_upper = context::to_upper_copy(std::string(member));
 
@@ -106,7 +106,11 @@ class endevor_preprocessor final : public preprocessor
             return false;
         }
 
-        if (auto lib = m_libs(member_upper); !lib.has_value())
+        std::optional<std::pair<std::string, utils::resource::resource_location>> library;
+        if (m_libs)
+            library = m_libs(member_upper);
+
+        if (!library.has_value())
         {
             if (m_diags)
                 m_diags->add_diagnostic(diagnostic_op::error_END001(
@@ -116,9 +120,12 @@ class endevor_preprocessor final : public preprocessor
         }
         else
         {
-            document member_doc(lib.value());
+            auto& [lib_text, lib_loc] = *library;
+            document member_doc(lib_text);
             member_doc.convert_to_replaced();
-            stack.emplace_back(std::move(member_upper), std::move(member_doc));
+            stack.emplace_back(member_upper, std::move(member_doc));
+            append_included_member(std::make_unique<included_member_details>(
+                included_member_details { std::move(member_upper), std::move(lib_text), std::move(lib_loc) }));
         }
 
         return true;
@@ -140,7 +147,7 @@ public:
     // Inherited via preprocessor
     document generate_replacement(document doc) override
     {
-        clear_statements();
+        reset();
 
         if (std::none_of(doc.begin(), doc.end(), [](const auto& l) {
                 auto text = l.text();

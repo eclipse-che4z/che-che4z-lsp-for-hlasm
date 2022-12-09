@@ -146,7 +146,7 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
             std::move(macro_occurences_));
 
         if (result.external)
-            lsp_ctx_.add_macro(std::move(m_i), lsp::text_data_ref_t(file_text_));
+            lsp_ctx_.add_macro(std::move(m_i), lsp::text_data_view(file_text_));
         else
             lsp_ctx_.add_macro(std::move(m_i));
     }
@@ -157,14 +157,14 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
 
 void lsp_analyzer::copydef_finished(context::copy_member_ptr copydef, copy_processing_result&&)
 {
-    lsp_ctx_.add_copy(std::move(copydef), lsp::text_data_ref_t(file_text_));
+    lsp_ctx_.add_copy(std::move(copydef), lsp::text_data_view(file_text_));
 }
 
 void lsp_analyzer::opencode_finished()
 {
     lsp_ctx_.add_opencode(
         std::make_unique<lsp::opencode_info>(std::move(opencode_var_defs_), std::move(opencode_occurences_)),
-        lsp::text_data_ref_t(file_text_));
+        lsp::text_data_view(file_text_));
 }
 
 void lsp_analyzer::assign_statement_occurences(const utils::resource::resource_location& doc_location)

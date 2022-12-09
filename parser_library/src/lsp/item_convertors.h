@@ -32,12 +32,12 @@ namespace hlasm_plugin::parser_library::lsp {
 struct completion_item_s;
 class file_info;
 struct macro_info;
-class text_data_ref_t;
+class text_data_view;
 struct variable_symbol_definition;
 
 std::string hover_text(const context::symbol& sym);
 std::string hover_text(const variable_symbol_definition& sym);
-std::string get_macro_documentation(const text_data_ref_t& macro_text, size_t definition_line);
+std::string get_macro_documentation(const text_data_view& macro_text, size_t definition_line);
 std::string get_macro_signature(const context::macro_definition& m);
 bool is_continued_line(std::string_view line);
 

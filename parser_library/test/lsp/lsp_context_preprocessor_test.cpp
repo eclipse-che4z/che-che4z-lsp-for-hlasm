@@ -12,11 +12,15 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <string>
+
 #include "gtest/gtest.h"
 
 #include "../mock_parse_lib_provider.h"
 #include "analyzer.h"
 #include "context/instruction.h"
+#include "location.h"
+#include "range.h"
 #include "utils/resource_location.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -67,11 +71,11 @@ TEST_F(lsp_context_endevor_preprocessor_test, go_to)
     EXPECT_EQ(location(position(3, 1), source_loc), a.context().lsp_ctx->definition(source_loc, position(3, 1)));
 
     // jump from source to included file
-    EXPECT_EQ(location(position(0, 3), member_loc), a.context().lsp_ctx->definition(source_loc, position(1, 8)));
+    EXPECT_EQ(location(position(0, 0), member_loc), a.context().lsp_ctx->definition(source_loc, position(1, 8)));
     // jump from source to included file
-    EXPECT_EQ(location(position(0, 3), member_loc), a.context().lsp_ctx->definition(source_loc, position(2, 14)));
+    EXPECT_EQ(location(position(0, 0), member_loc), a.context().lsp_ctx->definition(source_loc, position(2, 14)));
     // jump from source to included file
-    EXPECT_EQ(location(position(0, 3), member2_loc), a.context().lsp_ctx->definition(source_loc, position(3, 8)));
+    EXPECT_EQ(location(position(0, 0), member2_loc), a.context().lsp_ctx->definition(source_loc, position(3, 8)));
 
     // no jump
     EXPECT_EQ(location(position(1, 15), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 15)));

@@ -125,21 +125,21 @@ bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_co
             if (!info)
                 return true; // The file for which the analyzer is cached does not contain definition of macro
             ctx.hlasm_ctx->add_macro(info->macro_definition);
-            ctx.lsp_ctx->add_macro(info, lsp::text_data_ref_t(macro_file_->get_text()));
+            ctx.lsp_ctx->add_macro(info, lsp::text_data_view(macro_file_->get_text()));
 
             // Add all copy members on which this macro is dependant
             for (const auto& copy_ptr : info->macro_definition->used_copy_members)
             {
                 auto file = file_mngr_->find(copy_ptr->definition_location.resource_loc);
                 ctx.hlasm_ctx->add_copy_member(copy_ptr);
-                ctx.lsp_ctx->add_copy(copy_ptr, lsp::text_data_ref_t(file->get_text()));
+                ctx.lsp_ctx->add_copy(copy_ptr, lsp::text_data_view(file->get_text()));
             }
         }
         else if (key.data.proc_kind == processing::processing_kind::COPY)
         {
             auto copy_member = std::get<context::copy_member_ptr>(cached_data->cached_member);
             ctx.hlasm_ctx->add_copy_member(copy_member);
-            ctx.lsp_ctx->add_copy(copy_member, lsp::text_data_ref_t(macro_file_->get_text()));
+            ctx.lsp_ctx->add_copy(copy_member, lsp::text_data_view(macro_file_->get_text()));
         }
 
         return true;

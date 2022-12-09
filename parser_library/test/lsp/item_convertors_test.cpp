@@ -12,13 +12,16 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <string>
+#include <vector>
+
 #include "gtest/gtest.h"
 
 #include "lsp/completion_item.h"
 #include "lsp/file_info.h"
 #include "lsp/item_convertors.h"
 #include "lsp/macro_info.h"
-#include "lsp/text_data_ref_t.h"
+#include "lsp/text_data_view.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
@@ -108,7 +111,7 @@ const std::string macro_def_expected = R"(```
 
 TEST(item_convertors, macro_doc)
 {
-    text_data_ref_t text(macro_def_input);
+    text_data_view text(macro_def_input);
     EXPECT_EQ(get_macro_documentation(text, 4), macro_def_expected);
 }
 
@@ -147,7 +150,7 @@ TEST(item_convertors, macro)
         std::unordered_set<std::shared_ptr<copy_member>> {});
     macro_info mi(
         false, location(position(4, 0), hlasm_plugin::utils::resource::resource_location()), mac_def, {}, {}, {});
-    file_info fi(mac_def, text_data_ref_t(macro_def_input));
+    file_info fi(mac_def, text_data_view(macro_def_input));
 
     auto result_with_doc = generate_completion_item(mi, &fi);
     auto result_without_doc = generate_completion_item(mi, nullptr);

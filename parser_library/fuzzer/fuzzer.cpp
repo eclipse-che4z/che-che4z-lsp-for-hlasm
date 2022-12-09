@@ -16,8 +16,12 @@
 #include <cstring>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <utility>
 
 #include "analyzer.h"
+#include "analyzing_context.h"
+#include "utils/resource_location.h"
 #include "utils/unicode_text.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/parse_lib_provider.h"
@@ -62,17 +66,15 @@ public:
         return read_library_name(library).has_value();
     }
 
-    std::optional<std::string> get_library(const std::string& library,
-        const hlasm_plugin::utils::resource::resource_location&,
-        std::optional<hlasm_plugin::utils::resource::resource_location>& location) const override
+    std::optional<std::pair<std::string, hlasm_plugin::utils::resource::resource_location>> get_library(
+        const std::string& library, const hlasm_plugin::utils::resource::resource_location&) const override
     {
         auto lib = read_library_name(library);
         if (!lib.has_value())
             return std::nullopt;
 
-        location = hlasm_plugin::utils::resource::resource_location(library);
-
-        return files[lib.value()];
+        return std::pair<std::string, hlasm_plugin::utils::resource::resource_location>(
+            files[lib.value()], hlasm_plugin::utils::resource::resource_location(library));
     }
 
     std::vector<std::string> files;

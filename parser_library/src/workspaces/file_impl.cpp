@@ -15,11 +15,7 @@
 
 #include "file_impl.h"
 
-#include <cerrno>
-#include <codecvt>
-#include <exception>
-#include <locale>
-#include <string>
+#include <stdexcept>
 
 #include "file_manager.h"
 #include "utils/content_loader.h"
@@ -72,7 +68,7 @@ update_file_result file_impl::load_text()
 }
 
 // adds positions of newlines into vector 'lines'
-size_t find_newlines(const std::string& text, std::vector<size_t>& lines)
+size_t find_newlines(std::string_view text, std::vector<size_t>& lines)
 {
     size_t before = lines.size();
     bool was_r = false;
@@ -208,7 +204,7 @@ update_file_result file_impl::update_and_get_bad()
     return load_text();
 }
 
-size_t file_impl::index_from_position(const std::string& text, const std::vector<size_t>& line_indices, position loc)
+size_t file_impl::index_from_position(std::string_view text, const std::vector<size_t>& line_indices, position loc)
 {
     size_t end = (size_t)loc.column;
     if (loc.line >= line_indices.size())
@@ -237,7 +233,7 @@ size_t file_impl::index_from_position(const std::string& text, const std::vector
     return i;
 }
 
-std::vector<size_t> file_impl::create_line_indices(const std::string& text)
+std::vector<size_t> file_impl::create_line_indices(std::string_view text)
 {
     std::vector<size_t> ret;
     ret.push_back(0);

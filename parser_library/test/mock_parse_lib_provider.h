@@ -12,9 +12,12 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
+
 #include "analyzer.h"
-
-
 
 namespace hlasm_plugin::parser_library {
 
@@ -55,19 +58,15 @@ public:
     }
 
 
-    std::optional<std::string> get_library(const std::string& library,
-        const utils::resource::resource_location&,
-        std::optional<utils::resource::resource_location>& lib_location) const override
+    std::optional<std::pair<std::string, utils::resource::resource_location>> get_library(
+        const std::string& library, const utils::resource::resource_location&) const override
     {
         auto it = m_files.find(library);
         if (it == m_files.end())
-        {
-            lib_location = std::nullopt;
             return std::nullopt;
-        }
 
-        lib_location = utils::resource::resource_location(library);
-        return it->second;
+        return std::pair<std::string, utils::resource::resource_location>(
+            it->second, utils::resource::resource_location(library));
     }
 };
 

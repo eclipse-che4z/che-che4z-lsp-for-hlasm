@@ -248,19 +248,22 @@ class db2_preprocessor final : public preprocessor
         }
         m_result.emplace_back(replaced_line { "***$$$\n" });
 
-        std::optional<std::string> include_text;
+        std::optional<std::pair<std::string, utils::resource::resource_location>> include_member;
         if (m_libs)
-            include_text = m_libs(operands_upper);
-        if (!include_text.has_value())
+            include_member = m_libs(operands_upper);
+        if (!include_member.has_value())
         {
             if (m_diags)
                 m_diags->add_diagnostic(diagnostic_op::error_DB002(range(position(lineno, 0)), operands));
             return;
         }
 
-        document d(include_text.value());
+        auto& [include_mem_text, include_mem_loc] = *include_member;
+        document d(include_mem_text);
         d.convert_to_replaced();
         generate_replacement(d.begin(), d.end(), false);
+        append_included_member(std::make_unique<included_member_details>(included_member_details {
+            std::move(operands_upper), std::move(include_mem_text), std::move(include_mem_loc) }));
     }
     static bool consume_words(
         std::string_view& l, std::initializer_list<std::string_view> words, bool tolerate_no_space_at_end = false)
@@ -792,7 +795,7 @@ class db2_preprocessor final : public preprocessor
     // Inherited via preprocessor
     document generate_replacement(document doc) override
     {
-        clear_statements();
+        reset();
         m_source_translated = false;
         m_result.clear();
         m_result.reserve(doc.size());

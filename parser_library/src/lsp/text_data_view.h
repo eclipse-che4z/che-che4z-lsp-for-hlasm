@@ -12,26 +12,24 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef LSP_TEXT_DATA_REF_T_H
-#define LSP_TEXT_DATA_REF_T_H
+#ifndef LSP_TEXT_DATA_VIEW_H
+#define LSP_TEXT_DATA_VIEW_H
 
-#include <string>
+#include <string_view>
 #include <vector>
 
-#include "protocol.h"
+#include "range.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
-class text_data_ref_t
+class text_data_view
 {
-    const std::string* text = &empty_text;
+    std::string_view text;
     std::vector<size_t> line_indices;
 
-    static std::string empty_text;
-
 public:
-    text_data_ref_t() = default;
-    explicit text_data_ref_t(const std::string& text);
+    text_data_view() = default;
+    explicit text_data_view(std::string_view text);
 
     // Returns a specified line from the text, zero-based indexed.
     // If the line does not exist, returns empty string view

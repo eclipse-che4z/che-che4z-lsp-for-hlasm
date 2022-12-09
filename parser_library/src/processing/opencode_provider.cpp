@@ -599,11 +599,9 @@ bool opencode_provider::finished() const
     return std::none_of(o.begin(), o.end(), [](const auto& c) { return c.suspended(); });
 }
 
-std::vector<std::shared_ptr<semantics::preprocessor_statement_si>>
-opencode_provider::get_preprocessor_statements() const
+processing::preprocessor* opencode_provider::get_preprocessor()
 {
-    return m_preprocessor ? m_preprocessor->take_statements()
-                          : std::vector<std::shared_ptr<semantics::preprocessor_statement_si>>();
+    return m_preprocessor ? m_preprocessor.get() : nullptr;
 }
 
 parsing::hlasmparser_multiline& opencode_provider::parser()

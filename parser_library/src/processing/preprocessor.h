@@ -21,11 +21,13 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 
 #include "diagnostic_consumer.h"
 #include "document.h"
+#include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library {
 struct cics_preprocessor_options;
@@ -50,11 +52,20 @@ class id_storage;
 
 namespace hlasm_plugin::parser_library::processing {
 
-using library_fetcher = std::function<std::optional<std::string>(std::string_view)>;
+using library_fetcher =
+    std::function<std::optional<std::pair<std::string, hlasm_plugin::utils::resource::resource_location>>(
+        std::string_view)>;
 
 class preprocessor
 {
 public:
+    struct included_member_details
+    {
+        std::string name;
+        std::string text;
+        utils::resource::resource_location loc;
+    };
+
     virtual ~preprocessor() = default;
 
     virtual document generate_replacement(document doc) = 0;
@@ -79,6 +90,8 @@ public:
 
     virtual std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> take_statements();
 
+    virtual const std::vector<std::unique_ptr<included_member_details>>& view_included_members();
+
 protected:
     preprocessor() = default;
     preprocessor(const preprocessor&) = default;
@@ -91,7 +104,7 @@ protected:
         line_iterator end,
         const lexing::logical_line_extractor_args& opts);
 
-    void clear_statements();
+    void reset();
     void set_statement(std::shared_ptr<semantics::preprocessor_statement_si> stmt);
     void set_statements(std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> stmts);
 
@@ -100,8 +113,13 @@ protected:
     static void do_highlighting(
         const semantics::preprocessor_statement_si& stmt, semantics::source_info_processor& src_proc);
 
+    void append_included_member(std::unique_ptr<included_member_details> details);
+    void append_included_members(std::vector<std::unique_ptr<included_member_details>> details);
+    void capture_included_members(preprocessor& preproc);
+
 private:
     std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> m_statements;
+    std::vector<std::unique_ptr<included_member_details>> m_inc_members;
 };
 } // namespace hlasm_plugin::parser_library::processing
 
