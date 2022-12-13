@@ -93,6 +93,7 @@ void dap_feature::register_methods(std::map<std::string, method>& methods)
     methods.try_emplace("stepIn", this_bind(&dap_feature::on_step_in, telemetry_log_level::LOG_EVENT));
     methods.try_emplace("variables", this_bind(&dap_feature::on_variables));
     methods.try_emplace("continue", this_bind(&dap_feature::on_continue, telemetry_log_level::LOG_EVENT));
+    methods.try_emplace("pause", this_bind(&dap_feature::on_pause, telemetry_log_level::LOG_EVENT));
 }
 json dap_feature::register_capabilities() { return json(); }
 
@@ -142,9 +143,11 @@ void dap_feature::on_launch(const json& request_seq, const json& args)
     bool stop_on_entry = args["stopOnEntry"].get<bool>();
     auto workspace_id = ws_mngr_.find_workspace(program_path.c_str());
     debugger->set_event_consumer(this);
-    debugger->launch(program_path.c_str(), *workspace_id, stop_on_entry);
 
-    response_->respond(request_seq, "launch", json());
+    if (debugger->launch(program_path.c_str(), *workspace_id, stop_on_entry))
+        response_->respond(request_seq, "launch", json());
+    else
+        response_->respond_error(request_seq, "launch", 0, "File not found", json());
 }
 
 void dap_feature::on_set_breakpoints(const json& request_seq, const json& args)
@@ -310,4 +313,15 @@ void dap_feature::on_continue(const json& request_seq, const json&)
 
     response_->respond(request_seq, "continue", json { { "allThreadsContinued", true } });
 }
+
+void dap_feature::on_pause(const json& request_seq, const json&)
+{
+    if (!debugger)
+        return;
+
+    debugger->pause();
+
+    response_->respond(request_seq, "pause", json());
+}
+
 } // namespace hlasm_plugin::language_server::dap

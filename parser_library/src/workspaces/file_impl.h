@@ -60,6 +60,8 @@ public:
 
     virtual ~file_impl() = default;
 
+    bool is_bad() const { return bad_; }
+
 protected:
     const std::string& get_text_ref();
 

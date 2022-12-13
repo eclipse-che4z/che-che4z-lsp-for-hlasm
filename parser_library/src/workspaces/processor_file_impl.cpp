@@ -125,21 +125,6 @@ parse_result processor_file_impl::parse_macro(
     return ret;
 }
 
-parse_result processor_file_impl::parse_no_lsp_update(
-    parse_lib_provider& lib_provider, analyzing_context ctx, library_data data)
-{
-    auto no_update_analyzer_ = std::make_unique<analyzer>(get_text(),
-        analyzer_options {
-            get_location(),
-            &lib_provider,
-            std::move(ctx),
-            data,
-            should_collect_hl(ctx.hlasm_ctx.get()) ? collect_highlighting_info::yes : collect_highlighting_info::no,
-        });
-    no_update_analyzer_->analyze();
-    return true;
-}
-
 const std::set<utils::resource::resource_location>& processor_file_impl::dependencies() { return dependencies_; }
 
 const semantics::lines_info& processor_file_impl::get_hl_info()

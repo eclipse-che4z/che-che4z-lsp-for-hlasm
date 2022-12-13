@@ -36,6 +36,7 @@
 #include "virtual_file_monitor.h"
 #include "workspaces/file_manager.h"
 #include "workspaces/file_manager_vfm.h"
+#include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library::workspaces;
 
@@ -129,30 +130,51 @@ class debugger::impl final : public processing::statement_analyzer
 public:
     impl() = default;
 
-    void launch(
-        std::string_view source, workspaces::workspace& workspace, bool stop_on_entry, parse_lib_provider* lib_provider)
+    bool launch(std::string_view source, workspaces::workspace& workspace, bool stop_on_entry)
     {
-        // TODO: check if already running???
-        auto open_code = workspace.get_processor_file(utils::resource::resource_location(source));
-        opencode_source_uri_ = open_code->get_location().get_uri();
+        // still has data races
+        utils::resource::resource_location open_code_location(source);
+        auto open_code_text = workspace.get_file_manager().get_file_content(open_code_location);
+        if (!open_code_text.has_value())
+        {
+            debug_ended_ = true;
+            return false;
+        }
+        opencode_source_uri_ = open_code_location.get_uri();
         stop_on_next_stmt_ = stop_on_entry;
 
-        thread_ = std::thread([this, open_code = std::move(open_code), &workspace, lib_provider]() {
+        struct debugger_thread_data
+        {
+            utils::resource::resource_location open_code_location;
+            std::string open_code_text;
+            debug_lib_provider debug_provider;
+            asm_option asm_opts;
+            std::vector<preprocessor_options> pp_opts;
+            workspaces::file_manager_vfm vfm;
+            analyzer_options opts;
+        };
+
+        auto data = std::make_unique<debugger_thread_data>(debugger_thread_data {
+            open_code_location,
+            std::move(open_code_text).value(),
+            debug_lib_provider(workspace.get_libraries(open_code_location), workspace.get_file_manager(), &cancel_),
+            workspace.get_asm_options(open_code_location),
+            workspace.get_preprocessor_options(open_code_location),
+            workspaces::file_manager_vfm(
+                workspace.get_file_manager(), utils::resource::resource_location(workspace.uri())),
+        });
+
+        thread_ = std::thread([this, data = std::move(data)]() {
             std::lock_guard<std::mutex> guard(variable_mtx_); // Lock the mutex while analyzer is running, unlock once
                                                               // it is stopped and waiting in the statement method
-            debug_lib_provider debug_provider(workspace);
 
-            workspaces::file_manager_vfm vfm(
-                workspace.get_file_manager(), utils::resource::resource_location(workspace.uri()));
-            // TODO: it would probably be better to implement Sources request and keep everything locally
-
-            analyzer a(open_code->get_text(),
+            analyzer a(data->open_code_text,
                 analyzer_options {
-                    open_code->get_location(),
-                    lib_provider ? lib_provider : &debug_provider,
-                    workspace.get_asm_options(open_code->get_location()),
-                    workspace.get_preprocessor_options(open_code->get_location()),
-                    &vfm,
+                    std::move(data->open_code_location),
+                    &data->debug_provider,
+                    std::move(data->asm_opts),
+                    std::move(data->pp_opts),
+                    &data->vfm,
                 });
 
             a.register_stmt_analyzer(this);
@@ -165,6 +187,8 @@ public:
                 event_->exited(0);
             debug_ended_ = true;
         });
+
+        return true;
     }
 
     void set_event_consumer(debug_event_consumer* event) { event_ = event; }
@@ -277,6 +301,8 @@ public:
         continue_ = true;
         con_var.notify_all();
     }
+
+    void pause() { stop_on_next_stmt_ = true; }
 
     // Retrieval of current context.
     const std::vector<stack_frame>& stack_frames()
@@ -431,12 +457,9 @@ debugger::~debugger()
         delete pimpl;
 }
 
-void debugger::launch(sequence<char> source,
-    workspaces::workspace& source_workspace,
-    bool stop_on_entry,
-    parse_lib_provider* lib_provider)
+bool debugger::launch(sequence<char> source, workspaces::workspace& source_workspace, bool stop_on_entry)
 {
-    pimpl->launch(std::string_view(source), source_workspace, stop_on_entry, lib_provider);
+    return pimpl->launch(std::string_view(source), source_workspace, stop_on_entry);
 }
 
 void debugger::set_event_consumer(debug_event_consumer* event) { pimpl->set_event_consumer(event); }
@@ -445,6 +468,7 @@ void debugger::next() { pimpl->next(); }
 void debugger::step_in() { pimpl->step_in(); }
 void debugger::disconnect() { pimpl->disconnect(); }
 void debugger::continue_debug() { pimpl->continue_debug(); }
+void debugger::pause() { pimpl->pause(); }
 
 
 void debugger::breakpoints(sequence<char> source, sequence<breakpoint> bps)

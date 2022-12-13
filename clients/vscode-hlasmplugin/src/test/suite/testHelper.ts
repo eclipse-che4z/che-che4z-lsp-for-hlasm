@@ -20,23 +20,18 @@ export function getWorkspacePath(): string {
     return vscode.workspace.workspaceFolders[0].uri.fsPath;
 }
 
-export function get_editor(workspace_file: string): vscode.TextEditor {
-    const editor = vscode.window.activeTextEditor;
-    assert.equal(editor.document.uri.fsPath, path.join(getWorkspacePath(), workspace_file));
-
-    return editor;
-}
-
-export async function showDocument(workspace_file: string) {
+export async function showDocument(workspace_file: string, language_id: string | undefined = undefined) {
     const files = await vscode.workspace.findFiles(workspace_file);
 
     assert.ok(files && files[0]);
     const file = files[0];
 
     // open and show the file
-    const document = await vscode.workspace.openTextDocument(file);
+    let document = await vscode.workspace.openTextDocument(file);
+    if (language_id)
+        document = await vscode.languages.setTextDocumentLanguage(document, language_id);
 
-    await vscode.window.showTextDocument(document);
+    return { editor: await vscode.window.showTextDocument(document), document };
 }
 
 export async function closeAllEditors() {
@@ -51,11 +46,11 @@ export function moveCursor(editor: vscode.TextEditor, position: vscode.Position)
 }
 
 export async function toggleBreakpoints(file: string, lines: Array<integer>) {
-    await showDocument(file);
+    const editor = (await showDocument(file)).editor;
     await sleep(1000);
 
     for (const line of lines) {
-        moveCursor(get_editor(file), new vscode.Position(line, 0));
+        moveCursor(editor, new vscode.Position(line, 0));
         await vscode.commands.executeCommand('editor.debug.action.toggleBreakpoint');
     }
 
@@ -123,7 +118,19 @@ export async function insertString(editor: vscode.TextEditor, position: vscode.P
     return movePosition;
 }
 
-export function sleep(ms: number): Promise<unknown> {
-    return new Promise((resolve) => { setTimeout(resolve, ms); });
+export function sleep(ms: number): Promise<void> {
+    return new Promise<void>((resolve) => { setTimeout(resolve, ms); });
 }
 
+export function timeout(ms: number, error_message: string | undefined = undefined): Promise<void> {
+    return new Promise<void>((_, reject) => { setTimeout(() => reject(error_message && Error(error_message)), ms); });
+}
+
+export async function waitForDiagnostics() {
+    return new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve, reject) => {
+        const listener = vscode.languages.onDidChangeDiagnostics((_) => {
+            listener.dispose();
+            resolve(vscode.languages.getDiagnostics());
+        });
+    });
+}

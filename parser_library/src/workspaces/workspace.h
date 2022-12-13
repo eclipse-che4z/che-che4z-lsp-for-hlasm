@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -36,6 +37,7 @@
 
 namespace hlasm_plugin::parser_library::workspaces {
 class file_manager;
+class library;
 using ws_uri = std::string;
 using ws_highlight_info = std::unordered_map<std::string, semantics::highlighting_info>;
 
@@ -96,6 +98,8 @@ public:
     bool has_library(const std::string& library, const utils::resource::resource_location& program) const override;
     std::optional<std::pair<std::string, utils::resource::resource_location>> get_library(
         const std::string& library, const utils::resource::resource_location& program) const override;
+    virtual std::vector<std::shared_ptr<library>> get_libraries(
+        const utils::resource::resource_location& file_location) const;
     virtual asm_option get_asm_options(const utils::resource::resource_location& file_location) const;
     virtual std::vector<preprocessor_options> get_preprocessor_options(
         const utils::resource::resource_location& file_location) const;
@@ -108,7 +112,7 @@ public:
 
     processor_file_ptr get_processor_file(const utils::resource::resource_location& file_location);
 
-    file_manager& get_file_manager();
+    file_manager& get_file_manager() const;
 
     bool settings_updated();
 

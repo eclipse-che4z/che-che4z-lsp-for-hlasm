@@ -22,7 +22,6 @@
 #include <optional>
 #include <string_view>
 
-#include "debugging/debug_lib_provider.h"
 #include "workspace_manager.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"

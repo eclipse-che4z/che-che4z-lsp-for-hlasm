@@ -13,6 +13,7 @@
 target_sources(parser_library PRIVATE
 	attribute_variable.cpp
 	attribute_variable.h
+	debug_lib_provider.cpp
 	debug_lib_provider.h
 	debug_types.h
 	debugger.cpp

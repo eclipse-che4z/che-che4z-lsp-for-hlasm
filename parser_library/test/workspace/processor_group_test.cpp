@@ -16,6 +16,7 @@
 
 #include "../common_testing.h"
 #include "config/proc_grps.h"
+#include "workspaces/library.h"
 #include "workspaces/processor_group.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -219,14 +220,21 @@ TEST(processor_group, asm_options_machine_invalid)
 
 TEST(processor_group, opcode_suggestions)
 {
-    struct library_mock final : library, diagnosable_impl
+    struct library_mock final : library
     {
-        std::shared_ptr<processor> find_file(const std::string&) override { return nullptr; }
         void refresh() override {}
         std::vector<std::string> list_files() override { return { "MAC1", "MAC2", "LONGMAC" }; }
+        bool has_file(std::string_view file, hlasm_plugin::utils::resource::resource_location* url)
+        {
+            auto files = list_files();
+            bool result = std::any_of(files.begin(), files.end(), [file](const auto& v) { return v == file; });
+            if (url)
+                *url = hlasm_plugin::utils::resource::resource_location(file);
+            return result;
+        }
 
-        // diag iface
-        void collect_diags() const override {}
+        void copy_diagnostics(std::vector<diagnostic_s>&) const override {}
+
         std::string refresh_url_prefix() const override { return {}; }
     };
     processor_group grp("", {}, {});

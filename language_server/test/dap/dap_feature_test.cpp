@@ -400,3 +400,23 @@ TEST_F(feature_launch_test, variables)
 
     feature.on_disconnect("9"_json, {});
 }
+
+namespace {
+std::string pause_file = ".A AGO .A";
+}
+
+TEST_F(feature_launch_test, pause)
+{
+    ws_mngr.did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, pause_file.c_str(), pause_file.size());
+
+    feature.on_launch("0"_json, nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
+
+    feature.on_pause("1"_json, {});
+
+    resp_provider.wait_for_stopped();
+    std::vector<response_mock> expected_resp = { { "0"_json, "launch", json() }, { "1"_json, "pause", json() } };
+    EXPECT_EQ(resp_provider.responses, expected_resp);
+    resp_provider.reset();
+
+    feature.on_disconnect("2"_json, {});
+}

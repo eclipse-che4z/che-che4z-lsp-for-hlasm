@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_FILE_MANAGER_H
 #define HLASMPLUGIN_PARSERLIBRARY_FILE_MANAGER_H
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -91,6 +92,8 @@ public:
     virtual utils::resource::resource_location get_virtual_file_workspace(unsigned long long id) const = 0;
 
     virtual open_file_result update_file(const file_location& document_loc) = 0;
+
+    virtual std::optional<std::string> get_file_content(const utils::resource::resource_location&) = 0;
 
 protected:
     ~file_manager() = default;

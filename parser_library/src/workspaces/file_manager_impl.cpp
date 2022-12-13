@@ -78,6 +78,19 @@ processor_file_ptr file_manager_impl::get_processor_file(const file_location& fi
         return change_into_processor_file_if_not_already_(ret->second);
 }
 
+std::optional<std::string> file_manager_impl::get_file_content(const utils::resource::resource_location& file_name)
+{
+    std::lock_guard guard(files_mutex);
+    auto it = files_.find(file_name);
+    auto file = it == files_.end() ? std::make_shared<file_impl>(file_name) : it->second;
+
+    std::optional<std::string> result(file->get_text());
+    if (file->is_bad())
+        result.reset();
+
+    return result;
+}
+
 void file_manager_impl::remove_file(const file_location& file)
 {
     std::lock_guard guard(files_mutex);

@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H
 
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -48,7 +49,7 @@ public:
 
     const std::string& name() const { return m_pg_name; }
 
-    const std::vector<std::unique_ptr<library>>& libraries() const { return m_libs; }
+    std::vector<std::shared_ptr<library>> libraries() const { return m_libs; }
 
     void apply_options_to(asm_option& opts) const;
 
@@ -61,7 +62,7 @@ public:
     bool refresh_needed(const std::vector<utils::resource::resource_location>& urls) const;
 
 private:
-    std::vector<std::unique_ptr<library>> m_libs;
+    std::vector<std::shared_ptr<library>> m_libs;
     std::string m_pg_name;
     config::assembler_options m_asm_opts;
     std::vector<preprocessor_options> m_prep_opts;

@@ -17,6 +17,8 @@ import * as Mocha from 'mocha';
 import * as glob from 'glob';
 import * as vscode from 'vscode';
 import * as process from 'process';
+import { timeout } from './testHelper';
+import { EXTENSION_ID } from '../../extension';
 
 export async function run(): Promise<void> {
 	const is_vscode = process.execPath.includes('Code');
@@ -35,8 +37,11 @@ export async function run(): Promise<void> {
 	});
 
 	// Add files to the test suite
-	files.forEach(file =>
-		mocha.addFile(path.resolve(testsPath, file)));
+	files.forEach(file => mocha.addFile(path.resolve(testsPath, file)));
+
+	const ext = await vscode.extensions.getExtension(EXTENSION_ID).activate();
+	const lang: { onReady(): Promise<void>; } = ext!.getExtension();
+	await Promise.race([lang!.onReady(), timeout(30000, 'Language server initialization failed')]);
 
 	await new Promise((resolve, reject) => {
 		// Run the mocha test

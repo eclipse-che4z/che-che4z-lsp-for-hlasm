@@ -24,13 +24,12 @@ suite('Debugging Test Suite', () => {
     suiteSetup(async function () {
         this.timeout(10000);
 
-        await helper.showDocument(workspace_file);
-        editor = helper.get_editor(workspace_file);
+        editor = (await helper.showDocument(workspace_file)).editor;
     });
 
     suiteTeardown(async function () {
         this.timeout(10000);
-        
+
         await helper.removeAllBreakpoints();
         await helper.closeAllEditors();
     });

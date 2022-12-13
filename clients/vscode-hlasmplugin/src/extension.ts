@@ -31,6 +31,8 @@ import { HLASMCodeActionsProvider } from './hlasmCodeActionsProvider';
 import { hlasmplugin_folder } from './constants';
 import { ConfigurationsHandler } from './configurationsHandler';
 
+export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
+
 const offset = 71;
 const continueColumn = 15;
 

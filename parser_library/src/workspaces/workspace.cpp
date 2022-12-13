@@ -14,6 +14,7 @@
 
 #include "workspace.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <memory>
 
@@ -471,7 +472,7 @@ void workspace::close() { opened_ = false; }
 
 void workspace::set_message_consumer(message_consumer* consumer) { message_consumer_ = consumer; }
 
-file_manager& workspace::get_file_manager() { return file_manager_; }
+file_manager& workspace::get_file_manager() const { return file_manager_; }
 
 bool workspace::settings_updated()
 {
@@ -654,12 +655,16 @@ bool workspace::is_dependency_(const utils::resource::resource_location& file_lo
 
 parse_result workspace::parse_library(const std::string& library, analyzing_context ctx, library_data data)
 {
+    utils::resource::resource_location url;
     auto& proc_grp = get_proc_grp_by_program(ctx.hlasm_ctx->opencode_location());
     for (auto&& lib : proc_grp.libraries())
     {
-        std::shared_ptr<processor> found = lib->find_file(library);
-        if (found)
-            return found->parse_macro(*this, std::move(ctx), data);
+        if (!lib->has_file(library, &url))
+            continue;
+
+        std::shared_ptr<processor> found = file_manager_.add_processor_file(url);
+        assert(found);
+        return found->parse_macro(*this, std::move(ctx), data);
     }
 
     return false;
@@ -667,34 +672,34 @@ parse_result workspace::parse_library(const std::string& library, analyzing_cont
 
 bool workspace::has_library(const std::string& library, const utils::resource::resource_location& program) const
 {
-    auto& proc_grp = get_proc_grp_by_program(program);
-    for (auto&& lib : proc_grp.libraries())
-    {
-        std::shared_ptr<processor> found = lib->find_file(library);
-        if (found)
-            return true;
-    }
+    const auto& libs = get_proc_grp_by_program(program).libraries();
 
-    return false;
+    return std::any_of(libs.begin(), libs.end(), [&library](const auto& lib) { return lib->has_file(library); });
 }
 
 std::optional<std::pair<std::string, utils::resource::resource_location>> workspace::get_library(
     const std::string& library, const utils::resource::resource_location& program) const
 {
+    utils::resource::resource_location url;
     auto& proc_grp = get_proc_grp_by_program(program);
     for (auto&& lib : proc_grp.libraries())
     {
-        std::shared_ptr<processor> found = lib->find_file(library);
-        if (!found)
+        if (!lib->has_file(library, &url))
             continue;
 
-        auto f = dynamic_cast<file*>(found.get());
-        if (!f) // for now
+        auto content = file_manager_.get_file_content(url);
+        if (!content.has_value())
             return std::nullopt;
 
-        return std::pair<std::string, utils::resource::resource_location>(f->get_text(), f->get_location());
+        return std::make_pair(std::move(content).value(), std::move(url));
     }
     return std::nullopt;
+}
+
+std::vector<std::shared_ptr<library>> workspace::get_libraries(
+    const utils::resource::resource_location& file_location) const
+{
+    return get_proc_grp_by_program(file_location).libraries();
 }
 
 asm_option workspace::get_asm_options(const utils::resource::resource_location& file_location) const

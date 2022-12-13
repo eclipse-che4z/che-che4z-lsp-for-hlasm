@@ -46,31 +46,31 @@ TEST(extension_handling_test, extension_removal)
 
     // file must end with hlasm
     library_local lib(file_mngr, lib_loc, { { ".hlasm" } }, empty_loc);
-    EXPECT_NE(lib.find_file("MAC"), nullptr);
+    EXPECT_TRUE(lib.has_file("MAC"));
 
     // file must end with hlasm
     library_local lib2(file_mngr, lib_loc, { { ".hlasm" } }, empty_loc);
-    EXPECT_NE(lib2.find_file("MAC"), nullptr);
+    EXPECT_TRUE(lib2.has_file("MAC"));
 
     // file must end with asm
     library_local lib3(file_mngr, lib_loc, { { ".asm" } }, empty_loc);
-    EXPECT_EQ(lib3.find_file("MAC"), nullptr);
+    EXPECT_FALSE(lib3.has_file("MAC"));
 
     // test multiple extensions
     library_local lib4(file_mngr, lib2_loc, { { ".hlasm", ".asm" } }, empty_loc);
-    EXPECT_NE(lib4.find_file("MAC"), nullptr);
+    EXPECT_TRUE(lib4.has_file("MAC"));
 
     // test no extensions
     library_local lib5(file_mngr, lib2_loc, { {} }, empty_loc);
-    EXPECT_EQ(lib5.find_file("MAC"), nullptr);
+    EXPECT_FALSE(lib5.has_file("MAC"));
 
     // test no extensions
     library_local lib6(file_mngr, lib2_loc, { { "" } }, empty_loc);
-    EXPECT_EQ(lib6.find_file("MAC"), nullptr);
+    EXPECT_FALSE(lib6.has_file("MAC"));
 
     // tolerate missing dot
     library_local lib7(file_mngr, lib_loc, { { "hlasm", "asm" } }, empty_loc);
-    EXPECT_NE(lib7.find_file("MAC"), nullptr);
+    EXPECT_TRUE(lib7.has_file("MAC"));
 }
 
 TEST(extension_handling_test, legacy_extension_selection)
@@ -79,9 +79,9 @@ TEST(extension_handling_test, legacy_extension_selection)
     resource_location empty_loc;
     library_local lib(file_mngr, lib_loc, { { ".hlasm" }, true }, empty_loc);
 
-    EXPECT_NE(lib.find_file("MAC"), nullptr);
-    lib.collect_diags();
-    const auto& diags = lib.diags();
+    EXPECT_TRUE(lib.has_file("MAC"));
+    std::vector<hlasm_plugin ::parser_library::diagnostic_s> diags;
+    lib.copy_diagnostics(diags);
     EXPECT_TRUE(std::any_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "L0003"; }));
 }
 
@@ -101,9 +101,9 @@ TEST(extension_handling_test, multiple_macro_definitions)
     resource_location empty_loc;
     library_local lib(file_mngr, lib_loc, { { ".hlasm", "" } }, empty_loc);
 
-    EXPECT_NE(lib.find_file("MAC"), nullptr);
-    lib.collect_diags();
-    const auto& diags = lib.diags();
+    EXPECT_TRUE(lib.has_file("MAC"));
+    std::vector<hlasm_plugin ::parser_library::diagnostic_s> diags;
+    lib.copy_diagnostics(diags);
     EXPECT_TRUE(std::any_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "L0004"; }));
 }
 
@@ -113,9 +113,9 @@ TEST(extension_handling_test, no_multiple_macro_definitions)
     resource_location empty_loc;
     library_local lib(file_mngr, lib_loc, { { ".hlasm" } }, empty_loc);
 
-    EXPECT_NE(lib.find_file("MAC"), nullptr);
-    lib.collect_diags();
-    const auto& diags = lib.diags();
+    EXPECT_TRUE(lib.has_file("MAC"));
+    std::vector<hlasm_plugin ::parser_library::diagnostic_s> diags;
+    lib.copy_diagnostics(diags);
     EXPECT_TRUE(std::none_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "L0004"; }));
 }
 
@@ -134,8 +134,8 @@ TEST(extension_handling_test, legacy_extension_selection_file_without_ext)
     resource_location empty_loc;
     library_local lib(file_mngr, lib_loc, { { ".hlasm" }, true }, empty_loc);
 
-    EXPECT_NE(lib.find_file("MAC"), nullptr);
-    lib.collect_diags();
-    const auto& diags = lib.diags();
+    EXPECT_TRUE(lib.has_file("MAC"));
+    std::vector<hlasm_plugin ::parser_library::diagnostic_s> diags;
+    lib.copy_diagnostics(diags);
     EXPECT_TRUE(std::none_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "L0003"; }));
 }

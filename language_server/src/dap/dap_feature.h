@@ -62,6 +62,7 @@ public:
     void on_step_in(const json& request_seq, const json& args);
     void on_variables(const json& request_seq, const json& args);
     void on_continue(const json& request_seq, const json& args);
+    void on_pause(const json& request_seq, const json& args);
 
 private:
     // Inherited via feature

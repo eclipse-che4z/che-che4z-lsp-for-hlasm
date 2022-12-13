@@ -24,8 +24,7 @@ suite('Integration Test Suite', () => {
     suiteSetup(async function () {
         this.timeout(30000);
 
-        await helper.showDocument(workspace_file);
-        editor = helper.get_editor(workspace_file);
+        editor = (await helper.showDocument(workspace_file)).editor;
     });
 
     // open 'open' file, should be recognized as hlasm
@@ -38,12 +37,7 @@ suite('Integration Test Suite', () => {
     // change 'open' file to create diagnostic
     test('Diagnostic test', async () => {
         // register callback to check for the correctness of the diagnostic
-        const diagnostic_event = new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve, reject) => {
-            const listener = vscode.languages.onDidChangeDiagnostics((_) => {
-                listener.dispose();
-                resolve(vscode.languages.getDiagnostics());
-            });
-        });
+        const diagnostic_event = helper.waitForDiagnostics();
         // remove second parameter from LR instruction
         await editor.edit(edit => {
             edit.delete(new vscode.Range(new vscode.Position(2, 6), new vscode.Position(2, 7)));

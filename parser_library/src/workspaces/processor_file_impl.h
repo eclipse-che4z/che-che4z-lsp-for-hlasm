@@ -43,9 +43,6 @@ public:
         parse_lib_provider&, asm_option, std::vector<preprocessor_options>, virtual_file_monitor*) override;
     // Starts parser with in the context of parameter
     parse_result parse_macro(parse_lib_provider&, analyzing_context, library_data) override;
-    // Starts parser with in the context of parameter, but does not affect LSP, HL info or parse_info_updated.
-    // Used by the macro tracer.
-    parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context ctx, library_data) override;
 
     const std::set<utils::resource::resource_location>& dependencies() override;
 

@@ -17,6 +17,7 @@ target_sources(library_test PRIVATE
 	empty_configs.h
 	extension_handling_test.cpp
 	file_manager_impl_test.cpp
+	file_manager_mock.h
 	file_with_text.h
 	files_parse_lib_provider.h
 	instruction_sets_test.cpp

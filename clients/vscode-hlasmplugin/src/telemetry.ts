@@ -14,8 +14,8 @@
 import * as vscode from "vscode";
 
 import TelemetryReporter, { TelemetryEventMeasurements, TelemetryEventProperties } from 'vscode-extension-telemetry';
+import { EXTENSION_ID } from "./extension";
 
-const EXTENSION_ID = "broadcommfd.hlasm-language-support";
 const TELEMETRY_DEFAULT_KEY = "NOT_TELEMETRY_KEY";
 
 // The following line is replaced by base64 encoded telemetry key in the CI

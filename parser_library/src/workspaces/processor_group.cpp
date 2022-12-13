@@ -121,7 +121,7 @@ void processor_group::collect_diags() const
 {
     for (auto&& lib : m_libs)
     {
-        collect_diags_from_child(*lib);
+        lib->copy_diagnostics(diags());
     }
 }
 

@@ -26,30 +26,26 @@ suite('Code actions', () => {
     });
 
     test('Diagnostics not suppressed', async () => {
-        const file = 'code_action_1.hlasm';
-        await helper.showDocument(file);
-        const editor = helper.get_editor(file);
+        const diagnostic_event = helper.waitForDiagnostics();
 
-        await new Promise((resolve, reject) => vscode.languages.setTextDocumentLanguage(editor.document, 'hlasm').then(resolve, reject));
+        const { editor, document } = await helper.showDocument('code_action_1.hlasm', 'hlasm');
 
-        await helper.sleep(1000);
+        await diagnostic_event;
 
-        const codeActionsList: vscode.CodeAction[] = await vscode.commands.executeCommand('vscode.executeCodeActionProvider', editor.document.uri, new vscode.Range(0, 10, 0, 15));
+        const codeActionsList: vscode.CodeAction[] = await vscode.commands.executeCommand('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 10, 0, 15));
 
         assert.equal(codeActionsList.length, 4 + 3);
-    }).timeout(5000).slow(2000);
+    }).timeout(10000).slow(5000);
 
     test('Diagnostics suppressed', async () => {
-        const file = 'code_action_2.hlasm';
-        await helper.showDocument(file);
-        const editor = helper.get_editor(file);
+        const diagnostic_event = helper.waitForDiagnostics();
 
-        await new Promise((resolve, reject) => vscode.languages.setTextDocumentLanguage(editor.document, 'hlasm').then(resolve, reject));
+        const { editor, document } = await helper.showDocument('code_action_2.hlasm', 'hlasm');
 
-        await helper.sleep(1000);
+        await diagnostic_event;
 
-        const codeActionsList: vscode.CodeAction[] = await vscode.commands.executeCommand('vscode.executeCodeActionProvider', editor.document.uri, new vscode.Range(0, 10, 0, 15));
+        const codeActionsList: vscode.CodeAction[] = await vscode.commands.executeCommand('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 10, 0, 15));
 
         assert.equal(codeActionsList.length, 1);
-    }).timeout(5000).slow(2000);
+    }).timeout(10000).slow(5000);
 });

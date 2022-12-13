@@ -40,8 +40,6 @@ public:
         parse_lib_provider&, asm_option, std::vector<preprocessor_options>, virtual_file_monitor*) = 0;
     // starts parser with in the context of parameter
     virtual parse_result parse_macro(parse_lib_provider&, analyzing_context, library_data) = 0;
-    // starts parser to parse macro but does not update parse info or diagnostics
-    virtual parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context, library_data) = 0;
 
 protected:
     ~processor() = default;
