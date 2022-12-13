@@ -90,25 +90,18 @@ void server::message_received(const json& message)
     auto params_found = message.find("params");
     auto method_found = message.find("method");
 
-    if (params_found == message.end() || method_found == message.end())
+    if (method_found == message.end())
     {
-        LOG_WARNING("Method or params missing from received request or notification");
-        send_telemetry_error("lsp_server/method_or_params_missing");
+        LOG_WARNING("Method missing from received request or notification");
+        send_telemetry_error("lsp_server/method_missing");
         return;
     }
 
     try
     {
-        if (id_found == message.end())
-        {
-            // notification
-            call_method(method_found.value().get<std::string>(), nlohmann::json(), params_found.value());
-        }
-        else
-        {
-            // method
-            call_method(method_found.value().get<std::string>(), id_found.value(), params_found.value());
-        }
+        call_method(method_found.value().get<std::string>(),
+            id_found == message.end() ? nlohmann::json() : id_found.value(),
+            params_found == message.end() ? nlohmann::json() : params_found.value());
     }
     catch (const std::exception& e)
     {

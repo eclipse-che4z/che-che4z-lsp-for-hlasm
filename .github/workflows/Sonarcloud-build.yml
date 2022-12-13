@@ -46,7 +46,7 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Debug
           -DCMAKE_C_COMPILER=clang-14
           -DCMAKE_CXX_COMPILER=clang++-14
-          -DCMAKE_CXX_FLAGS="-fprofile-instr-generate -fcoverage-mapping"
+          -DCMAKE_CXX_FLAGS="-fprofile-instr-generate -fcoverage-mapping -mllvm -runtime-counter-relocation"
           -DWITH_LIBCXX=Off
           ../
       - name: Sonar build wrapper download
@@ -64,11 +64,11 @@ jobs:
           LLVM_PROFILE_FILE="server.rawprof" ./server_test
           LLVM_PROFILE_FILE="utils.rawprof" ./hlasm_utils_test
       - name: Extension Test
-        run: cd clients/vscode-hlasmplugin && xvfb-run -a npx c8 --reporter=lcovonly --allowExternal --exclude='**/.vscode-test/**' --exclude='**/test/**' --exclude='**/build/**' npm test
+        run: cd clients/vscode-hlasmplugin && LLVM_PROFILE_FILE="%c$(pwd)/../../build/bin/language.rawprof" xvfb-run -a npx c8 --reporter=lcovonly --allowExternal --exclude='**/.vscode-test/**' --exclude='**/test/**' --exclude='**/build/**' npm test
       - name: Merge raw profiles
-        run: cd build/bin && llvm-profdata-14 merge -o hlasm_profile library.rawprof server.rawprof utils.rawprof
+        run: cd build/bin && llvm-profdata-14 merge -o hlasm_profile language.rawprof library.rawprof server.rawprof utils.rawprof
       - name: Generate lcov coverage
-        run: cd build/bin && llvm-cov-14 show -instr-profile hlasm_profile library_test -object server_test -object hlasm_utils_test > ../coverage.txt
+        run: cd build/bin && llvm-cov-14 show -instr-profile hlasm_profile language_server -object library_test -object server_test -object hlasm_utils_test > ../coverage.txt
       - name: Pull request event info
         if: github.event_name == 'pull_request'
         run: |
@@ -91,5 +91,9 @@ jobs:
             clients/vscode-hlasmplugin/coverage/lcov.info
             pr-info/
             !build/bin/
+            !build/build-wrapper*
             !build/_deps/**/.git/
+            !build/_deps/**/*.jar
+            !build/_deps/**/*.class
+            !build/lib/
             !build/**/CMakeFiles/
