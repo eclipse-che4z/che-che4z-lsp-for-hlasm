@@ -19,6 +19,7 @@ target_sources(library_test PRIVATE
 	copy_test.cpp
 	db2_preprocessor_test.cpp
 	dc_test.cpp
+	end_instr_test.cpp
 	endevor_preprocessor_test.cpp
 	equ_test.cpp
 	label_test.cpp
@@ -29,7 +30,7 @@ target_sources(library_test PRIVATE
 	occurence_collector_test.cpp
 	opsyn_test.cpp
 	org_test.cpp
+	preprocessor_utils_test.cpp
 	start_test.cpp
-	end_instr_test.cpp
 )
 

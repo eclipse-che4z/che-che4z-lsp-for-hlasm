@@ -12,6 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <memory>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
@@ -19,8 +21,11 @@
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
 #include "analyzer.h"
+#include "diagnostic_consumer.h"
+#include "document.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
+#include "semantics/source_info_processor.h"
 #include "utils/resource_location.h"
 
 using namespace hlasm_plugin::parser_library::processing;
@@ -35,12 +40,11 @@ public:
 
     std::unique_ptr<preprocessor> create_preprocessor(library_fetcher libs)
     {
-        return preprocessor::create(endevor_preprocessor_options(), libs, &m_diags, m_src_info, m_ids);
+        return preprocessor::create(endevor_preprocessor_options(), libs, &m_diags, m_src_info);
     }
 
 protected:
     semantics::source_info_processor m_src_info;
-    context::id_storage m_ids;
     diagnostic_op_consumer_container m_diags;
     int m_callback_count = 0;
 };

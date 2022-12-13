@@ -15,8 +15,15 @@
 #ifndef SEMANTICS_STATEMENT_H
 #define SEMANTICS_STATEMENT_H
 
+#include <span>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "context/hlasm_statement.h"
+#include "context/id_storage.h"
 #include "diagnostic.h"
+#include "range.h"
 #include "statement_fields.h"
 
 // this file contains inherited structures from hlasm_statement that are used during the parsing
@@ -158,35 +165,49 @@ struct statement_si_defer_done : public complete_statement
     const range& stmt_range_ref() const override { return deferred_stmt->stmt_range_ref(); }
 };
 
-struct preprocessor_statement_si
-    : public statement_si // todo think if the statement_si inheritance is too heavy for preprocessor statements
+struct preproc_details
 {
-    context::id_index m_resemblence;
+    struct name_range
+    {
+        std::string name;
+        range r;
 
-    preprocessor_statement_si(range stmt_range,
-        label_si label,
-        instruction_si instruction,
-        operands_si operands,
-        remarks_si remarks,
-        context::id_index resemblence)
-        : statement_si(std::move(stmt_range),
-            std::move(label),
-            std::move(instruction),
-            std::move(operands),
-            std::move(remarks),
-            {})
-        , m_resemblence(resemblence)
+        bool operator==(const name_range&) const = default;
+    };
+
+    template<typename ITEM_TYPE>
+    struct item_list
+    {
+        std::vector<ITEM_TYPE> items;
+        range overall_r;
+    };
+
+    range stmt_r;
+    name_range label;
+    name_range instruction;
+    item_list<name_range> operands;
+    item_list<range> remarks;
+};
+
+struct preprocessor_statement_si
+{
+    preproc_details m_details;
+    const bool m_copylike;
+
+    preprocessor_statement_si(preproc_details details, bool copylike)
+        : m_details(std::move(details))
+        , m_copylike(copylike)
     {}
 };
 
 struct endevor_statement_si : public preprocessor_statement_si
 {
-    endevor_statement_si(range stmt_range,
-        range instruction_range,
-        std::string_view copy_member,
-        range copy_member_range,
-        remarks_si remarks,
-        context::id_storage& ids);
+    explicit endevor_statement_si(preproc_details details);
+};
+
+struct cics_statement_si : public preprocessor_statement_si
+{
+    explicit cics_statement_si(preproc_details details);
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

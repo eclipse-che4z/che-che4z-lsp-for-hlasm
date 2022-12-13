@@ -15,10 +15,33 @@
 #ifndef PROCESSING_ASM_PROCESSOR_H
 #define PROCESSING_ASM_PROCESSOR_H
 
+#include <functional>
+#include <memory>
+#include <unordered_map>
+
+#include "checking/data_definition/data_def_type_base.h"
+#include "context/id_storage.h"
 #include "low_language_processor.h"
-#include "processing/opencode_provider.h"
-#include "semantics/operand_impls.h"
-#include "workspaces/parse_lib_provider.h"
+
+namespace hlasm_plugin::parser_library {
+struct analyzing_context;
+class diagnosable_ctx;
+struct range;
+} // namespace hlasm_plugin::parser_library
+
+namespace hlasm_plugin::parser_library::processing {
+class branching_provider;
+class opencode_provider;
+class processing_manager;
+class statement_fields_parser;
+
+struct rebuit_statement;
+struct resolved_statement;
+} // namespace hlasm_plugin::parser_library::processing
+
+namespace hlasm_plugin::parser_library::workspaces {
+class parse_lib_provider;
+}
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -28,7 +51,6 @@ class asm_processor : public low_language_processor
     using process_table_t = std::unordered_map<context::id_index, std::function<void(rebuilt_statement)>>;
 
     const process_table_t table_;
-    checking::assembler_checker checker_;
 
 public:
     asm_processor(analyzing_context ctx,
@@ -50,8 +72,7 @@ public:
     static bool process_copy(const semantics::complete_statement& stmt,
         analyzing_context ctx,
         workspaces::parse_lib_provider& lib_provider,
-        diagnosable_ctx* diagnoser,
-        bool enter_copy = true);
+        diagnosable_ctx* diagnoser);
 
 private:
     opencode_provider* open_code_;

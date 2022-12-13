@@ -22,9 +22,11 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "protocol.h"
+#include "range.h"
 
 namespace hlasm_plugin::utils::resource {
 class resource_location;
@@ -714,6 +716,8 @@ struct diagnostic_op
     static diagnostic_op warn_CIC001(const range& range);
 
     static diagnostic_op warn_CIC002(const range& range, std::string_view variable_name);
+
+    static diagnostic_op warn_CIC003(const range& range);
 
     static diagnostic_op error_END001(const range& range, std::string_view lib);
 

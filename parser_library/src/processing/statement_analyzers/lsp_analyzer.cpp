@@ -15,9 +15,24 @@
 #include "lsp_analyzer.h"
 
 #include <algorithm>
+#include <array>
+#include <utility>
 
+#include "context/hlasm_context.h"
+#include "context/id_storage.h"
+#include "lsp/lsp_context.h"
+#include "lsp/text_data_view.h"
+#include "occurence_collector.h"
+#include "processing/statement.h"
+#include "processing/statement_analyzers/occurence_collector.h"
+#include "processing/statement_processors/copy_processing_info.h"
+#include "processing/statement_processors/macrodef_processing_info.h"
 #include "processing/statement_processors/macrodef_processor.h"
-
+#include "range.h"
+#include "semantics/statement.h"
+#include "semantics/statement_fields.h"
+#include "semantics/variable_symbol.h"
+#include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -111,11 +126,8 @@ void lsp_analyzer::analyze(const semantics::preprocessor_statement_si& statement
 {
     collect_occurences(lsp::occurence_kind::ORD, statement);
 
-    if (statement.m_resemblence == context::id_storage::well_known::COPY)
-    {
-        if (auto sym_expr = get_single_mach_symbol(statement.operands_ref().value))
-            add_copy_operand(sym_expr->value, sym_expr->get_range(), false);
-    }
+    if (const auto& operands = statement.m_details.operands.items; statement.m_copylike && operands.size() == 1)
+        add_copy_operand(hlasm_ctx_.ids().add(operands.front().name), operands.front().r, false);
 
     assign_statement_occurences(hlasm_ctx_.opencode_location());
 }
@@ -205,11 +217,22 @@ void lsp_analyzer::collect_occurences(
 
 void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const semantics::preprocessor_statement_si& statement)
 {
-    occurence_collector collector(kind, hlasm_ctx_, stmt_occurences_, false);
+    const bool evaluated_model = false;
 
-    collect_occurence(statement.label_ref(), collector);
-    collect_occurence(statement.instruction_ref(), collector);
-    collect_occurence(statement.operands_ref(), collector);
+    occurence_collector collector(kind, hlasm_ctx_, stmt_occurences_, evaluated_model);
+    const auto& details = statement.m_details;
+
+    collector.occurences.emplace_back(
+        lsp::occurence_kind::ORD, hlasm_ctx_.ids().add(details.label.name), details.label.r, evaluated_model);
+
+    collector.occurences.emplace_back(lsp::occurence_kind::INSTR,
+        hlasm_ctx_.ids().add(details.instruction.name),
+        details.instruction.r,
+        evaluated_model);
+
+    for (const auto& ops : details.operands.items)
+        collector.occurences.emplace_back(
+            lsp::occurence_kind::ORD, hlasm_ctx_.ids().add(ops.name), ops.r, evaluated_model);
 }
 
 void lsp_analyzer::collect_occurence(const semantics::label_si& label, occurence_collector& collector)
@@ -247,9 +270,6 @@ void lsp_analyzer::collect_occurence(const semantics::instruction_si& instructio
             collector.occurences.emplace_back(
                 opcode.opcode, macro_def ? std::move(*macro_def) : context::macro_def_ptr {}, instruction.field_range);
     }
-    else if (instruction.type == semantics::instruction_si_type::PREPROC)
-        collector.occurences.emplace_back(
-            std::get<context::id_index>(instruction.value), context::macro_def_ptr {}, instruction.field_range);
 }
 
 void lsp_analyzer::collect_occurence(const semantics::operands_si& operands, occurence_collector& collector)
@@ -261,8 +281,6 @@ void lsp_analyzer::collect_occurence(const semantics::deferred_operands_si& oper
 {
     std::for_each(operands.vars.begin(), operands.vars.end(), [&](const auto& v) { collector.get_occurence(*v); });
 }
-
-
 
 bool lsp_analyzer::is_LCL_GBL(
     const processing::resolved_statement& statement, context::SET_t_enum& set_type, bool& global) const
@@ -281,8 +299,6 @@ bool lsp_analyzer::is_LCL_GBL(
 
     return false;
 }
-
-
 
 bool lsp_analyzer::is_SET(const processing::resolved_statement& statement, context::SET_t_enum& set_type) const
 {

@@ -16,6 +16,8 @@
 
 #include "../common_testing.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
+#include "expressions/mach_expr_term.h"
+#include "expressions/mach_operator.h"
 #include "library_info_transitional.h"
 
 // test for

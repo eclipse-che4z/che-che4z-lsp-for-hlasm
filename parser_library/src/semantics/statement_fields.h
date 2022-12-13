@@ -97,7 +97,6 @@ enum class instruction_si_type
 {
     ORD,
     CONC,
-    PREPROC,
     EMPTY
 };
 
@@ -106,8 +105,8 @@ using instruction_si_value_t = std::variant<context::id_index, concat_chain>;
 // struct holding semantic information (si) about instruction field
 struct instruction_si
 {
-    instruction_si(range field_range, context::id_index value, bool preproc = false)
-        : type(preproc ? instruction_si_type::PREPROC : instruction_si_type::ORD)
+    instruction_si(range field_range, context::id_index value)
+        : type(instruction_si_type::ORD)
         , field_range(std::move(field_range))
         , value(std::move(value))
     {}

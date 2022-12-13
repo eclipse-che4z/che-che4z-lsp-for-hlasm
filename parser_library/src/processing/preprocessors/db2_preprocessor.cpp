@@ -16,17 +16,22 @@
 #include <cassert>
 #include <cctype>
 #include <charconv>
+#include <memory>
 #include <regex>
 #include <span>
+#include <string>
+#include <string_view>
 #include <tuple>
 #include <utility>
+#include <vector>
 
+#include "diagnostic_consumer.h"
 #include "lexing/logical_line.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
 #include "semantics/source_info_processor.h"
-#include "semantics/statement.h"
 #include "utils/concat.h"
+#include "utils/resource_location.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace {
@@ -45,7 +50,7 @@ namespace hlasm_plugin::parser_library::processing {
 namespace {
 using utils::concat;
 
-class db2_preprocessor final : public preprocessor
+class db2_preprocessor final : public preprocessor // TODO Take DBCS into account
 {
     lexing::logical_line m_logical_line;
     std::string m_operands;
@@ -828,8 +833,7 @@ public:
 std::unique_ptr<preprocessor> preprocessor::create(const db2_preprocessor_options& opts,
     library_fetcher libs,
     diagnostic_op_consumer* diags,
-    semantics::source_info_processor& src_proc,
-    context::id_storage& ids)
+    semantics::source_info_processor& src_proc)
 {
     return std::make_unique<db2_preprocessor>(opts, std::move(libs), diags);
 }

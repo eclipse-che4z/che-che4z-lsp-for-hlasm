@@ -15,14 +15,12 @@
 #ifndef HLASMPARSER_PARSERLIBRARY_PROCESSING_PREPROCESSOR_H
 #define HLASMPARSER_PARSERLIBRARY_PROCESSING_PREPROCESSOR_H
 
-#include <deque>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #include "diagnostic_consumer.h"
@@ -43,11 +41,6 @@ namespace semantics {
 class source_info_processor;
 struct preprocessor_statement_si;
 } // namespace semantics
-
-namespace context {
-class id_storage;
-}
-
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::processing {
@@ -70,23 +63,16 @@ public:
 
     virtual document generate_replacement(document doc) = 0;
 
-    static std::unique_ptr<preprocessor> create(const cics_preprocessor_options&,
-        library_fetcher,
-        diagnostic_op_consumer*,
-        semantics::source_info_processor&,
-        context::id_storage&);
+    static std::unique_ptr<preprocessor> create(
+        const cics_preprocessor_options&, library_fetcher, diagnostic_op_consumer*, semantics::source_info_processor&);
 
-    static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&,
-        library_fetcher,
-        diagnostic_op_consumer*,
-        semantics::source_info_processor&,
-        context::id_storage&);
+    static std::unique_ptr<preprocessor> create(
+        const db2_preprocessor_options&, library_fetcher, diagnostic_op_consumer*, semantics::source_info_processor&);
 
     static std::unique_ptr<preprocessor> create(const endevor_preprocessor_options&,
         library_fetcher,
         diagnostic_op_consumer*,
-        semantics::source_info_processor&,
-        context::id_storage&);
+        semantics::source_info_processor&);
 
     virtual std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> take_statements();
 
@@ -110,8 +96,9 @@ protected:
 
     static bool is_continued(std::string_view s);
 
-    static void do_highlighting(
-        const semantics::preprocessor_statement_si& stmt, semantics::source_info_processor& src_proc);
+    virtual void do_highlighting(const semantics::preprocessor_statement_si& stmt,
+        semantics::source_info_processor& src_proc,
+        size_t continue_column = 15) const;
 
     void append_included_member(std::unique_ptr<included_member_details> details);
     void append_included_members(std::vector<std::unique_ptr<included_member_details>> details);

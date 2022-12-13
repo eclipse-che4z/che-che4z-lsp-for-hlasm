@@ -14,7 +14,10 @@
 
 #include "preprocessor.h"
 
+#include <iterator>
+
 #include "lexing/logical_line.h"
+#include "protocol.h"
 #include "semantics/source_info_processor.h"
 #include "semantics/statement.h"
 #include "utils/unicode_text.h"
@@ -66,22 +69,26 @@ std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> preprocessor:
     return std::move(m_statements);
 }
 
-void preprocessor::do_highlighting(
-    const semantics::preprocessor_statement_si& stmt, semantics::source_info_processor& src_proc)
+void preprocessor::do_highlighting(const semantics::preprocessor_statement_si& stmt,
+    semantics::source_info_processor& src_proc,
+    size_t continue_column) const
 {
-    if (stmt.label_ref().type != semantics::label_si_type::EMPTY)
-        src_proc.add_hl_symbol(token_info(stmt.label_ref().field_range, semantics::hl_scopes::label));
+    const auto& details = stmt.m_details;
 
-    src_proc.add_hl_symbol(token_info(stmt.instruction_ref().field_range, semantics::hl_scopes::instruction));
+    if (!details.label.name.empty())
+        src_proc.add_hl_symbol(token_info(details.label.r, semantics::hl_scopes::label), continue_column);
 
-    for (const auto& op : stmt.operands_ref().value)
+    src_proc.add_hl_symbol(token_info(details.instruction.r, semantics::hl_scopes::instruction), continue_column);
+
+    for (const auto& operand : details.operands.items)
     {
-        if (op)
-            src_proc.add_hl_symbol(token_info(op->operand_range, semantics::hl_scopes::operand));
+        src_proc.add_hl_symbol(token_info(operand.r, semantics::hl_scopes::operand), continue_column);
     }
 
-    if (stmt.remarks_ref().value.size())
-        src_proc.add_hl_symbol(token_info(stmt.remarks_ref().field_range, semantics::hl_scopes::remark));
+    for (const auto& remark_r : details.remarks.items)
+    {
+        src_proc.add_hl_symbol(token_info(remark_r, semantics::hl_scopes::remark), continue_column);
+    }
 }
 
 void preprocessor::append_included_member(std::unique_ptr<included_member_details> details)

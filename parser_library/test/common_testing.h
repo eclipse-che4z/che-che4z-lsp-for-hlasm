@@ -17,9 +17,12 @@
 
 #include <algorithm>
 #include <functional>
+#include <initializer_list>
 #include <iterator>
 #include <span>
+#include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -39,11 +42,6 @@ using namespace hlasm_plugin::parser_library::processing;
 using namespace hlasm_plugin::parser_library::expressions;
 
 const size_t size_t_zero = static_cast<size_t>(0);
-
-namespace antlr4 {
-class ParserRuleContext;
-} // namespace antlr4
-std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_library::parsing::hlasmparser& h_parser);
 
 template<typename T>
 std::optional<T> get_var_value(hlasm_context& ctx, std::string name)

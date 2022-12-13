@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "semantics/operand_impls.h"
 
 // tests for parsing model statements:
 // various invalid statements parsing

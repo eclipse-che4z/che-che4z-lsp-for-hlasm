@@ -12,10 +12,18 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <algorithm>
+#include <ostream>
+#include <string>
+
 #include "gtest/gtest.h"
 
 #include "../gtest_stringers.h"
 #include "analyzer.h"
+#include "preprocessor_options.h"
+#include "protocol.h"
+#include "semantics/highlighting_info.h"
+#include "utils/resource_location.h"
 #include "workspaces/parse_lib_provider.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -399,6 +407,62 @@ TEST(highlighting, endevor_preprocessor_statement)
         token_info({ { 1, 0 }, { 1, 4 } }, hl_scopes::instruction),
         token_info({ { 1, 6 }, { 1, 12 } }, hl_scopes::operand),
         token_info({ { 1, 13 }, { 1, 20 } }, hl_scopes::remark),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}
+
+TEST(highlighting, cics_preprocessor_statement)
+{
+    const std::string contents = R"(
+A   EXEC CICS ABEND ABCODE('1234')                                      00000000
+    EXEC CICS ABEND                                                    X
+ ABCODE('1234')
+    EXEC CICS ABEND ABCODE('12                                         X00000001
+ 34') NODUMP
+
+B   L 0,DFHRESP ( NORMAL ) bla                                         X00000002
+               bla                                                     XYZ
+               bla
+                                                                       X00000004
+               L 1,DFHRESP(NORMAL))";
+
+    analyzer a(
+        contents, analyzer_options { source_file_loc, cics_preprocessor_options(), collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.source_processor().semantic_tokens();
+    const semantics::lines_info expected = {
+        token_info({ { 1, 0 }, { 1, 1 } }, hl_scopes::label),
+        token_info({ { 1, 4 }, { 1, 19 } }, hl_scopes::instruction),
+        token_info({ { 1, 20 }, { 1, 34 } }, hl_scopes::operand),
+        token_info({ { 1, 72 }, { 1, 80 } }, hl_scopes::ignored),
+        token_info({ { 2, 4 }, { 2, 19 } }, hl_scopes::instruction),
+        token_info({ { 2, 71 }, { 2, 72 } }, hl_scopes::continuation),
+        token_info({ { 3, 1 }, { 3, 15 } }, hl_scopes::operand),
+        token_info({ { 4, 4 }, { 4, 19 } }, hl_scopes::instruction),
+        token_info({ { 4, 20 }, { 4, 71 } }, hl_scopes::operand),
+        token_info({ { 4, 71 }, { 4, 72 } }, hl_scopes::continuation),
+        token_info({ { 4, 72 }, { 4, 80 } }, hl_scopes::ignored),
+        token_info({ { 5, 1 }, { 5, 5 } }, hl_scopes::operand),
+        token_info({ { 5, 6 }, { 5, 12 } }, hl_scopes::operand),
+
+        token_info({ { 7, 0 }, { 7, 1 } }, hl_scopes::label),
+        token_info({ { 7, 4 }, { 7, 5 } }, hl_scopes::instruction),
+        token_info({ { 7, 6 }, { 7, 7 } }, hl_scopes::operand),
+        token_info({ { 7, 8 }, { 7, 26 } }, hl_scopes::operand),
+        token_info({ { 7, 27 }, { 7, 71 } }, hl_scopes::remark),
+        token_info({ { 7, 71 }, { 7, 72 } }, hl_scopes::continuation),
+        token_info({ { 7, 72 }, { 7, 80 } }, hl_scopes::ignored),
+        token_info({ { 8, 15 }, { 8, 71 } }, hl_scopes::remark),
+        token_info({ { 8, 71 }, { 8, 72 } }, hl_scopes::continuation),
+        token_info({ { 8, 72 }, { 8, 74 } }, hl_scopes::ignored),
+        token_info({ { 9, 15 }, { 9, 18 } }, hl_scopes::remark),
+        token_info({ { 10, 71 }, { 10, 72 } }, hl_scopes::continuation),
+        token_info({ { 10, 72 }, { 10, 80 } }, hl_scopes::ignored),
+        token_info({ { 11, 15 }, { 11, 16 } }, hl_scopes::instruction),
+        token_info({ { 11, 17 }, { 11, 18 } }, hl_scopes::operand),
+        token_info({ { 11, 19 }, { 11, 34 } }, hl_scopes::operand),
     };
 
     EXPECT_EQ(tokens, expected);

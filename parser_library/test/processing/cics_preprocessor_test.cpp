@@ -12,10 +12,17 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <initializer_list>
+#include <ostream>
+#include <string>
+#include <string_view>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
+#include "analyzer.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
 #include "semantics/source_info_processor.h"
@@ -47,10 +54,9 @@ TEST(cics_preprocessor, asm_xopts_parsing)
         })
     {
         semantics::source_info_processor src_info(false);
-        context::id_storage ids;
 
         auto p = preprocessor::create(
-            cics_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr, src_info, ids);
+            cics_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr, src_info);
 
         auto result = p->generate_replacement(document(text_template));
         EXPECT_GT(result.size(), 0);
@@ -82,12 +88,11 @@ std::ostream& operator<<(std::ostream& os, const cics_preprocessor_tests_basics_
 TEST_P(cics_preprocessor_tests, basics)
 {
     semantics::source_info_processor src_info(false);
-    context::id_storage ids;
     const auto& [input, expected] = GetParam();
     auto [text_template, config] = input;
 
     auto p = preprocessor::create(
-        config, [](std::string_view) { return std::nullopt; }, nullptr, src_info, ids);
+        config, [](std::string_view) { return std::nullopt; }, nullptr, src_info);
 
     auto result = p->generate_replacement(document(text_template));
 
@@ -469,6 +474,26 @@ AAAAAA   SAM31
     a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CIC001" }));
+}
+
+TEST(cics_preprocessor, check_missing_command)
+{
+    const std::string input = R"(
+         MACRO
+         DFHECALL
+         MEND
+         MACRO
+         DFHEIMSG
+         MEND
+
+SPACE    EXEC CICS 
+NOSPACE  EXEC CICS)";
+    analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CIC003", "CIC003" }));
 }
 
 TEST(cics_preprocessor, check_null_argument_message)

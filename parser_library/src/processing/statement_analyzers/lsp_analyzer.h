@@ -16,12 +16,51 @@
 #define PROCESSING_LSP_ANALYZER_H
 
 #include <array>
+#include <string>
 
-#include "lsp/lsp_context.h"
-#include "occurence_collector.h"
+#include "context/common_types.h"
+#include "context/copy_member.h"
+#include "context/macro.h"
+#include "lsp/macro_info.h"
+#include "lsp/symbol_occurence.h"
 #include "processing/processing_format.h"
-#include "processing/statement.h"
+#include "processing/statement_providers/statement_provider_kind.h"
 #include "statement_analyzer.h"
+
+namespace hlasm_plugin::parser_library {
+struct range;
+} // namespace hlasm_plugin::parser_library
+
+namespace hlasm_plugin::parser_library::context {
+class hlasm_context;
+class id_index;
+} // namespace hlasm_plugin::parser_library::context
+
+namespace hlasm_plugin::parser_library::lsp {
+class lsp_context;
+} // namespace hlasm_plugin::parser_library::lsp
+
+namespace hlasm_plugin::parser_library::processing {
+struct copy_processing_result;
+struct macrodef_processing_result;
+struct macrodef_start_data;
+struct resolved_statement;
+
+class occurence_collector;
+} // namespace hlasm_plugin::parser_library::processing
+
+namespace hlasm_plugin::parser_library::semantics {
+struct deferred_operands_si;
+struct instruction_si;
+struct label_si;
+struct operands_si;
+struct preprocessor_statement_si;
+struct variable_symbol;
+} // namespace hlasm_plugin::parser_library::semantics
+
+namespace hlasm_plugin::utils::resource {
+class resource_location;
+} // namespace hlasm_plugin::utils::resource
 
 namespace hlasm_plugin::parser_library::processing {
 

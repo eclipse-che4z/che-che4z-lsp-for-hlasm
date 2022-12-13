@@ -14,4 +14,6 @@ target_sources(parser_library PRIVATE
 	cics_preprocessor.cpp
 	db2_preprocessor.cpp
 	endevor_preprocessor.cpp
+	preprocessor_utils.cpp
+	preprocessor_utils.h
 )

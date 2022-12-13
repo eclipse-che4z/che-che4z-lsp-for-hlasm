@@ -15,7 +15,6 @@
 #include "analyzer.h"
 
 #include "hlasmparser_multiline.h"
-#include "parsing/error_strategy.h"
 #include "processing/opencode_provider.h"
 #include "processing/preprocessor.h"
 
@@ -52,13 +51,12 @@ workspaces::parse_lib_provider& analyzer_options::get_lib_provider() const
 
 std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(processing::library_fetcher asm_lf,
     diagnostic_op_consumer& diag_consumer,
-    semantics::source_info_processor& src_proc,
-    context::id_storage& ids) const
+    semantics::source_info_processor& src_proc) const
 {
-    const auto transform_preprocessor = [&asm_lf, &diag_consumer, &src_proc, &ids](const preprocessor_options& po) {
+    const auto transform_preprocessor = [&asm_lf, &diag_consumer, &src_proc](const preprocessor_options& po) {
         return std::visit(
-            [&asm_lf, &diag_consumer, &src_proc, &ids](const auto& p) -> std::unique_ptr<processing::preprocessor> {
-                return processing::preprocessor::create(p, std::move(asm_lf), &diag_consumer, src_proc, ids);
+            [&asm_lf, &diag_consumer, &src_proc](const auto& p) -> std::unique_ptr<processing::preprocessor> {
+                return processing::preprocessor::create(p, asm_lf, &diag_consumer, src_proc);
             },
             po);
     };
@@ -119,8 +117,7 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
                     [libs = &opts.get_lib_provider(), program = opts.file_loc](
                         std::string_view library) { return libs->get_library(std::string(library), program); },
                     *this,
-                    src_proc_,
-                    ctx_.hlasm_ctx->ids()),
+                    src_proc_),
                 opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
                                                                : processing::opencode_provider_options {},
                 opts.vf_monitor),

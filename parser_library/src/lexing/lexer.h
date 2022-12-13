@@ -17,24 +17,21 @@
 
 #include <memory>
 #include <queue>
-#include <set>
-#include <string_view>
+#include <string>
 
 #include "antlr4-runtime.h"
 
-#include "input_source.h"
 #include "parser_library_export.h"
 #include "range.h"
 #include "semantics/source_info_processor.h"
-#include "token.h"
 #include "token_factory.h"
 
 
 namespace hlasm_plugin::parser_library::lexing {
-
 class input_source;
 using token_ptr = std::unique_ptr<antlr4::Token>;
 using char_t = char32_t;
+
 class lexer final : public antlr4::TokenSource
 {
 public:

@@ -15,22 +15,31 @@
 #ifndef HLASMPARSER_PARSERLIBRARY_ANALYZER_H
 #define HLASMPARSER_PARSERLIBRARY_ANALYZER_H
 
+#include <atomic>
+#include <memory>
 #include <optional>
+#include <string>
+#include <utility>
 #include <variant>
+#include <vector>
 
 #include "analyzing_context.h"
+#include "compiler_options.h"
 #include "context/hlasm_context.h"
+#include "context/id_storage.h"
 #include "diagnosable_ctx.h"
-#include "lexing/token_stream.h"
-#include "lsp/lsp_context.h"
-#include "parsing/parser_error_listener.h"
 #include "preprocessor_options.h"
+#include "processing/processing_format.h"
 #include "processing/processing_manager.h"
+#include "processing/statement_fields_parser.h"
+#include "protocol.h"
+#include "semantics/source_info_processor.h"
+#include "utils/resource_location.h"
 #include "virtual_file_monitor.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::parsing {
-class hlasmparser;
+class hlasmparser_multiline;
 } // namespace hlasm_plugin::parser_library::parsing
 
 namespace hlasm_plugin::parser_library {
@@ -74,10 +83,8 @@ class analyzer_options
     context::hlasm_context& get_hlasm_context();
     analyzing_context& get_context();
     workspaces::parse_lib_provider& get_lib_provider() const;
-    std::unique_ptr<processing::preprocessor> get_preprocessor(processing::library_fetcher,
-        diagnostic_op_consumer&,
-        semantics::source_info_processor&,
-        context::id_storage& ids) const;
+    std::unique_ptr<processing::preprocessor> get_preprocessor(
+        processing::library_fetcher, diagnostic_op_consumer&, semantics::source_info_processor&) const;
 
     friend class analyzer;
 

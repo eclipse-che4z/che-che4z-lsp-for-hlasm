@@ -15,10 +15,10 @@
 #ifndef SOURCE_INFO_PROC_INFO
 #define SOURCE_INFO_PROC_INFO
 
-#include <memory>
 #include <vector>
 
 #include "highlighting_info.h"
+#include "protocol.h"
 
 namespace hlasm_plugin::parser_library::semantics {
 
@@ -30,9 +30,11 @@ public:
 
     // takes vector of highlighting symbols and processes them into highlighting info for further propagation
     void process_hl_symbols(std::vector<token_info> symbols);
+    void process_hl_symbols(std::vector<token_info> symbols, size_t continue_column);
 
     // add one hl symbol to the highlighting info
     void add_hl_symbol(token_info symbol);
+    void add_hl_symbol(token_info symbol, size_t continue_column);
 
     const lines_info& semantic_tokens() const;
 

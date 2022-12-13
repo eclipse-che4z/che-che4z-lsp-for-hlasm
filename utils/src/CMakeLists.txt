@@ -17,6 +17,7 @@ target_sources(hlasm_utils PRIVATE
 	path_conversions.cpp
 	platform.cpp
 	resource_location.cpp
+	string_operations.cpp
 	unicode_text.cpp
 )
 

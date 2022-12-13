@@ -14,10 +14,7 @@
 
 #include "diagnostic.h"
 
-#include <string>
-#include <string_view>
 #include <type_traits>
-#include <utility>
 
 #include "utils/concat.h"
 #include "utils/resource_location.h"
@@ -2377,6 +2374,12 @@ diagnostic_op diagnostic_op::warn_CIC002(const range& range, std::string_view va
         "CIC002",
         concat("CICS preprocessor - ", variable_name, " argument cannot be NULL"),
         range);
+}
+
+diagnostic_op diagnostic_op::warn_CIC003(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::warning, "CIC003", std::string("CICS preprocessor - missing CICS command"), range);
 }
 
 diagnostic_op diagnostic_op::error_END001(const range& range, std::string_view lib)
