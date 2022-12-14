@@ -26,6 +26,12 @@ struct string_hasher
         return hasher(s);
     }
 };
+
+constexpr size_t hash_combine(std::size_t old, std::size_t next)
+{
+    return old ^ (next + 0x9e3779b9 + (old << 6) + (old >> 2));
+}
+
 } // namespace hlasm_plugin::utils::hashers
 
 #endif

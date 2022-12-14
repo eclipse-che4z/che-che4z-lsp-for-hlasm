@@ -28,9 +28,11 @@
 #include "mach_expr_term.h"
 #include "mach_expr_visitor.h"
 #include "semantics/collector.h"
+#include "utils/general_hashers.h"
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::expressions {
+using utils::hashers::hash_combine;
 
 constexpr char V_type = 'V';
 

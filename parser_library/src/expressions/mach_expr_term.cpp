@@ -23,9 +23,11 @@
 #include "context/ordinary_assembly/symbol_value.h"
 #include "ebcdic_encoding.h"
 #include "mach_expr_visitor.h"
+#include "utils/general_hashers.h"
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::expressions {
+using utils::hashers::hash_combine;
 //***********  mach_expr_constant ************
 
 bool mach_expr_constant::do_is_similar(const mach_expression& expr) const

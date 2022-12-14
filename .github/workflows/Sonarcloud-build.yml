@@ -82,6 +82,7 @@ jobs:
         run: |
           mkdir pr-info
           echo ${{ github.event.ref }} > pr-info/ref.txt
+          echo -Dsonar.branch.name=${{ github.ref_name }} > pr-info/head-branch-arg.txt
 
       - uses: actions/upload-artifact@v3
         with:

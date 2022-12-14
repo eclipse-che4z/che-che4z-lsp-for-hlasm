@@ -70,11 +70,6 @@ private:
     range expr_range_;
 };
 
-inline size_t hash_combine(std::size_t old, std::size_t next)
-{
-    return old ^ (next + 0x9e3779b9 + (old << 6) + (old >> 2));
-}
-
 } // namespace hlasm_plugin::parser_library::expressions
 
 #endif

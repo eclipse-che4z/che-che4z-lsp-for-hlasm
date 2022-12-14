@@ -17,9 +17,11 @@
 #include <cassert>
 
 #include "context/ordinary_assembly/symbol_value.h"
+#include "utils/general_hashers.h"
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::expressions {
+using utils::hashers::hash_combine;
 
 template<typename T>
 bool mach_expr_binary<T>::do_is_similar(const mach_expression& expr) const

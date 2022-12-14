@@ -22,6 +22,7 @@
 #include "copy_member.h"
 #include "processing/processing_format.h"
 #include "source_snapshot.h"
+#include "utils/general_hashers.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -103,11 +104,8 @@ class processing_frame_tree
         size_t operator()(const processing_frame_node& n) const
         {
             constexpr auto hash = []<typename... T>(const T&... v) {
-                constexpr auto hash_combine = [](size_t old, size_t next) {
-                    return old ^ (next + 0x9e3779b9 + (old << 6) + (old >> 2));
-                };
                 size_t result = 0;
-                ((result = hash_combine(result, std::hash<T>()(v))), ...);
+                ((result = utils::hashers::hash_combine(result, std::hash<T>()(v))), ...);
                 return result;
             };
             return hash(n.m_parent, n.frame.member_name, n.frame.resource_loc, n.frame.pos.column, n.frame.pos.line);

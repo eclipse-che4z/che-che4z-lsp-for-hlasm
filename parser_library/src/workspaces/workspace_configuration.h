@@ -84,6 +84,83 @@ public:
 };
 #endif
 
+
+class library_options
+{
+    template<typename T>
+    struct impl_t
+    {
+        static void deleter(const void* p) noexcept { delete static_cast<const T*>(p); }
+        static bool comparer_lt(const void* l, const void* r) noexcept
+        {
+            return *static_cast<const T*>(l) < *static_cast<const T*>(r);
+        }
+    };
+    struct impl
+    {
+        void (*deleter)(const void* p) noexcept;
+        bool (*comparer_lt)(const void* l, const void* r) noexcept;
+        template<typename T>
+        static const impl* get()
+        {
+            static constexpr const impl i { &impl_t<T>::deleter, &impl_t<T>::comparer_lt };
+            return &i;
+        }
+    };
+    const impl* m_impl;
+    const void* m_data;
+
+public:
+    template<typename T>
+    explicit library_options(T value)
+        : m_impl(impl::get<T>())
+        , m_data(new T(std::move(value)))
+    {}
+    library_options(library_options&& o) noexcept
+        : m_impl(std::exchange(o.m_impl, nullptr))
+        , m_data(std::exchange(o.m_data, nullptr))
+    {}
+    library_options& operator=(library_options&& o) noexcept
+    {
+        library_options tmp(std::move(o));
+        swap(tmp);
+        return *this;
+    }
+    void swap(library_options& o) noexcept
+    {
+        std::swap(m_impl, o.m_impl);
+        std::swap(m_data, o.m_data);
+    }
+    ~library_options()
+    {
+        if (m_impl)
+            m_impl->deleter(m_data);
+    }
+
+    friend bool operator<(const library_options& l, const library_options& r) noexcept
+    {
+        if (auto c = l.m_impl <=> r.m_impl; c != 0)
+            return c < 0;
+
+        return l.m_impl && l.m_impl->comparer_lt(l.m_data, r.m_data);
+    }
+
+    template<typename T>
+    friend bool operator<(const library_options& l, const T& r) noexcept
+    {
+        if (auto c = l.m_impl <=> impl::template get<T>(); c != 0)
+            return c < 0;
+        return impl_t<T>::comparer_lt(l.m_data, &r);
+    }
+    template<typename T>
+    friend bool operator<(const T& l, const library_options& r) noexcept
+    {
+        if (auto c = impl::template get<T>() <=> r.m_impl; c != 0)
+            return c < 0;
+        return impl_t<T>::comparer_lt(&l, r.m_data);
+    }
+};
+
 class workspace_configuration
 {
     static constexpr const char FILENAME_PROC_GRPS[] = "proc_grps.json";
@@ -133,7 +210,21 @@ class workspace_configuration
 
     std::vector<diagnostic_s> m_config_diags;
 
+    std::map<std::pair<utils::resource::resource_location, library_options>,
+        std::pair<std::shared_ptr<library>, bool>,
+        std::less<>>
+        m_libraries;
+
+    std::shared_ptr<library> get_local_library(
+        const utils::resource::resource_location& url, const library_local_options& opts);
+
     void process_processor_group(const config::processor_group& pg,
+        std::span<const std::string> fallback_macro_extensions,
+        std::span<const std::string> always_recognize,
+        const utils::resource::resource_location& alternative_root,
+        std::vector<diagnostic_s>& diags);
+
+    void process_processor_group_and_cleanup_libraries(std::span<const config::processor_group> pgs,
         std::span<const std::string> fallback_macro_extensions,
         std::span<const std::string> always_recognize,
         const utils::resource::resource_location& alternative_root,

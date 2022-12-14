@@ -15,6 +15,8 @@
 #include "workspace_configuration.h"
 
 #include <charconv>
+#include <compare>
+#include <tuple>
 
 #include "file_manager.h"
 #include "library_local.h"
@@ -254,6 +256,37 @@ bool workspace_configuration::is_configuration_file(const utils::resource::resou
 {
     return is_config_file(file) || is_b4g_config_file(file);
 }
+
+template<typename T>
+inline bool operator<(const std::pair<utils::resource::resource_location, library_options>& l,
+    const std::tuple<const utils::resource::resource_location&, const T&>& r) noexcept
+{
+    const auto& [lx, ly] = l;
+    return std::tie(lx, ly) < r;
+}
+
+template<typename T>
+inline bool operator<(const std::tuple<const utils::resource::resource_location&, const T&>& l,
+    const std::pair<utils::resource::resource_location, library_options>& r) noexcept
+{
+    const auto& [rx, ry] = r;
+    return l < std::tie(rx, ry);
+}
+
+std::shared_ptr<library> workspace_configuration::get_local_library(
+    const utils::resource::resource_location& url, const library_local_options& opts)
+{
+    if (auto it = m_libraries.find(std::tie(url, opts)); it != m_libraries.end())
+    {
+        it->second.second = true;
+        return it->second.first;
+    }
+
+    auto result = std::make_shared<library_local>(m_file_manager, url, opts, m_proc_grps_loc);
+    m_libraries.try_emplace(std::make_pair(url, library_options(opts)), result, true);
+    return result;
+}
+
 void workspace_configuration::process_processor_group(const config::processor_group& pg,
     std::span<const std::string> fallback_macro_extensions,
     std::span<const std::string> always_recognize,
@@ -281,8 +314,7 @@ void workspace_configuration::process_processor_group(const config::processor_gr
         rl.join(""); // Ensure that this is a directory
 
         if (auto first_wild_card = rl.get_uri().find_first_of("*?"); first_wild_card == std::string::npos)
-            prc_grp.add_library(std::make_unique<library_local>(
-                m_file_manager, std::move(rl), std::move(lib_local_opts), m_proc_grps_loc));
+            prc_grp.add_library(get_local_library(rl, lib_local_opts));
         else
             find_and_add_libs(utils::resource::resource_location(
                                   rl.get_uri().substr(0, rl.get_uri().find_last_of("/", first_wild_card) + 1)),
@@ -292,6 +324,22 @@ void workspace_configuration::process_processor_group(const config::processor_gr
                 diags);
     }
     m_proc_grps.try_emplace(std::make_pair(prc_grp.name(), alternative_root), std::move(prc_grp));
+}
+
+void workspace_configuration::process_processor_group_and_cleanup_libraries(
+    std::span<const config::processor_group> pgs,
+    std::span<const std::string> fallback_macro_extensions,
+    std::span<const std::string> always_recognize,
+    const utils::resource::resource_location& alternative_root,
+    std::vector<diagnostic_s>& diags)
+{
+    for (auto& [_, l] : m_libraries)
+        l.second = false; // mark
+
+    for (const auto& pg : pgs)
+        process_processor_group(pg, fallback_macro_extensions, always_recognize, alternative_root, diags);
+
+    std::erase_if(m_libraries, [](const auto& kv) { return !kv.second.second; }); // sweep
 }
 
 bool workspace_configuration::process_program(const config::program_mapping& pgm, std::vector<diagnostic_s>& diags)
@@ -348,12 +396,11 @@ parse_config_file_result workspace_configuration::load_and_process_config(std::v
     file_ptr pgm_conf_file;
     const auto pgm_conf_loaded = load_pgm_config(pgm_config, pgm_conf_file, utilized_settings_values, diags);
 
-    // process processor groups
-    for (const auto& pg : proc_groups.pgroups)
-    {
-        process_processor_group(
-            pg, proc_groups.macro_extensions, pgm_config.always_recognize, utils::resource::resource_location(), diags);
-    }
+    process_processor_group_and_cleanup_libraries(proc_groups.pgroups,
+        proc_groups.macro_extensions,
+        pgm_config.always_recognize,
+        utils::resource::resource_location(),
+        diags);
 
     if (pgm_conf_loaded != parse_config_file_result::parsed)
     {
@@ -502,8 +549,8 @@ parse_config_file_result workspace_configuration::parse_b4g_config_file(
         return parse_config_file_result::error;
     }
 
-    for (const auto& pg_def : m_proc_grps_source.pgroups)
-        process_processor_group(pg_def, m_proc_grps_source.macro_extensions, {}, alternative_root, conf.diags);
+    process_processor_group_and_cleanup_libraries(
+        m_proc_grps_source.pgroups, m_proc_grps_source.macro_extensions, {}, alternative_root, conf.diags);
 
     for (const auto& [name, details] : conf.config.value().files)
     {
@@ -589,7 +636,7 @@ void workspace_configuration::find_and_add_libs(const utils::resource::resource_
             continue;
 
         if (std::regex_match(dir.get_uri(), path_validator))
-            prc_grp.add_library(std::make_unique<library_local>(m_file_manager, dir, opts, m_proc_grps_loc));
+            prc_grp.add_library(get_local_library(dir, opts));
 
         auto [subdir_list, return_code] = m_file_manager.list_directory_subdirs_and_symlinks(dir);
         if (return_code != utils::path::list_directory_rc::done)
@@ -648,16 +695,20 @@ parse_config_file_result workspace_configuration::parse_configuration_file(
 bool workspace_configuration::refresh_libraries(const std::vector<utils::resource::resource_location>& file_locations)
 {
     bool refreshed = false;
+
+    std::unordered_set<const library*> refreshed_libs;
     for (auto& [_, proc_grp] : m_proc_grps)
     {
         if (!proc_grp.refresh_needed(file_locations))
             continue;
         refreshed = true;
-        for (auto& lib : proc_grp.libraries())
+        for (const auto& lib : proc_grp.libraries())
         {
+            if (!refreshed_libs.emplace(std::to_address(lib)).second)
+                continue;
             lib->refresh();
         }
-        proc_grp.generate_suggestions();
+        proc_grp.invalidate_suggestions();
     }
     return refreshed;
 }

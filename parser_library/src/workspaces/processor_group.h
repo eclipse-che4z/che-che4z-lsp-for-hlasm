@@ -45,7 +45,7 @@ public:
 
     void collect_diags() const override;
 
-    void add_library(std::unique_ptr<library> library);
+    void add_library(std::shared_ptr<library> library);
 
     const std::string& name() const { return m_pg_name; }
 
@@ -56,6 +56,7 @@ public:
     const std::vector<preprocessor_options>& preprocessors() const { return m_prep_opts; }
 
     void generate_suggestions(bool force = true);
+    void invalidate_suggestions();
 
     std::vector<std::pair<std::string, size_t>> suggest(std::string_view s, bool extended);
 

@@ -16,10 +16,13 @@
 
 #include <unordered_set>
 
+#include "utils/general_hashers.h"
 #include "utils/similar.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::context;
+
+using hlasm_plugin::utils::hashers::hash_combine;
 
 nominal_value_string* nominal_value_t::access_string() { return dynamic_cast<nominal_value_string*>(this); }
 

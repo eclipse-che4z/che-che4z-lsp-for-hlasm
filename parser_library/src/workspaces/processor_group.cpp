@@ -78,6 +78,8 @@ void processor_group::generate_suggestions(bool force)
     }
 }
 
+void processor_group::invalidate_suggestions() { m_suggestions.reset(); }
+
 std::vector<std::pair<std::string, size_t>> processor_group::suggest(std::string_view opcode, bool extended)
 {
     generate_suggestions(false);
@@ -125,7 +127,7 @@ void processor_group::collect_diags() const
     }
 }
 
-void processor_group::add_library(std::unique_ptr<library> library)
+void processor_group::add_library(std::shared_ptr<library> library)
 {
     const auto& lib = m_libs.emplace_back(std::move(library));
     m_refresh_prefix.emplace(lib->refresh_url_prefix());

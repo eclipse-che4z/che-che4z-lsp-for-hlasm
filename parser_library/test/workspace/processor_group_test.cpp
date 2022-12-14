@@ -238,7 +238,7 @@ TEST(processor_group, opcode_suggestions)
         std::string refresh_url_prefix() const override { return {}; }
     };
     processor_group grp("", {}, {});
-    grp.add_library(std::make_unique<library_mock>());
+    grp.add_library(std::make_shared<library_mock>());
 
     auto mac_false = grp.suggest("MAC", false);
     std::vector<std::pair<std::string, size_t>> expected_mac_false { { "MAC1", 1 }, { "MAC2", 1 } };
