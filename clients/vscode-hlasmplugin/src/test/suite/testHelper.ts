@@ -12,8 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 import * as assert from 'assert';
-import * as vscode from "vscode";
-import * as path from 'path';
+import * as vscode from 'vscode';
 import { integer } from 'vscode-languageclient';
 
 export function getWorkspacePath(): string {
@@ -35,6 +34,7 @@ export async function showDocument(workspace_file: string, language_id: string |
 }
 
 export async function closeAllEditors() {
+    // workbench.action.closeAllEditors et al. saves content
     while (vscode.window.activeTextEditor !== undefined) {
         await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
         await sleep(500);
@@ -126,9 +126,11 @@ export function timeout(ms: number, error_message: string | undefined = undefine
     return new Promise<void>((_, reject) => { setTimeout(() => reject(error_message && Error(error_message)), ms); });
 }
 
-export async function waitForDiagnostics() {
+export async function waitForDiagnostics(filename: string) {
     return new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve, reject) => {
-        const listener = vscode.languages.onDidChangeDiagnostics((_) => {
+        const listener = vscode.languages.onDidChangeDiagnostics((e) => {
+            if (!e.uris.find(v => v.path.endsWith('/' + filename)))
+                return;
             listener.dispose();
             resolve(vscode.languages.getDiagnostics());
         });

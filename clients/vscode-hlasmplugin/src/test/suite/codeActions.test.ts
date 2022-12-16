@@ -26,9 +26,11 @@ suite('Code actions', () => {
     });
 
     test('Diagnostics not suppressed', async () => {
-        const diagnostic_event = helper.waitForDiagnostics();
+        const file = 'code_action_1.hlasm';
 
-        const { editor, document } = await helper.showDocument('code_action_1.hlasm', 'hlasm');
+        const diagnostic_event = helper.waitForDiagnostics(file);
+
+        const { editor, document } = await helper.showDocument(file, 'hlasm');
 
         await diagnostic_event;
 
@@ -38,9 +40,10 @@ suite('Code actions', () => {
     }).timeout(10000).slow(5000);
 
     test('Diagnostics suppressed', async () => {
-        const diagnostic_event = helper.waitForDiagnostics();
+        const file = 'code_action_2.hlasm';
+        const diagnostic_event = helper.waitForDiagnostics(file);
 
-        const { editor, document } = await helper.showDocument('code_action_2.hlasm', 'hlasm');
+        const { editor, document } = await helper.showDocument(file, 'hlasm');
 
         await diagnostic_event;
 

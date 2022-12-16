@@ -86,6 +86,7 @@ public:
 
     auto size() const noexcept { return m_nodes.size(); }
     void clear() noexcept { m_nodes.clear(); }
+    void reserve(size_t s) { m_nodes.reserve(s); }
 
     template<typename U>
     std::pair<const T*, bool> insert(U&& value)

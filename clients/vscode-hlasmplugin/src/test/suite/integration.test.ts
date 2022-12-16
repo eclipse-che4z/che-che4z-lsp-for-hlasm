@@ -37,7 +37,7 @@ suite('Integration Test Suite', () => {
     // change 'open' file to create diagnostic
     test('Diagnostic test', async () => {
         // register callback to check for the correctness of the diagnostic
-        const diagnostic_event = helper.waitForDiagnostics();
+        const diagnostic_event = helper.waitForDiagnostics(workspace_file);
         // remove second parameter from LR instruction
         await editor.edit(edit => {
             edit.delete(new vscode.Range(new vscode.Position(2, 6), new vscode.Position(2, 7)));

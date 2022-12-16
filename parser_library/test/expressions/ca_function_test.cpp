@@ -83,8 +83,8 @@ protected:
     context::SET_t get_result()
     {
         std::vector<ca_expr_ptr> params;
-        for (auto& param : GetParam().params)
-            params.push_back(std::make_unique<set_expr>(std::move(param)));
+        for (const auto& param : GetParam().params)
+            params.push_back(std::make_unique<set_expr>(param));
 
 
         ca_function f(context::id_index(), GetParam().function, std::move(params), nullptr, range());

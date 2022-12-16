@@ -3421,3 +3421,50 @@ const mnemonic_code& instruction::get_mnemonic_codes(std::string_view name)
 }
 
 std::span<const mnemonic_code> instruction::all_mnemonic_codes() { return mnemonic_codes; }
+
+namespace {
+constexpr instruction_set_size compute_instruction_set_size(instruction_set_version v)
+{
+    instruction_set_size result = {
+        0,
+        0,
+        std::size(ca_instructions),
+        std::size(assembler_instructions),
+    };
+    for (const auto& i : machine_instructions)
+        if (instruction_available(i.instr_set_affiliation(), v))
+            ++result.machine;
+    for (const auto& i : mnemonic_codes)
+        if (instruction_available(i.instr_set_affiliation(), v))
+            ++result.mnemonic;
+
+    return result;
+}
+
+constexpr const instruction_set_size instruction_set_sizes[] = {
+    {},
+    compute_instruction_set_size(instruction_set_version::ZOP),
+    compute_instruction_set_size(instruction_set_version::YOP),
+    compute_instruction_set_size(instruction_set_version::Z9),
+    compute_instruction_set_size(instruction_set_version::Z10),
+    compute_instruction_set_size(instruction_set_version::Z11),
+    compute_instruction_set_size(instruction_set_version::Z12),
+    compute_instruction_set_size(instruction_set_version::Z13),
+    compute_instruction_set_size(instruction_set_version::Z14),
+    compute_instruction_set_size(instruction_set_version::Z15),
+    compute_instruction_set_size(instruction_set_version::Z16),
+    compute_instruction_set_size(instruction_set_version::ESA),
+    compute_instruction_set_size(instruction_set_version::XA),
+    compute_instruction_set_size(instruction_set_version::_370),
+    compute_instruction_set_size(instruction_set_version::DOS),
+    compute_instruction_set_size(instruction_set_version::UNI),
+};
+
+} // namespace
+
+const instruction_set_size& hlasm_plugin::parser_library::context::get_instruction_sizes(instruction_set_version v)
+{
+    auto idx = static_cast<int>(v);
+    assert(0 < idx && idx < std::size(instruction_set_sizes));
+    return instruction_set_sizes[idx];
+}

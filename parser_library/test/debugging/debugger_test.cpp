@@ -12,11 +12,15 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <functional>
 #include <optional>
+#include <regex>
+#include <string_view>
 #include <thread>
 #include <unordered_map>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include "gtest/gtest.h"
 
@@ -33,6 +37,46 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::debugging;
 using namespace hlasm_plugin::parser_library::workspaces;
 using namespace hlasm_plugin::utils::resource;
+
+namespace {
+
+struct expected_stack_frame
+{
+    expected_stack_frame(size_t begin_line, size_t end_line, uint32_t id, std::string name, std::string source)
+        : begin_line(begin_line)
+        , end_line(end_line)
+        , id(id)
+        , name(std::move(name))
+        , frame_source(std::move(source))
+    {}
+    expected_stack_frame(size_t begin_line,
+        size_t end_line,
+        uint32_t id,
+        std::string name,
+        std::function<bool(std::string_view)> source_matcher)
+        : begin_line(begin_line)
+        , end_line(end_line)
+        , id(id)
+        , name(std::move(name))
+        , frame_source(std::move(source_matcher))
+    {}
+    size_t begin_line;
+    size_t end_line;
+    uint32_t id;
+    std::string name;
+    std::variant<std::string, std::function<bool(std::string_view)>> frame_source;
+
+    static bool check_frame_source(const std::string& exp, std::string_view uri) { return exp == uri; }
+    static bool check_frame_source(const std::function<bool(std::string_view)>& exp, std::string_view uri)
+    {
+        return exp(uri);
+    }
+    bool check_frame_source(std::string_view uri) const
+    {
+        return std::visit([uri](const auto& v) { return check_frame_source(v, uri); }, frame_source);
+    }
+};
+} // namespace
 
 TEST(debugger, stopped_on_entry)
 {
@@ -237,7 +281,7 @@ bool check_vars(debugger& d,
 }
 
 bool check_step(
-    debugger& d, const std::vector<debugging::stack_frame>& exp_frames, const std::vector<frame_vars>& exp_frame_vars)
+    debugger& d, const std::vector<expected_stack_frame>& exp_frames, const std::vector<frame_vars>& exp_frame_vars)
 {
     auto frames = d.stack_frames();
     if (frames.size() != exp_frames.size())
@@ -249,7 +293,7 @@ bool check_step(
             return false;
         if (exp_frames[i].end_line != f.source_range.end.line)
             return false;
-        if (exp_frames[i].frame_source.uri != std::string_view(f.source_file.uri))
+        if (!exp_frames[i].check_frame_source(std::string_view(f.source_file.uri)))
             return false;
         if (exp_frames[i].id != f.id)
             return false;
@@ -281,7 +325,7 @@ namespace {
 void step_over_by(size_t number_of_steps,
     debugger& d,
     debug_event_consumer_s_mock& m,
-    std::vector<debugging::stack_frame>& exp_stack_frames,
+    std::vector<expected_stack_frame>& exp_stack_frames,
     size_t line)
 {
     exp_stack_frames[0].begin_line = exp_stack_frames[0].end_line = line;
@@ -296,22 +340,27 @@ void step_over_by(size_t number_of_steps,
 
 void step_into(debugger& d,
     debug_event_consumer_s_mock& m,
-    std::vector<debugging::stack_frame>& exp_stack_frames,
+    std::vector<expected_stack_frame>& exp_stack_frames,
     size_t line,
     std::string name,
-    resource_location source)
+    std::variant<resource_location, std::function<bool(std::string_view)>> source)
 {
     uint32_t next_frame_id = exp_stack_frames.empty() ? 0 : exp_stack_frames[0].id + 1;
 
-    exp_stack_frames.insert(
-        exp_stack_frames.begin(), debugging::stack_frame(line, line, next_frame_id, name, source.get_uri()));
+    if (std::holds_alternative<resource_location>(source))
+        exp_stack_frames.insert(exp_stack_frames.begin(),
+            expected_stack_frame(line, line, next_frame_id, name, std::get<resource_location>(source).get_uri()));
+    else
+        exp_stack_frames.insert(exp_stack_frames.begin(),
+            expected_stack_frame(
+                line, line, next_frame_id, name, std::get<std::function<bool(std::string_view)>>(source)));
 
     d.step_in();
     m.wait_for_stopped();
 }
 
 void erase_frames_from_top(size_t number_of_frames,
-    std::vector<debugging::stack_frame>& exp_stack_frames,
+    std::vector<expected_stack_frame>& exp_stack_frames,
     std::vector<frame_vars>& exp_frame_vars)
 {
     exp_stack_frames.erase(exp_stack_frames.begin(), exp_stack_frames.begin() + number_of_frames);
@@ -423,7 +472,7 @@ TEST(debugger, test)
     file_manager.did_open_file(file_loc, 0, open_code);
     ASSERT_TRUE(d.launch(filename, lib_provider, true));
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
+    std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
@@ -514,7 +563,7 @@ TEST(debugger, sysstmt)
     file_manager.did_open_file(file_loc, 0, open_code);
     ASSERT_TRUE(d.launch(filename, lib_provider, true));
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
+    std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { { {
                                                    "&SYSSTMT",
                                                    "00000003",
@@ -576,7 +625,7 @@ A  MAC_IN ()
     file_manager.did_open_file(file_loc, 0, open_code);
     ASSERT_TRUE(d.launch(filename, lib_provider, true));
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
+    std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
 
     step_over_by(3, d, m, exp_frames, 16);
@@ -746,7 +795,7 @@ TEST(debugger, positional_parameters)
 
     d.next();
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 5, 5, 0, "OPENCODE", file_loc.get_uri() } };
+    std::vector<expected_stack_frame> exp_frames { { 5, 5, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
 
     step_into(d, m, exp_frames, 3, "MACRO", file_loc);
@@ -864,7 +913,7 @@ TEST(debugger, arrays)
 
     ASSERT_TRUE(d.launch(filename, lib_provider, true));
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
+    std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
@@ -921,7 +970,7 @@ B EQU A
     ASSERT_TRUE(d.launch(file_loc.get_uri(), lib_provider, true));
 
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
+    std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
@@ -968,7 +1017,7 @@ TEST(debugger, ainsert)
     ASSERT_TRUE(d.launch(file_loc.get_uri(), lib_provider, true));
 
     m.wait_for_stopped();
-    std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
+    std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { {
         std::unordered_map<std::string, test_var_value> {
             // macro locals
@@ -982,7 +1031,10 @@ TEST(debugger, ainsert)
     } };
 
     step_over_by(3, d, m, exp_frames, 12);
-    step_into(d, m, exp_frames, 2, "MACRO", resource_location("hlasm://0/AINSERT_1.hlasm"));
+    step_into(d, m, exp_frames, 2, "MACRO", [](std::string_view uri) {
+        static const std::regex expected("hlasm://\\d+/AINSERT_1.hlasm");
+        return std::regex_match(std::string(uri), expected);
+    });
     exp_frame_vars.insert(exp_frame_vars.begin(), frame_vars_ignore_sys_vars({}, {}, {}));
 
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));

@@ -499,6 +499,8 @@ auto generate_instruction_bk_tree(instruction_set_version version)
 {
     utils::bk_tree<std::string_view, utils::levenshtein_distance_t<16>> result;
 
+    result.reserve(context::get_instruction_sizes(version).total());
+
     for (const auto& i : context::instruction::all_assembler_instructions())
         result.insert(i.name());
     for (const auto& i : context::instruction::all_ca_instructions())

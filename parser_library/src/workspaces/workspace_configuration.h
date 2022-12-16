@@ -87,6 +87,11 @@ public:
 
 class library_options
 {
+    struct impl
+    {
+        void (*const deleter)(const void* p) noexcept;
+        bool (*const comparer_lt)(const void* l, const void* r) noexcept;
+    };
     template<typename T>
     struct impl_t
     {
@@ -96,24 +101,26 @@ class library_options
             return *static_cast<const T*>(l) < *static_cast<const T*>(r);
         }
     };
-    struct impl
+    template<typename T>
+    static const impl* get_impl(const T&)
     {
-        void (*deleter)(const void* p) noexcept;
-        bool (*comparer_lt)(const void* l, const void* r) noexcept;
-        template<typename T>
-        static const impl* get()
-        {
-            static constexpr const impl i { &impl_t<T>::deleter, &impl_t<T>::comparer_lt };
-            return &i;
-        }
-    };
+        static
+#ifdef _MSC_VER
+            // This prevents COMDAT folding
+            constinit
+#else
+            constexpr
+#endif //  _MSC_VER
+            impl i { &impl_t<T>::deleter, &impl_t<T>::comparer_lt };
+        return &i;
+    }
     const impl* m_impl;
     const void* m_data;
 
 public:
     template<typename T>
     explicit library_options(T value)
-        : m_impl(impl::get<T>())
+        : m_impl(get_impl(value))
         , m_data(new T(std::move(value)))
     {}
     library_options(library_options&& o) noexcept
@@ -148,14 +155,14 @@ public:
     template<typename T>
     friend bool operator<(const library_options& l, const T& r) noexcept
     {
-        if (auto c = l.m_impl <=> impl::template get<T>(); c != 0)
+        if (auto c = l.m_impl <=> get_impl(r); c != 0)
             return c < 0;
         return impl_t<T>::comparer_lt(l.m_data, &r);
     }
     template<typename T>
     friend bool operator<(const T& l, const library_options& r) noexcept
     {
-        if (auto c = impl::template get<T>() <=> r.m_impl; c != 0)
+        if (auto c = get_impl(l) <=> r.m_impl; c != 0)
             return c < 0;
         return impl_t<T>::comparer_lt(&l, r.m_data);
     }

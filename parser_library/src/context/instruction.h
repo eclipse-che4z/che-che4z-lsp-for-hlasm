@@ -100,6 +100,18 @@ constexpr bool instruction_available(
     }
 }
 
+struct instruction_set_size
+{
+    size_t mnemonic;
+    size_t machine;
+    size_t ca;
+    size_t assembler;
+
+    constexpr size_t total() const { return mnemonic + machine + ca + assembler; }
+};
+
+const instruction_set_size& get_instruction_sizes(instruction_set_version v);
+
 // all mach_format types for operands of machine instructions:
 // formats with length 16 are arranged in range (0,2),formats with length 32 are arranged in range(3,20),formats with
 // length 48 are arranged in range (21,77)
