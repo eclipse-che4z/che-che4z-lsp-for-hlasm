@@ -12,6 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <regex>
+
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
@@ -449,4 +451,52 @@ TEST(system_variable, mnote_sys_variables)
     std::vector<C_t> expected_hres { "000", "000", "004", "004", "008", "008", "008", "008", "008", "008" };
     EXPECT_EQ(get_var_vector<C_t>(a.hlasm_ctx(), "RES"), expected_res);
     EXPECT_EQ(get_var_vector<C_t>(a.hlasm_ctx(), "HRES"), expected_hres);
+}
+
+TEST(system_variable, sysclock)
+{
+    std::string input = R"(
+        MACRO
+        MAC2
+        GBLC &VAL3
+&VAL3   SETC '&SYSCLOCK'
+        MEND
+*
+        MACRO
+        MAC
+        GBLC &VAR,&VAL1,&VAL2
+&T1     SETC T'&SYSCLOCK
+&K1     SETA K'&SYSCLOCK
+&VAR    SETC '&T1 &K1'
+&VAL1   SETC '&SYSCLOCK'
+&I      SETA 1000
+.LOOP   ANOP ,
+&I      SETA &I-1
+        AIF  (&I GT 0).LOOP
+        MAC2
+&VAL2   SETC '&SYSCLOCK'
+        MEND
+*
+        GBLC &VAR,&VAL1,&VAL2,&VAL3
+        MAC
+        END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "U 26");
+
+    auto val1 = get_var_value<C_t>(a.hlasm_ctx(), "VAL1");
+    auto val2 = get_var_value<C_t>(a.hlasm_ctx(), "VAL2");
+    auto val3 = get_var_value<C_t>(a.hlasm_ctx(), "VAL3");
+
+    ASSERT_TRUE(val1 && val2 && val3);
+
+    EXPECT_EQ(val1, val2);
+    EXPECT_NE(val1, val3);
+
+    EXPECT_TRUE(std::regex_match(val1.value(), std::regex(R"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d)")));
 }

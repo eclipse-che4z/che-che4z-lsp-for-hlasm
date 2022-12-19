@@ -20,6 +20,7 @@ target_sources(hlasm_utils_test PRIVATE
 	platform_test.cpp
 	resource_location_test.cpp
 	unicode_text_test.cpp
+	time_test.cpp
 )
 
 target_link_libraries(hlasm_utils_test hlasm_utils)

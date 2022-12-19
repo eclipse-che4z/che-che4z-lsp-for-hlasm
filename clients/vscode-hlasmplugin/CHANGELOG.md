@@ -8,6 +8,7 @@
 - Quick fixes for typos in instruction and macro names added to the code actions
 - Endevor and CICS preprocessor statements highlighting and parsing
 - Instruction suggestions are included in the completion list
+- Support for the SYSCLOCK system variable
 
 #### Fixed
 - LSP requests on virtual files are evaluated in the correct workspace context

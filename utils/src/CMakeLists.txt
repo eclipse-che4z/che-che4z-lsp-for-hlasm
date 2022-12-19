@@ -19,6 +19,7 @@ target_sources(hlasm_utils PRIVATE
 	resource_location.cpp
 	string_operations.cpp
 	unicode_text.cpp
+	time.cpp
 )
 
 if(EMSCRIPTEN)

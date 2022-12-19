@@ -17,6 +17,7 @@
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
 #include "semantics/operand_impls.h"
 #include "semantics/range_provider.h"
+#include "utils/time.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace processing;
@@ -582,14 +583,9 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
     constexpr const auto since_midnight = []() -> std::chrono::nanoseconds {
         using namespace std::chrono;
 
-        const auto now = system_clock::now();
+        const auto now = utils::timestamp::now().value_or(utils::timestamp());
 
-        const auto now_t = system_clock::to_time_t(now);
-        const auto tm = *std::localtime(&now_t);
-
-        const auto subsecond = now - std::chrono::floor<std::chrono::seconds>(now);
-
-        return hours(tm.tm_hour) + minutes(tm.tm_min) + seconds(tm.tm_sec) + subsecond;
+        return hours(now.hour()) + minutes(now.minute()) + seconds(now.second()) + microseconds(now.microsecond());
     };
 
     std::string value_to_set;
