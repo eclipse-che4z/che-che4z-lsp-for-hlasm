@@ -70,12 +70,12 @@ bool ordinary_symbol_variable::is_scalar() const
 std::vector<variable_ptr> ordinary_symbol_variable::values() const
 {
     std::vector<std::unique_ptr<variable>> vars;
-    if (symbol_.attributes().is_defined(context::data_attr_kind::L))
-        vars.emplace_back(std::make_unique<attribute_variable>(
-            "L", std::to_string(symbol_.attributes().get_attribute_value(context::data_attr_kind::L))));
     if (symbol_.attributes().is_defined(context::data_attr_kind::I))
         vars.emplace_back(std::make_unique<attribute_variable>(
             "I", std::to_string(symbol_.attributes().get_attribute_value(context::data_attr_kind::I))));
+    if (symbol_.attributes().is_defined(context::data_attr_kind::L))
+        vars.emplace_back(std::make_unique<attribute_variable>(
+            "L", std::to_string(symbol_.attributes().get_attribute_value(context::data_attr_kind::L))));
     if (symbol_.attributes().is_defined(context::data_attr_kind::S))
         vars.emplace_back(std::make_unique<attribute_variable>(
             "S", std::to_string(symbol_.attributes().get_attribute_value(context::data_attr_kind::S))));

@@ -387,7 +387,13 @@ public:
             if (const auto* sym = std::get_if<context::symbol>(&it.second))
                 ordinary_symbols.push_back(std::make_unique<ordinary_symbol_variable>(*sym));
 
+        constexpr auto compare_variables = [](const variable_ptr& l, const variable_ptr& r) {
+            return l->get_name() < r->get_name();
+        };
 
+        std::sort(globals.begin(), globals.end(), compare_variables);
+        std::sort(scope_vars.begin(), scope_vars.end(), compare_variables);
+        std::sort(ordinary_symbols.begin(), ordinary_symbols.end(), compare_variables);
 
         scopes_.emplace_back("Globals", add_variable(std::move(globals)), source(opencode_source_uri_));
         scopes_.emplace_back("Locals", add_variable(std::move(scope_vars)), source(opencode_source_uri_));
