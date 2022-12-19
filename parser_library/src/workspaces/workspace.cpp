@@ -411,9 +411,21 @@ lsp::completion_list_s workspace::generate_completion(const lsp::completion_list
 
     const auto& hlasm_ctx = cli.lsp_ctx->get_related_hlasm_context();
 
-    auto suggestions = !cli.completed_text.empty() && instruction_suggestions
-        ? instruction_suggestions(cli.completed_text)
-        : std::vector<std::string>();
+    auto suggestions = [&instruction_suggestions](std::string_view ct) {
+        std::vector<std::pair<std::string, bool>> result;
+        if (ct.empty() || !instruction_suggestions)
+            return result;
+        auto raw_suggestions = instruction_suggestions(ct);
+        result.reserve(raw_suggestions.size());
+        for (auto&& s : raw_suggestions)
+            result.emplace_back(std::move(s), false);
+        return result;
+    }(cli.completed_text);
+    const auto locate_suggestion = [&s = suggestions](std::string_view text) {
+        auto it = std::find_if(s.begin(), s.end(), [text](const auto& e) { return e.first == text; });
+        return it == s.end() ? nullptr : std::to_address(it);
+    };
+
 
     // Store only instructions from the currently active instruction set
     for (const auto& instr : lsp::completion_item_s::m_instruction_completion_items)
@@ -428,9 +440,10 @@ lsp::completion_list_s workspace::generate_completion(const lsp::completion_list
                 if (auto col_pos = cli.completed_text_start_column + space; col_pos < 15)
                     i.insert_text.insert(i.insert_text.begin() + space, 15 - col_pos, ' ');
             }
-            if (std::find(suggestions.begin(), suggestions.end(), i.label) != suggestions.end())
+            if (auto* suggestion = locate_suggestion(i.label))
             {
                 i.suggestion_for = cli.completed_text;
+                suggestion->second = true;
             }
         }
     }
@@ -439,10 +452,19 @@ lsp::completion_list_s workspace::generate_completion(const lsp::completion_list
     {
         auto& i = result.emplace_back(lsp::generate_completion_item(
             *macro_i, cli.lsp_ctx->get_file_info(macro_i->definition_location.resource_loc)));
-        if (std::find(suggestions.begin(), suggestions.end(), i.label) != suggestions.end())
+        if (auto* suggestion = locate_suggestion(i.label))
         {
             i.suggestion_for = cli.completed_text;
+            suggestion->second = true;
         }
+    }
+
+    for (const auto& [suggestion, used] : suggestions)
+    {
+        if (used)
+            continue;
+        result.emplace_back(
+            suggestion, "", suggestion, "", completion_item_kind::macro, false, std::string(cli.completed_text));
     }
 
     return result;
