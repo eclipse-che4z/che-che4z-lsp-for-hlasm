@@ -259,9 +259,9 @@ void hlasm_context::add_global_system_vars(code_scope& scope)
                 date_val.push_back('0');
             }
 
-            datc_val.append(std::to_string(now.month() + 1));
+            datc_val.append(std::to_string(now.month()));
 
-            date_val.append(std::to_string(now.month() + 1));
+            date_val.append(std::to_string(now.month()));
             date_val.push_back('/');
 
             if (now.day() < 10)
