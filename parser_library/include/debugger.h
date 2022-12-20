@@ -81,6 +81,7 @@ public:
     // User controls for debugging.
     void next();
     void step_in();
+    void step_out();
     void disconnect();
     void continue_debug();
     void pause();

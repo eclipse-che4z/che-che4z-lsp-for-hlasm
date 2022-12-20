@@ -91,6 +91,7 @@ void dap_feature::register_methods(std::map<std::string, method>& methods)
     methods.try_emplace("scopes", this_bind(&dap_feature::on_scopes));
     methods.try_emplace("next", this_bind(&dap_feature::on_next, telemetry_log_level::LOG_EVENT));
     methods.try_emplace("stepIn", this_bind(&dap_feature::on_step_in, telemetry_log_level::LOG_EVENT));
+    methods.try_emplace("stepOut", this_bind(&dap_feature::on_step_out, telemetry_log_level::LOG_EVENT));
     methods.try_emplace("variables", this_bind(&dap_feature::on_variables));
     methods.try_emplace("continue", this_bind(&dap_feature::on_continue, telemetry_log_level::LOG_EVENT));
     methods.try_emplace("pause", this_bind(&dap_feature::on_pause, telemetry_log_level::LOG_EVENT));
@@ -258,6 +259,15 @@ void dap_feature::on_step_in(const json& request_seq, const json&)
 
     debugger->step_in();
     response_->respond(request_seq, "stepIn", json());
+}
+
+void dap_feature::on_step_out(const json& request_seq, const json&)
+{
+    if (!debugger)
+        return;
+
+    debugger->step_out();
+    response_->respond(request_seq, "stepOut", json());
 }
 
 void dap_feature::on_variables(const json& request_seq, const json& args)

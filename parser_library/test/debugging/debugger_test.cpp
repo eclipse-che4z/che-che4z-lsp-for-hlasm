@@ -367,6 +367,16 @@ void erase_frames_from_top(size_t number_of_frames,
     exp_stack_frames.erase(exp_stack_frames.begin(), exp_stack_frames.begin() + number_of_frames);
     exp_frame_vars.erase(exp_frame_vars.begin(), exp_frame_vars.begin() + number_of_frames);
 }
+
+void step_out(
+    debugger& d, debug_event_consumer_s_mock& m, std::vector<expected_stack_frame>& exp_stack_frames, size_t line)
+{
+    d.step_out();
+    m.wait_for_stopped();
+    exp_stack_frames.erase(exp_stack_frames.begin());
+
+    exp_stack_frames[0].begin_line = exp_stack_frames[0].end_line = line;
+}
 } // namespace
 
 class workspace_mock : public workspace
@@ -1038,6 +1048,13 @@ TEST(debugger, ainsert)
         return std::regex_match(std::string(uri), expected);
     });
     exp_frame_vars.insert(exp_frame_vars.begin(), frame_vars_ignore_sys_vars({}, {}, {}));
+
+    EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
+
+    step_out(d, m, exp_frames, 13);
+
+    exp_frame_vars.erase(exp_frame_vars.begin());
+    exp_frame_vars.front().globals.at("&VAR") = test_var_value(5);
 
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 

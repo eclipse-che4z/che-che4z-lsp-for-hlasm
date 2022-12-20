@@ -91,8 +91,8 @@ class debugger::impl final : public processing::statement_analyzer
 
     // Specifies whether the debugger stops on the next statement call.
     std::atomic<bool> stop_on_next_stmt_ = false;
-    std::atomic<bool> step_over_ = false;
-    size_t step_over_depth_ = 0;
+    std::atomic<bool> stop_on_stack_changes_ = false;
+    std::pair<context::processing_stack_t, const utils::resource::resource_location*> stop_on_stack_condition_;
 
     // Range of statement that is about to be processed by analyzer.
     range next_stmt_range_;
@@ -221,8 +221,8 @@ public:
 
         bool breakpoint_hit = false;
 
+        auto stack_node = ctx_->processing_stack();
         auto stack = ctx_->processing_stack_details();
-        const auto stack_depth = stack.size();
 
         for (const auto& bp : breakpoints(*stack.back().resource_loc))
         {
@@ -230,8 +230,16 @@ public:
                 breakpoint_hit = true;
         }
 
+        const auto stack_condition_violated = [cond = stop_on_stack_condition_](context::processing_stack_t cur) {
+            auto last = cur;
+            for (cur = cur.parent(); !cur.empty(); last = cur, cur = cur.parent())
+                if (cur == cond.first)
+                    break;
+            return cond.first != cur || (cond.second && cond.second != last.frame().resource_loc);
+        };
+
         // breakpoint check
-        if (stop_on_next_stmt_ || breakpoint_hit || (step_over_ && stack_depth <= step_over_depth_))
+        if (stop_on_next_stmt_ || breakpoint_hit || (stop_on_stack_changes_ && stack_condition_violated(stack_node)))
         {
             variables_.clear();
             stack_frames_.clear();
@@ -243,9 +251,9 @@ public:
             if (disconnected_)
                 return;
             stop_on_next_stmt_ = false;
-            step_over_ = false;
+            stop_on_stack_changes_ = false;
             next_stmt_range_ = stmt_range;
-            step_over_depth_ = stack_depth;
+            stop_on_stack_condition_ = std::make_pair(stack_node, nullptr);
 
             continue_ = false;
             if (event_)
@@ -262,7 +270,7 @@ public:
     {
         {
             std::lock_guard<std::mutex> lck(control_mtx);
-            step_over_ = true;
+            stop_on_stack_changes_ = true;
             continue_ = true;
         }
         con_var.notify_all();
@@ -273,6 +281,23 @@ public:
         {
             std::lock_guard<std::mutex> lck(control_mtx);
             stop_on_next_stmt_ = true;
+            continue_ = true;
+        }
+        con_var.notify_all();
+    }
+
+    void step_out()
+    {
+        {
+            std::lock_guard<std::mutex> lck(control_mtx);
+            if (!stop_on_stack_condition_.first.empty())
+            {
+                stop_on_stack_changes_ = true;
+                stop_on_stack_condition_ = std::make_pair(
+                    stop_on_stack_condition_.first.parent(), stop_on_stack_condition_.first.frame().resource_loc);
+            }
+            else
+                stop_on_next_stmt_ = false; // step out in the opencode is equivalent to continue
             continue_ = true;
         }
         con_var.notify_all();
@@ -472,6 +497,7 @@ void debugger::set_event_consumer(debug_event_consumer* event) { pimpl->set_even
 
 void debugger::next() { pimpl->next(); }
 void debugger::step_in() { pimpl->step_in(); }
+void debugger::step_out() { pimpl->step_out(); }
 void debugger::disconnect() { pimpl->disconnect(); }
 void debugger::continue_debug() { pimpl->continue_debug(); }
 void debugger::pause() { pimpl->pause(); }

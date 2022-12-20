@@ -9,6 +9,7 @@
 - Endevor and CICS preprocessor statements highlighting and parsing
 - Instruction suggestions are included in the completion list
 - Support for the SYSCLOCK system variable
+- Implement step out support in the macro tracer
 
 #### Fixed
 - LSP requests on virtual files are evaluated in the correct workspace context

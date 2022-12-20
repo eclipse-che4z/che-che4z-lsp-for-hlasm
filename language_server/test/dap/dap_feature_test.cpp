@@ -254,6 +254,20 @@ TEST_F(feature_launch_test, step)
     }
     resp_provider.reset();
 
+    feature.on_step_out("10"_json, json());
+    expected_resp = { { "10"_json, "stepOut", json() } };
+    EXPECT_EQ(resp_provider.responses, expected_resp);
+    wait_for_stopped();
+    resp_provider.reset();
+
+    feature.on_stack_trace("11"_json, json());
+    ASSERT_EQ(resp_provider.responses.size(), 1U);
+    const response_mock& r2 = resp_provider.responses[0];
+    EXPECT_EQ(r2.id, "11"_json);
+    EXPECT_EQ(r2.req_method, "stackTrace");
+    ASSERT_EQ(r2.args["totalFrames"], 1U);
+    ASSERT_EQ(r2.args["stackFrames"].size(), 1U);
+
     feature.on_continue("47"_json, json());
     resp_provider.wait_for_exited();
     feature.on_disconnect("48"_json, {});
