@@ -18,6 +18,7 @@
 - Do not display messages related to Bridge for Git configuration unless it is actively utilized
 - Sequence symbol location is incorrect when discovered in the lookahead mode
 - Sort variables in the macro tracer
+- The language server may occasionally work with obsolete configuration
 
 #### Changed
 - Macro label is the preferred go to definition target unless the request is made from the label itself

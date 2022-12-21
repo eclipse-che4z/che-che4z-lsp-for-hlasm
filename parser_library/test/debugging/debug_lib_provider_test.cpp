@@ -19,10 +19,10 @@
 
 #include "../common_testing.h"
 #include "../workspace/file_manager_mock.h"
+#include "../workspace/library_mock.h"
 #include "analyzer.h"
 #include "debugging/debug_lib_provider.h"
 #include "utils/resource_location.h"
-#include "workspaces/library.h"
 
 using namespace ::testing;
 using namespace hlasm_plugin::parser_library;
@@ -31,16 +31,6 @@ using namespace hlasm_plugin::parser_library::workspaces;
 using namespace hlasm_plugin::utils::resource;
 
 namespace {
-class library_mock : public library
-{
-public:
-    // Inherited via library
-    MOCK_METHOD(void, refresh, (), (override));
-    MOCK_METHOD(std::vector<std::string>, list_files, (), (override));
-    MOCK_METHOD(std::string, refresh_url_prefix, (), (const override));
-    MOCK_METHOD(bool, has_file, (std::string_view, resource_location* url), (override));
-    MOCK_METHOD(void, copy_diagnostics, (std::vector<diagnostic_s>&), (const override));
-};
 
 class debug_lib_provider_test : public Test
 {

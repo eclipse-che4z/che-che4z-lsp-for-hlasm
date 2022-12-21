@@ -179,12 +179,14 @@ public:
 class file_manager_proc_grps_test : public file_manager_impl
 {
 public:
-    file_ptr add_file(const resource_location& location) override
+    std::optional<std::string> get_file_content(const resource_location& location) override
     {
         if (hlasm_plugin::utils::resource::filename(location) == "proc_grps.json")
-            return proc_grps;
+            return proc_grps->get_text();
+        else if (hlasm_plugin::utils::resource::filename(location) == "pgm_conf.json")
+            return pgm_conf->get_text();
         else
-            return pgm_conf;
+            return std::nullopt;
     }
 
     std::shared_ptr<file_proc_grps> proc_grps = std::make_shared<file_proc_grps>();

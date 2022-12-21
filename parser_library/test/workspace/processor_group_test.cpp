@@ -16,11 +16,15 @@
 
 #include "../common_testing.h"
 #include "config/proc_grps.h"
+#include "library_mock.h"
 #include "workspaces/library.h"
 #include "workspaces/processor_group.h"
 
+using namespace ::testing;
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
+using hlasm_plugin::utils::resource::resource_location;
+
 
 auto asm_options(config::assembler_options o)
 {
@@ -220,25 +224,21 @@ TEST(processor_group, asm_options_machine_invalid)
 
 TEST(processor_group, opcode_suggestions)
 {
-    struct library_mock final : library
-    {
-        void refresh() override {}
-        std::vector<std::string> list_files() override { return { "MAC1", "MAC2", "LONGMAC" }; }
-        bool has_file(std::string_view file, hlasm_plugin::utils::resource::resource_location* url)
-        {
-            auto files = list_files();
+    auto lib = std::make_shared<::testing::NiceMock<library_mock>>();
+
+    const std::vector<std::string> files { "MAC1", "MAC2", "LONGMAC" };
+
+    EXPECT_CALL(*lib, list_files).WillRepeatedly(Return(files));
+    EXPECT_CALL(*lib, has_file)
+        .WillRepeatedly([&files](std::string_view file, hlasm_plugin::utils::resource::resource_location* url) {
             bool result = std::any_of(files.begin(), files.end(), [file](const auto& v) { return v == file; });
-            if (url)
+            if (result && url)
                 *url = hlasm_plugin::utils::resource::resource_location(file);
             return result;
-        }
+        });
 
-        void copy_diagnostics(std::vector<diagnostic_s>&) const override {}
-
-        std::string refresh_url_prefix() const override { return {}; }
-    };
     processor_group grp("", {}, {});
-    grp.add_library(std::make_shared<library_mock>());
+    grp.add_library(lib);
 
     auto mac_false = grp.suggest("MAC", false);
     std::vector<std::pair<std::string, size_t>> expected_mac_false { { "MAC1", 1 }, { "MAC2", 1 } };
@@ -253,4 +253,24 @@ TEST(processor_group, opcode_suggestions)
 
     EXPECT_TRUE(grp.suggest("MAC1", false).empty());
     EXPECT_TRUE(grp.suggest("MAC1", true).empty());
+}
+
+TEST(processor_group, refresh_needed)
+{
+    auto lib1 = std::make_shared<::testing::NiceMock<library_mock>>();
+    EXPECT_CALL(*lib1, refresh_url_prefix).WillRepeatedly(Return("test://workspace/externals/library1"));
+    auto lib2 = std::make_shared<::testing::NiceMock<library_mock>>();
+    EXPECT_CALL(*lib2, refresh_url_prefix).WillRepeatedly(Return("test://workspace/externals/library2"));
+
+    processor_group grp("", {}, {});
+    grp.add_library(lib1);
+    grp.add_library(lib2);
+
+    // TODO: only create&delete should trigger the file specific one
+    EXPECT_TRUE(grp.refresh_needed({ resource_location("test://workspace/externals/library1/MAC") }));
+    EXPECT_TRUE(grp.refresh_needed({ resource_location("test://workspace/externals/library1") }));
+    // whole tree gets deleted
+    EXPECT_TRUE(grp.refresh_needed({ resource_location("test://workspace/externals") }));
+    EXPECT_TRUE(grp.refresh_needed({ resource_location("test://workspace/externals/library2") }));
+    EXPECT_FALSE(grp.refresh_needed({ resource_location("test://workspace/externals/library3") }));
 }

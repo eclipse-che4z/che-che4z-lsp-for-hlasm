@@ -17,10 +17,14 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "empty_configs.h"
+#include "file_manager_mock.h"
 #include "workspaces/workspace_configuration.h"
 
+using namespace ::testing;
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
+using namespace hlasm_plugin::utils::resource;
 
 namespace {
 template<int>
@@ -71,4 +75,19 @@ TEST(workspace_configuration, library_options)
 
     EXPECT_TRUE(library_options(X<2> { 1 }) < X<2> { 2 });
     EXPECT_TRUE(library_options(X<2> { 1 }) < library_options(X<2> { 2 }));
+}
+
+TEST(workspace_configuration, refresh_needed)
+{
+    NiceMock<file_manager_mock> fm;
+    shared_json global_settings = make_empty_shared_json();
+
+    EXPECT_CALL(fm, get_file_content(_)).WillRepeatedly(Return(std::nullopt));
+
+    workspace_configuration cfg(fm, resource_location("test://workspace"), global_settings);
+
+    EXPECT_TRUE(cfg.refresh_libraries({ resource_location("test://workspace/.hlasmplugin") }));
+    EXPECT_TRUE(cfg.refresh_libraries({ resource_location("test://workspace/.hlasmplugin/proc_grps.json") }));
+    EXPECT_TRUE(cfg.refresh_libraries({ resource_location("test://workspace/.hlasmplugin/pgm_conf.json") }));
+    EXPECT_FALSE(cfg.refresh_libraries({ resource_location("test://workspace/something/else") }));
 }

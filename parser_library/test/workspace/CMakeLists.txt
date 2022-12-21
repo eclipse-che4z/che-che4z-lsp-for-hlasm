@@ -21,6 +21,7 @@ target_sources(library_test PRIVATE
 	file_with_text.h
 	files_parse_lib_provider.h
 	instruction_sets_test.cpp
+	library_mock.h
 	load_config_test.cpp
 	macro_cache_test.cpp
 	pathmask_test.cpp

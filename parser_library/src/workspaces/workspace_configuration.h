@@ -251,13 +251,10 @@ class workspace_configuration
     parse_config_file_result load_and_process_config(std::vector<diagnostic_s>& diags);
 
     parse_config_file_result load_proc_config(config::proc_grps& proc_groups,
-        file_ptr& proc_grps_file,
         global_settings_map& utilized_settings_values,
         std::vector<diagnostic_s>& diags);
-    parse_config_file_result load_pgm_config(config::pgm_conf& pgm_config,
-        file_ptr& pgm_conf_file,
-        global_settings_map& utilized_settings_values,
-        std::vector<diagnostic_s>& diags);
+    parse_config_file_result load_pgm_config(
+        config::pgm_conf& pgm_config, global_settings_map& utilized_settings_values, std::vector<diagnostic_s>& diags);
 
     void find_and_add_libs(const utils::resource::resource_location& root,
         const utils::resource::resource_location& path_pattern,
