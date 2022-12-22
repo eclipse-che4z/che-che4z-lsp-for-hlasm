@@ -25,6 +25,9 @@ on:
       - master
       - development
 
+env:
+  CLIENT_DIR: clients/vscode-hlasmplugin
+
 jobs:
   formal-checks:
     name: Checks
@@ -33,11 +36,6 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run clang-format
         run: clang-format-14 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
-      - name: Upload clang-format-output.txt
-        uses: actions/upload-artifact@v3
-        with:
-          name: clang-format-output
-          path: clang-format-output.txt
       - name: Check format
         run: |
           if [ -s clang-format-output.txt ]
@@ -45,9 +43,7 @@ jobs:
             exit 1
           fi
       - name: Check license headers
-        run: |
-          chmod +x cmake/check_license.sh
-          cmake/check_license.sh
+        run: cmake/check_license.sh
       - name: PR to master is allowed only from a release branch
         if: github.event_name == 'pull_request' && github.base_ref == 'master' && github.head_ref != 'release-next'
         run: exit 1
@@ -70,13 +66,23 @@ jobs:
           java-version: 11
           distribution: 'temurin'
       - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install ninja-build
+        run: |
+          sudo apt-get update
+          sudo apt-get install ninja-build
+      - name: Make build directory
+        run: mkdir build
       - name: Configure
-        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off ../
+        run: cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off ../
+        working-directory: build
       - name: Build
-        run: cd build && cmake --build .
+        run: cmake --build .
+        working-directory: build
       - name: Test
-        run: cd build/bin && ./server_test && ./library_test && ./hlasm_utils_test
+        run: |
+          ./server_test
+          ./library_test
+          ./hlasm_utils_test
+        working-directory: build/bin
 
   build-matrix:
     name: Build
@@ -90,7 +96,7 @@ jobs:
             container: alpine:3.16
             prereq: apk update && apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk11 maven
             config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-static" -DBUILD_VSIX=Off ../
-            dbg-strip: cd build/bin && objcopy --only-keep-debug language_server language_server.dbg && objcopy --strip-unneeded language_server && objcopy --add-gnu-debuglink=language_server.dbg language_server
+            dbg-strip: objcopy --only-keep-debug language_server language_server.dbg && objcopy --strip-unneeded language_server && objcopy --add-gnu-debuglink=language_server.dbg language_server
             dbg-pattern: build/bin/language_server.dbg
           - os: ubuntu-22.04
             native: wasm
@@ -102,7 +108,7 @@ jobs:
               -DCMAKE_EXE_LINKER_FLAGS="-s PTHREAD_POOL_SIZE=8 -s TOTAL_MEMORY=268435456 -s PROXY_TO_PTHREAD=1 -s NODERAWFS=1 -s EXIT_RUNTIME=1 --bind"
               -DCMAKE_CROSSCOMPILING_EMULATOR="node;--experimental-wasm-threads;--experimental-wasm-bulk-memory"
               -Dgtest_disable_pthreads=On -DBUILD_VSIX=Off ../
-            test: node --experimental-wasm-threads --experimental-wasm-bulk-memory ./server_test.js && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./library_test.js && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./hlasm_utils_test.js
+            test-runner: node --experimental-wasm-threads --experimental-wasm-bulk-memory
             artifacts-ext: .*
           - os: windows-2022
             native: win32
@@ -125,15 +131,24 @@ jobs:
       - name: Requirements install
         if: ${{ matrix.prereq }}
         run: ${{ matrix.prereq }}
+      - name: Make build directory
+        run: mkdir build
       - name: Configure
-        run: mkdir build && cd build && ${{ matrix.config }}
+        run: ${{ matrix.config }}
+        working-directory: build
       - name: Build
-        run: cd build && cmake --build . ${{ matrix.build-extra }}
+        run: cmake --build . ${{ matrix.build-extra }}
+        working-directory: build
       - name: Server Test
-        run: cd build/bin && ${{ matrix.test || './library_test && ./server_test && ./hlasm_utils_test' }}
+        run: |
+          ${{ matrix.test-runner }} ./library_test
+          ${{ matrix.test-runner }} ./server_test
+          ${{ matrix.test-runner }} ./hlasm_utils_test
+        working-directory: build/bin
       - name: Strip debug info
         if: ${{ matrix.dbg-strip }}
         run: ${{ matrix.dbg-strip }}
+        working-directory: build/bin
       - name: Actions artifact
         uses: actions/upload-artifact@v3
         with:
@@ -173,33 +188,38 @@ jobs:
             native: darwin
             chmod: true
 
+    env:
+      XVFB: ${{ matrix.native == 'linux' && 'xvfb-run -a' || '' }}
+    defaults:
+      run:
+        working-directory: ${{ env.CLIENT_DIR }}
     steps:
       - uses: actions/checkout@v3
       - name: Download native language server
         uses: actions/download-artifact@v3
         with:
           name: language_server_${{ matrix.native }}
-          path: clients/vscode-hlasmplugin/bin/${{ matrix.native }}/
-      - name: Run chmod
-        if: ${{ matrix.chmod }}
-        run: chmod +x clients/vscode-hlasmplugin/bin/${{ matrix.native }}/language_server
+          path: ${{ env.CLIENT_DIR }}/bin/${{ matrix.native }}/
       - name: Download wasm language server
         uses: actions/download-artifact@v3
         with:
           name: language_server_wasm
-          path: clients/vscode-hlasmplugin/bin/wasm/
+          path: ${{ env.CLIENT_DIR }}/bin/wasm/
+      - name: Set executable flag
+        if: ${{ matrix.chmod }}
+        run: chmod +x bin/${{ matrix.native }}/language_server
       - name: NPM CI
-        run: npm --prefix clients/vscode-hlasmplugin ci
+        run: npm ci
       - name: Extension Test
-        run: cd clients/vscode-hlasmplugin && ${{ matrix.native == 'linux' && 'xvfb-run -a' || '' }} npm run test
+        run: ${{ env.XVFB }} npm run test
       - name: Extension Test WASM
-        run: cd clients/vscode-hlasmplugin && ${{ matrix.native == 'linux' && 'xvfb-run -a' || '' }} npm run test:wasm
+        run: ${{ env.XVFB }} npm run test:wasm
       - name: Extension Test Insiders
-        run: cd clients/vscode-hlasmplugin && ${{ matrix.native == 'linux' && 'xvfb-run -a' || '' }} npm run test:insiders
+        run: ${{ env.XVFB }} npm run test:insiders
 
   VSIX:
     runs-on: ubuntu-22.04
-    needs: [test-matrix]
+    needs: [build-matrix]
 
     steps:
       - uses: actions/checkout@v3
@@ -207,59 +227,65 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: language_server_win32
-          path: clients/vscode-hlasmplugin/bin/win32/
+          path: ${{ env.CLIENT_DIR }}/bin/win32/
       - name: Download linux language server
         uses: actions/download-artifact@v3
         with:
           name: language_server_linux
-          path: clients/vscode-hlasmplugin/bin/linux/
+          path: ${{ env.CLIENT_DIR }}/bin/linux/
       - name: Download wasm language server
         uses: actions/download-artifact@v3
         with:
           name: language_server_wasm
-          path: clients/vscode-hlasmplugin/bin/wasm/
+          path: ${{ env.CLIENT_DIR }}/bin/wasm/
       - name: Download MacOS language server
         uses: actions/download-artifact@v3
         with:
           name: language_server_darwin
-          path: clients/vscode-hlasmplugin/bin/darwin/
+          path: ${{ env.CLIENT_DIR }}/bin/darwin/
       - name: Set executable flag
         run: |
-          chmod +x clients/vscode-hlasmplugin/bin/darwin/language_server
-          chmod +x clients/vscode-hlasmplugin/bin/linux/language_server
-      - name: Extract branch name
-        run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
-      - name: Update version
-        if: env.BRANCH == 'master' || env.BRANCH == 'release-next'
-        run: cd clients/vscode-hlasmplugin && npm ci && npm run compile && npx semantic-release --dry-run
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          chmod +x ${{ env.CLIENT_DIR }}/bin/darwin/language_server
+          chmod +x ${{ env.CLIENT_DIR }}/bin/linux/language_server
+      - name: NPM CI
+        run: npm ci
+        working-directory: ${{ env.CLIENT_DIR }}
       - name: Inject telemetry key
         run: |
-          cd clients/vscode-hlasmplugin/src
           export TEL_KEY=`node -e "console.log(Buffer.from('${{ secrets.TELEMETRY_KEY }}').toString('base64'))"`
-          sed -i "s/const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY/const TELEMETRY_KEY_ENCODED = '$TEL_KEY'/" telemetry.ts
+          sed -i "s/const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY/const TELEMETRY_KEY_ENCODED = '$TEL_KEY'/" src/telemetry.ts
+        working-directory: ${{ env.CLIENT_DIR }}
+      - name: NPM Compile
+        run: npm run compile
+        working-directory: ${{ env.CLIENT_DIR }}
+      - name: Update version
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release-next'
+        run: npx semantic-release --dry-run
+        working-directory: ${{ env.CLIENT_DIR }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package VSIX
-        run: cd clients/vscode-hlasmplugin/ && npm ci && npm run compile && npx vsce package -o hlasm-language-support.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
+        run: npx vsce package -o hlasm-language-support.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
+        working-directory: ${{ env.CLIENT_DIR }}
       - name: Upload VSIX
         uses: actions/upload-artifact@v3
         with:
           name: hlasm-language-support.vsix
-          path: clients/vscode-hlasmplugin/hlasm-language-support.vsix
+          path: ${{ env.CLIENT_DIR }}/hlasm-language-support.vsix
       - name: Upload Release Info
         uses: actions/upload-artifact@v3
         with:
           name: release-info
           path: |
             CHANGELOG.md
-            clients/vscode-hlasmplugin/package.json
-            clients/vscode-hlasmplugin/CHANGELOG.md
+            ${{ env.CLIENT_DIR }}/package.json
+            ${{ env.CLIENT_DIR }}/CHANGELOG.md
 
   release:
     name: Release VSIXs
     runs-on: ubuntu-22.04
     if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'push' && github.ref == 'refs/heads/release-next')
-    needs: [VSIX]
+    needs: [VSIX, test-matrix, sanitizer-builds, theia-test]
 
     steps:
       - uses: actions/checkout@v3
@@ -267,7 +293,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: hlasm-language-support.vsix
-          path: clients/vscode-hlasmplugin/
+          path: ${{ env.CLIENT_DIR }}
       - name: Download Release Info
         uses: actions/download-artifact@v3
         with:
@@ -277,16 +303,19 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "github-actions"
-          git add CHANGELOG.md clients/vscode-hlasmplugin/package.json clients/vscode-hlasmplugin/CHANGELOG.md
+          git add CHANGELOG.md ${{ env.CLIENT_DIR }}/package.json ${{ env.CLIENT_DIR }}/CHANGELOG.md
           git commit -m "chore: Update version & changelog [skip ci]"
       - name: Push changes
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-
+      - name: NPM CI
+        run: npm ci
+        working-directory: ${{ env.CLIENT_DIR }}
       - name: Release new version
-        run: cd clients/vscode-hlasmplugin && npx semantic-release
+        run: npx semantic-release
+        working-directory: ${{ env.CLIENT_DIR }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Merge master into development
@@ -297,7 +326,7 @@ jobs:
           git checkout origin/development
           git merge origin/master
 
-          cd clients/vscode-hlasmplugin
+          cd ${{ env.CLIENT_DIR }}
           sed -i 's/"version": "\(.*\)"/"version": "\1-NEXT"/g' package.json
           sed -i '2s/^/\n## ****Unreleased****\n/' CHANGELOG.md
           git add package.json CHANGELOG.md
@@ -335,14 +364,14 @@ jobs:
           persist-credentials: false
       - name: Install Chromium
         run: apk add --no-cache chromium
-      - name: Extract branch name
-        run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
       - name: Download VSIX
         uses: actions/download-artifact@v3
         with:
           name: hlasm-language-support.vsix
-          path: clients/vscode-hlasmplugin/plugin/
+          path: ${{ env.CLIENT_DIR }}/plugin/
       - name: npm ci
-        run: cd clients/vscode-hlasmplugin && npm ci
+        run: npm ci
+        working-directory: ${{ env.CLIENT_DIR }}
       - name: Run Theia Tests
-        run: cd clients/vscode-hlasmplugin && npm run test:theia /home/theia/
+        run: npm run test:theia /home/theia/
+        working-directory: ${{ env.CLIENT_DIR }}

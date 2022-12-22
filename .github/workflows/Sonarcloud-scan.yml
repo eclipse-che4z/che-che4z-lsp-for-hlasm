@@ -46,36 +46,38 @@ jobs:
                archive_format: 'zip',
             });
             var fs = require('fs');
-            fs.writeFileSync('${{github.workspace}}/bw-artifact.zip', Buffer.from(download.data));
-      - run: unzip bw-artifact.zip
-      - name: Get ref
-        run: echo "REF=$(cat pr-info/ref.txt)" >> $GITHUB_ENV
-      - run: mv bw-artifact.zip /tmp/bw-artifact.zip
+            fs.writeFileSync('${{ runner.temp }}/bw-artifact.zip', Buffer.from(download.data));
+      - name: Get PR info
+        run: |
+          unzip ${{ runner.temp }}/bw-artifact.zip 'pr-info/*'
+          echo "REF=$(cat pr-info/ref.txt)" >> $GITHUB_ENV
+          echo "HEAD_BRANCH_ARG=$(cat pr-info/head-branch-arg.txt)" >> $GITHUB_ENV
+          echo "PR_NUMBER_ARG=$(cat pr-info/pr-number-arg.txt)" >> $GITHUB_ENV
+
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
           fetch-depth: 0
           ref: ${{ env.REF }}
-      - run: mv /tmp/bw-artifact.zip bw-artifact.zip
-      - run: unzip bw-artifact.zip
       - name: Get version
+        run: echo "VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")" >> $GITHUB_ENV
+
+      - run: unzip ${{ runner.temp }}/bw-artifact.zip
+
+      - name: Download Sonar
+        env:
+          SONAR_SCANNER_VERSION: 4.2.0.1873
         run: |
-          echo "VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")" >> $GITHUB_ENV
-          echo "HEAD_BRANCH_ARG=$(cat pr-info/head-branch-arg.txt)" >> $GITHUB_ENV
-          echo "PR_NUMBER_ARG=$(cat pr-info/pr-number-arg.txt)" >> $GITHUB_ENV
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip
+          unzip sonar-scanner.zip
+          mv sonar-scanner-$SONAR_SCANNER_VERSION-linux sonar-scanner-linux
+        working-directory: ${{ runner.temp }}
 
       - name: Sonar scan
+        env:
+          SONAR_SCANNER_OPTS: -server
         run: >
-          export SONAR_SCANNER_VERSION=4.2.0.1873 &&
-          export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux &&
-          rm -rf $SONAR_SCANNER_HOME &&
-          mkdir -p $SONAR_SCANNER_HOME &&
-          curl -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip &&
-          unzip $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/ &&
-          rm $HOME/.sonar/sonar-scanner.zip &&
-          export PATH=$SONAR_SCANNER_HOME/bin:$PATH &&
-          export SONAR_SCANNER_OPTS="-server" &&
-          sonar-scanner
+          $RUNNER_TEMP/sonar-scanner-linux/bin/sonar-scanner
           -Dsonar.projectKey=$(echo "$GITHUB_REPOSITORY" | tr "/" "_")
           -Dsonar.organization=$(echo "$GITHUB_REPOSITORY_OWNER" | tr "[:upper:]" "[:lower:]")
           -Dsonar.sources=benchmark,clients/vscode-hlasmplugin/src/,language_server/src,parser_library/src,parser_library/include,build/generated_parser/,utils/src,utils/include
