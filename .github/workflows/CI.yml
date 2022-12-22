@@ -19,7 +19,7 @@ on:
     branches:
       - master
       - development
-      - release**
+      - release-next
   pull_request:
     branches:
       - master
@@ -49,7 +49,7 @@ jobs:
           chmod +x cmake/check_license.sh
           cmake/check_license.sh
       - name: PR to master is allowed only from a release branch
-        if: github.event_name == 'pull_request' && github.base_ref == 'master' && !contains(github.head_ref, 'release')
+        if: github.event_name == 'pull_request' && github.base_ref == 'master' && github.head_ref != 'release-next'
         run: exit 1
 
   sanitizer-builds:
@@ -89,7 +89,7 @@ jobs:
             native: linux
             container: alpine:3.16
             prereq: apk update && apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk11 maven
-            config: cmake -G Ninja -DCMAKE_EXE_LINKER_FLAGS="-static" ../
+            config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-static" -DBUILD_VSIX=Off ../
             dbg-strip: cd build/bin && objcopy --only-keep-debug language_server language_server.dbg && objcopy --strip-unneeded language_server && objcopy --add-gnu-debuglink=language_server.dbg language_server
             dbg-pattern: build/bin/language_server.dbg
           - os: ubuntu-22.04
@@ -230,7 +230,7 @@ jobs:
       - name: Extract branch name
         run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
       - name: Update version
-        if: env.BRANCH == 'master' || startsWith(env.BRANCH, 'release')
+        if: env.BRANCH == 'master' || env.BRANCH == 'release-next'
         run: cd clients/vscode-hlasmplugin && npm ci && npm run compile && npx semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -240,41 +240,38 @@ jobs:
           export TEL_KEY=`node -e "console.log(Buffer.from('${{ secrets.TELEMETRY_KEY }}').toString('base64'))"`
           sed -i "s/const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY/const TELEMETRY_KEY_ENCODED = '$TEL_KEY'/" telemetry.ts
       - name: Package VSIX
-        run: cd clients/vscode-hlasmplugin/ && npm ci && npm run compile && npm run package
-      - name: Get VSIX filename
-        run: echo VSIX_FILENAME=$(ls clients/vscode-hlasmplugin/*.vsix) >> $GITHUB_ENV
-      - name: Get version
-        run: echo VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") >> $GITHUB_ENV
+        run: cd clients/vscode-hlasmplugin/ && npm ci && npm run compile && npx vsce package -o hlasm-language-support.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
       - name: Upload VSIX
         uses: actions/upload-artifact@v3
         with:
-          name: hlasm-language-support-${{ env.VERSION }}.vsix
-          path: ${{ env.VSIX_FILENAME }}
+          name: hlasm-language-support.vsix
+          path: clients/vscode-hlasmplugin/hlasm-language-support.vsix
+      - name: Upload Release Info
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-info
+          path: |
+            CHANGELOG.md
+            clients/vscode-hlasmplugin/package.json
+            clients/vscode-hlasmplugin/CHANGELOG.md
 
   release:
     name: Release VSIXs
     runs-on: ubuntu-22.04
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release'))
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'push' && github.ref == 'refs/heads/release-next')
     needs: [VSIX]
 
     steps:
       - uses: actions/checkout@v3
-      - name: Update version
-        run: cd clients/vscode-hlasmplugin && npm ci && npm run compile && npx semantic-release --dry-run
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Get new version
-        run: echo VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") >> $GITHUB_ENV
       - name: Download VSIX
         uses: actions/download-artifact@v3
         with:
-          name: hlasm-language-support-${{ env.VERSION }}.vsix
+          name: hlasm-language-support.vsix
           path: clients/vscode-hlasmplugin/
-      - name: Rename VSIXs
-        run: |
-          cd clients/vscode-hlasmplugin/
-          mv hlasm-language-support-${{ env.VERSION }}.vsix         multi.vsix
-
+      - name: Download Release Info
+        uses: actions/download-artifact@v3
+        with:
+          name: release-info
       - name: Commit changes
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
@@ -311,13 +308,12 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: development
-
       - name: Delete PRs head branches
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: dawidd6/action-delete-branch@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branches: release-${{ env.VERSION }}
+          branches: release-next
 
   theia-test:
     name: Theia Integration Test
@@ -341,17 +337,10 @@ jobs:
         run: apk add --no-cache chromium
       - name: Extract branch name
         run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
-      - name: Update version
-        if: env.BRANCH == 'master' || startsWith(env.BRANCH, 'release')
-        run: cd clients/vscode-hlasmplugin && npm ci && npm run compile && npx semantic-release --dry-run
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Get version
-        run: echo VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") >> $GITHUB_ENV
       - name: Download VSIX
         uses: actions/download-artifact@v3
         with:
-          name: hlasm-language-support-${{ env.VERSION }}.vsix
+          name: hlasm-language-support.vsix
           path: clients/vscode-hlasmplugin/plugin/
       - name: npm ci
         run: cd clients/vscode-hlasmplugin && npm ci

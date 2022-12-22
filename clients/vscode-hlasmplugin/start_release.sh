@@ -6,16 +6,4 @@ if [ "$BRANCH" != "development" ]; then
     exit 1
 fi
 
-git pull
-
-sed -i '3s/^/  - development\n/' .releaserc.yaml
-
-npm ci
-npx semantic-release --dry-run
-
-
-
-VERSION=`node -e "console.log(require('./package.json').version)"`
-
-git reset --hard
-git push origin HEAD:release-$VERSION
+git reset --hard && git pull --ff-only && git push origin HEAD:release-next

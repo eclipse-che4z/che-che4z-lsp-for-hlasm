@@ -1,6 +1,6 @@
 branches:
   - master
-  - name: release-+([0-9]).+([0-9]).+([0-9])
+  - name: release-next
     prerelease: beta
 ci: true
 tagFormat: ${version}
@@ -41,7 +41,7 @@ plugins:
     - generateNotesCmd: sh prepare_release.sh ${nextRelease.version} ${branch.name} "${nextRelease.notes}" ${lastRelease.version} ${Date.now()}
   - - "@semantic-release/github"
     - assets:
-      - path: "multi.vsix"
+      - path: "hlasm-language-support.vsix"
         label: "hlasm-language-support-${nextRelease.version}.vsix"
         name: "hlasm-language-support-${nextRelease.version}.vsix"
   
