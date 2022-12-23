@@ -15,8 +15,8 @@
 #include "hlasm_context.h"
 
 #include <ctime>
+#include <memory>
 #include <numeric>
-#include <stdexcept>
 
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
@@ -454,12 +454,12 @@ std::shared_ptr<id_storage> hlasm_context::ids_ptr() { return ids_; }
 const utils::resource::resource_location* hlasm_context::shared_resource_location(
     const utils::resource::resource_location& l)
 {
-    return &*m_resource_locations.emplace(l).first;
+    return std::to_address(m_resource_locations.emplace(l).first);
 }
 const utils::resource::resource_location* hlasm_context::shared_resource_location(
     utils::resource::resource_location&& l)
 {
-    return &*m_resource_locations.emplace(std::move(l)).first;
+    return std::to_address(m_resource_locations.emplace(std::move(l)).first);
 }
 
 processing_stack_t hlasm_context::processing_stack()
@@ -926,8 +926,7 @@ copy_member_ptr hlasm_context::get_copy_member(id_index member) const
 void hlasm_context::enter_copy_member(id_index member_name)
 {
     auto tmp = copy_members_.find(member_name);
-    if (tmp == copy_members_.end())
-        throw std::runtime_error("unknown copy member");
+    assert(tmp != copy_members_.end());
 
     const auto& [name, member] = *tmp;
 

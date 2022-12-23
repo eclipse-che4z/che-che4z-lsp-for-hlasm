@@ -85,12 +85,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
 
     // create server options
-    var factory = new ServerFactory();
+    const factory = new ServerFactory();
 
     const serverOptions = await factory.create(serverVariant);
 
     //client init
-    var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
+    const hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
 
     clientErrorHandler.defaultHandler = hlasmpluginClient.createDefaultErrorHandler();
     // The objectToString is necessary, because telemetry reporter only takes objects with

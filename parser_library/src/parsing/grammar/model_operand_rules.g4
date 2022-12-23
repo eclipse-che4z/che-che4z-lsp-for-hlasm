@@ -94,7 +94,7 @@ model_op returns [std::optional<concat_chain> chain_opt = concat_chain()]
 	{
 			$chain_opt->emplace_back(char_str_conc(std::move($before_var_sym_model.value), provider.get_range($before_var_sym_model.ctx)));
 	}
-	var_sym_model[&*$chain_opt] after_var_sym_model[&*$chain_opt]
+	var_sym_model[&$chain_opt.value()] after_var_sym_model[&$chain_opt.value()]
 	{
 		if($var_sym_model.ctx->exception)
 			$chain_opt = std::nullopt;

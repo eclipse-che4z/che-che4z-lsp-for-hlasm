@@ -14,7 +14,8 @@
 
 #include "processing_manager.h"
 
-#include <assert.h>
+#include <cassert>
+#include <memory>
 
 #include "parsing/parser_impl.h"
 #include "statement_analyzers/lsp_analyzer.h"
@@ -144,13 +145,13 @@ void processing_manager::run_anayzers(const context::hlasm_statement& statement,
 
 bool processing_manager::attr_lookahead_active() const
 {
-    auto look_pr = dynamic_cast<lookahead_processor*>(&*procs_.back());
+    auto look_pr = dynamic_cast<lookahead_processor*>(std::to_address(procs_.back()));
     return look_pr && look_pr->action == lookahead_action::ORD;
 }
 
 bool processing_manager::seq_lookahead_active() const
 {
-    auto look_pr = dynamic_cast<lookahead_processor*>(&*procs_.back());
+    auto look_pr = dynamic_cast<lookahead_processor*>(std::to_address(procs_.back()));
     return look_pr && look_pr->action == lookahead_action::SEQ;
 }
 

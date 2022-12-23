@@ -15,7 +15,7 @@
 #include "section.h"
 
 #include <algorithm>
-#include <stdexcept>
+#include <memory>
 
 using namespace hlasm_plugin::parser_library::context;
 
@@ -35,7 +35,7 @@ void section::set_location_counter(id_index loctr_name)
         loctrs_.begin(), loctrs_.end(), [loctr_name](const auto& loctr) { return loctr->name == loctr_name; });
 
     if (tmp != loctrs_.end())
-        curr_loctr_ = &**tmp;
+        curr_loctr_ = std::to_address(*tmp);
     else
     {
         loctrs_.emplace_back(std::make_unique<location_counter>(loctr_name, *this, loctr_kind::NONSTARTING));

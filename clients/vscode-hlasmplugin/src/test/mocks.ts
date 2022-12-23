@@ -162,15 +162,15 @@ export class TextEditorEditMock implements vscode.TextEditorEdit {
     }
     _insert(location: vscode.Position, value: string): void {
         let pos = this.skipLines(this._text, location.line);
-        var before = this._text.slice(0, pos + location.character);
-        var after = this._text.slice(pos + location.character);
+        const before = this._text.slice(0, pos + location.character);
+        const after = this._text.slice(pos + location.character);
         this._text = before + value + after;
     }
     _delete(location: vscode.Range | vscode.Selection): void {
-        let pos_start = this.skipLines(this._text, location.start.line);
-        let pos_end = this.skipLines(this._text, location.end.line);
-        var before = this._text.slice(0, pos_start + location.start.character);
-        var after = this._text.slice(pos_end + location.end.character);
+        const pos_start = this.skipLines(this._text, location.start.line);
+        const pos_end = this.skipLines(this._text, location.end.line);
+        const before = this._text.slice(0, pos_start + location.start.character);
+        const after = this._text.slice(pos_end + location.end.character);
         this._text = before + after;
     }
     setEndOfLine(endOfLine: vscode.EndOfLine): void {
@@ -216,8 +216,8 @@ export class TextDocumentMock implements vscode.TextDocument {
     lineAt(line: number): vscode.TextLine;
     lineAt(position: vscode.Position): vscode.TextLine;
     lineAt(position: any) {
-        var line = new TextLineMock();
-        var lines = this.text.split(/\r?\n/);
+        const line = new TextLineMock();
+        const lines = this.text.split(/\r?\n/);
         if ((position as vscode.Position).line !== undefined)
             line.lineNumber = (position as vscode.Position).line;
         else

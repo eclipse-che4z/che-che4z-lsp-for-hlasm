@@ -23,24 +23,15 @@ async function main() {
 		const extensionDevelopmentPath = path.join(__dirname, '../../');
 		const extensionTestsPath = path.join(__dirname, './suite/index');
 		const launchArgs = [path.join(__dirname, './workspace/'), '--disable-extensions', '--disable-workspace-trust'];
-		var options: TestOptions;
-		if (process.argv.length > 2 && process.argv[2] == 'insiders') {
-			const vscodeExecutablePath = await downloadAndUnzipVSCode('insiders');
-			options = {
-				vscodeExecutablePath,
-				extensionDevelopmentPath,
-				extensionTestsPath,
-				launchArgs
-			}
-		} else {
-			options = {
-				extensionDevelopmentPath,
-				extensionTestsPath,
-				launchArgs
-			}
-		}
+		const vscodeExecutablePath = process.argv.length > 2 && process.argv[2] == 'insiders' && await downloadAndUnzipVSCode('insiders') || undefined;
+
 		// run tests
-		await runTests(options);
+		await runTests({
+			vscodeExecutablePath,
+			extensionDevelopmentPath,
+			extensionTestsPath,
+			launchArgs
+		});
 	} catch (error) {
 		console.log(error);
 		console.error('Tests Failed');

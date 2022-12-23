@@ -14,6 +14,8 @@
 
 #include "system_variable.h"
 
+#include <memory>
+
 #include "diagnostic.h"
 #include "diagnostic_consumer.h"
 #include "range.h"
@@ -91,7 +93,7 @@ size_t system_variable::size(std::span<const size_t> offset) const
     return tmp->size();
 }
 
-const macro_param_data_component* system_variable::real_data() const { return &*data_; }
+const macro_param_data_component* system_variable::real_data() const { return std::to_address(data_); }
 
 C_t system_variable_sysmac::get_value(std::span<const size_t> offset) const
 {

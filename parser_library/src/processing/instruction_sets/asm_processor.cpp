@@ -15,6 +15,7 @@
 #include "asm_processor.h"
 
 #include <charconv>
+#include <memory>
 #include <optional>
 
 #include "analyzing_context.h"
@@ -396,8 +397,8 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
             (void)data_op->value->check_single_symbol_ok(diagnostic_collector(this));
         }
 
-        const auto* b = &*start;
-        const auto* e = b + (it - start);
+        const auto* const b = std::to_address(start);
+        const auto* const e = std::to_address(it);
 
         if (has_length_dependencies)
         {

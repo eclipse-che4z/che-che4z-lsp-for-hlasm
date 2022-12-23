@@ -449,7 +449,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
             default: {
                 const auto li = lob_info(*match[1].first, match[3].matched ? *match[3].first : 0);
                 unsigned long long len;
-                std::from_chars(&*match[2].first, &*match[2].first + match[2].length(), len);
+                std::from_chars(std::to_address(match[2].first), std::to_address(match[2].second), len);
                 len *= li.scale;
 
                 add_ds_line(label, "", "0FL4");

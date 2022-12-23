@@ -14,6 +14,8 @@
 
 #include "feature_text_synchronization.h"
 
+#include <memory>
+
 #include "../logger.h"
 #include "protocol.h"
 #include "utils/resource_location.h"
@@ -92,7 +94,7 @@ void feature_text_synchronization::on_did_change(const json&, const json& params
 
         ++i;
     }
-    ws_mngr_.did_change_file(doc_uri.c_str(), version, &*changes.begin(), changes.size());
+    ws_mngr_.did_change_file(doc_uri.c_str(), version, changes.data(), changes.size());
 }
 
 void feature_text_synchronization::on_did_close(const json&, const json& params)

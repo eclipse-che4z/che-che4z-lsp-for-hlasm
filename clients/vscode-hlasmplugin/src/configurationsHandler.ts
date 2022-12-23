@@ -177,12 +177,12 @@ export class ConfigurationsHandler {
 
     // converts wildcards to regexes
     private convertWildcardToRegex(wildcard: string): RegExp {
-        var regexStr = wildcard.replace(/\(|\[|\{|\\|\^|\-|\=|\$|\!|\||\]|\}|\)|\./g, (char) => { return "\\" + char });
-        regexStr = regexStr.replace(/%3[fF]/g, ".");
-        regexStr = regexStr.replace(/%2[aA]/g, (char) => { return ".*?"; });
-        regexStr = regexStr.replace(/%2[bB]/g, (char) => { return ".+?"; });
-        regexStr = '^' + regexStr + '$';
-        return new RegExp(regexStr);
+        return new RegExp('^' +
+            wildcard.replace(/\(|\[|\{|\\|\^|\-|\=|\$|\!|\||\]|\}|\)|\./g, (char) => { return "\\" + char })
+                .replace(/%3[fF]/g, ".")
+                .replace(/%2[aA]/g, (char) => { return ".*?"; })
+                .replace(/%2[bB]/g, (char) => { return ".+?"; })
+            + '$');
     }
 
 

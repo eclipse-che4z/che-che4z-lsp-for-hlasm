@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
 
 #include "checking/diagnostic_collector.h"
 
@@ -288,7 +289,7 @@ const ca_instruction* instruction::find_ca_instructions(std::string_view name)
 
     if (it == std::ranges::end(ca_instructions) || it->name() != name)
         return nullptr;
-    return &*it;
+    return std::to_address(it);
 }
 #else
 static_assert(std::is_sorted(std::begin(ca_instructions), std::end(ca_instructions), [](const auto& l, const auto& r) {
@@ -304,7 +305,7 @@ const ca_instruction* instruction::find_ca_instructions(std::string_view name)
 
     if (it == std::end(ca_instructions) || it->name() != name)
         return nullptr;
-    return &*it;
+    return std::to_address(it);
 }
 #endif
 
@@ -379,7 +380,7 @@ const assembler_instruction* instruction::find_assembler_instructions(std::strin
     auto it = std::ranges::lower_bound(assembler_instructions, instr, {}, &assembler_instruction::name);
     if (it == std::ranges::end(assembler_instructions) || it->name() != instr)
         return nullptr;
-    return &*it;
+    return std::to_address(it);
 }
 #else
 static_assert(std::is_sorted(std::begin(assembler_instructions),
@@ -394,7 +395,7 @@ const assembler_instruction* instruction::find_assembler_instructions(std::strin
         });
     if (it == std::end(assembler_instructions) || it->name() != instr)
         return nullptr;
-    return &*it;
+    return std::to_address(it);
 }
 #endif
 
@@ -1948,14 +1949,14 @@ const machine_instruction* instruction::find_machine_instructions(std::string_vi
     auto it = std::ranges::lower_bound(machine_instructions, name, {}, &machine_instruction::name);
     if (it == std::ranges::end(machine_instructions) || it->name() != name)
         return nullptr;
-    return &*it;
+    return std::to_address(it);
 }
 
 constexpr const machine_instruction* find_mi(std::string_view name)
 {
     auto it = std::ranges::lower_bound(machine_instructions, name, {}, &machine_instruction::name);
     assert(it != std::ranges::end(machine_instructions) && it->name() == name);
-    return &*it;
+    return std::to_address(it);
 }
 #else
 static_assert(std::is_sorted(std::begin(machine_instructions),
@@ -1970,7 +1971,7 @@ const machine_instruction* instruction::find_machine_instructions(std::string_vi
         });
     if (it == std::end(machine_instructions) || it->name() != name)
         return nullptr;
-    return &*it;
+    return std::to_address(it);
 }
 
 constexpr const machine_instruction* find_mi(std::string_view name)
@@ -1980,7 +1981,7 @@ constexpr const machine_instruction* find_mi(std::string_view name)
             return l.name() < r;
         });
     assert(it != std::end(machine_instructions) && it->name() == name);
-    return &*it;
+    return std::to_address(it);
 }
 #endif
 
@@ -3394,7 +3395,7 @@ const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name)
     auto it = std::ranges::lower_bound(mnemonic_codes, name, {}, &mnemonic_code::name);
     if (it == std::ranges::end(mnemonic_codes) || it->name() != name)
         return nullptr;
-    return &*it;
+    return std::to_address(it);
 }
 #else
 static_assert(std::is_sorted(std::begin(mnemonic_codes), std::end(mnemonic_codes), [](const auto& l, const auto& r) {
@@ -3409,7 +3410,7 @@ const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name)
         });
     if (it == std::end(mnemonic_codes) || it->name() != name)
         return nullptr;
-    return &*it;
+    return std::to_address(it);
 }
 #endif
 

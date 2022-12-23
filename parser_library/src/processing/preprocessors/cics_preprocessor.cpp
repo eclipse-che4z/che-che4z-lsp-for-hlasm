@@ -955,7 +955,7 @@ public:
         if (!std::regex_match(line.begin(), line.end(), m_regex_match, asm_statement) || m_regex_match[1].length() == 0)
             return false;
 
-        std::string_view operands(&*m_regex_match[1].first, (size_t)m_regex_match[1].length());
+        std::string_view operands(m_regex_match[1].first, m_regex_match[1].second);
         auto opts_begin =
             std::regex_token_iterator<std::string_view::iterator>(operands.begin(), operands.end(), op_sep, -1);
         auto opts_end = std::regex_token_iterator<std::string_view::iterator>();
@@ -965,7 +965,7 @@ public:
             if (opts_begin->length() == 0)
                 continue;
 
-            std::string_view name(&*opts_begin->first, opts_begin->second - opts_begin->first);
+            std::string_view name(opts_begin->first, opts_begin->second);
             if (auto o = opts.find(name); o != opts.end())
                 (m_options.*o->second.first) = o->second.second;
         }
@@ -1038,8 +1038,8 @@ public:
         static const std::regex line_of_interest("([^ ]*)[ ]+(START|CSECT|RSECT|DSECT|DFHEIENT|DFHEISTG|END)(?: .+)?");
 
         return (std::regex_match(line.begin(), line.end(), m_matches_sv, line_of_interest)
-            && process_asm_statement(std::string_view(std::to_address(m_matches_sv[2].first), m_matches_sv[2].length()),
-                std::string_view(std::to_address(m_matches_sv[1].first), m_matches_sv[1].length())));
+            && process_asm_statement(std::string_view(m_matches_sv[2].first, m_matches_sv[2].second),
+                std::string_view(m_matches_sv[1].first, m_matches_sv[1].second)));
     }
 
     struct label_info

@@ -146,7 +146,7 @@ std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(
 
     semantics::preproc_details details;
 
-    details.stmt_r = range({ lineno, 0 }, { lineno, matches[0].str().length() });
+    details.stmt_r = range({ lineno, 0 }, { lineno, static_cast<size_t>(matches[0].length()) });
     auto rp = semantics::range_provider(details.stmt_r, semantics::adjusting_state::MACRO_REPARSE, continue_column);
 
     if (ids.label)

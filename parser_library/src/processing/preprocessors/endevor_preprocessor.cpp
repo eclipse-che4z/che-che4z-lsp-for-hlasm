@@ -53,7 +53,7 @@ std::string_view get_copy_member(const std::match_results<std::string_view::iter
     if (matches.size() != 4)
         return "";
 
-    return std::string_view(std::to_address(matches[2].first), matches[2].length());
+    return std::string_view(matches[2].first, matches[2].second);
 }
 } // namespace
 

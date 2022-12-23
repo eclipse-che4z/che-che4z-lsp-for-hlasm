@@ -54,7 +54,7 @@ struct PARSER_LIBRARY_EXPORT position
 
 struct PARSER_LIBRARY_EXPORT range
 {
-    range() {}
+    range() = default;
     range(position start, position end)
         : start(start)
         , end(end)

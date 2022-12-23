@@ -20,6 +20,18 @@ import * as process from 'process';
 import { timeout } from './testHelper';
 import { EXTENSION_ID } from '../../extension';
 
+async function primeExtension() {
+	const ext = await vscode.extensions.getExtension(EXTENSION_ID).activate();
+	const lang: {
+		onReady(): Promise<void>;
+		sendRequest<R>(method: string, param: any, token?: vscode.CancellationToken): Promise<R>;
+	} = ext!.getExtension()!;
+	// wait for the language server initialization
+	await Promise.race([lang.onReady(), timeout(30000, 'Language server initialization failed')]);
+	// prime opcode suggestions to avoid timeouts
+	await Promise.race([lang.sendRequest<object>('textDocument/$/opcode_suggestion', { opcodes: ['OPCODE'] }), timeout(30000, 'Opcode suggestion request failed')]);
+}
+
 export async function run(): Promise<void> {
 	const is_vscode = process.execPath.includes('Code');
 
@@ -39,9 +51,7 @@ export async function run(): Promise<void> {
 	// Add files to the test suite
 	files.forEach(file => mocha.addFile(path.resolve(testsPath, file)));
 
-	const ext = await vscode.extensions.getExtension(EXTENSION_ID).activate();
-	const lang: { onReady(): Promise<void>; } = ext!.getExtension();
-	await Promise.race([lang!.onReady(), timeout(30000, 'Language server initialization failed')]);
+	await primeExtension();
 
 	await new Promise((resolve, reject) => {
 		// Run the mocha test

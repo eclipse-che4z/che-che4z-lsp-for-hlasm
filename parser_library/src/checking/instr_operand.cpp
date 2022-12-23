@@ -22,14 +22,14 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::checking;
 
-complex_operand::complex_operand() {}
+complex_operand::complex_operand() = default;
 
 complex_operand::complex_operand(
     std::string operand_identifier, std::vector<std::unique_ptr<asm_operand>> operand_params)
     : operand_identifier(operand_identifier)
     , operand_parameters(std::move(operand_params)) {};
 
-machine_operand::machine_operand() {}
+machine_operand::machine_operand() = default;
 
 bool machine_operand::is_operand_corresponding(int operand, parameter param)
 {
@@ -328,7 +328,7 @@ bool one_operand::check(
     return true;
 }
 
-empty_operand::empty_operand() {}
+empty_operand::empty_operand() = default;
 empty_operand::empty_operand(range r)
     : operand(r)
 {}

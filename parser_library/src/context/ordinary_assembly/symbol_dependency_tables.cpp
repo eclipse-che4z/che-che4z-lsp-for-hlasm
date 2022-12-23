@@ -16,9 +16,9 @@
 
 #include <algorithm>
 #include <cassert>
+#include <memory>
 #include <queue>
 #include <stack>
-#include <stdexcept>
 
 #include "ordinary_assembly_context.h"
 #include "ordinary_assembly_dependency_solver.h"
@@ -439,7 +439,7 @@ void symbol_dependency_tables::add_dependency(space_ptr target,
 
     assert(inserted);
 
-    add_dependency(dependant(target), &*it->second, false, dep_ctx, li);
+    add_dependency(dependant(target), std::to_address(it->second), false, dep_ctx, li);
 
     if (dependency_source_stmt)
     {
@@ -644,8 +644,7 @@ void dependency_adder::finish()
 
     auto [it, inserted] = m_owner.m_postponed_stmts.try_emplace(std::move(m_source_stmt), m_dep_ctx);
 
-    if (!inserted)
-        throw std::runtime_error("statement already registered");
+    assert(inserted);
 
     statement_ref ref(it, m_ref_count);
 

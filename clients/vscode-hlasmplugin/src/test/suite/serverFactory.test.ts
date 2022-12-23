@@ -19,8 +19,8 @@ import * as glob from 'glob';
 import { ServerFactory } from '../../serverFactory'
 
 suite('ServerFactory Test Suite', () => {
-    var factory = new ServerFactory();
-     
+    const factory = new ServerFactory();
+
     test('non TCP server options test', async () => {
         // create standard server options
         const options = await factory.create('native');

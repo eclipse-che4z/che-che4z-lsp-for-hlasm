@@ -55,7 +55,7 @@ public:
     virtual mach_expr_ptr clone() const = 0;
 
     range get_range() const;
-    virtual ~mach_expression() {}
+    virtual ~mach_expression() = default;
 
     static mach_expr_ptr assign_expr(mach_expr_ptr expr, range expr_range);
 

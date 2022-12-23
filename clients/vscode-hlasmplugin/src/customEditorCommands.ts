@@ -59,7 +59,7 @@ export class CustomEditorCommands {
             -1;
 
         // position of cursor after delete
-        var newCursorPosition = new vscode.Position(
+        let newCursorPosition = new vscode.Position(
             editor.selection.active.line,
             editor.selection.active.character - ((selectionSize >= -1) ? selectionSize : 0));
 
@@ -132,7 +132,7 @@ export class CustomEditorCommands {
                 : 1;
 
         // position of cursor after delete
-        var newCursorPosition =
+        let newCursorPosition =
             new vscode.Position(
                 editor.selection.active.line,
                 editor.selection.active.character - ((selectionSize > 0 && editor.selection.active.character > 0) ? selectionSize : 0));
@@ -172,8 +172,8 @@ export class CustomEditorCommands {
 
     // find space for line, used for custom type
     private findSpace(textLine: vscode.TextLine, length: number, editor: vscode.TextEditor, continuationOffset: number) {
-        var spacePosition = continuationOffset - 1;
-        var currentSymbol = textLine.text[spacePosition];
+        let spacePosition = continuationOffset - 1;
+        let currentSymbol = textLine.text[spacePosition];
         // go backwards through all the symbols since the continuation and check whether there are enough spaces to compensate for the input
         while (currentSymbol == " " && spacePosition > editor.selection.active.character && length > 0) {
             spacePosition--;

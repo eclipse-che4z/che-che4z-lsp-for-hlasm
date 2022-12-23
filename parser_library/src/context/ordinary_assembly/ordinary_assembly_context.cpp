@@ -16,7 +16,7 @@
 
 #include <algorithm>
 #include <cassert>
-#include <stdexcept>
+#include <memory>
 
 #include "alignment.h"
 #include "context/hlasm_context.h"
@@ -105,7 +105,7 @@ section* ordinary_assembly_context::set_section(
     });
 
     if (tmp != sections_.end())
-        curr_section_ = &**tmp;
+        curr_section_ = std::to_address(*tmp);
     else
     {
         curr_section_ = create_section(name, kind);
@@ -137,9 +137,8 @@ void ordinary_assembly_context::create_external_section(
                 return symbol_attributes::make_extrn_attrs();
             case section_kind::WEAK_EXTERNAL:
                 return symbol_attributes::make_wxtrn_attrs();
-            default:
-                throw std::invalid_argument("section type mismatch");
         }
+        assert(false);
     }();
 
 

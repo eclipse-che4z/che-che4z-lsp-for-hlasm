@@ -101,7 +101,7 @@ export class ServerFactory {
     }
     // returns random free port
     private getRandomPort = () => new Promise<number>((resolve, reject) => {
-        var srv = net.createServer();
+        const srv = net.createServer();
         srv.unref();
         srv.listen(0, "127.0.0.1", () => {
             const address = srv.address();

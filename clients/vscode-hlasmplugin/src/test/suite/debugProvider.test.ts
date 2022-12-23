@@ -25,7 +25,7 @@ suite('Debug Provider Test Suite', () => {
 
         // resolve empty configuration
         const emptyDebugConf = new DebugConfigurationMock();
-        var result = <vscode.DebugConfiguration>(debugProvider.resolveDebugConfiguration(vscode.workspace.workspaceFolders[0], emptyDebugConf));
+        let result = <vscode.DebugConfiguration>(debugProvider.resolveDebugConfiguration(vscode.workspace.workspaceFolders[0], emptyDebugConf));
         assert.equal(result.type, 'hlasm');
         assert.equal(result.name, 'Macro tracer: current program');
 

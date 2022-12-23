@@ -91,7 +91,7 @@ suite('Continuation Handler Test Suite', () => {
         document.uri = vscode.Uri.file('file');
         // prepare editor and edit
         const editor = new TextEditorMock(document);
-        var cursorPosition = new vscode.Position(1, 0);
+        let cursorPosition = new vscode.Position(1, 0);
         editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
         const edit = new TextEditorEditMock('continuation   X\r\n     ');
         document.text = edit.text;

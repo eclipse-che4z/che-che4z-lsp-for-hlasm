@@ -17,7 +17,7 @@
 
 #include <cassert>
 #include <limits>
-#include <stdexcept>
+#include <memory>
 #include <string_view>
 #include <vector>
 
@@ -90,7 +90,7 @@ struct logical_line
         {}
 
         reference operator*() const noexcept { return *m_col; }
-        pointer operator->() const noexcept { return &*m_col; }
+        pointer operator->() const noexcept { return std::to_address(m_col); }
         const_iterator& operator++() noexcept
         {
             assert(m_logical_line);

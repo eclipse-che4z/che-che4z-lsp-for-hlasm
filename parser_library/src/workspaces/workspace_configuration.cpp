@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <charconv>
 #include <compare>
+#include <memory>
 #include <string_view>
 #include <tuple>
 
@@ -215,7 +216,7 @@ struct json_settings_replacer
 
             static constexpr std::string_view config_section = "config:";
 
-            std::string_view key(std::to_address(matches[1].first), matches[1].length());
+            std::string_view key(matches[1].first, matches[1].second);
             if (key.starts_with(config_section))
             {
                 auto reduced_key = key.substr(config_section.size());
@@ -521,8 +522,8 @@ parse_config_file_result workspace_configuration::parse_b4g_config_file(
     auto [it, inserted] = m_b4g_config_cache.try_emplace(file_location);
     if (!inserted)
     {
-        std::erase_if(m_exact_pgm_conf, [tag = &*it](const auto& e) { return e.second.tag == tag; });
-        std::erase_if(m_regex_pgm_conf, [tag = &*it](const auto& e) { return e.first.tag == tag; });
+        std::erase_if(m_exact_pgm_conf, [tag = std::to_address(it)](const auto& e) { return e.second.tag == tag; });
+        std::erase_if(m_regex_pgm_conf, [tag = std::to_address(it)](const auto& e) { return e.first.tag == tag; });
         std::erase_if(m_proc_grps, [&alternative_root](const auto& e) { return e.first.second == alternative_root; });
         it->second = {};
     }
@@ -531,7 +532,7 @@ parse_config_file_result workspace_configuration::parse_b4g_config_file(
     if (!b4g_config_content.has_value())
         return parse_config_file_result::not_found;
 
-    const void* new_tag = &*it;
+    const void* new_tag = std::to_address(it);
     auto& conf = it->second;
     std::unordered_set<std::string> missing_pgroups;
     try

@@ -15,6 +15,7 @@
 #include "source_context.h"
 
 #include <cassert>
+#include <memory>
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
@@ -50,14 +51,15 @@ processing_frame_details::processing_frame_details(position pos,
 {}
 
 processing_frame_tree::processing_frame_tree()
-    : m_root(&*m_frames.emplace(processing_frame_node { nullptr, processing_frame({}, {}, id_index()) }).first)
+    : m_root(std::to_address(
+        m_frames.emplace(processing_frame_node { nullptr, processing_frame({}, {}, id_index()) }).first))
 {}
 
 processing_frame_tree::node_pointer processing_frame_tree::step(processing_frame next, node_pointer current)
 {
     assert(current.m_node);
 
-    return node_pointer(&*m_frames.emplace(processing_frame_node { current.m_node, next }).first);
+    return node_pointer(std::to_address(m_frames.emplace(processing_frame_node { current.m_node, next }).first));
 }
 
 

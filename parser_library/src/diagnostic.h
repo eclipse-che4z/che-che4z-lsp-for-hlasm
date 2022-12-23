@@ -772,7 +772,7 @@ std::string diagnostic_decorate_message(std::string_view field, std::string_view
 
 struct range_uri_s
 {
-    range_uri_s() {};
+    range_uri_s() = default;
     range_uri_s(std::string uri, range range)
         : uri(std::move(uri))
         , rang(range)
@@ -786,7 +786,7 @@ struct range_uri_s
 class diagnostic_related_info_s
 {
 public:
-    diagnostic_related_info_s() {}
+    diagnostic_related_info_s() = default;
     diagnostic_related_info_s(range_uri_s location, std::string message)
         : location(std::move(location))
         , message(std::move(message))

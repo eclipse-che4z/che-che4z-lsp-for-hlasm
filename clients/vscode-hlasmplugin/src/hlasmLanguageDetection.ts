@@ -63,9 +63,9 @@ export class HLASMLanguageDetection {
         if (!getConfig<boolean>('useAutodetection', false))
             return false;
 
-        var score = 0;
-        var lines = 0;
-        var lastContinued = false;
+        let score = 0;
+        let lines = 0;
+        let lastContinued = false;
         //iterate line by line
         const split = text.split('\n');
         //check whether the first line is MACRO and immediately set to hlasm

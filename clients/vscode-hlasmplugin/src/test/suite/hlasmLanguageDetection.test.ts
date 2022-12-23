@@ -41,7 +41,7 @@ suite('Language Detection Test Suite', () => {
 	});
 	// if file has no extension  return false
 	test('non HLASM file extension test false_one', async () => {
-		var document = new TextDocumentMock();
+		const document = new TextDocumentMock();
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
@@ -50,7 +50,7 @@ suite('Language Detection Test Suite', () => {
 		assert.ok(!detector.EndsWithExtension(document));
 	});
 	test('non HLASM file extension test false_two', async () => {
-		var document = new TextDocumentMock();
+		const document = new TextDocumentMock();
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
@@ -59,7 +59,7 @@ suite('Language Detection Test Suite', () => {
 		assert.ok(!detector.EndsWithExtension(document));
 	});
 	test('non HLASM file extension test false_three', async () => {
-		var document = new TextDocumentMock();
+		const document = new TextDocumentMock();
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
@@ -68,7 +68,7 @@ suite('Language Detection Test Suite', () => {
 		assert.ok(!detector.EndsWithExtension(document));
 	});
 	test('Cobol file  containing several dots but not extension returns false', async () => {
-		var document = new TextDocumentMock();
+		const document = new TextDocumentMock();
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
@@ -77,7 +77,7 @@ suite('Language Detection Test Suite', () => {
 		assert.ok(!detector.EndsWithExtension(document));
 	});
 	test('Cobol file ending with extension', async () => {
-		var document = new TextDocumentMock();
+		const document = new TextDocumentMock();
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
@@ -87,40 +87,40 @@ suite('Language Detection Test Suite', () => {
 	});
 	// if file has extension  return true
 	test('non HLASM file extension test true', async () => {
-		var document = new TextDocumentMock();
+		const document = new TextDocumentMock();
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
 		document.fileName = "file.cbl";
 		document.uri = vscode.Uri.file('file.cbl');
 		assert.ok(detector.EndsWithExtension(document));
-	
+
 	});
 	//Dont set to Hlasm if file extension exist other than .hlasm or file assosciations irrespective of content
 	test('non HLASM test based on file extension and language id', async () => {
-		var document = new TextDocumentMock();
+		const document = new TextDocumentMock();
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = hlasmContents;
 		document.fileName = "file.cbl";
 		document.uri = vscode.Uri.file('file.cbl');
 		assert.ok(!detector.setHlasmLanguage(document));
-	
+
 	});
 	test('HLASM test based on file extension and language id', async () => {
-		var document = new TextDocumentMock();
+		const document = new TextDocumentMock();
 		// set plain text file to HLASM
 		document.languageId = 'hlasm';
 		document.text = hlasmContents;
 		document.fileName = "file.hlasm";
 		document.uri = vscode.Uri.file('file.hlasm');
 		assert.ok(detector.setHlasmLanguage(document));
-	
+
 	});
-	
+
 	// set non HLASM file as HLASM
 	test('non HLASM files test', async () => {
-		var document = new TextDocumentMock();
+		const document = new TextDocumentMock();
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
@@ -128,7 +128,7 @@ suite('Language Detection Test Suite', () => {
 		document.fileName = "file";
 		assert.ok(!detector.setHlasmLanguage(document));
 	});
-	
+
 });
 
 const hlasmContents = `

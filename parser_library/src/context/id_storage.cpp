@@ -14,6 +14,8 @@
 
 #include "id_storage.h"
 
+#include <memory>
+
 #include "common_types.h"
 
 using namespace hlasm_plugin::parser_library::context;
@@ -35,7 +37,7 @@ std::optional<id_index> id_storage::find(std::string_view value) const
         return small_id(value);
 
     if (auto tmp = lit_.find(to_upper_copy(std::string(value))); tmp != lit_.end())
-        return id_index(&*tmp);
+        return id_index(std::to_address(tmp));
     else
         return std::nullopt;
 }
@@ -45,7 +47,7 @@ id_index id_storage::add(std::string_view value)
     if (value.size() < id_index::buffer_size)
         return small_id(value);
 
-    return id_index(&*lit_.insert(to_upper_copy(std::string(value))).first);
+    return id_index(std::to_address(lit_.insert(to_upper_copy(std::string(value))).first));
 }
 
 id_index id_storage::add(std::string&& value)
@@ -55,5 +57,5 @@ id_index id_storage::add(std::string&& value)
 
     to_upper(value);
 
-    return id_index(&*lit_.insert(std::move(value)).first);
+    return id_index(std::to_address(lit_.insert(std::move(value)).first));
 }
