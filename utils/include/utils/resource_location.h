@@ -57,6 +57,11 @@ public:
     resource_location& replace_filename(std::string_view other);
     static resource_location replace_filename(resource_location rl, std::string_view other);
 
+    std::string filename() const;
+    resource_location parent() const;
+
+    std::string get_local_path_or_uri() const;
+
     std::strong_ordering operator<=>(const resource_location& rl) const noexcept = default;
 
 private:

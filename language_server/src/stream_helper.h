@@ -15,7 +15,7 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_STREAM_HELPER_H
 #define HLASMPLUGIN_LANGUAGESERVER_STREAM_HELPER_H
 
-#include <iostream>
+#include <ios>
 #include <locale>
 
 namespace hlasm_plugin::language_server {

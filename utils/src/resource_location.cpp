@@ -410,6 +410,38 @@ resource_location resource_location::replace_filename(resource_location rl, std:
     return rl;
 }
 
+std::string resource_location::filename() const
+{
+    if (!utils::path::is_uri(m_uri))
+        return m_uri.substr(m_uri.find_last_of("/\\") + 1);
+
+    auto dis_uri = utils::path::dissect_uri(m_uri);
+
+    return dis_uri.path.substr(dis_uri.path.rfind('/') + 1);
+}
+
+resource_location resource_location::parent() const
+{
+    if (!utils::path::is_uri(m_uri))
+    {
+        if (auto slash_pos = m_uri.find_last_of("/\\"); slash_pos != std::string::npos)
+            return resource_location(m_uri.substr(0, slash_pos));
+        else
+            return resource_location();
+    }
+
+    auto dis_uri = utils::path::dissect_uri(m_uri);
+
+    if (auto slash_pos = dis_uri.path.rfind('/'); slash_pos != std::string::npos)
+        dis_uri.path.erase(slash_pos);
+    else
+        dis_uri.path.clear();
+
+    return resource_location(utils::path::reconstruct_uri(dis_uri));
+}
+
+std::string resource_location::get_local_path_or_uri() const { return is_local() ? get_path() : m_uri; }
+
 namespace {
 utils::path::dissected_uri::authority relative_reference_process_new_auth(
     const std::optional<utils::path::dissected_uri::authority>& old_auth, std::string_view host)
@@ -417,7 +449,7 @@ utils::path::dissected_uri::authority relative_reference_process_new_auth(
     utils::path::dissected_uri::authority new_auth;
     new_auth.host = host;
 
-    if (!old_auth)
+    if (old_auth)
     {
         new_auth.user_info = old_auth->user_info;
         new_auth.port = old_auth->port;

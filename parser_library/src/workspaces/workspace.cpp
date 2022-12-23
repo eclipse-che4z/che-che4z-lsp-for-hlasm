@@ -15,7 +15,6 @@
 #include "workspace.h"
 
 #include <algorithm>
-#include <filesystem>
 #include <memory>
 
 #include "context/instruction.h"
@@ -744,14 +743,11 @@ asm_option workspace::get_asm_options(const utils::resource::resource_location& 
     utils::resource::resource_location relative_to_location(
         file_location.lexically_relative(location_).lexically_normal());
 
-    // TODO - convert sysin_path from std::filesystem::path to utils::resource::resource_location
-    std::filesystem::path sysin_path = !pgm
-            && (relative_to_location == utils::resource::resource_location()
-                || relative_to_location.lexically_out_of_scope())
-        ? file_location.get_path()
-        : relative_to_location.get_path();
-    result.sysin_member = utils::path::filename(sysin_path).string();
-    result.sysin_dsn = utils::path::parent_path(sysin_path).string();
+    const auto& sysin_path = !pgm && (relative_to_location.empty() || relative_to_location.lexically_out_of_scope())
+        ? file_location
+        : relative_to_location;
+    result.sysin_member = sysin_path.filename();
+    result.sysin_dsn = sysin_path.parent().get_local_path_or_uri();
 
     return result;
 }

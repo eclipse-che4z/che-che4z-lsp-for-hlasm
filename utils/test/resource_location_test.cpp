@@ -908,3 +908,37 @@ TEST(resource_location, replace_filename)
     EXPECT_EQ(resource_location::replace_filename(resource_location("schema://h/a/x/f?zzz"), "b").get_uri(),
         "schema://h/a/x/b?zzz");
 }
+
+TEST(resource_location, filename)
+{
+    EXPECT_EQ(resource_location("a").filename(), "a");
+    EXPECT_EQ(resource_location("x/a").filename(), "a");
+    EXPECT_EQ(resource_location("x/").filename(), "");
+    EXPECT_EQ(resource_location("schema:a").filename(), "a");
+    EXPECT_EQ(resource_location("schema://h/a").filename(), "a");
+    EXPECT_EQ(resource_location("schema://h/a/x/").filename(), "");
+    EXPECT_EQ(resource_location("schema://h/a").filename(), "a");
+    EXPECT_EQ(resource_location("schema://h/a/x/f?zzz").filename(), "f");
+}
+
+TEST(resource_location, parent)
+{
+    EXPECT_EQ(resource_location("a").parent().get_uri(), "");
+    EXPECT_EQ(resource_location("x/a").parent().get_uri(), "x");
+    EXPECT_EQ(resource_location("x/").parent().get_uri(), "x");
+    EXPECT_EQ(resource_location("schema:a").parent().get_uri(), "schema:");
+    EXPECT_EQ(resource_location("schema://h/a").parent().get_uri(), "schema://h");
+    EXPECT_EQ(resource_location("schema://h/a/x/").parent().get_uri(), "schema://h/a/x");
+    EXPECT_EQ(resource_location("schema://h/a").parent().get_uri(), "schema://h");
+    EXPECT_EQ(resource_location("schema://h/a/x/f?zzz").parent().get_uri(), "schema://h/a/x?zzz");
+}
+
+TEST(resource_location, get_local_path_or_uri)
+{
+    EXPECT_EQ(resource_location("schema://h/a").get_local_path_or_uri(), "schema://h/a");
+    EXPECT_EQ(resource_location("schema:h/a").get_local_path_or_uri(), "schema:h/a");
+    EXPECT_EQ(resource_location("x/a").get_local_path_or_uri(), "x/a");
+    EXPECT_EQ((is_windows() ? resource_location("file:///C:/dir/file") : resource_location("file:///home/file"))
+                  .get_local_path_or_uri(),
+        is_windows() ? "c:\\dir\\file" : "/home/file");
+}
