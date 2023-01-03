@@ -74,11 +74,11 @@
   "contributes": {
     "jsonValidation": [
       {
-        "fileMatch": "pgm_conf.json",
+        "fileMatch": "/.hlasmplugin/pgm_conf.json",
         "url": "./schema/pgm_conf.schema.json"
       },
       {
-        "fileMatch": "proc_grps.json",
+        "fileMatch": "/.hlasmplugin/proc_grps.json",
         "url": "./schema/proc_grps.schema.json"
       }
     ],
