@@ -219,6 +219,7 @@ The `alwaysRecognize` option in `pgm_conf.json` has been deprecated in favor of 
 
 `proc_grps.json` can include an optional parameter `macro_extensions` which contains a list of extensions that are used to identify files with macro definitions.
 The options can be specified both at the top level of the file, which provides the default list for all libraries in all process groups, and at the level of individual library definitions, which override the default from the top level.
+If the `macro_extensions` parameter is not provided or is empty the language server ignores file extensions. Warning messages are produced when conflicting names are detected.
 
 For example, with the extension `.hlasm`, a user can add the macro `MAC` to his source code even if it is in a file called `MAC.hlasm`.
 

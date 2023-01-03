@@ -71,29 +71,6 @@ utils::resource::resource_location transform_to_resource_location(
     return rl.lexically_normal();
 }
 
-std::vector<std::string> get_macro_extensions_compatibility_list(std::span<const std::string> always_recognize)
-{
-    // Extract extension list for compatibility reasons
-    std::vector<std::string> macro_extensions_compatibility_list;
-    for (const auto& wildcard : always_recognize)
-    {
-        std::string_view wc(wildcard);
-        if (const auto ext_pattern = wc.rfind("*."); ext_pattern != std::string_view::npos)
-        {
-            wc.remove_prefix(ext_pattern + 1);
-            macro_extensions_compatibility_list.emplace_back(wc);
-        }
-    }
-
-    std::sort(macro_extensions_compatibility_list.begin(), macro_extensions_compatibility_list.end());
-
-    macro_extensions_compatibility_list.erase(
-        std::unique(macro_extensions_compatibility_list.begin(), macro_extensions_compatibility_list.end()),
-        macro_extensions_compatibility_list.end());
-
-    return macro_extensions_compatibility_list;
-}
-
 std::optional<std::string> substitute_home_directory(std::string p)
 {
     if (!p.starts_with("~"))
@@ -107,9 +84,8 @@ std::optional<std::string> substitute_home_directory(std::string p)
     return utils::path::join(homedir, std::move(p).substr(skip)).string();
 }
 
-library_local_options get_library_local_options(const config::library& lib,
-    std::span<const std::string> fallback_macro_extensions,
-    std::span<const std::string> always_recognize)
+library_local_options get_library_local_options(
+    const config::library& lib, std::span<const std::string> fallback_macro_extensions)
 {
     library_local_options opts;
 
@@ -118,12 +94,6 @@ library_local_options get_library_local_options(const config::library& lib,
         opts.extensions = lib.macro_extensions;
     else if (!fallback_macro_extensions.empty())
         opts.extensions = std::vector(fallback_macro_extensions.begin(), fallback_macro_extensions.end());
-    else if (auto macro_extensions_compatibility_list = get_macro_extensions_compatibility_list(always_recognize);
-             !macro_extensions_compatibility_list.empty())
-    {
-        opts.extensions = macro_extensions_compatibility_list;
-        opts.extensions_from_deprecated_source = true;
-    }
 
     return opts;
 }
@@ -292,7 +262,6 @@ std::shared_ptr<library> workspace_configuration::get_local_library(
 
 void workspace_configuration::process_processor_group(const config::processor_group& pg,
     std::span<const std::string> fallback_macro_extensions,
-    std::span<const std::string> always_recognize,
     const utils::resource::resource_location& alternative_root,
     std::vector<diagnostic_s>& diags)
 {
@@ -312,7 +281,7 @@ void workspace_configuration::process_processor_group(const config::processor_gr
             continue;
         }
 
-        auto lib_local_opts = get_library_local_options(lib, fallback_macro_extensions, always_recognize);
+        auto lib_local_opts = get_library_local_options(lib, fallback_macro_extensions);
         auto rl = transform_to_resource_location(*lib_path, root);
         rl.join(""); // Ensure that this is a directory
 
@@ -332,7 +301,6 @@ void workspace_configuration::process_processor_group(const config::processor_gr
 void workspace_configuration::process_processor_group_and_cleanup_libraries(
     std::span<const config::processor_group> pgs,
     std::span<const std::string> fallback_macro_extensions,
-    std::span<const std::string> always_recognize,
     const utils::resource::resource_location& alternative_root,
     std::vector<diagnostic_s>& diags)
 {
@@ -340,7 +308,7 @@ void workspace_configuration::process_processor_group_and_cleanup_libraries(
         l.second = false; // mark
 
     for (const auto& pg : pgs)
-        process_processor_group(pg, fallback_macro_extensions, always_recognize, alternative_root, diags);
+        process_processor_group(pg, fallback_macro_extensions, alternative_root, diags);
 
     std::erase_if(m_libraries, [](const auto& kv) { return !kv.second.second; }); // sweep
 }
@@ -396,11 +364,8 @@ parse_config_file_result workspace_configuration::load_and_process_config(std::v
     config::pgm_conf pgm_config;
     const auto pgm_conf_loaded = load_pgm_config(pgm_config, utilized_settings_values, diags);
 
-    process_processor_group_and_cleanup_libraries(proc_groups.pgroups,
-        proc_groups.macro_extensions,
-        pgm_config.always_recognize,
-        utils::resource::resource_location(),
-        diags);
+    process_processor_group_and_cleanup_libraries(
+        proc_groups.pgroups, proc_groups.macro_extensions, utils::resource::resource_location(), diags);
 
     if (pgm_conf_loaded != parse_config_file_result::parsed)
     {
@@ -546,7 +511,7 @@ parse_config_file_result workspace_configuration::parse_b4g_config_file(
     }
 
     process_processor_group_and_cleanup_libraries(
-        m_proc_grps_source.pgroups, m_proc_grps_source.macro_extensions, {}, alternative_root, conf.diags);
+        m_proc_grps_source.pgroups, m_proc_grps_source.macro_extensions, alternative_root, conf.diags);
 
     for (const auto& [name, details] : conf.config.value().files)
     {

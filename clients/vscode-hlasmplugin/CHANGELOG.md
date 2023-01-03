@@ -23,6 +23,7 @@
 #### Changed
 - Macro label is the preferred go to definition target unless the request is made from the label itself
 - Library contents are now shared between processor groups
+- File extensions are now ignored when `macro_extensions` option is not provided in proc_grps.json
 
 ## [1.5.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.4.0...1.5.0) (2022-11-02)
 

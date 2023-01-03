@@ -2660,30 +2660,22 @@ diagnostic_s diagnostic_s::error_L0002(
         concat("Unable to load library: ", lib_loc.to_presentable(), ". Error: The path does not point to directory."));
 }
 
-diagnostic_s diagnostic_s::warning_L0003(
-    const utils::resource::resource_location& config_loc, const utils::resource::resource_location& lib_loc)
-{
-    return diagnostic_s(config_loc.get_uri(),
-        {},
-        diagnostic_severity::warning,
-        "L0003",
-        concat("Macros from library '",
-            lib_loc.to_presentable(),
-            "' were selected by a deprecated mechanism to specify file extensions (alwaysRecognize in pgm_conf.json)."),
-        {},
-        diagnostic_tag::none);
-}
-
 diagnostic_s diagnostic_s::warning_L0004(const utils::resource::resource_location& config_loc,
     const utils::resource::resource_location& lib_loc,
-    std::string_view macro_name)
+    std::string_view macro_name,
+    bool has_extensions)
 {
     return diagnostic_s(config_loc.get_uri(),
         {},
         diagnostic_severity::warning,
         "L0004",
-        concat(
-            "Library '", lib_loc.to_presentable(), "' contains multiple definitions of the macro '", macro_name, "'."),
+        concat("Library '",
+            lib_loc.to_presentable(),
+            "' contains conflicting macro definitions (",
+            macro_name,
+            "). Consider ",
+            has_extensions ? std::string_view("changing") : std::string_view("adding"),
+            " 'macro_extensions' parameter."),
         {},
         diagnostic_tag::none);
 }

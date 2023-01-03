@@ -36,7 +36,6 @@ namespace hlasm_plugin::parser_library::workspaces {
 struct library_local_options
 {
     std::vector<std::string> extensions;
-    bool extensions_from_deprecated_source = false;
     bool optional_library = false;
 
 #ifdef __cpp_lib_three_way_comparison
@@ -48,10 +47,6 @@ struct library_local_options
         if (extensions < o.extensions)
             return true;
         if (extensions > o.extensions)
-            return false;
-        if (extensions_from_deprecated_source < o.extensions_from_deprecated_source)
-            return true;
-        if (extensions_from_deprecated_source > o.extensions_from_deprecated_source)
             return false;
         if (optional_library < o.optional_library)
             return true;
@@ -118,7 +113,6 @@ private:
     atomic_files_collection_t m_files_collection;
     std::vector<std::string> m_extensions;
     bool m_optional = false;
-    bool m_extensions_from_deprecated_source = false;
     utils::resource::resource_location m_proc_grps_loc;
 
     files_collection_t load_files();

@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <locale>
+#include <utility>
 
 #include "utils/path.h"
 #include "utils/platform.h"
@@ -24,19 +25,12 @@
 namespace hlasm_plugin::parser_library::workspaces {
 
 namespace {
-void adjust_extensions_vector(std::vector<std::string>& extensions, bool extensions_from_deprecated_source)
+void adjust_extensions_vector(std::vector<std::string>& extensions)
 {
-    bool contains_empty = false;
     for (auto& ext : extensions)
-    {
-        if (ext.empty())
-            contains_empty = true;
-        else
-        {
-            if (ext[0] != '.')
-                ext.insert(0, 1, '.');
-        }
-    }
+        if (!ext.empty() && ext[0] != '.')
+            ext.insert(0, 1, '.');
+
     // from longest to shortest, then lexicographically
     std::sort(extensions.begin(), extensions.end(), [](const std::string& l, const std::string& r) {
         if (l.size() > r.size())
@@ -45,8 +39,6 @@ void adjust_extensions_vector(std::vector<std::string>& extensions, bool extensi
             return false;
         return l < r;
     });
-    if (extensions_from_deprecated_source && !contains_empty)
-        extensions.emplace_back(); // alwaysRecognize always implied accepting files without an extension
     extensions.erase(std::unique(extensions.begin(), extensions.end()), extensions.end());
 }
 } // namespace
@@ -59,11 +51,10 @@ library_local::library_local(file_manager& file_manager,
     , m_lib_loc(std::move(lib_loc))
     , m_extensions(std::move(options.extensions))
     , m_optional(options.optional_library)
-    , m_extensions_from_deprecated_source(options.extensions_from_deprecated_source)
     , m_proc_grps_loc(std::move(proc_grps_loc))
 {
     if (m_extensions.size())
-        adjust_extensions_vector(m_extensions, m_extensions_from_deprecated_source);
+        adjust_extensions_vector(m_extensions);
 }
 
 library_local::library_local(library_local&& l) noexcept
@@ -72,7 +63,6 @@ library_local::library_local(library_local&& l) noexcept
     , m_files_collection(l.m_files_collection.exchange(nullptr))
     , m_extensions(std::move(l.m_extensions))
     , m_optional(l.m_optional)
-    , m_extensions_from_deprecated_source(l.m_extensions_from_deprecated_source)
     , m_proc_grps_loc(std::move(l.m_proc_grps_loc))
 {}
 
@@ -138,40 +128,55 @@ library_local::files_collection_t library_local::load_files()
             break;
     }
 
-    bool extension_removed = false;
+    size_t conflict_count = 0;
+    std::string file_name_conflicts;
+    const auto add_conflict = [&conflict_count, &file_name_conflicts](std::string_view file_name) {
+        constexpr const size_t max_conflict_count = 3;
+        if (conflict_count < max_conflict_count)
+        {
+            if (conflict_count)
+                file_name_conflicts.append(", ");
+            file_name_conflicts.append(file_name);
+        }
+        else if (conflict_count == max_conflict_count)
+            file_name_conflicts.append(" and others");
+        ++conflict_count;
+    };
+
     for (auto& [file, rl] : files_list)
     {
         if (m_extensions.empty())
         {
-            new_files.try_emplace(context::to_upper_copy(file), std::move(rl));
-            continue;
+            // ".hidden" is not an extension ------v
+            if (auto off = file.find_first_of('.', 1); off != std::string::npos)
+                file.erase(off);
         }
+        else if (auto ext = std::find_if(
+                     m_extensions.begin(), m_extensions.end(), [&f = file](const auto& e) { return f.ends_with(e); });
+                 ext != m_extensions.end())
 
-        for (const auto& extension : m_extensions)
+            file.erase(file.size() - ext->size());
+        else
+            continue;
+
+        context::to_upper(file);
+
+        if (auto [it, inserted] = new_files.try_emplace(std::move(file), std::move(rl)); !inserted)
         {
-            std::string_view filename(file);
+            // file, rl was not moved
+            add_conflict(file);
 
-            if (filename.size() <= extension.size())
-                continue;
-
-            if (filename.substr(filename.size() - extension.size()) != extension)
-                continue;
-            filename.remove_suffix(extension.size());
-
-            const auto [_, inserted] =
-                new_files.try_emplace(context::to_upper_copy(std::string(filename)), std::move(rl));
-            // TODO: the stored value is a full path, yet we try to interpret it as a relative one later on
-            if (!inserted)
-                new_diags.push_back(diagnostic_s::warning_L0004(
-                    m_proc_grps_loc, m_lib_loc, context::to_upper_copy(std::string(filename))));
-
-            if (extension.size())
-                extension_removed = true;
-            break;
+            // keep shortest (i.e. without extension for compatibility) or lexicographically smaller
+            const std::string_view rl_uri(rl.get_uri());
+            const std::string_view old_uri(it->second.get_uri());
+            if (std::pair(rl_uri.size(), rl_uri) < std::pair(old_uri.size(), old_uri))
+                it->second = std::move(rl);
         }
     }
-    if (extension_removed && m_extensions_from_deprecated_source)
-        new_diags.push_back(diagnostic_s::warning_L0003(m_proc_grps_loc, m_lib_loc));
+
+    if (conflict_count > 0)
+        new_diags.push_back(
+            diagnostic_s::warning_L0004(m_proc_grps_loc, m_lib_loc, file_name_conflicts, !m_extensions.empty()));
 
     m_files_collection.store(new_state);
 

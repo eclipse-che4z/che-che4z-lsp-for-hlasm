@@ -227,13 +227,11 @@ class workspace_configuration
 
     void process_processor_group(const config::processor_group& pg,
         std::span<const std::string> fallback_macro_extensions,
-        std::span<const std::string> always_recognize,
         const utils::resource::resource_location& alternative_root,
         std::vector<diagnostic_s>& diags);
 
     void process_processor_group_and_cleanup_libraries(std::span<const config::processor_group> pgs,
         std::span<const std::string> fallback_macro_extensions,
-        std::span<const std::string> always_recognize,
         const utils::resource::resource_location& alternative_root,
         std::vector<diagnostic_s>& diags);
 
