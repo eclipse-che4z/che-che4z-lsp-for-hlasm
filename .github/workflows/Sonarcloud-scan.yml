@@ -93,5 +93,6 @@ jobs:
           -Dsonar.exclusions=clients/vscode-hlasmplugin/src/test/**
           -Dsonar.test.inclusions=clients/vscode-hlasmplugin/src/test/**
           -Dsonar.coverage.exclusions=benchmark/benchmark.cpp
+          -Dsonar.scm.revision=${{ github.event.workflow_run.head_sha }}
           $HEAD_BRANCH_ARG
           $PR_NUMBER_ARG
