@@ -6,7 +6,7 @@
 - Command for downloading copybooks allows selections of data sets which should be downloaded
 - Code actions for an unknown operation code
 - Quick fixes for typos in instruction and macro names added to the code actions
-- Endevor and CICS preprocessor statements highlighting and parsing
+- Endevor, CICS and DB2 preprocessor statements highlighting and parsing
 - Instruction suggestions are included in the completion list
 - Support for the SYSCLOCK system variable
 - Implement step out support in the macro tracer

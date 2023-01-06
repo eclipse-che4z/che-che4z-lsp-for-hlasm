@@ -52,6 +52,8 @@ using library_fetcher =
 class preprocessor
 {
 public:
+    using line_iterator = std::vector<document_line>::const_iterator;
+
     struct included_member_details
     {
         std::string name;
@@ -78,17 +80,15 @@ public:
 
     virtual const std::vector<std::unique_ptr<included_member_details>>& view_included_members();
 
-protected:
-    preprocessor() = default;
-    preprocessor(const preprocessor&) = default;
-    preprocessor(preprocessor&&) = default;
-
-    using line_iterator = std::vector<document_line>::const_iterator;
-
     static line_iterator extract_nonempty_logical_line(lexing::logical_line& out,
         line_iterator it,
         line_iterator end,
         const lexing::logical_line_extractor_args& opts);
+
+protected:
+    preprocessor() = default;
+    preprocessor(const preprocessor&) = default;
+    preprocessor(preprocessor&&) = default;
 
     void reset();
     void set_statement(std::shared_ptr<semantics::preprocessor_statement_si> stmt);
@@ -97,6 +97,11 @@ protected:
     static bool is_continued(std::string_view s);
 
     virtual void do_highlighting(const semantics::preprocessor_statement_si& stmt,
+        semantics::source_info_processor& src_proc,
+        size_t continue_column = 15) const;
+
+    virtual void do_highlighting(const semantics::preprocessor_statement_si& stmt,
+        const lexing::logical_line& ll,
         semantics::source_info_processor& src_proc,
         size_t continue_column = 15) const;
 

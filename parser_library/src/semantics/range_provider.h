@@ -20,6 +20,7 @@
 
 #include "antlr4-runtime.h"
 
+#include "lexing/logical_line.h"
 #include "range.h"
 
 namespace hlasm_plugin::parser_library::semantics {
@@ -63,6 +64,9 @@ private:
     position adjust_position(position pos, bool end) const;
     position adjust_model_position(position pos, bool end) const;
 };
+
+range text_range(
+    const lexing::logical_line::const_iterator& b, const lexing::logical_line::const_iterator& e, size_t lineno_offset);
 
 } // namespace hlasm_plugin::parser_library::semantics
 #endif

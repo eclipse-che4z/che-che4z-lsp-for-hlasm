@@ -43,6 +43,19 @@ template<typename PREPROC_STATEMENT, typename ITERATOR>
 std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(
     const std::match_results<ITERATOR>& matches, const stmt_part_ids& ids, size_t lineno, size_t continue_column = 15);
 
+template<typename It>
+static std::true_type same_line_detector(const It& t, decltype(t.same_line(t)) = false);
+static std::false_type same_line_detector(...);
+
+template<typename It>
+static bool same_line(const It& l, const It& r)
+{
+    if constexpr (decltype(same_line_detector(l))::value)
+        return l.same_line(r);
+    else
+        return true;
+}
+
 } // namespace hlasm_plugin::parser_library::processing
 
 #endif

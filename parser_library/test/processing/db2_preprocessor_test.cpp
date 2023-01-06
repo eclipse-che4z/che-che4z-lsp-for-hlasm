@@ -211,7 +211,7 @@ TEST_F(db2_preprocessor_test, bad_continuation)
     auto p = create_preprocessor(
         db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &m_diags);
 
-    std::string_view text = R"( EXEC SQL PRETENT SQL STATEMENT                                        X
+    std::string_view text = R"( EXEC SQL PRETEND SQL STATEMENT                                        X
 badcontinuation)";
 
     auto doc = p->generate_replacement(document(text));
@@ -250,6 +250,20 @@ TEST(db2_preprocessor, sqlsect_available)
     a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(db2_preprocessor, instruction_not_recognized)
+{
+    std::string input = R"(
+               EXEC                                                 SQLX
+               INCLUDE SQLCA
+)";
+
+    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
 
 TEST(db2_preprocessor, aread_from_preprocessor)
@@ -364,20 +378,84 @@ TEST(db2_preprocessor, continuation_in_buffer)
     EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
 }
 
-TEST(db2_preprocessor, include_empty)
+TEST(db2_preprocessor, include_valid)
 {
     mock_parse_lib_provider libs({
         { "MEMBER", "" },
     });
-    std::string input = " EXEC SQL INCLUDE MEMBER ";
 
-    analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
-    a.analyze();
-    a.collect_diags();
+    std::vector<std::string> inputs = {
+        R"( EXEC SQL INCLUDE MEMBER )",
+        R"( EXEC SQL INCLUDE MEMBER--TMP)",
+        R"( EXEC SQL INCLUDE MEMBER--)",
+        R"( EXEC SQL INCLUDE                                                      X
+               MEMBER)",
+        R"( EXEC SQL INCLUDE -- TMP                                               X
+               MEMBER)",
+        R"( EXEC SQL INCLUDE  -- COMMENT                                          X
+                  --COMMENT                                            X
+               MEMBER)",
+        // R"(               EXEC                                                 SQLX
+        //         INCLUDE SQLCA)", // TODO Easier to enable this with proper grammar
+    };
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    for (const auto& input : inputs)
+    {
+        analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
+        a.analyze();
+        a.collect_diags();
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
+        EXPECT_EQ(a.diags().size(), (size_t)0);
+
+        EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
+    }
+}
+
+TEST(db2_preprocessor, include_double)
+{
+    mock_parse_lib_provider libs({
+        { "MEMBER", "" },
+    });
+
+    std::vector<std::string> inputs = {
+        R"( EXEC SQL INCLUDE MEMBER MEMBER)",
+        R"( EXEC SQL INCLUDE MEMBER                                               X
+               MEMBER)",
+        R"( EXEC SQL INCLUDE  MEMBER                                              X
+                   -- COMMENT                                          X
+                  --COMMENT                                            X
+               MEMBER)",
+    };
+
+    for (const auto& input : inputs)
+    {
+        analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
+        a.analyze();
+        a.collect_diags();
+
+        EXPECT_TRUE(matches_message_codes(a.diags(), { "DB002" }));
+        EXPECT_EQ(a.hlasm_ctx().get_visited_files().count(member_loc), 0);
+    }
+}
+
+TEST(db2_preprocessor, include_member_not_present)
+{
+    mock_parse_lib_provider libs({
+        { "MEMBER", "" },
+    });
+    std::vector<std::string> inputs = { R"( EXEC SQL INCLUDE -- MEMBER)",
+        R"( EXEC SQL INCLUDE --                                                   X
+               -- MEMBER)" };
+
+    for (const auto& input : inputs)
+    {
+        analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
+        a.analyze();
+        a.collect_diags();
+
+        EXPECT_TRUE(matches_message_codes(a.diags(), { "DB007" }));
+        EXPECT_EQ(a.hlasm_ctx().get_visited_files().count(member_loc), 0);
+    }
 }
 
 TEST(db2_preprocessor, include_insensitive)
@@ -392,7 +470,6 @@ TEST(db2_preprocessor, include_insensitive)
     a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-
     EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
 }
 
@@ -404,7 +481,21 @@ TEST(db2_preprocessor, include_nonexistent)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "DB002" }));
+}
+
+TEST(db2_preprocessor, include_invalid)
+{
+    mock_parse_lib_provider libs({
+        { "MEMBER", "" },
+    });
+    std::string input = " EXEC SQL INCLUDEMEMBER ";
+
+    analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.hlasm_ctx().get_visited_files().count(member_loc), 0);
 }
 
 TEST(db2_preprocessor, ago_in_include)
@@ -890,6 +981,81 @@ TEST_F(db2_preprocessor_test, sql_type_warn_on_continuation)
     EXPECT_TRUE(matches_message_codes(m_diags.diags, { "DB005" }));
 }
 
+// TODO - issue with msvc regex
+// TEST(db2_preprocessor, sql_type_is_table_like_regex)
+//{
+//    std::string input = R"(
+// A SQL TYPE IS TABLE LIKE A                                             X
+//               A                                                       X
+//               A AS LOCATOR)";
+//
+//    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+//    a.analyze();
+//
+//    // No expectations - it should just past
+//}
+
+TEST_F(db2_preprocessor_test, sql_type_parse_and_warn_on_continuation)
+{
+    std::string_view text = R"(
+RE1                                 SQL TYPE                           X
+               IS                                           RESULT_SET_X
+               LOCATOR VARYING
+RE2                                 SQL TYPE                         ISX
+               RESULT_SET_LOCATOR                                      X
+               VARYING
+RE3                                 SQL TYPE                         ISX
+                                                     RESULT_SET_LOCATORX
+                VARYING
+)";
+
+
+    auto p = create_preprocessor(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &m_diags);
+
+    auto result = p->generate_replacement(document(text));
+
+    EXPECT_TRUE(matches_message_codes(m_diags.diags, { "DB005", "DB005", "DB005" }));
+    EXPECT_EQ(std::count_if(result.begin(),
+                  result.end(),
+                  [](const auto& l) { return l.text().find("DS    FL4") != std::string_view::npos; }),
+        3);
+}
+
+TEST_F(db2_preprocessor_test, sql_type_dont_parse_and_warn_on_continuation)
+{
+    std::string_view text = R"(
+RE1                                 SQL TYPE                          IX
+               S                                            RESULT_SET_X
+               LOCATOR VARYING
+RE2                                 SQL TYPE                           X
+               IS                                        RESULT_SET_--RX
+               LOCATOR VARYING
+RE3                                 SQL TYPE                         ISX
+                                                     RESULT_SET_LOCATORX
+               VARYING
+)";
+
+    auto p = create_preprocessor(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &m_diags);
+
+    auto result = p->generate_replacement(document(text));
+
+    EXPECT_TRUE(matches_message_codes(m_diags.diags,
+        {
+            "DB005",
+            "DB006",
+            "DB005",
+            "DB004",
+            "DB005",
+            "DB004",
+        }));
+    EXPECT_EQ(std::count_if(result.begin(),
+                  result.end(),
+                  [](const auto& l) { return l.text().find("DS    FL4") != std::string_view::npos; }),
+        0);
+}
+
 TEST(db2_preprocessor, no_codegen_for_unacceptable_sql_statement)
 {
     std::string input = R"(
@@ -1006,6 +1172,8 @@ B   DS   0C
                DECLARE C CURSOR FOR SELECT 1 FROM TABLE
 E   DS   0C
 LEN EQU  E-B
+       EXEC    SQL                -- comment                           X
+               INCLUDE SQLCA
 )";
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });

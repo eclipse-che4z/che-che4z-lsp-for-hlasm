@@ -89,50 +89,32 @@ bool low_language_processor::create_symbol(
     return ok;
 }
 
-// return true if the result is not empty
-bool trim_right(std::string& s)
-{
-    auto last_non_space = s.find_last_not_of(' ');
-    if (last_non_space != std::string::npos)
-    {
-        s.erase(last_non_space + 1);
-        return true;
-    }
-    else
-    {
-        s.clear();
-        return false;
-    }
-}
-
 low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement& stmt)
 {
     using namespace semantics;
     preprocessed_part result;
 
-    std::string new_label;
+    const auto label_inserter = [&result, &ids = hlasm_ctx.ids()](std::string&& label, const range& r) {
+        label.erase(label.find_last_not_of(' ') + 1);
+        if (label.empty())
+            result.label.emplace(r);
+        else
+        {
+            auto ord_id = ids.add(label);
+            result.label.emplace(r, ord_symbol_string { ord_id, std::move(label) });
+        }
+    };
+
     // label
     switch (const auto& label_ref = stmt.label_ref(); label_ref.type)
     {
         case label_si_type::CONC:
-            new_label = concatenation_point::evaluate(std::get<concat_chain>(label_ref.value), eval_ctx);
-            if (!trim_right(new_label))
-                result.label.emplace(label_ref.field_range);
-            else
-            {
-                auto ord_id = hlasm_ctx.ids().add(new_label);
-                result.label.emplace(label_ref.field_range, ord_symbol_string { ord_id, std::move(new_label) });
-            }
+            label_inserter(concatenation_point::evaluate(std::get<concat_chain>(label_ref.value), eval_ctx),
+                label_ref.field_range);
             break;
         case label_si_type::VAR:
-            new_label = var_sym_conc::evaluate(std::get<vs_ptr>(label_ref.value)->evaluate(eval_ctx));
-            if (!trim_right(new_label))
-                result.label.emplace(label_ref.field_range);
-            else
-            {
-                auto ord_id = hlasm_ctx.ids().add(new_label);
-                result.label.emplace(label_ref.field_range, ord_symbol_string { ord_id, std::move(new_label) });
-            }
+            label_inserter(
+                var_sym_conc::evaluate(std::get<vs_ptr>(label_ref.value)->evaluate(eval_ctx)), label_ref.field_range);
             break;
         case label_si_type::MAC:
             if (stmt.opcode_ref().value.to_string_view() != "TITLE")

@@ -12,11 +12,9 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include <algorithm>
 #include <array>
-#include <functional>
-#include <numeric>
-#include <vector>
+#include <string_view>
+#include <utility>
 
 #include "gtest/gtest.h"
 
@@ -230,42 +228,3 @@ TEST(logical_line, eol)
         EXPECT_EQ(t.first.size(), 0);
     }
 }
-
-class logical_line_iterator_fixture : public ::testing::TestWithParam<std::vector<std::string_view>>
-{};
-
-TEST_P(logical_line_iterator_fixture, iterator)
-{
-    logical_line line;
-    const auto& parm = GetParam();
-    std::transform(parm.begin(), parm.end(), std::back_inserter(line.segments), [](const auto& c) {
-        logical_line_segment lls;
-        lls.code = c;
-        return lls;
-    });
-
-    std::string concat_parm;
-    for (auto p : parm)
-        concat_parm.append(p);
-
-    EXPECT_TRUE(std::equal(line.begin(), line.end(), concat_parm.begin(), concat_parm.end()));
-    EXPECT_TRUE(std::equal(std::make_reverse_iterator(line.end()),
-        std::make_reverse_iterator(line.begin()),
-        concat_parm.rbegin(),
-        concat_parm.rend()));
-}
-
-INSTANTIATE_TEST_SUITE_P(logical_line,
-    logical_line_iterator_fixture,
-    ::testing::ValuesIn(std::vector {
-        std::vector<std::string_view> {},
-        std::vector<std::string_view> { "" },
-        std::vector<std::string_view> { "", "" },
-        std::vector<std::string_view> { "a", "b" },
-        std::vector<std::string_view> { "", "b" },
-        std::vector<std::string_view> { "a", "" },
-        std::vector<std::string_view> { "a", "", "c" },
-        std::vector<std::string_view> { "a", "", "c", "" },
-        std::vector<std::string_view> { "a", "", "c", "", "e" },
-        std::vector<std::string_view> { "", "", "abc", "", "", "def", "", "", "ghi", "", "" },
-    }));

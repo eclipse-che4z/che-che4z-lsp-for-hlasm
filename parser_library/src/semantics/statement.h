@@ -175,18 +175,11 @@ struct preproc_details
         bool operator==(const name_range&) const = default;
     };
 
-    template<typename ITEM_TYPE>
-    struct item_list
-    {
-        std::vector<ITEM_TYPE> items;
-        range overall_r;
-    };
-
     range stmt_r;
     name_range label;
     name_range instruction;
-    item_list<name_range> operands;
-    item_list<range> remarks;
+    std::vector<name_range> operands;
+    std::vector<range> remarks;
 };
 
 struct preprocessor_statement_si
@@ -194,7 +187,7 @@ struct preprocessor_statement_si
     preproc_details m_details;
     const bool m_copylike;
 
-    preprocessor_statement_si(preproc_details details, bool copylike)
+    preprocessor_statement_si(preproc_details details, bool copylike = false)
         : m_details(std::move(details))
         , m_copylike(copylike)
     {}
@@ -203,11 +196,6 @@ struct preprocessor_statement_si
 struct endevor_statement_si : public preprocessor_statement_si
 {
     explicit endevor_statement_si(preproc_details details);
-};
-
-struct cics_statement_si : public preprocessor_statement_si
-{
-    explicit cics_statement_si(preproc_details details);
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

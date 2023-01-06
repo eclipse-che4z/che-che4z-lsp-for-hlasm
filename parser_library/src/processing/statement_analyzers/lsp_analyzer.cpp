@@ -126,7 +126,7 @@ void lsp_analyzer::analyze(const semantics::preprocessor_statement_si& statement
 {
     collect_occurences(lsp::occurence_kind::ORD, statement);
 
-    if (const auto& operands = statement.m_details.operands.items; statement.m_copylike && operands.size() == 1)
+    if (const auto& operands = statement.m_details.operands; statement.m_copylike && operands.size() == 1)
         add_copy_operand(hlasm_ctx_.ids().add(operands.front().name), operands.front().r, false);
 
     assign_statement_occurences(hlasm_ctx_.opencode_location());
@@ -230,7 +230,7 @@ void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const semantics:
         details.instruction.r,
         evaluated_model);
 
-    for (const auto& ops : details.operands.items)
+    for (const auto& ops : details.operands)
         collector.occurences.emplace_back(
             lsp::occurence_kind::ORD, hlasm_ctx_.ids().add(ops.name), ops.r, evaluated_model);
 }

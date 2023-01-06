@@ -16,13 +16,53 @@
 
 namespace hlasm_plugin::utils {
 
-std::pair<std::string_view, size_t> trim_left(std::string_view s)
+size_t trim_left(std::string_view& s)
 {
-    size_t to_trim = s.find_first_not_of(" ");
+    const auto to_trim = s.find_first_not_of(' ');
     if (to_trim == std::string_view::npos)
-        return { "", s.length() };
+    {
+        auto s_length = s.length();
+        s = {};
+        return s_length;
+    }
 
     s.remove_prefix(to_trim);
-    return { s, to_trim };
+    return to_trim;
 }
+
+size_t trim_right(std::string_view& s)
+{
+    const auto to_trim = s.find_last_not_of(' ');
+    if (to_trim == std::string_view::npos)
+    {
+        auto s_length = s.length();
+        s = {};
+        return s_length;
+    }
+
+    s = s.substr(0, to_trim + 1);
+    return to_trim;
+}
+
+size_t consume(std::string_view& s, std::string_view lit)
+{
+    // case sensitive
+    if (!s.starts_with(lit))
+        return 0;
+    s.remove_prefix(lit.size());
+    return lit.size();
+}
+
+std::string_view next_nonblank_sequence(std::string_view s)
+{
+    if (s.empty() || s.front() == ' ')
+        return {};
+
+    auto space = s.find(' ');
+    if (space == std::string_view::npos)
+        space = s.size();
+
+    return s.substr(0, space);
+}
+
 } // namespace hlasm_plugin::utils

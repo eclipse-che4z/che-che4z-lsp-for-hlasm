@@ -74,8 +74,7 @@ std::string_view extract_operand_and_argument(std::string_view s)
 
 std::pair<std::string_view, size_t> remove_separators(std::string_view s)
 {
-    size_t trimmed = 0;
-    std::tie(s, trimmed) = hlasm_plugin::utils::trim_left(s);
+    auto trimmed = hlasm_plugin::utils::trim_left(s);
     if (!s.empty() && s.front() == ',')
     {
         s.remove_prefix(1);
@@ -160,21 +159,22 @@ std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(
     }
 
     if (matches[ids.operands].length())
-    {
-        auto [ops_text, ops_range] = get_stmt_part_name_range<ITERATOR>(matches, ids.operands, rp);
-        details.operands.items =
-            get_operands_list(ops_text, std::distance(matches[0].first, matches[ids.operands].first), rp);
-        details.operands.overall_r = std::move(ops_range);
-    }
+        details.operands = get_operands_list(get_stmt_part_name_range<ITERATOR>(matches, ids.operands, rp).name,
+            std::distance(matches[0].first, matches[ids.operands].first),
+            rp);
 
     if (ids.remarks && matches[*ids.remarks].length())
-    {
-        details.remarks.overall_r = get_stmt_part_name_range<ITERATOR>(matches, *ids.remarks, rp).r;
-        details.remarks.items.emplace_back(details.remarks.overall_r);
-    }
+        details.remarks.emplace_back(get_stmt_part_name_range<ITERATOR>(matches, *ids.remarks, rp).r);
 
     return std::make_shared<PREPROC_STATEMENT>(std::move(details));
 }
+
+template std::shared_ptr<semantics::preprocessor_statement_si>
+get_preproc_statement<semantics::preprocessor_statement_si, lexing::logical_line::const_iterator>(
+    const std::match_results<lexing::logical_line::const_iterator>& matches,
+    const stmt_part_ids& ids,
+    size_t lineno,
+    size_t continuation_column);
 
 template std::shared_ptr<semantics::endevor_statement_si>
 get_preproc_statement<semantics::endevor_statement_si, std::string_view::iterator>(
@@ -182,13 +182,4 @@ get_preproc_statement<semantics::endevor_statement_si, std::string_view::iterato
     const stmt_part_ids& ids,
     size_t lineno,
     size_t continuation_column);
-
-template std::shared_ptr<semantics::cics_statement_si>
-get_preproc_statement<semantics::cics_statement_si, lexing::logical_line::const_iterator>(
-    const std::match_results<lexing::logical_line::const_iterator>& matches,
-    const stmt_part_ids& ids,
-    size_t lineno,
-    size_t continuation_column);
-
-
 } // namespace hlasm_plugin::parser_library::processing

@@ -701,18 +701,6 @@ class mini_parser
         return r;
     }();
 
-    template<typename T>
-    std::true_type same_line_detector(const T& t, decltype(t.same_line(t)) = false);
-    std::false_type same_line_detector(...);
-
-    bool same_line(It l, It r)
-    {
-        if constexpr (decltype(same_line_detector(l))::value)
-            return l.same_line(r);
-        else
-            return true;
-    }
-
 public:
     const std::string& operands() const& { return m_substituted_operands; }
     std::string operands() && { return std::move(m_substituted_operands); }
@@ -848,7 +836,6 @@ public:
 class cics_preprocessor final : public preprocessor
 {
     lexing::logical_line m_logical_line;
-    std::string m_operands;
     library_fetcher m_libs;
     diagnostic_op_consumer* m_diags = nullptr;
     std::vector<document_line> m_result;
@@ -1151,8 +1138,8 @@ public:
         }
 
         static const stmt_part_ids part_ids { 1, { 2, 3 }, { 4 }, std::nullopt };
-        auto stmt = get_preproc_statement<semantics::cics_statement_si>(m_matches_ll, part_ids, lineno, 1);
-        do_highlighting(*stmt, m_src_proc, 1);
+        auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno, 1);
+        do_highlighting(*stmt, m_logical_line, m_src_proc, 1);
         set_statement(std::move(stmt));
 
         return true;
@@ -1231,8 +1218,8 @@ public:
                 ret_val = true;
 
             static const stmt_part_ids part_ids { 1, { 2 }, 3, 4 };
-            auto stmt = get_preproc_statement<semantics::cics_statement_si>(m_matches_ll, part_ids, lineno);
-            do_highlighting(*stmt, m_src_proc);
+            auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno);
+            do_highlighting(*stmt, m_logical_line, m_src_proc);
             set_statement(std::move(stmt));
         }
 
@@ -1330,29 +1317,6 @@ public:
     }
 
     cics_preprocessor_options current_options() const { return m_options; }
-
-    void do_highlighting(const semantics::preprocessor_statement_si& stmt,
-        semantics::source_info_processor& src_proc,
-        size_t continue_column = 15) const override
-    {
-        preprocessor::do_highlighting(stmt, src_proc, continue_column);
-
-        size_t lineno = stmt.m_details.stmt_r.start.line;
-        for (size_t i = 0; i < m_logical_line.segments.size(); ++i)
-        {
-            const auto& segment = m_logical_line.segments[i];
-
-            if (!segment.continuation.empty())
-                m_src_proc.add_hl_symbol(token_info(
-                    range(position(lineno + i, 71), position(lineno + i, 72)), semantics::hl_scopes::continuation));
-
-            if (!segment.ignore.empty())
-                m_src_proc.add_hl_symbol(
-                    token_info(range(position(lineno + i, 72),
-                                   position(lineno + i, 72 + segment.ignore.length() - segment.continuation.empty())),
-                        semantics::hl_scopes::ignored));
-        }
-    }
 };
 
 } // namespace
