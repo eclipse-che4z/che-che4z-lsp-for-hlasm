@@ -320,7 +320,7 @@ TEST_F(lsp_context_cics_preprocessor_test, refs_dfh)
 
 // TODO: hover for DFHVALUE and DHFRESP values
 
-class lsp_context_db2_preprocessor_test : public lsp_context_preprocessor_test
+class lsp_context_db2_preprocessor_include_test : public lsp_context_preprocessor_test
 {
 protected:
     inline static const std::string contents =
@@ -332,7 +332,7 @@ C     EXEC SQL INCLUDE  SqLdA)";
     std::optional<resource_location> preproc1_loc;
 
 public:
-    lsp_context_db2_preprocessor_test()
+    lsp_context_db2_preprocessor_include_test()
         : lsp_context_preprocessor_test(
             contents, std::make_shared<mock_parse_lib_provider>(member_list), db2_preprocessor_options())
     {}
@@ -346,7 +346,7 @@ public:
     }
 };
 
-TEST_F(lsp_context_db2_preprocessor_test, go_to_label)
+TEST_F(lsp_context_db2_preprocessor_include_test, go_to_label)
 {
     // jump to virtual file, label A
     EXPECT_EQ(location(position(0, 0), *preproc1_loc), a.context().lsp_ctx->definition(source_loc, position(1, 1)));
@@ -356,7 +356,7 @@ TEST_F(lsp_context_db2_preprocessor_test, go_to_label)
     EXPECT_EQ(location(position(32, 0), *preproc1_loc), a.context().lsp_ctx->definition(source_loc, position(3, 1)));
 }
 
-TEST_F(lsp_context_db2_preprocessor_test, go_to_exec_sql)
+TEST_F(lsp_context_db2_preprocessor_include_test, go_to_exec_sql)
 {
     // no jump,  EXEC   SQL
     EXPECT_EQ(location(position(1, 12), source_loc), a.context().lsp_ctx->definition(source_loc, position(1, 12)));
@@ -366,7 +366,7 @@ TEST_F(lsp_context_db2_preprocessor_test, go_to_exec_sql)
     EXPECT_EQ(location(position(3, 12), source_loc), a.context().lsp_ctx->definition(source_loc, position(3, 12)));
 }
 
-TEST_F(lsp_context_db2_preprocessor_test, go_to_include)
+TEST_F(lsp_context_db2_preprocessor_include_test, go_to_include)
 {
     // jump from source to MEMBER
     EXPECT_EQ(location(position(0, 0), member_loc), a.context().lsp_ctx->definition(source_loc, position(1, 29)));
@@ -376,7 +376,7 @@ TEST_F(lsp_context_db2_preprocessor_test, go_to_include)
     EXPECT_EQ(location(position(42, 0), *preproc1_loc), a.context().lsp_ctx->definition(source_loc, position(3, 29)));
 }
 
-TEST_F(lsp_context_db2_preprocessor_test, refs_label)
+TEST_F(lsp_context_db2_preprocessor_include_test, refs_label)
 {
     const location_list expected_a_locations {
         location(position(1, 0), source_loc),
@@ -400,7 +400,7 @@ TEST_F(lsp_context_db2_preprocessor_test, refs_label)
 }
 
 
-TEST_F(lsp_context_db2_preprocessor_test, refs_exec_sql)
+TEST_F(lsp_context_db2_preprocessor_include_test, refs_exec_sql)
 {
     const location_list expected_exec_sql_locations {
         location(position(1, 7), source_loc),
@@ -419,7 +419,7 @@ TEST_F(lsp_context_db2_preprocessor_test, refs_exec_sql)
         has_same_content(expected_exec_sql_locations, a.context().lsp_ctx->references(source_loc, position(3, 12))));
 }
 
-TEST_F(lsp_context_db2_preprocessor_test, refs_include)
+TEST_F(lsp_context_db2_preprocessor_include_test, refs_include)
 {
     const location_list expected_member_locations {
         location(position(1, 29), source_loc),
@@ -445,7 +445,7 @@ TEST_F(lsp_context_db2_preprocessor_test, refs_include)
         has_same_content(expected_sqlda_locations, a.context().lsp_ctx->references(source_loc, position(3, 29))));
 }
 
-TEST_F(lsp_context_db2_preprocessor_test, hover_label)
+TEST_F(lsp_context_db2_preprocessor_include_test, hover_label)
 {
     // A
     EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(1, 1))));
@@ -467,9 +467,12 @@ protected:
                TO : --RM                                             ZYX
                XWV   FROM TABLE WHERE X = :ABCDE
 
-ZYXWV    DS    F
+         EXEC SQL DECLARE GET_ID CURSOR FOR SELECT KEY FROM  TARGET    X
+               WHERE NAME    = :ZYXWV
+
 XWV      DS    F
 ABCDE    DS    F
+ZYXWV    DS    F
          END
 )";
 
@@ -483,9 +486,11 @@ public:
 TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, go_to)
 {
     // XWV
-    EXPECT_EQ(location(position(9, 0), source_loc), a.context().lsp_ctx->definition(source_loc, position(6, 17)));
+    EXPECT_EQ(location(position(11, 0), source_loc), a.context().lsp_ctx->definition(source_loc, position(6, 17)));
     // ABCDE
-    EXPECT_EQ(location(position(10, 0), source_loc), a.context().lsp_ctx->definition(source_loc, position(6, 48)));
+    EXPECT_EQ(location(position(12, 0), source_loc), a.context().lsp_ctx->definition(source_loc, position(6, 48)));
+    // ZYXWV
+    EXPECT_EQ(location(position(13, 0), source_loc), a.context().lsp_ctx->definition(source_loc, position(9, 34)));
 
     // ZY - no jump
     EXPECT_EQ(location(position(5, 71), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 71)));
@@ -493,26 +498,27 @@ TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, go_to)
 
 TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, refs)
 {
-    const location_list expected_zyxwv_locations {
-        location(position(8, 0), source_loc),
-    };
     const location_list expected_xwv_locations {
         location(position(6, 15), source_loc),
-        location(position(9, 0), source_loc),
+        location(position(11, 0), source_loc),
     };
     const location_list expected_abcde_locations {
         location(position(6, 43), source_loc),
-        location(position(10, 0), source_loc),
+        location(position(12, 0), source_loc),
+    };
+    const location_list expected_zyxwv_locations {
+        location(position(9, 32), source_loc),
+        location(position(13, 0), source_loc),
     };
 
-    // ZYXWV reference
-    EXPECT_TRUE(
-        has_same_content(expected_zyxwv_locations, a.context().lsp_ctx->references(source_loc, position(8, 1))));
     // XWV reference
     EXPECT_TRUE(has_same_content(expected_xwv_locations, a.context().lsp_ctx->references(source_loc, position(6, 17))));
     // ABCDE reference
     EXPECT_TRUE(
         has_same_content(expected_abcde_locations, a.context().lsp_ctx->references(source_loc, position(6, 48))));
+    // ZYXWV reference
+    EXPECT_TRUE(
+        has_same_content(expected_zyxwv_locations, a.context().lsp_ctx->references(source_loc, position(9, 32))));
 
     // ZY reference
     EXPECT_TRUE(a.context().lsp_ctx->references(source_loc, position(5, 70)).empty());
@@ -524,6 +530,8 @@ TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, hover)
     EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(6, 17))));
     // ABCDE
     EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(6, 48))));
+    // ZYXWV
+    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(9, 37))));
 
     // ZY
     EXPECT_TRUE(a.context().lsp_ctx->hover(source_loc, position(5, 71)).empty());

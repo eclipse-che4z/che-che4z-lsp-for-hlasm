@@ -551,3 +551,27 @@ TEST(highlighting, db2_preprocessor_statement_reinclude)
 
     EXPECT_EQ(tokens, expected);
 }
+
+TEST(highlighting, nested_preprocessors)
+{
+    mock_parse_lib_provider libs({
+        { "MEMBER", "A   EXEC CICS ABEND ABCODE('1234')" },
+    });
+
+    const std::string contents = "-INC  MEMBER";
+
+    analyzer a(contents,
+        analyzer_options { source_file_loc,
+            &libs,
+            std::vector<preprocessor_options> { endevor_preprocessor_options(), cics_preprocessor_options() },
+            collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.source_processor().semantic_tokens();
+    const semantics::lines_info expected = {
+        token_info({ { 0, 0 }, { 0, 4 } }, hl_scopes::instruction),
+        token_info({ { 0, 6 }, { 0, 12 } }, hl_scopes::operand),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}

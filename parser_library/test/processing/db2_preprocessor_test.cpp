@@ -981,19 +981,18 @@ TEST_F(db2_preprocessor_test, sql_type_warn_on_continuation)
     EXPECT_TRUE(matches_message_codes(m_diags.diags, { "DB005" }));
 }
 
-// TODO - issue with msvc regex
-// TEST(db2_preprocessor, sql_type_is_table_like_regex)
-//{
-//    std::string input = R"(
-// A SQL TYPE IS TABLE LIKE A                                             X
-//               A                                                       X
-//               A AS LOCATOR)";
-//
-//    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
-//    a.analyze();
-//
-//    // No expectations - it should just past
-//}
+TEST(db2_preprocessor, sql_type_is_table_like_regex)
+{
+    std::string input = R"(
+A SQL TYPE IS TABLE LIKE A                                             X
+               A                                                       X
+               A AS LOCATOR)";
+
+    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+    a.analyze();
+
+    // No expectations - it should just past
+}
 
 TEST_F(db2_preprocessor_test, sql_type_parse_and_warn_on_continuation)
 {

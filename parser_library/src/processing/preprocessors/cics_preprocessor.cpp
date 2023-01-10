@@ -1099,7 +1099,9 @@ public:
         return matches[3].matched;
     }
 
-    bool try_exec_cics(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
+    bool try_exec_cics(preprocessor::line_iterator& it,
+        const preprocessor::line_iterator& end,
+        const std::optional<size_t>& potential_lineno)
     {
         static const std::regex exec_cics(
             "([^ ]*)[ ]+([eE][xX][eE][cC][ ]+[cC][iI][cC][sS](?:[ ]+(\\S+))?)(?:[ ]+(.*))?");
@@ -1116,6 +1118,7 @@ public:
         if (!std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, exec_cics))
             return false;
 
+        auto lineno = potential_lineno.value_or(0);
         if (is_command_present(m_matches_ll))
         {
             process_exec_cics(m_matches_ll);
@@ -1137,10 +1140,13 @@ public:
             m_result.emplace_back(replaced_line { "         DFHEIMSG 12\n" });
         }
 
-        static const stmt_part_ids part_ids { 1, { 2, 3 }, { 4 }, std::nullopt };
-        auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno, 1);
-        do_highlighting(*stmt, m_logical_line, m_src_proc, 1);
-        set_statement(std::move(stmt));
+        if (potential_lineno)
+        {
+            static const stmt_part_ids part_ids { 1, { 2, 3 }, { 4 }, std::nullopt };
+            auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno, 1);
+            do_highlighting(*stmt, m_logical_line, m_src_proc, 1);
+            set_statement(std::move(stmt));
+        }
 
         return true;
     }
@@ -1190,13 +1196,16 @@ public:
         return events;
     }
 
-    bool try_dfh_lookup(preprocessor::line_iterator& it, const preprocessor::line_iterator& end, const auto lineno)
+    bool try_dfh_lookup(preprocessor::line_iterator& it,
+        const preprocessor::line_iterator& end,
+        const std::optional<size_t>& potential_lineno)
     {
         static const std::regex dfh_lookup("([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+((?:\\S+,)?(?:DFHRESP|DFHVALUE)[ "
                                            "]*\\([ ]*[A-Z0-9]*[ ]*\\))(?:[ ]+(.*))?",
             std::regex_constants::icase);
 
         bool ret_val = false;
+        auto lineno = potential_lineno.value_or(0);
         it = extract_nonempty_logical_line(m_logical_line, it, end, lexing::default_ictl);
 
         if (m_logical_line.continuation_error)
@@ -1217,10 +1226,13 @@ public:
             else if (r.substitutions_performed() > 0)
                 ret_val = true;
 
-            static const stmt_part_ids part_ids { 1, { 2 }, 3, 4 };
-            auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno);
-            do_highlighting(*stmt, m_logical_line, m_src_proc);
-            set_statement(std::move(stmt));
+            if (potential_lineno)
+            {
+                static const stmt_part_ids part_ids { 1, { 2 }, 3, 4 };
+                auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno);
+                do_highlighting(*stmt, m_logical_line, m_src_proc);
+                set_statement(std::move(stmt));
+            }
         }
 
         return ret_val;
@@ -1269,7 +1281,7 @@ public:
 
             do_general_injections();
 
-            const auto lineno = it->lineno().value_or(0); // TODO: preprocessor chaining
+            const auto lineno = it->lineno(); // TODO: preprocessor chaining
 
             if (asm_xopts_allowed && is_process_line(text))
             {
@@ -1278,7 +1290,7 @@ public:
                 continue;
             }
 
-            if (asm_xopts_allowed && try_asm_xopts(it->text(), lineno))
+            if (asm_xopts_allowed && try_asm_xopts(it->text(), lineno.value_or(0)))
             {
                 m_result.emplace_back(*it++);
                 // ignores continuation
