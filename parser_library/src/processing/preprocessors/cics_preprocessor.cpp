@@ -927,7 +927,7 @@ public:
         line = line.substr(0, lexing::default_ictl.end);
 
         static const std::regex asm_statement(
-            R"(\*ASM[ ]+(?:[Xx][Oo][Pp][Tt][Ss]?|[Cc][Ii][Cc][Ss])[(']([A-Z, ]*)[)'](?: .*)?)");
+            R"(^\*ASM[ ]+(?:[Xx][Oo][Pp][Tt][Ss]?|[Cc][Ii][Cc][Ss])[(']([A-Z, ]*)[)'])");
         static const std::regex op_sep("[ ,]+");
         static const std::unordered_map<std::string_view, std::pair<bool cics_preprocessor_options::*, bool>> opts {
             { "PROLOG", { &cics_preprocessor_options::prolog, true } },
@@ -939,7 +939,8 @@ public:
         };
 
         std::match_results<std::string_view::const_iterator> m_regex_match;
-        if (!std::regex_match(line.begin(), line.end(), m_regex_match, asm_statement) || m_regex_match[1].length() == 0)
+        if (!std::regex_search(line.begin(), line.end(), m_regex_match, asm_statement)
+            || m_regex_match[1].length() == 0)
             return false;
 
         std::string_view operands(m_regex_match[1].first, m_regex_match[1].second);
@@ -1022,9 +1023,9 @@ public:
 
     bool process_line_of_interest(std::string_view line)
     {
-        static const std::regex line_of_interest("([^ ]*)[ ]+(START|CSECT|RSECT|DSECT|DFHEIENT|DFHEISTG|END)(?: .+)?");
+        static const std::regex line_of_interest("^([^ ]*)[ ]+(START|CSECT|RSECT|DSECT|DFHEIENT|DFHEISTG|END)(?= |$)");
 
-        return (std::regex_match(line.begin(), line.end(), m_matches_sv, line_of_interest)
+        return (std::regex_search(line.begin(), line.end(), m_matches_sv, line_of_interest)
             && process_asm_statement(std::string_view(m_matches_sv[2].first, m_matches_sv[2].second),
                 std::string_view(m_matches_sv[1].first, m_matches_sv[1].second)));
     }
@@ -1103,8 +1104,7 @@ public:
         const preprocessor::line_iterator& end,
         const std::optional<size_t>& potential_lineno)
     {
-        static const std::regex exec_cics(
-            "([^ ]*)[ ]+([eE][xX][eE][cC][ ]+[cC][iI][cC][sS](?:[ ]+(\\S+))?)(?:[ ]+(.*))?");
+        static const std::regex exec_cics("^([^ ]*)[ ]+([eE][xX][eE][cC][ ]+[cC][iI][cC][sS](?:[ ]+(\\S+))?)(?= |$)");
 
         it = extract_nonempty_logical_line(m_logical_line, it, end, cics_extract);
         bool exec_cics_continuation_error = false;
@@ -1115,7 +1115,7 @@ public:
             m_logical_line.segments.erase(m_logical_line.segments.begin() + 1, m_logical_line.segments.end());
         }
 
-        if (!std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, exec_cics))
+        if (!std::regex_search(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, exec_cics))
             return false;
 
         auto lineno = potential_lineno.value_or(0);
@@ -1142,7 +1142,7 @@ public:
 
         if (potential_lineno)
         {
-            static const stmt_part_ids part_ids { 1, { 2, 3 }, { 4 }, std::nullopt };
+            static const stmt_part_ids part_ids { 1, { 2, 3 }, (size_t)-1, std::nullopt };
             auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno, 1);
             do_highlighting(*stmt, m_logical_line, m_src_proc, 1);
             set_statement(std::move(stmt));
@@ -1200,8 +1200,8 @@ public:
         const preprocessor::line_iterator& end,
         const std::optional<size_t>& potential_lineno)
     {
-        static const std::regex dfh_lookup("([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+((?:\\S+,)?(?:DFHRESP|DFHVALUE)[ "
-                                           "]*\\([ ]*[A-Z0-9]*[ ]*\\))(?:[ ]+(.*))?",
+        static const std::regex dfh_lookup("^([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+((?:\\S+,)?(?:DFHRESP|DFHVALUE)[ ]*"
+                                           "\\([ ]*[A-Z0-9]*[ ]*\\))(?= |$)",
             std::regex_constants::icase);
 
         bool ret_val = false;
@@ -1213,7 +1213,7 @@ public:
             if (m_diags)
                 m_diags->add_diagnostic(diagnostic_op::warn_CIC001(range(position(lineno, 0))));
         }
-        else if (std::regex_match(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, dfh_lookup))
+        else if (std::regex_search(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, dfh_lookup))
         {
             auto r = try_substituting_dfh(m_matches_ll);
             if (r.error())
@@ -1228,7 +1228,7 @@ public:
 
             if (potential_lineno)
             {
-                static const stmt_part_ids part_ids { 1, { 2 }, 3, 4 };
+                static const stmt_part_ids part_ids { 1, { 2 }, 3, (size_t)-1 };
                 auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno);
                 do_highlighting(*stmt, m_logical_line, m_src_proc);
                 set_statement(std::move(stmt));

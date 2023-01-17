@@ -452,7 +452,7 @@ B   L 0,DFHRESP ( NORMAL ) bla                                         X00000002
         token_info({ { 7, 4 }, { 7, 5 } }, hl_scopes::instruction),
         token_info({ { 7, 6 }, { 7, 7 } }, hl_scopes::operand),
         token_info({ { 7, 8 }, { 7, 26 } }, hl_scopes::operand),
-        token_info({ { 7, 27 }, { 7, 71 } }, hl_scopes::remark),
+        token_info({ { 7, 26 }, { 7, 71 } }, hl_scopes::remark),
         token_info({ { 7, 71 }, { 7, 72 } }, hl_scopes::continuation),
         token_info({ { 7, 72 }, { 7, 80 } }, hl_scopes::ignored),
         token_info({ { 8, 15 }, { 8, 71 } }, hl_scopes::remark),

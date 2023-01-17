@@ -132,6 +132,12 @@ semantics::preproc_details::name_range get_stmt_part_name_range(
         nr.r = rp.adjust_range(range(position(lineno, std::distance(matches[0].first, matches[index].first)),
             position(lineno, std::distance(matches[0].first, matches[index].second))));
     }
+    else if (index == (size_t)-1)
+    {
+        nr.name = matches.suffix().str();
+        nr.r = rp.adjust_range(range(position(lineno, std::distance(matches[0].first, matches.suffix().first)),
+            position(lineno, std::distance(matches[0].first, matches.suffix().second))));
+    }
 
     return nr;
 }
@@ -141,11 +147,19 @@ template<typename PREPROC_STATEMENT, typename ITERATOR>
 std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(
     const std::match_results<ITERATOR>& matches, const stmt_part_ids& ids, size_t lineno, size_t continue_column)
 {
-    assert(!matches.empty() && ids.operands < matches.size() && (!ids.remarks || *ids.remarks < matches.size()));
+    assert(!matches.empty() && (ids.operands < matches.size() || ids.operands == -1)
+        && (!ids.remarks || *ids.remarks < matches.size() || *ids.remarks == -1));
+
+    const auto matches_ = [&matches](size_t n) {
+        if (n == (size_t)-1)
+            return matches.suffix();
+        else
+            return matches[n];
+    };
 
     semantics::preproc_details details;
 
-    details.stmt_r = range({ lineno, 0 }, { lineno, static_cast<size_t>(matches[0].length()) });
+    details.stmt_r = range({ lineno, 0 }, { lineno, static_cast<size_t>(matches_(0).length()) });
     auto rp = semantics::range_provider(details.stmt_r, semantics::adjusting_state::MACRO_REPARSE, continue_column);
 
     if (ids.label)
@@ -158,12 +172,12 @@ std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(
         details.instruction.r.start = get_stmt_part_name_range<ITERATOR>(matches, ids.instruction.front(), rp).r.start;
     }
 
-    if (matches[ids.operands].length())
+    if (matches_(ids.operands).length())
         details.operands = get_operands_list(get_stmt_part_name_range<ITERATOR>(matches, ids.operands, rp).name,
-            std::distance(matches[0].first, matches[ids.operands].first),
+            std::distance(matches[0].first, matches_(ids.operands).first),
             rp);
 
-    if (ids.remarks && matches[*ids.remarks].length())
+    if (ids.remarks && matches_(*ids.remarks).length())
         details.remarks.emplace_back(get_stmt_part_name_range<ITERATOR>(matches, *ids.remarks, rp).r);
 
     return std::make_shared<PREPROC_STATEMENT>(std::move(details));

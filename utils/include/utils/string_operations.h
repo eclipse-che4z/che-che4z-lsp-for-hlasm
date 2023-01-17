@@ -29,6 +29,44 @@ std::string_view next_nonblank_sequence(std::string_view s);
 
 inline bool isblank32(char32_t c) { return c <= 255 && std::isblank(static_cast<unsigned char>(c)); }
 
+template<typename T>
+bool consume(T& b, const T& e, std::string_view lit)
+{
+    auto work = b;
+    for (auto c : lit)
+    {
+        if (work == e)
+            return false;
+        if (*work != c)
+            return false;
+        ++work;
+    }
+    b = work;
+    return true;
+}
+
+template<typename T>
+size_t trim_left(T& b, const T& e, std::initializer_list<std::string_view> to_trim = { " " })
+{
+    size_t result = 0;
+    while (b != e)
+    {
+        bool found = false;
+        for (const auto& s : to_trim)
+        {
+            if (consume(b, e, s))
+            {
+                ++result;
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            break;
+    }
+    return result;
+}
+
 } // namespace hlasm_plugin::utils
 
 #endif
