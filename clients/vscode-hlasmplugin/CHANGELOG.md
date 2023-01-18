@@ -1,6 +1,6 @@
 # Changelog
 
-## ****Unreleased****
+## [1.6.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.5.0...1.6.0) (2023-01-18)
 
 #### Added
 - Command for downloading copybooks allows selections of data sets which should be downloaded

@@ -1,3 +1,49 @@
+## [1.6.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.5.0...1.6.0) (2023-01-18)
+
+
+### Features
+
+* CICS preprocessor statements highlighting and parsing ([3fd716b](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/3fd716b9387d56c492ce1336d90f5fa1d2388d60))
+* Code actions for an unknown operation code ([f3522fd](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f3522fd7f5a034a2db46ecde42c3ab7c72577c44))
+* Command for downloading copybooks allows selections of data sets which should be downloaded ([44a19d9](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/44a19d915019a49457f881c6c6b2ea34d49785b6))
+* DB2 preprocessor statements highlighting and parsing ([73b545f](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/73b545f942908dbb841493f3cefab398b07c7c8c))
+* Endevor preprocessor statements highlighting and parsing ([cb1a834](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/cb1a834467f9a27c166042f0915122e57a01d90b))
+* Implement step out support in the macro tracer ([e0529a8](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e0529a873eabeb236e2c85189af43afdc0120be2))
+* Instruction suggestions are included in the completion list ([17a6eff](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/17a6effa59597ccdcdba82ff39d9d83bfb243658))
+* Quick fixes for typos in instruction and macro names added to the code actions ([aaa6703](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/aaa6703500061bc42d5242af663da6b8560bacf3))
+* Support for the SYSCLOCK system variable ([6116699](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/61166994698a9764ccb19823d6708288f0e79efc))
+
+
+### Other changes
+
+* Abstract id_index pointer nature ([cdb8a9e](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/cdb8a9e8e1aec847144cbe49ed549c9f40fc9dcd))
+* Enhance coverage reporting ([87dcc26](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/87dcc26cd4b930e0c247c3d7a69bae22e1b512f2))
+* Keep small IDs inline in id_index ([e871d92](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e871d926240c788ee64afdc6851ee3e2093376ed))
+* preprocessor copy members ([e4da1ef](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e4da1ef8515e7f43a22a83f1496212af04ef298a))
+* Reference matching version of resources in the readme file ([3f13c0f](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/3f13c0f67b91b18640c84170d3981c500afdec20))
+* Remove unsupported actions ([f2eee14](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f2eee14850ca7499567e3657d27e98d068a30b21))
+* Update GH actions due to node12 deprecation ([e912d22](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e912d22272d95054491d584718312dd8ba0c7c9f))
+* Upgrade all the things ([ce8ce03](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/ce8ce03ba2780596f7d7d24726f22e8cf274dafb))
+* Workflow refactoring ([a3387a2](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/a3387a2f6ff11053d82fabf13edd8c049b449d07))
+
+
+### Fixes
+
+* Do not display messages related to Bridge for Git configuration unless it is actively utilized ([1c8fb3e](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/1c8fb3ef3e17e4441d90f58d3aca7b0e4f831774))
+* Enhance language server response times ([3452dfd](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/3452dfda927297fadada8697f0ff6d65d102b328))
+* File extensions are now ignored when  option is not provided in proc_grps.json ([40862d5](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/40862d5384177a54f368cb8933c76db35597288d))
+* Language server may crash on hover ([36c8895](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/36c88955dfc8b2233f6b02b6ec4fdd2d35ffd77a))
+* Language server may crash while generating the document outline ([f85ae1d](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f85ae1d0e08b4eb98f303dcf654bf926c0923b8d))
+* Library contents are now shared between processor groups ([25dfa69](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/25dfa690f2f7e5923f61669ad5a7be08a8675350))
+* LSP requests on virtual files are evaluated in the correct workspace context ([64420d1](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/64420d170a21d20e2d344b7631dfd7fbeff92fa0))
+* Macro label is the preferred go to definition target unless the request is made from the label itself ([1fb6427](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/1fb6427b23cd60c12c479bd70dcf78eccd41aca4))
+* Missing references and hover text in model statements ([a81918a](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/a81918a7c5f83324d9d0c9f733651f93820d8784))
+* Regex workaround ([9a6a2cb](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/9a6a2cbd0657e796b3fcc2fe9d9d0b886e58e965))
+* Restrict configuration file patterns ([9938bc2](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/9938bc290afc88916f19e65c5c94f730c0fb621e))
+* Sequence symbol location is incorrect when discovered in the lookahead mode ([20dda28](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/20dda28571e1ef437230a732c013479f8a6e740a))
+* Sort variables in the macro tracer ([94b3acd](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/94b3acdd4cce0bd51fe79585ad7151f68abf41a2))
+* The language server may occasionally work with obsolete configuration ([8d39b9f](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/8d39b9fae4f6c279e1aa4a03432d5161b0f2dd72))
+
 ## [1.5.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.4.0...1.5.0) (2022-11-02)
 
 
