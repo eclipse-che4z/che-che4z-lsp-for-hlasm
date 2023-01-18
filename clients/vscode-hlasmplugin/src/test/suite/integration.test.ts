@@ -16,6 +16,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as helper from './testHelper';
+import { waitForDiagnostics } from './testHelper';
 
 suite('Integration Test Suite', () => {
     const workspace_file = 'open';
@@ -51,18 +52,22 @@ suite('Integration Test Suite', () => {
         assert.ok(openDiags.length == 1 && openDiags[0].code == 'M003', 'Wrong diagnostic');
     }).timeout(10000).slow(1000);
 
-    // test completion for instructions
-    test('Completion Instructions test', async () => {
-        await helper.insertString(editor, new vscode.Position(7, 1), 'L');
-
+    async function insertBestCompletion() {
+        // for some reason insertBestCompletion does not do anything
         await vscode.commands.executeCommand('editor.action.triggerSuggest');
         await helper.sleep(1000);
 
         await vscode.commands.executeCommand('acceptSelectedSuggestion');
         await helper.sleep(1000);
+    }
 
-        const text = editor.document.getText();
-        const acceptedLine = text.split('\n')[7];
+    // test completion for instructions
+    test('Completion Instructions test', async () => {
+        await helper.insertString(editor, new vscode.Position(7, 1), 'L');
+
+        await insertBestCompletion();
+
+        const acceptedLine = editor.document.getText(new vscode.Range(7, 0, 8, 0));
 
         assert.ok(acceptedLine.includes('L             R1,D12U2(X2,B2)'), 'Wrong suggestion result' + acceptedLine);
     }).timeout(10000).slow(4000);
@@ -71,14 +76,9 @@ suite('Integration Test Suite', () => {
     test('Completion Variable symbol test', async () => {
         await helper.insertString(editor, new vscode.Position(8, 0), '&');
 
-        await vscode.commands.executeCommand('editor.action.triggerSuggest');
-        await helper.sleep(1000);
+        await insertBestCompletion();
 
-        await vscode.commands.executeCommand('acceptSelectedSuggestion')
-        await helper.sleep(1000);
-
-        const text = editor.document.getText();
-        const acceptedLine = text.split('\n')[8];
+        const acceptedLine = editor.document.getText(new vscode.Range(8, 0, 9, 0));
 
         assert.ok(acceptedLine.includes('&VAR'), 'Wrong suggestion result' + acceptedLine);
     }).timeout(10000).slow(4000);
@@ -133,13 +133,12 @@ suite('Integration Test Suite', () => {
     }).timeout(20000).slow(10000);
 
     async function openDocumentAndCheckDiags(workspace_file: string) {
-        await helper.showDocument(workspace_file);
-        await helper.sleep(1500);
+        const diagsChange = waitForDiagnostics(workspace_file);
+        const uri = (await helper.showDocument(workspace_file)).document.uri.toString();
 
-        const allDiags = vscode.languages.getDiagnostics();
-        const patternDiags = allDiags.find(pair => pair[0].path.endsWith(workspace_file));
+        const [, diags] = (await diagsChange).find(pair => pair[0].toString() === uri);
 
-        assert.ok(patternDiags === undefined, "Library patterns are not working for file: " + workspace_file);
+        assert.ok(diags && diags.length === 1 && diags[0].code === 'MNOTE' && diags[0].message === 'DONE', "Library patterns are not working for file: " + workspace_file);
     }
 
     // verify that library patterns are working

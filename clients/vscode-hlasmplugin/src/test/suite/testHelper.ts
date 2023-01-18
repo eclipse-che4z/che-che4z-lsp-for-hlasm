@@ -13,62 +13,88 @@
  */
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { integer } from 'vscode-languageclient';
+
+const debuggerWaitRequests = new Map<string, () => void>();
+
+export function registerWaitRequest(message: string, sessionId: string): Promise<void> {
+    return new Promise<void>((resolve) => debuggerWaitRequests.set(sessionId + '_' + message, resolve));
+}
+
+export function popWaitRequestResolver(message: string, sessionId: string): () => void {
+    const key = sessionId + '_' + message;
+
+    const result = debuggerWaitRequests.get(key);
+    if (result)
+        debuggerWaitRequests.delete(key);
+
+    return result;
+}
+
+export function activeEditorChanged(): Promise<void> {
+    return new Promise<void>((resolve) => {
+        const listener = vscode.window.onDidChangeActiveTextEditor(() => {
+            listener.dispose();
+            resolve();
+        })
+    });
+}
 
 export function getWorkspacePath(): string {
     return vscode.workspace.workspaceFolders[0].uri.fsPath;
 }
 
-export async function showDocument(workspace_file: string, language_id: string | undefined = undefined) {
+export async function getWorkspaceFile(workspace_file: string) {
     const files = await vscode.workspace.findFiles(workspace_file);
 
     assert.ok(files && files[0]);
-    const file = files[0];
 
+    return files[0];
+}
+
+export async function showDocument(workspace_file: string, language_id: string | undefined = undefined) {
     // open and show the file
-    let document = await vscode.workspace.openTextDocument(file);
+    let document = await vscode.workspace.openTextDocument(await getWorkspaceFile(workspace_file));
     if (language_id)
         document = await vscode.languages.setTextDocumentLanguage(document, language_id);
 
-    return { editor: await vscode.window.showTextDocument(document), document };
+    const visible = activeEditorChanged();
+    const result = { editor: await vscode.window.showTextDocument(document), document };
+    await visible;
+    return result;
 }
 
 export async function closeAllEditors() {
+    await vscode.commands.executeCommand('workbench.action.files.revert');
     // workbench.action.closeAllEditors et al. saves content
-    while (vscode.window.activeTextEditor !== undefined) {
-        await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-        await sleep(500);
-    }
+    await vscode.commands.executeCommand('workbench.action.closeAllEditors');
 }
 
-export function moveCursor(editor: vscode.TextEditor, position: vscode.Position) {
-    editor.selection = new vscode.Selection(position, position);
-}
+export async function addBreakpoints(file: string, lines: Array<number>) {
+    const document = (await showDocument(file, 'hlasm')).document;
 
-export async function toggleBreakpoints(file: string, lines: Array<integer>) {
-    const editor = (await showDocument(file)).editor;
-    await sleep(1000);
-
-    for (const line of lines) {
-        moveCursor(editor, new vscode.Position(line, 0));
-        await vscode.commands.executeCommand('editor.debug.action.toggleBreakpoint');
-    }
-
-    await sleep(1000);
+    await vscode.debug.addBreakpoints(lines.map(l => new vscode.SourceBreakpoint(new vscode.Location(document.uri, new vscode.Position(l, 0)), true)));
 }
 
 export async function removeAllBreakpoints() {
-
-    await vscode.commands.executeCommand('workbench.debug.viewlet.action.removeAllBreakpoints');
-    await sleep(1000);
+    await vscode.debug.removeBreakpoints(vscode.debug.breakpoints);
 }
 
-export async function debugStartSession(): Promise<vscode.DebugSession> {
+function sessionStoppedEvent(session: vscode.DebugSession = vscode.debug.activeDebugSession) {
+    if (!session)
+        return Promise.resolve();
+    else
+        return registerWaitRequest("scopes", session.id);
+}
+
+export async function debugStartSession(waitForStopped = true): Promise<vscode.DebugSession> {
     const session_started_event = new Promise<vscode.DebugSession>((resolve) => {
         // when the debug session starts
         const disposable = vscode.debug.onDidStartDebugSession((session) => {
             disposable.dispose();
-            resolve(session);
+            if (waitForStopped)
+                sessionStoppedEvent(session).then(() => resolve(session));
+            else
+                resolve(session);
         });
     });
     // start debugging
@@ -76,31 +102,33 @@ export async function debugStartSession(): Promise<vscode.DebugSession> {
         throw new Error("Failed to start a debugging session");
 
     const session = await session_started_event;
-    await sleep(1000);
 
     return session;
 }
 
 export async function debugContinue() {
+    const ready = sessionStoppedEvent();
     await vscode.commands.executeCommand('workbench.action.debug.continue');
-    await sleep(1000);
+    await ready;
 }
 
-export async function debugStepOver(steps: integer) {
+export async function debugStepOver(steps: number) {
     while (steps) {
+        const ready = sessionStoppedEvent();
         await vscode.commands.executeCommand('workbench.action.debug.stepOver');
-        await sleep(1000);
+        await ready;
         steps--;
     }
 }
 
 export async function debugStepInto() {
+    const ready = sessionStoppedEvent();
     await vscode.commands.executeCommand('workbench.action.debug.stepInto');
-    await sleep(1000);
+    await ready;
 }
 
 export async function debugStop() {
-    await vscode.commands.executeCommand('workbench.action.debug.stop');
+    await vscode.debug.stopDebugging();
 }
 
 export async function insertString(editor: vscode.TextEditor, position: vscode.Position, str: string): Promise<vscode.Position> {
@@ -113,6 +141,7 @@ export async function insertString(editor: vscode.TextEditor, position: vscode.P
     const lines = str_split.length;
 
     const movePosition = new vscode.Position(position.line + lines - 1, lines == 1 ? position.character + str.length : str_split[lines].length);
+
     editor.selection = new vscode.Selection(movePosition, movePosition);
 
     return movePosition;
@@ -126,13 +155,22 @@ export function timeout(ms: number, error_message: string | undefined = undefine
     return new Promise<void>((_, reject) => { setTimeout(() => reject(error_message && Error(error_message)), ms); });
 }
 
-export async function waitForDiagnostics(filename: string) {
-    return new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve, reject) => {
-        const listener = vscode.languages.onDidChangeDiagnostics((e) => {
-            if (!e.uris.find(v => v.path.endsWith('/' + filename)))
-                return;
-            listener.dispose();
-            resolve(vscode.languages.getDiagnostics());
+export async function waitForDiagnostics(file: string | vscode.Uri) {
+    const result = new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve) => {
+        const file_promise = typeof file === 'string' ? getWorkspaceFile(file).then(uri => uri.toString()) : Promise.resolve(file.toString());
+
+        let listener = vscode.languages.onDidChangeDiagnostics((e) => {
+            file_promise.then((file) => {
+                if (!listener)
+                    return;
+                if (!e.uris.find(v => v.toString() === file))
+                    return;
+                listener.dispose();
+                listener = null;
+                resolve(vscode.languages.getDiagnostics());
+            });
         });
     });
+
+    return result;
 }

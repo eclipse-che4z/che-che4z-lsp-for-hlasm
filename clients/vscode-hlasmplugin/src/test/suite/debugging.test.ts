@@ -52,8 +52,8 @@ suite('Debugging Test Suite', () => {
     }).timeout(20000).slow(10000);
 
     test('Breakpoint test', async () => {
-        await helper.toggleBreakpoints(path.join('libs', 'mac.asm'), [3]);
-        await helper.toggleBreakpoints('open', [3, 9]);
+        await helper.addBreakpoints(path.join('libs', 'mac.asm'), [3]);
+        await helper.addBreakpoints('open', [3, 9]);
 
         await helper.debugStartSession();
 
@@ -75,7 +75,7 @@ suite('Debugging Test Suite', () => {
 
     // verify that virtual files are working
     test('Virtual files', async () => {
-        await helper.toggleBreakpoints('virtual', [7, 11, 12]);
+        await helper.addBreakpoints('virtual', [7, 11, 12]);
 
         await helper.debugStartSession();
 

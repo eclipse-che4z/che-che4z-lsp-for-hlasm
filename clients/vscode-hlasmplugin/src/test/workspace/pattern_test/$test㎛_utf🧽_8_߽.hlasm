@@ -12,4 +12,6 @@
          TEST_4_BYTE
          TEST_2_BYTE
 
+         MNOTE 'DONE'
+
          END

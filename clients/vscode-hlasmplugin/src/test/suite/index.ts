@@ -17,10 +17,10 @@ import * as Mocha from 'mocha';
 import * as glob from 'glob';
 import * as vscode from 'vscode';
 import * as process from 'process';
-import { timeout } from './testHelper';
+import { popWaitRequestResolver, timeout } from './testHelper';
 import { EXTENSION_ID } from '../../extension';
 
-async function primeExtension() {
+async function primeExtension(): Promise<vscode.Disposable[]> {
 	const ext = await vscode.extensions.getExtension(EXTENSION_ID).activate();
 	const lang: {
 		onReady(): Promise<void>;
@@ -30,6 +30,20 @@ async function primeExtension() {
 	await Promise.race([lang.onReady(), timeout(30000, 'Language server initialization failed')]);
 	// prime opcode suggestions to avoid timeouts
 	await Promise.race([lang.sendRequest<object>('textDocument/$/opcode_suggestion', { opcodes: ['OPCODE'] }), timeout(30000, 'Opcode suggestion request failed')]);
+
+	return [vscode.debug.registerDebugAdapterTrackerFactory('hlasm', {
+		createDebugAdapterTracker: function (session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
+			return {
+				onDidSendMessage: (message: any) => {
+					if (message.type !== 'response')
+						return;
+					const resolver = popWaitRequestResolver(message.command, session.id);
+					if (resolver)
+						resolver();
+				}
+			};
+		}
+	})];
 }
 
 export async function run(): Promise<void> {
@@ -51,7 +65,7 @@ export async function run(): Promise<void> {
 	// Add files to the test suite
 	files.forEach(file => mocha.addFile(path.resolve(testsPath, file)));
 
-	await primeExtension();
+	const toDispose = await primeExtension();
 
 	await new Promise((resolve, reject) => {
 		// Run the mocha test
@@ -64,7 +78,7 @@ export async function run(): Promise<void> {
 				resolve(undefined);
 			}
 		});
-	});
+	}).finally(() => { toDispose.forEach(d => d.dispose()) });
 
 	if (!is_vscode)
 		console.log('>>>THEIA TESTS PASSED<<<');
