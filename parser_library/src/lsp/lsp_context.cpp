@@ -272,7 +272,7 @@ bool do_not_need_nodes(const std::vector<context::processing_frame>& sym,
         }
         i++;
     }
-    return false;
+    return i >= sym.size();
 }
 
 void lsp_context::document_symbol_symbol(document_symbol_list_s& modified,
