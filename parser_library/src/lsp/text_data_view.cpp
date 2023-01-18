@@ -29,7 +29,7 @@ std::string_view text_data_view::get_line(size_t line) const
         return {};
     size_t line_end_i = (line < line_indices.size() - 1) ? line_indices[line + 1] : text.size();
     size_t line_len = line_end_i - line_indices[line];
-    return text.substr(line_indices[line], line_len);
+    return std::string_view(text).substr(line_indices[line], line_len);
 }
 
 std::string_view text_data_view::get_line_beginning_at(position pos) const
@@ -38,7 +38,7 @@ std::string_view text_data_view::get_line_beginning_at(position pos) const
         return {};
     size_t line_end_i = workspaces::file_impl::index_from_position(text, line_indices, pos);
     size_t line_len = line_end_i - line_indices[pos.line];
-    return text.substr(line_indices[pos.line], line_len);
+    return std::string_view(text).substr(line_indices[pos.line], line_len);
 }
 
 char text_data_view::get_character_before(position pos) const
@@ -55,14 +55,14 @@ std::string_view text_data_view::get_range_content(range r) const
     size_t end_i = workspaces::file_impl::index_from_position(text, line_indices, r.end);
     if (start_i >= text.size())
         return {};
-    return text.substr(start_i, end_i - start_i);
+    return std::string_view(text).substr(start_i, end_i - start_i);
 }
 
 std::string_view text_data_view::get_lines_beginning_at(position pos) const
 {
     if (pos.line >= line_indices.size())
         return {};
-    return text.substr(line_indices[pos.line]);
+    return std::string_view(text).substr(line_indices[pos.line]);
 }
 
 size_t text_data_view::get_number_of_lines() const { return line_indices.size(); }

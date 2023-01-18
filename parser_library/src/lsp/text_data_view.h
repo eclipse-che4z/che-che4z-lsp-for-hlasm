@@ -24,7 +24,7 @@ namespace hlasm_plugin::parser_library::lsp {
 
 class text_data_view
 {
-    std::string_view text;
+    std::string text; // FIXME: no longer view due to lifetime issues
     std::vector<size_t> line_indices;
 
 public:
