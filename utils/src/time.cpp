@@ -108,7 +108,7 @@ std::optional<timestamp> timestamp::now()
     auto minute = shift_out(v, 6);
     auto hour = shift_out(v, 5);
     auto day = shift_out(v, 5);
-    auto month = shift_out(v, 4);
+    auto month = shift_out(v, 4) + 1;
     auto year = v;
 
     return timestamp(year, month, day, hour, minute, second, microseconds);
