@@ -60,7 +60,7 @@ TEST_P(instr_hint_test_fixture, instructions)
 
     EXPECT_TRUE(item.snippet);
     EXPECT_EQ(item.insert_text, concat(name, " ", snippet));
-    EXPECT_EQ(item.detail, concat("Operands: ", operands));
+    EXPECT_EQ(item.detail, operands);
 
     if (substitution.empty())
         EXPECT_EQ(item.documentation.find("Substituted operands:"), std::string::npos);

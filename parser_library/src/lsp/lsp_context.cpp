@@ -867,7 +867,7 @@ std::string lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr 
                 auto it = completion_item_s::m_instruction_completion_items.find(occ.name.to_string_view());
                 if (it == completion_item_s::m_instruction_completion_items.end())
                     return "";
-                return it->detail + "\n\n" + it->documentation;
+                return it->documentation;
             }
         }
         case lsp::occurence_kind::COPY_OP:

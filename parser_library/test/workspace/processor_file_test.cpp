@@ -62,7 +62,10 @@ TEST(processor_file, parse_macro)
 
     EXPECT_EQ(open_fp->definition(opencode_loc, { 1, 2 }), location({ 1, 1 }, macro_loc));
 
-    const std::string sam31_hover_message = "Operands: \n\nMachine instruction \n\nInstruction format: E";
+    const std::string sam31_hover_message = "**Set Addressing Mode (31)**\n\nMachine instruction, format: E\n\n"
+                                            "Operands: \n\nCondition Code: The code remains unchanged\n\nDetails on "
+                                            "[page 885](https://publibfp.dhe.ibm.com/epubs/pdf/a227832d.pdf#page=885 "
+                                            "\"Principles of Operations (SA22-7832-13)\")";
     EXPECT_EQ(open_fp->hover(opencode_loc, { 0, 2 }), sam31_hover_message);
     EXPECT_EQ(open_fp->hover(macro_loc, { 2, 2 }), sam31_hover_message);
 

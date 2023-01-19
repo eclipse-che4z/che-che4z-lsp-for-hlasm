@@ -141,6 +141,7 @@ enum class mach_format : unsigned char
     RX_b,
     S,
     SI,
+    DIAGNOSE,
 
     length_48,
     MII = length_48,
@@ -334,12 +335,86 @@ public:
     }
 };
 
+enum class condition_code
+{
+    _0,
+    _1,
+    _2,
+    _3,
+};
+
+class condition_code_explanation
+{
+    std::array<const char*, 5> text;
+    std::array<unsigned char, 5> lengths;
+
+public:
+    template<size_t L0>
+    explicit consteval condition_code_explanation(const char (&t0)[L0]) noexcept requires(L0 > 1 && L0 < 256)
+        : text { t0, t0, t0, t0 }
+        , lengths { L0 - 1, L0 - 1, L0 - 1, L0 - 1 }
+    {}
+    template<size_t L0, size_t L1, size_t L2, size_t L3>
+    explicit consteval condition_code_explanation(
+        const char (&t0)[L0], const char (&t1)[L1], const char (&t2)[L2], const char (&t3)[L3]) noexcept
+        requires(L0 > 0 && L1 > 0 && L2 > 0 && L3 > 0 && L0 < 256 && L1 < 256 && L2 < 256 && L3 < 256)
+        : text { L0 == 1 ? nullptr : t0, L1 == 1 ? nullptr : t1, L2 == 1 ? nullptr : t2, L3 == 1 ? nullptr : t3 }
+        , lengths { L0 - 1, L1 - 1, L2 - 1, L3 - 1 }
+    {}
+    template<size_t L0, size_t L1, size_t L2, size_t L3, size_t Qual>
+    explicit consteval condition_code_explanation(const char (&t0)[L0],
+        const char (&t1)[L1],
+        const char (&t2)[L2],
+        const char (&t3)[L3],
+        const char (&qualification)[Qual]) noexcept requires(L0 > 0 && L1 > 0 && L2 > 0 && L3 > 0 && Qual > 1
+        && L0 < 256 && L1 < 256 && L2 < 256 && L3 < 256 && Qual < 256)
+        : text { L0 == 1 ? nullptr : t0,
+            L1 == 1 ? nullptr : t1,
+            L2 == 1 ? nullptr : t2,
+            L3 == 1 ? nullptr : t3,
+            qualification }
+        , lengths { L0 - 1, L1 - 1, L2 - 1, L3 - 1, Qual - 1 }
+    {}
+
+    constexpr std::string_view tranlate_cc(condition_code cc) const noexcept
+    {
+        auto cc_val = static_cast<int>(cc);
+        return std::string_view(text[cc_val], lengths[cc_val]);
+    }
+
+    constexpr std::string_view cc_qualification() const noexcept { return std::string_view(text[4], lengths[4]); }
+
+    constexpr bool has_single_explanation() const noexcept
+    {
+        return text[0] == text[1] && text[0] == text[2] && text[0] == text[3] && lengths[0] == lengths[1]
+            && lengths[0] == lengths[2] && lengths[0] == lengths[3];
+    }
+};
+
+extern constinit const condition_code_explanation condition_code_explanations[];
+
+struct machine_instruction_details
+{
+    const char* fullname;
+    unsigned char fullname_length;
+    unsigned char cc_explanation;
+    bool privileged : 1;
+    bool privileged_conditionally : 1;
+    bool has_parameter_list : 1;
+};
 
 struct instruction_format_definition
 {
     std::span<const checking::machine_operand_format> op_format;
 
     mach_format format;
+};
+
+enum class privilege_status
+{
+    not_privileged,
+    privileged,
+    conditionally_privileged,
 };
 
 // machine instruction representation for checking
@@ -398,13 +473,15 @@ class machine_instruction
     unsigned char m_operand_len;
 
     const checking::machine_operand_format* m_operands;
+    machine_instruction_details m_details;
 
 public:
     constexpr machine_instruction(std::string_view name,
         mach_format format,
         std::span<const checking::machine_operand_format> operands,
         unsigned short page_no,
-        instruction_set_affiliation instr_set_affiliation)
+        instruction_set_affiliation instr_set_affiliation,
+        machine_instruction_details d)
         : m_name(name)
         , m_size_identifier(get_length_by_format(format))
         , m_page_no(page_no)
@@ -420,14 +497,16 @@ public:
 #endif
         , m_operand_len((unsigned char)operands.size())
         , m_operands(operands.data())
+        , m_details(d)
     {
         assert(operands.size() <= max_operand_count);
     }
     constexpr machine_instruction(std::string_view name,
         instruction_format_definition ifd,
         unsigned short page_no,
-        instruction_set_affiliation instr_set_affiliation)
-        : machine_instruction(name, ifd.format, ifd.op_format, page_no, instr_set_affiliation)
+        instruction_set_affiliation instr_set_affiliation,
+        machine_instruction_details d)
+        : machine_instruction(name, ifd.format, ifd.op_format, page_no, instr_set_affiliation, d)
     {}
 
     constexpr std::string_view name() const { return m_name.to_string_view(); }
@@ -460,6 +539,24 @@ public:
         const diagnostic_collector& add_diagnostic) const; // input vector is the vector of the actual incoming values
 
     static constexpr const size_t max_operand_count = 16;
+
+    constexpr std::string_view fullname() const noexcept
+    {
+        return std::string_view(m_details.fullname, m_details.fullname_length);
+    }
+
+    constexpr const auto& cc_explanation() const noexcept
+    {
+        return condition_code_explanations[m_details.cc_explanation];
+    }
+
+    constexpr size_t page_in_pop() const noexcept { return m_page_no; }
+
+    constexpr bool has_parameter_list() const noexcept { return m_details.has_parameter_list; }
+    constexpr privilege_status privileged() const noexcept
+    {
+        return static_cast<privilege_status>(m_details.privileged + m_details.privileged_conditionally * 2);
+    }
 };
 
 class ca_instruction
