@@ -17,8 +17,13 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { HLASMConfigurationProvider, getCurrentProgramName } from '../../debugProvider';
 import { DebugConfigurationMock } from '../mocks';
+import * as helper from './testHelper';
 
 suite('Debug Provider Test Suite', () => {
+
+    suiteTeardown(async function () {
+        await helper.closeAllEditors();
+    });
 
     test('Debug Configuration Provider test', () => {
         const debugProvider = new HLASMConfigurationProvider();
@@ -44,14 +49,11 @@ suite('Debug Provider Test Suite', () => {
         assert.equal(getCurrentProgramName(), undefined);
 
         // non HLASM file active
-        const textDocument = await vscode.workspace.openTextDocument(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'plain.txt'));
-        await vscode.window.showTextDocument(textDocument);
+        await helper.showDocument('plain.txt');
         assert.equal(getCurrentProgramName(), undefined);
 
         // HLASM file active
-        const hlasmDocument = await vscode.workspace.openTextDocument(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'test'));
-        await vscode.languages.setTextDocumentLanguage(hlasmDocument, 'hlasm');
-        await vscode.window.showTextDocument(hlasmDocument);
+        await helper.showDocument('test', 'hlasm');
         assert.equal(getCurrentProgramName(), path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'test'));
     }).slow(1000);
 });

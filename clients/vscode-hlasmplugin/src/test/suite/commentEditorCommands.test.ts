@@ -99,10 +99,10 @@ suite('Comment editor commands', () => {
     })
 
     test('Deserialize comment option', () => {
-        assert.ok(translateCommentOption('CommentOption.toggle') === CommentOption.toggle);
-        assert.ok(translateCommentOption('CommentOption.add') === CommentOption.add);
-        assert.ok(translateCommentOption('CommentOption.remove') === CommentOption.remove);
-        assert.ok(translateCommentOption('something') === null);
+        assert.strictEqual(translateCommentOption('CommentOption.toggle'), CommentOption.toggle);
+        assert.strictEqual(translateCommentOption('CommentOption.add'), CommentOption.add);
+        assert.strictEqual(translateCommentOption('CommentOption.remove'), CommentOption.remove);
+        assert.strictEqual(translateCommentOption('something'), null);
     })
 
     test('Toggle macro style comment', () => {

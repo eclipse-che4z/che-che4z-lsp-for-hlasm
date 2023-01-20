@@ -30,11 +30,13 @@ export function popWaitRequestResolver(message: string, sessionId: string): () =
     return result;
 }
 
-export function activeEditorChanged(): Promise<void> {
-    return new Promise<void>((resolve) => {
-        const listener = vscode.window.onDidChangeActiveTextEditor(() => {
-            listener.dispose();
-            resolve();
+export function activeEditorChanged(): Promise<vscode.TextEditor> {
+    return new Promise<vscode.TextEditor>((resolve) => {
+        const listener = vscode.window.onDidChangeActiveTextEditor((e) => {
+            if (e) {
+                listener.dispose();
+                resolve(e);
+            }
         })
     });
 }
@@ -58,8 +60,8 @@ export async function showDocument(workspace_file: string, language_id: string |
         document = await vscode.languages.setTextDocumentLanguage(document, language_id);
 
     const visible = activeEditorChanged();
-    const result = { editor: await vscode.window.showTextDocument(document), document };
-    await visible;
+    const result = { editor: await vscode.window.showTextDocument(document, { preview: false }), document };
+    assert.strictEqual(await visible, result.editor);
     return result;
 }
 
@@ -155,19 +157,23 @@ export function timeout(ms: number, error_message: string | undefined = undefine
     return new Promise<void>((_, reject) => { setTimeout(() => reject(error_message && Error(error_message)), ms); });
 }
 
-export async function waitForDiagnostics(file: string | vscode.Uri) {
-    const result = new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve) => {
+export async function waitForDiagnostics(file: string | vscode.Uri, nonEmptyOnly: boolean = false) {
+    const result = new Promise<vscode.Diagnostic[]>((resolve) => {
         const file_promise = typeof file === 'string' ? getWorkspaceFile(file).then(uri => uri.toString()) : Promise.resolve(file.toString());
 
         let listener = vscode.languages.onDidChangeDiagnostics((e) => {
             file_promise.then((file) => {
                 if (!listener)
                     return;
-                if (!e.uris.find(v => v.toString() === file))
+                const forFile = e.uris.find(v => v.toString() === file);
+                if (!forFile)
+                    return;
+                const diags = vscode.languages.getDiagnostics(forFile);
+                if (nonEmptyOnly && diags.length === 0)
                     return;
                 listener.dispose();
                 listener = null;
-                resolve(vscode.languages.getDiagnostics());
+                resolve(diags);
             });
         });
     });
