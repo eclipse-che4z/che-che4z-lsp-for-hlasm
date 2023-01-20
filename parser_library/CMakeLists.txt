@@ -14,7 +14,12 @@ include(GenerateExportHeader)
 include(GoogleTest)
 project(parser_library)
 
-set(GENERATED_FOLDER ${CMAKE_BINARY_DIR}/generated_parser/)
+set(GENERATED_FOLDER ${CMAKE_BINARY_DIR}/generated_sources/)
+if(NOT USE_PRE_GENERATED_GRAMMAR)
+	set(GENERATED_GRAMMER_FOLDER ${CMAKE_BINARY_DIR}/generated_parser/)
+else()
+	set(GENERATED_GRAMMER_FOLDER ${USE_PRE_GENERATED_GRAMMAR})
+endif()
 
 add_library(parser_library)
 
@@ -26,15 +31,15 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 generate_export_header(parser_library
-			EXPORT_FILE_NAME ${GENERATED_FOLDER}/export/parser_library_export.h)
+			EXPORT_FILE_NAME ${GENERATED_FOLDER}/parser_library_export.h)
 
-target_sources(parser_library PUBLIC ${GENERATED_FOLDER}/export/parser_library_export.h)
+target_sources(parser_library PUBLIC ${GENERATED_FOLDER}/parser_library_export.h)
 
 target_include_directories(parser_library PUBLIC
 	${PROJECT_SOURCE_DIR}/include
 	${PROJECT_SOURCE_DIR}/src
+	${GENERATED_GRAMMER_FOLDER}
 	${GENERATED_FOLDER}
-	${GENERATED_FOLDER}/export
 )
 
 target_link_libraries(parser_library parser_library_generated)

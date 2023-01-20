@@ -55,11 +55,17 @@ if(BUILD_SHARED_LIBS)
 	endif()
 endif()
 
+#Check whether npm is installed and in path
+find_program(NPM_RETURN npm)
+if(NPM_RETURN MATCHES "NPM_RETURN-NOTFOUND")
+    message(FATAL_ERROR "Cannot find npm. Are you sure npm is installed and in the path?" )
+endif()
+
 add_custom_command(
 		OUTPUT
 			${CHECK_CI}
 		COMMAND
-			${CALL} npm --unsafe-perm ci
+			${CALL} ${NPM_RETURN} --unsafe-perm ci
 			#the --unsafe-perm is needed when user with root rights runs the build on linux
 		COMMAND
 			${CMAKE_COMMAND} -E touch ${CHECK_CI}
@@ -73,7 +79,7 @@ add_custom_command(
 		OUTPUT
 			${CHECK_BUILD}
 		COMMAND
-			${CALL} npm --unsafe-perm run compile
+			${CALL} ${NPM_RETURN} --unsafe-perm run compile
 			#the --unsafe-perm is needed when user with root rights runs the build on linux
 		COMMAND
 			${CMAKE_COMMAND} -E make_directory ${BIN_FOLDER}

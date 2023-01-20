@@ -15,17 +15,8 @@ PROJECT(antlr4cpp_fetcher CXX)
 INCLUDE(FetchContent)
 FIND_PACKAGE(Git REQUIRED)
 
-# only JRE required
-FIND_PACKAGE(Java 11 COMPONENTS Runtime REQUIRED)
-
 if(APPLE)
   find_library(COREFOUNDATION_LIBRARY CoreFoundation)
-endif()
-
-#Check whether maven is installed and in path
-find_program(MVN_RETURN mvn)
-if(MVN_RETURN MATCHES "MVN_RETURN-NOTFOUND")
-    message(FATAL_ERROR "Cannot find mvn. Are you sure maven is installed and in the path?" )
 endif()
 
 # external repository
@@ -66,21 +57,31 @@ if(NOT antlr4cpp_POPULATED)
     set(ANTLR_JAR_LOCATION
         ${antlr4cpp_SOURCE_DIR}/tool/target/antlr4-${ANTLR4CPP_EXTERNAL_TAG}-complete.jar)
 
-    add_custom_command(
-        OUTPUT
-            ${ANTLR_JAR_LOCATION}
-        COMMAND
-            mvn -DskipTests install
-        COMMENT
-            "Building ANTLR jar..."
-        WORKING_DIRECTORY
-            ${antlr4cpp_SOURCE_DIR}/tool/
-        VERBATIM
-        )
+    if(NOT USE_PRE_GENERATED_GRAMMAR)
+        # only JRE required
+        FIND_PACKAGE(Java 11 COMPONENTS Runtime REQUIRED)
+        #Check whether maven is installed and in path
+        find_program(MVN_RETURN mvn)
+        if(MVN_RETURN MATCHES "MVN_RETURN-NOTFOUND")
+            message(FATAL_ERROR "Cannot find mvn. Are you sure maven is installed and in the path?" )
+        endif()
 
-    add_custom_target(antlr4jar
-                       DEPENDS
-                          ${ANTLR_JAR_LOCATION})
+        add_custom_command(
+            OUTPUT
+                ${ANTLR_JAR_LOCATION}
+            COMMAND
+                mvn -DskipTests install
+            COMMENT
+                "Building ANTLR jar..."
+            WORKING_DIRECTORY
+                ${antlr4cpp_SOURCE_DIR}/tool/
+            VERBATIM
+            )
+
+        add_custom_target(antlr4jar
+                           DEPENDS
+                              ${ANTLR_JAR_LOCATION})
+    endif()
 endif()
 
 if(BUILD_SHARED_LIBS)

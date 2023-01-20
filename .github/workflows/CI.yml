@@ -48,10 +48,39 @@ jobs:
         if: github.event_name == 'pull_request' && github.base_ref == 'master' && github.head_ref != 'release-next'
         run: exit 1
 
+  generate_grammar:
+    name: Generate grammar
+    runs-on: ubuntu-22.04
+    needs: [formal-checks]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: build/generated_parser
+          key: ${{ hashFiles('**/CMakeLists.txt', 'cmake/**', 'parser_library/src/parsing/grammar/**') }}
+      - name: Set up JDK 11
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: 'temurin'
+      - name: Generate grammar
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir build && cd build
+          cmake -DBUILD_VSIX=Off -DBUILD_TESTING=Off ../
+          cmake --build . --target generate_grammar
+      - name: Upload generated files
+        uses: actions/upload-artifact@v3
+        with:
+          name: grammar
+          path: build/generated_parser/hlasmparser_*.*
+
   sanitizer-builds:
     name: Build with sanitizers
     runs-on: ubuntu-22.04
-    needs: [formal-checks]
+    needs: [generate_grammar]
     strategy:
       matrix:
         include:
@@ -60,19 +89,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Set up JDK 11
-        uses: actions/setup-java@v3
+      - name: Download generated files
+        uses: actions/download-artifact@v3
         with:
-          java-version: 11
-          distribution: 'temurin'
+          name: grammar
+          path: build/generated_parser
       - name: Requirements install
         run: |
           sudo apt-get update
           sudo apt-get install ninja-build
-      - name: Make build directory
-        run: mkdir build
       - name: Configure
-        run: cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off ../
+        run: cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
         working-directory: build
       - name: Build
         run: cmake --build .
@@ -87,24 +114,24 @@ jobs:
   build-matrix:
     name: Build
     runs-on: ${{ matrix.os }}
-    needs: [formal-checks]
+    needs: [generate_grammar]
     strategy:
       matrix:
         include:
           - os: ubuntu-22.04
             native: linux
             container: alpine:3.16
-            prereq: apk update && apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk11 maven
-            config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-static" -DBUILD_VSIX=Off ../
+            prereq: apk update && apk add --no-cache linux-headers git g++ cmake ninja
+            config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-static" -DBUILD_VSIX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
             dbg-strip: objcopy --only-keep-debug language_server language_server.dbg && objcopy --strip-unneeded language_server && objcopy --add-gnu-debuglink=language_server.dbg language_server
             dbg-pattern: build/bin/language_server.dbg
           - os: ubuntu-22.04
             native: wasm
             container: emscripten/emsdk:3.1.13
-            prereq: sudo apt-get update && sudo apt-get install -y ninja-build maven
+            prereq: sudo apt-get update && sudo apt-get install -y ninja-build
             config: >
               emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DDISCOVER_TESTS=Off
-              -DWITH_LIBCXX=Off -DWITH_STATIC_CRT=Off -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -fexceptions"
+              -DWITH_LIBCXX=Off -DWITH_STATIC_CRT=Off -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -fexceptions" -DUSE_PRE_GENERATED_GRAMMAR="generated_parser"
               -DCMAKE_EXE_LINKER_FLAGS="-s PTHREAD_POOL_SIZE=8 -s TOTAL_MEMORY=268435456 -s PROXY_TO_PTHREAD=1 -s NODERAWFS=1 -s EXIT_RUNTIME=1 --bind"
               -DCMAKE_CROSSCOMPILING_EMULATOR="node;--experimental-wasm-threads;--experimental-wasm-bulk-memory"
               -Dgtest_disable_pthreads=On -DBUILD_VSIX=Off ../
@@ -112,27 +139,24 @@ jobs:
             artifacts-ext: .*
           - os: windows-2022
             native: win32
-            config: cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_VSIX=Off ../
+            config: cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_VSIX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
             build-extra: --parallel --config Release
             artifacts-ext: .exe
           - os: macos-12
             native: darwin
             prereq: brew install ninja
-            config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=$(brew --prefix llvm@14)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@14)/bin/clang++ -DLLVM_PATH=$(brew --prefix llvm@14) -DBUILD_VSIX=Off ../
+            config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=$(brew --prefix llvm@14)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@14)/bin/clang++ -DLLVM_PATH=$(brew --prefix llvm@14) -DBUILD_VSIX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
     container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v3
-      - name: Set up JDK 11
-        if: ${{ !matrix.container }}
-        uses: actions/setup-java@v3
+      - name: Download generated files
+        uses: actions/download-artifact@v3
         with:
-          java-version: 11
-          distribution: 'temurin'
+          name: grammar
+          path: build/generated_parser
       - name: Requirements install
         if: ${{ matrix.prereq }}
         run: ${{ matrix.prereq }}
-      - name: Make build directory
-        run: mkdir build
       - name: Configure
         run: ${{ matrix.config }}
         working-directory: build
