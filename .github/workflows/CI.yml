@@ -145,7 +145,7 @@ jobs:
           - os: macos-12
             native: darwin
             prereq: brew install ninja
-            config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=$(brew --prefix llvm@14)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@14)/bin/clang++ -DLLVM_PATH=$(brew --prefix llvm@14) -DBUILD_VSIX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
+            config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=$(brew --prefix llvm@15)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@15)/bin/clang++ -DLLVM_PATH=$(brew --prefix llvm@15) -DBUILD_VSIX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
     container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v3
