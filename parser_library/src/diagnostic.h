@@ -904,8 +904,6 @@ public:
 
     static diagnostic_s info_SUP(const utils::resource::resource_location& file_name);
 
-    static diagnostic_s fade(const utils::resource::resource_location& loc, const range& range);
-
     /*
     E01x - wrong format
     - E010 - unknown name
@@ -919,7 +917,7 @@ public:
     - E022 - missing operand
 
     E03x - runtime problems
-    - E030 - assigment not allowed
+    - E030 - assignment not allowed
     - E031 - naming problem - name already exists
 
     W01x - wrong format

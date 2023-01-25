@@ -62,6 +62,8 @@ public:
 
     bool is_bad() const { return bad_; }
 
+    void retrieve_fade_messages(std::vector<fade_message_s>&) const override {};
+
 protected:
     const std::string& get_text_ref();
 

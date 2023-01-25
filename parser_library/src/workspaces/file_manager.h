@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "diagnosable.h"
+#include "fade_messages.h"
 #include "file.h"
 #include "processor.h"
 #include "utils/general_hashers.h"
@@ -94,6 +95,8 @@ public:
     virtual open_file_result update_file(const file_location& document_loc) = 0;
 
     virtual std::optional<std::string> get_file_content(const utils::resource::resource_location&) = 0;
+
+    virtual void retrieve_fade_messages(std::vector<fade_message_s>& fms) const = 0;
 
 protected:
     ~file_manager() = default;

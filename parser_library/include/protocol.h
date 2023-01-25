@@ -82,6 +82,7 @@ struct location;
 struct range_uri_s;
 class diagnostic_related_info_s;
 class diagnostic_s;
+struct fade_message_s;
 
 enum class PARSER_LIBRARY_EXPORT completion_trigger_kind
 {
@@ -235,7 +236,7 @@ private:
 
 struct PARSER_LIBRARY_EXPORT diagnostic
 {
-    diagnostic(diagnostic_s&);
+    explicit diagnostic(diagnostic_s&);
 
     const char* file_uri() const;
     range get_range() const;
@@ -249,6 +250,20 @@ struct PARSER_LIBRARY_EXPORT diagnostic
 
 private:
     diagnostic_s& impl_;
+};
+
+struct PARSER_LIBRARY_EXPORT fade_message
+{
+    explicit fade_message(fade_message_s&);
+
+    const char* file_uri() const;
+    range get_range() const;
+    const char* code() const;
+    const char* source() const;
+    const char* message() const;
+
+private:
+    fade_message_s& impl_;
 };
 
 struct PARSER_LIBRARY_EXPORT performance_metrics
@@ -299,6 +314,19 @@ struct PARSER_LIBRARY_EXPORT diagnostic_list
 
 private:
     diagnostic_s* begin_;
+    size_t size_;
+};
+
+struct PARSER_LIBRARY_EXPORT fade_message_list
+{
+    fade_message_list();
+    fade_message_list(fade_message_s* begin, size_t size);
+
+    fade_message message(size_t index);
+    size_t size() const;
+
+private:
+    fade_message_s* begin_;
     size_t size_;
 };
 

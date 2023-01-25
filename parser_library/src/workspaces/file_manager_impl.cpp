@@ -27,9 +27,13 @@ namespace hlasm_plugin::parser_library::workspaces {
 void file_manager_impl::collect_diags() const
 {
     for (auto& it : files_)
-    {
         collect_diags_from_child(*it.second);
-    }
+}
+
+void file_manager_impl::retrieve_fade_messages(std::vector<fade_message_s>& fms) const
+{
+    for (const auto& [_, file_impl] : files_)
+        file_impl->retrieve_fade_messages(fms);
 }
 
 file_ptr file_manager_impl::add_file(const file_location& file)

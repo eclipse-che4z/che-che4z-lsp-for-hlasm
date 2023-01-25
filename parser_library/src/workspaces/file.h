@@ -16,8 +16,10 @@
 #define HLASMPLUGIN_PARSERLIBRARY_FILE_H
 
 #include <string>
+#include <vector>
 
 #include "diagnosable.h"
+#include "fade_messages.h"
 #include "protocol.h"
 #include "utils/resource_location.h"
 
@@ -54,6 +56,8 @@ public:
     virtual void did_change(std::string new_text) = 0;
     virtual void did_change(range range, std::string new_text) = 0;
     virtual void did_close() = 0;
+
+    virtual void retrieve_fade_messages(std::vector<fade_message_s>& fms) const = 0;
 
 protected:
     ~file() = default;

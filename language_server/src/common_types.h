@@ -15,7 +15,10 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_COMMON_TYPES_H
 #define HLASMPLUGIN_LANGUAGESERVER_COMMON_TYPES_H
 
+#include <functional>
+
 #include "nlohmann/json.hpp"
+
 // Types that are used throughout the language server component
 namespace hlasm_plugin::language_server {
 

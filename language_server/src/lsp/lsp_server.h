@@ -15,12 +15,10 @@
 #ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_LSP_SERVER_H
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_LSP_SERVER_H
 
-#include <functional>
-#include <memory>
+#include <string>
 #include <unordered_set>
 
 #include "../common_types.h"
-#include "../feature.h"
 #include "../parsing_metadata_collector.h"
 #include "../server.h"
 #include "nlohmann/json.hpp"
@@ -92,7 +90,8 @@ private:
     std::unordered_set<std::string> last_diagnostics_files_;
     // Implements parser_library::diagnostics_consumer: wraps the diagnostics in json and
     // sends them to client.
-    void consume_diagnostics(parser_library::diagnostic_list diagnostics) override;
+    void consume_diagnostics(
+        parser_library::diagnostic_list diagnostics, parser_library::fade_message_list fade_messages) override;
 
     // Registers LSP methods implemented by this server (not by features).
     void register_methods();

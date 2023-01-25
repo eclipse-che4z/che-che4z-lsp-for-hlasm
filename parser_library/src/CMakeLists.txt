@@ -31,6 +31,8 @@ target_sources(parser_library PRIVATE
 	ebcdic_encoding.cpp
 	ebcdic_encoding.h
 	error_messages.h
+	fade_messages.cpp
+	fade_messages.h
 	instruction_set_version.h
 	lib_config.cpp
 	library_info.h

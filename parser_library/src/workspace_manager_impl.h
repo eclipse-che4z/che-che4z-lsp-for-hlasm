@@ -21,7 +21,10 @@
 #include <limits>
 #include <optional>
 #include <string_view>
+#include <unordered_map>
+#include <vector>
 
+#include "protocol.h"
 #include "workspace_manager.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
@@ -337,15 +340,17 @@ private:
             return quiet_implicit_workspace_;
     }
 
-    void notify_diagnostics_consumers() const
+    void notify_diagnostics_consumers()
     {
         diags().clear();
         collect_diags();
-        diagnostic_list l(diags().data(), diags().size());
+
+        fade_messages_.clear();
+        file_manager_.retrieve_fade_messages(fade_messages_);
+
         for (auto consumer : diag_consumers_)
-        {
-            consumer->consume_diagnostics(l);
-        }
+            consumer->consume_diagnostics(diagnostic_list(diags().data(), diags().size()),
+                fade_message_list(fade_messages_.data(), fade_messages_.size()));
     }
 
     void notify_performance_consumers(
@@ -378,6 +383,7 @@ private:
     std::vector<diagnostics_consumer*> diag_consumers_;
     std::vector<parsing_metadata_consumer*> parsing_metadata_consumers_;
     message_consumer* message_consumer_ = nullptr;
+    std::vector<fade_message_s> fade_messages_;
 };
 } // namespace hlasm_plugin::parser_library
 

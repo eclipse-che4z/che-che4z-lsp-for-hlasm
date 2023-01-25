@@ -16,8 +16,12 @@
 #define HLASMPLUGIN_PARSERLIBRARY_FILE_MANAGER_IMPL_H
 
 #include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "diagnosable_impl.h"
+#include "fade_messages.h"
 #include "file_manager.h"
 #include "processor_file_impl.h"
 #include "utils/resource_location.h"
@@ -44,6 +48,7 @@ public:
     file_manager_impl& operator=(file_manager_impl&&) = delete;
 
     void collect_diags() const override;
+    void retrieve_fade_messages(std::vector<fade_message_s>& fms) const override;
 
     file_ptr add_file(const file_location&) override;
     processor_file_ptr add_processor_file(const file_location&) override;

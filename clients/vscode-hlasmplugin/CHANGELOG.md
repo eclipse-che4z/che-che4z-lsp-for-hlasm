@@ -4,6 +4,7 @@
 
 #### Added
 - Provide more details about machine instructions in hover texts
+- Faded preprocessor statements
 
 ## [1.6.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.5.0...1.6.0) (2023-01-18)
 

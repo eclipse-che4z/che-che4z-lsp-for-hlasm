@@ -35,7 +35,8 @@ public:
 class diagnostic_counter_mock : public hlasm_plugin::parser_library::diagnostics_consumer
 {
 public:
-    void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
+    void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics,
+        hlasm_plugin::parser_library::fade_message_list) override
     {
         for (size_t i = 0; i < diagnostics.diagnostics_size(); i++)
         {

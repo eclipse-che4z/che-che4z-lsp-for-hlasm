@@ -15,7 +15,12 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_FILE_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_FILE_H
 
+#include <atomic>
+#include <memory>
+#include <set>
+
 #include "analyzer.h"
+#include "fade_messages.h"
 #include "file_impl.h"
 #include "macro_cache.h"
 #include "processor.h"
@@ -55,6 +60,8 @@ public:
 
     bool has_lsp_info() const override;
 
+    void retrieve_fade_messages(std::vector<fade_message_s>& fms) const override;
+
 private:
     std::unique_ptr<analyzer> last_analyzer_ = nullptr;
     std::shared_ptr<context::id_storage> last_opencode_id_storage_;
@@ -69,6 +76,9 @@ private:
     std::set<utils::resource::resource_location> files_to_close_;
 
     macro_cache macro_cache_;
+
+    std::shared_ptr<const std::vector<fade_message_s>> fade_messages_ =
+        std::make_shared<const std::vector<fade_message_s>>();
 
     bool should_collect_hl(context::hlasm_context* ctx = nullptr) const;
 };

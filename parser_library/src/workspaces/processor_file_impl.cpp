@@ -14,8 +14,10 @@
 
 #include "processor_file_impl.h"
 
+#include <cassert>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "file.h"
 
@@ -25,8 +27,7 @@ processor_file_impl::processor_file_impl(
     utils::resource::resource_location file_loc, const file_manager& file_mngr, std::atomic<bool>* cancel)
     : file_impl(std::move(file_loc))
     , cancel_(cancel)
-    , macro_cache_(file_mngr, *this)
-{}
+    , macro_cache_(file_mngr, *this) {};
 
 processor_file_impl::processor_file_impl(file_impl&& f_impl, const file_manager& file_mngr, std::atomic<bool>* cancel)
     : file_impl(std::move(f_impl))
@@ -54,6 +55,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider,
         last_opencode_id_storage_ = std::make_shared<context::id_storage>();
 
     const bool collect_hl = should_collect_hl();
+    auto fms = std::make_shared<std::vector<fade_message_s>>();
     auto new_analyzer = std::make_unique<analyzer>(get_text(),
         analyzer_options {
             get_location(),
@@ -64,6 +66,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider,
             last_opencode_id_storage_,
             std::move(pp),
             vfm,
+            fms,
         });
     // If parsed as opencode previously, use id_index from the last parsing
 
@@ -89,6 +92,8 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider,
             if (dependencies_.find(file) == dependencies_.end())
                 files_to_close_.insert(file);
         }
+
+        fade_messages_ = std::move(fms);
     }
 
     return res;
@@ -103,6 +108,7 @@ parse_result processor_file_impl::parse_macro(
         return true;
 
     const bool collect_hl = should_collect_hl(ctx.hlasm_ctx.get());
+    auto fms = std::make_shared<std::vector<fade_message_s>>();
     auto a = std::make_unique<analyzer>(get_text(),
         analyzer_options {
             get_location(),
@@ -110,6 +116,7 @@ parse_result processor_file_impl::parse_macro(
             std::move(ctx),
             data,
             collect_hl ? collect_highlighting_info::yes : collect_highlighting_info::no,
+            fms,
         });
 
     auto ret = parse_inner(*a);
@@ -121,6 +128,8 @@ parse_result processor_file_impl::parse_macro(
     last_analyzer_ = std::move(a);
     last_analyzer_opencode_ = false;
     last_analyzer_with_lsp = collect_hl;
+
+    fade_messages_ = std::move(fms);
 
     return ret;
 }
@@ -181,5 +190,10 @@ bool processor_file_impl::should_collect_hl(context::hlasm_context* ctx) const
 }
 
 bool processor_file_impl::has_lsp_info() const { return last_analyzer_with_lsp; }
+
+void processor_file_impl::retrieve_fade_messages(std::vector<fade_message_s>& fms) const
+{
+    fms.insert(std::end(fms), std::begin(*fade_messages_), std::end(*fade_messages_));
+}
 
 } // namespace hlasm_plugin::parser_library::workspaces

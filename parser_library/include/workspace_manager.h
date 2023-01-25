@@ -45,7 +45,7 @@ using ws_id = workspaces::workspace*;
 class diagnostics_consumer
 {
 public:
-    virtual void consume_diagnostics(diagnostic_list diagnostics) = 0;
+    virtual void consume_diagnostics(diagnostic_list diagnostics, fade_message_list fade_messages) = 0;
 
 protected:
     ~diagnostics_consumer() = default;

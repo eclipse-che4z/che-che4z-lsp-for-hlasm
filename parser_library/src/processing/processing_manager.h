@@ -22,6 +22,7 @@
 
 #include "analyzing_context.h"
 #include "branching_provider.h"
+#include "fade_messages.h"
 #include "opencode_provider.h"
 #include "processing_state_listener.h"
 #include "statement_analyzers/lsp_analyzer.h"
@@ -43,7 +44,8 @@ public:
         utils::resource::resource_location file_loc,
         const std::string& file_text,
         workspaces::parse_lib_provider& lib_provider,
-        statement_fields_parser& parser);
+        statement_fields_parser& parser,
+        std::shared_ptr<std::vector<fade_message_s>> fade_msgs);
 
     // method that starts the processing loop
     void start_processing(std::atomic<bool>* cancel);
@@ -85,6 +87,8 @@ private:
     std::unordered_map<context::id_index, std::pair<pending_seq_redifinition_state, std::vector<diagnostic_s>>>
         m_lookahead_seq_redifinitions;
     std::vector<decltype(m_lookahead_seq_redifinitions)::iterator> m_pending_seq_redifinitions;
+
+    std::shared_ptr<std::vector<fade_message_s>> m_fade_msgs;
 
     bool attr_lookahead_active() const;
     bool seq_lookahead_active() const;

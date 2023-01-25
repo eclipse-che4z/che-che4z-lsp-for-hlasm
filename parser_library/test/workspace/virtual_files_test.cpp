@@ -158,7 +158,7 @@ TEST(virtual_files, hover)
     {
     public:
         // Inherited via diagnostics_consumer
-        void consume_diagnostics(diagnostic_list diagnostics) override { diags = diagnostics; }
+        void consume_diagnostics(diagnostic_list diagnostics, fade_message_list) override { diags = diagnostics; }
 
         diagnostic_list diags;
     } diag_mock;

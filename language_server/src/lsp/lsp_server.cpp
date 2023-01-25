@@ -15,8 +15,13 @@
 
 #include "lsp_server.h"
 
+#include <algorithm>
+#include <exception>
 #include <functional>
-#include <map>
+#include <memory>
+#include <optional>
+#include <unordered_map>
+#include <utility>
 
 #include "../logger.h"
 #include "feature_language_features.h"
@@ -24,6 +29,7 @@
 #include "feature_workspace_folders.h"
 #include "lib_config.h"
 #include "parsing_metadata_serialization.h"
+#include "utils/general_hashers.h"
 #include "utils/resource_location.h"
 
 namespace hlasm_plugin::language_server::lsp {
@@ -225,7 +231,7 @@ void server::show_message(const std::string& message, parser_library::message_ty
     notify("window/showMessage", m);
 }
 
-json diagnostic_related_info_to_json(parser_library::diagnostic& diag)
+json diagnostic_related_info_to_json(const parser_library::diagnostic& diag)
 {
     json related;
     for (size_t i = 0; i < diag.related_info_size(); ++i)
@@ -247,59 +253,87 @@ std::string replace_empty_by_space(std::string s)
     else
         return s;
 }
+
+json create_diag_json(const parser_library::range& r,
+    const char* code,
+    const char* source,
+    const char* message,
+    std::optional<json> diag_related_info,
+    parser_library::diagnostic_severity severity,
+    parser_library::diagnostic_tag tags)
+{
+    json one_json {
+        { "range", feature::range_to_json(r) },
+        { "code", code },
+        { "source", source },
+        { "message", replace_empty_by_space(message) },
+    };
+
+    if (diag_related_info.has_value())
+        one_json["relatedInformation"] = std::move(*diag_related_info);
+
+    if (severity != parser_library::diagnostic_severity::unspecified)
+        one_json["severity"] = static_cast<int>(severity);
+
+    if (tags != parser_library::diagnostic_tag::none)
+    {
+        auto& j_tags = one_json["tags"] = json::array();
+        if (static_cast<int>(tags) & static_cast<int>(parser_library::diagnostic_tag::unnecessary))
+            j_tags.push_back(1);
+        if (static_cast<int>(tags) & static_cast<int>(parser_library::diagnostic_tag::deprecated))
+            j_tags.push_back(2);
+    }
+
+    return one_json;
+}
 } // namespace
 
-void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
+void server::consume_diagnostics(
+    parser_library::diagnostic_list diagnostics, parser_library::fade_message_list fade_messages)
 {
-    // map of all diagnostics that came from the server
-    std::map<std::string, std::vector<parser_library::diagnostic>> diags;
-
     diags_error_count = 0;
     diags_warning_count = 0;
+    std::unordered_map<std::string, json::array_t, utils::hashers::string_hasher, std::equal_to<>> diag_jsons;
 
     for (size_t i = 0; i < diagnostics.diagnostics_size(); ++i)
     {
-        auto d = diagnostics.diagnostics(i);
-        diags[d.file_uri()].push_back(d);
+        const auto& d = diagnostics.diagnostics(i);
+
+        diag_jsons[d.file_uri()].emplace_back(create_diag_json(d.get_range(),
+            d.code(),
+            d.source(),
+            d.message(),
+            diagnostic_related_info_to_json(d),
+            d.severity(),
+            d.tags()));
+
         if (d.severity() == parser_library::diagnostic_severity::error)
             ++diags_error_count;
         else if (d.severity() == parser_library::diagnostic_severity::warning)
             ++diags_warning_count;
     }
 
+    for (size_t i = 0; i < fade_messages.size(); ++i)
+    {
+        const auto& fm = fade_messages.message(i);
+
+        diag_jsons[fm.file_uri()].emplace_back(create_diag_json(fm.get_range(),
+            fm.code(),
+            fm.source(),
+            fm.message(),
+            std::nullopt,
+            parser_library::diagnostic_severity::hint,
+            parser_library::diagnostic_tag::unnecessary));
+    }
+
     // set of all files for which diagnostics came from the server.
     std::unordered_set<std::string> new_files;
     // transform the diagnostics into json
-    for (const auto& file_diags : diags)
+    for (auto& [uri, diag_json] : diag_jsons)
     {
-        json diags_array = json::array();
-        for (auto d : file_diags.second)
-        {
-            json one_json {
-                { "range", feature::range_to_json(d.get_range()) },
-                { "code", d.code() },
-                { "source", d.source() },
-                { "message", replace_empty_by_space(d.message()) },
-                { "relatedInformation", diagnostic_related_info_to_json(d) },
-            };
-            if (d.severity() != parser_library::diagnostic_severity::unspecified)
-            {
-                one_json["severity"] = (int)d.severity();
-            }
-            if (auto t = d.tags(); t != parser_library::diagnostic_tag::none)
-            {
-                auto& tags = one_json["tags"] = json::array();
-                if (static_cast<int>(t) & static_cast<int>(parser_library::diagnostic_tag::unnecessary))
-                    tags.push_back(1);
-                if (static_cast<int>(t) & static_cast<int>(parser_library::diagnostic_tag::deprecated))
-                    tags.push_back(2);
-            }
-            diags_array.push_back(std::move(one_json));
-        }
-
-        json publish_diags_params { { "uri", file_diags.first }, { "diagnostics", diags_array } };
-        new_files.insert(file_diags.first);
-        last_diagnostics_files_.erase(file_diags.first);
+        json publish_diags_params { { "uri", uri }, { "diagnostics", std::move(diag_json) } };
+        new_files.insert(uri);
+        last_diagnostics_files_.erase(uri);
 
         notify("textDocument/publishDiagnostics", publish_diags_params);
     }
@@ -315,6 +349,5 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
 
     last_diagnostics_files_ = std::move(new_files);
 }
-
 
 } // namespace hlasm_plugin::language_server::lsp

@@ -126,7 +126,8 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
           opts.file_loc,
           text,
           opts.get_lib_provider(),
-          field_parser_)
+          field_parser_,
+          std::move(opts.fade_messages))
 {}
 
 analyzing_context analyzer::context() const { return ctx_; }

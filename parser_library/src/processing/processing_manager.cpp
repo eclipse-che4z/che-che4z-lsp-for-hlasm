@@ -35,7 +35,8 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     utils::resource::resource_location file_loc,
     const std::string& file_text,
     workspaces::parse_lib_provider& lib_provider,
-    statement_fields_parser& parser)
+    statement_fields_parser& parser,
+    std::shared_ptr<std::vector<fade_message_s>> fade_msgs)
     : diagnosable_ctx(*ctx.hlasm_ctx)
     , ctx_(std::move(ctx))
     , hlasm_ctx_(*ctx_.hlasm_ctx)
@@ -44,6 +45,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     , lsp_analyzer_(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, file_text)
     , stms_analyzers_({ &lsp_analyzer_ })
     , file_loc_(file_loc)
+    , m_fade_msgs(std::move(fade_msgs))
 {
     switch (data.proc_kind)
     {
@@ -194,6 +196,10 @@ void processing_manager::finish_preprocessor()
         if (!stmt)
             continue;
 
+        if (m_fade_msgs)
+            m_fade_msgs->emplace_back(
+                fade_message_s::preprocessor_statement(file_loc_.get_uri(), stmt->m_details.stmt_r));
+
         lsp_analyzer_.analyze(*stmt);
     }
 
@@ -210,9 +216,6 @@ void processing_manager::finish_preprocessor()
                                    location(position(0, 0), inc_member_details->loc)),
             lsp::text_data_view(inc_member_details->text));
     }
-
-    // diagnosable_impl::add_diagnostic(diagnostic_s::fade(file_loc_, stmt->stmt_range_ref())); // todo create
-    // separate 'fade' container
 }
 
 void processing_manager::start_macro_definition(macrodef_start_data start)

@@ -28,6 +28,7 @@
 #include "context/hlasm_context.h"
 #include "context/id_storage.h"
 #include "diagnosable_ctx.h"
+#include "fade_messages.h"
 #include "preprocessor_options.h"
 #include "processing/processing_format.h"
 #include "processing/processing_manager.h"
@@ -67,6 +68,7 @@ class analyzer_options
     std::shared_ptr<context::id_storage> ids_init;
     std::vector<preprocessor_options> preprocessor_args;
     virtual_file_monitor* vf_monitor = nullptr;
+    std::shared_ptr<std::vector<fade_message_s>> fade_messages = nullptr;
 
     void set(utils::resource::resource_location rl) { file_loc = std::move(rl); }
     void set(workspaces::parse_lib_provider* lp) { lib_provider = lp; }
@@ -79,6 +81,7 @@ class analyzer_options
     void set(preprocessor_options pp) { preprocessor_args.push_back(std::move(pp)); }
     void set(std::vector<preprocessor_options> pp) { preprocessor_args = std::move(pp); }
     void set(virtual_file_monitor* vfm) { vf_monitor = vfm; }
+    void set(std::shared_ptr<std::vector<fade_message_s>> fmc) { fade_messages = fmc; };
 
     context::hlasm_context& get_hlasm_context();
     analyzing_context& get_context();
@@ -107,8 +110,10 @@ public:
         constexpr auto pp_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, preprocessor_options>)+(
             0 + ... + std::is_same_v<std::decay_t<Args>, std::vector<preprocessor_options>>);
         constexpr auto vfm_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, virtual_file_monitor*>);
-        constexpr auto cnt =
-            rl_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt + pp_cnt + vfm_cnt;
+        constexpr auto fmc_cnt =
+            (0 + ... + std::is_same_v<std::decay_t<Args>, std::shared_ptr<std::vector<fade_message_s>>>);
+        constexpr auto cnt = rl_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt + pp_cnt
+            + vfm_cnt + fmc_cnt;
 
         static_assert(rl_cnt <= 1, "Duplicate resource_location");
         static_assert(lib_cnt <= 1, "Duplicate parse_lib_provider");
@@ -120,6 +125,7 @@ public:
         static_assert(ids_cnt <= 1, "Duplicate id_storage");
         static_assert(pp_cnt <= 1, "Duplicate preprocessor_args");
         static_assert(vfm_cnt <= 1, "Duplicate virtual_file_monitor");
+        static_assert(fmc_cnt <= 1, "Duplicate fade message container");
         static_assert(!(ac_cnt && (ao_cnt || ids_cnt || pp_cnt)),
             "Do not specify both analyzing_context and asm_option, id_storage or preprocessor_args");
         static_assert(cnt == sizeof...(Args), "Unrecognized argument provided");

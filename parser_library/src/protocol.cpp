@@ -16,6 +16,7 @@
 
 #include "debugging/debug_types.h"
 #include "diagnosable.h"
+#include "fade_messages.h"
 #include "location.h"
 #include "lsp/completion_item.h"
 #include "semantics/highlighting_info.h"
@@ -87,6 +88,7 @@ range range_uri::get_range() const { return impl_.rang; }
 
 const char* range_uri::uri() const { return impl_.uri.c_str(); }
 
+//********************** diagnostic **********************
 
 range_uri diagnostic_related_info::location() const { return range_uri(impl_.location); }
 
@@ -114,13 +116,23 @@ size_t diagnostic::related_info_size() const { return impl_.related.size(); }
 
 diagnostic_tag diagnostic::tags() const { return impl_.tag; }
 
-//********************* diagnostics_container *******************
+//********************** fade message **********************
 
-class diagnostic_list_impl
-{
-public:
-    std::vector<diagnostic_s> diags;
-};
+fade_message::fade_message(fade_message_s& fm)
+    : impl_(fm)
+{}
+
+const char* fade_message::file_uri() const { return impl_.uri.c_str(); }
+
+range fade_message::get_range() const { return impl_.r; }
+
+const char* fade_message::code() const { return impl_.code.c_str(); }
+
+const char* fade_message::source() const { return fade_message_s::source.data(); }
+
+const char* fade_message::message() const { return impl_.message.c_str(); }
+
+//********************* diagnostics_container *******************
 
 diagnostic_list::diagnostic_list()
     : begin_(nullptr)
@@ -132,9 +144,25 @@ diagnostic_list::diagnostic_list(diagnostic_s* begin, size_t size)
     , size_(size)
 {}
 
-diagnostic diagnostic_list::diagnostics(size_t index) { return begin_[index]; }
+diagnostic diagnostic_list::diagnostics(size_t index) { return static_cast<diagnostic>(begin_[index]); }
 
 size_t diagnostic_list::diagnostics_size() const { return size_; }
+
+//********************* fade message list *******************
+
+fade_message_list::fade_message_list()
+    : begin_(nullptr)
+    , size_(0)
+{}
+
+fade_message_list::fade_message_list(fade_message_s* begin, size_t size)
+    : begin_(begin)
+    , size_(size)
+{}
+
+fade_message fade_message_list::message(size_t index) { return static_cast<fade_message>(begin_[index]); }
+
+size_t fade_message_list::size() const { return size_; }
 
 token_info::token_info(const range& token_range, semantics::hl_scopes scope)
     : token_range(token_range)
