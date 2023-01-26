@@ -95,9 +95,9 @@ class HLASMDebugAdapter implements vscode.DebugAdapter {
     private readonly message_id: string = HLASMDebugAdapter.registration_message_id + '/' + this.session_id;
 
     constructor(private client: BaseLanguageClient) {
-        this.client.sendNotification(HLASMDebugAdapter.registration_message_id, { session_id : this.session_id });
         this.client.onReady().then(() => {
-            client.onNotification(this.message_id, (msg: any) => {
+            this.client.sendNotification(HLASMDebugAdapter.registration_message_id, { session_id: this.session_id });
+            this.client.onNotification(this.message_id, (msg: any) => {
                 this.message_event.fire(msg);
             });
         });
@@ -107,12 +107,16 @@ class HLASMDebugAdapter implements vscode.DebugAdapter {
     }
 
     handleMessage(message: vscode.DebugProtocolMessage): void {
-        this.client.sendNotification(this.message_id, message);
+        this.client.onReady().then(() => {
+            this.client.sendNotification(this.message_id, message);
+        });
     }
 
     dispose() {
-        this.client.sendNotification(this.message_id);
         this.message_event.dispose();
+        this.client.onReady().then(() => {
+            this.client.sendNotification(this.message_id);
+        });
     }
 
 }
