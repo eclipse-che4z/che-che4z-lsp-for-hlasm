@@ -16,6 +16,8 @@
 
 #include <cassert>
 
+#include "antlr4-runtime.h"
+
 using namespace hlasm_plugin::parser_library;
 namespace hlasm_plugin::parser_library::semantics {
 
@@ -170,20 +172,4 @@ range_provider::range_provider()
     : original_range()
     , state(adjusting_state::NONE)
 {}
-
-range text_range(
-    const lexing::logical_line::const_iterator& b, const lexing::logical_line::const_iterator& e, size_t lineno_offset)
-{
-    assert(std::distance(b, e) >= 0);
-
-    const auto [bx, by] = b.get_coordinates();
-    position b_pos(by + lineno_offset, bx);
-    if (b == e) // empty range
-        return range(std::move(b_pos));
-    else
-    {
-        const auto [ex, ey] = std::prev(e).get_coordinates();
-        return range(std::move(b_pos), position(ey + lineno_offset, ex + 1));
-    }
-}
 } // namespace hlasm_plugin::parser_library::semantics

@@ -23,6 +23,7 @@
 #include "processing/error_statement.h"
 #include "semantics/collector.h"
 #include "semantics/range_provider.h"
+#include "utils/text_matchers.h"
 #include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -168,8 +169,13 @@ void opencode_provider::feed_line(const parsing::parser_holder& p, bool is_proce
 
 bool opencode_provider::is_comment()
 {
-    auto prefix = m_current_logical_line.segments.front().code.substr(0, 2);
-    return prefix == ".*" || prefix.substr(0, 1) == "*";
+    using string_matcher = utils::text_matchers::basic_string_matcher<true, false>;
+    static constexpr const auto comment = utils::text_matchers::alt(string_matcher("*"), string_matcher(".*"));
+
+    auto b = m_current_logical_line.segments.front().code;
+    const auto e = m_current_logical_line.segments.front().continuation;
+
+    return comment(b, e);
 }
 
 void opencode_provider::process_comment()
@@ -177,14 +183,13 @@ void opencode_provider::process_comment()
     size_t line_no = m_current_logical_line_source.begin_line;
     for (const auto& l : m_current_logical_line.segments)
     {
-        if (l.code.size())
+        if (l.code != l.continuation)
         {
-            auto skip_len = utils::length_utf16(l.line.substr(0, l.code.data() - l.line.data()));
-            auto code_len = utils::length_utf16(l.code);
+            auto skip_len = lexing::logical_distance(l.begin, l.code);
+            auto code_len = lexing::logical_distance(l.begin, l.continuation);
 
-            m_src_proc->add_hl_symbol(
-                token_info(range(position(line_no, skip_len), position(line_no, skip_len + code_len)),
-                    semantics::hl_scopes::comment));
+            m_src_proc->add_hl_symbol(token_info(
+                range(position(line_no, skip_len), position(line_no, code_len)), semantics::hl_scopes::comment));
         }
         ++line_no;
     }
@@ -197,8 +202,8 @@ void opencode_provider::generate_continuation_error_messages(diagnostic_op_consu
     {
         if (s.continuation_error)
         {
-            diags->add_diagnostic(
-                diagnostic_op::error_E001(range { { line_no, 0 }, { line_no, s.code_offset_utf16 } }));
+            diags->add_diagnostic(diagnostic_op::error_E001(
+                range { { line_no, 0 }, { line_no, lexing::logical_distance(s.begin, s.code) } }));
 
             break;
         }
@@ -467,15 +472,16 @@ bool opencode_provider::suspend_copy_processing(remove_empty re) const
         const auto pos = copy.current_statement_position();
         std::string_view remaining_text =
             m_ctx->lsp_ctx->get_file_info(copy.definition_location()->resource_loc)->data.get_lines_beginning_at(pos);
+        auto remaining_text_it = remaining_text.begin();
         const size_t line_no = pos.line;
 
         // remove line being processed
-        lexing::logical_line ll = {};
+        lexing::logical_line<std::string_view::iterator> ll = {};
         if (const bool before_first_read = copy.current_statement == (size_t)-1; !before_first_read)
-            lexing::extract_logical_line(ll, remaining_text, lexing::default_ictl_copy);
+            lexing::extract_logical_line(ll, remaining_text_it, remaining_text.end(), lexing::default_ictl_copy);
 
         copy.suspend(line_no + ll.segments.size());
-        if (remaining_text.empty())
+        if (remaining_text_it == remaining_text.end())
         {
             if (re == remove_empty::yes)
                 copy.resume();
@@ -686,8 +692,11 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
         copy_file.current_statement = resync;
 
         const auto* copy_text = m_ctx->lsp_ctx->get_file_info(copy_file.definition_location()->resource_loc);
-        std::string_view remaining_text = copy_text->data.get_lines_beginning_at({ line, 0 });
-        if (!lexing::extract_logical_line(m_current_logical_line, remaining_text, lexing::default_ictl_copy))
+        if (std::string_view remaining_text = copy_text->data.get_lines_beginning_at({ line, 0 });
+            !lexing::extract_logical_line(m_current_logical_line,
+                utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>(remaining_text.begin()),
+                remaining_text.end(),
+                lexing::default_ictl_copy))
         {
             opencode_copy_stack.pop_back();
             continue;
@@ -743,8 +752,11 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
         {
             const auto first_index = m_next_line_index;
             const auto& current_line = m_input_document.at(m_next_line_index++);
-            auto current_line_text = current_line.text();
-            append_to_logical_line(m_current_logical_line, current_line_text, lexing::default_ictl);
+            const auto current_line_text = current_line.text();
+            append_to_logical_line(m_current_logical_line,
+                utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>(current_line_text.begin()),
+                current_line_text.end(),
+                lexing::default_ictl);
             finish_logical_line(m_current_logical_line, lexing::default_ictl);
             --m_opts.process_remaining;
 
@@ -764,9 +776,11 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     const auto current_lineno = m_input_document.at(m_next_line_index).lineno().value();
     while (m_next_line_index < m_input_document.size())
     {
-        const auto& current_line = m_input_document.at(m_next_line_index++);
-        auto current_line_text = current_line.text();
-        if (!append_to_logical_line(m_current_logical_line, current_line_text, lexing::default_ictl))
+        if (const auto current_line_text = m_input_document.at(m_next_line_index++).text();
+            !append_to_logical_line(m_current_logical_line,
+                utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>(current_line_text.begin()),
+                current_line_text.end(),
+                lexing::default_ictl))
             break;
     }
     finish_logical_line(m_current_logical_line, lexing::default_ictl);

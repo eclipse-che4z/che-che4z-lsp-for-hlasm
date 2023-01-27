@@ -74,3 +74,93 @@ TEST(utf8, multibyte_validation)
          })
         EXPECT_EQ(utf8_valid_multibyte_prefix(f, s), e);
 }
+
+TEST(utf8, iterator)
+{
+    std::string_view s = (const char*)u8"a\U000000b6\U00001D01\U0001f34c";
+    utf8_iterator it(s.begin(), utf8_multicounter<utf8_byte_counter, utf8_utf16_counter, utf8_utf32_counter>());
+
+    EXPECT_EQ(it.counter(), it.counter(counter_index<0>));
+    EXPECT_EQ(it.counter<0>(), 0);
+    EXPECT_EQ(it.counter<1>(), 0);
+    EXPECT_EQ(it.counter<2>(), 0);
+
+    utf8_next(it, 0, s.end());
+
+    EXPECT_EQ(it.counter(), it.counter(counter_index<0>));
+    EXPECT_EQ(it.counter<0>(), 0);
+    EXPECT_EQ(it.counter<1>(), 0);
+    EXPECT_EQ(it.counter<2>(), 0);
+
+    utf8_next(it, 1, s.end());
+
+    EXPECT_EQ(it.counter(), it.counter(counter_index<0>));
+    EXPECT_EQ(it.counter<0>(), 1);
+    EXPECT_EQ(it.counter<1>(), 1);
+    EXPECT_EQ(it.counter<2>(), 1);
+
+    utf8_next(it, 1, s.end());
+
+    EXPECT_EQ(it.counter(), it.counter<0>());
+    EXPECT_EQ(it.counter<0>(), 3);
+    EXPECT_EQ(it.counter<1>(), 2);
+    EXPECT_EQ(it.counter<2>(), 2);
+
+    utf8_next(it, 1, s.end());
+
+    EXPECT_EQ(it.counter(), it.counter<0>());
+    EXPECT_EQ(it.counter<0>(), 6);
+    EXPECT_EQ(it.counter<1>(), 3);
+    EXPECT_EQ(it.counter<2>(), 3);
+
+    utf8_next(it, 1, s.end());
+
+    EXPECT_EQ(it.counter(), it.counter<0>());
+    EXPECT_EQ(it.counter<0>(), 10);
+    EXPECT_EQ(it.counter<1>(), 5);
+    EXPECT_EQ(it.counter<2>(), 4);
+
+    // try going past the end
+    utf8_next(it, 1, s.end());
+
+    EXPECT_EQ(it.counter(), it.counter<0>());
+    EXPECT_EQ(it.counter<0>(), 10);
+    EXPECT_EQ(it.counter<1>(), 5);
+    EXPECT_EQ(it.counter<2>(), 4);
+
+    utf8_prev(it, 1, s.begin());
+
+    EXPECT_EQ(it.counter(), it.counter<0>());
+    EXPECT_EQ(it.counter<0>(), 6);
+    EXPECT_EQ(it.counter<1>(), 3);
+    EXPECT_EQ(it.counter<2>(), 3);
+
+    utf8_prev(it, 1, s.begin());
+
+    EXPECT_EQ(it.counter(), it.counter<0>());
+    EXPECT_EQ(it.counter<0>(), 3);
+    EXPECT_EQ(it.counter<1>(), 2);
+    EXPECT_EQ(it.counter<2>(), 2);
+
+    utf8_prev(it, 1, s.begin());
+
+    EXPECT_EQ(it.counter(), it.counter<0>());
+    EXPECT_EQ(it.counter<0>(), 1);
+    EXPECT_EQ(it.counter<1>(), 1);
+    EXPECT_EQ(it.counter<2>(), 1);
+
+    utf8_prev(it, 1, s.begin());
+
+    EXPECT_EQ(it.counter(), it.counter<0>());
+    EXPECT_EQ(it.counter<0>(), 0);
+    EXPECT_EQ(it.counter<1>(), 0);
+    EXPECT_EQ(it.counter<2>(), 0);
+
+    // try going past the beginning
+    utf8_prev(it, 1, s.begin());
+
+    EXPECT_EQ(it.counter(), it.counter<0>());
+    EXPECT_EQ(it.counter<0>(), 0);
+    EXPECT_EQ(it.counter<1>(), 0);
+    EXPECT_EQ(it.counter<2>(), 0);
+}

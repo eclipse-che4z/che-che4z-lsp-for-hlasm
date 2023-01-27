@@ -33,6 +33,7 @@ struct db2_preprocessor_options;
 struct endevor_preprocessor_options;
 
 namespace lexing {
+template<typename It>
 struct logical_line;
 struct logical_line_extractor_args;
 } // namespace lexing
@@ -80,7 +81,7 @@ public:
 
     virtual const std::vector<std::unique_ptr<included_member_details>>& view_included_members();
 
-    static line_iterator extract_nonempty_logical_line(lexing::logical_line& out,
+    static line_iterator extract_nonempty_logical_line(lexing::logical_line<std::string_view::iterator>& out,
         line_iterator it,
         line_iterator end,
         const lexing::logical_line_extractor_args& opts);
@@ -101,7 +102,7 @@ protected:
         size_t continue_column = 15) const;
 
     virtual void do_highlighting(const semantics::preprocessor_statement_si& stmt,
-        const lexing::logical_line& ll,
+        const lexing::logical_line<std::string_view::iterator>& ll,
         semantics::source_info_processor& src_proc,
         size_t continue_column = 15) const;
 

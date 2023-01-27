@@ -25,14 +25,16 @@
 namespace hlasm_plugin::parser_library::processing {
 
 preprocessor::line_iterator preprocessor::extract_nonempty_logical_line(
-    lexing::logical_line& out, line_iterator it, line_iterator end, const lexing::logical_line_extractor_args& opts)
+    lexing::logical_line<std::string_view::iterator>& out,
+    line_iterator it,
+    line_iterator end,
+    const lexing::logical_line_extractor_args& opts)
 {
     out.clear();
 
     while (it != end)
     {
-        auto text = it++->text();
-        if (!append_to_logical_line(out, text, opts))
+        if (!append_to_logical_line(out, it++->text(), opts).first)
             break;
     }
 
@@ -88,7 +90,7 @@ void preprocessor::do_highlighting(const semantics::preprocessor_statement_si& s
 }
 
 void preprocessor::do_highlighting(const semantics::preprocessor_statement_si& stmt,
-    const lexing::logical_line& ll,
+    const lexing::logical_line<std::string_view::iterator>& ll,
     semantics::source_info_processor& src_proc,
     size_t continue_column) const
 {
@@ -100,15 +102,15 @@ void preprocessor::do_highlighting(const semantics::preprocessor_statement_si& s
     {
         const auto& segment = ll.segments[i];
 
-        if (!segment.continuation.empty())
+        const bool continuation = segment.continuation != segment.ignore;
+        if (continuation)
             src_proc.add_hl_symbol(
                 token_info(range(position(lineno, continuation_column), position(lineno, ignore_column)),
                     semantics::hl_scopes::continuation));
 
-        if (!segment.ignore.empty())
+        if (const size_t ignore_len = std::distance(segment.ignore, segment.end); ignore_len)
             src_proc.add_hl_symbol(token_info(
-                range(position(lineno, ignore_column),
-                    position(lineno, ignore_column + segment.ignore.length() - segment.continuation.empty())),
+                range(position(lineno, ignore_column), position(lineno, ignore_column + ignore_len - !continuation)),
                 semantics::hl_scopes::ignored));
     }
 }

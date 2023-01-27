@@ -26,10 +26,10 @@ using namespace hlasm_plugin::parser_library::semantics;
 TEST(text_range_test, empty_line)
 {
     std::string_view input = "123456";
-    lexing::logical_line ll;
+    lexing::logical_line<std::string_view::iterator> ll;
 
-    ASSERT_TRUE(extract_logical_line(ll, input, lexing::default_ictl));
-    ll.segments.front().code = {};
+    ASSERT_TRUE(extract_logical_line(ll, input, lexing::default_ictl).first);
+    ll.segments.front().code = ll.segments.front().continuation;
 
     EXPECT_EQ(text_range(ll.begin(), ll.end(), 1), range(position(1, 0)));
 }
@@ -37,9 +37,9 @@ TEST(text_range_test, empty_line)
 TEST(text_range_test, single_line)
 {
     std::string_view input = "123456";
-    lexing::logical_line ll;
+    lexing::logical_line<std::string_view::iterator> ll;
 
-    ASSERT_TRUE(extract_logical_line(ll, input, lexing::default_ictl));
+    ASSERT_TRUE(extract_logical_line(ll, input, lexing::default_ictl).first);
 
     EXPECT_EQ(text_range(ll.begin(), ll.end(), 2), range(position(2, 0), position(2, 6)));
     EXPECT_EQ(text_range(std::next(ll.begin()), ll.end(), 0), range(position(0, 1), position(0, 6)));
@@ -53,9 +53,9 @@ TEST(text_range_test, multi_line)
                TEXT                                                    X
                GOES                                                    X
                HERE)";
-    lexing::logical_line ll;
+    lexing::logical_line<std::string_view::iterator> ll;
 
-    ASSERT_TRUE(extract_logical_line(ll, input, lexing::default_ictl));
+    ASSERT_TRUE(extract_logical_line(ll, input, lexing::default_ictl).first);
 
     EXPECT_EQ(text_range(ll.begin(), ll.end(), 2), range(position(2, 0), position(5, 19)));
     EXPECT_EQ(

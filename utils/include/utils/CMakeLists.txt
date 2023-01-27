@@ -24,6 +24,7 @@ target_sources(hlasm_utils PUBLIC
 	resource_location.h
 	similar.h
 	string_operations.h
+	text_matchers.h
 	time.h
 	truth_table.h
 	unicode_text.h

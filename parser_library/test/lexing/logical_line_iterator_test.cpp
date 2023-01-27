@@ -28,14 +28,15 @@ class logical_line_iterator_fixture : public ::testing::TestWithParam<std::vecto
 {};
 } // namespace
 
+using test_logical_line = logical_line<std::string_view::iterator>;
+using test_logical_line_segment = logical_line_segment<std::string_view::iterator>;
+
 TEST_P(logical_line_iterator_fixture, general_behavior)
 {
-    logical_line line;
+    test_logical_line line;
     const auto& parm = GetParam();
     std::transform(parm.begin(), parm.end(), std::back_inserter(line.segments), [](const auto& c) {
-        logical_line_segment lls;
-        lls.code = c;
-        return lls;
+        return test_logical_line_segment { c.begin(), c.begin(), c.end(), c.end(), c.end() };
     });
 
     std::string concat_parm;
@@ -72,10 +73,10 @@ public:
         : m_input(std::move(input))
     {}
 
-    void SetUp() override { ASSERT_TRUE(extract_logical_line(m_line, m_input, default_ictl)); }
+    void SetUp() override { ASSERT_TRUE(extract_logical_line(m_line, m_input, default_ictl).first); }
 
 protected:
-    logical_line m_line;
+    test_logical_line m_line;
     std::string_view m_input;
 };
 
@@ -103,7 +104,7 @@ TEST_F(logical_line_iterator_coordinates_singleline, unchanged_code_part)
 
 TEST_F(logical_line_iterator_coordinates_singleline, removed_code_suffix)
 {
-    m_line.segments.front().code.remove_suffix(3);
+    std::advance(m_line.segments.front().continuation, -3);
 
     auto expected = std::pair<size_t, size_t>(0, 0);
     EXPECT_EQ(m_line.begin().get_coordinates(), expected);
@@ -147,7 +148,7 @@ TEST_F(logical_line_iterator_coordinates_multiline, unchanged_code_part)
 
 TEST_F(logical_line_iterator_coordinates_multiline, empty_all_lines)
 {
-    std::for_each(m_line.segments.begin(), m_line.segments.end(), [](auto& s) { s.code = {}; });
+    std::for_each(m_line.segments.begin(), m_line.segments.end(), [](auto& s) { s = {}; });
 
     auto expected = std::pair<size_t, size_t>(0, 0);
     EXPECT_EQ(m_line.begin().get_coordinates(), expected);
@@ -156,7 +157,7 @@ TEST_F(logical_line_iterator_coordinates_multiline, empty_all_lines)
 
 TEST_F(logical_line_iterator_coordinates_multiline, empty_last_line)
 {
-    m_line.segments.back().code = {};
+    m_line.segments.back().code = m_line.segments.back().continuation;
 
     auto expected = std::pair<size_t, size_t>(0, 0);
     EXPECT_EQ(m_line.begin().get_coordinates(), expected);
@@ -167,8 +168,8 @@ TEST_F(logical_line_iterator_coordinates_multiline, empty_last_line)
 
 TEST_F(logical_line_iterator_coordinates_multiline, empty_some_lines)
 {
-    m_line.segments[1].code = {};
-    m_line.segments[3].code.remove_suffix(46);
+    m_line.segments[1].code = m_line.segments[1].continuation;
+    std::advance(m_line.segments[3].continuation, -46);
 
     auto expected = std::pair<size_t, size_t>(0, 0);
     EXPECT_EQ(m_line.begin().get_coordinates(), expected);

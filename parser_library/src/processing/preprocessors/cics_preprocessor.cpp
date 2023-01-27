@@ -37,6 +37,7 @@
 #include "semantics/source_info_processor.h"
 #include "semantics/statement.h"
 #include "utils/concat.h"
+#include "utils/text_matchers.h"
 #include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -809,7 +810,7 @@ public:
                         // skips comment at the end of the line
                         m_substituted_operands.push_back(c);
                         auto skip_line = b;
-                        while (skip_line != e && same_line(b, skip_line))
+                        while (skip_line != e && utils::text_matchers::same_line(b, skip_line))
                             ++skip_line;
                         b = skip_line;
                         continue;
@@ -835,7 +836,7 @@ public:
 
 class cics_preprocessor final : public preprocessor
 {
-    lexing::logical_line m_logical_line;
+    lexing::logical_line<std::string_view::iterator> m_logical_line;
     library_fetcher m_libs;
     diagnostic_op_consumer* m_diags = nullptr;
     std::vector<document_line> m_result;
@@ -848,9 +849,9 @@ class cics_preprocessor final : public preprocessor
     std::string_view m_pending_dfh_null_error;
 
     std::match_results<std::string_view::iterator> m_matches_sv;
-    std::match_results<lexing::logical_line::const_iterator> m_matches_ll;
+    std::match_results<lexing::logical_line<std::string_view::iterator>::const_iterator> m_matches_ll;
 
-    mini_parser<lexing::logical_line::const_iterator> m_mini_parser;
+    mini_parser<lexing::logical_line<std::string_view::iterator>::const_iterator> m_mini_parser;
 
     semantics::source_info_processor& m_src_proc;
 
@@ -1043,10 +1044,13 @@ public:
         for (const auto& l : m_logical_line.segments)
         {
             std::string buffer;
-            buffer.append(utils::utf8_substr(l.line, 0, cics_extract.end).str);
+            auto it = l.begin;
+            utils::utf8_next(it, cics_extract.end, l.end);
+            buffer.append(l.begin, it);
+            utils::utf8_next(it, 1, l.end);
 
-            if (auto after_cont = utils::utf8_substr(l.line, cics_extract.end + 1).str; !after_cont.empty())
-                buffer.append(" ").append(after_cont);
+            if (it != l.end)
+                buffer.append(" ").append(it, l.end);
 
             if (first_line)
                 buffer.replace(0, li.byte_length, li.char_length, ' ');
@@ -1058,9 +1062,8 @@ public:
         }
     }
 
-    static std::string generate_label_fragment(lexing::logical_line::const_iterator label_b,
-        lexing::logical_line::const_iterator label_e,
-        const label_info& li)
+    template<typename It>
+    static std::string generate_label_fragment(It label_b, It label_e, const label_info& li)
     {
         if (li.char_length <= 8)
             return std::string(label_b, label_e) + std::string(9 - li.char_length, ' ');
@@ -1068,9 +1071,8 @@ public:
             return std::string(label_b, label_e) + " DS 0H\n";
     }
 
-    void inject_call(lexing::logical_line::const_iterator label_b,
-        lexing::logical_line::const_iterator label_e,
-        const label_info& li)
+    template<typename It>
+    void inject_call(It label_b, It label_e, const label_info& li)
     {
         if (li.char_length <= 8)
             m_result.emplace_back(
@@ -1083,7 +1085,8 @@ public:
         // TODO: generate correct calls
     }
 
-    void process_exec_cics(const std::match_results<lexing::logical_line::const_iterator>& matches)
+    void process_exec_cics(
+        const std::match_results<lexing::logical_line<std::string_view::iterator>::const_iterator>& matches)
     {
         auto label_b = matches[1].first;
         auto label_e = matches[1].second;
@@ -1095,7 +1098,8 @@ public:
         inject_call(label_b, label_e, li);
     }
 
-    static bool is_command_present(const std::match_results<lexing::logical_line::const_iterator>& matches)
+    static bool is_command_present(
+        const std::match_results<lexing::logical_line<std::string_view::iterator>::const_iterator>& matches)
     {
         return matches[3].matched;
     }
@@ -1151,7 +1155,8 @@ public:
         return true;
     }
 
-    auto try_substituting_dfh(const std::match_results<lexing::logical_line::const_iterator>& matches)
+    auto try_substituting_dfh(
+        const std::match_results<lexing::logical_line<std::string_view::iterator>::const_iterator>& matches)
     {
         auto events = m_mini_parser.parse_and_substitute(matches[3].first, matches[3].second);
         if (!events.error() && events.substitutions_performed() > 0)
@@ -1349,14 +1354,14 @@ cics_preprocessor_options test_cics_current_options(const preprocessor& p)
 
 std::pair<int, std::string> test_cics_miniparser(const std::vector<std::string_view>& list)
 {
-    lexing::logical_line ll;
+    lexing::logical_line<std::string_view::iterator> ll;
     std::transform(list.begin(), list.end(), std::back_inserter(ll.segments), [](std::string_view s) {
-        lexing::logical_line_segment lls;
-        lls.code = s;
-        return lls;
+        return lexing::logical_line_segment<std::string_view::iterator> {
+            s.begin(), s.begin(), s.end(), s.end(), s.end()
+        };
     });
 
-    mini_parser<lexing::logical_line::const_iterator> p;
+    mini_parser<lexing::logical_line<std::string_view::iterator>::const_iterator> p;
     std::pair<int, std::string> result;
 
     auto p_s = p.parse_and_substitute(ll.begin(), ll.end());

@@ -15,6 +15,7 @@
 #include "input_source.h"
 
 #include <exception>
+#include <iterator>
 
 #include "logical_line.h"
 #include "utils/unicode_text.h"
@@ -71,19 +72,17 @@ void input_source::reset(std::string_view str)
     append_utf8_to_utf32(_data, str);
 }
 
-// TODO: this is a compatibility mechanism, ideally we want use logical_line directly
-void input_source::reset(const logical_line& l)
+void input_source::reset(
+    const logical_line<utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>>& l)
 {
     reset("");
     for (size_t i = 0; i < l.segments.size(); ++i)
     {
         const auto& s = l.segments[i];
         if (i > 0)
-            _data.append(s.code.data() - s.line.data(), s.continuation_error ? 'X' : ' ');
+            _data.append(std::distance(s.begin, s.code), s.continuation_error ? 'X' : ' ');
 
-        append(s.code);
-        append(s.continuation);
-        append(s.ignore);
+        append(std::string_view(s.code.base(), s.end.base()));
 
         if (i + 1 < l.segments.size())
         {

@@ -28,6 +28,7 @@
 #include "preprocessor.h"
 #include "range.h"
 #include "statement_providers/statement_provider.h"
+#include "utils/unicode_text.h"
 #include "virtual_file_monitor.h"
 
 namespace hlasm_plugin::parser_library {
@@ -79,7 +80,8 @@ class opencode_provider final : public statement_provider
     document m_input_document;
     std::size_t m_next_line_index = 0;
 
-    lexing::logical_line m_current_logical_line;
+    lexing::logical_line<utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>>
+        m_current_logical_line;
     struct logical_line_origin
     {
         size_t begin_line;

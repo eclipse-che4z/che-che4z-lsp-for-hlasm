@@ -184,8 +184,9 @@ std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(
 }
 
 template std::shared_ptr<semantics::preprocessor_statement_si>
-get_preproc_statement<semantics::preprocessor_statement_si, lexing::logical_line::const_iterator>(
-    const std::match_results<lexing::logical_line::const_iterator>& matches,
+get_preproc_statement<semantics::preprocessor_statement_si,
+    lexing::logical_line<std::string_view::iterator>::const_iterator>(
+    const std::match_results<lexing::logical_line<std::string_view::iterator>::const_iterator>& matches,
     const stmt_part_ids& ids,
     size_t lineno,
     size_t continuation_column);
