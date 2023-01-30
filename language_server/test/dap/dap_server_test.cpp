@@ -20,6 +20,7 @@
 #include "gmock/gmock.h"
 
 #include "dap/dap_server.h"
+#include "nlohmann/json.hpp"
 #include "utils/path.h"
 #include "utils/platform.h"
 #include "workspace_manager.h"
@@ -29,9 +30,9 @@ using namespace hlasm_plugin::language_server;
 
 struct send_message_provider_mock : public send_message_provider
 {
-    void reply(const json& result) override { replies.push_back(result); };
+    void reply(const nlohmann::json& result) override { replies.push_back(result); };
 
-    std::vector<json> replies;
+    std::vector<nlohmann::json> replies;
 };
 
 
@@ -49,12 +50,12 @@ TEST(dap_server, dap_server)
     serv.set_send_message_provider(&smp);
 
     // actual message sent by VS Code
-    json initialize_message =
+    auto initialize_message =
         R"({"command":"initialize","arguments":{"clientID":"vscode","clientName":"Visual Studio Code","adapterID":"hlasm","pathFormat":"path","linesStartAt1":true,"columnsStartAt1":true,"supportsVariableType":true,"supportsVariablePaging":true,"supportsRunInTerminalRequest":true,"locale":"en-us","supportsProgressReporting":true},"type":"request","seq":1})"_json;
 
     serv.message_received(initialize_message);
 
-    std::vector<json> expected_response_init = {
+    std::vector expected_response_init = {
         R"({"body":{"supportsConfigurationDoneRequest":true},"command":"initialize","request_seq":1,"seq":1,"success":true,"type":"response"})"_json,
         R"({"body":null,"event" : "initialized","seq" : 2,"type" : "event"})"_json
     };
@@ -63,10 +64,10 @@ TEST(dap_server, dap_server)
     smp.replies.clear();
 
 
-    json disconnect_message =
+    auto disconnect_message =
         R"({"command":"disconnect","arguments":{"restart":false},"type":"request","seq":10})"_json;
 
-    std::vector<json> expected_response_disconnect = {
+    std::vector expected_response_disconnect = {
         R"({"body":null,"command":"disconnect","request_seq":10,"seq":3,"success":true,"type":"response"})"_json
     };
 
@@ -79,7 +80,7 @@ TEST(dap_server, dap_server)
 TEST(dap_server, malformed_message)
 {
     parser_library::workspace_manager ws_mngr;
-    json malf = R"({"commnd":"disconnect"})"_json;
+    auto malf = R"({"commnd":"disconnect"})"_json;
     dap::server serv(ws_mngr);
 
 

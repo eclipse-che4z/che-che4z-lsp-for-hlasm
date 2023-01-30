@@ -19,6 +19,7 @@
 #include "../scope_exit.h"
 #include "dap_server.h"
 #include "logger.h"
+#include "nlohmann/json.hpp"
 
 namespace hlasm_plugin::language_server::dap {
 void session::thread_routine()

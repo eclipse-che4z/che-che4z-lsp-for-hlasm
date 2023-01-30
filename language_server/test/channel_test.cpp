@@ -21,6 +21,7 @@
 #include "base_protocol_channel.h"
 #include "dap/dap_message_wrappers.h"
 #include "message_router.h"
+#include "nlohmann/json.hpp"
 #include "stream_helper.h"
 
 using namespace hlasm_plugin::language_server;

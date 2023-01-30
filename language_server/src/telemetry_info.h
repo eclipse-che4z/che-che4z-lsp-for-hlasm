@@ -19,8 +19,7 @@
 #include <string>
 #include <variant>
 
-#include "nlohmann/json.hpp"
-#include "workspace_manager.h"
+#include "protocol.h"
 
 namespace hlasm_plugin::language_server {
 

@@ -19,6 +19,7 @@
 #include "gmock/gmock.h"
 
 #include "message_router.h"
+#include "nlohmann/json.hpp"
 
 using namespace hlasm_plugin::language_server;
 

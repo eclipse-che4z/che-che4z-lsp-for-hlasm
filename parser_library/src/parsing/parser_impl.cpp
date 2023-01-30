@@ -24,6 +24,7 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "hlasmparser_multiline.h"
 #include "hlasmparser_singleline.h"
+#include "lexing/input_source.h"
 #include "lexing/token_stream.h"
 #include "processing/op_code.h"
 

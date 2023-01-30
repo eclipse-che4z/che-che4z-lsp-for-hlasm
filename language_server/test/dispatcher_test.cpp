@@ -18,8 +18,10 @@
 
 #include "base_protocol_channel.h"
 #include "dispatcher.h"
+#include "nlohmann/json.hpp"
+#include "request_manager.h"
+#include "server.h"
 #include "stream_helper.h"
-
 
 using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
@@ -35,13 +37,15 @@ public:
         , messages_limit(max_messages)
     {}
 
-    std::vector<json> messages;
+    std::vector<nlohmann::json> messages;
 
-    void request(const json&, const std::string&, const json&, method) override {}
-    void respond(const json&, const std::string&, const json&) override {}
-    void notify(const std::string&, const json&) override {}
-    void respond_error(const json&, const std::string&, int, const std::string&, const json&) override {}
-    void message_received(const json& message) override
+    void request(const std::string&, const nlohmann::json&, method) override {}
+    void respond(const nlohmann::json&, const std::string&, const nlohmann::json&) override {}
+    void notify(const std::string&, const nlohmann::json&) override {}
+    void respond_error(
+        const nlohmann::json&, const std::string&, int, const std::string&, const nlohmann::json&) override
+    {}
+    void message_received(const nlohmann::json& message) override
     {
         ++counter;
         if (counter == messages_limit)
@@ -58,7 +62,7 @@ struct test_param
     int messages_limit;
     int return_value;
     std::vector<std::string> headers;
-    std::vector<json> messages;
+    std::vector<nlohmann::json> messages;
     bool write_messages;
     std::string name;
 };
@@ -148,7 +152,7 @@ TEST(dispatcher, write_message)
     base_protocol_channel channel(ss, ss);
     dispatcher d(json_channel_adapter(channel), dummy_server, rm);
 
-    json message = R"("A json message")"_json;
+    nlohmann::json message = R"("A json message")"_json;
     d.reply(message);
 
     EXPECT_EQ(ss.str(), "Content-Length: 16\r\n\r\n" + message.dump());

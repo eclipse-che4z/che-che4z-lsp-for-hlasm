@@ -23,9 +23,6 @@
 #include "input_source.h"
 #include "utils/string_operations.h"
 
-using namespace antlr4;
-using namespace std;
-
 using namespace hlasm_plugin;
 using namespace parser_library;
 using namespace lexing;
@@ -41,7 +38,7 @@ lexer::lexer(input_source* input, semantics::source_info_processor* lsp_proc)
     // initialize IS with first character from input
     input_state_->c = static_cast<char_t>(input_->LA(1));
 
-    dummy_factory = make_shared<antlr4::CommonTokenFactory>();
+    dummy_factory = std::make_shared<antlr4::CommonTokenFactory>();
 }
 
 void lexer::set_unlimited_line(bool unlimited_lines) { unlimited_line_ = unlimited_lines; }
@@ -73,7 +70,7 @@ std::string lexer::getSourceName() { return input_->getSourceName(); }
 void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNEL)
 {
     /* do not generate empty tokens (except EOF) */
-    if (token_start_state_.char_position == token_start_state_.input->index() && ttype != Token::EOF)
+    if (token_start_state_.char_position == token_start_state_.input->index() && ttype != antlr4::Token::EOF)
         return;
 
     creating_var_symbol_ = ttype == AMPERSAND;
@@ -153,7 +150,7 @@ void lexer::consume()
     }
 }
 
-bool lexer::eof() const { return input_->LA(1) == CharStream::EOF; }
+bool lexer::eof() const { return input_->LA(1) == antlr4::CharStream::EOF; }
 
 /* set start token info */
 void lexer::start_token() { token_start_state_ = *input_state_; }
@@ -169,7 +166,7 @@ token_ptr lexer::nextToken()
     {
         if (!token_queue_.empty())
         {
-            auto t = move(token_queue_.front());
+            auto t = std::move(token_queue_.front());
             token_queue_.pop();
             return t;
         }
@@ -180,7 +177,7 @@ token_ptr lexer::nextToken()
 
         if (eof())
         {
-            create_token(Token::EOF);
+            create_token(antlr4::Token::EOF);
         }
 
         else if (double_byte_enabled_)
@@ -387,7 +384,7 @@ void lexer::check_continuation()
     end_ = end_default_;
 
     auto cc = input_->LA(end_default_ + 1);
-    if (cc != CharStream::EOF && !utils::isblank32(static_cast<char_t>(cc)))
+    if (cc != antlr4::CharStream::EOF && !utils::isblank32(static_cast<char_t>(cc)))
     {
         do
         {

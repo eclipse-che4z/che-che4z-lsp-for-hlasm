@@ -14,11 +14,11 @@ target_sources(language_server_base PRIVATE
 	base_protocol_channel.cpp
 	base_protocol_channel.h
 	blocking_queue.h
-	common_types.h
 	dispatcher.cpp
 	dispatcher.h
 	feature.cpp
 	feature.h
+	json_channel.cpp
 	json_channel.h
 	json_queue_channel.cpp
 	json_queue_channel.h
@@ -27,10 +27,12 @@ target_sources(language_server_base PRIVATE
 	message_router.cpp
 	message_router.h
 	parsing_metadata_collector.h
+	parsing_metadata_serialization.cpp
 	parsing_metadata_serialization.h
 	request_manager.cpp
 	request_manager.h
 	scope_exit.h
+	send_message_provider.h
 	server.cpp
 	server.h
 	server_streams.h

@@ -18,6 +18,7 @@
 #include "json_channel.h"
 
 #include "blocking_queue.h"
+#include "nlohmann/json.hpp"
 
 namespace hlasm_plugin::language_server {
 class json_queue_channel final : public json_channel

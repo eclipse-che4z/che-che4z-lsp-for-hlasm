@@ -16,9 +16,11 @@
 
 #include <string_view>
 
+#include "nlohmann/json.hpp"
+
 using namespace hlasm_plugin::language_server;
 
-request::request(json message, server* executing_server)
+request::request(nlohmann::json message, server* executing_server)
     : message(std::move(message))
     , valid(true)
     , executing_server(executing_server)
@@ -31,7 +33,7 @@ request_manager::request_manager(std::atomic<bool>* cancel, async_policy async_p
     , async_policy_(async_pol)
 {}
 
-void request_manager::add_request(server* server, json message)
+void request_manager::add_request(server* server, nlohmann::json message)
 {
     if (async_policy_ == async_policy::SYNC)
     {
@@ -143,7 +145,7 @@ void request_manager::finish_server_requests(server* to_finish)
 }
 
 std::pair<std::string, request_manager::request_parsing_implication> request_manager::get_request_file_(
-    const json& r) const
+    const nlohmann::json& r) const
 {
     constexpr auto parsing_implication = [](std::string_view method) {
         if (method == "textDocument/didOpen" || method == "textDocument/didChange")

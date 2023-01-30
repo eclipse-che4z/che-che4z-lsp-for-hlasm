@@ -19,7 +19,6 @@
 
 #include "antlr4-runtime.h"
 
-#include "input_source.h"
 #include "parser_library_export.h"
 
 namespace hlasm_plugin::parser_library::lexing {

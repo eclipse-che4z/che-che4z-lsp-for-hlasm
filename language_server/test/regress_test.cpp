@@ -17,24 +17,23 @@
 #include "gmock/gmock.h"
 
 #include "lsp/lsp_server.h"
+#include "nlohmann/json.hpp"
 #include "request_manager.h"
 
 using namespace hlasm_plugin;
 using namespace language_server;
 
-using json = nlohmann::json;
-using server_notification = std::pair<std::string, json>;
-
+using server_notification = std::pair<std::string, nlohmann::json>;
 
 class message_provider_mock : public send_message_provider
 {
 public:
-    void reply(const json& result) override { notfs.push_back(result); }
+    void reply(const nlohmann::json& result) override { notfs.push_back(result); }
 
-    std::vector<json> notfs;
+    std::vector<nlohmann::json> notfs;
 };
 
-json make_notification(std::string method_name, json parameter)
+nlohmann::json make_notification(std::string method_name, nlohmann::json parameter)
 {
     return { { "jsonrpc", "2.0" }, { "method", method_name }, { "params", parameter } };
 }
@@ -51,7 +50,7 @@ TEST(regress_test, behaviour_error)
     s.message_received(notf);
 
     ASSERT_EQ(mess_p.notfs.size(), (size_t)2);
-    auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](json notif) {
+    auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](nlohmann::json notif) {
         return notif["method"] == "textDocument/publishDiagnostics";
     });
     ASSERT_NE(publish_notif, mess_p.notfs.end());
@@ -85,7 +84,7 @@ TEST(regress_test, behaviour_error)
     mess_p.notfs.clear();
 }
 
-const static std::vector<json> messages = {
+const static std::vector<nlohmann::json> messages = {
     make_notification("textDocument/didOpen",
         R"#({"textDocument":{"uri":"file:///c%3A/test/stability.hlasm","languageId":"plaintext","version":1,"text":"LABEL LR 1,1 REMARK"}})#"_json),
     make_notification("textDocument/didChange",
@@ -606,7 +605,7 @@ TEST(regress_test, check_diagnostic_tags)
     s.message_received(notf);
 
     ASSERT_EQ(mess_p.notfs.size(), (size_t)2);
-    auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](json notif) {
+    auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](nlohmann::json notif) {
         return notif["method"] == "textDocument/publishDiagnostics";
     });
     ASSERT_NE(publish_notif, mess_p.notfs.end());

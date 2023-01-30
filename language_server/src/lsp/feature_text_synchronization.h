@@ -42,17 +42,17 @@ public:
     // Adds the implemented methods into the map.
     void register_methods(std::map<std::string, method>& methods) override;
     // Returns set capabilities connected with text synchonization
-    json register_capabilities() override;
+    nlohmann::json register_capabilities() override;
     // Does nothing, not needed.
-    void initialize_feature(const json& initialise_params) override;
+    void initialize_feature(const nlohmann::json& initialise_params) override;
 
 private:
     // Handles textDocument/didOpen notification.
-    void on_did_open(const json& id, const json& params);
+    void on_did_open(const nlohmann::json& id, const nlohmann::json& params);
     // Handles textDocument/didChange notification.
-    void on_did_change(const json& id, const json& params);
+    void on_did_change(const nlohmann::json& id, const nlohmann::json& params);
     // Handles textDocument/didClose notification.
-    void on_did_close(const json& id, const json& params);
+    void on_did_close(const nlohmann::json& id, const nlohmann::json& params);
 };
 
 } // namespace hlasm_plugin::language_server::lsp

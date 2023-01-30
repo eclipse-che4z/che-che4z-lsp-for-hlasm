@@ -14,28 +14,30 @@
 
 #include "feature.h"
 
+#include "nlohmann/json.hpp"
+
 namespace hlasm_plugin::language_server {
 
-parser_library::range feature::parse_range(const json& range_json)
+parser_library::range feature::parse_range(const nlohmann::json& range_json)
 {
     return { parse_position(range_json["start"]), parse_position(range_json["end"]) };
 }
 
-parser_library::position feature::parse_position(const json& position_json)
+parser_library::position feature::parse_position(const nlohmann::json& position_json)
 {
     // TODO: rewrite message parsing
     return { (size_t)position_json["line"].get<nlohmann::json::number_unsigned_t>(),
         (size_t)position_json["character"].get<nlohmann::json::number_unsigned_t>() };
 }
 
-json feature::range_to_json(const parser_library::range& range)
+nlohmann::json feature::range_to_json(const parser_library::range& range)
 {
-    return json { { "start", position_to_json(range.start) }, { "end", position_to_json(range.end) } };
+    return nlohmann::json { { "start", position_to_json(range.start) }, { "end", position_to_json(range.end) } };
 }
 
-json feature::position_to_json(const parser_library::position& position)
+nlohmann::json feature::position_to_json(const parser_library::position& position)
 {
-    return json { { "line", position.line }, { "character", position.column } };
+    return nlohmann::json { { "line", position.line }, { "character", position.column } };
 }
 
 } // namespace hlasm_plugin::language_server

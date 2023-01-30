@@ -17,7 +17,7 @@
 
 #include <optional>
 
-#include "nlohmann/json.hpp"
+#include "nlohmann/json_fwd.hpp"
 
 namespace hlasm_plugin::language_server {
 
@@ -60,9 +60,9 @@ public:
         : source(in)
         , sink(out)
     {}
-    std::optional<nlohmann::json> read() override { return source.read(); }
-    void write(const nlohmann::json& j) override { sink.write(j); }
-    void write(nlohmann::json&& j) override { sink.write(std::move(j)); }
+    std::optional<nlohmann::json> read() override;
+    void write(const nlohmann::json& j) override;
+    void write(nlohmann::json&& j) override;
 };
 
 } // namespace hlasm_plugin::language_server

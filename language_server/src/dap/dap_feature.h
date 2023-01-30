@@ -43,32 +43,32 @@ public:
 class dap_feature : public feature, public hlasm_plugin::parser_library::debugging::debug_event_consumer
 {
 public:
-    void initialize_feature(const json& client_capabilities) override;
+    void initialize_feature(const nlohmann::json& client_capabilities) override;
 
     dap_feature(parser_library::workspace_manager& ws_mngr,
         response_provider& response_provider,
         dap_disconnect_listener* disconnect_listener);
 
-    void on_initialize(const json& requested_seq, const json& args);
-    void on_disconnect(const json& request_seq, const json& args);
-    void on_launch(const json& request_seq, const json& args);
-    void on_set_breakpoints(const json& request_seq, const json& args);
-    void on_set_exception_breakpoints(const json& request_seq, const json& args);
-    void on_configuration_done(const json& request_seq, const json& args);
-    void on_threads(const json& request_seq, const json& args);
-    void on_stack_trace(const json& request_seq, const json& args);
-    void on_scopes(const json& request_seq, const json& args);
-    void on_next(const json& request_seq, const json& args);
-    void on_step_in(const json& request_seq, const json& args);
-    void on_step_out(const json& request_seq, const json& args);
-    void on_variables(const json& request_seq, const json& args);
-    void on_continue(const json& request_seq, const json& args);
-    void on_pause(const json& request_seq, const json& args);
+    void on_initialize(const nlohmann::json& requested_seq, const nlohmann::json& args);
+    void on_disconnect(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_launch(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_set_breakpoints(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_set_exception_breakpoints(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_configuration_done(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_threads(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_stack_trace(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_scopes(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_next(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_step_in(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_step_out(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_variables(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_continue(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_pause(const nlohmann::json& request_seq, const nlohmann::json& args);
 
 private:
     // Inherited via feature
     void register_methods(std::map<std::string, method>& methods) override;
-    json register_capabilities() override;
+    nlohmann::json register_capabilities() override;
 
     // Inherited via debug_event_consumer
     void stopped(hlasm_plugin::parser_library::sequence<char> reason,

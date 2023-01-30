@@ -19,6 +19,7 @@
 #include <utility>
 
 #include "../feature.h"
+#include "nlohmann/json.hpp"
 #include "utils/resource_location.h"
 
 namespace {
@@ -87,9 +88,10 @@ feature_language_features::feature_language_features(
 
 void feature_language_features::register_methods(std::map<std::string, method>& methods)
 {
-    const auto this_bind = [this](void (feature_language_features::*func)(const json&, const json&),
+    const auto this_bind = [this](void (feature_language_features::*func)(const nlohmann::json&, const nlohmann::json&),
                                telemetry_log_level telem) {
-        return method { [this, func](const json& id, const json& args) { (this->*func)(id, args); }, telem };
+        return method { [this, func](const nlohmann::json& id, const nlohmann::json& args) { (this->*func)(id, args); },
+            telem };
     };
     methods.emplace(
         "textDocument/definition", this_bind(&feature_language_features::definition, telemetry_log_level::LOG_EVENT));
@@ -106,11 +108,11 @@ void feature_language_features::register_methods(std::map<std::string, method>& 
         this_bind(&feature_language_features::opcode_suggestion, telemetry_log_level::LOG_EVENT));
 }
 
-json feature_language_features::register_capabilities()
+nlohmann::json feature_language_features::register_capabilities()
 {
     // in case any changes are done to tokenTypes, the hl_scopes field in protocol.h
     // needs to be adjusted accordingly, as they are implicitly but directly mapped to each other
-    return json {
+    return nlohmann::json {
         { "definitionProvider", true },
         { "referencesProvider", true },
         { "hoverProvider", true },
@@ -144,7 +146,7 @@ json feature_language_features::register_capabilities()
                                 "parameter", //     ordinary_symbol    = 16
                             },
                         },
-                        { "tokenModifiers", json::array() },
+                        { "tokenModifiers", nlohmann::json::array() },
                     },
                 },
                 { "full", true },
@@ -154,38 +156,39 @@ json feature_language_features::register_capabilities()
     };
 }
 
-void feature_language_features::initialize_feature(const json&)
+void feature_language_features::initialize_feature(const nlohmann::json&)
 {
     // No need for initialization in this feature.
 }
 
-void feature_language_features::definition(const json& id, const json& params)
+void feature_language_features::definition(const nlohmann::json& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
     auto pos = extract_position(params);
 
     auto definition_position_uri = ws_mngr_.definition(document_uri.c_str(), pos);
-    json to_ret {
+    nlohmann::json to_ret {
         { "uri", definition_position_uri.file_uri() },
         { "range", range_to_json({ definition_position_uri.pos(), definition_position_uri.pos() }) },
     };
     response_->respond(id, "", to_ret);
 }
 
-void feature_language_features::references(const json& id, const json& params)
+void feature_language_features::references(const nlohmann::json& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
     auto pos = extract_position(params);
-    json to_ret = json::array();
+    auto to_ret = nlohmann::json::array();
     auto references = ws_mngr_.references(document_uri.c_str(), pos);
     for (size_t i = 0; i < references.size(); ++i)
     {
         auto ref = references.item(i);
-        to_ret.push_back(json { { "uri", ref.file_uri() }, { "range", range_to_json({ ref.pos(), ref.pos() }) } });
+        to_ret.push_back(
+            nlohmann::json { { "uri", ref.file_uri() }, { "range", range_to_json({ ref.pos(), ref.pos() }) } });
     }
     response_->respond(id, "", to_ret);
 }
-void feature_language_features::hover(const json& id, const json& params)
+void feature_language_features::hover(const nlohmann::json& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
     auto pos = extract_position(params);
@@ -193,7 +196,11 @@ void feature_language_features::hover(const json& id, const json& params)
 
     auto hover_list = std::string_view(ws_mngr_.hover(document_uri.c_str(), pos));
 
-    response_->respond(id, "", json { { "contents", hover_list.empty() ? json() : get_markup_content(hover_list) } });
+    response_->respond(id,
+        "",
+        nlohmann::json {
+            { "contents", hover_list.empty() ? nlohmann::json() : get_markup_content(hover_list) },
+        });
 }
 
 // Completion item kinds from the LSP specification
@@ -237,9 +244,9 @@ const std::unordered_map<parser_library::completion_item_kind, lsp_completion_it
 };
 
 
-json feature_language_features::get_markup_content(std::string_view content)
+nlohmann::json feature_language_features::get_markup_content(std::string_view content)
 {
-    return json { { "kind", "markdown" }, { "value", content } };
+    return nlohmann::json { { "kind", "markdown" }, { "value", content } };
 }
 
 std::string decorate_suggestion(std::string_view s)
@@ -252,7 +259,7 @@ std::string decorate_suggestion(std::string_view s)
     return result;
 }
 
-void feature_language_features::completion(const json& id, const json& params)
+void feature_language_features::completion(const nlohmann::json& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
     auto pos = extract_position(params);
@@ -260,12 +267,12 @@ void feature_language_features::completion(const json& id, const json& params)
     auto [trigger_kind, trigger_char] = extract_trigger(params);
 
     auto completion_list = ws_mngr_.completion(document_uri.c_str(), pos, trigger_char, trigger_kind);
-    json to_ret = json::value_t::object;
-    json completion_item_array = json::array();
+    auto to_ret = nlohmann::json::object();
+    auto completion_item_array = nlohmann::json::array();
     for (size_t i = 0; i < completion_list.size(); ++i)
     {
         const auto& item = completion_list.item(i);
-        auto& json_item = completion_item_array.emplace_back(json {
+        auto& json_item = completion_item_array.emplace_back(nlohmann::json {
             { "label", item.label() },
             { "kind", completion_item_kind_mapping.at(item.kind()) },
             { "detail", item.detail() },
@@ -287,8 +294,10 @@ void feature_language_features::completion(const json& id, const json& params)
     response_->respond(id, "", to_ret);
 }
 
-void add_token(
-    json& encoded_tokens, const parser_library::token_info& current, parser_library::range& last_rng, bool first)
+void add_token(nlohmann::json& encoded_tokens,
+    const parser_library::token_info& current,
+    parser_library::range& last_rng,
+    bool first)
 {
     using namespace parser_library;
 
@@ -316,14 +325,15 @@ void add_token(
     last_rng = current.token_range;
 }
 
-json feature_language_features::convert_tokens_to_num_array(const std::vector<parser_library::token_info>& tokens)
+nlohmann::json feature_language_features::convert_tokens_to_num_array(
+    const std::vector<parser_library::token_info>& tokens)
 {
     using namespace parser_library;
 
     if (tokens.empty())
-        return json::array();
+        return nlohmann::json::array();
 
-    json encoded_tokens = json::array();
+    auto encoded_tokens = nlohmann::json::array();
 
 
     range last_rng;
@@ -387,14 +397,13 @@ json feature_language_features::convert_tokens_to_num_array(const std::vector<pa
     return encoded_tokens;
 }
 
-void feature_language_features::semantic_tokens(const json& id, const json& params)
+void feature_language_features::semantic_tokens(const nlohmann::json& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
 
     auto tokens = std::vector<parser_library::token_info>(ws_mngr_.semantic_tokens(document_uri.c_str()));
-    json num_array = convert_tokens_to_num_array(tokens);
 
-    response_->respond(id, "", { { "data", num_array } });
+    response_->respond(id, "", { { "data", convert_tokens_to_num_array(tokens) } });
 }
 
 // document symbol item kinds from the LSP specification
@@ -446,7 +455,8 @@ const std::unordered_map<parser_library::document_symbol_kind, lsp_document_symb
         { parser_library::document_symbol_kind::WEAK_EXTERNAL, lsp_document_symbol_item_kind::Enum },
         { parser_library::document_symbol_kind::MACRO, lsp_document_symbol_item_kind::File } };
 
-json feature_language_features::document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol)
+nlohmann::json feature_language_features::document_symbol_item_json(
+    hlasm_plugin::parser_library::document_symbol_item symbol)
 {
     return {
         { "name", symbol.name() },
@@ -457,10 +467,10 @@ json feature_language_features::document_symbol_item_json(hlasm_plugin::parser_l
     };
 }
 
-json feature_language_features::document_symbol_list_json(
+nlohmann::json feature_language_features::document_symbol_list_json(
     hlasm_plugin::parser_library::document_symbol_list symbol_list)
 {
-    json result = json::array();
+    auto result = nlohmann::json::array();
     for (const auto& symbol : symbol_list)
     {
         result.push_back(document_symbol_item_json(symbol));
@@ -468,7 +478,7 @@ json feature_language_features::document_symbol_list_json(
     return result;
 }
 
-void feature_language_features::document_symbol(const json& id, const json& params)
+void feature_language_features::document_symbol(const nlohmann::json& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
 
@@ -478,11 +488,11 @@ void feature_language_features::document_symbol(const json& id, const json& para
     response_->respond(id, "", document_symbol_list_json(symbol_list));
 }
 
-void feature_language_features::opcode_suggestion(const json& id, const json& params)
+void feature_language_features::opcode_suggestion(const nlohmann::json& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
 
-    auto suggestions = json::object();
+    auto suggestions = nlohmann::json::object();
 
     bool extended = false;
     if (auto e = params.find("extended"); e != params.end() && e->is_boolean())
@@ -498,7 +508,7 @@ void feature_language_features::opcode_suggestion(const json& id, const json& pa
             auto opcode_suggestions = ws_mngr_.make_opcode_suggestion(document_uri.c_str(), op.c_str(), extended);
             if (opcode_suggestions.size() == 0)
                 continue;
-            auto& ar = suggestions[op] = json::array();
+            auto& ar = suggestions[op] = nlohmann::json::array();
             for (const auto& s : opcode_suggestions)
             {
                 ar.push_back(nlohmann::json {
@@ -509,7 +519,7 @@ void feature_language_features::opcode_suggestion(const json& id, const json& pa
         }
     }
 
-    json to_ret {
+    nlohmann::json to_ret {
         { "uri", document_uri },
         { "suggestions", std::move(suggestions) },
     };

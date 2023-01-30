@@ -27,7 +27,7 @@
 
 namespace nlohmann {
 // needed in order to have mock methods with json arguments
-inline void PrintTo(json const& json, std::ostream* os) { *os << json.dump(); }
+inline void PrintTo(nlohmann::json const& json, std::ostream* os) { *os << json.dump(); }
 } // namespace nlohmann
 
 using namespace hlasm_plugin;
@@ -36,7 +36,7 @@ using namespace language_server;
 TEST(lsp_server, initialize)
 {
     // this is json params actually sent by vscode LSP client
-    json j =
+    auto j =
         R"({"jsonrpc":"2.0","id":47,"method":"initialize","params":{"processId":5236,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true,"workspaceFolders":true},"textDocument":{"publishDiagnostics":{"relatedInformation":true},"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"contextSupport":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true,"documentationFormat":["markdown","plaintext"],"deprecatedSupport":true,"preselectSupport":true},"completionItemKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}},"hover":{"dynamicRegistration":true,"contentFormat":["markdown","plaintext"]},"signatureHelp":{"dynamicRegistration":true,"signatureInformation":{"documentationFormat":["markdown","plaintext"]}},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"codeAction":{"dynamicRegistration":true,"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports"]}}},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true},"typeDefinition":{"dynamicRegistration":true},"implementation":{"dynamicRegistration":true},"colorProvider":{"dynamicRegistration":true}}},"trace":"off","workspaceFolders":null}})"_json;
     test::ws_mngr_mock ws_mngr;
     send_message_provider_mock smpm;
@@ -45,21 +45,21 @@ TEST(lsp_server, initialize)
 
 
 
-    json server_capab;
-    json second;
+    nlohmann::json server_capab;
+    nlohmann::json second;
 
-    json show_message =
+    auto show_message =
         R"({"jsonrpc":"2.0", "method" : "window/showMessage", "params" : {"message":"The capabilities of hlasm language server were sent!", "type" : 3}})"_json;
-    json register_message =
-        R"({"jsonrpc":"2.0", "id":"register1", "method" : "client/registerCapability", "params" : [{"registrations":[{"id":"configureRegister", "method":"workspace/didChangeConfiguration"}]}]})"_json;
-    json config_request_message =
-        R"({"id":"config_request_0","jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[{"section":"hlasm"},{}]}})"_json;
+    auto register_message =
+        R"({"jsonrpc":"2.0", "id":0, "method" : "client/registerCapability", "params" : [{"registrations":[{"id":"configureRegister", "method":"workspace/didChangeConfiguration"}]}]})"_json;
+    auto config_request_message =
+        R"({"id":1,"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[{"section":"hlasm"},{}]}})"_json;
 
     EXPECT_CALL(smpm, reply(::testing::_)).WillOnce(::testing::SaveArg<0>(&server_capab));
     EXPECT_CALL(smpm, reply(show_message)).Times(::testing::AtMost(1));
     EXPECT_CALL(smpm, reply(register_message)).Times(::testing::AtMost(1));
     EXPECT_CALL(smpm, reply(config_request_message)).Times(::testing::AtMost(1));
-    EXPECT_CALL(smpm, reply(::testing::Truly([](const json& arg) {
+    EXPECT_CALL(smpm, reply(::testing::Truly([](const nlohmann::json& arg) {
         return arg.count("method") && arg["method"] == "telemetry/event";
     })));
 
@@ -67,17 +67,17 @@ TEST(lsp_server, initialize)
 
     EXPECT_NE(server_capab.find("jsonrpc"), server_capab.end());
     ASSERT_NE(server_capab.find("id"), server_capab.end());
-    EXPECT_EQ(server_capab["id"].get<json::number_unsigned_t>(), 47);
+    EXPECT_EQ(server_capab["id"].get<nlohmann::json::number_unsigned_t>(), 47);
     ASSERT_NE(server_capab.find("result"), server_capab.end());
     EXPECT_NE(server_capab["result"].find("capabilities"), server_capab["result"].end());
 
     // provide response to the register request
-    json register_response = R"({"jsonrpc":"2.0","id":"register1","result":null})"_json;
+    auto register_response = R"({"jsonrpc":"2.0","id":0,"result":null})"_json;
     s.message_received(register_response);
 
-    json shutdown_request = R"({"jsonrpc":"2.0","id":48,"method":"shutdown","params":null})"_json;
-    json shutdown_response = R"({"jsonrpc":"2.0","id":48,"result":null})"_json;
-    json exit_notification = R"({"jsonrpc":"2.0","method":"exit","params":null})"_json;
+    auto shutdown_request = R"({"jsonrpc":"2.0","id":48,"method":"shutdown","params":null})"_json;
+    auto shutdown_response = R"({"jsonrpc":"2.0","id":48,"result":null})"_json;
+    auto exit_notification = R"({"jsonrpc":"2.0","method":"exit","params":null})"_json;
     EXPECT_CALL(smpm, reply(shutdown_response)).Times(1);
     EXPECT_FALSE(s.is_exit_notification_received());
     EXPECT_FALSE(s.is_shutdown_request_received());
@@ -91,13 +91,13 @@ TEST(lsp_server, initialize)
 
 TEST(lsp_server, not_implemented_method)
 {
-    json j = R"({"jsonrpc":"2.0","id":47,"method":"unknown_method","params":"A parameter"})"_json;
+    auto j = R"({"jsonrpc":"2.0","id":47,"method":"unknown_method","params":"A parameter"})"_json;
     test::ws_mngr_mock ws_mngr;
     send_message_provider_mock smpm;
     lsp::server s(ws_mngr);
     s.set_send_message_provider(&smpm);
 
-    json expected_telemetry =
+    auto expected_telemetry =
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
             "method_name":"server_error/method_not_implemented",
@@ -113,7 +113,7 @@ TEST(lsp_server, not_implemented_method)
 class request_handler
 {
 public:
-    void handle(json id, json args)
+    void handle(nlohmann::json id, nlohmann::json args)
     {
         ++counter;
         received_id = id;
@@ -121,8 +121,8 @@ public:
     }
 
     int counter = 0;
-    json received_id;
-    json received_args;
+    nlohmann::json received_id;
+    nlohmann::json received_args;
 };
 
 TEST(lsp_server, request_correct)
@@ -134,23 +134,21 @@ TEST(lsp_server, request_correct)
     response_provider& rp = s;
     request_handler handler;
 
-    json expected_message =
-        R"({"id":"a_request","jsonrpc":"2.0","method":"client_method","params":"a_json_parameter"})"_json;
+    auto expected_message = R"({"id":0,"jsonrpc":"2.0","method":"client_method","params":"a_json_parameter"})"_json;
 
     EXPECT_CALL(message_provider, reply(expected_message));
 
-    rp.request("a_request",
-        "client_method",
+    rp.request("client_method",
         "a_json_parameter",
-        { [&handler](const json& id, const json& params) { handler.handle(id, params); },
+        { [&handler](const nlohmann::json& id, const nlohmann::json& params) { handler.handle(id, params); },
             telemetry_log_level::NO_TELEMETRY });
 
-    json request_response = R"({"id":"a_request","jsonrpc":"2.0","result":"response_result"})"_json;
+    auto request_response = R"({"id":0,"jsonrpc":"2.0","result":"response_result"})"_json;
 
     s.message_received(request_response);
 
     ASSERT_EQ(handler.counter, 1);
-    EXPECT_EQ(handler.received_id, "a_request");
+    EXPECT_EQ(handler.received_id, 0);
     EXPECT_EQ(handler.received_args, "response_result");
 }
 
@@ -161,9 +159,9 @@ TEST(lsp_server, request_no_handler)
     lsp::server s(mngr);
     s.set_send_message_provider(&message_provider);
 
-    json request_response = R"({"id":"a_request","jsonrpc":"2.0","result":"response_result"})"_json;
+    auto request_response = R"({"id":"a_request","jsonrpc":"2.0","result":"response_result"})"_json;
 
-    json expected_telemetry =
+    auto expected_telemetry =
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
             "method_name":"server_error/lsp_server/response_no_handler",
@@ -183,9 +181,9 @@ TEST(lsp_server, request_no_id)
     lsp::server s(mngr);
     s.set_send_message_provider(&message_provider);
 
-    json request_response = R"({"jsonrpc":"2.0","result":"response_result"})"_json;
+    auto request_response = R"({"jsonrpc":"2.0","result":"response_result"})"_json;
 
-    json expected_telemetry =
+    auto expected_telemetry =
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
             "method_name":"server_error/lsp_server/response_no_id",
@@ -207,9 +205,9 @@ TEST(lsp_server, request_error)
     lsp::server s(mngr);
     s.set_send_message_provider(&message_provider);
 
-    json request_response = R"({"id":"a_request","jsonrpc":"2.0","error":{"message":"the_error_message"}})"_json;
+    auto request_response = R"({"id":"a_request","jsonrpc":"2.0","error":{"message":"the_error_message"}})"_json;
 
-    json expected_telemetry =
+    auto expected_telemetry =
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
             "method_name":"server_error/lsp_server/response_error_returned",
@@ -229,9 +227,9 @@ TEST(lsp_server, request_error_no_message)
     lsp::server s(mngr);
     s.set_send_message_provider(&message_provider);
 
-    json request_response = R"({"id":"a_request","jsonrpc":"2.0","error":null})"_json;
+    auto request_response = R"({"id":"a_request","jsonrpc":"2.0","error":null})"_json;
 
-    json expected_telemetry =
+    auto expected_telemetry =
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
             "method_name":"server_error/lsp_server/response_error_returned",

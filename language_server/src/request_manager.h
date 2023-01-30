@@ -20,16 +20,16 @@
 #include <thread>
 #include <utility>
 
+#include "nlohmann/json.hpp"
 #include "server.h"
-
 
 namespace hlasm_plugin::language_server {
 
 // Represents one LSP or DAP message received by LSP/DAP server
 struct request
 {
-    request(json message, server* executing_server);
-    json message;
+    request(nlohmann::json message, server* executing_server);
+    nlohmann::json message;
     bool valid;
     server* executing_server;
 };
@@ -48,7 +48,7 @@ public:
     };
 
     explicit request_manager(std::atomic<bool>* cancel, async_policy async_pol = async_policy::ASYNC);
-    void add_request(server* server, json message);
+    void add_request(server* server, nlohmann::json message);
     void finish_server_requests(server* server);
     void end_worker();
     bool is_running() const;
@@ -75,7 +75,7 @@ private:
         stop_parsing,
     };
 
-    std::pair<std::string, request_parsing_implication> get_request_file_(const json& r) const;
+    std::pair<std::string, request_parsing_implication> get_request_file_(const nlohmann::json& r) const;
 
     std::deque<request> requests_;
 

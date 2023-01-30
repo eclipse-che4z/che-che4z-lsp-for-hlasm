@@ -17,8 +17,6 @@
 #include "macro_param.h"
 #include "set_symbol.h"
 
-using namespace std;
-
 namespace hlasm_plugin::parser_library::context {
 
 set_symbol_base* variable_symbol::access_set_symbol_base() { return dynamic_cast<set_symbol_base*>(this); }

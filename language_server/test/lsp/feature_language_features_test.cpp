@@ -17,6 +17,7 @@
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
 #include "lsp/feature_language_features.h"
+#include "nlohmann/json.hpp"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
 
@@ -72,7 +73,7 @@ TEST(language_features, definition)
     auto params1 = nlohmann::json::parse(
         R"({"textDocument":{"uri":")" + uri + R"("},"position":{"line":0,"character":1},"context":{"triggerKind":1}})");
 
-    EXPECT_CALL(response_mock, respond(json(""), "", _));
+    EXPECT_CALL(response_mock, respond(nlohmann::json(""), "", _));
     notifs["textDocument/definition"].handler("", params1);
 }
 TEST(language_features, references)
@@ -101,13 +102,19 @@ TEST(language_features, document_symbol)
     std::string file_text = "A EQU 1";
 
     ws_mngr.did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
-    json params1 = json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
+    nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
-    json r = { { "start", { { "line", 0 }, { "character", 0 } } }, { "end", { { "line", 0 }, { "character", 0 } } } };
-    json response = json::array();
-    response.push_back(
-        { { "name", "A" }, { "kind", 17 }, { "range", r }, { "selectionRange", r }, { "children", json::array() } });
-    EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
+    nlohmann::json r = { { "start", { { "line", 0 }, { "character", 0 } } },
+        { "end", { { "line", 0 }, { "character", 0 } } } };
+    nlohmann::json response = nlohmann::json::array();
+    response.push_back({
+        { "name", "A" },
+        { "kind", 17 },
+        { "range", r },
+        { "selectionRange", r },
+        { "children", nlohmann::json::array() },
+    });
+    EXPECT_CALL(response_mock, respond(nlohmann::json(""), std::string(""), response));
     notifs["textDocument/documentSymbol"].handler("", params1);
 }
 
@@ -122,10 +129,10 @@ TEST(language_features, semantic_tokens)
     std::string file_text = "A EQU 1\n SAM31";
 
     ws_mngr.did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
-    json params1 = json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
+    nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
-    json response { { "data", { 0, 0, 1, 0, 0, 0, 2, 3, 1, 0, 0, 4, 1, 10, 0, 1, 1, 5, 1, 0 } } };
-    EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
+    nlohmann::json response { { "data", { 0, 0, 1, 0, 0, 0, 2, 3, 1, 0, 0, 4, 1, 10, 0, 1, 1, 5, 1, 0 } } };
+    EXPECT_CALL(response_mock, respond(nlohmann::json(""), std::string(""), response));
 
     notifs["textDocument/semanticTokens/full"].handler("", params1);
 }
@@ -144,10 +151,10 @@ IIIIIIIIIIIIIII1
 )";
 
     ws_mngr.did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
-    json params1 = json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
+    nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     // clang-format off
-    json response { { "data",
+    nlohmann::json response { { "data",
         { 1,0,1,0,0,      // label         D
             0,2,3,1,0,    // instruction   EQU
             0,68,1,10,0,  // number        1
@@ -157,7 +164,7 @@ IIIIIIIIIIIIIII1
             0,15,1,10,0   // number        1
         } } };
     // clang-format on
-    EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
+    EXPECT_CALL(response_mock, respond(nlohmann::json(""), std::string(""), response));
 
     notifs["textDocument/semanticTokens/full"].handler("", params1);
 }
@@ -177,10 +184,10 @@ TEST(language_features, semantic_tokens_multiline_overlap)
 )";
 
     ws_mngr.did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
-    json params1 = json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
+    nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     // clang-format off
-    json response { { "data",
+    nlohmann::json response { { "data",
         {   1,0,2,7,0,    // var symbol    &X
             0,3,4,1,0,    // instruction   SETC
             0,5,3,9,0,    // string        ' '
@@ -200,7 +207,7 @@ TEST(language_features, semantic_tokens_multiline_overlap)
             0,3,4,1,0     // instruction   ANOP
         } } };
     // clang-format on
-    EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
+    EXPECT_CALL(response_mock, respond(nlohmann::json(""), std::string(""), response));
 
     notifs["textDocument/semanticTokens/full"].handler("", params1);
 }
@@ -212,7 +219,7 @@ struct test_param
 {
     std::string name;
     std::vector<parser_library::token_info> tokens;
-    json result;
+    nlohmann::json result;
 };
 
 struct stringer
@@ -227,7 +234,7 @@ class convert_tokens_fixture : public ::testing::TestWithParam<test_param>
 
 INSTANTIATE_TEST_SUITE_P(convert_tokens_to_num_array,
     convert_tokens_fixture,
-    ::testing::Values(test_param { "empty", {}, json::array() },
+    ::testing::Values(test_param { "empty", {}, nlohmann::json::array() },
         test_param { "one_token",
             {
                 { { { 0, 0 }, { 0, 5 } }, parser_library::semantics::hl_scopes::instruction },
@@ -299,7 +306,7 @@ TEST_P(convert_tokens_fixture, test)
     using namespace lsp;
     using namespace parser_library;
     std::vector<token_info> tokens;
-    json result = feature_language_features::convert_tokens_to_num_array(GetParam().tokens);
+    nlohmann::json result = feature_language_features::convert_tokens_to_num_array(GetParam().tokens);
     EXPECT_EQ(result, GetParam().result);
 }
 

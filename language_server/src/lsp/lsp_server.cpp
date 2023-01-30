@@ -28,6 +28,7 @@
 #include "feature_text_synchronization.h"
 #include "feature_workspace_folders.h"
 #include "lib_config.h"
+#include "nlohmann/json.hpp"
 #include "parsing_metadata_serialization.h"
 #include "utils/general_hashers.h"
 #include "utils/resource_location.h"
@@ -49,7 +50,7 @@ server::server(parser_library::workspace_manager& ws_mngr)
     ws_mngr_.register_parsing_metadata_consumer(&parsing_metadata_);
 }
 
-void server::message_received(const json& message)
+void server::message_received(const nlohmann::json& message)
 {
     auto id_found = message.find("id");
 
@@ -67,7 +68,9 @@ void server::message_received(const json& message)
             return;
         }
 
-        auto handler_found = request_handlers_.find(*id_found);
+        auto handler_found = request_handlers_.end();
+        if (id_found->is_number_unsigned())
+            handler_found = request_handlers_.find(id_found->get<unsigned long long>());
         if (handler_found == request_handlers_.end())
         {
             LOG_WARNING("A response with no registered handler received.");
@@ -75,7 +78,7 @@ void server::message_received(const json& message)
             return;
         }
 
-        method handler = handler_found->second;
+        method handler = std::move(handler_found->second);
         request_handlers_.erase(handler_found);
         handler.handler(id_found.value(), result_found.value());
         return;
@@ -122,88 +125,124 @@ telemetry_metrics_info server::get_telemetry_details()
     return telemetry_metrics_info { parsing_metadata_.data, diags_error_count, diags_warning_count };
 }
 
-void server::request(const json& id, const std::string& requested_method, const json& args, method handler)
+void server::request(const std::string& requested_method, const nlohmann::json& args, method handler)
 {
-    json reply { { "jsonrpc", "2.0" }, { "id", id }, { "method", requested_method }, { "params", args } };
+    auto id = request_id_counter++;
+    nlohmann::json reply {
+        { "jsonrpc", "2.0" },
+        { "id", id },
+        { "method", requested_method },
+        { "params", args },
+    };
     request_handlers_.emplace(id, handler);
     send_message_->reply(reply);
 }
 
-void server::respond(const json& id, const std::string&, const json& args)
+void server::respond(const nlohmann::json& id, const std::string&, const nlohmann::json& args)
 {
-    json reply { { "jsonrpc", "2.0" }, { "id", id }, { "result", args } };
-    send_message_->reply(reply);
-}
-
-void server::notify(const std::string& method, const json& args)
-{
-    json reply { { "jsonrpc", "2.0" }, { "method", method }, { "params", args } };
-    send_message_->reply(reply);
-}
-
-void server::respond_error(
-    const json& id, const std::string&, int err_code, const std::string& err_message, const json& error)
-{
-    json reply { { "jsonrpc", "2.0" },
+    nlohmann::json reply {
+        { "jsonrpc", "2.0" },
         { "id", id },
-        { "error", json { { "code", err_code }, { "message", err_message }, { "data", error } } } };
+        { "result", args },
+    };
+    send_message_->reply(reply);
+}
+
+void server::notify(const std::string& method, const nlohmann::json& args)
+{
+    nlohmann::json reply {
+        { "jsonrpc", "2.0" },
+        { "method", method },
+        { "params", args },
+    };
+    send_message_->reply(reply);
+}
+
+void server::respond_error(const nlohmann::json& id,
+    const std::string&,
+    int err_code,
+    const std::string& err_message,
+    const nlohmann::json& error)
+{
+    nlohmann::json reply { { "jsonrpc", "2.0" },
+        { "id", id },
+        { "error",
+            {
+                { "code", err_code },
+                { "message", err_message },
+                { "data", error },
+            } } };
     send_message_->reply(reply);
 }
 
 void server::register_methods()
 {
     methods_.try_emplace("initialize",
-        method { [this](const json& id, const json& params) { on_initialize(id, params); },
+        method { [this](const nlohmann::json& id, const nlohmann::json& params) { on_initialize(id, params); },
             telemetry_log_level::LOG_EVENT });
     methods_.try_emplace("initialized",
-        method { [](const json&, const json&) { /*no implementation, silences uninteresting telemetry*/ },
+        method { [](const nlohmann::json&,
+                     const nlohmann::json&) { /*no implementation, silences uninteresting telemetry*/ },
             telemetry_log_level::NO_TELEMETRY });
     methods_.try_emplace("shutdown",
-        method { [this](const json& id, const json& params) { on_shutdown(id, params); },
+        method { [this](const nlohmann::json& id, const nlohmann::json& params) { on_shutdown(id, params); },
             telemetry_log_level::NO_TELEMETRY });
     methods_.try_emplace("exit",
-        method {
-            [this](const json& id, const json& params) { on_exit(id, params); }, telemetry_log_level::NO_TELEMETRY });
+        method { [this](const nlohmann::json& id, const nlohmann::json& params) { on_exit(id, params); },
+            telemetry_log_level::NO_TELEMETRY });
     methods_.try_emplace("$/cancelRequest",
-        method { [](const json&, const json&) {
+        method { [](const nlohmann::json&, const nlohmann::json&) {
                     /*no implementation, silences telemetry reporting*/
                 },
             telemetry_log_level::NO_TELEMETRY });
 }
 
-void server::send_telemetry(const telemetry_message& message) { notify("telemetry/event", json(message)); }
+void server::send_telemetry(const telemetry_message& message) { notify("telemetry/event", nlohmann::json(message)); }
 
-void empty_handler(json, const json&)
+void empty_handler(nlohmann::json, const nlohmann::json&)
 {
     // Does nothing
 }
 
-void server::on_initialize(json id, const json& param)
+void server::on_initialize(nlohmann::json id, const nlohmann::json& param)
 {
     // send server capabilities back
-    json capabilities = json { { "capabilities",
-        json { { "documentFormattingProvider", false },
-            { "documentRangeFormattingProvider", false },
-            { "codeActionProvider", false },
-            { "signatureHelpProvider", false },
-            { "documentHighlightProvider", false },
-            { "renameProvider", false },
-            { "workspaceSymbolProvider", false } } } };
+    auto capabilities = nlohmann::json {
+        {
+            "capabilities",
+            {
+                { "documentFormattingProvider", false },
+                { "documentRangeFormattingProvider", false },
+                { "codeActionProvider", false },
+                { "signatureHelpProvider", false },
+                { "documentHighlightProvider", false },
+                { "renameProvider", false },
+                { "workspaceSymbolProvider", false },
+            },
+        },
+    };
 
     for (auto& f : features_)
     {
-        json feature_cap = f->register_capabilities();
+        auto feature_cap = f->register_capabilities();
         capabilities["capabilities"].insert(feature_cap.begin(), feature_cap.end());
     }
 
     respond(id, "", capabilities);
 
-    json register_configuration_changed_args {
-        { { "registrations", { { { "id", "configureRegister" }, { "method", "workspace/didChangeConfiguration" } } } } }
+    nlohmann::json register_configuration_changed_args {
+        { {
+            "registrations",
+            {
+                {
+                    { "id", "configureRegister" },
+                    { "method", "workspace/didChangeConfiguration" },
+                },
+            },
+        } },
     };
 
-    request("register1",
-        "client/registerCapability",
+    request("client/registerCapability",
         register_configuration_changed_args,
         { &empty_handler, telemetry_log_level::NO_TELEMETRY });
 
@@ -214,33 +253,40 @@ void server::on_initialize(json id, const json& param)
     }
 }
 
-void server::on_shutdown(json id, const json&)
+void server::on_shutdown(nlohmann::json id, const nlohmann::json&)
 {
     shutdown_request_received_ = true;
 
     // perform shutdown
-    json rep = json {};
-    respond(id, "", rep);
+    respond(id, "", nlohmann::json());
 }
 
-void server::on_exit(json, const json&) { exit_notification_received_ = true; }
+void server::on_exit(nlohmann::json, const nlohmann::json&) { exit_notification_received_ = true; }
 
 void server::show_message(const std::string& message, parser_library::message_type type)
 {
-    json m { { "type", (int)type }, { "message", message } };
+    nlohmann::json m {
+        { "type", (int)type },
+        { "message", message },
+    };
     notify("window/showMessage", m);
 }
 
-json diagnostic_related_info_to_json(const parser_library::diagnostic& diag)
+nlohmann::json diagnostic_related_info_to_json(const parser_library::diagnostic& diag)
 {
-    json related;
+    nlohmann::json related;
     for (size_t i = 0; i < diag.related_info_size(); ++i)
     {
-        related.push_back(
-            json { { "location",
-                       json { { "uri", diag.related_info(i).location().uri() },
-                           { "range", feature::range_to_json(diag.related_info(i).location().get_range()) } } },
-                { "message", diag.related_info(i).message() } });
+        related.push_back(nlohmann::json {
+            {
+                "location",
+                {
+                    { "uri", diag.related_info(i).location().uri() },
+                    { "range", feature::range_to_json(diag.related_info(i).location().get_range()) },
+                },
+            },
+            { "message", diag.related_info(i).message() },
+        });
     }
     return related;
 }
@@ -254,15 +300,15 @@ std::string replace_empty_by_space(std::string s)
         return s;
 }
 
-json create_diag_json(const parser_library::range& r,
+nlohmann::json create_diag_json(const parser_library::range& r,
     const char* code,
     const char* source,
     const char* message,
-    std::optional<json> diag_related_info,
+    std::optional<nlohmann::json> diag_related_info,
     parser_library::diagnostic_severity severity,
     parser_library::diagnostic_tag tags)
 {
-    json one_json {
+    nlohmann::json one_json {
         { "range", feature::range_to_json(r) },
         { "code", code },
         { "source", source },
@@ -277,7 +323,7 @@ json create_diag_json(const parser_library::range& r,
 
     if (tags != parser_library::diagnostic_tag::none)
     {
-        auto& j_tags = one_json["tags"] = json::array();
+        auto& j_tags = one_json["tags"] = nlohmann::json::array();
         if (static_cast<int>(tags) & static_cast<int>(parser_library::diagnostic_tag::unnecessary))
             j_tags.push_back(1);
         if (static_cast<int>(tags) & static_cast<int>(parser_library::diagnostic_tag::deprecated))
@@ -293,7 +339,7 @@ void server::consume_diagnostics(
 {
     diags_error_count = 0;
     diags_warning_count = 0;
-    std::unordered_map<std::string, json::array_t, utils::hashers::string_hasher, std::equal_to<>> diag_jsons;
+    std::unordered_map<std::string, nlohmann::json::array_t, utils::hashers::string_hasher, std::equal_to<>> diag_jsons;
 
     for (size_t i = 0; i < diagnostics.diagnostics_size(); ++i)
     {
@@ -331,7 +377,10 @@ void server::consume_diagnostics(
     // transform the diagnostics into json
     for (auto& [uri, diag_json] : diag_jsons)
     {
-        json publish_diags_params { { "uri", uri }, { "diagnostics", std::move(diag_json) } };
+        nlohmann::json publish_diags_params {
+            { "uri", uri },
+            { "diagnostics", std::move(diag_json) },
+        };
         new_files.insert(uri);
         last_diagnostics_files_.erase(uri);
 
@@ -343,7 +392,10 @@ void server::consume_diagnostics(
     // remove the diags from UI
     for (auto& it : last_diagnostics_files_)
     {
-        json publish_diags_params { { "uri", it }, { "diagnostics", json::array() } };
+        nlohmann::json publish_diags_params {
+            { "uri", it },
+            { "diagnostics", nlohmann::json::array() },
+        };
         notify("textDocument/publishDiagnostics", publish_diags_params);
     }
 

@@ -20,6 +20,7 @@
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
 #include "lsp/feature_text_synchronization.h"
+#include "nlohmann/json.hpp"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
 
@@ -39,7 +40,7 @@ TEST(text_synchronization, did_open_file)
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
-    json params1 = json::parse(
+    auto params1 = nlohmann::json::parse(
         R"({"textDocument":{"uri":")" + txt_file_uri + R"(","languageId":"plaintext","version":4,"text":"sad"}})");
 
     EXPECT_CALL(ws_mngr, did_open_file(StrEq(txt_file_uri), 4, StrEq("sad"), 3));
@@ -70,7 +71,7 @@ TEST(text_synchronization, did_change_file)
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
-    json params1 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri
+    auto params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + txt_file_uri
         + R"(","version":7},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":0,"character":8}},"rangeLength":8,"text":"sad"}, {"range":{"start":{"line":1,"character":12},"end":{"line":1,"character":14}},"rangeLength":2,"text":""}]})");
 
     parser_library::document_change expected1[2] { { { { 0, 0 }, { 0, 8 } }, "sad", 3 },
@@ -83,7 +84,7 @@ TEST(text_synchronization, did_change_file)
 
 
     parser_library::document_change expected2[1] { { "sad", 3 } };
-    json params2 = json::parse(
+    auto params2 = nlohmann::json::parse(
         R"({"textDocument":{"uri":")" + txt_file_uri + R"(","version":7},"contentChanges":[{"text":"sad"}]})");
     EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_uri), 7, _, 1))
         .With(Args<2, 3>(PointerAndSizeEqArray(expected2, std::size(expected2))));
@@ -92,7 +93,7 @@ TEST(text_synchronization, did_change_file)
 
 
 
-    json params3 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri
+    auto params3 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + txt_file_uri
         + R"("},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":0,"character":8}},"rangeLength":8,"text":"sad"}, {"range":{"start":{"line":1,"character":12},"end":{"line":1,"character":14}},"rangeLength":2,"text":""}]})");
 
     EXPECT_THROW(notifs["textDocument/didChange"].handler("", params3), nlohmann::basic_json<>::exception);
@@ -107,7 +108,7 @@ TEST(text_synchronization, did_close_file)
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
-    json params1 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri + R"("}})");
+    auto params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + txt_file_uri + R"("}})");
     EXPECT_CALL(ws_mngr, did_close_file(StrEq(txt_file_uri))),
 
         notifs["textDocument/didClose"].handler("", params1);

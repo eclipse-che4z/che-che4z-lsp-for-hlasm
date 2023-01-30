@@ -19,6 +19,7 @@
 #include "../ws_mngr_mock.h"
 #include "lib_config.h"
 #include "lsp/feature_workspace_folders.h"
+#include "nlohmann/json.hpp"
 #include "utils/platform.h"
 
 using namespace hlasm_plugin;
@@ -44,23 +45,24 @@ TEST(workspace_folders, did_change_workspace_folders)
 
     EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("OneDrive"), ::testing::StrEq(ws1_uri)));
 
-    json params1 = json::parse(R"({"event":{"added":[{"uri":")" + ws1_uri + R"(","name":"OneDrive"}],"removed":[]}})");
+    auto params1 =
+        nlohmann::json::parse(R"({"event":{"added":[{"uri":")" + ws1_uri + R"(","name":"OneDrive"}],"removed":[]}})");
     notifs["workspace/didChangeWorkspaceFolders"].handler("", params1);
 
     EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("TwoDrive"), ::testing::StrEq(ws2_uri)));
     EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("ThreeDrive"), ::testing::StrEq(ws3_uri)));
     EXPECT_CALL(ws_mngr, remove_workspace(::testing::StrEq(ws1_uri)));
 
-    json params2 = json::parse(R"({"event":{"added":[{"uri":")" + ws2_uri + R"(","name":"TwoDrive"},{"uri":")" + ws3_uri
-        + R"(","name":"ThreeDrive"}],"removed":[{"uri":")" + ws1_uri + R"(","name":"OneDrive"}]}})");
+    auto params2 = nlohmann::json::parse(R"({"event":{"added":[{"uri":")" + ws2_uri + R"(","name":"TwoDrive"},{"uri":")"
+        + ws3_uri + R"(","name":"ThreeDrive"}],"removed":[{"uri":")" + ws1_uri + R"(","name":"OneDrive"}]}})");
     notifs["workspace/didChangeWorkspaceFolders"].handler("", params2);
 
     EXPECT_CALL(ws_mngr, remove_workspace(::testing::StrEq(ws2_uri)));
     EXPECT_CALL(ws_mngr, remove_workspace(::testing::StrEq(ws3_uri)));
     EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("FourDrive"), ::testing::StrEq(ws4_uri)));
-    json params3 =
-        json::parse(R"({"event":{"added":[{"uri":")" + ws4_uri + R"(","name":"FourDrive"}],"removed":[{"uri":")"
-            + ws2_uri + R"(","name":"TwoDrive"},{"uri":")" + ws3_uri + R"(","name":"ThreeDrive"}]}})");
+    auto params3 = nlohmann::json::parse(R"({"event":{"added":[{"uri":")" + ws4_uri
+        + R"(","name":"FourDrive"}],"removed":[{"uri":")" + ws2_uri + R"(","name":"TwoDrive"},{"uri":")" + ws3_uri
+        + R"(","name":"ThreeDrive"}]}})");
     notifs["workspace/didChangeWorkspaceFolders"].handler("", params3);
 }
 
@@ -86,16 +88,10 @@ TEST(workspace_folders, initialize_folders)
     response_provider_mock rpm;
     lsp::feature_workspace_folders f(ws_mngr, rpm);
 
-    for (int config_request_number = 0; config_request_number < 5; ++config_request_number)
-        EXPECT_CALL(rpm,
-            request(json("config_request_" + std::to_string(config_request_number)),
-                std::string("workspace/configuration"),
-                _,
-                _))
-            .Times(1);
+    EXPECT_CALL(rpm, request(std::string("workspace/configuration"), _, _)).Times(5);
 
     // workspace folders on, but no workspaces provided
-    json init1 = R"({"processId":5236,
+    auto init1 = R"({"processId":5236,
                      "rootPath":null,
                      "rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true,
                      "workspaceFolders":true},"textDocument":{"publishDiagnostics":{"relatedInformation":true},"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"contextSupport":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true,"documentationFormat":["markdown","plaintext"],"deprecatedSupport":true,"preselectSupport":true},"completionItemKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}},"hover":{"dynamicRegistration":true,"contentFormat":["markdown","plaintext"]},"signatureHelp":{"dynamicRegistration":true,"signatureInformation":{"documentationFormat":["markdown","plaintext"]}},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"codeAction":{"dynamicRegistration":true,"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports"]}}},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true},"typeDefinition":{"dynamicRegistration":true},"implementation":{"dynamicRegistration":true},"colorProvider":{"dynamicRegistration":true}}},"trace":"off",
@@ -107,7 +103,7 @@ TEST(workspace_folders, initialize_folders)
 
 
     // workspace folders on, two workspaces provided
-    json init2 = json::parse(R"({"processId":11244,
+    auto init2 = nlohmann::json::parse(R"({"processId":11244,
                      "rootPath":"c:\\Users\\Desktop\\dont_load",
                      "rootUri":"file:///c%3A/Users/error","capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true,
                      "workspaceFolders":true},"textDocument":{"publishDiagnostics":{"relatedInformation":true},"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"contextSupport":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true,"documentationFormat":["markdown","plaintext"],"deprecatedSupport":true,"preselectSupport":true},"completionItemKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}},"hover":{"dynamicRegistration":true,"contentFormat":["markdown","plaintext"]},"signatureHelp":{"dynamicRegistration":true,"signatureInformation":{"documentationFormat":["markdown","plaintext"]}},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]},"hierarchicalDocumentSymbolSupport":true},"codeAction":{"dynamicRegistration":true,"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports"]}}},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true},"typeDefinition":{"dynamicRegistration":true},"implementation":{"dynamicRegistration":true},"colorProvider":{"dynamicRegistration":true},"foldingRange":{"dynamicRegistration":true,"rangeLimit":5000,"lineFoldingOnly":true}}},"trace":"off",
@@ -119,7 +115,7 @@ TEST(workspace_folders, initialize_folders)
     f.initialize_feature(init2);
 
     // workspace folders off
-    json init3 = json::parse(R"({"processId":11244,
+    auto init3 = nlohmann::json::parse(R"({"processId":11244,
                      "rootPath":"c:\\Users\\error",
                      "rootUri":")"
         + ws1_uri
@@ -129,7 +125,7 @@ TEST(workspace_folders, initialize_folders)
     f.initialize_feature(init3);
 
     // fallback to rootPath
-    json init4 = json::parse(R"({"processId":11244,
+    auto init4 = nlohmann::json::parse(R"({"processId":11244,
                      "rootPath":")"
         + ws1_path_json_string + R"(",
                      "rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true,
@@ -138,7 +134,7 @@ TEST(workspace_folders, initialize_folders)
     f.initialize_feature(init4);
 
     // no rootUri provided (older version of LSP)
-    json init5 = json::parse(R"({"processId":11244,
+    auto init5 = nlohmann::json::parse(R"({"processId":11244,
                      "rootPath":")"
         + ws1_path_json_string
         + R"(","capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true},"textDocument":{"publishDiagnostics":{"relatedInformation":true},"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"contextSupport":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true,"documentationFormat":["markdown","plaintext"],"deprecatedSupport":true,"preselectSupport":true},"completionItemKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}},"hover":{"dynamicRegistration":true,"contentFormat":["markdown","plaintext"]},"signatureHelp":{"dynamicRegistration":true,"signatureInformation":{"documentationFormat":["markdown","plaintext"]}},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]},"hierarchicalDocumentSymbolSupport":true},"codeAction":{"dynamicRegistration":true,"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports"]}}},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true},"typeDefinition":{"dynamicRegistration":true},"implementation":{"dynamicRegistration":true},"colorProvider":{"dynamicRegistration":true},"foldingRange":{"dynamicRegistration":true,"rangeLimit":5000,"lineFoldingOnly":true}}},"trace":"off"})");
@@ -160,11 +156,20 @@ TEST(workspace_folders, did_change_configuration)
 
 
     method handler;
-    json config_request_args { { "items", json::array_t { { { "section", "hlasm" } }, json::object() } } };
+    nlohmann::json config_request_args {
+        {
+            "items",
+            nlohmann::json::array_t {
+                {
+                    { "section", "hlasm" },
+                },
+                nlohmann::json::object(),
+            },
+        },
+    };
 
-    EXPECT_CALL(
-        provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_))
-        .WillOnce(::testing::SaveArg<3>(&handler));
+    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, ::testing::_))
+        .WillOnce(::testing::SaveArg<2>(&handler));
 
     methods["workspace/didChangeConfiguration"].handler("did_change_configuration_id", "{}"_json);
 
@@ -191,11 +196,18 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
 
 
     method handler;
-    json config_request_args { { "items", json::array_t { { { "section", "hlasm" } }, json::object() } } };
+    nlohmann::json config_request_args {
+        {
+            "items",
+            nlohmann::json::array_t {
+                { { "section", "hlasm" } },
+                nlohmann::json::object(),
+            },
+        },
+    };
 
-    EXPECT_CALL(
-        provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_))
-        .WillOnce(::testing::SaveArg<3>(&handler));
+    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, ::testing::_))
+        .WillOnce(::testing::SaveArg<2>(&handler));
 
     methods["workspace/didChangeConfiguration"].handler("did_change_configuration_id", "{}"_json);
 

@@ -14,6 +14,8 @@
 
 #include "dap_message_wrappers.h"
 
+#include "nlohmann/json.hpp"
+
 namespace hlasm_plugin::language_server::dap {
 
 std::optional<nlohmann::json> message_unwrapper::read()

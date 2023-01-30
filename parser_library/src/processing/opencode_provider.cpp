@@ -16,6 +16,7 @@
 
 #include "analyzer.h"
 #include "hlasmparser_multiline.h"
+#include "lexing/input_source.h"
 #include "lexing/token_stream.h"
 #include "library_info_transitional.h"
 #include "parsing/error_strategy.h"

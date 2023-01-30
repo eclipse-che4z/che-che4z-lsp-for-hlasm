@@ -17,6 +17,7 @@
 
 #include "../logger.h"
 #include "dap_feature.h"
+#include "nlohmann/json.hpp"
 
 namespace hlasm_plugin::language_server::dap {
 
@@ -27,44 +28,54 @@ server::server(parser_library::workspace_manager& ws_mngr, telemetry_sink* telem
     register_feature_methods();
 }
 
-void server::request(const json&, const std::string&, const json&, method)
+void server::request(const std::string&, const nlohmann::json&, method)
 {
     // Currently, there are no supported DAP requests from client to server
-    /*send_message_->reply(json {
+    /*send_message_->reply(nlohmann::json {
         { "seq", request_seq }, { "type", "request" }, { "command", requested_command }, { "arguments", args } });*/
 }
 
-void server::respond(const json& request_seq, const std::string& requested_command, const json& args)
+void server::respond(
+    const nlohmann::json& request_seq, const std::string& requested_command, const nlohmann::json& args)
 {
-    send_message_->reply(json { { "seq", ++last_seq_ },
+    send_message_->reply(nlohmann::json {
+        { "seq", ++last_seq_ },
         { "type", "response" },
         { "request_seq", request_seq },
         { "success", true },
         { "command", requested_command },
-        { "body", args } });
+        { "body", args },
+    });
 }
 
-void server::notify(const std::string& method, const json& args)
+void server::notify(const std::string& method, const nlohmann::json& args)
 {
-    send_message_->reply(json { { "seq", ++last_seq_ }, { "type", "event" }, { "event", method }, { "body", args } });
+    send_message_->reply(nlohmann::json {
+        { "seq", ++last_seq_ },
+        { "type", "event" },
+        { "event", method },
+        { "body", args },
+    });
 }
 
-void server::respond_error(const json& request_seq,
+void server::respond_error(const nlohmann::json& request_seq,
     const std::string& requested_command,
     int,
     const std::string& err_message,
-    const json& error)
+    const nlohmann::json& error)
 {
-    send_message_->reply(json { { "seq", ++last_seq_ },
+    send_message_->reply(nlohmann::json {
+        { "seq", ++last_seq_ },
         { "type", "response" },
         { "request_seq", request_seq },
         { "success", false },
         { "command", requested_command },
         { "message", err_message },
-        { "body", json { { "error", error } } } });
+        { "body", { { "error", error } } },
+    });
 }
 
-void server::message_received(const json& message)
+void server::message_received(const nlohmann::json& message)
 {
     try
     {
@@ -76,7 +87,7 @@ void server::message_received(const json& message)
         }
         auto arguments = message.find("arguments");
         if (arguments == message.end())
-            call_method(message.at("command").get<std::string>(), message.at("seq"), json());
+            call_method(message.at("command").get<std::string>(), message.at("seq"), nlohmann::json());
         else
             call_method(message.at("command").get<std::string>(), message.at("seq"), arguments.value());
     }

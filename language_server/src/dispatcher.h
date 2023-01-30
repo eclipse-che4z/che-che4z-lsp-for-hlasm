@@ -17,14 +17,15 @@
 
 #include "json_channel.h"
 
-#include "request_manager.h"
-#include "server.h"
+#include "send_message_provider.h"
 
 namespace hlasm_plugin::language_server {
+class server;
+class request_manager;
 
 // Reads and writes LSP (or DAP) messages from streams and deserializes them into json
 // Creates requests and passes them to request manager.
-class dispatcher : public send_message_provider
+class dispatcher final : public send_message_provider
 {
 public:
     // Takes istream to read messages, ostream to write messages,
@@ -36,7 +37,7 @@ public:
     int run_server_loop();
 
     // Serializes the json and sends it as message.
-    void reply(const json& result) override;
+    void reply(const nlohmann::json& result) override;
 
 private:
     json_channel_adapter channel;

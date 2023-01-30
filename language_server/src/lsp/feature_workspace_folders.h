@@ -34,29 +34,28 @@ public:
     // Adds workspace/* methods to the map.
     void register_methods(std::map<std::string, method>&) override;
     // Returns workspaces capability.
-    json register_capabilities() override;
+    nlohmann::json register_capabilities() override;
     // Opens workspace specified in the initialize request.
-    void initialize_feature(const json& initialise_params) override;
+    void initialize_feature(const nlohmann::json& initialise_params) override;
 
 private:
     // Handles workspace/didChangeWorkspaceFolders notification.
-    void on_did_change_workspace_folders(const json& id, const json& params);
-    void did_change_watched_files(const json&, const json& params);
+    void on_did_change_workspace_folders(const nlohmann::json& id, const nlohmann::json& params);
+    void did_change_watched_files(const nlohmann::json&, const nlohmann::json& params);
 
-    void configuration(const json&, const json& params) const;
-    void did_change_configuration(const json&, const json& params);
+    void configuration(const nlohmann::json&, const nlohmann::json& params) const;
+    void did_change_configuration(const nlohmann::json&, const nlohmann::json& params);
 
 
     // Adds all workspaces specified in the json to the workspace manager.
-    void add_workspaces(const json& added);
+    void add_workspaces(const nlohmann::json& added);
 
     // Removes all workspaces specified in the json from the workspace manager.
-    void remove_workspaces(const json& removed);
+    void remove_workspaces(const nlohmann::json& removed);
 
     // Adds one workspace to the workspace manager.
     void add_workspace(const std::string& name, const std::string& uri);
 
-    uint64_t config_request_number_ = 0;
     void send_configuration_request();
 };
 

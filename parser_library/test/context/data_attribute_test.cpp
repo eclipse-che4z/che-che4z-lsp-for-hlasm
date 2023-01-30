@@ -33,17 +33,13 @@ TEST(data_attributes, N)
     data = std::make_unique<macro_param_data_dummy>();
     EXPECT_EQ(positional_param(id, 0, *data).number({}), 0);
 
-
-    auto s0 = std::make_unique<macro_param_data_single>("first");
-    auto s1 = std::make_unique<macro_param_data_single>("second");
-    auto s2 = std::make_unique<macro_param_data_single>("third");
     std::vector<macro_data_ptr> v;
-    v.push_back(move(s0));
-    v.push_back(move(s1));
-    v.push_back(move(s2));
+    v.push_back(std::make_unique<macro_param_data_single>("first"));
+    v.push_back(std::make_unique<macro_param_data_single>("second"));
+    v.push_back(std::make_unique<macro_param_data_single>("third"));
 
     EXPECT_EQ(keyword_param(id, std::make_unique<macro_param_data_dummy>(), nullptr).number({}), 0);
-    data = std::make_unique<macro_param_data_composite>(move(v));
+    data = std::make_unique<macro_param_data_composite>(std::move(v));
     auto kp = keyword_param(id, std::make_unique<macro_param_data_dummy>(), std::move(data));
     EXPECT_EQ(kp.number({}), 3);
     EXPECT_EQ(kp.number(std::array<size_t, 1> { 1 }), 1);
@@ -86,18 +82,14 @@ TEST(data_attributes, K)
     data = std::make_unique<macro_param_data_dummy>();
     EXPECT_EQ(positional_param(idA, 0, *data).count({}), 0);
 
-
-    auto s0 = std::make_unique<macro_param_data_single>("first");
-    auto s1 = std::make_unique<macro_param_data_single>("second");
-    auto s2 = std::make_unique<macro_param_data_single>("third");
     std::vector<macro_data_ptr> v;
-    v.push_back(move(s0));
-    v.push_back(move(s1));
-    v.push_back(move(s2));
+    v.push_back(std::make_unique<macro_param_data_single>("first"));
+    v.push_back(std::make_unique<macro_param_data_single>("second"));
+    v.push_back(std::make_unique<macro_param_data_single>("third"));
 
     EXPECT_EQ(keyword_param(idA, std::make_unique<macro_param_data_dummy>(), nullptr).count({}), 0);
     auto kp = keyword_param(
-        idA, std::make_unique<macro_param_data_dummy>(), std::make_unique<macro_param_data_composite>(move(v)));
+        idA, std::make_unique<macro_param_data_dummy>(), std::make_unique<macro_param_data_composite>(std::move(v)));
     EXPECT_EQ(kp.count({}), 20);
     EXPECT_EQ(kp.count(std::array<size_t, 1> { 2 }), 6);
     EXPECT_EQ(kp.count(std::array<size_t, 1> { 4 }), 0);

@@ -19,6 +19,7 @@
 
 #include "blocking_queue.h"
 #include "logger.h"
+#include "nlohmann/json.hpp"
 #include "server_streams.h"
 
 namespace hlasm_plugin::language_server {

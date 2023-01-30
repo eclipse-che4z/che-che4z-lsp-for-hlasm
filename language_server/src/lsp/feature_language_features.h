@@ -31,23 +31,23 @@ public:
     feature_language_features(parser_library::workspace_manager& ws_mngr, response_provider& response_provider);
 
     void register_methods(std::map<std::string, method>& methods) override;
-    json register_capabilities() override;
-    void initialize_feature(const json& initialise_params) override;
+    nlohmann::json register_capabilities() override;
+    void initialize_feature(const nlohmann::json& initialise_params) override;
 
-    static json convert_tokens_to_num_array(const std::vector<parser_library::token_info>& tokens);
+    static nlohmann::json convert_tokens_to_num_array(const std::vector<parser_library::token_info>& tokens);
 
 private:
-    void definition(const json& id, const json& params);
-    void references(const json& id, const json& params);
-    void hover(const json& id, const json& params);
-    void completion(const json& id, const json& params);
-    void semantic_tokens(const json& id, const json& params);
-    void document_symbol(const json& id, const json& params);
-    void opcode_suggestion(const json& id, const json& params);
+    void definition(const nlohmann::json& id, const nlohmann::json& params);
+    void references(const nlohmann::json& id, const nlohmann::json& params);
+    void hover(const nlohmann::json& id, const nlohmann::json& params);
+    void completion(const nlohmann::json& id, const nlohmann::json& params);
+    void semantic_tokens(const nlohmann::json& id, const nlohmann::json& params);
+    void document_symbol(const nlohmann::json& id, const nlohmann::json& params);
+    void opcode_suggestion(const nlohmann::json& id, const nlohmann::json& params);
 
-    static json get_markup_content(std::string_view content);
-    json document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol);
-    json document_symbol_list_json(hlasm_plugin::parser_library::document_symbol_list symbol_list);
+    static nlohmann::json get_markup_content(std::string_view content);
+    nlohmann::json document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol);
+    nlohmann::json document_symbol_list_json(hlasm_plugin::parser_library::document_symbol_list symbol_list);
 };
 
 } // namespace hlasm_plugin::language_server::lsp

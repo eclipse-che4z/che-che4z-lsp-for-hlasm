@@ -117,7 +117,7 @@ macro_invo_ptr macro_definition::call(
                         positional_params_[syslist.size()]->position,
                         *param.data));
             }
-            syslist.push_back(move(param.data));
+            syslist.push_back(std::move(param.data));
         }
     }
 

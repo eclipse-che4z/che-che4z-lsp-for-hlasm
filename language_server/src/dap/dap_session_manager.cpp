@@ -15,6 +15,9 @@
 #include "dap_session_manager.h"
 
 #include "dap_message_wrappers.h"
+#include "dap_session.h"
+#include "nlohmann/json.hpp"
+#include "telemetry_sink.h"
 
 namespace {
 std::optional<size_t> extract_session_id_from_registration_message(const nlohmann::json& msg)
@@ -62,6 +65,9 @@ session_manager::session_manager(
     , out_stream(&out)
     , telemetry_reporter(telem_reporter)
 {}
+session_manager::session_manager(session_manager&&) noexcept = default;
+session_manager& session_manager::operator=(session_manager&&) noexcept = default;
+session_manager::~session_manager() = default;
 
 // Inherited via json_sink
 

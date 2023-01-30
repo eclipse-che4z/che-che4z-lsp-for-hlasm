@@ -19,6 +19,7 @@
 
 #include "dap/dap_server.h"
 #include "lsp/lsp_server.h"
+#include "nlohmann/json.hpp"
 #include "scope_exit.h"
 #include "send_message_provider_mock.h"
 #include "stream_helper.h"
@@ -32,18 +33,19 @@ using ::testing::SaveArg;
 using ::testing::Truly;
 
 namespace {
-json open_file_message =
+nlohmann::json open_file_message =
     R"({"jsonrpc":"2.0","id":47,"method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///test_file","languageId":"hlasm","version":4,"text":" LR 16,1"}}})"_json;
 
 auto get_method_matcher(std::string method)
 {
-    return [method = std::move(method)](
-               const json& arg) { return arg.count("method") > 0 && arg["method"].get<std::string>() == method; };
+    return [method = std::move(method)](const nlohmann::json& arg) {
+        return arg.count("method") > 0 && arg["method"].get<std::string>() == method;
+    };
 }
 
 auto get_telemetry_method_matcher(std::string method)
 {
-    return [method = std::move(method)](const json& arg) {
+    return [method = std::move(method)](const nlohmann::json& arg) {
         return arg.count("method") > 0 && arg["method"].get<std::string>() == "telemetry/event"
             && arg["params"]["method_name"] == method;
     };
@@ -59,8 +61,8 @@ TEST(telemetry, lsp_server_did_open)
 
 
 
-    json diags_reply;
-    json telemetry_reply;
+    nlohmann::json diags_reply;
+    nlohmann::json telemetry_reply;
 
 
     EXPECT_CALL(lsp_smpm, reply(Truly(get_method_matcher("textDocument/publishDiagnostics"))))
@@ -74,13 +76,13 @@ TEST(telemetry, lsp_server_did_open)
 
     EXPECT_EQ(diags_reply["params"]["diagnostics"].size(), 1);
 
-    json& metrics = telemetry_reply["params"]["measurements"];
+    nlohmann::json& metrics = telemetry_reply["params"]["measurements"];
 
     EXPECT_EQ(metrics["Files"], 1);
     EXPECT_GT(metrics["duration"], 0U);
     EXPECT_EQ(metrics["error_count"], 1);
 
-    json& ws_info = telemetry_reply["params"]["properties"];
+    nlohmann::json& ws_info = telemetry_reply["params"]["properties"];
 
     EXPECT_EQ(ws_info["diagnostics_suppressed"], false);
 }
@@ -124,17 +126,17 @@ TEST(telemetry, telemetry_broker)
         dap_server.set_send_message_provider(&dap_smpm);
 
         // actual message sent by VS Code
-        json initialize_message =
+        auto initialize_message =
             R"({"command":"initialize","arguments":{"pathFormat":"uri","linesStartAt1":true,"columnsStartAt1":true},"type":"request","seq":1})"_json;
 
         dap_server.message_received(initialize_message);
 
-        json launch_message =
+        auto launch_message =
             R"({"command":"launch","arguments":{"program":"file:///test_file","stopOnEntry":true,"restart":false},"type":"request","seq":10})"_json;
 
         dap_server.message_received(launch_message);
 
-        json disconnect_message =
+        auto disconnect_message =
             R"({"command":"disconnect","arguments":{"restart":false},"type":"request","seq":10})"_json;
 
         dap_server.message_received(disconnect_message);

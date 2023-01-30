@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Broadcom.
+ * Copyright (c) 2023 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -12,21 +12,24 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_LANGUAGESERVER_TEST_SEND_MESSAGE_PROVIDER_MOCK_H
-#define HLASMPLUGIN_LANGUAGESERVER_TEST_SEND_MESSAGE_PROVIDER_MOCK_H
+#ifndef HLASMPLUGIN_LANGUAGESERVER_SEND_MESSAGE_PROVIDER_H
+#define HLASMPLUGIN_LANGUAGESERVER_SEND_MESSAGE_PROVIDER_H
 
-#include "gmock/gmock.h"
-
-#include "server.h"
+#include "nlohmann/json_fwd.hpp"
 
 namespace hlasm_plugin::language_server {
 
-class send_message_provider_mock : public send_message_provider
+// Interface that the server uses to send messages to the LSP client.
+class send_message_provider
 {
+protected:
+    ~send_message_provider() = default;
+
 public:
-    MOCK_METHOD1(reply, void(const nlohmann::json&));
+    // Serializes the json and sends it to the LSP client.
+    virtual void reply(const nlohmann::json& result) = 0;
 };
 
 } // namespace hlasm_plugin::language_server
 
-#endif // !HLASMPLUGIN_LANGUAGESERVER_TEST_SEND_MESSAGE_PROVIDER_MOCK_H
+#endif

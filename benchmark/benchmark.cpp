@@ -21,7 +21,6 @@
 #include <unordered_map>
 
 #include "../language_server/src/parsing_metadata_collector.h"
-#include "../language_server/src/parsing_metadata_serialization.h"
 #include "config/pgm_conf.h"
 #include "diagnostic_counter.h"
 #include "nlohmann/json.hpp"
@@ -144,7 +143,8 @@ json parse_one_file(const std::string& source_file,
 
     auto top_messages = benchmark::get_top_messages(diag_counter.message_counts);
 
-    json result({ { "File", source_file },
+    json result({
+        { "File", source_file },
         { "Success", true },
         { "Errors", diag_counter.error_count },
         { "Warnings", diag_counter.warning_count },
@@ -153,11 +153,20 @@ json parse_one_file(const std::string& source_file,
         { "Executed Statements", exec_statements },
         { "ExecStatement/ms", exec_statements / (double)time },
         { "Line/ms", metrics.lines / (double)time },
-        { "Top messages", std::move(top_messages) } });
+        { "Top messages", std::move(top_messages) },
 
-    json metrics_json(metrics);
-
-    result.insert(metrics_json.begin(), metrics_json.end());
+        { "Open Code Statements", metrics.open_code_statements },
+        { "Copy Statements", metrics.copy_statements },
+        { "Macro Statements", metrics.macro_statements },
+        { "Copy Def Statements", metrics.copy_def_statements },
+        { "Macro Def Statements", metrics.macro_def_statements },
+        { "Lookahead Statements", metrics.lookahead_statements },
+        { "Reparsed Statements", metrics.reparsed_statements },
+        { "Continued Statements", metrics.continued_statements },
+        { "Non-continued Statements", metrics.non_continued_statements },
+        { "Lines", metrics.lines },
+        { "Files", metrics.files },
+    });
 
     auto first_parse_metrics = metrics;
     auto first_diag_counter = diag_counter;

@@ -16,6 +16,7 @@
 
 #include "common_testing.h"
 #include "ebcdic_encoding.h"
+#include "lexing/input_source.h"
 #include "utils/unicode_text.h"
 
 TEST(input_source, utf8conv)

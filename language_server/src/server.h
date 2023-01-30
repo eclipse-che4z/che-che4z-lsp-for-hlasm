@@ -18,23 +18,12 @@
 #include <chrono>
 #include <unordered_set>
 
-#include "json_channel.h"
-
-#include "common_types.h"
 #include "feature.h"
+#include "send_message_provider.h"
 #include "telemetry_sink.h"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server {
-
-// Interface that the server uses to send messages to the LSP client.
-class send_message_provider
-{
-public:
-    // Serializes the json and sends it to the LSP client.
-    virtual void reply(const json& result) = 0;
-    virtual ~send_message_provider() = default;
-};
 
 // Abstract class that calls the correct serving method for registered LSP and DAP notifications and requests
 // Can be implemented to fit LSP or DAP. Class implementing this class must also implement response
@@ -47,7 +36,7 @@ public:
     explicit server(parser_library::workspace_manager& ws_mngr, telemetry_sink* telemetry_provider = nullptr);
 
     // Tells the server that a massage was received. The server carries out the notification or request.
-    virtual void message_received(const json& message) = 0;
+    virtual void message_received(const nlohmann::json& message) = 0;
 
     // Returns true, if LSP shutdown request has been received.
     bool is_shutdown_request_received() const;
@@ -62,7 +51,7 @@ protected:
     std::vector<std::unique_ptr<feature>> features_;
 
     std::map<std::string, method> methods_;
-    std::unordered_map<json, method> request_handlers_;
+    std::unordered_map<unsigned long long, method> request_handlers_;
 
     bool shutdown_request_received_ = false;
     bool exit_notification_received_ = false;
@@ -73,7 +62,7 @@ protected:
     void register_feature_methods();
 
     // Calls a method that is registered in methods_ with the specified name with arguments and id of request.
-    void call_method(const std::string& method, const json& id, const json& args);
+    void call_method(const std::string& method, const nlohmann::json& id, const nlohmann::json& args);
 
     virtual telemetry_metrics_info get_telemetry_details();
 

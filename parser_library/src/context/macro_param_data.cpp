@@ -16,8 +16,6 @@
 
 #include <stdexcept>
 
-using namespace std;
-
 namespace hlasm_plugin::parser_library::context {
 
 macro_param_data_component::~macro_param_data_component() = default;

@@ -21,6 +21,7 @@
 #include <string>
 
 #include "logger.h"
+#include "nlohmann/json.hpp"
 
 namespace hlasm_plugin::language_server {
 
@@ -37,7 +38,7 @@ void server::register_feature_methods()
     }
 }
 
-void server::call_method(const std::string& method, const json& id, const json& args)
+void server::call_method(const std::string& method, const nlohmann::json& id, const nlohmann::json& args)
 {
     if (shutdown_request_received_)
     {
@@ -50,7 +51,7 @@ void server::call_method(const std::string& method, const json& id, const json& 
         try
         {
             auto start = std::chrono::steady_clock::now();
-            (*found).second.handler(id.is_null() ? /* for compatibility */ json("") : id, args);
+            (*found).second.handler(id.is_null() ? /* for compatibility */ nlohmann::json("") : id, args);
             std::chrono::duration<double> duration = std::chrono::steady_clock::now() - start;
 
             telemetry_method_call(method, (*found).second.telemetry_level, duration.count());
@@ -68,7 +69,7 @@ void server::call_method(const std::string& method, const json& id, const json& 
         // - notification can be ignored
         // - requests should be responded to with MethodNotFound
         if (!id.is_null())
-            send_message_->reply(json {
+            send_message_->reply(nlohmann::json {
                 { "id", id },
                 {
                     "error",

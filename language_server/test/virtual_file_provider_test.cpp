@@ -15,6 +15,7 @@
 #include "gmock/gmock.h"
 #include "json_channel.h"
 
+#include "nlohmann/json.hpp"
 #include "protocol.h"
 #include "virtual_file_provider.h"
 #include "ws_mngr_mock.h"

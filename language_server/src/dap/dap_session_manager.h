@@ -21,10 +21,13 @@
 
 #include "../json_channel.h"
 #include "../message_router.h"
-#include "dap_session.h"
 #include "workspace_manager.h"
 
+namespace hlasm_plugin::language_server {
+class telemetry_sink;
+} // namespace hlasm_plugin::language_server
 namespace hlasm_plugin::language_server::dap {
+class session;
 class session_manager final : public json_sink
 {
     hlasm_plugin::parser_library::workspace_manager* ws_mngr;
@@ -39,6 +42,11 @@ public:
     session_manager(hlasm_plugin::parser_library::workspace_manager& ws,
         json_sink& out,
         telemetry_sink* telemetry_reporter = nullptr);
+    session_manager(const session_manager&) = delete;
+    session_manager(session_manager&&) noexcept;
+    session_manager& operator=(const session_manager&) = delete;
+    session_manager& operator=(session_manager&&) noexcept;
+    ~session_manager();
 
     // Inherited via json_sink
     void write(const nlohmann::json& msg) override;

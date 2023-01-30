@@ -18,14 +18,17 @@
 #    include <locale.h>
 #endif
 
+#include "json_queue_channel.h"
+
 #include "dap/dap_message_wrappers.h"
 #include "dap/dap_server.h"
-#include "dap/dap_session.h"
 #include "dap/dap_session_manager.h"
 #include "dispatcher.h"
 #include "logger.h"
 #include "lsp/lsp_server.h"
 #include "message_router.h"
+#include "nlohmann/json.hpp"
+#include "request_manager.h"
 #include "scope_exit.h"
 #include "server_streams.h"
 #include "telemetry_broker.h"

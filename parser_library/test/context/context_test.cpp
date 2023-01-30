@@ -29,7 +29,6 @@
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
-using namespace std;
 
 TEST(context, in_open_code)
 {
@@ -177,7 +176,7 @@ TEST(context_set_vars, set_scalar)
     EXPECT_EQ(var.get_value(1), 0);
 
 
-    set_symbol<string> str_var(idx, true, false);
+    set_symbol<std::string> str_var(idx, true, false);
 
     EXPECT_EQ(str_var.get_value(), "");
     EXPECT_EQ(str_var.get_value(1), "");
@@ -190,7 +189,7 @@ TEST(context_set_vars, set_non_scalar)
 
     auto idx = ctx.ids().add(std::string_view("var"));
 
-    set_symbol<string> var(idx, false, false);
+    set_symbol<std::string> var(idx, false, false);
 
     EXPECT_EQ(var.get_value(), "");
 
@@ -220,9 +219,9 @@ TEST(context_macro_param, param_data)
     hlasm_context ctx;
 
     // creating macro param data
-    auto s0 = make_unique<macro_param_data_single>("first");
-    auto s1 = make_unique<macro_param_data_single>("second");
-    auto s2 = make_unique<macro_param_data_single>("third");
+    auto s0 = std::make_unique<macro_param_data_single>("first");
+    auto s1 = std::make_unique<macro_param_data_single>("second");
+    auto s2 = std::make_unique<macro_param_data_single>("third");
 
     // asserting behaviour of data classes
     ASSERT_TRUE(s0->get_value() == "first");
@@ -232,11 +231,11 @@ TEST(context_macro_param, param_data)
     EXPECT_EQ(s1->get_ith(5)->get_ith(3)->get_value(), "");
 
     // creating composite data
-    vector<macro_data_ptr> v;
-    v.push_back(move(s0));
-    v.push_back(move(s1));
-    v.push_back(move(s2));
-    macro_param_data_composite c(move(v));
+    std::vector<macro_data_ptr> v;
+    v.push_back(std::move(s0));
+    v.push_back(std::move(s1));
+    v.push_back(std::move(s2));
+    macro_param_data_composite c(std::move(v));
     macro_param_data_component* ptr(&c);
 
     EXPECT_EQ(ptr->get_value(), "(first,second,third)");
@@ -253,27 +252,27 @@ TEST(context_macro_param, param_data_composite_empty)
 // testing more complex composite data
 TEST(context_macro_param, param_data_composite)
 {
-    vector<macro_data_ptr> v;
-    v.push_back(unique_ptr<macro_param_data_component>(make_unique<macro_param_data_single>("first")));
-    v.push_back(unique_ptr<macro_param_data_component>(make_unique<macro_param_data_single>("second")));
+    std::vector<macro_data_ptr> v;
+    v.push_back(std::make_unique<macro_param_data_single>("first"));
+    v.push_back(std::make_unique<macro_param_data_single>("second"));
 
-    vector<macro_data_ptr> v2;
-    v2.push_back(unique_ptr<macro_param_data_component>(make_unique<macro_param_data_single>("second")));
-    v2.push_back(unique_ptr<macro_param_data_component>(make_unique<macro_param_data_single>("third")));
+    std::vector<macro_data_ptr> v2;
+    v2.push_back(std::make_unique<macro_param_data_single>("second"));
+    v2.push_back(std::make_unique<macro_param_data_single>("third"));
 
-    vector<macro_data_ptr> v3;
-    v3.push_back(unique_ptr<macro_param_data_component>(make_unique<macro_param_data_single>("third")));
+    std::vector<macro_data_ptr> v3;
+    v3.push_back(std::make_unique<macro_param_data_single>("third"));
 
-    macro_data_ptr c1(make_unique<macro_param_data_composite>(move(v)));
-    macro_data_ptr c2(make_unique<macro_param_data_composite>(move(v2)));
-    macro_data_ptr c3(make_unique<macro_param_data_composite>(move(v3)));
+    macro_data_ptr c1(std::make_unique<macro_param_data_composite>(std::move(v)));
+    macro_data_ptr c2(std::make_unique<macro_param_data_composite>(std::move(v2)));
+    macro_data_ptr c3(std::make_unique<macro_param_data_composite>(std::move(v3)));
 
-    vector<macro_data_ptr> v4;
-    v4.push_back(move(c1));
-    v4.push_back(move(c2));
-    v4.push_back(move(c3));
+    std::vector<macro_data_ptr> v4;
+    v4.push_back(std::move(c1));
+    v4.push_back(std::move(c2));
+    v4.push_back(std::move(c3));
 
-    macro_param_data_composite c(move(v4));
+    macro_param_data_composite c(std::move(v4));
 
     EXPECT_EQ(c.get_value(), "((first,second),(second,third),(third))");
     EXPECT_EQ(c.get_ith(0)->get_value(), "(first,second)");
@@ -296,18 +295,18 @@ TEST(context_macro, add_macro)
     auto op3 = ctx.ids().add(std::string_view("op3"));
 
     // creating data of params
-    macro_data_ptr p1(make_unique<macro_param_data_single>(""));
+    macro_data_ptr p1(std::make_unique<macro_param_data_single>(""));
 
     // creating vector of params for add_macro
-    macro_arg a(move(p1), key);
-    vector<macro_arg> args;
-    args.push_back(move(a));
+    macro_arg a(std::move(p1), key);
+    std::vector<macro_arg> args;
+    args.push_back(std::move(a));
     args.emplace_back(nullptr, op1);
     args.emplace_back(nullptr);
     args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-    auto& m = *ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {}, {});
+    auto& m = *ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {});
 
     EXPECT_EQ(m.named_params().size(), (size_t)4);
     EXPECT_NE(m.named_params().find(key), m.named_params().end());
@@ -328,32 +327,32 @@ TEST(context_macro, call_and_leave_macro)
     auto op3 = ctx.ids().add(std::string_view("op3"));
 
     // creating data of params
-    macro_data_ptr p1(make_unique<macro_param_data_single>(""));
+    macro_data_ptr p1(std::make_unique<macro_param_data_single>(""));
 
     // creating vector of params for add_macro
-    macro_arg a(move(p1), key);
-    vector<macro_arg> args;
-    args.push_back(move(a));
+    macro_arg a(std::move(p1), key);
+    std::vector<macro_arg> args;
+    args.push_back(std::move(a));
     args.emplace_back(nullptr, op1);
     args.emplace_back(nullptr);
     args.emplace_back(nullptr, op3);
 
     // prototype->|		MAC		&KEY=,&OP1,,&OP3
-    auto& m = *ctx.add_macro(idx, context::id_index(), move(args), {}, {}, {}, {}, {});
+    auto& m = *ctx.add_macro(idx, context::id_index(), std::move(args), {}, {}, {}, {}, {});
 
     // creating param data
-    macro_data_ptr p2(make_unique<macro_param_data_single>("ada"));
-    macro_data_ptr p3(make_unique<macro_param_data_single>("mko"));
-    macro_data_ptr p4(make_unique<macro_param_data_single>(""));
+    macro_data_ptr p2(std::make_unique<macro_param_data_single>("ada"));
+    macro_data_ptr p3(std::make_unique<macro_param_data_single>("mko"));
+    macro_data_ptr p4(std::make_unique<macro_param_data_single>(""));
 
     // creating vector of param data for entering macro
-    vector<macro_arg> params;
-    params.emplace_back(move(p2));
-    params.emplace_back(move(p3));
-    params.emplace_back(move(p4));
+    std::vector<macro_arg> params;
+    params.emplace_back(std::move(p2));
+    params.emplace_back(std::move(p3));
+    params.emplace_back(std::move(p4));
 
     // call->|		MAC		ada,mko,
-    auto m2 = ctx.enter_macro(idx, nullptr, move(params));
+    auto m2 = ctx.enter_macro(idx, nullptr, std::move(params));
 
     ASSERT_TRUE(m.id == m2->id);
     ASSERT_TRUE(ctx.is_in_macro());
@@ -390,34 +389,34 @@ TEST(context_macro, repeat_call_same_macro)
     auto lbl = ctx.ids().add(std::string_view("lbl"));
 
     // creating data of params
-    macro_data_ptr p1(make_unique<macro_param_data_single>(""));
+    macro_data_ptr p1(std::make_unique<macro_param_data_single>(""));
 
     // creating vector of params for add_macro
-    macro_arg a(move(p1), key);
-    vector<macro_arg> args;
-    args.push_back(move(a));
+    macro_arg a(std::move(p1), key);
+    std::vector<macro_arg> args;
+    args.push_back(std::move(a));
     args.emplace_back(nullptr, op1);
     args.emplace_back(nullptr);
     args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-    ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {}, {});
+    ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {});
 
     // creating param data
-    macro_data_ptr lb(make_unique<macro_param_data_single>("lbl"));
-    macro_data_ptr p2(make_unique<macro_param_data_single>("ada"));
-    macro_data_ptr p3(make_unique<macro_param_data_single>("mko"));
-    macro_data_ptr p4(make_unique<macro_param_data_single>(""));
+    macro_data_ptr lb(std::make_unique<macro_param_data_single>("lbl"));
+    macro_data_ptr p2(std::make_unique<macro_param_data_single>("ada"));
+    macro_data_ptr p3(std::make_unique<macro_param_data_single>("mko"));
+    macro_data_ptr p4(std::make_unique<macro_param_data_single>(""));
 
     // creating vector of param data for entering macro
-    vector<macro_arg> params;
-    params.emplace_back(move(p2));
-    params.emplace_back(move(p3));
-    params.emplace_back(move(p4));
+    std::vector<macro_arg> params;
+    params.emplace_back(std::move(p2));
+    params.emplace_back(std::move(p3));
+    params.emplace_back(std::move(p4));
 
     // calling macro
     // call->|lbl		MAC		ada,mko,
-    auto m2 = ctx.enter_macro(idx, move(lb), move(params));
+    auto m2 = ctx.enter_macro(idx, std::move(lb), std::move(params));
 
     EXPECT_EQ(m2->named_params.find(lbl)->second->get_value(), "lbl");
 
@@ -426,28 +425,25 @@ TEST(context_macro, repeat_call_same_macro)
     params.clear();
 
     // creating data for another macro call
-    macro_data_ptr np2(make_unique<macro_param_data_single>(""));
-    macro_data_ptr np3(make_unique<macro_param_data_single>(""));
-    macro_data_ptr np4(make_unique<macro_param_data_single>("cas"));
+    macro_data_ptr np2(std::make_unique<macro_param_data_single>(""));
+    macro_data_ptr np3(std::make_unique<macro_param_data_single>(""));
+    macro_data_ptr np4(std::make_unique<macro_param_data_single>("cas"));
 
     // creating data for one complex macro param
-    auto s0 = make_unique<macro_param_data_single>("first");
-    auto s1 = make_unique<macro_param_data_single>("second");
-    auto s2 = make_unique<macro_param_data_single>("third");
-    vector<macro_data_ptr> v;
-    v.push_back(move(s0));
-    v.push_back(move(s1));
-    v.push_back(move(s2));
-    macro_data_ptr dat(make_unique<macro_param_data_composite>(move(v)));
+    std::vector<macro_data_ptr> v;
+    v.push_back(std::make_unique<macro_param_data_single>("first"));
+    v.push_back(std::make_unique<macro_param_data_single>("second"));
+    v.push_back(std::make_unique<macro_param_data_single>("third"));
+    macro_data_ptr dat(std::make_unique<macro_param_data_composite>(std::move(v)));
 
     // creating another vector for macro call
-    params.emplace_back(move(np2));
-    params.emplace_back(move(np4), key);
-    params.emplace_back(move(np3));
-    params.emplace_back(move(dat));
+    params.emplace_back(std::move(np2));
+    params.emplace_back(std::move(np4), key);
+    params.emplace_back(std::move(np3));
+    params.emplace_back(std::move(dat));
 
     // call->|		MAC		,KEY=cas,,(first,second,third)
-    auto m3 = ctx.enter_macro(idx, nullptr, move(params));
+    auto m3 = ctx.enter_macro(idx, nullptr, std::move(params));
 
     ASSERT_TRUE(m2 != m3);
 
@@ -484,35 +480,35 @@ TEST(context_macro, recurr_call)
     auto lbl = ctx.ids().add(std::string_view("lbl"));
 
     // creating data of params
-    macro_data_ptr p1(make_unique<macro_param_data_single>(""));
+    macro_data_ptr p1(std::make_unique<macro_param_data_single>(""));
 
     // creating vector of params for add_macro
-    macro_arg a(move(p1), key);
-    vector<macro_arg> args;
-    args.push_back(move(a));
+    macro_arg a(std::move(p1), key);
+    std::vector<macro_arg> args;
+    args.push_back(std::move(a));
     args.emplace_back(nullptr, op1);
     args.emplace_back(nullptr);
     args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-    ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {}, {});
+    ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {});
 
     // creating param data
-    macro_data_ptr lb(make_unique<macro_param_data_single>("lbl"));
-    macro_data_ptr p2(make_unique<macro_param_data_single>("ada"));
-    macro_data_ptr p3(make_unique<macro_param_data_single>("mko"));
-    macro_data_ptr p4(make_unique<macro_param_data_single>(""));
-    macro_data_ptr p5(make_unique<macro_param_data_single>("as"));
+    macro_data_ptr lb(std::make_unique<macro_param_data_single>("lbl"));
+    macro_data_ptr p2(std::make_unique<macro_param_data_single>("ada"));
+    macro_data_ptr p3(std::make_unique<macro_param_data_single>("mko"));
+    macro_data_ptr p4(std::make_unique<macro_param_data_single>(""));
+    macro_data_ptr p5(std::make_unique<macro_param_data_single>("as"));
 
     // creating vector of param data for entering macro
-    vector<macro_arg> params;
-    params.emplace_back(move(p2));
-    params.emplace_back(move(p3));
-    params.emplace_back(move(p4));
+    std::vector<macro_arg> params;
+    params.emplace_back(std::move(p2));
+    params.emplace_back(std::move(p3));
+    params.emplace_back(std::move(p4));
 
     // calling macro
     // call->|lbl		MAC		ada,mko,
-    auto m2 = ctx.enter_macro(idx, move(lb), move(params));
+    auto m2 = ctx.enter_macro(idx, std::move(lb), std::move(params));
 
     //*****created first macro call
 
@@ -522,28 +518,25 @@ TEST(context_macro, recurr_call)
     params.clear();
 
     // creating data for another macro call
-    macro_data_ptr np2(make_unique<macro_param_data_single>(""));
-    macro_data_ptr np3(make_unique<macro_param_data_single>(""));
-    macro_data_ptr np4(make_unique<macro_param_data_single>("cas"));
+    macro_data_ptr np2(std::make_unique<macro_param_data_single>(""));
+    macro_data_ptr np3(std::make_unique<macro_param_data_single>(""));
+    macro_data_ptr np4(std::make_unique<macro_param_data_single>("cas"));
 
     // creating data for one complex macro param
-    auto s0 = make_unique<macro_param_data_single>("first");
-    auto s1 = make_unique<macro_param_data_single>("second");
-    auto s2 = make_unique<macro_param_data_single>("third");
-    vector<macro_data_ptr> v;
-    v.push_back(move(s0));
-    v.push_back(move(s1));
-    v.push_back(move(s2));
-    macro_data_ptr dat(make_unique<macro_param_data_composite>(move(v)));
+    std::vector<macro_data_ptr> v;
+    v.push_back(std::make_unique<macro_param_data_single>("first"));
+    v.push_back(std::make_unique<macro_param_data_single>("second"));
+    v.push_back(std::make_unique<macro_param_data_single>("third"));
+    macro_data_ptr dat(std::make_unique<macro_param_data_composite>(std::move(v)));
 
     // creating another vector for macro call
-    params.emplace_back(move(np2));
-    params.emplace_back(move(np4), key);
-    params.emplace_back(move(np3));
-    params.emplace_back(move(dat));
+    params.emplace_back(std::move(np2));
+    params.emplace_back(std::move(np4), key);
+    params.emplace_back(std::move(np3));
+    params.emplace_back(std::move(dat));
 
     // call->|		MAC		,KEY=cas,,(first,second,third)
-    auto m3 = ctx.enter_macro(idx, nullptr, move(params));
+    auto m3 = ctx.enter_macro(idx, nullptr, std::move(params));
 
     //********called again the same macro without calling leave
     ASSERT_TRUE(ctx.this_macro() == m3);

@@ -17,7 +17,9 @@
 #include "gmock/gmock.h"
 
 #include "../ws_mngr_mock.h"
+#include "dap/dap_session.h"
 #include "dap/dap_session_manager.h"
+#include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 
 using namespace hlasm_plugin;

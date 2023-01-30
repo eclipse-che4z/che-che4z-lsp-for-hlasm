@@ -15,7 +15,6 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_PARSING_METADATA_SINK_H
 #define HLASMPLUGIN_LANGUAGESERVER_PARSING_METADATA_SINK_H
 
-#include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server {
