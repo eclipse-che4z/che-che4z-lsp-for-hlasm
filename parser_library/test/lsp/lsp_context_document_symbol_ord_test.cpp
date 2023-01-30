@@ -1154,3 +1154,62 @@ SECT     DSECT
     ASSERT_FALSE(outline.empty());
     EXPECT_EQ(outline.front().name, "Outline may be truncated");
 }
+
+TEST(lsp_context_document_symbol, generated_symbols)
+{
+    std::string input =
+        R"(
+         MACRO
+         MAC
+&I       SETA  0
+.LOOP    ANOP
+&LINE    AREAD
+&L       SETC  '&LINE'(1,1)
+&IN      SETC  '&LINE'(10,6)
+&OPS     SETC  '&LINE'(16,*)
+&L       &IN   &OPS
+&I       SETA  &I+1
+         AIF   (&I LT 3).LOOP
+         MEND
+
+         MAC
+C        CSECT
+A        DS    F
+B        DS    F
+         END
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
+    document_symbol_list_s expected = document_symbol_list_s {
+        document_symbol_item_s {
+            "MAC",
+            document_symbol_kind::MACRO,
+            range { { 14, 9 }, { 14, 9 } },
+            document_symbol_list_s {
+                document_symbol_item_s {
+                    "C",
+                    document_symbol_kind::EXECUTABLE,
+                    range { { 14, 9 }, { 14, 9 } },
+                    document_symbol_list_s {
+                        document_symbol_item_s {
+                            "A",
+                            document_symbol_kind::DAT,
+                            range { { 14, 9 }, { 14, 9 } },
+                        },
+                        document_symbol_item_s {
+                            "B",
+                            document_symbol_kind::DAT,
+                            range { { 14, 9 }, { 14, 9 } },
+                        },
+                    },
+                },
+            },
+        },
+    };
+    EXPECT_TRUE(is_similar(outline, expected));
+}
