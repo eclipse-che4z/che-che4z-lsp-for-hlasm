@@ -29,8 +29,6 @@ file_impl::file_impl(file_location location)
     , text_()
 {}
 
-void file_impl::collect_diags() const {}
-
 const file_location& file_impl::get_location() { return file_location_; }
 
 const std::string& file_impl::get_text()
@@ -108,7 +106,9 @@ size_t find_newlines(std::string_view text, std::vector<size_t>& lines)
 open_file_result file_impl::did_open(std::string new_text, version_t version)
 {
     bool identical = text_ == new_text;
-    text_ = std::move(new_text);
+    if (!identical)
+        text_ = std::move(new_text);
+
     version_ = version;
 
     lines_ind_.clear();

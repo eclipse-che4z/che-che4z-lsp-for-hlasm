@@ -19,7 +19,6 @@
 
 #include "../common_testing.h"
 #include "../workspace/empty_configs.h"
-#include "file_with_text.h"
 #include "utils/path.h"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
@@ -36,11 +35,10 @@ class workspace_instruction_sets_test : public diagnosable_impl, public testing:
 {
 public:
     void collect_diags() const override {}
-    size_t collect_and_get_diags_size(workspace& ws, file_manager& file_mngr)
+    size_t collect_and_get_diags_size(workspace& ws)
     {
         diags().clear();
         collect_diags_from_child(ws);
-        collect_diags_from_child(file_mngr);
         return diags().size();
     }
 };
@@ -169,12 +167,12 @@ TEST_F(workspace_instruction_sets_test, changed_instr_set_370_Z10)
     ws.open();
 
     ws.did_open_file(source_loc);
-    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
 
     // Change instruction set
     change_instruction_set({ { 0, 0 }, { 12, 1 } }, pgroups_file_optable_Z10, file_manager, ws);
 
-    collect_and_get_diags_size(ws, file_manager);
+    collect_and_get_diags_size(ws);
     EXPECT_TRUE(matches_message_codes(diags(), { "E049" }));
 }
 
@@ -187,11 +185,11 @@ TEST_F(workspace_instruction_sets_test, changed_instr_set_Z10_370)
     ws.open();
 
     ws.did_open_file(source_loc);
-    collect_and_get_diags_size(ws, file_manager);
+    collect_and_get_diags_size(ws);
     EXPECT_TRUE(matches_message_codes(diags(), { "E049" }));
 
     // Change instruction set
     change_instruction_set({ { 0, 0 }, { 12, 1 } }, pgroups_file_optable_370, file_manager, ws);
 
-    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
 }

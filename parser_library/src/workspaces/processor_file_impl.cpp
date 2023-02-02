@@ -20,30 +20,18 @@
 #include <utility>
 
 #include "file.h"
+#include "file_manager.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
-processor_file_impl::processor_file_impl(
-    utils::resource::resource_location file_loc, const file_manager& file_mngr, std::atomic<bool>* cancel)
-    : file_impl(std::move(file_loc))
+processor_file_impl::processor_file_impl(std::shared_ptr<file> file, file_manager& file_mngr, std::atomic<bool>* cancel)
+    : file_mngr_(file_mngr)
+    , file_(std::move(file))
     , cancel_(cancel)
-    , macro_cache_(file_mngr, *this) {};
-
-processor_file_impl::processor_file_impl(file_impl&& f_impl, const file_manager& file_mngr, std::atomic<bool>* cancel)
-    : file_impl(std::move(f_impl))
-    , cancel_(cancel)
-    , macro_cache_(file_mngr, *this)
+    , macro_cache_(file_mngr, *file_)
 {}
 
-processor_file_impl::processor_file_impl(
-    const file_impl& file, const file_manager& file_mngr, std::atomic<bool>* cancel)
-    : file_impl(file)
-    , cancel_(cancel)
-    , macro_cache_(file_mngr, *this)
-{}
-
-void processor_file_impl::collect_diags() const { file_impl::collect_diags(); }
-
+void processor_file_impl::collect_diags() const {}
 bool processor_file_impl::is_once_only() const { return false; }
 
 parse_result processor_file_impl::parse(parse_lib_provider& lib_provider,
@@ -51,14 +39,14 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider,
     std::vector<preprocessor_options> pp,
     virtual_file_monitor* vfm)
 {
-    if (!last_analyzer_opencode_)
+    if (!last_opencode_id_storage_)
         last_opencode_id_storage_ = std::make_shared<context::id_storage>();
 
     const bool collect_hl = should_collect_hl();
     auto fms = std::make_shared<std::vector<fade_message_s>>();
-    auto new_analyzer = std::make_unique<analyzer>(get_text(),
+    auto new_analyzer = std::make_unique<analyzer>(file_->get_text(),
         analyzer_options {
-            get_location(),
+            file_->get_location(),
             &lib_provider,
             std::move(asm_opts),
             collect_hl ? collect_highlighting_info::yes : collect_highlighting_info::no,
@@ -82,7 +70,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider,
 
         dependencies_.clear();
         for (auto& file : last_analyzer_->hlasm_ctx().get_visited_files())
-            if (file != get_location())
+            if (file != file_->get_location())
                 dependencies_.insert(file);
 
         files_to_close_.clear();
@@ -109,9 +97,9 @@ parse_result processor_file_impl::parse_macro(
 
     const bool collect_hl = should_collect_hl(ctx.hlasm_ctx.get());
     auto fms = std::make_shared<std::vector<fade_message_s>>();
-    auto a = std::make_unique<analyzer>(get_text(),
+    auto a = std::make_unique<analyzer>(file_->get_text(),
         analyzer_options {
-            get_location(),
+            file_->get_location(),
             &lib_provider,
             std::move(ctx),
             data,
@@ -186,14 +174,36 @@ bool processor_file_impl::should_collect_hl(context::hlasm_context* ctx) const
     // 1) The file is opened in the editor
     // 2) HL information was previously requested
     // 3) this macro is a top-level macro
-    return get_lsp_editing() || last_analyzer_with_lsp || ctx && ctx->processing_stack().parent().empty();
+    return file_->get_lsp_editing() || last_analyzer_with_lsp || ctx && ctx->processing_stack().parent().empty();
 }
 
-bool processor_file_impl::has_lsp_info() const { return last_analyzer_with_lsp; }
+bool processor_file_impl::has_lsp_info() const { return last_analyzer_ && last_analyzer_with_lsp; }
 
 void processor_file_impl::retrieve_fade_messages(std::vector<fade_message_s>& fms) const
 {
     fms.insert(std::end(fms), std::begin(*fade_messages_), std::end(*fade_messages_));
+}
+
+const file_location& processor_file_impl::get_location() const { return file_->get_location(); }
+
+bool processor_file_impl::current_version() const
+{
+    auto f = file_mngr_.find(get_location());
+    return f == file_;
+}
+
+void processor_file_impl::update_source()
+{
+    last_analyzer_.reset();
+    used_files.clear();
+    file_ = file_mngr_.add_file(get_location());
+}
+
+void processor_file_impl::store_used_files(std::unordered_map<utils::resource::resource_location,
+    std::shared_ptr<file>,
+    utils::resource::resource_location_hasher> uf)
+{
+    used_files = std::move(uf);
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

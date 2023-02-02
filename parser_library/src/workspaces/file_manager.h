@@ -33,8 +33,6 @@
 
 namespace hlasm_plugin::parser_library::workspaces {
 
-using file_ptr = std::shared_ptr<file>;
-using processor_file_ptr = std::shared_ptr<processor_file>;
 using list_directory_result =
     std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>, utils::path::list_directory_rc>;
 enum class open_file_result
@@ -46,27 +44,17 @@ enum class open_file_result
 
 // Wraps an associative array of file names and files.
 // Implements LSP text synchronization methods.
-class file_manager : public virtual diagnosable
+class file_manager
 {
 public:
     // Adds a file with specified file name and returns it.
     // If such processor file already exists, it is returned.
-    virtual file_ptr add_file(const file_location&) = 0;
-
-    // Adds processor file with specified file name and returns it.
-    // If such processor file already exists, it is returned.
-    // If such file already exists, it is changed into processor file.
-    virtual processor_file_ptr add_processor_file(const file_location&) = 0;
-    virtual processor_file_ptr get_processor_file(const file_location&) = 0;
+    virtual std::shared_ptr<file> add_file(const file_location&) = 0;
 
     virtual void remove_file(const file_location&) = 0;
 
     // Finds file with specified file name, return nullptr if not found.
-    virtual file_ptr find(const file_location& key) const = 0;
-    // Finds processor file with specified file name.
-    // If there is a file with the file name, it is changed to processor_file.
-    // Returns nullptr if there is no such file.
-    virtual processor_file_ptr find_processor_file(const file_location& key) = 0;
+    virtual std::shared_ptr<file> find(const file_location& key) const = 0;
 
     // Returns list of all files in a directory. Returns associative array with pairs file name - file location.
     virtual list_directory_result list_directory_files(const utils::resource::resource_location& directory) const = 0;
@@ -94,9 +82,7 @@ public:
 
     virtual open_file_result update_file(const file_location& document_loc) = 0;
 
-    virtual std::optional<std::string> get_file_content(const utils::resource::resource_location&) = 0;
-
-    virtual void retrieve_fade_messages(std::vector<fade_message_s>& fms) const = 0;
+    virtual std::optional<std::string> get_file_content(const utils::resource::resource_location&) const = 0;
 
 protected:
     ~file_manager() = default;

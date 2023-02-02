@@ -18,7 +18,7 @@
 #include <atomic>
 #include <memory>
 #include <optional>
-#include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -146,7 +146,7 @@ class analyzer : public diagnosable_ctx
     processing::processing_manager mngr_;
 
 public:
-    analyzer(const std::string& text, analyzer_options opts = {});
+    analyzer(std::string_view text, analyzer_options opts = {});
 
     analyzing_context context() const;
     context::hlasm_context& hlasm_ctx();

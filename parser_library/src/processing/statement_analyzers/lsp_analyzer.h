@@ -16,7 +16,7 @@
 #define PROCESSING_LSP_ANALYZER_H
 
 #include <array>
-#include <string>
+#include <string_view>
 
 #include "context/common_types.h"
 #include "context/copy_member.h"
@@ -69,7 +69,7 @@ class lsp_analyzer : public statement_analyzer
     context::hlasm_context& hlasm_ctx_;
     lsp::lsp_context& lsp_ctx_;
     // text of the file this analyzer is assigned to
-    const std::string& file_text_;
+    std::string_view file_text_;
 
     bool in_macro_ = false;
     size_t macro_nest_ = 1;
@@ -81,7 +81,7 @@ class lsp_analyzer : public statement_analyzer
     lsp::occurence_storage stmt_occurences_;
 
 public:
-    lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx, const std::string& file_text);
+    lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx, std::string_view file_text);
 
     void analyze(const context::hlasm_statement& statement,
         statement_provider_kind prov_kind,

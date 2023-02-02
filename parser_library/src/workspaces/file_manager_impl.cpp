@@ -15,8 +15,9 @@
 #include "file_manager_impl.h"
 
 #include <map>
+#include <span>
 
-#include "processor_file_impl.h"
+#include "file_impl.h"
 #include "utils/content_loader.h"
 #include "utils/path.h"
 #include "utils/path_conversions.h"
@@ -24,65 +25,15 @@
 
 namespace hlasm_plugin::parser_library::workspaces {
 
-void file_manager_impl::collect_diags() const
-{
-    for (auto& it : files_)
-        collect_diags_from_child(*it.second);
-}
-
-void file_manager_impl::retrieve_fade_messages(std::vector<fade_message_s>& fms) const
-{
-    for (const auto& [_, file_impl] : files_)
-        file_impl->retrieve_fade_messages(fms);
-}
-
-file_ptr file_manager_impl::add_file(const file_location& file)
+std::shared_ptr<file> file_manager_impl::add_file(const file_location& file)
 {
     std::lock_guard guard(files_mutex);
     auto [ret, _] = files_.try_emplace(file, std::make_shared<file_impl>(file));
     return ret->second;
 }
 
-processor_file_ptr file_manager_impl::change_into_processor_file_if_not_already_(std::shared_ptr<file_impl>& to_change)
-{
-    auto processor = std::dynamic_pointer_cast<processor_file>(to_change);
-    if (processor)
-        return processor;
-    else
-    {
-        auto proc_file = std::make_shared<processor_file_impl>(std::move(*to_change), *this, cancel_);
-        to_change = proc_file;
-        return proc_file;
-    }
-}
-
-processor_file_ptr file_manager_impl::add_processor_file(const file_location& file)
-{
-    std::lock_guard guard(files_mutex);
-    auto ret = files_.find(file);
-    if (ret == files_.end())
-    {
-        auto ptr = std::make_shared<processor_file_impl>(file, *this, cancel_);
-        files_.try_emplace(file, ptr);
-        return ptr;
-    }
-    else
-        return change_into_processor_file_if_not_already_(ret->second);
-}
-
-processor_file_ptr file_manager_impl::get_processor_file(const file_location& file)
-{
-    std::lock_guard guard(files_mutex);
-    auto ret = files_.find(file);
-    if (ret == files_.end())
-    {
-        return std::make_shared<processor_file_impl>(file, *this);
-    }
-    else
-        return change_into_processor_file_if_not_already_(ret->second);
-}
-
-std::optional<std::string> file_manager_impl::get_file_content(const utils::resource::resource_location& file_name)
+std::optional<std::string> file_manager_impl::get_file_content(
+    const utils::resource::resource_location& file_name) const
 {
     std::lock_guard guard(files_mutex);
     auto it = files_.find(file_name);
@@ -105,7 +56,7 @@ void file_manager_impl::remove_file(const file_location& file)
     files_.erase(file);
 }
 
-file_ptr file_manager_impl::find(const utils::resource::resource_location& key) const
+std::shared_ptr<file> file_manager_impl::find(const utils::resource::resource_location& key) const
 {
     std::lock_guard guard(files_mutex);
     auto ret = files_.find(key);
@@ -113,16 +64,6 @@ file_ptr file_manager_impl::find(const utils::resource::resource_location& key) 
         return nullptr;
 
     return ret->second;
-}
-
-processor_file_ptr file_manager_impl::find_processor_file(const utils::resource::resource_location& key)
-{
-    std::lock_guard guard(files_mutex);
-    auto ret = files_.find(key);
-    if (ret == files_.end())
-        return nullptr;
-
-    return change_into_processor_file_if_not_already_(ret->second);
 }
 
 list_directory_result file_manager_impl::list_directory_files(const utils::resource::resource_location& directory) const
@@ -146,11 +87,7 @@ void file_manager_impl::prepare_file_for_change_(std::shared_ptr<file_impl>& fil
     if (file.use_count() == 1) // TODO: possible weak_ptr issue
         return;
     // another shared ptr to this file exists, we need to create a copy
-    auto proc_file = std::dynamic_pointer_cast<processor_file>(file);
-    if (proc_file)
-        file = std::make_shared<processor_file_impl>(*file, *this, cancel_);
-    else
-        file = std::make_shared<file_impl>(*file);
+    file = std::make_shared<file_impl>(*file);
 }
 
 open_file_result file_manager_impl::did_open_file(
@@ -158,13 +95,14 @@ open_file_result file_manager_impl::did_open_file(
 {
     std::lock_guard guard(files_mutex);
     auto [ret, inserted] = files_.try_emplace(document_loc, std::make_shared<file_impl>(document_loc));
-    prepare_file_for_change_(ret->second);
+    if (ret->second->is_text_loaded() && ret->second->get_text() != text)
+        prepare_file_for_change_(ret->second);
     auto changed = ret->second->did_open(std::move(text), version);
     return inserted ? open_file_result::changed_content : changed;
 }
 
 void file_manager_impl::did_change_file(
-    const file_location& document_loc, version_t, const document_change* changes, size_t ch_size)
+    const file_location& document_loc, version_t, const document_change* changes_start, size_t ch_size)
 {
     // TODO
     // the version is the version after the changes -> I don't see how is that useful
@@ -177,15 +115,26 @@ void file_manager_impl::did_change_file(
     if (file == files_.end())
         return; // if the file does not exist, no action is taken
 
+    if (!ch_size)
+        return;
+
     prepare_file_for_change_(file->second);
 
-    for (size_t i = 0; i < ch_size; ++i)
+    auto last_whole = changes_start + ch_size;
+    while (last_whole != changes_start)
     {
-        std::string text_s(changes[i].text, changes[i].text_length);
-        if (changes[i].whole)
+        --last_whole;
+        if (last_whole->whole)
+            break;
+    }
+
+    for (const auto& change : std::span(last_whole, changes_start + ch_size))
+    {
+        std::string text_s(change.text, change.text_length);
+        if (change.whole)
             file->second->did_change(std::move(text_s));
         else
-            file->second->did_change(changes[i].change_range, std::move(text_s));
+            file->second->did_change(change.change_range, std::move(text_s));
     }
 }
 
@@ -196,9 +145,11 @@ void file_manager_impl::did_close_file(const file_location& document_loc)
     if (file == files_.end())
         return;
 
-    prepare_file_for_change_(file->second);
-    // close the file externally
-    file->second->did_close();
+    if (!file->second->is_text_loaded()
+        || file->second->get_text() == utils::resource::load_text(file->second->get_location()))
+        file->second->did_close(); // close the file externally, content is accurate
+    else
+        file->second = std::make_shared<file_impl>(file->second->get_location()); // our version is not accurate
 
     // if the file does not exist, no action is taken
 }

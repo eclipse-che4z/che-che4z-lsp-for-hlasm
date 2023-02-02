@@ -29,7 +29,7 @@ namespace hlasm_plugin::parser_library::workspaces {
 
 // Implementation of the file interface. Implements LSP incremental changing
 // of contents of file as well as loading the file from disk.
-class file_impl : public virtual file, public virtual diagnosable_impl
+class file_impl : public virtual file
 {
 public:
     explicit file_impl(file_location location);
@@ -38,8 +38,6 @@ public:
 
     file_impl(file_impl&&) = default;
     file_impl& operator=(file_impl&&) = default;
-
-    void collect_diags() const override;
 
     const file_location& get_location() override;
     const std::string& get_text() override;
@@ -61,8 +59,7 @@ public:
     virtual ~file_impl() = default;
 
     bool is_bad() const { return bad_; }
-
-    void retrieve_fade_messages(std::vector<fade_message_s>&) const override {};
+    bool is_text_loaded() const { return up_to_date_; }
 
 protected:
     const std::string& get_text_ref();

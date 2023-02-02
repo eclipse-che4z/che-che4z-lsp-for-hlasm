@@ -27,36 +27,28 @@
 #include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
-
+class file_impl;
 #pragma warning(push)
 #pragma warning(disable : 4250)
 
 // Implementation of the file_manager interface.
-class file_manager_impl : public file_manager, public diagnosable_impl
+class file_manager_impl : public file_manager
 {
     mutable std::mutex files_mutex;
     mutable std::mutex virtual_files_mutex;
-    std::atomic<bool>* cancel_;
 
 public:
-    file_manager_impl(std::atomic<bool>* cancel = nullptr)
-        : cancel_(cancel) {};
+    file_manager_impl() = default;
     file_manager_impl(const file_manager_impl&) = delete;
     file_manager_impl& operator=(const file_manager_impl&) = delete;
 
     file_manager_impl(file_manager_impl&&) = delete;
     file_manager_impl& operator=(file_manager_impl&&) = delete;
 
-    void collect_diags() const override;
-    void retrieve_fade_messages(std::vector<fade_message_s>& fms) const override;
-
-    file_ptr add_file(const file_location&) override;
-    processor_file_ptr add_processor_file(const file_location&) override;
-    processor_file_ptr get_processor_file(const file_location&) override;
+    std::shared_ptr<file> add_file(const file_location&) override;
     void remove_file(const file_location&) override;
 
-    file_ptr find(const utils::resource::resource_location& key) const override;
-    processor_file_ptr find_processor_file(const utils::resource::resource_location& key) override;
+    std::shared_ptr<file> find(const utils::resource::resource_location& key) const override;
 
     list_directory_result list_directory_files(const utils::resource::resource_location& directory) const override;
     list_directory_result list_directory_subdirs_and_symlinks(
@@ -81,7 +73,7 @@ public:
 
     open_file_result update_file(const file_location& document_loc) override;
 
-    std::optional<std::string> get_file_content(const utils::resource::resource_location&) override;
+    std::optional<std::string> get_file_content(const utils::resource::resource_location&) const override;
 
 private:
     struct virtual_file_entry
@@ -105,8 +97,7 @@ private:
         utils::resource::resource_location_hasher>
         files_;
 
-    processor_file_ptr change_into_processor_file_if_not_already_(std::shared_ptr<file_impl>& ret);
-    void prepare_file_for_change_(std::shared_ptr<file_impl>& file);
+    static void prepare_file_for_change_(std::shared_ptr<file_impl>& file);
 
 protected:
     const auto& get_files() const { return files_; }

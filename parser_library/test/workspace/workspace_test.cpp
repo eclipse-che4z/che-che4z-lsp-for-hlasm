@@ -18,7 +18,6 @@
 #include "gtest/gtest.h"
 
 #include "empty_configs.h"
-#include "file_with_text.h"
 #include "utils/path.h"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
@@ -40,11 +39,10 @@ class workspace_test : public diagnosable_impl, public testing::Test
 {
 public:
     void collect_diags() const override {}
-    size_t collect_and_get_diags_size(workspace& ws, file_manager& file_mngr)
+    size_t collect_and_get_diags_size(workspace& ws)
     {
         diags().clear();
         collect_diags_from_child(ws);
-        collect_diags_from_child(file_mngr);
         return diags().size();
     }
 
@@ -65,54 +63,10 @@ public:
         }
         return true;
     }
-};
-
-TEST_F(workspace_test, parse_lib_provider)
-{
-    using namespace hlasm_plugin::utils;
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    file_manager_impl file_mngr;
-
-    std::string test_wks_path = path::join(path::join("test", "library"), "test_wks").string();
-
-    workspace ws(resource_location(test_wks_path), file_mngr, config, global_settings);
-
-    ws.open();
-
-    collect_diags_from_child(ws);
-    collect_diags_from_child(file_mngr);
-    EXPECT_EQ(diags().size(), (size_t)0);
-
-    file_mngr.add_processor_file(correct_loc);
-
-    auto [ctx_1, ctx_2] = [&ws]() {
-        ws.did_open_file(correct_loc);
-        return std::make_pair(std::make_shared<context::hlasm_context>(correct_loc),
-            std::make_shared<context::hlasm_context>(correct_loc));
-    }();
-
-    collect_diags_from_child(file_mngr);
-    EXPECT_EQ(diags().size(), (size_t)0);
-
-    diags().clear();
-
-    auto macro1 = context::id_index("MACRO1");
-    ws.parse_library("MACRO1",
-        analyzing_context { ctx_1, std::make_shared<lsp::lsp_context>(ctx_1) },
-        library_data { processing::processing_kind::MACRO, macro1 });
-
-    // test, that macro1 is parsed, once we are able to parse macros (mby in ctx)
-
-    collect_diags_from_child(ws);
-    EXPECT_EQ(diags().size(), (size_t)0);
-
-    auto not_existing = context::id_index("NOT_EXISTING");
-    ws.parse_library("not_existing",
-        analyzing_context { ctx_2, std::make_shared<lsp::lsp_context>(ctx_2) },
-        library_data { processing::processing_kind::MACRO, not_existing });
-}
+};
 
 namespace {
 std::string pgroups_file = R"({
@@ -381,8 +335,6 @@ public:
 
 TEST_F(workspace_test, did_close_file)
 {
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
     file_manager_extended file_manager;
     workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
 
@@ -393,18 +345,18 @@ TEST_F(workspace_test, did_close_file)
     // on first reparse, there should be 3 diagnostics from sources and lib/ERROR file
     ws.did_open_file(source1_loc);
     ws.did_open_file(source2_loc);
-    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)3);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)3);
     EXPECT_TRUE(match_strings({ faulty_macro_loc, source2_loc, source1_loc }));
 
     // when we close source1, only its diagnostics should disappear
     // macro's and source2's diagnostics should stay as it is still open
     ws.did_close_file(source1_loc);
-    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)2);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)2);
     EXPECT_TRUE(match_strings({ faulty_macro_loc, source2_loc }));
 
     // even though we close the ERROR macro, its diagnostics will still be there as it is a dependency of source2
     ws.did_close_file(faulty_macro_loc);
-    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)2);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)2);
     EXPECT_TRUE(match_strings({ faulty_macro_loc, source2_loc }));
 
     // if we remove the line using ERROR macro in the source2. its diagnostics will be removed as it is no longer a
@@ -414,30 +366,28 @@ TEST_F(workspace_test, did_close_file)
     changes.push_back(document_change({ { 0, 0 }, { 0, 6 } }, new_text.c_str(), new_text.size()));
     file_manager.did_change_file(source2_loc, 1, changes.data(), changes.size());
     ws.did_change_file(source2_loc, changes.data(), changes.size());
-    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)1);
     EXPECT_TRUE(match_strings({ source2_loc }));
 
     // finally if we close the last source2 file, its diagnostics will disappear as well
     ws.did_close_file(source2_loc);
-    ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
+    ASSERT_EQ(collect_and_get_diags_size(ws), (size_t)0);
 }
 
 TEST_F(workspace_test, did_change_watched_files)
 {
     file_manager_extended file_manager;
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     // no diagnostics with no syntax errors
     ws.did_open_file(source3_loc);
-    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
 
     // remove the macro, there should still be 1 diagnostic E049 that the ERROR was not found
     file_manager.insert_correct_macro = false;
     ws.did_change_watched_files({ correct_macro_loc });
-    ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+    ASSERT_EQ(collect_and_get_diags_size(ws), (size_t)1);
     EXPECT_STREQ(diags()[0].code.c_str(), "E049");
 
     // put it back and make some change in the source file, the diagnostic will disappear
@@ -447,25 +397,23 @@ TEST_F(workspace_test, did_change_watched_files)
     std::string new_text = "";
     changes.push_back(document_change({ { 0, 0 }, { 0, 0 } }, new_text.c_str(), new_text.size()));
     ws.did_change_file(source3_loc, changes.data(), changes.size());
-    ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
+    ASSERT_EQ(collect_and_get_diags_size(ws), (size_t)0);
 }
 
 TEST_F(workspace_test, diagnostics_recollection)
 {
     file_manager_opt file_manager(file_manager_opt_variant::required);
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     ws.did_open_file(source1_loc);
 
     ws.collect_diags();
-    size_t original_diags_size = collect_and_get_diags_size(ws, file_manager);
+    size_t original_diags_size = collect_and_get_diags_size(ws);
     EXPECT_GE(original_diags_size, (size_t)1);
 
     ws.collect_diags();
-    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), original_diags_size);
+    EXPECT_EQ(collect_and_get_diags_size(ws), original_diags_size);
 }
 
 TEST_F(workspace_test, missing_library_required)
@@ -475,13 +423,11 @@ TEST_F(workspace_test, missing_library_required)
              file_manager_opt_variant::required })
     {
         file_manager_opt file_manager(type);
-        lib_config config;
-        shared_json global_settings = make_empty_shared_json();
         workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
         ws.open();
 
         ws.did_open_file(source1_loc);
-        EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+        EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
         EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "L0002"; }));
     }
 }
@@ -489,48 +435,40 @@ TEST_F(workspace_test, missing_library_required)
 TEST_F(workspace_test, missing_library_optional)
 {
     file_manager_opt file_manager(file_manager_opt_variant::optional);
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     ws.did_open_file(source1_loc);
-    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
 }
 
 TEST_F(workspace_test, invalid_assembler_options)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_assembler_options);
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
-    EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+    EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
     EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "W0005"; }));
 }
 
 TEST_F(workspace_test, invalid_assembler_options_in_pgm_conf)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_assembler_options_in_pgm_conf);
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
-    EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+    EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
     EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "W0005"; }));
 }
 
 TEST_F(workspace_test, invalid_preprocessor_options)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_preprocessor_options);
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
-    EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+    EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
     EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "W0006"; }));
 }
 
@@ -554,13 +492,11 @@ public:
 TEST_F(workspace_test, library_list_failure)
 {
     file_manager_list_dir_failed file_manager;
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
     ws.did_open_file(source1_loc);
-    EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+    EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
     EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "L0001"; }));
 }
 

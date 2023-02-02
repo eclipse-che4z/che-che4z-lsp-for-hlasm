@@ -102,7 +102,7 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
     return std::make_unique<combined_preprocessor>(std::move(tmp));
 }
 
-analyzer::analyzer(const std::string& text, analyzer_options opts)
+analyzer::analyzer(std::string_view text, analyzer_options opts)
     : diagnosable_ctx(opts.get_hlasm_context())
     , ctx_(std::move(opts.get_context()))
     , src_proc_(opts.collect_hl_info == collect_highlighting_info::yes)

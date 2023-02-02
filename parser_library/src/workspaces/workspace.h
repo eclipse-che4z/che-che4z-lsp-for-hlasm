@@ -38,13 +38,14 @@
 namespace hlasm_plugin::parser_library::workspaces {
 class file_manager;
 class library;
+class processor_file_impl;
 using ws_uri = std::string;
 using ws_highlight_info = std::unordered_map<std::string, semantics::highlighting_info>;
-
+struct workspace_parse_lib_provider;
 // Represents a LSP workspace. It solves all dependencies between files -
 // implements parse lib provider and decides which files are to be parsed
 // when a particular file has been changed in the editor.
-class workspace : public diagnosable_impl, public parse_lib_provider
+class workspace : public diagnosable_impl
 {
 public:
     // Creates just a dummy workspace with no libraries - no dependencies
@@ -75,7 +76,6 @@ public:
 
     workspace_file_info parse_file(
         const utils::resource::resource_location& file_location, open_file_result file_content_status);
-    workspace_file_info parse_successful(const processor_file_ptr& f);
     bool refresh_libraries(const std::vector<utils::resource::resource_location>& file_locations);
     workspace_file_info did_open_file(const utils::resource::resource_location& file_location,
         open_file_result file_content_status = open_file_result::changed_content);
@@ -94,10 +94,8 @@ public:
     lsp::document_symbol_list_s document_symbol(
         const utils::resource::resource_location& document_loc, long long limit) const;
 
-    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override;
-    bool has_library(const std::string& library, const utils::resource::resource_location& program) const override;
-    std::optional<std::pair<std::string, utils::resource::resource_location>> get_library(
-        const std::string& library, const utils::resource::resource_location& program) const override;
+    std::vector<token_info> semantic_tokens(const utils::resource::resource_location& document_loc) const;
+
     virtual std::vector<std::shared_ptr<library>> get_libraries(
         const utils::resource::resource_location& file_location) const;
     virtual asm_option get_asm_options(const utils::resource::resource_location& file_location) const;
@@ -110,7 +108,8 @@ public:
 
     void set_message_consumer(message_consumer* consumer);
 
-    processor_file_ptr get_processor_file(const utils::resource::resource_location& file_location);
+    std::shared_ptr<processor_file> add_processor_file(const utils::resource::resource_location& file);
+    std::shared_ptr<processor_file> find_processor_file(const utils::resource::resource_location& file) const;
 
     file_manager& get_file_manager() const;
 
@@ -121,6 +120,8 @@ public:
 
     std::vector<std::pair<std::string, size_t>> make_opcode_suggestion(
         const utils::resource::resource_location& file, std::string_view opcode, bool extended);
+
+    void retrieve_fade_messages(std::vector<fade_message_s>& fms) const;
 
     static lsp::completion_list_s generate_completion(const lsp::completion_list_source& cls,
         std::function<std::vector<std::string>(std::string_view)> instruction_suggestions = {});
@@ -157,12 +158,12 @@ private:
         opened_files_;
 
     void filter_and_close_dependencies_(
-        const std::set<utils::resource::resource_location>& dependencies, processor_file_ptr file);
-    bool is_dependency_(const utils::resource::resource_location& file_location);
+        const std::set<utils::resource::resource_location>& dependencies, std::shared_ptr<processor_file> file);
+    bool is_dependency_(const utils::resource::resource_location& file_location) const;
 
-    std::vector<processor_file_ptr> find_related_opencodes(
+    std::vector<std::shared_ptr<processor_file>> find_related_opencodes(
         const utils::resource::resource_location& document_loc) const;
-    void delete_diags(processor_file_ptr file);
+    void delete_diags(std::shared_ptr<processor_file> file);
 
     void show_message(const std::string& message);
 
@@ -174,6 +175,17 @@ private:
 
     workspace_configuration m_configuration;
 
+    struct processor_file_compoments
+    {
+        std::shared_ptr<processor_file_impl> m_processor_file;
+        void update_source_if_needed() const;
+    };
+
+    std::unordered_map<utils::resource::resource_location,
+        processor_file_compoments,
+        utils::resource::resource_location_hasher>
+        m_processor_files;
+
     static lsp::completion_list_s generate_completion(
         std::monostate, const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
     static lsp::completion_list_s generate_completion(const lsp::vardef_storage*,
@@ -183,7 +195,13 @@ private:
     static lsp::completion_list_s generate_completion(const lsp::completion_list_instructions&,
         const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
 
-    std::vector<processor_file_ptr> collect_dependants(const utils::resource::resource_location& file_location) const;
+    std::vector<processor_file_compoments*> collect_dependants(const utils::resource::resource_location& file_location);
+
+    processor_file_compoments& add_processor_file_impl(const utils::resource::resource_location& file);
+    processor_file_compoments* find_processor_file_impl(const utils::resource::resource_location& file);
+    const processor_file_compoments* find_processor_file_impl(const utils::resource::resource_location& file) const;
+    friend struct workspace_parse_lib_provider;
+    workspace_file_info parse_successful(processor_file_compoments& comp, workspace_parse_lib_provider libs);
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

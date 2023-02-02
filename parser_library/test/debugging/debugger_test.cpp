@@ -389,13 +389,6 @@ public:
         : workspace(file_mngr, config, global_settings)
     {}
 
-    parse_result parse_library(const std::string&, analyzing_context, library_data) override
-    {
-        assert(false);
-
-        return false;
-    }
-
     std::vector<std::shared_ptr<library>> get_libraries(const resource_location&) const override
     {
         struct debugger_mock_library : library

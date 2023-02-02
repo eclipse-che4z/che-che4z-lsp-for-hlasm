@@ -134,9 +134,9 @@ completion_list workspace_manager::completion(
     return impl_->completion(document_uri, pos, trigger_char, trigger_kind);
 }
 
-sequence<token_info> workspace_manager::semantic_tokens(const char* document_uri)
+continuous_sequence<token_info> workspace_manager::semantic_tokens(const char* document_uri)
 {
-    return sequence<token_info>(impl_->semantic_tokens(document_uri));
+    return impl_->semantic_tokens(document_uri);
 }
 
 document_symbol_list workspace_manager::document_symbol(const char* document_uri, long long limit)

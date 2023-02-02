@@ -15,10 +15,12 @@
 #include "gtest/gtest.h"
 
 #include "../gtest_stringers.h"
+#include "../workspace/empty_configs.h"
 #include "files_parse_lib_provider.h"
 #include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/processor_file_impl.h"
+#include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -29,7 +31,11 @@ TEST(processor_file, no_lsp_context)
     resource_location file_loc("filename");
     file_manager_impl mngr;
     mngr.did_open_file(file_loc, 0, " LR 1,1");
-    auto file = mngr.add_processor_file(file_loc);
+    lib_config config;
+    shared_json global_settings = make_empty_shared_json();
+    workspace ws(mngr, config, global_settings);
+    ws.open();
+    auto file = ws.add_processor_file(file_loc);
 
     // Prior to parsing, there is no lsp_context available
 
@@ -43,16 +49,20 @@ TEST(processor_file, parse_macro)
     resource_location macro_loc("MAC");
 
     file_manager_impl mngr;
-    files_parse_lib_provider provider(mngr);
+    lib_config config;
+    shared_json global_settings = make_empty_shared_json();
+    workspace ws(mngr, config, global_settings);
+    ws.open();
+    files_parse_lib_provider provider(mngr, ws);
 
     mngr.did_open_file(opencode_loc, 0, " SAM31\n MAC");
-    auto opencode = mngr.add_processor_file(opencode_loc);
+    auto opencode = ws.add_processor_file(opencode_loc);
 
     mngr.did_open_file(macro_loc, 0, R"( MACRO
  MAC
  SAM31
  MEND)");
-    auto macro = mngr.add_processor_file(macro_loc);
+    auto macro = ws.add_processor_file(macro_loc);
 
     opencode->parse(provider, {}, {}, nullptr);
 

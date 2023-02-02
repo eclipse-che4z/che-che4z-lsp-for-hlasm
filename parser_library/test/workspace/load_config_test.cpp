@@ -179,7 +179,7 @@ public:
 class file_manager_proc_grps_test : public file_manager_impl
 {
 public:
-    std::optional<std::string> get_file_content(const resource_location& location) override
+    std::optional<std::string> get_file_content(const resource_location& location) const override
     {
         if (hlasm_plugin::utils::resource::filename(location) == "proc_grps.json")
             return proc_grps->get_text();
@@ -570,7 +570,7 @@ TEST(workspace, lsp_file_not_processed_yet)
     ws.open();
 
     mngr.did_open_file(file_loc, 0, " LR 1,1");
-    auto file = mngr.add_processor_file(file_loc);
+    auto file = ws.add_processor_file(file_loc);
 
     // Prior to parsing, it should return default values
     const auto* fp = file->get_lsp_context();

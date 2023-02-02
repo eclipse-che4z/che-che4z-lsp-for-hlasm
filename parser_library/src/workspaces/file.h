@@ -36,7 +36,7 @@ enum class update_file_result
 
 // Interface that represents both file opened in LSP
 // as well as a file opened by parser library from the disk.
-class file : public virtual diagnosable
+class file
 {
 public:
     virtual const file_location& get_location() = 0;
@@ -56,8 +56,6 @@ public:
     virtual void did_change(std::string new_text) = 0;
     virtual void did_change(range range, std::string new_text) = 0;
     virtual void did_close() = 0;
-
-    virtual void retrieve_fade_messages(std::vector<fade_message_s>& fms) const = 0;
 
 protected:
     ~file() = default;

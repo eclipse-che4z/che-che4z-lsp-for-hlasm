@@ -41,7 +41,6 @@ class workspace_manager::impl final : public diagnosable_impl
 public:
     impl(std::atomic<bool>* cancel = nullptr)
         : cancel_(cancel)
-        , file_manager_(cancel)
         , implicit_workspace_(file_manager_, global_config_, m_global_settings, cancel)
         , quiet_implicit_workspace_(file_manager_, supress_all, m_global_settings, cancel)
     {}
@@ -50,6 +49,39 @@ public:
 
     impl(impl&&) = delete;
     impl& operator=(impl&&) = delete;
+
+    static auto& ws_path_match(auto& self, std::string_view document_uri)
+    {
+        if (auto hlasm_id = extract_hlasm_id(document_uri); hlasm_id.has_value())
+        {
+            if (auto related_ws = self.file_manager_.get_virtual_file_workspace(hlasm_id.value()); !related_ws.empty())
+                for (auto& [_, ws] : self.workspaces_)
+                    if (ws.uri() == related_ws.get_uri())
+                        return ws;
+        }
+
+        size_t max = 0;
+        decltype(&self.workspaces_.begin()->second) max_ws = nullptr;
+        for (auto& [name, ws] : self.workspaces_)
+        {
+            size_t match = prefix_match(document_uri, ws.uri());
+            if (match > max && match >= name.size())
+            {
+                max = match;
+                max_ws = &ws;
+            }
+        }
+        if (max_ws != nullptr)
+            return *max_ws;
+        else if (document_uri.starts_with("file:") || document_uri.starts_with("untitled:"))
+            return self.implicit_workspace_;
+        else
+            return self.quiet_implicit_workspace_;
+    }
+
+    // returns implicit workspace, if the file does not belong to any workspace
+    auto& ws_path_match(std::string_view document_uri) { return ws_path_match(*this, document_uri); }
+    auto& ws_path_match(std::string_view document_uri) const { return ws_path_match(*this, document_uri); }
 
     size_t get_workspaces(ws_id* workspaces, size_t max_size)
     {
@@ -246,19 +278,10 @@ public:
             notify_diagnostics_consumers();
     }
 
-    std::vector<token_info> empty_tokens;
-    const std::vector<token_info>& semantic_tokens(const char* document_uri)
+    continuous_sequence<token_info> semantic_tokens(const char* document_uri)
     {
-        if (cancel_ && *cancel_)
-            return empty_tokens;
-
-        utils::resource::resource_location doc(document_uri);
-
-        auto file = file_manager_.find(doc);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            return file_manager_.find_processor_file(doc)->get_hl_info();
-
-        return empty_tokens;
+        return make_continuous_sequence(
+            ws_path_match(document_uri).semantic_tokens(utils::resource::resource_location(document_uri)));
     }
 
     continuous_sequence<char> get_virtual_file_content(unsigned long long id) const
@@ -284,8 +307,8 @@ public:
 private:
     void collect_diags() const override
     {
-        collect_diags_from_child(file_manager_);
-
+        collect_diags_from_child(implicit_workspace_);
+        collect_diags_from_child(quiet_implicit_workspace_);
         for (auto& it : workspaces_)
             collect_diags_from_child(it.second);
     }
@@ -310,43 +333,16 @@ private:
             return result;
     }
 
-    // returns implicit workspace, if the file does not belong to any workspace
-    workspaces::workspace& ws_path_match(std::string_view document_uri)
-    {
-        if (auto hlasm_id = extract_hlasm_id(document_uri); hlasm_id.has_value())
-        {
-            if (auto related_ws = file_manager_.get_virtual_file_workspace(hlasm_id.value()); !related_ws.empty())
-                for (auto& [_, ws] : workspaces_)
-                    if (ws.uri() == related_ws.get_uri())
-                        return ws;
-        }
-
-        size_t max = 0;
-        workspaces::workspace* max_ws = nullptr;
-        for (auto& [name, ws] : workspaces_)
-        {
-            size_t match = prefix_match(document_uri, ws.uri());
-            if (match > max && match >= name.size())
-            {
-                max = match;
-                max_ws = &ws;
-            }
-        }
-        if (max_ws != nullptr)
-            return *max_ws;
-        else if (document_uri.starts_with("file:") || document_uri.starts_with("untitled:"))
-            return implicit_workspace_;
-        else
-            return quiet_implicit_workspace_;
-    }
-
     void notify_diagnostics_consumers()
     {
         diags().clear();
         collect_diags();
 
         fade_messages_.clear();
-        file_manager_.retrieve_fade_messages(fade_messages_);
+        implicit_workspace_.retrieve_fade_messages(fade_messages_);
+        quiet_implicit_workspace_.retrieve_fade_messages(fade_messages_);
+        for (const auto& [_, ws] : workspaces_)
+            ws.retrieve_fade_messages(fade_messages_);
 
         for (auto consumer : diag_consumers_)
             consumer->consume_diagnostics(diagnostic_list(diags().data(), diags().size()),
@@ -356,16 +352,13 @@ private:
     void notify_performance_consumers(
         const utils::resource::resource_location& document_uri, workspace_file_info ws_file_info) const
     {
-        auto file = file_manager_.find(document_uri);
-        auto proc_file = dynamic_cast<workspaces::processor_file*>(file.get());
-        if (proc_file)
-        {
-            const auto& metrics = proc_file->get_metrics();
-            for (auto consumer : parsing_metadata_consumers_)
-            {
-                consumer->consume_parsing_metadata({ metrics, ws_file_info });
-            }
-        }
+        auto proc_file = ws_path_match(document_uri.get_uri()).find_processor_file(document_uri);
+        if (!proc_file)
+            return;
+
+        parsing_metadata data { proc_file->get_metrics(), std::move(ws_file_info) };
+        for (auto consumer : parsing_metadata_consumers_)
+            consumer->consume_parsing_metadata(data);
     }
 
     static size_t prefix_match(std::string_view first, std::string_view second)

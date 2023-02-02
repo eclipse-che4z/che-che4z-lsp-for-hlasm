@@ -62,7 +62,7 @@ constexpr std::array<std::pair<context::id_index, context::SET_t_enum>, 3> SET_i
 
 } // namespace
 
-lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx, const std::string& file_text)
+lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx, std::string_view file_text)
     : hlasm_ctx_(hlasm_ctx)
     , lsp_ctx_(lsp_ctx)
     , file_text_(file_text)

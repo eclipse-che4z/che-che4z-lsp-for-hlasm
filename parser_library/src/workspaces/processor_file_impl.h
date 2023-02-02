@@ -21,7 +21,7 @@
 
 #include "analyzer.h"
 #include "fade_messages.h"
-#include "file_impl.h"
+#include "file.h"
 #include "macro_cache.h"
 #include "processor.h"
 #include "utils/resource_location.h"
@@ -33,14 +33,11 @@ class file_manager;
 // Implementation of the processor_file interface. Uses analyzer to parse the file
 // Then stores it until the next parsing so it is possible to retrieve parsing
 // information from it.
-class processor_file_impl : public virtual file_impl, public virtual processor_file
+class processor_file_impl final : public virtual processor_file, public diagnosable_impl
 {
 public:
-    processor_file_impl(utils::resource::resource_location file_loc,
-        const file_manager& file_mngr,
-        std::atomic<bool>* cancel = nullptr);
-    processor_file_impl(file_impl&&, const file_manager& file_mngr, std::atomic<bool>* cancel = nullptr);
-    processor_file_impl(const file_impl& file, const file_manager& file_mngr, std::atomic<bool>* cancel = nullptr);
+    processor_file_impl(std::shared_ptr<file> file, file_manager& file_mngr, std::atomic<bool>* cancel = nullptr);
+
     void collect_diags() const override;
     bool is_once_only() const override;
     // Starts parser with new (empty) context
@@ -61,8 +58,19 @@ public:
     bool has_lsp_info() const override;
 
     void retrieve_fade_messages(std::vector<fade_message_s>& fms) const override;
+    const file_location& get_location() const override;
+
+    bool current_version() const override;
+
+    void update_source();
+    std::shared_ptr<file> current_source() const { return file_; }
+    void store_used_files(std::unordered_map<utils::resource::resource_location,
+        std::shared_ptr<file>,
+        utils::resource::resource_location_hasher> used_files);
 
 private:
+    file_manager& file_mngr_;
+    std::shared_ptr<file> file_;
     std::unique_ptr<analyzer> last_analyzer_ = nullptr;
     std::shared_ptr<context::id_storage> last_opencode_id_storage_;
     bool last_analyzer_opencode_ = false;
@@ -74,6 +82,11 @@ private:
 
     std::set<utils::resource::resource_location> dependencies_;
     std::set<utils::resource::resource_location> files_to_close_;
+
+    std::unordered_map<utils::resource::resource_location,
+        std::shared_ptr<file>,
+        utils::resource::resource_location_hasher>
+        used_files;
 
     macro_cache macro_cache_;
 

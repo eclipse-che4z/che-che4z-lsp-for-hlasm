@@ -17,9 +17,9 @@
 
 #include "gtest/gtest.h"
 
+#include "../workspace/empty_configs.h"
 #include "analyzer.h"
 #include "context/id_storage.h"
-#include "file_with_text.h"
 #include "files_parse_lib_provider.h"
 #include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"
@@ -36,8 +36,8 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
 {
     const static inline size_t lib_prefix_length = 4;
 
-    std::unordered_map<resource_location, std::shared_ptr<file_with_text>, resource_location_hasher> files_by_location_;
-    std::unordered_map<std::string, std::pair<std::shared_ptr<file_with_text>, macro_cache>> files_by_library_;
+    std::unordered_map<resource_location, std::shared_ptr<file>, resource_location_hasher> files_by_location_;
+    std::unordered_map<std::string, std::pair<std::shared_ptr<file>, macro_cache>> files_by_library_;
 
     std::shared_ptr<context::hlasm_context> hlasm_ctx;
 
@@ -45,12 +45,11 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
     {
         auto file_loc = resource_location(file_name);
 
-        auto file = std::make_shared<file_with_text>(file_loc, text, *this);
+        did_open_file(file_loc, {}, text);
+        auto f = file_manager_impl::find(file_loc);
 
-        auto [it, succ] = files_by_library_.emplace(file_name.substr(lib_prefix_length),
-            std::pair<std::shared_ptr<file_with_text>, macro_cache>(
-                std::piecewise_construct, std::forward_as_tuple(file), std::forward_as_tuple(*this, *file)));
-        files_by_location_.emplace(std::move(file_loc), file);
+        auto [it, succ] = files_by_library_.try_emplace(file_name.substr(lib_prefix_length), f, macro_cache(*this, *f));
+        files_by_location_.emplace(std::move(file_loc), f);
 
         return it->second;
     }
@@ -59,19 +58,20 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
     {
         auto file_loc = resource_location(file_name);
 
-        auto file = std::make_shared<file_with_text>(file_loc, text, *this);
-        files_by_location_.emplace(std::move(file_loc), file);
-        return file;
+        did_open_file(file_loc, {}, text);
+        auto f = file_manager_impl::find(file_loc);
+        files_by_location_.emplace(std::move(file_loc), f);
+        return f;
     }
 
 
-    file_ptr find(const resource_location& key) const override
+    std::shared_ptr<file> find(const resource_location& key) const override
     {
         auto it = files_by_location_.find(key);
         return it == files_by_location_.end() ? nullptr : it->second;
     };
 
-    std::pair<processor_file_ptr, macro_cache*> get_proc_file_from_library(const std::string& library)
+    std::pair<std::shared_ptr<file>, macro_cache*> get_proc_file_from_library(const std::string& library)
     {
         auto it = files_by_library_.find(library);
         if (it == files_by_library_.end())
@@ -149,10 +149,16 @@ TEST(macro_cache_test, copy_from_macro)
 )";
 
     file_manager_cache_test_mock file_mngr;
+    lib_config config;
+    shared_json global_settings = make_empty_shared_json();
+    workspace ws(file_mngr, config, global_settings);
+    ws.open();
 
-    auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
+    file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto& [macro, macro_c] = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
     auto& [copyfile, copy_c] = file_mngr.add_macro_or_copy(copyfile_file_name, copyfile_text);
+
+    auto opencode = ws.add_processor_file(opencode_file_loc);
 
 
     opencode->parse(file_mngr, {}, {}, nullptr);
@@ -215,8 +221,14 @@ SETA   OPSYN LR
 )";
 
     file_manager_cache_test_mock file_mngr;
-    auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
+    lib_config config;
+    shared_json global_settings = make_empty_shared_json();
+    workspace ws(file_mngr, config, global_settings);
+    ws.open();
+    auto opencode_file = file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto& [macro, macro_c] = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
+
+    auto opencode = ws.add_processor_file(opencode_file_loc);
 
     opencode->parse(file_mngr, {}, {}, nullptr);
     opencode->collect_diags();
@@ -242,7 +254,8 @@ SETA   OPSYN LR
 
 
 
-    opencode->did_change({}, "L OPSYN SETB\n");
+    opencode_file->did_change({}, "L OPSYN SETB\n");
+    EXPECT_EQ(opencode, ws.add_processor_file(opencode_file_loc));
     opencode->parse(file_mngr, {}, {}, nullptr);
 
     analyzing_context ctx_second_opsyn1 = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
@@ -273,8 +286,14 @@ TEST(macro_cache_test, empty_macro)
     std::string macro_text = "";
 
     file_manager_cache_test_mock file_mngr;
-    auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
+    lib_config config;
+    shared_json global_settings = make_empty_shared_json();
+    workspace ws(file_mngr, config, global_settings);
+    ws.open();
+
+    file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto& [macro, macro_c] = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
+    auto opencode = ws.add_processor_file(opencode_file_loc);
 
     opencode->parse(file_mngr, {}, {}, nullptr);
 
@@ -359,11 +378,15 @@ TEST(macro_cache_test, overwrite_by_inline)
 )";
 
     file_manager_impl file_mngr;
-    files_parse_lib_provider lib_provider(file_mngr);
+    lib_config config;
+    shared_json global_settings = make_empty_shared_json();
+    workspace ws(file_mngr, config, global_settings);
+    ws.open();
+    files_parse_lib_provider lib_provider(file_mngr, ws);
 
     file_mngr.did_open_file(opencode_file_loc, 0, opencode_text);
     file_mngr.did_open_file(macro_file_loc, 0, macro_text);
-    auto opencode = file_mngr.add_processor_file(opencode_file_loc);
+    auto opencode = ws.add_processor_file(opencode_file_loc);
 
     opencode->parse(lib_provider, {}, {}, nullptr);
     opencode->collect_diags();
@@ -398,8 +421,13 @@ TEST(macro_cache_test, inline_depends_on_copy)
     std::string copy_text = R"( LR 1,1 arbitrary instruction)";
 
     file_manager_cache_test_mock file_mngr;
-    auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
+    lib_config config;
+    shared_json global_settings = make_empty_shared_json();
+    workspace ws(file_mngr, config, global_settings);
+    ws.open();
+    file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto& [copyfile, copy_c] = file_mngr.add_macro_or_copy(copy_file_name, copy_text);
+    auto opencode = ws.add_processor_file(opencode_file_loc);
 
     opencode->parse(file_mngr, {}, {}, nullptr);
     opencode->collect_diags();

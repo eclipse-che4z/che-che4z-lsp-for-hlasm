@@ -46,7 +46,7 @@ protected:
 };
 
 // Interface that represents a file that can be parsed.
-class processor_file : public virtual file, public processor
+class processor_file : public processor
 {
 public:
     virtual const std::set<utils::resource::resource_location>& dependencies() = 0;
@@ -56,6 +56,9 @@ public:
     virtual const performance_metrics& get_metrics() = 0;
     virtual void erase_cache_of_opencode(const utils::resource::resource_location& opencode_file_location) = 0;
     virtual bool has_lsp_info() const = 0;
+    virtual void retrieve_fade_messages(std::vector<fade_message_s>& fms) const = 0;
+    virtual const file_location& get_location() const = 0;
+    virtual bool current_version() const = 0;
 
 protected:
     ~processor_file() = default;

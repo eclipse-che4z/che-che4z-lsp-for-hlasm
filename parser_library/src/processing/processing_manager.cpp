@@ -33,7 +33,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     analyzing_context ctx,
     workspaces::library_data data,
     utils::resource::resource_location file_loc,
-    const std::string& file_text,
+    std::string_view file_text,
     workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
     std::shared_ptr<std::vector<fade_message_s>> fade_msgs)

@@ -65,7 +65,7 @@ TEST(diags_suppress, no_suppress)
     ws.open();
     ws.did_open_file(file_loc);
 
-    auto pfile = fm.find(file_loc);
+    auto pfile = ws.find_processor_file(file_loc);
     ASSERT_TRUE(pfile);
 
     pfile->collect_diags();
@@ -97,7 +97,7 @@ TEST(diags_suppress, do_suppress)
     ws.open();
     ws.did_open_file(file_loc);
 
-    auto pfile = fm.find(file_loc);
+    auto pfile = ws.find_processor_file(file_loc);
     ASSERT_TRUE(pfile);
 
     pfile->collect_diags();
@@ -127,7 +127,7 @@ TEST(diags_suppress, pgm_supress_limit_changed)
     ws.open();
     ws.did_open_file(file_loc);
 
-    auto pfile = fm.find(file_loc);
+    auto pfile = ws.find_processor_file(file_loc);
     ASSERT_TRUE(pfile);
 
     pfile->collect_diags();
@@ -142,7 +142,7 @@ TEST(diags_suppress, pgm_supress_limit_changed)
 
     ws.did_change_file(file_loc, &ch, 1);
 
-    pfile = fm.find(file_loc);
+    pfile = ws.find_processor_file(file_loc);
     ASSERT_TRUE(pfile);
     pfile->collect_diags();
     EXPECT_TRUE(matches_message_codes(pfile->diags(), { "SUP" }));
@@ -171,9 +171,9 @@ TEST(diags_suppress, cancel_token)
     ws.open();
     ws.did_open_file(file_loc);
 
-    auto pfile = fm.find(file_loc);
+    auto pfile = ws.find_processor_file(file_loc);
     ASSERT_TRUE(pfile);
 
     pfile->collect_diags();
-    EXPECT_TRUE(matches_message_codes(pfile->diags(), { "SUP" }));
+    EXPECT_TRUE(pfile->diags().empty());
 }

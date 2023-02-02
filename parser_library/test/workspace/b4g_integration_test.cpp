@@ -129,20 +129,16 @@ TEST(b4g_integration_test, basic_pgm_conf_retrieval)
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/A"));
     ws.collect_diags();
-    file_manager.collect_diags();
 
-    EXPECT_TRUE(ws.diags().empty());
-    EXPECT_TRUE(matches_message_text(file_manager.diags(), { "SYS/SUB/ASMMACP1/MAC1", "ASMMACP1/MAC2" }));
+    EXPECT_TRUE(matches_message_text(ws.diags(), { "SYS/SUB/ASMMACP1/MAC1", "ASMMACP1/MAC2" }));
+    ws.diags().clear();
 
     ws.did_close_file(resource_location("SYS/SUB/ASMPGM/A"));
-    file_manager.diags().clear();
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/B"));
     ws.collect_diags();
-    file_manager.collect_diags();
 
-    EXPECT_TRUE(ws.diags().empty());
-    EXPECT_TRUE(matches_message_text(file_manager.diags(), { "SYS/SUB/ASMMACP2/MAC1", "ASMMACP2/MAC2" }));
+    EXPECT_TRUE(matches_message_text(ws.diags(), { "SYS/SUB/ASMMACP2/MAC1", "ASMMACP2/MAC2" }));
 
     ws.did_close_file(resource_location("SYS/SUB/ASMPGM/B"));
 }
@@ -162,9 +158,7 @@ TEST(b4g_integration_test, invalid_bridge_json)
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/A"));
     ws.collect_diags();
-    file_manager.collect_diags();
 
-    EXPECT_TRUE(file_manager.diags().empty());
     EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G001" }));
 }
 
@@ -185,9 +179,7 @@ TEST(b4g_integration_test, missing_pgroup)
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/A"));
     ws.collect_diags();
-    file_manager.collect_diags();
 
-    EXPECT_TRUE(file_manager.diags().empty());
     EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002", "B4G002" }));
 }
 
@@ -210,9 +202,7 @@ TEST(b4g_integration_test, missing_pgroup_but_not_used)
     ws.did_close_file(resource_location("SYS/SUB/ASMPGM/A"));
 
     ws.collect_diags();
-    file_manager.collect_diags();
 
-    EXPECT_TRUE(file_manager.diags().empty());
     EXPECT_TRUE(ws.diags().empty());
 }
 
@@ -240,13 +230,10 @@ TEST(b4g_integration_test, bridge_config_changed)
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/A"));
     ws.collect_diags();
-    file_manager.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(file_manager.diags(), { "E049" }));
-    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G001" }));
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "E049", "B4G001" }));
 
     ws.diags().clear();
-    file_manager.diags().clear();
 
     std::string_view new_bridge_json = R"({"elements":{},"defaultProcessorGroup":"P1","fileExtension":""})";
     document_change doc_change(new_bridge_json.data(), new_bridge_json.size());
@@ -254,10 +241,8 @@ TEST(b4g_integration_test, bridge_config_changed)
     ws.did_change_file(resource_location("SYS/SUB/ASMPGM/.bridge.json"), &doc_change, 1);
 
     ws.collect_diags();
-    file_manager.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(file_manager.diags(), { "MNOTE" }));
-    EXPECT_TRUE(ws.diags().empty());
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "MNOTE" }));
 }
 
 TEST(b4g_integration_test, proc_config_changed)
@@ -284,13 +269,10 @@ TEST(b4g_integration_test, proc_config_changed)
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/A"));
     ws.collect_diags();
-    file_manager.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(file_manager.diags(), { "E049" }));
-    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002" }));
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "E049", "B4G002" }));
 
     ws.diags().clear();
-    file_manager.diags().clear();
 
     std::string_view new_bridge_json =
         R"({"pgroups":[{"name":"P1","libs":[{"path":"ASMMAC","prefer_alternate_root":true}]}]})";
@@ -299,8 +281,6 @@ TEST(b4g_integration_test, proc_config_changed)
     ws.did_change_file(resource_location(".hlasmplugin/proc_grps.json"), &doc_change, 1);
 
     ws.collect_diags();
-    file_manager.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(file_manager.diags(), { "MNOTE" }));
-    EXPECT_TRUE(ws.diags().empty());
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "MNOTE" }));
 }

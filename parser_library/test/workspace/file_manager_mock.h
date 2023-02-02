@@ -27,12 +27,9 @@ public:
     {
         // nothing to do
     }
-    MOCK_METHOD(file_ptr, add_file, (const file_location&), (override));
-    MOCK_METHOD(processor_file_ptr, add_processor_file, (const file_location&), (override));
-    MOCK_METHOD(processor_file_ptr, get_processor_file, (const file_location&), (override));
+    MOCK_METHOD(std::shared_ptr<file>, add_file, (const file_location&), (override));
     MOCK_METHOD(void, remove_file, (const file_location&), (override));
-    MOCK_METHOD(file_ptr, find, (const file_location& key), (const override));
-    MOCK_METHOD(processor_file_ptr, find_processor_file, (const file_location& key), (override));
+    MOCK_METHOD(std::shared_ptr<file>, find, (const file_location& key), (const override));
     MOCK_METHOD(list_directory_result,
         list_directory_files,
         (const hlasm_plugin::utils::resource::resource_location& path),
@@ -79,7 +76,7 @@ public:
     MOCK_METHOD(std::optional<std::string>,
         get_file_content,
         (const hlasm_plugin::utils::resource::resource_location&),
-        (override));
+        (const override));
 
     MOCK_METHOD(void, retrieve_fade_messages, (std::vector<fade_message_s>&), (const override));
 };
