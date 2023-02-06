@@ -14,6 +14,7 @@
 
 #include "item_convertors.h"
 
+#include <concepts>
 #include <limits>
 
 #include "completion_item.h"
@@ -26,11 +27,12 @@
 #include "text_data_view.h"
 #include "utils/concat.h"
 #include "utils/string_operations.h"
+#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 namespace {
 
-template</*std::integral*/ typename T>
+template<std::integral T>
 std::string& append_hex_and_dec(std::string& t, T value)
 {
     using UT = std::make_unsigned_t<T>;
@@ -185,15 +187,11 @@ std::string get_macro_documentation(const text_data_view& text, size_t definitio
         --doc_before_begin_line;
     ++doc_before_begin_line;
 
-    std::string_view doc_before = text.get_range_content({ { doc_before_begin_line, 0 }, { MACRO_line, 0 } });
-
     // Find the end line of macro definition
     size_t macro_def_end_line = definition_line;
     while (macro_def_end_line < text.get_number_of_lines() && is_continued_line(text.get_line(macro_def_end_line)))
         ++macro_def_end_line;
     ++macro_def_end_line;
-
-    std::string_view macro_def = text.get_range_content({ { definition_line, 0 }, { macro_def_end_line, 0 } });
 
     // Find the end line of documentation that comes after the macro definition
     size_t doc_after_end_line = macro_def_end_line;
@@ -201,9 +199,45 @@ std::string get_macro_documentation(const text_data_view& text, size_t definitio
     while (doc_after_end_line < text.get_number_of_lines() && is_comment(text.get_line(doc_after_end_line)))
         ++doc_after_end_line;
 
-    std::string_view doc_after = text.get_range_content({ { macro_def_end_line, 0 }, { doc_after_end_line, 0 } });
+    constexpr static std::string_view prolog("```hlasm");
+    constexpr static std::string_view epilog("\n```\n");
 
-    return utils::concat("```\n", macro_def, doc_before, doc_after, "\n```\n");
+    constexpr static auto add_line = [](std::string& str, std::string_view line) {
+        auto append = utils::utf8_substr(line, 0, 72).str;
+        str.push_back('\n');
+        size_t trim_pos = append.find_last_not_of(" \n\r") + 1;
+        str.append(append.substr(0, trim_pos - (trim_pos == 0)));
+    };
+
+    // There is a limit editor.maxTokenizationLineLength which seems to be applied a bit strangely...
+    // Breaking the content into two blocks ensures that at least the first one is likely highlighted correctly
+
+    std::string result;
+    /* 2x(prolog + epilog) + line count * (72 columns, newline, reserve 1 byte per line for weird chars) */
+    result.reserve(2 * (prolog.size() + epilog.size()) + (72 + 1 + 1) * (doc_after_end_line - doc_before_begin_line));
+
+    result.append(prolog);
+    for (auto i = definition_line; i < macro_def_end_line; ++i)
+        add_line(result, text.get_line(i));
+    result.append(epilog);
+
+    if (MACRO_line - doc_before_begin_line + doc_after_end_line - macro_def_end_line > 0)
+    {
+        size_t doc_lines = 0;
+        constexpr size_t doc_limit = 1024;
+
+        result.append(prolog);
+        for (auto i = doc_before_begin_line; i < MACRO_line && doc_lines < doc_limit; ++i, ++doc_lines)
+            add_line(result, text.get_line(i));
+        for (auto i = macro_def_end_line; i < doc_after_end_line && doc_lines < doc_limit; ++i, ++doc_lines)
+            add_line(result, text.get_line(i));
+        result.append(epilog);
+
+        if (doc_lines >= doc_limit)
+            result.append("Documentation truncated...");
+    }
+
+    return result;
 }
 
 completion_item_s generate_completion_item(const context::sequence_symbol& sym)

@@ -97,14 +97,15 @@ const std::string macro_def_input =
  
 )";
 
-const std::string macro_def_expected = R"(```
+const std::string macro_def_expected = R"(```hlasm
        MAC     &FIRST_PARAM,      first param remark                   X
                &SECOND_PARAM=1    second param remark
+```
+```hlasm
 * Before macro line 1
 * Before macro line 2
 * After macro line 1
 .* After macro line 2
-
 ```
 )";
 } // namespace

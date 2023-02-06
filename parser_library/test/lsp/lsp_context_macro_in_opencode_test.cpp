@@ -66,9 +66,8 @@ TEST_F(lsp_context_macro_in_opencode, hover_macro)
 {
     auto res = a.context().lsp_ctx->hover(opencode_loc, { 7, 8 });
 
-    EXPECT_EQ(res, R"(```
+    EXPECT_EQ(res, R"(```hlasm
 &LABEL MAC &POS_PAR,&KEY_PAR=1
-
 ```
 )");
 }

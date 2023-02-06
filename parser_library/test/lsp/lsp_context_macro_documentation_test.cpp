@@ -40,14 +40,15 @@ struct lsp_context_macro_documentation : public analyzer_fixture
  
 )";
 
-    const static inline std::string macro_documentation = R"(```
+    const static inline std::string macro_documentation = R"(```hlasm
        MAC     &FIRST_PARAM,      first param remark                   X
                &SECOND_PARAM=1    second param remark
+```
+```hlasm
 * Before macro line 1
 * Before macro line 2
 * After macro line 1
 .* After macro line 2
-
 ```
 )";
 

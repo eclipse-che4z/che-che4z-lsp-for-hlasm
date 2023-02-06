@@ -199,7 +199,7 @@ void feature_language_features::hover(const nlohmann::json& id, const nlohmann::
     response_->respond(id,
         "",
         nlohmann::json {
-            { "contents", hover_list.empty() ? nlohmann::json() : get_markup_content(hover_list) },
+            { "contents", hover_list.empty() ? "" : get_markup_content(hover_list) },
         });
 }
 
