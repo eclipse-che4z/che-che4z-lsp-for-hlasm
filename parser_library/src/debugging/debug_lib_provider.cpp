@@ -30,7 +30,7 @@ debug_lib_provider::debug_lib_provider(std::vector<std::shared_ptr<workspaces::l
 {}
 
 workspaces::parse_result debug_lib_provider::parse_library(
-    const std::string& library, analyzing_context ctx, workspaces::library_data data)
+    std::string_view library, analyzing_context ctx, workspaces::library_data data)
 {
     utils::resource::resource_location url;
     for (const auto& lib : m_libraries)
@@ -58,7 +58,7 @@ workspaces::parse_result debug_lib_provider::parse_library(
     return false;
 }
 
-bool debug_lib_provider::has_library(const std::string& library, const utils::resource::resource_location&) const
+bool debug_lib_provider::has_library(std::string_view library) const
 {
     for (const auto& lib : m_libraries)
         if (lib->has_file(library))
@@ -67,7 +67,7 @@ bool debug_lib_provider::has_library(const std::string& library, const utils::re
 }
 
 std::optional<std::pair<std::string, utils::resource::resource_location>> debug_lib_provider::get_library(
-    const std::string& library, const utils::resource::resource_location&) const
+    std::string_view library) const
 {
     utils::resource::resource_location url;
     for (const auto& lib : m_libraries)

@@ -17,6 +17,7 @@
 #include <array>
 
 #include "file_manager.h"
+#include "lsp/lsp_context.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -25,9 +26,9 @@ void macro_cache::collect_diags() const
     // No collectible children
 }
 
-macro_cache::macro_cache(const file_manager& file_mngr, file& macro_file)
+macro_cache::macro_cache(const file_manager& file_mngr, std::shared_ptr<file> macro_file)
     : file_mngr_(&file_mngr)
-    , macro_file_(&macro_file)
+    , macro_file_(std::move(macro_file))
 {}
 
 std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_context& ctx)
@@ -115,7 +116,7 @@ const macro_cache_data* macro_cache::find_cached_data(const macro_cache_key& key
     return &cached_data;
 }
 
-bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_context& ctx)
+bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_context& ctx) const
 {
     if (auto cached_data = find_cached_data(key))
     {
@@ -186,14 +187,7 @@ void macro_cache::save_macro(const macro_cache_key& key, const analyzer& analyze
 
 void macro_cache::erase_cache_of_opencode(const utils::resource::resource_location& opencode_file_location)
 {
-    auto it = cache_.begin();
-    while (it != cache_.end())
-    {
-        if (it->first.opencode_file_location == opencode_file_location)
-            it = cache_.erase(it);
-        else
-            ++it;
-    }
+    std::erase_if(cache_, [&l = opencode_file_location](const auto& e) { return e.first.opencode_file_location == l; });
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

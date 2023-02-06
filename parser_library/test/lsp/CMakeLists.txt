@@ -14,6 +14,7 @@ target_sources(library_test PRIVATE
 	analyzer_fixture.h
 	instruction_hints_test.cpp
 	item_convertors_test.cpp
+	lsp_completion.cpp
 	lsp_context_copy_in_macro_test.cpp
 	lsp_context_document_symbol_ord_test.cpp
 	lsp_context_document_symbol_var_seq_test.cpp

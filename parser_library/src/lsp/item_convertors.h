@@ -15,9 +15,12 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_LSP_ITEM_CONVERTORS_H
 #define HLASMPLUGIN_PARSERLIBRARY_LSP_ITEM_CONVERTORS_H
 
+#include <functional>
 #include <string>
 #include <string_view>
+#include <vector>
 
+#include "completion_list_source.h"
 
 namespace hlasm_plugin::parser_library {
 namespace context {
@@ -44,6 +47,18 @@ bool is_continued_line(std::string_view line);
 completion_item_s generate_completion_item(const context::sequence_symbol& sym);
 completion_item_s generate_completion_item(const variable_symbol_definition& sym);
 completion_item_s generate_completion_item(const macro_info& sym, const file_info* info);
+
+std::vector<completion_item_s> generate_completion(const completion_list_source& cls,
+    const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions = {});
+std::vector<completion_item_s> generate_completion(
+    std::monostate, const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
+std::vector<completion_item_s> generate_completion(const std::vector<variable_symbol_definition>*,
+    const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
+std::vector<completion_item_s> generate_completion(
+    const std::unordered_map<context::id_index, std::unique_ptr<context::sequence_symbol>>*,
+    const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
+std::vector<completion_item_s> generate_completion(const completion_list_instructions&,
+    const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
 
 } // namespace hlasm_plugin::parser_library::lsp
 

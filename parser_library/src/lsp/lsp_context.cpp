@@ -21,10 +21,13 @@
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
+#include <variant>
 
 #include "context/instruction.h"
+#include "context/macro.h"
 #include "ebcdic_encoding.h"
 #include "item_convertors.h"
+#include "lsp/macro_info.h"
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::lsp {

@@ -13,6 +13,7 @@
 target_sources(parser_library PRIVATE
 	completion_item.cpp
 	completion_item.h
+	completion_list_source.h
 	document_symbol_item.cpp
 	document_symbol_item.h
 	file_info.cpp

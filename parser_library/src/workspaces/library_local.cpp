@@ -20,6 +20,7 @@
 
 #include "utils/path.h"
 #include "utils/platform.h"
+#include "utils/string_operations.h"
 #include "wildcard.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
@@ -159,7 +160,7 @@ library_local::files_collection_t library_local::load_files()
         else
             continue;
 
-        context::to_upper(file);
+        utils::to_upper(file);
 
         if (auto [it, inserted] = new_files.try_emplace(std::move(file), std::move(rl)); !inserted)
         {

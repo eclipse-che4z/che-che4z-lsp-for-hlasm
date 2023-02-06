@@ -15,6 +15,8 @@
 #include "gtest/gtest.h"
 
 #include "analyzer_fixture.h"
+#include "lsp/document_symbol_item.h"
+#include "lsp/lsp_context.h"
 #include "lsp_context_test_helper.h"
 
 using namespace hlasm_plugin::parser_library;

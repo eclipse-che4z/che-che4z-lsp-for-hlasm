@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "completion_item.h"
+#include "completion_list_source.h"
 #include "context/id_storage.h"
 #include "context/macro.h"
 #include "document_symbol_item.h"
@@ -35,19 +36,6 @@
 #include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::lsp {
-
-class lsp_context;
-
-struct completion_list_instructions
-{
-    std::string_view completed_text;
-    size_t completed_text_start_column;
-    const std::unordered_map<context::macro_def_ptr, macro_info_ptr>* macros;
-    const lsp_context* lsp_ctx;
-};
-
-using completion_list_source =
-    std::variant<std::monostate, const vardef_storage*, const context::label_storage*, completion_list_instructions>;
 
 class lsp_context final
 {

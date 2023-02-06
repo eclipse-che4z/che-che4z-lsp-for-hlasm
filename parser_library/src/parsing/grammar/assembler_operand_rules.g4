@@ -62,9 +62,7 @@ asm_op returns [operand_ptr op]
 	}
 	| { !ALIAS() }? mach_expr
 	{
-		std::string upper_case = $mach_expr.ctx->getText();
-		context::to_upper(upper_case);
-		$op = std::make_unique<expr_assembler_operand>(std::move($mach_expr.m_e),upper_case,provider.get_range($mach_expr.ctx));
+		$op = std::make_unique<expr_assembler_operand>(std::move($mach_expr.m_e),utils::to_upper_copy($mach_expr.ctx->getText()),provider.get_range($mach_expr.ctx));
 	}
 	| string
 	{

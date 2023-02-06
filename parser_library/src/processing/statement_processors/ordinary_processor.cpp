@@ -35,7 +35,7 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
     const processing_manager& proc_mgr)
     : statement_processor(processing_kind::ORDINARY, ctx)
     , lib_provider(lib_provider)
-    , lib_info(lib_provider, *ctx.hlasm_ctx)
+    , lib_info(lib_provider)
     , eval_ctx { *ctx.hlasm_ctx, lib_info, *this }
     , ca_proc_(ctx, branch_provider, lib_provider, state_listener, open_code)
     , mac_proc_(ctx, branch_provider, lib_provider)

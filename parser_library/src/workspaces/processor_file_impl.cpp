@@ -28,7 +28,7 @@ processor_file_impl::processor_file_impl(std::shared_ptr<file> file, file_manage
     : file_mngr_(file_mngr)
     , file_(std::move(file))
     , cancel_(cancel)
-    , macro_cache_(file_mngr, *file_)
+    , macro_cache_(file_mngr, file_)
 {}
 
 void processor_file_impl::collect_diags() const {}
@@ -60,31 +60,34 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider,
 
     auto old_dep = dependencies_;
 
-    auto res = parse_inner(*new_analyzer);
+    new_analyzer->analyze(cancel_);
 
-    if (!cancel_ || !*cancel_)
+    if (cancel_ && *cancel_)
+        return false;
+
+    diags().clear();
+    collect_diags_from_child(*new_analyzer);
+
+    last_analyzer_ = std::move(new_analyzer);
+    last_analyzer_opencode_ = true;
+    last_analyzer_with_lsp = collect_hl;
+
+    dependencies_.clear();
+    for (auto& file : last_analyzer_->hlasm_ctx().get_visited_files())
+        if (file != file_->get_location())
+            dependencies_.insert(file);
+
+    files_to_close_.clear();
+    // files that used to be dependencies but are not anymore should be closed internally
+    for (const auto& file : old_dep)
     {
-        last_analyzer_ = std::move(new_analyzer);
-        last_analyzer_opencode_ = true;
-        last_analyzer_with_lsp = collect_hl;
-
-        dependencies_.clear();
-        for (auto& file : last_analyzer_->hlasm_ctx().get_visited_files())
-            if (file != file_->get_location())
-                dependencies_.insert(file);
-
-        files_to_close_.clear();
-        // files that used to be dependencies but are not anymore should be closed internally
-        for (const auto& file : old_dep)
-        {
-            if (dependencies_.find(file) == dependencies_.end())
-                files_to_close_.insert(file);
-        }
-
-        fade_messages_ = std::move(fms);
+        if (dependencies_.find(file) == dependencies_.end())
+            files_to_close_.insert(file);
     }
 
-    return res;
+    fade_messages_ = std::move(fms);
+
+    return true;
 }
 
 parse_result processor_file_impl::parse_macro(
@@ -107,10 +110,13 @@ parse_result processor_file_impl::parse_macro(
             fms,
         });
 
-    auto ret = parse_inner(*a);
+    a->analyze(cancel_);
 
-    if (!ret) // Parsing was interrupted by cancellation token, do not save the result into cache
+    if (cancel_ && *cancel_)
         return false;
+
+    diags().clear();
+    collect_diags_from_child(*a);
 
     macro_cache_.save_macro(cache_key, *a);
     last_analyzer_ = std::move(a);
@@ -119,7 +125,7 @@ parse_result processor_file_impl::parse_macro(
 
     fade_messages_ = std::move(fms);
 
-    return ret;
+    return true;
 }
 
 const std::set<utils::resource::resource_location>& processor_file_impl::dependencies() { return dependencies_; }
@@ -156,18 +162,6 @@ void processor_file_impl::erase_cache_of_opencode(const utils::resource::resourc
     macro_cache_.erase_cache_of_opencode(opencode_file_location);
 }
 
-bool processor_file_impl::parse_inner(analyzer& new_analyzer)
-{
-    new_analyzer.analyze(cancel_);
-
-    if (cancel_ && *cancel_)
-        return false;
-
-    diags().clear();
-    collect_diags_from_child(new_analyzer);
-    return true;
-}
-
 bool processor_file_impl::should_collect_hl(context::hlasm_context* ctx) const
 {
     // collect highlighting information in any of the following cases:
@@ -197,6 +191,8 @@ void processor_file_impl::update_source()
     last_analyzer_.reset();
     used_files.clear();
     file_ = file_mngr_.add_file(get_location());
+    macro_cache_ = macro_cache(file_mngr_, file_);
+    diags().clear();
 }
 
 void processor_file_impl::store_used_files(std::unordered_map<utils::resource::resource_location,

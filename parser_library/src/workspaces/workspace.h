@@ -16,7 +16,6 @@
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_H
 
 #include <atomic>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <set>
@@ -85,13 +84,13 @@ public:
     void did_change_watched_files(const std::vector<utils::resource::resource_location>& file_locations);
 
     location definition(const utils::resource::resource_location& document_loc, position pos) const;
-    location_list references(const utils::resource::resource_location& document_loc, position pos) const;
+    std::vector<location> references(const utils::resource::resource_location& document_loc, position pos) const;
     std::string hover(const utils::resource::resource_location& document_loc, position pos) const;
-    lsp::completion_list_s completion(const utils::resource::resource_location& document_loc,
+    std::vector<lsp::completion_item_s> completion(const utils::resource::resource_location& document_loc,
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind);
-    lsp::document_symbol_list_s document_symbol(
+    std::vector<lsp::document_symbol_item_s> document_symbol(
         const utils::resource::resource_location& document_loc, long long limit) const;
 
     std::vector<token_info> semantic_tokens(const utils::resource::resource_location& document_loc) const;
@@ -108,7 +107,6 @@ public:
 
     void set_message_consumer(message_consumer* consumer);
 
-    std::shared_ptr<processor_file> add_processor_file(const utils::resource::resource_location& file);
     std::shared_ptr<processor_file> find_processor_file(const utils::resource::resource_location& file) const;
 
     file_manager& get_file_manager() const;
@@ -122,9 +120,6 @@ public:
         const utils::resource::resource_location& file, std::string_view opcode, bool extended);
 
     void retrieve_fade_messages(std::vector<fade_message_s>& fms) const;
-
-    static lsp::completion_list_s generate_completion(const lsp::completion_list_source& cls,
-        std::function<std::vector<std::string>(std::string_view)> instruction_suggestions = {});
 
 private:
     std::atomic<bool>* cancel_;
@@ -185,15 +180,6 @@ private:
         processor_file_compoments,
         utils::resource::resource_location_hasher>
         m_processor_files;
-
-    static lsp::completion_list_s generate_completion(
-        std::monostate, const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
-    static lsp::completion_list_s generate_completion(const lsp::vardef_storage*,
-        const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
-    static lsp::completion_list_s generate_completion(const context::label_storage*,
-        const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
-    static lsp::completion_list_s generate_completion(const lsp::completion_list_instructions&,
-        const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions);
 
     std::vector<processor_file_compoments*> collect_dependants(const utils::resource::resource_location& file_location);
 

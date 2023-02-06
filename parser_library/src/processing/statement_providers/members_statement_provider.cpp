@@ -48,9 +48,8 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
     {
         if (const auto* instr = retrieve_instruction(*cache))
         {
-            if (try_trigger_attribute_lookahead(*instr,
-                    { *ctx.hlasm_ctx, library_info_transitional(lib_provider, *ctx.hlasm_ctx), drop_diags },
-                    listener))
+            if (try_trigger_attribute_lookahead(
+                    *instr, { *ctx.hlasm_ctx, library_info_transitional(lib_provider), drop_diags }, listener))
                 return nullptr;
         }
     }
@@ -74,7 +73,7 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
 
     if (processor.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(
-            *stmt, { *ctx.hlasm_ctx, library_info_transitional(lib_provider, *ctx.hlasm_ctx), drop_diags }, listener))
+            *stmt, { *ctx.hlasm_ctx, library_info_transitional(lib_provider), drop_diags }, listener))
         return nullptr;
 
     return stmt;

@@ -152,7 +152,7 @@ lookahead_processor::process_table_t lookahead_processor::create_table()
 void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
     diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
-    library_info_transitional li(lib_provider_, *ctx.hlasm_ctx);
+    library_info_transitional li(lib_provider_);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, li);
     // type attribute operand
     context::symbol_attributes::type_attr t_attr = context::symbol_attributes::undef_type;
@@ -237,7 +237,7 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
     context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
     context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 
-    library_info_transitional li(lib_provider_, *ctx.hlasm_ctx);
+    library_info_transitional li(lib_provider_);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, li);
     diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
 
@@ -346,7 +346,7 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
 
 void lookahead_processor::register_attr_ref(context::id_index name, context::symbol_attributes attributes)
 {
-    library_info_transitional li(lib_provider_, *ctx.hlasm_ctx);
+    library_info_transitional li(lib_provider_);
     hlasm_ctx.ord_ctx.add_symbol_reference(
         context::symbol(name, context::symbol_value(), attributes, location(), {}), li);
 }

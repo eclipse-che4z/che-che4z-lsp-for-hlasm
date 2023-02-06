@@ -21,7 +21,8 @@
 #include "context/sequence_symbol.h"
 #include "ebcdic_encoding.h"
 #include "file_info.h"
-#include "macro_info.h"
+#include "lsp/lsp_context.h"
+#include "lsp/macro_info.h"
 #include "text_data_view.h"
 #include "utils/concat.h"
 #include "utils/string_operations.h"
@@ -225,10 +226,115 @@ completion_item_s generate_completion_item(const macro_info& sym, const file_inf
     const context::macro_definition& m = *sym.macro_definition;
 
     return completion_item_s(m.id.to_string(),
-        lsp::get_macro_signature(m),
+        get_macro_signature(m),
         m.id.to_string(),
         info ? get_macro_documentation(info->data, sym.definition_location.pos.line) : "",
         completion_item_kind::macro);
 }
+
+
+completion_list_s generate_completion(const completion_list_source& cls,
+    const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions)
+{
+    return std::visit(
+        [&instruction_suggestions](auto v) { return generate_completion(v, instruction_suggestions); }, cls);
+}
+
+completion_list_s generate_completion(std::monostate, const std::function<std::vector<std::string>(std::string_view)>&)
+{
+    return completion_list_s();
+}
+
+completion_list_s generate_completion(
+    const vardef_storage* var_defs, const std::function<std::vector<std::string>(std::string_view)>&)
+{
+    completion_list_s items;
+    for (const auto& vardef : *var_defs)
+    {
+        items.emplace_back(generate_completion_item(vardef));
+    }
+
+    return items;
+}
+
+completion_list_s generate_completion(
+    const context::label_storage* seq_syms, const std::function<std::vector<std::string>(std::string_view)>&)
+{
+    completion_list_s items;
+    items.reserve(seq_syms->size());
+    for (const auto& [_, sym] : *seq_syms)
+    {
+        items.emplace_back(generate_completion_item(*sym));
+    }
+    return items;
+}
+
+completion_list_s generate_completion(const completion_list_instructions& cli,
+    const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions)
+{
+    assert(cli.lsp_ctx);
+
+    const auto& hlasm_ctx = cli.lsp_ctx->get_related_hlasm_context();
+
+    auto suggestions = [&instruction_suggestions](std::string_view ct) {
+        std::vector<std::pair<std::string, bool>> result;
+        if (ct.empty() || !instruction_suggestions)
+            return result;
+        auto raw_suggestions = instruction_suggestions(ct);
+        result.reserve(raw_suggestions.size());
+        for (auto&& s : raw_suggestions)
+            result.emplace_back(std::move(s), false);
+        return result;
+    }(cli.completed_text);
+    const auto locate_suggestion = [&s = suggestions](std::string_view text) {
+        auto it = std::find_if(s.begin(), s.end(), [text](const auto& e) { return e.first == text; });
+        return it == s.end() ? nullptr : std::to_address(it);
+    };
+
+    completion_list_s result;
+
+    // Store only instructions from the currently active instruction set
+    for (const auto& instr : completion_item_s::m_instruction_completion_items)
+    {
+        auto id = hlasm_ctx.ids().find(instr.label);
+        // TODO: we could provide more precise results here if actual generation is provided
+        if (id.has_value() && hlasm_ctx.find_opcode_mnemo(id.value(), context::opcode_generation::zero))
+        {
+            auto& i = result.emplace_back(instr);
+            if (auto space = i.insert_text.find(' '); space != std::string::npos)
+            {
+                if (auto col_pos = cli.completed_text_start_column + space; col_pos < 15)
+                    i.insert_text.insert(i.insert_text.begin() + space, 15 - col_pos, ' ');
+            }
+            if (auto* suggestion = locate_suggestion(i.label))
+            {
+                i.suggestion_for = cli.completed_text;
+                suggestion->second = true;
+            }
+        }
+    }
+
+    for (const auto& [_, macro_i] : *cli.macros)
+    {
+        auto& i = result.emplace_back(
+            generate_completion_item(*macro_i, cli.lsp_ctx->get_file_info(macro_i->definition_location.resource_loc)));
+        if (auto* suggestion = locate_suggestion(i.label))
+        {
+            i.suggestion_for = cli.completed_text;
+            suggestion->second = true;
+        }
+    }
+
+    for (const auto& [suggestion, used] : suggestions)
+    {
+        if (used)
+            continue;
+        result.emplace_back(
+            suggestion, "", suggestion, "", completion_item_kind::macro, false, std::string(cli.completed_text));
+    }
+
+    return result;
+}
+
 
 } // namespace hlasm_plugin::parser_library::lsp

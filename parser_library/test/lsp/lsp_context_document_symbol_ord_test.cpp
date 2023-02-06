@@ -15,6 +15,8 @@
 #include "gtest/gtest.h"
 
 #include "../mock_parse_lib_provider.h"
+#include "lsp/document_symbol_item.h"
+#include "lsp/lsp_context.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;

@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_UTILS_STRING_OPERATIONS_H
 
 #include <cctype>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -66,6 +67,9 @@ size_t trim_left(T& b, const T& e, std::initializer_list<std::string_view> to_tr
     }
     return result;
 }
+
+std::string& to_upper(std::string& s);
+std::string to_upper_copy(std::string s);
 
 } // namespace hlasm_plugin::utils
 

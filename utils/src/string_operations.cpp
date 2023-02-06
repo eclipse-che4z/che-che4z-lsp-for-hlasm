@@ -65,4 +65,18 @@ std::string_view next_nonblank_sequence(std::string_view s)
     return s.substr(0, space);
 }
 
+std::string& to_upper(std::string& s)
+{
+    for (auto& c : s)
+        c = static_cast<char>(std::toupper((unsigned char)c));
+    return s;
+}
+
+std::string to_upper_copy(std::string s)
+{
+    for (auto& c : s)
+        c = static_cast<char>(std::toupper((unsigned char)c));
+    return s;
+}
+
 } // namespace hlasm_plugin::utils

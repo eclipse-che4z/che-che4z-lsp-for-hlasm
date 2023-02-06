@@ -16,7 +16,7 @@
 
 #include "../gtest_stringers.h"
 #include "../workspace/empty_configs.h"
-#include "files_parse_lib_provider.h"
+#include "lsp/lsp_context.h"
 #include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/processor_file_impl.h"
@@ -31,15 +31,12 @@ TEST(processor_file, no_lsp_context)
     resource_location file_loc("filename");
     file_manager_impl mngr;
     mngr.did_open_file(file_loc, 0, " LR 1,1");
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
-    workspace ws(mngr, config, global_settings);
-    ws.open();
-    auto file = ws.add_processor_file(file_loc);
+
+    processor_file_impl file(mngr.find(file_loc), mngr);
 
     // Prior to parsing, there is no lsp_context available
 
-    const auto* fp = file->get_lsp_context();
+    const auto* fp = file.get_lsp_context();
     ASSERT_FALSE(fp);
 }
 
@@ -49,25 +46,43 @@ TEST(processor_file, parse_macro)
     resource_location macro_loc("MAC");
 
     file_manager_impl mngr;
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
-    workspace ws(mngr, config, global_settings);
-    ws.open();
-    files_parse_lib_provider provider(mngr, ws);
 
     mngr.did_open_file(opencode_loc, 0, " SAM31\n MAC");
-    auto opencode = ws.add_processor_file(opencode_loc);
 
     mngr.did_open_file(macro_loc, 0, R"( MACRO
  MAC
  SAM31
  MEND)");
-    auto macro = ws.add_processor_file(macro_loc);
 
-    opencode->parse(provider, {}, {}, nullptr);
+    processor_file_impl opencode(mngr.find(opencode_loc), mngr);
+    processor_file_impl macro(mngr.find(macro_loc), mngr);
+
+    struct simple_provider : parse_lib_provider
+    {
+        processor_file_impl& macro_ref;
+
+        parse_result parse_library(std::string_view lib, analyzing_context ac, library_data ld) override
+        {
+            EXPECT_EQ(lib, "MAC");
+
+            return macro_ref.parse_macro(*this, ac, ld);
+        }
+        bool has_library(std::string_view) const override { return false; }
+        std::optional<std::pair<std::string, resource_location>> get_library(std::string_view) const override
+        {
+            return std::nullopt;
+        }
+
+        simple_provider(processor_file_impl& macro_ref)
+            : macro_ref(macro_ref)
+        {}
+
+    } provider(macro);
+
+    opencode.parse(provider, {}, {}, nullptr);
 
     // Opencode file tests
-    const auto* open_fp = opencode->get_lsp_context();
+    const auto* open_fp = opencode.get_lsp_context();
     ASSERT_TRUE(open_fp);
 
     EXPECT_EQ(open_fp->definition(opencode_loc, { 1, 2 }), location({ 1, 1 }, macro_loc));
@@ -84,7 +99,7 @@ TEST(processor_file, parse_macro)
         { 1, 1, 1, 4, semantics::hl_scopes::instruction },
     };
 
-    EXPECT_EQ(opencode->get_hl_info(), open_expected_hl);
+    EXPECT_EQ(opencode.get_hl_info(), open_expected_hl);
 
     performance_metrics expected_metrics;
     expected_metrics.files = 2;
@@ -93,11 +108,11 @@ TEST(processor_file, parse_macro)
     expected_metrics.macro_statements = 2;
     expected_metrics.non_continued_statements = 6;
     expected_metrics.open_code_statements = 2;
-    EXPECT_EQ(opencode->get_metrics(), expected_metrics);
+    EXPECT_EQ(opencode.get_metrics(), expected_metrics);
 
 
     // Macro file tests
-    const auto* macro_fp = macro->get_lsp_context();
+    const auto* macro_fp = macro.get_lsp_context();
     ASSERT_TRUE(macro_fp);
     EXPECT_EQ(macro_fp->definition(opencode_loc, { 1, 2 }), location({ 1, 1 }, macro_loc));
     EXPECT_EQ(macro_fp->hover(opencode_loc, { 0, 2 }), sam31_hover_message);
@@ -110,6 +125,6 @@ TEST(processor_file, parse_macro)
         { 3, 1, 3, 5, semantics::hl_scopes::instruction },
     };
 
-    EXPECT_EQ(macro->get_hl_info(), macro_expected_hl);
-    EXPECT_EQ(macro->get_metrics(), expected_metrics);
+    EXPECT_EQ(macro.get_hl_info(), macro_expected_hl);
+    EXPECT_EQ(macro.get_metrics(), expected_metrics);
 }

@@ -17,6 +17,7 @@
 #include "../mock_parse_lib_provider.h"
 #include "analyzer.h"
 #include "context/instruction.h"
+#include "lsp/lsp_context.h"
 #include "utils/resource_location.h"
 #include "workspaces/parse_lib_provider.h"
 

@@ -29,6 +29,7 @@
 #include "range.h"
 #include "semantics/source_info_processor.h"
 #include "utils/resource_location.h"
+#include "utils/string_operations.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -66,7 +67,7 @@ class endevor_preprocessor final : public preprocessor
 
     bool process_member(std::string_view member, std::vector<stack_entry>& stack)
     {
-        std::string member_upper = context::to_upper_copy(std::string(member));
+        std::string member_upper = utils::to_upper_copy(std::string(member));
 
         if (std::any_of(stack.begin(), stack.end(), [member = std::string_view(member_upper)](const auto& e) {
                 return e.name == member;

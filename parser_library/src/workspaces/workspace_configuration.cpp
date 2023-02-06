@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <charconv>
 #include <compare>
+#include <deque>
 #include <memory>
 #include <string_view>
 #include <tuple>

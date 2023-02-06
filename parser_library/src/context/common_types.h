@@ -119,9 +119,5 @@ public:
     bool operator==(const SET_t& r) const noexcept;
 };
 
-// just mock method for now, will be implemented later with respect to UTF/EBCDIC
-std::string& to_upper(std::string& s);
-std::string to_upper_copy(std::string s);
-
 } // namespace hlasm_plugin::parser_library::context
 #endif

@@ -19,6 +19,7 @@
 #include "fade_messages.h"
 #include "location.h"
 #include "lsp/completion_item.h"
+#include "lsp/document_symbol_item.h"
 #include "semantics/highlighting_info.h"
 #include "workspaces/processor.h"
 

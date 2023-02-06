@@ -24,6 +24,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "lsp/completion_item.h"
+#include "lsp/document_symbol_item.h"
 #include "protocol.h"
 #include "workspace_manager.h"
 #include "workspaces/file_manager_impl.h"

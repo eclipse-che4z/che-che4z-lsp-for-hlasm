@@ -36,6 +36,7 @@
 #include "processing/statement_fields_parser.h"
 #include "range.h"
 #include "semantics/operand_impls.h"
+#include "utils/string_operations.h"
 #include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -502,7 +503,7 @@ void asm_processor::process_external(rebuilt_statement stmt, external_type t)
         }
         else if (auto complex = op_asm->access_complex())
         {
-            if (context::to_upper_copy(complex->value.identifier) != "PART")
+            if (utils::to_upper_copy(complex->value.identifier) != "PART")
                 continue;
             for (const auto& nested : complex->value.values)
             {

@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "lsp/lsp_context.h"
 
 using namespace hlasm_plugin::utils::resource;
 TEST(deferred_statement, split_var)

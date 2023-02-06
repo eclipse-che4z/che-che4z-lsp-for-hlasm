@@ -37,6 +37,7 @@
 #include "semantics/source_info_processor.h"
 #include "semantics/statement.h"
 #include "utils/concat.h"
+#include "utils/string_operations.h"
 #include "utils/text_matchers.h"
 #include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
@@ -765,12 +766,12 @@ public:
                             if (m_matches[1].length() != 0)
                                 m_substituted_operands.append("=F'")
                                     .append(
-                                        std::to_string(DFHRESP_operands.at(context::to_upper_copy(m_matches[1].str()))))
+                                        std::to_string(DFHRESP_operands.at(utils::to_upper_copy(m_matches[1].str()))))
                                     .append("'");
                             else if (m_matches[2].length() != 0)
                                 m_substituted_operands.append("=F'")
-                                    .append(std::to_string(
-                                        DFHVALUE_operands.at(context::to_upper_copy(m_matches[2].str()))))
+                                    .append(
+                                        std::to_string(DFHVALUE_operands.at(utils::to_upper_copy(m_matches[2].str()))))
                                     .append("'");
                             else
                             {

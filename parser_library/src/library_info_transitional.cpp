@@ -25,8 +25,7 @@ namespace hlasm_plugin::parser_library {
 
 bool library_info_transitional::has_library(std::string_view member) const
 {
-    return m_lib_provider->has_library(
-        std::string(member), m_hlasm_ctx ? m_hlasm_ctx->opencode_location() : empty_location);
+    return m_lib_provider->has_library(member);
 }
 
 const library_info_transitional library_info_transitional::empty(workspaces::empty_parse_lib_provider::instance);

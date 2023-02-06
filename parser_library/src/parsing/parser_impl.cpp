@@ -27,6 +27,7 @@
 #include "lexing/input_source.h"
 #include "lexing/token_stream.h"
 #include "processing/op_code.h"
+#include "utils/string_operations.h"
 
 namespace hlasm_plugin::parser_library::parsing {
 
@@ -135,7 +136,7 @@ void parser_impl::disable_continuation() { input.disable_continuation(); }
 bool parser_impl::is_self_def()
 {
     std::string tmp(_input->LT(1)->getText());
-    context::to_upper(tmp);
+    utils::to_upper(tmp);
     return tmp == "B" || tmp == "X" || tmp == "C" || tmp == "G";
 }
 

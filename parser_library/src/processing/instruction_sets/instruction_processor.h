@@ -50,7 +50,7 @@ protected:
         , hlasm_ctx(*ctx.hlasm_ctx)
         , branch_provider(branch_provider)
         , lib_provider(lib_provider)
-        , lib_info(lib_provider, *ctx.hlasm_ctx)
+        , lib_info(lib_provider)
         , eval_ctx { *ctx.hlasm_ctx, lib_info, *this }
     {}
 

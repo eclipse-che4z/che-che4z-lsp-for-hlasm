@@ -20,7 +20,9 @@
 #include "context/instruction.h"
 #include "file_impl.h"
 #include "file_manager.h"
+#include "lsp/document_symbol_item.h"
 #include "lsp/item_convertors.h"
+#include "lsp/lsp_context.h"
 #include "processor_file_impl.h"
 #include "utils/bk_tree.h"
 #include "utils/levenshtein_distance.h"
@@ -43,10 +45,10 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
     {}
 
     // Inherited via parse_lib_provider
-    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
+    parse_result parse_library(std::string_view library, analyzing_context ctx, library_data data) override
     {
         utils::resource::resource_location url;
-        for (auto&& lib : libraries)
+        for (const auto& lib : libraries)
         {
             if (!lib->has_file(library, &url))
                 continue;
@@ -61,16 +63,16 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
 
         return false;
     }
-    bool has_library(const std::string& library, const utils::resource::resource_location&) const override
+    bool has_library(std::string_view library) const override
     {
         return std::any_of(
             libraries.begin(), libraries.end(), [&library](const auto& lib) { return lib->has_file(library); });
     }
     std::optional<std::pair<std::string, utils::resource::resource_location>> get_library(
-        const std::string& library, const utils::resource::resource_location&) const override
+        std::string_view library) const override
     {
         utils::resource::resource_location url;
-        for (auto&& lib : libraries)
+        for (const auto& lib : libraries)
         {
             if (!lib->has_file(library, &url))
                 continue;
@@ -432,7 +434,7 @@ lsp::completion_list_s workspace::completion(const utils::resource::resource_loc
     if (!lsp_context)
         return {};
 
-    return generate_completion(lsp_context->completion(document_loc, pos, trigger_char, trigger_kind),
+    return lsp::generate_completion(lsp_context->completion(document_loc, pos, trigger_char, trigger_kind),
         [&document_loc, this](std::string_view opcode) {
             auto suggestions = make_opcode_suggestion(document_loc, opcode, true);
             std::vector<std::string> result;
@@ -441,111 +443,6 @@ lsp::completion_list_s workspace::completion(const utils::resource::resource_loc
             });
             return result;
         });
-}
-
-lsp::completion_list_s workspace::generate_completion(const lsp::completion_list_source& cls,
-    std::function<std::vector<std::string>(std::string_view)> instruction_suggestions)
-{
-    return std::visit(
-        [&instruction_suggestions](auto v) { return generate_completion(v, instruction_suggestions); }, cls);
-}
-
-lsp::completion_list_s workspace::generate_completion(
-    std::monostate, const std::function<std::vector<std::string>(std::string_view)>&)
-{
-    return lsp::completion_list_s();
-}
-
-lsp::completion_list_s workspace::generate_completion(
-    const lsp::vardef_storage* var_defs, const std::function<std::vector<std::string>(std::string_view)>&)
-{
-    lsp::completion_list_s items;
-    for (const auto& vardef : *var_defs)
-    {
-        items.emplace_back(lsp::generate_completion_item(vardef));
-    }
-
-    return items;
-}
-
-lsp::completion_list_s workspace::generate_completion(
-    const context::label_storage* seq_syms, const std::function<std::vector<std::string>(std::string_view)>&)
-{
-    lsp::completion_list_s items;
-    items.reserve(seq_syms->size());
-    for (const auto& [_, sym] : *seq_syms)
-    {
-        items.emplace_back(lsp::generate_completion_item(*sym));
-    }
-    return items;
-}
-
-lsp::completion_list_s workspace::generate_completion(const lsp::completion_list_instructions& cli,
-    const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions)
-{
-    lsp::completion_list_s result;
-
-    assert(cli.lsp_ctx);
-
-    const auto& hlasm_ctx = cli.lsp_ctx->get_related_hlasm_context();
-
-    auto suggestions = [&instruction_suggestions](std::string_view ct) {
-        std::vector<std::pair<std::string, bool>> result;
-        if (ct.empty() || !instruction_suggestions)
-            return result;
-        auto raw_suggestions = instruction_suggestions(ct);
-        result.reserve(raw_suggestions.size());
-        for (auto&& s : raw_suggestions)
-            result.emplace_back(std::move(s), false);
-        return result;
-    }(cli.completed_text);
-    const auto locate_suggestion = [&s = suggestions](std::string_view text) {
-        auto it = std::find_if(s.begin(), s.end(), [text](const auto& e) { return e.first == text; });
-        return it == s.end() ? nullptr : std::to_address(it);
-    };
-
-
-    // Store only instructions from the currently active instruction set
-    for (const auto& instr : lsp::completion_item_s::m_instruction_completion_items)
-    {
-        auto id = hlasm_ctx.ids().find(instr.label);
-        // TODO: we could provide more precise results here if actual generation is provided
-        if (id.has_value() && hlasm_ctx.find_opcode_mnemo(id.value(), context::opcode_generation::zero))
-        {
-            auto& i = result.emplace_back(instr);
-            if (auto space = i.insert_text.find(' '); space != std::string::npos)
-            {
-                if (auto col_pos = cli.completed_text_start_column + space; col_pos < 15)
-                    i.insert_text.insert(i.insert_text.begin() + space, 15 - col_pos, ' ');
-            }
-            if (auto* suggestion = locate_suggestion(i.label))
-            {
-                i.suggestion_for = cli.completed_text;
-                suggestion->second = true;
-            }
-        }
-    }
-
-    for (const auto& [_, macro_i] : *cli.macros)
-    {
-        auto& i = result.emplace_back(lsp::generate_completion_item(
-            *macro_i, cli.lsp_ctx->get_file_info(macro_i->definition_location.resource_loc)));
-        if (auto* suggestion = locate_suggestion(i.label))
-        {
-            i.suggestion_for = cli.completed_text;
-            suggestion->second = true;
-        }
-    }
-
-    for (const auto& [suggestion, used] : suggestions)
-    {
-        if (used)
-            continue;
-        result.emplace_back(
-            suggestion, "", suggestion, "", completion_item_kind::macro, false, std::string(cli.completed_text));
-    }
-
-    return result;
 }
 
 lsp::document_symbol_list_s workspace::document_symbol(
@@ -564,6 +461,9 @@ lsp::document_symbol_list_s workspace::document_symbol(
 std::vector<token_info> workspace::semantic_tokens(const utils::resource::resource_location& document_loc) const
 {
     auto comp = find_processor_file_impl(document_loc);
+    if (!comp)
+        return {};
+
     const auto& f = comp->m_processor_file;
 
     if (!f || !f->current_source())
@@ -801,11 +701,6 @@ std::vector<preprocessor_options> workspace::get_preprocessor_options(
     const utils::resource::resource_location& file_location) const
 {
     return get_proc_grp_by_program(file_location).preprocessors();
-}
-
-std::shared_ptr<processor_file> workspace::add_processor_file(const utils::resource::resource_location& file_location)
-{
-    return add_processor_file_impl(file_location).m_processor_file;
 }
 
 workspace::processor_file_compoments& workspace::add_processor_file_impl(

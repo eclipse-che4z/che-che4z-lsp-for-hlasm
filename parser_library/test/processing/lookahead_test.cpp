@@ -18,6 +18,7 @@
 #include "../mock_parse_lib_provider.h"
 #include "hlasmparser_multiline.h"
 #include "library_info_transitional.h"
+#include "lsp/lsp_context.h"
 
 // tests for lookahead feature:
 // forward/backward jums

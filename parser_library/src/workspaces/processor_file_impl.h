@@ -76,8 +76,6 @@ private:
     bool last_analyzer_opencode_ = false;
     bool last_analyzer_with_lsp = false;
 
-    bool parse_inner(analyzer&);
-
     std::atomic<bool>* cancel_;
 
     std::set<utils::resource::resource_location> dependencies_;

@@ -15,11 +15,15 @@
 #ifndef HLASMPARSER_PARSERLIBRARY_ANALYZING_CONTEXT_H
 #define HLASMPARSER_PARSERLIBRARY_ANALYZING_CONTEXT_H
 
-#include "context/hlasm_context.h"
-#include "lsp/lsp_context.h"
+#include <memory>
 
 namespace hlasm_plugin::parser_library {
-
+namespace context {
+class hlasm_context;
+} // namespace context
+namespace lsp {
+class lsp_context;
+} // namespace lsp
 
 struct analyzing_context
 {

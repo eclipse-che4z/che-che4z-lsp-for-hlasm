@@ -17,6 +17,8 @@
 #include <cassert>
 #include <memory>
 
+#include "lsp/lsp_context.h"
+#include "lsp/text_data_view.h"
 #include "parsing/parser_impl.h"
 #include "statement_analyzers/lsp_analyzer.h"
 #include "statement_processors/copy_processor.h"

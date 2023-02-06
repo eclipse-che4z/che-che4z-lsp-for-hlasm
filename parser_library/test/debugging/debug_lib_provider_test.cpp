@@ -62,8 +62,8 @@ TEST_F(debug_lib_provider_test, has_library)
     EXPECT_CALL(*mock_lib, has_file(Eq("AAA"), _)).WillOnce(Return(true));
     EXPECT_CALL(*mock_lib, has_file(Eq("BBB"), _)).WillOnce(Return(false));
 
-    EXPECT_TRUE(lib.has_library("AAA", resource_location()));
-    EXPECT_FALSE(lib.has_library("BBB", resource_location()));
+    EXPECT_TRUE(lib.has_library("AAA"));
+    EXPECT_FALSE(lib.has_library("BBB"));
 }
 
 TEST_F(debug_lib_provider_test, get_library)
@@ -75,7 +75,7 @@ TEST_F(debug_lib_provider_test, get_library)
     EXPECT_CALL(*mock_lib, has_file(Eq("AAA"), _)).WillOnce(DoAll(SetArgPointee<1>(aaa_location), Return(true)));
     EXPECT_CALL(*mock_lib, has_file(Eq("BBB"), _)).WillOnce(Return(false));
 
-    EXPECT_EQ(lib.get_library("AAA", resource_location()), std::pair(aaa_content, aaa_location));
+    EXPECT_EQ(lib.get_library("AAA"), std::pair(aaa_content, aaa_location));
 
-    EXPECT_EQ(lib.get_library("BBB", resource_location()), std::nullopt);
+    EXPECT_EQ(lib.get_library("BBB"), std::nullopt);
 }

@@ -19,6 +19,7 @@ target_sources(library_test PRIVATE
 	diagnosable_ctx_test.cpp
 	diagnostics_check_test.cpp
 	diagnostics_sysvar_test.cpp
+	gtest_stringers.cpp
 	gtest_stringers.h
 	message_consumer_mock.h
 	metrics_test.cpp

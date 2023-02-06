@@ -21,6 +21,7 @@
 #include "context/common_types.h"
 #include "diagnostic_collector.h"
 #include "lexing/tools.h"
+#include "utils/string_operations.h"
 
 namespace {
 const std::vector<std::string_view> rmode_options = { "24", "31", "64", "ANY" };
@@ -662,7 +663,7 @@ bool external::check(const std::vector<const asm_operand*>& to_check,
         if (auto complex_op = get_complex_operand(operand); complex_op)
         {
             // check PART operand
-            if (context::to_upper_copy(complex_op->operand_identifier) != "PART")
+            if (utils::to_upper_copy(complex_op->operand_identifier) != "PART")
             {
                 add_diagnostic(diagnostic_op::error_A129_EXTRN_format(operand->operand_range));
                 return false;

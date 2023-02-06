@@ -18,6 +18,7 @@
 
 #include "compiler_options.h"
 #include "nlohmann/json.hpp"
+#include "utils/string_operations.h"
 
 namespace hlasm_plugin::parser_library::config {
 
@@ -129,16 +130,10 @@ static_assert(std::is_sorted(std::begin(instr_set_machine_equivalents),
     [](const auto& l, const auto& r) { return l.first < r.first; }));
 #endif
 
-void to_upper(std::string& s)
-{
-    for (auto& c : s)
-        c = static_cast<char>(std::toupper((unsigned char)c));
-}
-
 bool instr_set_equivalent_valid(
     std::string instr_set_name, std::span<const instr_set_equivalent_pair> equivalents) noexcept
 {
-    to_upper(instr_set_name);
+    utils::to_upper(instr_set_name);
 
 #ifdef __cpp_lib_ranges
     return instr_set_name.size() == 0
@@ -169,7 +164,7 @@ namespace {
 std::optional<instruction_set_version> find_instruction_set(
     std::string instr_set_name, const std::span<const instr_set_equivalent_pair> equivalents)
 {
-    to_upper(instr_set_name);
+    utils::to_upper(instr_set_name);
 
 #ifdef __cpp_lib_ranges
     auto it = std::ranges::lower_bound(equivalents, instr_set_name, {}, [](const auto& instr) { return instr.first; });

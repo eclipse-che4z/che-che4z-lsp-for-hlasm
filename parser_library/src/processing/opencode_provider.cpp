@@ -19,6 +19,7 @@
 #include "lexing/input_source.h"
 #include "lexing/token_stream.h"
 #include "library_info_transitional.h"
+#include "lsp/lsp_context.h"
 #include "parsing/error_strategy.h"
 #include "parsing/parser_impl.h"
 #include "processing/error_statement.h"
@@ -267,7 +268,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
 
     if (proc.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(collector.current_instruction(),
-            { *m_ctx->hlasm_ctx, library_info_transitional(*m_lib_provider, *m_ctx->hlasm_ctx), drop_diags },
+            { *m_ctx->hlasm_ctx, library_info_transitional(*m_lib_provider), drop_diags },
             *m_state_listener))
         return nullptr;
 
@@ -364,9 +365,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     auto result = collector.extract_statement(proc_status, statement_range);
 
     if (proc.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(*result,
-            { *m_ctx->hlasm_ctx, library_info_transitional(*m_lib_provider, *m_ctx->hlasm_ctx), drop_diags },
-            *m_state_listener))
+        && try_trigger_attribute_lookahead(
+            *result, { *m_ctx->hlasm_ctx, library_info_transitional(*m_lib_provider), drop_diags }, *m_state_listener))
         return nullptr;
 
     if (m_current_logical_line.segments.size() > 1)

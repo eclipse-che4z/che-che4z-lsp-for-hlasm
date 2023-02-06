@@ -543,7 +543,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
     std::pair<line_type, std::string> process_include_member(
         line_type instruction_type, std::string member, size_t lineno)
     {
-        auto member_upper = context::to_upper_copy(member);
+        auto member_upper = utils::to_upper_copy(member);
 
         if (member_upper == "SQLCA")
         {
