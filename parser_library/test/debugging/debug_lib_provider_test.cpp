@@ -62,8 +62,8 @@ TEST_F(debug_lib_provider_test, has_library)
     EXPECT_CALL(*mock_lib, has_file(Eq("AAA"), _)).WillOnce(Return(true));
     EXPECT_CALL(*mock_lib, has_file(Eq("BBB"), _)).WillOnce(Return(false));
 
-    EXPECT_TRUE(lib.has_library("AAA"));
-    EXPECT_FALSE(lib.has_library("BBB"));
+    EXPECT_TRUE(lib.has_library("AAA", nullptr));
+    EXPECT_FALSE(lib.has_library("BBB", nullptr));
 }
 
 TEST_F(debug_lib_provider_test, get_library)

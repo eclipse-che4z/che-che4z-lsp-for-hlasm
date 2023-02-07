@@ -336,6 +336,7 @@ public:
     bool next_statement() { return --m_statements_remaining >= 0; }
 
     const opcode_t* find_opcode_mnemo(id_index name, opcode_generation gen) const;
+    const opcode_t* find_any_valid_opcode(id_index name) const;
 
     opcode_generation current_opcode_generation() const { return m_current_opcode_generation; }
 

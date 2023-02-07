@@ -304,7 +304,7 @@ void processing_manager::finish_copy_member(copy_processing_result result)
 void processing_manager::finish_opencode()
 {
     finish_preprocessor();
-    lsp_analyzer_.opencode_finished();
+    lsp_analyzer_.opencode_finished(lib_provider_);
 }
 
 void processing_manager::start_macro_definition(

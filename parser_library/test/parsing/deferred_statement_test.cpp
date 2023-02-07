@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 #include "lsp/lsp_context.h"
 
 using namespace hlasm_plugin::utils::resource;
@@ -83,4 +84,60 @@ TEST(deferred_statement, recognize_comment)
 
     a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(deferred_statement, navigation_for_nonexecuted)
+{
+    std::string input = R"(
+         MACRO
+         OUTER
+         MEXIT
+         INNER
+         SAM31
+         MEND
+*
+         OUTER
+)";
+    resource_location opencode("OPENCODE");
+    mock_parse_lib_provider libs({ { "INNER", " MACRO\n INNER\n MEND" } });
+    analyzer a(input, analyzer_options(&libs, opencode));
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(a.context().lsp_ctx->definition(opencode, position(4, 10)).get_uri(), "INNER");
+    EXPECT_EQ(a.context().lsp_ctx->hover(opencode, position(4, 10)),
+        "Statement not executed, macro with matching name available");
+    EXPECT_NE(a.context().lsp_ctx->hover(opencode, position(5, 10)).find("Set Addressing Mode"), std::string::npos);
+}
+
+TEST(deferred_statement, share_references_for_nonexecuted)
+{
+    std::string input = R"(
+         MACRO
+         OUTER
+         MEXIT
+         INNER
+         SAM31
+         MEND
+*
+         OUTER
+         INNER
+)";
+    resource_location opencode("OPENCODE");
+    mock_parse_lib_provider libs({ { "INNER", " MACRO\n INNER\n MEND" } });
+    analyzer a(input, analyzer_options(&libs, opencode));
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    std::vector<position> expected_positions { position(1, 1), position(4, 9), position(9, 9) };
+
+    auto refs = a.context().lsp_ctx->references(opencode, position(4, 10));
+    std::vector<position> positions;
+    std::transform(refs.begin(), refs.end(), std::back_inserter(positions), [](const auto& e) { return e.pos; });
+    std::sort(positions.begin(), positions.end());
+    EXPECT_EQ(positions, expected_positions);
 }

@@ -102,6 +102,8 @@ public:
     void update_slices(const std::vector<file_slice_t>& slices);
     const std::vector<symbol_occurence>& get_occurences() const;
     void process_occurrences();
+    void collect_instruction_like_references(
+        std::unordered_map<context::id_index, utils::resource::resource_location>& m) const;
 
 private:
     std::map<line_range, file_slice_t> slices;

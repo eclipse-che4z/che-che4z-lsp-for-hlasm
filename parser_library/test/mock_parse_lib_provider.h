@@ -53,7 +53,14 @@ public:
         return true;
     }
 
-    bool has_library(std::string_view library) const override { return m_files.count(library); }
+    bool has_library(std::string_view library, utils::resource::resource_location* loc) const override
+    {
+        if (!m_files.count(library))
+            return false;
+        if (loc)
+            *loc = utils::resource::resource_location(library);
+        return true;
+    }
 
 
     std::optional<std::pair<std::string, utils::resource::resource_location>> get_library(

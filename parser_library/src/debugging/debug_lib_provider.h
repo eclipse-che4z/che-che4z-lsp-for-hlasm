@@ -53,7 +53,7 @@ public:
     workspaces::parse_result parse_library(
         std::string_view library, analyzing_context ctx, workspaces::library_data data) override;
 
-    bool has_library(std::string_view library) const override;
+    bool has_library(std::string_view library, utils::resource::resource_location* loc) const override;
 
     std::optional<std::pair<std::string, utils::resource::resource_location>> get_library(
         std::string_view library) const override;

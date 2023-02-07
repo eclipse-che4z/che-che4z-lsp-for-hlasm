@@ -5,6 +5,7 @@
 #### Added
 - Provide more details about machine instructions in hover texts
 - Faded preprocessor statements
+- Best-effort navigation for instructions in non-executed macro statements
 
 #### Fixed
 - Large macro documentation is not highlighted correctly in hover texts

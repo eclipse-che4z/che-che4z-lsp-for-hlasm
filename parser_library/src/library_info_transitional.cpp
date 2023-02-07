@@ -25,7 +25,7 @@ namespace hlasm_plugin::parser_library {
 
 bool library_info_transitional::has_library(std::string_view member) const
 {
-    return m_lib_provider->has_library(member);
+    return m_lib_provider->has_library(member, nullptr);
 }
 
 const library_info_transitional library_info_transitional::empty(workspaces::empty_parse_lib_provider::instance);

@@ -29,6 +29,7 @@
 #include "item_convertors.h"
 #include "lsp/macro_info.h"
 #include "utils/similar.h"
+#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 namespace {
@@ -535,7 +536,8 @@ void lsp_context::add_macro(macro_info_ptr macro_i, text_data_view text_data)
     m_macros[macro_i->macro_definition] = macro_i;
 }
 
-void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_view text_data)
+void lsp_context::add_opencode(
+    opencode_info_ptr opencode_i, text_data_view text_data, workspaces::parse_lib_provider& libs)
 {
     m_opencode = std::move(opencode_i);
     add_file(file_info(m_hlasm_ctx->opencode_location(), std::move(text_data)));
@@ -548,6 +550,16 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_view text
 
     for (const auto& [_, file] : m_files)
         file->process_occurrences();
+
+    for (const auto& [_, file] : m_files)
+        file->collect_instruction_like_references(m_instr_like);
+
+    std::erase_if(m_instr_like, [this](const auto& e) { return have_suggestions_for_instr_like(e.first); });
+    for (auto& [key, value] : m_instr_like)
+    {
+        libs.has_library(key.to_string_view(), &value);
+    }
+    std::erase_if(m_instr_like, [](const auto& e) { return e.second.empty(); });
 }
 
 macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name, context::opcode_generation gen) const
@@ -806,6 +818,18 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
             }
             break;
         }
+        case lsp::occurence_kind::INSTR_LIKE: {
+            if (auto it = m_macros.find(occ.opcode); it != m_macros.end())
+                return it->second->definition_location;
+            if (auto op = m_hlasm_ctx->find_any_valid_opcode(occ.name);
+                op && std::holds_alternative<context::macro_def_ptr>(op->opcode_detail))
+            {
+                return std::get<context::macro_def_ptr>(op->opcode_detail)->definition_location;
+            }
+            if (auto it = m_instr_like.find(occ.name); it != m_instr_like.end())
+                return location(position(), it->second);
+            break;
+        }
         case lsp::occurence_kind::COPY_OP: {
 #ifdef __cpp_lib_ranges
             auto copy = std::ranges::find_if(m_files, [&](const auto& f) {
@@ -827,6 +851,28 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
             break;
     }
     return std::nullopt;
+}
+
+std::string lsp_context::hover_for_macro(const macro_info& macro) const
+{
+    // Get file, where the macro is defined
+    auto mit = m_files.find(macro.definition_location.resource_loc);
+    if (mit == m_files.end())
+        return "";
+
+    return get_macro_documentation(mit->second->data, macro.definition_location.pos.line);
+}
+std::string lsp_context::hover_for_instruction(context::id_index name) const
+{
+    auto it = completion_item_s::m_instruction_completion_items.find(name.to_string_view());
+    if (it == completion_item_s::m_instruction_completion_items.end())
+        return "";
+    return it->documentation;
+}
+
+bool lsp_context::have_suggestions_for_instr_like(context::id_index name) const
+{
+    return m_hlasm_ctx->find_any_valid_opcode(name);
 }
 
 std::string lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr macro_scope_i) const
@@ -858,20 +904,26 @@ std::string lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr 
                 auto it = m_macros.find(occ.opcode);
                 assert(it != m_macros.end());
 
-                // Get file, where the macro is defined
-                auto mit = m_files.find(it->second->definition_location.resource_loc);
-                if (mit == m_files.end())
-                    return "";
-
-                return get_macro_documentation(mit->second->data, it->second->definition_location.pos.line);
+                return hover_for_macro(*it->second);
             }
             else
             {
-                auto it = completion_item_s::m_instruction_completion_items.find(occ.name.to_string_view());
-                if (it == completion_item_s::m_instruction_completion_items.end())
-                    return "";
-                return it->documentation;
+                return hover_for_instruction(occ.name);
             }
+        }
+        case lsp::occurence_kind::INSTR_LIKE: {
+            if (auto it = m_macros.find(occ.opcode); it != m_macros.end())
+                return hover_for_macro(*it->second);
+            if (auto op = m_hlasm_ctx->find_any_valid_opcode(occ.name))
+            {
+                if (std::holds_alternative<context::macro_def_ptr>(op->opcode_detail))
+                    return hover_for_macro(*m_macros.at(std::get<context::macro_def_ptr>(op->opcode_detail)));
+                else
+                    return hover_for_instruction(op->opcode);
+            }
+            if (m_instr_like.contains(occ.name))
+                return "Statement not executed, macro with matching name available";
+            break;
         }
         case lsp::occurence_kind::COPY_OP:
             return "";

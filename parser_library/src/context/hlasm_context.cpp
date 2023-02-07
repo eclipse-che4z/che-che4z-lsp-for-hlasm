@@ -724,6 +724,20 @@ const opcode_t* hlasm_context::find_opcode_mnemo(id_index name, opcode_generatio
     return &it->second;
 }
 
+const opcode_t* hlasm_context::find_any_valid_opcode(id_index name) const
+{
+    for (auto it = opcode_mnemo_.upper_bound({ name, opcode_generation::current }); it != opcode_mnemo_.begin();)
+    {
+        --it;
+        if (it->first.first != name)
+            break;
+        if (it->second)
+            return &it->second;
+    }
+
+    return nullptr;
+}
+
 void hlasm_context::add_mnemonic(id_index mnemo, id_index op_code)
 {
     auto tmp = find_opcode_mnemo(op_code, opcode_generation::current);

@@ -35,6 +35,10 @@
 #include "range.h"
 #include "utils/resource_location.h"
 
+namespace hlasm_plugin::parser_library::workspaces {
+class parse_lib_provider;
+} // namespace hlasm_plugin::parser_library::workspaces
+
 namespace hlasm_plugin::parser_library::lsp {
 
 class lsp_context final
@@ -45,6 +49,8 @@ class lsp_context final
     std::unordered_map<context::macro_def_ptr, macro_info_ptr> m_macros;
 
     std::shared_ptr<context::hlasm_context> m_hlasm_ctx;
+
+    std::unordered_map<context::id_index, utils::resource::resource_location> m_instr_like;
 
     template<typename T>
     struct vector_set
@@ -69,7 +75,7 @@ public:
 
     void add_copy(context::copy_member_ptr copy, text_data_view text_data);
     void add_macro(macro_info_ptr macro_i, text_data_view text_data = text_data_view());
-    void add_opencode(opencode_info_ptr opencode_i, text_data_view text_data);
+    void add_opencode(opencode_info_ptr opencode_i, text_data_view text_data, workspaces::parse_lib_provider& libs);
 
     [[nodiscard]] macro_info_ptr get_macro_info(
         context::id_index macro_name, context::opcode_generation gen = context::opcode_generation::current) const;
@@ -86,6 +92,8 @@ public:
         const utils::resource::resource_location& document_loc, long long limit) const;
 
     const context::hlasm_context& get_related_hlasm_context() const { return *m_hlasm_ctx; }
+
+    void collect_instr_like_suggestions();
 
 private:
     void add_file(file_info file_i);
@@ -153,6 +161,10 @@ private:
         document_symbol_cache& cache) const;
     bool belongs_to_copyfile(
         const utils::resource::resource_location& document_loc, position pos, context::id_index id) const;
+
+    std::string hover_for_macro(const macro_info& macro) const;
+    std::string hover_for_instruction(context::id_index name) const;
+    bool have_suggestions_for_instr_like(context::id_index name) const;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

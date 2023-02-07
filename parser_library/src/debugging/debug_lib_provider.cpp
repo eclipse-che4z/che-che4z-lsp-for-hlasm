@@ -58,10 +58,10 @@ workspaces::parse_result debug_lib_provider::parse_library(
     return false;
 }
 
-bool debug_lib_provider::has_library(std::string_view library) const
+bool debug_lib_provider::has_library(std::string_view library, utils::resource::resource_location* loc) const
 {
     for (const auto& lib : m_libraries)
-        if (lib->has_file(library))
+        if (lib->has_file(library, loc))
             return true;
     return false;
 }

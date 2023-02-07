@@ -29,6 +29,7 @@ enum class occurence_kind
     VAR,
     SEQ,
     INSTR,
+    INSTR_LIKE,
     COPY_OP
 };
 
@@ -61,7 +62,9 @@ struct symbol_occurence
 
     bool is_similar(const symbol_occurence& occ) const
     {
-        return kind == occ.kind && name == occ.name && opcode == occ.opcode;
+        using enum occurence_kind;
+        return kind == occ.kind && name == occ.name && opcode == occ.opcode
+            || name == occ.name && (kind == INSTR_LIKE && occ.kind == INSTR || kind == INSTR && occ.kind == INSTR_LIKE);
     }
 
     bool operator==(const symbol_occurence&) const noexcept = default;

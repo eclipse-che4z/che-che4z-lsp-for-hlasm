@@ -54,8 +54,8 @@ bool file_info::is_in_range(const position& pos, const range& r)
 
 occurence_scope_t file_info::find_occurence_with_scope(position pos) const
 {
-    std::pair<const symbol_occurence*, bool> found_pair;
-    auto& [found, found_in_evaluated_model] = found_pair;
+    std::pair<const symbol_occurence*, size_t> found_pair(nullptr, (size_t)-1);
+    auto& [found, priority] = found_pair;
 
     auto l = std::lower_bound(occurences.begin(), occurences.end(), pos, [](const auto& occ, const auto& p) {
         return occ.occurence_range.end.line < p.line;
@@ -67,9 +67,10 @@ occurence_scope_t file_info::find_occurence_with_scope(position pos) const
         const auto& occ = *it;
         if (is_in_range(pos, occ.occurence_range))
         {
-            if (!found || !occ.evaluated_model && found_in_evaluated_model)
-                found_pair = { &occ, occ.evaluated_model };
-            if (!found_in_evaluated_model)
+            auto occ_priority = 1 * occ.evaluated_model + 2 * (occ.kind == occurence_kind::INSTR_LIKE);
+            if (!found || occ_priority < priority)
+                found_pair = { &occ, occ_priority };
+            if (priority == 0)
                 break;
         }
     }
@@ -98,6 +99,8 @@ std::vector<position> file_info::find_references(
     for (const auto& occ : occurences)
         if (occurence.is_similar(occ))
             result.emplace_back(occ.occurence_range.start);
+    std::sort(result.begin(), result.end());
+    result.erase(std::unique(result.begin(), result.end()), result.end());
     return result;
 }
 
@@ -167,6 +170,17 @@ void file_info::process_occurrences()
         occurences.rend(),
         occurences_start_limit.rbegin(),
         [min = (size_t)-1](const auto& occ) mutable { return min = std::min(min, occ.occurence_range.start.line); });
+}
+
+void file_info::collect_instruction_like_references(
+    std::unordered_map<context::id_index, utils::resource::resource_location>& m) const
+{
+    for (const auto& occ : occurences)
+    {
+        if (occ.kind != occurence_kind::INSTR_LIKE)
+            continue;
+        m.try_emplace(occ.name);
+    }
 }
 
 } // namespace hlasm_plugin::parser_library::lsp

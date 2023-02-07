@@ -58,6 +58,10 @@ struct preprocessor_statement_si;
 struct variable_symbol;
 } // namespace hlasm_plugin::parser_library::semantics
 
+namespace hlasm_plugin::parser_library::workspaces {
+class parse_lib_provider;
+} // namespace hlasm_plugin::parser_library::workspaces
+
 namespace hlasm_plugin::utils::resource {
 class resource_location;
 } // namespace hlasm_plugin::utils::resource
@@ -95,7 +99,7 @@ public:
 
     void copydef_finished(context::copy_member_ptr copydef, copy_processing_result&& result);
 
-    void opencode_finished();
+    void opencode_finished(workspaces::parse_lib_provider& libs);
 
 private:
     void assign_statement_occurences(const utils::resource::resource_location& doc_location);
