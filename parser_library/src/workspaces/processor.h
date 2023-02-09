@@ -54,7 +54,7 @@ public:
     virtual const lsp::lsp_context* get_lsp_context() = 0;
     virtual const std::set<utils::resource::resource_location>& files_to_close() = 0;
     virtual const performance_metrics& get_metrics() = 0;
-    virtual void erase_cache_of_opencode(const utils::resource::resource_location& opencode_file_location) = 0;
+    virtual void erase_unused_cache_entries() = 0;
     virtual bool has_lsp_info() const = 0;
     virtual void retrieve_fade_messages(std::vector<fade_message_s>& fms) const = 0;
     virtual const file_location& get_location() const = 0;

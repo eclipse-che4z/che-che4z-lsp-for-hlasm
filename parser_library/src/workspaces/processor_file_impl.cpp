@@ -69,8 +69,8 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider,
     collect_diags_from_child(*new_analyzer);
 
     last_analyzer_ = std::move(new_analyzer);
-    last_analyzer_opencode_ = true;
     last_analyzer_with_lsp = collect_hl;
+    last_hl_info_ = last_analyzer_->source_processor().semantic_tokens();
 
     dependencies_.clear();
     for (auto& file : last_analyzer_->hlasm_ctx().get_visited_files())
@@ -100,7 +100,7 @@ parse_result processor_file_impl::parse_macro(
 
     const bool collect_hl = should_collect_hl(ctx.hlasm_ctx.get());
     auto fms = std::make_shared<std::vector<fade_message_s>>();
-    auto a = std::make_unique<analyzer>(file_->get_text(),
+    analyzer a(file_->get_text(),
         analyzer_options {
             file_->get_location(),
             &lib_provider,
@@ -110,18 +110,18 @@ parse_result processor_file_impl::parse_macro(
             fms,
         });
 
-    a->analyze(cancel_);
+    a.analyze(cancel_);
 
     if (cancel_ && *cancel_)
         return false;
 
     diags().clear();
-    collect_diags_from_child(*a);
+    collect_diags_from_child(a);
 
-    macro_cache_.save_macro(cache_key, *a);
-    last_analyzer_ = std::move(a);
-    last_analyzer_opencode_ = false;
+    macro_cache_.save_macro(cache_key, a);
     last_analyzer_with_lsp = collect_hl;
+    if (collect_hl)
+        last_hl_info_ = a.source_processor().semantic_tokens();
 
     fade_messages_ = std::move(fms);
 
@@ -130,14 +130,7 @@ parse_result processor_file_impl::parse_macro(
 
 const std::set<utils::resource::resource_location>& processor_file_impl::dependencies() { return dependencies_; }
 
-const semantics::lines_info& processor_file_impl::get_hl_info()
-{
-    if (last_analyzer_)
-        return last_analyzer_->source_processor().semantic_tokens();
-
-    const static semantics::lines_info empty_lines;
-    return empty_lines;
-}
+const semantics::lines_info& processor_file_impl::get_hl_info() { return last_hl_info_; }
 
 const lsp::lsp_context* processor_file_impl::get_lsp_context()
 {
@@ -157,10 +150,7 @@ const performance_metrics& processor_file_impl::get_metrics()
     return metrics;
 }
 
-void processor_file_impl::erase_cache_of_opencode(const utils::resource::resource_location& opencode_file_location)
-{
-    macro_cache_.erase_cache_of_opencode(opencode_file_location);
-}
+void processor_file_impl::erase_unused_cache_entries() { macro_cache_.erase_unused(); }
 
 bool processor_file_impl::should_collect_hl(context::hlasm_context* ctx) const
 {
@@ -189,6 +179,7 @@ bool processor_file_impl::current_version() const
 void processor_file_impl::update_source()
 {
     last_analyzer_.reset();
+    last_hl_info_.clear();
     used_files.clear();
     file_ = file_mngr_.add_file(get_location());
     macro_cache_ = macro_cache(file_mngr_, file_);

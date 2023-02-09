@@ -110,13 +110,9 @@ TEST(processor_file, parse_macro)
     expected_metrics.open_code_statements = 2;
     EXPECT_EQ(opencode.get_metrics(), expected_metrics);
 
-
     // Macro file tests
     const auto* macro_fp = macro.get_lsp_context();
-    ASSERT_TRUE(macro_fp);
-    EXPECT_EQ(macro_fp->definition(opencode_loc, { 1, 2 }), location({ 1, 1 }, macro_loc));
-    EXPECT_EQ(macro_fp->hover(opencode_loc, { 0, 2 }), sam31_hover_message);
-    EXPECT_EQ(macro_fp->hover(macro_loc, { 2, 2 }), sam31_hover_message);
+    ASSERT_FALSE(macro_fp);
 
     semantics::lines_info macro_expected_hl {
         { 0, 1, 0, 6, semantics::hl_scopes::instruction },
@@ -126,5 +122,4 @@ TEST(processor_file, parse_macro)
     };
 
     EXPECT_EQ(macro.get_hl_info(), macro_expected_hl);
-    EXPECT_EQ(macro.get_metrics(), expected_metrics);
 }

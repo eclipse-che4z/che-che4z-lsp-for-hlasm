@@ -346,20 +346,20 @@ void workspace::did_close_file(const utils::resource::resource_location& file_lo
         return;
     }
 
+    std::vector<utils::resource::resource_location> deps_to_cleanup;
+
     // find if the file is a dependant
     auto fname = dependants_.find(file_location);
     if (fname != dependants_.end())
     {
         auto file = find_processor_file(*fname);
+
+        const auto& deps = file->dependencies();
+
         // filter the dependencies that should not be closed
-        filter_and_close_dependencies_(file->dependencies(), file);
-        // Erase macros cached for this opencode from all its dependencies
-        for (const auto& dep : file->dependencies())
-        {
-            auto proc_file = find_processor_file(dep);
-            if (proc_file)
-                proc_file->erase_cache_of_opencode(file_location);
-        }
+        filter_and_close_dependencies_(deps, file);
+        deps_to_cleanup.reserve(deps.size());
+        deps_to_cleanup.assign(deps.begin(), deps.end());
         // remove it from dependants
         dependants_.erase(fname);
     }
@@ -368,6 +368,14 @@ void workspace::did_close_file(const utils::resource::resource_location& file_lo
     m_processor_files.erase(file_location);
     file_manager_.did_close_file(file_location);
     file_manager_.remove_file(file_location);
+
+    // Erase macros cached for this opencode from all its dependencies
+    for (const auto& dep : deps_to_cleanup)
+    {
+        auto proc_file = find_processor_file(dep);
+        if (proc_file)
+            proc_file->erase_unused_cache_entries();
+    }
 }
 
 void workspace::did_change_file(

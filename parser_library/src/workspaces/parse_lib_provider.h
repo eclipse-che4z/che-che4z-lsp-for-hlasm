@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PARSE_LIB_PROVIDER_H
 #define HLASMPLUGIN_PARSERLIBRARY_PARSE_LIB_PROVIDER_H
 
+#include <compare>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -33,7 +34,10 @@ struct library_data
 {
     processing::processing_kind proc_kind;
     context::id_index library_member;
+
+    constexpr auto operator<=>(const library_data&) const = default;
 };
+
 // Interface that the analyzer uses to parse macros and COPY files in separate files (libraries).
 class parse_lib_provider
 {
