@@ -1,0 +1,13 @@
+diff --git a/src/detail/uri_parse.cpp b/src/detail/uri_parse.cpp
+index 7f77148..73f581e 100644
+--- a/src/detail/uri_parse.cpp
++++ b/src/detail/uri_parse.cpp
+@@ -31,7 +31,7 @@ bool validate_scheme(string_view::const_iterator &it,
+   }
+ 
+   // The first character must be a letter
+-  if (!std::isalpha(*it, std::locale("C"))) {
++  if (!std::isalpha(*it, std::locale::classic())) {
+     return false;
+   }
+   ++it;

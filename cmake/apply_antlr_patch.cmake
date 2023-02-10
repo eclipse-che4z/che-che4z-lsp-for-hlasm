@@ -16,7 +16,7 @@
 # The patch step of ExternalProject_Add is executed repeatedly even when there
 # is no change to CmakeLists or the external project
 
-set(PATCH_STAMP "${CMAKE_BINARY_DIR}/patch_applied.stamp")
+set(PATCH_STAMP "${CMAKE_BINARY_DIR}/antlr_patch_applied.stamp")
 
 if(NOT EXISTS ${PATCH_STAMP})
 	execute_process(COMMAND ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/cmake/antlr_patch.diff)
