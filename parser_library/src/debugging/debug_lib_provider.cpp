@@ -29,8 +29,8 @@ debug_lib_provider::debug_lib_provider(std::vector<std::shared_ptr<workspaces::l
     , m_cancel(cancel)
 {}
 
-workspaces::parse_result debug_lib_provider::parse_library(
-    std::string_view library, analyzing_context ctx, workspaces::library_data data)
+void debug_lib_provider::parse_library(
+    std::string_view library, analyzing_context ctx, workspaces::library_data data, std::function<void(bool)> callback)
 {
     utils::resource::resource_location url;
     for (const auto& lib : m_libraries)
@@ -40,7 +40,7 @@ workspaces::parse_result debug_lib_provider::parse_library(
 
         auto content_o = m_file_manager.get_file_content(url);
         if (!content_o.has_value())
-            return false;
+            break;
 
         const auto& [location, content] = *m_files.try_emplace(std::move(url), std::move(content_o).value()).first;
         analyzer a(content,
@@ -51,11 +51,20 @@ workspaces::parse_result debug_lib_provider::parse_library(
                 data,
                 collect_highlighting_info::no,
             });
-        a.analyze(m_cancel);
-        return m_cancel == nullptr || !*m_cancel;
-    }
 
-    return false;
+        do
+        {
+            if (m_cancel && m_cancel->load(std::memory_order_relaxed))
+            {
+                callback(false);
+                return;
+            }
+        } while (a.analyze_step());
+
+        callback(true);
+        return;
+    }
+    callback(false);
 }
 
 bool debug_lib_provider::has_library(std::string_view library, utils::resource::resource_location* loc) const

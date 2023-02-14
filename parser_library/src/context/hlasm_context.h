@@ -62,6 +62,7 @@ class hlasm_context
 
     // storage of defined macros
     macro_storage macros_;
+    std::unordered_map<id_index, macro_def_ptr> external_macros_;
     // storage of copy members
     copy_member_storage copy_members_;
     // map of OPSYN mnemonics
@@ -237,8 +238,9 @@ public:
         copy_nest_storage copy_nests,
         label_storage labels,
         location definition_location,
-        std::unordered_set<copy_member_ptr> used_copy_members);
-    void add_macro(macro_def_ptr macro);
+        std::unordered_set<copy_member_ptr> used_copy_members,
+        bool external);
+    void add_macro(macro_def_ptr macro, bool external);
     // enters a macro with actual params
     macro_invo_ptr enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params);
     // leaves current macro

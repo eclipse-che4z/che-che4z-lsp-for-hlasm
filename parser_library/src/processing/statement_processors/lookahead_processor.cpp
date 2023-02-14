@@ -22,8 +22,10 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-processing_status lookahead_processor::get_processing_status(const semantics::instruction_si& instruction) const
+std::optional<processing_status> lookahead_processor::get_processing_status(
+    const semantics::instruction_si& instruction) const
 {
+    // Lookahead processor always returns value
     if (instruction.type == semantics::instruction_si_type::ORD)
     {
         auto status = ordinary_processor::get_instruction_processing_status(
@@ -117,7 +119,18 @@ void lookahead_processor::process_MACRO() { ++macro_nest_; }
 void lookahead_processor::process_MEND() { macro_nest_ -= macro_nest_ == 0 ? 0 : 1; }
 void lookahead_processor::process_COPY(const resolved_statement& statement)
 {
-    asm_processor::process_copy(statement, ctx, lib_provider_, nullptr);
+    if (auto extract = asm_processor::extract_copy_id(statement, nullptr); extract.has_value())
+    {
+        if (ctx.hlasm_ctx->copy_members().contains(extract->name))
+            asm_processor::common_copy_postprocess(true, *extract, *ctx.hlasm_ctx, nullptr);
+        else
+        {
+            branch_provider_.request_external_processing(
+                extract->name, processing_kind::COPY, [extract, this](bool result) {
+                    asm_processor::common_copy_postprocess(result, *extract, *ctx.hlasm_ctx, this);
+                });
+        }
+    }
 }
 
 lookahead_processor::process_table_t lookahead_processor::create_table()

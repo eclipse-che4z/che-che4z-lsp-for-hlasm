@@ -16,6 +16,22 @@
 
 namespace hlasm_plugin::parser_library::workspaces {
 
+
+void empty_parse_lib_provider::parse_library(
+    std::string_view, analyzing_context, library_data, std::function<void(bool)> callback)
+{
+    callback(false);
+};
+bool empty_parse_lib_provider::has_library(std::string_view, utils::resource::resource_location*) const
+{
+    return false;
+};
+std::optional<std::pair<std::string, utils::resource::resource_location>> empty_parse_lib_provider::get_library(
+    std::string_view) const
+{
+    return std::nullopt;
+}
+
 empty_parse_lib_provider empty_parse_lib_provider::instance;
 
-}
+} // namespace hlasm_plugin::parser_library::workspaces

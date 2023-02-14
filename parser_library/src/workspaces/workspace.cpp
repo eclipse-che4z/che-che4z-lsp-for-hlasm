@@ -45,7 +45,8 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
     {}
 
     // Inherited via parse_lib_provider
-    parse_result parse_library(std::string_view library, analyzing_context ctx, library_data data) override
+    void parse_library(
+        std::string_view library, analyzing_context ctx, library_data data, std::function<void(bool)> callback) override
     {
         utils::resource::resource_location url;
         for (const auto& lib : libraries)
@@ -58,10 +59,11 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
 
             used_files.try_emplace(url, found->current_source());
 
-            return found->parse_macro(*this, std::move(ctx), std::move(data));
+            callback(found->parse_macro(*this, std::move(ctx), std::move(data)));
+            return;
         }
 
-        return false;
+        callback(false);
     }
     bool has_library(std::string_view library, utils::resource::resource_location* loc) const override
     {

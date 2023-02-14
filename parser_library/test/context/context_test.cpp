@@ -306,7 +306,7 @@ TEST(context_macro, add_macro)
     args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-    auto& m = *ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {});
+    auto& m = *ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
 
     EXPECT_EQ(m.named_params().size(), (size_t)4);
     EXPECT_NE(m.named_params().find(key), m.named_params().end());
@@ -338,7 +338,7 @@ TEST(context_macro, call_and_leave_macro)
     args.emplace_back(nullptr, op3);
 
     // prototype->|		MAC		&KEY=,&OP1,,&OP3
-    auto& m = *ctx.add_macro(idx, context::id_index(), std::move(args), {}, {}, {}, {}, {});
+    auto& m = *ctx.add_macro(idx, context::id_index(), std::move(args), {}, {}, {}, {}, {}, false);
 
     // creating param data
     macro_data_ptr p2(std::make_unique<macro_param_data_single>("ada"));
@@ -400,7 +400,7 @@ TEST(context_macro, repeat_call_same_macro)
     args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-    ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {});
+    ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
 
     // creating param data
     macro_data_ptr lb(std::make_unique<macro_param_data_single>("lbl"));
@@ -491,7 +491,7 @@ TEST(context_macro, recurr_call)
     args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-    ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {});
+    ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
 
     // creating param data
     macro_data_ptr lb(std::make_unique<macro_param_data_single>("lbl"));

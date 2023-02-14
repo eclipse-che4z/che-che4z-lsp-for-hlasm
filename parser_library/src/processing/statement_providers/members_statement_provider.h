@@ -15,11 +15,18 @@
 #ifndef PROCESSING_MEMBERS_STATEMENT_PROVIDER_H
 #define PROCESSING_MEMBERS_STATEMENT_PROVIDER_H
 
+#include <utility>
+
 #include "context/hlasm_context.h"
 #include "expressions/evaluation_context.h"
 #include "processing/processing_state_listener.h"
 #include "processing/statement_fields_parser.h"
 #include "statement_provider.h"
+
+namespace hlasm_plugin::parser_library::context {
+struct copy_member_invocation;
+struct macro_invocation;
+} // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::workspaces {
 class parse_lib_provider;
@@ -42,13 +49,21 @@ public:
 
 
 protected:
+    union rollback_token
+    {
+        void* p = nullptr;
+        context::macro_invocation* mi;
+        context::copy_member_invocation* cmi;
+    };
+
     analyzing_context ctx;
     statement_fields_parser& parser;
     workspaces::parse_lib_provider& lib_provider;
     processing::processing_state_listener& listener;
     diagnostic_op_consumer& diagnoser;
-    virtual context::statement_cache* get_next() = 0;
+    virtual std::pair<context::statement_cache*, rollback_token> get_next() = 0;
     virtual std::vector<diagnostic_op> filter_cached_diagnostics(const semantics::deferred_statement& stmt) const = 0;
+    virtual void go_back(rollback_token t) = 0;
 
 private:
     const semantics::instruction_si* retrieve_instruction(const context::statement_cache& cache) const;
@@ -57,7 +72,10 @@ private:
         std::shared_ptr<const semantics::deferred_statement> def_stmt,
         const processing_status& status);
 
-    context::shared_stmt_ptr preprocess_deferred(const statement_processor& processor, context::statement_cache& cache);
+    context::shared_stmt_ptr preprocess_deferred(const statement_processor& processor,
+        context::statement_cache& cache,
+        processing_status status,
+        context::shared_stmt_ptr base_stmt);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

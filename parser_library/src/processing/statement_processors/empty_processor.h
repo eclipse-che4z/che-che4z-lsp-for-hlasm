@@ -24,7 +24,7 @@ class empty_processor final : public statement_processor
 {
 public:
     empty_processor(analyzing_context ctx);
-    processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
+    std::optional<processing_status> get_processing_status(const semantics::instruction_si& instruction) const override;
     void process_statement(context::shared_stmt_ptr statement) override;
     void end_processing() override;
     bool terminal_condition(const statement_provider_kind kind) const override;

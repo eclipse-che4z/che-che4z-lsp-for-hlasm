@@ -15,6 +15,7 @@
 #ifndef PROCESSING_PROCESSING_MANAGER_H
 #define PROCESSING_PROCESSING_MANAGER_H
 
+#include <map>
 #include <memory>
 #include <set>
 #include <stack>
@@ -49,7 +50,7 @@ public:
         std::shared_ptr<std::vector<fade_message_s>> fade_msgs);
 
     // method that starts the processing loop
-    void start_processing(std::atomic<bool>* cancel);
+    bool step();
 
     void register_stmt_analyzer(statement_analyzer* stmt_analyzer);
 
@@ -91,6 +92,8 @@ private:
 
     std::shared_ptr<std::vector<fade_message_s>> m_fade_msgs;
 
+    std::map<std::pair<std::string, processing::processing_kind>, bool> m_external_requests;
+
     bool attr_lookahead_active() const;
     bool seq_lookahead_active() const;
     bool lookahead_active() const;
@@ -106,6 +109,8 @@ private:
     void start_copy_member(copy_start_data start) override;
     void finish_copy_member(copy_processing_result result) override;
     void finish_opencode() override;
+    std::optional<bool> request_external_processing(
+        context::id_index name, processing::processing_kind proc_kind, std::function<void(bool)> callback) override;
 
     void start_macro_definition(macrodef_start_data start, std::optional<utils::resource::resource_location> file_loc);
 

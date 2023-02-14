@@ -152,7 +152,8 @@ public:
     context::hlasm_context& hlasm_ctx();
     const semantics::source_info_processor& source_processor() const;
 
-    void analyze(std::atomic<bool>* cancel = nullptr);
+    void analyze();
+    bool analyze_step();
 
     void collect_diags() const override;
     const performance_metrics& get_metrics() const;

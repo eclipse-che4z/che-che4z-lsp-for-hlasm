@@ -22,11 +22,11 @@ namespace hlasm_plugin::parser_library::processing {
 
 macrodef_processor::macrodef_processor(analyzing_context ctx,
     processing_state_listener& listener,
-    workspaces::parse_lib_provider& provider,
+    branching_provider& branching_provider_,
     macrodef_start_data start)
     : statement_processor(processing_kind::MACRO, std::move(ctx))
     , listener_(listener)
-    , provider_(provider)
+    , branching_provider_(branching_provider_)
     , start_(std::move(start))
     , initial_copy_nest_(hlasm_ctx.current_copy_stack().size())
     , macro_nest_(1)
@@ -45,7 +45,8 @@ macrodef_processor::macrodef_processor(analyzing_context ctx,
     result_.invalid = true; // result starts invalid until mandatory statements are encountered
 }
 
-processing_status macrodef_processor::get_processing_status(const semantics::instruction_si& instruction) const
+std::optional<processing_status> macrodef_processor::get_processing_status(
+    const semantics::instruction_si& instruction) const
 {
     if (expecting_prototype_ && !expecting_MACRO_)
     {
@@ -395,9 +396,22 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
     result_.definition.push_back(std::move(empty));
     add_correct_copy_nest();
 
-    if (asm_processor::process_copy(statement, ctx, provider_, this))
+    if (auto extract = asm_processor::extract_copy_id(statement, nullptr); extract.has_value())
     {
-        result_.used_copy_members.insert(ctx.hlasm_ctx->current_copy_stack().back().copy_member_definition);
+        if (ctx.hlasm_ctx->copy_members().contains(extract->name))
+        {
+            if (asm_processor::common_copy_postprocess(true, *extract, *ctx.hlasm_ctx, this))
+            {
+                result_.used_copy_members.insert(ctx.hlasm_ctx->current_copy_stack().back().copy_member_definition);
+            }
+        }
+        else
+        {
+            branching_provider_.request_external_processing(
+                extract->name, processing_kind::COPY, [extract, this](bool result) {
+                    asm_processor::common_copy_postprocess(result, *extract, *ctx.hlasm_ctx, this);
+                });
+        }
     }
 
     omit_next_ = true;

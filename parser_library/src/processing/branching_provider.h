@@ -15,8 +15,12 @@
 #ifndef PROCESSING_BRANCHING_PROVIDER_H
 #define PROCESSING_BRANCHING_PROVIDER_H
 
+#include <functional>
+#include <optional>
+
 #include "context/id_storage.h"
 #include "context/ordinary_assembly/dependant.h"
+#include "processing_format.h"
 #include "range.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -24,11 +28,15 @@ namespace hlasm_plugin::parser_library::processing {
 // interface for registering and using sequence symbols
 class branching_provider
 {
+protected:
+    ~branching_provider() = default;
+
 public:
     virtual void jump_in_statements(context::id_index target, range symbol_range) = 0;
     virtual void register_sequence_symbol(context::id_index target, range symbol_range) = 0;
 
-    virtual ~branching_provider() = default;
+    virtual std::optional<bool> request_external_processing(
+        context::id_index name, processing_kind proc_kind, std::function<void(bool)> callback) = 0;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

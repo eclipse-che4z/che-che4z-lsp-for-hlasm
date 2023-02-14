@@ -50,8 +50,10 @@ public:
         workspaces::file_manager& fm,
         std::atomic<bool>* cancel);
 
-    workspaces::parse_result parse_library(
-        std::string_view library, analyzing_context ctx, workspaces::library_data data) override;
+    void parse_library(std::string_view library,
+        analyzing_context ctx,
+        workspaces::library_data data,
+        std::function<void(bool)> callback) override;
 
     bool has_library(std::string_view library, utils::resource::resource_location* loc) const override;
 

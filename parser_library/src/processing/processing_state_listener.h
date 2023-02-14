@@ -31,6 +31,9 @@ enum class resume_copy
 // interface for listening that a statement processor needs to be started or has finished
 class processing_state_listener
 {
+protected:
+    ~processing_state_listener() = default;
+
 public:
     virtual void start_macro_definition(macrodef_start_data start) = 0;
     virtual void finish_macro_definition(macrodef_processing_result result) = 0;
@@ -42,8 +45,6 @@ public:
     virtual void finish_copy_member(copy_processing_result result) = 0;
 
     virtual void finish_opencode() = 0;
-
-    virtual ~processing_state_listener() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -100,32 +100,28 @@ void update_metrics(processing_kind proc_kind, statement_provider_kind prov_kind
     }
 }
 
-void processing_manager::start_processing(std::atomic<bool>* cancel)
+bool processing_manager::step()
 {
-    while (!procs_.empty())
+    if (procs_.empty())
+        return false;
+
+    statement_processor& proc = *procs_.back();
+    statement_provider& prov = find_provider();
+
+    if ((prov.finished() && proc.terminal_condition(prov.kind)) || proc.finished())
     {
-        if (cancel && *cancel)
-            break;
-
-        statement_processor& proc = *procs_.back();
-        statement_provider& prov = find_provider();
-
-        if ((prov.finished() && proc.terminal_condition(prov.kind)) || proc.finished())
-        {
-            finish_processor();
-            continue;
-        }
-
-        auto stmt = prov.get_next(proc);
-
-        if (stmt)
-        {
-            update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
-            run_anayzers(*stmt, prov.kind, proc.kind, false);
-
-            proc.process_statement(std::move(stmt));
-        }
+        finish_processor();
+        return true;
     }
+
+    if (auto stmt = prov.get_next(proc))
+    {
+        update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
+        run_anayzers(*stmt, prov.kind, proc.kind, false);
+
+        proc.process_statement(std::move(stmt));
+    }
+    return true;
 }
 
 void processing_manager::register_stmt_analyzer(statement_analyzer* stmt_analyzer)
@@ -236,7 +232,8 @@ void processing_manager::finish_macro_definition(macrodef_processing_result resu
             std::move(result.nests),
             std::move(result.sequence_symbols),
             std::move(result.definition_location),
-            std::move(result.used_copy_members));
+            std::move(result.used_copy_members),
+            result.external);
 
     lsp_analyzer_.macrodef_finished(mac, std::move(result));
 }
@@ -307,6 +304,30 @@ void processing_manager::finish_opencode()
     lsp_analyzer_.opencode_finished(lib_provider_);
 }
 
+std::optional<bool> processing_manager::request_external_processing(
+    context::id_index name, processing_kind proc_kind, std::function<void(bool)> callback)
+{
+    const auto key = std::pair(name.to_string(), proc_kind);
+    if (auto it = m_external_requests.find(key); it != m_external_requests.end())
+    {
+        if (callback)
+            callback(it->second);
+        return it->second;
+    }
+
+    lib_provider_.parse_library(
+        name.to_string_view(), ctx_, { proc_kind, name }, [this, key, callback = std::move(callback)](bool result) {
+            m_external_requests.insert_or_assign(key, result);
+            if (callback)
+                callback(result);
+        });
+
+    if (auto it = m_external_requests.find(key); it != m_external_requests.end())
+        return it->second;
+    else
+        return std::nullopt;
+}
+
 void processing_manager::start_macro_definition(
     macrodef_start_data start, std::optional<utils::resource::resource_location> file_loc)
 {
@@ -316,7 +337,7 @@ void processing_manager::start_macro_definition(
         hlasm_ctx_.push_statement_processing(processing_kind::MACRO);
 
     lsp_analyzer_.macrodef_started(start);
-    procs_.emplace_back(std::make_unique<macrodef_processor>(ctx_, *this, lib_provider_, std::move(start)));
+    procs_.emplace_back(std::make_unique<macrodef_processor>(ctx_, *this, *this, std::move(start)));
 }
 
 void processing_manager::jump_in_statements(context::id_index target, range symbol_range)

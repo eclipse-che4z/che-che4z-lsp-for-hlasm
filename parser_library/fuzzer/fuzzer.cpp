@@ -50,17 +50,21 @@ class fuzzer_lib_provider : public parse_lib_provider
     }
 
 public:
-    parse_result parse_library(std::string_view library, analyzing_context ctx, library_data data) override
+    void parse_library(
+        std::string_view library, analyzing_context ctx, library_data data, std::function<void(bool)> callback) override
     {
         auto lib = read_library_name(library);
         if (!lib.has_value())
-            return false;
+        {
+            callback(false);
+            return;
+        }
 
         auto a = std::make_unique<analyzer>(files[lib.value()],
             analyzer_options { hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data });
         a->analyze();
         a->collect_diags();
-        return true;
+        callback(true);
     }
 
     bool has_library(std::string_view library) const override { return read_library_name(library).has_value(); }

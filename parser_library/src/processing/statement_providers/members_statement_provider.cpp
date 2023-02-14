@@ -39,7 +39,7 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
     if (finished())
         throw std::runtime_error("provider already finished");
 
-    auto cache = get_next();
+    auto [cache, rollback] = get_next();
 
     if (!cache)
         return nullptr;
@@ -61,9 +61,18 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
         case context::statement_kind::RESOLVED:
             stmt = cache->get_base();
             break;
-        case context::statement_kind::DEFERRED:
-            stmt = preprocess_deferred(processor, *cache);
+        case context::statement_kind::DEFERRED: {
+            stmt = cache->get_base();
+            auto proc_status_o = processor.get_processing_status(stmt->access_deferred()->instruction_ref());
+            if (!proc_status_o.has_value())
+            {
+                go_back(std::move(rollback));
+                return nullptr;
+            }
+            if (proc_status_o->first.form != processing_form::DEFERRED)
+                stmt = preprocess_deferred(processor, *cache, proc_status_o.value(), std::move(stmt));
             break;
+        }
         case context::statement_kind::ERROR:
             stmt = cache->get_base();
             break;
@@ -126,16 +135,12 @@ void members_statement_provider::fill_cache(context::statement_cache& cache,
     cache.insert(processing_status_cache_key(status), std::move(reparsed_stmt));
 }
 
-context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
-    const statement_processor& processor, context::statement_cache& cache)
+context::shared_stmt_ptr members_statement_provider::preprocess_deferred(const statement_processor& processor,
+    context::statement_cache& cache,
+    processing_status status,
+    context::shared_stmt_ptr base_stmt)
 {
-    auto base_stmt = cache.get_base();
     const auto& def_stmt = *base_stmt->access_deferred();
-
-    auto status = processor.get_processing_status(def_stmt.instruction_ref());
-
-    if (status.first.form == processing_form::DEFERRED)
-        return base_stmt;
 
     processing_status_cache_key key(status);
 

@@ -101,7 +101,7 @@ bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_co
             lsp::macro_info_ptr info = std::get<lsp::macro_info_ptr>(cached_data->cached_member);
             if (!info)
                 return true; // The file for which the analyzer is cached does not contain definition of macro
-            ctx.hlasm_ctx->add_macro(info->macro_definition);
+            ctx.hlasm_ctx->add_macro(info->macro_definition, info->external);
             ctx.lsp_ctx->add_macro(info, lsp::text_data_view(macro_file_->get_text()));
 
             // Add all copy members on which this macro is dependant

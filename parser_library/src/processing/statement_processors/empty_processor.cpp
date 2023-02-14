@@ -23,7 +23,7 @@ empty_processor::empty_processor(analyzing_context ctx)
     : statement_processor(processing_kind::ORDINARY, std::move(ctx))
 {}
 
-processing_status empty_processor::get_processing_status(const semantics::instruction_si&) const
+std::optional<processing_status> empty_processor::get_processing_status(const semantics::instruction_si&) const
 {
     return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::IGNORED), op_code());
 }

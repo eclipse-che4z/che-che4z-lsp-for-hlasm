@@ -22,12 +22,13 @@
 #include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::processing {
+class branching_provider;
 
 // processor that creates macro definition from provided statements
 class macrodef_processor final : public statement_processor
 {
     processing_state_listener& listener_;
-    workspaces::parse_lib_provider& provider_;
+    branching_provider& branching_provider_;
     const macrodef_start_data start_;
 
     size_t initial_copy_nest_;
@@ -49,10 +50,10 @@ class macrodef_processor final : public statement_processor
 public:
     macrodef_processor(analyzing_context ctx,
         processing_state_listener& listener,
-        workspaces::parse_lib_provider& provider,
+        branching_provider& branching_provider_,
         macrodef_start_data start);
 
-    processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
+    std::optional<processing_status> get_processing_status(const semantics::instruction_si& instruction) const override;
     void process_statement(context::shared_stmt_ptr statement) override;
     void end_processing() override;
     bool terminal_condition(const statement_provider_kind kind) const override;

@@ -38,19 +38,25 @@ public:
         : m_files(c.begin(), c.end())
     {}
 
-    workspaces::parse_result parse_library(
-        std::string_view library, analyzing_context ctx, workspaces::library_data data) override
+    void parse_library(std::string_view library,
+        analyzing_context ctx,
+        workspaces::library_data data,
+        std::function<void(bool)> callback) override
     {
         auto it = m_files.find(library);
         if (it == m_files.end())
-            return false;
+        {
+            callback(false);
+            return;
+        }
 
         auto a = std::make_unique<analyzer>(it->second,
             analyzer_options { hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data });
         a->analyze();
         a->collect_diags();
         analyzers.insert_or_assign(std::string(library), std::move(a));
-        return true;
+
+        callback(true);
     }
 
     bool has_library(std::string_view library, utils::resource::resource_location* loc) const override

@@ -748,9 +748,13 @@ void hlasm_context::add_mnemonic(id_index mnemo, id_index op_code)
 
 void hlasm_context::remove_mnemonic(id_index mnemo)
 {
-    [[maybe_unused]] const opcode_t* it;
-    assert((it = find_opcode_mnemo(mnemo, opcode_generation::current)) && *it);
-    opcode_mnemo_.try_emplace({ mnemo, ++m_current_opcode_generation }, opcode_t());
+    [[maybe_unused]] const opcode_t* test_opcode;
+    assert((test_opcode = find_opcode_mnemo(mnemo, opcode_generation::current)) && *test_opcode);
+
+    if (auto it = external_macros_.find(mnemo); it == external_macros_.end())
+        opcode_mnemo_.try_emplace({ mnemo, ++m_current_opcode_generation }, opcode_t());
+    else // restore external macro when available
+        opcode_mnemo_.try_emplace({ mnemo, ++m_current_opcode_generation }, opcode_t { it->first, it->second });
 }
 
 opcode_t hlasm_context::get_operation_code(id_index symbol, opcode_generation gen) const
@@ -824,7 +828,8 @@ macro_def_ptr hlasm_context::add_macro(id_index name,
     copy_nest_storage copy_nests,
     label_storage labels,
     location definition_location,
-    std::unordered_set<copy_member_ptr> used_copy_members)
+    std::unordered_set<copy_member_ptr> used_copy_members,
+    bool external)
 {
     auto result = std::make_shared<macro_definition>(name,
         label_param_name,
@@ -834,15 +839,17 @@ macro_def_ptr hlasm_context::add_macro(id_index name,
         std::move(labels),
         std::move(definition_location),
         std::move(used_copy_members));
-    add_macro(result);
+    add_macro(result, external);
     return result;
 }
 
-void hlasm_context::add_macro(macro_def_ptr macro)
+void hlasm_context::add_macro(macro_def_ptr macro, bool external)
 {
     auto next_gen = ++m_current_opcode_generation;
     const auto& m = macros_.try_emplace({ macro->id, next_gen }, std::move(macro)).first->second;
     opcode_mnemo_.try_emplace({ m->id, next_gen }, opcode_t { m->id, m });
+    if (external)
+        external_macros_.try_emplace(m->id, m);
 };
 
 const hlasm_context::macro_storage& hlasm_context::macros() const { return macros_; }

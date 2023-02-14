@@ -61,11 +61,12 @@ TEST(processor_file, parse_macro)
     {
         processor_file_impl& macro_ref;
 
-        parse_result parse_library(std::string_view lib, analyzing_context ac, library_data ld) override
+        void parse_library(
+            std::string_view lib, analyzing_context ac, library_data ld, std::function<void(bool)> callback) override
         {
             EXPECT_EQ(lib, "MAC");
 
-            return macro_ref.parse_macro(*this, ac, ld);
+            callback(macro_ref.parse_macro(*this, ac, ld));
         }
         bool has_library(std::string_view, resource_location*) const override { return false; }
         std::optional<std::pair<std::string, resource_location>> get_library(std::string_view) const override

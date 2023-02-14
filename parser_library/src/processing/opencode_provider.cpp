@@ -218,8 +218,10 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
     const std::optional<std::string>& op_text,
     const range& op_range)
 {
+    // Lookahead processor always returns value
+    auto proc_status = proc.get_processing_status(collector.current_instruction()).value();
+
     m_ctx->hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
-    auto proc_status = proc.get_processing_status(collector.current_instruction());
 
     if (op_text
         && proc_status.first.form != processing_form::IGNORED
@@ -273,7 +275,13 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
         return nullptr;
 
     m_ctx->hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
-    auto proc_status = proc.get_processing_status(collector.current_instruction());
+    const auto proc_status_o = proc.get_processing_status(collector.current_instruction());
+    if (!proc_status_o.has_value())
+    {
+        m_next_line_index = m_current_logical_line_source.first_index;
+        return nullptr;
+    }
+    const auto& proc_status = proc_status_o.value();
 
     if (op_text)
     {
