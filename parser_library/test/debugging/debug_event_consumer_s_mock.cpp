@@ -26,22 +26,20 @@ void debug_event_consumer_s_mock::stopped(
     (void)reason;
     (void)addtl_info;
     ++stop_count;
-    while (stopped_)
-        std::this_thread::sleep_for(100ms);
     stopped_ = true;
 }
 
 void debug_event_consumer_s_mock::wait_for_stopped()
 {
     while (!stopped_)
-        std::this_thread::sleep_for(100ms);
+        d.analysis_step();
     stopped_ = false;
 }
 
 void debug_event_consumer_s_mock::wait_for_exited()
 {
     while (!exited_)
-        std::this_thread::sleep_for(100ms);
+        d.analysis_step();
     stopped_ = false;
 }
 

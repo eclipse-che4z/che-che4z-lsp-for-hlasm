@@ -28,6 +28,7 @@
 #include "statement_processors/ordinary_processor.h"
 #include "statement_providers/copy_statement_provider.h"
 #include "statement_providers/macro_statement_provider.h"
+#include "utils/task.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -122,6 +123,33 @@ bool processing_manager::step()
         proc.process_statement(std::move(stmt));
     }
     return true;
+}
+
+utils::task processing_manager::co_step()
+{
+    while (!procs_.empty())
+    {
+        statement_processor& proc = *procs_.back();
+        statement_provider& prov = find_provider();
+
+        if ((prov.finished() && proc.terminal_condition(prov.kind)) || proc.finished())
+        {
+            finish_processor();
+            continue;
+        }
+
+        if (auto stmt = prov.get_next(proc))
+        {
+            update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
+            for (auto& a : stms_analyzers_)
+                if (a->analyze(*stmt, prov.kind, proc.kind, false))
+                    co_await utils::task::suspend();
+
+            proc.process_statement(std::move(stmt));
+        }
+
+        co_await utils::task::suspend();
+    }
 }
 
 void processing_manager::register_stmt_analyzer(statement_analyzer* stmt_analyzer)

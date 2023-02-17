@@ -87,7 +87,7 @@ class lsp_analyzer : public statement_analyzer
 public:
     lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx, std::string_view file_text);
 
-    void analyze(const context::hlasm_statement& statement,
+    bool analyze(const context::hlasm_statement& statement,
         statement_provider_kind prov_kind,
         processing_kind proc_kind,
         bool evaluated_model) override;

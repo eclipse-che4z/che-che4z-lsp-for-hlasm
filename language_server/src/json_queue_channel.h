@@ -32,6 +32,7 @@ public:
     void write(nlohmann::json&&) override;
 
     void terminate();
+    bool will_read_block() const { return queue.will_block(); }
 };
 } // namespace hlasm_plugin::language_server
 

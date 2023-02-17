@@ -15,17 +15,23 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_TEST_DEBUG_EVENT_CONSUMER_S_MOCK_H
 #define HLASMPLUGIN_PARSERLIBRARY_TEST_DEBUG_EVENT_CONSUMER_S_MOCK_H
 
-#include <atomic>
-
 #include "debugger.h"
 
 class debug_event_consumer_s_mock : public hlasm_plugin::parser_library::debugging::debug_event_consumer
 {
-    std::atomic<bool> stopped_ = false;
-    std::atomic<bool> exited_ = false;
-    std::atomic<size_t> stop_count = 0;
+    bool stopped_ = false;
+    bool exited_ = false;
+    size_t stop_count = 0;
+
+    hlasm_plugin::parser_library::debugging::debugger& d;
 
 public:
+    debug_event_consumer_s_mock(hlasm_plugin::parser_library::debugging::debugger& d)
+        : d(d)
+    {
+        d.set_event_consumer(this);
+    }
+
     void stopped(hlasm_plugin::parser_library::sequence<char> reason,
         hlasm_plugin::parser_library::sequence<char> addtl_info) override;
 

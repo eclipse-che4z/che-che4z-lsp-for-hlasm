@@ -24,7 +24,9 @@ namespace hlasm_plugin::language_server::dap {
 server::server(parser_library::workspace_manager& ws_mngr, telemetry_sink* telemetry_reporter)
     : language_server::server(ws_mngr, telemetry_reporter)
 {
-    features_.push_back(std::make_unique<dap_feature>(ws_mngr_, *this, this));
+    auto dap_f = std::make_unique<dap_feature>(ws_mngr_, *this, this);
+    m_dap_feature = dap_f.get();
+    features_.push_back(std::move(dap_f));
     register_feature_methods();
 }
 
@@ -104,5 +106,8 @@ void server::disconnected()
     shutdown_request_received_ = true;
     exit_notification_received_ = true;
 }
+
+
+bool server::idle_handler() { return m_dap_feature->idle_handler(); }
 
 } // namespace hlasm_plugin::language_server::dap

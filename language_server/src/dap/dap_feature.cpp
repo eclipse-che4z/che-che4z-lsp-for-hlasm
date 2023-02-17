@@ -356,4 +356,6 @@ void dap_feature::on_pause(const nlohmann::json& request_seq, const nlohmann::js
     response_->respond(request_seq, "pause", nlohmann::json());
 }
 
+bool dap_feature::idle_handler() { return debugger && debugger->analysis_step(); }
+
 } // namespace hlasm_plugin::language_server::dap

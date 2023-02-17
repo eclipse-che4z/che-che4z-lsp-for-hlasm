@@ -31,6 +31,10 @@
 #include "statement_fields_parser.h"
 #include "workspaces/parse_lib_provider.h"
 
+namespace hlasm_plugin::utils {
+struct task;
+} // namespace hlasm_plugin::utils
+
 namespace hlasm_plugin::parser_library::processing {
 
 // main class for processing of the opencode
@@ -51,6 +55,8 @@ public:
 
     // method that starts the processing loop
     bool step();
+
+    utils::task co_step();
 
     void register_stmt_analyzer(statement_analyzer* stmt_analyzer);
 

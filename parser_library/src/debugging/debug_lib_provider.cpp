@@ -15,6 +15,7 @@
 #include "debug_lib_provider.h"
 
 #include "analyzer.h"
+#include "utils/task.h"
 #include "workspaces/file_manager.h"
 #include "workspaces/library.h"
 #include "workspaces/workspace.h"
@@ -23,10 +24,10 @@ namespace hlasm_plugin::parser_library::debugging {
 
 debug_lib_provider::debug_lib_provider(std::vector<std::shared_ptr<workspaces::library>> libraries,
     workspaces::file_manager& fm,
-    std::atomic<bool>* cancel)
+    std::vector<utils::task>& analyzers)
     : m_libraries(std::move(libraries))
     , m_file_manager(fm)
-    , m_cancel(cancel)
+    , m_analyzers(analyzers)
 {}
 
 void debug_lib_provider::parse_library(
@@ -43,25 +44,21 @@ void debug_lib_provider::parse_library(
             break;
 
         const auto& [location, content] = *m_files.try_emplace(std::move(url), std::move(content_o).value()).first;
-        analyzer a(content,
-            analyzer_options {
-                location,
-                this,
-                std::move(ctx),
-                data,
-                collect_highlighting_info::no,
-            });
 
-        do
-        {
-            if (m_cancel && m_cancel->load(std::memory_order_relaxed))
-            {
-                callback(false);
-                return;
-            }
-        } while (a.analyze_step());
+        constexpr auto dep_task =
+            [](std::string content, analyzer_options opts, std::function<void(bool)> callback) -> utils::task {
+            analyzer a(content, std::move(opts));
 
-        callback(true);
+            co_await a.co_analyze();
+
+            if (callback)
+                callback(true);
+        };
+
+        m_analyzers.emplace_back(dep_task(content,
+            analyzer_options(location, this, std::move(ctx), data, collect_highlighting_info::no),
+            std::move(callback)));
+
         return;
     }
     callback(false);

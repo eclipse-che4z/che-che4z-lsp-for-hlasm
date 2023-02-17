@@ -85,9 +85,8 @@ TEST(debugger, stopped_on_entry)
     shared_json global_settings = make_empty_shared_json();
     workspace ws(file_manager, config, global_settings);
 
-    debug_event_consumer_s_mock m;
     debugger d;
-    d.set_event_consumer(&m);
+    debug_event_consumer_s_mock m(d);
     std::string file_name = "test_workspace\\test";
     resource_location file_loc(file_name);
 
@@ -123,9 +122,8 @@ TEST(debugger, disconnect)
     shared_json global_settings = make_empty_shared_json();
     workspace ws(file_manager, config, global_settings);
 
-    debug_event_consumer_s_mock m;
     debugger d;
-    d.set_event_consumer(&m);
+    debug_event_consumer_s_mock m(d);
     std::string file_name = "test_workspace\\test";
     resource_location file_loc(file_name);
 
@@ -467,9 +465,8 @@ TEST(debugger, test)
     file_manager.did_open_file(copy2_file_loc, 0, copy2_source);
     workspace_mock lib_provider(file_manager);
 
-    debug_event_consumer_s_mock m;
     debugger d;
-    d.set_event_consumer(&m);
+    debug_event_consumer_s_mock m(d);
     std::string filename = "ws\\test";
     resource_location file_loc(filename);
 
@@ -559,9 +556,8 @@ TEST(debugger, sysstmt)
     file_manager_impl file_manager;
     workspace_mock lib_provider(file_manager);
 
-    debug_event_consumer_s_mock m;
     debugger d;
-    d.set_event_consumer(&m);
+    debug_event_consumer_s_mock m(d);
     std::string filename = "ws\\test";
     resource_location file_loc(filename);
 
@@ -621,9 +617,8 @@ A  MAC_IN ()
     file_manager.did_open_file(copy1_file_loc, 0, copy1_source);
     workspace_mock lib_provider(file_manager);
 
-    debug_event_consumer_s_mock m;
     debugger d;
-    d.set_event_consumer(&m);
+    debug_event_consumer_s_mock m(d);
     std::string filename = "ws\\test";
     resource_location file_loc(filename);
 
@@ -787,9 +782,8 @@ TEST(debugger, positional_parameters)
 
     file_manager_impl file_manager;
     workspace_mock lib_provider(file_manager);
-    debug_event_consumer_s_mock m;
     debugger d;
-    d.set_event_consumer(&m);
+    debug_event_consumer_s_mock m(d);
     std::string filename = "ws\\test";
     resource_location file_loc(filename);
 
@@ -908,9 +902,8 @@ TEST(debugger, arrays)
 
     file_manager_impl file_manager;
     workspace_mock lib_provider(file_manager);
-    debug_event_consumer_s_mock m;
     debugger d;
-    d.set_event_consumer(&m);
+    debug_event_consumer_s_mock m(d);
     std::string filename = "ws\\test";
     resource_location file_loc(filename);
 
@@ -964,9 +957,8 @@ B EQU A
 
     file_manager_impl file_manager;
     workspace_mock lib_provider(file_manager);
-    debug_event_consumer_s_mock m;
     debugger d;
-    d.set_event_consumer(&m);
+    debug_event_consumer_s_mock m(d);
     std::string filename = "ws\\test";
     resource_location file_loc(filename);
 
@@ -1011,9 +1003,8 @@ TEST(debugger, ainsert)
 
     file_manager_impl file_manager;
     workspace_mock lib_provider(file_manager);
-    debug_event_consumer_s_mock m;
     debugger d;
-    d.set_event_consumer(&m);
+    debug_event_consumer_s_mock m(d);
     std::string filename = "ws\\test";
     resource_location file_loc(filename);
 
@@ -1076,9 +1067,8 @@ TEST(debugger, concurrent_next_and_file_change)
     file_manager.did_open_file(copy1_file_loc, 0, copy1_source);
     workspace_mock lib_provider(file_manager);
 
-    debug_event_consumer_s_mock m;
     debugger d;
-    d.set_event_consumer(&m);
+    debug_event_consumer_s_mock m(d);
     std::string filename = "ws\\test";
     resource_location file_loc(filename);
 
@@ -1089,16 +1079,13 @@ TEST(debugger, concurrent_next_and_file_change)
     std::vector<document_change> chs;
     chs.emplace_back(new_string.c_str(), new_string.size());
     d.next();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::thread t([&file_manager, &copy1_file_loc, &chs]() {
         file_manager.did_change_file(copy1_file_loc, 0, chs.data(), chs.size());
     });
+    t.join();
     m.wait_for_stopped();
 
-
     d.disconnect();
-
-    t.join();
 }
 
 TEST(debugger, pimpl_moves)
@@ -1129,9 +1116,8 @@ TEST(debugger, invalid_file)
     shared_json global_settings = make_empty_shared_json();
     workspace ws(file_manager, config, global_settings);
 
-    debug_event_consumer_s_mock m;
     debugger d;
-    d.set_event_consumer(&m);
+    debug_event_consumer_s_mock m(d);
     std::string file_name = "test_workspace\\test";
     resource_location file_loc(file_name);
 

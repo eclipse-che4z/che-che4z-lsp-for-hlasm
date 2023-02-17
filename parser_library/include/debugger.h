@@ -95,6 +95,8 @@ public:
     stack_frames_t stack_frames() const;
     scopes_t scopes(frame_id_t frame_id) const;
     variables_t variables(var_reference_t var_ref) const;
+
+    bool analysis_step();
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

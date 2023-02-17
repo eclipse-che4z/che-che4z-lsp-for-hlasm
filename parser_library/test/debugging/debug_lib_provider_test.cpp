@@ -23,6 +23,7 @@
 #include "analyzer.h"
 #include "debugging/debug_lib_provider.h"
 #include "utils/resource_location.h"
+#include "utils/task.h"
 
 using namespace ::testing;
 using namespace hlasm_plugin::parser_library;
@@ -37,7 +38,28 @@ class debug_lib_provider_test : public Test
 protected:
     std::shared_ptr<NiceMock<library_mock>> mock_lib = std::make_shared<NiceMock<library_mock>>();
     NiceMock<file_manager_mock> fm_mock;
-    debug_lib_provider lib = debug_lib_provider({ mock_lib }, fm_mock, nullptr);
+    std::vector<hlasm_plugin::utils::task> nested_analyzers;
+    debug_lib_provider lib = debug_lib_provider({ mock_lib }, fm_mock, nested_analyzers);
+
+    void analyze(analyzer& a)
+    {
+        while (true)
+        {
+            if (!nested_analyzers.empty())
+            {
+                auto& na = nested_analyzers.back();
+                if (na.done())
+                {
+                    nested_analyzers.pop_back();
+                    continue;
+                }
+                na();
+                continue;
+            }
+            if (!a.analyze_step())
+                break;
+        }
+    }
 };
 
 } // namespace
@@ -51,7 +73,7 @@ TEST_F(debug_lib_provider_test, parse_library)
 
     std::string input = " COPY AAA";
     analyzer a(input, analyzer_options(&lib));
-    a.analyze();
+    analyze(a);
     a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));

@@ -69,7 +69,7 @@ lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& 
     , file_text_(file_text)
 {}
 
-void lsp_analyzer::analyze(const context::hlasm_statement& statement,
+bool lsp_analyzer::analyze(const context::hlasm_statement& statement,
     statement_provider_kind prov_kind,
     processing_kind proc_kind,
     bool evaluated_model)
@@ -115,6 +115,8 @@ void lsp_analyzer::analyze(const context::hlasm_statement& statement,
     }
 
     assign_statement_occurences(hlasm_ctx_.current_statement_location().resource_loc);
+
+    return false;
 }
 
 namespace {

@@ -46,8 +46,11 @@ public:
 
     void message_received(const nlohmann::json& message) override;
 
+    bool idle_handler();
+
 private:
     std::atomic<uint64_t> last_seq_ = 0;
+    dap_feature* m_dap_feature = nullptr;
 
     void register_methods();
 

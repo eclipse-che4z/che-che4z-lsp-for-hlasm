@@ -30,42 +30,55 @@ enum class blocking_queue_termination_policy : bool
 };
 
 template<typename T,
-    blocking_queue_termination_policy termination_policy = blocking_queue_termination_policy::drop_elements>
+    blocking_queue_termination_policy termination_policy = blocking_queue_termination_policy::drop_elements,
+    bool one_reader = true>
 class blocking_queue
 {
+    static constexpr unsigned char terminated_flag = 0x01;
+    static constexpr unsigned char has_elements_flag = 0x02;
+
     std::mutex mutex;
     std::condition_variable cond_var;
     std::deque<T> queue;
-    bool terminated = false;
+    std::atomic<unsigned char> state = 0;
 
 public:
-    void push(T&& t)
+    bool push(T&& t)
     {
         std::unique_lock g(mutex);
-        if (terminated)
-            return;
+
+        if (terminated())
+            return false;
 
         const bool notify = queue.size() == 0;
         queue.push_back(std::move(t));
+        state.fetch_or(has_elements_flag, std::memory_order_relaxed);
 
         g.unlock();
 
         if (notify)
             cond_var.notify_one();
+
+        return true;
     }
-    void push(const T& t)
+
+    bool push(const T& t)
     {
         std::unique_lock g(mutex);
-        if (terminated)
-            return;
+
+        if (terminated())
+            return false;
 
         const bool notify = queue.size() == 0;
         queue.push_back(t);
+        state.fetch_or(has_elements_flag, std::memory_order_relaxed);
 
         g.unlock();
 
         if (notify)
             cond_var.notify_one();
+
+        return true;
     }
 
     std::optional<T> pop()
@@ -74,13 +87,15 @@ public:
         constexpr const auto process = blocking_queue_termination_policy::process_elements;
 
         std::unique_lock g(mutex);
-        cond_var.wait(g, [this] { return queue.size() || terminated; });
+        cond_var.wait(g, [this] { return queue.size() || terminated(); });
 
-        if ((termination_policy == drop && terminated) || (termination_policy == process && queue.size() == 0))
+        if ((termination_policy == drop && terminated()) || (termination_policy == process && queue.size() == 0))
             return std::nullopt;
 
         std::optional<T> result = std::move(queue.front());
         queue.pop_front();
+        if (queue.empty())
+            state.fetch_and(static_cast<unsigned char>(~has_elements_flag), std::memory_order_relaxed);
 
         return result;
     }
@@ -88,11 +103,16 @@ public:
     void terminate()
     {
         std::unique_lock g(mutex);
-        terminated = true;
+        state.fetch_or(terminated_flag, std::memory_order_relaxed);
         g.unlock();
 
         cond_var.notify_one();
     }
+
+    bool terminated() const { return state.load(std::memory_order_relaxed) & terminated_flag; }
+    bool empty() const { return !(state.load(std::memory_order_relaxed) & has_elements_flag); }
+
+    bool will_block() const requires one_reader { return state.load(std::memory_order_relaxed) == 0; }
 };
 } // namespace hlasm_plugin::language_server
 

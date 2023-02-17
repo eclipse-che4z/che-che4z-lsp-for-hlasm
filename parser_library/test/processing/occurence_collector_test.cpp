@@ -35,16 +35,19 @@ struct operand_occurence_analyzer_mock : public processing::statement_analyzer
         a.analyze();
     }
 
-    void analyze(const context::hlasm_statement& statement,
+    bool analyze(const context::hlasm_statement& statement,
         processing::statement_provider_kind,
         processing::processing_kind,
         bool evaluated_model) override
     {
         const auto* res_stmt = statement.access_resolved();
-        ASSERT_TRUE(res_stmt);
+        EXPECT_TRUE(res_stmt);
+        assert(res_stmt);
         processing::occurence_collector collector(occ_kind, *a.context().hlasm_ctx, st, evaluated_model);
         const auto& operands = res_stmt->operands_ref().value;
         std::for_each(operands.begin(), operands.end(), [&](const auto& op) { op->apply(collector); });
+
+        return false;
     }
 
     context::id_index get_id(const std::string& s) { return a.context().hlasm_ctx->ids().add(s); }

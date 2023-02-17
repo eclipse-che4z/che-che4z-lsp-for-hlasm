@@ -76,36 +76,8 @@ struct response_provider_mock : public response_provider
 
     std::vector<response_mock> responses;
     std::vector<notif_mock> notifs;
-    std::atomic<bool> stopped = false;
-    std::atomic<bool> exited = false;
-
-    void wait_for_stopped()
-    {
-        size_t i = 0;
-        while (!stopped)
-        {
-            if (i > 50)
-                throw std::runtime_error("Wait for stopped timeout.");
-            ++i;
-
-            std::this_thread::sleep_for(100ms);
-        }
-        stopped = false;
-    }
-
-    void wait_for_exited()
-    {
-        size_t i = 0;
-        while (!exited)
-        {
-            if (i > 50)
-                throw std::runtime_error("Wait for exited timeout.");
-            ++i;
-
-            std::this_thread::sleep_for(100ms);
-        }
-        exited = false;
-    }
+    bool stopped = false;
+    bool exited = false;
 
 
     void reset()
@@ -150,8 +122,27 @@ struct feature_launch_test : public testing::Test
 
     void wait_for_stopped()
     {
-        resp_provider.wait_for_stopped();
+        for (int i = 0; !resp_provider.stopped; ++i)
+        {
+            if (i >= 1000000)
+                throw std::runtime_error("Wait for stopped timeout.");
+
+            feature.idle_handler();
+        }
         EXPECT_EQ(resp_provider.notifs.size(), 1U);
+        resp_provider.stopped = false;
+    }
+
+    void wait_for_exited()
+    {
+        for (int i = 0; !resp_provider.exited; ++i)
+        {
+            if (i >= 1000000)
+                throw std::runtime_error("Wait for exited timeout.");
+
+            feature.idle_handler();
+        }
+        resp_provider.exited = false;
     }
 
     std::map<std::string, method> methods;
@@ -271,7 +262,7 @@ TEST_F(feature_launch_test, step)
     ASSERT_EQ(r2.args["stackFrames"].size(), 1U);
 
     feature.on_continue("47"_json, nlohmann::json());
-    resp_provider.wait_for_exited();
+    wait_for_exited();
     feature.on_disconnect("48"_json, {});
 }
 
@@ -337,11 +328,13 @@ TEST_F(feature_launch_test, variables)
     check_simple_stack_trace("2"_json, 0);
 
     feature.on_step_in("3"_json, nlohmann::json());
-    resp_provider.wait_for_stopped();
+    wait_for_stopped();
+    resp_provider.reset();
     feature.on_step_in("3"_json, nlohmann::json());
-    resp_provider.wait_for_stopped();
+    wait_for_stopped();
+    resp_provider.reset();
     feature.on_step_in("3"_json, nlohmann::json());
-    resp_provider.wait_for_stopped();
+    wait_for_stopped();
     resp_provider.reset();
 
     feature.on_stack_trace("1"_json, nlohmann::json());
@@ -429,7 +422,7 @@ TEST_F(feature_launch_test, pause)
 
     feature.on_pause("1"_json, {});
 
-    resp_provider.wait_for_stopped();
+    wait_for_stopped();
     std::vector<response_mock> expected_resp = { { "0"_json, "launch", nlohmann::json() },
         { "1"_json, "pause", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);

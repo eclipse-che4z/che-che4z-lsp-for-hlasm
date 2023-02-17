@@ -32,6 +32,7 @@
 #include "macro_param_variable.h"
 #include "ordinary_symbol_variable.h"
 #include "set_symbol_variable.h"
+#include "utils/task.h"
 #include "variable.h"
 #include "virtual_file_monitor.h"
 #include "workspaces/file_manager.h"
@@ -76,32 +77,19 @@ std::size_t breakpoints_t::size() const { return pimpl->m_breakpoints.size(); }
 // interface.
 class debugger::impl final : public processing::statement_analyzer
 {
-    mutable std::mutex control_mtx;
-    mutable std::mutex variable_mtx_;
-    mutable std::mutex breakpoints_mutex_;
-
-    std::thread thread_;
-
-    // these are used in conditional variable to stop execution
-    // of analyzer and wait for user input
-    std::condition_variable con_var;
-    std::atomic<bool> continue_ = false;
-
-    std::atomic<bool> debug_ended_ = false;
+    bool debug_ended_ = false;
+    bool continue_ = false;
 
     // Specifies whether the debugger stops on the next statement call.
-    std::atomic<bool> stop_on_next_stmt_ = false;
-    std::atomic<bool> stop_on_stack_changes_ = false;
+    bool stop_on_next_stmt_ = false;
+    bool stop_on_stack_changes_ = false;
     std::pair<context::processing_stack_t, const utils::resource::resource_location*> stop_on_stack_condition_;
 
     // Range of statement that is about to be processed by analyzer.
     range next_stmt_range_;
 
     // True, if disconnect request was received
-    std::atomic<bool> disconnected_ = false;
-
-    // Cancellation token for parsing
-    std::atomic<bool> cancel_ = false;
+    bool disconnected_ = false;
 
     // Provides a way to inform outer world about debugger events
     debug_event_consumer* event_ = nullptr;
@@ -127,6 +115,8 @@ class debugger::impl final : public processing::statement_analyzer
         return next_var_ref_++;
     }
 
+    std::vector<utils::task> analyzers;
+
 public:
     impl() = default;
 
@@ -141,85 +131,97 @@ public:
             return false;
         }
         opencode_source_uri_ = open_code_location.get_uri();
+        continue_ = true;
         stop_on_next_stmt_ = stop_on_entry;
+        stop_on_stack_changes_ = false;
 
-        struct debugger_thread_data
-        {
-            utils::resource::resource_location open_code_location;
-            std::string open_code_text;
-            debug_lib_provider debug_provider;
-            asm_option asm_opts;
-            std::vector<preprocessor_options> pp_opts;
-            workspaces::file_manager_vfm vfm;
-            analyzer_options opts;
-        };
-
-        auto data = std::make_unique<debugger_thread_data>(debugger_thread_data {
-            open_code_location,
-            std::move(open_code_text).value(),
-            debug_lib_provider(workspace.get_libraries(open_code_location), workspace.get_file_manager(), &cancel_),
-            workspace.get_asm_options(open_code_location),
-            workspace.get_preprocessor_options(open_code_location),
-            workspaces::file_manager_vfm(
-                workspace.get_file_manager(), utils::resource::resource_location(workspace.uri())),
-        });
-
-        thread_ = std::thread([this, data = std::move(data)]() {
-            std::lock_guard<std::mutex> guard(variable_mtx_); // Lock the mutex while analyzer is running, unlock once
-                                                              // it is stopped and waiting in the statement method
-
-            analyzer a(data->open_code_text,
+        const auto main_analyzer = [](std::string open_code_text,
+                                       debug_lib_provider debug_provider,
+                                       workspaces::file_manager_vfm vfm,
+                                       asm_option asm_opts,
+                                       std::vector<preprocessor_options> pp_opts,
+                                       utils::resource::resource_location open_code_location,
+                                       impl* self) -> utils::task {
+            analyzer a(open_code_text,
                 analyzer_options {
-                    std::move(data->open_code_location),
-                    &data->debug_provider,
-                    std::move(data->asm_opts),
-                    std::move(data->pp_opts),
-                    &data->vfm,
+                    std::move(open_code_location),
+                    &debug_provider,
+                    std::move(asm_opts),
+                    std::move(pp_opts),
+                    &vfm,
                 });
 
-            a.register_stmt_analyzer(this);
+            a.register_stmt_analyzer(self);
 
-            ctx_ = a.context().hlasm_ctx.get();
+            self->ctx_ = a.context().hlasm_ctx.get();
 
-            do
-            {
-                if (cancel_.load(std::memory_order_relaxed))
-                    break;
-            } while (a.analyze_step());
+            co_await a.co_analyze();
+        };
 
-            if (!disconnected_ && event_)
-                event_->exited(0);
-            debug_ended_ = true;
-        });
+        auto& fm = workspace.get_file_manager();
+        analyzers.clear();
+        analyzers.emplace_back(main_analyzer(std::move(open_code_text).value(),
+            debug_lib_provider(workspace.get_libraries(open_code_location), fm, analyzers),
+            workspaces::file_manager_vfm(fm, utils::resource::resource_location(workspace.uri())),
+            workspace.get_asm_options(open_code_location),
+            workspace.get_preprocessor_options(open_code_location),
+            open_code_location,
+            this));
 
         return true;
     }
 
+    bool step()
+    {
+        if (analyzers.empty() || debug_ended_)
+            return false;
+
+        if (!continue_)
+            return false;
+
+        if (const auto& a = analyzers.back(); !a.done())
+        {
+            a();
+            return true;
+        }
+
+        analyzers.pop_back();
+
+        if (!analyzers.empty())
+            return true;
+
+        if (!disconnected_ && event_)
+            event_->exited(0);
+        debug_ended_ = true;
+
+        return false;
+    }
+
     void set_event_consumer(debug_event_consumer* event) { event_ = event; }
 
-    void analyze(const context::hlasm_statement& statement,
+    bool analyze(const context::hlasm_statement& statement,
         processing::statement_provider_kind,
         processing::processing_kind proc_kind,
         bool evaluated_model) override
     {
         if (disconnected_)
-            return;
+            return false;
 
         if (evaluated_model)
-            return; // we already stopped on the model itself
+            return false; // we already stopped on the model itself
 
         // Continue only for ordinary processing kind (i.e. when the statement is executed, skip
         // lookahead and copy/macro definitions)
         if (proc_kind != processing::processing_kind::ORDINARY)
-            return;
+            return false;
 
         const auto* resolved_stmt = statement.access_resolved();
         if (!resolved_stmt)
-            return;
+            return false;
 
         // Continue only for non-empty statements
         if (resolved_stmt->opcode_ref().value.empty())
-            return;
+            return false;
 
         range stmt_range = resolved_stmt->stmt_range_ref();
 
@@ -249,11 +251,9 @@ public:
             stack_frames_.clear();
             scopes_.clear();
             proc_stack_ = std::move(stack);
-            variable_mtx_.unlock();
 
-            std::unique_lock<std::mutex> lck(control_mtx);
             if (disconnected_)
-                return;
+                return false;
             stop_on_next_stmt_ = false;
             stop_on_stack_changes_ = false;
             next_stmt_range_ = stmt_range;
@@ -262,73 +262,48 @@ public:
             continue_ = false;
             if (event_)
                 event_->stopped("entry", "");
-
-            con_var.wait(lck, [&] { return !!continue_; });
-
-            variable_mtx_.lock();
         }
+        return !continue_;
     }
 
     // User controls of debugging.
     void next()
     {
-        {
-            std::lock_guard<std::mutex> lck(control_mtx);
-            stop_on_stack_changes_ = true;
-            continue_ = true;
-        }
-        con_var.notify_all();
+        stop_on_stack_changes_ = true;
+        continue_ = true;
     }
 
     void step_in()
     {
-        {
-            std::lock_guard<std::mutex> lck(control_mtx);
-            stop_on_next_stmt_ = true;
-            continue_ = true;
-        }
-        con_var.notify_all();
+        stop_on_next_stmt_ = true;
+        continue_ = true;
     }
 
     void step_out()
     {
+        if (!stop_on_stack_condition_.first.empty())
         {
-            std::lock_guard<std::mutex> lck(control_mtx);
-            if (!stop_on_stack_condition_.first.empty())
-            {
-                stop_on_stack_changes_ = true;
-                stop_on_stack_condition_ = std::make_pair(
-                    stop_on_stack_condition_.first.parent(), stop_on_stack_condition_.first.frame().resource_loc);
-            }
-            else
-                stop_on_next_stmt_ = false; // step out in the opencode is equivalent to continue
-            continue_ = true;
+            stop_on_stack_changes_ = true;
+            stop_on_stack_condition_ = std::make_pair(
+                stop_on_stack_condition_.first.parent(), stop_on_stack_condition_.first.frame().resource_loc);
         }
-        con_var.notify_all();
+        else
+            stop_on_next_stmt_ = false; // step out in the opencode is equivalent to continue
+        continue_ = true;
     }
 
     void disconnect()
     {
         // set cancellation token and wake up the thread,
         // so it peacefully finishes, we then wait for it and join
-        {
-            std::lock_guard<std::mutex> lck(control_mtx);
-
-            disconnected_ = true;
-            continue_ = true;
-            cancel_ = true;
-        }
-        con_var.notify_all();
-
-        if (thread_.joinable())
-            thread_.join();
+        disconnected_ = true;
+        continue_ = true;
     }
 
     void continue_debug()
     {
         stop_on_next_stmt_ = false;
         continue_ = true;
-        con_var.notify_all();
     }
 
     void pause() { stop_on_next_stmt_ = true; }
@@ -336,7 +311,6 @@ public:
     // Retrieval of current context.
     const std::vector<stack_frame>& stack_frames()
     {
-        std::lock_guard<std::mutex> guard(variable_mtx_);
         stack_frames_.clear();
         if (debug_ended_)
             return stack_frames_;
@@ -370,8 +344,6 @@ public:
 
     const std::vector<scope>& scopes(frame_id_t frame_id)
     {
-        std::lock_guard<std::mutex> guard(variable_mtx_);
-
         scopes_.clear();
         if (debug_ended_)
             return scopes_;
@@ -436,7 +408,6 @@ public:
     {
         static const hlasm_plugin::parser_library::debugging::variable_store empty_variables;
 
-        std::lock_guard<std::mutex> guard(variable_mtx_);
         if (debug_ended_)
             return empty_variables;
         auto it = variables_.find(var_ref);
@@ -455,23 +426,17 @@ public:
 
     void breakpoints(const utils::resource::resource_location& source, std::vector<breakpoint> bps)
     {
-        std::lock_guard g(breakpoints_mutex_);
         breakpoints_[source] = std::move(bps);
     }
 
     [[nodiscard]] std::vector<breakpoint> breakpoints(const utils::resource::resource_location& source) const
     {
-        std::lock_guard g(breakpoints_mutex_);
         if (auto it = breakpoints_.find(source); it != breakpoints_.end())
             return it->second;
         return {};
     }
 
-    ~impl()
-    {
-        if (thread_.joinable())
-            disconnect();
-    }
+    ~impl() { disconnect(); }
 };
 
 debugger::debugger()
@@ -505,6 +470,7 @@ void debugger::step_out() { pimpl->step_out(); }
 void debugger::disconnect() { pimpl->disconnect(); }
 void debugger::continue_debug() { pimpl->continue_debug(); }
 void debugger::pause() { pimpl->pause(); }
+bool debugger::analysis_step() { return pimpl->step(); }
 
 
 void debugger::breakpoints(sequence<char> source, sequence<breakpoint> bps)

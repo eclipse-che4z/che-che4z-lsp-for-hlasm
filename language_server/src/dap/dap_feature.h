@@ -65,6 +65,8 @@ public:
     void on_continue(const nlohmann::json& request_seq, const nlohmann::json& args);
     void on_pause(const nlohmann::json& request_seq, const nlohmann::json& args);
 
+    bool idle_handler();
+
 private:
     // Inherited via feature
     void register_methods(std::map<std::string, method>& methods) override;

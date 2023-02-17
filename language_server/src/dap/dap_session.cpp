@@ -26,13 +26,31 @@ void session::thread_routine()
 {
     try
     {
-        std::atomic<bool> cancel = false;
+        json_channel_adapter channel(msg_unwrapper, msg_wrapper);
+        struct smp_t final : send_message_provider
+        {
+            json_channel_adapter& channel;
+            void reply(const nlohmann::json& result) override { channel.write(result); }
+            explicit smp_t(json_channel_adapter& channel)
+                : channel(channel)
+            {}
+        } smp(channel);
+
         scope_exit indicate_end([this]() { running = false; });
-        request_manager req_mgr(&cancel);
-        scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
+
         dap::server server(*ws_mngr, telemetry_reporter);
-        dispatcher dispatcher(json_channel_adapter(msg_unwrapper, msg_wrapper), server, req_mgr);
-        dispatcher.run_server_loop();
+        server.set_send_message_provider(&smp);
+
+        while (!server.is_exit_notification_received())
+        {
+            if (queue.will_read_block() && server.idle_handler())
+                continue;
+
+            auto msg = channel.read();
+            if (!msg.has_value())
+                break;
+            server.message_received(msg.value());
+        }
     }
     catch (const std::exception& ex)
     {

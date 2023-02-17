@@ -15,7 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DEBUG_LIB_PROVIDER_H
 #define HLASMPLUGIN_PARSERLIBRARY_DEBUG_LIB_PROVIDER_H
 
-#include <atomic>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -26,6 +26,14 @@
 
 #include "utils/resource_location.h"
 #include "workspaces/parse_lib_provider.h"
+
+namespace hlasm_plugin::utils {
+struct task;
+} // namespace hlasm_plugin::utils
+
+namespace hlasm_plugin::parser_library {
+class analyzer;
+} // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::workspaces {
 class file_manager;
@@ -43,12 +51,12 @@ class debug_lib_provider final : public workspaces::parse_lib_provider
         m_files;
     std::vector<std::shared_ptr<workspaces::library>> m_libraries;
     workspaces::file_manager& m_file_manager;
-    std::atomic<bool>* m_cancel;
+    std::vector<utils::task>& m_analyzers;
 
 public:
     debug_lib_provider(std::vector<std::shared_ptr<workspaces::library>> libraries,
         workspaces::file_manager& fm,
-        std::atomic<bool>* cancel);
+        std::vector<utils::task>& analyzers);
 
     void parse_library(std::string_view library,
         analyzing_context ctx,

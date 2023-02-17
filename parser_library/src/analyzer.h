@@ -39,6 +39,11 @@
 #include "virtual_file_monitor.h"
 #include "workspaces/parse_lib_provider.h"
 
+
+namespace hlasm_plugin::utils {
+struct task;
+} // namespace hlasm_plugin::utils
+
 namespace hlasm_plugin::parser_library::parsing {
 class hlasmparser_multiline;
 } // namespace hlasm_plugin::parser_library::parsing
@@ -154,6 +159,7 @@ public:
 
     void analyze();
     bool analyze_step();
+    utils::task co_analyze() &;
 
     void collect_diags() const override;
     const performance_metrics& get_metrics() const;
