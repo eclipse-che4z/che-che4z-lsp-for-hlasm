@@ -15,6 +15,7 @@
 #ifndef HLASMPARSER_PARSERLIBRARY_PROCESSING_PREPROCESSOR_H
 #define HLASMPARSER_PARSERLIBRARY_PROCESSING_PREPROCESSOR_H
 
+#include <concepts>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -44,11 +45,16 @@ struct preprocessor_statement_si;
 } // namespace semantics
 } // namespace hlasm_plugin::parser_library
 
+namespace hlasm_plugin::utils {
+template<std::move_constructible T>
+class value_task;
+} // namespace hlasm_plugin::utils
+
 namespace hlasm_plugin::parser_library::processing {
 
 using library_fetcher =
-    std::function<std::optional<std::pair<std::string, hlasm_plugin::utils::resource::resource_location>>(
-        std::string_view)>;
+    std::function<utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>>(
+        std::string)>;
 
 class preprocessor
 {
@@ -64,7 +70,7 @@ public:
 
     virtual ~preprocessor() = default;
 
-    virtual document generate_replacement(document doc) = 0;
+    virtual utils::value_task<document> generate_replacement(document doc) = 0;
 
     static std::unique_ptr<preprocessor> create(
         const cics_preprocessor_options&, library_fetcher, diagnostic_op_consumer*, semantics::source_info_processor&);

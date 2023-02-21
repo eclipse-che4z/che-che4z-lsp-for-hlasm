@@ -43,7 +43,8 @@ protected:
 
     void analyze(analyzer& a)
     {
-        while (true)
+        auto main = a.co_analyze();
+        while (!main.done())
         {
             if (!nested_analyzers.empty())
             {
@@ -56,8 +57,7 @@ protected:
                 na();
                 continue;
             }
-            if (!a.analyze_step())
-                break;
+            main();
         }
     }
 };
@@ -97,7 +97,11 @@ TEST_F(debug_lib_provider_test, get_library)
     EXPECT_CALL(*mock_lib, has_file(Eq("AAA"), _)).WillOnce(DoAll(SetArgPointee<1>(aaa_location), Return(true)));
     EXPECT_CALL(*mock_lib, has_file(Eq("BBB"), _)).WillOnce(Return(false));
 
-    EXPECT_EQ(lib.get_library("AAA"), std::pair(aaa_content, aaa_location));
+    std::optional<std::pair<std::string, resource_location>> result;
 
-    EXPECT_EQ(lib.get_library("BBB"), std::nullopt);
+    lib.get_library("AAA", [&result](auto v) { result = std::move(v); });
+    EXPECT_EQ(result, std::pair(aaa_content, aaa_location));
+
+    lib.get_library("BBB", [&result](auto v) { result = std::move(v); });
+    EXPECT_EQ(result, std::nullopt);
 }

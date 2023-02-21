@@ -16,6 +16,7 @@
 #include <array>
 #include <cassert>
 #include <cctype>
+#include <concepts>
 #include <initializer_list>
 #include <iterator>
 #include <limits>
@@ -42,6 +43,7 @@
 #include "utils/concat.h"
 #include "utils/resource_location.h"
 #include "utils/string_operations.h"
+#include "utils/task.h"
 #include "utils/text_matchers.h"
 #include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
@@ -106,7 +108,7 @@ public:
         return it;
     }
 
-    template<typename It>
+    template<std::forward_iterator It>
     static void trim_left(It& it, const It& it_e)
     {
         while (it != it_e)
@@ -540,7 +542,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
         return nr;
     }
 
-    std::pair<line_type, std::string> process_include_member(
+    utils::value_task<std::pair<line_type, std::string>> process_include_member(
         line_type instruction_type, std::string member, size_t lineno)
     {
         auto member_upper = utils::to_upper_copy(member);
@@ -548,32 +550,32 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
         if (member_upper == "SQLCA")
         {
             inject_SQLCA();
-            return { instruction_type, member_upper };
+            co_return { instruction_type, member_upper };
         }
         if (member_upper == "SQLDA")
         {
             inject_SQLDA();
-            return { instruction_type, member_upper };
+            co_return { instruction_type, member_upper };
         }
         m_result.emplace_back(replaced_line { "***$$$\n" });
 
         std::optional<std::pair<std::string, utils::resource::resource_location>> include_member;
         if (m_libs)
-            include_member = m_libs(member_upper);
+            include_member = co_await m_libs(member_upper);
         if (!include_member.has_value())
         {
             if (m_diags)
                 m_diags->add_diagnostic(diagnostic_op::error_DB002(range(position(lineno, 0)), member));
-            return { instruction_type, member };
+            co_return { instruction_type, member };
         }
 
         auto& [include_mem_text, include_mem_loc] = *include_member;
         document d(include_mem_text);
         d.convert_to_replaced();
-        generate_replacement(d.begin(), d.end(), m_ll_include_helper, false);
+        co_await generate_replacement(d.begin(), d.end(), m_ll_include_helper, false);
         append_included_member(std::make_unique<included_member_details>(included_member_details {
             std::move(member_upper), std::move(include_mem_text), std::move(include_mem_loc) }));
-        return { line_type::include, member };
+        co_return { line_type::include, member };
     }
 
     static bool is_end(std::string_view s) { return utils::consume(s, "END") && (s.empty() || s.front() == ' '); }
@@ -868,13 +870,35 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
         }
     }
 
-    void process_sql_type_line(const db2_logical_line_helper& ll)
+    void process_sql_type_line(const db2_logical_line_helper& ll, std::string_view label, size_t instruction_end)
     {
+        const auto diag_adder = [diags = m_diags](diagnostic_op&& diag) {
+            if (diags)
+                diags->add_diagnostic(std::move(diag));
+        };
+
         m_result.emplace_back(replaced_line { "***$$$\n" });
         m_result.emplace_back(replaced_line { concat("*",
             std::string_view(ll.m_orig_ll.segments.front().code, ll.m_orig_ll.segments.front().continuation),
             "\n") });
         m_result.emplace_back(replaced_line { "***$$$\n" });
+
+        // DB2 preprocessor exhibits strange behavior when SQL TYPE line is continued
+        if (ll.m_db2_ll.segments.size() > 1)
+            diag_adder(diagnostic_op::warn_DB005(range(position(ll.m_lineno, 0))));
+
+        auto [it_b, it_e] = skip_to_operands(ll.m_db2_ll.begin(), ll.m_db2_ll.end(), instruction_end);
+        if (static const consuming_regex_details is_crd({ "IS" }, true, true);
+            !consume_words_advance_to_next(it_b, it_e, is_crd))
+        {
+            diag_adder(diagnostic_op::warn_DB006(range(position(ll.m_lineno, 0))));
+            return;
+        }
+
+        if (label.empty())
+            label = " "; // best matches the observed behavior
+        if (!process_sql_type_operands(label, it_b, it_e))
+            diag_adder(diagnostic_op::error_DB004(range(position(ll.m_lineno, 0))));
     }
 
     std::tuple<line_type, semantics::preproc_details::name_range, semantics::preproc_details::name_range> check_line(
@@ -907,87 +931,6 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
             return { std::move(instruction_type), label, std::move(instruction_nr) };
 
         return ignore;
-    }
-
-    std::vector<semantics::preproc_details::name_range> process_nonempty_line(const db2_logical_line_helper& ll,
-        size_t instruction_end,
-        bool include_allowed,
-        line_type& instruction_type,
-        std::string_view label)
-    {
-        const auto diag_adder = [diags = m_diags](diagnostic_op&& diag) {
-            if (diags)
-                diags->add_diagnostic(std::move(diag));
-        };
-
-        if (ll.m_db2_ll.continuation_error)
-            diag_adder(diagnostic_op::error_DB001(range(position(ll.m_lineno, 0))));
-
-        static const consuming_regex_details is_crd({ "IS" }, true, true);
-
-        std::vector<semantics::preproc_details::name_range> args;
-        auto it = std::next(ll.m_db2_ll.begin(), instruction_end);
-        auto it_e = ll.m_db2_ll.end();
-        db2_logical_line_helper::trim_left(it, it_e);
-
-        switch (instruction_type)
-        {
-            case line_type::exec_sql: {
-                process_regular_line(ll.m_db2_ll.segments, label);
-                if (auto inc_member_details = try_process_include(it, it_e, ll.m_lineno);
-                    inc_member_details.has_value())
-                {
-                    if (inc_member_details->name.empty())
-                    {
-                        diag_adder(diagnostic_op::warn_DB007(range(position(ll.m_lineno, 0))));
-                        break;
-                    }
-
-                    if (include_allowed)
-                        std::tie(instruction_type, inc_member_details->name) =
-                            process_include_member(instruction_type, inc_member_details->name, ll.m_lineno);
-                    else
-                        diag_adder(
-                            diagnostic_op::error_DB003(range(position(ll.m_lineno, 0)), inc_member_details->name));
-
-                    args.emplace_back(std::move(*inc_member_details));
-                }
-                else
-                {
-                    static constexpr mini_parser<lexing::logical_line<std::string_view::iterator>::const_iterator>
-                        parser;
-                    args = parser.get_args(it, it_e, ll.m_lineno);
-                    if (sql_has_codegen(it, it_e))
-                        generate_sql_code_mock(args.size());
-                    m_result.emplace_back(replaced_line { "***$$$\n" });
-                }
-
-                break;
-            }
-
-            case line_type::sql_type:
-                process_sql_type_line(ll);
-                // DB2 preprocessor exhibits strange behavior when SQL TYPE line is continued
-                if (ll.m_db2_ll.segments.size() > 1)
-                    diag_adder(diagnostic_op::warn_DB005(range(position(ll.m_lineno, 0))));
-
-                if (!consume_words_advance_to_next(it, it_e, is_crd))
-                {
-                    diag_adder(diagnostic_op::warn_DB006(range(position(ll.m_lineno, 0))));
-                    break;
-                }
-
-                if (label.empty())
-                    label = " "; // best matches the observed behavior
-                if (!process_sql_type_operands(label, it, it_e))
-                    diag_adder(diagnostic_op::error_DB004(range(position(ll.m_lineno, 0))));
-                break;
-
-            default:
-                break;
-        }
-
-        return args;
     }
 
     template<typename It>
@@ -1078,10 +1021,24 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
         }
     }
 
-    void generate_replacement(
-        line_iterator it, line_iterator end, db2_logical_line_helper& ll_helper, bool include_allowed)
+    template<std::forward_iterator It>
+    static std::pair<It, It> skip_to_operands(It b, It e, size_t instruction_end)
+    {
+        std::advance(b, instruction_end);
+        db2_logical_line_helper::trim_left(b, e);
+
+        return { b, e };
+    }
+
+    utils::task generate_replacement(
+        line_iterator it, line_iterator end, db2_logical_line_helper& ll, bool include_allowed)
     {
         bool skip_continuation = false;
+
+        const auto diag_adder = [diags = m_diags](diagnostic_op&& diag) {
+            if (diags)
+                diags->add_diagnostic(std::move(diag));
+        };
 
         while (it != end)
         {
@@ -1105,22 +1062,67 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
 
             m_source_translated = true;
 
-            it = ll_helper.reinit(it, end, lineno.value_or(0));
+            it = ll.reinit(it, end, lineno.value_or(0));
 
-            auto args = process_nonempty_line(
-                ll_helper, instruction_nr.r.end.column, include_allowed, instruction_type, label_nr.name);
+            if (ll.m_db2_ll.continuation_error)
+                diag_adder(diagnostic_op::error_DB001(range(position(ll.m_lineno, 0))));
+
+            std::vector<semantics::preproc_details::name_range> args;
+            switch (instruction_type)
+            {
+                case line_type::exec_sql: {
+                    auto [it_b, it_e] =
+                        skip_to_operands(ll.m_db2_ll.begin(), ll.m_db2_ll.end(), instruction_nr.r.end.column);
+                    process_regular_line(ll.m_db2_ll.segments, label_nr.name);
+                    if (auto inc_member_details = try_process_include(it_b, it_e, ll.m_lineno);
+                        inc_member_details.has_value())
+                    {
+                        if (inc_member_details->name.empty())
+                        {
+                            diag_adder(diagnostic_op::warn_DB007(range(position(ll.m_lineno, 0))));
+                            break;
+                        }
+
+                        if (include_allowed)
+                            std::tie(instruction_type, inc_member_details->name) = co_await process_include_member(
+                                instruction_type, inc_member_details->name, ll.m_lineno);
+                        else
+                            diag_adder(
+                                diagnostic_op::error_DB003(range(position(ll.m_lineno, 0)), inc_member_details->name));
+
+                        args.emplace_back(std::move(*inc_member_details));
+                    }
+                    else
+                    {
+                        static constexpr mini_parser<lexing::logical_line<std::string_view::iterator>::const_iterator>
+                            parser;
+                        args = parser.get_args(it_b, it_e, ll.m_lineno);
+                        if (sql_has_codegen(it_b, it_e))
+                            generate_sql_code_mock(args.size());
+                        m_result.emplace_back(replaced_line { "***$$$\n" });
+                    }
+
+                    break;
+                }
+
+                case line_type::sql_type:
+                    process_sql_type_line(ll, label_nr.name, instruction_nr.r.end.column);
+                    break;
+
+                default:
+                    break;
+            }
 
             if (lineno.has_value())
             {
                 auto stmt = std::make_shared<semantics::preprocessor_statement_si>(
                     semantics::preproc_details {
-                        semantics::text_range(
-                            ll_helper.m_orig_ll.begin(), ll_helper.m_orig_ll.end(), ll_helper.m_lineno),
+                        semantics::text_range(ll.m_orig_ll.begin(), ll.m_orig_ll.end(), ll.m_lineno),
                         std::move(label_nr),
                         std::move(instruction_nr) },
                     instruction_type == line_type::include);
 
-                do_highlighting(*stmt, ll_helper.m_orig_ll, m_src_proc);
+                do_highlighting(*stmt, ll.m_orig_ll, m_src_proc);
 
                 stmt->m_details.operands = std::move(args);
                 set_statement(std::move(stmt));
@@ -1129,7 +1131,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
     }
 
     // Inherited via preprocessor
-    document generate_replacement(document doc) override
+    utils::value_task<document> generate_replacement(document doc) override
     {
         reset();
         m_source_translated = false;
@@ -1143,12 +1145,12 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
         // ignores ICTL
         inject_SQLSECT();
 
-        generate_replacement(it, end, m_ll_helper, true);
+        co_await generate_replacement(it, end, m_ll_helper, true);
 
         if (m_source_translated || !m_conditional)
-            return document(std::move(m_result));
+            co_return document(std::move(m_result));
         else
-            return doc;
+            co_return doc;
     }
 
     void do_highlighting(const semantics::preprocessor_statement_si& stmt,

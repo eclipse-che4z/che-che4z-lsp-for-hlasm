@@ -38,6 +38,7 @@
 #include "semantics/statement.h"
 #include "utils/concat.h"
 #include "utils/string_operations.h"
+#include "utils/task.h"
 #include "utils/text_matchers.h"
 #include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
@@ -1264,7 +1265,7 @@ public:
     }
 
     // Inherited via preprocessor
-    document generate_replacement(document doc) override
+    utils::value_task<document> generate_replacement(document doc) override
     {
         reset();
         m_result.clear();
@@ -1331,7 +1332,7 @@ public:
         if (!std::exchange(m_end_seen, true) && !asm_xopts_allowed) // actual code encountered
             inject_no_end_warning();
 
-        return document(std::move(m_result));
+        co_return document(std::move(m_result));
     }
 
     cics_preprocessor_options current_options() const { return m_options; }

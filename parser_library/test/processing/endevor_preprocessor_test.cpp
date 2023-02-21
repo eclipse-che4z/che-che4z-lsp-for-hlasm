@@ -38,9 +38,16 @@ public:
         : m_src_info(false)
     {}
 
-    std::unique_ptr<preprocessor> create_preprocessor(library_fetcher libs)
+    std::unique_ptr<preprocessor> create_preprocessor(auto libs)
     {
-        return preprocessor::create(endevor_preprocessor_options(), libs, &m_diags, m_src_info);
+        return preprocessor::create(
+            endevor_preprocessor_options(),
+            [libs](std::string s)
+                -> hlasm_plugin::utils::value_task<std::optional<std::pair<std::string, resource_location>>> {
+                co_return libs(s);
+            },
+            &m_diags,
+            m_src_info);
     }
 
 protected:
@@ -58,7 +65,7 @@ TEST_F(endevor_preprocessor_test, basic_inc)
             "TEST", hlasm_plugin::utils::resource::resource_location());
     });
 
-    auto result = p->generate_replacement(document("-INC AAA"));
+    auto result = p->generate_replacement(document("-INC AAA")).run().value();
 
     EXPECT_EQ(m_callback_count, 1);
     EXPECT_TRUE(m_diags.diags.empty());
@@ -75,7 +82,7 @@ TEST_F(endevor_preprocessor_test, basic_include)
             "TEST", hlasm_plugin::utils::resource::resource_location());
     });
 
-    auto result = p->generate_replacement(document("++INCLUDE AAA"));
+    auto result = p->generate_replacement(document("++INCLUDE AAA")).run().value();
 
     EXPECT_EQ(m_callback_count, 1);
     EXPECT_TRUE(m_diags.diags.empty());
@@ -91,7 +98,7 @@ TEST_F(endevor_preprocessor_test, missing_member)
         return std::nullopt;
     });
 
-    auto result = p->generate_replacement(document("++INCLUDE AAA\nBBB"));
+    auto result = p->generate_replacement(document("++INCLUDE AAA\nBBB")).run().value();
 
     EXPECT_EQ(m_callback_count, 1);
     ASSERT_EQ(result.size(), 1);
@@ -108,7 +115,7 @@ TEST_F(endevor_preprocessor_test, cycle)
             "-INC AaA", hlasm_plugin::utils::resource::resource_location());
     });
 
-    auto result = p->generate_replacement(document("++INCLUDE AAA"));
+    auto result = p->generate_replacement(document("++INCLUDE AAA")).run().value();
 
     EXPECT_EQ(m_callback_count, 1);
     EXPECT_EQ(result.size(), 0);
@@ -130,7 +137,7 @@ TEST_F(endevor_preprocessor_test, nested)
             return std::nullopt;
         });
 
-    auto result = p->generate_replacement(document("AAA\n-INC MEMBER\nEEE"));
+    auto result = p->generate_replacement(document("AAA\n-INC MEMBER\nEEE")).run().value();
 
     EXPECT_EQ(m_callback_count, 2);
     EXPECT_TRUE(m_diags.diags.empty());

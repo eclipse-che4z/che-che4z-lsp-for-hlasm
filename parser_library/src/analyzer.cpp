@@ -71,14 +71,14 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
     {
         std::vector<std::unique_ptr<processing::preprocessor>> pp;
 
-        document generate_replacement(document doc) override
+        utils::value_task<document> generate_replacement(document doc) override
         {
             reset();
 
             for (const auto& p : pp)
-                doc = p->generate_replacement(std::move(doc));
+                doc = co_await p->generate_replacement(std::move(doc));
 
-            return doc;
+            co_return doc;
         }
 
         std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> take_statements() override
@@ -109,19 +109,31 @@ analyzer::analyzer(std::string_view text, analyzer_options opts)
     , ctx_(std::move(opts.get_context()))
     , src_proc_(opts.collect_hl_info == collect_highlighting_info::yes)
     , field_parser_(ctx_.hlasm_ctx.get())
-    , mngr_(std::make_unique<processing::opencode_provider>(text,
-                ctx_,
-                opts.get_lib_provider(),
-                mngr_,
-                src_proc_,
-                *this,
-                opts.get_preprocessor(
-                    [libs = &opts.get_lib_provider()](std::string_view library) { return libs->get_library(library); },
-                    *this,
-                    src_proc_),
-                opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
-                                                               : processing::opencode_provider_options {},
-                opts.vf_monitor),
+    , mngr_(
+          std::make_unique<processing::opencode_provider>(text,
+              ctx_,
+              opts.get_lib_provider(),
+              mngr_,
+              src_proc_,
+              *this,
+              opts.get_preprocessor(
+                  [libs = &opts.get_lib_provider()](std::string library)
+                      -> utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>> {
+                      bool called = false;
+                      std::optional<std::pair<std::string, utils::resource::resource_location>> result;
+                      libs->get_library(library, [&result, &called](auto v) {
+                          result = std::move(v);
+                          called = true;
+                      });
+                      if (!called)
+                          co_await utils::task::suspend();
+                      co_return result;
+                  },
+                  *this,
+                  src_proc_),
+              opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
+                                                             : processing::opencode_provider_options {},
+              opts.vf_monitor),
           ctx_,
           opts.library_data,
           opts.file_loc,
@@ -141,14 +153,7 @@ size_t analyzer::debug_syntax_errors() { return mngr_.opencode_parser().getNumbe
 
 const semantics::source_info_processor& analyzer::source_processor() const { return src_proc_; }
 
-void analyzer::analyze()
-{
-    while (analyze_step())
-        ;
-}
-
-bool analyzer::analyze_step() { return mngr_.step() || (src_proc_.finish(), false); }
-
+void analyzer::analyze() { co_analyze().run(); }
 
 hlasm_plugin::utils::task analyzer::co_analyze() &
 {

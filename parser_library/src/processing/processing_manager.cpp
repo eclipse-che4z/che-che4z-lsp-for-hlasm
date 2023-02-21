@@ -69,6 +69,8 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
 
     provs_.emplace_back(std::make_unique<copy_statement_provider>(ctx_, parser, lib_provider, *this, *this));
     provs_.emplace_back(std::move(base_provider));
+
+    opencode_prov_.onetime_action();
 }
 
 void update_metrics(processing_kind proc_kind, statement_provider_kind prov_kind, performance_metrics& metrics)
@@ -106,6 +108,14 @@ bool processing_manager::step()
     if (procs_.empty())
         return false;
 
+    if (helper_task_.valid())
+    {
+        helper_task_();
+        if (helper_task_.done())
+            helper_task_ = {};
+        return true;
+    }
+
     statement_processor& proc = *procs_.back();
     statement_provider& prov = find_provider();
 
@@ -129,6 +139,9 @@ utils::task processing_manager::co_step()
 {
     while (!procs_.empty())
     {
+        if (helper_task_.valid())
+            co_await std::exchange(helper_task_, {});
+
         statement_processor& proc = *procs_.back();
         statement_provider& prov = find_provider();
 
@@ -356,6 +369,12 @@ std::optional<bool> processing_manager::request_external_processing(
         return std::nullopt;
 }
 
+void processing_manager::schedule_helper_task(utils::task t)
+{
+    assert(!helper_task_.valid());
+    helper_task_ = std::move(t);
+}
+
 void processing_manager::start_macro_definition(
     macrodef_start_data start, std::optional<utils::resource::resource_location> file_loc)
 {
@@ -468,6 +487,13 @@ void processing_manager::collect_diags() const
 {
     for (auto& proc : procs_)
         collect_diags_from_child(*proc);
+}
+
+parsing::hlasmparser_multiline& processing_manager::opencode_parser() // for testing only
+{
+    if (helper_task_.valid())
+        std::exchange(helper_task_, {}).run();
+    return opencode_prov_.parser();
 }
 
 } // namespace hlasm_plugin::parser_library::processing

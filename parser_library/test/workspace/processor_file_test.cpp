@@ -69,9 +69,10 @@ TEST(processor_file, parse_macro)
             callback(macro_ref.parse_macro(*this, ac, ld));
         }
         bool has_library(std::string_view, resource_location*) const override { return false; }
-        std::optional<std::pair<std::string, resource_location>> get_library(std::string_view) const override
+        void get_library(std::string_view,
+            std::function<void(std::optional<std::pair<std::string, resource_location>>)> callback) const override
         {
-            return std::nullopt;
+            callback(std::nullopt);
         }
 
         simple_provider(processor_file_impl& macro_ref)

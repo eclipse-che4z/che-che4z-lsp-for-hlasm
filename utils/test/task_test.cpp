@@ -149,3 +149,27 @@ TEST(task, direct_throw)
     EXPECT_ANY_THROW(x());
     EXPECT_TRUE(x.done());
 }
+
+TEST(task, values)
+{
+    static constexpr auto stall = []() -> task { co_return; };
+    static constexpr auto f1 = []() -> value_task<int> {
+        co_await stall();
+        co_return 1;
+    };
+    static constexpr auto f2 = []() -> value_task<int> {
+        co_await stall();
+        co_return 2;
+    };
+    static constexpr auto add = [](int v) -> value_task<int> {
+        co_await stall();
+        co_return v + co_await f1() + co_await f2();
+    };
+
+    auto x = add(3);
+
+    while (!x.done())
+        x();
+
+    EXPECT_EQ(x.value(), 6);
+}

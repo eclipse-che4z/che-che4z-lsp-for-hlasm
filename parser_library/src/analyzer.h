@@ -41,7 +41,7 @@
 
 
 namespace hlasm_plugin::utils {
-struct task;
+class task;
 } // namespace hlasm_plugin::utils
 
 namespace hlasm_plugin::parser_library::parsing {
@@ -158,7 +158,6 @@ public:
     const semantics::source_info_processor& source_processor() const;
 
     void analyze();
-    bool analyze_step();
     utils::task co_analyze() &;
 
     void collect_diags() const override;

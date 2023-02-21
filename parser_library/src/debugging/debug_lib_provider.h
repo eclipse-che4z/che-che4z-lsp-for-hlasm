@@ -28,7 +28,7 @@
 #include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::utils {
-struct task;
+class task;
 } // namespace hlasm_plugin::utils
 
 namespace hlasm_plugin::parser_library {
@@ -65,8 +65,9 @@ public:
 
     bool has_library(std::string_view library, utils::resource::resource_location* loc) const override;
 
-    std::optional<std::pair<std::string, utils::resource::resource_location>> get_library(
-        std::string_view library) const override;
+    void get_library(std::string_view library,
+        std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback)
+        const override;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

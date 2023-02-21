@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "common_testing.h"
+#include "utils/task.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::utils;
@@ -23,7 +24,7 @@ using namespace ::testing;
 struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
 {
     std::unordered_map<std::string, std::string, hashers::string_hasher, std::equal_to<>> m_files;
-    std::vector<std::pair<std::unique_ptr<analyzer>, std::function<void()>>> m_nested_analyzers;
+    std::vector<std::pair<std::unique_ptr<analyzer>, task>> m_nested_analyzers;
 
     // Inherited via parse_lib_provider
     void parse_library(
@@ -32,21 +33,23 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
         auto it = m_files.find(library);
         if (it == m_files.end())
         {
-            m_nested_analyzers.emplace_back(nullptr, [callback]() {
+            m_nested_analyzers.emplace_back(nullptr, [](analyzer* a, std::function<void(bool)> callback) -> task {
                 if (callback)
                     callback(false);
-            });
+                co_return;
+            }(nullptr, std::move(callback)));
         }
         else
         {
-            m_nested_analyzers.emplace_back(
-                std::make_unique<analyzer>(it->second,
-                    analyzer_options {
-                        hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data }),
-                [callback]() {
-                    if (callback)
-                        callback(true);
-                });
+            auto a_ptr = std::make_unique<analyzer>(it->second,
+                analyzer_options {
+                    hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data });
+            auto a_task = [](analyzer* a, std::function<void(bool)> callback) -> task {
+                co_await a->co_analyze();
+                if (callback)
+                    callback(true);
+            }(a_ptr.get(), std::move(callback));
+            m_nested_analyzers.emplace_back(std::move(a_ptr), std::move(a_task));
         }
     }
     bool has_library(std::string_view library, resource::resource_location* url) const override
@@ -58,33 +61,35 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
             *url = resource::resource_location(it->second);
         return true;
     }
-    std::optional<std::pair<std::string, resource::resource_location>> get_library(
-        std::string_view library) const override
+    void get_library(std::string_view library,
+        std::function<void(std::optional<std::pair<std::string, resource::resource_location>>)> callback) const override
     {
         if (auto it = m_files.find(library); it != m_files.end())
-            return std::make_pair(it->second, resource::resource_location(it->first));
+            callback(std::make_pair(it->second, resource::resource_location(it->first)));
         else
-            return std::nullopt;
+            callback(std::nullopt);
     }
 
     void analyze(analyzer& a)
     {
-        while (true)
+        auto main = a.co_analyze();
+        while (!main.done())
         {
             if (!m_nested_analyzers.empty())
             {
-                auto& [nested_a, callback] = m_nested_analyzers.back();
-                if (!nested_a || !nested_a->analyze_step())
+                auto& [nested_a, task] = m_nested_analyzers.back();
+                if (!task.done())
                 {
-                    callback();
-                    if (nested_a)
-                        a.collect_diags_from_child(*nested_a);
-                    m_nested_analyzers.pop_back();
+                    task();
+                    continue;
                 }
+
+                if (nested_a)
+                    a.collect_diags_from_child(*nested_a);
+                m_nested_analyzers.pop_back();
                 continue;
             }
-            if (!a.analyze_step())
-                break;
+            main();
         }
     }
 };

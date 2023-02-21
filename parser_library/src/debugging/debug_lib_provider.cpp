@@ -14,6 +14,8 @@
 
 #include "debug_lib_provider.h"
 
+#include <cassert>
+
 #include "analyzer.h"
 #include "utils/task.h"
 #include "workspaces/file_manager.h"
@@ -33,6 +35,7 @@ debug_lib_provider::debug_lib_provider(std::vector<std::shared_ptr<workspaces::l
 void debug_lib_provider::parse_library(
     std::string_view library, analyzing_context ctx, workspaces::library_data data, std::function<void(bool)> callback)
 {
+    assert(callback);
     utils::resource::resource_location url;
     for (const auto& lib : m_libraries)
     {
@@ -51,8 +54,7 @@ void debug_lib_provider::parse_library(
 
             co_await a.co_analyze();
 
-            if (callback)
-                callback(true);
+            callback(true);
         };
 
         m_analyzers.emplace_back(dep_task(content,
@@ -72,9 +74,10 @@ bool debug_lib_provider::has_library(std::string_view library, utils::resource::
     return false;
 }
 
-std::optional<std::pair<std::string, utils::resource::resource_location>> debug_lib_provider::get_library(
-    std::string_view library) const
+void debug_lib_provider::get_library(std::string_view library,
+    std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback) const
 {
+    assert(callback);
     utils::resource::resource_location url;
     for (const auto& lib : m_libraries)
     {
@@ -85,9 +88,10 @@ std::optional<std::pair<std::string, utils::resource::resource_location>> debug_
         if (!content_o.has_value())
             break;
 
-        return std::pair(std::move(content_o).value(), std::move(url));
+        callback(std::pair(std::move(content_o).value(), std::move(url)));
+        return;
     }
-    return {};
+    callback(std::nullopt);
 }
 
 } // namespace hlasm_plugin::parser_library::debugging

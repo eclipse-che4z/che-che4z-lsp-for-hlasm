@@ -19,6 +19,10 @@
 #include "statement_processors/lookahead_processing_info.h"
 #include "statement_processors/macrodef_processing_info.h"
 
+namespace hlasm_plugin::utils {
+class task;
+}
+
 namespace hlasm_plugin::parser_library::processing {
 
 enum class resume_copy
@@ -45,6 +49,8 @@ public:
     virtual void finish_copy_member(copy_processing_result result) = 0;
 
     virtual void finish_opencode() = 0;
+
+    virtual void schedule_helper_task(utils::task t) = 0;
 };
 
 } // namespace hlasm_plugin::parser_library::processing
