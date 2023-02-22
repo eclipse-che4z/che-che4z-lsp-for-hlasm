@@ -161,7 +161,9 @@
           ".asmpgm",
           ".asmmac",
           ".asm",
-          ".mac"
+          ".mac",
+          ".bms",
+          ".map"
         ],
         "aliases": [
           "HLASM"
