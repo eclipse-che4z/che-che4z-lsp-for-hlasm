@@ -13,17 +13,20 @@
 
 Project(fuzzer)
 
-add_executable(library_fuzzer)
+if(BUILD_FUZZER)
+	add_executable(library_fuzzer)
+	set_target_properties(library_fuzzer PROPERTIES LINK_FLAGS "-fsanitize=fuzzer")
+else()
+	add_library(library_fuzzer)
+endif()
 
 target_sources(library_fuzzer PRIVATE
-    fuzzer.cpp
+	fuzzer.cpp
 )
 
-set_target_properties(library_fuzzer PROPERTIES LINK_FLAGS "-fsanitize=fuzzer")
-    
 configure_file(
-            fuzzer.dict
-            ${CMAKE_BINARY_DIR}/bin/fuzzer.dict
+			fuzzer.dict
+			${CMAKE_BINARY_DIR}/bin/fuzzer.dict
 			COPYONLY)
 
 target_link_libraries(library_fuzzer parser_library)
@@ -31,4 +34,3 @@ target_link_libraries(library_fuzzer Threads::Threads)
 target_link_libraries(library_fuzzer ${ANTLR4_RUNTIME})
 target_link_libraries(library_fuzzer std::filesystem)
 target_link_libraries(library_fuzzer nlohmann_json::nlohmann_json)
-

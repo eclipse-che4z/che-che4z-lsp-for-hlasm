@@ -27,7 +27,7 @@ add_subdirectory(src)
 add_subdirectory(include)
 
 if(NOT BUILD_SHARED_LIBS)
-    target_compile_definitions(parser_library PUBLIC PARSER_LIBRARY_STATIC_DEFINE=1)
+	target_compile_definitions(parser_library PUBLIC PARSER_LIBRARY_STATIC_DEFINE=1)
 endif()
 
 generate_export_header(parser_library
@@ -52,6 +52,4 @@ if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
 
-if(BUILD_FUZZER)
-	add_subdirectory(fuzzer)
-endif()
+add_subdirectory(fuzzer)

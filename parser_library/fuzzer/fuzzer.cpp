@@ -36,6 +36,8 @@ using namespace hlasm_plugin::parser_library::workspaces;
 
 class fuzzer_lib_provider : public parse_lib_provider
 {
+    using resource_location = hlasm_plugin::utils::resource::resource_location;
+
     std::optional<size_t> read_library_name(std::string_view library) const
     {
         if (library.size() < 2 || library.size() > 8 || library[0] != '@'
@@ -62,26 +64,32 @@ public:
             return;
         }
 
-        auto a = std::make_unique<analyzer>(files[lib.value()],
-            analyzer_options { hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data });
+        auto a = std::make_unique<analyzer>(
+            files[lib.value()], analyzer_options { resource_location(library), this, std::move(ctx), data });
         a->analyze();
         a->collect_diags();
         callback(true);
     }
 
-    bool has_library(std::string_view library) const override { return read_library_name(library).has_value(); }
+    bool has_library(std::string_view library, resource_location* url) const override
+    {
+        auto lib = read_library_name(library);
+        if (!lib.has_value())
+            return false;
+        if (url)
+            *url = resource_location(library);
+        return true;
+    }
 
     void get_library(std::string_view library,
-        std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback)
-        const override
+        std::function<void(std::optional<std::pair<std::string, resource_location>>)> callback) const override
     {
         assert(callback);
         auto lib = read_library_name(library);
         if (!lib.has_value())
             return callback(std::nullopt);
 
-        return callback(std::pair<std::string, hlasm_plugin::utils::resource::resource_location>(
-            files[lib.value()], hlasm_plugin::utils::resource::resource_location(library)));
+        return callback(std::pair<std::string, resource_location>(files[lib.value()], resource_location(library)));
     }
 
     std::vector<std::string> files;
