@@ -40,8 +40,11 @@ std::vector<semantics::preproc_details::name_range> get_operands_list(
     std::string_view operands, size_t op_column_start, const semantics::range_provider& rp);
 
 template<typename PREPROC_STATEMENT, typename ITERATOR>
-std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(
-    const std::match_results<ITERATOR>& matches, const stmt_part_ids& ids, size_t lineno, size_t continue_column = 15);
+std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(const std::match_results<ITERATOR>& matches,
+    const stmt_part_ids& ids,
+    size_t lineno,
+    bool contains_preproc_specific_instruction,
+    size_t continue_column = 15);
 
 } // namespace hlasm_plugin::parser_library::processing
 

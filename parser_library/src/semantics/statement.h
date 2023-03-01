@@ -15,6 +15,7 @@
 #ifndef SEMANTICS_STATEMENT_H
 #define SEMANTICS_STATEMENT_H
 
+#include <optional>
 #include <span>
 #include <string>
 #include <utility>
@@ -175,9 +176,15 @@ struct preproc_details
         bool operator==(const name_range&) const = default;
     };
 
+    struct instr
+    {
+        name_range nr;
+        std::optional<range> preproc_specific_r;
+    };
+
     range stmt_r;
     name_range label;
-    name_range instruction;
+    instr instruction;
     std::vector<name_range> operands;
     std::vector<range> remarks;
 };

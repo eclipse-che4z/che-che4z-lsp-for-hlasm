@@ -239,8 +239,8 @@ void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const semantics:
         lsp::occurence_kind::ORD, hlasm_ctx_.ids().add(details.label.name), details.label.r, evaluated_model);
 
     collector.occurences.emplace_back(lsp::occurence_kind::INSTR,
-        hlasm_ctx_.ids().add(details.instruction.name),
-        details.instruction.r,
+        hlasm_ctx_.ids().add(details.instruction.nr.name),
+        details.instruction.nr.r,
         evaluated_model);
 
     for (const auto& ops : details.operands)

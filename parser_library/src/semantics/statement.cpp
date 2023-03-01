@@ -19,7 +19,7 @@ namespace hlasm_plugin::parser_library::semantics {
 endevor_statement_si::endevor_statement_si(preproc_details details)
     : preprocessor_statement_si(std::move(details), true)
 {
-    m_details.instruction.name = "-INC";
+    m_details.instruction.nr.name = "-INC";
 }
 
 } // namespace hlasm_plugin::parser_library::semantics

@@ -1110,7 +1110,7 @@ public:
         const preprocessor::line_iterator& end,
         const std::optional<size_t>& potential_lineno)
     {
-        static const std::regex exec_cics("^([^ ]*)[ ]+([eE][xX][eE][cC][ ]+[cC][iI][cC][sS](?:[ ]+(\\S+))?)(?= |$)");
+        static const std::regex exec_cics("^([^ ]*)[ ]+([eE][xX][eE][cC][ ]+[cC][iI][cC][sS])(?:[ ]+(\\S+))?(?= |$)");
 
         it = extract_nonempty_logical_line(m_logical_line, it, end, cics_extract);
         bool exec_cics_continuation_error = false;
@@ -1149,7 +1149,8 @@ public:
         if (potential_lineno)
         {
             static const stmt_part_ids part_ids { 1, { 2, 3 }, (size_t)-1, std::nullopt };
-            auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno, 1);
+            auto stmt =
+                get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno, true, 1);
             do_highlighting(*stmt, m_logical_line, m_src_proc, 1);
             set_statement(std::move(stmt));
         }
@@ -1236,7 +1237,8 @@ public:
             if (potential_lineno)
             {
                 static const stmt_part_ids part_ids { 1, { 2 }, 3, (size_t)-1 };
-                auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno);
+                auto stmt =
+                    get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno, false);
                 do_highlighting(*stmt, m_logical_line, m_src_proc);
                 set_statement(std::move(stmt));
             }

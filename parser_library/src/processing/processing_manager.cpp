@@ -241,9 +241,9 @@ void processing_manager::finish_preprocessor()
         if (!stmt)
             continue;
 
-        if (m_fade_msgs)
-            m_fade_msgs->emplace_back(
-                fade_message_s::preprocessor_statement(file_loc_.get_uri(), stmt->m_details.stmt_r));
+        if (m_fade_msgs && stmt->m_details.instruction.preproc_specific_r)
+            m_fade_msgs->emplace_back(fade_message_s::preprocessor_statement(
+                file_loc_.get_uri(), *stmt->m_details.instruction.preproc_specific_r));
 
         lsp_analyzer_.analyze(*stmt);
     }

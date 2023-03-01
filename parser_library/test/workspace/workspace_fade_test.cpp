@@ -1166,7 +1166,7 @@ TEST(fade, preprocessor)
          DFHECALL
          MEND
 
-         L     0,DFHVALUE ( BUSY )
+A        EXEC CICS ABEND ABCODE('1234')
 
          DFHECALL
          END)";
@@ -1177,33 +1177,33 @@ TEST(fade, preprocessor)
     EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
     EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
-    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 0), position(6, 34)));
+    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 9), position(6, 18)));
 
     std::vector<document_change> changes;
     ws_mngr.did_change_file("test/library/test_wks/file_1", 2, changes.data(), 0);
     EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
     EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
-    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 0), position(6, 34)));
+    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 9), position(6, 18)));
 
-    std::string new_f1_text = "         L     0,DFHVALUE(BUSY) ";
-    changes.push_back(document_change({ { 6, 0 }, { 6, 34 } }, new_f1_text.c_str(), new_f1_text.size()));
+    std::string new_f1_text = "A         EXEC  CICS   ABEND ABCODE('1234')\n";
+    changes.push_back(document_change({ { 6, 0 }, { 6, 43 } }, new_f1_text.c_str(), new_f1_text.size()));
     ws_mngr.did_change_file("test/library/test_wks/file_1", 3, changes.data(), 1);
     EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
     EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
-    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 0), position(6, 31)));
+    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 10), position(6, 20)));
 
     std::string f2 = "";
     ws_mngr.did_open_file("test/library/test_wks/diff_file_2", 1, f2.c_str(), f2.size());
     EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
     EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
-    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 0), position(6, 31)));
+    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 10), position(6, 20)));
 
-    new_f1_text = "         L     0,DFH(BUSY)";
+    new_f1_text = "*A         EXEC  CICS   ABEND ABCODE('1234')\n";
     changes.clear();
-    changes.push_back(document_change({ { 6, 0 }, { 6, 31 } }, new_f1_text.c_str(), new_f1_text.size()));
+    changes.push_back(document_change({ { 6, 0 }, { 6, 44 } }, new_f1_text.c_str(), new_f1_text.size()));
     ws_mngr.did_change_file("test/library/test_wks/file_1", 4, changes.data(), 1);
     EXPECT_GE(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
     EXPECT_EQ(consumer.fms.size(), static_cast<size_t>(0));

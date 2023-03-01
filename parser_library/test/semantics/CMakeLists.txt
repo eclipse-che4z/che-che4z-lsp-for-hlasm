@@ -12,6 +12,7 @@
 
 target_sources(library_test PRIVATE
 	concatenation_test.cpp
+	fading_test.cpp
 	highlighting_test.cpp
 	operand_test.cpp
 	text_range_test.cpp

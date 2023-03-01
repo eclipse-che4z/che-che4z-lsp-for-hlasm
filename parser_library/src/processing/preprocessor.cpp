@@ -80,7 +80,7 @@ void preprocessor::do_highlighting(const semantics::preprocessor_statement_si& s
     if (!details.label.name.empty())
         src_proc.add_hl_symbol(token_info(details.label.r, semantics::hl_scopes::label), continue_column);
 
-    src_proc.add_hl_symbol(token_info(details.instruction.r, semantics::hl_scopes::instruction), continue_column);
+    src_proc.add_hl_symbol(token_info(details.instruction.nr.r, semantics::hl_scopes::instruction), continue_column);
 
     for (const auto& operand : details.operands)
         src_proc.add_hl_symbol(token_info(operand.r, semantics::hl_scopes::operand), continue_column);

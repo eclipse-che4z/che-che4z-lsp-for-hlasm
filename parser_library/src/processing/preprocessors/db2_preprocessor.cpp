@@ -1124,6 +1124,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
 
                 do_highlighting(*stmt, ll.m_orig_ll, m_src_proc);
 
+                stmt->m_details.instruction.preproc_specific_r = stmt->m_details.instruction.nr.r;
                 stmt->m_details.operands = std::move(args);
                 set_statement(std::move(stmt));
             }
@@ -1176,7 +1177,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
             }
 
             if (segment.code != segment.continuation)
-                if (auto operand_start_column = i == 0 ? stmt.m_details.instruction.r.end.column : continue_column;
+                if (auto operand_start_column = i == 0 ? stmt.m_details.instruction.nr.r.end.column : continue_column;
                     operand_start_column < comment_start_column)
                     src_proc.add_hl_symbol(token_info(
                         range(position(lineno, operand_start_column), position(lineno, comment_start_column)),

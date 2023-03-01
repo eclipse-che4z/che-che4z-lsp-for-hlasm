@@ -144,8 +144,11 @@ semantics::preproc_details::name_range get_stmt_part_name_range(
 } // namespace
 
 template<typename PREPROC_STATEMENT, typename ITERATOR>
-std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(
-    const std::match_results<ITERATOR>& matches, const stmt_part_ids& ids, size_t lineno, size_t continue_column)
+std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(const std::match_results<ITERATOR>& matches,
+    const stmt_part_ids& ids,
+    size_t lineno,
+    bool contains_preproc_specific_instruction,
+    size_t continue_column)
 {
     assert(!matches.empty() && (ids.operands < matches.size() || ids.operands == -1)
         && (!ids.remarks || *ids.remarks < matches.size() || *ids.remarks == -1));
@@ -168,8 +171,13 @@ std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(
     if (ids.instruction.size())
     {
         // Let's store the complete instruction range and only the last word of the instruction as it is unique
-        details.instruction = get_stmt_part_name_range<ITERATOR>(matches, ids.instruction.back(), rp);
-        details.instruction.r.start = get_stmt_part_name_range<ITERATOR>(matches, ids.instruction.front(), rp).r.start;
+        details.instruction.nr = get_stmt_part_name_range<ITERATOR>(matches, ids.instruction.back(), rp);
+
+        auto front_instr_r = get_stmt_part_name_range<ITERATOR>(matches, ids.instruction.front(), rp).r;
+        details.instruction.nr.r.start = front_instr_r.start;
+
+        if (contains_preproc_specific_instruction)
+            details.instruction.preproc_specific_r = std::move(front_instr_r);
     }
 
     if (matches_(ids.operands).length())
@@ -189,6 +197,7 @@ get_preproc_statement<semantics::preprocessor_statement_si,
     const std::match_results<lexing::logical_line<std::string_view::iterator>::const_iterator>& matches,
     const stmt_part_ids& ids,
     size_t lineno,
+    bool contains_preproc_specific_instruction,
     size_t continuation_column);
 
 template std::shared_ptr<semantics::endevor_statement_si>
@@ -196,5 +205,6 @@ get_preproc_statement<semantics::endevor_statement_si, std::string_view::iterato
     const std::match_results<std::string_view::iterator>& matches,
     const stmt_part_ids& ids,
     size_t lineno,
+    bool contains_preproc_specific_instruction,
     size_t continuation_column);
 } // namespace hlasm_plugin::parser_library::processing
