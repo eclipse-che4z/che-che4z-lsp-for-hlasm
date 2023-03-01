@@ -63,6 +63,7 @@ class parse_lib_provider;
 } // namespace hlasm_plugin::parser_library::workspaces
 
 namespace hlasm_plugin::parser_library::processing {
+class processing_manager;
 
 enum class ainsert_destination
 {
@@ -122,6 +123,7 @@ class opencode_provider final : public statement_provider
     analyzing_context* m_ctx;
     workspaces::parse_lib_provider* m_lib_provider;
     processing::processing_state_listener* m_state_listener;
+    const processing::processing_manager& m_processing_manager;
     semantics::source_info_processor* m_src_proc;
     diagnosable_ctx* m_diagnoser;
 
@@ -144,6 +146,7 @@ public:
         analyzing_context& ctx,
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& state_listener,
+        const processing::processing_manager& proc_manager,
         semantics::source_info_processor& src_proc,
         diagnosable_ctx& diag_consumer,
         std::unique_ptr<preprocessor> preprocessor,

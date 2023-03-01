@@ -42,7 +42,7 @@ rebuilt_statement low_language_processor::preprocess(std::shared_ptr<const proce
     auto [label, ops, literals, was_model] = preprocess_inner(*stmt);
     rebuilt_statement result(std::move(stmt), std::move(label), std::move(ops), std::move(literals));
     if (was_model)
-        proc_mgr.run_anayzers(result, true);
+        proc_mgr.run_analyzers(result, true);
     return result;
 }
 

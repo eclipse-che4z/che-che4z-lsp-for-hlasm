@@ -576,9 +576,9 @@ processing_stack_details_t hlasm_context::processing_stack_details()
     return res;
 }
 
-location hlasm_context::current_statement_location() const
+location hlasm_context::current_statement_location(bool consider_macros) const
 {
-    if (source_stack_.size() > 1 || scope_stack_.size() == 1)
+    if (!consider_macros || source_stack_.size() > 1 || scope_stack_.size() == 1)
     {
         if (source_stack_.back().copy_stack.size())
         {
@@ -908,11 +908,21 @@ void hlasm_context::leave_macro()
     scope_stack_.pop_back();
 }
 
-macro_invo_ptr hlasm_context::this_macro() const
+macro_invo_ptr hlasm_context::current_macro() const
 {
     if (is_in_macro())
         return curr_scope()->this_macro;
     return macro_invo_ptr();
+}
+
+const location* hlasm_context::current_macro_definition_location() const
+{
+    if (is_in_macro())
+    {
+        if (const auto& mac = curr_scope()->this_macro; mac)
+            return &mac->definition_location;
+    }
+    return nullptr;
 }
 
 const utils::resource::resource_location& hlasm_context::opencode_location() const { return opencode_file_location_; }

@@ -23,6 +23,7 @@
 #include "fade_messages.h"
 #include "file.h"
 #include "macro_cache.h"
+#include "processing/statement_analyzers/hit_count_analyzer.h"
 #include "processor.h"
 #include "utils/resource_location.h"
 
@@ -48,7 +49,7 @@ public:
     const std::set<utils::resource::resource_location>& dependencies() override;
 
     const semantics::lines_info& get_hl_info() override;
-    const lsp::lsp_context* get_lsp_context() override;
+    const lsp::lsp_context* get_lsp_context() const override;
     const std::set<utils::resource::resource_location>& files_to_close() override;
     const performance_metrics& get_metrics() override;
 
@@ -56,40 +57,44 @@ public:
 
     bool has_lsp_info() const override;
 
-    void retrieve_fade_messages(std::vector<fade_message_s>& fms) const override;
+    const std::vector<fade_message_s>& fade_messages() const override;
+    const processing::hit_count_map& hit_count_map() const override;
+
     const file_location& get_location() const override;
 
     bool current_version() const override;
 
     void update_source();
-    std::shared_ptr<file> current_source() const { return file_; }
+    std::shared_ptr<file> current_source() const { return m_file; }
     void store_used_files(std::unordered_map<utils::resource::resource_location,
         std::shared_ptr<file>,
         utils::resource::resource_location_hasher> used_files);
 
 private:
-    file_manager& file_mngr_;
-    std::shared_ptr<file> file_;
-    std::unique_ptr<analyzer> last_analyzer_;
-    std::shared_ptr<context::id_storage> last_opencode_id_storage_;
-    bool last_analyzer_with_lsp = false;
+    file_manager& m_file_mngr;
+    std::shared_ptr<file> m_file;
+    std::unique_ptr<analyzer> m_last_analyzer;
+    std::shared_ptr<context::id_storage> m_last_opencode_id_storage;
+    bool m_last_analyzer_with_lsp = false;
 
-    semantics::lines_info last_hl_info_;
+    semantics::lines_info m_last_hl_info;
 
-    std::atomic<bool>* cancel_;
+    std::atomic<bool>* m_cancel;
 
-    std::set<utils::resource::resource_location> dependencies_;
-    std::set<utils::resource::resource_location> files_to_close_;
+    std::set<utils::resource::resource_location> m_dependencies;
+    std::set<utils::resource::resource_location> m_files_to_close;
 
     std::unordered_map<utils::resource::resource_location,
         std::shared_ptr<file>,
         utils::resource::resource_location_hasher>
         used_files;
 
-    macro_cache macro_cache_;
+    macro_cache m_macro_cache;
 
-    std::shared_ptr<const std::vector<fade_message_s>> fade_messages_ =
+    std::shared_ptr<const std::vector<fade_message_s>> m_fade_messages =
         std::make_shared<const std::vector<fade_message_s>>();
+
+    processing::hit_count_map m_hc_map;
 
     bool should_collect_hl(context::hlasm_context* ctx = nullptr) const;
 };

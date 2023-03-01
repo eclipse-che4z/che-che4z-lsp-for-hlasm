@@ -92,6 +92,8 @@ public:
         processing_kind proc_kind,
         bool evaluated_model) override;
 
+    void analyze_aread_line(const utils::resource::resource_location&, size_t, std::string_view) override {}
+
     void analyze(const semantics::preprocessor_statement_si& statement);
 
     void macrodef_started(const macrodef_start_data& data);

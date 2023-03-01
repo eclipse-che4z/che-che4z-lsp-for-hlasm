@@ -14,6 +14,8 @@
 
 #include "opencode_provider.h"
 
+#include <algorithm>
+
 #include "analyzer.h"
 #include "hlasmparser_multiline.h"
 #include "lexing/input_source.h"
@@ -23,6 +25,7 @@
 #include "parsing/error_strategy.h"
 #include "parsing/parser_impl.h"
 #include "processing/error_statement.h"
+#include "processing/processing_manager.h"
 #include "semantics/collector.h"
 #include "semantics/range_provider.h"
 #include "utils/text_matchers.h"
@@ -39,30 +42,32 @@ dummy_vfm fallback_vfm;
 } // namespace
 
 opencode_provider::opencode_provider(std::string_view text,
-    analyzing_context& ctx,
-    workspaces::parse_lib_provider& lib_provider,
-    processing_state_listener& state_listener,
-    semantics::source_info_processor& src_proc,
-    diagnosable_ctx& diag_consumer,
-    std::unique_ptr<preprocessor> prep,
-    opencode_provider_options opts,
-    virtual_file_monitor* virtual_file_monitor)
-    : statement_provider(statement_provider_kind::OPEN)
-    , m_input_document(text)
-    , m_singleline { parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer, false),
-        parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, false),
-        parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, false), }
-    , m_multiline { parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer,true),
-        parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr,true),
-        parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr,true), }
-    , m_ctx(&ctx)
-    , m_lib_provider(&lib_provider)
-    , m_state_listener(&state_listener)
-    , m_src_proc(&src_proc)
-    , m_diagnoser(&diag_consumer)
-    , m_opts(opts)
-    , m_preprocessor(std::move(prep))
-    , m_virtual_file_monitor(virtual_file_monitor ? virtual_file_monitor : &fallback_vfm)
+		analyzing_context& ctx,
+		workspaces::parse_lib_provider& lib_provider,
+		processing_state_listener& state_listener,
+        const processing::processing_manager& proc_manager,
+		semantics::source_info_processor& src_proc,
+		diagnosable_ctx& diag_consumer,
+		std::unique_ptr<preprocessor> prep,
+		opencode_provider_options opts,
+		virtual_file_monitor* virtual_file_monitor)
+		: statement_provider(statement_provider_kind::OPEN)
+		, m_input_document(text)
+		, m_singleline{ parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer, false),
+			parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, false),
+			parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, false), }
+		, m_multiline{ parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer,true),
+			parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr,true),
+			parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr,true), }
+		, m_ctx(&ctx)
+		, m_lib_provider(&lib_provider)
+		, m_state_listener(&state_listener)
+        , m_processing_manager(proc_manager)
+		, m_src_proc(&src_proc)
+		, m_diagnoser(&diag_consumer)
+		, m_opts(opts)
+		, m_preprocessor(std::move(prep))
+		, m_virtual_file_monitor(virtual_file_monitor ? virtual_file_monitor : &fallback_vfm)
 {}
 
 utils::task opencode_provider::start_preprocessor()
@@ -75,7 +80,6 @@ void opencode_provider::onetime_action()
     if (m_preprocessor)
         m_state_listener->schedule_helper_task(start_preprocessor());
 }
-
 
 void opencode_provider::rewind_input(context::source_position pos)
 {
@@ -166,7 +170,10 @@ std::string opencode_provider::try_aread_from_document()
     auto line_text = line.text();
     std::string result(lexing::extract_line(line_text).first);
     if (auto lineno = line.lineno(); lineno.has_value())
+    {
+        m_processing_manager.aread_cb(*lineno, result);
         generate_aread_highlighting(result, *lineno);
+    }
 
     result.resize(80, ' ');
 

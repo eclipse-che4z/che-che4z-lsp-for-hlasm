@@ -39,6 +39,26 @@ suite('Integration Test Suite', () => {
         assert.strictEqual(editor.document.languageId, 'hlasm');
     }).timeout(10000).slow(4000);
 
+    // Comment macro call to create faded line
+    test('Faded line test', async () => {
+        // register callback to check for the correctness of the diagnostic
+        let diagnostic_event = helper.waitForDiagnostics(workspace_file, true);
+
+        await helper.insertString(editor, new vscode.Position(10, 0), '  AGO .SKIP\n   ANOP\n.SKIP ANOP');
+
+        let diags = await diagnostic_event;
+        const codes = diags.map(x => x.code || '');
+        assert.deepStrictEqual(codes, ['INACT'], editor.document.getText());
+
+        diagnostic_event = helper.waitForDiagnostics(workspace_file, false);
+        await editor.edit(edit => {
+            edit.delete(new vscode.Range(new vscode.Position(10, 0), new vscode.Position(12, 10)));
+        });
+
+        diags = await diagnostic_event;
+        assert.equal(diags.length, 0);
+    }).timeout(10000).slow(1000);
+
     // change 'open' file to create diagnostic
     test('Diagnostic test', async () => {
         // register callback to check for the correctness of the diagnostic

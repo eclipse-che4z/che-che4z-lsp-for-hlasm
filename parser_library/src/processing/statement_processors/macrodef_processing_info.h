@@ -15,8 +15,16 @@
 #ifndef PROCESSING_MACRODEF_PROCESSING_INFO_H
 #define PROCESSING_MACRODEF_PROCESSING_INFO_H
 
+#include <unordered_set>
+#include <vector>
+
+#include "context/copy_member.h"
+#include "context/hlasm_statement.h"
+#include "context/id_storage.h"
 #include "context/macro.h"
+#include "location.h"
 #include "lsp/macro_info.h"
+#include "protocol.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

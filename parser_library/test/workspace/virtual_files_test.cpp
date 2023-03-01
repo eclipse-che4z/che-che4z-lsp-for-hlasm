@@ -18,6 +18,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "consume_diagnostics_mock.h"
 #include "diagnosable_impl.h"
 #include "file_manager_mock.h"
 #include "preprocessor_options.h"
@@ -154,15 +155,7 @@ TEST(virtual_files, workspace_auto_cleanup)
 
 TEST(virtual_files, hover)
 {
-    class diag_consumer_mock : public diagnostics_consumer
-    {
-    public:
-        // Inherited via diagnostics_consumer
-        void consume_diagnostics(diagnostic_list diagnostics, fade_message_list) override { diags = diagnostics; }
-
-        diagnostic_list diags;
-    } diag_mock;
-
+    diag_consumer_mock diag_mock;
     workspace_manager wm;
     wm.add_workspace("ws", "ws");
     std::string_view input = R"(

@@ -19,7 +19,7 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-// statement provider providing statements of macro defintion
+// statement provider providing statements of macro definition
 class macro_statement_provider final : public members_statement_provider
 {
 public:

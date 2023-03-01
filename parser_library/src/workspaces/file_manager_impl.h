@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_FILE_MANAGER_IMPL_H
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>

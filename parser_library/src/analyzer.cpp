@@ -114,6 +114,7 @@ analyzer::analyzer(std::string_view text, analyzer_options opts)
               ctx_,
               opts.get_lib_provider(),
               mngr_,
+              mngr_,
               src_proc_,
               *this,
               opts.get_preprocessor(

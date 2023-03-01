@@ -15,6 +15,7 @@
 #ifndef PROCESSING_PROCESSING_MANAGER_H
 #define PROCESSING_PROCESSING_MANAGER_H
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <set>
@@ -61,11 +62,13 @@ public:
 
     void register_stmt_analyzer(statement_analyzer* stmt_analyzer);
 
-    void run_anayzers(const context::hlasm_statement& statement, bool evaluated_model) const;
-    void run_anayzers(const context::hlasm_statement& statement,
+    void run_analyzers(const context::hlasm_statement& statement, bool evaluated_model) const;
+    void run_analyzers(const context::hlasm_statement& statement,
         statement_provider_kind prov_kind,
         processing_kind proc_kind,
         bool evaluated_model) const;
+
+    void aread_cb(size_t line, std::string_view text) const;
 
     void collect_diags() const override;
 

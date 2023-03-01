@@ -85,9 +85,6 @@ class debugger::impl final : public processing::statement_analyzer
     bool stop_on_stack_changes_ = false;
     std::pair<context::processing_stack_t, const utils::resource::resource_location*> stop_on_stack_condition_;
 
-    // Range of statement that is about to be processed by analyzer.
-    range next_stmt_range_;
-
     // True, if disconnect request was received
     bool disconnected_ = false;
 
@@ -256,7 +253,6 @@ public:
                 return false;
             stop_on_next_stmt_ = false;
             stop_on_stack_changes_ = false;
-            next_stmt_range_ = stmt_range;
             stop_on_stack_condition_ = std::make_pair(stack_node, nullptr);
 
             continue_ = false;
@@ -265,6 +261,8 @@ public:
         }
         return !continue_;
     }
+
+    void analyze_aread_line(const utils::resource::resource_location&, size_t, std::string_view) override {}
 
     // User controls of debugging.
     void next()

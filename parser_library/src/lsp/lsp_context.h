@@ -95,6 +95,8 @@ public:
 
     void collect_instr_like_suggestions();
 
+    const std::unordered_map<context::macro_def_ptr, macro_info_ptr>& macros() const { return m_macros; };
+
 private:
     void add_file(file_info file_i);
     void distribute_macro_i(macro_info_ptr macro_i);

@@ -356,7 +356,7 @@ TEST(context_macro, call_and_leave_macro)
 
     ASSERT_TRUE(m.id == m2->id);
     ASSERT_TRUE(ctx.is_in_macro());
-    ASSERT_TRUE(ctx.this_macro() == m2);
+    ASSERT_TRUE(ctx.current_macro() == m2);
 
     auto SYSLIST = m2->named_params.find(id_storage::well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST);
@@ -512,7 +512,7 @@ TEST(context_macro, recurr_call)
 
     //*****created first macro call
 
-    ASSERT_TRUE(ctx.this_macro() == m2);
+    ASSERT_TRUE(ctx.current_macro() == m2);
     ASSERT_TRUE(ctx.is_in_macro());
 
     params.clear();
@@ -539,7 +539,7 @@ TEST(context_macro, recurr_call)
     auto m3 = ctx.enter_macro(idx, nullptr, std::move(params));
 
     //********called again the same macro without calling leave
-    ASSERT_TRUE(ctx.this_macro() == m3);
+    ASSERT_TRUE(ctx.current_macro() == m3);
     ASSERT_TRUE(ctx.is_in_macro());
     ASSERT_FALSE(m2 == m3);
 
@@ -579,7 +579,7 @@ TEST(context_macro, recurr_call)
 
     ctx.leave_macro();
     ASSERT_TRUE(ctx.is_in_macro());
-    ASSERT_TRUE(ctx.this_macro() == m2);
+    ASSERT_TRUE(ctx.current_macro() == m2);
 
     ctx.leave_macro();
     ASSERT_FALSE(ctx.is_in_macro());

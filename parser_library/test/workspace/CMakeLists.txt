@@ -12,6 +12,7 @@
 
 target_sources(library_test PRIVATE
 	b4g_integration_test.cpp
+	consume_diagnostics_mock.h
 	diags_suppress_test.cpp
 	empty_configs.cpp
 	empty_configs.h
@@ -29,6 +30,7 @@ target_sources(library_test PRIVATE
 	virtual_files_test.cpp
 	wildcard2regex_test.cpp
 	workspace_configuration_test.cpp
+	workspace_fade_test.cpp
 	workspace_pattern_test.cpp
 	workspace_test.cpp
 )

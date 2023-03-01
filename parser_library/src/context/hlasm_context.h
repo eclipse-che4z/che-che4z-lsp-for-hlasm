@@ -157,7 +157,8 @@ public:
     processing_stack_t processing_stack();
     processing_frame processing_stack_top(bool consider_macros = true);
     processing_stack_details_t processing_stack_details();
-    location current_statement_location() const;
+    location current_statement_location(bool consider_macros = true) const;
+
     // gets macro nest
     const std::deque<code_scope>& scope_stack() const;
     // gets copy nest of current statement processing
@@ -229,7 +230,8 @@ public:
     // checks whether processing is currently in macro
     bool is_in_macro() const;
     // returns macro we are currently in or empty shared_ptr if in open code
-    macro_invo_ptr this_macro() const;
+    macro_invo_ptr current_macro() const;
+    const location* current_macro_definition_location() const;
     // registers new macro
     macro_def_ptr add_macro(id_index name,
         id_index label_param_name,

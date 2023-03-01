@@ -16,7 +16,9 @@
 
 #include <algorithm>
 #include <cassert>
+#include <map>
 #include <memory>
+#include <unordered_set>
 
 #include "context/instruction.h"
 #include "file_impl.h"
@@ -141,10 +143,190 @@ void workspace::collect_diags() const
         collect_diags_from_child(*pfc.m_processor_file);
 }
 
+namespace {
+struct mac_cpybook_definition_details
+{
+    bool cpy_book = false;
+    size_t end_line;
+    size_t prototype_line = 0;
+};
+
+using mac_cpy_definitions_map = std::map<size_t, mac_cpybook_definition_details, std::greater<size_t>>;
+using rl_mac_cpy_map = std::unordered_map<utils::resource::resource_location,
+    mac_cpy_definitions_map,
+    utils::resource::resource_location_hasher>;
+
+void generate_merged_fade_messages(const utils::resource::resource_location& rl,
+    const processing::hit_count_entry& hc_entry,
+    const rl_mac_cpy_map& active_rl_mac_cpy_map,
+    std::vector<fade_message_s>& fms)
+{
+    const auto& [has_sections, line_hits, encountered_macro_defs] = hc_entry;
+    if (!has_sections)
+        return;
+
+    const mac_cpy_definitions_map* active_mac_cpy_defs_map = nullptr;
+    if (const auto active_rl_mac_cpy_map_it = active_rl_mac_cpy_map.find(rl);
+        active_rl_mac_cpy_map_it != active_rl_mac_cpy_map.end())
+        active_mac_cpy_defs_map = &active_rl_mac_cpy_map_it->second;
+
+    const auto line_details_it_b = line_hits.line_details.begin();
+    const auto line_details_it_e = std::next(line_details_it_b, line_hits.max_lineno + 1);
+
+    const auto faded_line_predicate = [&active_mac_cpy_defs_map,
+                                          line_details_addr = std::to_address(line_details_it_b),
+                                          &encountered_mac_defs = encountered_macro_defs](
+                                          const processing::line_detail& e) {
+        if (e.macro_definition)
+        {
+            if (!active_mac_cpy_defs_map)
+                return false;
+
+            auto lineno = static_cast<size_t>(std::distance(line_details_addr, &e));
+            auto active_mac_cpy_it_e = active_mac_cpy_defs_map->end();
+
+            auto active_mac_cpy_it = std::find_if(active_mac_cpy_defs_map->lower_bound(lineno),
+                active_mac_cpy_it_e,
+                [lineno](const std::pair<size_t, mac_cpybook_definition_details>& mac_cpy_def) {
+                    const auto& [active_mac_cpy_start_line, active_mac_cpy_def_detail] = mac_cpy_def;
+                    return lineno >= active_mac_cpy_start_line && lineno <= active_mac_cpy_def_detail.end_line;
+                });
+
+            if (active_mac_cpy_it == active_mac_cpy_it_e
+                || (!active_mac_cpy_it->second.cpy_book && !encountered_mac_defs.contains(active_mac_cpy_it->first)))
+                return false;
+        }
+
+        return e.contains_statement && e.count == 0;
+    };
+
+    const auto& uri = rl.get_uri();
+
+    const auto it_b = std::find_if(
+        line_details_it_b, line_details_it_e, [](const processing::line_detail& e) { return e.contains_statement; });
+    auto faded_line_it = std::find_if(it_b, line_details_it_e, faded_line_predicate);
+
+    while (faded_line_it != line_details_it_e)
+    {
+        auto active_line = std::find_if_not(std::next(faded_line_it), line_details_it_e, faded_line_predicate);
+        fms.emplace_back(fade_message_s::inactive_statement(uri,
+            range(position(std::distance(line_details_it_b, faded_line_it), 0),
+                position(std::distance(line_details_it_b, std::prev(active_line)), 80))));
+
+        faded_line_it = std::find_if(active_line, line_details_it_e, faded_line_predicate);
+    }
+}
+
+void filter_and_emplace_hc_map(
+    processing::hit_count_map& to, const processing::hit_count_map& from, const utils::resource::resource_location& rl)
+{
+    auto from_it = from.find(rl);
+    if (from_it == from.end())
+        return;
+
+    const auto& from_hc_entry = from_it->second;
+    if (auto [to_hc_it, new_element] = to.try_emplace(rl, from_hc_entry); !new_element)
+        to_hc_it->second.merge(from_hc_entry);
+}
+
+void filter_and_emplace_mac_cpy_definitions(rl_mac_cpy_map& active_rl_mac_cpy_map,
+    const lsp::lsp_context* lsp_ctx,
+    const utils::resource::resource_location& rl)
+{
+    if (!lsp_ctx)
+        return;
+
+    for (const auto& [_, mac_info_ptr] : lsp_ctx->macros())
+    {
+        if (!mac_info_ptr || !mac_info_ptr->macro_definition)
+            continue;
+
+        const auto mac_definition_emplacer = [&active_rl_mac_cpy_map, &rl](const auto& definition,
+                                                 bool cpy_book) -> mac_cpybook_definition_details* {
+            const auto& def_location = definition->definition_location;
+            if (def_location.resource_loc != rl)
+                return nullptr;
+
+            const auto& lines = definition->cached_definition;
+            if (lines.empty())
+                return nullptr;
+
+            const auto& first_line = lines.front().get_base();
+            const auto& last_line = lines.back().get_base();
+            if (!first_line || !last_line)
+                return nullptr;
+
+            return &active_rl_mac_cpy_map[rl]
+                        .emplace(def_location.pos.line,
+                            mac_cpybook_definition_details { cpy_book, last_line->statement_position().line })
+                        .first->second;
+        };
+
+        const auto& mac_def = mac_info_ptr->macro_definition;
+        if (auto entry = mac_definition_emplacer(mac_def, false); entry != nullptr)
+            entry->prototype_line = mac_info_ptr->definition_location.pos.line;
+
+        for (const auto& cpy_member : mac_def->used_copy_members)
+        {
+            if (cpy_member)
+                mac_definition_emplacer(cpy_member, true);
+        }
+    }
+}
+
+void fade_unused_mac_names(const processing::hit_count_map& hc_map,
+    const rl_mac_cpy_map& active_rl_mac_cpy_map,
+    std::vector<fade_message_s>& fms)
+{
+    for (const auto& [active_rl, active_mac_cpy_defs] : active_rl_mac_cpy_map)
+    {
+        auto hc_map_it = hc_map.find(active_rl);
+        if (hc_map_it == hc_map.end() || !hc_map_it->second.has_sections)
+            continue;
+
+        const auto& encountered_macro_def_lines = hc_map_it->second.macro_definition_lines;
+        for (const auto& [mac_cpy_def_start_line, mac_cpy_def_details] : active_mac_cpy_defs)
+        {
+            if (!mac_cpy_def_details.cpy_book && !encountered_macro_def_lines.contains(mac_cpy_def_start_line))
+                fms.emplace_back(fade_message_s::unused_macro(active_rl.get_uri(),
+                    range(position(mac_cpy_def_details.prototype_line, 0),
+                        position(mac_cpy_def_details.prototype_line, 80))));
+        }
+    }
+}
+} // namespace
+
 void workspace::retrieve_fade_messages(std::vector<fade_message_s>& fms) const
 {
-    for (const auto& [key, value] : m_processor_files)
-        value.m_processor_file->retrieve_fade_messages(fms);
+    processing::hit_count_map hc_map;
+    rl_mac_cpy_map active_rl_mac_cpy_map;
+
+    std::unordered_set<std::string, utils::hashers::string_hasher, std::equal_to<>> opened_files_uris;
+
+    for (const auto& [rl, _] : opened_files_)
+        opened_files_uris.emplace(rl.get_uri());
+
+    for (const auto& [_, proc_file_component] : m_processor_files)
+    {
+        const auto& pf = *proc_file_component.m_processor_file;
+        const auto& pf_fade_messages = pf.fade_messages();
+        std::copy_if(pf_fade_messages.begin(),
+            pf_fade_messages.end(),
+            std::back_inserter(fms),
+            [&opened_files_uris](const auto& fmsg) { return opened_files_uris.contains(fmsg.uri); });
+
+        for (const auto& [opened_file_rl, __] : opened_files_)
+        {
+            filter_and_emplace_hc_map(hc_map, pf.hit_count_map(), opened_file_rl);
+            filter_and_emplace_mac_cpy_definitions(active_rl_mac_cpy_map, pf.get_lsp_context(), opened_file_rl);
+        }
+    }
+
+    fade_unused_mac_names(hc_map, active_rl_mac_cpy_map, fms);
+
+    std::for_each(hc_map.begin(), hc_map.end(), [&active_rl_mac_cpy_map, &fms](const auto& e) {
+        generate_merged_fade_messages(e.first, e.second, active_rl_mac_cpy_map, fms);
+    });
 }
 
 std::vector<std::shared_ptr<processor_file>> workspace::find_related_opencodes(

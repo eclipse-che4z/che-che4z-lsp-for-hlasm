@@ -50,6 +50,9 @@ struct operand_occurence_analyzer_mock : public processing::statement_analyzer
         return false;
     }
 
+    void analyze_aread_line(const hlasm_plugin::utils::resource::resource_location&, size_t, std::string_view) override
+    {}
+
     context::id_index get_id(const std::string& s) { return a.context().hlasm_ctx->ids().add(s); }
 };
 

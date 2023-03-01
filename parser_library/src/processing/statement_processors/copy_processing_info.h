@@ -17,6 +17,8 @@
 
 #include "context/hlasm_statement.h"
 #include "context/id_storage.h"
+#include "location.h"
+#include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

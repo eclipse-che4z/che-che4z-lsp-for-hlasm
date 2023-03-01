@@ -4,7 +4,7 @@
 
 #### Added
 - Provide more details about machine instructions in hover texts
-- Faded preprocessor statements
+- Visually identify preprocessor and inactive statements
 - Best-effort navigation for instructions in non-executed macro statements
 
 #### Fixed

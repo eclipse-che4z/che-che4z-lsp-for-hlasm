@@ -11,6 +11,8 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
+	hit_count_analyzer.cpp
+	hit_count_analyzer.h
 	lsp_analyzer.cpp
 	lsp_analyzer.h
 	occurence_collector.cpp

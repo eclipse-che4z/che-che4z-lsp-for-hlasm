@@ -15,20 +15,39 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_H
 
-#include <memory>
+#include <set>
+#include <unordered_map>
+#include <vector>
 
-#include "compiler_options.h"
 #include "diagnosable.h"
-#include "file.h"
-#include "parse_lib_provider.h"
 #include "preprocessor_options.h"
+#include "protocol.h"
 #include "semantics/highlighting_info.h"
 
+namespace hlasm_plugin::utils::resource {
+class resource_location;
+}
+
 namespace hlasm_plugin::parser_library {
+struct analyzing_context;
+struct asm_option;
+struct fade_message_s;
 class virtual_file_monitor;
+
+namespace lsp {
+class lsp_context;
+}
+
+namespace processing {
+struct hit_count_entry;
+} // namespace processing
+
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::workspaces {
+struct library_data;
+class parse_lib_provider;
+using file_location = utils::resource::resource_location;
 
 // Interface that represents an object that can be parsed.
 // The only implementor is processor_file
@@ -50,12 +69,16 @@ class processor_file : public processor
 public:
     virtual const std::set<utils::resource::resource_location>& dependencies() = 0;
     virtual const semantics::lines_info& get_hl_info() = 0;
-    virtual const lsp::lsp_context* get_lsp_context() = 0;
+    virtual const lsp::lsp_context* get_lsp_context() const = 0;
     virtual const std::set<utils::resource::resource_location>& files_to_close() = 0;
     virtual const performance_metrics& get_metrics() = 0;
     virtual void erase_unused_cache_entries() = 0;
     virtual bool has_lsp_info() const = 0;
-    virtual void retrieve_fade_messages(std::vector<fade_message_s>& fms) const = 0;
+    virtual const std::vector<fade_message_s>& fade_messages() const = 0;
+    virtual const std::unordered_map<utils::resource::resource_location,
+        processing::hit_count_entry,
+        utils::resource::resource_location_hasher>&
+    hit_count_map() const = 0;
     virtual const file_location& get_location() const = 0;
     virtual bool current_version() const = 0;
 

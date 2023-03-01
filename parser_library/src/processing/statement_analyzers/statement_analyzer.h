@@ -35,6 +35,9 @@ public:
         processing_kind proc_kind,
         bool evaluated_model) = 0;
 
+    virtual void analyze_aread_line(
+        const utils::resource::resource_location& rl, size_t lineno, std::string_view text) = 0;
+
 protected:
     ~statement_analyzer() = default;
 };
