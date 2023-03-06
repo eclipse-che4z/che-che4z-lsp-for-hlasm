@@ -1003,6 +1003,31 @@ TEST(macro, pass_empty_operand_components)
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR"), 2);
 }
 
+TEST(macro, pass_empty_concat_strings)
+{
+    std::string input = R"(
+        MACRO
+        MAC2 &P
+        GBLC &VAR
+&VAR    SETC '&P'
+        MEND
+
+        MACRO
+        MAC &STR1,&STR2
+        MAC2 &STR1&STR2
+        MEND
+
+        GBLC &VAR
+        MAC
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "");
+}
+
 TEST(macro, multiline_comment)
 {
     std::string input = R"(

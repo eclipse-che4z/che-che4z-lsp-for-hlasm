@@ -369,8 +369,9 @@ context::macro_data_ptr create_macro_data_inner(semantics::concat_chain::const_i
         return macro_processor::string_to_macrodata(to_string(begin, end));
     else if (size > 1)
     {
-        if (auto s = to_string(begin, end);
-            s.front() != '(' && (!nested || semantics::concatenation_point::find_var_sym(begin, end) == nullptr))
+        if (auto s = to_string(begin, end); s.empty())
+            return std::make_unique<context::macro_param_data_dummy>();
+        else if (s.front() != '(' && (!nested || semantics::concatenation_point::find_var_sym(begin, end) == nullptr))
             return macro_processor::string_to_macrodata(std::move(s));
         else if (is_valid_string(s))
             return macro_processor::string_to_macrodata(std::move(s));
