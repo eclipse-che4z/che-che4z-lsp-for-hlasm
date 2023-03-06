@@ -469,7 +469,7 @@ protected:
                XWV   FROM TABLE WHERE X = :ABCDE
 
          EXEC SQL DECLARE GET_ID CURSOR FOR SELECT KEY FROM  TARGET    X
-               WHERE NAME    = :ZYXWV
+               WHERE NAME    = :ZYXWV:ABCDE
 
 XWV      DS    F
 ABCDE    DS    F
@@ -490,8 +490,10 @@ TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, go_to)
     EXPECT_EQ(location(position(11, 0), source_loc), a.context().lsp_ctx->definition(source_loc, position(6, 17)));
     // ABCDE
     EXPECT_EQ(location(position(12, 0), source_loc), a.context().lsp_ctx->definition(source_loc, position(6, 48)));
-    // ZYXWV
+    // ZYXWV:ABCDE - ZYXWV part
     EXPECT_EQ(location(position(13, 0), source_loc), a.context().lsp_ctx->definition(source_loc, position(9, 34)));
+    // ZYXWV:ABCDE - ABCDE part
+    EXPECT_EQ(location(position(12, 0), source_loc), a.context().lsp_ctx->definition(source_loc, position(9, 42)));
 
     // ZY - no jump
     EXPECT_EQ(location(position(5, 71), source_loc), a.context().lsp_ctx->definition(source_loc, position(5, 71)));
@@ -505,6 +507,7 @@ TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, refs)
     };
     const location_list expected_abcde_locations {
         location(position(6, 43), source_loc),
+        location(position(9, 38), source_loc),
         location(position(12, 0), source_loc),
     };
     const location_list expected_zyxwv_locations {
@@ -517,9 +520,12 @@ TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, refs)
     // ABCDE reference
     EXPECT_TRUE(
         has_same_content(expected_abcde_locations, a.context().lsp_ctx->references(source_loc, position(6, 48))));
-    // ZYXWV reference
+    // ZYXWV:ABCDE reference - ZYXWV part
     EXPECT_TRUE(
         has_same_content(expected_zyxwv_locations, a.context().lsp_ctx->references(source_loc, position(9, 32))));
+    // ZYXWV:ABCDE reference - ABCDE part
+    EXPECT_TRUE(
+        has_same_content(expected_abcde_locations, a.context().lsp_ctx->references(source_loc, position(9, 39))));
 
     // ZY reference
     EXPECT_TRUE(a.context().lsp_ctx->references(source_loc, position(5, 70)).empty());
@@ -531,8 +537,10 @@ TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, hover)
     EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(6, 17))));
     // ABCDE
     EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(6, 48))));
-    // ZYXWV
+    // ZYXWV:ABCDE - ZYXWV part
     EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(9, 37))));
+    // ZYXWV:ABCDE - ABCDE part
+    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(9, 38))));
 
     // ZY
     EXPECT_TRUE(a.context().lsp_ctx->hover(source_loc, position(5, 71)).empty());

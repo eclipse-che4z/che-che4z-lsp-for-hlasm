@@ -9,6 +9,7 @@
 
 #### Fixed
 - Large macro documentation is not highlighted correctly in hover texts
+- Support for concatenated assembler names in DB2 statements
 
 ## [1.6.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.5.0...1.6.0) (2023-01-18)
 

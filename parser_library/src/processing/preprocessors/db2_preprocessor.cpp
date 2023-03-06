@@ -234,8 +234,8 @@ public:
                     if (state == consuming_state::PREPARE_TO_CONSUME || state == consuming_state::TRAIL)
                         break;
 
-                    if (!try_arg_inserter(arg_start_it, b, state))
-                        next_state = consuming_state::PREPARE_TO_CONSUME;
+                    try_arg_inserter(arg_start_it, b, state);
+                    next_state = consuming_state::PREPARE_TO_CONSUME;
 
                     break;
 
