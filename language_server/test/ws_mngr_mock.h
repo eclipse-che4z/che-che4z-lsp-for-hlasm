@@ -18,6 +18,7 @@
 #include "gmock/gmock.h"
 
 #include "workspace_manager.h"
+#include "workspace_manager_response.h"
 
 namespace hlasm_plugin::language_server::test {
 
@@ -40,20 +41,34 @@ public:
 
     MOCK_METHOD2(configuration_changed, void(const lib_config& new_config, const char* whole_settings));
 
-    MOCK_METHOD(position_uri, definition, (const char* document_uri, position pos), (override));
-    MOCK_METHOD(position_uri_list, references, (const char* document_uri, position pos), (override));
-    MOCK_METHOD(sequence<char>, hover, (const char* document_uri, position pos), (override));
-    MOCK_METHOD(completion_list,
+    MOCK_METHOD(void,
+        definition,
+        (const char* document_uri, position pos, workspace_manager_response<position_uri>),
+        (override));
+    MOCK_METHOD(void,
+        references,
+        (const char* document_uri, position pos, workspace_manager_response<position_uri_list>),
+        (override));
+    MOCK_METHOD(
+        void, hover, (const char* document_uri, position pos, workspace_manager_response<sequence<char>>), (override));
+    MOCK_METHOD(void,
         completion,
-        (const char* document_uri, position pos, const char trigger_char, completion_trigger_kind trigger_kind),
+        (const char* document_uri,
+            position pos,
+            const char trigger_char,
+            completion_trigger_kind trigger_kind,
+            workspace_manager_response<completion_list>),
         (override));
 
     MOCK_METHOD(continuous_sequence<char>, get_virtual_file_content, (unsigned long long id), (const override));
 
 
-    MOCK_METHOD(continuous_sequence<opcode_suggestion>,
+    MOCK_METHOD(void,
         make_opcode_suggestion,
-        (const char* document_uri, const char* opcode, bool extended),
+        (const char* document_uri,
+            const char* opcode,
+            bool extended,
+            workspace_manager_response<continuous_sequence<opcode_suggestion>>),
         (const override));
 };
 

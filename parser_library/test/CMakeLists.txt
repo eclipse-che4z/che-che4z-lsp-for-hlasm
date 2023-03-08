@@ -27,6 +27,7 @@ target_sources(library_test PRIVATE
 	mock_parse_lib_provider.h
 	stability_test.cpp
 	utf_conv_test.cpp
+	workspace_manager_response_mock.h
 	workspace_manager_test.cpp
 )
 

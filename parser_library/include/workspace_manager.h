@@ -20,15 +20,13 @@
 // It implements LSP requests and notifications and is used by the language server.
 
 #include <atomic>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <utility>
 
 #include "lib_config.h"
 #include "message_consumer.h"
 #include "parser_library_export.h"
 #include "protocol.h"
+#include "sequence.h"
 
 namespace hlasm_plugin::parser_library {
 
@@ -82,6 +80,9 @@ struct opcode_suggestion
     size_t distance;
 };
 
+template<typename T>
+class workspace_manager_response;
+
 // The main class that encapsulates all functionality of parser library.
 // All the methods are C++ version of LSP and DAP methods.
 class PARSER_LIBRARY_EXPORT workspace_manager
@@ -113,14 +114,19 @@ public:
     virtual void did_close_file(const char* document_uri);
     virtual void did_change_watched_files(sequence<fs_change> changes);
 
-    virtual position_uri definition(const char* document_uri, position pos);
-    virtual position_uri_list references(const char* document_uri, position pos);
-    virtual sequence<char> hover(const char* document_uri, position pos);
-    virtual completion_list completion(
-        const char* document_uri, position pos, char trigger_char, completion_trigger_kind trigger_kind);
+    virtual void definition(const char* document_uri, position pos, workspace_manager_response<position_uri> resp);
+    virtual void references(const char* document_uri, position pos, workspace_manager_response<position_uri_list> resp);
+    virtual void hover(const char* document_uri, position pos, workspace_manager_response<sequence<char>> resp);
+    virtual void completion(const char* document_uri,
+        position pos,
+        char trigger_char,
+        completion_trigger_kind trigger_kind,
+        workspace_manager_response<completion_list> resp);
 
-    virtual continuous_sequence<token_info> semantic_tokens(const char* document_uri);
-    virtual document_symbol_list document_symbol(const char* document_uri, long long limit);
+    virtual void semantic_tokens(
+        const char* document_uri, workspace_manager_response<continuous_sequence<token_info>> resp);
+    virtual void document_symbol(
+        const char* document_uri, long long limit, workspace_manager_response<document_symbol_list> resp);
 
     virtual void configuration_changed(const lib_config& new_config, const char* whole_settings);
 
@@ -133,8 +139,10 @@ public:
 
     virtual continuous_sequence<char> get_virtual_file_content(unsigned long long id) const;
 
-    virtual continuous_sequence<opcode_suggestion> make_opcode_suggestion(
-        const char* document_uri, const char* opcode, bool extended) const;
+    virtual void make_opcode_suggestion(const char* document_uri,
+        const char* opcode,
+        bool extended,
+        workspace_manager_response<continuous_sequence<opcode_suggestion>>) const;
 
 private:
     impl* impl_;

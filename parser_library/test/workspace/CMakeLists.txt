@@ -31,6 +31,7 @@ target_sources(library_test PRIVATE
 	wildcard2regex_test.cpp
 	workspace_configuration_test.cpp
 	workspace_fade_test.cpp
+	workspace_manager_response_test.cpp
 	workspace_pattern_test.cpp
 	workspace_test.cpp
 )

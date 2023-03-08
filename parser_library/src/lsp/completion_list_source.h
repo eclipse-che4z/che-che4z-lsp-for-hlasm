@@ -42,6 +42,8 @@ struct completion_list_instructions
     size_t completed_text_start_column;
     const std::unordered_map<std::shared_ptr<context::macro_definition>, std::shared_ptr<macro_info>>* macros;
     const lsp_context* lsp_ctx;
+
+    std::vector<std::string> additional_instructions;
 };
 
 using completion_list_source = std::variant<std::monostate,

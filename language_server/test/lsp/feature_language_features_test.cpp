@@ -41,7 +41,8 @@ TEST(language_features, completion)
         R"({"textDocument":{"uri":")" + uri + R"("},"position":{"line":0,"character":1},"context":{"triggerKind":1}})");
 
     EXPECT_CALL(ws_mngr,
-        completion(StrEq(uri), parser_library::position(0, 1), '\0', parser_library::completion_trigger_kind::invoked));
+        completion(
+            StrEq(uri), parser_library::position(0, 1), '\0', parser_library::completion_trigger_kind::invoked, _));
     notifs["textDocument/completion"].handler("", params1);
 }
 
@@ -57,7 +58,7 @@ TEST(language_features, hover)
         R"({"textDocument":{"uri":")" + uri + R"("},"position":{"line":0,"character":1},"context":{"triggerKind":1}})");
 
     std::string s("test");
-    EXPECT_CALL(ws_mngr, hover(StrEq(uri), parser_library::position(0, 1)));
+    EXPECT_CALL(ws_mngr, hover(StrEq(uri), parser_library::position(0, 1), _));
     notifs["textDocument/hover"].handler("", params1);
 }
 
@@ -87,7 +88,7 @@ TEST(language_features, references)
     auto params1 = nlohmann::json::parse(
         R"({"textDocument":{"uri":")" + uri + R"("},"position":{"line":0,"character":1},"context":{"triggerKind":1}})");
 
-    EXPECT_CALL(ws_mngr, references(StrEq(uri), parser_library::position(0, 1)));
+    EXPECT_CALL(ws_mngr, references(StrEq(uri), parser_library::position(0, 1), _));
     notifs["textDocument/references"].handler("", params1);
 }
 

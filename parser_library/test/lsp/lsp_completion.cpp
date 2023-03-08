@@ -36,13 +36,8 @@ TEST(lsp_completion, completion_list_instr)
     std::unordered_map<context::macro_def_ptr, lsp::macro_info_ptr> m;
     m.try_emplace(aaaa->macro_definition, aaaa);
 
-    auto result = lsp::generate_completion(
-        lsp::completion_list_source(lsp::completion_list_instructions { "AAAAA", 1, &m, a.context().lsp_ctx.get() }),
-        [](std::string_view v) -> std::vector<std::string> {
-            if (v == "AAAAA")
-                return { "AAAA", "ADATA" };
-            return {};
-        });
+    auto result = lsp::generate_completion(lsp::completion_list_source(
+        lsp::completion_list_instructions { "AAAAA", 1, &m, a.context().lsp_ctx.get(), { "AAAA", "ADATA" } }));
 
     EXPECT_TRUE(std::any_of(
         result.begin(), result.end(), [](const auto& e) { return e.label == "ADATA" && e.suggestion_for == "AAAAA"; }));
@@ -74,7 +69,7 @@ TEST(lsp_completion, completion_list_labels)
 
 TEST(lsp_completion, completion_list_empty)
 {
-    auto result = lsp::generate_completion({});
+    auto result = lsp::generate_completion(std::monostate());
 
     EXPECT_TRUE(result.empty());
 }

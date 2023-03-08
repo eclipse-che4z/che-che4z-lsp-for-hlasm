@@ -15,8 +15,9 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_SERVER
 #define HLASMPLUGIN_LANGUAGESERVER_SERVER
 
-#include <chrono>
-#include <unordered_set>
+#include <map>
+#include <unordered_map>
+#include <vector>
 
 #include "feature.h"
 #include "send_message_provider.h"

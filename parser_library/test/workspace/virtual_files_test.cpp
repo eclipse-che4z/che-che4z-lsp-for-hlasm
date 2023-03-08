@@ -18,6 +18,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../workspace_manager_response_mock.h"
 #include "consume_diagnostics_mock.h"
 #include "diagnosable_impl.h"
 #include "file_manager_mock.h"
@@ -25,6 +26,7 @@
 #include "utils/resource_location.h"
 #include "virtual_file_monitor.h"
 #include "workspace_manager.h"
+#include "workspace_manager_response.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/file_manager_vfm.h"
 
@@ -173,7 +175,12 @@ MY  DSECT
 
     ASSERT_TRUE(vf.starts_with("hlasm://"));
 
-    std::string hover_text(wm.hover(vf.c_str(), position(0, 0)));
+    auto [resp, mock] =
+        make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<sequence<char>>>);
 
-    EXPECT_NE(hover_text.find("MY + X'4' (4)"), std::string::npos);
+    EXPECT_CALL(*mock, provide(Truly([](sequence<char> hover_text) {
+        return std::string_view(hover_text).find("MY + X'4' (4)") != std::string::npos;
+    })));
+
+    wm.hover(vf.c_str(), position(0, 0), resp);
 }

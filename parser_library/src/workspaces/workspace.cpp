@@ -632,15 +632,15 @@ lsp::completion_list_s workspace::completion(const utils::resource::resource_loc
     if (!lsp_context)
         return {};
 
-    return lsp::generate_completion(lsp_context->completion(document_loc, pos, trigger_char, trigger_kind),
-        [&document_loc, this](std::string_view opcode) {
-            auto suggestions = make_opcode_suggestion(document_loc, opcode, true);
-            std::vector<std::string> result;
-            std::transform(suggestions.begin(), suggestions.end(), std::back_inserter(result), [](auto& e) {
-                return std::move(e.first);
-            });
-            return result;
-        });
+    auto comp = lsp_context->completion(document_loc, pos, trigger_char, trigger_kind);
+    if (auto* cli = std::get_if<lsp::completion_list_instructions>(&comp); cli && !cli->completed_text.empty())
+    {
+        auto raw_suggestions = make_opcode_suggestion(document_loc, cli->completed_text, true);
+        cli->additional_instructions.reserve(raw_suggestions.size());
+        for (auto&& [suggestion, rank] : raw_suggestions)
+            cli->additional_instructions.emplace_back(std::move(suggestion));
+    }
+    return lsp::generate_completion(comp);
 }
 
 lsp::document_symbol_list_s workspace::document_symbol(

@@ -28,6 +28,7 @@
 #include "lsp/document_symbol_item.h"
 #include "protocol.h"
 #include "workspace_manager.h"
+#include "workspace_manager_response.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
 
@@ -199,70 +200,83 @@ public:
             wks.second.set_message_consumer(consumer);
     }
 
-    location definition_result;
-    position_uri definition(const std::string& document_uri, position pos)
+    void definition(const std::string& document_uri, position pos, workspace_manager_response<position_uri> r)
     {
+        location definition_result;
         auto doc_loc = utils::resource::resource_location(document_uri);
 
         if (cancel_ && *cancel_)
         {
             definition_result = { pos, doc_loc };
-            return position_uri(definition_result);
+            r.provide(position_uri(definition_result));
+            return;
         }
 
         definition_result = ws_path_match(document_uri).definition(doc_loc, pos);
 
-        return position_uri(definition_result);
+        r.provide(position_uri(definition_result));
     }
 
-    location_list references_result;
-    position_uri_list references(const std::string& document_uri, position pos)
+    void references(const std::string& document_uri, position pos, workspace_manager_response<position_uri_list> r)
     {
         if (cancel_ && *cancel_)
-            return {};
+        {
+            r.provide({});
+            return;
+        }
 
-        references_result =
+        auto references_result =
             ws_path_match(document_uri).references(utils::resource::resource_location(document_uri), pos);
 
-        return { references_result.data(), references_result.size() };
+        r.provide({ references_result.data(), references_result.size() });
     }
 
-    std::string hover_result;
-    std::string_view hover(const std::string& document_uri, position pos)
+    void hover(const std::string& document_uri, position pos, workspace_manager_response<sequence<char>> r)
     {
         if (cancel_ && *cancel_)
-            return "";
+        {
+            r.provide(sequence<char>(std::string_view("")));
+            return;
+        }
 
-        hover_result = ws_path_match(document_uri).hover(utils::resource::resource_location(document_uri), pos);
+        auto hover_result = ws_path_match(document_uri).hover(utils::resource::resource_location(document_uri), pos);
 
-        return hover_result;
+        r.provide(sequence<char>(hover_result));
     }
 
 
-    lsp::completion_list_s completion_result;
-    completion_list completion(
-        const std::string& document_uri, position pos, const char trigger_char, completion_trigger_kind trigger_kind)
+    void completion(const std::string& document_uri,
+        position pos,
+        const char trigger_char,
+        completion_trigger_kind trigger_kind,
+        workspace_manager_response<completion_list> r)
     {
         if (cancel_ && *cancel_)
-            return completion_list { nullptr, 0 };
+        {
+            r.provide(completion_list { nullptr, 0 });
+            return;
+        }
 
-        completion_result =
+        auto completion_result =
             ws_path_match(document_uri)
                 .completion(utils::resource::resource_location(document_uri), pos, trigger_char, trigger_kind);
 
-        return completion_list(completion_result.data(), completion_result.size());
+        r.provide(completion_list(completion_result.data(), completion_result.size()));
     }
 
-    lsp::document_symbol_list_s document_symbol_result;
-    document_symbol_list document_symbol(const std::string& document_uri, long long limit)
+    void document_symbol(
+        const std::string& document_uri, long long limit, workspace_manager_response<document_symbol_list> r)
     {
         if (cancel_ && *cancel_)
-            return document_symbol_list { nullptr, 0 };
+        {
+            r.provide(document_symbol_list { nullptr, 0 });
+            return;
+        }
 
-        document_symbol_result =
+        auto document_symbol_result =
             ws_path_match(document_uri).document_symbol(utils::resource::resource_location(document_uri), limit);
 
-        return document_symbol_list(document_symbol_result.data(), document_symbol_result.size());
+        r.provide(document_symbol_list(document_symbol_result.data(), document_symbol_result.size()));
     }
 
     lib_config global_config_;
@@ -280,10 +294,10 @@ public:
             notify_diagnostics_consumers();
     }
 
-    continuous_sequence<token_info> semantic_tokens(const char* document_uri)
+    void semantic_tokens(const char* document_uri, workspace_manager_response<continuous_sequence<token_info>> r)
     {
-        return make_continuous_sequence(
-            ws_path_match(document_uri).semantic_tokens(utils::resource::resource_location(document_uri)));
+        r.provide(make_continuous_sequence(
+            ws_path_match(document_uri).semantic_tokens(utils::resource::resource_location(document_uri))));
     }
 
     continuous_sequence<char> get_virtual_file_content(unsigned long long id) const
@@ -291,8 +305,10 @@ public:
         return make_continuous_sequence(file_manager_.get_virtual_file(id));
     }
 
-    continuous_sequence<opcode_suggestion> make_opcode_suggestion(
-        const std::string& document_uri, const std::string& opcode, bool extended)
+    void make_opcode_suggestion(const std::string& document_uri,
+        const std::string& opcode,
+        bool extended,
+        workspace_manager_response<continuous_sequence<opcode_suggestion>> r)
     {
         auto suggestions =
             ws_path_match(document_uri)
@@ -303,7 +319,7 @@ public:
         for (auto&& [suggestion, distance] : suggestions)
             res.emplace_back(opcode_suggestion { make_continuous_sequence(std::move(suggestion)), distance });
 
-        return make_continuous_sequence(std::move(res));
+        r.provide(make_continuous_sequence(std::move(res)));
     }
 
 private:

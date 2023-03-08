@@ -45,7 +45,6 @@ private:
     void document_symbol(const nlohmann::json& id, const nlohmann::json& params);
     void opcode_suggestion(const nlohmann::json& id, const nlohmann::json& params);
 
-    static nlohmann::json get_markup_content(std::string_view content);
     nlohmann::json document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol);
     nlohmann::json document_symbol_list_json(hlasm_plugin::parser_library::document_symbol_list symbol_list);
 };

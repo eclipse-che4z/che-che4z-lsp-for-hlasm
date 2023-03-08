@@ -14,6 +14,7 @@
 
 #include "request_manager.h"
 
+#include <chrono>
 #include <string_view>
 
 #include "nlohmann/json.hpp"

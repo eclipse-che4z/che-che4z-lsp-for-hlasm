@@ -267,20 +267,14 @@ completion_item_s generate_completion_item(const macro_info& sym, const file_inf
 }
 
 
-completion_list_s generate_completion(const completion_list_source& cls,
-    const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions)
+completion_list_s generate_completion(const completion_list_source& cls)
 {
-    return std::visit(
-        [&instruction_suggestions](auto v) { return generate_completion(v, instruction_suggestions); }, cls);
+    return std::visit([](auto v) { return generate_completion(v); }, cls);
 }
 
-completion_list_s generate_completion(std::monostate, const std::function<std::vector<std::string>(std::string_view)>&)
-{
-    return completion_list_s();
-}
+completion_list_s generate_completion(std::monostate) { return completion_list_s(); }
 
-completion_list_s generate_completion(
-    const vardef_storage* var_defs, const std::function<std::vector<std::string>(std::string_view)>&)
+completion_list_s generate_completion(const vardef_storage* var_defs)
 {
     completion_list_s items;
     for (const auto& vardef : *var_defs)
@@ -291,8 +285,7 @@ completion_list_s generate_completion(
     return items;
 }
 
-completion_list_s generate_completion(
-    const context::label_storage* seq_syms, const std::function<std::vector<std::string>(std::string_view)>&)
+completion_list_s generate_completion(const context::label_storage* seq_syms)
 {
     completion_list_s items;
     items.reserve(seq_syms->size());
@@ -303,23 +296,17 @@ completion_list_s generate_completion(
     return items;
 }
 
-completion_list_s generate_completion(const completion_list_instructions& cli,
-    const std::function<std::vector<std::string>(std::string_view)>& instruction_suggestions)
+completion_list_s generate_completion(const completion_list_instructions& cli)
 {
     assert(cli.lsp_ctx);
 
     const auto& hlasm_ctx = cli.lsp_ctx->get_related_hlasm_context();
 
-    auto suggestions = [&instruction_suggestions](std::string_view ct) {
-        std::vector<std::pair<std::string, bool>> result;
-        if (ct.empty() || !instruction_suggestions)
-            return result;
-        auto raw_suggestions = instruction_suggestions(ct);
-        result.reserve(raw_suggestions.size());
-        for (auto&& s : raw_suggestions)
-            result.emplace_back(std::move(s), false);
-        return result;
-    }(cli.completed_text);
+    std::vector<std::pair<std::string, bool>> suggestions;
+    suggestions.reserve(cli.additional_instructions.size());
+    for (const auto& s : cli.additional_instructions)
+        suggestions.emplace_back(s, false);
+
     const auto locate_suggestion = [&s = suggestions](std::string_view text) {
         auto it = std::find_if(s.begin(), s.end(), [text](const auto& e) { return e.first == text; });
         return it == s.end() ? nullptr : std::to_address(it);
