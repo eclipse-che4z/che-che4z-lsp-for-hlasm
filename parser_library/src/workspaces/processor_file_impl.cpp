@@ -45,7 +45,7 @@ bool processor_file_impl::parse(parse_lib_provider& lib_provider,
 
     const bool collect_hl = should_collect_hl();
     auto fms = std::make_shared<std::vector<fade_message_s>>();
-    auto new_analyzer = std::make_unique<analyzer>(m_file->get_text(),
+    analyzer new_analyzer(m_file->get_text(),
         analyzer_options {
             m_file->get_location(),
             &lib_provider,
@@ -60,24 +60,28 @@ bool processor_file_impl::parse(parse_lib_provider& lib_provider,
 
     auto old_dep = m_dependencies;
 
-    processing::hit_count_analyzer hc_analyzer(new_analyzer->hlasm_ctx());
-    new_analyzer->register_stmt_analyzer(&hc_analyzer); // TODO dangling reference to hc_analyzer
+    processing::hit_count_analyzer hc_analyzer(new_analyzer.hlasm_ctx());
+    new_analyzer.register_stmt_analyzer(&hc_analyzer);
 
-    for (auto a = new_analyzer->co_analyze(); !a.done(); a())
+    for (auto a = new_analyzer.co_analyze(); !a.done(); a())
     {
         if (m_cancel && m_cancel->load(std::memory_order_relaxed))
             return false;
     }
 
     diags().clear();
-    collect_diags_from_child(*new_analyzer);
+    collect_diags_from_child(new_analyzer);
 
-    m_last_analyzer = std::move(new_analyzer);
     m_last_analyzer_with_lsp = collect_hl;
-    m_last_hl_info = m_last_analyzer->source_processor().semantic_tokens();
+    m_last_results.hl_info = new_analyzer.take_semantic_tokens();
+    m_last_results.lsp_context = new_analyzer.context().lsp_ctx;
+    m_last_results.fade_messages = std::move(fms);
+    m_last_results.metrics = new_analyzer.get_metrics();
+    m_last_results.vf_handles = new_analyzer.take_vf_handles();
+    m_last_results.hc_map = hc_analyzer.take_hit_count_map();
 
     m_dependencies.clear();
-    for (auto& file : m_last_analyzer->hlasm_ctx().get_visited_files())
+    for (auto& file : new_analyzer.hlasm_ctx().get_visited_files())
         if (file != m_file->get_location())
             m_dependencies.insert(file);
 
@@ -88,9 +92,6 @@ bool processor_file_impl::parse(parse_lib_provider& lib_provider,
         if (!m_dependencies.contains(file))
             m_files_to_close.insert(file);
     }
-
-    m_hc_map = hc_analyzer.take_hit_count_map();
-    m_fade_messages = std::move(fms);
 
     return true;
 }
@@ -127,34 +128,22 @@ bool processor_file_impl::parse_macro(parse_lib_provider& lib_provider, analyzin
     m_macro_cache.save_macro(cache_key, a);
     m_last_analyzer_with_lsp = collect_hl;
     if (collect_hl)
-        m_last_hl_info = a.source_processor().semantic_tokens();
+        m_last_results.hl_info = a.take_semantic_tokens();
 
-    m_hc_map = hc_analyzer.take_hit_count_map();
+    m_last_results.hc_map = hc_analyzer.take_hit_count_map();
 
     return true;
 }
 
 const std::set<utils::resource::resource_location>& processor_file_impl::dependencies() { return m_dependencies; }
 
-const semantics::lines_info& processor_file_impl::get_hl_info() { return m_last_hl_info; }
+const semantics::lines_info& processor_file_impl::get_hl_info() { return m_last_results.hl_info; }
 
-const lsp::lsp_context* processor_file_impl::get_lsp_context() const
-{
-    if (m_last_analyzer)
-        return m_last_analyzer->context().lsp_ctx.get();
-
-    return nullptr;
-}
+const lsp::lsp_context* processor_file_impl::get_lsp_context() const { return m_last_results.lsp_context.get(); }
 
 const std::set<utils::resource::resource_location>& processor_file_impl::files_to_close() { return m_files_to_close; }
 
-const performance_metrics& processor_file_impl::get_metrics()
-{
-    if (m_last_analyzer)
-        return m_last_analyzer->get_metrics();
-    const static performance_metrics metrics;
-    return metrics;
-}
+const performance_metrics& processor_file_impl::get_metrics() { return m_last_results.metrics; }
 
 void processor_file_impl::erase_unused_cache_entries() { m_macro_cache.erase_unused(); }
 
@@ -169,8 +158,8 @@ bool processor_file_impl::should_collect_hl(context::hlasm_context* ctx) const
 
 bool processor_file_impl::has_lsp_info() const { return m_last_analyzer_with_lsp; }
 
-const std::vector<fade_message_s>& processor_file_impl::fade_messages() const { return *m_fade_messages; }
-const processing::hit_count_map& processor_file_impl::hit_count_map() const { return m_hc_map; }
+const std::vector<fade_message_s>& processor_file_impl::fade_messages() const { return *m_last_results.fade_messages; }
+const processing::hit_count_map& processor_file_impl::hit_count_map() const { return m_last_results.hc_map; }
 
 const file_location& processor_file_impl::get_location() const { return m_file->get_location(); }
 
@@ -182,12 +171,10 @@ bool processor_file_impl::current_version() const
 
 void processor_file_impl::update_source()
 {
-    m_last_analyzer.reset();
-    m_last_hl_info.clear();
+    m_last_results = {};
     used_files.clear();
     m_file = m_file_mngr.add_file(get_location());
     m_macro_cache = macro_cache(m_file_mngr, m_file);
-    m_hc_map.clear();
     diags().clear();
 }
 

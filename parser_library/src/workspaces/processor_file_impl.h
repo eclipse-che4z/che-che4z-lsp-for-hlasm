@@ -73,11 +73,19 @@ public:
 private:
     file_manager& m_file_mngr;
     std::shared_ptr<file> m_file;
-    std::unique_ptr<analyzer> m_last_analyzer;
     std::shared_ptr<context::id_storage> m_last_opencode_id_storage;
     bool m_last_analyzer_with_lsp = false;
 
-    semantics::lines_info m_last_hl_info;
+    struct
+    {
+        semantics::lines_info hl_info;
+        std::shared_ptr<lsp::lsp_context> lsp_context;
+        std::shared_ptr<const std::vector<fade_message_s>> fade_messages =
+            std::make_shared<const std::vector<fade_message_s>>();
+        performance_metrics metrics;
+        std::vector<virtual_file_handle> vf_handles;
+        processing::hit_count_map hc_map;
+    } m_last_results;
 
     std::atomic<bool>* m_cancel;
 
@@ -90,11 +98,6 @@ private:
         used_files;
 
     macro_cache m_macro_cache;
-
-    std::shared_ptr<const std::vector<fade_message_s>> m_fade_messages =
-        std::make_shared<const std::vector<fade_message_s>>();
-
-    processing::hit_count_map m_hc_map;
 
     bool should_collect_hl(context::hlasm_context* ctx = nullptr) const;
 };

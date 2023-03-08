@@ -38,7 +38,7 @@ void source_info_processor::process_hl_symbols(std::vector<token_info> symbols, 
 
 void source_info_processor::finish() { std::sort(hl_info_.lines.begin(), hl_info_.lines.end()); }
 
-const lines_info& source_info_processor::semantic_tokens() const { return hl_info_.lines; }
+lines_info source_info_processor::take_semantic_tokens() { return std::move(hl_info_.lines); }
 
 void source_info_processor::add_hl_symbol(token_info symbol)
 {

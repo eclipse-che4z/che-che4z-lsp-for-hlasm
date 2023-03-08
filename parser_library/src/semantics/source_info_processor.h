@@ -36,7 +36,7 @@ public:
     void add_hl_symbol(token_info symbol);
     void add_hl_symbol(token_info symbol, size_t continue_column);
 
-    const lines_info& semantic_tokens() const;
+    lines_info take_semantic_tokens();
 
     // finishes collected data
     void finish();
