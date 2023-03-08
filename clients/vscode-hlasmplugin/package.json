@@ -23,7 +23,7 @@
     "ibm assembler"
   ],
   "activationEvents": [
-    "*"
+    "onStartupFinished"
   ],
   "icon": "resources/logo.png",
   "main": "./lib/extension.js",
