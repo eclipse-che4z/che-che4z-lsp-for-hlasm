@@ -9,7 +9,7 @@
 # HLASM Language Support
 HLASM Language Support is an IDE extension that supports the High Level Assembler language. It provides code completion, highlighting and navigation features, shows mistakes in the source, retrieval of dependencies from mainframe data sets, and enables you to trace how the conditional assembly is evaluated with a modern debugging experience.
 
-HLASM Language Support is part of the Che4z open-source project. Feel free to contribute at our [Github repository](https://github.com/eclipse/che-che4z-lsp-for-hlasm/). For project documentation, see the [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/). 
+HLASM Language Support is part of the Che4z open-source project. Feel free to contribute at our [GitHub repository](https://github.com/eclipse/che-che4z-lsp-for-hlasm/). For project documentation, see the [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/). 
 
 HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack), an all-round package that offers a modern experience for mainframe application developers, including extensions for language support, data editing, testing, and source code management.
 
@@ -35,7 +35,7 @@ For more information about the Zowe Explorer extension, see [Zowe Explorer](http
 
 Follow these steps to open a HLASM project:
 
-1. In **File** -> **Open Folder...** select the folder with the HLASM sources. An example workspace is provided in the folder `example_workspace`.
+1. In **File** -> **Open Folder...** select the folder with the HLASM sources. You can download and open an <nobr>`example workspace`</nobr> from our [GitHub repository](https://github.com/eclipse/che-che4z-lsp-for-hlasm/tree/master/example_workspace).
 2. Open any HLASM source file (note that HLASM does not have a standard filename extension) or create a new file.
 3. If the auto-detection of HLASM language does not recognize the file, set it manually in the bottom-right corner of the VS Code window.  
 4. The extension is now enabled on the open file. If you have macro definitions in separate files or use the COPY instruction, you must set up a workspace.
@@ -104,7 +104,7 @@ Breakpoints can be set before or during the debugging session.
 ### External Macro Libraries and COPY Members
 The HLASM Language Support extension looks for locally stored members when a macro call or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the `.hlasmplugin` folder of the currently open workspace:
 
-- `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries that are defined by a list of directories (some of which can be optional). Additionaly, some assembler options can be specified in `asm_options` sections (`SYSPARM`, `SYSTEM_ID` and others).
+- `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries that are defined by a list of directories (some of which can be optional). Additionally, some assembler options can be specified in `asm_options` sections (`SYSPARM`, `SYSTEM_ID` and others).
 
 - `pgm_conf.json` provides a mapping between programs (open-code files) and processor groups. It specifies which list of directories is used with which program. 
 
