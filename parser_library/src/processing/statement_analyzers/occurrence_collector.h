@@ -12,12 +12,12 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef PROCESSING_OCCURENCE_COLLECTOR_H
-#define PROCESSING_OCCURENCE_COLLECTOR_H
+#ifndef PROCESSING_OCCURRENCE_COLLECTOR_H
+#define PROCESSING_OCCURRENCE_COLLECTOR_H
 
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/mach_expr_visitor.h"
-#include "lsp/symbol_occurence.h"
+#include "lsp/symbol_occurrence.h"
 #include "semantics/operand_visitor.h"
 
 namespace hlasm_plugin::parser_library::context {
@@ -26,20 +26,20 @@ class hlasm_context;
 
 namespace hlasm_plugin::parser_library::processing {
 
-class occurence_collector : public semantics::operand_visitor,
-                            public expressions::mach_expr_visitor,
-                            public expressions::ca_expr_visitor
+class occurrence_collector : public semantics::operand_visitor,
+                             public expressions::mach_expr_visitor,
+                             public expressions::ca_expr_visitor
 {
 public:
-    lsp::occurence_kind collector_kind;
+    lsp::occurrence_kind collector_kind;
     context::hlasm_context& hlasm_ctx;
-    std::vector<lsp::symbol_occurence>& occurences;
+    std::vector<lsp::symbol_occurrence>& occurrences;
     bool evaluated_model;
 
 
-    occurence_collector(lsp::occurence_kind collector_kind,
+    occurrence_collector(lsp::occurrence_kind collector_kind,
         context::hlasm_context& hlasm_ctx,
-        lsp::occurence_storage& storage,
+        lsp::occurrence_storage& storage,
         bool evaluated_model);
 
     void visit(const semantics::empty_operand& op) override;
@@ -58,11 +58,11 @@ public:
     void visit(const semantics::macro_operand_chain& op) override;
     void visit(const semantics::macro_operand_string& op) override;
 
-    void get_occurence(const semantics::variable_symbol& var);
-    void get_occurence(const semantics::seq_sym& seq);
-    void get_occurence(context::id_index ord, const range& ord_range);
-    void get_occurence(const semantics::concat_chain& chain);
-    void get_occurence(const semantics::literal_si& var);
+    void get_occurrence(const semantics::variable_symbol& var);
+    void get_occurrence(const semantics::seq_sym& seq);
+    void get_occurrence(context::id_index ord, const range& ord_range);
+    void get_occurrence(const semantics::concat_chain& chain);
+    void get_occurrence(const semantics::literal_si& var);
 
 private:
     void visit(const expressions::mach_expr_constant& expr) override;

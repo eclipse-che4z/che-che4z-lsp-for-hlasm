@@ -23,9 +23,9 @@
 #include "context/special_instructions.h"
 #include "lsp/lsp_context.h"
 #include "lsp/text_data_view.h"
-#include "occurence_collector.h"
+#include "occurrence_collector.h"
 #include "processing/statement.h"
-#include "processing/statement_analyzers/occurence_collector.h"
+#include "processing/statement_analyzers/occurrence_collector.h"
 #include "processing/statement_processors/copy_processing_info.h"
 #include "processing/statement_processors/macrodef_processing_info.h"
 #include "processing/statement_processors/macrodef_processor.h"
@@ -78,12 +78,12 @@ bool lsp_analyzer::analyze(const context::hlasm_statement& statement,
     switch (proc_kind)
     {
         case processing_kind::ORDINARY:
-            collect_occurences(lsp::occurence_kind::ORD, statement, evaluated_model);
-            collect_occurences(lsp::occurence_kind::INSTR, statement, evaluated_model);
+            collect_occurrences(lsp::occurrence_kind::ORD, statement, evaluated_model);
+            collect_occurrences(lsp::occurrence_kind::INSTR, statement, evaluated_model);
             if (prov_kind != statement_provider_kind::MACRO) // macros already processed during macro def processing
             {
-                collect_occurences(lsp::occurence_kind::VAR, statement, evaluated_model);
-                collect_occurences(lsp::occurence_kind::SEQ, statement, evaluated_model);
+                collect_occurrences(lsp::occurrence_kind::VAR, statement, evaluated_model);
+                collect_occurrences(lsp::occurrence_kind::SEQ, statement, evaluated_model);
                 if (resolved_stmt)
                 {
                     collect_var_definition(*resolved_stmt);
@@ -95,18 +95,18 @@ bool lsp_analyzer::analyze(const context::hlasm_statement& statement,
             if (resolved_stmt)
                 update_macro_nest(*resolved_stmt);
             if (macro_nest_ > 1)
-                break; // Do not collect occurences in nested macros to avoid collecting occurences multiple times
+                break; // Do not collect occurrences in nested macros to avoid collecting occurrences multiple times
             if (statement.kind == context::statement_kind::DEFERRED)
-                collect_occurences(lsp::occurence_kind::INSTR_LIKE, statement, evaluated_model);
+                collect_occurrences(lsp::occurrence_kind::INSTR_LIKE, statement, evaluated_model);
             else if (resolved_stmt)
             {
                 if (const auto& instr = statement.access_resolved()->instruction_ref();
                     instr.type == semantics::instruction_si_type::ORD
                     && context::instruction_resolved_during_macro_parsing(std::get<context::id_index>(instr.value)))
-                    collect_occurences(lsp::occurence_kind::INSTR, statement, evaluated_model);
+                    collect_occurrences(lsp::occurrence_kind::INSTR, statement, evaluated_model);
             }
-            collect_occurences(lsp::occurence_kind::VAR, statement, evaluated_model);
-            collect_occurences(lsp::occurence_kind::SEQ, statement, evaluated_model);
+            collect_occurrences(lsp::occurrence_kind::VAR, statement, evaluated_model);
+            collect_occurrences(lsp::occurrence_kind::SEQ, statement, evaluated_model);
             if (resolved_stmt)
                 collect_copy_operands(*resolved_stmt, evaluated_model);
             break;
@@ -114,7 +114,7 @@ bool lsp_analyzer::analyze(const context::hlasm_statement& statement,
             break;
     }
 
-    assign_statement_occurences(hlasm_ctx_.current_statement_location().resource_loc);
+    assign_statement_occurrences(hlasm_ctx_.current_statement_location().resource_loc);
 
     return false;
 }
@@ -136,12 +136,12 @@ const expressions::mach_expr_symbol* get_single_mach_symbol(const semantics::ope
 
 void lsp_analyzer::analyze(const semantics::preprocessor_statement_si& statement)
 {
-    collect_occurences(lsp::occurence_kind::ORD, statement);
+    collect_occurrences(lsp::occurrence_kind::ORD, statement);
 
     if (const auto& operands = statement.m_details.operands; statement.m_copylike && operands.size() == 1)
         add_copy_operand(hlasm_ctx_.ids().add(operands.front().name), operands.front().r, false);
 
-    assign_statement_occurences(hlasm_ctx_.opencode_location());
+    assign_statement_occurrences(hlasm_ctx_.opencode_location());
 }
 
 void lsp_analyzer::macrodef_started(const macrodef_start_data& data)
@@ -158,16 +158,16 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
 {
     if (!result.invalid)
     {
-        // add instruction occurence of macro name
+        // add instruction occurrence of macro name
         const auto& macro_file = macrodef->definition_location.resource_loc;
-        macro_occurences_[macro_file].emplace_back(macrodef->id, macrodef, result.prototype.macro_name_range);
+        macro_occurrences_[macro_file].emplace_back(macrodef->id, macrodef, result.prototype.macro_name_range);
 
         auto m_i = std::make_shared<lsp::macro_info>(result.external,
             location(result.prototype.macro_name_range.start, macro_file),
             std::move(macrodef),
             std::move(result.variable_symbols),
             std::move(result.file_scopes),
-            std::move(macro_occurences_));
+            std::move(macro_occurrences_));
 
         if (result.external)
             lsp_ctx_.add_macro(std::move(m_i), lsp::text_data_view(file_text_));
@@ -176,7 +176,7 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
     }
 
     in_macro_ = false;
-    macro_occurences_.clear();
+    macro_occurrences_.clear();
 }
 
 void lsp_analyzer::copydef_finished(context::copy_member_ptr copydef, copy_processing_result&&)
@@ -187,118 +187,120 @@ void lsp_analyzer::copydef_finished(context::copy_member_ptr copydef, copy_proce
 void lsp_analyzer::opencode_finished(workspaces::parse_lib_provider& libs)
 {
     lsp_ctx_.add_opencode(
-        std::make_unique<lsp::opencode_info>(std::move(opencode_var_defs_), std::move(opencode_occurences_)),
+        std::make_unique<lsp::opencode_info>(std::move(opencode_var_defs_), std::move(opencode_occurrences_)),
         lsp::text_data_view(file_text_),
         libs);
 }
 
-void lsp_analyzer::assign_statement_occurences(const utils::resource::resource_location& doc_location)
+void lsp_analyzer::assign_statement_occurrences(const utils::resource::resource_location& doc_location)
 {
     if (in_macro_)
     {
-        auto& file_occs = macro_occurences_[doc_location];
-        file_occs.insert(
-            file_occs.end(), std::move_iterator(stmt_occurences_.begin()), std::move_iterator(stmt_occurences_.end()));
+        auto& file_occs = macro_occurrences_[doc_location];
+        file_occs.insert(file_occs.end(),
+            std::move_iterator(stmt_occurrences_.begin()),
+            std::move_iterator(stmt_occurrences_.end()));
     }
     else
     {
-        auto& file_occs = opencode_occurences_[doc_location];
-        file_occs.insert(
-            file_occs.end(), std::move_iterator(stmt_occurences_.begin()), std::move_iterator(stmt_occurences_.end()));
+        auto& file_occs = opencode_occurrences_[doc_location];
+        file_occs.insert(file_occs.end(),
+            std::move_iterator(stmt_occurrences_.begin()),
+            std::move_iterator(stmt_occurrences_.end()));
     }
-    stmt_occurences_.clear();
+    stmt_occurrences_.clear();
 }
 
-void lsp_analyzer::collect_occurences(
-    lsp::occurence_kind kind, const context::hlasm_statement& statement, bool evaluated_model)
+void lsp_analyzer::collect_occurrences(
+    lsp::occurrence_kind kind, const context::hlasm_statement& statement, bool evaluated_model)
 {
-    occurence_collector collector(kind, hlasm_ctx_, stmt_occurences_, evaluated_model);
+    occurrence_collector collector(kind, hlasm_ctx_, stmt_occurrences_, evaluated_model);
 
     if (auto def_stmt = statement.access_deferred())
     {
-        collect_occurence(def_stmt->label_ref(), collector);
-        collect_occurence(def_stmt->instruction_ref(), collector);
-        collect_occurence(def_stmt->deferred_ref(), collector);
+        collect_occurrence(def_stmt->label_ref(), collector);
+        collect_occurrence(def_stmt->instruction_ref(), collector);
+        collect_occurrence(def_stmt->deferred_ref(), collector);
     }
     else if (auto res_stmt = statement.access_resolved())
     {
-        collect_occurence(res_stmt->label_ref(), collector);
-        collect_occurence(res_stmt->instruction_ref(), collector);
-        collect_occurence(res_stmt->operands_ref(), collector);
+        collect_occurrence(res_stmt->label_ref(), collector);
+        collect_occurrence(res_stmt->instruction_ref(), collector);
+        collect_occurrence(res_stmt->operands_ref(), collector);
     }
 }
 
-void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const semantics::preprocessor_statement_si& statement)
+void lsp_analyzer::collect_occurrences(lsp::occurrence_kind kind, const semantics::preprocessor_statement_si& statement)
 {
     const bool evaluated_model = false;
 
-    occurence_collector collector(kind, hlasm_ctx_, stmt_occurences_, evaluated_model);
+    occurrence_collector collector(kind, hlasm_ctx_, stmt_occurrences_, evaluated_model);
     const auto& details = statement.m_details;
 
-    collector.occurences.emplace_back(
-        lsp::occurence_kind::ORD, hlasm_ctx_.ids().add(details.label.name), details.label.r, evaluated_model);
+    collector.occurrences.emplace_back(
+        lsp::occurrence_kind::ORD, hlasm_ctx_.ids().add(details.label.name), details.label.r, evaluated_model);
 
-    collector.occurences.emplace_back(lsp::occurence_kind::INSTR,
+    collector.occurrences.emplace_back(lsp::occurrence_kind::INSTR,
         hlasm_ctx_.ids().add(details.instruction.nr.name),
         details.instruction.nr.r,
         evaluated_model);
 
     for (const auto& ops : details.operands)
-        collector.occurences.emplace_back(
-            lsp::occurence_kind::ORD, hlasm_ctx_.ids().add(ops.name), ops.r, evaluated_model);
+        collector.occurrences.emplace_back(
+            lsp::occurrence_kind::ORD, hlasm_ctx_.ids().add(ops.name), ops.r, evaluated_model);
 }
 
-void lsp_analyzer::collect_occurence(const semantics::label_si& label, occurence_collector& collector)
+void lsp_analyzer::collect_occurrence(const semantics::label_si& label, occurrence_collector& collector)
 {
     switch (label.type)
     {
         case semantics::label_si_type::CONC:
-            collector.get_occurence(std::get<semantics::concat_chain>(label.value));
+            collector.get_occurrence(std::get<semantics::concat_chain>(label.value));
             break;
         case semantics::label_si_type::ORD:
-            collector.get_occurence(std::get<semantics::ord_symbol_string>(label.value).symbol, label.field_range);
+            collector.get_occurrence(std::get<semantics::ord_symbol_string>(label.value).symbol, label.field_range);
             break;
         case semantics::label_si_type::SEQ:
-            collector.get_occurence(std::get<semantics::seq_sym>(label.value));
+            collector.get_occurrence(std::get<semantics::seq_sym>(label.value));
             break;
         case semantics::label_si_type::VAR:
-            collector.get_occurence(*std::get<semantics::vs_ptr>(label.value));
+            collector.get_occurrence(*std::get<semantics::vs_ptr>(label.value));
             break;
         default:
             break;
     }
 }
 
-void lsp_analyzer::collect_occurence(const semantics::instruction_si& instruction, occurence_collector& collector)
+void lsp_analyzer::collect_occurrence(const semantics::instruction_si& instruction, occurrence_collector& collector)
 {
     if (instruction.type == semantics::instruction_si_type::CONC)
-        collector.get_occurence(std::get<semantics::concat_chain>(instruction.value));
+        collector.get_occurrence(std::get<semantics::concat_chain>(instruction.value));
     else if (instruction.type == semantics::instruction_si_type::ORD
-        && collector.collector_kind == lsp::occurence_kind::INSTR)
+        && collector.collector_kind == lsp::occurrence_kind::INSTR)
     {
         auto opcode = hlasm_ctx_.get_operation_code(
             std::get<context::id_index>(instruction.value)); // TODO: collect the instruction at the right time
         auto* macro_def = std::get_if<context::macro_def_ptr>(&opcode.opcode_detail);
         if (!opcode.opcode.empty() || macro_def)
-            collector.occurences.emplace_back(
+            collector.occurrences.emplace_back(
                 opcode.opcode, macro_def ? std::move(*macro_def) : context::macro_def_ptr {}, instruction.field_range);
     }
     else if (instruction.type == semantics::instruction_si_type::ORD
-        && collector.collector_kind == lsp::occurence_kind::INSTR_LIKE)
+        && collector.collector_kind == lsp::occurrence_kind::INSTR_LIKE)
     {
         if (const auto& op = std::get<context::id_index>(instruction.value); !op.empty())
-            collector.occurences.emplace_back(lsp::occurence_kind::INSTR_LIKE, op, instruction.field_range, false);
+            collector.occurrences.emplace_back(lsp::occurrence_kind::INSTR_LIKE, op, instruction.field_range, false);
     }
 }
 
-void lsp_analyzer::collect_occurence(const semantics::operands_si& operands, occurence_collector& collector)
+void lsp_analyzer::collect_occurrence(const semantics::operands_si& operands, occurrence_collector& collector)
 {
     std::for_each(operands.value.begin(), operands.value.end(), [&](const auto& op) { op->apply(collector); });
 }
 
-void lsp_analyzer::collect_occurence(const semantics::deferred_operands_si& operands, occurence_collector& collector)
+void lsp_analyzer::collect_occurrence(const semantics::deferred_operands_si& operands, occurrence_collector& collector)
 {
-    std::for_each(operands.vars.begin(), operands.vars.end(), [&](const auto& v) { collector.get_occurence(*v); });
+    std::for_each(operands.vars.begin(), operands.vars.end(), [&](const auto& v) { collector.get_occurrence(*v); });
 }
 
 bool lsp_analyzer::is_LCL_GBL(
@@ -403,13 +405,13 @@ void lsp_analyzer::add_var_def(const semantics::variable_symbol* var, context::S
 void lsp_analyzer::add_copy_operand(context::id_index name, const range& operand_range, bool evaluated_model)
 {
     // find ORD occurrence of COPY_OP
-    lsp::symbol_occurence occ(lsp::occurence_kind::ORD, name, operand_range, evaluated_model);
-    auto ord_sym = std::find(stmt_occurences_.begin(), stmt_occurences_.end(), occ);
+    lsp::symbol_occurrence occ(lsp::occurrence_kind::ORD, name, operand_range, evaluated_model);
+    auto ord_sym = std::find(stmt_occurrences_.begin(), stmt_occurrences_.end(), occ);
 
-    if (ord_sym != stmt_occurences_.end())
-        ord_sym->kind = lsp::occurence_kind::COPY_OP;
+    if (ord_sym != stmt_occurrences_.end())
+        ord_sym->kind = lsp::occurrence_kind::COPY_OP;
     else
-        stmt_occurences_.emplace_back(lsp::occurence_kind::COPY_OP, name, operand_range, evaluated_model);
+        stmt_occurrences_.emplace_back(lsp::occurrence_kind::COPY_OP, name, operand_range, evaluated_model);
 }
 
 void lsp_analyzer::update_macro_nest(const processing::resolved_statement& statement)

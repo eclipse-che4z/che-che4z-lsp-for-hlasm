@@ -64,7 +64,7 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
     std::vector<semantics::literal_si> literals;
 
     const auto& [format, opcode] = status;
-    if (format.occurence == processing::operand_occurence::ABSENT
+    if (format.occurrence == processing::operand_occurrence::ABSENT
         || format.form == processing::processing_form::UNKNOWN)
         h.op_rem_body_noop();
     else

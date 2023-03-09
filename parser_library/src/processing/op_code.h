@@ -43,15 +43,15 @@ using processing_status = std::pair<processing_format, op_code>;
 class processing_status_cache_key
 {
     processing_form form;
-    operand_occurence occurence;
+    operand_occurrence occurrence;
     unsigned char is_alias : 1, loctr_len : 7;
     unsigned char rel_addr;
 
 public:
     friend bool operator==(processing_status_cache_key l, processing_status_cache_key r)
     {
-        return l.form == r.form && l.occurence == r.occurence && l.is_alias == r.is_alias && l.loctr_len == r.loctr_len
-            && l.rel_addr == r.rel_addr;
+        return l.form == r.form && l.occurrence == r.occurrence && l.is_alias == r.is_alias
+            && l.loctr_len == r.loctr_len && l.rel_addr == r.rel_addr;
     }
     friend bool operator!=(processing_status_cache_key l, processing_status_cache_key r) { return !(l == r); }
 

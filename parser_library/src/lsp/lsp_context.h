@@ -63,11 +63,11 @@ class lsp_context final
     struct document_symbol_cache
     {
         std::unordered_map<utils::resource::resource_location,
-            std::vector<std::pair<symbol_occurence, vector_set<context::id_index>>>,
+            std::vector<std::pair<symbol_occurrence, vector_set<context::id_index>>>,
             utils::resource::resource_location_hasher>
-            occurences;
+            occurrences;
 
-        std::unordered_map<const file_info*, std::vector<const symbol_occurence*>> occurences_by_name;
+        std::unordered_map<const file_info*, std::vector<const symbol_occurrence*>> occurrences_by_name;
     };
 
 public:
@@ -100,18 +100,18 @@ public:
 private:
     void add_file(file_info file_i);
     void distribute_macro_i(macro_info_ptr macro_i);
-    void distribute_file_occurences(const file_occurences_t& occurences);
+    void distribute_file_occurrences(const file_occurrences_t& occurrences);
 
-    occurence_scope_t find_occurence_with_scope(
+    occurrence_scope_t find_occurrence_with_scope(
         const utils::resource::resource_location& document_loc, position pos) const;
 
-    std::optional<location> find_definition_location(const symbol_occurence& occ,
+    std::optional<location> find_definition_location(const symbol_occurrence& occ,
         macro_info_ptr macro_i,
         const utils::resource::resource_location& document_loc,
         position pos) const;
     location find_symbol_definition_location(
         const context::symbol& sym, const utils::resource::resource_location& document_loc, position pos) const;
-    std::string find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const;
+    std::string find_hover(const symbol_occurrence& occ, macro_info_ptr macro_i) const;
 
     completion_list_source complete_var(const file_info& file, position pos) const;
     completion_list_source complete_seq(const file_info& file, position pos) const;
@@ -125,7 +125,7 @@ private:
         long long& limit,
         document_symbol_cache& cache) const;
     void document_symbol_copy(document_symbol_list_s& result,
-        const std::vector<symbol_occurence>& occurence_list,
+        const std::vector<symbol_occurrence>& occurrence_list,
         const utils::resource::resource_location& document_loc,
         std::optional<range> r,
         long long& limit) const;
@@ -134,18 +134,18 @@ private:
         long long& limit,
         document_symbol_cache& cache) const;
 
-    const std::vector<std::pair<symbol_occurence, vector_set<context::id_index>>>& copy_occurences(
+    const std::vector<std::pair<symbol_occurrence, vector_set<context::id_index>>>& copy_occurrences(
         const utils::resource::resource_location& document_loc, document_symbol_cache& cache) const;
     void fill_cache(
-        std::vector<std::pair<symbol_occurence, lsp_context::vector_set<context::id_index>>>& copy_occurences,
+        std::vector<std::pair<symbol_occurrence, lsp_context::vector_set<context::id_index>>>& copy_occurrences,
         const utils::resource::resource_location& document_loc,
         document_symbol_cache& cache) const;
-    std::span<const symbol_occurence* const> get_occurences_by_name(
+    std::span<const symbol_occurrence* const> get_occurrences_by_name(
         const file_info& document, context::id_index name, document_symbol_cache& cache) const;
 
     void modify_with_copy(document_symbol_list_s& modified,
         context::id_index sym_name,
-        const std::vector<std::pair<symbol_occurence, lsp_context::vector_set<context::id_index>>>& copy_occs,
+        const std::vector<std::pair<symbol_occurrence, lsp_context::vector_set<context::id_index>>>& copy_occs,
         const document_symbol_kind kind,
         long long& limit) const;
     std::string find_macro_copy_id(const std::vector<context::processing_frame>& stack, unsigned long i) const;

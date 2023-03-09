@@ -16,7 +16,7 @@
 #define LSP_MACRO_INFO_H
 
 #include "context/macro.h"
-#include "symbol_occurence.h"
+#include "symbol_occurrence.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
@@ -98,8 +98,8 @@ struct macro_slice_t
 using file_scopes_t = std::unordered_map<utils::resource::resource_location,
     std::vector<lsp::macro_slice_t>,
     utils::resource::resource_location_hasher>;
-using file_occurences_t = std::
-    unordered_map<utils::resource::resource_location, occurence_storage, utils::resource::resource_location_hasher>;
+using file_occurrences_t = std::
+    unordered_map<utils::resource::resource_location, occurrence_storage, utils::resource::resource_location_hasher>;
 
 class lsp_context;
 
@@ -110,20 +110,20 @@ struct macro_info
     context::macro_def_ptr macro_definition;
     vardef_storage var_definitions;
     file_scopes_t file_scopes_;
-    file_occurences_t file_occurences_;
+    file_occurrences_t file_occurrences_;
 
     macro_info(bool external,
         location definition_location,
         context::macro_def_ptr macro_definition,
         vardef_storage var_definitions,
         file_scopes_t file_scopes,
-        file_occurences_t file_occurences)
+        file_occurrences_t file_occurrences)
         : external(external)
         , definition_location(std::move(definition_location))
         , macro_definition(std::move(macro_definition))
         , var_definitions(std::move(var_definitions))
         , file_scopes_(std::move(file_scopes))
-        , file_occurences_(std::move(file_occurences))
+        , file_occurrences_(std::move(file_occurrences))
     {}
 };
 

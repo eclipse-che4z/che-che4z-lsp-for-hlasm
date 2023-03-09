@@ -128,7 +128,7 @@ const semantics::remarks_si literal_pool::literal_postponed_statement::empty_rem
 const semantics::label_si literal_pool::literal_postponed_statement::empty_label(range {});
 const semantics::instruction_si literal_pool::literal_postponed_statement::empty_instr(range {});
 const processing::processing_format literal_pool::literal_postponed_statement::dc_format(
-    processing::processing_kind::ORDINARY, processing::processing_form::ASM, processing::operand_occurence::PRESENT);
+    processing::processing_kind::ORDINARY, processing::processing_form::ASM, processing::operand_occurrence::PRESENT);
 
 void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using, const library_info& li)
 {

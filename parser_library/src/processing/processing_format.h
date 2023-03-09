@@ -39,7 +39,7 @@ enum class processing_form : uint8_t
     UNKNOWN
 };
 
-enum class operand_occurence : uint8_t
+enum class operand_occurrence : uint8_t
 {
     PRESENT,
     ABSENT
@@ -49,20 +49,20 @@ enum class operand_occurence : uint8_t
 struct processing_format
 {
     processing_format(
-        processing_kind kind, processing_form form, operand_occurence occurence = operand_occurence::PRESENT)
+        processing_kind kind, processing_form form, operand_occurrence occurrence = operand_occurrence::PRESENT)
         : kind(kind)
         , form(form)
-        , occurence(occurence)
+        , occurrence(occurrence)
     {}
 
     bool operator==(const processing_format& oth) const
     {
-        return kind == oth.kind && form == oth.form && occurence == oth.occurence;
+        return kind == oth.kind && form == oth.form && occurrence == oth.occurrence;
     }
 
     processing_kind kind;
     processing_form form;
-    operand_occurence occurence;
+    operand_occurrence occurrence;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

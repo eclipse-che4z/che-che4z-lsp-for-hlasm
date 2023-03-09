@@ -110,7 +110,7 @@ void members_statement_provider::fill_cache(context::statement_cache& cache,
 {
     context::statement_cache::cached_statement_t reparsed_stmt { {}, filter_cached_diagnostics(*def_stmt) };
 
-    if (status.first.occurence == operand_occurence::ABSENT || status.first.form == processing_form::UNKNOWN
+    if (status.first.occurrence == operand_occurrence::ABSENT || status.first.form == processing_form::UNKNOWN
         || status.first.form == processing_form::IGNORED)
     {
         semantics::operands_si op(def_stmt->deferred_ref().field_range, semantics::operand_list());

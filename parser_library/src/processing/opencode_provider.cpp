@@ -339,7 +339,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
             *op_text, *m_ctx->hlasm_ctx, diags, semantics::range_provider(), op_range, proc_status, false);
 
         const auto& [format, opcode] = proc_status;
-        if (format.occurence == operand_occurence::ABSENT || format.form == processing_form::UNKNOWN)
+        if (format.occurrence == operand_occurrence::ABSENT || format.form == processing_form::UNKNOWN)
             h.op_rem_body_noop();
         else
         {

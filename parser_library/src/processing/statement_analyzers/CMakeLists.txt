@@ -15,7 +15,7 @@ target_sources(parser_library PRIVATE
 	hit_count_analyzer.h
 	lsp_analyzer.cpp
 	lsp_analyzer.h
-	occurence_collector.cpp
-	occurence_collector.h
+	occurrence_collector.cpp
+	occurrence_collector.h
 	statement_analyzer.h
 )

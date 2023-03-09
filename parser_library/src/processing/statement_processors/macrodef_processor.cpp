@@ -127,13 +127,13 @@ processing_status macrodef_processor::get_macro_processing_status(
         {
             processing_format format(processing_kind::MACRO,
                 processing_form::CA,
-                (*ca_instr)->operandless() ? operand_occurence::ABSENT : operand_occurence::PRESENT);
+                (*ca_instr)->operandless() ? operand_occurrence::ABSENT : operand_occurrence::PRESENT);
 
             return std::make_pair(format, op_code(code.opcode, context::instruction_type::CA));
         }
         else if (code.opcode == context::id_storage::well_known::COPY)
         {
-            processing_format format(processing_kind::MACRO, processing_form::ASM, operand_occurence::PRESENT);
+            processing_format format(processing_kind::MACRO, processing_form::ASM, operand_occurrence::PRESENT);
 
             return std::make_pair(format, op_code(code.opcode, context::instruction_type::ASM));
         }
@@ -141,7 +141,7 @@ processing_status macrodef_processor::get_macro_processing_status(
 
     if (instruction.type == semantics::instruction_si_type::EMPTY)
     {
-        processing_format format(processing_kind::MACRO, processing_form::CA, operand_occurence::ABSENT);
+        processing_format format(processing_kind::MACRO, processing_form::CA, operand_occurrence::ABSENT);
 
         return std::make_pair(format, op_code(context::id_index(), context::instruction_type::CA));
     }
@@ -390,7 +390,7 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
         std::vector<semantics::literal_si>());
 
     auto empty = std::make_unique<resolved_statement_impl>(std::move(empty_sem),
-        processing_status(processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT),
+        processing_status(processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurrence::ABSENT),
             op_code(context::id_storage::well_known::ANOP, context::instruction_type::CA)));
 
     result_.definition.push_back(std::move(empty));

@@ -27,7 +27,7 @@ target_sources(library_test PRIVATE
 	lookahead_test.cpp
 	mach_instr_test.cpp
 	multiple_preprocessors_test.cpp
-	occurence_collector_test.cpp
+	occurrence_collector_test.cpp
 	opsyn_test.cpp
 	org_test.cpp
 	preprocessor_utils_test.cpp

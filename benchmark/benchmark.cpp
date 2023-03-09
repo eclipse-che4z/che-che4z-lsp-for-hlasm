@@ -48,8 +48,8 @@
  * - Open Code Statements     - number of statements parsed in open code
  * - Copy Statements          - number of statements parsed in copy files (includes multiple uses of the same copy file)
  * - Macro Statements         - number of statements parsed in macro files (includes multiple uses of the same macro)
- * - Copy Def Statements      - number of statements defined in copy files (only the first occurence of the copy file)
- * - Macro Def Statements     - number of statements defined in macro files (only the first occurence of the macro)
+ * - Copy Def Statements      - number of statements defined in copy files (only the first occurrence of the copy file)
+ * - Macro Def Statements     - number of statements defined in macro files (only the first occurrence of the macro)
  * - Lookahead Statements     - number of statements processed in lookahead mode
  * - Reparsed Statements      - number of statements that were reparsed later (e.g. model statements)
  * - Continued Statements     - number of statements that were continued (multiple continuations of one statement count

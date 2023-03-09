@@ -204,19 +204,19 @@ TEST_F(lsp_context_var_symbol_no_definition, hover)
     EXPECT_EQ(res, "");
 }
 
-TEST_F(lsp_context_var_symbol_no_definition, definition_no_occurence)
+TEST_F(lsp_context_var_symbol_no_definition, definition_no_occurrence)
 {
     auto res = a.context().lsp_ctx->definition(opencode_loc, { 0, 9 });
     check_location_with_position(res, opencode_loc, 0, 9);
 }
 
-TEST_F(lsp_context_var_symbol_no_definition, references_no_occurence)
+TEST_F(lsp_context_var_symbol_no_definition, references_no_occurrence)
 {
     auto res = a.context().lsp_ctx->references(opencode_loc, { 0, 9 });
     ASSERT_EQ(res.size(), 0U);
 }
 
-TEST_F(lsp_context_var_symbol_no_definition, hover_no_occurence)
+TEST_F(lsp_context_var_symbol_no_definition, hover_no_occurrence)
 {
     auto res = a.context().lsp_ctx->hover(opencode_loc, { 0, 9 });
 

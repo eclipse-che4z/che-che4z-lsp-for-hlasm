@@ -27,11 +27,11 @@ using opencode_info_ptr = std::unique_ptr<opencode_info>;
 struct opencode_info
 {
     vardef_storage variable_definitions;
-    file_occurences_t file_occurences;
+    file_occurrences_t file_occurrences;
 
-    opencode_info(vardef_storage variable_definitions, file_occurences_t file_occurences)
+    opencode_info(vardef_storage variable_definitions, file_occurrences_t file_occurrences)
         : variable_definitions(std::move(variable_definitions))
-        , file_occurences(std::move(file_occurences))
+        , file_occurrences(std::move(file_occurrences))
     {}
 };
 

@@ -22,7 +22,7 @@
 #include "context/copy_member.h"
 #include "context/macro.h"
 #include "lsp/macro_info.h"
-#include "lsp/symbol_occurence.h"
+#include "lsp/symbol_occurrence.h"
 #include "processing/processing_format.h"
 #include "processing/statement_providers/statement_provider_kind.h"
 #include "statement_analyzer.h"
@@ -46,7 +46,7 @@ struct macrodef_processing_result;
 struct macrodef_start_data;
 struct resolved_statement;
 
-class occurence_collector;
+class occurrence_collector;
 } // namespace hlasm_plugin::parser_library::processing
 
 namespace hlasm_plugin::parser_library::semantics {
@@ -77,12 +77,12 @@ class lsp_analyzer : public statement_analyzer
 
     bool in_macro_ = false;
     size_t macro_nest_ = 1;
-    lsp::file_occurences_t macro_occurences_;
+    lsp::file_occurrences_t macro_occurrences_;
 
-    lsp::file_occurences_t opencode_occurences_;
+    lsp::file_occurrences_t opencode_occurrences_;
     lsp::vardef_storage opencode_var_defs_;
 
-    lsp::occurence_storage stmt_occurences_;
+    lsp::occurrence_storage stmt_occurrences_;
 
 public:
     lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx, std::string_view file_text);
@@ -104,15 +104,16 @@ public:
     void opencode_finished(workspaces::parse_lib_provider& libs);
 
 private:
-    void assign_statement_occurences(const utils::resource::resource_location& doc_location);
+    void assign_statement_occurrences(const utils::resource::resource_location& doc_location);
 
-    void collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement, bool evaluated_model);
-    void collect_occurences(lsp::occurence_kind kind, const semantics::preprocessor_statement_si& statement);
+    void collect_occurrences(
+        lsp::occurrence_kind kind, const context::hlasm_statement& statement, bool evaluated_model);
+    void collect_occurrences(lsp::occurrence_kind kind, const semantics::preprocessor_statement_si& statement);
 
-    void collect_occurence(const semantics::label_si& label, occurence_collector& collector);
-    void collect_occurence(const semantics::instruction_si& instruction, occurence_collector& collector);
-    void collect_occurence(const semantics::operands_si& operands, occurence_collector& collector);
-    void collect_occurence(const semantics::deferred_operands_si& operands, occurence_collector& collector);
+    void collect_occurrence(const semantics::label_si& label, occurrence_collector& collector);
+    void collect_occurrence(const semantics::instruction_si& instruction, occurrence_collector& collector);
+    void collect_occurrence(const semantics::operands_si& operands, occurrence_collector& collector);
+    void collect_occurrence(const semantics::deferred_operands_si& operands, occurrence_collector& collector);
 
     void collect_var_definition(const processing::resolved_statement& statement);
     void collect_copy_operands(const processing::resolved_statement& statement, bool evaluated_model);

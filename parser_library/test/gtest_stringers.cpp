@@ -18,7 +18,7 @@
 
 #include "location.h"
 #include "lsp/completion_item.h"
-#include "lsp/symbol_occurence.h"
+#include "lsp/symbol_occurrence.h"
 #include "protocol.h"
 
 namespace hlasm_plugin::parser_library {
@@ -55,10 +55,10 @@ std::ostream& operator<<(std::ostream& stream, const performance_metrics& item)
 
 namespace hlasm_plugin::parser_library::lsp {
 
-std::ostream& operator<<(std::ostream& stream, const symbol_occurence& item)
+std::ostream& operator<<(std::ostream& stream, const symbol_occurrence& item)
 {
     return stream << "{ kind: " << (int)item.kind << "\n name: " << item.name.to_string_view()
-                  << "\n range: " << item.occurence_range << " }";
+                  << "\n range: " << item.occurrence_range << " }";
 }
 
 std::ostream& operator<<(std::ostream& stream, const lsp::completion_item_s& item)

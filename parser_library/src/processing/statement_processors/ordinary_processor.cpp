@@ -172,7 +172,7 @@ struct processing_status_visitor
     context::id_index id;
     context::hlasm_context& hlasm_ctx;
 
-    processing_status return_value(processing_form f, operand_occurence o, context::instruction_type t) const
+    processing_status return_value(processing_form f, operand_occurrence o, context::instruction_type t) const
     {
         return std::make_pair(processing_format(processing_kind::ORDINARY, f, o), op_code(id, t));
     }
@@ -182,25 +182,25 @@ struct processing_status_visitor
         const auto f = id == context::id_index("DC") || id == context::id_index("DS") || id == context::id_index("DXD")
             ? processing_form::DAT
             : processing_form::ASM;
-        const auto o = i->max_operands() == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT;
+        const auto o = i->max_operands() == 0 ? operand_occurrence::ABSENT : operand_occurrence::PRESENT;
         return return_value(f, o, context::instruction_type::ASM);
     }
     processing_status operator()(const context::machine_instruction* i) const
     {
         return return_value(processing_form::MACH,
-            i->operands().empty() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            i->operands().empty() ? operand_occurrence::ABSENT : operand_occurrence::PRESENT,
             context::instruction_type::MACH);
     }
     processing_status operator()(const context::ca_instruction* i) const
     {
         return return_value(processing_form::CA,
-            i->operandless() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            i->operandless() ? operand_occurrence::ABSENT : operand_occurrence::PRESENT,
             context::instruction_type::CA);
     }
     processing_status operator()(const context::mnemonic_code* i) const
     {
         return return_value(processing_form::MACH,
-            i->operand_count().second == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            i->operand_count().second == 0 ? operand_occurrence::ABSENT : operand_occurrence::PRESENT,
             context::instruction_type::MACH);
     }
     template<typename T>
@@ -226,7 +226,7 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
     {
         if (instruction.empty())
             return std::make_pair(
-                processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT),
+                processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurrence::ABSENT),
                 op_code(context::id_index(), context::instruction_type::CA));
         else
             return std::nullopt;

@@ -25,7 +25,7 @@
 
 #include "context/copy_member.h"
 #include "macro_info.h"
-#include "symbol_occurence.h"
+#include "symbol_occurrence.h"
 #include "text_data_view.h"
 #include "utils/resource_location.h"
 
@@ -73,7 +73,7 @@ class file_info;
 
 using file_info_ptr = std::unique_ptr<file_info>;
 
-using occurence_scope_t = std::pair<const symbol_occurence*, macro_info_ptr>;
+using occurrence_scope_t = std::pair<const symbol_occurrence*, macro_info_ptr>;
 
 class file_info
 {
@@ -93,22 +93,22 @@ public:
 
     static bool is_in_range(const position& pos, const range& r);
 
-    occurence_scope_t find_occurence_with_scope(position pos) const;
+    occurrence_scope_t find_occurrence_with_scope(position pos) const;
     macro_info_ptr find_scope(position pos) const;
     static std::vector<position> find_references(
-        const symbol_occurence& occurence, const std::vector<symbol_occurence>& occurences);
+        const symbol_occurrence& occurrence, const std::vector<symbol_occurrence>& occurrences);
 
-    void update_occurences(const occurence_storage& occurences_upd);
+    void update_occurrences(const occurrence_storage& occurrences_upd);
     void update_slices(const std::vector<file_slice_t>& slices);
-    const std::vector<symbol_occurence>& get_occurences() const;
+    const std::vector<symbol_occurrence>& get_occurrences() const;
     void process_occurrences();
     void collect_instruction_like_references(
         std::unordered_map<context::id_index, utils::resource::resource_location>& m) const;
 
 private:
     std::map<line_range, file_slice_t> slices;
-    std::vector<symbol_occurence> occurences;
-    std::vector<size_t> occurences_start_limit;
+    std::vector<symbol_occurrence> occurrences;
+    std::vector<size_t> occurrences_start_limit;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

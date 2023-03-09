@@ -24,7 +24,7 @@ target_sources(parser_library PRIVATE
 	lsp_context.h
 	macro_info.h
 	opencode_info.h
-	symbol_occurence.h
+	symbol_occurrence.h
 	text_data_view.cpp
 	text_data_view.h
 )

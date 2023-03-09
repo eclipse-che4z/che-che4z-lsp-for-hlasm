@@ -147,7 +147,7 @@ auto tie_completion_item(const lsp::completion_item_s& lhs)
     return std::tie(lhs.label, lhs.detail, lhs.insert_text, lhs.documentation, lhs.kind);
 }
 
-void sort_occurence_vector(std::vector<lsp::completion_item_s>& v)
+void sort_occurrence_vector(std::vector<lsp::completion_item_s>& v)
 {
     std::sort(v.begin(), v.end(), [](const lsp::completion_item_s& lhs, const lsp::completion_item_s rhs) {
         return tie_completion_item(lhs) < tie_completion_item(rhs);

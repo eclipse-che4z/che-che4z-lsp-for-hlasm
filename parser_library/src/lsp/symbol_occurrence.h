@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef LSP_SYMBOL_OCCURENCE_H
-#define LSP_SYMBOL_OCCURENCE_H
+#ifndef LSP_SYMBOL_OCCURRENCE_H
+#define LSP_SYMBOL_OCCURRENCE_H
 
 #include <vector>
 
@@ -23,7 +23,7 @@
 
 namespace hlasm_plugin::parser_library::lsp {
 
-enum class occurence_kind
+enum class occurrence_kind
 {
     ORD,
     VAR,
@@ -33,44 +33,44 @@ enum class occurence_kind
     COPY_OP
 };
 
-struct symbol_occurence
+struct symbol_occurrence
 {
-    occurence_kind kind;
+    occurrence_kind kind;
     bool evaluated_model = false;
     context::id_index name;
-    range occurence_range;
+    range occurrence_range;
 
     // in case of INSTR kind, holds potential macro opcode
     context::macro_def_ptr opcode = nullptr;
 
-    symbol_occurence(occurence_kind kind, context::id_index name, const range& occurence_range, bool evaluated_model)
+    symbol_occurrence(occurrence_kind kind, context::id_index name, const range& occurrence_range, bool evaluated_model)
         : kind(kind)
         , evaluated_model(evaluated_model)
         , name(name)
-        , occurence_range(occurence_range)
+        , occurrence_range(occurrence_range)
     {}
 
-    symbol_occurence(context::id_index name, context::macro_def_ptr opcode, const range& occurence_range)
-        : kind(occurence_kind::INSTR)
+    symbol_occurrence(context::id_index name, context::macro_def_ptr opcode, const range& occurrence_range)
+        : kind(occurrence_kind::INSTR)
         , name(name)
-        , occurence_range(occurence_range)
+        , occurrence_range(occurrence_range)
         , opcode(std::move(opcode))
     {}
 
-    // returns true, if this occurence kind depends on a scope
-    bool is_scoped() const { return kind == occurence_kind::SEQ || kind == occurence_kind::VAR; }
+    // returns true, if this occurrence kind depends on a scope
+    bool is_scoped() const { return kind == occurrence_kind::SEQ || kind == occurrence_kind::VAR; }
 
-    bool is_similar(const symbol_occurence& occ) const
+    bool is_similar(const symbol_occurrence& occ) const
     {
-        using enum occurence_kind;
+        using enum occurrence_kind;
         return kind == occ.kind && name == occ.name && opcode == occ.opcode
             || name == occ.name && (kind == INSTR_LIKE && occ.kind == INSTR || kind == INSTR && occ.kind == INSTR_LIKE);
     }
 
-    bool operator==(const symbol_occurence&) const noexcept = default;
+    bool operator==(const symbol_occurrence&) const noexcept = default;
 };
 
-using occurence_storage = std::vector<symbol_occurence>;
+using occurrence_storage = std::vector<symbol_occurrence>;
 
 } // namespace hlasm_plugin::parser_library::lsp
 
