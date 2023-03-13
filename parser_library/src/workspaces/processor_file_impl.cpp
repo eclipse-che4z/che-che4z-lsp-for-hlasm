@@ -63,7 +63,7 @@ bool processor_file_impl::parse(parse_lib_provider& lib_provider,
     processing::hit_count_analyzer hc_analyzer(new_analyzer.hlasm_ctx());
     new_analyzer.register_stmt_analyzer(&hc_analyzer);
 
-    for (auto a = new_analyzer.co_analyze(); !a.done(); a())
+    for (auto a = new_analyzer.co_analyze(); !a.done(); a.resume())
     {
         if (m_cancel && m_cancel->load(std::memory_order_relaxed))
             return false;
@@ -116,7 +116,7 @@ bool processor_file_impl::parse_macro(parse_lib_provider& lib_provider, analyzin
     processing::hit_count_analyzer hc_analyzer(a.hlasm_ctx());
     a.register_stmt_analyzer(&hc_analyzer);
 
-    for (auto co_a = a.co_analyze(); !co_a.done(); co_a())
+    for (auto co_a = a.co_analyze(); !co_a.done(); co_a.resume())
     {
         if (m_cancel && m_cancel->load(std::memory_order_relaxed))
             return false;

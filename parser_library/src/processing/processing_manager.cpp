@@ -110,7 +110,7 @@ bool processing_manager::step()
 
     if (helper_task_.valid())
     {
-        helper_task_();
+        helper_task_.resume();
         if (helper_task_.done())
             helper_task_ = {};
         return true;
@@ -161,7 +161,7 @@ utils::task processing_manager::co_step()
             proc.process_statement(std::move(stmt));
         }
 
-        co_await utils::task::suspend();
+        co_await utils::task::yield();
     }
 }
 
@@ -378,7 +378,8 @@ std::optional<bool> processing_manager::request_external_processing(
 void processing_manager::schedule_helper_task(utils::task t)
 {
     assert(!helper_task_.valid());
-    helper_task_ = std::move(t);
+    if (!t.done())
+        helper_task_ = std::move(t);
 }
 
 void processing_manager::start_macro_definition(

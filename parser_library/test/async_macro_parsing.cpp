@@ -80,7 +80,7 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
                 auto& [nested_a, task] = m_nested_analyzers.back();
                 if (!task.done())
                 {
-                    task();
+                    task.resume();
                     continue;
                 }
 
@@ -89,7 +89,7 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
                 m_nested_analyzers.pop_back();
                 continue;
             }
-            main();
+            main.resume();
         }
     }
 };

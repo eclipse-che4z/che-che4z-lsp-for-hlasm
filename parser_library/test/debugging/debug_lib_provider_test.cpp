@@ -54,10 +54,10 @@ protected:
                     nested_analyzers.pop_back();
                     continue;
                 }
-                na();
+                na.resume();
                 continue;
             }
-            main();
+            main.resume();
         }
     }
 };

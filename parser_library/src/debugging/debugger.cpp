@@ -178,7 +178,7 @@ public:
 
         if (const auto& a = analyzers.back(); !a.done())
         {
-            a();
+            a.resume();
             return true;
         }
 
