@@ -47,14 +47,14 @@ async function primeExtension(): Promise<vscode.Disposable[]> {
 }
 
 export async function run(): Promise<void> {
-	const is_vscode = process.execPath.includes('Code');
+	const is_theia = 'THEIA_PARENT_PID' in process.env;
 
 	// Create the mocha test
 	const mocha = new Mocha({ ui: 'tdd', color: true });
 	const testsPath = path.join(__dirname, '..');
 
 	const files = await new Promise<string[]>((resolve, reject) => {
-		glob((is_vscode) ? '**/**.test.js' : '**/integration.test.js', { cwd: testsPath }, (err, files) => {
+		glob((!is_theia) ? '**/**.test.js' : '**/integration.test.js', { cwd: testsPath }, (err, files) => {
 			if (err)
 				reject(err);
 			else
@@ -71,7 +71,7 @@ export async function run(): Promise<void> {
 		// Run the mocha test
 		mocha.run(failures => {
 			if (failures > 0) {
-				if (!is_vscode)
+				if (is_theia)
 					console.error('>>>THEIA TESTS FAILED<<<');
 				reject(new Error(`${failures} tests failed.`));
 			} else {
@@ -80,6 +80,6 @@ export async function run(): Promise<void> {
 		});
 	}).finally(() => { toDispose.forEach(d => d.dispose()) });
 
-	if (!is_vscode)
+	if (is_theia)
 		console.log('>>>THEIA TESTS PASSED<<<');
 }
