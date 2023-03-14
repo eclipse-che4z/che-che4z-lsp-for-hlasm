@@ -2,6 +2,12 @@
 
 ## ****Unreleased****
 
+#### Added
+
+#### Fixed
+- Operands no longer classified as remarks when instruction or macro is not recognized
+- New or changed files are parsed only when they are opened in the editor
+
 ## [1.7.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.6.0...1.7.0) (2023-03-08)
 
 #### Added
@@ -12,7 +18,6 @@
 #### Fixed
 - Large macro documentation is not highlighted correctly in hover texts
 - Support for concatenated assembler names in DB2 statements
-- Operands no longer classified as remarks when instruction or macro is not recognized
 
 ## [1.6.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.5.0...1.6.0) (2023-01-18)
 

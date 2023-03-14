@@ -1,6 +1,6 @@
 // A launch configuration that compiles the extension and then opens it inside a new window
 {
-    "version": "0.1.0",
+    "version": "0.2.0",
     "configurations": [
         {
             "name": "Extension Tests",
@@ -8,12 +8,15 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-              "${workspaceFolder}/lib/test/workspace/",
-              "--disable-extensions",
-              "--extensionDevelopmentPath=${workspaceFolder}",
-              "--extensionTestsPath=${workspaceFolder}/lib/test/suite/index"
+                "${workspaceFolder}/lib/test/workspace/",
+                "--disable-extensions",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/lib/test/suite/index"
             ],
-            "outFiles": ["${workspaceFolder}/lib/test/**/*.js"],
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/lib/**/*.js"
+            ],
             "preLaunchTask": "prepareTest"
         },
         {
@@ -21,10 +24,13 @@
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
-            "args": ["--extensionDevelopmentPath=${workspaceRoot}" ],
-            "stopOnEntry": false,
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}"
+            ],
             "sourceMaps": true,
-            "outFiles": [ "${workspaceRoot}lib/extension.js" ],
+            "outFiles": [
+                "${workspaceFolder}/lib/**/*.js"
+            ],
             "preLaunchTask": "npm"
         }
     ]

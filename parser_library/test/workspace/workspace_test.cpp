@@ -228,8 +228,6 @@ label
 
 std::string source_using_macro_file_no_error = R"( CORRECT)";
 
-const char* faulty_macro_path = "lib/ERROR";
-const char* correct_macro_path = "lib/CORRECT";
 const std::string hlasmplugin_folder = ".hlasmplugin";
 
 const resource_location empty_loc = resource_location("");
@@ -239,8 +237,8 @@ const resource_location pgm_conf_loc(hlasmplugin_folder + "/pgm_conf.json");
 const resource_location source1_loc("source1");
 const resource_location source2_loc("source2");
 const resource_location source3_loc("source3");
-const resource_location faulty_macro_loc(faulty_macro_path);
-const resource_location correct_macro_loc(correct_macro_path);
+const resource_location faulty_macro_loc("lib/ERROR");
+const resource_location correct_macro_loc("lib/CORRECT");
 } // namespace
 
 class file_manager_extended : public file_manager_impl
@@ -380,17 +378,14 @@ TEST_F(workspace_test, did_change_watched_files)
     workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
     ws.open();
 
-    // no diagnostics with no syntax errors
     ws.did_open_file(source3_loc);
     EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
 
-    // remove the macro, there should still be 1 diagnostic E049 that the ERROR was not found
     file_manager.insert_correct_macro = false;
     ws.did_change_watched_files({ correct_macro_loc });
     ASSERT_EQ(collect_and_get_diags_size(ws), (size_t)1);
     EXPECT_STREQ(diags()[0].code.c_str(), "E049");
 
-    // put it back and make some change in the source file, the diagnostic will disappear
     file_manager.insert_correct_macro = true;
     ws.did_change_watched_files({ correct_macro_loc });
     std::vector<document_change> changes;
@@ -398,6 +393,19 @@ TEST_F(workspace_test, did_change_watched_files)
     changes.push_back(document_change({ { 0, 0 }, { 0, 0 } }, new_text.c_str(), new_text.size()));
     ws.did_change_file(source3_loc, changes.data(), changes.size());
     ASSERT_EQ(collect_and_get_diags_size(ws), (size_t)0);
+}
+
+TEST_F(workspace_test, did_change_watched_files_not_opened_file)
+{
+    file_manager_extended file_manager;
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    ws.open();
+
+    ws.did_open_file(source3_loc);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
+
+    ws.did_change_watched_files({ faulty_macro_loc });
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
 }
 
 TEST_F(workspace_test, diagnostics_recollection)

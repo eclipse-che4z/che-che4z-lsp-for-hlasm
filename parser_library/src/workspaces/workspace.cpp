@@ -456,7 +456,7 @@ workspace_file_info workspace::parse_file(
         if (trigger_reparse(file_location))
             files_to_parse = collect_dependants(file_location);
 
-        if (files_to_parse.empty())
+        if (files_to_parse.empty() && opened_files_.contains(file_location))
         {
             if (!this_file)
                 this_file = &add_processor_file_impl(file_location);
