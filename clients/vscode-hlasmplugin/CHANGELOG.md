@@ -7,6 +7,7 @@
 #### Fixed
 - Operands no longer classified as remarks when instruction or macro is not recognized
 - New or changed files are parsed only when they are opened in the editor
+- High CPU usage while going to the symbol definition
 
 ## [1.7.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/1.6.0...1.7.0) (2023-03-08)
 

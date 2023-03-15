@@ -30,6 +30,7 @@ import { blockCommentCommand, CommentOption, lineCommentCommand } from './commen
 import { HLASMCodeActionsProvider } from './hlasmCodeActionsProvider';
 import { hlasmplugin_folder } from './constants';
 import { ConfigurationsHandler } from './configurationsHandler';
+import { getLanguageClientMiddleware } from './languageClientMiddleware';
 
 export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
 
@@ -80,7 +81,8 @@ export async function activate(context: vscode.ExtensionContext) {
                 vscode.workspace.createFileSystemWatcher(hlasmplugin_folder + '/*.json'),
             ]
         },
-        errorHandler: clientErrorHandler
+        errorHandler: clientErrorHandler,
+        middleware: getLanguageClientMiddleware(),
     };
 
 
