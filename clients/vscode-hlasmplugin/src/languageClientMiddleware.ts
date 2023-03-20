@@ -28,17 +28,23 @@ export function getLanguageClientMiddleware(): Middleware {
     }>();
     const timeout = 50;
 
+    const sendOpenNotification = (uri: string) => {
+        const didOpenEvent = pendingOpens.get(uri);
+        if (didOpenEvent) {
+            pendingOpens.delete(uri);
+            didOpenEvent.clearTimeout();
+            didOpenEvent.send();
+
+            return true;
+        }
+        return false;
+    };
+
     return {
         didOpen: (data, next) => {
             const uri = data.uri.toString();
 
-            const didOpenEvent = pendingOpens.get(uri);
-            if (didOpenEvent) {
-                console.error('Double open detected for', uri);
-                pendingOpens.delete(uri);
-                didOpenEvent.clearTimeout();
-                didOpenEvent.send();
-            }
+            sendOpenNotification(uri) && console.error('Double open detected for', uri);
 
             const timerId = setTimeout(() => {
                 pendingOpens.delete(uri);
@@ -50,13 +56,7 @@ export function getLanguageClientMiddleware(): Middleware {
             });
         },
         didChange: (data, next) => {
-            const uri = data.document.uri.toString();
-            const didOpenEvent = pendingOpens.get(uri);
-            if (didOpenEvent) {
-                pendingOpens.delete(uri);
-                didOpenEvent.clearTimeout();
-                didOpenEvent.send();
-            }
+            sendOpenNotification(data.document.uri.toString());
             next(data);
         },
         didClose: (data, next) => {
@@ -68,6 +68,30 @@ export function getLanguageClientMiddleware(): Middleware {
             }
             else
                 next(data);
+        },
+        provideDefinition: (document, position, token, next) => {
+            sendOpenNotification(document.uri.toString());
+            return next(document, position, token);
+        },
+        provideReferences: (document, position, token, options, next) => {
+            sendOpenNotification(document.uri.toString());
+            return next(document, position, token, options);
+        },
+        provideHover: (document, position, token, next) => {
+            sendOpenNotification(document.uri.toString());
+            return next(document, position, token);
+        },
+        provideCompletionItem: (document, position, context, token, next) => {
+            sendOpenNotification(document.uri.toString());
+            return next(document, position, context, token);
+        },
+        provideDocumentSemanticTokens: (document, token, next) => {
+            sendOpenNotification(document.uri.toString());
+            return next(document, token);
+        },
+        provideDocumentSymbols: (document, token, next) => {
+            sendOpenNotification(document.uri.toString());
+            return next(document, token);
         },
     };
 }
