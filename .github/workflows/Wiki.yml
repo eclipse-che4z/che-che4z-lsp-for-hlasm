@@ -23,6 +23,8 @@ jobs:
   docs-to-wiki:
     name: Publish documentation to wiki
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout base code
