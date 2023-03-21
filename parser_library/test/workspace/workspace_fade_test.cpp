@@ -173,15 +173,7 @@ TEST_P(opencode_general_fixture, opencode)
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
-
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
 }
 
 namespace {
@@ -229,15 +221,7 @@ $x
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
-
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
 }
 
 TEST_P(opencode_macros_fixture, macros_opencode_no_section)
@@ -297,15 +281,7 @@ X        DS F
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
-
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
 }
 
 namespace {
@@ -358,15 +334,7 @@ $x
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
-
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
 }
 
 namespace {
@@ -445,15 +413,7 @@ $x
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
-
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
 }
 
 namespace {
@@ -502,15 +462,7 @@ $x
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
-
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
 }
 
 namespace {
@@ -602,15 +554,7 @@ $x
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
-
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
 }
 
 namespace {
@@ -788,15 +732,7 @@ $x
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
-
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
 }
 
 namespace {
@@ -844,15 +780,7 @@ LABEL    L 1,1
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
-
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
 }
 
 namespace {
@@ -924,15 +852,7 @@ $x
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
-
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
 }
 
 namespace {
@@ -1064,15 +984,7 @@ SYM      DS XL8
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
-
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
 }
 
 namespace {
@@ -1118,15 +1030,199 @@ SYM      DS XL8
     });
 
     EXPECT_TRUE(contains_message_codes(collect_and_get_diags(), GetParam().diag_message_codes));
+    EXPECT_TRUE(matches_fade_messages(fms, GetParam().expected_fade_messages));
+}
 
-    const auto& expected_msgs = GetParam().expected_fade_messages;
-    EXPECT_TRUE(std::is_permutation(fms.begin(),
-        fms.end(),
-        expected_msgs.begin(),
-        expected_msgs.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+namespace {
+class file_manager_impl_test : public file_manager_impl
+{
+    std::optional<std::string> get_file_content(const resource_location& rl) const override
+    {
+        if (rl.get_uri().ends_with("proc_grps.json"))
+            return proc_grps;
+
+        if (rl.get_uri().ends_with("pgm_conf.json"))
+            return pgm_conf;
+
+        return std::nullopt;
+    }
+
+    list_directory_result list_directory_files(const resource_location& directory) const override
+    {
+        list_directory_result result;
+
+        for (const auto& [file_rl, _] : get_files())
+        {
+            auto rel_path = file_rl.lexically_relative(directory);
+            if (rel_path.empty() || rel_path.lexically_out_of_scope())
+                continue;
+
+            if (const auto& filename = rel_path.get_uri(); filename.find('/') == std::string::npos)
+                result.first.emplace_back(std::make_pair(filename, file_rl));
+        }
+
+        result.second = hlasm_plugin::utils::path::list_directory_rc::done;
+
+        return result;
+    }
+
+private:
+    inline static const std::string proc_grps = R"({
+  "pgroups": [
+    {
+      "name": "GRP1",
+      "libs": [""]
+    }
+  ]
+})";
+
+    inline static const std::string pgm_conf = R"({
+  "pgms": [
+    {
+      "program": "A.hlasm",
+      "pgroup": "GRP1",
+      "asm_options": {
+        "SYSPARM": "A"
+      }
+    },
+    {
+      "program": "B.hlasm",
+      "pgroup": "GRP1",
+      "asm_options": {
+        "SYSPARM": "B"
+      }
+    },
+    {
+      "program": "C.hlasm",
+      "pgroup": "GRP1",
+      "asm_options": {
+        "SYSPARM": "C"
+      }
+    }
+  ]
+})";
+};
+
+class fade_helper
+{
+public:
+    struct files_details
+    {
+        resource_location rl;
+        bool is_cpybook;
+        workspaces::open_file_result open_file_res;
+    };
+
+    fade_helper(const std::vector<files_details>& files_to_open)
+    {
+        for (const auto& [rl, is_cpybook, _] : files_to_open)
+            m_fm.did_open_file(rl, 1, is_cpybook ? cpybook : source_template);
+
+        ws.open();
+        for (const auto& [rl, _, open_file_res] : files_to_open)
+            ws.did_open_file(rl, open_file_res);
+    }
+
+    std::vector<fade_message_s>& fade_messages()
+    {
+        m_fmsgs.clear();
+        ws.retrieve_fade_messages(m_fmsgs);
+        return m_fmsgs;
+    }
+
+    void did_close_file(resource_location rl) { ws.did_close_file(rl); }
+    void did_open_file(resource_location rl)
+    {
+        m_fm.did_open_file(rl, 1, source_template);
+        ws.did_open_file(rl);
+    }
+
+
+private:
+    const static inline std::string source_template = R"(
+         CSECT
+         COPY  C)";
+
+    const static inline std::string cpybook = R"(
+         CSECT
+         AGO   .SKIP
+         ANOP
+.SKIP    AIF   ('&SYSPARM' EQ 'A').A
+         AIF   ('&SYSPARM' EQ 'B').B
+         MNOTE 'C'
+         AGO   .END
+
+.A       ANOP
+         MNOTE 'A'
+         AGO   .END
+.B       ANOP
+         MNOTE 'B'
+         AGO   .END
+
+.END     ANOP
+)";
+
+    file_manager_impl_test m_fm;
+    const lib_config m_empty_config;
+    const shared_json m_global_settings = make_empty_shared_json();
+    workspace ws = workspace(m_fm, m_empty_config, m_global_settings);
+    std::vector<fade_message_s> m_fmsgs;
+};
+} // namespace
+
+TEST(fade, cpybook_as_pgm)
+{
+    static const resource_location srcA_loc("A.hlasm");
+    static const resource_location srcB_loc("B.hlasm");
+    static const resource_location srcC_loc("C.hlasm");
+
+    fade_helper fh(std::vector<fade_helper::files_details>({
+        fade_helper::files_details { srcA_loc, false, workspaces::open_file_result::changed_content },
+        fade_helper::files_details { srcB_loc, false, workspaces::open_file_result::changed_content },
+        fade_helper::files_details { srcC_loc, true, workspaces::open_file_result::changed_lsp },
+    }));
+
+    EXPECT_TRUE(matches_fade_messages(fh.fade_messages(),
+        std::vector<fade_message_s>({
+            fade_message_s::inactive_statement("C.hlasm", range(position(3, 0), position(3, 80))),
+            fade_message_s::inactive_statement("C.hlasm", range(position(8, 0), position(8, 80))),
+            fade_message_s::inactive_statement("C.hlasm", range(position(15, 0), position(15, 80))),
+        })));
+
+    // Toggle open and close of a file a few times
+    fh.did_close_file(srcA_loc);
+    EXPECT_TRUE(matches_fade_messages(fh.fade_messages(),
+        std::vector<fade_message_s>({
+            fade_message_s::inactive_statement("C.hlasm", range(position(3, 0), position(3, 80))),
+            fade_message_s::inactive_statement("C.hlasm", range(position(8, 0), position(11, 80))),
+            fade_message_s::inactive_statement("C.hlasm", range(position(15, 0), position(15, 80))),
+        })));
+
+    fh.did_open_file(srcA_loc);
+    EXPECT_TRUE(matches_fade_messages(fh.fade_messages(),
+        std::vector<fade_message_s>({
+            fade_message_s::inactive_statement("C.hlasm", range(position(3, 0), position(3, 80))),
+            fade_message_s::inactive_statement("C.hlasm", range(position(8, 0), position(8, 80))),
+            fade_message_s::inactive_statement("C.hlasm", range(position(15, 0), position(15, 80))),
+        })));
+
+    fh.did_close_file(srcA_loc);
+    EXPECT_TRUE(matches_fade_messages(fh.fade_messages(),
+        std::vector<fade_message_s>({
+            fade_message_s::inactive_statement("C.hlasm", range(position(3, 0), position(3, 80))),
+            fade_message_s::inactive_statement("C.hlasm", range(position(8, 0), position(11, 80))),
+            fade_message_s::inactive_statement("C.hlasm", range(position(15, 0), position(15, 80))),
+        })));
+
+    fh.did_close_file(srcB_loc);
+    EXPECT_TRUE(matches_fade_messages(fh.fade_messages(),
+        std::vector<fade_message_s>({
+            fade_message_s::inactive_statement("C.hlasm", range(position(3, 0), position(3, 80))),
+            fade_message_s::inactive_statement("C.hlasm", range(position(8, 0), position(15, 80))),
+        })));
+
+    fh.did_close_file(srcC_loc);
+    EXPECT_EQ(fh.fade_messages().size(), static_cast<size_t>(0));
 }
 
 TEST(fade, preprocessor)

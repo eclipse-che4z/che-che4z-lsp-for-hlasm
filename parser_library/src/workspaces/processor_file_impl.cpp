@@ -72,13 +72,13 @@ bool processor_file_impl::parse(parse_lib_provider& lib_provider,
     diags().clear();
     collect_diags_from_child(new_analyzer);
 
-    m_last_analyzer_with_lsp = collect_hl;
+    m_last_opencode_analyzer_with_lsp = collect_hl;
     m_last_results.hl_info = new_analyzer.take_semantic_tokens();
     m_last_results.lsp_context = new_analyzer.context().lsp_ctx;
     m_last_results.fade_messages = std::move(fms);
     m_last_results.metrics = new_analyzer.get_metrics();
     m_last_results.vf_handles = new_analyzer.take_vf_handles();
-    m_last_results.hc_map = hc_analyzer.take_hit_count_map();
+    m_last_results.hc_opencode_map = hc_analyzer.take_hit_count_map();
 
     m_dependencies.clear();
     for (auto& file : new_analyzer.hlasm_ctx().get_visited_files())
@@ -126,11 +126,11 @@ bool processor_file_impl::parse_macro(parse_lib_provider& lib_provider, analyzin
     collect_diags_from_child(a);
 
     m_macro_cache.save_macro(cache_key, a);
-    m_last_analyzer_with_lsp = collect_hl;
+    m_last_macro_analyzer_with_lsp = collect_hl;
     if (collect_hl)
         m_last_results.hl_info = a.take_semantic_tokens();
 
-    m_last_results.hc_map = hc_analyzer.take_hit_count_map();
+    m_last_results.hc_macro_map = hc_analyzer.take_hit_count_map();
 
     return true;
 }
@@ -153,13 +153,24 @@ bool processor_file_impl::should_collect_hl(context::hlasm_context* ctx) const
     // 1) The file is opened in the editor
     // 2) HL information was previously requested
     // 3) this macro is a top-level macro
-    return m_file->get_lsp_editing() || m_last_analyzer_with_lsp || ctx && ctx->processing_stack().parent().empty();
+    return m_file->get_lsp_editing() || m_last_opencode_analyzer_with_lsp || m_last_macro_analyzer_with_lsp
+        || ctx && ctx->processing_stack().parent().empty();
 }
 
-bool processor_file_impl::has_lsp_info() const { return m_last_analyzer_with_lsp; }
+bool processor_file_impl::has_opencode_lsp_info() const { return m_last_opencode_analyzer_with_lsp; }
+bool processor_file_impl::has_macro_lsp_info() const { return m_last_macro_analyzer_with_lsp; }
 
 const std::vector<fade_message_s>& processor_file_impl::fade_messages() const { return *m_last_results.fade_messages; }
-const processing::hit_count_map& processor_file_impl::hit_count_map() const { return m_last_results.hc_map; }
+
+const processing::hit_count_map& processor_file_impl::hit_count_opencode_map() const
+{
+    return m_last_results.hc_opencode_map;
+}
+
+const processing::hit_count_map& processor_file_impl::hit_count_macro_map() const
+{
+    return m_last_results.hc_macro_map;
+}
 
 const file_location& processor_file_impl::get_location() const { return m_file->get_location(); }
 

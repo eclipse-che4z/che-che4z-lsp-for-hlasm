@@ -73,12 +73,17 @@ public:
     virtual const std::set<utils::resource::resource_location>& files_to_close() = 0;
     virtual const performance_metrics& get_metrics() = 0;
     virtual void erase_unused_cache_entries() = 0;
-    virtual bool has_lsp_info() const = 0;
+    virtual bool has_opencode_lsp_info() const = 0;
+    virtual bool has_macro_lsp_info() const = 0;
     virtual const std::vector<fade_message_s>& fade_messages() const = 0;
     virtual const std::unordered_map<utils::resource::resource_location,
         processing::hit_count_entry,
         utils::resource::resource_location_hasher>&
-    hit_count_map() const = 0;
+    hit_count_opencode_map() const = 0;
+    virtual const std::unordered_map<utils::resource::resource_location,
+        processing::hit_count_entry,
+        utils::resource::resource_location_hasher>&
+    hit_count_macro_map() const = 0;
     virtual const file_location& get_location() const = 0;
     virtual bool current_version() const = 0;
 

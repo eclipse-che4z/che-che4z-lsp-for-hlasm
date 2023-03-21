@@ -315,9 +315,16 @@ void workspace::retrieve_fade_messages(std::vector<fade_message_s>& fms) const
             std::back_inserter(fms),
             [&opened_files_uris](const auto& fmsg) { return opened_files_uris.contains(fmsg.uri); });
 
+        bool take_also_opencode_hc = true;
+        if (const auto& pf_rl = pf.get_location();
+            &get_proc_grp_by_program(pf_rl) == &implicit_proc_grp && is_dependency_(pf_rl))
+            take_also_opencode_hc = false;
+
         for (const auto& [opened_file_rl, __] : opened_files_)
         {
-            filter_and_emplace_hc_map(hc_map, pf.hit_count_map(), opened_file_rl);
+            filter_and_emplace_hc_map(hc_map, pf.hit_count_macro_map(), opened_file_rl);
+            if (take_also_opencode_hc)
+                filter_and_emplace_hc_map(hc_map, pf.hit_count_opencode_map(), opened_file_rl);
             filter_and_emplace_mac_cpy_definitions(active_rl_mac_cpy_map, pf.get_lsp_context(), opened_file_rl);
         }
     }
@@ -427,16 +434,40 @@ std::vector<workspace::processor_file_compoments*> workspace::collect_dependants
     return result;
 }
 
+void workspace::populate_files_to_parse(std::vector<processor_file_compoments*>& files_to_parse,
+    const utils::resource::resource_location& file_location,
+    open_file_result file_content_status)
+{
+    assert(file_content_status != open_file_result::identical);
+
+    // TODO: apparently just opening a file without changing it triggers reparse
+
+    if (file_content_status == open_file_result::changed_content && trigger_reparse(file_location))
+        files_to_parse = collect_dependants(file_location);
+
+    if (opened_files_.contains(file_location)
+        && (files_to_parse.empty() || &get_proc_grp_by_program(file_location) != &implicit_proc_grp))
+    {
+        if (file_content_status == open_file_result::changed_content)
+            files_to_parse.emplace_back(&add_processor_file_impl(file_location));
+        else if (auto proc_file = find_processor_file_impl(file_location); proc_file == nullptr)
+            files_to_parse.emplace_back(&add_processor_file_impl(file_location));
+        else if (!proc_file->m_processor_file->has_opencode_lsp_info())
+            files_to_parse.emplace_back(proc_file);
+    }
+}
+
 workspace_file_info workspace::parse_file(
     const utils::resource::resource_location& file_location, open_file_result file_content_status)
 {
     workspace_file_info ws_file_info;
 
+    if (file_content_status == open_file_result::identical)
+        return ws_file_info;
+
     // TODO: add support for hlasm to vscode (auto detection??) and do the decision based on languageid
     if (m_configuration.is_configuration_file(file_location))
     {
-        if (file_content_status == open_file_result::identical)
-            return {};
         if (m_configuration.parse_configuration_file(file_location) == parse_config_file_result::parsed)
             reparse_after_config_refresh();
         ws_file_info.config_parsing = true;
@@ -445,44 +476,27 @@ workspace_file_info workspace::parse_file(
 
     // TODO: what about removing files??? what if depentands_ points to not existing file?
     std::vector<processor_file_compoments*> files_to_parse;
+    populate_files_to_parse(files_to_parse, file_location, file_content_status);
 
-    // TODO: apparently just opening a file without changing it triggers reparse
-
-    if (processor_file_compoments* this_file = nullptr; file_content_status == open_file_result::changed_content
-        || file_content_status == open_file_result::changed_lsp
-            && !((this_file = find_processor_file_impl(file_location)) != nullptr
-                && this_file->m_processor_file->has_lsp_info()))
+    for (auto* component : files_to_parse)
     {
-        if (trigger_reparse(file_location))
-            files_to_parse = collect_dependants(file_location);
+        assert(component);
+        const auto& f = component->m_processor_file;
+        const auto& f_loc = f->get_location();
 
-        if (files_to_parse.empty() && opened_files_.contains(file_location))
-        {
-            if (!this_file)
-                this_file = &add_processor_file_impl(file_location);
-            files_to_parse.push_back(this_file);
-        }
+        if (auto opened_it = opened_files_.find(f_loc); opened_it != opened_files_.end())
+            opened_it->second.alternative_config = m_configuration.load_alternative_config_if_needed(f_loc);
 
-        for (auto* component : files_to_parse)
-        {
-            const auto& f = component->m_processor_file;
-            const auto& f_loc = component->m_processor_file->get_location();
+        workspace_parse_lib_provider ws_lib(*this, f_loc);
+        if (!f->parse(ws_lib, get_asm_options(f_loc), get_preprocessor_options(f_loc), &fm_vfm_))
+            continue;
 
-            auto alt_cfg = m_configuration.load_alternative_config_if_needed(f_loc);
-            if (auto opened_it = opened_files_.find(f_loc); opened_it != opened_files_.end())
-                opened_it->second.alternative_config = std::move(alt_cfg);
-
-            workspace_parse_lib_provider ws_lib(*this, f_loc);
-            if (!f->parse(ws_lib, get_asm_options(f_loc), get_preprocessor_options(f_loc), &fm_vfm_))
-                continue;
-
-            ws_file_info = parse_successful(*component, std::move(ws_lib));
-        }
-
-        // second check after all dependants are there to close all files that used to be dependencies
-        for (const auto* component : files_to_parse)
-            filter_and_close_dependencies_(component->m_processor_file->files_to_close(), component->m_processor_file);
+        ws_file_info = parse_successful(*component, std::move(ws_lib));
     }
+
+    // second check after all dependants are there to close all files that used to be dependencies
+    for (const auto* component : files_to_parse)
+        filter_and_close_dependencies_(component->m_processor_file->files_to_close(), component->m_processor_file);
 
     return ws_file_info;
 }
@@ -853,12 +867,11 @@ bool workspace::is_dependency_(const utils::resource::resource_location& file_lo
         auto fdependant = find_processor_file(dependant);
         if (!fdependant)
             continue;
-        for (auto& dependency : fdependant->dependencies())
-        {
-            if (dependency == file_location)
-                return true;
-        }
+
+        if (fdependant->dependencies().contains(file_location))
+            return true;
     }
+
     return false;
 }
 

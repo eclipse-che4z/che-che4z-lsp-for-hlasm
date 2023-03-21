@@ -203,6 +203,20 @@ inline bool contains_message_text(const std::vector<Msg>& d, const C& c)
     return contains_message_properties(d, c, &Msg::message);
 }
 
+inline bool matches_fade_messages(const std::vector<fade_message_s>& a, const std::vector<fade_message_s>& b)
+{
+    return std::is_permutation(a.begin(), a.end(), b.begin(), b.end(), [](const auto& msg_a, const auto& msg_b) {
+        return msg_a.code == msg_b.code && msg_a.r == msg_b.r && msg_a.uri == msg_b.uri;
+    });
+}
+
+inline bool contains_fade_messages(const std::vector<fade_message_s>& a, const std::vector<fade_message_s>& b)
+{
+    return std::includes(a.begin(), a.end(), b.begin(), b.end(), [](const auto& msg_a, const auto& msg_b) {
+        return msg_a.code == msg_b.code && msg_a.r == msg_b.r && msg_a.uri == msg_b.uri;
+    });
+}
+
 inline const section* get_section(hlasm_context& ctx, std::string name)
 {
     auto sect = ctx.ids().find(name);
