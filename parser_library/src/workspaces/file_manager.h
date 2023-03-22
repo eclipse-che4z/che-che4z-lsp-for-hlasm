@@ -23,15 +23,13 @@
 #include <utility>
 #include <vector>
 
-#include "diagnosable.h"
-#include "fade_messages.h"
-#include "file.h"
-#include "processor.h"
-#include "utils/general_hashers.h"
+#include "protocol.h"
 #include "utils/list_directory_rc.h"
 #include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
+
+class file;
 
 using list_directory_result =
     std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>, utils::path::list_directory_rc>;
@@ -48,13 +46,10 @@ class file_manager
 {
 public:
     // Adds a file with specified file name and returns it.
-    // If such processor file already exists, it is returned.
-    virtual std::shared_ptr<file> add_file(const file_location&) = 0;
-
-    virtual void remove_file(const file_location&) = 0;
+    virtual std::shared_ptr<file> add_file(const utils::resource::resource_location&) = 0;
 
     // Finds file with specified file name, return nullptr if not found.
-    virtual std::shared_ptr<file> find(const file_location& key) const = 0;
+    virtual std::shared_ptr<file> find(const utils::resource::resource_location& key) const = 0;
 
     // Returns list of all files in a directory. Returns associative array with pairs file name - file location.
     virtual list_directory_result list_directory_files(const utils::resource::resource_location& directory) const = 0;
@@ -69,10 +64,13 @@ public:
 
     virtual bool dir_exists(const utils::resource::resource_location& dir_loc) const = 0;
 
-    virtual open_file_result did_open_file(const file_location& document_loc, version_t version, std::string text) = 0;
-    virtual void did_change_file(
-        const file_location& document_loc, version_t version, const document_change* changes, size_t ch_size) = 0;
-    virtual void did_close_file(const file_location& document_loc) = 0;
+    virtual open_file_result did_open_file(
+        const utils::resource::resource_location& document_loc, version_t version, std::string text) = 0;
+    virtual void did_change_file(const utils::resource::resource_location& document_loc,
+        version_t version,
+        const document_change* changes,
+        size_t ch_size) = 0;
+    virtual void did_close_file(const utils::resource::resource_location& document_loc) = 0;
 
     virtual void put_virtual_file(
         unsigned long long id, std::string_view text, utils::resource::resource_location related_workspace) = 0;
@@ -80,9 +78,9 @@ public:
     virtual std::string get_virtual_file(unsigned long long id) const = 0;
     virtual utils::resource::resource_location get_virtual_file_workspace(unsigned long long id) const = 0;
 
-    virtual open_file_result update_file(const file_location& document_loc) = 0;
+    virtual open_file_result update_file(const utils::resource::resource_location& document_loc) = 0;
 
-    virtual std::optional<std::string> get_file_content(const utils::resource::resource_location&) const = 0;
+    virtual std::optional<std::string> get_file_content(const utils::resource::resource_location&) = 0;
 
 protected:
     ~file_manager() = default;

@@ -114,6 +114,29 @@ class debugger::impl final : public processing::statement_analyzer
 
     std::vector<utils::task> analyzers;
 
+    utils::task start_main_analyzer(std::string open_code_text,
+        debug_lib_provider debug_provider,
+        workspaces::file_manager_vfm vfm,
+        asm_option asm_opts,
+        std::vector<preprocessor_options> pp_opts,
+        utils::resource::resource_location open_code_location)
+    {
+        analyzer a(open_code_text,
+            analyzer_options {
+                std::move(open_code_location),
+                &debug_provider,
+                std::move(asm_opts),
+                std::move(pp_opts),
+                &vfm,
+            });
+
+        a.register_stmt_analyzer(this);
+
+        ctx_ = a.context().hlasm_ctx.get();
+
+        co_await a.co_analyze();
+    }
+
 public:
     impl() = default;
 
@@ -132,38 +155,14 @@ public:
         stop_on_next_stmt_ = stop_on_entry;
         stop_on_stack_changes_ = false;
 
-        const auto main_analyzer = [](std::string open_code_text,
-                                       debug_lib_provider debug_provider,
-                                       workspaces::file_manager_vfm vfm,
-                                       asm_option asm_opts,
-                                       std::vector<preprocessor_options> pp_opts,
-                                       utils::resource::resource_location open_code_location,
-                                       impl* self) -> utils::task {
-            analyzer a(open_code_text,
-                analyzer_options {
-                    std::move(open_code_location),
-                    &debug_provider,
-                    std::move(asm_opts),
-                    std::move(pp_opts),
-                    &vfm,
-                });
-
-            a.register_stmt_analyzer(self);
-
-            self->ctx_ = a.context().hlasm_ctx.get();
-
-            co_await a.co_analyze();
-        };
-
         auto& fm = workspace.get_file_manager();
         analyzers.clear();
-        analyzers.emplace_back(main_analyzer(std::move(open_code_text).value(),
+        analyzers.emplace_back(start_main_analyzer(std::move(open_code_text).value(),
             debug_lib_provider(workspace.get_libraries(open_code_location), fm, analyzers),
             workspaces::file_manager_vfm(fm, utils::resource::resource_location(workspace.uri())),
             workspace.get_asm_options(open_code_location),
             workspace.get_preprocessor_options(open_code_location),
-            open_code_location,
-            this));
+            open_code_location));
 
         return true;
     }

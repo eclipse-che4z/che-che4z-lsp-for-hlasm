@@ -16,6 +16,7 @@
 
 #include "../gtest_stringers.h"
 #include "../workspace/empty_configs.h"
+#include "library_mock.h"
 #include "lsp/lsp_context.h"
 #include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"
@@ -54,54 +55,34 @@ TEST(processor_file, parse_macro)
  SAM31
  MEND)");
 
-    processor_file_impl opencode(mngr.find(opencode_loc), mngr);
-    processor_file_impl macro(mngr.find(macro_loc), mngr);
+    using namespace ::testing;
+    shared_json global_settings = make_empty_shared_json();
+    lib_config config;
+    auto library = std::make_shared<NiceMock<library_mock>>();
+    workspace ws(mngr, config, global_settings, nullptr, library);
 
-    struct simple_provider : parse_lib_provider
-    {
-        processor_file_impl& macro_ref;
+    EXPECT_CALL(*library, has_file(std::string_view("MAC"), _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(macro_loc), Return(true)));
 
-        void parse_library(
-            std::string_view lib, analyzing_context ac, library_data ld, std::function<void(bool)> callback) override
-        {
-            EXPECT_EQ(lib, "MAC");
-
-            callback(macro_ref.parse_macro(*this, ac, ld));
-        }
-        bool has_library(std::string_view, resource_location*) const override { return false; }
-        void get_library(std::string_view,
-            std::function<void(std::optional<std::pair<std::string, resource_location>>)> callback) const override
-        {
-            callback(std::nullopt);
-        }
-
-        simple_provider(processor_file_impl& macro_ref)
-            : macro_ref(macro_ref)
-        {}
-
-    } provider(macro);
-
-    opencode.parse(provider, {}, {}, nullptr);
+    ws.did_open_file(opencode_loc, open_file_result::changed_content);
 
     // Opencode file tests
-    const auto* open_fp = opencode.get_lsp_context();
-    ASSERT_TRUE(open_fp);
 
-    EXPECT_EQ(open_fp->definition(opencode_loc, { 1, 2 }), location({ 1, 1 }, macro_loc));
+    EXPECT_EQ(ws.definition(opencode_loc, { 1, 2 }), location({ 1, 1 }, macro_loc));
 
     const std::string sam31_hover_message = "**Set Addressing Mode (31)**\n\nMachine instruction, format: E\n\n"
                                             "Operands: \n\nCondition Code: The code remains unchanged\n\nDetails on "
                                             "[page 885](https://publibfp.dhe.ibm.com/epubs/pdf/a227832d.pdf#page=885 "
                                             "\"Principles of Operations (SA22-7832-13)\")";
-    EXPECT_EQ(open_fp->hover(opencode_loc, { 0, 2 }), sam31_hover_message);
-    EXPECT_EQ(open_fp->hover(macro_loc, { 2, 2 }), sam31_hover_message);
+    EXPECT_EQ(ws.hover(opencode_loc, { 0, 2 }), sam31_hover_message);
+    EXPECT_EQ(ws.hover(macro_loc, { 2, 2 }), sam31_hover_message);
 
     semantics::lines_info open_expected_hl {
         { 0, 1, 0, 6, semantics::hl_scopes::instruction },
         { 1, 1, 1, 4, semantics::hl_scopes::instruction },
     };
 
-    EXPECT_EQ(opencode.get_hl_info(), open_expected_hl);
+    EXPECT_EQ(ws.semantic_tokens(opencode_loc), open_expected_hl);
 
     performance_metrics expected_metrics;
     expected_metrics.files = 2;
@@ -110,12 +91,9 @@ TEST(processor_file, parse_macro)
     expected_metrics.macro_statements = 2;
     expected_metrics.non_continued_statements = 6;
     expected_metrics.open_code_statements = 2;
-    EXPECT_EQ(opencode.get_metrics(), expected_metrics);
+    EXPECT_EQ(ws.find_processor_file(opencode_loc)->get_metrics(), expected_metrics);
 
     // Macro file tests
-    const auto* macro_fp = macro.get_lsp_context();
-    ASSERT_FALSE(macro_fp);
-
     semantics::lines_info macro_expected_hl {
         { 0, 1, 0, 6, semantics::hl_scopes::instruction },
         { 1, 1, 1, 4, semantics::hl_scopes::instruction },
@@ -123,5 +101,5 @@ TEST(processor_file, parse_macro)
         { 3, 1, 3, 5, semantics::hl_scopes::instruction },
     };
 
-    EXPECT_EQ(macro.get_hl_info(), macro_expected_hl);
+    EXPECT_EQ(ws.semantic_tokens(macro_loc), macro_expected_hl);
 }

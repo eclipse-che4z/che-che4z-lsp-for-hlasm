@@ -28,9 +28,15 @@
 #include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
-class file_impl;
-#pragma warning(push)
-#pragma warning(disable : 4250)
+
+class external_file_reader
+{
+public:
+    virtual std::optional<std::string> load_text(const utils::resource::resource_location& document_loc) const = 0;
+
+protected:
+    ~external_file_reader() = default;
+};
 
 // Implementation of the file_manager interface.
 class file_manager_impl : public file_manager
@@ -39,15 +45,17 @@ class file_manager_impl : public file_manager
     mutable std::mutex virtual_files_mutex;
 
 public:
-    file_manager_impl() = default;
+    file_manager_impl();
+    explicit file_manager_impl(const external_file_reader& file_reader);
     file_manager_impl(const file_manager_impl&) = delete;
     file_manager_impl& operator=(const file_manager_impl&) = delete;
 
     file_manager_impl(file_manager_impl&&) = delete;
     file_manager_impl& operator=(file_manager_impl&&) = delete;
 
+    ~file_manager_impl();
+
     std::shared_ptr<file> add_file(const file_location&) override;
-    void remove_file(const file_location&) override;
 
     std::shared_ptr<file> find(const utils::resource::resource_location& key) const override;
 
@@ -64,8 +72,6 @@ public:
 
     bool dir_exists(const utils::resource::resource_location& dir_loc) const override;
 
-    virtual ~file_manager_impl() = default;
-
     void put_virtual_file(
         unsigned long long id, std::string_view text, utils::resource::resource_location related_workspace) override;
     void remove_virtual_file(unsigned long long id) override;
@@ -74,9 +80,10 @@ public:
 
     open_file_result update_file(const file_location& document_loc) override;
 
-    std::optional<std::string> get_file_content(const utils::resource::resource_location&) const override;
+    std::optional<std::string> get_file_content(const utils::resource::resource_location&) override;
 
 private:
+    const external_file_reader* m_file_reader;
     struct virtual_file_entry
     {
         std::string text;
@@ -92,19 +99,31 @@ private:
         {}
     };
     std::unordered_map<unsigned long long, virtual_file_entry> m_virtual_files;
-    // m_virtual_files must outlive the files_
-    std::unordered_map<utils::resource::resource_location,
-        std::shared_ptr<file_impl>,
-        utils::resource::resource_location_hasher>
-        files_;
 
-    static void prepare_file_for_change_(std::shared_ptr<file_impl>& file);
+    struct mapped_file;
+    template<typename... Args>
+    static std::shared_ptr<mapped_file> make_mapped_file(Args&&... args);
+
+    struct mapped_file_entry
+    {
+        mapped_file* file;
+        bool closed = false;
+
+        explicit mapped_file_entry(mapped_file* file)
+            : file(file)
+        {}
+    };
+
+    // m_virtual_files must outlive the m_files
+    std::unordered_map<utils::resource::resource_location, mapped_file_entry, utils::resource::resource_location_hasher>
+        m_files;
+
+    std::shared_ptr<mapped_file> try_obtaining_file_unsafe(
+        const utils::resource::resource_location& file_name, const std::optional<std::string>* expected_text);
 
 protected:
-    const auto& get_files() const { return files_; }
+    const auto& get_files() const { return m_files; }
 };
-
-#pragma warning(pop)
 
 } // namespace hlasm_plugin::parser_library::workspaces
 

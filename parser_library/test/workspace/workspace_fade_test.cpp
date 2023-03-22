@@ -1036,7 +1036,7 @@ SYM      DS XL8
 namespace {
 class file_manager_impl_test : public file_manager_impl
 {
-    std::optional<std::string> get_file_content(const resource_location& rl) const override
+    std::optional<std::string> get_file_content(const resource_location& rl) override
     {
         if (rl.get_uri().ends_with("proc_grps.json"))
             return proc_grps;

@@ -16,8 +16,6 @@
 
 #include <algorithm>
 
-#include "workspaces/file_impl.h"
-
 namespace hlasm_plugin::parser_library::lsp {
 
 bool operator==(const line_range& lhs, const line_range& rhs) { return lhs.begin == rhs.begin && lhs.end == rhs.end; }

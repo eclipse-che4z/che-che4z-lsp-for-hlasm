@@ -14,13 +14,13 @@
 
 #include "text_data_view.h"
 
-#include "workspaces/file_impl.h"
+#include "workspaces/file.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
 text_data_view::text_data_view(std::string_view text)
     : text(text)
-    , line_indices(workspaces::file_impl::create_line_indices(text))
+    , line_indices(workspaces::create_line_indices(text))
 {}
 
 std::string_view text_data_view::get_line(size_t line) const
@@ -36,7 +36,7 @@ std::string_view text_data_view::get_line_beginning_at(position pos) const
 {
     if (pos.line >= line_indices.size())
         return {};
-    size_t line_end_i = workspaces::file_impl::index_from_position(text, line_indices, pos);
+    size_t line_end_i = workspaces::index_from_position(text, line_indices, pos);
     size_t line_len = line_end_i - line_indices[pos.line];
     return std::string_view(text).substr(line_indices[pos.line], line_len);
 }
@@ -45,14 +45,14 @@ char text_data_view::get_character_before(position pos) const
 {
     if (pos.column == 0)
         return '\0';
-    size_t index = workspaces::file_impl::index_from_position(text, line_indices, { pos.line, pos.column - 1 });
+    size_t index = workspaces::index_from_position(text, line_indices, { pos.line, pos.column - 1 });
     return text.at(index);
 }
 
 std::string_view text_data_view::get_range_content(range r) const
 {
-    size_t start_i = workspaces::file_impl::index_from_position(text, line_indices, r.start);
-    size_t end_i = workspaces::file_impl::index_from_position(text, line_indices, r.end);
+    size_t start_i = workspaces::index_from_position(text, line_indices, r.start);
+    size_t end_i = workspaces::index_from_position(text, line_indices, r.end);
     if (start_i >= text.size())
         return {};
     return std::string_view(text).substr(start_i, end_i - start_i);

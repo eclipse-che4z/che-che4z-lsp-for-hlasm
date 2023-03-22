@@ -24,7 +24,6 @@
 #include "lib_config.h"
 #include "nlohmann/json.hpp"
 #include "utils/resource_location.h"
-#include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
 

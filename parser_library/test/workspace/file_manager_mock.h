@@ -22,61 +22,43 @@ namespace {
 
 class file_manager_mock : public file_manager, public diagnosable_impl
 {
+    using resource_location = hlasm_plugin::utils::resource::resource_location;
+
 public:
     void collect_diags() const override
     {
         // nothing to do
     }
-    MOCK_METHOD(std::shared_ptr<file>, add_file, (const file_location&), (override));
-    MOCK_METHOD(void, remove_file, (const file_location&), (override));
-    MOCK_METHOD(std::shared_ptr<file>, find, (const file_location& key), (const override));
-    MOCK_METHOD(list_directory_result,
-        list_directory_files,
-        (const hlasm_plugin::utils::resource::resource_location& path),
-        (const override));
-    MOCK_METHOD(list_directory_result,
-        list_directory_subdirs_and_symlinks,
-        (const hlasm_plugin::utils::resource::resource_location& path),
-        (const override));
-    MOCK_METHOD(std::string,
-        canonical,
-        (const hlasm_plugin::utils::resource::resource_location& res_loc, std::error_code& ec),
-        (const override));
+    MOCK_METHOD(std::shared_ptr<file>, add_file, (const resource_location&), (override));
+    MOCK_METHOD(std::shared_ptr<file>, find, (const resource_location& key), (const override));
+    MOCK_METHOD(list_directory_result, list_directory_files, (const resource_location& path), (const override));
     MOCK_METHOD(
-        bool, file_exists, (const hlasm_plugin::utils::resource::resource_location& file_loc), (const override));
-    MOCK_METHOD(bool,
-        lib_file_exists,
-        (const hlasm_plugin::utils::resource::resource_location& lib_root, std::string_view file_name),
-        (const override));
-    MOCK_METHOD(bool, dir_exists, (const hlasm_plugin::utils::resource::resource_location& dir_loc), (const override));
+        list_directory_result, list_directory_subdirs_and_symlinks, (const resource_location& path), (const override));
+    MOCK_METHOD(std::string, canonical, (const resource_location& res_loc, std::error_code& ec), (const override));
+    MOCK_METHOD(bool, file_exists, (const resource_location& file_loc), (const override));
+    MOCK_METHOD(
+        bool, lib_file_exists, (const resource_location& lib_root, std::string_view file_name), (const override));
+    MOCK_METHOD(bool, dir_exists, (const resource_location& dir_loc), (const override));
     MOCK_METHOD(open_file_result,
         did_open_file,
-        (const file_location& document_loc, version_t version, std::string text),
+        (const resource_location& document_loc, version_t version, std::string text),
         (override));
     MOCK_METHOD(void,
         did_change_file,
-        (const file_location& document_loc, version_t version, const document_change* changes, size_t ch_size),
+        (const resource_location& document_loc, version_t version, const document_change* changes, size_t ch_size),
         (override));
-    MOCK_METHOD(void, did_close_file, (const file_location& document_loc), (override));
+    MOCK_METHOD(void, did_close_file, (const resource_location& document_loc), (override));
     MOCK_METHOD(void,
         put_virtual_file,
-        (unsigned long long id,
-            std::string_view text,
-            hlasm_plugin::utils::resource::resource_location related_workspace),
+        (unsigned long long id, std::string_view text, resource_location related_workspace),
         (override));
     MOCK_METHOD(void, remove_virtual_file, (unsigned long long id), (override));
     MOCK_METHOD(std::string, get_virtual_file, (unsigned long long id), (const override));
-    MOCK_METHOD(hlasm_plugin::utils::resource::resource_location,
-        get_virtual_file_workspace,
-        (unsigned long long id),
-        (const override));
+    MOCK_METHOD(resource_location, get_virtual_file_workspace, (unsigned long long id), (const override));
 
-    MOCK_METHOD(open_file_result, update_file, (const file_location& document_loc), (override));
+    MOCK_METHOD(open_file_result, update_file, (const resource_location& document_loc), (override));
 
-    MOCK_METHOD(std::optional<std::string>,
-        get_file_content,
-        (const hlasm_plugin::utils::resource::resource_location&),
-        (const override));
+    MOCK_METHOD(std::optional<std::string>, get_file_content, (const resource_location&), (override));
 };
 
 } // namespace

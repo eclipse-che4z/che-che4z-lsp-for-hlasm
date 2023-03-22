@@ -48,51 +48,6 @@ struct cached_opsyn_mnemo
     constexpr auto operator<=>(const cached_opsyn_mnemo&) const = default;
 };
 
-template<typename T>
-class comparable_weak_ptr
-{
-    std::weak_ptr<T> ptr;
-    T* direct_ptr;
-
-public:
-    explicit comparable_weak_ptr(const std::shared_ptr<T>& s)
-        : ptr(s)
-        , direct_ptr(s.get())
-    {}
-
-    bool expired() const { return ptr.expired(); }
-    auto lock() const { return ptr.lock(); }
-
-    bool operator==(const comparable_weak_ptr& o) const
-    {
-        if (ptr.owner_before(o.ptr) || o.ptr.owner_before(ptr))
-            return false;
-        return std::compare_three_way()(direct_ptr, o.direct_ptr);
-    }
-    auto operator<=>(const comparable_weak_ptr& o) const
-    {
-        if (ptr.owner_before(o.ptr))
-            return std::strong_ordering::less;
-        if (o.ptr.owner_before(ptr))
-            return std::strong_ordering::greater;
-        return std::compare_three_way()(direct_ptr, o.direct_ptr);
-    }
-    bool operator==(const std::shared_ptr<T>& o) const
-    {
-        if (ptr.owner_before(o) || o.owner_before(ptr))
-            return false;
-        return std::compare_three_way()(direct_ptr, o.get());
-    }
-    auto operator<=>(const std::shared_ptr<T>& o) const
-    {
-        if (ptr.owner_before(o))
-            return std::strong_ordering::less;
-        if (o.owner_before(ptr))
-            return std::strong_ordering::greater;
-        return std::compare_three_way()(direct_ptr, o.get());
-    }
-};
-
 // Contains all the context that affects parsing an external file (macro or copy member)
 struct macro_cache_key
 {
@@ -100,15 +55,12 @@ struct macro_cache_key
     static void sort_opsyn_state(std::vector<cached_opsyn_mnemo>& opsyn_state);
     static std::vector<cached_opsyn_mnemo> get_opsyn_state(context::hlasm_context& hlasm_ctx);
 
-    comparable_weak_ptr<context::id_storage> related_open_code;
     library_data data;
     std::vector<cached_opsyn_mnemo> opsyn_state;
 
     bool operator==(const macro_cache_key&) const = default;
     auto operator<=>(const macro_cache_key& o) const
     {
-        if (auto c = related_open_code <=> o.related_open_code; c != 0)
-            return c;
         if (auto c = data <=> o.data; c != 0)
             return c;
         if (auto c = opsyn_state.size() <=> o.opsyn_state.size(); c != 0)
@@ -133,6 +85,7 @@ struct macro_cache_data
     std::variant<lsp::macro_info_ptr, context::copy_member_ptr> cached_member;
 };
 
+// Macro cache is tied to a specific id_storage
 class macro_cache final
 {
     std::map<macro_cache_key, macro_cache_data> cache_;
@@ -145,7 +98,6 @@ public:
     // cached macro to the specified context. Returns true, if the macro was loaded.
     bool load_from_cache(const macro_cache_key& key, const analyzing_context& ctx) const;
     void save_macro(const macro_cache_key& key, const analyzer& analyzer);
-    void erase_unused();
 
 private:
     [[nodiscard]] const macro_cache_data* find_cached_data(const macro_cache_key& key) const;

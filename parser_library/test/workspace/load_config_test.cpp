@@ -24,7 +24,6 @@
 #include "utils/content_loader.h"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
-#include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/library_local.h"
 #include "workspaces/workspace.h"
@@ -48,23 +47,8 @@ const auto pgm_anything_loc = resource_location::join(ws_loc, "pgms/anything");
 const auto pgm_outside_ws = resource_location::join(users_dir, "outside/anything");
 } // namespace
 
-class file_proc_grps : public file_impl
-{
-public:
-    file_proc_grps()
-        : file_impl(proc_grps_loc)
-    {}
-
-    file_location location = file_loc;
-
-    const file_location& get_location() override { return location; }
-
-    const std::string& get_text() override { return file; }
-
-    update_file_result update_and_get_bad() override { return update_file_result::changed; }
-
-    std::string file = is_windows() ?
-                                    R"({
+const std::string file_proc_grps_content = is_windows() ?
+                                                        R"({
     "pgroups": [
         {
             "name": "P1",
@@ -91,7 +75,7 @@ public:
         }
     ]
 })"
-                                    : R"({
+                                                        : R"({
     "pgroups": [
         {
             "name": "P1",
@@ -118,24 +102,8 @@ public:
         }
     ]
 })";
-};
 
-class file_pgm_conf : public file_impl
-{
-public:
-    file_pgm_conf()
-        : file_impl(proc_grps_loc)
-    {}
-
-    file_location location = file_loc;
-
-    const file_location& get_location() override { return location; }
-
-    const std::string& get_text() override { return file; }
-
-    update_file_result update_and_get_bad() override { return update_file_result::changed; }
-
-    std::string file = is_windows() ? R"({
+const std::string file_pgm_conf_content = is_windows() ? R"({
   "pgms": [
     {
       "program": "pgm1",
@@ -155,7 +123,7 @@ public:
     }
   ]
 })"
-                                    : R"({
+                                                       : R"({
   "pgms": [
     {
       "program": "pgm1",
@@ -175,24 +143,19 @@ public:
     }
   ]
 })";
-};
 
 class file_manager_proc_grps_test : public file_manager_impl
 {
 public:
-    std::optional<std::string> get_file_content(const resource_location& location) const override
+    std::optional<std::string> get_file_content(const resource_location& location) override
     {
         if (hlasm_plugin::utils::resource::filename(location) == "proc_grps.json")
-            return proc_grps->get_text();
+            return file_proc_grps_content;
         else if (hlasm_plugin::utils::resource::filename(location) == "pgm_conf.json")
-            return pgm_conf->get_text();
+            return file_pgm_conf_content;
         else
             return std::nullopt;
     }
-
-    std::shared_ptr<file_proc_grps> proc_grps = std::make_shared<file_proc_grps>();
-    std::shared_ptr<file_pgm_conf> pgm_conf = std::make_shared<file_pgm_conf>();
-
 
     // Inherited via file_manager
     open_file_result did_open_file(const resource_location&, version_t, std::string) override
@@ -381,24 +344,13 @@ TEST(workspace, asm_options_invalid)
     EXPECT_EQ(ws.diags()[0].code, "W0002");
 }
 
-class file_proc_grps_asm : public file_proc_grps
+class file_manager_asm_test : public file_manager_proc_grps_test
 {
 public:
-    file_proc_grps_asm()
-        : file_proc_grps()
-        , proc_file(generate_proc_file())
-
-    {}
-
-    const std::string& get_text() override { return proc_file; }
-
-    std::string proc_file;
-
-private:
-    std::string generate_proc_file()
+    std::optional<std::string> get_file_content(const resource_location& location) override
     {
-        return
-            R"({
+        if (hlasm_plugin::utils::resource::filename(location) == "proc_grps.json")
+            return R"({
   "pgroups": [
     {
       "name": "P1",
@@ -410,17 +362,9 @@ private:
     }
   ]
 })";
+        else
+            return file_manager_proc_grps_test::get_file_content(location);
     }
-};
-
-class file_manager_asm_test : public file_manager_proc_grps_test
-{
-public:
-    file_manager_asm_test()
-        : file_manager_proc_grps_test()
-    {
-        proc_grps = std::make_shared<file_proc_grps_asm>();
-    };
 };
 
 TEST(workspace, asm_options_goff_xobject_redefinition)

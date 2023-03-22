@@ -25,10 +25,12 @@
 #include <vector>
 
 #include "diagnosable_impl.h"
-#include "file_manager.h"
 #include "library.h"
+#include "utils/general_hashers.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
+
+class file_manager;
 
 #pragma warning(push)
 #pragma warning(disable : 4250)

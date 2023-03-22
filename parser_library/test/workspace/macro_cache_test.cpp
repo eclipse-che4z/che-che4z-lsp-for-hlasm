@@ -15,11 +15,13 @@
 #include <algorithm>
 #include <iterator>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "../workspace/empty_configs.h"
 #include "analyzer.h"
 #include "context/id_storage.h"
+#include "library_mock.h"
 #include "lsp/lsp_context.h"
 #include "lsp/opencode_info.h"
 #include "lsp/text_data_view.h"
@@ -116,8 +118,8 @@ TEST(macro_cache_test, copy_from_macro)
 
     constexpr context::id_index macro_id("MAC");
     constexpr context::id_index copy_id("COPYFILE");
-    macro_cache_key macro_key { comparable_weak_ptr(ids), { processing::processing_kind::MACRO, macro_id }, {} };
-    macro_cache_key copy_key { comparable_weak_ptr(ids), { processing::processing_kind::COPY, copy_id }, {} };
+    macro_cache_key macro_key { { processing::processing_kind::MACRO, macro_id }, {} };
+    macro_cache_key copy_key { { processing::processing_kind::COPY, copy_id }, {} };
 
     // try recalling the cached results
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, ids);
@@ -127,7 +129,8 @@ TEST(macro_cache_test, copy_from_macro)
     EXPECT_NE(new_ctx.hlasm_ctx->get_copy_member(copy_id), nullptr);
 
     // introduce macro change
-    macro_file->did_change({}, " ");
+    document_change simple_change({}, " ", 1);
+    file_mngr.did_change_file(macro_file_loc, 0, &simple_change, 1);
 
     // After macro change, copy should still be cached
     analyzing_context ctx_macro_changed = create_analyzing_context(opencode_file_name, new_ctx.hlasm_ctx->ids_ptr());
@@ -140,7 +143,7 @@ TEST(macro_cache_test, copy_from_macro)
     save_dependency(macro_c, parse_dependency(macro_file, ctx, processing::processing_kind::MACRO));
 
     // introduce change into copy
-    copy_file->did_change({}, " ");
+    file_mngr.did_change_file(copyfile_file_loc, 0, &simple_change, 1);
 
     // Macro depends on the copyfile, so none should be cached.
     analyzing_context ctx_copy_changed = create_analyzing_context(opencode_file_name, ids);
@@ -181,9 +184,8 @@ TEST(macro_cache_test, opsyn_change)
     }
 
     // try loading with and without OPSYN change
-    macro_cache_key macro_key { comparable_weak_ptr(ids), { processing::processing_kind::MACRO, macro_id }, {} };
-    macro_cache_key macro_key_one_opsyn { comparable_weak_ptr(ids),
-        { processing::processing_kind::MACRO, macro_id },
+    macro_cache_key macro_key { { processing::processing_kind::MACRO, macro_id }, {} };
+    macro_cache_key macro_key_one_opsyn { { processing::processing_kind::MACRO, macro_id },
         { cached_opsyn_mnemo { context::id_storage::well_known::SETA, LR, false } } };
     {
         analyzing_context ctx = create_analyzing_context(opencode_file_name, ids);
@@ -243,7 +245,7 @@ TEST(macro_cache_test, empty_macro)
 
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, ids);
 
-    macro_cache_key macro_key { comparable_weak_ptr(ids), { processing::processing_kind::MACRO, macro_id }, {} };
+    macro_cache_key macro_key { { processing::processing_kind::MACRO, macro_id }, {} };
     EXPECT_TRUE(macro_c.load_from_cache(macro_key, new_ctx));
     EXPECT_FALSE(new_ctx.hlasm_ctx->find_macro(macro_id));
 }
@@ -324,47 +326,29 @@ TEST(macro_cache_test, overwrite_by_inline)
     file_mngr.did_open_file(opencode_file_loc, 0, opencode_text);
     file_mngr.did_open_file(macro_file_loc, 0, macro_text);
 
-    processor_file_impl opencode(open_file(opencode_file_loc, opencode_text, file_mngr), file_mngr);
-    processor_file_impl macro(open_file(macro_file_loc, macro_text, file_mngr), file_mngr);
+    shared_json global_settings = make_empty_shared_json();
+    lib_config config;
+    using namespace ::testing;
+    auto library = std::make_shared<NiceMock<library_mock>>();
+    workspace ws(file_mngr, config, global_settings, nullptr, library);
 
-    struct simple_provider : parse_lib_provider
-    {
-        processor_file_impl& macro_ref;
+    EXPECT_CALL(*library, has_file(std::string_view("MAC"), _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(macro_file_loc), Return(true)));
 
-        void parse_library(
-            std::string_view lib, analyzing_context ac, library_data ld, std::function<void(bool)> callback) override
-        {
-            EXPECT_EQ(lib, "MAC");
+    ws.did_open_file(opencode_file_loc);
+    auto opencode = ws.find_processor_file(opencode_file_loc);
 
-            callback(macro_ref.parse_macro(*this, ac, ld));
-        }
-        bool has_library(std::string_view, resource_location*) const override { return false; }
-        void get_library(std::string_view,
-            std::function<void(std::optional<std::pair<std::string, resource_location>>)> callback) const override
-        {
-            callback(std::nullopt);
-        }
+    EXPECT_EQ(opencode->diags().size(), 2U);
+    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), macro_file_loc));
+    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), opencode_file_loc));
 
-        simple_provider(processor_file_impl& macro_ref)
-            : macro_ref(macro_ref)
-        {}
+    opencode->diags().clear();
 
-    } provider(macro);
-
-    opencode.parse(provider, {}, {}, nullptr);
-    opencode.collect_diags();
-
-    EXPECT_EQ(opencode.diags().size(), 2U);
-    EXPECT_TRUE(find_diag_with_filename(opencode.diags(), macro_file_loc));
-    EXPECT_TRUE(find_diag_with_filename(opencode.diags(), opencode_file_loc));
-
-    opencode.diags().clear();
-
-    opencode.parse(provider, {}, {}, nullptr);
-    opencode.collect_diags();
-    EXPECT_EQ(opencode.diags().size(), 2U);
-    EXPECT_TRUE(find_diag_with_filename(opencode.diags(), macro_file_loc));
-    EXPECT_TRUE(find_diag_with_filename(opencode.diags(), opencode_file_loc));
+    document_change change(range(), "", 0);
+    ws.did_change_file(opencode_file_loc, &change, 1);
+    EXPECT_EQ(opencode->diags().size(), 2U);
+    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), macro_file_loc));
+    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), opencode_file_loc));
 }
 
 TEST(macro_cache_test, inline_depends_on_copy)
@@ -401,12 +385,13 @@ TEST(macro_cache_test, inline_depends_on_copy)
     opencode.collect_diags();
     EXPECT_TRUE(opencode.diags().empty());
 
-    macro_cache_key copy_key { comparable_weak_ptr(ids), { processing::processing_kind::COPY, copy_id }, {} };
+    macro_cache_key copy_key { { processing::processing_kind::COPY, copy_id }, {} };
 
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, ids);
     EXPECT_TRUE(copy_c.load_from_cache(copy_key, new_ctx));
 
     analyzing_context new_ctx_2 = create_analyzing_context(opencode_file_name, ids);
-    copy_file->did_change({ { 0, 4 }, { 0, 5 } }, "16");
+    document_change simple_change({ { 0, 4 }, { 0, 5 } }, "16", 2);
+    file_mngr.did_change_file(copy_file_loc, 0, &simple_change, 1);
     EXPECT_FALSE(copy_c.load_from_cache(copy_key, new_ctx_2));
 }

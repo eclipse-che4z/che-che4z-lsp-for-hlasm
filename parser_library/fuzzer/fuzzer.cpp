@@ -28,7 +28,6 @@
 #include "preprocessor_options.h"
 #include "utils/resource_location.h"
 #include "utils/unicode_text.h"
-#include "workspaces/file_impl.h"
 #include "workspaces/parse_lib_provider.h"
 
 using namespace hlasm_plugin::parser_library;

@@ -56,8 +56,6 @@ class processor : public virtual diagnosable
 public:
     // starts parser with new (empty) context
     virtual bool parse(parse_lib_provider&, asm_option, std::vector<preprocessor_options>, virtual_file_monitor*) = 0;
-    // starts parser with in the context of parameter
-    virtual bool parse_macro(parse_lib_provider&, analyzing_context, library_data) = 0;
 
 protected:
     ~processor() = default;
@@ -72,7 +70,6 @@ public:
     virtual const lsp::lsp_context* get_lsp_context() const = 0;
     virtual const std::set<utils::resource::resource_location>& files_to_close() = 0;
     virtual const performance_metrics& get_metrics() = 0;
-    virtual void erase_unused_cache_entries() = 0;
     virtual bool has_opencode_lsp_info() const = 0;
     virtual bool has_macro_lsp_info() const = 0;
     virtual const std::vector<fade_message_s>& fade_messages() const = 0;

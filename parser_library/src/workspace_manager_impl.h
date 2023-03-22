@@ -157,8 +157,11 @@ public:
 
     void did_close_file(const utils::resource::resource_location& document_loc)
     {
+        file_manager_.did_close_file(document_loc);
+
         workspaces::workspace& ws = ws_path_match(document_loc.get_uri());
         ws.did_close_file(document_loc);
+
         notify_diagnostics_consumers();
     }
 

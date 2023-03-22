@@ -13,6 +13,7 @@
  */
 
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "utils/task.h"
@@ -297,4 +298,60 @@ TEST(task, await_done_task)
     EXPECT_TRUE(i_task.done());
 
     EXPECT_EQ(outer(std::move(i_task)).run().value(), 1);
+}
+
+TEST(task, then)
+{
+    ::testing::MockFunction<void(int)> func;
+    auto stdfunc = func.AsStdFunction();
+
+    task t1 = []() -> task { co_return; }().then([&stdfunc]() { stdfunc(1); });
+    EXPECT_CALL(func, Call(1));
+    t1.run();
+
+    task t2 = []() -> task { co_return; }().then([&stdfunc]() -> task {
+        stdfunc(2);
+        co_return;
+    });
+    EXPECT_CALL(func, Call(2));
+    t2.run();
+
+    value_task<int> t3 = []() -> task { co_return; }().then([&stdfunc]() {
+        stdfunc(3);
+        return 3;
+    });
+    EXPECT_CALL(func, Call(3));
+    EXPECT_EQ(t3.run().value(), 3);
+
+    value_task<int> t4 = []() -> task { co_return; }().then([&stdfunc]() -> value_task<int> {
+        stdfunc(4);
+        co_return 4;
+    });
+    EXPECT_CALL(func, Call(4));
+    EXPECT_EQ(t4.run().value(), 4);
+
+    task v1 = []() -> value_task<int> { co_return 1; }().then([&stdfunc](int v) { stdfunc(v); });
+    EXPECT_CALL(func, Call(1));
+    v1.run();
+
+    task v2 = []() -> value_task<int> { co_return 2; }().then([&stdfunc](int v) -> task {
+        stdfunc(2);
+        co_return;
+    });
+    EXPECT_CALL(func, Call(2));
+    v2.run();
+
+    value_task<int> v3 = []() -> value_task<int> { co_return 3; }().then([&stdfunc](int v) {
+        stdfunc(v);
+        return v;
+    });
+    EXPECT_CALL(func, Call(3));
+    EXPECT_EQ(v3.run().value(), 3);
+
+    value_task<int> v4 = []() -> value_task<int> { co_return 4; }().then([&stdfunc](int v) -> value_task<int> {
+        stdfunc(v);
+        co_return v;
+    });
+    EXPECT_CALL(func, Call(4));
+    EXPECT_EQ(v4.run().value(), 4);
 }

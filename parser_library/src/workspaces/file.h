@@ -16,50 +16,46 @@
 #define HLASMPLUGIN_PARSERLIBRARY_FILE_H
 
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "diagnosable.h"
-#include "fade_messages.h"
 #include "protocol.h"
 #include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
-enum class open_file_result;
 using file_location = utils::resource::resource_location;
-
-enum class update_file_result
-{
-    identical,
-    changed,
-    bad,
-};
 
 // Interface that represents both file opened in LSP
 // as well as a file opened by parser library from the disk.
 class file
 {
 public:
-    virtual const file_location& get_location() = 0;
+    virtual const file_location& get_location() const = 0;
     // Gets contents of file either by loading from disk or from LSP.
-    virtual const std::string& get_text() = 0;
-    // Returns whether file is bad - bad file cannot be loaded from disk.
-    // LSP files are never bad.
-    virtual update_file_result update_and_get_bad() = 0;
+    virtual const std::string& get_text() const = 0;
     // Returns whether file is open by LSP.
     virtual bool get_lsp_editing() const = 0;
-
-    // Gets LSP version of file.
-    virtual version_t get_version() = 0;
-
-    // LSP notifications
-    virtual open_file_result did_open(std::string new_text, version_t version) = 0;
-    virtual void did_change(std::string new_text) = 0;
-    virtual void did_change(range range, std::string new_text) = 0;
-    virtual void did_close() = 0;
+    // Internal unique version
+    virtual version_t get_version() const = 0;
+    // file is in error state
+    virtual bool error() const = 0;
+    // Tests if the file is up-to-date
+    virtual bool up_to_date() const = 0;
 
 protected:
     ~file() = default;
 };
+
+// append offsets of newlines to output
+void find_newlines(std::vector<size_t>& output, std::string_view text);
+// Generates vector of offsets to the beginning of individual lines
+std::vector<size_t> create_line_indices(std::string_view text);
+void create_line_indices(std::vector<size_t>& output, std::string_view text);
+// Returns the location in text that corresponds to utf-16 based location
+// The position may point beyond the last character -> returns text.size()
+size_t index_from_position(std::string_view text, const std::vector<size_t>& line_indices, position pos);
+// apply incremental change
+void apply_text_diff(std::string& text, std::vector<size_t>& lines, range r, std::string_view replacement);
 
 
 } // namespace hlasm_plugin::parser_library::workspaces
