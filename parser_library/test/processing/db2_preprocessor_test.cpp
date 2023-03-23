@@ -36,6 +36,7 @@ namespace {
 const auto copy1_loc = resource_location("COPY1");
 const auto copy2_loc = resource_location("COPY2");
 const auto member_loc = resource_location("MEMBER");
+const mock_file_stats_t invalid_stats { (size_t)-1, (size_t)-1, (size_t)-1 };
 
 constexpr auto empty_library_fetcher =
     [](std::string) -> hlasm_plugin::utils::value_task<
@@ -380,7 +381,7 @@ TEST(db2_preprocessor, continuation_in_buffer)
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
+    EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
 }
 
 TEST(db2_preprocessor, include_valid)
@@ -412,7 +413,7 @@ TEST(db2_preprocessor, include_valid)
 
         EXPECT_EQ(a.diags().size(), (size_t)0);
 
-        EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
+        EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
     }
 }
 
@@ -439,7 +440,7 @@ TEST(db2_preprocessor, include_double)
         a.collect_diags();
 
         EXPECT_TRUE(matches_message_codes(a.diags(), { "DB002" }));
-        EXPECT_EQ(a.hlasm_ctx().get_visited_files().count(member_loc), 0);
+        EXPECT_EQ(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, 0);
     }
 }
 
@@ -459,7 +460,7 @@ TEST(db2_preprocessor, include_member_not_present)
         a.collect_diags();
 
         EXPECT_TRUE(matches_message_codes(a.diags(), { "DB007" }));
-        EXPECT_EQ(a.hlasm_ctx().get_visited_files().count(member_loc), 0);
+        EXPECT_EQ(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, 0);
     }
 }
 
@@ -475,7 +476,7 @@ TEST(db2_preprocessor, include_insensitive)
     a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
+    EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
 }
 
 TEST(db2_preprocessor, include_nonexistent)
@@ -500,7 +501,7 @@ TEST(db2_preprocessor, include_invalid)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx().get_visited_files().count(member_loc), 0);
+    EXPECT_EQ(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, 0);
 }
 
 TEST(db2_preprocessor, ago_in_include)
@@ -520,7 +521,7 @@ TEST(db2_preprocessor, ago_in_include)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
+    EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 }
 
@@ -544,7 +545,7 @@ TEST(db2_preprocessor, ago_into_include)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
+    EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), 2);
 }
@@ -569,7 +570,7 @@ TEST(db2_preprocessor, ago_from_include)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
+    EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), 2);
 }
@@ -598,7 +599,7 @@ TEST(db2_preprocessor, ago_around_include)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
+    EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
 }
 
@@ -625,9 +626,9 @@ TEST(db2_preprocessor, copy_in_include)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(copy1_loc));
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(copy2_loc));
-    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count(member_loc));
+    EXPECT_NE(libs.get_stats("COPY1").value_or(invalid_stats).content_requests, -1);
+    EXPECT_NE(libs.get_stats("COPY2").value_or(invalid_stats).content_requests, -1);
+    EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A1"), 1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A2"), 2);

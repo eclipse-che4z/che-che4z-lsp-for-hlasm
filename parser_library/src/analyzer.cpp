@@ -170,11 +170,7 @@ void analyzer::collect_diags() const
     collect_diags_from_child(field_parser_);
 }
 
-const performance_metrics& analyzer::get_metrics() const
-{
-    ctx_.hlasm_ctx->fill_metrics_files();
-    return ctx_.hlasm_ctx->metrics;
-}
+const performance_metrics& analyzer::get_metrics() const { return ctx_.hlasm_ctx->metrics; }
 
 void analyzer::register_stmt_analyzer(statement_analyzer* stmt_analyzer)
 {

@@ -20,14 +20,18 @@ namespace hlasm_plugin::parser_library {
 
 void to_json(nlohmann::json& j, const parser_library::workspace_file_info& info)
 {
-    j = nlohmann::json { { "config_parsing", info.config_parsing },
+    j = nlohmann::json {
+        { "config_parsing", info.config_parsing },
         { "diagnostics_suppressed", info.diagnostics_suppressed },
-        { "processor_group_found", info.processor_group_found } };
+        { "processor_group_found", info.processor_group_found },
+        { "files_processed", info.files_processed },
+    };
 }
 
 void to_json(nlohmann::json& j, const parser_library::performance_metrics& metrics)
 {
-    j = nlohmann::json { { "Open Code Statements", metrics.open_code_statements },
+    j = nlohmann::json {
+        { "Open Code Statements", metrics.open_code_statements },
         { "Copy Statements", metrics.copy_statements },
         { "Macro Statements", metrics.macro_statements },
         { "Copy Def Statements", metrics.copy_def_statements },
@@ -37,7 +41,7 @@ void to_json(nlohmann::json& j, const parser_library::performance_metrics& metri
         { "Continued Statements", metrics.continued_statements },
         { "Non-continued Statements", metrics.non_continued_statements },
         { "Lines", metrics.lines },
-        { "Files", metrics.files } };
+    };
 }
 
 void to_json(nlohmann::json& j, const parser_library::parsing_metadata& metadata)

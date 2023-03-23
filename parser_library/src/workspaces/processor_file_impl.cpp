@@ -57,8 +57,6 @@ bool processor_file_impl::parse(parse_lib_provider& lib_provider,
             fms,
         });
 
-    auto old_dep = m_dependencies;
-
     processing::hit_count_analyzer hc_analyzer(new_analyzer.hlasm_ctx());
     new_analyzer.register_stmt_analyzer(&hc_analyzer);
 
@@ -79,29 +77,12 @@ bool processor_file_impl::parse(parse_lib_provider& lib_provider,
     m_last_results.vf_handles = new_analyzer.take_vf_handles();
     m_last_results.hc_opencode_map = hc_analyzer.take_hit_count_map();
 
-    m_dependencies.clear();
-    for (auto& file : new_analyzer.hlasm_ctx().get_visited_files())
-        if (file != m_file->get_location())
-            m_dependencies.insert(file);
-
-    m_files_to_close.clear();
-    // files that used to be dependencies but are not anymore should be closed internally
-    for (const auto& file : old_dep)
-    {
-        if (!m_dependencies.contains(file))
-            m_files_to_close.insert(file);
-    }
-
     return true;
 }
-
-const std::set<utils::resource::resource_location>& processor_file_impl::dependencies() { return m_dependencies; }
 
 const semantics::lines_info& processor_file_impl::get_hl_info() { return m_last_results.hl_info; }
 
 const lsp::lsp_context* processor_file_impl::get_lsp_context() const { return m_last_results.lsp_context.get(); }
-
-const std::set<utils::resource::resource_location>& processor_file_impl::files_to_close() { return m_files_to_close; }
 
 const performance_metrics& processor_file_impl::get_metrics() { return m_last_results.metrics; }
 

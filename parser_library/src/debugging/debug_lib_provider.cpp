@@ -66,7 +66,7 @@ void debug_lib_provider::parse_library(
     callback(false);
 }
 
-bool debug_lib_provider::has_library(std::string_view library, utils::resource::resource_location* loc) const
+bool debug_lib_provider::has_library(std::string_view library, utils::resource::resource_location* loc)
 {
     for (const auto& lib : m_libraries)
         if (lib->has_file(library, loc))
@@ -75,7 +75,7 @@ bool debug_lib_provider::has_library(std::string_view library, utils::resource::
 }
 
 void debug_lib_provider::get_library(std::string_view library,
-    std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback) const
+    std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback)
 {
     assert(callback);
     utils::resource::resource_location url;

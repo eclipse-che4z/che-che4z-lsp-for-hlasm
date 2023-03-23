@@ -81,8 +81,6 @@ class hlasm_context
 
     // opencode file location
     utils::resource::resource_location opencode_file_location_;
-    // all files processes via macro or copy member invocation
-    std::set<utils::resource::resource_location> visited_files_;
 
     // Compiler options
     asm_option asm_options_;
@@ -131,8 +129,6 @@ public:
 
     // gets opencode file location
     const utils::resource::resource_location& opencode_location() const;
-    // accesses visited files
-    const std::set<utils::resource::resource_location>& get_visited_files() const;
 
     // gets current source
     const source_context& current_source() const;
@@ -187,7 +183,6 @@ public:
     // performance metrics
     performance_metrics metrics;
 
-    void fill_metrics_files();
     // return map of global set vars
     const global_variable_storage& globals() const;
 
@@ -258,9 +253,6 @@ public:
     void enter_copy_member(id_index member);
     // leaves current copy member
     void leave_copy_member();
-
-    // register preprocessor dependency
-    void add_preprocessor_dependency(const utils::resource::resource_location& file_loc);
 
     // creates specified global set symbol
     template<typename T>

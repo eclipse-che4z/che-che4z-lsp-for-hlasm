@@ -63,11 +63,11 @@ public:
         workspaces::library_data data,
         std::function<void(bool)> callback) override;
 
-    bool has_library(std::string_view library, utils::resource::resource_location* loc) const override;
+    bool has_library(std::string_view library, utils::resource::resource_location* loc) override;
 
     void get_library(std::string_view library,
         std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback)
-        const override;
+        override;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

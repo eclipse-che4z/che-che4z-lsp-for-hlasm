@@ -38,10 +38,16 @@ const resource_location member_loc("MEMBER");
 const resource_location member2_loc("MEMBER2");
 
 const std::vector<std::pair<std::string, std::string>> member_list {
-    { "MEMBER", R"(R2 EQU 2
-            LR R2,R2)" },
-    { "MEMBER2", R"(R5 EQU 5
-            LR R5,R5)" },
+    {
+        "MEMBER",
+        R"(R2 EQU 2
+            LR R2,R2)",
+    },
+    {
+        "MEMBER2",
+        R"(R5 EQU 5
+            LR R5,R5)",
+    },
 };
 
 class lsp_context_preprocessor_test : public testing::Test
@@ -51,23 +57,38 @@ public:
         std::shared_ptr<workspaces::parse_lib_provider> lib_provider,
         preprocessor_options preproc_options)
         : lib_provider(lib_provider)
-        , a(contents, analyzer_options { source_loc, lib_provider.get(), preproc_options })
+        , a(contents, analyzer_options { source_loc, lib_provider.get(), preproc_options, &vf_monitor })
     {}
 
-    void SetUp() override { a.analyze(); }
+    void SetUp() override
+    {
+        a.analyze();
+        vf_files = a.take_vf_handles();
+    }
 
 protected:
     std::shared_ptr<workspaces::parse_lib_provider> lib_provider;
+    struct : virtual_file_monitor
+    {
+        unsigned long long next_id = 12345;
+        std::vector<unsigned long long> generated_handles;
+        virtual_file_handle file_generated(std::string_view) final
+        {
+            generated_handles.emplace_back(next_id++);
+
+            return virtual_file_handle(std::make_shared<virtual_file_id>(generated_handles.back()));
+        }
+    } vf_monitor;
     analyzer a;
+    std::vector<std::pair<virtual_file_handle, resource_location>> vf_files;
 
     std::optional<resource_location> find_preproc_file(std::string_view name)
     {
-        const auto& files = a.hlasm_ctx().get_visited_files();
+        for (const auto& [_, url] : vf_files)
+            if (url.get_uri().ends_with(name))
+                return url;
 
-        auto it = std::find_if(
-            files.begin(), files.end(), [name](const resource_location& f) { return f.get_uri().ends_with(name); });
-
-        return it != files.end() ? std::make_optional(*it) : std::nullopt;
+        return std::nullopt;
     }
 
     inline bool reloc_symbol_checker(std::string_view source)
@@ -340,7 +361,8 @@ public:
 
     void SetUp() override
     {
-        a.analyze();
+        lsp_context_preprocessor_test::SetUp();
+
         preproc1_loc = find_preproc_file("PREPROCESSOR_1.hlasm");
 
         ASSERT_TRUE(preproc1_loc.has_value());

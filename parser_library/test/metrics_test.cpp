@@ -141,13 +141,6 @@ TEST_F(benchmark_test, continued_statements)
     EXPECT_EQ(a->get_metrics().non_continued_statements, (size_t)0);
 }
 
-TEST_F(benchmark_test, files)
-{
-    setUpAnalyzer(" MAC\n COPY COPYFILE\n MAC");
-    // only 3 files visited -> macro, copy and open code, each once
-    EXPECT_EQ(a->get_metrics().files, (size_t)3);
-}
-
 TEST_F(benchmark_test, reparsed_statements)
 {
     setUpAnalyzer(" MAC\n");

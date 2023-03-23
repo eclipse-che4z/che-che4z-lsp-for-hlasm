@@ -278,11 +278,13 @@ struct PARSER_LIBRARY_EXPORT performance_metrics
     size_t lookahead_statements = 0;
     size_t continued_statements = 0;
     size_t non_continued_statements = 0;
-    size_t files = 0;
+
+    bool operator==(const performance_metrics&) const noexcept = default;
 };
 
 struct PARSER_LIBRARY_EXPORT workspace_file_info
 {
+    size_t files_processed = 0;
     bool config_parsing = false;
     bool diagnostics_suppressed = false;
     bool processor_group_found = false;
@@ -293,16 +295,6 @@ struct PARSER_LIBRARY_EXPORT parsing_metadata
     performance_metrics metrics;
     workspace_file_info ws_info;
 };
-
-bool inline operator==(const performance_metrics& lhs, const performance_metrics& rhs)
-{
-    return lhs.lines == rhs.lines && lhs.macro_def_statements == rhs.macro_def_statements
-        && lhs.macro_statements == rhs.macro_statements && lhs.open_code_statements == rhs.open_code_statements
-        && lhs.copy_def_statements == rhs.copy_def_statements && lhs.copy_statements == rhs.copy_statements
-        && lhs.reparsed_statements == rhs.reparsed_statements && lhs.lookahead_statements == rhs.lookahead_statements
-        && lhs.continued_statements == rhs.continued_statements
-        && lhs.non_continued_statements == rhs.non_continued_statements && lhs.files == rhs.files;
-}
 
 struct PARSER_LIBRARY_EXPORT diagnostic_list
 {

@@ -42,8 +42,8 @@ std::ostream& operator<<(std::ostream& stream, const performance_metrics& item)
 {
     return stream << "continued statements: " << item.continued_statements
                   << "\n copy def statements: " << item.copy_def_statements
-                  << "\n copy statements: " << item.copy_statements << "\n files: " << item.files
-                  << "\n lines: " << item.lines << "\n lookahead statements: " << item.lookahead_statements
+                  << "\n copy statements: " << item.copy_statements << "\n lines: " << item.lines
+                  << "\n lookahead statements: " << item.lookahead_statements
                   << "\n macro def statements: " << item.macro_def_statements
                   << "\n macro statements: " << item.macro_statements
                   << "\n non continued statements: " << item.non_continued_statements

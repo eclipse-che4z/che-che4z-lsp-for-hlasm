@@ -138,7 +138,7 @@ json parse_one_file(const std::string& source_file,
         + metrics.lookahead_statements + metrics.reparsed_statements;
     s.average_stmt_ms += (exec_statements / (double)time);
     s.average_line_ms += metrics.lines / (double)time;
-    s.all_files += metrics.files;
+    s.all_files += collector.data.ws_info.files_processed;
     s.whole_time += time;
 
     auto top_messages = benchmark::get_top_messages(diag_counter.message_counts);
@@ -165,9 +165,10 @@ json parse_one_file(const std::string& source_file,
         { "Continued Statements", metrics.continued_statements },
         { "Non-continued Statements", metrics.non_continued_statements },
         { "Lines", metrics.lines },
-        { "Files", metrics.files },
+        { "Files", collector.data.ws_info.files_processed },
     });
 
+    auto first_ws_info = collector.data.ws_info;
     auto first_parse_metrics = metrics;
     auto first_diag_counter = diag_counter;
     long long reparse_time = 0;
@@ -226,7 +227,7 @@ json parse_one_file(const std::string& source_file,
                   << "Lines: " << first_parse_metrics.lines << '\n'
                   << "Executed Statement/ms: " << exec_statements / (double)time << '\n'
                   << "Line/ms: " << first_parse_metrics.lines / (double)time << '\n'
-                  << "Files: " << first_parse_metrics.files << '\n'
+                  << "Files: " << first_ws_info.files_processed << '\n'
                   << "Top messages: " << top_messages.dump() << '\n'
                   << '\n'
                   << std::endl;

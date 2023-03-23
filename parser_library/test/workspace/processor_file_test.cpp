@@ -64,7 +64,7 @@ TEST(processor_file, parse_macro)
     EXPECT_CALL(*library, has_file(std::string_view("MAC"), _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(macro_loc), Return(true)));
 
-    ws.did_open_file(opencode_loc, open_file_result::changed_content);
+    auto wf_info = ws.did_open_file(opencode_loc, open_file_result::changed_content);
 
     // Opencode file tests
 
@@ -85,13 +85,13 @@ TEST(processor_file, parse_macro)
     EXPECT_EQ(ws.semantic_tokens(opencode_loc), open_expected_hl);
 
     performance_metrics expected_metrics;
-    expected_metrics.files = 2;
     expected_metrics.lines = 6;
     expected_metrics.macro_def_statements = 4;
     expected_metrics.macro_statements = 2;
     expected_metrics.non_continued_statements = 6;
     expected_metrics.open_code_statements = 2;
     EXPECT_EQ(ws.find_processor_file(opencode_loc)->get_metrics(), expected_metrics);
+    EXPECT_EQ(wf_info.files_processed, 2);
 
     // Macro file tests
     semantics::lines_info macro_expected_hl {

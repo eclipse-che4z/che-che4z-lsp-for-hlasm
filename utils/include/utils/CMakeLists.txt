@@ -28,6 +28,7 @@ target_sources(hlasm_utils PUBLIC
 	task.h
 	text_matchers.h
 	time.h
+	transform_inserter.h
 	truth_table.h
 	unicode_text.h
 )

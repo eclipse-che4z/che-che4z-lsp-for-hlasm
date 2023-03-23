@@ -254,8 +254,6 @@ void processing_manager::finish_preprocessor()
 
         static const context::statement_block stmt_block;
 
-        ctx_.hlasm_ctx->add_preprocessor_dependency(inc_member_details->loc);
-
         ctx_.lsp_ctx->add_copy(std::make_shared<context::copy_member>(hlasm_ctx_.ids().add(inc_member_details->name),
                                    stmt_block,
                                    location(position(0, 0), inc_member_details->loc)),

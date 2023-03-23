@@ -21,9 +21,27 @@
 
 namespace hlasm_plugin::parser_library {
 
+struct mock_file_stats_t
+{
+    size_t parse_requests = 0;
+    size_t existence_requests = 0;
+    size_t content_requests = 0;
+};
+
+struct mock_file_t
+{
+    mock_file_t(std::string c)
+        : content(std::move(c))
+    {}
+
+    std::string content;
+
+    mutable mock_file_stats_t stats;
+};
+
 class mock_parse_lib_provider : public workspaces::parse_lib_provider
 {
-    std::unordered_map<std::string, std::string, utils::hashers::string_hasher, std::equal_to<>> m_files;
+    std::unordered_map<std::string, mock_file_t, utils::hashers::string_hasher, std::equal_to<>> m_files;
 
 public:
     std::unordered_map<std::string, std::unique_ptr<analyzer>, utils::hashers::string_hasher, std::equal_to<>>
@@ -50,7 +68,8 @@ public:
             return;
         }
 
-        auto a = std::make_unique<analyzer>(it->second,
+        ++it->second.stats.parse_requests;
+        auto a = std::make_unique<analyzer>(it->second.content,
             analyzer_options { hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data });
         a->analyze();
         a->collect_diags();
@@ -59,10 +78,13 @@ public:
         callback(true);
     }
 
-    bool has_library(std::string_view library, utils::resource::resource_location* loc) const override
+    bool has_library(std::string_view library, utils::resource::resource_location* loc) override
     {
-        if (!m_files.count(library))
+        auto it = m_files.find(library);
+        if (it == m_files.end())
             return false;
+
+        ++it->second.stats.existence_requests;
         if (loc)
             *loc = utils::resource::resource_location(library);
         return true;
@@ -71,7 +93,7 @@ public:
 
     void get_library(std::string_view library,
         std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback)
-        const override
+        override
     {
         auto it = m_files.find(library);
         if (it == m_files.end())
@@ -80,8 +102,18 @@ public:
             return;
         }
 
+        ++it->second.stats.content_requests;
         callback(std::pair<std::string, utils::resource::resource_location>(
-            it->second, utils::resource::resource_location(library)));
+            it->second.content, utils::resource::resource_location(library)));
+    }
+
+    std::optional<mock_file_stats_t> get_stats(std::string_view library) const
+    {
+        auto it = m_files.find(library);
+        if (it == m_files.end())
+            return std::nullopt;
+        else
+            return it->second.stats;
     }
 };
 

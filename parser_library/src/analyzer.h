@@ -148,13 +148,13 @@ class analyzer : public diagnosable_ctx
 
     processing::statement_fields_parser field_parser_;
 
-    std::vector<virtual_file_handle> vf_handles_;
+    std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>> vf_handles_;
 
     processing::processing_manager mngr_;
 
 public:
     analyzer(std::string_view text, analyzer_options opts = {});
-    std::vector<virtual_file_handle> take_vf_handles() { return std::move(vf_handles_); }
+    auto take_vf_handles() { return std::move(vf_handles_); }
     analyzing_context context() const;
 
     context::hlasm_context& hlasm_ctx();

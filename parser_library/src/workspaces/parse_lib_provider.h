@@ -46,11 +46,10 @@ public:
     virtual void parse_library(
         std::string_view library, analyzing_context ctx, library_data data, std::function<void(bool)> callback) = 0;
 
-    virtual bool has_library(std::string_view library, utils::resource::resource_location* url) const = 0;
+    virtual bool has_library(std::string_view library, utils::resource::resource_location* url) = 0;
 
     virtual void get_library(std::string_view library,
-        std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback)
-        const = 0;
+        std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback) = 0;
 
 protected:
     ~parse_lib_provider() = default;
@@ -61,10 +60,10 @@ class empty_parse_lib_provider final : public parse_lib_provider
 {
 public:
     void parse_library(std::string_view, analyzing_context, library_data, std::function<void(bool)> callback) override;
-    bool has_library(std::string_view, utils::resource::resource_location*) const override;
+    bool has_library(std::string_view, utils::resource::resource_location*) override;
     void get_library(std::string_view,
         std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback)
-        const override;
+        override;
 
     static empty_parse_lib_provider instance;
 };

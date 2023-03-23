@@ -70,7 +70,7 @@ public:
         callback(true);
     }
 
-    bool has_library(std::string_view library, resource_location* url) const override
+    bool has_library(std::string_view library, resource_location* url) override
     {
         auto lib = read_library_name(library);
         if (!lib.has_value())
@@ -81,7 +81,7 @@ public:
     }
 
     void get_library(std::string_view library,
-        std::function<void(std::optional<std::pair<std::string, resource_location>>)> callback) const override
+        std::function<void(std::optional<std::pair<std::string, resource_location>>)> callback) override
     {
         assert(callback);
         auto lib = read_library_name(library);

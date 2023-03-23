@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -134,7 +135,7 @@ class opencode_provider final : public statement_provider
     std::unique_ptr<preprocessor> m_preprocessor;
 
     virtual_file_monitor* m_virtual_file_monitor;
-    std::vector<virtual_file_handle>& m_vf_handles;
+    std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>>& m_vf_handles;
 
 public:
     // rewinds position in file
@@ -152,7 +153,7 @@ public:
         std::unique_ptr<preprocessor> preprocessor,
         opencode_provider_options opts,
         virtual_file_monitor* virtual_file_monitor,
-        std::vector<virtual_file_handle>& vf_handles);
+        std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>>& vf_handles);
 
     parsing::hlasmparser_multiline& parser(); // for testing only
 

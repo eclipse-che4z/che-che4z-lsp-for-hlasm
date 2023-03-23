@@ -51,7 +51,7 @@ opencode_provider::opencode_provider(std::string_view text,
     std::unique_ptr<preprocessor> prep,
     opencode_provider_options opts,
     virtual_file_monitor* virtual_file_monitor,
-    std::vector<virtual_file_handle>& vf_handles)
+    std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>>& vf_handles)
     : statement_provider(statement_provider_kind::OPEN)
     , m_input_document(text)
     , m_singleline { parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer, false),
@@ -522,11 +522,12 @@ utils::task opencode_provider::run_preprocessor()
     }
     else
     {
+        auto file_handle = m_virtual_file_monitor->file_generated(new_file->second);
+        auto file_location = generate_virtual_file_name(file_handle.file_id(), virtual_file_name.to_string_view());
+        m_vf_handles.emplace_back(std::move(file_handle), file_location);
         return start_nested_parser(new_file->second,
             analyzer_options {
-                generate_virtual_file_name(
-                    m_vf_handles.emplace_back(m_virtual_file_monitor->file_generated(new_file->second)).file_id(),
-                    virtual_file_name.to_string_view()),
+                std::move(file_location),
                 m_lib_provider,
                 *m_ctx,
                 workspaces::library_data { processing_kind::COPY, virtual_file_name },
@@ -597,11 +598,12 @@ utils::task opencode_provider::convert_ainsert_buffer_to_copybook()
 
     auto new_file = m_virtual_files.try_emplace(virtual_copy_name, std::move(result)).first;
 
+    auto file_handle = m_virtual_file_monitor->file_generated(new_file->second);
+    auto file_location = generate_virtual_file_name(file_handle.file_id(), virtual_copy_name.to_string_view());
+    m_vf_handles.emplace_back(std::move(file_handle), file_location);
     co_await start_nested_parser(new_file->second,
         analyzer_options {
-            generate_virtual_file_name(
-                m_vf_handles.emplace_back(m_virtual_file_monitor->file_generated(new_file->second)).file_id(),
-                virtual_copy_name.to_string_view()),
+            std::move(file_location),
             m_lib_provider,
             *m_ctx,
             workspaces::library_data { processing_kind::COPY, virtual_copy_name },

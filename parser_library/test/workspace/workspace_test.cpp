@@ -21,6 +21,7 @@
 #include "utils/path.h"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
+#include "workspaces/file_manager.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
 
@@ -240,18 +241,24 @@ const resource_location faulty_macro_loc("lib/ERROR");
 const resource_location correct_macro_loc("lib/CORRECT");
 } // namespace
 
-class file_manager_extended : public file_manager_impl
+class file_manager_extended : public file_manager_impl, public external_file_reader
 {
+    std::map<resource_location, std::string> file_contents = {
+        { proc_grps_loc, pgroups_file },
+        { pgm_conf_loc, pgmconf_file },
+        { source1_loc, source_using_macro_file },
+        { source2_loc, source_using_macro_file },
+        { source3_loc, source_using_macro_file_no_error },
+        { faulty_macro_loc, faulty_macro_file },
+        { correct_macro_loc, correct_macro_file },
+    };
+
 public:
     file_manager_extended()
+        : file_manager_impl(static_cast<external_file_reader&>(*this))
     {
-        did_open_file(proc_grps_loc, 1, pgroups_file);
-        did_open_file(pgm_conf_loc, 1, pgmconf_file);
-        did_open_file(source1_loc, 1, source_using_macro_file);
-        did_open_file(source2_loc, 1, source_using_macro_file);
-        did_open_file(source3_loc, 1, source_using_macro_file_no_error);
-        did_open_file(faulty_macro_loc, 1, faulty_macro_file);
-        did_open_file(correct_macro_loc, 1, correct_macro_file);
+        for (const auto& [loc, content] : file_contents)
+            did_open_file(loc, 1, content);
     }
 
     list_directory_result list_directory_files(const hlasm_plugin::utils::resource::resource_location&) const override
@@ -260,6 +267,14 @@ public:
             return { { { "ERROR", faulty_macro_loc }, { "CORRECT", correct_macro_loc } },
                 hlasm_plugin::utils::path::list_directory_rc::done };
         return { { { "ERROR", faulty_macro_loc } }, hlasm_plugin::utils::path::list_directory_rc::done };
+    }
+
+
+    std::optional<std::string> load_text(const resource_location& document_loc) const override
+    {
+        if (auto it = file_contents.find(document_loc); it != file_contents.end())
+            return it->second;
+        return std::nullopt;
     }
 
     bool insert_correct_macro = true;
@@ -369,6 +384,29 @@ TEST_F(workspace_test, did_close_file)
     // finally if we close the last source2 file, its diagnostics will disappear as well
     ws.did_close_file(source2_loc);
     ASSERT_EQ(collect_and_get_diags_size(ws), (size_t)0);
+}
+
+TEST_F(workspace_test, did_close_file_without_save)
+{
+    file_manager_extended file_manager;
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+
+    ws.open();
+
+    ws.did_open_file(source3_loc);
+    ws.did_open_file(correct_macro_loc);
+    EXPECT_EQ(collect_and_get_diags_size(ws), 0);
+
+    document_change c(range(), "ERR", 3);
+    file_manager.did_change_file(correct_macro_loc, 2, &c, 1);
+    ws.did_change_file(correct_macro_loc, &c, 1);
+
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)1);
+    EXPECT_TRUE(match_strings({ correct_macro_loc }));
+
+    file_manager.did_close_file(correct_macro_loc);
+    ws.did_close_file(correct_macro_loc);
+    EXPECT_EQ(collect_and_get_diags_size(ws), 0);
 }
 
 TEST_F(workspace_test, did_change_watched_files)

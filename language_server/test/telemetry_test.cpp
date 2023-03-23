@@ -78,12 +78,12 @@ TEST(telemetry, lsp_server_did_open)
 
     nlohmann::json& metrics = telemetry_reply["params"]["measurements"];
 
-    EXPECT_EQ(metrics["Files"], 1);
     EXPECT_GT(metrics["duration"], 0U);
     EXPECT_EQ(metrics["error_count"], 1);
 
     nlohmann::json& ws_info = telemetry_reply["params"]["properties"];
 
+    EXPECT_EQ(ws_info["files_processed"], 1);
     EXPECT_EQ(ws_info["diagnostics_suppressed"], false);
 }
 

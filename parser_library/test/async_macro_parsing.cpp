@@ -52,7 +52,7 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
             m_nested_analyzers.emplace_back(std::move(a_ptr), std::move(a_task));
         }
     }
-    bool has_library(std::string_view library, resource::resource_location* url) const override
+    bool has_library(std::string_view library, resource::resource_location* url) override
     {
         auto it = m_files.find(library);
         if (it == m_files.end())
@@ -62,7 +62,7 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
         return true;
     }
     void get_library(std::string_view library,
-        std::function<void(std::optional<std::pair<std::string, resource::resource_location>>)> callback) const override
+        std::function<void(std::optional<std::pair<std::string, resource::resource_location>>)> callback) override
     {
         if (auto it = m_files.find(library); it != m_files.end())
             callback(std::make_pair(it->second, resource::resource_location(it->first)));

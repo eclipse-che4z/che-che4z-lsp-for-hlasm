@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_H
 
 #include <atomic>
+#include <map>
 #include <memory>
 #include <optional>
 #include <set>
@@ -23,6 +24,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "diagnosable_impl.h"
@@ -133,11 +135,11 @@ private:
 
     void reparse_after_config_refresh();
 
-    void filter_and_close_dependencies_(std::set<resource_location> dependencies, std::shared_ptr<processor_file> file);
-    bool is_dependency_(const resource_location& file_location) const;
+    void filter_and_close_dependencies(
+        std::set<resource_location> files_to_close_candidates, const processor_file_impl* file_to_ignore = nullptr);
+    bool is_dependency(const resource_location& file_location) const;
 
     std::vector<std::shared_ptr<processor_file>> find_related_opencodes(const resource_location& document_loc) const;
-    void delete_diags(std::shared_ptr<processor_file> file);
 
     void show_message(const std::string& message);
 
@@ -149,13 +151,22 @@ private:
 
     workspace_configuration m_configuration;
 
+    struct dependency_cache
+    {
+        dependency_cache(version_t version, const file_manager& fm, std::shared_ptr<file> file)
+            : version(version)
+            , cache(fm, std::move(file))
+        {}
+        version_t version;
+        macro_cache cache;
+    };
+
     struct processor_file_compoments
     {
         std::shared_ptr<processor_file_impl> m_processor_file;
-        std::unordered_map<resource_location,
-            std::shared_ptr<std::pair<version_t, macro_cache>>,
-            resource_location_hasher>
-            m_macro_cache;
+        std::map<resource_location, std::variant<std::shared_ptr<dependency_cache>, virtual_file_handle>, std::less<>>
+            m_dependencies;
+        std::map<std::string, resource_location, std::less<>> m_member_map;
 
         resource_location m_alternative_config = resource_location();
 
@@ -169,11 +180,12 @@ private:
     std::vector<processor_file_compoments*> populate_files_to_parse(
         const utils::resource::resource_location& file_location, open_file_result file_content_status);
 
-    processor_file_compoments& add_processor_file_impl(const resource_location& file);
+    processor_file_compoments& add_processor_file_impl(std::shared_ptr<file> f);
     processor_file_compoments* find_processor_file_impl(const resource_location& file);
     const processor_file_compoments* find_processor_file_impl(const resource_location& file) const;
     friend struct workspace_parse_lib_provider;
     workspace_file_info parse_successful(processor_file_compoments& comp, workspace_parse_lib_provider libs);
+    void delete_diags(processor_file_compoments& pfc);
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces
