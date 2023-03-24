@@ -33,7 +33,7 @@ async function main() {
 
     // give theia 5 seconds to start, then connect
     setTimeout(async function() {
-        const browser = await puppeteer.launch({executablePath: '/usr/lib/chromium/chrome', headless:true,args: ['--no-sandbox', '--disable-gpu']});
+        const browser = await puppeteer.launch({executablePath: '/usr/lib/chromium/chromium', headless:true,args: ['--no-sandbox', '--disable-gpu']});
         const page = await browser.newPage();
         try {
             await page.goto('http://localhost:3000');

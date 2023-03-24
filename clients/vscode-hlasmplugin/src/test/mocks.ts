@@ -13,7 +13,7 @@
  */
 
 import * as vscode from 'vscode';
-import * as vscodelc from 'vscode-languageclient/node';
+import * as vscodelc from 'vscode-languageclient';
 /**
  * A collection of mocked interfaces needed for unit testing
  */

@@ -12,26 +12,26 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-import * as vscodelc from 'vscode-languageclient/node';
+import * as vscodelc from 'vscode-languageclient';
 
-import { ErrorHandler } from 'vscode-languageclient/node';
 import { Telemetry } from './telemetry';
 
-export class LanguageClientErrorHandler implements ErrorHandler {
-    defaultHandler: ErrorHandler = undefined;
+export class LanguageClientErrorHandler implements vscodelc.ErrorHandler {
+    defaultHandler: vscodelc.ErrorHandler = undefined;
     telemetry: Telemetry;
 
     constructor(tlmtry: Telemetry) {
         this.telemetry = tlmtry;
     }
 
-    error(error: Error, message: vscodelc.Message, count: number): vscodelc.ErrorAction {
-        this.telemetry.reportEvent("hlasm.connectionError", { ...error })
+    error(error: Error, message: vscodelc.Message | undefined, count: number | undefined): vscodelc.ErrorHandlerResult | Promise<vscodelc.ErrorHandlerResult> {
+        this.telemetry.reportEvent("hlasm.connectionError", { ...error });
 
         return this.defaultHandler.error(error, message, count);
     }
-    closed(): vscodelc.CloseAction {
-        this.telemetry.reportEvent("hlasm.connectionClosed")
+
+    closed(): vscodelc.CloseHandlerResult | Promise<vscodelc.CloseHandlerResult> {
+        this.telemetry.reportEvent("hlasm.connectionClosed");
         return this.defaultHandler.closed();
     }
 

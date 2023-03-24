@@ -14,7 +14,7 @@
 
 import * as vscode from 'vscode';
 import * as net from 'net'
-import { BaseLanguageClient } from 'vscode-languageclient/node';
+import { BaseLanguageClient } from 'vscode-languageclient';
 
 export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFactory {
     private theia_local_server: net.Server = null;
@@ -93,30 +93,32 @@ class HLASMDebugAdapter implements vscode.DebugAdapter {
     private message_event = new vscode.EventEmitter<vscode.DebugProtocolMessage>();
     private readonly session_id: number = HLASMDebugAdapter.next_session_id++;
     private readonly message_id: string = HLASMDebugAdapter.registration_message_id + '/' + this.session_id;
+    private readonly to_dispose: vscode.Disposable[] = [];
+
+    private notification_queue: Promise<void>;
 
     constructor(private client: BaseLanguageClient) {
-        this.client.onReady().then(() => {
-            this.client.sendNotification(HLASMDebugAdapter.registration_message_id, { session_id: this.session_id });
-            this.client.onNotification(this.message_id, (msg: any) => {
-                this.message_event.fire(msg);
-            });
-        });
+        this.notification_queue = this.client.sendNotification(HLASMDebugAdapter.registration_message_id, { session_id: this.session_id });
+        this.to_dispose.push(this.client.onNotification(this.message_id, (msg: any) => {
+            this.message_event.fire(msg);
+        }));
+        this.to_dispose.push(this.message_event);
     }
     onDidSendMessage(listener: (e: vscode.DebugProtocolMessage) => any, thisArgs?: any, disposables?: vscode.Disposable[]): vscode.Disposable {
         return this.message_event.event(listener, thisArgs, disposables);
     }
 
     handleMessage(message: vscode.DebugProtocolMessage): void {
-        this.client.onReady().then(() => {
-            this.client.sendNotification(this.message_id, message);
-        });
+        this.notification_queue = this.notification_queue.then(
+            () => this.client.sendNotification(this.message_id, message)
+        );
     }
 
     dispose() {
-        this.message_event.dispose();
-        this.client.onReady().then(() => {
-            this.client.sendNotification(this.message_id);
-        });
+        this.to_dispose.forEach(x => x.dispose());
+        this.notification_queue.then(
+            () => this.client.sendNotification(this.message_id)
+        );
     }
 
 }

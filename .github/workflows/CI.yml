@@ -382,7 +382,7 @@ jobs:
     needs: VSIX
     strategy:
       matrix:
-        theia: ["quay.io/zowe-explorer/theia:1.25.0"] 
+        theia: ["ghcr.io/eclipse-theia/theia-blueprint/blueprint:1.35.0"]
 # theiaide images not supported anymore, replaced with a quay mirror until there is something official again. See also https://github.com/theia-ide/theia-apps/issues/496
     container:
       image: ${{ matrix.theia }}
@@ -395,7 +395,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Chromium
-        run: apk add --no-cache chromium
+        run: apt-get update && apt-get install -y chromium
       - name: Download VSIX
         uses: actions/download-artifact@v3
         with:
@@ -405,5 +405,5 @@ jobs:
         run: npm ci
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Run Theia Tests
-        run: npm run test:theia /home/theia/
+        run: npm run test:theia /home/theia/applications/browser/
         working-directory: ${{ env.CLIENT_DIR }}

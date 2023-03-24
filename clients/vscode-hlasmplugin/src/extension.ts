@@ -62,9 +62,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const telemetry = new Telemetry();
     context.subscriptions.push(telemetry);
 
-    // setTimeout is needed, because telemetry initialization is asynchronous
-    // and AFAIK no event in the API is exposed to send the activation telemetry event
-    setTimeout(() => { telemetry.reportEvent("hlasm.activated", { server_variant: serverVariant.toString() }); }, 1000);
+    telemetry.reportEvent("hlasm.activated", { server_variant: serverVariant.toString() });
 
     // patterns for files and configs
     const filePattern: string = '**/*';
@@ -93,23 +91,30 @@ export async function activate(context: vscode.ExtensionContext) {
 
     //client init
     const hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
+    context.subscriptions.push(hlasmpluginClient);
 
     clientErrorHandler.defaultHandler = hlasmpluginClient.createDefaultErrorHandler();
+
     // The objectToString is necessary, because telemetry reporter only takes objects with
     // string properties and there are some boolean that we receive from the language server
     hlasmpluginClient.onTelemetry((object) => { telemetry.reportEvent(object.method_name, objectToString(object.properties), object.measurements) });
-
-    // register all commands and objects to context
-    await registerToContext(context, hlasmpluginClient, telemetry);
 
     //give the server some time to start listening when using TCP
     if (serverVariant === 'tcp')
         await sleep(2000);
 
-    context.subscriptions.push(hlasmpluginClient.start());
+    try {
+        await hlasmpluginClient.start();
+    }
+    catch (e) {
+        if (serverVariant === 'native')
+            offerSwitchToWasmClient();
 
-    if (serverVariant === 'native')
-        startCheckingNativeClient(hlasmpluginClient);
+        throw e;
+    }
+
+    // register all commands and objects to context
+    await registerToContext(context, hlasmpluginClient, telemetry);
 
     let api = {
         getExtension(): vscodelc.LanguageClient {
@@ -122,27 +127,22 @@ export async function activate(context: vscode.ExtensionContext) {
     return api;
 }
 
-function startCheckingNativeClient(hlasmpluginClient: vscodelc.LanguageClient) {
-    const timeout = setTimeout(() => {
-        const use_wasm = 'Switch to WASM version';
-        vscode.window.showWarningMessage('The language server did not start.', ...[use_wasm, 'Ignore']).then((value) => {
-            if (value === use_wasm) {
-                vscode.workspace.getConfiguration('hlasm').update('serverVariant', 'wasm', vscode.ConfigurationTarget.Global).then(
-                    () => {
-                        const reload = 'Reload window';
-                        vscode.window.showInformationMessage('User settings updated.', ...[reload]).then((value) => {
-                            if (value === reload)
-                                vscode.commands.executeCommand('workbench.action.reloadWindow');
-                        })
-                    },
-                    (error) => {
-                        vscode.window.showErrorMessage(error);
-                    });
-            }
-        })
-    }, 15000);
-    hlasmpluginClient.onReady().then(() => {
-        clearTimeout(timeout);
+function offerSwitchToWasmClient() {
+    const use_wasm = 'Switch to WASM version';
+    vscode.window.showWarningMessage('The language server did not start.', ...[use_wasm, 'Ignore']).then((value) => {
+        if (value === use_wasm) {
+            vscode.workspace.getConfiguration('hlasm').update('serverVariant', 'wasm', vscode.ConfigurationTarget.Global).then(
+                () => {
+                    const reload = 'Reload window';
+                    vscode.window.showInformationMessage('User settings updated.', ...[reload]).then((value) => {
+                        if (value === reload)
+                            vscode.commands.executeCommand('workbench.action.reloadWindow');
+                    })
+                },
+                (error) => {
+                    vscode.window.showErrorMessage(error);
+                });
+        }
     });
 }
 

@@ -23,11 +23,8 @@ import { EXTENSION_ID } from '../../extension';
 async function primeExtension(): Promise<vscode.Disposable[]> {
 	const ext = await vscode.extensions.getExtension(EXTENSION_ID).activate();
 	const lang: {
-		onReady(): Promise<void>;
 		sendRequest<R>(method: string, param: any, token?: vscode.CancellationToken): Promise<R>;
 	} = ext!.getExtension()!;
-	// wait for the language server initialization
-	await Promise.race([lang.onReady(), timeout(30000, 'Language server initialization failed')]);
 	// prime opcode suggestions to avoid timeouts
 	await Promise.race([lang.sendRequest<object>('textDocument/$/opcode_suggestion', { opcodes: ['OPCODE'] }), timeout(30000, 'Opcode suggestion request failed')]);
 

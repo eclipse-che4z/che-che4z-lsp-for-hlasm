@@ -14,7 +14,7 @@
 
 import { relative } from 'path';
 import * as vscode from 'vscode';
-import * as vscodelc from 'vscode-languageclient/node';
+import * as vscodelc from 'vscode-languageclient';
 import { configurationExists } from './helpers';
 
 
@@ -34,7 +34,6 @@ function unique(a: string[]) {
 }
 
 async function gatherOpcodeSuggestions(opcodes: string[], client: vscodelc.BaseLanguageClient, uri: vscode.Uri): Promise<OpcodeSuggestionList> {
-    await client.onReady();
     const suggestionsResponse = await client.sendRequest<OpcodeSuggestionResponse>("textDocument/$/opcode_suggestion", {
         textDocument: { uri: uri.toString() },
         opcodes: opcodes,

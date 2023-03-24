@@ -23,51 +23,49 @@ export function getLanguageClientMiddleware(): Middleware {
     // In that case, we drop both events.
 
     const pendingOpens = new Map<string, {
-        send: () => void,
-        clearTimeout: () => void,
+        send: () => boolean,
+        forget: () => boolean,
     }>();
     const timeout = 50;
 
-    const sendOpenNotification = (uri: string) => {
-        const didOpenEvent = pendingOpens.get(uri);
-        if (didOpenEvent) {
-            pendingOpens.delete(uri);
-            didOpenEvent.clearTimeout();
-            didOpenEvent.send();
-
-            return true;
-        }
-        return false;
-    };
+    const sendOpenNotification = (uri: string) => pendingOpens.get(uri)?.send() || false;
 
     return {
         didOpen: (data, next) => {
-            const uri = data.uri.toString();
+            return new Promise<void>((resolve, reject) => {
+                const uri = data.uri.toString();
 
-            sendOpenNotification(uri) && console.error('Double open detected for', uri);
+                sendOpenNotification(uri) && console.error('Double open detected for', uri);
 
-            const timerId = setTimeout(() => {
-                pendingOpens.delete(uri);
-                next(data);
-            }, timeout);
-            pendingOpens.set(uri, {
-                send: () => { next(data); },
-                clearTimeout: () => { clearTimeout(timerId); },
+                const timerId = setTimeout(() => {
+                    pendingOpens.delete(uri);
+                    next(data).then(resolve, reject);
+                }, timeout);
+
+                pendingOpens.set(uri, {
+                    send: () => {
+                        clearTimeout(timerId);
+                        pendingOpens.delete(uri);
+                        next(data).then(resolve, reject);
+                        return true;
+                    },
+                    forget: () => {
+                        clearTimeout(timerId);
+                        pendingOpens.delete(uri);
+                        resolve();
+                        return true;
+                    },
+                });
             });
         },
         didChange: (data, next) => {
             sendOpenNotification(data.document.uri.toString());
-            next(data);
+            return next(data);
         },
         didClose: (data, next) => {
-            const uri = data.uri.toString();
-            const didOpenEvent = pendingOpens.get(uri);
-            if (didOpenEvent) {
-                pendingOpens.delete(uri);
-                didOpenEvent.clearTimeout();
-            }
-            else
-                next(data);
+            return pendingOpens.get(data.uri.toString())?.forget()
+                ? new Promise<void>((resolve) => setImmediate(resolve))
+                : next(data);
         },
         provideDefinition: (document, position, token, next) => {
             sendOpenNotification(document.uri.toString());
