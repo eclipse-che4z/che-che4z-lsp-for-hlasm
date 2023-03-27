@@ -43,15 +43,13 @@
 namespace hlasm_plugin::parser_library::processing {
 
 namespace {
-diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
-
 std::optional<context::A_t> try_get_abs_value(
     const semantics::simple_expr_operand* op, context::dependency_solver& dep_solver)
 {
     if (op->has_dependencies(dep_solver, nullptr))
         return std::nullopt;
 
-    auto val = op->expression->evaluate(dep_solver, drop_diags);
+    auto val = op->expression->evaluate(dep_solver, drop_diagnostic_op);
 
     if (val.value_kind() != context::symbol_value_kind::ABS)
         return std::nullopt;
@@ -321,11 +319,11 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
             if (!data_op->value->length
                 || !data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
             {
-                len = data_op->value->get_length_attribute(dep_solver, drop_diags);
+                len = data_op->value->get_length_attribute(dep_solver, drop_diagnostic_op);
             }
             if (data_op->value->scale && !data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
             {
-                scale = data_op->value->get_scale_attribute(dep_solver, drop_diags);
+                scale = data_op->value->get_scale_attribute(dep_solver, drop_diagnostic_op);
             }
             create_symbol(stmt.stmt_range_ref(),
                 label,
@@ -334,7 +332,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
                     type,
                     len,
                     scale,
-                    data_op->value->get_integer_attribute(dep_solver, drop_diags)));
+                    data_op->value->get_integer_attribute(dep_solver, drop_diagnostic_op)));
         }
         else
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
@@ -408,7 +406,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         }
         else
         {
-            auto length = data_def_dependency<instr_type>::get_operands_length(b, e, op_solver, drop_diags);
+            auto length = data_def_dependency<instr_type>::get_operands_length(b, e, op_solver, drop_diagnostic_op);
             hlasm_ctx.ord_ctx.reserve_storage_area(length, context::no_align, lib_info);
         }
     }
@@ -618,7 +616,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
 
     if (!undefined_absolute_part)
     {
-        if (auto res = reloc_expr->expression->evaluate(dep_solver, drop_diags);
+        if (auto res = reloc_expr->expression->evaluate(dep_solver, drop_diagnostic_op);
             res.value_kind() == context::symbol_value_kind::RELOC)
             reloc_val = std::move(res).get_reloc();
         else
@@ -1058,7 +1056,7 @@ void asm_processor::process_END(rebuilt_statement stmt)
             && stmt.operands_ref().value[0]->access_asm()->kind == semantics::asm_kind::EXPR)
         {
             auto symbol = stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get()->evaluate(
-                dep_solver, drop_diags);
+                dep_solver, drop_diagnostic_op);
 
             if (symbol.value_kind() == context::symbol_value_kind::ABS)
             {

@@ -30,6 +30,7 @@
 #include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
 
+using namespace hlasm_plugin::utils;
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
 
@@ -52,22 +53,17 @@ class fuzzer_lib_provider : public parse_lib_provider
     }
 
 public:
-    void parse_library(
-        std::string_view library, analyzing_context ctx, library_data data, std::function<void(bool)> callback) override
+    value_task<bool> parse_library(std::string library, analyzing_context ctx, library_data data) override
     {
-        assert(callback);
         auto lib = read_library_name(library);
         if (!lib.has_value())
-        {
-            callback(false);
-            return;
-        }
+            co_return false;
 
-        auto a = std::make_unique<analyzer>(
-            files[lib.value()], analyzer_options { resource_location(library), this, std::move(ctx), data });
-        a->analyze();
-        a->collect_diags();
-        callback(true);
+        analyzer a(
+            files[lib.value()], analyzer_options(resource_location(std::move(library)), this, std::move(ctx), data));
+        co_await a.co_analyze();
+        a.collect_diags();
+        co_return true;
     }
 
     bool has_library(std::string_view library, resource_location* url) override
@@ -80,15 +76,14 @@ public:
         return true;
     }
 
-    void get_library(std::string_view library,
-        std::function<void(std::optional<std::pair<std::string, resource_location>>)> callback) override
+    value_task<std::optional<std::pair<std::string, resource::resource_location>>> get_library(
+        std::string library) override
     {
-        assert(callback);
         auto lib = read_library_name(library);
         if (!lib.has_value())
-            return callback(std::nullopt);
+            co_return std::nullopt;
 
-        return callback(std::pair<std::string, resource_location>(files[lib.value()], resource_location(library)));
+        co_return std::pair<std::string, resource_location>(files[lib.value()], resource_location(std::move(library)));
     }
 
     std::vector<std::string> files;

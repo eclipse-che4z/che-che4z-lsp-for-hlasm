@@ -45,26 +45,31 @@ macrodef_processor::macrodef_processor(analyzing_context ctx,
     result_.invalid = true; // result starts invalid until mandatory statements are encountered
 }
 
-std::optional<processing_status> macrodef_processor::get_processing_status(
-    const semantics::instruction_si& instruction) const
+
+std::optional<context::id_index> macrodef_processor::resolve_concatenation(
+    const semantics::concat_chain& concat, const range&) const
 {
+    // TODO: should the identifier limit be enforced here?
+    return hlasm_ctx.ids().add(semantics::concatenation_point::to_string(concat));
+}
+
+std::optional<processing_status> macrodef_processor::get_processing_status(
+    const std::optional<context::id_index>& instruction, const range& r) const
+{
+    assert(instruction.has_value());
     if (expecting_prototype_ && !expecting_MACRO_)
     {
         processing_format format(processing_kind::MACRO, processing_form::MAC);
         context::id_index id;
-        if (instruction.type == semantics::instruction_si_type::EMPTY)
+        if (instruction->empty())
         {
-            add_diagnostic(diagnostic_op::error_E042(instruction.field_range));
+            add_diagnostic(diagnostic_op::error_E042(r));
 
             id = context::id_storage::well_known::ASPACE;
         }
         else
         {
-            id = instruction.type == semantics::instruction_si_type::ORD
-                ? std::get<context::id_index>(instruction.value)
-                : hlasm_ctx.ids().add(
-                    semantics::concatenation_point::to_string(std::get<semantics::concat_chain>(instruction.value)));
-            // TODO: should the identifier limit be enforced here?
+            id = *instruction;
         }
         return std::make_pair(format, op_code(id, context::instruction_type::MAC));
     }
@@ -117,12 +122,11 @@ bool macrodef_processor::terminal_condition(const statement_provider_kind prov_k
 bool macrodef_processor::finished() { return finished_flag_; }
 
 processing_status macrodef_processor::get_macro_processing_status(
-    const semantics::instruction_si& instruction, context::hlasm_context& hlasm_ctx)
+    const std::optional<context::id_index>& instruction, context::hlasm_context& hlasm_ctx)
 {
-    if (instruction.type == semantics::instruction_si_type::ORD)
+    if (instruction && !instruction->empty())
     {
-        auto id = std::get<context::id_index>(instruction.value);
-        auto code = hlasm_ctx.get_operation_code(id);
+        auto code = hlasm_ctx.get_operation_code(*instruction);
         if (auto** ca_instr = std::get_if<const context::ca_instruction*>(&code.opcode_detail); ca_instr)
         {
             processing_format format(processing_kind::MACRO,
@@ -139,7 +143,7 @@ processing_status macrodef_processor::get_macro_processing_status(
         }
     }
 
-    if (instruction.type == semantics::instruction_si_type::EMPTY)
+    if (instruction && instruction->empty())
     {
         processing_format format(processing_kind::MACRO, processing_form::CA, operand_occurrence::ABSENT);
 

@@ -56,26 +56,23 @@ public:
         : m_files(c.begin(), c.end())
     {}
 
-    void parse_library(std::string_view library,
-        analyzing_context ctx,
-        workspaces::library_data data,
-        std::function<void(bool)> callback) override
+    utils::value_task<bool> parse_library(
+        std::string library, analyzing_context ctx, workspaces::library_data data) override
     {
         auto it = m_files.find(library);
         if (it == m_files.end())
         {
-            callback(false);
-            return;
+            co_return false;
         }
 
         ++it->second.stats.parse_requests;
         auto a = std::make_unique<analyzer>(it->second.content,
             analyzer_options { hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data });
-        a->analyze();
+        co_await a->co_analyze();
         a->collect_diags();
-        analyzers.insert_or_assign(std::string(library), std::move(a));
+        analyzers.insert_or_assign(std::move(library), std::move(a));
 
-        callback(true);
+        co_return true;
     }
 
     bool has_library(std::string_view library, utils::resource::resource_location* loc) override
@@ -91,20 +88,18 @@ public:
     }
 
 
-    void get_library(std::string_view library,
-        std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback)
-        override
+    utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>> get_library(
+        std::string library) override
     {
         auto it = m_files.find(library);
         if (it == m_files.end())
         {
-            callback(std::nullopt);
-            return;
+            co_return std::nullopt;
         }
 
         ++it->second.stats.content_requests;
-        callback(std::pair<std::string, utils::resource::resource_location>(
-            it->second.content, utils::resource::resource_location(library)));
+        co_return std::pair<std::string, utils::resource::resource_location>(
+            it->second.content, utils::resource::resource_location(std::move(library)));
     }
 
     std::optional<mock_file_stats_t> get_stats(std::string_view library) const

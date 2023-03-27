@@ -109,33 +109,19 @@ analyzer::analyzer(std::string_view text, analyzer_options opts)
     , ctx_(std::move(opts.get_context()))
     , src_proc_(opts.collect_hl_info == collect_highlighting_info::yes)
     , field_parser_(ctx_.hlasm_ctx.get())
-    , mngr_(
-          std::make_unique<processing::opencode_provider>(text,
-              ctx_,
-              opts.get_lib_provider(),
-              mngr_,
-              mngr_,
-              src_proc_,
-              *this,
-              opts.get_preprocessor(
-                  [libs = &opts.get_lib_provider()](std::string library)
-                      -> utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>> {
-                      bool called = false;
-                      std::optional<std::pair<std::string, utils::resource::resource_location>> result;
-                      libs->get_library(library, [&result, &called](auto v) {
-                          result = std::move(v);
-                          called = true;
-                      });
-                      if (!called)
-                          co_await utils::task::suspend();
-                      co_return result;
-                  },
-                  *this,
-                  src_proc_),
-              opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
-                                                             : processing::opencode_provider_options {},
-              opts.vf_monitor,
-              vf_handles_),
+    , mngr_(std::make_unique<processing::opencode_provider>(text,
+                ctx_,
+                opts.get_lib_provider(),
+                mngr_,
+                mngr_,
+                src_proc_,
+                *this,
+                opts.get_preprocessor(
+                    std::bind_front(&parse_lib_provider::get_library, &opts.get_lib_provider()), *this, src_proc_),
+                opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
+                                                               : processing::opencode_provider_options {},
+                opts.vf_monitor,
+                vf_handles_),
           ctx_,
           opts.library_data,
           opts.file_loc,

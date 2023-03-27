@@ -330,6 +330,13 @@ TEST(task, then)
     EXPECT_CALL(func, Call(4));
     EXPECT_EQ(t4.run().value(), 4);
 
+    task t5 = []() -> task { co_return; }().then([](auto& callback) -> task {
+        callback(5);
+        co_return;
+    }(stdfunc));
+    EXPECT_CALL(func, Call(5));
+    t5.run();
+
     task v1 = []() -> value_task<int> { co_return 1; }().then([&stdfunc](int v) { stdfunc(v); });
     EXPECT_CALL(func, Call(1));
     v1.run();
@@ -354,4 +361,11 @@ TEST(task, then)
     });
     EXPECT_CALL(func, Call(4));
     EXPECT_EQ(v4.run().value(), 4);
+
+    value_task<int> v5 = []() -> task { co_return; }().then([](auto& callback) -> value_task<int> {
+        callback(5);
+        co_return 5;
+    }(stdfunc));
+    EXPECT_CALL(func, Call(5));
+    EXPECT_EQ(v5.run().value(), 5);
 }

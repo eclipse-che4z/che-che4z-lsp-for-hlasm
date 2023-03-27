@@ -28,8 +28,15 @@ copy_processor::copy_processor(analyzing_context ctx, processing_state_listener&
     , first_statement_(true)
 {}
 
+
+std::optional<context::id_index> copy_processor::resolve_concatenation(
+    const semantics::concat_chain&, const range&) const
+{
+    return std::nullopt;
+}
+
 std::optional<processing_status> copy_processor::get_processing_status(
-    const semantics::instruction_si& instruction) const
+    const std::optional<context::id_index>& instruction, const range&) const
 {
     auto status = macrodef_processor::get_macro_processing_status(instruction, hlasm_ctx);
     status.first.kind = processing_kind::COPY;

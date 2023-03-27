@@ -24,32 +24,29 @@ using namespace ::testing;
 struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
 {
     std::unordered_map<std::string, std::string, hashers::string_hasher, std::equal_to<>> m_files;
-    std::vector<std::pair<std::unique_ptr<analyzer>, task>> m_nested_analyzers;
+    analyzer* current = nullptr;
 
     // Inherited via parse_lib_provider
-    void parse_library(
-        std::string_view library, analyzing_context ctx, library_data data, std::function<void(bool)> callback) override
+    value_task<bool> parse_library(std::string library, analyzing_context ctx, library_data data) override
     {
         auto it = m_files.find(library);
         if (it == m_files.end())
         {
-            m_nested_analyzers.emplace_back(nullptr, [](analyzer* a, std::function<void(bool)> callback) -> task {
-                if (callback)
-                    callback(false);
-                co_return;
-            }(nullptr, std::move(callback)));
+            co_return false;
         }
         else
         {
-            auto a_ptr = std::make_unique<analyzer>(it->second,
+            analyzer a(it->second,
                 analyzer_options {
-                    hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data });
-            auto a_task = [](analyzer* a, std::function<void(bool)> callback) -> task {
-                co_await a->co_analyze();
-                if (callback)
-                    callback(true);
-            }(a_ptr.get(), std::move(callback));
-            m_nested_analyzers.emplace_back(std::move(a_ptr), std::move(a_task));
+                    hlasm_plugin::utils::resource::resource_location(std::move(library)),
+                    this,
+                    std::move(ctx),
+                    data,
+                });
+
+            co_await a.co_analyze();
+            current->collect_diags_from_child(a);
+            co_return true;
         }
     }
     bool has_library(std::string_view library, resource::resource_location* url) override
@@ -61,36 +58,20 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
             *url = resource::resource_location(it->second);
         return true;
     }
-    void get_library(std::string_view library,
-        std::function<void(std::optional<std::pair<std::string, resource::resource_location>>)> callback) override
+    value_task<std::optional<std::pair<std::string, resource::resource_location>>> get_library(
+        std::string library) override
     {
         if (auto it = m_files.find(library); it != m_files.end())
-            callback(std::make_pair(it->second, resource::resource_location(it->first)));
+            co_return std::make_pair(it->second, resource::resource_location(it->first));
         else
-            callback(std::nullopt);
+            co_return std::nullopt;
     }
 
     void analyze(analyzer& a)
     {
-        auto main = a.co_analyze();
-        while (!main.done())
-        {
-            if (!m_nested_analyzers.empty())
-            {
-                auto& [nested_a, task] = m_nested_analyzers.back();
-                if (!task.done())
-                {
-                    task.resume();
-                    continue;
-                }
-
-                if (nested_a)
-                    a.collect_diags_from_child(*nested_a);
-                m_nested_analyzers.pop_back();
-                continue;
-            }
-            main.resume();
-        }
+        current = &a;
+        a.co_analyze().run();
+        current = nullptr;
     }
 };
 

@@ -27,21 +27,23 @@ macro_statement_provider::macro_statement_provider(analyzing_context ctx,
         statement_provider_kind::MACRO, std::move(ctx), parser, lib_provider, listener, diag_consumer)
 {}
 
-bool macro_statement_provider::finished() const { return ctx.hlasm_ctx->scope_stack().size() == 1; }
+bool macro_statement_provider::finished() const { return m_ctx.hlasm_ctx->scope_stack().size() == 1; }
 
-std::pair<context::statement_cache*, members_statement_provider::rollback_token> macro_statement_provider::get_next()
+std::pair<context::statement_cache*, std::optional<std::optional<context::id_index>>>
+macro_statement_provider::get_next()
 {
-    auto& invo = ctx.hlasm_ctx->scope_stack().back().this_macro;
+    auto& invo = m_ctx.hlasm_ctx->scope_stack().back().this_macro;
     assert(invo);
 
-    ++invo->current_statement;
+    invo->current_statement += !m_resolved_instruction.has_value();
     if (invo->current_statement == invo->cached_definition.size())
     {
-        ctx.hlasm_ctx->leave_macro();
+        m_resolved_instruction.reset();
+        m_ctx.hlasm_ctx->leave_macro();
         return {};
     }
 
-    return { &invo->cached_definition[invo->current_statement], rollback_token { .mi = invo.get() } };
+    return { &invo->cached_definition[invo->current_statement], std::exchange(m_resolved_instruction, {}) };
 }
 
 std::vector<diagnostic_op> macro_statement_provider::filter_cached_diagnostics(
@@ -49,13 +51,6 @@ std::vector<diagnostic_op> macro_statement_provider::filter_cached_diagnostics(
 {
     auto diags = stmt.diagnostics();
     return std::vector<diagnostic_op>(diags.begin(), diags.end());
-}
-
-void macro_statement_provider::go_back(rollback_token t)
-{
-    assert(t.mi);
-    assert(t.mi->current_statement != (size_t)-1);
-    --t.mi->current_statement;
 }
 
 } // namespace hlasm_plugin::parser_library::processing

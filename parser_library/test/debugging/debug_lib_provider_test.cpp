@@ -38,28 +38,9 @@ class debug_lib_provider_test : public Test
 protected:
     std::shared_ptr<NiceMock<library_mock>> mock_lib = std::make_shared<NiceMock<library_mock>>();
     NiceMock<file_manager_mock> fm_mock;
-    std::vector<hlasm_plugin::utils::task> nested_analyzers;
-    debug_lib_provider lib = debug_lib_provider({ mock_lib }, fm_mock, nested_analyzers);
+    debug_lib_provider lib = debug_lib_provider({ mock_lib }, fm_mock);
 
-    void analyze(analyzer& a)
-    {
-        auto main = a.co_analyze();
-        while (!main.done())
-        {
-            if (!nested_analyzers.empty())
-            {
-                auto& na = nested_analyzers.back();
-                if (na.done())
-                {
-                    nested_analyzers.pop_back();
-                    continue;
-                }
-                na.resume();
-                continue;
-            }
-            main.resume();
-        }
-    }
+    void analyze(analyzer& a) { a.co_analyze().run(); }
 };
 
 } // namespace
@@ -99,9 +80,7 @@ TEST_F(debug_lib_provider_test, get_library)
 
     std::optional<std::pair<std::string, resource_location>> result;
 
-    lib.get_library("AAA", [&result](auto v) { result = std::move(v); });
-    EXPECT_EQ(result, std::pair(aaa_content, aaa_location));
+    EXPECT_EQ(lib.get_library("AAA").run().value(), std::pair(aaa_content, aaa_location));
 
-    lib.get_library("BBB", [&result](auto v) { result = std::move(v); });
-    EXPECT_EQ(result, std::nullopt);
+    EXPECT_EQ(lib.get_library("BBB").run().value(), std::nullopt);
 }

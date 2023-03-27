@@ -26,6 +26,7 @@
 #include "context/id_storage.h"
 #include "processing/processing_format.h"
 #include "utils/resource_location.h"
+#include "utils/task.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -43,13 +44,12 @@ class parse_lib_provider
 public:
     // Parses library with specified name and saves it into context.
     // Library data passes information whether COPY or macro is going to be parsed.
-    virtual void parse_library(
-        std::string_view library, analyzing_context ctx, library_data data, std::function<void(bool)> callback) = 0;
+    virtual utils::value_task<bool> parse_library(std::string library, analyzing_context ctx, library_data data) = 0;
 
     virtual bool has_library(std::string_view library, utils::resource::resource_location* url) = 0;
 
-    virtual void get_library(std::string_view library,
-        std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback) = 0;
+    virtual utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>> get_library(
+        std::string library) = 0;
 
 protected:
     ~parse_lib_provider() = default;
@@ -59,11 +59,10 @@ protected:
 class empty_parse_lib_provider final : public parse_lib_provider
 {
 public:
-    void parse_library(std::string_view, analyzing_context, library_data, std::function<void(bool)> callback) override;
+    utils::value_task<bool> parse_library(std::string, analyzing_context, library_data) override;
     bool has_library(std::string_view, utils::resource::resource_location*) override;
-    void get_library(std::string_view,
-        std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback)
-        override;
+    utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>> get_library(
+        std::string) override;
 
     static empty_parse_lib_provider instance;
 };

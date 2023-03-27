@@ -112,7 +112,7 @@ class debugger::impl final : public processing::statement_analyzer
         return next_var_ref_++;
     }
 
-    std::vector<utils::task> analyzers;
+    utils::task analyzer_task;
 
     utils::task start_main_analyzer(std::string open_code_text,
         debug_lib_provider debug_provider,
@@ -156,35 +156,31 @@ public:
         stop_on_stack_changes_ = false;
 
         auto& fm = workspace.get_file_manager();
-        analyzers.clear();
-        analyzers.emplace_back(start_main_analyzer(std::move(open_code_text).value(),
-            debug_lib_provider(workspace.get_libraries(open_code_location), fm, analyzers),
+        analyzer_task = start_main_analyzer(std::move(open_code_text).value(),
+            debug_lib_provider(workspace.get_libraries(open_code_location), fm),
             workspaces::file_manager_vfm(fm, utils::resource::resource_location(workspace.uri())),
             workspace.get_asm_options(open_code_location),
             workspace.get_preprocessor_options(open_code_location),
-            open_code_location));
+            open_code_location);
 
         return true;
     }
 
     bool step()
     {
-        if (analyzers.empty() || debug_ended_)
+        if (!analyzer_task.valid() || debug_ended_)
             return false;
 
         if (!continue_)
             return false;
 
-        if (const auto& a = analyzers.back(); !a.done())
+        if (!analyzer_task.done())
         {
-            a.resume();
+            analyzer_task.resume();
             return true;
         }
 
-        analyzers.pop_back();
-
-        if (!analyzers.empty())
-            return true;
+        analyzer_task = {};
 
         if (!disconnected_ && event_)
             event_->exited(0);

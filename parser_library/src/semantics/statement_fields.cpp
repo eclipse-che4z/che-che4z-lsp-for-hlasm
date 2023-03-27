@@ -16,7 +16,6 @@
 
 #include "utils/similar.h"
 
-
 namespace hlasm_plugin::parser_library::semantics {
 
 void label_si::resolve(diagnostic_op_consumer& diag)

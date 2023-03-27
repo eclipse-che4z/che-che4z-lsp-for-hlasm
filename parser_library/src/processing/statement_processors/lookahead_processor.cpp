@@ -22,14 +22,20 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
+
+std::optional<context::id_index> lookahead_processor::resolve_concatenation(
+    const semantics::concat_chain&, const range&) const
+{
+    return std::nullopt;
+}
+
 std::optional<processing_status> lookahead_processor::get_processing_status(
-    const semantics::instruction_si& instruction) const
+    const std::optional<context::id_index>& instruction, const range&) const
 {
     // Lookahead processor always returns value
-    if (instruction.type == semantics::instruction_si_type::ORD)
+    if (instruction.has_value() && !instruction->empty())
     {
-        auto status = ordinary_processor::get_instruction_processing_status(
-            std::get<context::id_index>(instruction.value), hlasm_ctx);
+        auto status = ordinary_processor::get_instruction_processing_status(*instruction, hlasm_ctx);
 
         if (status)
         {
@@ -164,7 +170,6 @@ lookahead_processor::process_table_t lookahead_processor::create_table()
 
 void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
-    diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
     library_info_transitional li(lib_provider_);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, li);
     // type attribute operand
@@ -177,7 +182,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
 
         if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver, nullptr))
         {
-            auto t_value = expr_op->expression->evaluate(dep_solver, drop_diags);
+            auto t_value = expr_op->expression->evaluate(dep_solver, drop_diagnostic_op);
             if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
                 && t_value.get_abs() <= 255)
                 t_attr = (context::symbol_attributes::type_attr)t_value.get_abs();
@@ -194,7 +199,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
 
         if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver, nullptr))
         {
-            auto length_value = expr_op->expression->evaluate(dep_solver, drop_diags);
+            auto length_value = expr_op->expression->evaluate(dep_solver, drop_diagnostic_op);
             if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0
                 && length_value.get_abs() <= 65535)
                 length_attr = (context::symbol_attributes::len_attr)length_value.get_abs();
@@ -252,15 +257,14 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
 
     library_info_transitional li(lib_provider_);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, li);
-    diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
 
     if (!data_op->value->length || !data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
     {
-        len = data_op->value->get_length_attribute(dep_solver, drop_diags);
+        len = data_op->value->get_length_attribute(dep_solver, drop_diagnostic_op);
     }
     if (data_op->value->scale && !data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
     {
-        scale = data_op->value->get_scale_attribute(dep_solver, drop_diags);
+        scale = data_op->value->get_scale_attribute(dep_solver, drop_diagnostic_op);
     }
 
     register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::DAT, type, len, scale));

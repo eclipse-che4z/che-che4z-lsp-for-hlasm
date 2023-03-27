@@ -279,12 +279,11 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
             if (name_field == lit->get_text())
                 return "M";
 
-            diagnostic_consumer_transform drop_diags([](diagnostic_op) {});
             // all literals have the form =XY that can be trivially compared
             if (iequals(std::string_view(name_field).substr(0, 3), std::string_view(lit->get_text()).substr(0, 3))
                 && utils::is_similar(lit,
                     reparse_substituted_literal(
-                        name_field, lit->get_range(), { eval_ctx.hlasm_ctx, eval_ctx.lib_info, drop_diags })))
+                        name_field, lit->get_range(), { eval_ctx.hlasm_ctx, eval_ctx.lib_info, drop_diagnostic_op })))
                 return "M";
         }
         return std::string { lit->get_dd().get_type_attribute() };

@@ -24,6 +24,7 @@ target_sources(parser_library PRIVATE
 	macrodef_processor.h
 	ordinary_processor.cpp
 	ordinary_processor.h
+	statement_processor.cpp
 	statement_processor.h
 )
 

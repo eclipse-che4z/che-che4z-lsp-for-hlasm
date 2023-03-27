@@ -137,6 +137,17 @@ class opencode_provider final : public statement_provider
     virtual_file_monitor* m_virtual_file_monitor;
     std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>>& m_vf_handles;
 
+    struct process_ordinary_restart_data
+    {
+        const statement_processor& proc;
+        semantics::collector& collector;
+        std::pair<std::optional<std::string>, range> operands;
+        diagnostic_op_consumer* diags;
+        std::optional<context::id_index> resolved_instr;
+    };
+
+    std::optional<process_ordinary_restart_data> m_restart_process_ordinary;
+
 public:
     // rewinds position in file
     void rewind_input(context::source_position pos);
@@ -186,13 +197,13 @@ private:
 
     std::shared_ptr<const context::hlasm_statement> process_lookahead(const statement_processor& proc,
         semantics::collector& collector,
-        const std::optional<std::string>& op_text,
-        const range& op_range);
+
+        std::pair<std::optional<std::string>, range> operands);
     std::shared_ptr<const context::hlasm_statement> process_ordinary(const statement_processor& proc,
         semantics::collector& collector,
-        const std::optional<std::string>& op_text,
-        const range& op_range,
-        diagnostic_op_consumer* diags);
+        std::pair<std::optional<std::string>, range> operands,
+        diagnostic_op_consumer* diags,
+        std::optional<context::id_index> resolved_instr);
 
     bool should_run_preprocessor() const noexcept;
     utils::task run_preprocessor();

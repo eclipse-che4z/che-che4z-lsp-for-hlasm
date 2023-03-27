@@ -590,6 +590,48 @@ TEST(external_macro, library_with_begin_comment)
     EXPECT_EQ(a.debug_syntax_errors(), 0U);
 }
 
+TEST(external_macro, process_ordinary_restart)
+{
+    std::string input =
+        R"(
+         MAC
+)";
+    std::string ext_macro =
+        R"(       MACRO
+         MAC
+         MEND
+)";
+    mock_parse_lib_provider lib_provider { { "MAC", ext_macro } };
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(external_macro, deferred_macro_restart)
+{
+    std::string input =
+        R"(
+         MAC
+)";
+    std::string ext_macro1 =
+        R"(       MACRO
+         MAC
+         MAC2
+         MEND
+)";
+    std::string ext_macro2 =
+        R"(       MACRO
+         MAC2
+         MEND
+)";
+    mock_parse_lib_provider lib_provider { { "MAC", ext_macro1 }, { "MAC2", ext_macro2 } };
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+}
+
 TEST(variable_argument_passing, positive_sublist)
 {
     auto data = macro_processor::string_to_macrodata("(a,b,c)");

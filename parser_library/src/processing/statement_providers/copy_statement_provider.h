@@ -32,9 +32,8 @@ public:
     bool finished() const override;
 
 protected:
-    std::pair<context::statement_cache*, rollback_token> get_next() override;
+    std::pair<context::statement_cache*, std::optional<std::optional<context::id_index>>> get_next() override;
     std::vector<diagnostic_op> filter_cached_diagnostics(const semantics::deferred_statement& stmt) const override;
-    void go_back(rollback_token t) override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

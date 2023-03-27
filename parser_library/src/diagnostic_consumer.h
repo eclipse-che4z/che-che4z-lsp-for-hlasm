@@ -62,6 +62,16 @@ public:
 };
 
 template<typename T>
+class drop_diagnostics_t final : public diagnostic_consumer<T>
+{
+public:
+    void add_diagnostic(T diagnostic) const override { /* drop the diagnostic */ };
+};
+
+inline constinit drop_diagnostics_t<diagnostic_op> drop_diagnostic_op;
+inline constinit drop_diagnostics_t<diagnostic_op> drop_diagnostic_s;
+
+template<typename T>
 class diagnostic_consumer_container final : public diagnostic_consumer<T>
 {
 public:

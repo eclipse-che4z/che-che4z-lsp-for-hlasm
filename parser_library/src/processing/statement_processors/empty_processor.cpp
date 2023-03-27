@@ -23,7 +23,14 @@ empty_processor::empty_processor(analyzing_context ctx)
     : statement_processor(processing_kind::ORDINARY, std::move(ctx))
 {}
 
-std::optional<processing_status> empty_processor::get_processing_status(const semantics::instruction_si&) const
+std::optional<context::id_index> empty_processor::resolve_concatenation(
+    const semantics::concat_chain&, const range&) const
+{
+    return std::nullopt;
+}
+
+std::optional<processing_status> empty_processor::get_processing_status(
+    const std::optional<context::id_index>&, const range&) const
 {
     return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::IGNORED), op_code());
 }

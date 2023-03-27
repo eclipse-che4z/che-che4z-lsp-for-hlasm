@@ -226,7 +226,12 @@ public:
     template<typename U>
     auto then(U&& next) &&
     {
-        if constexpr (is_task<std::invoke_result_t<U&>>::value)
+        if constexpr (is_task<U>::value)
+            return [](task self, U u) -> U {
+                co_await std::move(self);
+                co_return co_await std::move(u);
+            }(std::move(*this), std::forward<U>(next));
+        else if constexpr (is_task<std::invoke_result_t<U&>>::value)
             return [](task self, U u) -> std::invoke_result_t<U&> {
                 co_await std::move(self);
                 co_return co_await u();

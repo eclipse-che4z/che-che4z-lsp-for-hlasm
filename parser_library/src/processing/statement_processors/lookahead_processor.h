@@ -48,7 +48,8 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         lookahead_start_data start);
 
-    std::optional<processing_status> get_processing_status(const semantics::instruction_si& instruction) const override;
+    std::optional<processing_status> get_processing_status(
+        const std::optional<context::id_index>& instruction, const range& r) const override;
     void process_statement(context::shared_stmt_ptr statement) override;
     void end_processing() override;
     bool terminal_condition(const statement_provider_kind kind) const override;
@@ -76,6 +77,9 @@ private:
     void find_ord(const resolved_statement& statement);
 
     void register_attr_ref(context::id_index name, context::symbol_attributes attributes);
+
+    std::optional<context::id_index> resolve_concatenation(
+        const semantics::concat_chain& concat, const range& r) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

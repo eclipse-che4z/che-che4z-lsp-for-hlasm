@@ -51,23 +51,17 @@ class debug_lib_provider final : public workspaces::parse_lib_provider
         m_files;
     std::vector<std::shared_ptr<workspaces::library>> m_libraries;
     workspaces::file_manager& m_file_manager;
-    std::vector<utils::task>& m_analyzers;
 
 public:
-    debug_lib_provider(std::vector<std::shared_ptr<workspaces::library>> libraries,
-        workspaces::file_manager& fm,
-        std::vector<utils::task>& analyzers);
+    debug_lib_provider(std::vector<std::shared_ptr<workspaces::library>> libraries, workspaces::file_manager& fm);
 
-    void parse_library(std::string_view library,
-        analyzing_context ctx,
-        workspaces::library_data data,
-        std::function<void(bool)> callback) override;
+    utils::value_task<bool> parse_library(
+        std::string library, analyzing_context ctx, workspaces::library_data data) override;
 
     bool has_library(std::string_view library, utils::resource::resource_location* loc) override;
 
-    void get_library(std::string_view library,
-        std::function<void(std::optional<std::pair<std::string, utils::resource::resource_location>>)> callback)
-        override;
+    utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>> get_library(
+        std::string library) override;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

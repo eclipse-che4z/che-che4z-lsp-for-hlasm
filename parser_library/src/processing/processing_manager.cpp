@@ -360,17 +360,16 @@ std::optional<bool> processing_manager::request_external_processing(
         return it->second;
     }
 
-    lib_provider_.parse_library(
-        name.to_string_view(), ctx_, { proc_kind, name }, [this, key, callback = std::move(callback)](bool result) {
-            m_external_requests.insert_or_assign(key, result);
-            if (callback)
-                callback(result);
-        });
+    auto next_task = lib_provider_.parse_library(name.to_string(), ctx_, { proc_kind, name })
+                         .then([this, key, callback = std::move(callback)](bool result) {
+                             m_external_requests.insert_or_assign(key, result);
+                             if (callback)
+                                 callback(result);
+                         });
+    helper_task_ = helper_task_.valid() && !helper_task_.done() ? std::move(next_task).then(std::move(helper_task_))
+                                                                : std::move(next_task);
 
-    if (auto it = m_external_requests.find(key); it != m_external_requests.end())
-        return it->second;
-    else
-        return std::nullopt;
+    return std::nullopt;
 }
 
 void processing_manager::schedule_helper_task(utils::task t)

@@ -49,21 +49,16 @@ public:
 
 
 protected:
-    union rollback_token
-    {
-        void* p = nullptr;
-        context::macro_invocation* mi;
-        context::copy_member_invocation* cmi;
-    };
+    analyzing_context m_ctx;
+    statement_fields_parser& m_parser;
+    workspaces::parse_lib_provider& m_lib_provider;
+    processing::processing_state_listener& m_listener;
+    diagnostic_op_consumer& m_diagnoser;
+    std::optional<std::optional<context::id_index>> m_resolved_instruction;
 
-    analyzing_context ctx;
-    statement_fields_parser& parser;
-    workspaces::parse_lib_provider& lib_provider;
-    processing::processing_state_listener& listener;
-    diagnostic_op_consumer& diagnoser;
-    virtual std::pair<context::statement_cache*, rollback_token> get_next() = 0;
+    virtual std::pair<context::statement_cache*, std::optional<std::optional<context::id_index>>> get_next() = 0;
     virtual std::vector<diagnostic_op> filter_cached_diagnostics(const semantics::deferred_statement& stmt) const = 0;
-    virtual void go_back(rollback_token t) = 0;
+    void go_back(std::optional<context::id_index> ri) { m_resolved_instruction.emplace(std::move(ri)); }
 
 private:
     const semantics::instruction_si* retrieve_instruction(const context::statement_cache& cache) const;

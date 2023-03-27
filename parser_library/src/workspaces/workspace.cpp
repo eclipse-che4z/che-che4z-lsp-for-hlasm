@@ -113,16 +113,12 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
     }
 
     // Inherited via parse_lib_provider
-    void parse_library(
-        std::string_view library, analyzing_context ctx, library_data data, std::function<void(bool)> callback) override
+    utils::value_task<bool> parse_library(std::string library, analyzing_context ctx, library_data data) override
     {
-        assert(callback);
         resource_location url = get_url(library);
         if (url.empty())
-        {
-            callback(false);
-            return;
-        }
+            co_return false;
+
         std::shared_ptr<file> file = get_file(url);
         // TODO: if file is in error do something?
 
@@ -135,10 +131,7 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
         auto& mc = get_cache(url, file);
 
         if (mc.load_from_cache(cache_key, ctx))
-        {
-            callback(true);
-            return;
-        }
+            co_return true;
 
         const bool collect_hl = found->should_collect_hl(ctx.hlasm_ctx.get());
         analyzer a(file->get_text(),
@@ -153,14 +146,7 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
         processing::hit_count_analyzer hc_analyzer(a.hlasm_ctx());
         a.register_stmt_analyzer(&hc_analyzer);
 
-        for (auto co_a = a.co_analyze(); !co_a.done(); co_a.resume())
-        {
-            if (ws.cancel_ && ws.cancel_->load(std::memory_order_relaxed))
-            {
-                callback(false);
-                return;
-            }
-        }
+        co_await a.co_analyze();
 
         found->diags().clear();
         found->collect_diags_from_child(a);
@@ -172,7 +158,7 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
 
         found->m_last_results.hc_macro_map = hc_analyzer.take_hit_count_map();
 
-        callback(true);
+        co_return true;
     }
 
     bool has_library(std::string_view library, resource_location* loc) override
@@ -184,14 +170,13 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
         return result;
     }
 
-    void get_library(std::string_view library,
-        std::function<void(std::optional<std::pair<std::string, resource_location>>)> callback) override
+    utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>> get_library(
+        std::string library) override
     {
-        assert(callback);
         if (auto url = get_url(library); url.empty())
-            callback(std::nullopt);
+            co_return std::nullopt;
         else
-            callback(std::make_pair(get_file(url)->get_text(), std::move(url)));
+            co_return std::make_pair(get_file(url)->get_text(), std::move(url));
     }
 };
 
