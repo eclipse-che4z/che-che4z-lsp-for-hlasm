@@ -2,7 +2,7 @@
 
 The architecture of the language server component is illustrated in the picture above. It communicates via the standard input/output or TCP/IP connection using LSP with the LSP client. The low level details of receiving and sending JSON messages are abstracted away by `json_source` and `json_sink` interfaces. Specific implementations are provided during the server start-up depending on parameters and the environment by `server_streams` implementation.
 
-The main purpose of the class [`dispatcher`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/IO-handling) is to implement a message loop shared by LSP and DAP. It reads `json_source` to get messages parsed using the JSON for Modern C++ library (see [[third party libraries]]) and stores them in the [`request_manager`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/Request-manager) as `requests`.
+The main purpose of the class [`dispatcher`](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/IO-handling) is to implement a message loop shared by LSP and DAP. It reads `json_source` to get messages parsed using the JSON for Modern C++ library (see [[third party libraries]]) and stores them in the [`request_manager`](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/Request-manager) as `requests`.
 
 A `request` encapsulates one message that came from the client and is represented only by raw (but parsed) JSON.
 
@@ -10,7 +10,7 @@ A `request` encapsulates one message that came from the client and is represente
 
 `server` is an abstract class that implements protocol behavior that is common for both DAP and LSP — it implements a Remote Procedure Call. The actual handling of LSP and DAP requests is implemented in `features`. Each `feature` contains implementation of several protocol requests or notifications. The features unwrap the arguments from the JSON and call corresponding parser library methods.
 
-There are two implementations of the abstract `server` class: [`lsp_server`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/LSP-and-DAP-server) and [`dap_server`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/LSP-and-DAP-server). They both implement the initialization and finalization of protocol communication, which is a bit different for both protocols and both use features to serve protocol requests.
+There are two implementations of the abstract `server` class: [`lsp_server`](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/LSP-and-DAP-server) and [`dap_server`](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/LSP-and-DAP-server). They both implement the initialization and finalization of protocol communication, which is a bit different for both protocols and both use features to serve protocol requests.
 
 Example: Hover Request Handling
 -------------------------------

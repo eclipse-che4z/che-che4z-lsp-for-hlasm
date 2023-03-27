@@ -16,7 +16,7 @@ To be independent of pipes, we have added an option to use TCP, which assigns a 
 DAP Extension
 -------------
 
-The [*Macro Tracer*](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/Macro-tracer)  is implemented using DAP, which is also supported out-of-the-box by VSCode. Similarly to LSP TCP support, we dynamically assign a random free port for DAP communication during  activation.
+The [*Macro Tracer*](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/Macro-tracer)  is implemented using DAP, which is also supported out-of-the-box by VSCode. Similarly to LSP TCP support, we dynamically assign a random free port for DAP communication during  activation.
 
 Additional Implemented Features
 -------------------------------

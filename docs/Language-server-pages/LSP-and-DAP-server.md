@@ -35,4 +35,4 @@ According to the LSP and the DAP, the server is required to send messages back t
 
 The servers then send the JSON to the LSP/DAP client using the `send_message_provider` interface. At this point, the final complete JSON response is formed. The `send_message_provider` then adds the message header and serializes the JSON using the JSON for Modern C++ library (see [[third party libraries]]).
 
-The only implementation of the `send_message_provider` interface is the [`dispatcher`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/IO-handling).
+The only implementation of the `send_message_provider` interface is the [`dispatcher`](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/IO-handling).

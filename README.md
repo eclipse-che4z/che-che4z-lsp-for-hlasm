@@ -1,15 +1,15 @@
 <div id="header" align="center">
 
-[![GitHub issues](https://img.shields.io/github/issues-raw/eclipse/che-che4z-lsp-for-hlasm)](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues)
+[![GitHub issues](https://img.shields.io/github/issues-raw/eclipse-che4z/che-che4z-lsp-for-hlasm)](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/issues)
 [![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://communityinviter.com/apps/che4z/code4z)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=eclipse_che-che4z-lsp-for-hlasm&metric=alert_status)](https://sonarcloud.io/dashboard?id=eclipse_che-che4z-lsp-for-hlasm)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=eclipse-che4z_che-che4z-lsp-for-hlasm&metric=alert_status)](https://sonarcloud.io/dashboard?id=eclipse-che4z_che-che4z-lsp-for-hlasm)
 
 </div>
 
 # HLASM Language Support
 HLASM Language Support is an IDE extension that supports the High Level Assembler language. It provides code completion, highlighting and navigation features, shows mistakes in the source, retrieval of dependencies from mainframe data sets, and enables you to trace how the conditional assembly is evaluated with a modern debugging experience.
 
-HLASM Language Support is part of the Che4z open-source project. Feel free to contribute at our [GitHub repository](https://github.com/eclipse/che-che4z-lsp-for-hlasm/). For project documentation, see the [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/). 
+HLASM Language Support is part of the Che4z open-source project. Feel free to contribute at our [GitHub repository](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/). For project documentation, see the [wiki](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/). 
 
 HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack), an all-round package that offers a modern experience for mainframe application developers, including extensions for language support, data editing, testing, and source code management.
 
@@ -35,7 +35,7 @@ For more information about the Zowe Explorer extension, see [Zowe Explorer](http
 
 Follow these steps to open a HLASM project:
 
-1. In **File** -> **Open Folder...** select the folder with the HLASM sources. You can download and open an <nobr>`example workspace`</nobr> from our [GitHub repository](https://github.com/eclipse/che-che4z-lsp-for-hlasm/tree/master/example_workspace).
+1. In **File** -> **Open Folder...** select the folder with the HLASM sources. You can download and open an <nobr>`example workspace`</nobr> from our [GitHub repository](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/tree/master/example_workspace).
 2. Open any HLASM source file (note that HLASM does not have a standard filename extension) or create a new file.
 3. If the auto-detection of HLASM language does not recognize the file, set it manually in the bottom-right corner of the VS Code window.  
 4. The extension is now enabled on the open file. If you have macro definitions in separate files or use the COPY instruction, you must set up a workspace.
@@ -344,8 +344,8 @@ You can use the HLASM Language Support extension to download dependencies from m
 All dependencies are downloaded from the specified data sets to your workspace.
 
 ## Questions, issues, feature requests, and contributions
-- If you have a question about how to accomplish something with the extension, or come across a problem, file an issue on [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm)
-- Contributions are always welcome! Please see our [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm) repository for more information.
+- If you have a question about how to accomplish something with the extension, or come across a problem, file an issue on [GitHub](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm)
+- Contributions are always welcome! Please see our [GitHub](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm) repository for more information.
 - Any and all feedback is appreciated and welcome!
 
 

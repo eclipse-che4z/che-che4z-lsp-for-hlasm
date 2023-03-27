@@ -1,13 +1,13 @@
 
-`request_manager` encapsulates a queue of requests with a worker thread that processes them. There can be up to two [`dispatcher`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/IO-handling) instances in the language server: one for the LSP and one for the DAP. Both of them add the requests they parse into one `request_manager`. It is necessary to process the requests one by one, because the parser library cannot process more requests at the same time.
+`request_manager` encapsulates a queue of requests with a worker thread that processes them. There can be up to two [`dispatcher`](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/IO-handling) instances in the language server: one for the LSP and one for the DAP. Both of them add the requests they parse into one `request_manager`. It is necessary to process the requests one by one, because the parser library cannot process more requests at the same time.
 
 Asynchronous communication is handled by separating the communication into threads:
 
 -   LSP read thread — a thread in which the `dispatcher` reads messages from the standard input.
 
--   DAP read thread — a thread in which the [`tcp_handler`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/IO-handling) listens on a localhost port to initiate a DAP session. After accepting the DAP client, the `dispatcher` reads DAP input on this thread too.
+-   DAP read thread — a thread in which the [`tcp_handler`](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/IO-handling) listens on a localhost port to initiate a DAP session. After accepting the DAP client, the `dispatcher` reads DAP input on this thread too.
 
--   Worker thread in `request_manager` that processes each request using the [`lsp_server`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/LSP-and-DAP-server) or the [`dap_server`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/LSP-and-DAP-server) and ultimately the parser library.
+-   Worker thread in `request_manager` that processes each request using the [`lsp_server`](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/LSP-and-DAP-server) or the [`dap_server`](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/LSP-and-DAP-server) and ultimately the parser library.
 
 The threads are synchronized in two ways. First, there is a mutex that prevents the LSP and DAP threads from adding to the request queue simultaneously. Second, there is a conditional variable to control the worker thread.
 

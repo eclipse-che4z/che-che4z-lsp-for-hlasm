@@ -1,4 +1,4 @@
-The purpose of the `dispatcher` is to execute an infinite loop in which it read JSON messages from `json_source` and passes them to the [`request_manager`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/Request-manager). At the same time, it is able to write responses in the correct format.
+The purpose of the `dispatcher` is to execute an infinite loop in which it read JSON messages from `json_source` and passes them to the [`request_manager`](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/Request-manager). At the same time, it is able to write responses in the correct format.
 
 The language server communicates with the LSP client either via standard input and output or a TCP/IP connection, in the case of running under Node.js only standard I/O channels are supported.
 In the case of TCP/IP, the VS Code extension identified a free TCP port and passes it to the language server as an argument. Thanks to the ASIO library (see [[third party libraries]]) implementation of the `std::iostream` interface, the implementation is able to completely abstract from the fact that it is communicating through TCP and not through the standard IO.

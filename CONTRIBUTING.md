@@ -26,13 +26,13 @@ git commit --signoff
 
 ## Setting up the Development Environment
 
-The project uses CMake targeting all major platforms (Windows, Linux, MacOS). The full build instructions including project prerequisites can be found in the project [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/Build-instructions).
+The project uses CMake targeting all major platforms (Windows, Linux, MacOS). The full build instructions including project prerequisites can be found in the project [wiki](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/Build-instructions).
 
 ## Start contributing
 
 Before contributing to the project, fork the repository and clone it, or add it as a new remote if you have already cloned the original repository. All the commits should be pushed to the fork in order to open pull requests from it.
 
-We encourage every potential contributor to read the project documentation available on the project [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/). It describes the architecture of the project, decomposes it into software components and explains their relationships.
+We encourage every potential contributor to read the project documentation available on the project [wiki](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/). It describes the architecture of the project, decomposes it into software components and explains their relationships.
 
 All the activity on the project should begin with defining a new issue that describes the required changes.
 
@@ -47,9 +47,9 @@ Each pull request is automatically verified in the following environments (in a 
 - Ubuntu 22.04 build with the Clang 14 compiler using the libstdc++ standard library and address sanitizer
 - MacOS 12 build with CLang 14 using the libc++ standard library
 
-Further, all C++ sources must be formatted with clang-format. The required configuration is available in the [.clang-format](https://github.com/eclipse/che-che4z-lsp-for-hlasm/blob/development/.clang-format) file in the root of the repository.
+Further, all C++ sources must be formatted with clang-format. The required configuration is available in the [.clang-format](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/blob/development/.clang-format) file in the root of the repository.
 
-The project is also scanned on [SonarCloud](https://sonarcloud.io/dashboard?id=eclipse_che-che4z-lsp-for-hlasm). However, because of the current architecture of GitHub Actions and Sonarcloud (see e.g. this [issue](https://jira.sonarsource.com/browse/MMF-1371)), the scan cannot be run from forked repositories automatically. Until a fix is found, it will be scanned manually by a member of the project team.
+The project is also scanned on [SonarCloud](https://sonarcloud.io/dashboard?id=eclipse-che4z_che-che4z-lsp-for-hlasm). However, because of the current architecture of GitHub Actions and Sonarcloud (see e.g. this [issue](https://jira.sonarsource.com/browse/MMF-1371)), the scan cannot be run from forked repositories automatically. Until a fix is found, it will be scanned manually by a member of the project team.
 
 ## Contact
 

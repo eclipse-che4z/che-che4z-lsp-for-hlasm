@@ -6,7 +6,7 @@
   "license": "EPL-2.0",
   "author": "Broadcom",
   "publisher": "BroadcomMFD",
-  "homepage": "https://github.com/eclipse/che-che4z-lsp-for-hlasm",
+  "homepage": "https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm",
   "categories": [
     "Programming Languages",
     "Linters",
@@ -33,10 +33,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/eclipse/che-che4z-lsp-for-hlasm.git"
+    "url": "https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm.git"
   },
   "bugs": {
-    "url": "https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues"
+    "url": "https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/issues"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.1",
