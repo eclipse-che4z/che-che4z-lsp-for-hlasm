@@ -3,6 +3,7 @@
 ## ****Unreleased****
 
 #### Added
+- Warning when files with non-UTF-8 encoding are processed
 
 #### Fixed
 - Operands no longer classified as remarks when instruction or macro is not recognized

@@ -18,18 +18,13 @@
 #include <iterator>
 
 #include "logical_line.h"
-#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::lexing {
-
-
-input_source::input_source(const std::string& input)
-    : ANTLRInputStream(input)
-{}
-
 namespace {
-void append_utf8_to_utf32(std::u32string& t, std::string_view s)
+input_source::char_substitution append_utf8_to_utf32(std::u32string& t, std::string_view s)
 {
+    input_source::char_substitution subs {};
+
     while (!s.empty())
     {
         unsigned char c = s.front();
@@ -45,44 +40,64 @@ void append_utf8_to_utf32(std::u32string& t, std::string_view s)
             char32_t v = c & 0b0111'1111u >> cs.utf8;
             for (int i = 1; i < cs.utf8; ++i)
                 v = v << 6 | (s[i] & 0b0011'1111u);
+
+            if (v == utils::substitute_character)
+                subs.client = true;
+
             t.append(1, v);
             s.remove_prefix(cs.utf8);
         }
         else
         {
+            subs.server = true;
             t.append(1, utils::substitute_character);
             s.remove_prefix(1);
         }
     }
+
+    return subs;
 }
 } // namespace
 
-void input_source::append(const std::u32string& str) { _data.append(str); }
-
-void input_source::append(std::string_view str)
+input_source::input_source(std::string_view input)
+    : ANTLRInputStream()
 {
-    p = _data.size();
-    append_utf8_to_utf32(_data, str);
+    append(input);
 }
 
-void input_source::reset(std::string_view str)
+input_source::char_substitution input_source::append(std::u32string_view str)
+{
+    _data.append(str);
+    return {};
+}
+
+input_source::char_substitution input_source::append(std::string_view str)
+{
+    p = _data.size();
+    return append_utf8_to_utf32(_data, str);
+}
+
+input_source::char_substitution input_source::new_input(std::string_view str)
 {
     p = 0;
     _data.clear();
-    append_utf8_to_utf32(_data, str);
+    return append_utf8_to_utf32(_data, str);
 }
 
-void input_source::reset(
+
+input_source::char_substitution input_source::new_input(
     const logical_line<utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>>& l)
 {
-    reset("");
+    input_source::char_substitution subs {};
+    new_input("");
+
     for (size_t i = 0; i < l.segments.size(); ++i)
     {
         const auto& s = l.segments[i];
         if (i > 0)
             _data.append(std::distance(s.begin, s.code), s.continuation_error ? 'X' : ' ');
 
-        append(std::string_view(s.code.base(), s.end.base()));
+        subs |= append(std::string_view(s.code.base(), s.end.base()));
 
         if (i + 1 < l.segments.size())
         {
@@ -103,7 +118,9 @@ void input_source::reset(
             }
         }
     }
+
     reset();
+    return subs;
 }
 
 std::string input_source::getText(const antlr4::misc::Interval& interval)

@@ -22,6 +22,7 @@
 
 #include "logical_line.h"
 #include "parser_library_export.h"
+#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::lexing {
 /*
@@ -31,13 +32,27 @@ supports input rewinding, appending and resetting
 class input_source final : public antlr4::ANTLRInputStream
 {
 public:
-    input_source(const std::string& input);
+    struct char_substitution
+    {
+        uint8_t server : 1;
+        uint8_t client : 1;
 
-    void append(const std::u32string& str);
-    void append(std::string_view str);
-    using antlr4::ANTLRInputStream::reset;
-    void reset(std::string_view str);
-    void reset(const logical_line<utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>>& l);
+        char_substitution& operator|=(const char_substitution& other)
+        {
+            server |= other.server;
+            client |= other.client;
+            return *this;
+        }
+    };
+
+    input_source() = default;
+    explicit input_source(std::string_view input); // for testing only
+
+    char_substitution append(std::u32string_view str);
+    char_substitution append(std::string_view str);
+    char_substitution new_input(std::string_view str);
+    char_substitution new_input(
+        const logical_line<utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>>& l);
 
     input_source(const input_source&) = delete;
     input_source& operator=(const input_source&) = delete;

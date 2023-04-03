@@ -45,7 +45,8 @@ struct char_size
 // Map first byte of UTF-8 encoded Unicode character to char_size
 extern constinit const std::array<char_size, 256> utf8_prefix_sizes;
 
-constexpr const char substitute_character = 0x1a;
+// Substitute character used by VSCode
+constexpr const char32_t substitute_character = 0xFFFD;
 
 constexpr const size_t max_utf8_sequence_length = 4;
 

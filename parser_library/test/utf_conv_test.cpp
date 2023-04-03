@@ -12,8 +12,11 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <string>
+
 #include "gtest/gtest.h"
 
+#include "analyzer.h"
 #include "common_testing.h"
 #include "ebcdic_encoding.h"
 #include "lexing/input_source.h"
@@ -28,7 +31,7 @@ TEST(input_source, utf8conv)
     u8.insert(u8.end(), (unsigned char)0x80);
     u8.insert(u8.end(), (unsigned char)0x80);
 
-    hlasm_plugin::parser_library::lexing::input_source input1(u8);
+    lexing::input_source input1(u8);
 
     EXPECT_EQ(u8, input1.getText({ (ssize_t)0, (ssize_t)0 }));
 
@@ -36,20 +39,20 @@ TEST(input_source, utf8conv)
     u8.insert(u8.end(), (unsigned char)0x84);
     u8.insert(u8.end(), (unsigned char)0xA3);
 
-    hlasm_plugin::parser_library::lexing::input_source input2(u8);
+    lexing::input_source input2(u8);
 
     EXPECT_EQ(u8, input2.getText({ (ssize_t)0, (ssize_t)1 }));
 
     u8.insert(u8.end(), (unsigned char)0xC5);
     u8.insert(u8.end(), (unsigned char)0x80);
 
-    hlasm_plugin::parser_library::lexing::input_source input3(u8);
+    lexing::input_source input3(u8);
 
     EXPECT_EQ(u8, input3.getText({ (ssize_t)0, (ssize_t)2 }));
 
     u8.insert(u8.end(), (unsigned char)0x41);
 
-    hlasm_plugin::parser_library::lexing::input_source input4(u8);
+    lexing::input_source input4(u8);
 
     EXPECT_EQ(u8, input4.getText({ (ssize_t)0, (ssize_t)3 }));
 }
@@ -72,36 +75,33 @@ TEST(ebcdic_encoding, unicode)
 
     u8.insert(u8.end(), (unsigned char)0x41);
 
-    //�
+    //ä
     u8.insert(u8.end(), (unsigned char)0xC3);
     u8.insert(u8.end(), (unsigned char)0xA4);
 
     auto begin = u8.c_str();
 
-    EXPECT_EQ(hlasm_plugin::parser_library::ebcdic_encoding::to_pseudoascii(begin),
-        hlasm_plugin::parser_library::ebcdic_encoding::SUB);
+    EXPECT_EQ(ebcdic_encoding::to_pseudoascii(begin), ebcdic_encoding::SUB);
 
     EXPECT_EQ(begin, u8.c_str() + 3);
 
 
-    EXPECT_EQ(hlasm_plugin::parser_library::ebcdic_encoding::to_pseudoascii(++begin),
-        hlasm_plugin::parser_library::ebcdic_encoding::SUB);
+    EXPECT_EQ(ebcdic_encoding::to_pseudoascii(++begin), ebcdic_encoding::SUB);
 
     EXPECT_EQ(begin, u8.c_str() + 4 + 2);
 
 
-    EXPECT_EQ(hlasm_plugin::parser_library::ebcdic_encoding::to_pseudoascii(++begin),
-        hlasm_plugin::parser_library::ebcdic_encoding::SUB);
+    EXPECT_EQ(ebcdic_encoding::to_pseudoascii(++begin), ebcdic_encoding::SUB);
 
     EXPECT_EQ(begin, u8.c_str() + 4 + 3 + 1);
 
 
-    EXPECT_EQ(hlasm_plugin::parser_library::ebcdic_encoding::to_pseudoascii(++begin), 0x41);
+    EXPECT_EQ(ebcdic_encoding::to_pseudoascii(++begin), 0x41);
 
     EXPECT_EQ(begin, u8.c_str() + 4 + 3 + 2);
 
 
-    EXPECT_EQ(hlasm_plugin::parser_library::ebcdic_encoding::to_pseudoascii(++begin), (unsigned char)0xE4);
+    EXPECT_EQ(ebcdic_encoding::to_pseudoascii(++begin), (unsigned char)0xE4);
 
     EXPECT_EQ(begin, u8.c_str() + 4 + 3 + 2 + 1 + 1);
 }
@@ -160,4 +160,37 @@ TEST(replace_non_utf8_chars, middle_char)
     EXPECT_EQ(res[begin.size() + 2], '\xBD');
     EXPECT_EQ(res.substr(0, begin.size()), begin);
     EXPECT_EQ(res.substr(begin.size() + 3), end);
+}
+
+TEST(encoding, server_substitution)
+{
+    std::string input = "&VAR SETC 'PARAM\xA2'"; // 'PARAM¢' in ISO/IEC 8859-1
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W017" }));
+}
+
+TEST(encoding, client_substitution_vscode)
+{
+    std::string input = "&VAR SETC 'PARAM\xEF\xBF\xBD'"; // 'PARAMï¿½' - Replacement characters from VSCode
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W018" }));
+}
+
+TEST(encoding, client_server_substitution_multiple_vscode)
+{
+    std::string input = "&VAR1 SETC 'PARAM\xEF\xBF\xBD\xA2'\n&VAR2 SETC 'PARAM\xA2\xEF\xBF\xBD'";
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W017", "W018" }));
 }

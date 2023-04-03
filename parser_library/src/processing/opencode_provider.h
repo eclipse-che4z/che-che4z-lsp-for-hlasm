@@ -148,6 +148,14 @@ class opencode_provider final : public statement_provider
 
     std::optional<process_ordinary_restart_data> m_restart_process_ordinary;
 
+    struct encoding_warning_issued
+    {
+        bool server = false;
+        bool client = false;
+    };
+
+    encoding_warning_issued m_encoding_warning_issued = {};
+
 public:
     // rewinds position in file
     void rewind_input(context::source_position pos);

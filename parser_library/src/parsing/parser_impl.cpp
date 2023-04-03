@@ -69,7 +69,7 @@ struct parser_holder_impl final : parser_holder
         semantics::source_info_processor* lsp_proc, context::hlasm_context* hl_ctx, diagnostic_op_consumer* d)
     {
         error_handler = std::make_shared<parsing::error_strategy>();
-        input = std::make_unique<lexing::input_source>(std::string());
+        input = std::make_unique<lexing::input_source>();
         lex = std::make_unique<lexing::lexer>(input.get(), lsp_proc);
         stream = std::make_unique<lexing::token_stream>(lex.get());
         parser = std::make_unique<parser_t>(stream.get());
@@ -420,7 +420,7 @@ void parser_holder::prepare_parser(const std::string& text,
     const processing::processing_status& proc_status,
     bool unlimited_line) const
 {
-    input->reset(text);
+    input->new_input(text);
 
     lex->reset();
     lex->set_file_offset(text_range.start);

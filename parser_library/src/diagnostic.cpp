@@ -2155,6 +2155,18 @@ diagnostic_op diagnostic_op::warning_W016(const range& range)
         diagnostic_severity::warning, "W016", "Multiple TITLE instructions with a non-empty name field", range);
 }
 
+diagnostic_op diagnostic_op::warning_W017(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::warning, "W017", "Non-UTF-8 characters detected and replaced [server]", range);
+}
+
+diagnostic_op diagnostic_op::warning_W018(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::warning, "W018", "Non-UTF-8 characters detected and replaced [client]", range);
+}
+
 diagnostic_op diagnostic_op::error_EQU1(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "EQU1", "Constant redefinition", range);
