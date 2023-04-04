@@ -568,7 +568,7 @@ async function filterDownloadList(downloadCandidates: JobDetail[], newOnly: bool
             };
         }
     }
-    return new Promise<JobDetail[]>(async (resolve, reject) => {
+    return new Promise<JobDetail[]>((resolve, reject) => {
         input.ignoreFocusOut = true;
         input.title = 'Select data sets to download';
         input.items = downloadCandidates.map(x => { return { label: x.dsn }; });
