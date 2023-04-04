@@ -74,12 +74,11 @@ dap_feature::dap_feature(parser_library::workspace_manager& ws_mngr,
 
 void dap_feature::register_methods(std::map<std::string, method>& methods)
 {
-    const auto this_bind = [this](void (dap_feature::*func)(const nlohmann::json&, const nlohmann::json&),
+    const auto this_bind = [this](void (dap_feature::*func)(const request_id&, const nlohmann::json&),
                                telemetry_log_level telem = telemetry_log_level::NO_TELEMETRY) {
         return method {
-            [this, func](const nlohmann::json& requested_seq, const nlohmann::json& args) {
-                (this->*func)(requested_seq, args);
-            },
+            [this, func](
+                const request_id& requested_seq, const nlohmann::json& args) { (this->*func)(requested_seq, args); },
             telem,
         };
     };
@@ -119,7 +118,7 @@ void dap_feature::exited(int exit_code)
     response_->notify("terminated", nlohmann::json());
 }
 
-void dap_feature::on_initialize(const nlohmann::json& requested_seq, const nlohmann::json& args)
+void dap_feature::on_initialize(const request_id& requested_seq, const nlohmann::json& args)
 {
     response_->respond(requested_seq, "initialize", nlohmann::json { { "supportsConfigurationDoneRequest", true } });
 
@@ -132,7 +131,7 @@ void dap_feature::on_initialize(const nlohmann::json& requested_seq, const nlohm
     response_->notify("initialized", nlohmann::json());
 }
 
-void dap_feature::on_disconnect(const nlohmann::json& request_seq, const nlohmann::json&)
+void dap_feature::on_disconnect(const request_id& request_seq, const nlohmann::json&)
 {
     if (disconnect_listener_)
         disconnect_listener_->disconnected();
@@ -142,7 +141,7 @@ void dap_feature::on_disconnect(const nlohmann::json& request_seq, const nlohman
     response_->respond(request_seq, "disconnect", nlohmann::json());
 }
 
-void dap_feature::on_launch(const nlohmann::json& request_seq, const nlohmann::json& args)
+void dap_feature::on_launch(const request_id& request_seq, const nlohmann::json& args)
 {
     if (!debugger)
         return;
@@ -159,7 +158,7 @@ void dap_feature::on_launch(const nlohmann::json& request_seq, const nlohmann::j
         response_->respond_error(request_seq, "launch", 0, "File not found", nlohmann::json());
 }
 
-void dap_feature::on_set_breakpoints(const nlohmann::json& request_seq, const nlohmann::json& args)
+void dap_feature::on_set_breakpoints(const request_id& request_seq, const nlohmann::json& args)
 {
     if (!debugger)
         return;
@@ -182,17 +181,17 @@ void dap_feature::on_set_breakpoints(const nlohmann::json& request_seq, const nl
     response_->respond(request_seq, "setBreakpoints", nlohmann::json { { "breakpoints", breakpoints_verified } });
 }
 
-void dap_feature::on_set_exception_breakpoints(const nlohmann::json& request_seq, const nlohmann::json&)
+void dap_feature::on_set_exception_breakpoints(const request_id& request_seq, const nlohmann::json&)
 {
     response_->respond(request_seq, "setExceptionBreakpoints", nlohmann::json());
 }
 
-void dap_feature::on_configuration_done(const nlohmann::json& request_seq, const nlohmann::json&)
+void dap_feature::on_configuration_done(const request_id& request_seq, const nlohmann::json&)
 {
     response_->respond(request_seq, "configurationDone", nlohmann::json());
 }
 
-void dap_feature::on_threads(const nlohmann::json& request_seq, const nlohmann::json&)
+void dap_feature::on_threads(const request_id& request_seq, const nlohmann::json&)
 {
     response_->respond(request_seq,
         "threads",
@@ -212,7 +211,7 @@ void dap_feature::on_threads(const nlohmann::json& request_seq, const nlohmann::
     return nlohmann::json { { "path", client_conformant_path(std::string_view(source.uri), path_format) } };
 }
 
-void dap_feature::on_stack_trace(const nlohmann::json& request_seq, const nlohmann::json&)
+void dap_feature::on_stack_trace(const request_id& request_seq, const nlohmann::json&)
 {
     if (!debugger)
         return;
@@ -241,7 +240,7 @@ void dap_feature::on_stack_trace(const nlohmann::json& request_seq, const nlohma
         });
 }
 
-void dap_feature::on_scopes(const nlohmann::json& request_seq, const nlohmann::json& args)
+void dap_feature::on_scopes(const request_id& request_seq, const nlohmann::json& args)
 {
     if (!debugger)
         return;
@@ -264,7 +263,7 @@ void dap_feature::on_scopes(const nlohmann::json& request_seq, const nlohmann::j
     response_->respond(request_seq, "scopes", nlohmann::json { { "scopes", scopes_json } });
 }
 
-void dap_feature::on_next(const nlohmann::json& request_seq, const nlohmann::json&)
+void dap_feature::on_next(const request_id& request_seq, const nlohmann::json&)
 {
     if (!debugger)
         return;
@@ -274,7 +273,7 @@ void dap_feature::on_next(const nlohmann::json& request_seq, const nlohmann::jso
     response_->respond(request_seq, "next", nlohmann::json());
 }
 
-void dap_feature::on_step_in(const nlohmann::json& request_seq, const nlohmann::json&)
+void dap_feature::on_step_in(const request_id& request_seq, const nlohmann::json&)
 {
     if (!debugger)
         return;
@@ -283,7 +282,7 @@ void dap_feature::on_step_in(const nlohmann::json& request_seq, const nlohmann::
     response_->respond(request_seq, "stepIn", nlohmann::json());
 }
 
-void dap_feature::on_step_out(const nlohmann::json& request_seq, const nlohmann::json&)
+void dap_feature::on_step_out(const request_id& request_seq, const nlohmann::json&)
 {
     if (!debugger)
         return;
@@ -292,7 +291,7 @@ void dap_feature::on_step_out(const nlohmann::json& request_seq, const nlohmann:
     response_->respond(request_seq, "stepOut", nlohmann::json());
 }
 
-void dap_feature::on_variables(const nlohmann::json& request_seq, const nlohmann::json& args)
+void dap_feature::on_variables(const request_id& request_seq, const nlohmann::json& args)
 {
     if (!debugger)
         return;
@@ -336,7 +335,7 @@ void dap_feature::on_variables(const nlohmann::json& request_seq, const nlohmann
     response_->respond(request_seq, "variables", nlohmann::json { { "variables", variables_json } });
 }
 
-void dap_feature::on_continue(const nlohmann::json& request_seq, const nlohmann::json&)
+void dap_feature::on_continue(const request_id& request_seq, const nlohmann::json&)
 {
     if (!debugger)
         return;
@@ -346,7 +345,7 @@ void dap_feature::on_continue(const nlohmann::json& request_seq, const nlohmann:
     response_->respond(request_seq, "continue", nlohmann::json { { "allThreadsContinued", true } });
 }
 
-void dap_feature::on_pause(const nlohmann::json& request_seq, const nlohmann::json&)
+void dap_feature::on_pause(const request_id& request_seq, const nlohmann::json&)
 {
     if (!debugger)
         return;

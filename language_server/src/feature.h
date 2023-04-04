@@ -15,9 +15,12 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_FEATURE_H
 #define HLASMPLUGIN_LANGUAGESERVER_FEATURE_H
 
+#include <compare>
+#include <concepts>
 #include <functional>
 #include <map>
 #include <string>
+#include <variant>
 
 #include "nlohmann/json_fwd.hpp"
 #include "workspace_manager.h"
@@ -28,27 +31,113 @@ enum class telemetry_log_level
 {
     NO_TELEMETRY,
     LOG_EVENT,
-    LOG_WITH_PARSE_DATA
+};
+
+class request_id
+{
+    std::variant<long, std::string> id;
+
+public:
+    explicit request_id(long l)
+        : id(l)
+    {}
+    explicit request_id(std::string s)
+        : id(std::move(s))
+    {}
+
+#ifdef __cpp_lib_three_way_comparison
+    auto operator<=>(const request_id&) const = default;
+#else
+    bool operator==(const request_id& o) const { return id == o.id; }
+    std::strong_ordering operator<=>(const request_id& o) const
+    {
+        if (auto c = id.index() <=> o.id.index(); c != 0)
+            return c;
+        if (std::holds_alternative<long>(id))
+            return std::get<long>(id) <=> std::get<long>(o.id);
+        else
+            return std::get<std::string>(id).compare(std::get<std::string>(o.id)) <=> 0;
+    }
+#endif
+
+    std::string to_string() const
+    {
+        if (std::holds_alternative<long>(id))
+            return "(" + std::to_string(std::get<long>(id)) + ")";
+        else
+            return "\"" + std::get<std::string>(id) + "\"";
+    }
+
+    auto hash() const { return std::hash<std::variant<long, std::string>>()(id); }
+
+    friend struct ::nlohmann::adl_serializer<hlasm_plugin::language_server::request_id>;
+    friend void from_json(const nlohmann::json& j, std::optional<request_id>& rid);
 };
 
 struct method
 {
-    std::function<void(const nlohmann::json& id, const nlohmann::json& params)> handler;
+    std::variant<std::function<void(const nlohmann::json& params)>,
+        std::function<void(const request_id& id, const nlohmann::json& params)>>
+        handler;
     telemetry_log_level telemetry_level;
+
+    bool is_notification_handler() const
+    {
+        return std::holds_alternative<std::function<void(const nlohmann::json& params)>>(handler);
+    }
+    bool is_request_handler() const
+    {
+        return std::holds_alternative<std::function<void(const request_id& id, const nlohmann::json& params)>>(handler);
+    }
+    const auto& as_notification_handler() const
+    {
+        return std::get<std::function<void(const nlohmann::json& params)>>(handler);
+    }
+    const auto& as_request_handler() const
+    {
+        return std::get<std::function<void(const request_id& id, const nlohmann::json& params)>>(handler);
+    }
+};
+
+template<typename T>
+concept cancellable_request = requires(const T& t)
+{
+    t.invalidate();
+    bool(t.resolved());
+};
+
+class request_invalidator
+{
+    std::function<void()> invalidator;
+
+public:
+    auto take_invalidator() { return std::move(invalidator); }
+
+    explicit operator bool() const { return !!invalidator; }
+
+    template<cancellable_request Request>
+    explicit(false) request_invalidator(Request r)
+        : invalidator(
+            r.resolved() ? std::function<void()>() : std::function<void()>([r = std::move(r)]() { r.invalidate(); }))
+    {}
 };
 
 // Provides methods to send notification, respond to request and respond with error respond
 class response_provider
 {
 public:
-    virtual void request(const std::string& requested_method, const nlohmann::json& args, method handler) = 0;
-    virtual void respond(const nlohmann::json& id, const std::string& requested_method, const nlohmann::json& args) = 0;
+    virtual void request(const std::string& requested_method,
+        const nlohmann::json& args,
+        std::function<void(const nlohmann::json& params)> handler) = 0;
+    virtual void respond(const request_id& id, const std::string& requested_method, const nlohmann::json& args) = 0;
     virtual void notify(const std::string& method, const nlohmann::json& args) = 0;
-    virtual void respond_error(const nlohmann::json& id,
+    virtual void respond_error(const request_id& id,
         const std::string& requested_method,
         int err_code,
         const std::string& err_message,
         const nlohmann::json& error) = 0;
+
+    virtual void register_cancellable_request(const request_id& id, request_invalidator cancel_handler) = 0;
 
 protected:
     ~response_provider() = default;
@@ -96,5 +185,22 @@ protected:
 };
 
 } // namespace hlasm_plugin::language_server
+
+namespace std {
+template<>
+struct hash<hlasm_plugin::language_server::request_id>
+{
+    size_t operator()(const hlasm_plugin::language_server::request_id& rid) const { return rid.hash(); }
+};
+} // namespace std
+
+namespace nlohmann {
+template<>
+struct adl_serializer<hlasm_plugin::language_server::request_id>
+{
+    static hlasm_plugin::language_server::request_id from_json(const json& j);
+    static void to_json(json& j, const hlasm_plugin::language_server::request_id& p);
+};
+} // namespace nlohmann
 
 #endif // !HLASMPLUGIN_LANGUAGESERVER_FEATURE_H

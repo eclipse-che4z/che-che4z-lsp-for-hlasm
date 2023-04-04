@@ -33,6 +33,8 @@ public:
 
     void terminate();
     bool will_read_block() const { return queue.will_block(); }
+
+    const auto* will_block_preview() const { return queue.state_preview(); }
 };
 } // namespace hlasm_plugin::language_server
 

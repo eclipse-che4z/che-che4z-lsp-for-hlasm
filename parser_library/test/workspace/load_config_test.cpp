@@ -511,35 +511,25 @@ TEST(workspace, lsp_file_not_processed_yet)
     file_manager_impl mngr;
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    std::atomic<bool> cancel;
-    workspace ws(mngr, config, global_settings, &cancel);
+    workspace ws(mngr, config, global_settings);
     ws.open();
 
     mngr.did_open_file(file_loc, 0, " LR 1,1");
 
-    auto file = ws.find_processor_file(file_loc);
-    EXPECT_FALSE(file);
-
     EXPECT_EQ(ws.definition(file_loc, { 0, 5 }), location({ 0, 5 }, file_loc));
     EXPECT_EQ(ws.references(file_loc, { 0, 5 }), location_list());
     EXPECT_EQ(ws.hover(file_loc, { 0, 5 }), "");
     EXPECT_EQ(ws.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked), lsp::completion_list_s());
 
-    cancel = true;
     ws.did_open_file(file_loc);
+    // parsing not done yet
 
     EXPECT_EQ(ws.definition(file_loc, { 0, 5 }), location({ 0, 5 }, file_loc));
     EXPECT_EQ(ws.references(file_loc, { 0, 5 }), location_list());
     EXPECT_EQ(ws.hover(file_loc, { 0, 5 }), "");
     EXPECT_EQ(ws.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked), lsp::completion_list_s());
-
-    file = ws.find_processor_file(file_loc);
-
-    ASSERT_TRUE(file);
 
     // Prior to parsing, it should return default values
-    const auto* fp = file->get_lsp_context();
-    ASSERT_FALSE(fp);
-    EXPECT_EQ(file->get_hl_info(), semantics::lines_info());
-    EXPECT_EQ(file->get_metrics(), performance_metrics());
+    EXPECT_EQ(ws.semantic_tokens(file_loc), semantics::lines_info());
+    EXPECT_EQ(ws.last_metrics(file_loc), performance_metrics());
 }

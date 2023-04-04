@@ -26,8 +26,6 @@ namespace hlasm_plugin::language_server {
 struct telemetry_metrics_info
 {
     parser_library::parsing_metadata metadata;
-    size_t error_count;
-    size_t warning_count;
 };
 
 struct telemetry_info

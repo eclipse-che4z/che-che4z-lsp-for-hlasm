@@ -25,6 +25,7 @@
 #include "gtest/gtest.h"
 
 #include "../workspace/empty_configs.h"
+#include "compiler_options.h"
 #include "debug_event_consumer_s_mock.h"
 #include "debugger.h"
 #include "debugging/debug_types.h"

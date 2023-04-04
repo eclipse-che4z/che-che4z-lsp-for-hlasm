@@ -56,6 +56,7 @@ protected:
         unsigned long long counter = 1;
         invalidator_t invalidator;
         bool valid = true;
+        bool resolved = false;
 
         shared_data_base() = default;
     };
@@ -101,7 +102,12 @@ protected:
     }
 
     bool valid() const noexcept { return static_cast<shared_data_base*>(impl)->valid; }
-    void error(int ec, const char* error) const { return actions->error(impl, ec, error); }
+    bool resolved() const noexcept { return static_cast<shared_data_base*>(impl)->resolved; }
+    void error(int ec, const char* error) const
+    {
+        static_cast<shared_data_base*>(impl)->resolved = true;
+        return actions->error(impl, ec, error);
+    }
     void invalidate() const
     {
         auto* base = static_cast<shared_data_base*>(impl);
@@ -134,7 +140,11 @@ protected:
 
     void remove_invalidation_handler() noexcept { change_invalidation_callback({}); }
 
-    void provide(void* t) const { actions->provide(impl, t); }
+    void provide(void* t) const
+    {
+        static_cast<shared_data_base*>(impl)->resolved = true;
+        actions->provide(impl, t);
+    }
 
     void* get_impl() const noexcept { return impl; }
 
@@ -226,6 +236,7 @@ public:
     using workspace_manager_response_base::error;
     using workspace_manager_response_base::invalidate;
     using workspace_manager_response_base::remove_invalidation_handler;
+    using workspace_manager_response_base::resolved;
     using workspace_manager_response_base::set_invalidation_callback;
     using workspace_manager_response_base::valid;
 

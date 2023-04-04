@@ -18,7 +18,6 @@
 
 #include "lsp/lsp_server.h"
 #include "nlohmann/json.hpp"
-#include "request_manager.h"
 
 using namespace hlasm_plugin;
 using namespace language_server;
@@ -48,8 +47,9 @@ TEST(regress_test, behaviour_error)
     auto notf = make_notification("textDocument/didOpen",
         R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","languageId":"plaintext","version":1,"text":"LABEL LR 1,20 REMARK"}})#"_json);
     s.message_received(notf);
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)2);
+    ASSERT_EQ(mess_p.notfs.size(), (size_t)3); // diags+open+parsing
     auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](nlohmann::json notif) {
         return notif["method"] == "textDocument/publishDiagnostics";
     });
@@ -64,6 +64,7 @@ TEST(regress_test, behaviour_error)
     notf = make_notification("textDocument/didChange",
         R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","version":2},"contentChanges":[{"range":{"start":{"line":0,"character":12},"end":{"line":0,"character":13}},"rangeLength":1,"text":""}]})#"_json);
     s.message_received(notf);
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
     ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
     ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/publishDiagnostics");
@@ -74,6 +75,7 @@ TEST(regress_test, behaviour_error)
     notf = make_notification("textDocument/didChange",
         R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","version":2},"contentChanges":[{"range":{"start":{"line":0,"character":5},"end":{"line":0,"character":19}},"rangeLength":14,"text":""}]})#"_json);
     s.message_received(notf);
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
     ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
     ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/publishDiagnostics");
@@ -562,22 +564,16 @@ const static std::vector<nlohmann::json> messages = {
 // fast typing (async, cancellations test)
 TEST(regress_test, stability_async)
 {
-    std::atomic<bool> cancel = false;
-    parser_library::workspace_manager ws_mngr(&cancel);
+    parser_library::workspace_manager ws_mngr;
     message_provider_mock mess_p;
     lsp::server s(ws_mngr);
     s.set_send_message_provider(&mess_p);
-    request_manager req_mngr(&cancel);
 
     // series of lsp notification calls
     for (const auto& message : messages)
-        req_mngr.add_request(&s, message);
+        s.message_received(message);
 
-    while (req_mngr.is_running())
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-
-    EXPECT_TRUE(!req_mngr.is_running());
-    req_mngr.end_worker();
+    EXPECT_FALSE(ws_mngr.idle_handler());
 }
 
 // slow typing (sync, no cancellation)
@@ -590,7 +586,10 @@ TEST(regress_test, stability_sync)
 
     // series of lsp notification calls
     for (const auto& message : messages)
+    {
         s.message_received(message);
+        EXPECT_FALSE(ws_mngr.idle_handler());
+    }
 }
 
 TEST(regress_test, check_diagnostic_tags)
@@ -603,8 +602,9 @@ TEST(regress_test, check_diagnostic_tags)
     auto notf = make_notification("textDocument/didOpen",
         R"#({"textDocument":{"uri":"file:///c%3A/test/note_test.hlasm","languageId":"plaintext","version":1,"text":" MNOTE 'test note'"}})#"_json);
     s.message_received(notf);
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)2);
+    ASSERT_EQ(mess_p.notfs.size(), (size_t)3); // diags+open+parsing
     auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](nlohmann::json notif) {
         return notif["method"] == "textDocument/publishDiagnostics";
     });

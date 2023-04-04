@@ -48,11 +48,11 @@ public:
 
 private:
     // Handles textDocument/didOpen notification.
-    void on_did_open(const nlohmann::json& id, const nlohmann::json& params);
+    void on_did_open(const nlohmann::json& params);
     // Handles textDocument/didChange notification.
-    void on_did_change(const nlohmann::json& id, const nlohmann::json& params);
+    void on_did_change(const nlohmann::json& params);
     // Handles textDocument/didClose notification.
-    void on_did_close(const nlohmann::json& id, const nlohmann::json& params);
+    void on_did_close(const nlohmann::json& params);
 };
 
 } // namespace hlasm_plugin::language_server::lsp

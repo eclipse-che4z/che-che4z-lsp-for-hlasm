@@ -30,15 +30,14 @@ server::server(parser_library::workspace_manager& ws_mngr, telemetry_sink* telem
     register_feature_methods();
 }
 
-void server::request(const std::string&, const nlohmann::json&, method)
+void server::request(const std::string&, const nlohmann::json&, std::function<void(const nlohmann::json& params)>)
 {
     // Currently, there are no supported DAP requests from client to server
     /*send_message_->reply(nlohmann::json {
         { "seq", request_seq }, { "type", "request" }, { "command", requested_command }, { "arguments", args } });*/
 }
 
-void server::respond(
-    const nlohmann::json& request_seq, const std::string& requested_command, const nlohmann::json& args)
+void server::respond(const request_id& request_seq, const std::string& requested_command, const nlohmann::json& args)
 {
     send_message_->reply(nlohmann::json {
         { "seq", ++last_seq_ },
@@ -60,7 +59,7 @@ void server::notify(const std::string& method, const nlohmann::json& args)
     });
 }
 
-void server::respond_error(const nlohmann::json& request_seq,
+void server::respond_error(const request_id& request_seq,
     const std::string& requested_command,
     int,
     const std::string& err_message,
@@ -77,6 +76,10 @@ void server::respond_error(const nlohmann::json& request_seq,
     });
 }
 
+void server::register_cancellable_request(const request_id&, request_invalidator)
+{ /* not supported in dap */
+}
+
 void server::message_received(const nlohmann::json& message)
 {
     try
@@ -87,11 +90,9 @@ void server::message_received(const nlohmann::json& message)
             send_telemetry_error("dap_server/invalid_message");
             return;
         }
-        auto arguments = message.find("arguments");
-        if (arguments == message.end())
-            call_method(message.at("command").get<std::string>(), message.at("seq"), nlohmann::json());
-        else
-            call_method(message.at("command").get<std::string>(), message.at("seq"), arguments.value());
+        call_method(message.at("command").get<std::string>(),
+            message.at("seq").get<request_id>(),
+            message.value("arguments", nlohmann::json()));
     }
     catch (const nlohmann::json::exception& e)
     {

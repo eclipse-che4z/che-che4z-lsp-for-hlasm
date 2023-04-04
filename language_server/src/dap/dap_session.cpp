@@ -14,12 +14,10 @@
 
 #include "dap_session.h"
 
-#include "../dispatcher.h"
-#include "../request_manager.h"
-#include "../scope_exit.h"
 #include "dap_server.h"
 #include "logger.h"
 #include "nlohmann/json.hpp"
+#include "utils/scope_exit.h"
 
 namespace hlasm_plugin::language_server::dap {
 void session::thread_routine()
@@ -36,7 +34,7 @@ void session::thread_routine()
             {}
         } smp(channel);
 
-        scope_exit indicate_end([this]() { running = false; });
+        utils::scope_exit indicate_end([this]() noexcept { running = false; });
 
         dap::server server(*ws_mngr, telemetry_reporter);
         server.set_send_message_provider(&smp);

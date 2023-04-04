@@ -128,14 +128,17 @@ TEST(b4g_integration_test, basic_pgm_conf_retrieval)
     ws.open();
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/A"));
+    parse_all_files(ws);
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_text(ws.diags(), { "SYS/SUB/ASMMACP1/MAC1", "ASMMACP1/MAC2" }));
     ws.diags().clear();
 
     ws.did_close_file(resource_location("SYS/SUB/ASMPGM/A"));
+    parse_all_files(ws);
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/B"));
+    parse_all_files(ws);
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_text(ws.diags(), { "SYS/SUB/ASMMACP2/MAC1", "ASMMACP2/MAC2" }));
@@ -157,6 +160,7 @@ TEST(b4g_integration_test, invalid_bridge_json)
     ws.open();
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/A"));
+    parse_all_files(ws);
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G001" }));
@@ -178,6 +182,7 @@ TEST(b4g_integration_test, missing_pgroup)
     ws.open();
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/A"));
+    parse_all_files(ws);
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002", "B4G002" }));
@@ -199,7 +204,9 @@ TEST(b4g_integration_test, missing_pgroup_but_not_used)
     ws.open();
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/A"));
+    parse_all_files(ws);
     ws.did_close_file(resource_location("SYS/SUB/ASMPGM/A"));
+    parse_all_files(ws);
 
     ws.collect_diags();
 
@@ -229,6 +236,7 @@ TEST(b4g_integration_test, bridge_config_changed)
     ws.open();
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/A"));
+    parse_all_files(ws);
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(ws.diags(), { "E049", "B4G001" }));
@@ -239,6 +247,7 @@ TEST(b4g_integration_test, bridge_config_changed)
     document_change doc_change(new_bridge_json.data(), new_bridge_json.size());
     file_manager.did_change_file(resource_location("SYS/SUB/ASMPGM/.bridge.json"), 2, &doc_change, 1);
     ws.did_change_file(resource_location("SYS/SUB/ASMPGM/.bridge.json"), &doc_change, 1);
+    parse_all_files(ws);
 
     ws.collect_diags();
 
@@ -268,6 +277,7 @@ TEST(b4g_integration_test, proc_config_changed)
     ws.open();
 
     ws.did_open_file(resource_location("SYS/SUB/ASMPGM/A"));
+    parse_all_files(ws);
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(ws.diags(), { "E049", "B4G002" }));
@@ -279,6 +289,7 @@ TEST(b4g_integration_test, proc_config_changed)
     document_change doc_change(new_bridge_json.data(), new_bridge_json.size());
     file_manager.did_change_file(resource_location(".hlasmplugin/proc_grps.json"), 2, &doc_change, 1);
     ws.did_change_file(resource_location(".hlasmplugin/proc_grps.json"), &doc_change, 1);
+    parse_all_files(ws);
 
     ws.collect_diags();
 

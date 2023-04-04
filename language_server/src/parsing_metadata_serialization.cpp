@@ -47,6 +47,8 @@ void to_json(nlohmann::json& j, const parser_library::performance_metrics& metri
 void to_json(nlohmann::json& j, const parser_library::parsing_metadata& metadata)
 {
     j = nlohmann::json { { "properties", metadata.ws_info }, { "measurements", metadata.metrics } };
+    j["measurements"]["error_count"] = metadata.errors;
+    j["measurements"]["warning_count"] = metadata.warnings;
 }
 
 } // namespace hlasm_plugin::parser_library
@@ -54,12 +56,7 @@ void to_json(nlohmann::json& j, const parser_library::parsing_metadata& metadata
 
 namespace hlasm_plugin::language_server {
 
-void to_json(nlohmann::json& j, const telemetry_metrics_info& metrics)
-{
-    j = metrics.metadata;
-    j["measurements"]["error_count"] = metrics.error_count;
-    j["measurements"]["warning_count"] = metrics.warning_count;
-}
+void to_json(nlohmann::json& j, const telemetry_metrics_info& metrics) { j = metrics.metadata; }
 
 void to_json(nlohmann::json& j, const telemetry_info& info)
 {

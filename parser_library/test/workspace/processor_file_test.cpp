@@ -18,28 +18,14 @@
 #include "../workspace/empty_configs.h"
 #include "library_mock.h"
 #include "lsp/lsp_context.h"
+#include "semantics/highlighting_info.h"
 #include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"
-#include "workspaces/processor_file_impl.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
 using namespace hlasm_plugin::utils::resource;
-
-TEST(processor_file, no_lsp_context)
-{
-    resource_location file_loc("filename");
-    file_manager_impl mngr;
-    mngr.did_open_file(file_loc, 0, " LR 1,1");
-
-    processor_file_impl file(mngr.find(file_loc), mngr);
-
-    // Prior to parsing, there is no lsp_context available
-
-    const auto* fp = file.get_lsp_context();
-    ASSERT_FALSE(fp);
-}
 
 TEST(processor_file, parse_macro)
 {
@@ -59,12 +45,16 @@ TEST(processor_file, parse_macro)
     shared_json global_settings = make_empty_shared_json();
     lib_config config;
     auto library = std::make_shared<NiceMock<library_mock>>();
-    workspace ws(mngr, config, global_settings, nullptr, library);
+    workspace ws(mngr, config, global_settings, library);
 
     EXPECT_CALL(*library, has_file(std::string_view("MAC"), _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(macro_loc), Return(true)));
 
-    auto wf_info = ws.did_open_file(opencode_loc, open_file_result::changed_content);
+    ws.did_open_file(opencode_loc, open_file_result::changed_content);
+
+    auto [url, wf_info, metrics, errors, warnings] = ws.parse_file().run().value();
+    EXPECT_EQ(url, opencode_loc);
+    EXPECT_TRUE(metrics);
 
     // Opencode file tests
 
@@ -90,7 +80,8 @@ TEST(processor_file, parse_macro)
     expected_metrics.macro_statements = 2;
     expected_metrics.non_continued_statements = 6;
     expected_metrics.open_code_statements = 2;
-    EXPECT_EQ(ws.find_processor_file(opencode_loc)->get_metrics(), expected_metrics);
+    EXPECT_EQ(metrics, expected_metrics);
+    EXPECT_EQ(ws.last_metrics(opencode_loc), expected_metrics);
     EXPECT_EQ(wf_info.files_processed, 2);
 
     // Macro file tests

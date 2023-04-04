@@ -31,14 +31,11 @@ feature_text_synchronization::feature_text_synchronization(
 void feature_text_synchronization::register_methods(std::map<std::string, method>& methods)
 {
     methods.try_emplace("textDocument/didOpen",
-        method { [this](const nlohmann::json& id, const nlohmann::json& args) { on_did_open(id, args); },
-            telemetry_log_level::LOG_WITH_PARSE_DATA });
+        method { [this](const nlohmann::json& args) { on_did_open(args); }, telemetry_log_level::LOG_EVENT });
     methods.try_emplace("textDocument/didChange",
-        method { [this](const nlohmann::json& id, const nlohmann::json& args) { on_did_change(id, args); },
-            telemetry_log_level::NO_TELEMETRY });
+        method { [this](const nlohmann::json& args) { on_did_change(args); }, telemetry_log_level::NO_TELEMETRY });
     methods.try_emplace("textDocument/didClose",
-        method { [this](const nlohmann::json& id, const nlohmann::json& args) { on_did_close(id, args); },
-            telemetry_log_level::LOG_EVENT });
+        method { [this](const nlohmann::json& args) { on_did_close(args); }, telemetry_log_level::LOG_EVENT });
 }
 
 nlohmann::json feature_text_synchronization::register_capabilities()
@@ -61,7 +58,7 @@ void feature_text_synchronization::initialize_feature(const nlohmann::json&)
     // No need for initialization in this feature.
 }
 
-void feature_text_synchronization::on_did_open(const nlohmann::json&, const nlohmann::json& params)
+void feature_text_synchronization::on_did_open(const nlohmann::json& params)
 {
     nlohmann::json text_doc = params["textDocument"];
     std::string doc_uri = text_doc["uri"].get<std::string>();
@@ -71,7 +68,7 @@ void feature_text_synchronization::on_did_open(const nlohmann::json&, const nloh
     ws_mngr_.did_open_file(doc_uri.c_str(), version, text.c_str(), text.size());
 }
 
-void feature_text_synchronization::on_did_change(const nlohmann::json&, const nlohmann::json& params)
+void feature_text_synchronization::on_did_change(const nlohmann::json& params)
 {
     nlohmann::json text_doc = params["textDocument"];
     std::string doc_uri = text_doc["uri"].get<std::string>();
@@ -102,7 +99,7 @@ void feature_text_synchronization::on_did_change(const nlohmann::json&, const nl
     ws_mngr_.did_change_file(doc_uri.c_str(), version, changes.data(), changes.size());
 }
 
-void feature_text_synchronization::on_did_close(const nlohmann::json&, const nlohmann::json& params)
+void feature_text_synchronization::on_did_close(const nlohmann::json& params)
 {
     std::string doc_uri = params["textDocument"]["uri"].get<std::string>();
 

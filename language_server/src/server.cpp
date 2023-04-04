@@ -15,10 +15,8 @@
 
 #include "server.h"
 
-#include <chrono>
 #include <functional>
 #include <sstream>
-#include <string>
 
 #include "logger.h"
 #include "nlohmann/json.hpp"
@@ -38,7 +36,7 @@ void server::register_feature_methods()
     }
 }
 
-void server::call_method(const std::string& method, const nlohmann::json& id, const nlohmann::json& args)
+void server::call_method(const std::string& method, std::optional<request_id> id, const nlohmann::json& args)
 {
     if (shutdown_request_received_)
     {
@@ -48,13 +46,25 @@ void server::call_method(const std::string& method, const nlohmann::json& id, co
     auto found = methods_.find(method);
     if (found != methods_.end())
     {
+        if (found->second.is_request_handler() && !id)
+        {
+            LOG_WARNING("Missing request id for method:" + method);
+            send_telemetry_error("call_method/missing_id");
+            return;
+        }
         try
         {
-            auto start = std::chrono::steady_clock::now();
-            (*found).second.handler(id.is_null() ? /* for compatibility */ nlohmann::json("") : id, args);
-            std::chrono::duration<double> duration = std::chrono::steady_clock::now() - start;
+            if (found->second.telemetry_level == telemetry_log_level::NO_TELEMETRY)
+                method_inflight = {};
+            else
+                method_inflight = { found->first, std::chrono::steady_clock::now() };
 
-            telemetry_method_call(method, (*found).second.telemetry_level, duration.count());
+            if (found->second.is_request_handler())
+                found->second.as_request_handler()(*id, args);
+            if (found->second.is_notification_handler())
+                found->second.as_notification_handler()(args);
+
+            telemetry_request_done(method_inflight);
         }
         catch (const nlohmann::basic_json<>::exception& e)
         {
@@ -68,9 +78,9 @@ void server::call_method(const std::string& method, const nlohmann::json& id, co
         // LSP spec says:
         // - notification can be ignored
         // - requests should be responded to with MethodNotFound
-        if (!id.is_null())
+        if (id)
             send_message_->reply(nlohmann::json {
-                { "id", id },
+                { "id", nlohmann ::json(*id) },
                 {
                     "error",
                     {
@@ -90,8 +100,6 @@ void server::call_method(const std::string& method, const nlohmann::json& id, co
     }
 }
 
-telemetry_metrics_info server::get_telemetry_details() { return {}; }
-
 void server::send_telemetry_error(std::string where, std::string what)
 {
     if (!telemetry_provider_)
@@ -100,19 +108,26 @@ void server::send_telemetry_error(std::string where, std::string what)
     telemetry_provider_->send_telemetry(telemetry_error { where, what });
 }
 
-void server::telemetry_method_call(const std::string& method_name, telemetry_log_level log_level, double seconds)
+void server::telemetry_request_done(method_telemetry_data start)
 {
-    if (log_level == telemetry_log_level::NO_TELEMETRY)
-        return;
-    if (!telemetry_provider_)
-        return;
+    if (telemetry_provider_ && !start.method_name.empty())
+        telemetry_provider_->send_telemetry(telemetry_info {
+            std::string(start.method_name),
+            std::chrono::duration<double>(std::chrono::steady_clock::now() - start.start).count(),
+        });
+}
 
-    telemetry_info info { method_name, seconds };
-
-    if (log_level == telemetry_log_level::LOG_WITH_PARSE_DATA)
-        info.metrics = get_telemetry_details();
-
-    telemetry_provider_->send_telemetry(info);
+void server::cancel_request_handler(const nlohmann::json& args)
+{
+    auto cancel_id = args.find("id");
+    std::optional<request_id> cid;
+    if (cancel_id == args.end() || !cancel_id->get_to(cid))
+    {
+        LOG_WARNING("Missing id to cancel");
+        send_telemetry_error("call_method/missing_cancel_id");
+    }
+    else if (auto req = cancellable_requests_.extract(*cid); req)
+        req.mapped().first();
 }
 
 bool server::is_exit_notification_received() const { return exit_notification_received_; }

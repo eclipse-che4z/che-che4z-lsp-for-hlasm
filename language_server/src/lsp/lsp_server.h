@@ -19,7 +19,6 @@
 #include <string>
 #include <unordered_set>
 
-#include "../parsing_metadata_collector.h"
 #include "../server.h"
 #include "nlohmann/json_fwd.hpp"
 #include "telemetry_sink.h"
@@ -33,7 +32,8 @@ namespace hlasm_plugin::language_server::lsp {
 class server final : public hlasm_plugin::language_server::server,
                      public parser_library::diagnostics_consumer,
                      public parser_library::message_consumer,
-                     public telemetry_sink
+                     public telemetry_sink,
+                     parser_library::parsing_metadata_consumer
 {
 public:
     // Creates the server with workspace_manager as entry point to parser library.
@@ -47,37 +47,36 @@ public:
 
 protected:
     // Sends request to LSP client using send_message_provider.
-    void request(const std::string& requested_method, const nlohmann::json& args, method handler) override;
+    void request(const std::string& requested_method,
+        const nlohmann::json& args,
+        std::function<void(const nlohmann::json& params)> handler) override;
     // Sends respond to request to LSP client using send_message_provider.
-    void respond(const nlohmann::json& id, const std::string& requested_method, const nlohmann::json& args) override;
+    void respond(const request_id& id, const std::string& requested_method, const nlohmann::json& args) override;
     // Sends notification to LSP client using send_message_provider.
     void notify(const std::string& method, const nlohmann::json& args) override;
     // Sends erroneous respond to LSP client using send_message_provider.
-    void respond_error(const nlohmann::json& id,
+    void respond_error(const request_id& id,
         const std::string& requested_method,
         int err_code,
         const std::string& err_message,
         const nlohmann::json& error) override;
 
-    telemetry_metrics_info get_telemetry_details() override;
+    void register_cancellable_request(const request_id&, request_invalidator) override;
 
 private:
-    std::atomic<unsigned long long> request_id_counter = 0;
-    parsing_metadata_collector parsing_metadata_;
-    size_t diags_warning_count = 0;
-    size_t diags_error_count = 0;
+    std::atomic<long> request_id_counter = 0;
 
     // requests
     // Implements initialize request.
-    void on_initialize(nlohmann::json id, const nlohmann::json& param);
+    void on_initialize(const request_id& id, const nlohmann::json& param);
     // Implements the LSP shutdown request.
-    void on_shutdown(nlohmann::json id, const nlohmann::json& param);
+    void on_shutdown(const request_id& id, const nlohmann::json& param);
 
 
     // notifications
 
     // Implements the LSP exit request.
-    void on_exit(nlohmann::json id, const nlohmann::json& param);
+    void on_exit(const nlohmann::json& param);
 
 
     // client notifications
@@ -96,6 +95,10 @@ private:
 
     // Registers LSP methods implemented by this server (not by features).
     void register_methods();
+
+    // Ingest parsing metadata and forward them to telemetry client
+    void consume_parsing_metadata(
+        parser_library::sequence<char> uri, double duration, const parser_library::parsing_metadata& metadata) override;
 };
 
 } // namespace hlasm_plugin::language_server::lsp

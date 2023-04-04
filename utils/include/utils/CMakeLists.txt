@@ -23,6 +23,7 @@ target_sources(hlasm_utils PUBLIC
 	path_conversions.h
 	platform.h
 	resource_location.h
+	scope_exit.h
 	similar.h
 	string_operations.h
 	task.h

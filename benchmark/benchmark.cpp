@@ -20,7 +20,6 @@
 #include <sstream>
 #include <unordered_map>
 
-#include "../language_server/src/parsing_metadata_collector.h"
 #include "config/pgm_conf.h"
 #include "diagnostic_counter.h"
 #include "nlohmann/json.hpp"
@@ -79,6 +78,17 @@ struct all_file_stats
     size_t failed_file_opens = 0;
 };
 
+struct parsing_metadata_collector final : public parser_library::parsing_metadata_consumer
+{
+    void consume_parsing_metadata(
+        parser_library::sequence<char>, double, const parser_library::parsing_metadata& metadata) override
+    {
+        data.emplace_back(metadata);
+    }
+
+    std::vector<parser_library::parsing_metadata> data;
+};
+
 json parse_one_file(const std::string& source_file,
     const std::string& ws_folder,
     all_file_stats& s,
@@ -102,7 +112,7 @@ json parse_one_file(const std::string& source_file,
     parser_library::workspace_manager ws;
     benchmark::diagnostic_counter diag_counter;
     ws.register_diagnostics_consumer(&diag_counter);
-    language_server::parsing_metadata_collector collector;
+    parsing_metadata_collector collector;
     ws.register_parsing_metadata_consumer(&collector);
     // input folder as new workspace
     ws.add_workspace(ws_folder.c_str(), ws_folder.c_str());
@@ -115,6 +125,8 @@ json parse_one_file(const std::string& source_file,
     try
     {
         ws.did_open_file(source_path.c_str(), 1, content.c_str(), content.length());
+        if (ws.idle_handler())
+            abort();
     }
     catch (const std::exception& e)
     {
@@ -129,7 +141,15 @@ json parse_one_file(const std::string& source_file,
         return json({ { "File", source_file }, { "Success", false }, { "Reason", "Crash" } });
     }
 
-    const auto& metrics = collector.data.metrics;
+    if (collector.data.size() != 1)
+    {
+        ++s.parsing_crashes;
+        std::clog << message << "Error: Unexpected parsing metadata" << std::endl;
+        return json({ { "File", source_file }, { "Success", false }, { "Reason", "Unexpected parsing metadata" } });
+    }
+
+    const auto& parse_data = collector.data.front();
+    const auto& metrics = parse_data.metrics;
 
     auto c_end = std::clock();
     auto end = std::chrono::high_resolution_clock::now();
@@ -138,7 +158,7 @@ json parse_one_file(const std::string& source_file,
         + metrics.lookahead_statements + metrics.reparsed_statements;
     s.average_stmt_ms += (exec_statements / (double)time);
     s.average_line_ms += metrics.lines / (double)time;
-    s.all_files += collector.data.ws_info.files_processed;
+    s.all_files += parse_data.ws_info.files_processed;
     s.whole_time += time;
 
     auto top_messages = benchmark::get_top_messages(diag_counter.message_counts);
@@ -154,7 +174,6 @@ json parse_one_file(const std::string& source_file,
         { "ExecStatement/ms", exec_statements / (double)time },
         { "Line/ms", metrics.lines / (double)time },
         { "Top messages", std::move(top_messages) },
-
         { "Open Code Statements", metrics.open_code_statements },
         { "Copy Statements", metrics.copy_statements },
         { "Macro Statements", metrics.macro_statements },
@@ -165,10 +184,10 @@ json parse_one_file(const std::string& source_file,
         { "Continued Statements", metrics.continued_statements },
         { "Non-continued Statements", metrics.non_continued_statements },
         { "Lines", metrics.lines },
-        { "Files", collector.data.ws_info.files_processed },
+        { "Files", parse_data.ws_info.files_processed },
     });
 
-    auto first_ws_info = collector.data.ws_info;
+    auto first_ws_info = parse_data.ws_info;
     auto first_parse_metrics = metrics;
     auto first_diag_counter = diag_counter;
     long long reparse_time = 0;
@@ -186,6 +205,8 @@ json parse_one_file(const std::string& source_file,
             // pass in a dummy change, as to not skew reparse results by optimizations
             parser_library::document_change dummy({}, "", 0);
             ws.did_change_file(source_path.c_str(), 1, &dummy, 1);
+            if (ws.idle_handler())
+                abort();
         }
         catch (const std::exception& e)
         {

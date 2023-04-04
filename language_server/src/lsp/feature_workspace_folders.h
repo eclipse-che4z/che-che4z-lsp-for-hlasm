@@ -40,11 +40,11 @@ public:
 
 private:
     // Handles workspace/didChangeWorkspaceFolders notification.
-    void on_did_change_workspace_folders(const nlohmann::json& id, const nlohmann::json& params);
-    void did_change_watched_files(const nlohmann::json&, const nlohmann::json& params);
+    void on_did_change_workspace_folders(const nlohmann::json& params);
+    void did_change_watched_files(const nlohmann::json& params);
 
-    void configuration(const nlohmann::json&, const nlohmann::json& params) const;
-    void did_change_configuration(const nlohmann::json&, const nlohmann::json& params);
+    void configuration(const nlohmann::json& params) const;
+    void did_change_configuration(const nlohmann::json& params);
 
 
     // Adds all workspaces specified in the json to the workspace manager.

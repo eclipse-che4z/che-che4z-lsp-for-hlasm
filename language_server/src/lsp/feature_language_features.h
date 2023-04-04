@@ -37,13 +37,13 @@ public:
     static nlohmann::json convert_tokens_to_num_array(const std::vector<parser_library::token_info>& tokens);
 
 private:
-    void definition(const nlohmann::json& id, const nlohmann::json& params);
-    void references(const nlohmann::json& id, const nlohmann::json& params);
-    void hover(const nlohmann::json& id, const nlohmann::json& params);
-    void completion(const nlohmann::json& id, const nlohmann::json& params);
-    void semantic_tokens(const nlohmann::json& id, const nlohmann::json& params);
-    void document_symbol(const nlohmann::json& id, const nlohmann::json& params);
-    void opcode_suggestion(const nlohmann::json& id, const nlohmann::json& params);
+    void definition(const request_id& id, const nlohmann::json& params);
+    void references(const request_id& id, const nlohmann::json& params);
+    void hover(const request_id& id, const nlohmann::json& params);
+    void completion(const request_id& id, const nlohmann::json& params);
+    void semantic_tokens(const request_id& id, const nlohmann::json& params);
+    void document_symbol(const request_id& id, const nlohmann::json& params);
+    void opcode_suggestion(const request_id& id, const nlohmann::json& params);
 
     nlohmann::json document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol);
     nlohmann::json document_symbol_list_json(hlasm_plugin::parser_library::document_symbol_list symbol_list);

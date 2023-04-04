@@ -16,6 +16,7 @@
 #include "gtest/gtest.h"
 
 #include "utils/resource_location.h"
+#include "workspaces/file.h"
 #include "workspaces/file_manager_impl.h"
 
 using namespace hlasm_plugin::parser_library::workspaces;

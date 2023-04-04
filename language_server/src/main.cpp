@@ -23,15 +23,13 @@
 #include "dap/dap_message_wrappers.h"
 #include "dap/dap_server.h"
 #include "dap/dap_session_manager.h"
-#include "dispatcher.h"
 #include "logger.h"
 #include "lsp/lsp_server.h"
 #include "message_router.h"
 #include "nlohmann/json.hpp"
-#include "request_manager.h"
-#include "scope_exit.h"
 #include "server_streams.h"
 #include "telemetry_broker.h"
+#include "utils/scope_exit.h"
 #include "virtual_file_provider.h"
 #include "workspace_manager.h"
 
@@ -39,11 +37,11 @@ using namespace hlasm_plugin::language_server;
 
 namespace {
 
-class main_program : public json_sink
+class main_program : public json_sink, send_message_provider
 {
-    std::atomic<bool> cancel = false;
     hlasm_plugin::parser_library::workspace_manager ws_mngr;
 
+    json_sink& json_output;
     json_queue_channel lsp_queue;
 
     message_router router;
@@ -53,9 +51,11 @@ class main_program : public json_sink
     dap::session_manager dap_sessions;
     virtual_file_provider virtual_files;
 
+    void reply(const nlohmann::json& message) final { json_output.write(message); }
+
 public:
     main_program(json_sink& json_output, int& ret)
-        : ws_mngr(&cancel)
+        : json_output(json_output)
         , router(&lsp_queue)
         , dap_sessions(ws_mngr, json_output, &dap_telemetry_broker)
         , virtual_files(ws_mngr, json_output)
@@ -63,31 +63,52 @@ public:
         router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
         router.register_route(virtual_files.get_filtering_predicate(), virtual_files);
 
-        lsp_thread = std::thread([&ret, this, io = json_channel_adapter(lsp_queue, json_output)]() {
+        lsp_thread = std::thread([&ret, this]() {
             try
             {
-                request_manager req_mgr(&cancel);
-                scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
                 lsp::server server(ws_mngr);
-                scope_exit disconnect_telemetry([this]() { dap_telemetry_broker.set_telemetry_sink(nullptr); });
+                server.set_send_message_provider(this);
+                hlasm_plugin::utils::scope_exit disconnect_telemetry(
+                    [this]() noexcept { dap_telemetry_broker.set_telemetry_sink(nullptr); });
                 dap_telemetry_broker.set_telemetry_sink(&server);
 
-                dispatcher lsp_dispatcher(io, server, req_mgr);
-                ret = lsp_dispatcher.run_server_loop();
+                for (;;)
+                {
+                    if (lsp_queue.will_read_block() && ws_mngr.idle_handler(lsp_queue.will_block_preview()))
+                        continue;
+
+                    auto message = lsp_queue.read();
+                    if (!message.has_value())
+                    {
+                        ret = 1;
+                        break;
+                    }
+
+                    server.message_received(message.value());
+
+                    // If exit notification came without prior shutdown request, return error 1.
+                    if (server.is_exit_notification_received())
+                    {
+                        if (!server.is_shutdown_request_received())
+                            ret = 1;
+                        break;
+                    }
+                }
             }
             catch (const std::exception& e)
             {
                 LOG_ERROR(std::string("LSP thread exception: ") + e.what());
+                ret = -1;
             }
             catch (...)
             {
                 LOG_ERROR("LSP thread unknown exception.");
+                ret = -1;
             }
         });
     }
     ~main_program()
     {
-        cancel = true;
         lsp_queue.terminate();
         if (lsp_thread.joinable())
             lsp_thread.join();

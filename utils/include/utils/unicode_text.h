@@ -164,7 +164,7 @@ class utf8_utf16_counter
         for (size_t i = 0; i < 0x100; i += 8)
         {
             unsigned long long bits = 0;
-            if (0b0000'0000 <= i && i <= 0b0111'1111)
+            if (i <= 0b0111'1111)
                 bits = 1;
             else if (0b1100'0000 <= i && i <= 0b1101'1111)
                 bits = 1;

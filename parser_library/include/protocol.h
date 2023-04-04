@@ -294,6 +294,8 @@ struct PARSER_LIBRARY_EXPORT parsing_metadata
 {
     performance_metrics metrics;
     workspace_file_info ws_info;
+    size_t errors = 0;
+    size_t warnings = 0;
 };
 
 struct PARSER_LIBRARY_EXPORT diagnostic_list

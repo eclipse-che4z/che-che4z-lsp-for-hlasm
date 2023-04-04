@@ -20,7 +20,6 @@
 #include "dap/dap_server.h"
 #include "lsp/lsp_server.h"
 #include "nlohmann/json.hpp"
-#include "scope_exit.h"
 #include "send_message_provider_mock.h"
 #include "stream_helper.h"
 #include "telemetry_broker.h"
@@ -59,20 +58,17 @@ TEST(telemetry, lsp_server_did_open)
     send_message_provider_mock lsp_smpm;
     lsp_server.set_send_message_provider(&lsp_smpm);
 
-
-
     nlohmann::json diags_reply;
     nlohmann::json telemetry_reply;
-
 
     EXPECT_CALL(lsp_smpm, reply(Truly(get_method_matcher("textDocument/publishDiagnostics"))))
         .WillOnce(SaveArg<0>(&diags_reply));
 
-    EXPECT_CALL(lsp_smpm, reply(Truly(get_method_matcher("telemetry/event")))).WillOnce(SaveArg<0>(&telemetry_reply));
-
-
+    EXPECT_CALL(lsp_smpm, reply(Truly(get_telemetry_method_matcher("parsing")))).WillOnce(SaveArg<0>(&telemetry_reply));
+    EXPECT_CALL(lsp_smpm, reply(Truly(get_telemetry_method_matcher("textDocument/didOpen"))));
 
     lsp_server.message_received(open_file_message);
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
     EXPECT_EQ(diags_reply["params"]["diagnostics"].size(), 1);
 
@@ -98,6 +94,7 @@ TEST(telemetry, telemetry_broker)
     EXPECT_CALL(lsp_smpm, reply(Truly(get_method_matcher("textDocument/publishDiagnostics"))));
 
 
+    EXPECT_CALL(lsp_smpm, reply(Truly(get_telemetry_method_matcher("parsing"))));
     EXPECT_CALL(lsp_smpm, reply(Truly(get_telemetry_method_matcher("textDocument/didOpen"))));
 
     EXPECT_CALL(
@@ -111,12 +108,14 @@ TEST(telemetry, telemetry_broker)
     broker.set_telemetry_sink(&lsp_server);
 
     lsp_server.message_received(open_file_message);
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
     //"textDocument/hover",R"#({"textDocument":{"uri":"file:///c%3A/test/stability.hlasm"},"position":{"line":0,"character":7}})#"_json),
 
-    std::thread lsp_thread([&lsp_server]() {
+    std::thread lsp_thread([&lsp_server, &ws_mngr]() {
         lsp_server.message_received(
             R"({"jsonrpc":"2.0","id":48,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///test_file"},"position":{"line":0,"character":2} }})"_json);
+        EXPECT_FALSE(ws_mngr.idle_handler());
     });
 
 

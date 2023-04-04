@@ -18,6 +18,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "../common_testing.h"
 #include "../workspace/empty_configs.h"
 #include "analyzer.h"
 #include "context/id_storage.h"
@@ -26,8 +27,8 @@
 #include "lsp/opencode_info.h"
 #include "lsp/text_data_view.h"
 #include "utils/resource_location.h"
+#include "workspaces/file.h"
 #include "workspaces/file_manager_impl.h"
-#include "workspaces/processor_file_impl.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -330,25 +331,27 @@ TEST(macro_cache_test, overwrite_by_inline)
     lib_config config;
     using namespace ::testing;
     auto library = std::make_shared<NiceMock<library_mock>>();
-    workspace ws(file_mngr, config, global_settings, nullptr, library);
+    workspace ws(file_mngr, config, global_settings, library);
 
     EXPECT_CALL(*library, has_file(std::string_view("MAC"), _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(macro_file_loc), Return(true)));
 
     ws.did_open_file(opencode_file_loc);
-    auto opencode = ws.find_processor_file(opencode_file_loc);
+    parse_all_files(ws);
+    ws.collect_diags();
 
-    EXPECT_EQ(opencode->diags().size(), 2U);
-    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), macro_file_loc));
-    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), opencode_file_loc));
-
-    opencode->diags().clear();
+    EXPECT_EQ(ws.diags().size(), 2U);
+    EXPECT_TRUE(find_diag_with_filename(ws.diags(), macro_file_loc));
+    EXPECT_TRUE(find_diag_with_filename(ws.diags(), opencode_file_loc));
 
     document_change change(range(), "", 0);
     ws.did_change_file(opencode_file_loc, &change, 1);
-    EXPECT_EQ(opencode->diags().size(), 2U);
-    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), macro_file_loc));
-    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), opencode_file_loc));
+    parse_all_files(ws);
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_EQ(ws.diags().size(), 2U);
+    EXPECT_TRUE(find_diag_with_filename(ws.diags(), macro_file_loc));
+    EXPECT_TRUE(find_diag_with_filename(ws.diags(), opencode_file_loc));
 }
 
 TEST(macro_cache_test, inline_depends_on_copy)

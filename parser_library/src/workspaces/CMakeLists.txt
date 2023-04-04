@@ -25,9 +25,6 @@ target_sources(parser_library PRIVATE
 	macro_cache.h
 	parse_lib_provider.cpp
 	parse_lib_provider.h
-	processor.h
-	processor_file_impl.cpp
-	processor_file_impl.h
 	processor_group.cpp
 	processor_group.h
 	wildcard.cpp

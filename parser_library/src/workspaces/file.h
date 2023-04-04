@@ -23,14 +23,13 @@
 #include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
-using file_location = utils::resource::resource_location;
 
 // Interface that represents both file opened in LSP
 // as well as a file opened by parser library from the disk.
 class file
 {
 public:
-    virtual const file_location& get_location() const = 0;
+    virtual const utils::resource::resource_location& get_location() const = 0;
     // Gets contents of file either by loading from disk or from LSP.
     virtual const std::string& get_text() const = 0;
     // Returns whether file is open by LSP.

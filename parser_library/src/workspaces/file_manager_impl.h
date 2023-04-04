@@ -24,7 +24,6 @@
 #include "diagnosable_impl.h"
 #include "fade_messages.h"
 #include "file_manager.h"
-#include "processor_file_impl.h"
 #include "utils/resource_location.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
@@ -55,7 +54,7 @@ public:
 
     ~file_manager_impl();
 
-    std::shared_ptr<file> add_file(const file_location&) override;
+    std::shared_ptr<file> add_file(const utils::resource::resource_location&) override;
 
     std::shared_ptr<file> find(const utils::resource::resource_location& key) const override;
 
@@ -65,10 +64,13 @@ public:
 
     std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec) const override;
 
-    open_file_result did_open_file(const file_location& document_loc, version_t version, std::string text) override;
-    void did_change_file(
-        const file_location& document_loc, version_t version, const document_change* changes, size_t ch_size) override;
-    void did_close_file(const file_location& document_loc) override;
+    open_file_result did_open_file(
+        const utils::resource::resource_location& document_loc, version_t version, std::string text) override;
+    void did_change_file(const utils::resource::resource_location& document_loc,
+        version_t version,
+        const document_change* changes,
+        size_t ch_size) override;
+    void did_close_file(const utils::resource::resource_location& document_loc) override;
 
     bool dir_exists(const utils::resource::resource_location& dir_loc) const override;
 
@@ -78,7 +80,7 @@ public:
     std::string get_virtual_file(unsigned long long id) const override;
     utils::resource::resource_location get_virtual_file_workspace(unsigned long long id) const override;
 
-    open_file_result update_file(const file_location& document_loc) override;
+    open_file_result update_file(const utils::resource::resource_location& document_loc) override;
 
     std::optional<std::string> get_file_content(const utils::resource::resource_location&) override;
 

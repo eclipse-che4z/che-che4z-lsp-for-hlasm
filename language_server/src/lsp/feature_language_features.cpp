@@ -192,27 +192,26 @@ struct first_arg
 };
 
 template<typename U>
-auto make_response(nlohmann::json id, response_provider* response, U handler)
+auto make_response(const request_id& id, response_provider* response, U handler)
 {
     using T = typename first_arg<U>::type;
     class response_t
     {
-        nlohmann::json m_id;
+        request_id m_id;
         response_provider* m_response;
         [[no_unique_address]] U m_handler;
 
     public:
-        response_t(nlohmann::json id, response_provider* response, U handler)
-            : m_id(std::move(id))
+        response_t(const request_id& id, response_provider* response, U handler)
+            : m_id(id)
             , m_response(response)
             , m_handler(std::move(handler))
         {}
 
-        bool valid() const { return true; }
         void error(int ec, const char* error) const { m_response->respond_error(m_id, "", ec, std::string(error), {}); }
         void provide(T r) const { m_response->respond(m_id, "", m_handler(std::move(r))); }
     };
-    return workspace_manager_response<T>(response_t(std::move(id), response, std::move(handler)));
+    return workspace_manager_response<T>(response_t(id, response, std::move(handler)));
 }
 
 } // namespace
@@ -224,11 +223,14 @@ feature_language_features::feature_language_features(
 
 void feature_language_features::register_methods(std::map<std::string, method>& methods)
 {
-    const auto this_bind = [this](void (feature_language_features::*func)(const nlohmann::json&, const nlohmann::json&),
+    const auto this_bind = [this](void (feature_language_features::*func)(const request_id& id, const nlohmann::json&),
                                telemetry_log_level telem) {
-        return method { [this, func](const nlohmann::json& id, const nlohmann::json& args) { (this->*func)(id, args); },
-            telem };
+        return method {
+            [this, func](const request_id& id, const nlohmann::json& args) { (this->*func)(id, args); },
+            telem,
+        };
     };
+
     methods.emplace(
         "textDocument/definition", this_bind(&feature_language_features::definition, telemetry_log_level::LOG_EVENT));
     methods.emplace(
@@ -297,26 +299,28 @@ void feature_language_features::initialize_feature(const nlohmann::json&)
     // No need for initialization in this feature.
 }
 
-void feature_language_features::definition(const nlohmann::json& id, const nlohmann::json& params)
+void feature_language_features::definition(const request_id& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
     auto pos = extract_position(params);
+    auto resp = make_response(id, response_, [](position_uri definition_position_uri) {
+        return nlohmann::json {
+            { "uri", definition_position_uri.file_uri() },
+            { "range", range_to_json({ definition_position_uri.pos(), definition_position_uri.pos() }) },
+        };
+    });
 
-    ws_mngr_.definition(
-        document_uri.c_str(), pos, make_response(id, response_, [](position_uri definition_position_uri) {
-            return nlohmann::json {
-                { "uri", definition_position_uri.file_uri() },
-                { "range", range_to_json({ definition_position_uri.pos(), definition_position_uri.pos() }) },
-            };
-        }));
+    ws_mngr_.definition(document_uri.c_str(), pos, resp);
+
+    response_->register_cancellable_request(id, std::move(resp));
 }
 
-void feature_language_features::references(const nlohmann::json& id, const nlohmann::json& params)
+void feature_language_features::references(const request_id& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
     auto pos = extract_position(params);
 
-    ws_mngr_.references(document_uri.c_str(), pos, make_response(id, response_, [](position_uri_list references) {
+    auto resp = make_response(id, response_, [](position_uri_list references) {
         auto to_ret = nlohmann::json::array();
         for (size_t i = 0; i < references.size(); ++i)
         {
@@ -325,31 +329,39 @@ void feature_language_features::references(const nlohmann::json& id, const nlohm
                 nlohmann::json { { "uri", ref.file_uri() }, { "range", range_to_json({ ref.pos(), ref.pos() }) } });
         }
         return to_ret;
-    }));
+    });
+    ws_mngr_.references(document_uri.c_str(), pos, resp);
+
+    response_->register_cancellable_request(id, std::move(resp));
 }
-void feature_language_features::hover(const nlohmann::json& id, const nlohmann::json& params)
+void feature_language_features::hover(const request_id& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
     auto pos = extract_position(params);
 
-    ws_mngr_.hover(document_uri.c_str(), pos, make_response(id, response_, [](sequence<char> hover_list_result) {
+    auto resp = make_response(id, response_, [](sequence<char> hover_list_result) {
         std::string_view hover_list(hover_list_result);
         return nlohmann::json {
             { "contents", hover_list.empty() ? "" : get_markup_content(hover_list) },
         };
-    }));
+    });
+    ws_mngr_.hover(document_uri.c_str(), pos, resp);
+
+    response_->register_cancellable_request(id, std::move(resp));
 }
 
 
-void feature_language_features::completion(const nlohmann::json& id, const nlohmann::json& params)
+void feature_language_features::completion(const request_id& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
     auto pos = extract_position(params);
 
     auto [trigger_kind, trigger_char] = extract_trigger(params);
 
-    ws_mngr_.completion(
-        document_uri.c_str(), pos, trigger_char, trigger_kind, make_response(id, response_, translate_completion_list));
+    auto resp = make_response(id, response_, translate_completion_list);
+    ws_mngr_.completion(document_uri.c_str(), pos, trigger_char, trigger_kind, resp);
+
+    response_->register_cancellable_request(id, std::move(resp));
 }
 
 void add_token(nlohmann::json& encoded_tokens,
@@ -455,16 +467,18 @@ nlohmann::json feature_language_features::convert_tokens_to_num_array(
     return encoded_tokens;
 }
 
-void feature_language_features::semantic_tokens(const nlohmann::json& id, const nlohmann::json& params)
+void feature_language_features::semantic_tokens(const request_id& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
 
-    ws_mngr_.semantic_tokens(
-        document_uri.c_str(), make_response(id, response_, [](continuous_sequence<token_info> token_list) {
-            return nlohmann::json {
-                { "data", convert_tokens_to_num_array(std::vector<parser_library::token_info>(std::move(token_list))) },
-            };
-        }));
+    auto resp = make_response(id, response_, [](continuous_sequence<token_info> token_list) {
+        return nlohmann::json {
+            { "data", convert_tokens_to_num_array(std::vector<parser_library::token_info>(std::move(token_list))) },
+        };
+    });
+    ws_mngr_.semantic_tokens(document_uri.c_str(), resp);
+
+    response_->register_cancellable_request(id, std::move(resp));
 }
 
 // document symbol item kinds from the LSP specification
@@ -539,18 +553,21 @@ nlohmann::json feature_language_features::document_symbol_list_json(
     return result;
 }
 
-void feature_language_features::document_symbol(const nlohmann::json& id, const nlohmann::json& params)
+void feature_language_features::document_symbol(const request_id& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
 
     const auto limit = 5000LL;
-    ws_mngr_.document_symbol(
-        document_uri.c_str(), limit, make_response(id, response_, [this](document_symbol_list symbol_list) {
-            return document_symbol_list_json(symbol_list);
-        }));
+
+    auto resp = make_response(
+        id, response_, [this](document_symbol_list symbol_list) { return document_symbol_list_json(symbol_list); });
+
+    ws_mngr_.document_symbol(document_uri.c_str(), limit, resp);
+
+    response_->register_cancellable_request(id, std::move(resp));
 }
 
-void feature_language_features::opcode_suggestion(const nlohmann::json& id, const nlohmann::json& params)
+void feature_language_features::opcode_suggestion(const request_id& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
 
@@ -570,9 +587,9 @@ void feature_language_features::opcode_suggestion(const nlohmann::json& id, cons
         return;
     }
 
-    class composite_response_t
+    class composite_response_t : public std::enable_shared_from_this<composite_response_t>
     {
-        nlohmann::json m_id;
+        request_id m_id;
         response_provider* m_response;
         std::string m_document_uri;
 
@@ -595,13 +612,12 @@ void feature_language_features::opcode_suggestion(const nlohmann::json& id, cons
         }
 
     public:
-        composite_response_t(nlohmann::json id, response_provider* response, std::string document_uri)
-            : m_id(std::move(id))
+        composite_response_t(const request_id& id, response_provider* response, std::string document_uri)
+            : m_id(id)
             , m_response(response)
             , m_document_uri(std::move(document_uri))
         {}
 
-        bool valid() const { return !m_failed; }
         void error(int ec, const char* error)
         {
             m_failed = true;
@@ -626,22 +642,22 @@ void feature_language_features::opcode_suggestion(const nlohmann::json& id, cons
                 send();
         }
 
-        auto start_request(
-            workspace_manager_response<std::optional<std::pair<std::string, nlohmann::json>>> self, std::string opcode)
+        using subrequest_t =
+            workspace_manager_response<continuous_sequence<hlasm_plugin::parser_library::opcode_suggestion>>;
+        subrequest_t start_request(std::string opcode)
         {
             struct subrequest_t
             {
-                workspace_manager_response<std::optional<std::pair<std::string, nlohmann::json>>> m_self;
+                std::shared_ptr<composite_response_t> m_self;
                 std::string m_opcode;
 
-                bool valid() const { return m_self.valid(); }
-                void error(int ec, const char* error) const { m_self.error(ec, error); }
+                void error(int ec, const char* error) const { m_self->error(ec, error); }
 
                 void provide(continuous_sequence<hlasm_plugin::parser_library::opcode_suggestion> opcode_suggestions)
                 {
                     if (opcode_suggestions.size() == 0)
                     {
-                        m_self.provide(std::nullopt);
+                        m_self->provide(std::nullopt);
                         return;
                     }
                     auto result = nlohmann::json::array();
@@ -652,35 +668,58 @@ void feature_language_features::opcode_suggestion(const nlohmann::json& id, cons
                             { "distance", s.distance },
                         });
                     }
-                    m_self.provide(std::make_pair(std::move(m_opcode), std::move(result)));
+                    m_self->provide(std::make_pair(std::move(m_opcode), std::move(result)));
                 }
             };
-            auto [result, _] = make_workspace_manager_response(subrequest_t { std::move(self), std::move(opcode) });
+
+            auto [result, _] = make_workspace_manager_response(subrequest_t { shared_from_this(), std::move(opcode) });
 
             ++m_pending_responses;
 
             return std::move(result);
         }
+
+        auto get_invalidator(std::vector<composite_response_t::subrequest_t> collected_subrequests)
+        {
+            struct
+            {
+                std::shared_ptr<composite_response_t> m_self;
+                std::vector<composite_response_t::subrequest_t> subrequests;
+
+                bool resolved() const { return m_self->m_failed || m_self->m_pending_responses == 0; }
+                void invalidate() const
+                {
+                    for (const auto& subreq : subrequests)
+                        subreq.invalidate();
+                }
+            } result { shared_from_this(), std::move(collected_subrequests) };
+            return result;
+        }
     };
 
-    auto [response, composite] = make_workspace_manager_response(composite_response_t(id, response_, document_uri));
+    auto composite = std::make_shared<composite_response_t>(id, response_, document_uri);
 
     try
     {
+        std::vector<composite_response_t::subrequest_t> subrequests;
         for (const auto& opcode : *opcodes)
         {
             if (!opcode.is_string())
                 continue;
             auto op = opcode.get<std::string>();
+
             ws_mngr_.make_opcode_suggestion(
-                document_uri.c_str(), op.c_str(), extended, composite->start_request(response, op));
+                document_uri.c_str(), op.c_str(), extended, subrequests.emplace_back(composite->start_request(op)));
         }
+
+        response_->register_cancellable_request(id, composite->get_invalidator(std::move(subrequests)));
 
         composite->requests_submitted();
     }
     catch (const std::exception& e)
     {
-        response.error(-32603, e.what());
+        constexpr int internal_error = -32603;
+        composite->error(internal_error, e.what());
     }
 }
 

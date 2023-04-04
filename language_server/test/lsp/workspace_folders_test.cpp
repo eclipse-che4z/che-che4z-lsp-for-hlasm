@@ -47,7 +47,7 @@ TEST(workspace_folders, did_change_workspace_folders)
 
     auto params1 =
         nlohmann::json::parse(R"({"event":{"added":[{"uri":")" + ws1_uri + R"(","name":"OneDrive"}],"removed":[]}})");
-    notifs["workspace/didChangeWorkspaceFolders"].handler("", params1);
+    notifs["workspace/didChangeWorkspaceFolders"].as_notification_handler()(params1);
 
     EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("TwoDrive"), ::testing::StrEq(ws2_uri)));
     EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("ThreeDrive"), ::testing::StrEq(ws3_uri)));
@@ -55,7 +55,7 @@ TEST(workspace_folders, did_change_workspace_folders)
 
     auto params2 = nlohmann::json::parse(R"({"event":{"added":[{"uri":")" + ws2_uri + R"(","name":"TwoDrive"},{"uri":")"
         + ws3_uri + R"(","name":"ThreeDrive"}],"removed":[{"uri":")" + ws1_uri + R"(","name":"OneDrive"}]}})");
-    notifs["workspace/didChangeWorkspaceFolders"].handler("", params2);
+    notifs["workspace/didChangeWorkspaceFolders"].as_notification_handler()(params2);
 
     EXPECT_CALL(ws_mngr, remove_workspace(::testing::StrEq(ws2_uri)));
     EXPECT_CALL(ws_mngr, remove_workspace(::testing::StrEq(ws3_uri)));
@@ -63,7 +63,7 @@ TEST(workspace_folders, did_change_workspace_folders)
     auto params3 = nlohmann::json::parse(R"({"event":{"added":[{"uri":")" + ws4_uri
         + R"(","name":"FourDrive"}],"removed":[{"uri":")" + ws2_uri + R"(","name":"TwoDrive"},{"uri":")" + ws3_uri
         + R"(","name":"ThreeDrive"}]}})");
-    notifs["workspace/didChangeWorkspaceFolders"].handler("", params3);
+    notifs["workspace/didChangeWorkspaceFolders"].as_notification_handler()(params3);
 }
 
 TEST(workspace_folders, did_change_watchedfiles_invalid_uri)
@@ -75,8 +75,8 @@ TEST(workspace_folders, did_change_watchedfiles_invalid_uri)
     std::map<std::string, method> notifs;
 
     f.register_methods(notifs);
-    notifs["workspace/didChangeWatchedFiles"].handler(
-        "", R"({"changes":[{"uri":"user_storage:/user/storage/layout","type":2}, {"uri":"file:///file_name"}]})"_json);
+    notifs["workspace/didChangeWatchedFiles"].as_notification_handler()(
+        R"({"changes":[{"uri":"user_storage:/user/storage/layout","type":2}, {"uri":"file:///file_name"}]})"_json);
 
     // If server didn't crash - hurray!
 }
@@ -155,7 +155,7 @@ TEST(workspace_folders, did_change_configuration)
     feat.register_methods(methods);
 
 
-    method handler;
+    std::function<void(const nlohmann::json& params)> handler;
     nlohmann::json config_request_args {
         {
             "items",
@@ -171,14 +171,14 @@ TEST(workspace_folders, did_change_configuration)
     EXPECT_CALL(provider, request("workspace/configuration", config_request_args, ::testing::_))
         .WillOnce(::testing::SaveArg<2>(&handler));
 
-    methods["workspace/didChangeConfiguration"].handler("did_change_configuration_id", "{}"_json);
+    methods["workspace/didChangeConfiguration"].as_notification_handler()("{}"_json);
 
     parser_library::lib_config expected_config;
     expected_config.diag_supress_limit = 42;
 
     EXPECT_CALL(ws_mngr, configuration_changed(::testing::Eq(expected_config), ::testing::StrEq(R"({"aaa":"bbb"})")));
 
-    handler.handler("config_respond", R"([{"diagnosticsSuppressLimit":42},{"aaa":"bbb"}])"_json);
+    handler(R"([{"diagnosticsSuppressLimit":42},{"aaa":"bbb"}])"_json);
 }
 
 TEST(workspace_folders, did_change_configuration_empty_configuration_params)
@@ -195,7 +195,7 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
     feat.register_methods(methods);
 
 
-    method handler;
+    std::function<void(const nlohmann::json& params)> handler;
     nlohmann::json config_request_args {
         {
             "items",
@@ -209,9 +209,9 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
     EXPECT_CALL(provider, request("workspace/configuration", config_request_args, ::testing::_))
         .WillOnce(::testing::SaveArg<2>(&handler));
 
-    methods["workspace/didChangeConfiguration"].handler("did_change_configuration_id", "{}"_json);
+    methods["workspace/didChangeConfiguration"].as_notification_handler()("{}"_json);
 
     EXPECT_CALL(ws_mngr, configuration_changed(::testing::_, ::testing::_)).Times(0);
 
-    handler.handler("config_respond", R"([])"_json);
+    handler(R"([])"_json);
 }

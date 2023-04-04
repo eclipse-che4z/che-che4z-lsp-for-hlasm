@@ -63,12 +63,11 @@ TEST(diags_suppress, no_suppress)
     workspace ws(fm, config, global_settings);
     ws.open();
     ws.did_open_file(file_loc);
+    parse_all_files(ws);
 
-    auto pfile = ws.find_processor_file(file_loc);
-    ASSERT_TRUE(pfile);
+    ws.collect_diags();
 
-    pfile->collect_diags();
-    EXPECT_EQ(pfile->diags().size(), 6U);
+    EXPECT_EQ(ws.diags().size(), 6U);
 }
 
 TEST(diags_suppress, do_suppress)
@@ -95,12 +94,11 @@ TEST(diags_suppress, do_suppress)
     ws.set_message_consumer(&msg_consumer);
     ws.open();
     ws.did_open_file(file_loc);
+    parse_all_files(ws);
 
-    auto pfile = ws.find_processor_file(file_loc);
-    ASSERT_TRUE(pfile);
+    ws.collect_diags();
 
-    pfile->collect_diags();
-    EXPECT_TRUE(matches_message_codes(pfile->diags(), { "SUP" }));
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "SUP" }));
     EXPECT_TRUE(msg_consumer.messages.empty());
 }
 
@@ -125,29 +123,27 @@ TEST(diags_suppress, pgm_supress_limit_changed)
     workspace ws(fm, config, global_settings);
     ws.open();
     ws.did_open_file(file_loc);
+    parse_all_files(ws);
 
-    auto pfile = ws.find_processor_file(file_loc);
-    ASSERT_TRUE(pfile);
-
-    pfile->collect_diags();
-    EXPECT_EQ(pfile->diags().size(), 6U);
-    pfile->diags().clear();
+    ws.collect_diags();
+    EXPECT_EQ(ws.diags().size(), 6U);
 
     std::string new_limit_str = R"("diagnosticsSuppressLimit":5,)";
     document_change ch(range({ 0, 1 }, { 0, 1 }), new_limit_str.c_str(), new_limit_str.size());
 
     fm.did_change_file(pgm_conf_name, 1, &ch, 1);
     ws.did_change_file(pgm_conf_name, &ch, 1);
+    parse_all_files(ws);
 
     ws.did_change_file(file_loc, &ch, 1);
+    parse_all_files(ws);
 
-    pfile = ws.find_processor_file(file_loc);
-    ASSERT_TRUE(pfile);
-    pfile->collect_diags();
-    EXPECT_TRUE(matches_message_codes(pfile->diags(), { "SUP" }));
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "SUP" }));
 }
 
-TEST(diags_suppress, cancel_token)
+TEST(diags_suppress, mark_for_parsing_only)
 {
     file_manager_impl fm;
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
@@ -162,17 +158,18 @@ TEST(diags_suppress, cancel_token)
     LR 1,
 )");
 
-    std::atomic<bool> cancel = true;
     auto config = lib_config::load_from_json(R"({"diagnosticsSuppressLimit":5})"_json);
     shared_json global_settings = make_empty_shared_json();
 
-    workspace ws(fm, config, global_settings, &cancel);
+    workspace ws(fm, config, global_settings);
     ws.open();
     ws.did_open_file(file_loc);
+    // parsing not done yet
 
-    auto pfile = ws.find_processor_file(file_loc);
-    ASSERT_TRUE(pfile);
+    ws.collect_diags();
+    EXPECT_TRUE(ws.diags().empty());
 
-    pfile->collect_diags();
-    EXPECT_TRUE(pfile->diags().empty());
+    parse_all_files(ws);
+    ws.collect_diags();
+    EXPECT_FALSE(ws.diags().empty());
 }

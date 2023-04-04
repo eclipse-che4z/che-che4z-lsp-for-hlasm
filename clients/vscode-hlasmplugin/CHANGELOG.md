@@ -3,6 +3,7 @@
 ## ****Unreleased****
 
 #### Added
+- Implement request cancellation support
 - Warning when files with non-UTF-8 encoding are processed
 
 #### Fixed
@@ -11,6 +12,7 @@
 - High CPU usage while going to the symbol definition
 - Inconsistent identification of inactive statements
 - Closing a dependency without saving does not trigger reparsing
+- Source code colorization may be flickering while typing
 
 ## [1.7.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.6.0...1.7.0) (2023-03-08)
 

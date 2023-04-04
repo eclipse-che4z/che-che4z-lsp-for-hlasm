@@ -60,6 +60,14 @@ public:
             workspace_manager_response<completion_list>),
         (override));
 
+
+    MOCK_METHOD(
+        void, semantic_tokens, (const char*, workspace_manager_response<continuous_sequence<token_info>>), (override));
+    MOCK_METHOD(void,
+        document_symbol,
+        (const char*, long long limit, workspace_manager_response<document_symbol_list>),
+        (override));
+
     MOCK_METHOD(continuous_sequence<char>, get_virtual_file_content, (unsigned long long id), (const override));
 
 

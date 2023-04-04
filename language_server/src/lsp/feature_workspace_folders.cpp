@@ -31,14 +31,13 @@ feature_workspace_folders::feature_workspace_folders(
 void feature_workspace_folders::register_methods(std::map<std::string, method>& methods)
 {
     methods.try_emplace("workspace/didChangeWorkspaceFolders",
-        method {
-            [this](const nlohmann::json& id, const nlohmann::json& args) { on_did_change_workspace_folders(id, args); },
+        method { [this](const nlohmann::json& args) { on_did_change_workspace_folders(args); },
             telemetry_log_level::LOG_EVENT });
     methods.try_emplace("workspace/didChangeWatchedFiles",
-        method { [this](const nlohmann::json& id, const nlohmann::json& args) { did_change_watched_files(id, args); },
+        method { [this](const nlohmann::json& args) { did_change_watched_files(args); },
             telemetry_log_level::NO_TELEMETRY });
     methods.try_emplace("workspace/didChangeConfiguration",
-        method { [this](const nlohmann::json& id, const nlohmann::json& args) { did_change_configuration(id, args); },
+        method { [this](const nlohmann::json& args) { did_change_configuration(args); },
             telemetry_log_level::NO_TELEMETRY });
 }
 
@@ -97,7 +96,7 @@ void feature_workspace_folders::initialize_feature(const nlohmann::json& initial
 }
 
 
-void feature_workspace_folders::on_did_change_workspace_folders(const nlohmann::json&, const nlohmann::json& params)
+void feature_workspace_folders::on_did_change_workspace_folders(const nlohmann::json& params)
 {
     const auto& added = params["event"]["added"];
     const auto& removed = params["event"]["removed"];
@@ -130,7 +129,7 @@ void feature_workspace_folders::add_workspace(const std::string& name, const std
     ws_mngr_.add_workspace(name.c_str(), path.c_str());
 }
 
-void feature_workspace_folders::did_change_watched_files(const nlohmann::json&, const nlohmann::json& params)
+void feature_workspace_folders::did_change_watched_files(const nlohmann::json& params)
 {
     using namespace hlasm_plugin::parser_library;
     try
@@ -163,13 +162,12 @@ void feature_workspace_folders::send_configuration_request()
             nlohmann::json::object(),
         },
     } };
-    response_->request("workspace/configuration",
-        config_request_args,
-        { [this](const nlohmann::json& id, const nlohmann::json& params) { configuration(id, params); },
-            telemetry_log_level::LOG_EVENT });
+    response_->request("workspace/configuration", config_request_args, [this](const nlohmann::json& params) {
+        configuration(params);
+    });
 }
 
-void feature_workspace_folders::configuration(const nlohmann::json&, const nlohmann::json& params) const
+void feature_workspace_folders::configuration(const nlohmann::json& params) const
 {
     if (params.size() != 2)
     {
@@ -180,9 +178,6 @@ void feature_workspace_folders::configuration(const nlohmann::json&, const nlohm
     ws_mngr_.configuration_changed(parser_library::lib_config::load_from_json(params[0]), params[1].dump().c_str());
 }
 
-void feature_workspace_folders::did_change_configuration(const nlohmann::json&, const nlohmann::json&)
-{
-    send_configuration_request();
-}
+void feature_workspace_folders::did_change_configuration(const nlohmann::json&) { send_configuration_request(); }
 
 } // namespace hlasm_plugin::language_server::lsp

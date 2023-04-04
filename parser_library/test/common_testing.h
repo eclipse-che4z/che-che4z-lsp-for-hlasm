@@ -41,6 +41,14 @@ using namespace hlasm_plugin::parser_library::expressions;
 
 const size_t size_t_zero = static_cast<size_t>(0);
 
+namespace hlasm_plugin::parser_library {
+class workspace_manager;
+namespace workspaces {
+class workspace;
+} // namespace workspaces
+} // namespace hlasm_plugin::parser_library
+void parse_all_files(hlasm_plugin::parser_library::workspaces::workspace& ws);
+
 template<typename T>
 std::optional<T> get_var_value(hlasm_context& ctx, std::string name)
 {

@@ -33,7 +33,7 @@ using namespace std::chrono_literals;
 
 struct response_mock
 {
-    nlohmann::json id;
+    request_id id;
     std::string req_method;
     nlohmann::json args;
 
@@ -58,11 +58,12 @@ struct notif_mock
 
 struct response_provider_mock : public response_provider
 {
-    void request(const std::string&, const nlohmann::json&, method) override {};
-    void respond(const nlohmann::json& id, const std::string& requested_method, const nlohmann::json& args) override
+    void request(const std::string&, const nlohmann::json&, std::function<void(const nlohmann::json& params)>) override
+    {}
+    void respond(const request_id& id, const std::string& requested_method, const nlohmann::json& args) override
     {
         responses.push_back({ id, requested_method, args });
-    };
+    }
     void notify(const std::string& method, const nlohmann::json& args) override
     {
         notifs.push_back({ method, args });
@@ -70,9 +71,11 @@ struct response_provider_mock : public response_provider
             stopped = true;
         if (method == "exited")
             exited = true;
-    };
-    void respond_error(
-        const nlohmann::json&, const std::string&, int, const std::string&, const nlohmann::json&) override {};
+    }
+    void respond_error(const request_id&, const std::string&, int, const std::string&, const nlohmann::json&) override
+    {}
+
+    void register_cancellable_request(const request_id&, request_invalidator) override {}
 
     std::vector<response_mock> responses;
     std::vector<notif_mock> notifs;
@@ -93,7 +96,7 @@ struct feature_launch_test : public testing::Test
         : feature(ws_mngr, resp_provider, nullptr)
     {
         feature.on_initialize(
-            "0"_json, R"({"linesStartAt1":false, "columnsStartAt1":false, "pathFormat":"path"})"_json);
+            request_id(0), R"({"linesStartAt1":false, "columnsStartAt1":false, "pathFormat":"path"})"_json);
         resp_provider.reset();
 
         file_path = hlasm_plugin::utils::path::absolute("to_trace").string();
@@ -102,10 +105,10 @@ struct feature_launch_test : public testing::Test
 
     void check_simple_stack_trace(nlohmann::json, size_t expected_line)
     {
-        feature.on_stack_trace("1"_json, nlohmann::json());
+        feature.on_stack_trace(request_id(1), nlohmann::json());
         ASSERT_EQ(resp_provider.responses.size(), 1U);
         const response_mock& r = resp_provider.responses[0];
-        EXPECT_EQ(r.id, "1"_json);
+        EXPECT_EQ(r.id, request_id(1));
         EXPECT_EQ(r.req_method, "stackTrace");
         ASSERT_EQ(r.args["totalFrames"], 1U);
         ASSERT_EQ(r.args["stackFrames"].size(), 1U);
@@ -158,16 +161,17 @@ TEST_F(feature_launch_test, stop_on_entry)
 {
     ws_mngr.did_open_file(
         utils::path::path_to_uri(file_path).c_str(), 0, file_stop_on_entry.c_str(), file_stop_on_entry.size());
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
-    feature.on_launch("0"_json, nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
-    std::vector<response_mock> expected_resp = { { "0"_json, "launch", nlohmann::json() } };
+    feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
+    std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
 
-    check_simple_stack_trace("1"_json, 0);
+    check_simple_stack_trace(request_id(1), 0);
 
-    feature.on_disconnect("2"_json, {});
+    feature.on_disconnect(request_id(2), {});
 }
 
 std::string file_step = R"(  LR 1,1
@@ -185,49 +189,50 @@ std::string file_step = R"(  LR 1,1
 TEST_F(feature_launch_test, step)
 {
     ws_mngr.did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, file_step.c_str(), file_step.size());
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
-    feature.on_launch("0"_json, nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
-    std::vector<response_mock> expected_resp = { { "0"_json, "launch", nlohmann::json() } };
+    feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
+    std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
 
-    check_simple_stack_trace("2"_json, 0);
+    check_simple_stack_trace(request_id(2), 0);
 
-    feature.on_step_in("3"_json, nlohmann::json());
-    expected_resp = { { "3"_json, "stepIn", nlohmann::json() } };
+    feature.on_step_in(request_id(3), nlohmann::json());
+    expected_resp = { { request_id(3), "stepIn", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
 
-    check_simple_stack_trace("4"_json, 1);
+    check_simple_stack_trace(request_id(4), 1);
 
-    feature.on_next("5"_json, nlohmann::json());
-    expected_resp = { { "5"_json, "next", nlohmann::json() } };
+    feature.on_next(request_id(5), nlohmann::json());
+    expected_resp = { { request_id(5), "next", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
 
-    check_simple_stack_trace("6"_json, 6);
+    check_simple_stack_trace(request_id(6), 6);
 
-    feature.on_next("7"_json, nlohmann::json());
-    expected_resp = { { "7"_json, "next", nlohmann::json() } };
+    feature.on_next(request_id(7), nlohmann::json());
+    expected_resp = { { request_id(7), "next", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
 
-    check_simple_stack_trace("8"_json, 7);
+    check_simple_stack_trace(request_id(8), 7);
 
-    feature.on_step_in("8"_json, nlohmann::json());
-    expected_resp = { { "8"_json, "stepIn", nlohmann::json() } };
+    feature.on_step_in(request_id(8), nlohmann::json());
+    expected_resp = { { request_id(8), "stepIn", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
 
-    feature.on_stack_trace("9"_json, nlohmann::json());
+    feature.on_stack_trace(request_id(9), nlohmann::json());
     ASSERT_EQ(resp_provider.responses.size(), 1U);
     const response_mock& r = resp_provider.responses[0];
-    EXPECT_EQ(r.id, "9"_json);
+    EXPECT_EQ(r.id, request_id(9));
     EXPECT_EQ(r.req_method, "stackTrace");
     ASSERT_EQ(r.args["totalFrames"], 2U);
     ASSERT_EQ(r.args["stackFrames"].size(), 2U);
@@ -247,23 +252,23 @@ TEST_F(feature_launch_test, step)
     }
     resp_provider.reset();
 
-    feature.on_step_out("10"_json, nlohmann::json());
-    expected_resp = { { "10"_json, "stepOut", nlohmann::json() } };
+    feature.on_step_out(request_id(10), nlohmann::json());
+    expected_resp = { { request_id(10), "stepOut", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
 
-    feature.on_stack_trace("11"_json, nlohmann::json());
+    feature.on_stack_trace(request_id(11), nlohmann::json());
     ASSERT_EQ(resp_provider.responses.size(), 1U);
     const response_mock& r2 = resp_provider.responses[0];
-    EXPECT_EQ(r2.id, "11"_json);
+    EXPECT_EQ(r2.id, request_id(11));
     EXPECT_EQ(r2.req_method, "stackTrace");
     ASSERT_EQ(r2.args["totalFrames"], 1U);
     ASSERT_EQ(r2.args["stackFrames"].size(), 1U);
 
-    feature.on_continue("47"_json, nlohmann::json());
+    feature.on_continue(request_id(47), nlohmann::json());
     wait_for_exited();
-    feature.on_disconnect("48"_json, {});
+    feature.on_disconnect(request_id(48), {});
 }
 
 std::string file_breakpoint = R"(  LR 1,1
@@ -276,11 +281,12 @@ TEST_F(feature_launch_test, breakpoint)
 {
     ws_mngr.did_open_file(
         utils::path::path_to_uri(file_path).c_str(), 0, file_breakpoint.c_str(), file_breakpoint.size());
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
     nlohmann::json bp_args { { "source", { { "path", file_path } } },
         { "breakpoints", R"([{"line":1}, {"line":3}])"_json } };
-    feature.on_set_breakpoints("47"_json, bp_args);
-    std::vector<response_mock> expected_resp_bp = { { "47"_json, "setBreakpoints", R"(
+    feature.on_set_breakpoints(request_id(47), bp_args);
+    std::vector<response_mock> expected_resp_bp = { { request_id(47), "setBreakpoints", R"(
         { "breakpoints":[
             {"verified":true},
             {"verified":true}
@@ -288,25 +294,25 @@ TEST_F(feature_launch_test, breakpoint)
     EXPECT_EQ(resp_provider.responses, expected_resp_bp);
     resp_provider.reset();
 
-    feature.on_launch("0"_json, nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
-    std::vector<response_mock> expected_resp = { { "0"_json, "launch", nlohmann::json() } };
+    feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
+    std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
 
-    check_simple_stack_trace("2"_json, 1);
+    check_simple_stack_trace(request_id(2), 1);
 
-    feature.on_continue("3"_json, nlohmann::json());
+    feature.on_continue(request_id(3), nlohmann::json());
     std::vector<response_mock> expected_resp_cont = {
-        { "3"_json, "continue", nlohmann::json { { "allThreadsContinued", true } } }
+        { request_id(3), "continue", nlohmann::json { { "allThreadsContinued", true } } }
     };
     EXPECT_EQ(resp_provider.responses, expected_resp_cont);
     wait_for_stopped();
     resp_provider.reset();
 
-    check_simple_stack_trace("4"_json, 3);
+    check_simple_stack_trace(request_id(4), 3);
 
-    feature.on_disconnect("5"_json, {});
+    feature.on_disconnect(request_id(5), {});
 }
 
 std::string file_variables = R"(&VARA SETA 4
@@ -318,29 +324,30 @@ TEST_F(feature_launch_test, variables)
 {
     ws_mngr.did_open_file(
         utils::path::path_to_uri(file_path).c_str(), 0, file_variables.c_str(), file_variables.size());
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
-    feature.on_launch("0"_json, nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
-    std::vector<response_mock> expected_resp = { { "0"_json, "launch", nlohmann::json() } };
+    feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
+    std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
 
-    check_simple_stack_trace("2"_json, 0);
+    check_simple_stack_trace(request_id(2), 0);
 
-    feature.on_step_in("3"_json, nlohmann::json());
+    feature.on_step_in(request_id(3), nlohmann::json());
     wait_for_stopped();
     resp_provider.reset();
-    feature.on_step_in("3"_json, nlohmann::json());
+    feature.on_step_in(request_id(3), nlohmann::json());
     wait_for_stopped();
     resp_provider.reset();
-    feature.on_step_in("3"_json, nlohmann::json());
+    feature.on_step_in(request_id(3), nlohmann::json());
     wait_for_stopped();
     resp_provider.reset();
 
-    feature.on_stack_trace("1"_json, nlohmann::json());
+    feature.on_stack_trace(request_id(1), nlohmann::json());
     ASSERT_EQ(resp_provider.responses.size(), 1U);
     response_mock r = resp_provider.responses[0];
-    EXPECT_EQ(r.id, "1"_json);
+    EXPECT_EQ(r.id, request_id(1));
     EXPECT_EQ(r.req_method, "stackTrace");
     ASSERT_EQ(r.args["totalFrames"], 1U);
     ASSERT_EQ(r.args["stackFrames"].size(), 1U);
@@ -355,10 +362,10 @@ TEST_F(feature_launch_test, variables)
     nlohmann::json frame_id = f["id"];
     resp_provider.reset();
 
-    feature.on_scopes("5"_json, nlohmann::json { { "frameId", frame_id } });
+    feature.on_scopes(request_id(5), nlohmann::json { { "frameId", frame_id } });
     ASSERT_EQ(resp_provider.responses.size(), 1U);
     r = resp_provider.responses[0];
-    EXPECT_EQ(r.id, "5"_json);
+    EXPECT_EQ(r.id, request_id(5));
     EXPECT_EQ(r.req_method, "scopes");
     nlohmann::json scopes = r.args["scopes"];
     nlohmann::json locals_ref;
@@ -373,10 +380,10 @@ TEST_F(feature_launch_test, variables)
     }
     resp_provider.reset();
 
-    feature.on_variables("8"_json, nlohmann::json { { "variablesReference", locals_ref } });
+    feature.on_variables(request_id(8), nlohmann::json { { "variablesReference", locals_ref } });
     ASSERT_EQ(resp_provider.responses.size(), 1U);
     r = resp_provider.responses[0];
-    EXPECT_EQ(r.id, "8"_json);
+    EXPECT_EQ(r.id, request_id(8));
     EXPECT_EQ(r.req_method, "variables");
     const nlohmann::json& variables = r.args["variables"];
     size_t var_count = 0;
@@ -407,7 +414,7 @@ TEST_F(feature_launch_test, variables)
     // test, that all variable symbols were reported
     EXPECT_EQ(var_count, 3);
 
-    feature.on_disconnect("9"_json, {});
+    feature.on_disconnect(request_id(9), {});
 }
 
 namespace {
@@ -417,16 +424,17 @@ std::string pause_file = ".A AGO .A";
 TEST_F(feature_launch_test, pause)
 {
     ws_mngr.did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, pause_file.c_str(), pause_file.size());
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
-    feature.on_launch("0"_json, nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
+    feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
 
-    feature.on_pause("1"_json, {});
+    feature.on_pause(request_id(1), {});
 
     wait_for_stopped();
-    std::vector<response_mock> expected_resp = { { "0"_json, "launch", nlohmann::json() },
-        { "1"_json, "pause", nlohmann::json() } };
+    std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() },
+        { request_id(1), "pause", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     resp_provider.reset();
 
-    feature.on_disconnect("2"_json, {});
+    feature.on_disconnect(request_id(2), {});
 }

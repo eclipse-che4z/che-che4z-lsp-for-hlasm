@@ -36,7 +36,7 @@ public:
             telem_sink->send_telemetry(message);
     }
 
-    void set_telemetry_sink(telemetry_sink* sink)
+    void set_telemetry_sink(telemetry_sink* sink) noexcept
     {
         std::lock_guard guard(write_mutex);
         telem_sink = sink;

@@ -154,6 +154,7 @@ void change_instruction_set(
 
     fm.did_change_file(proc_grps_loc, 1, changes.data(), changes.size());
     ws.did_change_file(proc_grps_loc, changes.data(), changes.size());
+    parse_all_files(ws);
 }
 } // namespace
 
@@ -166,6 +167,7 @@ TEST_F(workspace_instruction_sets_test, changed_instr_set_370_Z10)
     ws.open();
 
     ws.did_open_file(source_loc);
+    parse_all_files(ws);
     EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
 
     // Change instruction set
@@ -184,6 +186,7 @@ TEST_F(workspace_instruction_sets_test, changed_instr_set_Z10_370)
     ws.open();
 
     ws.did_open_file(source_loc);
+    parse_all_files(ws);
     collect_and_get_diags_size(ws);
     EXPECT_TRUE(matches_message_codes(diags(), { "E049" }));
 

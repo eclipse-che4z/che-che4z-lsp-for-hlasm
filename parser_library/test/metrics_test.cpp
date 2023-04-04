@@ -27,7 +27,10 @@ using namespace hlasm_plugin::utils::resource;
 class metrics_mock : public parsing_metadata_consumer
 {
 public:
-    void consume_parsing_metadata(const parsing_metadata& metadata) override { metrics_ = metadata.metrics; }
+    void consume_parsing_metadata(sequence<char>, double, const parsing_metadata& metadata) override
+    {
+        metrics_ = metadata.metrics;
+    }
 
     performance_metrics metrics_;
 };

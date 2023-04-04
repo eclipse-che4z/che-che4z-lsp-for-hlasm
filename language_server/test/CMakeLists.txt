@@ -15,10 +15,8 @@ add_executable(server_test)
 target_sources(server_test PRIVATE
 	blocking_queue_test.cpp
 	channel_test.cpp
-	dispatcher_test.cpp
 	message_router_test.cpp
 	regress_test.cpp
-	request_manager_test.cpp
 	response_provider_mock.h
 	send_message_provider_mock.h
 	stream_helper_test.cpp

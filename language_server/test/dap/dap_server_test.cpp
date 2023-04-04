@@ -44,6 +44,7 @@ TEST(dap_server, dap_server)
     std::string file_text = " LR 1,1";
     parser_library::workspace_manager ws_mngr;
     ws_mngr.did_open_file(file_name.c_str(), 0, file_text.c_str(), file_text.size());
+    EXPECT_FALSE(ws_mngr.idle_handler());
 
     send_message_provider_mock smp;
     dap::server serv(ws_mngr);

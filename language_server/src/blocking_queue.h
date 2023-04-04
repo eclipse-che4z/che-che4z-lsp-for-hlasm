@@ -113,6 +113,8 @@ public:
     bool empty() const { return !(state.load(std::memory_order_relaxed) & has_elements_flag); }
 
     bool will_block() const requires one_reader { return state.load(std::memory_order_relaxed) == 0; }
+
+    const std::atomic<unsigned char>* state_preview() const { return &state; }
 };
 } // namespace hlasm_plugin::language_server
 

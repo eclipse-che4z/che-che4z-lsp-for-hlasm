@@ -31,8 +31,8 @@
 
 namespace hlasm_plugin::parser_library {
 
-workspace_manager::workspace_manager(std::atomic<bool>* cancel)
-    : impl_(new impl(cancel))
+workspace_manager::workspace_manager()
+    : impl_(new impl())
 {}
 
 workspace_manager::workspace_manager(workspace_manager&& ws_mngr) noexcept
@@ -162,6 +162,12 @@ void workspace_manager::make_opcode_suggestion(const char* document_uri,
     workspace_manager_response<continuous_sequence<opcode_suggestion>> r) const
 {
     impl_->make_opcode_suggestion(document_uri, opcode, extended, std::move(r));
+}
+
+
+bool workspace_manager::idle_handler(const std::atomic<unsigned char>* yield_indicator)
+{
+    return impl_->idle_handler(yield_indicator);
 }
 
 } // namespace hlasm_plugin::parser_library

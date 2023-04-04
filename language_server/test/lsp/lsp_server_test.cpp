@@ -113,15 +113,13 @@ TEST(lsp_server, not_implemented_method)
 class request_handler
 {
 public:
-    void handle(nlohmann::json id, nlohmann::json args)
+    void handle(nlohmann::json args)
     {
         ++counter;
-        received_id = id;
         received_args = args;
     }
 
     int counter = 0;
-    nlohmann::json received_id;
     nlohmann::json received_args;
 };
 
@@ -138,17 +136,14 @@ TEST(lsp_server, request_correct)
 
     EXPECT_CALL(message_provider, reply(expected_message));
 
-    rp.request("client_method",
-        "a_json_parameter",
-        { [&handler](const nlohmann::json& id, const nlohmann::json& params) { handler.handle(id, params); },
-            telemetry_log_level::NO_TELEMETRY });
+    rp.request(
+        "client_method", "a_json_parameter", [&handler](const nlohmann::json& params) { handler.handle(params); });
 
     auto request_response = R"({"id":0,"jsonrpc":"2.0","result":"response_result"})"_json;
 
     s.message_received(request_response);
 
     ASSERT_EQ(handler.counter, 1);
-    EXPECT_EQ(handler.received_id, 0);
     EXPECT_EQ(handler.received_args, "response_result");
 }
 

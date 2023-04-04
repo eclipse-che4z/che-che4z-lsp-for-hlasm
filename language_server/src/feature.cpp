@@ -16,7 +16,37 @@
 
 #include "nlohmann/json.hpp"
 
+void nlohmann::adl_serializer<hlasm_plugin::language_server::request_id>::to_json(
+    nlohmann::json& j, const hlasm_plugin::language_server::request_id& rid)
+{
+    if (std::holds_alternative<long>(rid.id))
+        j = std::get<long>(rid.id);
+    else
+        j = std::get<std::string>(rid.id);
+}
+
+hlasm_plugin::language_server::request_id
+nlohmann::adl_serializer<hlasm_plugin::language_server::request_id>::from_json(const nlohmann::json& j)
+{
+    if (j.is_number_integer())
+        return hlasm_plugin::language_server::request_id(j.get<long>());
+    else if (j.is_string())
+        return hlasm_plugin::language_server::request_id(j.get<std::string>());
+    else
+        throw nlohmann::json::other_error::create(501, "Request id must be either integer or string", j);
+}
+
 namespace hlasm_plugin::language_server {
+
+void from_json(const nlohmann::json& j, std::optional<request_id>& rid)
+{
+    if (j.is_number_integer())
+        rid.emplace(j.get<long>());
+    else if (j.is_string())
+        rid.emplace(j.get<std::string>());
+    else
+        rid.reset();
+}
 
 parser_library::range feature::parse_range(const nlohmann::json& range_json)
 {

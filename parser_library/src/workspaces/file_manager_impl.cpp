@@ -20,6 +20,7 @@
 #include <span>
 #include <variant>
 
+#include "file.h"
 #include "utils/content_loader.h"
 #include "utils/path.h"
 #include "utils/path_conversions.h"
@@ -41,7 +42,7 @@ struct file_manager_impl::mapped_file final : file
     std::weak_ptr<mapped_file> m_self;
     std::shared_ptr<mapped_file> shared_from_this() const noexcept { return m_self.lock(); }
 
-    file_location m_location;
+    utils::resource::resource_location m_location;
     std::string m_text;
     struct file_error
     {};
@@ -58,14 +59,14 @@ struct file_manager_impl::mapped_file final : file
     std::shared_ptr<mapped_file> m_editing_self_reference;
     decltype(file_manager_impl::m_files)::const_iterator m_it = m_fm.m_files.end();
 
-    mapped_file(const file_location& file_name, file_manager_impl& fm, std::string text)
+    mapped_file(const utils::resource::resource_location& file_name, file_manager_impl& fm, std::string text)
         : m_location(file_name)
         , m_text(std::move(text))
         , m_lines(create_line_indices(m_text))
         , m_fm(fm)
     {}
 
-    mapped_file(const file_location& file_name, file_manager_impl& fm, file_error error)
+    mapped_file(const utils::resource::resource_location& file_name, file_manager_impl& fm, file_error error)
         : m_location(file_name)
         , m_error(std::move(error))
         , m_fm(fm)
@@ -88,7 +89,7 @@ struct file_manager_impl::mapped_file final : file
     }
 
     // Inherited via file
-    const file_location& get_location() const override { return m_location; }
+    const utils::resource::resource_location& get_location() const override { return m_location; }
     const std::string& get_text() const override { return m_text; }
     bool get_lsp_editing() const override { return m_editing_self_reference != nullptr; }
     version_t get_version() const override { return m_version; }
@@ -158,7 +159,7 @@ std::shared_ptr<file_manager_impl::mapped_file> file_manager_impl::make_mapped_f
     return result;
 }
 
-std::shared_ptr<file> file_manager_impl::add_file(const file_location& file_name)
+std::shared_ptr<file> file_manager_impl::add_file(const utils::resource::resource_location& file_name)
 {
     std::unique_lock lock(files_mutex);
 
@@ -253,7 +254,7 @@ std::string file_manager_impl::canonical(const utils::resource::resource_locatio
 }
 
 open_file_result file_manager_impl::did_open_file(
-    const file_location& document_loc, version_t version, std::string new_text)
+    const utils::resource::resource_location& document_loc, version_t version, std::string new_text)
 {
     std::shared_ptr<mapped_file> locked;
 
@@ -289,8 +290,10 @@ open_file_result file_manager_impl::did_open_file(
     }
 }
 
-void file_manager_impl::did_change_file(
-    const file_location& document_loc, version_t, const document_change* changes_start, size_t ch_size)
+void file_manager_impl::did_change_file(const utils::resource::resource_location& document_loc,
+    version_t,
+    const document_change* changes_start,
+    size_t ch_size)
 {
     if (!ch_size)
         return;
@@ -349,7 +352,7 @@ void file_manager_impl::did_change_file(
     file->m_version = next_global_version();
 }
 
-void file_manager_impl::did_close_file(const file_location& document_loc)
+void file_manager_impl::did_close_file(const utils::resource::resource_location& document_loc)
 {
     std::shared_ptr<mapped_file> to_release;
 
@@ -406,7 +409,7 @@ utils::resource::resource_location file_manager_impl::get_virtual_file_workspace
     return utils::resource::resource_location();
 }
 
-open_file_result file_manager_impl::update_file(const file_location& document_loc)
+open_file_result file_manager_impl::update_file(const utils::resource::resource_location& document_loc)
 {
     std::unique_lock lock(files_mutex);
 

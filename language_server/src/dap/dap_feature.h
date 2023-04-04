@@ -49,21 +49,21 @@ public:
         response_provider& response_provider,
         dap_disconnect_listener* disconnect_listener);
 
-    void on_initialize(const nlohmann::json& requested_seq, const nlohmann::json& args);
-    void on_disconnect(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_launch(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_set_breakpoints(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_set_exception_breakpoints(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_configuration_done(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_threads(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_stack_trace(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_scopes(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_next(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_step_in(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_step_out(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_variables(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_continue(const nlohmann::json& request_seq, const nlohmann::json& args);
-    void on_pause(const nlohmann::json& request_seq, const nlohmann::json& args);
+    void on_initialize(const request_id& request_seq, const nlohmann::json& args);
+    void on_disconnect(const request_id& request_seq, const nlohmann::json& args);
+    void on_launch(const request_id& request_seq, const nlohmann::json& args);
+    void on_set_breakpoints(const request_id& request_seq, const nlohmann::json& args);
+    void on_set_exception_breakpoints(const request_id& request_seq, const nlohmann::json& args);
+    void on_configuration_done(const request_id& request_seq, const nlohmann::json& args);
+    void on_threads(const request_id& request_seq, const nlohmann::json& args);
+    void on_stack_trace(const request_id& request_seq, const nlohmann::json& args);
+    void on_scopes(const request_id& request_seq, const nlohmann::json& args);
+    void on_next(const request_id& request_seq, const nlohmann::json& args);
+    void on_step_in(const request_id& request_seq, const nlohmann::json& args);
+    void on_step_out(const request_id& request_seq, const nlohmann::json& args);
+    void on_variables(const request_id& request_seq, const nlohmann::json& args);
+    void on_continue(const request_id& request_seq, const nlohmann::json& args);
+    void on_pause(const request_id& request_seq, const nlohmann::json& args);
 
     bool idle_handler();
 

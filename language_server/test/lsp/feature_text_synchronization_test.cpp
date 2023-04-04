@@ -45,7 +45,7 @@ TEST(text_synchronization, did_open_file)
 
     EXPECT_CALL(ws_mngr, did_open_file(StrEq(txt_file_uri), 4, StrEq("sad"), 3));
 
-    notifs["textDocument/didOpen"].handler("", params1);
+    notifs["textDocument/didOpen"].as_notification_handler()(params1);
 }
 
 MATCHER_P2(PointerAndSizeEqArray, pointer, size, "")
@@ -79,7 +79,7 @@ TEST(text_synchronization, did_change_file)
 
     EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_uri), 7, _, 2))
         .With(Args<2, 3>(PointerAndSizeEqArray(expected1, std::size(expected1))));
-    notifs["textDocument/didChange"].handler("", params1);
+    notifs["textDocument/didChange"].as_notification_handler()(params1);
 
 
 
@@ -89,14 +89,15 @@ TEST(text_synchronization, did_change_file)
     EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_uri), 7, _, 1))
         .With(Args<2, 3>(PointerAndSizeEqArray(expected2, std::size(expected2))));
 
-    notifs["textDocument/didChange"].handler("", params2);
+    notifs["textDocument/didChange"].as_notification_handler()(params2);
 
 
 
     auto params3 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + txt_file_uri
         + R"("},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":0,"character":8}},"rangeLength":8,"text":"sad"}, {"range":{"start":{"line":1,"character":12},"end":{"line":1,"character":14}},"rangeLength":2,"text":""}]})");
 
-    EXPECT_THROW(notifs["textDocument/didChange"].handler("", params3), nlohmann::basic_json<>::exception);
+    EXPECT_THROW(
+        notifs["textDocument/didChange"].as_notification_handler()(params3), nlohmann::basic_json<>::exception);
 }
 
 TEST(text_synchronization, did_close_file)
@@ -109,9 +110,9 @@ TEST(text_synchronization, did_close_file)
     f.register_methods(notifs);
 
     auto params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + txt_file_uri + R"("}})");
-    EXPECT_CALL(ws_mngr, did_close_file(StrEq(txt_file_uri))),
+    EXPECT_CALL(ws_mngr, did_close_file(StrEq(txt_file_uri)));
 
-        notifs["textDocument/didClose"].handler("", params1);
+    notifs["textDocument/didClose"].as_notification_handler()(params1);
 }
 
 #endif // !HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_TEXT_SYNCHRONIZATION_TEST_H
