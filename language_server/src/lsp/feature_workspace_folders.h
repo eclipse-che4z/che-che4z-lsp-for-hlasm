@@ -37,6 +37,7 @@ public:
     nlohmann::json register_capabilities() override;
     // Opens workspace specified in the initialize request.
     void initialize_feature(const nlohmann::json& initialise_params) override;
+    void initialized() override;
 
 private:
     // Handles workspace/didChangeWorkspaceFolders notification.
@@ -57,6 +58,8 @@ private:
     void add_workspace(const std::string& name, const std::string& uri);
 
     void send_configuration_request();
+
+    std::vector<std::pair<std::string, std::string>> m_initial_workspaces;
 };
 
 } // namespace hlasm_plugin::language_server::lsp

@@ -29,6 +29,7 @@
 
 #include "lsp/completion_item.h"
 #include "lsp/document_symbol_item.h"
+#include "nlohmann/json.hpp"
 #include "protocol.h"
 #include "utils/scope_exit.h"
 #include "workspace_manager.h"
@@ -41,15 +42,31 @@ namespace hlasm_plugin::parser_library {
 // Implementation of workspace manager (Implementation part of the pimpl idiom)
 // Holds workspaces, file manager and macro tracer and handles LSP and DAP
 // notifications and requests.
+
 class workspace_manager::impl final : public diagnosable_impl
 {
     static constexpr lib_config supress_all { 0 };
     using resource_location = utils::resource::resource_location;
 
+    struct opened_workspace
+    {
+        opened_workspace(const resource_location& location,
+            const std::string& name,
+            workspaces::file_manager& file_manager,
+            const lib_config& global_config)
+            : ws(location, name, file_manager, global_config, settings)
+        {}
+        opened_workspace(workspaces::file_manager& file_manager, const lib_config& global_config)
+            : ws(file_manager, global_config, settings)
+        {}
+        workspaces::shared_json settings = std::make_shared<const nlohmann::json>(nlohmann::json::object());
+        workspaces::workspace ws;
+    };
+
 public:
     impl()
-        : implicit_workspace_(file_manager_, global_config_, m_global_settings)
-        , quiet_implicit_workspace_(file_manager_, supress_all, m_global_settings)
+        : implicit_workspace_(file_manager_, global_config_)
+        , quiet_implicit_workspace_(file_manager_, supress_all)
     {}
     impl(const impl&) = delete;
     impl& operator=(const impl&) = delete;
@@ -62,24 +79,24 @@ public:
         if (auto hlasm_id = extract_hlasm_id(document_uri); hlasm_id.has_value())
         {
             if (auto related_ws = self.file_manager_.get_virtual_file_workspace(hlasm_id.value()); !related_ws.empty())
-                for (auto& [_, ws] : self.workspaces_)
-                    if (ws.uri() == related_ws.get_uri())
-                        return ws;
+                for (auto& [_, ows] : self.workspaces_)
+                    if (ows.ws.uri() == related_ws.get_uri())
+                        return ows;
         }
 
         size_t max = 0;
-        decltype(&self.workspaces_.begin()->second) max_ws = nullptr;
-        for (auto& [name, ws] : self.workspaces_)
+        decltype(&self.workspaces_.begin()->second) max_ows = nullptr;
+        for (auto& [name, ows] : self.workspaces_)
         {
-            size_t match = prefix_match(document_uri, ws.uri());
+            size_t match = prefix_match(document_uri, ows.ws.uri());
             if (match > max && match >= name.size())
             {
                 max = match;
-                max_ws = &ws;
+                max_ows = &ows;
             }
         }
-        if (max_ws != nullptr)
-            return *max_ws;
+        if (max_ows != nullptr)
+            return *max_ows;
         else if (document_uri.starts_with("file:") || document_uri.starts_with("untitled:"))
             return self.implicit_workspace_;
         else
@@ -96,7 +113,7 @@ public:
 
         for (auto it = workspaces_.begin(); size < max_size && it != workspaces_.end(); ++size, ++it)
         {
-            workspaces[size] = &it->second;
+            workspaces[size] = &it->second.ws;
         }
         return size;
     }
@@ -105,47 +122,140 @@ public:
 
     enum class work_item_type
     {
+        workspace_open,
+        settings_change,
         file_change,
         query,
     };
 
     struct work_item
     {
-        workspaces::workspace* ws;
+        unsigned long long id;
+
+        opened_workspace* ows;
 
         std::function<void(bool)> action; // true on workspace removal
         std::function<bool()> validator; // maybe empty
 
         work_item_type request_type;
+
+        std::vector<std::pair<unsigned long long, std::function<void()>>> pending_requests;
+
         bool workspace_removed = false;
 
         bool is_valid() const { return !validator || validator(); }
+        bool remove_pending_request(unsigned long long rid)
+        {
+            auto it = std::find_if(
+                pending_requests.begin(), pending_requests.end(), [rid](const auto& e) { return e.first == rid; });
+
+            if (it == pending_requests.end())
+                return false;
+
+            pending_requests.erase(it);
+            return true;
+        }
+        void cancel_pending_requests()
+        {
+            for (const auto& [_, h] : pending_requests)
+                h();
+            pending_requests.clear();
+        }
     };
     std::deque<work_item> m_work_queue;
 
+    work_item* find_work_item(unsigned long long id)
+    {
+        for (auto& wi : m_work_queue)
+            if (wi.id == id)
+                return &wi;
+        return nullptr;
+    }
+
     void add_workspace(std::string name, std::string uri)
     {
-        auto ws = workspaces_.emplace(name,
-            workspaces::workspace(
-                resource_location(std::move(uri)), name, file_manager_, global_config_, m_global_settings));
-        ws.first->second.set_message_consumer(message_consumer_);
-        ws.first->second.open();
+        auto& ows =
+            workspaces_.try_emplace(name, resource_location(std::move(uri)), name, file_manager_, global_config_)
+                .first->second;
+        ows.ws.set_message_consumer(message_consumer_);
 
-        notify_diagnostics_consumers();
+        auto& new_workspace = m_work_queue.emplace_back(work_item {
+            next_unique_id(),
+            &ows,
+            [this, &ws = ows.ws](bool workspace_removed) {
+                if (workspace_removed)
+                    return;
+                ws.open();
+
+                notify_diagnostics_consumers();
+            },
+            {},
+            work_item_type::workspace_open,
+        });
+
+        attach_configuration_request(new_workspace);
     }
-    ws_id find_workspace(const std::string& document_uri) { return &ws_path_match(document_uri); }
+
+    bool attach_configuration_request(work_item& wi)
+    {
+        if (!requests_)
+            return false;
+
+        auto configuration_request = next_unique_id();
+
+        struct open_workspace_t
+        {
+            unsigned long long work_item_id;
+            unsigned long long request_id;
+            impl* self;
+
+            auto* get_wi() const
+            {
+                auto* wi = self->find_work_item(work_item_id);
+                return wi && wi->remove_pending_request(request_id) ? wi : nullptr;
+            }
+
+            void provide(sequence<char> json_text) const
+            {
+                if (auto* wi = get_wi())
+                    wi->ows->settings =
+                        std::make_shared<const nlohmann::json>(nlohmann::json::parse(std::string_view(json_text)));
+            }
+
+            void error(int, const char*) const
+            {
+                if (auto* wi = get_wi())
+                    wi->ows->settings = std::make_shared<const nlohmann::json>();
+            }
+        };
+
+        auto [resp, _] = make_workspace_manager_response(open_workspace_t { wi.id, configuration_request, this });
+
+        wi.pending_requests.emplace_back(configuration_request, [resp = resp]() { resp.invalidate(); });
+
+        requests_->request_workspace_configuration(wi.ows->ws.uri().c_str(), std::move(resp));
+
+        return true;
+    }
+
+    ws_id find_workspace(const std::string& document_uri) { return &ws_path_match(document_uri).ws; }
     void remove_workspace(std::string uri)
     {
         auto it = workspaces_.find(uri);
         if (it == workspaces_.end())
             return; // erase does no action, if the key does not exist
 
+        auto* ows = &it->second;
+
         for (auto& e : m_work_queue)
         {
-            if (e.ws == &it->second)
-                e.workspace_removed = true;
+            if (e.ows != ows)
+                continue;
+
+            e.workspace_removed = true;
+            e.cancel_pending_requests();
         }
-        if (m_active_task.ws == &it->second)
+        if (m_active_task.ows == ows)
             m_active_task = {};
 
         workspaces_.erase(it);
@@ -155,7 +265,7 @@ public:
     struct
     {
         utils::value_task<workspaces::parse_file_result> task;
-        workspaces::workspace* ws = nullptr;
+        opened_workspace* ows = nullptr;
         std::chrono::steady_clock::time_point start_time;
 
         bool valid() const noexcept { return task.valid(); }
@@ -163,7 +273,7 @@ public:
 
     bool run_active_task(const std::atomic<unsigned char>* yield_indicator)
     {
-        const auto& [task, ws, start] = m_active_task;
+        const auto& [task, ows, start] = m_active_task;
         while (!task.done())
         {
             if (yield_indicator && yield_indicator->load(std::memory_order_relaxed))
@@ -186,16 +296,16 @@ public:
         return true;
     }
 
-    std::pair<bool, bool> run_parse_loop(workspaces::workspace& ws, const std::atomic<unsigned char>* yield_indicator)
+    std::pair<bool, bool> run_parse_loop(opened_workspace& ows, const std::atomic<unsigned char>* yield_indicator)
     {
         auto result = std::pair<bool, bool>(false, true);
         while (true)
         {
-            auto task = ws.parse_file();
+            auto task = ows.ws.parse_file();
             if (!task.valid())
                 break;
 
-            m_active_task = { std::move(task), &ws, std::chrono::steady_clock::now() };
+            m_active_task = { std::move(task), &ows, std::chrono::steady_clock::now() };
 
             if (!run_active_task(yield_indicator))
                 return result;
@@ -214,8 +324,8 @@ public:
         };
         auto result = run_parse_loop(implicit_workspace_, yield_indicator);
         combine(result, run_parse_loop(quiet_implicit_workspace_, yield_indicator));
-        for (auto& [_, ws] : workspaces_)
-            combine(result, run_parse_loop(ws, yield_indicator));
+        for (auto& [_, ows] : workspaces_)
+            combine(result, run_parse_loop(ows, yield_indicator));
 
         const auto& [progress, stuff_to_do] = result;
 
@@ -238,10 +348,14 @@ public:
         {
             if (!m_work_queue.empty())
             {
-                const auto& item = m_work_queue.front();
+                auto& item = m_work_queue.front();
+                if (!item.pending_requests.empty() && item.is_valid())
+                    return false;
                 if (item.workspace_removed || !item.is_valid() || parsing_done || !parsing_must_be_done(item))
                 {
                     utils::scope_exit pop_front([this]() noexcept { m_work_queue.pop_front(); });
+
+                    item.cancel_pending_requests();
 
                     if (item.request_type == work_item_type::file_change)
                     {
@@ -273,10 +387,11 @@ public:
 
     void did_open_file(const utils::resource::resource_location& document_loc, version_t version, std::string text)
     {
-        workspaces::workspace& ws = ws_path_match(document_loc.get_uri());
+        auto& ows = ws_path_match(document_loc.get_uri());
         m_work_queue.emplace_back(work_item {
-            &ws,
-            [this, document_loc, version, text = std::move(text), &ws](bool workspace_removed) mutable {
+            next_unique_id(),
+            &ows,
+            [this, document_loc, version, text = std::move(text), &ws = ows.ws](bool workspace_removed) mutable {
                 auto file_changed = file_manager_.did_open_file(document_loc, version, std::move(text));
                 if (!workspace_removed)
                     ws.did_open_file(document_loc, file_changed);
@@ -291,7 +406,7 @@ public:
         const document_change* changes,
         size_t ch_size)
     {
-        workspaces::workspace& ws = ws_path_match(document_loc.get_uri());
+        auto& ows = ws_path_match(document_loc.get_uri());
 
         struct captured_change
         {
@@ -312,8 +427,10 @@ public:
             });
 
         m_work_queue.emplace_back(work_item {
-            &ws,
-            [this, document_loc, version, captured_changes = std::move(captured_changes), &ws](bool workspace_removed) {
+            next_unique_id(),
+            &ows,
+            [this, document_loc, version, captured_changes = std::move(captured_changes), &ws = ows.ws](
+                bool workspace_removed) {
                 std::vector<document_change> list;
                 list.reserve(captured_changes.size());
                 std::transform(captured_changes.begin(),
@@ -334,11 +451,12 @@ public:
 
     void did_close_file(const utils::resource::resource_location& document_loc)
     {
-        workspaces::workspace& ws = ws_path_match(document_loc.get_uri());
+        auto& ows = ws_path_match(document_loc.get_uri());
 
         m_work_queue.emplace_back(work_item {
-            &ws,
-            [this, document_loc, &ws](bool workspace_removed) {
+            next_unique_id(),
+            &ows,
+            [this, document_loc, &ws = ows.ws](bool workspace_removed) {
                 file_manager_.did_close_file(document_loc);
                 if (!workspace_removed)
                     ws.did_close_file(document_loc);
@@ -350,16 +468,17 @@ public:
 
     void did_change_watched_files(std::vector<utils::resource::resource_location> paths)
     {
-        std::unordered_map<workspaces::workspace*, std::vector<resource_location>> paths_for_ws;
+        std::unordered_map<opened_workspace*, std::vector<resource_location>> paths_for_ws;
         for (auto& path : paths)
             paths_for_ws[&ws_path_match(path.get_uri())].push_back(std::move(path));
 
-        for (auto& [ws, path_list] : paths_for_ws)
+        for (auto& [ows, path_list] : paths_for_ws)
             m_work_queue.emplace_back(work_item {
-                ws,
-                [path_list = std::move(path_list), ws = ws](bool workspace_removed) {
+                next_unique_id(),
+                ows,
+                [path_list = std::move(path_list), &ws = ows->ws](bool workspace_removed) {
                     if (!workspace_removed)
-                        ws->did_change_watched_files(path_list);
+                        ws.did_change_watched_files(path_list);
                 },
                 {},
                 work_item_type::file_change,
@@ -387,10 +506,12 @@ public:
     void set_message_consumer(message_consumer* consumer)
     {
         message_consumer_ = consumer;
-        implicit_workspace_.set_message_consumer(consumer);
+        implicit_workspace_.ws.set_message_consumer(consumer);
         for (auto& wks : workspaces_)
-            wks.second.set_message_consumer(consumer);
+            wks.second.ws.set_message_consumer(consumer);
     }
+
+    void set_request_interface(workspace_manager_requests* requests) { requests_ = requests; }
 
     struct
     {
@@ -413,12 +534,13 @@ public:
 
     void definition(const std::string& document_uri, position pos, workspace_manager_response<position_uri> r)
     {
-        auto& ws = ws_path_match(document_uri);
+        auto& ows = ws_path_match(document_uri);
 
         m_work_queue.emplace_back(work_item {
-            &ws,
+            next_unique_id(),
+            &ows,
             response_handle(r,
-                [&ws, doc_loc = resource_location(document_uri), pos](
+                [&ws = ows.ws, doc_loc = resource_location(document_uri), pos](
                     const workspace_manager_response<position_uri>& resp) {
                     resp.provide(position_uri(ws.definition(doc_loc, pos)));
                 }),
@@ -429,12 +551,13 @@ public:
 
     void references(const std::string& document_uri, position pos, workspace_manager_response<position_uri_list> r)
     {
-        auto& ws = ws_path_match(document_uri);
+        auto& ows = ws_path_match(document_uri);
 
         m_work_queue.emplace_back(work_item {
-            &ws,
+            next_unique_id(),
+            &ows,
             response_handle(r,
-                [&ws, doc_loc = resource_location(document_uri), pos](
+                [&ws = ows.ws, doc_loc = resource_location(document_uri), pos](
                     const workspace_manager_response<position_uri_list>& resp) {
                     auto references_result = ws.references(doc_loc, pos);
                     resp.provide({ references_result.data(), references_result.size() });
@@ -446,12 +569,13 @@ public:
 
     void hover(const std::string& document_uri, position pos, workspace_manager_response<sequence<char>> r)
     {
-        auto& ws = ws_path_match(document_uri);
+        auto& ows = ws_path_match(document_uri);
 
         m_work_queue.emplace_back(work_item {
-            &ws,
+            next_unique_id(),
+            &ows,
             response_handle(r,
-                [&ws, doc_loc = resource_location(document_uri), pos](
+                [&ws = ows.ws, doc_loc = resource_location(document_uri), pos](
                     const workspace_manager_response<sequence<char>>& resp) {
                     auto hover_result = ws.hover(doc_loc, pos);
                     resp.provide(sequence<char>(hover_result));
@@ -468,12 +592,13 @@ public:
         completion_trigger_kind trigger_kind,
         workspace_manager_response<completion_list> r)
     {
-        auto& ws = ws_path_match(document_uri);
+        auto& ows = ws_path_match(document_uri);
 
         m_work_queue.emplace_back(work_item {
-            &ws,
+            next_unique_id(),
+            &ows,
             response_handle(r,
-                [&ws, doc_loc = resource_location(document_uri), pos, trigger_char, trigger_kind](
+                [&ws = ows.ws, doc_loc = resource_location(document_uri), pos, trigger_char, trigger_kind](
                     const workspace_manager_response<completion_list>& resp) {
                     auto completion_result = ws.completion(doc_loc, pos, trigger_char, trigger_kind);
                     resp.provide(completion_list(completion_result.data(), completion_result.size()));
@@ -486,12 +611,13 @@ public:
     void document_symbol(
         const std::string& document_uri, long long limit, workspace_manager_response<document_symbol_list> r)
     {
-        auto& ws = ws_path_match(document_uri);
+        auto& ows = ws_path_match(document_uri);
 
         m_work_queue.emplace_back(work_item {
-            &ws,
+            next_unique_id(),
+            &ows,
             response_handle(r,
-                [&ws, doc_loc = resource_location(document_uri), limit](
+                [&ws = ows.ws, doc_loc = resource_location(document_uri), limit](
                     const workspace_manager_response<document_symbol_list>& resp) {
                     auto document_symbol_result = ws.document_symbol(doc_loc, limit);
                     resp.provide(document_symbol_list(document_symbol_result.data(), document_symbol_result.size()));
@@ -502,30 +628,45 @@ public:
     }
 
     lib_config global_config_;
-    workspaces::shared_json m_global_settings = std::make_shared<const nlohmann::json>(nlohmann::json::object());
-    void configuration_changed(const lib_config& new_config, std::shared_ptr<const nlohmann::json> global_settings)
+    void configuration_changed(const lib_config& new_config)
     {
         // TODO: should this action be also performed IN ORDER?
 
         global_config_ = new_config;
-        m_global_settings.store(std::move(global_settings));
-
-        bool updated = false;
-        for (auto& [_, ws] : workspaces_)
-            updated |= ws.settings_updated();
-
-        if (updated)
+        if (implicit_workspace_.ws.settings_updated())
             notify_diagnostics_consumers();
+
+        if (!requests_)
+            return;
+
+        for (auto& [_, ows] : workspaces_)
+        {
+            auto& refersh_settings = m_work_queue.emplace_back(work_item {
+                next_unique_id(),
+                &ows,
+                [this, &ws = ows.ws](bool workspace_removed) {
+                    if (workspace_removed)
+                        return;
+                    if (ws.settings_updated())
+                        notify_diagnostics_consumers();
+                },
+                {},
+                work_item_type::settings_change,
+            });
+
+            attach_configuration_request(refersh_settings);
+        }
     }
 
     void semantic_tokens(const char* document_uri, workspace_manager_response<continuous_sequence<token_info>> r)
     {
-        auto& ws = ws_path_match(document_uri);
+        auto& ows = ws_path_match(document_uri);
 
         m_work_queue.emplace_back(work_item {
-            &ws,
+            next_unique_id(),
+            &ows,
             response_handle(r,
-                [&ws, doc_loc = resource_location(document_uri)](
+                [&ws = ows.ws, doc_loc = resource_location(document_uri)](
                     const workspace_manager_response<continuous_sequence<token_info>>& resp) {
                     resp.provide(make_continuous_sequence(ws.semantic_tokens(doc_loc)));
                 }),
@@ -547,7 +688,7 @@ public:
         // performed out of order
         auto suggestions =
             ws_path_match(document_uri)
-                .make_opcode_suggestion(utils::resource::resource_location(document_uri), opcode, extended);
+                .ws.make_opcode_suggestion(utils::resource::resource_location(document_uri), opcode, extended);
 
         std::vector<opcode_suggestion> res;
 
@@ -560,10 +701,10 @@ public:
 private:
     void collect_diags() const override
     {
-        collect_diags_from_child(implicit_workspace_);
-        collect_diags_from_child(quiet_implicit_workspace_);
+        collect_diags_from_child(implicit_workspace_.ws);
+        collect_diags_from_child(quiet_implicit_workspace_.ws);
         for (auto& it : workspaces_)
-            collect_diags_from_child(it.second);
+            collect_diags_from_child(it.second.ws);
     }
 
     static std::optional<unsigned long long> extract_hlasm_id(std::string_view uri)
@@ -592,10 +733,10 @@ private:
         collect_diags();
 
         fade_messages_.clear();
-        implicit_workspace_.retrieve_fade_messages(fade_messages_);
-        quiet_implicit_workspace_.retrieve_fade_messages(fade_messages_);
-        for (const auto& [_, ws] : workspaces_)
-            ws.retrieve_fade_messages(fade_messages_);
+        implicit_workspace_.ws.retrieve_fade_messages(fade_messages_);
+        quiet_implicit_workspace_.ws.retrieve_fade_messages(fade_messages_);
+        for (const auto& [_, ows] : workspaces_)
+            ows.ws.retrieve_fade_messages(fade_messages_);
 
         for (auto consumer : diag_consumers_)
             consumer->consume_diagnostics(diagnostic_list(diags().data(), diags().size()),
@@ -608,15 +749,20 @@ private:
         return static_cast<size_t>(std::min(f - first.begin(), s - second.begin()));
     }
 
+    unsigned long long next_unique_id() { return ++unique_id_sequence; }
+
     workspaces::file_manager_impl file_manager_;
-    std::unordered_map<std::string, workspaces::workspace> workspaces_;
-    workspaces::workspace implicit_workspace_;
-    workspaces::workspace quiet_implicit_workspace_;
+
+    std::unordered_map<std::string, opened_workspace> workspaces_;
+    opened_workspace implicit_workspace_;
+    opened_workspace quiet_implicit_workspace_;
 
     std::vector<diagnostics_consumer*> diag_consumers_;
     std::vector<parsing_metadata_consumer*> parsing_metadata_consumers_;
     message_consumer* message_consumer_ = nullptr;
+    workspace_manager_requests* requests_ = nullptr;
     std::vector<fade_message_s> fade_messages_;
+    unsigned long long unique_id_sequence = 0;
 };
 } // namespace hlasm_plugin::parser_library
 

@@ -46,6 +46,7 @@ server::server(parser_library::workspace_manager& ws_mngr)
 
     ws_mngr_.register_diagnostics_consumer(this);
     ws_mngr_.set_message_consumer(this);
+    ws_mngr_.set_request_interface(this);
 
     ws_mngr_.register_parsing_metadata_consumer(this);
 }
@@ -166,14 +167,18 @@ void server::respond_error(
     const request_id& id, const std::string&, int err_code, const std::string& err_message, const nlohmann::json& error)
 {
     cancellable_requests_.erase(id);
-    nlohmann::json reply { { "jsonrpc", "2.0" },
+    nlohmann::json reply {
+        { "jsonrpc", "2.0" },
         { "id", id },
-        { "error",
+        {
+            "error",
             {
                 { "code", err_code },
                 { "message", err_message },
                 { "data", error },
-            } } };
+            },
+        },
+    };
     send_message_->reply(reply);
 }
 
@@ -189,7 +194,10 @@ void server::register_methods()
         method { [this](const request_id& id, const nlohmann::json& params) { on_initialize(id, params); },
             telemetry_log_level::LOG_EVENT });
     methods_.try_emplace("initialized",
-        method { [](const nlohmann::json&) { /*no implementation, silences uninteresting telemetry*/ },
+        method { [this](const nlohmann::json&) {
+                    for (const auto& f : features_)
+                        f->initialized();
+                },
             telemetry_log_level::NO_TELEMETRY });
     methods_.try_emplace("shutdown",
         method { [this](const request_id& id, const nlohmann::json& params) { on_shutdown(id, params); },
@@ -235,7 +243,7 @@ void server::on_initialize(const request_id& id, const nlohmann::json& param)
     respond(id, "", capabilities);
 
     nlohmann::json register_configuration_changed_args {
-        { {
+        {
             "registrations",
             {
                 {
@@ -243,11 +251,10 @@ void server::on_initialize(const request_id& id, const nlohmann::json& param)
                     { "method", "workspace/didChangeConfiguration" },
                 },
             },
-        } },
+        },
     };
 
     request("client/registerCapability", register_configuration_changed_args, &empty_handler);
-
 
     for (auto& f : features_)
     {
@@ -265,7 +272,7 @@ void server::on_shutdown(const request_id& id, const nlohmann::json&)
 
 void server::on_exit(const nlohmann::json&) { exit_notification_received_ = true; }
 
-void server::show_message(const std::string& message, parser_library::message_type type)
+void server::show_message(const char* message, parser_library::message_type type)
 {
     nlohmann::json m {
         { "type", (int)type },
@@ -395,6 +402,24 @@ void server::consume_diagnostics(
     }
 
     last_diagnostics_files_ = std::move(new_files);
+}
+
+void server::request_workspace_configuration(
+    const char* url, parser_library::workspace_manager_response<parser_library::sequence<char>> json_text)
+{
+    request("workspace/configuration",
+        nlohmann::json { {
+            "items",
+            nlohmann::json::array_t {
+                { { "scopeUri", url } },
+            },
+        } },
+        [json_text = std::move(json_text)](const nlohmann::json& params) {
+            if (!params.is_array() || params.size() != 1)
+                json_text.error(-1, "Invalid response to 'workspace/configuration'");
+            else
+                json_text.provide(parser_library::sequence<char>(params.at(0).dump()));
+        });
 }
 
 } // namespace hlasm_plugin::language_server::lsp

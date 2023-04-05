@@ -522,7 +522,7 @@ void workspace::delete_diags(processor_file_compoments& pfc)
 void workspace::show_message(const std::string& message)
 {
     if (message_consumer_)
-        message_consumer_->show_message(message, message_type::MT_INFO);
+        message_consumer_->show_message(message.c_str(), message_type::MT_INFO);
 }
 
 lib_config workspace::get_config() const { return m_configuration.get_config().fill_missing_settings(global_config_); }

@@ -51,7 +51,7 @@ TEST(lsp_server, initialize)
     auto show_message =
         R"({"jsonrpc":"2.0", "method" : "window/showMessage", "params" : {"message":"The capabilities of hlasm language server were sent!", "type" : 3}})"_json;
     auto register_message =
-        R"({"jsonrpc":"2.0", "id":0, "method" : "client/registerCapability", "params" : [{"registrations":[{"id":"configureRegister", "method":"workspace/didChangeConfiguration"}]}]})"_json;
+        R"({"jsonrpc":"2.0", "id":0, "method" : "client/registerCapability", "params" : {"registrations":[{"id":"configureRegister", "method":"workspace/didChangeConfiguration"}]}})"_json;
     auto config_request_message =
         R"({"id":1,"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[{"section":"hlasm"},{}]}})"_json;
 

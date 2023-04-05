@@ -19,5 +19,6 @@ target_sources(parser_library PUBLIC
 	range.h
 	sequence.h
 	workspace_manager.h
+	workspace_manager_requests.h
 	workspace_manager_response.h
 )

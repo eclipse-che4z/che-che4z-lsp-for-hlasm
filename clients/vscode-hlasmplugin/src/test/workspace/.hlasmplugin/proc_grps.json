@@ -9,7 +9,7 @@
         {
           "path": "libs"
         },
-        "copy"
+        "${config:emptyVariable}copy"
       ]
     },
     {

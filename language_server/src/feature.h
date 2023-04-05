@@ -159,14 +159,15 @@ public:
     {}
 
     // Implement to add methods to server.
-    void virtual register_methods(std::map<std::string, method>& methods) = 0;
+    virtual void register_methods(std::map<std::string, method>& methods) = 0;
     // Implement to add json object to server capabilities that are sent to LSP client
     // in the response to initialize request.
-    nlohmann::json virtual register_capabilities() = 0;
+    virtual nlohmann::json register_capabilities() = 0;
 
     // Can be implemented to set feature specific to client capabilities that
     // are sent in initialize request.
-    void virtual initialize_feature(const nlohmann::json& client_capabilities) = 0;
+    virtual void initialize_feature(const nlohmann::json& client_capabilities) = 0;
+    virtual void initialized() {}
 
     // Converts LSP json representation of range into parse_library::range.
     static parser_library::range parse_range(const nlohmann::json& range_json);

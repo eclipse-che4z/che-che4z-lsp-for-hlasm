@@ -3,5 +3,6 @@
     "hlasm.useAutodetection": true,
     "hlasm.serverVariant": "wasm",
     "hlasm.diagnosticsSuppressLimit": 10,
-    "workbench.editor.languageDetection": false
+    "workbench.editor.languageDetection": false,
+    "emptyVariable": ""
 }

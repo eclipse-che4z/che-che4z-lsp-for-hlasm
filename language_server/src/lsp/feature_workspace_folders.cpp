@@ -59,9 +59,6 @@ nlohmann::json feature_workspace_folders::register_capabilities()
 
 void feature_workspace_folders::initialize_feature(const nlohmann::json& initialize_params)
 {
-    // Get config at initialization
-    send_configuration_request();
-
     bool ws_folders_support = false;
     auto capabs = initialize_params["capabilities"];
     auto ws = capabs.find("workspace");
@@ -74,7 +71,8 @@ void feature_workspace_folders::initialize_feature(const nlohmann::json& initial
 
     if (ws_folders_support)
     {
-        add_workspaces(initialize_params["workspaceFolders"]);
+        for (auto& it : initialize_params.at("workspaceFolders"))
+            m_initial_workspaces.emplace_back(it.at("name").get<std::string>(), it.at("uri").get<std::string>());
         return;
     }
 
@@ -82,8 +80,7 @@ void feature_workspace_folders::initialize_feature(const nlohmann::json& initial
     auto root_uri = initialize_params.find("rootUri");
     if (root_uri != initialize_params.end() && !root_uri->is_null())
     {
-        std::string uri = root_uri->get<std::string>();
-        add_workspace(uri, uri);
+        m_initial_workspaces.emplace_back(root_uri->get<std::string>(), root_uri->get<std::string>());
         return;
     }
 
@@ -91,10 +88,16 @@ void feature_workspace_folders::initialize_feature(const nlohmann::json& initial
     if (root_path != initialize_params.end() && !root_path->is_null())
     {
         auto uri = utils::path::path_to_uri(utils::path::lexically_normal(root_path->get<std::string>()).string());
-        add_workspace(uri, uri);
+        m_initial_workspaces.emplace_back(uri, uri);
     }
 }
 
+void feature_workspace_folders::initialized()
+{
+    send_configuration_request();
+    for (const auto& [name, uri] : std::exchange(m_initial_workspaces, {}))
+        add_workspace(name, uri);
+}
 
 void feature_workspace_folders::on_did_change_workspace_folders(const nlohmann::json& params)
 {
@@ -159,7 +162,6 @@ void feature_workspace_folders::send_configuration_request()
         "items",
         nlohmann::json::array_t {
             { { "section", "hlasm" } },
-            nlohmann::json::object(),
         },
     } };
     response_->request("workspace/configuration", config_request_args, [this](const nlohmann::json& params) {
@@ -169,13 +171,13 @@ void feature_workspace_folders::send_configuration_request()
 
 void feature_workspace_folders::configuration(const nlohmann::json& params) const
 {
-    if (params.size() != 2)
+    if (params.size() != 1)
     {
         LOG_WARNING("Unexpected configuration response received.");
         return;
     }
 
-    ws_mngr_.configuration_changed(parser_library::lib_config::load_from_json(params[0]), params[1].dump().c_str());
+    ws_mngr_.configuration_changed(parser_library::lib_config::load_from_json(params[0]));
 }
 
 void feature_workspace_folders::did_change_configuration(const nlohmann::json&) { send_configuration_request(); }

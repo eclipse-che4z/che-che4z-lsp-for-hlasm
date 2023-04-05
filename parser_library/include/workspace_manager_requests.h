@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Broadcom.
+ * Copyright (c) 2023 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -12,19 +12,24 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBRARY_MESSAGE_CONSUMER_MOCK_H
-#define HLASMPLUGIN_PARSERLIBRARY_MESSAGE_CONSUMER_MOCK_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_REQUESTS_H
+#define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_REQUESTS_H
 
-#include "message_consumer.h"
+#include "workspace_manager_response.h"
+
 
 namespace hlasm_plugin::parser_library {
 
-class message_consumer_mock : public hlasm_plugin::parser_library::message_consumer
+class workspace_manager_requests
 {
+protected:
+    ~workspace_manager_requests() = default;
+
 public:
-    void show_message(const char* message, message_type type) override { messages.emplace_back(message, type); }
-    std::vector<std::pair<std::string, message_type>> messages;
+    virtual void request_workspace_configuration(
+        const char* url, workspace_manager_response<sequence<char>> json_text) = 0;
 };
 
 } // namespace hlasm_plugin::parser_library
+
 #endif

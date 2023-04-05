@@ -27,6 +27,7 @@
 #include "parser_library_export.h"
 #include "protocol.h"
 #include "sequence.h"
+#include "workspace_manager_requests.h"
 
 namespace hlasm_plugin::parser_library {
 
@@ -128,7 +129,7 @@ public:
     virtual void document_symbol(
         const char* document_uri, long long limit, workspace_manager_response<document_symbol_list> resp);
 
-    virtual void configuration_changed(const lib_config& new_config, const char* whole_settings);
+    virtual void configuration_changed(const lib_config& new_config);
 
     // implementation of observer pattern - register consumer.
     virtual void register_diagnostics_consumer(diagnostics_consumer* consumer);
@@ -136,6 +137,7 @@ public:
     virtual void register_parsing_metadata_consumer(parsing_metadata_consumer* consumer);
     virtual void unregister_parsing_metadata_consumer(parsing_metadata_consumer* consumer);
     virtual void set_message_consumer(message_consumer* consumer);
+    virtual void set_request_interface(workspace_manager_requests* requests);
 
     virtual continuous_sequence<char> get_virtual_file_content(unsigned long long id) const;
 

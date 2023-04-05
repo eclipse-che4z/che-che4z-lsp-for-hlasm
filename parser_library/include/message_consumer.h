@@ -15,8 +15,6 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_MESSAGE_CONSUMER_H
 #define HLASMPLUGIN_PARSERLIBRARY_MESSAGE_CONSUMER_H
 
-#include <string>
-
 namespace hlasm_plugin::parser_library {
 
 enum class message_type
@@ -30,7 +28,7 @@ enum class message_type
 class message_consumer
 {
 public:
-    virtual void show_message(const std::string& message, message_type type) = 0;
+    virtual void show_message(const char* message, message_type type) = 0;
 
 protected:
     ~message_consumer() = default;

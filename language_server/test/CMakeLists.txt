@@ -21,6 +21,7 @@ target_sources(server_test PRIVATE
 	send_message_provider_mock.h
 	stream_helper_test.cpp
 	ws_mngr_mock.h
+	ws_mngr_req_mock.h
 	telemetry_test.cpp
 	virtual_file_provider_test.cpp
 )

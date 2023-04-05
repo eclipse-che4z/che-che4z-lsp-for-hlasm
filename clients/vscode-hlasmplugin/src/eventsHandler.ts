@@ -116,7 +116,7 @@ export class EventsHandler {
     async onDidChangeWorkspaceFolders(wsChanges: vscode.WorkspaceFoldersChangeEvent) {
         this.configSetup.setWildcards(
             (await Promise.all(
-                vscode.workspace.workspaceFolders.map(
+                (vscode.workspace.workspaceFolders || []).map(
                     x => this.configSetup.generateWildcards(x.uri).then((regset) => regset.map(regex => { return { regex, workspaceUri: x.uri }; }))
                 )
             )

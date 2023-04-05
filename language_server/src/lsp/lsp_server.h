@@ -23,6 +23,7 @@
 #include "nlohmann/json_fwd.hpp"
 #include "telemetry_sink.h"
 #include "workspace_manager.h"
+#include "workspace_manager_requests.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -30,10 +31,11 @@ namespace hlasm_plugin::language_server::lsp {
 // Integrates 3 features: language features, text synchronization and workspace folders.
 // Consumes diagnostics that come from the parser library and sends them to LSP client.
 class server final : public hlasm_plugin::language_server::server,
-                     public parser_library::diagnostics_consumer,
-                     public parser_library::message_consumer,
+                     parser_library::diagnostics_consumer,
+                     parser_library::message_consumer,
                      public telemetry_sink,
-                     parser_library::parsing_metadata_consumer
+                     parser_library::parsing_metadata_consumer,
+                     parser_library::workspace_manager_requests
 {
 public:
     // Creates the server with workspace_manager as entry point to parser library.
@@ -72,7 +74,6 @@ private:
     // Implements the LSP shutdown request.
     void on_shutdown(const request_id& id, const nlohmann::json& param);
 
-
     // notifications
 
     // Implements the LSP exit request.
@@ -82,7 +83,7 @@ private:
     // client notifications
 
     // Implements the LSP showMessage request.
-    void show_message(const std::string& message, parser_library::message_type type) override;
+    void show_message(const char* message, parser_library::message_type type) override;
 
     // Remembers name of files for which were sent diagnostics the last time
     // diagnostics were sent to client. Used to clear diagnostics in client
@@ -99,6 +100,9 @@ private:
     // Ingest parsing metadata and forward them to telemetry client
     void consume_parsing_metadata(
         parser_library::sequence<char> uri, double duration, const parser_library::parsing_metadata& metadata) override;
+
+    void request_workspace_configuration(
+        const char* url, parser_library::workspace_manager_response<parser_library::sequence<char>> json_text) override;
 };
 
 } // namespace hlasm_plugin::language_server::lsp

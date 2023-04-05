@@ -2,5 +2,6 @@
     "hlasm.continuationHandling": true,
     "hlasm.useAutodetection": true,
     "hlasm.diagnosticsSuppressLimit": 10,
-    "workbench.editor.languageDetection": false
+    "workbench.editor.languageDetection": false,
+    "emptyVariable": ""
 }
