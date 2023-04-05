@@ -14,6 +14,7 @@
 - Closing a dependency without saving does not trigger reparsing
 - Source code colorization may be flickering while typing
 - Configuration request sent before initialization is done
+- VSCode enters an infinite loop of opening and closing files
 
 ## [1.7.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.6.0...1.7.0) (2023-03-08)
 
