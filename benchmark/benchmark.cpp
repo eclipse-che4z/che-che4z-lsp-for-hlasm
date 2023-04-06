@@ -116,6 +116,8 @@ json parse_one_file(const std::string& source_file,
     ws.register_parsing_metadata_consumer(&collector);
     // input folder as new workspace
     ws.add_workspace(ws_folder.c_str(), ws_folder.c_str());
+    if (ws.idle_handler())
+        abort();
 
     // start counting
     auto c_start = std::clock();
