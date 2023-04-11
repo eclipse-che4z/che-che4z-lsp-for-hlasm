@@ -55,9 +55,6 @@ public:
         statement_fields_parser& parser,
         std::shared_ptr<std::vector<fade_message_s>> fade_msgs);
 
-    // method that starts the processing loop
-    bool step();
-
     utils::task co_step();
 
     void register_stmt_analyzer(statement_analyzer* stmt_analyzer);

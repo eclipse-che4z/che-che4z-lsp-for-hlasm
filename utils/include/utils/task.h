@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_UTILS_TASK_H
 #define HLASMPLUGIN_UTILS_TASK_H
 
+#include <atomic>
 #include <cassert>
 #include <concepts>
 #include <coroutine>
@@ -28,6 +29,8 @@ namespace hlasm_plugin::utils {
 class task;
 template<std::move_constructible T>
 class value_task;
+struct yield_request_t
+{};
 
 class task_base
 {
@@ -71,6 +74,7 @@ protected:
         std::coroutine_handle<promise_type_base> top_waiter = handle();
         std::coroutine_handle<promise_type_base> to_resume = {};
         std::exception_ptr pending_exception;
+        const std::atomic<unsigned char>* yield_indicator = nullptr;
 
         template<typename T>
         T&& await_transform(T&& t) const noexcept
@@ -116,6 +120,21 @@ protected:
                 : task_handle(std::move(task_handle))
             {}
         };
+        auto await_transform(yield_request_t) const noexcept
+        {
+            struct yield_awaiter
+            {
+                const std::atomic<unsigned char>* yield_indicator;
+
+                bool await_ready() const noexcept
+                {
+                    return !yield_indicator || !yield_indicator->load(std::memory_order_relaxed);
+                }
+                constexpr void await_suspend(std::coroutine_handle<>) const noexcept {}
+                constexpr void await_resume() const noexcept {}
+            };
+            return yield_awaiter { top_waiter.promise().yield_indicator };
+        }
         auto await_transform(task t) const noexcept;
         template<std::move_constructible T>
         auto await_transform(value_task<T> t) const noexcept;
@@ -159,9 +178,10 @@ public:
         return m_handle.done();
     }
 
-    void resume() const
+    void resume(const std::atomic<unsigned char>* yield_indicator) const
     {
         assert(m_handle);
+        m_handle.promise().yield_indicator = yield_indicator;
         m_handle.promise().next_step.promise().top_waiter = m_handle;
         m_handle.promise().next_step();
     }
@@ -171,6 +191,7 @@ public:
     void run() const
     {
         assert(m_handle);
+        m_handle.promise().yield_indicator = nullptr;
         while (!m_handle.done())
             m_handle.promise().next_step();
     }
@@ -205,8 +226,8 @@ public:
         : task_base(handle.promise().handle())
     {}
 
-    static std::suspend_always suspend() { return {}; }
-    static std::suspend_always yield() { return {}; }
+    static constexpr std::suspend_always suspend() { return {}; }
+    static constexpr yield_request_t yield() { return {}; }
 
     using task_base::done;
     using task_base::resume;
@@ -322,6 +343,7 @@ inline auto task_base::promise_type_base::await_transform(task t) const noexcept
 {
     auto h = std::exchange(t.m_handle, {});
 
+    h.promise().yield_indicator = nullptr;
     h.promise().next_step.promise().top_waiter = top_waiter;
 
     return awaiter<void>(std::move(h));
@@ -332,6 +354,7 @@ inline auto task_base::promise_type_base::await_transform(value_task<T> t) const
 {
     auto h = std::exchange(t.m_handle, {});
 
+    h.promise().yield_indicator = nullptr;
     h.promise().next_step.promise().top_waiter = top_waiter;
 
     return awaiter<T>(std::move(h));

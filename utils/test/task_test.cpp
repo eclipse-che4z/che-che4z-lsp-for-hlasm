@@ -68,7 +68,7 @@ TEST(task, basics)
     for (auto x = h(data); !x.done();)
     {
         ++resume_count;
-        x.resume();
+        x.resume(nullptr);
     }
 
     EXPECT_EQ(resume_count, 1);
@@ -135,7 +135,7 @@ TEST(task, basics_with_suspends)
     for (auto x = h(data); !x.done();)
     {
         ++resume_count;
-        x.resume();
+        x.resume(nullptr);
     }
 
     EXPECT_GT(resume_count, 1);
@@ -168,7 +168,7 @@ TEST(task, excp_propagation)
     };
 
     for (auto x = main(excp); !x.done();)
-        x.resume();
+        x.resume(nullptr);
 
     EXPECT_TRUE(excp);
 }
@@ -183,7 +183,7 @@ TEST(task, direct_throw)
     auto x = fail();
 
     EXPECT_FALSE(x.done());
-    EXPECT_ANY_THROW(x.resume());
+    EXPECT_ANY_THROW(x.resume(nullptr));
     EXPECT_TRUE(x.done());
 }
 
@@ -209,7 +209,7 @@ TEST(task, values)
     while (!x.done())
     {
         ++resume_count;
-        x.resume();
+        x.resume(nullptr);
     }
 
     EXPECT_EQ(resume_count, 1);
@@ -241,7 +241,7 @@ TEST(task, values_with_suspends)
     while (!x.done())
     {
         ++resume_count;
-        x.resume();
+        x.resume(nullptr);
     }
 
     EXPECT_GT(resume_count, 1);
@@ -275,7 +275,7 @@ TEST(task, await_partially_started_coroutine)
     auto i_task = inner(stop);
 
     while (!stop)
-        i_task.resume();
+        i_task.resume(nullptr);
 
     static constexpr auto outer = [](value_task<int> v) -> value_task<int> {
         int value = co_await std::move(v);
@@ -293,7 +293,7 @@ TEST(task, await_done_task)
     static constexpr auto outer = [](value_task<int> t) -> value_task<int> { co_return co_await std::move(t); };
 
     auto i_task = inner();
-    i_task.resume();
+    i_task.resume(nullptr);
 
     EXPECT_TRUE(i_task.done());
 
@@ -368,4 +368,46 @@ TEST(task, then)
     }(stdfunc));
     EXPECT_CALL(func, Call(5));
     EXPECT_EQ(v5.run().value(), 5);
+}
+
+
+
+TEST(task, yield)
+{
+    std::atomic<unsigned char> yield_indicator = 0;
+    int state = 0;
+
+    auto t = [](int& s) -> task {
+        co_await task::yield();
+        s = 1;
+        co_await task::yield();
+        s = 2;
+        co_await task::yield();
+        s = 3;
+        co_await task::suspend();
+        s = 4;
+        co_await task::yield();
+        s = 5;
+        co_await task::yield();
+        s = 6;
+        co_await task::yield();
+        s = 7;
+        co_await task::suspend();
+        s = 8;
+        co_await task::yield();
+    }(state);
+
+    t.resume(nullptr);
+    EXPECT_EQ(state, 3);
+    EXPECT_FALSE(t.done());
+
+    t.resume(&yield_indicator);
+    EXPECT_EQ(state, 7);
+    EXPECT_FALSE(t.done());
+
+    yield_indicator = 1;
+
+    t.resume(&yield_indicator);
+    EXPECT_EQ(state, 8);
+    EXPECT_FALSE(t.done());
 }

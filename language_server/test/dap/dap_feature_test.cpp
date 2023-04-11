@@ -130,7 +130,7 @@ struct feature_launch_test : public testing::Test
             if (i >= 1000000)
                 throw std::runtime_error("Wait for stopped timeout.");
 
-            feature.idle_handler();
+            feature.idle_handler(nullptr);
         }
         EXPECT_EQ(resp_provider.notifs.size(), 1U);
         resp_provider.stopped = false;
@@ -143,7 +143,7 @@ struct feature_launch_test : public testing::Test
             if (i >= 1000000)
                 throw std::runtime_error("Wait for exited timeout.");
 
-            feature.idle_handler();
+            feature.idle_handler(nullptr);
         }
         resp_provider.exited = false;
     }

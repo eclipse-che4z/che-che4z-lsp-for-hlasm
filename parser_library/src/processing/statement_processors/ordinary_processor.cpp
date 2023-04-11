@@ -53,7 +53,7 @@ std::optional<context::id_index> ordinary_processor::resolve_concatenation(
 }
 
 std::optional<processing_status> ordinary_processor::get_processing_status(
-    const std::optional<context::id_index>& instruction, const range& r) const
+    const std::optional<context::id_index>& instruction, const range&) const
 {
     assert(instruction.has_value());
     const auto& id = *instruction;

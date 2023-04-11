@@ -103,38 +103,6 @@ void update_metrics(processing_kind proc_kind, statement_provider_kind prov_kind
     }
 }
 
-bool processing_manager::step()
-{
-    if (procs_.empty())
-        return false;
-
-    if (helper_task_.valid())
-    {
-        helper_task_.resume();
-        if (helper_task_.done())
-            helper_task_ = {};
-        return true;
-    }
-
-    statement_processor& proc = *procs_.back();
-    statement_provider& prov = find_provider();
-
-    if ((prov.finished() && proc.terminal_condition(prov.kind)) || proc.finished())
-    {
-        finish_processor();
-        return true;
-    }
-
-    if (auto stmt = prov.get_next(proc))
-    {
-        update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
-        run_analyzers(*stmt, prov.kind, proc.kind, false);
-
-        proc.process_statement(std::move(stmt));
-    }
-    return true;
-}
-
 utils::task processing_manager::co_step()
 {
     while (!procs_.empty())

@@ -166,7 +166,7 @@ public:
         return true;
     }
 
-    bool step()
+    bool step(const std::atomic<unsigned char>* yield_indicator)
     {
         if (!analyzer_task.valid() || debug_ended_)
             return false;
@@ -176,7 +176,7 @@ public:
 
         if (!analyzer_task.done())
         {
-            analyzer_task.resume();
+            analyzer_task.resume(yield_indicator);
             return true;
         }
 
@@ -463,7 +463,7 @@ void debugger::step_out() { pimpl->step_out(); }
 void debugger::disconnect() { pimpl->disconnect(); }
 void debugger::continue_debug() { pimpl->continue_debug(); }
 void debugger::pause() { pimpl->pause(); }
-bool debugger::analysis_step() { return pimpl->step(); }
+bool debugger::analysis_step(const std::atomic<unsigned char>* yield_indicator) { return pimpl->step(yield_indicator); }
 
 
 void debugger::breakpoints(sequence<char> source, sequence<breakpoint> bps)

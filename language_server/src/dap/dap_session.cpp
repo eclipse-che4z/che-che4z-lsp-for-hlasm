@@ -41,7 +41,7 @@ void session::thread_routine()
 
         while (!server.is_exit_notification_received())
         {
-            if (queue.will_read_block() && server.idle_handler())
+            if (queue.will_read_block() && server.idle_handler(queue.will_block_preview()))
                 continue;
 
             auto msg = channel.read();

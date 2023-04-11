@@ -274,12 +274,10 @@ public:
     bool run_active_task(const std::atomic<unsigned char>* yield_indicator)
     {
         const auto& [task, ows, start] = m_active_task;
-        while (!task.done())
-        {
-            if (yield_indicator && yield_indicator->load(std::memory_order_relaxed))
-                return false;
-            task.resume();
-        }
+        task.resume(yield_indicator);
+        if (!task.done())
+            return false;
+
         std::chrono::duration<double> duration = std::chrono::steady_clock::now() - start;
 
         const auto& [url, metadata, perf_metrics, errors, warnings] = task.value();

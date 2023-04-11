@@ -50,7 +50,7 @@ public:
 
     void message_received(const nlohmann::json& message) override;
 
-    bool idle_handler();
+    bool idle_handler(const std::atomic<unsigned char>* yield_indicator);
 
 private:
     std::atomic<uint64_t> last_seq_ = 0;

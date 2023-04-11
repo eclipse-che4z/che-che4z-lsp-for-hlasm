@@ -355,6 +355,9 @@ void dap_feature::on_pause(const request_id& request_seq, const nlohmann::json&)
     response_->respond(request_seq, "pause", nlohmann::json());
 }
 
-bool dap_feature::idle_handler() { return debugger && debugger->analysis_step(); }
+bool dap_feature::idle_handler(const std::atomic<unsigned char>* yield_indicator)
+{
+    return debugger && debugger->analysis_step(yield_indicator);
+}
 
 } // namespace hlasm_plugin::language_server::dap

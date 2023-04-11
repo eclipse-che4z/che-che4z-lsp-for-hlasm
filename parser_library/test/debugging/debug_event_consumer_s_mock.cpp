@@ -32,14 +32,14 @@ void debug_event_consumer_s_mock::stopped(
 void debug_event_consumer_s_mock::wait_for_stopped()
 {
     while (!stopped_)
-        d.analysis_step();
+        d.analysis_step(nullptr);
     stopped_ = false;
 }
 
 void debug_event_consumer_s_mock::wait_for_exited()
 {
     while (!exited_)
-        d.analysis_step();
+        d.analysis_step(nullptr);
     stopped_ = false;
 }
 

@@ -65,7 +65,7 @@ public:
     void on_continue(const request_id& request_seq, const nlohmann::json& args);
     void on_pause(const request_id& request_seq, const nlohmann::json& args);
 
-    bool idle_handler();
+    bool idle_handler(const std::atomic<unsigned char>* yield_indicator);
 
 private:
     // Inherited via feature
