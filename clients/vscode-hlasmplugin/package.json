@@ -20,7 +20,9 @@
     "z/OS",
     "zos",
     "zowe",
-    "ibm assembler"
+    "ibm assembler",
+    "endevor",
+    "multi-root ready"
   ],
   "activationEvents": [
     "onStartupFinished"
