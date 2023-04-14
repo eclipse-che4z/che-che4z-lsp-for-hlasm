@@ -115,7 +115,7 @@ export class EventsHandler {
             if (!document.isClosed && this.langDetect.setHlasmLanguage(document)) {
                 const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
                 if (workspace)
-                    this.configSetup.checkConfigs(workspace.uri);
+                    this.configSetup.checkConfigs(workspace.uri, document.uri);
             }
         }, 50);
     }

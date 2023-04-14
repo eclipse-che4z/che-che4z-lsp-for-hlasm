@@ -13,11 +13,12 @@
  */
 
 import * as assert from 'assert';
-import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { ConfigurationsHandler } from '../../configurationsHandler';
-import { hlasmplugin_folder, pgm_conf_file, proc_grps_file } from '../../constants';
+import { ebg_folder, bridge_json_file } from '../../constants';
+import { configurationExists } from '../../helpers';
+import { FileSystemMock } from '../mocks';
 
 suite('Configurations Handler Test Suite', () => {
     const handler = new ConfigurationsHandler();
@@ -34,5 +35,33 @@ suite('Configurations Handler Test Suite', () => {
         handler.setWildcards((await handler.generateWildcards(workspaceUri)).map(regex => { return { regex, workspaceUri }; }));
         assert.ok(handler.match(vscode.Uri.joinPath(workspaceUri, 'file.asm')));
         assert.ok(handler.match(vscode.Uri.joinPath(workspaceUri, 'pgms/file')));
+    });
+
+    test('Existing b4g configs', async () => {
+        const fsMock = new FileSystemMock();
+        const pgmUri = vscode.Uri.joinPath(workspaceUri, "SYS/SUB/PGM");
+        const bridgeJsonUri = vscode.Uri.joinPath(workspaceUri, "SYS/SUB", bridge_json_file);
+        const ebgUri = vscode.Uri.joinPath(workspaceUri, ebg_folder);
+
+        fsMock.addResource(bridgeJsonUri);
+        fsMock.addResource(ebgUri);
+        fsMock.addResource(pgmUri);
+
+        const [g, p, b, e] = await configurationExists(workspaceUri, pgmUri, fsMock);
+        assert.equal(b.exists, true);
+        assert.equal(e.exists, true);
+        assert.deepStrictEqual(b.uri, bridgeJsonUri);
+        assert.deepStrictEqual(e.uri, ebgUri);
+    });
+
+    test('Non-existing b4g configs', async () => {
+        const fsMock = new FileSystemMock();
+        const pgmUri = vscode.Uri.joinPath(workspaceUri, "SYS/SUB/PGM");
+
+        fsMock.addResource(pgmUri);
+
+        const [g, p, b, e] = await configurationExists(workspaceUri, pgmUri, fsMock);
+        assert.equal(b.exists, false);
+        assert.equal(e.exists, false);
     });
 });

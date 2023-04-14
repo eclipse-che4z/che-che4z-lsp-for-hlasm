@@ -42,18 +42,13 @@ export class ConfigurationsHandler {
     }
 
     /**
-     * Checks whether both config files are present
-     * Creates them on demand if not
+     * Checks whether config files are present
+     * Creates proc_grps.json or pgm_conf.json on demand if not
      */
-    async checkConfigs(workspace: vscode.Uri) {
-        // configs exist
-        if (await ConfigurationsHandler.configFilesExist(workspace))
-            return;
-
-        const [g, p, e] = await configurationExists(workspace);
+    async checkConfigs(workspace: vscode.Uri, documentUri: vscode.Uri) {
+        const [g, p, b, e] = await configurationExists(workspace, documentUri);
 
         const doNotShowAgain = 'Do not track';
-
 
         // give option to create proc_grps
         if (!g.exists)
@@ -68,7 +63,7 @@ export class ConfigurationsHandler {
                         ConfigurationsHandler.createProcTemplate(workspace).then(uri => vscode.commands.executeCommand("vscode.open", uri));
                     }
                 });
-        if (!p.exists && !e.exists)
+        if (!p.exists && !b.exists && !e.exists)
             vscode.window.showWarningMessage('pgm_conf.json not found',
                 ...['Create empty pgm_conf.json', 'Create pgm_conf.json with this file', doNotShowAgain])
                 .then((selection) => {
@@ -190,7 +185,7 @@ export class ConfigurationsHandler {
      * Checks if the configs are there and stores their complete paths
      */
     public static async configFilesExist(workspace: vscode.Uri): Promise<boolean> {
-        const [g, p, e] = await configurationExists(workspace);
+        const [g, p] = await configurationExists(workspace, undefined);
         return g.exists && p.exists;
     }
     public static createCompleteConfig(workspace: vscode.Uri, program: string, group: string) {

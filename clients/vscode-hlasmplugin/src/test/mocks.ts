@@ -248,3 +248,50 @@ export class TextDocumentMock implements vscode.TextDocument {
             return new vscode.Position(0, this.text.length);
     }
 }
+
+export class FileSystemMock implements vscode.FileSystem {
+    resource = new Set<string>();
+    dummyStat: vscode.FileStat;
+
+    public addResource(uri: vscode.Uri) {
+        this.resource.add(uri.path);
+    }
+
+    stat(uri: vscode.Uri): Thenable<vscode.FileStat> {
+        return new Promise<vscode.FileStat>((resolve, reject) => {
+            this.resource.has(uri.path) ? resolve(this.dummyStat) : reject("Resource not found");
+        });
+    }
+
+    readDirectory(uri: vscode.Uri): Thenable<[string, vscode.FileType][]> {
+        throw new Error("Method not implemented.");
+    }
+
+    createDirectory(uri: vscode.Uri): Thenable<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    readFile(uri: vscode.Uri): Thenable<Uint8Array> {
+        throw new Error("Method not implemented.");
+    }
+
+    writeFile(uri: vscode.Uri, content: Uint8Array): Thenable<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    delete(uri: vscode.Uri, options?: { recursive?: boolean, useTrash?: boolean }): Thenable<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    rename(source: vscode.Uri, target: vscode.Uri, options?: { overwrite?: boolean }): Thenable<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    copy(source: vscode.Uri, target: vscode.Uri, options?: { overwrite?: boolean }): Thenable<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    isWritableFileSystem(scheme: string): boolean | undefined {
+        throw new Error("Method not implemented.");
+    }
+}

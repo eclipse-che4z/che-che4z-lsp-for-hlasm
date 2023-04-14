@@ -85,7 +85,7 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
 
         const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
         if (!workspace) return result;
-        const [procGrps, pgmConf, ebgConf] = await configurationExists(workspace.uri);
+        const [procGrps, pgmConf, bridgeJson, ebgConf] = await configurationExists(workspace.uri, document.uri);
 
         if (E049.length > 0) {
             if (procGrps.exists) {
@@ -113,7 +113,7 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
         let suggestPgmConfChange = E049.length > 0 || context.diagnostics.some(x => x.code === 'SUP');
 
         if (suggestProcGrpsChange || suggestPgmConfChange) {
-            if (!procGrps.exists && !pgmConf.exists && !ebgConf.exists) {
+            if (!procGrps.exists && !pgmConf.exists && !bridgeJson.exists && !ebgConf.exists) {
                 suggestProcGrpsChange = false;
                 suggestPgmConfChange = false;
                 result.push({
@@ -160,7 +160,7 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
                         kind: vscode.CodeActionKind.QuickFix
                     });
                 else {
-                    if (ebgConf.exists) {
+                    if (bridgeJson.exists || ebgConf.exists) {
                         // TODO: could we trigger B4G sync?
                     }
                     result.push({
