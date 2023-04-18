@@ -16,6 +16,10 @@
 - Configuration request sent before initialization is done
 - VSCode enters an infinite loop of opening and closing files
 - "pgm_conf.json not found" prompt shows up even when `.bridge.json` exists
+- `.bridge.json` is not reparsed when changed
+
+#### Changed
+- Programs assigned to "\*NOPROC\*" processor group no longer need its definition in pgm_conf.json
 
 ## [1.7.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.6.0...1.7.0) (2023-03-08)
 

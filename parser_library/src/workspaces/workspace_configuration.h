@@ -49,14 +49,14 @@ struct library_local_options;
 // information that a program uses certain processor group
 struct program
 {
-    program(program_id prog_id, proc_grp_id pgroup, config::assembler_options asm_opts)
+    program(program_id prog_id, std::optional<proc_grp_id> pgroup, config::assembler_options asm_opts)
         : prog_id(std::move(prog_id))
         , pgroup(std::move(pgroup))
         , asm_opts(std::move(asm_opts))
     {}
 
     program_id prog_id;
-    proc_grp_id pgroup;
+    std::optional<proc_grp_id> pgroup;
     config::assembler_options asm_opts;
 };
 
@@ -174,6 +174,7 @@ class workspace_configuration
     static constexpr const char FILENAME_PGM_CONF[] = "pgm_conf.json";
     static constexpr const char HLASM_PLUGIN_FOLDER[] = ".hlasmplugin";
     static constexpr const char B4G_CONF_FILE[] = ".bridge.json";
+    static constexpr std::string_view NOPROC_GROUP_ID = "*NOPROC*";
 
     file_manager& m_file_manager;
     utils::resource::resource_location m_location;
@@ -241,10 +242,16 @@ class workspace_configuration
     bool is_b4g_config_file(const utils::resource::resource_location& file) const;
     const program* get_program_normalized(const utils::resource::resource_location& file_location_normalized) const;
 
-    parse_config_file_result parse_b4g_config_file(const utils::resource::resource_location& file_location);
+    std::optional<std::pair<utils::resource::resource_location, workspace_configuration::tagged_program>>
+    try_creating_rl_tagged_pgm_pair(
+        std::unordered_set<std::string, utils::hashers::string_hasher, std::equal_to<>>& missing_pgroups,
+        bool default_b4g_proc_group,
+        proc_grp_id grp_id,
+        const void* tag,
+        const utils::resource::resource_location& file_root,
+        std::string_view filename = "");
 
-    std::pair<parse_config_file_result, utils::resource::resource_location> try_loading_alternative_configuration(
-        const utils::resource::resource_location& file_location);
+    parse_config_file_result parse_b4g_config_file(const utils::resource::resource_location& file_location);
 
     parse_config_file_result load_and_process_config(std::vector<diagnostic_s>& diags);
 
@@ -271,8 +278,8 @@ public:
         const utils::resource::resource_location& file_location);
 
     const program* get_program(const utils::resource::resource_location& program) const;
-    const processor_group& get_proc_grp_by_program(const program& p) const;
-    processor_group& get_proc_grp_by_program(const program& p);
+    const processor_group* get_proc_grp_by_program(const program& p) const;
+    processor_group* get_proc_grp_by_program(const program& p);
     const lib_config& get_config() const { return m_local_config; }
 
     bool settings_updated() const;

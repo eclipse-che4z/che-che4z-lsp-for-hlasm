@@ -2547,6 +2547,17 @@ diagnostic_op diagnostic_op::error_S0012(const range& range)
     return diagnostic_op(diagnostic_severity::error, "S0012", "Right parenthesis has no left match", range);
 }
 
+namespace {
+std::string get_not_defined_proc_group_msg(std::string_view config_file, std::string_view pgroup)
+{
+    return concat("The ",
+        config_file,
+        " file refers to a processor group \"",
+        pgroup,
+        "\", that is not defined in proc_grps.json");
+}
+} // namespace
+
 diagnostic_s diagnostic_s::error_W0001(const utils::resource::resource_location& file_name)
 {
     return diagnostic_s(file_name.get_uri(),
@@ -2586,9 +2597,7 @@ diagnostic_s diagnostic_s::error_W0004(const utils::resource::resource_location&
         {},
         diagnostic_severity::warning,
         "W0004",
-        concat("The configuration file pgm_conf refers to a processor group (",
-            pgroup,
-            "), that is not defined in proc_grps"),
+        get_not_defined_proc_group_msg("pgm_conf.json", pgroup),
         {},
         diagnostic_tag::none);
 }
@@ -2653,9 +2662,7 @@ diagnostic_s diagnostic_s::error_B4G002(const utils::resource::resource_location
         {},
         diagnostic_severity::warning,
         "B4G002",
-        concat("The .bridge.json file refers to a processor group \"",
-            grp_name,
-            "\", that is not defined in proc_grps.json"),
+        get_not_defined_proc_group_msg(".bridge.json", grp_name),
         {},
         diagnostic_tag::none);
 }
