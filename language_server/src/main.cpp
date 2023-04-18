@@ -23,6 +23,7 @@
 #include "dap/dap_message_wrappers.h"
 #include "dap/dap_server.h"
 #include "dap/dap_session_manager.h"
+#include "external_file_reader.h"
 #include "logger.h"
 #include "lsp/lsp_server.h"
 #include "message_router.h"
@@ -39,6 +40,7 @@ namespace {
 
 class main_program : public json_sink, send_message_provider
 {
+    external_file_reader external_files;
     hlasm_plugin::parser_library::workspace_manager ws_mngr;
 
     json_sink& json_output;
@@ -55,19 +57,26 @@ class main_program : public json_sink, send_message_provider
 
 public:
     main_program(json_sink& json_output, int& ret)
-        : json_output(json_output)
+        : external_files(json_output)
+        , ws_mngr(&external_files)
+        , json_output(json_output)
         , router(&lsp_queue)
         , dap_sessions(ws_mngr, json_output, &dap_telemetry_broker)
         , virtual_files(ws_mngr, json_output)
     {
         router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
         router.register_route(virtual_files.get_filtering_predicate(), virtual_files);
+        router.register_route(external_files.get_filtering_predicate(), external_files);
 
         lsp_thread = std::thread([&ret, this]() {
             try
             {
+                auto ext_reg =
+                    external_files.register_thread([this]() { lsp_queue.write(nlohmann::json::value_t::discarded); });
+
                 lsp::server server(ws_mngr);
                 server.set_send_message_provider(this);
+
                 hlasm_plugin::utils::scope_exit disconnect_telemetry(
                     [this]() noexcept { dap_telemetry_broker.set_telemetry_sink(nullptr); });
                 dap_telemetry_broker.set_telemetry_sink(&server);
@@ -83,6 +92,9 @@ public:
                         ret = 1;
                         break;
                     }
+
+                    if (message->is_discarded())
+                        continue;
 
                     server.message_received(message.value());
 

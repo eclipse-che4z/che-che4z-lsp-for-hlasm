@@ -400,7 +400,7 @@ public:
         did_open_file(root_source_file, 1, source_txt);
     }
 
-    MOCK_METHOD(list_directory_result,
+    MOCK_METHOD(hlasm_plugin::utils::value_task<list_directory_result>,
         list_directory_files,
         (const hlasm_plugin::utils::resource::resource_location& path),
         (const override));
@@ -461,22 +461,27 @@ public:
         , global_settings(make_empty_shared_json())
         , ws(ws_loc, "workspace_name", file_manager, config, global_settings)
     {
-        ws.open();
+        ws.open().run();
     };
 };
+
+auto list_directory_cortn(list_directory_result result)
+{
+    return [result](const auto&) { return hlasm_plugin::utils::value_task<list_directory_result>::from_value(result); };
+}
 
 void verify_absolute(pgmconf_variants pgmconf_variant)
 {
     test_variables_lib_pattern vars(pgroup_variants::ABSOLUTE, pgmconf_variant);
 
     EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib2_libs_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib2_libs_subdir))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
 
-    vars.ws.did_open_file(pattern_test_source_loc);
+    run_if_valid(vars.ws.did_open_file(pattern_test_source_loc));
     parse_all_files(vars.ws);
 }
 
@@ -485,15 +490,15 @@ void verify_relative_1(pgmconf_variants pgmconf_variant)
     test_variables_lib_pattern vars(pgroup_variants::RELATIVE, pgmconf_variant);
 
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
 
-    vars.ws.did_open_file(pattern_test_source_loc);
+    run_if_valid(vars.ws.did_open_file(pattern_test_source_loc));
     parse_all_files(vars.ws);
 }
 
@@ -502,13 +507,13 @@ void verify_relative_2(pgmconf_variants pgmconf_variant)
     test_variables_lib_pattern vars(pgroup_variants::RELATIVE_2, pgmconf_variant);
 
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
 
-    vars.ws.did_open_file(pattern_test_source_loc);
+    run_if_valid(vars.ws.did_open_file(pattern_test_source_loc));
     parse_all_files(vars.ws);
 }
 
@@ -517,13 +522,13 @@ void verify_relative_3(pgmconf_variants pgmconf_variant)
     test_variables_lib_pattern vars(pgroup_variants::RELATIVE_3, pgmconf_variant);
 
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_dir_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(patter_test_dir_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_est_dir_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
 
-    vars.ws.did_open_file(pattern_test_source_loc);
+    run_if_valid(vars.ws.did_open_file(pattern_test_source_loc));
     parse_all_files(vars.ws);
 }
 
@@ -532,15 +537,15 @@ void verify_uri_1(pgmconf_variants pgmconf_variant)
     test_variables_lib_pattern vars(pgroup_variants::URI, pgmconf_variant);
 
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
 
-    vars.ws.did_open_file(pattern_test_source_loc);
+    run_if_valid(vars.ws.did_open_file(pattern_test_source_loc));
     parse_all_files(vars.ws);
 }
 
@@ -549,13 +554,13 @@ void verify_uri_2_3(pgmconf_variants pgmconf_variant)
     test_variables_lib_pattern vars(pgroup_variants::URI_2, pgmconf_variant);
 
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
 
-    vars.ws.did_open_file(pattern_test_source_loc);
+    run_if_valid(vars.ws.did_open_file(pattern_test_source_loc));
     parse_all_files(vars.ws);
 }
 
@@ -564,15 +569,15 @@ void verify_uri_non_standard(pgroup_variants pgroup_variant, pgmconf_variants pg
     test_variables_lib_pattern vars(pgroup_variant, pgmconf_variant);
 
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
 
-    vars.ws.did_open_file(pattern_test_source_loc);
+    run_if_valid(vars.ws.did_open_file(pattern_test_source_loc));
     parse_all_files(vars.ws);
 }
 
@@ -581,25 +586,25 @@ void verify_combination(pgmconf_variants pgmconf_variant)
     test_variables_lib_pattern vars(pgroup_variants::COMBINATION, pgmconf_variant);
 
     EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib2_libs_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(temp_lib2_libs_subdir))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(different_libs_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(different_libs2_libs_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(different_libs2_libs_subdir))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
 
-    vars.ws.did_open_file(pattern_test_source_loc);
+    run_if_valid(vars.ws.did_open_file(pattern_test_source_loc));
     parse_all_files(vars.ws);
 }
 
@@ -608,15 +613,15 @@ void verify_double_dot(pgroup_variants pgroup_variant, pgmconf_variants pgmconf_
     test_variables_lib_pattern vars(pgroup_variant, pgmconf_variant);
 
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
 
-    vars.ws.did_open_file(pattern_test_source_loc);
+    run_if_valid(vars.ws.did_open_file(pattern_test_source_loc));
     parse_all_files(vars.ws);
 }
 
@@ -625,15 +630,15 @@ void verify_root_asterisk()
     test_variables_lib_pattern vars(pgroup_variants::DOUBLE_DOT_ABSOLUTE, pgmconf_variants::ROOT_ASTERISK);
 
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_loc))
-        .WillOnce(::testing::Return(list_directory_result { {}, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn({ {}, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib1_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac1", pattern_test_macro1_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
     EXPECT_CALL(vars.file_manager, list_directory_files(pattern_test_lib_sublib2_loc))
-        .WillOnce(::testing::Return(list_directory_result {
-            { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done }));
+        .WillOnce(::testing::Invoke(list_directory_cortn(
+            { { { "mac2", pattern_test_macro2_loc } }, hlasm_plugin::utils::path::list_directory_rc::done })));
 
-    vars.ws.did_open_file(root_source_file);
+    run_if_valid(vars.ws.did_open_file(root_source_file));
     parse_all_files(vars.ws);
 }
 } // namespace
@@ -920,9 +925,14 @@ void verify_infinit_loop(pgroup_symlinks_variants pgroup_variant, pgmconf_varian
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
 
+    EXPECT_CALL(file_manager, list_directory_files)
+        .WillRepeatedly(::testing::Invoke([](auto) -> hlasm_plugin::utils::value_task<list_directory_result> {
+            co_return { {}, hlasm_plugin::utils::path::list_directory_rc::done };
+        }));
+
     workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
-    ws.open();
-    ws.did_open_file(pattern_test_source_loc);
+    ws.open().run();
+    run_if_valid(ws.did_open_file(pattern_test_source_loc));
     parse_all_files(ws);
 
     // No explicit expectations - it is just expected that this will not crash or end up in a loop.

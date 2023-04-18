@@ -20,6 +20,7 @@
 #include "range.h"
 #include "sequence.h"
 #include "workspace_manager.h"
+#include "workspace_manager_response.h"
 
 namespace hlasm_plugin::parser_library::debugging {
 
@@ -70,10 +71,16 @@ public:
     debugger& operator=(debugger&&) & noexcept;
     ~debugger();
 
-    bool launch(sequence<char> source, workspaces::workspace& source_workspace, bool stop_on_entry);
-    bool launch(std::string_view source, workspaces::workspace& source_workspace, bool stop_on_entry)
+    void launch(sequence<char> source,
+        workspaces::workspace& source_workspace,
+        bool stop_on_entry,
+        workspace_manager_response<bool> resp);
+    void launch(std::string_view source,
+        workspaces::workspace& source_workspace,
+        bool stop_on_entry,
+        workspace_manager_response<bool> resp)
     {
-        return launch(sequence(source), source_workspace, stop_on_entry);
+        return launch(sequence(source), source_workspace, stop_on_entry, std::move(resp));
     }
 
     void set_event_consumer(debug_event_consumer* event);

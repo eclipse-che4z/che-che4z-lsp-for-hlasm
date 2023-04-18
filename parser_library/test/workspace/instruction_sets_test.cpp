@@ -135,14 +135,22 @@ public:
         did_open_file(sam31_macro_loc, 1, sam31_macro);
     }
 
-    list_directory_result list_directory_files(
+    hlasm_plugin::utils::value_task<list_directory_result> list_directory_files(
         const hlasm_plugin::utils::resource::resource_location& location) const override
     {
+        using hlasm_plugin::utils::value_task;
         if (location == resource_location("lib/"))
-            return { { { "SAM31", resource_location(sam31_macro_path) } },
-                hlasm_plugin::utils::path::list_directory_rc::done };
+            return value_task<list_directory_result>::from_value({
+                {
+                    { "SAM31", resource_location(sam31_macro_path) },
+                },
+                hlasm_plugin::utils::path::list_directory_rc::done,
+            });
 
-        return { {}, hlasm_plugin::utils::path::list_directory_rc::not_exists };
+        return value_task<list_directory_result>::from_value({
+            {},
+            hlasm_plugin::utils::path::list_directory_rc::not_exists,
+        });
     }
 };
 
@@ -153,7 +161,7 @@ void change_instruction_set(
     changes.push_back(document_change({ change_range }, process_group.c_str(), process_group.size()));
 
     fm.did_change_file(proc_grps_loc, 1, changes.data(), changes.size());
-    ws.did_change_file(proc_grps_loc, changes.data(), changes.size());
+    run_if_valid(ws.did_change_file(proc_grps_loc, file_content_state::changed_content));
     parse_all_files(ws);
 }
 } // namespace
@@ -164,9 +172,9 @@ TEST_F(workspace_instruction_sets_test, changed_instr_set_370_Z10)
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
     workspace ws(file_manager, config, global_settings);
-    ws.open();
+    ws.open().run();
 
-    ws.did_open_file(source_loc);
+    run_if_valid(ws.did_open_file(source_loc));
     parse_all_files(ws);
     EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
 
@@ -183,9 +191,9 @@ TEST_F(workspace_instruction_sets_test, changed_instr_set_Z10_370)
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
     workspace ws(file_manager, config, global_settings);
-    ws.open();
+    ws.open().run();
 
-    ws.did_open_file(source_loc);
+    run_if_valid(ws.did_open_file(source_loc));
     parse_all_files(ws);
     collect_and_get_diags_size(ws);
     EXPECT_TRUE(matches_message_codes(diags(), { "E049" }));

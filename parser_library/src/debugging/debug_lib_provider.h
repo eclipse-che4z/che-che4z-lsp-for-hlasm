@@ -55,13 +55,15 @@ class debug_lib_provider final : public workspaces::parse_lib_provider
 public:
     debug_lib_provider(std::vector<std::shared_ptr<workspaces::library>> libraries, workspaces::file_manager& fm);
 
-    utils::value_task<bool> parse_library(
+    [[nodiscard]] utils::value_task<bool> parse_library(
         std::string library, analyzing_context ctx, workspaces::library_data data) override;
 
     bool has_library(std::string_view library, utils::resource::resource_location* loc) override;
 
-    utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>> get_library(
-        std::string library) override;
+    [[nodiscard]] utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>>
+    get_library(std::string library) override;
+
+    [[nodiscard]] utils::task prefetch_libraries() const;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

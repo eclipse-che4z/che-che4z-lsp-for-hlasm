@@ -15,6 +15,7 @@
 #include "common_testing.h"
 
 #include "hlasmparser_multiline.h"
+#include "utils/task.h"
 #include "workspace_manager.h"
 #include "workspaces/workspace.h"
 
@@ -23,6 +24,13 @@ void parse_all_files(hlasm_plugin::parser_library::workspaces::workspace& ws)
     for (auto t = ws.parse_file(); t.valid(); t = ws.parse_file())
         t.run();
 }
+
+void run_if_valid(hlasm_plugin::utils::task t)
+{
+    if (t.valid())
+        t.run();
+}
+
 
 std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(
     hlasm_plugin::parser_library::parsing::hlasmparser_multiline& h_parser)

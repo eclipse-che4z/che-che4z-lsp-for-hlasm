@@ -21,6 +21,8 @@
 #include <utility>
 #include <vector>
 
+#include "parser_library_export.h"
+
 #pragma warning(push)
 #pragma warning(disable : 4661)
 

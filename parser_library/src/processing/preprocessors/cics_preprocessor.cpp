@@ -1267,7 +1267,7 @@ public:
     }
 
     // Inherited via preprocessor
-    utils::value_task<document> generate_replacement(document doc) override
+    [[nodiscard]] utils::value_task<document> generate_replacement(document doc) override
     {
         reset();
         m_result.clear();

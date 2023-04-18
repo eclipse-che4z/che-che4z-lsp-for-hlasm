@@ -43,13 +43,19 @@ protected:
     void analyze(analyzer& a) { a.co_analyze().run(); }
 };
 
+auto get_file_cortn(std::optional<std::string> result)
+{
+    return [result](
+               const auto&) { return hlasm_plugin::utils::value_task<std::optional<std::string>>::from_value(result); };
+}
+
 } // namespace
 
 TEST_F(debug_lib_provider_test, parse_library)
 {
     const std::string aaa_content = " MNOTE 'AAA'";
     const resource_location aaa_location("AAA");
-    EXPECT_CALL(fm_mock, get_file_content(Eq(aaa_location))).WillOnce(Return(aaa_content));
+    EXPECT_CALL(fm_mock, get_file_content(Eq(aaa_location))).WillOnce(Invoke(get_file_cortn(aaa_content)));
     EXPECT_CALL(*mock_lib, has_file(Eq("AAA"), _)).WillOnce(DoAll(SetArgPointee<1>(aaa_location), Return(true)));
 
     std::string input = " COPY AAA";
@@ -73,7 +79,7 @@ TEST_F(debug_lib_provider_test, get_library)
 {
     const std::string aaa_content = "AAA content";
     const resource_location aaa_location("AAA");
-    EXPECT_CALL(fm_mock, get_file_content(Eq(aaa_location))).WillOnce(Return(aaa_content));
+    EXPECT_CALL(fm_mock, get_file_content(Eq(aaa_location))).WillOnce(Invoke(get_file_cortn(aaa_content)));
 
     EXPECT_CALL(*mock_lib, has_file(Eq("AAA"), _)).WillOnce(DoAll(SetArgPointee<1>(aaa_location), Return(true)));
     EXPECT_CALL(*mock_lib, has_file(Eq("BBB"), _)).WillOnce(Return(false));

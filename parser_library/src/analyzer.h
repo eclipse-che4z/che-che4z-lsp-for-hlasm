@@ -161,7 +161,7 @@ public:
     semantics::lines_info take_semantic_tokens();
 
     void analyze();
-    utils::task co_analyze() &;
+    [[nodiscard]] utils::task co_analyze() &;
 
     void collect_diags() const override;
     const performance_metrics& get_metrics() const;

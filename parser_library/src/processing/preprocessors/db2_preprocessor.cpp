@@ -542,7 +542,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
         return nr;
     }
 
-    utils::value_task<std::pair<line_type, std::string>> process_include_member(
+    [[nodiscard]] utils::value_task<std::pair<line_type, std::string>> process_include_member(
         line_type instruction_type, std::string member, size_t lineno)
     {
         auto member_upper = utils::to_upper_copy(member);
@@ -1030,7 +1030,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
         return { b, e };
     }
 
-    utils::task generate_replacement(
+    [[nodiscard]] utils::task generate_replacement(
         line_iterator it, line_iterator end, db2_logical_line_helper& ll, bool include_allowed)
     {
         bool skip_continuation = false;
@@ -1132,7 +1132,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
     }
 
     // Inherited via preprocessor
-    utils::value_task<document> generate_replacement(document doc) override
+    [[nodiscard]] utils::value_task<document> generate_replacement(document doc) override
     {
         reset();
         m_source_translated = false;

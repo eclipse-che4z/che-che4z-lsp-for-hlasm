@@ -30,6 +30,7 @@
 #include "workspace_manager_requests.h"
 
 namespace hlasm_plugin::parser_library {
+class workspace_manager_external_file_requests;
 
 namespace workspaces {
 class workspace;
@@ -91,7 +92,7 @@ class PARSER_LIBRARY_EXPORT workspace_manager
     class impl;
 
 public:
-    workspace_manager();
+    explicit workspace_manager(workspace_manager_external_file_requests* external_file_requests = nullptr);
 
     workspace_manager(const workspace_manager&) = delete;
     workspace_manager& operator=(const workspace_manager&) = delete;

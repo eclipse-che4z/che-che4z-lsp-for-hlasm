@@ -88,16 +88,18 @@ public:
 
     void collect_diags() const override;
 
-    void mark_file_for_parsing(const resource_location& file_location, open_file_result file_content_status);
+    [[nodiscard]] utils::task mark_file_for_parsing(
+        const resource_location& file_location, file_content_state file_content_status);
     void mark_all_opened_files();
-    bool refresh_libraries(const std::vector<resource_location>& file_locations);
-    void did_open_file(const resource_location& file_location,
-        open_file_result file_content_status = open_file_result::changed_content);
-    void did_change_file(const resource_location& file_location, const document_change* changes, size_t ch_size);
-    void did_close_file(const resource_location& file_location);
-    void did_change_watched_files(const std::vector<resource_location>& file_locations);
+    [[nodiscard]] utils::task did_open_file(
+        resource_location file_location, file_content_state file_content_status = file_content_state::changed_content);
+    [[nodiscard]] utils::task did_change_file(resource_location file_location, file_content_state file_content_status);
+    [[nodiscard]] utils::task did_close_file(resource_location file_location);
+    [[nodiscard]] utils::task did_change_watched_files(
+        std::vector<resource_location> file_locations, std::vector<file_content_state> file_change_status);
 
-    utils::value_task<parse_file_result> parse_file(const resource_location& preferred_file = resource_location());
+    [[nodiscard]] utils::value_task<parse_file_result> parse_file(
+        const resource_location& preferred_file = resource_location());
 
     location definition(const resource_location& document_loc, position pos) const;
     std::vector<location> references(const resource_location& document_loc, position pos) const;
@@ -115,14 +117,14 @@ public:
     virtual std::vector<preprocessor_options> get_preprocessor_options(const resource_location& file_location) const;
     const ws_uri& uri() const;
 
-    void open();
+    [[nodiscard]] utils::task open();
     void close();
 
     void set_message_consumer(message_consumer* consumer);
 
     file_manager& get_file_manager() const;
 
-    bool settings_updated();
+    [[nodiscard]] utils::value_task<bool> settings_updated();
 
     const processor_group& get_proc_grp(const resource_location& file) const;
     const processor_group& get_proc_grp(const proc_grp_id& id) const; // test only
@@ -189,13 +191,13 @@ private:
         processor_file_compoments& operator=(processor_file_compoments&&) noexcept;
         ~processor_file_compoments();
 
-        void update_source_if_needed(file_manager& fm);
+        [[nodiscard]] utils::task update_source_if_needed(file_manager& fm);
     };
 
     std::unordered_map<resource_location, processor_file_compoments, resource_location_hasher> m_processor_files;
     std::unordered_set<resource_location, resource_location_hasher> m_parsing_pending;
 
-    processor_file_compoments& add_processor_file_impl(std::shared_ptr<file> f);
+    [[nodiscard]] utils::value_task<processor_file_compoments&> add_processor_file_impl(std::shared_ptr<file> f);
     const processor_file_compoments* find_processor_file_impl(const resource_location& file) const;
     friend struct workspace_parse_lib_provider;
     workspace_file_info parse_successful(processor_file_compoments& comp, workspace_parse_lib_provider libs);

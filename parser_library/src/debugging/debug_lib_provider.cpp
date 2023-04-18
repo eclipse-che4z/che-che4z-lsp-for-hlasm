@@ -39,7 +39,7 @@ utils::value_task<bool> debug_lib_provider::parse_library(
         if (!lib->has_file(library, &url))
             continue;
 
-        auto content_o = m_file_manager.get_file_content(url);
+        auto content_o = co_await m_file_manager.get_file_content(url);
         if (!content_o.has_value())
             break;
 
@@ -71,13 +71,26 @@ debug_lib_provider::get_library(std::string library)
         if (!lib->has_file(library, &url))
             continue;
 
-        auto content_o = m_file_manager.get_file_content(url);
+        auto content_o = co_await m_file_manager.get_file_content(url);
         if (!content_o.has_value())
             break;
 
         co_return std::pair(std::move(content_o).value(), std::move(url));
     }
     co_return std::nullopt;
+}
+
+utils::task debug_lib_provider::prefetch_libraries() const
+{
+    std::vector<utils::task> pending_prefetches;
+    for (const auto& lib : m_libraries)
+        if (auto p = lib->prefetch(); p.valid() && !p.done())
+            pending_prefetches.emplace_back(std::move(p));
+
+    if (pending_prefetches.empty())
+        return {};
+
+    return utils::task::wait_all(std::move(pending_prefetches));
 }
 
 } // namespace hlasm_plugin::parser_library::debugging

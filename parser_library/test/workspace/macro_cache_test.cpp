@@ -336,7 +336,7 @@ TEST(macro_cache_test, overwrite_by_inline)
     EXPECT_CALL(*library, has_file(std::string_view("MAC"), _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(macro_file_loc), Return(true)));
 
-    ws.did_open_file(opencode_file_loc);
+    run_if_valid(ws.did_open_file(opencode_file_loc));
     parse_all_files(ws);
     ws.collect_diags();
 
@@ -344,8 +344,7 @@ TEST(macro_cache_test, overwrite_by_inline)
     EXPECT_TRUE(find_diag_with_filename(ws.diags(), macro_file_loc));
     EXPECT_TRUE(find_diag_with_filename(ws.diags(), opencode_file_loc));
 
-    document_change change(range(), "", 0);
-    ws.did_change_file(opencode_file_loc, &change, 1);
+    run_if_valid(ws.did_change_file(opencode_file_loc, file_content_state::changed_content));
     parse_all_files(ws);
     ws.diags().clear();
     ws.collect_diags();

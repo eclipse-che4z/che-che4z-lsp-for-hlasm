@@ -15,6 +15,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "utils/task.h"
 #include "workspaces/library.h"
 
 namespace {
@@ -22,7 +23,8 @@ class library_mock : public hlasm_plugin::parser_library::workspaces::library
 {
 public:
     // Inherited via library
-    MOCK_METHOD(void, refresh, (), (override));
+    MOCK_METHOD(hlasm_plugin::utils::task, refresh, (), (override));
+    MOCK_METHOD(hlasm_plugin::utils::task, prefetch, (), (override));
     MOCK_METHOD(std::vector<std::string>, list_files, (), (override));
     MOCK_METHOD(std::string, refresh_url_prefix, (), (const override));
     MOCK_METHOD(bool, has_file, (std::string_view, hlasm_plugin::utils::resource::resource_location* url), (override));

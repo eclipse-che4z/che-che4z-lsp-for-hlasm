@@ -31,7 +31,10 @@ namespace hlasm_plugin::parser_library::workspaces {
 class external_file_reader
 {
 public:
-    virtual std::optional<std::string> load_text(const utils::resource::resource_location& document_loc) const = 0;
+    [[nodiscard]] virtual utils::value_task<std::optional<std::string>> load_text(
+        const utils::resource::resource_location& document_loc) const = 0;
+    [[nodiscard]] virtual utils::value_task<list_directory_result> list_directory_files(
+        const utils::resource::resource_location& directory) const = 0;
 
 protected:
     ~external_file_reader() = default;
@@ -54,17 +57,18 @@ public:
 
     ~file_manager_impl();
 
-    std::shared_ptr<file> add_file(const utils::resource::resource_location&) override;
+    [[nodiscard]] utils::value_task<std::shared_ptr<file>> add_file(const utils::resource::resource_location&) override;
 
     std::shared_ptr<file> find(const utils::resource::resource_location& key) const override;
 
-    list_directory_result list_directory_files(const utils::resource::resource_location& directory) const override;
+    [[nodiscard]] utils::value_task<list_directory_result> list_directory_files(
+        const utils::resource::resource_location& directory) const override;
     list_directory_result list_directory_subdirs_and_symlinks(
         const utils::resource::resource_location& directory) const override;
 
     std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec) const override;
 
-    open_file_result did_open_file(
+    file_content_state did_open_file(
         const utils::resource::resource_location& document_loc, version_t version, std::string text) override;
     void did_change_file(const utils::resource::resource_location& document_loc,
         version_t version,
@@ -80,9 +84,11 @@ public:
     std::string get_virtual_file(unsigned long long id) const override;
     utils::resource::resource_location get_virtual_file_workspace(unsigned long long id) const override;
 
-    open_file_result update_file(const utils::resource::resource_location& document_loc) override;
+    [[nodiscard]] utils::value_task<file_content_state> update_file(
+        const utils::resource::resource_location& document_loc) override;
 
-    std::optional<std::string> get_file_content(const utils::resource::resource_location&) override;
+    [[nodiscard]] utils::value_task<std::optional<std::string>> get_file_content(
+        const utils::resource::resource_location&) override;
 
 private:
     const external_file_reader* m_file_reader;

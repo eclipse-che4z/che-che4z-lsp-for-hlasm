@@ -114,14 +114,26 @@ class debugger::impl final : public processing::statement_analyzer
 
     utils::task analyzer_task;
 
-    utils::task start_main_analyzer(std::string open_code_text,
+    utils::task start_main_analyzer(file_manager& fm,
         debug_lib_provider debug_provider,
         workspaces::file_manager_vfm vfm,
         asm_option asm_opts,
         std::vector<preprocessor_options> pp_opts,
-        utils::resource::resource_location open_code_location)
+        utils::resource::resource_location open_code_location,
+        workspace_manager_response<bool> resp)
     {
-        analyzer a(open_code_text,
+        auto open_code_text = co_await fm.get_file_content(open_code_location);
+        if (!open_code_text.has_value())
+        {
+            resp.provide(false);
+            co_return;
+        }
+        resp.provide(true);
+
+        if (auto prefetch = debug_provider.prefetch_libraries(); prefetch.valid())
+            co_await std::move(prefetch);
+
+        analyzer a(open_code_text.value(),
             analyzer_options {
                 std::move(open_code_location),
                 &debug_provider,
@@ -140,28 +152,26 @@ class debugger::impl final : public processing::statement_analyzer
 public:
     impl() = default;
 
-    bool launch(std::string_view source, workspaces::workspace& workspace, bool stop_on_entry)
+    bool launch(std::string_view source,
+        workspaces::workspace& workspace,
+        bool stop_on_entry,
+        workspace_manager_response<bool> resp)
     {
         // still has data races
         utils::resource::resource_location open_code_location(source);
-        auto open_code_text = workspace.get_file_manager().get_file_content(open_code_location);
-        if (!open_code_text.has_value())
-        {
-            debug_ended_ = true;
-            return false;
-        }
         opencode_source_uri_ = open_code_location.get_uri();
         continue_ = true;
         stop_on_next_stmt_ = stop_on_entry;
         stop_on_stack_changes_ = false;
 
         auto& fm = workspace.get_file_manager();
-        analyzer_task = start_main_analyzer(std::move(open_code_text).value(),
+        analyzer_task = start_main_analyzer(fm,
             debug_lib_provider(workspace.get_libraries(open_code_location), fm),
             workspaces::file_manager_vfm(fm, utils::resource::resource_location(workspace.uri())),
             workspace.get_asm_options(open_code_location),
             workspace.get_preprocessor_options(open_code_location),
-            open_code_location);
+            open_code_location,
+            std::move(resp));
 
         return true;
     }
@@ -177,7 +187,7 @@ public:
         if (!analyzer_task.done())
         {
             analyzer_task.resume(yield_indicator);
-            return true;
+            return false;
         }
 
         analyzer_task = {};
@@ -450,9 +460,12 @@ debugger::~debugger()
         delete pimpl;
 }
 
-bool debugger::launch(sequence<char> source, workspaces::workspace& source_workspace, bool stop_on_entry)
+void debugger::launch(sequence<char> source,
+    workspaces::workspace& source_workspace,
+    bool stop_on_entry,
+    workspace_manager_response<bool> resp)
 {
-    return pimpl->launch(std::string_view(source), source_workspace, stop_on_entry);
+    pimpl->launch(std::string_view(source), source_workspace, stop_on_entry, std::move(resp));
 }
 
 void debugger::set_event_consumer(debug_event_consumer* event) { pimpl->set_event_consumer(event); }

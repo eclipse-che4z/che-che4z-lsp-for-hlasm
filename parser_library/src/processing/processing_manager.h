@@ -55,7 +55,7 @@ public:
         statement_fields_parser& parser,
         std::shared_ptr<std::vector<fade_message_s>> fade_msgs);
 
-    utils::task co_step();
+    [[nodiscard]] utils::task co_step();
 
     void register_stmt_analyzer(statement_analyzer* stmt_analyzer);
 

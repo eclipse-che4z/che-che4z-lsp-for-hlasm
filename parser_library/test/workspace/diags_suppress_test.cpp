@@ -61,8 +61,8 @@ TEST(diags_suppress, no_suppress)
     shared_json global_settings = make_empty_shared_json();
 
     workspace ws(fm, config, global_settings);
-    ws.open();
-    ws.did_open_file(file_loc);
+    ws.open().run();
+    run_if_valid(ws.did_open_file(file_loc));
     parse_all_files(ws);
 
     ws.collect_diags();
@@ -92,8 +92,8 @@ TEST(diags_suppress, do_suppress)
 
     workspace ws(fm, config, global_settings);
     ws.set_message_consumer(&msg_consumer);
-    ws.open();
-    ws.did_open_file(file_loc);
+    ws.open().run();
+    run_if_valid(ws.did_open_file(file_loc));
     parse_all_files(ws);
 
     ws.collect_diags();
@@ -121,8 +121,8 @@ TEST(diags_suppress, pgm_supress_limit_changed)
     shared_json global_settings = make_empty_shared_json();
 
     workspace ws(fm, config, global_settings);
-    ws.open();
-    ws.did_open_file(file_loc);
+    ws.open().run();
+    run_if_valid(ws.did_open_file(file_loc));
     parse_all_files(ws);
 
     ws.collect_diags();
@@ -132,10 +132,10 @@ TEST(diags_suppress, pgm_supress_limit_changed)
     document_change ch(range({ 0, 1 }, { 0, 1 }), new_limit_str.c_str(), new_limit_str.size());
 
     fm.did_change_file(pgm_conf_name, 1, &ch, 1);
-    ws.did_change_file(pgm_conf_name, &ch, 1);
+    run_if_valid(ws.did_change_file(pgm_conf_name, file_content_state::changed_content));
     parse_all_files(ws);
 
-    ws.did_change_file(file_loc, &ch, 1);
+    run_if_valid(ws.did_change_file(file_loc, file_content_state::changed_content));
     parse_all_files(ws);
 
     ws.diags().clear();
@@ -162,8 +162,8 @@ TEST(diags_suppress, mark_for_parsing_only)
     shared_json global_settings = make_empty_shared_json();
 
     workspace ws(fm, config, global_settings);
-    ws.open();
-    ws.did_open_file(file_loc);
+    ws.open().run();
+    run_if_valid(ws.did_open_file(file_loc));
     // parsing not done yet
 
     ws.collect_diags();

@@ -71,7 +71,7 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
     {
         std::vector<std::unique_ptr<processing::preprocessor>> pp;
 
-        utils::value_task<document> generate_replacement(document doc) override
+        [[nodiscard]] utils::value_task<document> generate_replacement(document doc) override
         {
             reset();
 

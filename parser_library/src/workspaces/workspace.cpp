@@ -55,7 +55,7 @@ struct parsing_results
     std::vector<diagnostic_s> macro_diagnostics;
 };
 
-utils::value_task<parsing_results> parse_one_file(std::shared_ptr<context::id_storage> ids,
+[[nodiscard]] utils::value_task<parsing_results> parse_one_file(std::shared_ptr<context::id_storage> ids,
     std::shared_ptr<file> file,
     parse_lib_provider& lib_provider,
     asm_option asm_opts,
@@ -146,11 +146,12 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
         }
     }
 
-    std::shared_ptr<file> get_file(const resource_location& url)
+    [[nodiscard]] utils::value_task<std::shared_ptr<file>> get_file(const resource_location& url)
     {
-        return current_file_map
-            .try_emplace(url, utils::factory([this, &url]() { return ws.file_manager_.add_file(url); }))
-            .first->second;
+        if (auto it = current_file_map.find(url); it != current_file_map.end())
+            co_return it->second;
+        else
+            co_return current_file_map.try_emplace(url, co_await ws.file_manager_.add_file(url)).first->second;
     }
 
     auto& get_cache(const resource_location& url, const std::shared_ptr<file>& file)
@@ -170,16 +171,17 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
     }
 
     // Inherited via parse_lib_provider
-    utils::value_task<bool> parse_library(std::string library, analyzing_context ctx, library_data data) override
+    [[nodiscard]] utils::value_task<bool> parse_library(
+        std::string library, analyzing_context ctx, library_data data) override
     {
         resource_location url = get_url(library);
         if (url.empty())
             co_return false;
 
-        std::shared_ptr<file> file = get_file(url);
+        std::shared_ptr<file> file = co_await get_file(url);
         // TODO: if file is in error do something?
 
-        auto& macro_pfc = ws.add_processor_file_impl(file);
+        auto& macro_pfc = co_await ws.add_processor_file_impl(file);
 
         auto cache_key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, data);
 
@@ -226,13 +228,26 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
         return result;
     }
 
-    utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>> get_library(
-        std::string library) override
+    [[nodiscard]] utils::value_task<std::optional<std::pair<std::string, utils::resource::resource_location>>>
+    get_library(std::string library) override
     {
         if (auto url = get_url(library); url.empty())
             co_return std::nullopt;
         else
-            co_return std::make_pair(get_file(url)->get_text(), std::move(url));
+            co_return std::make_pair((co_await get_file(url))->get_text(), std::move(url));
+    }
+
+    [[nodiscard]] utils::task prefetch_libraries() const
+    {
+        std::vector<utils::task> pending_prefetches;
+        for (const auto& lib : libraries)
+            if (auto p = lib->prefetch(); p.valid() && !p.done())
+                pending_prefetches.emplace_back(std::move(p));
+
+        if (pending_prefetches.empty())
+            return {};
+
+        return utils::task::wait_all(std::move(pending_prefetches));
     }
 };
 
@@ -545,8 +560,11 @@ utils::value_task<parse_file_result> workspace::parse_file(const resource_locati
     return [](processor_file_compoments& comp, workspace& self) -> utils::value_task<parse_file_result> {
         const auto& url = comp.m_file->get_location();
 
-        comp.m_alternative_config = self.m_configuration.load_alternative_config_if_needed(url);
+        comp.m_alternative_config = co_await self.m_configuration.load_alternative_config_if_needed(url);
         workspace_parse_lib_provider ws_lib(self, comp);
+
+        if (auto prefetch = ws_lib.prefetch_libraries(); prefetch.valid())
+            co_await std::move(prefetch);
 
         bool collect_perf_metrics = comp.m_collect_perf_metrics;
 
@@ -596,23 +614,17 @@ void workspace::mark_all_opened_files()
             m_parsing_pending.emplace(fname);
 }
 
-void workspace::mark_file_for_parsing(const resource_location& file_location, open_file_result file_content_status)
+utils::task workspace::mark_file_for_parsing(
+    const resource_location& file_location, file_content_state file_content_status)
 {
-    if (file_content_status == open_file_result::identical)
-        return;
+    if (file_content_status == file_content_state::identical)
+        return {};
 
     // TODO: add support for hlasm to vscode (auto detection??) and do the decision based on languageid
-    if (m_configuration.is_configuration_file(file_location))
-    {
-        if (m_configuration.parse_configuration_file(file_location) == parse_config_file_result::parsed)
-            mark_all_opened_files();
-        return;
-    }
-
     // TODO: what about removing files??? what if depentands_ points to not existing file?
     // TODO: apparently just opening a file without changing it triggers reparse
 
-    if (file_content_status == open_file_result::changed_content && trigger_reparse(file_location))
+    if (file_content_status == file_content_state::changed_content && trigger_reparse(file_location))
     {
         for (auto& [_, component] : m_processor_files)
         {
@@ -625,9 +637,11 @@ void workspace::mark_file_for_parsing(const resource_location& file_location, op
 
     if (auto it = m_processor_files.find(file_location); it != m_processor_files.end() && it->second.m_opened)
     {
-        it->second.update_source_if_needed(file_manager_);
         m_parsing_pending.emplace(it->second.m_file->get_location());
+        return it->second.update_source_if_needed(file_manager_);
     }
+
+    return {};
 }
 
 workspace_file_info workspace::parse_successful(processor_file_compoments& comp, workspace_parse_lib_provider libs)
@@ -658,35 +672,36 @@ workspace_file_info workspace::parse_successful(processor_file_compoments& comp,
     return ws_file_info;
 }
 
-bool workspace::refresh_libraries(const std::vector<resource_location>& file_locations)
-{
-    return m_configuration.refresh_libraries(file_locations);
-}
-
-void workspace::did_open_file(const resource_location& file_location, open_file_result file_content_status)
+utils::task workspace::did_open_file(resource_location file_location, file_content_state file_content_status)
 {
     if (!m_configuration.is_configuration_file(file_location))
     {
-        auto& file = add_processor_file_impl(file_manager_.add_file(file_location));
+        auto& file = co_await add_processor_file_impl(co_await file_manager_.add_file(file_location));
         file.m_opened = true;
         file.m_collect_perf_metrics = true;
         m_parsing_pending.emplace(file_location);
+        if (auto t = mark_file_for_parsing(file_location, file_content_status); t.valid())
+            co_await std::move(t);
     }
-
-    mark_file_for_parsing(file_location, file_content_status);
+    else
+    {
+        if (co_await m_configuration.parse_configuration_file(file_location) == parse_config_file_result::parsed)
+            mark_all_opened_files();
+    }
 }
 
-void workspace::did_close_file(const resource_location& file_location)
+utils::task workspace::did_close_file(resource_location file_location)
 {
     auto fcomp = m_processor_files.find(file_location);
     if (fcomp == m_processor_files.end())
-        return; // this indicates some kind of double close
+        co_return; // this indicates some kind of double close or configuration file close
 
     fcomp->second.m_opened = false;
     m_parsing_pending.erase(file_location);
 
     bool found_dependency = false;
     // first check whether the file is a dependency
+    std::vector<utils::task> pending_updates;
     for (std::shared_ptr<file> file; const auto& [_, component] : m_processor_files)
     {
         auto it = component.m_dependencies.find(file_location);
@@ -698,16 +713,18 @@ void workspace::did_close_file(const resource_location& file_location)
         found_dependency = true;
 
         if (!file)
-            file = file_manager_.add_file(file_location);
+            file = co_await file_manager_.add_file(file_location);
 
         if (file->get_version() == std::get<std::shared_ptr<dependency_cache>>(it->second)->version)
             continue;
 
-        mark_file_for_parsing(file_location, open_file_result::changed_content);
+        if (auto t = mark_file_for_parsing(file_location, file_content_state::changed_content); t.valid() && !t.done())
+            pending_updates.emplace_back(std::move(t));
         break;
     }
+    co_await utils::task::wait_all(std::move(pending_updates));
     if (found_dependency)
-        return;
+        co_return;
 
     // find if the file is a dependant
 
@@ -721,19 +738,38 @@ void workspace::did_close_file(const resource_location& file_location)
     m_processor_files.erase(fcomp);
 }
 
-void workspace::did_change_file(const resource_location& file_location, const document_change*, size_t cnt)
+utils::task workspace::did_change_file(resource_location file_location, file_content_state file_content_status)
 {
-    mark_file_for_parsing(file_location, cnt ? open_file_result::changed_content : open_file_result::identical);
+    if (m_configuration.is_configuration_file(file_location))
+    {
+        return m_configuration.parse_configuration_file(file_location).then([this](auto result) {
+            if (result == parse_config_file_result::parsed)
+                mark_all_opened_files();
+        });
+    }
+    else
+        return mark_file_for_parsing(file_location, file_content_status);
 }
 
-void workspace::did_change_watched_files(const std::vector<resource_location>& file_locations)
+utils::task workspace::did_change_watched_files(
+    std::vector<resource_location> file_locations, std::vector<file_content_state> file_change_status)
 {
-    bool refreshed = refresh_libraries(file_locations);
+    assert(file_locations.size() == file_change_status.size());
+
+    bool refreshed = co_await m_configuration.refresh_libraries(file_locations);
+    auto cit = file_change_status.begin();
+
+    std::vector<utils::task> pending_updates;
     for (const auto& file_location : file_locations)
     {
-        auto from_fm = file_manager_.update_file(file_location);
-        mark_file_for_parsing(file_location, refreshed ? open_file_result::changed_content : from_fm);
+        auto change_status = *cit++;
+        auto t = mark_file_for_parsing(file_location, refreshed ? file_content_state::changed_content : change_status);
+        if (!t.valid() || t.done())
+            continue;
+
+        pending_updates.emplace_back(std::move(t));
     }
+    co_await utils::task::wait_all(std::move(pending_updates));
 }
 
 location workspace::definition(const resource_location& document_loc, position pos) const
@@ -824,11 +860,11 @@ std::optional<performance_metrics> workspace::last_metrics(const resource_locati
     return comp->m_last_results->metrics;
 }
 
-void workspace::open()
+utils::task workspace::open()
 {
     opened_ = true;
 
-    m_configuration.parse_configuration_file();
+    co_await m_configuration.parse_configuration_file();
 }
 
 void workspace::close() { opened_ = false; }
@@ -837,12 +873,12 @@ void workspace::set_message_consumer(message_consumer* consumer) { message_consu
 
 file_manager& workspace::get_file_manager() const { return file_manager_; }
 
-bool workspace::settings_updated()
+utils::value_task<bool> workspace::settings_updated()
 {
     bool updated = m_configuration.settings_updated();
-    if (updated && m_configuration.parse_configuration_file() == parse_config_file_result::parsed)
+    if (updated && co_await m_configuration.parse_configuration_file() == parse_config_file_result::parsed)
         mark_all_opened_files();
-    return updated;
+    co_return updated;
 }
 
 const processor_group& workspace::get_proc_grp(const resource_location& file) const
@@ -1069,25 +1105,29 @@ workspace::processor_file_compoments& workspace::processor_file_compoments::oper
     processor_file_compoments&&) noexcept = default;
 workspace::processor_file_compoments::~processor_file_compoments() = default;
 
-void workspace::processor_file_compoments::update_source_if_needed(file_manager& fm)
+utils::task workspace::processor_file_compoments::update_source_if_needed(file_manager& fm)
 {
     if (!m_file->up_to_date())
     {
-        m_file = fm.add_file(m_file->get_location());
-        *m_last_results = {};
+        return fm.add_file(m_file->get_location()).then([this](std::shared_ptr<file> f) {
+            m_file = std::move(f);
+            *m_last_results = {};
+        });
     }
+    return {};
 }
 
-workspace::processor_file_compoments& workspace::add_processor_file_impl(std::shared_ptr<file> f)
+utils::value_task<workspace::processor_file_compoments&> workspace::add_processor_file_impl(std::shared_ptr<file> f)
 {
     const auto& loc = f->get_location();
     if (auto it = m_processor_files.find(loc); it != m_processor_files.end())
     {
-        it->second.update_source_if_needed(file_manager_);
-        return it->second;
+        if (auto t = it->second.update_source_if_needed(file_manager_); t.valid())
+            co_await std::move(t);
+        co_return it->second;
     }
 
-    return m_processor_files.try_emplace(loc, std::move(f)).first->second;
+    co_return m_processor_files.try_emplace(loc, std::move(f)).first->second;
 }
 
 const workspace::processor_file_compoments* workspace::find_processor_file_impl(

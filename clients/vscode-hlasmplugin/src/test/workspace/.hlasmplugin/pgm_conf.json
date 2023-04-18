@@ -35,6 +35,10 @@
     {
       "program": "pattern_test/test?_?utf?_8_?.hlasm",
       "pgroup": "patterns_utf_8_wildcards"
+    },
+    {
+      "program": "remote.hlasm",
+      "pgroup": "remote"
     }
   ],
   "alwaysRecognize": [

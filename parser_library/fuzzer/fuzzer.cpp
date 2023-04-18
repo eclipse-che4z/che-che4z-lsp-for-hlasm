@@ -53,7 +53,7 @@ class fuzzer_lib_provider : public parse_lib_provider
     }
 
 public:
-    value_task<bool> parse_library(std::string library, analyzing_context ctx, library_data data) override
+    [[nodiscard]] value_task<bool> parse_library(std::string library, analyzing_context ctx, library_data data) override
     {
         auto lib = read_library_name(library);
         if (!lib.has_value())
@@ -76,7 +76,7 @@ public:
         return true;
     }
 
-    value_task<std::optional<std::pair<std::string, resource::resource_location>>> get_library(
+    [[nodiscard]] value_task<std::optional<std::pair<std::string, resource::resource_location>>> get_library(
         std::string library) override
     {
         auto lib = read_library_name(library);

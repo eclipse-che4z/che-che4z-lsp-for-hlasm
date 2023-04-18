@@ -22,6 +22,8 @@ std::optional<nlohmann::json> message_unwrapper::read()
 {
     if (auto msg = source.read(); msg.has_value())
     {
+        if (msg->is_discarded())
+            return msg;
         auto it = msg.value().find("params");
         if (it != msg.value().end() && !it->is_null())
             return std::move(*it);

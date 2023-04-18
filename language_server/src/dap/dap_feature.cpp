@@ -18,6 +18,7 @@
 #include "utils/path.h"
 #include "utils/path_conversions.h"
 #include "utils/platform.h"
+#include "workspace_manager_response.h"
 
 namespace {
 using namespace hlasm_plugin::language_server::dap;
@@ -152,10 +153,30 @@ void dap_feature::on_launch(const request_id& request_seq, const nlohmann::json&
     auto workspace_id = ws_mngr_.find_workspace(program_path.c_str());
     debugger->set_event_consumer(this);
 
-    if (debugger->launch(program_path.c_str(), *workspace_id, stop_on_entry))
-        response_->respond(request_seq, "launch", nlohmann::json());
-    else
-        response_->respond_error(request_seq, "launch", 0, "File not found", nlohmann::json());
+    struct launch_handler
+    {
+        request_id rs;
+        response_provider* rp;
+
+        void provide(bool launched) const
+        {
+            if (launched)
+                rp->respond(rs, "launch", nlohmann::json());
+            else
+                rp->respond_error(rs, "launch", 0, "File not found", nlohmann::json());
+        }
+
+        void error(int err, const char* msg) const noexcept
+        {
+            // terminates on throw
+            rp->respond_error(rs, "launch", err, msg, nlohmann::json());
+        }
+    };
+
+    debugger->launch(program_path.c_str(),
+        *workspace_id,
+        stop_on_entry,
+        parser_library::make_workspace_manager_response(launch_handler { request_seq, response_ }).first);
 }
 
 void dap_feature::on_set_breakpoints(const request_id& request_seq, const nlohmann::json& args)

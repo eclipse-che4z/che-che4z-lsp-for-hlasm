@@ -30,6 +30,7 @@
 #include "lib_config.h"
 #include "nlohmann/json.hpp"
 #include "parsing_metadata_serialization.h"
+#include "utils/error_codes.h"
 #include "utils/general_hashers.h"
 #include "utils/resource_location.h"
 
@@ -416,7 +417,7 @@ void server::request_workspace_configuration(
         } },
         [json_text = std::move(json_text)](const nlohmann::json& params) {
             if (!params.is_array() || params.size() != 1)
-                json_text.error(-1, "Invalid response to 'workspace/configuration'");
+                json_text.error(utils::error::invalid_conf_response);
             else
                 json_text.provide(parser_library::sequence<char>(params.at(0).dump()));
         });

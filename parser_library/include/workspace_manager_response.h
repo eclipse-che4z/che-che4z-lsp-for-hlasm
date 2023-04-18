@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_RESPONSE_H
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_RESPONSE_H
 
+#include <atomic>
 #include <utility>
 
 namespace hlasm_plugin::parser_library {
@@ -30,6 +31,17 @@ struct is_in_place_type_t<std::in_place_type_t<T>>
 {
     static constexpr bool value = true;
 };
+
+template<typename U, typename T>
+concept workspace_manager_response_compatible = requires(U& u, T t)
+{
+    u.provide(std::move(t));
+    {
+        u.error(0, "")
+    }
+    noexcept;
+};
+
 } // namespace detail
 
 class workspace_manager_response_base
@@ -37,26 +49,19 @@ class workspace_manager_response_base
 protected:
     struct impl_actions
     {
-        void (*deleter)(void*) noexcept = nullptr;
-        void (*error)(void*, int, const char*) = nullptr;
-        void (*provide)(void*, void*) = nullptr;
-    };
-    struct invalidator_t
-    {
-        void* impl = nullptr;
-        void (*deleter)(void*) noexcept = nullptr;
-        union
-        {
-            void (*complex)(void*) = nullptr;
-            void (*simple)();
-        };
+        void (*addref)(void*) noexcept = nullptr;
+        void (*release)(void*) noexcept = nullptr;
+        void (*error)(void*, int, const char*) noexcept = nullptr;
+        void (*provide)(void*, void*) noexcept = nullptr;
+        void (*invalidate)(void*) noexcept = nullptr;
+        bool (*valid)(void*) noexcept = nullptr;
+        bool (*resolved)(void*) noexcept = nullptr;
     };
     struct shared_data_base
     {
-        unsigned long long counter = 1;
-        invalidator_t invalidator;
-        bool valid = true;
-        bool resolved = false;
+        std::atomic<unsigned long long> counter = 1;
+        std::atomic<bool> valid = true;
+        std::atomic<bool> resolved = false;
 
         shared_data_base() = default;
     };
@@ -72,7 +77,7 @@ protected:
         , actions(o.actions)
     {
         if (impl)
-            ++static_cast<shared_data_base*>(impl)->counter;
+            actions->addref(impl);
     }
     workspace_manager_response_base(workspace_manager_response_base&& o) noexcept
         : impl(std::exchange(o.impl, nullptr))
@@ -94,73 +99,26 @@ protected:
     }
     ~workspace_manager_response_base()
     {
-        if (impl && --static_cast<shared_data_base*>(impl)->counter == 0)
-        {
-            change_invalidation_callback({});
-            actions->deleter(impl);
-        }
+        if (impl)
+            actions->release(impl);
     }
 
-    bool valid() const noexcept { return static_cast<shared_data_base*>(impl)->valid; }
-    bool resolved() const noexcept { return static_cast<shared_data_base*>(impl)->resolved; }
-    void error(int ec, const char* error) const
+    bool valid() const noexcept { return actions->valid(impl); }
+    bool resolved() const noexcept { return actions->resolved(impl); }
+    void error(int ec, const char* error) const noexcept { actions->error(impl, ec, error); }
+    template<typename E>
+    void error(const E& e) const noexcept
     {
-        static_cast<shared_data_base*>(impl)->resolved = true;
-        return actions->error(impl, ec, error);
+        error(e.code, e.msg);
     }
-    void invalidate() const
-    {
-        auto* base = static_cast<shared_data_base*>(impl);
-        if (!base->valid)
-            return;
-
-        base->valid = false;
-        auto& i = base->invalidator;
-        if (i.impl == impl)
-            i.simple();
-        else if (i.impl)
-            i.complex(i.impl);
-    }
-
-    template<typename C>
-    void set_invalidation_callback(C t)
-    {
-        change_invalidation_callback(invalidator_t {
-            new C(std::move(t)),
-            +[](void* p) noexcept { delete static_cast<C*>(p); },
-            +[](void* p) { (*static_cast<C*>(p))(); },
-        });
-    }
-
-    template<typename C>
-    void set_invalidation_callback(C t) noexcept requires std::is_function_v<C>
-    {
-        change_invalidation_callback(invalidator_t { impl, nullptr, t });
-    }
-
-    void remove_invalidation_handler() noexcept { change_invalidation_callback({}); }
-
-    void provide(void* t) const
-    {
-        static_cast<shared_data_base*>(impl)->resolved = true;
-        actions->provide(impl, t);
-    }
+    void invalidate() const noexcept { actions->invalidate(impl); }
+    void provide(void* t) const noexcept { actions->provide(impl, t); }
 
     void* get_impl() const noexcept { return impl; }
 
 private:
     void* impl = nullptr;
     const impl_actions* actions = nullptr;
-
-    void change_invalidation_callback(invalidator_t next_i) noexcept
-    {
-        auto& i = static_cast<shared_data_base*>(impl)->invalidator;
-
-        std::swap(i, next_i);
-
-        if (next_i.deleter)
-            next_i.deleter(next_i.impl);
-    }
 };
 
 template<typename T>
@@ -194,7 +152,7 @@ public:
 template<typename T>
 class workspace_manager_response : workspace_manager_response_base
 {
-    template<typename U>
+    template<detail::workspace_manager_response_compatible<T> U>
     struct shared_data : shared_data_base
     {
         U data;
@@ -207,12 +165,44 @@ class workspace_manager_response : workspace_manager_response_base
             : data(std::forward<Args>(args)...)
         {}
     };
-    template<typename U>
+    template<detail::workspace_manager_response_compatible<T> U>
     static constexpr impl_actions get_actions = {
-        .deleter = +[](void* p) noexcept { delete static_cast<shared_data<U>*>(p); },
-        .error = +[](void* p, int ec, const char* error) { static_cast<shared_data<U>*>(p)->data.error(ec, error); },
+        .addref =
+            +[](void* p) noexcept { static_cast<shared_data<U>*>(p)->counter.fetch_add(1, std::memory_order_relaxed); },
+        .release =
+            +[](void* p) noexcept {
+                if (auto* ptr = static_cast<shared_data<U>*>(p);
+                    ptr->counter.fetch_sub(1, std::memory_order_release) == 1)
+                {
+                    std::atomic_thread_fence(std::memory_order_acquire);
+                    delete ptr;
+                }
+            },
+        .error =
+            +[](void* p, int ec, const char* error) noexcept {
+                auto* ptr = static_cast<shared_data<U>*>(p);
+                ptr->data.error(ec, error);
+                ptr->resolved.store(true, std::memory_order_release);
+            },
         .provide =
-            +[](void* p, void* t) { static_cast<shared_data<U>*>(p)->data.provide(std::move(*static_cast<T*>(t))); },
+            +[](void* p, void* t) noexcept {
+                auto* ptr = static_cast<shared_data<U>*>(p);
+                try
+                {
+                    ptr->data.provide(std::move(*static_cast<T*>(t)));
+                }
+                catch (...)
+                {
+                    ptr->data.error(-2, "Exception thrown while providing result");
+                }
+                ptr->resolved.store(true, std::memory_order_release);
+            },
+        .invalidate =
+            +[](void* p) noexcept { static_cast<shared_data<U>*>(p)->valid.store(false, std::memory_order_relaxed); },
+        .valid =
+            +[](void* p) noexcept { return static_cast<shared_data<U>*>(p)->valid.load(std::memory_order_relaxed); },
+        .resolved =
+            +[](void* p) noexcept { return static_cast<shared_data<U>*>(p)->resolved.load(std::memory_order_acquire); },
     };
 
     template<typename U>
@@ -223,11 +213,11 @@ class workspace_manager_response : workspace_manager_response_base
 
 public:
     workspace_manager_response() = default;
-    template<typename U>
+    template<detail::workspace_manager_response_compatible<T> U>
     explicit workspace_manager_response(U u) requires(!detail::is_in_place_type_t<U>::value)
         : workspace_manager_response_base(new shared_data<U>(std::move(u)), &get_actions<U>)
     {}
-    template<typename U, typename... Args>
+    template<detail::workspace_manager_response_compatible<T> U, typename... Args>
     explicit workspace_manager_response(std::in_place_type_t<U> u, Args&&... args)
         : workspace_manager_response_base(
             new shared_data<U>(std::move(u), std::forward<Args>(args)...), &get_actions<U>)
@@ -235,12 +225,10 @@ public:
 
     using workspace_manager_response_base::error;
     using workspace_manager_response_base::invalidate;
-    using workspace_manager_response_base::remove_invalidation_handler;
     using workspace_manager_response_base::resolved;
-    using workspace_manager_response_base::set_invalidation_callback;
     using workspace_manager_response_base::valid;
 
-    void provide(T t) const { workspace_manager_response_base::provide(&t); }
+    void provide(T t) const noexcept { workspace_manager_response_base::provide(&t); }
 
     friend decltype(make_workspace_manager_response);
 };

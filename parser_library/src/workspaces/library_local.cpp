@@ -68,11 +68,24 @@ library_local::library_local(library_local&& l) noexcept
     , m_proc_grps_loc(std::move(l.m_proc_grps_loc))
 {}
 
-void library_local::refresh() { load_files(); }
+utils::task library_local::refresh()
+{
+    return m_file_manager.list_directory_files(m_lib_loc).then([this](auto res) { load_files(std::move(res)); });
+}
+
+utils::task library_local::prefetch()
+{
+    if (m_files_collection.load())
+        return {};
+    else
+        return refresh();
+}
 
 std::vector<std::string> library_local::list_files()
 {
-    auto files = get_or_load_files();
+    auto files = m_files_collection.load();
+    if (!files)
+        return {};
 
     std::vector<std::string> result;
     result.reserve(files->first.size());
@@ -87,7 +100,9 @@ const utils::resource::resource_location& library_local::get_location() const { 
 
 bool library_local::has_file(std::string_view file, utils::resource::resource_location* url)
 {
-    auto files = get_or_load_files();
+    auto files = m_files_collection.load();
+    if (!files)
+        return {};
     auto it = files->first.find(file);
     if (it == files->first.end())
         return false;
@@ -104,9 +119,11 @@ void library_local::copy_diagnostics(std::vector<diagnostic_s>& target) const
         target.insert(target.end(), files->second.begin(), files->second.end());
 }
 
-library_local::files_collection_t library_local::load_files()
+library_local::files_collection_t library_local::load_files(
+    std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>, utils::path::list_directory_rc>
+        res)
 {
-    auto [files_list, rc] = m_file_manager.list_directory_files(m_lib_loc);
+    auto& [files_list, rc] = res;
     auto new_state = std::make_shared<std::pair<std::unordered_map<std::string,
                                                     utils::resource::resource_location,
                                                     utils::hashers::string_hasher,
@@ -183,13 +200,6 @@ library_local::files_collection_t library_local::load_files()
     m_files_collection.store(new_state);
 
     return new_state;
-}
-
-library_local::files_collection_t library_local::get_or_load_files()
-{
-    if (auto files = m_files_collection.load(); files)
-        return files;
-    return load_files();
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

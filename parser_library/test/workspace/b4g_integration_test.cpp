@@ -58,14 +58,15 @@ void change_and_reparse(file_manager& fm, workspace& ws, const resource_location
     static size_t version = 2;
     document_change doc_change(new_content.data(), new_content.size());
     fm.did_change_file(rl, version++, &doc_change, 1);
-    ws.did_change_file(rl, &doc_change, 1);
+    run_if_valid(ws.did_change_file(rl, file_content_state::changed_content));
     parse_all_files(ws);
 }
 } // namespace
 
 struct file_manager_impl_test : public file_manager_impl
 {
-    list_directory_result list_directory_files(const resource_location& directory) const override
+    hlasm_plugin::utils::value_task<list_directory_result> list_directory_files(
+        const resource_location& directory) const override
     {
         list_directory_result result;
 
@@ -83,7 +84,7 @@ struct file_manager_impl_test : public file_manager_impl
 
         result.second = hlasm_plugin::utils::path::list_directory_rc::done;
 
-        return result;
+        return hlasm_plugin::utils::value_task<list_directory_result>::from_value(std::move(result));
     }
     list_directory_result list_directory_subdirs_and_symlinks(const resource_location& directory) const override
     {
@@ -133,25 +134,25 @@ TEST(b4g_integration_test, basic_pgm_conf_retrieval)
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_rl, "workspace_name", file_manager, config, global_settings);
-    ws.open();
+    ws.open().run();
 
-    ws.did_open_file(pgm_a);
+    run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_text(ws.diags(), { sys_sub_p1_mac1.get_uri(), p1_mac2.get_uri() }));
     ws.diags().clear();
 
-    ws.did_close_file(pgm_a);
+    run_if_valid(ws.did_close_file(pgm_a));
     parse_all_files(ws);
 
-    ws.did_open_file(pgm_b);
+    run_if_valid(ws.did_open_file(pgm_b));
     parse_all_files(ws);
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_text(ws.diags(), { sys_sub_p2_mac1.get_uri(), p2_mac2.get_uri() }));
 
-    ws.did_close_file(pgm_b);
+    run_if_valid(ws.did_close_file(pgm_b));
 }
 
 class pgm_conf_preference_helper
@@ -188,7 +189,7 @@ public:
         fm.did_open_file(sys_sub_p2_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p2_mac1.get_uri()));
         fm.did_open_file(sys_sub_p3_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p3_mac1.get_uri()));
 
-        ws.open();
+        ws.open().run();
     }
 };
 
@@ -196,9 +197,8 @@ TEST(b4g_integration_test, pgm_conf_preference_exact_path)
 {
     pgm_conf_preference_helper helper("A");
     auto& ws = helper.ws;
-    auto& fm = helper.fm;
 
-    ws.did_open_file(pgm_b);
+    run_if_valid(ws.did_open_file(pgm_b));
     parse_all_files(ws);
     ws.collect_diags();
 
@@ -206,7 +206,7 @@ TEST(b4g_integration_test, pgm_conf_preference_exact_path)
 
     ws.diags().clear();
 
-    ws.did_open_file(pgm_a);
+    run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
     ws.collect_diags();
 
@@ -219,7 +219,7 @@ TEST(b4g_integration_test, pgm_conf_preference_regex_path)
     auto& ws = helper.ws;
     auto& fm = helper.fm;
 
-    ws.did_open_file(pgm_b);
+    run_if_valid(ws.did_open_file(pgm_b));
     parse_all_files(ws);
     ws.collect_diags();
 
@@ -228,7 +228,7 @@ TEST(b4g_integration_test, pgm_conf_preference_regex_path)
     ws.diags().clear();
     change_and_reparse(fm, ws, pgm_conf_name, std::regex_replace(helper.pgm_conf_template, std::regex("\\$x"), "*"));
 
-    ws.did_open_file(pgm_a);
+    run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
     ws.collect_diags();
 
@@ -245,10 +245,10 @@ TEST(b4g_integration_test, invalid_bridge_json)
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(empty_rl, "workspace_name", file_manager, config, global_settings);
-    ws.open();
+    workspace ws(resource_location(), "workspace_name", file_manager, config, global_settings);
+    ws.open().run();
 
-    ws.did_open_file(pgm_a);
+    run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
     ws.collect_diags();
 
@@ -268,9 +268,9 @@ TEST(b4g_integration_test, missing_pgroup)
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_rl, "workspace_name", file_manager, config, global_settings);
-    ws.open();
+    ws.open().run();
 
-    ws.did_open_file(pgm_a);
+    run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
     ws.collect_diags();
 
@@ -290,11 +290,11 @@ TEST(b4g_integration_test, missing_pgroup_but_not_used)
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_rl, "workspace_name", file_manager, config, global_settings);
-    ws.open();
+    ws.open().run();
 
-    ws.did_open_file(pgm_a);
+    run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
-    ws.did_close_file(pgm_a);
+    run_if_valid(ws.did_close_file(pgm_a));
     parse_all_files(ws);
 
     ws.collect_diags();
@@ -315,9 +315,9 @@ TEST(b4g_integration_test, bridge_config_changed)
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_rl, "workspace_name", file_manager, config, global_settings);
-    ws.open();
+    ws.open().run();
 
-    ws.did_open_file(pgm_a);
+    run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
     ws.collect_diags();
 
@@ -357,9 +357,9 @@ TEST(b4g_integration_test, proc_config_changed)
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
     workspace ws(empty_rl, "workspace_name", file_manager, config, global_settings);
-    ws.open();
+    ws.open().run();
 
-    ws.did_open_file(pgm_a);
+    run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
     ws.collect_diags();
 
@@ -388,8 +388,8 @@ TEST(b4g_integration_test, only_default_proc_group_exists)
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
     workspace ws(fm, config, global_settings);
-    ws.open();
-    ws.did_open_file(pgm_a);
+    ws.open().run();
+    run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
 
     ws.collect_diags();
@@ -415,8 +415,8 @@ TEST(b4g_integration_test, b4g_conf_noproc_proc_group)
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
     workspace ws(fm, config, global_settings);
-    ws.open();
-    ws.did_open_file(pgm_a);
+    ws.open().run();
+    run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
 
     ws.collect_diags();
@@ -442,8 +442,8 @@ TEST(b4g_integration_test, b4g_conf_noproc_proc_group_default)
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
     workspace ws(fm, config, global_settings);
-    ws.open();
-    ws.did_open_file(pgm_a);
+    ws.open().run();
+    run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
 
     ws.collect_diags();

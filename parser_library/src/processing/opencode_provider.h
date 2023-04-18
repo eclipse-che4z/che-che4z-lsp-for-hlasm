@@ -159,7 +159,7 @@ class opencode_provider final : public statement_provider
 public:
     // rewinds position in file
     void rewind_input(context::source_position pos);
-    std::variant<std::string, utils::value_task<std::string>> aread();
+    [[nodiscard]] std::variant<std::string, utils::value_task<std::string>> aread();
     void ainsert(const std::string& rec, ainsert_destination dest);
 
     opencode_provider(std::string_view text,
@@ -214,22 +214,23 @@ private:
         std::optional<context::id_index> resolved_instr);
 
     bool should_run_preprocessor() const noexcept;
-    utils::task run_preprocessor();
+    [[nodiscard]] utils::task run_preprocessor();
     enum class remove_empty : bool
     {
         no,
         yes,
     };
     bool suspend_copy_processing(remove_empty re) const;
-    utils::task convert_ainsert_buffer_to_copybook();
+    [[nodiscard]] utils::task convert_ainsert_buffer_to_copybook();
 
-    utils::task start_preprocessor();
-    utils::task start_nested_parser(std::string_view text, analyzer_options opts, context::id_index vf_name) const;
+    [[nodiscard]] utils::task start_preprocessor();
+    [[nodiscard]] utils::task start_nested_parser(
+        std::string_view text, analyzer_options opts, context::id_index vf_name) const;
 
     std::string aread_from_copybook() const;
     std::string try_aread_from_document();
 
-    utils::value_task<std::string> deferred_aread(utils::task prep_task);
+    [[nodiscard]] utils::value_task<std::string> deferred_aread(utils::task prep_task);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -164,6 +164,7 @@ TEST_F(feature_launch_test, stop_on_entry)
     EXPECT_FALSE(ws_mngr.idle_handler());
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
+    EXPECT_FALSE(feature.idle_handler(nullptr));
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
@@ -192,6 +193,7 @@ TEST_F(feature_launch_test, step)
     EXPECT_FALSE(ws_mngr.idle_handler());
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
+    EXPECT_FALSE(feature.idle_handler(nullptr));
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
@@ -295,6 +297,7 @@ TEST_F(feature_launch_test, breakpoint)
     resp_provider.reset();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
+    EXPECT_FALSE(feature.idle_handler(nullptr));
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
@@ -327,6 +330,7 @@ TEST_F(feature_launch_test, variables)
     EXPECT_FALSE(ws_mngr.idle_handler());
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
+    EXPECT_FALSE(feature.idle_handler(nullptr));
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
@@ -427,6 +431,10 @@ TEST_F(feature_launch_test, pause)
     EXPECT_FALSE(ws_mngr.idle_handler());
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
+
+    std::atomic<unsigned char> yield = 1;
+
+    EXPECT_FALSE(feature.idle_handler(&yield));
 
     feature.on_pause(request_id(1), {});
 

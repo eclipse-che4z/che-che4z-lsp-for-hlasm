@@ -14,6 +14,7 @@ target_sources(hlasm_utils PUBLIC
 	bk_tree.h
 	content_loader.h
 	encoding.h
+	error_codes.h
 	factory.h
 	filesystem_content_loader.h
 	general_hashers.h

@@ -14,6 +14,7 @@
 
 #include "gtest/gtest.h"
 
+#include "../common_testing.h"
 #include "../gtest_stringers.h"
 #include "../workspace/empty_configs.h"
 #include "library_mock.h"
@@ -50,7 +51,7 @@ TEST(processor_file, parse_macro)
     EXPECT_CALL(*library, has_file(std::string_view("MAC"), _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(macro_loc), Return(true)));
 
-    ws.did_open_file(opencode_loc, open_file_result::changed_content);
+    run_if_valid(ws.did_open_file(opencode_loc, file_content_state::changed_content));
 
     auto [url, wf_info, metrics, errors, warnings] = ws.parse_file().run().value();
     EXPECT_EQ(url, opencode_loc);

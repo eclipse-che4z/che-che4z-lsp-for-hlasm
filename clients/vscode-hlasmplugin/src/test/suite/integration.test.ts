@@ -199,4 +199,19 @@ suite('Integration Test Suite', () => {
     test('Wildcards and UTF-8 Encoding (Part #2)', async () => {
         await openDocumentAndCheckDiags("pattern_test/test¾_🧼utf@_8_☕.hlasm");
     }).timeout(10000).slow(2500);
+
+    test('Verify remote files', async () => {
+        const diagsChange = waitForDiagnostics('remote.hlasm', true);
+        const uri = (await helper.showDocument('remote.hlasm')).document.uri.toString();
+
+        const diags = await diagsChange;
+
+        assert.ok(diags);
+
+        const mentionedMacros = diags.map(x => [...x.message.matchAll(/\b(MAC.)\b/g)]).flat(1).map(x => x[1]);
+        const uniqueMacros = [...new Set(mentionedMacros)].sort();
+
+        assert.deepStrictEqual(uniqueMacros, ['MACD', 'MACE']);
+
+    }).timeout(10000).slow(2500);
 });

@@ -24,6 +24,7 @@
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server {
+class external_file_reader;
 class telemetry_sink;
 } // namespace hlasm_plugin::language_server
 namespace hlasm_plugin::language_server::dap {
@@ -34,6 +35,7 @@ class session_manager final : public json_sink
     json_sink* out_stream;
     std::map<std::string, std::unique_ptr<dap::session>, std::less<>> sessions;
     telemetry_sink* telemetry_reporter;
+    external_file_reader* ext_files;
 
     void cleanup_sessions();
     void handle_registration_request(size_t new_id);
@@ -41,7 +43,8 @@ class session_manager final : public json_sink
 public:
     session_manager(hlasm_plugin::parser_library::workspace_manager& ws,
         json_sink& out,
-        telemetry_sink* telemetry_reporter = nullptr);
+        telemetry_sink* telemetry_reporter = nullptr,
+        external_file_reader* ext_files = nullptr);
     session_manager(const session_manager&) = delete;
     session_manager(session_manager&&) noexcept;
     session_manager& operator=(const session_manager&) = delete;

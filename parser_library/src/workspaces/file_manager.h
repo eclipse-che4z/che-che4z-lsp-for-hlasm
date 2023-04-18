@@ -26,6 +26,7 @@
 #include "protocol.h"
 #include "utils/list_directory_rc.h"
 #include "utils/resource_location.h"
+#include "utils/task.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -33,7 +34,7 @@ class file;
 
 using list_directory_result =
     std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>, utils::path::list_directory_rc>;
-enum class open_file_result
+enum class file_content_state
 {
     identical,
     changed_lsp,
@@ -46,13 +47,15 @@ class file_manager
 {
 public:
     // Adds a file with specified file name and returns it.
-    virtual std::shared_ptr<file> add_file(const utils::resource::resource_location&) = 0;
+    [[nodiscard]] virtual utils::value_task<std::shared_ptr<file>> add_file(
+        const utils::resource::resource_location&) = 0;
 
     // Finds file with specified file name, return nullptr if not found.
     virtual std::shared_ptr<file> find(const utils::resource::resource_location& key) const = 0;
 
     // Returns list of all files in a directory. Returns associative array with pairs file name - file location.
-    virtual list_directory_result list_directory_files(const utils::resource::resource_location& directory) const = 0;
+    [[nodiscard]] virtual utils::value_task<list_directory_result> list_directory_files(
+        const utils::resource::resource_location& directory) const = 0;
 
     // Returns list of all sub directories and symbolic links. Returns associative array with pairs {canonical path -
     // file location}.
@@ -64,7 +67,7 @@ public:
 
     virtual bool dir_exists(const utils::resource::resource_location& dir_loc) const = 0;
 
-    virtual open_file_result did_open_file(
+    virtual file_content_state did_open_file(
         const utils::resource::resource_location& document_loc, version_t version, std::string text) = 0;
     virtual void did_change_file(const utils::resource::resource_location& document_loc,
         version_t version,
@@ -78,9 +81,11 @@ public:
     virtual std::string get_virtual_file(unsigned long long id) const = 0;
     virtual utils::resource::resource_location get_virtual_file_workspace(unsigned long long id) const = 0;
 
-    virtual open_file_result update_file(const utils::resource::resource_location& document_loc) = 0;
+    [[nodiscard]] virtual utils::value_task<file_content_state> update_file(
+        const utils::resource::resource_location& document_loc) = 0;
 
-    virtual std::optional<std::string> get_file_content(const utils::resource::resource_location&) = 0;
+    [[nodiscard]] virtual utils::value_task<std::optional<std::string>> get_file_content(
+        const utils::resource::resource_location&) = 0;
 
 protected:
     ~file_manager() = default;

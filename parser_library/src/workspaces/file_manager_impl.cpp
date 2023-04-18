@@ -112,9 +112,15 @@ struct file_manager_impl::mapped_file final : file
 
 class : public external_file_reader
 {
-    std::optional<std::string> load_text(const utils::resource::resource_location& document_loc) const final
+    utils::value_task<std::optional<std::string>> load_text(
+        const utils::resource::resource_location& document_loc) const final
     {
-        return utils::resource::load_text(document_loc);
+        return utils::value_task<std::optional<std::string>>::from_value(utils::resource::load_text(document_loc));
+    }
+    utils::value_task<list_directory_result> list_directory_files(
+        const utils::resource::resource_location& directory) const final
+    {
+        return utils::value_task<list_directory_result>::from_value(utils::resource::list_directory_files(directory));
     }
 } constexpr default_reader;
 
@@ -159,28 +165,28 @@ std::shared_ptr<file_manager_impl::mapped_file> file_manager_impl::make_mapped_f
     return result;
 }
 
-std::shared_ptr<file> file_manager_impl::add_file(const utils::resource::resource_location& file_name)
+utils::value_task<std::shared_ptr<file>> file_manager_impl::add_file(
+    const utils::resource::resource_location& file_name)
 {
-    std::unique_lock lock(files_mutex);
+    {
+        std::lock_guard g(files_mutex);
 
-    if (auto result = try_obtaining_file_unsafe(file_name, nullptr))
+        if (auto result = try_obtaining_file_unsafe(file_name, nullptr))
+            return utils::value_task<std::shared_ptr<file>>::from_value(result);
+    }
+    return m_file_reader->load_text(file_name).then([this, file_name](auto loaded_text) -> std::shared_ptr<file> {
+        std::lock_guard g(files_mutex);
+
+        if (auto result = try_obtaining_file_unsafe(file_name, &loaded_text))
+            return result;
+
+        auto result = loaded_text.has_value() ? make_mapped_file(file_name, *this, loaded_text.value())
+                                              : make_mapped_file(file_name, *this, mapped_file::file_error());
+
+        result->m_it = m_files.try_emplace(file_name, result.get()).first;
+
         return result;
-
-    lock.unlock();
-
-    auto loaded_text = m_file_reader->load_text(file_name);
-
-    lock.lock();
-
-    if (auto result = try_obtaining_file_unsafe(file_name, &loaded_text))
-        return result;
-
-    auto result = loaded_text.has_value() ? make_mapped_file(file_name, *this, loaded_text.value())
-                                          : make_mapped_file(file_name, *this, mapped_file::file_error());
-
-    result->m_it = m_files.try_emplace(file_name, result.get()).first;
-
-    return result;
+    });
 }
 
 std::shared_ptr<file_manager_impl::mapped_file> file_manager_impl::try_obtaining_file_unsafe(
@@ -218,13 +224,15 @@ std::shared_ptr<file_manager_impl::mapped_file> file_manager_impl::try_obtaining
     return result;
 }
 
-std::optional<std::string> file_manager_impl::get_file_content(const utils::resource::resource_location& file_name)
+utils::value_task<std::optional<std::string>> file_manager_impl::get_file_content(
+    const utils::resource::resource_location& file_name)
 {
-    auto f = add_file(file_name);
-    if (f->error())
-        return std::nullopt;
-    else
-        return f->get_text();
+    return add_file(file_name).then([](auto f) -> std::optional<std::string> {
+        if (f->error())
+            return std::nullopt;
+        else
+            return f->get_text();
+    });
 }
 
 std::shared_ptr<file> file_manager_impl::find(const utils::resource::resource_location& key) const
@@ -237,9 +245,10 @@ std::shared_ptr<file> file_manager_impl::find(const utils::resource::resource_lo
     return ret->second.file->shared_from_this();
 }
 
-list_directory_result file_manager_impl::list_directory_files(const utils::resource::resource_location& directory) const
+utils::value_task<list_directory_result> file_manager_impl::list_directory_files(
+    const utils::resource::resource_location& directory) const
 {
-    return utils::resource::list_directory_files(directory);
+    return m_file_reader->list_directory_files(directory);
 }
 
 list_directory_result file_manager_impl::list_directory_subdirs_and_symlinks(
@@ -253,7 +262,7 @@ std::string file_manager_impl::canonical(const utils::resource::resource_locatio
     return utils::resource::canonical(res_loc, ec);
 }
 
-open_file_result file_manager_impl::did_open_file(
+file_content_state file_manager_impl::did_open_file(
     const utils::resource::resource_location& document_loc, version_t version, std::string new_text)
 {
     std::shared_ptr<mapped_file> locked;
@@ -278,7 +287,7 @@ open_file_result file_manager_impl::did_open_file(
         file->m_it = m_files.try_emplace(document_loc, file.get()).first;
         file->m_editing_self_reference = std::move(file);
 
-        return open_file_result::changed_content;
+        return file_content_state::changed_content;
     }
     else
     {
@@ -286,7 +295,7 @@ open_file_result file_manager_impl::did_open_file(
         locked->m_editing_self_reference = std::move(locked);
         it->second.closed = false;
 
-        return open_file_result::changed_lsp;
+        return file_content_state::changed_lsp;
     }
 }
 
@@ -409,32 +418,32 @@ utils::resource::resource_location file_manager_impl::get_virtual_file_workspace
     return utils::resource::resource_location();
 }
 
-open_file_result file_manager_impl::update_file(const utils::resource::resource_location& document_loc)
+utils::value_task<file_content_state> file_manager_impl::update_file(
+    const utils::resource::resource_location& document_loc)
 {
-    std::unique_lock lock(files_mutex);
-
-    if (auto f = m_files.find(document_loc); f == m_files.end() || f->second.file->get_lsp_editing())
-        return open_file_result::identical;
-
-    lock.unlock();
-
-    auto current_text = m_file_reader->load_text(document_loc);
-
-    lock.lock();
-
-    auto f = m_files.find(document_loc);
-    if (f == m_files.end() || f->second.file->get_lsp_editing())
-        return open_file_result::identical;
-
-    if (f->second.file->get_text_or_error() == current_text)
     {
-        f->second.closed = false;
-        return open_file_result::identical;
-    }
+        std::lock_guard lock(files_mutex);
 
-    f->second.file->m_it = m_files.end();
-    m_files.erase(f);
-    return open_file_result::changed_content;
+        if (auto f = m_files.find(document_loc); f == m_files.end() || f->second.file->get_lsp_editing())
+            return {};
+    }
+    return m_file_reader->load_text(document_loc).then([this, document_loc](auto current_text) -> file_content_state {
+        std::lock_guard lock(files_mutex);
+
+        auto f = m_files.find(document_loc);
+        if (f == m_files.end() || f->second.file->get_lsp_editing())
+            return file_content_state::identical;
+
+        if (f->second.file->get_text_or_error() == current_text)
+        {
+            f->second.closed = false;
+            return file_content_state::identical;
+        }
+
+        f->second.file->m_it = m_files.end();
+        m_files.erase(f);
+        return file_content_state::changed_content;
+    });
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

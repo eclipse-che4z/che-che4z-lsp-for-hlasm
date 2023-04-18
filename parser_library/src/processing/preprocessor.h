@@ -70,7 +70,7 @@ public:
 
     virtual ~preprocessor() = default;
 
-    virtual utils::value_task<document> generate_replacement(document doc) = 0;
+    [[nodiscard]] virtual utils::value_task<document> generate_replacement(document doc) = 0;
 
     static std::unique_ptr<preprocessor> create(
         const cics_preprocessor_options&, library_fetcher, diagnostic_op_consumer*, semantics::source_info_processor&);

@@ -33,6 +33,7 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
 using namespace hlasm_plugin::utils::resource;
+using namespace hlasm_plugin::utils;
 
 namespace {
 const resource_location src1_loc("src1.hlasm");
@@ -45,15 +46,16 @@ const resource_location mac_loc("libs/mac");
 class file_manager_extended : public file_manager_impl
 {
 public:
-    list_directory_result list_directory_files(const hlasm_plugin::utils::resource::resource_location&) const override
+    value_task<list_directory_result> list_directory_files(
+        const hlasm_plugin::utils::resource::resource_location&) const override
     {
-        return {
+        return value_task<list_directory_result>::from_value({
             {
                 { "CPYBOOK", cpybook_loc },
                 { "MAC", mac_loc },
             },
             hlasm_plugin::utils::path::list_directory_rc::done,
-        };
+        });
     }
 };
 } // namespace
@@ -99,12 +101,12 @@ public:
 
     void open_src_files_and_collect_fms(std::initializer_list<std::pair<resource_location, std::string>> files)
     {
-        ws.open();
+        ws.open().run();
 
         for (const auto& [rl, text] : files)
         {
             file_manager.did_open_file(rl, 1, text);
-            ws.did_open_file(rl);
+            run_if_valid(ws.did_open_file(rl));
         }
         parse_all_files(ws);
 
@@ -1037,18 +1039,18 @@ SYM      DS XL8
 namespace {
 class file_manager_impl_test : public file_manager_impl
 {
-    std::optional<std::string> get_file_content(const resource_location& rl) override
+    value_task<std::optional<std::string>> get_file_content(const resource_location& rl) override
     {
         if (rl.get_uri().ends_with("proc_grps.json"))
-            return proc_grps;
+            return value_task<std::optional<std::string>>::from_value(proc_grps);
 
         if (rl.get_uri().ends_with("pgm_conf.json"))
-            return pgm_conf;
+            return value_task<std::optional<std::string>>::from_value(pgm_conf);
 
-        return std::nullopt;
+        return value_task<std::optional<std::string>>::from_value(std::nullopt);
     }
 
-    list_directory_result list_directory_files(const resource_location& directory) const override
+    value_task<list_directory_result> list_directory_files(const resource_location& directory) const override
     {
         list_directory_result result;
 
@@ -1064,7 +1066,7 @@ class file_manager_impl_test : public file_manager_impl
 
         result.second = hlasm_plugin::utils::path::list_directory_rc::done;
 
-        return result;
+        return value_task<list_directory_result>::from_value(std::move(result));
     }
 
 private:
@@ -1111,7 +1113,7 @@ public:
     {
         resource_location rl;
         bool is_cpybook;
-        workspaces::open_file_result open_file_res;
+        workspaces::file_content_state open_file_res;
     };
 
     fade_helper(const std::vector<files_details>& files_to_open)
@@ -1119,9 +1121,9 @@ public:
         for (const auto& [rl, is_cpybook, _] : files_to_open)
             m_fm.did_open_file(rl, 1, is_cpybook ? cpybook : source_template);
 
-        ws.open();
+        ws.open().run();
         for (const auto& [rl, _, open_file_res] : files_to_open)
-            ws.did_open_file(rl, open_file_res);
+            run_if_valid(ws.did_open_file(rl, open_file_res));
         parse_all_files(ws);
     }
 
@@ -1134,13 +1136,13 @@ public:
 
     void did_close_file(resource_location rl)
     {
-        ws.did_close_file(rl);
+        run_if_valid(ws.did_close_file(rl));
         parse_all_files(ws);
     }
     void did_open_file(resource_location rl)
     {
         m_fm.did_open_file(rl, 1, source_template);
-        ws.did_open_file(rl);
+        run_if_valid(ws.did_open_file(rl));
         parse_all_files(ws);
     }
 
@@ -1184,9 +1186,9 @@ TEST(fade, cpybook_as_pgm)
     static const resource_location srcC_loc("C.hlasm");
 
     fade_helper fh(std::vector<fade_helper::files_details>({
-        fade_helper::files_details { srcA_loc, false, workspaces::open_file_result::changed_content },
-        fade_helper::files_details { srcB_loc, false, workspaces::open_file_result::changed_content },
-        fade_helper::files_details { srcC_loc, true, workspaces::open_file_result::changed_lsp },
+        fade_helper::files_details { srcA_loc, false, workspaces::file_content_state::changed_content },
+        fade_helper::files_details { srcB_loc, false, workspaces::file_content_state::changed_content },
+        fade_helper::files_details { srcC_loc, true, workspaces::file_content_state::changed_lsp },
     }));
 
     EXPECT_TRUE(matches_fade_messages(fh.fade_messages(),

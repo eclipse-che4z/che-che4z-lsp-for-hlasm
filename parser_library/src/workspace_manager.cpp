@@ -30,8 +30,8 @@
 
 namespace hlasm_plugin::parser_library {
 
-workspace_manager::workspace_manager()
-    : impl_(new impl())
+workspace_manager::workspace_manager(workspace_manager_external_file_requests* external_file_requests)
+    : impl_(new impl(external_file_requests))
 {}
 
 workspace_manager::workspace_manager(workspace_manager&& ws_mngr) noexcept

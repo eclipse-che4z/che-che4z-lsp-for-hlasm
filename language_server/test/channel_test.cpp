@@ -16,6 +16,7 @@
 #include <sstream>
 
 #include "gmock/gmock.h"
+#include "json_channel_mock.h"
 #include "json_queue_channel.h"
 
 #include "base_protocol_channel.h"
@@ -134,26 +135,6 @@ TEST_P(channel_bad_fixture, from_strings)
 
     ASSERT_FALSE(ch.read().has_value());
 }
-
-namespace {
-struct mock_json_source : public json_source
-{
-    MOCK_METHOD0(read, std::optional<nlohmann::json>());
-};
-struct mock_json_sink : public json_sink
-{
-    MOCK_METHOD1(write, void(const nlohmann::json&));
-    MOCK_METHOD1(write_rvr, void(nlohmann::json&&));
-    void write(nlohmann::json&& j) override { write_rvr(std::move(j)); }
-};
-struct mock_json_channel : public json_channel
-{
-    MOCK_METHOD0(read, std::optional<nlohmann::json>());
-    MOCK_METHOD1(write, void(const nlohmann::json&));
-    MOCK_METHOD1(write_rvr, void(nlohmann::json&&));
-    void write(nlohmann::json&& j) override { write_rvr(std::move(j)); }
-};
-} // namespace
 
 TEST(channel, adapter_source_sink)
 {

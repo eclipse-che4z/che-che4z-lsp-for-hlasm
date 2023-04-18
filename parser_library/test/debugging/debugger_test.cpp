@@ -25,6 +25,7 @@
 #include "gtest/gtest.h"
 
 #include "../workspace/empty_configs.h"
+#include "../workspace_manager_response_mock.h"
 #include "compiler_options.h"
 #include "debug_event_consumer_s_mock.h"
 #include "debugger.h"
@@ -77,6 +78,7 @@ struct expected_stack_frame
         return std::visit([uri](const auto& v) { return check_frame_source(v, uri); }, frame_source);
     }
 };
+
 } // namespace
 
 TEST(debugger, stopped_on_entry)
@@ -92,7 +94,11 @@ TEST(debugger, stopped_on_entry)
     resource_location file_loc(file_name);
 
     file_manager.did_open_file(file_loc, 0, "   LR 1,2");
-    ASSERT_TRUE(d.launch(file_name.c_str(), ws, true));
+
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(file_name.c_str(), ws, true, resp);
+
     m.wait_for_stopped();
 
     auto frames = d.stack_frames();
@@ -129,7 +135,9 @@ TEST(debugger, disconnect)
     resource_location file_loc(file_name);
 
     file_manager.did_open_file(file_loc, 0, "   LR 1,2");
-    ASSERT_TRUE(d.launch(file_name.c_str(), ws, true));
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(file_name.c_str(), ws, true, resp);
     m.wait_for_stopped();
 
     d.disconnect();
@@ -393,7 +401,12 @@ public:
         struct debugger_mock_library : library
         {
             file_manager& fm;
-            void refresh() override { assert(false); }
+            hlasm_plugin::utils::task refresh() override
+            {
+                assert(false);
+                return {};
+            }
+            hlasm_plugin::utils::task prefetch() override { return {}; }
 
             std::vector<std::string> list_files() override
             {
@@ -472,7 +485,9 @@ TEST(debugger, test)
     resource_location file_loc(filename);
 
     file_manager.did_open_file(file_loc, 0, open_code);
-    ASSERT_TRUE(d.launch(filename, lib_provider, true));
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(filename, lib_provider, true, resp);
     m.wait_for_stopped();
     std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
@@ -563,7 +578,9 @@ TEST(debugger, sysstmt)
     resource_location file_loc(filename);
 
     file_manager.did_open_file(file_loc, 0, open_code);
-    ASSERT_TRUE(d.launch(filename, lib_provider, true));
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(filename, lib_provider, true, resp);
     m.wait_for_stopped();
     std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { { {
@@ -624,7 +641,9 @@ A  MAC_IN ()
     resource_location file_loc(filename);
 
     file_manager.did_open_file(file_loc, 0, open_code);
-    ASSERT_TRUE(d.launch(filename, lib_provider, true));
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(filename, lib_provider, true, resp);
     m.wait_for_stopped();
     std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
@@ -790,7 +809,9 @@ TEST(debugger, positional_parameters)
 
     file_manager.did_open_file(file_loc, 0, open_code);
 
-    ASSERT_TRUE(d.launch(filename, lib_provider, true));
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(filename, lib_provider, true, resp);
     m.wait_for_stopped();
 
     d.next();
@@ -910,7 +931,9 @@ TEST(debugger, arrays)
 
     file_manager.did_open_file(file_loc, 0, open_code);
 
-    ASSERT_TRUE(d.launch(filename, lib_provider, true));
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(filename, lib_provider, true, resp);
     m.wait_for_stopped();
     std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
@@ -965,7 +988,9 @@ B EQU A
 
     file_manager.did_open_file(file_loc, 0, open_code);
 
-    ASSERT_TRUE(d.launch(file_loc.get_uri(), lib_provider, true));
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(file_loc.get_uri(), lib_provider, true, resp);
 
     m.wait_for_stopped();
     std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
@@ -1011,7 +1036,9 @@ TEST(debugger, ainsert)
 
     file_manager.did_open_file(file_loc, 0, open_code);
 
-    ASSERT_TRUE(d.launch(file_loc.get_uri(), lib_provider, true));
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(file_loc.get_uri(), lib_provider, true, resp);
 
     m.wait_for_stopped();
     std::vector<expected_stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", file_loc.get_uri() } };
@@ -1074,7 +1101,9 @@ TEST(debugger, concurrent_next_and_file_change)
     resource_location file_loc(filename);
 
     file_manager.did_open_file(file_loc, 0, open_code);
-    ASSERT_TRUE(d.launch(filename, lib_provider, true));
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(filename, lib_provider, true, resp);
     m.wait_for_stopped();
     std::string new_string = "SOME NEW FILE DOES NOT MATTER";
     std::vector<document_change> chs;
@@ -1122,7 +1151,12 @@ TEST(debugger, invalid_file)
     std::string file_name = "test_workspace\\test";
     resource_location file_loc(file_name);
 
-    EXPECT_FALSE(d.launch(file_name.c_str(), ws, true));
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(false));
+    d.launch(file_name.c_str(), ws, true, resp);
+
+    while (!resp.resolved())
+        d.analysis_step(nullptr);
 
     d.disconnect();
 }

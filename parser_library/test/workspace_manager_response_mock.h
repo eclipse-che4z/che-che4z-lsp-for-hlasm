@@ -23,8 +23,7 @@ template<typename T>
 class workspace_manager_response_mock
 {
 public:
-    MOCK_METHOD(bool, valid, (), (const));
-    MOCK_METHOD(void, error, (int, const char*), ());
+    MOCK_METHOD(void, error, (int, const char*), (noexcept));
     MOCK_METHOD(void, provide, (T), ());
 };
 } // namespace hlasm_plugin::parser_library

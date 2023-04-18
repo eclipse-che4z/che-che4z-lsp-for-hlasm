@@ -167,6 +167,7 @@ public:
         int result = EM_ASM_INT(
             {
                 let rc = 0;
+                let dir = null;
                 try
                 {
                     const dir_name = UTF8ToString($0);
@@ -177,7 +178,7 @@ public:
 
                     rc = 1;
 
-                    const dir = fs.opendirSync(dir_name);
+                    dir = fs.opendirSync(dir_name);
 
                     rc = 2;
 
@@ -197,6 +198,11 @@ public:
                 }
                 catch (e)
                 {}
+                finally
+                {
+                    if (dir)
+                        dir.closeSync();
+                }
                 return rc;
             },
             (intptr_t)path.c_str(),
@@ -224,6 +230,7 @@ public:
         int result = EM_ASM_INT(
             {
                 let rc = 0;
+                let dir = null;
                 try
                 {
                     const dir_name = UTF8ToString($0);
@@ -234,7 +241,7 @@ public:
 
                     rc = 1;
 
-                    const dir = fs.opendirSync(dir_name);
+                    dir = fs.opendirSync(dir_name);
 
                     rc = 2;
 
@@ -254,6 +261,11 @@ public:
                 }
                 catch (e)
                 {}
+                finally
+                {
+                    if (dir)
+                        dir.closeSync();
+                }
                 return rc;
             },
             (intptr_t)path.c_str(),

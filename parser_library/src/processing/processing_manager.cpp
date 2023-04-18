@@ -342,9 +342,12 @@ std::optional<bool> processing_manager::request_external_processing(
 
 void processing_manager::schedule_helper_task(utils::task t)
 {
-    assert(!helper_task_.valid());
-    if (!t.done())
+    if (!t.valid() || t.done())
+        return;
+    if (!helper_task_.valid() || helper_task_.done())
         helper_task_ = std::move(t);
+    else
+        helper_task_ = std::move(helper_task_).then(std::move(t));
 }
 
 void processing_manager::start_macro_definition(

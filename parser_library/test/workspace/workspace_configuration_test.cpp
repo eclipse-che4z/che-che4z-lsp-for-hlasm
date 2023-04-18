@@ -82,12 +82,17 @@ TEST(workspace_configuration, refresh_needed)
     NiceMock<file_manager_mock> fm;
     shared_json global_settings = make_empty_shared_json();
 
-    EXPECT_CALL(fm, get_file_content(_)).WillRepeatedly(Return(std::nullopt));
+    EXPECT_CALL(fm, get_file_content(_))
+        .WillRepeatedly(Invoke([](const auto&) -> hlasm_plugin::utils::value_task<std::optional<std::string>> {
+            co_return std::nullopt;
+        }));
 
     workspace_configuration cfg(fm, resource_location("test://workspace"), global_settings);
 
-    EXPECT_TRUE(cfg.refresh_libraries({ resource_location("test://workspace/.hlasmplugin") }));
-    EXPECT_TRUE(cfg.refresh_libraries({ resource_location("test://workspace/.hlasmplugin/proc_grps.json") }));
-    EXPECT_TRUE(cfg.refresh_libraries({ resource_location("test://workspace/.hlasmplugin/pgm_conf.json") }));
-    EXPECT_FALSE(cfg.refresh_libraries({ resource_location("test://workspace/something/else") }));
+    EXPECT_TRUE(cfg.refresh_libraries({ resource_location("test://workspace/.hlasmplugin") }).run().value());
+    EXPECT_TRUE(
+        cfg.refresh_libraries({ resource_location("test://workspace/.hlasmplugin/proc_grps.json") }).run().value());
+    EXPECT_TRUE(
+        cfg.refresh_libraries({ resource_location("test://workspace/.hlasmplugin/pgm_conf.json") }).run().value());
+    EXPECT_FALSE(cfg.refresh_libraries({ resource_location("test://workspace/something/else") }).run().value());
 }

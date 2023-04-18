@@ -12,6 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <thread>
+
 #include "gtest/gtest.h"
 
 #include "../workspace_manager_response_mock.h"
@@ -113,116 +115,40 @@ TEST(workspace_manager_response, invalidate_without_handler)
     EXPECT_FALSE(p.valid());
 }
 
-TEST(workspace_manager_response, invalidate)
+
+TEST(workspace_manager_response, multithreaded)
 {
-    auto [p, _impl] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<int>>);
+    using namespace std::chrono_literals;
 
-    MockFunction<void()> invalidator;
-    p.set_invalidation_callback(invalidator.AsStdFunction());
-
-    EXPECT_CALL(invalidator, Call());
-
-    EXPECT_TRUE(p.valid());
-
-    p.invalidate();
-
-    EXPECT_FALSE(p.valid());
-}
-
-TEST(workspace_manager_response, change_invalidator)
-{
-    auto [p, _impl] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<int>>);
-
-    MockFunction<void()> invalidator;
-    p.set_invalidation_callback(invalidator.AsStdFunction());
-    MockFunction<void()> invalidator2;
-    p.set_invalidation_callback(invalidator2.AsStdFunction());
-
-    EXPECT_TRUE(p.valid());
-    EXPECT_CALL(invalidator, Call()).Times(0);
-    EXPECT_CALL(invalidator2, Call());
-
-    p.invalidate();
-
-    EXPECT_FALSE(p.valid());
-}
-
-thread_local int simple_invalidator_counter = 0;
-
-void simple_invalidator() { ++simple_invalidator_counter; }
-
-TEST(workspace_manager_response, simple_invalidator)
-{
-    auto [p, _impl] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<int>>);
-
-    p.set_invalidation_callback(simple_invalidator);
-
-    int baseline = simple_invalidator_counter;
-
-    p.invalidate();
-
-    EXPECT_EQ(simple_invalidator_counter, baseline + 1);
-}
-
-TEST(workspace_manager_response, invalidator_deleter)
-{
-    int deleter_called = 0;
-
+    struct test_t
     {
-        auto [p, _impl] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<int>>);
-
-        struct invalidator_t
-        {
-            int* d;
-            void operator()() const {}
-
-            invalidator_t(int& d)
-                : d(&d)
-            {}
-            invalidator_t(invalidator_t&& o) noexcept
-                : d(std::exchange(o.d, nullptr))
-            {}
-            ~invalidator_t()
-            {
-                if (d)
-                    ++*d;
-            }
-        };
-        p.set_invalidation_callback(invalidator_t(deleter_called));
-        EXPECT_EQ(deleter_called, 0);
-        p.set_invalidation_callback(invalidator_t(deleter_called));
-        EXPECT_EQ(deleter_called, 1);
-    }
-
-    EXPECT_EQ(deleter_called, 2);
-}
-
-TEST(workspace_manager_response, invalidator_remove)
-{
-    int deleter_called = 0;
-
-    auto [p, _impl] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<int>>);
-
-    struct invalidator_t
-    {
-        int* d;
-        void operator()() const {}
-
-        invalidator_t(int& d)
-            : d(&d)
-        {}
-        invalidator_t(invalidator_t&& o) noexcept
-            : d(std::exchange(o.d, nullptr))
-        {}
-        ~invalidator_t()
-        {
-            if (d)
-                ++*d;
-        }
+        int result = 0;
+        void error(int, const char*) noexcept {}
+        void provide(int v) noexcept { result = v; }
     };
-    p.set_invalidation_callback(invalidator_t(deleter_called));
+    auto [p, _impl] = make_workspace_manager_response(std::in_place_type<test_t>);
 
-    EXPECT_EQ(deleter_called, 0);
-    p.remove_invalidation_handler();
-    EXPECT_EQ(deleter_called, 1);
+    EXPECT_TRUE(p.valid());
+    EXPECT_FALSE(p.resolved());
+
+    std::thread receiver([p = p, _impl = _impl]() {
+        while (!p.resolved())
+        {
+            std::this_thread::sleep_for(10ms);
+        }
+        EXPECT_EQ(_impl->result, 5);
+    });
+    std::thread sender([p = p]() {
+        std::this_thread::sleep_for(200ms);
+        p.provide(5);
+    });
+
+    sender.join();
+    receiver.join();
+
+    EXPECT_NO_FATAL_FAILURE(p.invalidate());
+
+    EXPECT_FALSE(p.valid());
+    EXPECT_TRUE(p.resolved());
+    EXPECT_EQ(_impl->result, 5);
 }

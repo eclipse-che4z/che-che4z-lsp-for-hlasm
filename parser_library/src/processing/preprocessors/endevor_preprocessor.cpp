@@ -66,7 +66,7 @@ class endevor_preprocessor final : public preprocessor
     endevor_preprocessor_options m_options;
     semantics::source_info_processor& m_src_proc;
 
-    utils::value_task<bool> process_member(std::string member, std::vector<stack_entry>& stack)
+    [[nodiscard]] utils::value_task<bool> process_member(std::string member, std::vector<stack_entry>& stack)
     {
         std::string member_upper = utils::to_upper_copy(member);
 
@@ -115,7 +115,7 @@ public:
     {}
 
     // Inherited via preprocessor
-    utils::value_task<document> generate_replacement(document doc) override
+    [[nodiscard]] utils::value_task<document> generate_replacement(document doc) override
     {
         reset();
 

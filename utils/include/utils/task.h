@@ -23,6 +23,7 @@
 #include <optional>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace hlasm_plugin::utils {
 
@@ -105,7 +106,10 @@ protected:
                 if constexpr (!std::is_void_v<T>)
                 {
                     auto& p = static_cast<typename value_task<T>::promise_type&>(task_handle.promise());
-                    return std::move(p.result.value());
+                    if constexpr (std::is_reference_v<T>)
+                        return *p.result;
+                    else
+                        return std::move(p.result.value());
                 }
             }
 
@@ -135,9 +139,9 @@ protected:
             };
             return yield_awaiter { top_waiter.promise().yield_indicator };
         }
-        auto await_transform(task t) const noexcept;
+        awaiter<void> await_transform(task t) const noexcept;
         template<std::move_constructible T>
-        auto await_transform(value_task<T> t) const noexcept;
+        awaiter<T> await_transform(value_task<T> t) const noexcept;
     };
 
     task_base() = default;
@@ -245,7 +249,7 @@ public:
     }
 
     template<typename U>
-    auto then(U&& next) &&
+    [[nodiscard]] auto then(U&& next) &&
     {
         if constexpr (is_task<U>::value)
             return [](task self, U u) -> U {
@@ -268,6 +272,15 @@ public:
                 co_return u();
             }(std::move(*this), std::forward<U>(next));
     }
+
+    struct
+    {
+        task operator()(std::vector<task> tasks) const
+        {
+            for (auto& t : tasks)
+                co_await std::move(t);
+        }
+    } static constexpr wait_all = {}; // clang-14 workaround
 };
 
 template<std::move_constructible T>
@@ -279,15 +292,17 @@ public:
     struct promise_type : task_base::promise_type_base
     {
         value_task get_return_object() { return value_task(std::coroutine_handle<promise_type>::from_promise(*this)); }
+        void return_value(T v) noexcept requires std::is_reference_v<T> { result = &v; }
         void return_value(T v)
 #ifndef _MSC_VER
             noexcept(noexcept(result.emplace(std::move(v))))
 #endif // !_MSC_VER
+                requires(!std::is_reference_v<T>)
         {
             result.emplace(std::move(v));
         }
 
-        std::optional<T> result;
+        std::conditional_t<std::is_reference_v<T>, std::remove_reference_t<T>*, std::optional<T>> result = {};
     };
 
     value_task() = default;
@@ -307,9 +322,18 @@ public:
         if (p.pending_exception)
             std::rethrow_exception(p.pending_exception);
 
-        return static_cast<promise_type&>(p).result.value();
+        if constexpr (std::is_reference_v<T>)
+            return *static_cast<promise_type&>(p).result;
+        else
+            return static_cast<promise_type&>(p).result.value();
     }
-    T value() const&& { return std::move(std::as_const(*this).value()); }
+    T value() const&&
+    {
+        if constexpr (std::is_reference_v<T>)
+            return std::as_const(*this).value();
+        else
+            return std::move(std::as_const(*this).value());
+    }
 
     value_task& run() &
     {
@@ -323,7 +347,7 @@ public:
     }
 
     template<typename U>
-    auto then(U&& next) &&
+    [[nodiscard]] auto then(U&& next) &&
     {
         if constexpr (is_task<std::invoke_result_t<U&, T>>::value)
             return [](value_task self, U u) -> std::invoke_result_t<U&, T> {
@@ -337,9 +361,30 @@ public:
                 co_return u(co_await std::move(self));
             }(std::move(*this), std::forward<U>(next));
     }
+
+    [[nodiscard]] static value_task from_value(const T& v) requires(!std::is_reference_v<T>)
+    {
+        const auto cortn = [&v]() -> value_task { co_return v; };
+        auto result = cortn();
+        result.run();
+        return result;
+    }
+
+    [[nodiscard]] static value_task from_value(T&& v)
+    {
+        const auto cortn = [&v]() -> value_task {
+            if constexpr (std::is_reference_v<T>)
+                co_return v;
+            else
+                co_return std::move(v);
+        };
+        auto result = cortn();
+        result.run();
+        return result;
+    }
 };
 
-inline auto task_base::promise_type_base::await_transform(task t) const noexcept
+inline task_base::promise_type_base::awaiter<void> task_base::promise_type_base::await_transform(task t) const noexcept
 {
     auto h = std::exchange(t.m_handle, {});
 
@@ -350,7 +395,8 @@ inline auto task_base::promise_type_base::await_transform(task t) const noexcept
 }
 
 template<std::move_constructible T>
-inline auto task_base::promise_type_base::await_transform(value_task<T> t) const noexcept
+inline task_base::promise_type_base::awaiter<T> task_base::promise_type_base::await_transform(
+    value_task<T> t) const noexcept
 {
     auto h = std::exchange(t.m_handle, {});
 
@@ -359,7 +405,6 @@ inline auto task_base::promise_type_base::await_transform(value_task<T> t) const
 
     return awaiter<T>(std::move(h));
 }
-
 
 } // namespace hlasm_plugin::utils
 

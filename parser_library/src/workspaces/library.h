@@ -15,14 +15,19 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_LIBRARY_H
 #define HLASMPLUGIN_PARSERLIBRARY_LIBRARY_H
 
-#include <memory>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
-#include "diagnosable.h"
-#include "utils/resource_location.h"
+namespace hlasm_plugin {
+class diagnostic_s;
+namespace utils::resource {
+class resource_location;
+} // namespace utils::resource
+namespace utils {
+class task;
+} // namespace utils
+} // namespace hlasm_plugin
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -32,7 +37,8 @@ class library
 {
 public:
     virtual ~library() = default;
-    virtual void refresh() = 0;
+    [[nodiscard]] virtual utils::task refresh() = 0;
+    [[nodiscard]] virtual utils::task prefetch() = 0;
     virtual std::vector<std::string> list_files() = 0;
     virtual std::string refresh_url_prefix() const = 0;
     virtual bool has_file(std::string_view file, utils::resource::resource_location* url = nullptr) = 0;

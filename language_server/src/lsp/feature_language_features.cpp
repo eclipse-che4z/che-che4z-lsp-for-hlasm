@@ -20,9 +20,9 @@
 
 #include "../feature.h"
 #include "nlohmann/json.hpp"
+#include "utils/error_codes.h"
 #include "utils/resource_location.h"
 #include "workspace_manager_response.h"
-
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -208,7 +208,11 @@ auto make_response(const request_id& id, response_provider* response, U handler)
             , m_handler(std::move(handler))
         {}
 
-        void error(int ec, const char* error) const { m_response->respond_error(m_id, "", ec, std::string(error), {}); }
+        void error(int ec, const char* error) const noexcept
+        {
+            // terminates on throw
+            m_response->respond_error(m_id, "", ec, std::string(error), {});
+        }
         void provide(T r) const { m_response->respond(m_id, "", m_handler(std::move(r))); }
     };
     return workspace_manager_response<T>(response_t(id, response, std::move(handler)));
@@ -618,9 +622,10 @@ void feature_language_features::opcode_suggestion(const request_id& id, const nl
             , m_document_uri(std::move(document_uri))
         {}
 
-        void error(int ec, const char* error)
+        void error(int ec, const char* error) noexcept
         {
             m_failed = true;
+            // terminates on throw
             m_response->respond_error(m_id, "", ec, std::string(error), {});
         }
 
@@ -651,7 +656,7 @@ void feature_language_features::opcode_suggestion(const request_id& id, const nl
                 std::shared_ptr<composite_response_t> m_self;
                 std::string m_opcode;
 
-                void error(int ec, const char* error) const { m_self->error(ec, error); }
+                void error(int ec, const char* error) const noexcept { m_self->error(ec, error); }
 
                 void provide(continuous_sequence<hlasm_plugin::parser_library::opcode_suggestion> opcode_suggestions)
                 {
@@ -718,8 +723,7 @@ void feature_language_features::opcode_suggestion(const request_id& id, const nl
     }
     catch (const std::exception& e)
     {
-        constexpr int internal_error = -32603;
-        composite->error(internal_error, e.what());
+        composite->error(utils::error::lsp::internal_error, e.what());
     }
 }
 

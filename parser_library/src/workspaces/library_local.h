@@ -27,6 +27,12 @@
 #include "diagnosable_impl.h"
 #include "library.h"
 #include "utils/general_hashers.h"
+#include "utils/resource_location.h"
+#include "utils/task.h"
+
+namespace hlasm_plugin::utils::path {
+enum class list_directory_rc;
+} // namespace hlasm_plugin::utils::path
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -75,7 +81,9 @@ public:
 
     const utils::resource::resource_location& get_location() const;
 
-    void refresh() override;
+    [[nodiscard]] utils::task refresh() override;
+
+    [[nodiscard]] utils::task prefetch() override;
 
     std::vector<std::string> list_files() override;
 
@@ -117,8 +125,8 @@ private:
     bool m_optional = false;
     utils::resource::resource_location m_proc_grps_loc;
 
-    files_collection_t load_files();
-    files_collection_t get_or_load_files();
+    files_collection_t load_files(std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
+        utils::path::list_directory_rc>);
 };
 #pragma warning(pop)
 
