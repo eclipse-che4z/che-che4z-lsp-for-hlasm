@@ -522,8 +522,9 @@ public:
         m_work_queue.emplace_back(work_item {
             next_unique_id(),
             &ows,
-            std::function<utils::task()>(
-                [document_loc, &ws = ows.ws]() mutable { return ws.did_close_file(std::move(document_loc)); }),
+            std::function<utils::task()>([this, document_loc, &ws = ows.ws]() mutable {
+                return ws.did_close_file(std::move(document_loc)).then([this]() { notify_diagnostics_consumers(); });
+            }),
             {},
             work_item_type::file_change,
         });

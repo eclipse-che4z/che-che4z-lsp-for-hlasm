@@ -84,6 +84,19 @@ TEST(regress_test, behaviour_error)
     EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "S0003");
 
     mess_p.notfs.clear();
+
+    notf = make_notification(
+        "textDocument/didClose", R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm"}})#"_json);
+    s.message_received(notf);
+    EXPECT_FALSE(ws_mngr.idle_handler());
+
+    auto notfs_it = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [](const auto& msg_notification) {
+        return msg_notification["method"] == "textDocument/publishDiagnostics";
+    });
+    ASSERT_NE(notfs_it, mess_p.notfs.end());
+    EXPECT_EQ((*notfs_it)["params"]["diagnostics"].size(), (size_t)0);
+
+    mess_p.notfs.clear();
 }
 
 const static std::vector<nlohmann::json> messages = {
