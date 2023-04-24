@@ -756,7 +756,7 @@ utils::task workspace::did_change_watched_files(
 {
     assert(file_locations.size() == file_change_status.size());
 
-    bool refreshed = co_await m_configuration.refresh_libraries(file_locations);
+    auto refreshed = co_await m_configuration.refresh_libraries(file_locations);
     auto cit = file_change_status.begin();
 
     std::vector<utils::task> pending_updates;
@@ -768,6 +768,19 @@ utils::task workspace::did_change_watched_files(
             continue;
 
         pending_updates.emplace_back(std::move(t));
+    }
+    if (refreshed)
+    {
+        for (const auto& [_, comp] : m_processor_files)
+        {
+            if (!comp.m_opened)
+                continue;
+
+            auto loc = comp.m_file->get_location();
+            const auto* pg = &get_proc_grp(loc);
+            if (std::find(refreshed->begin(), refreshed->end(), pg) != refreshed->end())
+                m_parsing_pending.emplace(std::move(loc));
+        }
     }
     co_await utils::task::wait_all(std::move(pending_updates));
 }

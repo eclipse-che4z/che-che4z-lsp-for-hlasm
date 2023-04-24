@@ -17,6 +17,7 @@
 - VSCode enters an infinite loop of opening and closing files
 - "pgm_conf.json not found" prompt shows up even when `.bridge.json` exists
 - `.bridge.json` is not reparsed when changed
+- Source code not reparsed after missing dependency is provided
 
 #### Changed
 - Programs assigned to "\*NOPROC\*" processor group no longer need its definition in pgm_conf.json

@@ -591,3 +591,21 @@ TEST_F(workspace_test, library_list_failure)
     EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
     EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "L0001"; }));
 }
+
+TEST_F(workspace_test, did_change_watched_files_added_missing)
+{
+    file_manager_extended file_manager;
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    ws.open().run();
+
+    file_manager.insert_correct_macro = false;
+    run_if_valid(ws.did_open_file(source3_loc));
+    parse_all_files(ws);
+    EXPECT_EQ(collect_and_get_diags_size(ws), 1);
+    EXPECT_TRUE(matches_message_codes(diags(), { "E049" }));
+
+    file_manager.insert_correct_macro = true;
+    run_if_valid(ws.did_change_watched_files({ correct_macro_loc }, { workspaces::file_content_state::identical }));
+    parse_all_files(ws);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
+}

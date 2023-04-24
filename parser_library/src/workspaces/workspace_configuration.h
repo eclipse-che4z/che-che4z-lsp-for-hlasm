@@ -285,7 +285,7 @@ public:
     const lib_config& get_config() const { return m_local_config; }
 
     bool settings_updated() const;
-    [[nodiscard]] utils::value_task<bool> refresh_libraries(
+    [[nodiscard]] utils::value_task<std::optional<std::vector<const processor_group*>>> refresh_libraries(
         const std::vector<utils::resource::resource_location>& file_locations);
 
     void copy_diagnostics(const diagnosable& target,

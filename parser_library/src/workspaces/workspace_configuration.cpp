@@ -686,10 +686,10 @@ utils::value_task<parse_config_file_result> workspace_configuration::parse_confi
     co_return parse_config_file_result::not_found;
 }
 
-utils::value_task<bool> workspace_configuration::refresh_libraries(
+utils::value_task<std::optional<std::vector<const processor_group*>>> workspace_configuration::refresh_libraries(
     const std::vector<utils::resource::resource_location>& file_locations)
 {
-    bool refreshed = false;
+    std::optional<std::vector<const processor_group*>> result;
 
     if (std::any_of(file_locations.begin(),
             file_locations.end(),
@@ -697,7 +697,13 @@ utils::value_task<bool> workspace_configuration::refresh_libraries(
                 const auto& uri) { return is_configuration_file(uri) || uri == hlasm_folder; }))
     {
         co_await parse_configuration_file();
-        co_return true;
+
+        result.emplace();
+        // TODO: we could diff the configuration and really return only changed groups
+        for (const auto& [_, proc_grp] : m_proc_grps)
+            result->emplace_back(&proc_grp);
+
+        co_return result;
     }
 
     std::unordered_set<const library*> refreshed_libs;
@@ -707,7 +713,9 @@ utils::value_task<bool> workspace_configuration::refresh_libraries(
         bool pending_refresh = false;
         if (!proc_grp.refresh_needed(file_locations))
             continue;
-        refreshed = true;
+        if (!result)
+            result.emplace();
+        result->emplace_back(&proc_grp);
         for (const auto& lib : proc_grp.libraries())
         {
             if (!refreshed_libs.emplace(std::to_address(lib)).second)
@@ -730,7 +738,7 @@ utils::value_task<bool> workspace_configuration::refresh_libraries(
     for (auto& r : pending_refreshes)
         co_await std::move(r);
 
-    co_return refreshed;
+    co_return result;
 }
 
 const processor_group* workspace_configuration::get_proc_grp_by_program(const program& pgm) const
