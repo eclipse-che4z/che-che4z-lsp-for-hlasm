@@ -68,7 +68,7 @@ TEST(telemetry, lsp_server_did_open)
     EXPECT_CALL(lsp_smpm, reply(Truly(get_telemetry_method_matcher("textDocument/didOpen"))));
 
     lsp_server.message_received(open_file_message);
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 
     EXPECT_EQ(diags_reply["params"]["diagnostics"].size(), 1);
 
@@ -108,14 +108,14 @@ TEST(telemetry, telemetry_broker)
     broker.set_telemetry_sink(&lsp_server);
 
     lsp_server.message_received(open_file_message);
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 
     //"textDocument/hover",R"#({"textDocument":{"uri":"file:///c%3A/test/stability.hlasm"},"position":{"line":0,"character":7}})#"_json),
 
     std::thread lsp_thread([&lsp_server, &ws_mngr]() {
         lsp_server.message_received(
             R"({"jsonrpc":"2.0","id":48,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///test_file"},"position":{"line":0,"character":2} }})"_json);
-        EXPECT_FALSE(ws_mngr.idle_handler());
+        ws_mngr.idle_handler();
     });
 
 

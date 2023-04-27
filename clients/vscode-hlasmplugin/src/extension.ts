@@ -31,12 +31,14 @@ import { HLASMCodeActionsProvider } from './hlasmCodeActionsProvider';
 import { hlasmplugin_folder } from './constants';
 import { ConfigurationsHandler } from './configurationsHandler';
 import { getLanguageClientMiddleware } from './languageClientMiddleware';
-import { HLASMExternalFiles } from './hlasmExternalFiles';
+import { ExternalFilesClient, HLASMExternalFiles } from './hlasmExternalFiles';
+import { HLASMExternalFilesFtp } from './hlasmExternalFilesFtp';
 
 export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
 
 const offset = 71;
 const continueColumn = 15;
+const externalFilesScheme = 'hlasm-external';
 
 const sleep = (ms: number) => {
     return new Promise((resolve) => { setTimeout(resolve, ms) });
@@ -114,8 +116,11 @@ export async function activate(context: vscode.ExtensionContext) {
         throw e;
     }
 
+    const extFiles = new HLASMExternalFiles(externalFilesScheme, hlasmpluginClient);
+    context.subscriptions.push(extFiles);
+
     // register all commands and objects to context
-    await registerToContext(context, hlasmpluginClient, telemetry);
+    await registerToContext(context, hlasmpluginClient, telemetry, extFiles);
 
     let api = {
         getExtension(): vscodelc.LanguageClient {
@@ -123,6 +128,9 @@ export async function activate(context: vscode.ExtensionContext) {
         },
         getTelemetry(): Telemetry {
             return telemetry;
+        },
+        registerExternalFileClient(service: string, client: ExternalFilesClient) {
+            extFiles.setClient(service, client);
         }
     };
     return api;
@@ -147,7 +155,7 @@ function offerSwitchToWasmClient() {
     });
 }
 
-async function registerToContext(context: vscode.ExtensionContext, client: vscodelc.LanguageClient, telemetry: Telemetry) {
+async function registerToContext(context: vscode.ExtensionContext, client: vscodelc.LanguageClient, telemetry: Telemetry, extFiles: HLASMExternalFiles) {
     const completeCommand = "editor.action.triggerSuggest";
 
     // initialize helpers
@@ -165,7 +173,12 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
     context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('hlasm', new HLASMDebugAdapterFactory(client)));
     context.subscriptions.push(vscode.languages.registerCodeActionsProvider('hlasm', new HLASMCodeActionsProvider(client)));
 
-    context.subscriptions.push(new HLASMExternalFiles(client));
+    context.subscriptions.push(client.onDidChangeState(e => e.newState === vscodelc.State.Starting && extFiles.reset()));
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(externalFilesScheme, extFiles.getTextDocumentContentProvider()));
+    extFiles.setClient('DATASET', new HLASMExternalFilesFtp(context));
+
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.resumeRemoteActivity', () => extFiles.resumeAll()));
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.suspendRemoteActivity', () => extFiles.suspendAll()));
 
     // overrides should happen only if the user wishes
     if (getConfig<boolean>('continuationHandling', false)) {

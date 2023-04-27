@@ -16,13 +16,15 @@ import * as vscode from 'vscode';
 import { fork } from 'child_process';
 import { Client, FTPResponse, FileInfo, FTPError } from 'basic-ftp'
 import { Readable, Writable } from 'stream';
-import { EOL, homedir } from 'os';
+import { homedir } from 'os';
 import path = require('node:path');
 import { promises as fsp } from "fs";
 import { hlasmplugin_folder, proc_grps_file } from './constants';
 import { Telemetry } from './telemetry';
-
-const cancelMessage = "Action was cancelled";
+import { askUser } from './uiUtils';
+import { connectionSecurityLevel, gatherConnectionInfo, getLastRunConfig, translateConnectionInfo, updateLastRunConfig } from './ftpCreds';
+import { convertBuffer } from './conversions';
+import { isCancellationError } from './helpers';
 
 export type JobId = string;
 export interface JobDescription {
@@ -57,14 +59,7 @@ async function basicFtpJobClient(connection: {
     client.parseList = (rawList: string): FileInfo[] => {
         return rawList.split(/\r?\n/).slice(1).filter(x => !/^\s*$/.test(x)).map((value) => new FileInfo(value));
     };
-    await client.access({
-        host: connection.host,
-        user: connection.user,
-        password: connection.password,
-        port: connection.port,
-        secure: connection.securityLevel !== connectionSecurityLevel.unsecure,
-        secureOptions: connection.securityLevel === connectionSecurityLevel.unsecure ? undefined : { rejectUnauthorized: connection.securityLevel !== connectionSecurityLevel.rejectUnauthorized }
-    });
+    await client.access(translateConnectionInfo(connection));
 
     const checkResponse = (resp: FTPResponse) => {
         if (resp.code < 200 || resp.code > 299)
@@ -288,32 +283,6 @@ async function unterse(outDir: string): Promise<{ process: Promise<void>, input:
     return { process: promise, input: unpacker.stdin! };
 }
 
-function toBufferArray(s: string): Buffer[] {
-    if (s.length != 256)
-        throw Error("Single byte conversion table expected");
-    const result: Buffer[] = [];
-    for (const c of s)
-        result.push(Buffer.from(c));
-    return result;
-}
-
-const ibm1148WithCrlfReplacement = toBufferArray('\u0000\u0001\u0002\u0003\u009C\u0009\u0086\u007F\u0097\u008D\u008E\u000B\u000C\ue00D\u000E\u000F\u0010\u0011\u0012\u0013\u009D\ue025\u0008\u0087\u0018\u0019\u0092\u008F\u001C\u001D\u001E\u001F\u0080\u0081\u0082\u0083\u0084\u000A\u0017\u001B\u0088\u0089\u008A\u008B\u008C\u0005\u0006\u0007\u0090\u0091\u0016\u0093\u0094\u0095\u0096\u0004\u0098\u0099\u009A\u009B\u0014\u0015\u009E\u001A\u0020\u00A0\u00E2\u00E4\u00E0\u00E1\u00E3\u00E5\u00E7\u00F1\u005B\u002E\u003C\u0028\u002B\u0021\u0026\u00E9\u00EA\u00EB\u00E8\u00ED\u00EE\u00EF\u00EC\u00DF\u005D\u0024\u002A\u0029\u003B\u005E\u002D\u002F\u00C2\u00C4\u00C0\u00C1\u00C3\u00C5\u00C7\u00D1\u00A6\u002C\u0025\u005F\u003E\u003F\u00F8\u00C9\u00CA\u00CB\u00C8\u00CD\u00CE\u00CF\u00CC\u0060\u003A\u0023\u0040\u0027\u003D\u0022\u00D8\u0061\u0062\u0063\u0064\u0065\u0066\u0067\u0068\u0069\u00AB\u00BB\u00F0\u00FD\u00FE\u00B1\u00B0\u006A\u006B\u006C\u006D\u006E\u006F\u0070\u0071\u0072\u00AA\u00BA\u00E6\u00B8\u00C6\u20AC\u00B5\u007E\u0073\u0074\u0075\u0076\u0077\u0078\u0079\u007A\u00A1\u00BF\u00D0\u00DD\u00DE\u00AE\u00A2\u00A3\u00A5\u00B7\u00A9\u00A7\u00B6\u00BC\u00BD\u00BE\u00AC\u007C\u00AF\u00A8\u00B4\u00D7\u007B\u0041\u0042\u0043\u0044\u0045\u0046\u0047\u0048\u0049\u00AD\u00F4\u00F6\u00F2\u00F3\u00F5\u007D\u004A\u004B\u004C\u004D\u004E\u004F\u0050\u0051\u0052\u00B9\u00FB\u00FC\u00F9\u00FA\u00FF\u005C\u00F7\u0053\u0054\u0055\u0056\u0057\u0058\u0059\u005A\u00B2\u00D4\u00D6\u00D2\u00D3\u00D5\u0030\u0031\u0032\u0033\u0034\u0035\u0036\u0037\u0038\u0039\u00B3\u00DB\u00DC\u00D9\u00DA\u009F');
-
-export function convertBuffer(buffer: Buffer, lrecl: number) {
-    const EOLBuffer = Buffer.from(EOL);
-    // 0xe000 private plane has 3 byte encoding sequence
-    const result = Buffer.allocUnsafe(3 * buffer.length + Math.floor((buffer.length + lrecl - 1) / lrecl) * EOLBuffer.length);
-    let pos = 0;
-    let i = 0;
-    for (const v of buffer) {
-        pos += ibm1148WithCrlfReplacement[v].copy(result, pos, 0);
-        if (i % lrecl === lrecl - 1)
-            pos += EOLBuffer.copy(result, pos);
-        ++i;
-    }
-    return result.subarray(0, pos);
-}
-
 async function translateFiles(dir: string) {
     const files = await fsp.readdir(dir, { withFileTypes: true });
     for (const file of files) {
@@ -400,7 +369,7 @@ export async function downloadDependenciesWithClient(client: JobClient,
 
     const checkCancel = () => {
         if (cancelled())
-            throw Error(cancelMessage);
+            throw new vscode.CancellationError();
     };
 
     try {
@@ -443,32 +412,6 @@ export async function downloadDependenciesWithClient(client: JobClient,
     finally {
         client.dispose();
     }
-}
-
-function askUser(prompt: string, password: boolean, defaultValue: string = ''): Promise<string> {
-    const input = vscode.window.createInputBox();
-    return new Promise<string>((resolve, reject) => {
-        input.ignoreFocusOut = true;
-        input.prompt = prompt;
-        input.password = password;
-        input.value = defaultValue || '';
-        input.onDidHide(() => reject(Error(cancelMessage)));
-        input.onDidAccept(() => resolve(input.value));
-        input.show();
-    }).finally(() => { input.dispose(); });
-}
-
-function pickUser<T>(title: string, options: { label: string, value: T }[]): Promise<T> {
-    const input = vscode.window.createQuickPick();
-    return new Promise<T>((resolve, reject) => {
-        input.ignoreFocusOut = true;
-        input.title = title;
-        input.items = options.map(x => { return { label: x.label }; });
-        input.canSelectMany = false;
-        input.onDidHide(() => reject(Error(cancelMessage)));
-        input.onDidAccept(() => resolve(options.find(x => x.label === input.selectedItems[0].label)!.value));
-        input.show();
-    }).finally(() => { input.dispose(); });
 }
 
 // because VSCode does not expose the service???
@@ -574,107 +517,13 @@ async function filterDownloadList(downloadCandidates: JobDetail[], newOnly: bool
         input.items = downloadCandidates.map(x => { return { label: x.dsn }; });
         input.canSelectMany = true;
         input.selectedItems = newOnly ? input.items.filter(x => interestingDsn.has(x.label)) : input.items;
-        input.onDidHide(() => reject(Error(cancelMessage)));
+        input.onDidHide(() => reject(new vscode.CancellationError()));
         input.onDidAccept(() => {
             const selected = new Set(input.selectedItems.map(x => x.label));
             resolve(downloadCandidates.filter(x => selected.has(x.dsn)));
         });
         input.show();
     }).finally(() => { input.dispose(); });
-}
-
-enum connectionSecurityLevel {
-    "rejectUnauthorized",
-    "acceptUnauthorized",
-    "unsecure",
-}
-
-interface ConnectionInfo {
-    host: string;
-    port: number | undefined;
-    user: string;
-    password: string;
-    hostInput: string;
-    securityLevel: connectionSecurityLevel;
-
-    zowe: boolean;
-}
-
-function gatherSecurityLevelFromZowe(profile: any) {
-    if (profile.secureFtp !== false) {
-        if (profile.rejectUnauthorized !== false)
-            return connectionSecurityLevel.rejectUnauthorized;
-        else
-            return connectionSecurityLevel.acceptUnauthorized;
-    }
-    else
-        return connectionSecurityLevel.unsecure;
-}
-
-async function gatherConnectionInfoFromZowe(zowe: vscode.Extension<any>, profileName: string): Promise<ConnectionInfo> {
-    if (!zowe.isActive)
-        await zowe.activate();
-    if (!zowe.isActive)
-        throw Error("Unable to activate ZOWE Explorer extension");
-    const zoweExplorerApi = zowe?.exports;
-    await zoweExplorerApi
-        .getExplorerExtenderApi()
-        .getProfilesCache()
-        .refresh(zoweExplorerApi);
-    const loadedProfile = zoweExplorerApi
-        .getExplorerExtenderApi()
-        .getProfilesCache()
-        .loadNamedProfile(profileName);
-
-    return {
-        host: loadedProfile.profile.host,
-        port: loadedProfile.profile.port,
-        user: loadedProfile.profile.user,
-        password: loadedProfile.profile.password,
-        hostInput: '@' + profileName,
-        securityLevel: gatherSecurityLevelFromZowe(loadedProfile.profile),
-        zowe: true,
-    };
-}
-
-async function gatherConnectionInfo(lastInput: DownloadDependenciesInputMemento): Promise<ConnectionInfo> {
-    const zowe = vscode.extensions.getExtension("Zowe.vscode-extension-for-zowe");
-
-    const hostInput = await askUser(zowe ? "host[:port] or @zowe-profile-name" : "host[:port]", false, !zowe && lastInput.host.startsWith('@') ? '' : lastInput.host);
-    const hostPort = hostInput.split(':');
-    if (hostPort.length < 1 || hostPort.length > 2)
-        throw Error("Invalid hostname or port");
-
-    const host = hostPort[0];
-    const port = hostPort.length > 1 ? +hostPort[1] : undefined;
-    if (zowe && port === undefined && host.startsWith('@'))
-        return gatherConnectionInfoFromZowe(zowe, host.slice(1));
-
-    const user = await askUser("user name", false, lastInput.user);
-    const password = await askUser("password", true);
-    const securityLevel = await pickUser("Select security option", [
-        { label: "Use TLS, reject unauthorized certificated", value: connectionSecurityLevel.rejectUnauthorized },
-        { label: "Use TLS, accept unauthorized certificated", value: connectionSecurityLevel.acceptUnauthorized },
-        { label: "Unsecured connection", value: connectionSecurityLevel.unsecure },
-    ]);
-    return { host, port, user, password, hostInput, securityLevel, zowe: false };
-}
-
-interface DownloadDependenciesInputMemento {
-    host: string;
-    user: string;
-    jobcard: string;
-}
-
-const mementoKey = "hlasm.downloadDependencies";
-
-function getLastRunConfig(context: vscode.ExtensionContext): DownloadDependenciesInputMemento {
-    let lastRun = context.globalState.get(mementoKey, { host: '', user: '', jobcard: '' });
-    return {
-        host: '' + (lastRun.host || ''),
-        user: '' + (lastRun.user || ''),
-        jobcard: '' + (lastRun.jobcard || ''),
-    };
 }
 
 async function isDirectoryEmpty(dir: string): Promise<boolean> {
@@ -733,7 +582,7 @@ export async function downloadDependencies(context: vscode.ExtensionContext, tel
 
         const jobcardPattern = await askUser("Enter jobcard pattern (? will be substituted)", false, lastInput.jobcard || "//" + user.slice(0, 7).padEnd(8, '?').toUpperCase() + " JOB ACCTNO");
 
-        await context.globalState.update(mementoKey, { host: hostInput, user: user, jobcard: jobcardPattern });
+        await updateLastRunConfig(context, { host: hostInput, user: user, jobcard: jobcardPattern });
 
         const thingsToDownload = await filterDownloadList(gatherDownloadList(await gatherAvailableConfigs()), newOnly);
 
@@ -784,7 +633,8 @@ export async function downloadDependencies(context: vscode.ExtensionContext, tel
         telemetry.reportEvent("downloadDependencies/finished", { zowe: zowe ? 'yes' : 'no' }, { failed: result.failed.length, total: result.total, elapsedTime: (endTime - startTime) / 1000 });
     }
     catch (e) {
-        if (e.message !== cancelMessage)
-            vscode.window.showErrorMessage("Error occured while downloading dependencies: " + (e.message || e));
+        if (isCancellationError(e))
+            return;
+        vscode.window.showErrorMessage("Error occured while downloading dependencies: " + (e.message || e));
     }
 }

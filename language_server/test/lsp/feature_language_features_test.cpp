@@ -77,7 +77,7 @@ TEST(language_features, definition)
     EXPECT_CALL(response_mock, respond(request_id(0), "", _));
     notifs["textDocument/definition"].as_request_handler()(request_id(0), params1);
 
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 }
 
 TEST(language_features, references)
@@ -121,7 +121,7 @@ TEST(language_features, document_symbol)
     EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
     notifs["textDocument/documentSymbol"].as_request_handler()(request_id(0), params1);
 
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 }
 
 TEST(language_features, semantic_tokens)
@@ -142,7 +142,7 @@ TEST(language_features, semantic_tokens)
 
     notifs["textDocument/semanticTokens/full"].as_request_handler()(request_id(0), params1);
 
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 }
 
 TEST(language_features, semantic_tokens_cancelled)
@@ -169,7 +169,7 @@ TEST(language_features, semantic_tokens_cancelled)
     request_invalidator();
 
     EXPECT_CALL(response_mock, respond_error(request_id(0), _, -32800, "Canceled", _));
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 }
 
 TEST(language_features, semantic_tokens_multiline)
@@ -203,7 +203,7 @@ IIIIIIIIIIIIIII1
 
     notifs["textDocument/semanticTokens/full"].as_request_handler()(request_id(0), params1);
 
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 }
 
 TEST(language_features, semantic_tokens_multiline_overlap)
@@ -248,7 +248,7 @@ TEST(language_features, semantic_tokens_multiline_overlap)
 
     notifs["textDocument/semanticTokens/full"].as_request_handler()(request_id(0), params1);
 
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 }
 
 

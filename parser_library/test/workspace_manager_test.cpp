@@ -63,7 +63,7 @@ TEST(workspace_manager, did_open_file)
 
     std::string input_text = "label lr 1,2";
     ws_mngr.did_open_file("test/library/test_wks/some_file", 1, input_text.c_str(), input_text.size());
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 
     EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t)0);
 }
@@ -77,7 +77,7 @@ TEST(workspace_manager, did_change_file)
     ws_mngr.add_workspace("workspace", "test/library/test_wks");
     std::string input = "label lr 1,2 remark";
     ws_mngr.did_open_file("test/library/test_wks/new_file", 1, input.c_str(), input.size());
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 
     EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t)0);
 
@@ -86,7 +86,7 @@ TEST(workspace_manager, did_change_file)
     changes.push_back(document_change({ { 0, 6 }, { 0, input.size() } }, new_text.c_str(), new_text.size()));
 
     ws_mngr.did_change_file("test/library/test_wks/new_file", 2, changes.data(), 1);
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 
     EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t)1);
 
@@ -95,7 +95,7 @@ TEST(workspace_manager, did_change_file)
     changes1.push_back(document_change({ { 0, 6 }, { 0, 10 } }, new_text1.c_str(), new_text1.size()));
 
     ws_mngr.did_change_file("test/library/test_wks/new_file", 3, changes1.data(), 1);
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 
     EXPECT_GT(consumer.diags.diagnostics_size(), (size_t)0);
 }

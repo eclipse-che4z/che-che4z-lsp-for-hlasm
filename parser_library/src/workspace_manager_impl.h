@@ -32,7 +32,9 @@
 #include "nlohmann/json.hpp"
 #include "protocol.h"
 #include "utils/content_loader.h"
+#include "utils/encoding.h"
 #include "utils/error_codes.h"
+#include "utils/path_conversions.h"
 #include "utils/scope_exit.h"
 #include "utils/task.h"
 #include "workspace_manager.h"
@@ -88,6 +90,18 @@ public:
                 for (auto& [_, ows] : self.m_workspaces)
                     if (ows.ws.uri() == related_ws.get_uri())
                         return ows;
+        }
+
+        std::string replacement_uri;
+        if (document_uri.starts_with(hlasm_external_scheme))
+        {
+            utils::path::dissected_uri uri_components = utils::path::dissect_uri(document_uri);
+            if (uri_components.contains_host())
+            {
+                replacement_uri = utils::encoding::uri_friendly_base16_decode(uri_components.auth->host);
+                if (!replacement_uri.empty())
+                    document_uri = replacement_uri;
+            }
         }
 
         size_t max = 0;
@@ -372,7 +386,7 @@ public:
         return item.request_type == work_item_type::query;
     }
 
-    bool idle_handler(const std::atomic<unsigned char>* yield_indicator)
+    void idle_handler(const std::atomic<unsigned char>* yield_indicator)
     {
         bool parsing_done = false;
         bool finished_inflight_task = false;
@@ -382,7 +396,7 @@ public:
             {
                 auto& item = m_work_queue.front();
                 if (!item.pending_requests.empty() && item.is_valid())
-                    return false;
+                    return;
                 if (item.is_task() || item.workspace_removed || !item.is_valid() || parsing_done
                     || !parsing_must_be_done(item))
                 {
@@ -404,23 +418,23 @@ public:
                     done = item.perform_action();
 
                     if (!done)
-                        return false;
+                        return;
 
                     continue;
                 }
             }
             else if (parsing_done)
-                return false;
+                return;
 
             if (m_active_task.valid())
             {
                 if (!run_active_task(yield_indicator))
-                    return true;
+                    return;
                 finished_inflight_task = true;
             }
 
             if (run_parse_loop(yield_indicator, std::exchange(finished_inflight_task, false)))
-                return true;
+                return;
 
             parsing_done = true;
         }
@@ -855,8 +869,20 @@ private:
 
     static constexpr std::string_view hlasm_external_scheme = "hlasm-external://";
 
+    struct
+    {
+        template<typename Channel, typename T>
+        utils::value_task<T> operator()(Channel channel, T* result) const
+        {
+            while (!channel.resolved())
+                co_await utils::task::suspend();
+
+            co_return std::move(*result);
+        }
+    } static constexpr async_busy_wait = {}; // clang 14
+
     [[nodiscard]] utils::value_task<std::optional<std::string>> load_text_external(
-        utils::resource::resource_location document_loc) const
+        const utils::resource::resource_location& document_loc) const
     {
         struct content_t
         {
@@ -868,10 +894,7 @@ private:
         auto [channel, data] = make_workspace_manager_response(std::in_place_type<content_t>);
         m_external_file_requests->read_external_file(document_loc.get_uri().c_str(), channel);
 
-        while (!channel.resolved())
-            co_await utils::task::suspend();
-
-        co_return std::move(data->result);
+        return async_busy_wait(std::move(channel), &data->result);
     }
 
     [[nodiscard]] utils::value_task<std::optional<std::string>> load_text(
@@ -888,7 +911,7 @@ private:
 
     [[nodiscard]] utils::value_task<std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
         utils::path::list_directory_rc>>
-    list_directory_files_external(utils::resource::resource_location directory) const
+    list_directory_files_external(const utils::resource::resource_location& directory) const
     {
         using enum utils::path::list_directory_rc;
         struct content_t
@@ -901,13 +924,17 @@ private:
                 utils::path::list_directory_rc>
                 result;
 
-            void provide(sequence<sequence<char>> c)
+            void provide(workspace_manager_external_directory_result c)
             {
                 try
                 {
+                    std::string ext(c.suggested_extension);
                     auto& dirs = result.first;
-                    for (auto s : c)
-                        dirs.emplace_back(std::string(s), dir.join(std::string_view(s)));
+                    for (auto s : c.members)
+                    {
+                        std::string file(s);
+                        dirs.emplace_back(std::move(file), utils::resource::resource_location::join(dir, file + ext));
+                    }
                 }
                 catch (...)
                 {
@@ -924,13 +951,10 @@ private:
                     result.second = other_failure;
             }
         };
-        auto [channel, data] = make_workspace_manager_response(std::in_place_type<content_t>, std::move(directory));
+        auto [channel, data] = make_workspace_manager_response(std::in_place_type<content_t>, directory);
         m_external_file_requests->read_external_directory(data->dir.get_uri().c_str(), channel);
 
-        while (!channel.resolved())
-            co_await utils::task::suspend();
-
-        co_return std::move(data->result);
+        return async_busy_wait(std::move(channel), &data->result);
     }
 
     [[nodiscard]] utils::value_task<std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,

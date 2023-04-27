@@ -20,6 +20,12 @@
 
 namespace hlasm_plugin::parser_library {
 
+struct workspace_manager_external_directory_result
+{
+    sequence<sequence<char>> members;
+    sequence<char> suggested_extension;
+};
+
 class workspace_manager_external_file_requests
 {
 protected:
@@ -28,7 +34,7 @@ protected:
 public:
     virtual void read_external_file(const char* url, workspace_manager_response<sequence<char>> content) = 0;
     virtual void read_external_directory(
-        const char* url, workspace_manager_response<sequence<sequence<char>>> members) = 0;
+        const char* url, workspace_manager_response<workspace_manager_external_directory_result> members) = 0;
 };
 
 } // namespace hlasm_plugin::parser_library

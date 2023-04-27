@@ -109,9 +109,9 @@ void server::disconnected()
 }
 
 
-bool server::idle_handler(const std::atomic<unsigned char>* yield_indicator)
+void server::idle_handler(const std::atomic<unsigned char>* yield_indicator)
 {
-    return m_dap_feature->idle_handler(yield_indicator);
+    m_dap_feature->idle_handler(yield_indicator);
 }
 
 } // namespace hlasm_plugin::language_server::dap

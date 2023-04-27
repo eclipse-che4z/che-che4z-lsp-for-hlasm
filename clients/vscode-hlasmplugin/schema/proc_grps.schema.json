@@ -28,7 +28,7 @@
                                         },
                                         "optional": {
                                             "type": "boolean",
-                                            "description": "Specifies whether it is acceptable to not locate the folder."
+                                            "description": "Specify 'true' if it is acceptable to not locate the folder."
                                         },
                                         "macro_extensions": {
                                             "type": "array",
@@ -45,6 +45,22 @@
                                     },
                                     "required": [
                                         "path"
+                                    ]
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "dataset": {
+                                            "type": "string",
+                                            "description": "Name of a data set located on the mainframe."
+                                        },
+                                        "optional": {
+                                            "type": "boolean",
+                                            "description": "Specify 'true' if it is acceptable to not locate the data set."
+                                        }
+                                    },
+                                    "required": [
+                                        "dataset"
                                     ]
                                 }
                             ]

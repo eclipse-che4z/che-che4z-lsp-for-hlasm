@@ -19,6 +19,7 @@
 
 #include "../common_testing.h"
 #include "empty_configs.h"
+#include "external_file_reader_mock.h"
 #include "utils/path.h"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
@@ -29,7 +30,9 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
 using namespace hlasm_plugin::utils::resource;
+using namespace hlasm_plugin::utils;
 using hlasm_plugin::utils::platform::is_windows;
+using namespace ::testing;
 
 namespace {
 const auto correct_loc = is_windows() ? resource_location("test\\library\\test_wks\\correct")
@@ -608,4 +611,41 @@ TEST_F(workspace_test, did_change_watched_files_added_missing)
     run_if_valid(ws.did_change_watched_files({ correct_macro_loc }, { workspaces::file_content_state::identical }));
     parse_all_files(ws);
     EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
+}
+
+TEST_F(workspace_test, use_external_library)
+{
+    NiceMock<external_file_reader_mock> external_files;
+    file_manager_impl fm(external_files);
+
+    fm.did_open_file(pgm_conf_loc, 1, R"({
+  "pgms": [
+    {
+      "program": "source1",
+      "pgroup": "P1"
+    }
+  ]
+})");
+    fm.did_open_file(proc_grps_loc, 1, R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [ {"dataset": "REMOTE.DATASET"} ]
+    }
+  ]
+})");
+    fm.did_open_file(source1_loc, 1, "");
+
+    workspace ws(empty_loc, "workspace_name", fm, config, global_settings);
+    ws.open().run();
+
+    EXPECT_CALL(external_files, list_directory_files(resource_location("hlasm-external:///DATASET/REMOTE.DATASET")))
+        .WillOnce(Invoke([]() {
+            return value_task<list_directory_result>::from_value({ {}, path::list_directory_rc::done });
+        }));
+
+
+    run_if_valid(ws.did_open_file(source1_loc));
+    parse_all_files(ws);
+    EXPECT_EQ(collect_and_get_diags_size(ws), 0);
 }

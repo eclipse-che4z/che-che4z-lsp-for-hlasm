@@ -56,7 +56,7 @@ public:
     void read_external_file(
         const char* url, parser_library::workspace_manager_response<parser_library::sequence<char>> content) override;
     void read_external_directory(const char* url,
-        parser_library::workspace_manager_response<parser_library::sequence<parser_library::sequence<char>>> members)
+        parser_library::workspace_manager_response<parser_library::workspace_manager_external_directory_result> members)
         override;
 
     class thread_registration

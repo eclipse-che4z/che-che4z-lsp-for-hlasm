@@ -147,7 +147,7 @@ public:
         bool extended,
         workspace_manager_response<continuous_sequence<opcode_suggestion>>) const;
 
-    virtual bool idle_handler(const std::atomic<unsigned char>* yield_indicator = nullptr);
+    virtual void idle_handler(const std::atomic<unsigned char>* yield_indicator = nullptr);
 
 private:
     impl* impl_;

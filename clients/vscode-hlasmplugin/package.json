@@ -273,6 +273,16 @@
         "command": "extension.hlasm-plugin.blockCommentEditorCommands",
         "category": "HLASM",
         "title": "Toggle Block Comment"
+      },
+      {
+        "command": "extension.hlasm-plugin.resumeRemoteActivity",
+        "category": "HLASM",
+        "title": "Resume retrieval of remote files"
+      },
+      {
+        "command": "extension.hlasm-plugin.suspendRemoteActivity",
+        "category": "HLASM",
+        "title": "Suspend retrieval of remote files"
       }
     ],
     "keybindings": [

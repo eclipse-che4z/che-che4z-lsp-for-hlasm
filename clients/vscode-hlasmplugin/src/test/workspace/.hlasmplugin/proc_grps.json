@@ -55,10 +55,17 @@
       ]
     },
     {
-      "comment": "Temporary test only",
+      "comment": "Testing only",
       "name": "remote",
       "libs": [
-        "hlasm-external://something"
+        "hlasm-external:/TEST/something"
+      ]
+    },
+    {
+      "comment": "Testing only",
+      "name": "remote2",
+      "libs": [
+        "hlasm-external:/TEST/something.else"
       ]
     }
   ],

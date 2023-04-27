@@ -103,7 +103,7 @@ public:
     scopes_t scopes(frame_id_t frame_id) const;
     variables_t variables(var_reference_t var_ref) const;
 
-    bool analysis_step(const std::atomic<unsigned char>* yield_indicator);
+    void analysis_step(const std::atomic<unsigned char>* yield_indicator);
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

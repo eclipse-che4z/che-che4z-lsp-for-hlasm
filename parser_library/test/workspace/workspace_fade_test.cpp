@@ -1279,7 +1279,7 @@ A        EXEC CICS ABEND ABCODE('1234')
     ws_mngr.did_open_file("test/library/test_wks/.hlasmplugin/pgm_conf.json", 1, pgm_conf.c_str(), pgm_conf.size());
     ws_mngr.did_open_file("test/library/test_wks/.hlasmplugin/proc_grps.json", 1, proc_grps.c_str(), proc_grps.size());
     ws_mngr.did_open_file("test/library/test_wks/file_1", 1, f1.c_str(), f1.size());
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
     EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
     EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
@@ -1287,7 +1287,7 @@ A        EXEC CICS ABEND ABCODE('1234')
 
     std::vector<document_change> changes;
     ws_mngr.did_change_file("test/library/test_wks/file_1", 2, changes.data(), 0);
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
     EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
     EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
@@ -1296,7 +1296,7 @@ A        EXEC CICS ABEND ABCODE('1234')
     std::string new_f1_text = "A         EXEC  CICS   ABEND ABCODE('1234')\n";
     changes.push_back(document_change({ { 6, 0 }, { 6, 43 } }, new_f1_text.c_str(), new_f1_text.size()));
     ws_mngr.did_change_file("test/library/test_wks/file_1", 3, changes.data(), 1);
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
     EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
     EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
@@ -1304,7 +1304,7 @@ A        EXEC CICS ABEND ABCODE('1234')
 
     std::string f2 = "";
     ws_mngr.did_open_file("test/library/test_wks/diff_file_2", 1, f2.c_str(), f2.size());
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
     EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
     EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
@@ -1314,7 +1314,7 @@ A        EXEC CICS ABEND ABCODE('1234')
     changes.clear();
     changes.push_back(document_change({ { 6, 0 }, { 6, 44 } }, new_f1_text.c_str(), new_f1_text.size()));
     ws_mngr.did_change_file("test/library/test_wks/file_1", 4, changes.data(), 1);
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
     EXPECT_GE(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
     EXPECT_EQ(consumer.fms.size(), static_cast<size_t>(0));
 
@@ -1328,7 +1328,7 @@ A        EXEC CICS ABEND ABCODE('1234')
     changes.clear();
     changes.push_back(document_change(new_f1_text.c_str(), new_f1_text.size()));
     ws_mngr.did_change_file("test/library/test_wks/file_1", 5, changes.data(), 1);
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
     EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
     EXPECT_EQ(consumer.fms.size(), static_cast<size_t>(0));
 }

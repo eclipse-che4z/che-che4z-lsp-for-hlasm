@@ -79,7 +79,7 @@ void external_file_reader::read_external_file(const char* url, workspace_manager
 }
 
 void external_file_reader::read_external_directory(
-    const char* url, workspace_manager_response<sequence<sequence<char>>> members)
+    const char* url, workspace_manager_response<workspace_manager_external_directory_result> members)
 {
     auto next_id = m_next_id.fetch_add(1, std::memory_order_relaxed);
     nlohmann::json msg = {
@@ -95,7 +95,9 @@ void external_file_reader::read_external_directory(
             members.error(err, errmsg.c_str());
             return;
         }
-        if (!result.is_array())
+        auto member_list = result.find("members");
+        auto ext = result.find("suggested_extension");
+        if (member_list == result.end() || !member_list->is_array() || ext != result.end() && !ext->is_string())
         {
             members.error(utils::error::invalid_json);
             return;
@@ -110,7 +112,7 @@ void external_file_reader::read_external_directory(
             members.error(utils::error::allocation);
             return;
         }
-        for (const auto& item : result)
+        for (const auto& item : *member_list)
         {
             if (!item.is_string())
             {
@@ -120,7 +122,12 @@ void external_file_reader::read_external_directory(
             tmp.emplace_back(sequence<char>(item.get<std::string_view>()));
         }
 
-        members.provide(sequence<sequence<char>>(tmp));
+        sequence<char> extension(ext != result.end() ? ext->get<std::string_view>() : std::string_view());
+
+        members.provide({
+            .members = sequence<sequence<char>>(tmp),
+            .suggested_extension = extension,
+        });
     };
 
     if (!enqueue_message(next_id, std::move(msg), std::move(handler)))

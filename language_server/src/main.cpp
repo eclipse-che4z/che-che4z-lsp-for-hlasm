@@ -83,8 +83,8 @@ public:
 
                 for (;;)
                 {
-                    if (lsp_queue.will_read_block() && ws_mngr.idle_handler(lsp_queue.will_block_preview()))
-                        continue;
+                    if (lsp_queue.will_read_block())
+                        ws_mngr.idle_handler(lsp_queue.will_block_preview());
 
                     auto message = lsp_queue.read();
                     if (!message.has_value())

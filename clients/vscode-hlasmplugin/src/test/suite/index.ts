@@ -28,6 +28,47 @@ async function primeExtension(): Promise<vscode.Disposable[]> {
 	// prime opcode suggestions to avoid timeouts
 	await Promise.race([lang.sendRequest<object>('textDocument/$/opcode_suggestion', { opcodes: ['OPCODE'] }), timeout(30000, 'Opcode suggestion request failed')]);
 
+	ext.registerExternalFileClient('TEST', {
+		listMembers(args: { path: string, file: string }) {
+			if (this.clientSuspended)
+				throw new vscode.CancellationError();
+			return Promise.resolve(['MACA', 'MACB', 'MACC']);
+		},
+		readMember(args: { path: string, file: string }) {
+			if (this.clientSuspended)
+				throw new vscode.CancellationError();
+			if (/^MAC[A-C]$/.test(args.file))
+				return Promise.resolve(`.*
+         MACRO
+		 ${args.file}
+		 MEND`);
+
+			return Promise.resolve(null);
+		},
+
+		clientSuspended: false,
+		eventEmitter: new vscode.EventEmitter<boolean>(),
+
+		get onStateChange() { return this.eventEmitter.event; },
+
+		suspend() { !this.clientSuspended && this.eventEmitter.fire(this.clientSuspended = true); },
+		resume() { this.clientSuspended && this.eventEmitter.fire(this.clientSuspended = false); },
+
+		suspended() { return this.clientSuspended; },
+
+		dispose() { },
+
+		parseArgs(p: string) {
+			const [path, file] = p.split('/').slice(1).map(x => x.toUpperCase());
+			return {
+				path: path || '',
+				file: (file || '').split('.')[0],
+				toString() { return `${this.path}/${this.file}`; },
+				normalizedPath() { return `/${this.path}/${this.file}`; },
+			}
+		}
+	});
+
 	return [vscode.debug.registerDebugAdapterTrackerFactory('hlasm', {
 		createDebugAdapterTracker: function (session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
 			return {

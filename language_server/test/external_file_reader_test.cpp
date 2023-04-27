@@ -165,7 +165,7 @@ TEST(external_file_reader, directory_reading)
     MockFunction<void()> wakeup;
 
     auto [r, resp] = make_workspace_manager_response(
-        std::in_place_type<NiceMock<workspace_manager_response_mock<sequence<sequence<char>>>>>);
+        std::in_place_type<NiceMock<workspace_manager_response_mock<workspace_manager_external_directory_result>>>);
     external_file_reader reader(sink);
 
     auto reg = reader.register_thread(wakeup.AsStdFunction());
@@ -185,8 +185,9 @@ TEST(external_file_reader, directory_reading)
 
     reader.read_external_directory("CCC", r);
 
-    EXPECT_CALL(*resp, provide(Truly([](sequence<sequence<char>> v) {
-        return v.size() == 2 && std::string_view(v.item(0)) == "A" && std::string_view(v.item(1)) == "B";
+    EXPECT_CALL(*resp, provide(Truly([](workspace_manager_external_directory_result v) {
+        return std::string_view(v.suggested_extension) == ".hlasm" && v.members.size() == 2
+            && std::string_view(v.members.item(0)) == "A" && std::string_view(v.members.item(1)) == "B";
     })));
     EXPECT_CALL(wakeup, Call());
 
@@ -196,9 +197,12 @@ TEST(external_file_reader, directory_reading)
   "method":"external_file_response",
   "params":{
     "id":1,
-    "data":[
-      "A", "B"
-    ]
+    "data":{
+      "members": [
+         "A", "B"
+      ],
+      "suggested_extension": ".hlasm"
+    }
   }
 })"_json);
 }
@@ -209,7 +213,7 @@ TEST(external_file_reader, directory_reading_bad)
     MockFunction<void()> wakeup;
 
     auto [r, resp] = make_workspace_manager_response(
-        std::in_place_type<NiceMock<workspace_manager_response_mock<sequence<sequence<char>>>>>);
+        std::in_place_type<NiceMock<workspace_manager_response_mock<workspace_manager_external_directory_result>>>);
     external_file_reader reader(sink);
 
     auto reg = reader.register_thread(wakeup.AsStdFunction());
@@ -249,7 +253,7 @@ TEST(external_file_reader, directory_reading_bad2)
     MockFunction<void()> wakeup;
 
     auto [r, resp] = make_workspace_manager_response(
-        std::in_place_type<NiceMock<workspace_manager_response_mock<sequence<sequence<char>>>>>);
+        std::in_place_type<NiceMock<workspace_manager_response_mock<workspace_manager_external_directory_result>>>);
     external_file_reader reader(sink);
 
     auto reg = reader.register_thread(wakeup.AsStdFunction());
@@ -283,13 +287,53 @@ TEST(external_file_reader, directory_reading_bad2)
 })"_json);
 }
 
+TEST(external_file_reader, directory_reading_bad3)
+{
+    NiceMock<mock_json_sink> sink;
+    MockFunction<void()> wakeup;
+
+    auto [r, resp] = make_workspace_manager_response(
+        std::in_place_type<NiceMock<workspace_manager_response_mock<workspace_manager_external_directory_result>>>);
+    external_file_reader reader(sink);
+
+    auto reg = reader.register_thread(wakeup.AsStdFunction());
+
+    EXPECT_CALL(sink,
+        write_rvr(
+            R"(
+{
+  "jsonrpc": "2.0",
+  "method":"external_file_request",
+  "params":{
+    "id":1,
+    "op":"read_directory",
+    "url":"CCC"
+  }
+})"_json));
+
+    reader.read_external_directory("CCC", r);
+
+    EXPECT_CALL(*resp, error(_, _));
+    EXPECT_CALL(wakeup, Call());
+
+    reader.write(R"(
+{
+  "jsonrpc": "2.0",
+  "method":"external_file_response",
+  "params":{
+    "id":1,
+    "data":{"members":[5]}
+  }
+})"_json);
+}
+
 TEST(external_file_reader, directory_reading_error)
 {
     NiceMock<mock_json_sink> sink;
     MockFunction<void()> wakeup;
 
     auto [r, resp] = make_workspace_manager_response(
-        std::in_place_type<NiceMock<workspace_manager_response_mock<sequence<sequence<char>>>>>);
+        std::in_place_type<NiceMock<workspace_manager_response_mock<workspace_manager_external_directory_result>>>);
     external_file_reader reader(sink);
 
     auto reg = reader.register_thread(wakeup.AsStdFunction());

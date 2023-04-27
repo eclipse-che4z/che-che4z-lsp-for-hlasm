@@ -113,7 +113,7 @@ bool is_uri(std::string_view path) noexcept
     return ec.value() == 0;
 }
 
-dissected_uri dissect_uri(std::string_view uri) noexcept
+dissected_uri dissect_uri(std::string_view uri)
 {
     dissected_uri dis_uri;
 

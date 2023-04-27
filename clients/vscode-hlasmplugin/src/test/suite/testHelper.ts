@@ -180,3 +180,28 @@ export async function waitForDiagnostics(file: string | vscode.Uri, nonEmptyOnly
 
     return result;
 }
+
+export async function waitForDiagnosticsChange(file: string | vscode.Uri, action: () => PromiseLike<void>) {
+    const fileUri = typeof file === 'string' ? await getWorkspaceFile(file) : file;
+
+    const initialDiags = vscode.languages.getDiagnostics(fileUri).map(x => JSON.stringify(x)).sort();
+
+    const result = new Promise<vscode.Diagnostic[]>((resolve) => {
+        let listener = vscode.languages.onDidChangeDiagnostics((e) => {
+            if (!listener)
+                return;
+            const forFile = e.uris.find(v => v.toString() === fileUri.toString());
+            if (!forFile)
+                return;
+            const diags = vscode.languages.getDiagnostics(forFile);
+            if (diags.length === initialDiags.length && diags.map(x => JSON.stringify(x)).sort().every((x, i) => x === initialDiags[i]))
+                return;
+            listener.dispose();
+            listener = null;
+            resolve(diags);
+        });
+    });
+    await Promise.resolve(action());
+
+    return await result;
+}

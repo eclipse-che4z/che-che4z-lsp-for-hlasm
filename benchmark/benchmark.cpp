@@ -398,8 +398,7 @@ private:
             ws.register_diagnostics_consumer(&diag_counter);
             ws.register_parsing_metadata_consumer(&collector);
             ws.add_workspace(bc.ws_folder.c_str(), bc.ws_folder.c_str());
-            if (ws.idle_handler())
-                abort();
+            ws.idle_handler();
         }
 
     private:
@@ -603,8 +602,7 @@ private:
             reparse ? ws.did_change_file(source_path_c_str, 1, &dummy_change, 1)
                     : ws.did_open_file(source_path_c_str, 1, content.c_str(), content.length());
 
-            if (ws.idle_handler())
-                abort();
+            ws.idle_handler();
         }
         catch (const std::exception& e)
         {

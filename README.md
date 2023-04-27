@@ -109,7 +109,7 @@ The HLASM Language Support extension looks for locally stored members when a mac
 - `pgm_conf.json` provides a mapping between programs (open-code files) and processor groups. It specifies which list of directories is used with which program. 
 
 To use a predefined set of macro and copy members, follow these steps: 
-1. Specify any number of library directories to search for macros and COPY files in `proc_grps.json`. These directories are searched in order that they are listed. 
+1. Specify any number of library directories or remote data sets to search for macros and COPY files in `proc_grps.json`. These directories and data sets are searched in order that they are listed.
 2. Name the group of directories with an identifier.
    You have created a new processor group.
 3. Use the identifier of the new processor group with the name of your source code file in `pgm_conf.json` to assign the library members to the program.
@@ -122,12 +122,15 @@ Visual Studio Code workspace variables can be referenced in both configuration f
 
 ### Example `proc_grps.json`:
 
-The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files, it also defines the _SYSPARM_ assembler parameter for GROUP1. Additionally, if the library `MACLIB/` does not exist in the workspace, the plugin does not report it as an error. 
+The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files, it also defines the _SYSPARM_ assembler parameter for GROUP1. Additionally, if the library `MACLIB/` does not exist in the workspace, the plugin does not report it as an error.
+
+The `SYS1.MACLIB` data set is accessed via an FTP client and required members are downloaded.
 
 Wildcards can be used to locate libraries and/or programs as is shown in the path mask `C:/common/**/maclib` below. The following wildcards are supported:
 - `?` -  Matches a single character but not a directory separator 
 - `*` -  Matches 0 characters, 1 characters or a continuous sequence of characters but not a directory separator
 - `**` - Matches 0 characters, 1 character or a continuous sequence of characters including directory separators
+Wildcards can be used only when specifying local libraries, not remote data sets.
 
 The order of libraries that are selected by a path mask is arbitrary. We therefore recommend that macro names within these libraries are unique.
 
@@ -143,7 +146,10 @@ The order of libraries that are selected by a path mask is arbitrary. We therefo
           "optional": true
         },
         "C:/SYS.ASMMAC",
-        "C:/common/**/maclib"
+        "C:/common/**/maclib",
+        {
+          "dataset": "SYS1.MACLIB"
+        }
       ],
       "asm_options": {
         "SYSPARM": "ZOS210"

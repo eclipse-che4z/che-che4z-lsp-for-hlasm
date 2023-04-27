@@ -42,3 +42,34 @@ TEST(encoding, percent_encode_and_ignore_utf8)
     EXPECT_EQ(percent_encode_and_ignore_utf8("%F0%92%83%AF"), "%F0%92%83%AF");
     EXPECT_EQ(percent_encode_and_ignore_utf8("%F0%92%83%D0"), "%25F0%2592%2583%25D0");
 }
+
+TEST(encoding, uri_friendly_base16_encode)
+{
+    EXPECT_EQ(uri_friendly_base16_encode(""), "");
+    EXPECT_EQ(uri_friendly_base16_encode("A"), "eb");
+    EXPECT_EQ(uri_friendly_base16_encode("AB"), "ebec");
+}
+
+TEST(encoding, uri_friendly_base16_decode)
+{
+    EXPECT_EQ(uri_friendly_base16_decode(""), "");
+    EXPECT_EQ(uri_friendly_base16_decode("eb"), "A");
+    EXPECT_EQ(uri_friendly_base16_decode("ebec"), "AB");
+    EXPECT_EQ(uri_friendly_base16_decode("EB"), "A");
+    EXPECT_EQ(uri_friendly_base16_decode("EBEC"), "AB");
+    EXPECT_EQ(uri_friendly_base16_decode("EbeC"), "AB");
+    EXPECT_EQ(uri_friendly_base16_decode("e"), "");
+    EXPECT_EQ(uri_friendly_base16_decode("aX"), "");
+    EXPECT_EQ(uri_friendly_base16_decode("Xa"), "");
+    EXPECT_EQ(uri_friendly_base16_decode("ax"), "");
+    EXPECT_EQ(uri_friendly_base16_decode("xa"), "");
+}
+
+TEST(encoding, uri_friendly_base16_roundtrip)
+{
+    std::string s;
+    for (int i = 0; i < 256; ++i)
+        s.push_back(i);
+
+    EXPECT_EQ(uri_friendly_base16_decode(uri_friendly_base16_encode(s)), s);
+}

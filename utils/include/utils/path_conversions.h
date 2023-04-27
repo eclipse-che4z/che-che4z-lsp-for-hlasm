@@ -51,7 +51,7 @@ bool is_uri(std::string_view path) noexcept;
 std::string get_presentable_uri(std::string_view uri, bool debug);
 
 // Do URI dissection
-dissected_uri dissect_uri(std::string_view uri) noexcept;
+dissected_uri dissect_uri(std::string_view uri);
 
 // Reconstruct dissected URI
 std::string reconstruct_uri(const dissected_uri& dis_uri);

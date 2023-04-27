@@ -16,6 +16,7 @@
 
 #include <functional>
 #include <iterator>
+#include <limits>
 #include <optional>
 
 #include "network/uri/uri.hpp"
@@ -148,4 +149,62 @@ std::string percent_encode_and_ignore_utf8(std::string_view s)
     }
     return uri;
 }
+
+constexpr std::string_view uri_friendly_base16 = "abcdefghijklmnop";
+constexpr std::string_view uri_friendly_base16uc = "ABCDEFGHIJKLMNOP";
+
+static_assert(uri_friendly_base16.size() == 16);
+static_assert(uri_friendly_base16uc.size() == 16);
+
+std::string uri_friendly_base16_encode(std::string_view s)
+{
+    std::string result;
+    result.reserve(s.size() * 2);
+
+
+    for (unsigned char c : s)
+    {
+        result.push_back(uri_friendly_base16[c >> 4]);
+        result.push_back(uri_friendly_base16[c & 15]);
+    }
+
+    return result;
+}
+
+std::string uri_friendly_base16_decode(std::string_view s)
+{
+    if (s.size() & 1)
+        return {};
+
+    static constexpr const auto inverse = []() {
+        std::array<signed char, 256> result {};
+        for (auto& c : result)
+            c = -1;
+
+        for (size_t i = 0; i < uri_friendly_base16.size(); ++i)
+        {
+            result[(unsigned char)uri_friendly_base16[i]] = i;
+            result[(unsigned char)uri_friendly_base16uc[i]] = i;
+        }
+
+        return result;
+    }();
+
+    std::string result;
+    result.reserve(s.size() / 2);
+    for (size_t i = 0; i < s.size(); i += 2)
+    {
+        auto c0 = inverse[(unsigned char)s[i]];
+        auto c1 = inverse[(unsigned char)s[i + 1]];
+        if (c0 < 0 || c1 < 0)
+        {
+            result.clear();
+            break;
+        }
+        result.push_back(c0 << 4 | c1);
+    }
+
+    return result;
+}
+
 } // namespace hlasm_plugin::utils::encoding

@@ -176,18 +176,19 @@ public:
         return true;
     }
 
-    bool step(const std::atomic<unsigned char>* yield_indicator)
+    void step(const std::atomic<unsigned char>* yield_indicator)
     {
         if (!analyzer_task.valid() || debug_ended_)
-            return false;
+            return;
 
         if (!continue_)
-            return false;
+            return;
 
         if (!analyzer_task.done())
         {
             analyzer_task.resume(yield_indicator);
-            return false;
+            if (!analyzer_task.done())
+                return;
         }
 
         analyzer_task = {};
@@ -195,8 +196,6 @@ public:
         if (!disconnected_ && event_)
             event_->exited(0);
         debug_ended_ = true;
-
-        return false;
     }
 
     void set_event_consumer(debug_event_consumer* event) { event_ = event; }
@@ -476,7 +475,7 @@ void debugger::step_out() { pimpl->step_out(); }
 void debugger::disconnect() { pimpl->disconnect(); }
 void debugger::continue_debug() { pimpl->continue_debug(); }
 void debugger::pause() { pimpl->pause(); }
-bool debugger::analysis_step(const std::atomic<unsigned char>* yield_indicator) { return pimpl->step(yield_indicator); }
+void debugger::analysis_step(const std::atomic<unsigned char>* yield_indicator) { pimpl->step(yield_indicator); }
 
 
 void debugger::breakpoints(sequence<char> source, sequence<breakpoint> bps)

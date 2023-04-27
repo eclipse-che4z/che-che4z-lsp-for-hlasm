@@ -142,9 +142,9 @@ TEST(virtual_files, workspace)
     AINSERT 'A DC H',BACK
 )";
     wm.did_open_file("ws/file", 1, input.data(), input.size());
-    EXPECT_FALSE(wm.idle_handler());
+    wm.idle_handler();
     wm.did_close_file("ws/file");
-    EXPECT_FALSE(wm.idle_handler());
+    wm.idle_handler();
 }
 
 TEST(virtual_files, workspace_auto_cleanup)
@@ -155,7 +155,7 @@ TEST(virtual_files, workspace_auto_cleanup)
     AINSERT 'A DC H',BACK
 )";
     wm.did_open_file("ws/file", 1, input.data(), input.size());
-    EXPECT_FALSE(wm.idle_handler());
+    wm.idle_handler();
 }
 
 TEST(virtual_files, hover)
@@ -170,7 +170,7 @@ MY  DSECT
 )";
     wm.register_diagnostics_consumer(&diag_mock);
     wm.did_open_file("ws/file", 1, input.data(), input.size());
-    EXPECT_FALSE(wm.idle_handler());
+    wm.idle_handler();
 
     ASSERT_EQ(diag_mock.diags.diagnostics_size(), 1);
 
@@ -187,5 +187,5 @@ MY  DSECT
     })));
 
     wm.hover(vf.c_str(), position(0, 0), resp);
-    EXPECT_FALSE(wm.idle_handler());
+    wm.idle_handler();
 }

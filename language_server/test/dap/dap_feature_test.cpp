@@ -161,10 +161,10 @@ TEST_F(feature_launch_test, stop_on_entry)
 {
     ws_mngr.did_open_file(
         utils::path::path_to_uri(file_path).c_str(), 0, file_stop_on_entry.c_str(), file_stop_on_entry.size());
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
-    EXPECT_FALSE(feature.idle_handler(nullptr));
+    feature.idle_handler(nullptr);
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
@@ -190,10 +190,10 @@ std::string file_step = R"(  LR 1,1
 TEST_F(feature_launch_test, step)
 {
     ws_mngr.did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, file_step.c_str(), file_step.size());
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
-    EXPECT_FALSE(feature.idle_handler(nullptr));
+    feature.idle_handler(nullptr);
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
@@ -283,7 +283,7 @@ TEST_F(feature_launch_test, breakpoint)
 {
     ws_mngr.did_open_file(
         utils::path::path_to_uri(file_path).c_str(), 0, file_breakpoint.c_str(), file_breakpoint.size());
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 
     nlohmann::json bp_args { { "source", { { "path", file_path } } },
         { "breakpoints", R"([{"line":1}, {"line":3}])"_json } };
@@ -297,7 +297,7 @@ TEST_F(feature_launch_test, breakpoint)
     resp_provider.reset();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
-    EXPECT_FALSE(feature.idle_handler(nullptr));
+    feature.idle_handler(nullptr);
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
@@ -327,10 +327,10 @@ TEST_F(feature_launch_test, variables)
 {
     ws_mngr.did_open_file(
         utils::path::path_to_uri(file_path).c_str(), 0, file_variables.c_str(), file_variables.size());
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
-    EXPECT_FALSE(feature.idle_handler(nullptr));
+    feature.idle_handler(nullptr);
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
@@ -428,13 +428,13 @@ std::string pause_file = ".A AGO .A";
 TEST_F(feature_launch_test, pause)
 {
     ws_mngr.did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, pause_file.c_str(), pause_file.size());
-    EXPECT_FALSE(ws_mngr.idle_handler());
+    ws_mngr.idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
 
     std::atomic<unsigned char> yield = 1;
 
-    EXPECT_FALSE(feature.idle_handler(&yield));
+    feature.idle_handler(&yield);
 
     feature.on_pause(request_id(1), {});
 

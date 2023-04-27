@@ -30,3 +30,7 @@ export async function configurationExists(workspace: vscode.Uri, documentUri: vs
         uriExists(ebgPath, fs).then(b => { return { uri: ebgPath, exists: b }; }),
     ]);
 }
+
+export function isCancellationError(e: any) {
+    return e instanceof vscode.CancellationError || e instanceof Error && e.message == new vscode.CancellationError().message;
+}

@@ -15,6 +15,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as helper from './testHelper';
+import { isCancellationError } from '../../helpers';
 
 async function queryCodeActions(uri: vscode.Uri, range: vscode.Range, sleep: number, attempts: number = 10) {
     for (let i = 0; i < attempts; ++i) {
@@ -33,8 +34,7 @@ async function queryCodeActions(uri: vscode.Uri, range: vscode.Range, sleep: num
 
             return codeActionsList;
         } catch (e) {
-            assert.ok(e instanceof vscode.CancellationError || e instanceof Error);
-            assert.strictEqual(e.message, 'Canceled');
+            assert.ok(isCancellationError(e));
         }
     }
     throw Error("Code actions query failed");

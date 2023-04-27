@@ -39,6 +39,10 @@
     {
       "program": "remote.hlasm",
       "pgroup": "remote"
+    },
+    {
+      "program": "remote2.hlasm",
+      "pgroup": "remote2"
     }
   ],
   "alwaysRecognize": [

@@ -15,6 +15,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "external_file_reader_mock.h"
 #include "utils/resource_location.h"
 #include "workspaces/file.h"
 #include "workspaces/file_manager_impl.h"
@@ -25,12 +26,6 @@ using namespace hlasm_plugin::utils;
 using namespace ::testing;
 
 namespace {
-struct external_file_reader_mock : external_file_reader
-{
-    MOCK_METHOD(value_task<std::optional<std::string>>, load_text, (const resource_location&), (const override));
-    MOCK_METHOD(value_task<list_directory_result>, list_directory_files, (const resource_location&), (const override));
-};
-
 auto load_text_coroutine(std::optional<std::string> v)
 {
     return [v]() { return hlasm_plugin::utils::value_task<std::optional<std::string>>::from_value(v); };

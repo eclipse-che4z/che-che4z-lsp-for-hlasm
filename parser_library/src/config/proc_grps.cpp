@@ -69,6 +69,23 @@ void from_json(const nlohmann::json& j, library& p)
         throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", j);
 }
 
+void to_json(nlohmann::json& j, const dataset& p)
+{
+    j = nlohmann::json { { "dataset", p.dsn }, { "optional", p.optional } };
+}
+
+void from_json(const nlohmann::json& j, dataset& p)
+{
+    if (j.is_object())
+    {
+        j.at("dataset").get_to(p.dsn);
+        if (auto it = j.find("optional"); it != j.end())
+            p.optional = it->get_to(p.optional);
+    }
+    else
+        throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", j);
+}
+
 template<typename T>
 bool to_json_preprocessor_defaults(nlohmann::json& j, const T& v)
 {
@@ -184,6 +201,18 @@ struct preprocessor_visitor
     }
 };
 } // namespace
+
+void to_json(nlohmann::json& j, const std::variant<library, dataset>& v)
+{
+    std::visit([&j](const auto& x) { j = x; }, v);
+}
+void from_json(const nlohmann::json& j, std::variant<library, dataset>& v)
+{
+    if (j.contains("dataset"))
+        v = j.get<dataset>();
+    else
+        v = j.get<library>();
+}
 
 void to_json(nlohmann::json& j, const processor_group& p)
 {

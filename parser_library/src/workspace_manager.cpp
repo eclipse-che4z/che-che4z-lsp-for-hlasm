@@ -168,9 +168,9 @@ void workspace_manager::make_opcode_suggestion(const char* document_uri,
 }
 
 
-bool workspace_manager::idle_handler(const std::atomic<unsigned char>* yield_indicator)
+void workspace_manager::idle_handler(const std::atomic<unsigned char>* yield_indicator)
 {
-    return impl_->idle_handler(yield_indicator);
+    impl_->idle_handler(yield_indicator);
 }
 
 } // namespace hlasm_plugin::parser_library

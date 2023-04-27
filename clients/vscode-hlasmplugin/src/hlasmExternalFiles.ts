@@ -14,10 +14,12 @@
 
 import * as vscode from "vscode";
 import * as vscodelc from "vscode-languageclient";
+import { isCancellationError } from "./helpers";
+import { uriFriendlyBase16Decode, uriFriendlyBase16Encode } from "./conversions";
 
 // This is a temporary demo implementation
 
-enum ExternalRequestType {
+export enum ExternalRequestType {
     read_file = 'read_file',
     read_directory = 'read_directory',
 }
@@ -34,7 +36,10 @@ interface ExternalReadFileResponse {
 }
 interface ExternalReadDirectoryResponse {
     id: number,
-    data: string[],
+    data: {
+        members: string[],
+        suggested_extension: string | undefined,
+    },
 }
 interface ExternalErrorResponse {
     id: number,
@@ -44,65 +49,335 @@ interface ExternalErrorResponse {
     },
 }
 
-function generateFileContent(uriPath: string) {
-    return `.*
-         MACRO
-         ${uriPath.substring(uriPath.length - 4)}
-         MEND`
+export interface ClientUriDetails {
+    toString(): string;
+    normalizedPath(): string;
 }
 
-const magicScheme = 'hlasm-external';
+export interface ExternalFilesClient extends vscode.Disposable {
+    listMembers(arg: ClientUriDetails): Promise<string[] | null>;
+    readMember(arg: ClientUriDetails): Promise<string | null>;
+
+    onStateChange: vscode.Event<boolean>;
+
+    suspend(): void;
+    resume(): void;
+
+    suspended(): boolean;
+
+    parseArgs(path: string, purpose: ExternalRequestType): ClientUriDetails;
+}
+
+function take<T>(it: IterableIterator<T>, n: number): T[] {
+    const result: T[] = [];
+    while (n) {
+        const val = it.next();
+        if (val.done)
+            break;
+        result.push(val.value);
+        --n;
+    }
+    return result;
+}
+
+const not_exists = Object.freeze({});
+const no_client = Object.freeze({});
+interface InError { message: string };
+
+interface CacheEntry<T> {
+    service: string,
+    parsedArgs: ClientUriDetails,
+    result: T | InError | typeof not_exists | typeof no_client,
+    references: Set<string>;
+};
 export class HLASMExternalFiles {
     private toDispose: vscode.Disposable[] = [];
 
-    constructor(client: vscodelc.BaseLanguageClient) {
-        this.toDispose.push(client.onNotification('external_file_request', params => this.handleRawMessage(params).then(
-            msg => { if (msg) client.sendNotification('external_file_response', msg); }
+    private memberLists = new Map<string, CacheEntry<string[]>>();
+    private memberContent = new Map<string, CacheEntry<string>>();
+
+    private pendingRequests = new Set<{ topic: string }>();
+
+    private clients = new Map<string, {
+        client: ExternalFilesClient;
+        clientDisposables: vscode.Disposable[];
+    }>();
+
+    constructor(private magicScheme: string, private channel: {
+        onNotification(method: string, handler: vscodelc.GenericNotificationHandler): vscode.Disposable;
+        sendNotification<P>(type: vscodelc.NotificationType<P>, params?: P): Promise<void>;
+        sendNotification(method: string, params: any): Promise<void>;
+    }) {
+        this.toDispose.push(this.channel.onNotification('external_file_request', params => this.handleRawMessage(params).then(
+            msg => { if (msg) this.channel.sendNotification('external_file_response', msg); }
         )));
-
-        client.onDidChangeState(e => {
-            if (e.newState === vscodelc.State.Starting)
-                this.reset();
-        }, this, this.toDispose);
-
-        this.toDispose.push(vscode.workspace.registerTextDocumentContentProvider(magicScheme, {
-            provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
-                if (uri.scheme === magicScheme && /\/MAC[A-C]$/.test(uri.path))
-                    return generateFileContent(uri.path);
-                return null;
-            }
-        }));
     }
 
-    reset() { /* drop all pending requests in the future*/ }
+    setClient(service: string, client: ExternalFilesClient) {
+        if (!/^[A-Z]+$/.test(service))
+            throw Error('Invalid service name');
+
+        const oldClient = this.clients.get(service);
+        if (oldClient) {
+            this.clients.delete(service);
+
+            oldClient.clientDisposables.forEach(x => x.dispose());
+            oldClient.clientDisposables = [];
+            oldClient.client.dispose();
+        }
+
+        if (!client) return;
+
+        const newClient = {
+            client: client,
+            clientDisposables: [
+                client.onStateChange((suspended) => {
+                    if (suspended) {
+                        if (this.activeProgress) {
+                            clearTimeout(this.pendingActiveProgressCancellation);
+                            this.activeProgress.done();
+                            this.activeProgress = null;
+                        }
+                        vscode.window.showInformationMessage("Retrieval of remote files has been suspended.");
+                    }
+                    else
+                        this.notifyAllWorkspaces(service, false);
+                })
+            ]
+        };
+        this.clients.set(service, newClient);
+
+        if (oldClient || !client.suspended())
+            this.notifyAllWorkspaces(service, !!oldClient);
+    }
+
+    private getClient(service: string) { const c = this.clients.get(service); return c && c.client; }
+
+    private static readonly emptyUriDetails = Object.freeze({
+        cacheKey: null,
+        service: null,
+        client: null,
+        details: null,
+        associatedWorkspace: null,
+    });
+    private extractUriDetails(uri: string | vscode.Uri, purpose: ExternalRequestType): { cacheKey: string, service: string, client: ExternalFilesClient, details: ClientUriDetails, associatedWorkspace: string } | null {
+        if (typeof uri === 'string')
+            uri = vscode.Uri.parse(uri, true);
+
+        const pathParser = /^\/([A-Z]+)(\/.*)?/;
+
+        const matches = pathParser.exec(uri.path);
+
+        if (uri.scheme !== this.magicScheme || !matches)
+            return HLASMExternalFiles.emptyUriDetails;
+
+        const service = matches[1];
+        const subpath = matches[2] || '';
+
+        const client = this.clients.get(service);
+        const details = client?.client.parseArgs(subpath, purpose);
+
+        return {
+            cacheKey: details ? `/${service}${details.normalizedPath()}` : uri.path,
+            service: client ? service : null,
+            client: client?.client,
+            details: details,
+            associatedWorkspace: uriFriendlyBase16Decode(uri.authority)
+        };
+    }
+
+    private prepareChangeNotification<T>(service: string, cache: Map<string, CacheEntry<T>>, all: boolean) {
+        const changes = [...cache]
+            .filter(([, v]) => v.service === service && (
+                all ||
+                typeof v.result === 'object' && (v.result === no_client || 'message' in v.result)
+            ))
+            .map(([path, value]) => { return { path: path, refs: value.references }; });
+
+        changes.forEach(x => cache.delete(x.path));
+
+        return changes.map(x => [...x.refs]).flat().map(x => {
+            return {
+                uri: x,
+                type: vscodelc.FileChangeType.Changed
+            };
+        });
+    }
+
+    private notifyAllWorkspaces(service: string, all: boolean) {
+        this.channel.sendNotification(vscodelc.DidChangeWatchedFilesNotification.type, {
+            changes: (vscode.workspace.workspaceFolders || []).map(w => {
+                return {
+                    uri: `${this.magicScheme}://${uriFriendlyBase16Encode(w.uri.toString())}/${service}`,
+                    type: vscodelc.FileChangeType.Changed
+                };
+            })
+                .concat(this.prepareChangeNotification(service, this.memberContent, all))
+                .concat(this.prepareChangeNotification(service, this.memberLists, all))
+        });
+    }
+
+    activeProgress: { progressUpdater: vscode.Progress<{ message?: string; increment?: number }>, done: () => void } = null;
+    pendingActiveProgressCancellation: ReturnType<typeof setTimeout> = null;
+    addWIP(service: string, topic: string) {
+        clearTimeout(this.pendingActiveProgressCancellation);
+        if (!this.activeProgress && !this.getClient(service).suspended()) {
+            vscode.window.withProgress({ title: 'Retrieving remote files', location: vscode.ProgressLocation.Notification }, (progress, c) => {
+                return new Promise<void>((resolve) => {
+                    this.activeProgress = { progressUpdater: progress, done: resolve };
+                });
+            });
+        }
+        const wip = { topic };
+        this.pendingRequests.add(wip);
+
+        if (this.activeProgress)
+            this.activeProgress.progressUpdater.report({
+                message: take(this.pendingRequests.values(), 3)
+                    .map((v, n) => { return n < 2 ? v.topic : '...' })
+                    .join(', ')
+            });
+
+        return () => {
+            const result = this.pendingRequests.delete(wip);
+
+            if (this.activeProgress && this.pendingRequests.size === 0) {
+                this.pendingActiveProgressCancellation = setTimeout(() => {
+                    this.activeProgress.done();
+                    this.activeProgress = null;
+                }, 2500);
+            }
+
+            return result;
+        };
+    }
+
+    public suspendAll() {
+        this.clients.forEach(({ client }) => { client.suspend() });
+    }
+
+    public resumeAll() {
+        this.clients.forEach(({ client }) => { client.resume() });
+    }
+
+    public getTextDocumentContentProvider(): vscode.TextDocumentContentProvider {
+        const me = this;
+        return {
+            async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string | null> {
+                const result = await me.handleFileMessage({ url: uri.toString(), id: -1, op: ExternalRequestType.read_file });
+                if (result && 'data' in result && typeof result.data === 'string')
+                    return result.data;
+                else
+                    return null;
+            }
+        }
+    }
+
+    public reset() { this.pendingRequests.clear(); }
 
     dispose() {
         this.toDispose.forEach(x => x.dispose());
+        [...this.clients.keys()].forEach(x => this.setClient(x, null));
     }
 
-    private handleFileMessage(msg: ExternalRequest): Promise<ExternalReadFileResponse | ExternalReadDirectoryResponse | ExternalErrorResponse> {
-        if (msg.url.startsWith(magicScheme) && /\/MAC[A-C]$/.test(msg.url))
-            return Promise.resolve({
-                id: msg.id,
-                data: generateFileContent(msg.url)
-            });
+    private async askClient<T>(
+        service: string,
+        parsedArgs: ClientUriDetails,
+        func: (args: ClientUriDetails) => Promise<T | null>
+    ): Promise<T | InError | typeof not_exists | typeof no_client | null> {
+        const interest = this.addWIP(service, parsedArgs.toString());
+
+        try {
+            const result = await func(parsedArgs);
+
+            if (!interest()) return null;
+
+            if (!result)
+                return not_exists;
+
+            return result;
+
+        } catch (e) {
+            if (!isCancellationError(e)) {
+                this.suspendAll();
+                vscode.window.showErrorMessage(e.message);
+            }
+
+            if (!interest()) return null;
+
+            return { message: e.message };
+        }
+
+    }
+
+    private async getFile(client: ExternalFilesClient, service: string, parsedArgs: ClientUriDetails): Promise<string | InError | typeof not_exists | typeof no_client | null> {
+        return this.askClient(service, parsedArgs, client.readMember.bind(client));
+    }
+
+    private async getDir(client: ExternalFilesClient, service: string, parsedArgs: ClientUriDetails): Promise<string[] | InError | typeof not_exists | typeof no_client | null> {
+        return this.askClient(service, parsedArgs, client.listMembers.bind(client));
+    }
+
+    private async handleMessage<T>(
+        msg: ExternalRequest,
+        getData: (client: ExternalFilesClient, service: string, details: ClientUriDetails) => Promise<CacheEntry<T>['result'] | null>,
+        cache: Map<string, CacheEntry<T>>,
+        responseTransform: (result: T) => (T extends string[] ? ExternalReadDirectoryResponse : ExternalReadFileResponse)['data']):
+        Promise<(T extends string[] ? ExternalReadDirectoryResponse : ExternalReadFileResponse) | ExternalErrorResponse | null> {
+        const { cacheKey, service, client, details } = this.extractUriDetails(msg.url, msg.op);
+        if (!cacheKey || client && !details)
+            return this.generateError(msg.id, -5, 'Invalid request');
+
+        let content = cache.get(cacheKey);
+        if (content === undefined) {
+            const result = client ? await getData(client, service, details) : no_client;
+            if (!result) return Promise.resolve(null);
+            content = {
+                service: service,
+                parsedArgs: details,
+                result: result,
+                references: new Set<string>(),
+            };
+
+            cache.set(cacheKey, content);
+        }
+        content.references.add(msg.url);
+
+        return this.transformResult(msg.id, content, responseTransform);
+    }
+
+    private generateError(id: number, code: number, msg: string): ExternalErrorResponse {
+        return { id, error: { code, msg } };
+    }
+
+    private transformResult<T>(
+        id: number,
+        content: CacheEntry<T>,
+        transform: (result: T) => (T extends string[] ? ExternalReadDirectoryResponse : ExternalReadFileResponse)['data']
+    ): Promise<(T extends string[] ? ExternalReadDirectoryResponse : ExternalReadFileResponse) | ExternalErrorResponse> {
+        if (content.result === not_exists)
+            return Promise.resolve(this.generateError(id, 0, 'Not found'));
+        else if (content.result === no_client)
+            return Promise.resolve(this.generateError(id, -1000, 'No client'));
+        else if (typeof content.result === 'object' && 'message' in content.result)
+            return Promise.resolve(this.generateError(id, -1000, content.result.message));
         else
-            return Promise.resolve({
-                id: msg.id,
-                error: { code: 0, msg: 'Not found' }
+            return Promise.resolve(<T extends string[] ? ExternalReadDirectoryResponse : ExternalReadFileResponse>{
+                id,
+                data: transform(<T>content.result),
             });
     }
-    private handleDirMessage(msg: ExternalRequest): Promise<ExternalReadFileResponse | ExternalReadDirectoryResponse | ExternalErrorResponse> {
-        if (msg.url.startsWith(magicScheme))
-            return Promise.resolve({
-                id: msg.id,
-                data: ['MACA', 'MACB', 'MACC', 'MACD']
-            });
-        else
-            return Promise.resolve({
-                id: msg.id,
-                error: { code: 0, msg: 'Not found' }
-            });
+
+    private handleFileMessage(msg: ExternalRequest) {
+        return this.handleMessage(msg, this.getFile.bind(this), this.memberContent, x => x);
+    }
+    private handleDirMessage(msg: ExternalRequest) {
+        return this.handleMessage(msg, this.getDir.bind(this), this.memberLists, (result) => {
+            return {
+                members: result,
+                suggested_extension: '.hlasm',
+            };
+        });
     }
 
     public handleRawMessage(msg: any): Promise<ExternalReadFileResponse | ExternalReadDirectoryResponse | ExternalErrorResponse | null> {
@@ -114,8 +389,7 @@ export class HLASMExternalFiles {
         if (msg.op === ExternalRequestType.read_directory && typeof msg.url === 'string')
             return this.handleDirMessage(msg);
 
-        return Promise.resolve({ id: msg.id, error: { code: -5, msg: 'Invalid request' } });
+        return Promise.resolve(this.generateError(msg.id, -5, 'Invalid request'));
     }
 
 }
-

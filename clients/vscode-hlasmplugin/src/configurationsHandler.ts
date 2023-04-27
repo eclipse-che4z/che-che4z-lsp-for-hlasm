@@ -128,6 +128,7 @@ export class ConfigurationsHandler {
             (content.pgroups as any[]).forEach(pgroup => {
                 if (pgroup.libs)
                     (pgroup.libs as any[]).forEach(lib => {
+                        if (lib.dataset !== undefined) return;
                         const regex = this.convertWildcardToRegex(vscode.Uri.joinPath(workspaceUri, lib.path || lib, '*').toString());
                         if (regex)
                             definedExpressions.push(regex);
