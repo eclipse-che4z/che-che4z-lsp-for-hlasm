@@ -26,7 +26,7 @@ using namespace hlasm_plugin::language_server::dap;
 std::string server_conformant_path(std::string_view path, path_format path_format)
 {
     // Server accepts paths in URI format
-    if (path_format == path_format::URI)
+    if (path_format == path_format::URI || hlasm_plugin::utils::path::is_likely_uri(path))
         return std::string(path);
 
     // Theia sends us relative path while not accepting it back. Change to absolute

@@ -98,7 +98,7 @@ std::string path_to_uri(std::string_view path)
     return uri;
 }
 
-bool is_uri(std::string_view path) noexcept
+bool is_uri(std::string_view path)
 {
     if (path.empty())
         return false;
@@ -111,6 +111,11 @@ bool is_uri(std::string_view path) noexcept
     network::uri u(path.begin(), path.end(), ec);
 
     return ec.value() == 0;
+}
+
+bool is_likely_uri(std::string_view path)
+{
+    return std::regex_search(path.begin(), path.end(), uri_unlike_windows_path);
 }
 
 dissected_uri dissect_uri(std::string_view uri)
