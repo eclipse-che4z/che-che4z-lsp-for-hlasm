@@ -93,6 +93,8 @@ public:
 
     void copy_diagnostics(std::vector<diagnostic_s>& target) const override;
 
+    bool has_cached_content() const override;
+
 private:
     using files_collection_t = std::shared_ptr<const std::pair<std::unordered_map<std::string,
                                                                    utils::resource::resource_location,

@@ -119,6 +119,8 @@ void library_local::copy_diagnostics(std::vector<diagnostic_s>& target) const
         target.insert(target.end(), files->second.begin(), files->second.end());
 }
 
+bool library_local::has_cached_content() const { return m_files_collection.load() != nullptr; }
+
 library_local::files_collection_t library_local::load_files(
     std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>, utils::path::list_directory_rc>
         res)

@@ -119,11 +119,16 @@ bool processor_group::refresh_needed(const std::vector<utils::resource::resource
             const auto common_len = std::min(l.size(), r.size());
             return l.substr(0, common_len) == r.substr(0, common_len);
         };
+        const auto has_cached_content = [this](std::span<const size_t> idx) {
+            return std::any_of(idx.begin(), idx.end(), [this](auto i) { return m_libs[i]->has_cached_content(); });
+        };
 
         const std::string_view url = res_location.get_uri();
         const auto candidate = m_refresh_prefix.lower_bound(url);
-        return candidate != m_refresh_prefix.end() && matching_prefix(url, *candidate)
-            || candidate != m_refresh_prefix.begin() && matching_prefix(url, *std::prev(candidate));
+        return candidate != m_refresh_prefix.end() && matching_prefix(url, candidate->first)
+            && has_cached_content(candidate->second)
+            || candidate != m_refresh_prefix.begin() && matching_prefix(url, std::prev(candidate)->first)
+            && has_cached_content(std::prev(candidate)->second);
     });
 }
 
@@ -137,8 +142,9 @@ void processor_group::collect_diags() const
 
 void processor_group::add_library(std::shared_ptr<library> library)
 {
+    auto next_id = m_libs.size();
     const auto& lib = m_libs.emplace_back(std::move(library));
-    m_refresh_prefix.emplace(lib->refresh_url_prefix());
+    m_refresh_prefix[lib->refresh_url_prefix()].emplace_back(next_id);
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

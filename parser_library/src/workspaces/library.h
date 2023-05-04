@@ -43,6 +43,7 @@ public:
     virtual std::string refresh_url_prefix() const = 0;
     virtual bool has_file(std::string_view file, utils::resource::resource_location* url = nullptr) = 0;
     virtual void copy_diagnostics(std::vector<diagnostic_s>&) const = 0;
+    virtual bool has_cached_content() const = 0;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

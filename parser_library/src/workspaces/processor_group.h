@@ -15,8 +15,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H
 
+#include <map>
 #include <memory>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -72,7 +72,7 @@ private:
 
     std::optional<utils::bk_tree<std::string, utils::levenshtein_distance_t<suggestion_limit>>> m_suggestions;
 
-    std::set<std::string, std::less<>> m_refresh_prefix;
+    std::map<std::string, std::vector<size_t>, std::less<>> m_refresh_prefix;
 };
 } // namespace hlasm_plugin::parser_library::workspaces
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H

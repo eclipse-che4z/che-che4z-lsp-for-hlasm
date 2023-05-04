@@ -772,7 +772,7 @@ utils::value_task<std::optional<std::vector<const processor_group*>>> workspace_
         result->emplace_back(&proc_grp);
         for (const auto& lib : proc_grp.libraries())
         {
-            if (!refreshed_libs.emplace(std::to_address(lib)).second)
+            if (!refreshed_libs.emplace(std::to_address(lib)).second || !lib->has_cached_content())
                 continue;
             if (auto refresh = lib->refresh(); refresh.valid() && !refresh.done())
             {

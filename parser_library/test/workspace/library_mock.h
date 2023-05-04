@@ -29,5 +29,6 @@ public:
     MOCK_METHOD(std::string, refresh_url_prefix, (), (const override));
     MOCK_METHOD(bool, has_file, (std::string_view, hlasm_plugin::utils::resource::resource_location* url), (override));
     MOCK_METHOD(void, copy_diagnostics, (std::vector<hlasm_plugin::parser_library::diagnostic_s>&), (const override));
+    MOCK_METHOD(bool, has_cached_content, (), (const override));
 };
 } // namespace

@@ -257,14 +257,20 @@ TEST(processor_group, opcode_suggestions)
 
 TEST(processor_group, refresh_needed)
 {
-    auto lib1 = std::make_shared<::testing::NiceMock<library_mock>>();
+    auto lib1 = std::make_shared<NiceMock<library_mock>>();
     EXPECT_CALL(*lib1, refresh_url_prefix).WillRepeatedly(Return("test://workspace/externals/library1"));
-    auto lib2 = std::make_shared<::testing::NiceMock<library_mock>>();
+    EXPECT_CALL(*lib1, has_cached_content).WillRepeatedly(Return(true));
+    auto lib2 = std::make_shared<NiceMock<library_mock>>();
     EXPECT_CALL(*lib2, refresh_url_prefix).WillRepeatedly(Return("test://workspace/externals/library2"));
+    EXPECT_CALL(*lib2, has_cached_content).WillRepeatedly(Return(true));
+    auto lib3 = std::make_shared<NiceMock<library_mock>>();
+    EXPECT_CALL(*lib3, refresh_url_prefix).WillRepeatedly(Return("test://workspace/externals/library3"));
+    EXPECT_CALL(*lib3, has_cached_content).WillRepeatedly(Return(false));
 
     processor_group grp("", {}, {});
     grp.add_library(lib1);
     grp.add_library(lib2);
+    grp.add_library(lib3);
 
     // TODO: only create&delete should trigger the file specific one
     EXPECT_TRUE(grp.refresh_needed({ resource_location("test://workspace/externals/library1/MAC") }));
@@ -272,5 +278,8 @@ TEST(processor_group, refresh_needed)
     // whole tree gets deleted
     EXPECT_TRUE(grp.refresh_needed({ resource_location("test://workspace/externals") }));
     EXPECT_TRUE(grp.refresh_needed({ resource_location("test://workspace/externals/library2") }));
+    // nothing to refresh
     EXPECT_FALSE(grp.refresh_needed({ resource_location("test://workspace/externals/library3") }));
+    // not used
+    EXPECT_FALSE(grp.refresh_needed({ resource_location("test://workspace/externals/library4") }));
 }

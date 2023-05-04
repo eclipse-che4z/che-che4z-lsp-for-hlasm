@@ -430,6 +430,8 @@ public:
                 return {};
             }
 
+            bool has_cached_content() const override { return false; }
+
             debugger_mock_library(file_manager& fm)
                 : fm(fm)
             {}
