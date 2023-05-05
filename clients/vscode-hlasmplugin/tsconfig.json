@@ -6,7 +6,9 @@
     "sourceMap": true,
     "declaration": true,
     "stripInternal": true,
-    "lib": [ "es2016" ],
+    "lib": [
+      "es2016"
+    ],
     "outDir": "lib",
     "rootDir": "src",
     "alwaysStrict": true,
@@ -14,6 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
-    "noImplicitThis": true
+    "noImplicitThis": true,
+    "strict": true
   }
 }

@@ -176,6 +176,6 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
             }
         }
 
-        return result.length !== 0 ? result : null;
+        return result;
     }
 }

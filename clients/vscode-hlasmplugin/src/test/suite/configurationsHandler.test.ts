@@ -22,17 +22,20 @@ import { FileSystemMock } from '../mocks';
 
 suite('Configurations Handler Test Suite', () => {
     const handler = new ConfigurationsHandler();
-    const workspaceUri = vscode.workspace.workspaceFolders[0].uri;
+    const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 
     // 24 expressions - 2 for always recognize, 11 open codes (pgm_conf.json) and 11 library definitions (proc_grps.json)
     test('Update wildcards test', async () => {
         const wildcards = await handler.generateWildcards(workspaceUri);
+        assert.ok(wildcards);
         assert.equal(wildcards.length, 24);
     });
 
     // 2 files matching the wildcards
     test('Check language test', async () => {
-        handler.setWildcards((await handler.generateWildcards(workspaceUri)).map(regex => { return { regex, workspaceUri }; }));
+        const wildcards = await handler.generateWildcards(workspaceUri);
+        assert.ok(wildcards);
+        handler.setWildcards(wildcards.map(regex => { return { regex, workspaceUri }; }));
         assert.ok(handler.match(vscode.Uri.joinPath(workspaceUri, 'file.asm')));
         assert.ok(handler.match(vscode.Uri.joinPath(workspaceUri, 'pgms/file')));
     });

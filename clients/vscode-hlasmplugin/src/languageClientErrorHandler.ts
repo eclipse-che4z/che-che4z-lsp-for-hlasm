@@ -17,7 +17,7 @@ import * as vscodelc from 'vscode-languageclient';
 import { Telemetry } from './telemetry';
 
 export class LanguageClientErrorHandler implements vscodelc.ErrorHandler {
-    defaultHandler: vscodelc.ErrorHandler = undefined;
+    defaultHandler?: vscodelc.ErrorHandler = undefined;
     telemetry: Telemetry;
 
     constructor(tlmtry: Telemetry) {
@@ -27,12 +27,12 @@ export class LanguageClientErrorHandler implements vscodelc.ErrorHandler {
     error(error: Error, message: vscodelc.Message | undefined, count: number | undefined): vscodelc.ErrorHandlerResult | Promise<vscodelc.ErrorHandlerResult> {
         this.telemetry.reportEvent("hlasm.connectionError", { ...error });
 
-        return this.defaultHandler.error(error, message, count);
+        return this.defaultHandler!.error(error, message, count);
     }
 
     closed(): vscodelc.CloseHandlerResult | Promise<vscodelc.CloseHandlerResult> {
         this.telemetry.reportEvent("hlasm.connectionClosed");
-        return this.defaultHandler.closed();
+        return this.defaultHandler!.closed();
     }
 
 }

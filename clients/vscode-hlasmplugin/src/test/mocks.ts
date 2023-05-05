@@ -28,33 +28,10 @@ export class LanguageClientMock extends vscodelc.BaseLanguageClient {
     protected getLocale(): string { return "" };
 }
 
-export class TextDocumentChangeEventMock implements vscode.TextDocumentChangeEvent {
-    constructor(changes: vscode.TextDocumentContentChangeEvent[]) {
-        this.contentChanges = changes;
-    }
-    document: vscode.TextDocument;
-    contentChanges: readonly vscode.TextDocumentContentChangeEvent[];
-    reason: undefined;
-}
-
-export class TextDocumentContentChangeEventMock implements vscode.TextDocumentContentChangeEvent {
-    range: vscode.Range;
-    rangeOffset: number;
-    rangeLength: number;
-    text: string;
-}
-
 export class ConfigurationChangeEventMock implements vscode.ConfigurationChangeEvent {
     affectsConfiguration(section: string, scope?: vscode.ConfigurationScope): boolean {
         return false;
     }
-}
-
-export class DebugConfigurationMock implements vscode.DebugConfiguration {
-    [key: string]: any;
-    type: string;
-    name: string;
-    request: string;
 }
 
 export class TextEditorMock implements vscode.TextEditor {
@@ -72,9 +49,9 @@ export class TextEditorMock implements vscode.TextEditor {
         this.selections = [v];
     }
 
-    visibleRanges: vscode.Range[];
-    options: vscode.TextEditorOptions;
-    viewColumn: vscode.ViewColumn;
+    visibleRanges: vscode.Range[] = [];
+    options: vscode.TextEditorOptions = {};
+    viewColumn: vscode.ViewColumn = vscode.ViewColumn.One;
     edit(callback: (editBuilder: vscode.TextEditorEdit) => void, options?: { undoStopBefore: boolean; undoStopAfter: boolean; }): Thenable<boolean> {
         throw new Error("Method not implemented.");
     }
@@ -100,14 +77,15 @@ export class TextEditorEditMock implements vscode.TextEditorEdit {
         if (loc instanceof vscode.Selection) return loc.active;
         if (loc instanceof vscode.Range) return loc.start;
         if (loc instanceof vscode.Position) return loc;
-        return null;
+
+        throw Error('Unknown type');
     }
     private thing_to_do: (
-        { loc: vscode.Range | vscode.Position | vscode.Selection, value: string | null, what: 'replace' }
+        { loc: vscode.Range | vscode.Position | vscode.Selection, value: string, what: 'replace' }
         |
-        { loc: vscode.Position, value: string | null, what: 'insert' }
+        { loc: vscode.Position, value: string, what: 'insert' }
         |
-        { loc: vscode.Range | vscode.Selection, value: string | null, what: 'delete' }
+        { loc: vscode.Range | vscode.Selection, what: 'delete' }
     )[] = [];
     private _text: string;
     public get text(): string {
@@ -153,7 +131,7 @@ export class TextEditorEditMock implements vscode.TextEditorEdit {
         this.thing_to_do.push({ loc: location, value: value, what: 'insert' });
     }
     delete(location: vscode.Range | vscode.Selection): void {
-        this.thing_to_do.push({ loc: location, value: null, what: 'delete' });
+        this.thing_to_do.push({ loc: location, what: 'delete' });
     }
 
     _replace(location: vscode.Range | vscode.Position | vscode.Selection, value: string): void {
@@ -179,28 +157,19 @@ export class TextEditorEditMock implements vscode.TextEditorEdit {
 
 }
 
-class TextLineMock implements vscode.TextLine {
-    lineNumber: number;
-    text: string;
-    range: vscode.Range;
-    rangeIncludingLineBreak: vscode.Range;
-    firstNonWhitespaceCharacterIndex: number;
-    isEmptyOrWhitespace: boolean;
-}
-
 export class TextDocumentMock implements vscode.TextDocument {
-    text: string;
-    uri: vscode.Uri;
-    fileName: string;
-    isUntitled: boolean;
-    languageId: string;
-    version: number;
-    isDirty: boolean;
-    isClosed: boolean;
+    text: string = '';
+    uri: vscode.Uri = vscode.Uri.parse('unknown:');
+    fileName: string = '';
+    isUntitled: boolean = false;
+    languageId: string = '';
+    version: number = 0;
+    isDirty: boolean = false;
+    isClosed: boolean = false;
     save(): Thenable<boolean> {
         throw new Error("Method not implemented.");
     }
-    eol: vscode.EndOfLine;
+    eol: vscode.EndOfLine = vscode.EndOfLine.CRLF;
 
     public get lineCount(): number {
         let result = 0;
@@ -213,17 +182,18 @@ export class TextDocumentMock implements vscode.TextDocument {
         return result;
     }
 
-    lineAt(line: number): vscode.TextLine;
-    lineAt(position: vscode.Position): vscode.TextLine;
-    lineAt(position: any) {
-        const line = new TextLineMock();
+    lineAt(position: number | vscode.Position) {
         const lines = this.text.split(/\r?\n/);
-        if ((position as vscode.Position).line !== undefined)
-            line.lineNumber = (position as vscode.Position).line;
-        else
-            line.lineNumber = position as number;
-        line.text = lines[line.lineNumber] || '';
-        line.range = new vscode.Range(line.lineNumber, 0, line.lineNumber, line.text.length);
+        const lineNumber = typeof position === 'number' ? position : position.line;
+        const text = lines[lineNumber] || '';
+        const line = {
+            lineNumber,
+            text,
+            range: new vscode.Range(lineNumber, 0, lineNumber, text.length),
+            rangeIncludingLineBreak: new vscode.Range(lineNumber, 0, lineNumber, text.length + lineNumber >= lines.length ? 0 : this.eol),
+            firstNonWhitespaceCharacterIndex: 0,
+            isEmptyOrWhitespace: /^\s+$/.test(text)
+        };
         return line;
     }
     offsetAt(position: vscode.Position): number {
@@ -251,7 +221,7 @@ export class TextDocumentMock implements vscode.TextDocument {
 
 export class FileSystemMock implements vscode.FileSystem {
     resource = new Set<string>();
-    dummyStat: vscode.FileStat;
+    dummyStat: vscode.FileStat = { ctime: 0, mtime: 0, size: 0, type: vscode.FileType.File };
 
     public addResource(uri: vscode.Uri) {
         this.resource.add(uri.path);

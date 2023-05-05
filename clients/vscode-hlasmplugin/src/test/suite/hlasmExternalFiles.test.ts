@@ -15,12 +15,15 @@
 
 import * as assert from 'assert';
 import { HLASMExternalFilesFtp } from '../../hlasmExternalFilesFtp';
-import { ExternalRequestType } from '../../hlasmExternalFiles';
+import { ExternalRequestType, HLASMExternalFiles } from '../../hlasmExternalFiles';
+import { ExtensionContext } from 'vscode';
+
+const extensionContextMock = undefined as any as ExtensionContext;
 
 suite('External files (FTP)', () => {
 
     test('Dataset parsing', async () => {
-        const ftpClient = new HLASMExternalFilesFtp(undefined);
+        const ftpClient = new HLASMExternalFilesFtp(extensionContextMock);
 
         assert.strictEqual(ftpClient.parseArgs('aaa', ExternalRequestType.read_directory), null);
         assert.strictEqual(ftpClient.parseArgs('/0', ExternalRequestType.read_directory), null);
@@ -35,7 +38,7 @@ suite('External files (FTP)', () => {
     });
 
     test('Dataset member parsing', async () => {
-        const ftpClient = new HLASMExternalFilesFtp(undefined);
+        const ftpClient = new HLASMExternalFilesFtp(extensionContextMock);
 
         assert.strictEqual(ftpClient.parseArgs('aaa', ExternalRequestType.read_file), null);
         assert.strictEqual(ftpClient.parseArgs('/0', ExternalRequestType.read_file), null);
@@ -54,7 +57,7 @@ suite('External files (FTP)', () => {
     });
 
     test('Suspend', async () => {
-        const ftpClient = new HLASMExternalFilesFtp(undefined);
+        const ftpClient = new HLASMExternalFilesFtp(extensionContextMock);
 
         assert.strictEqual(ftpClient.suspended(), false);
 
@@ -68,7 +71,7 @@ suite('External files (FTP)', () => {
     });
 
     test('Resume', async () => {
-        const ftpClient = new HLASMExternalFilesFtp(undefined);
+        const ftpClient = new HLASMExternalFilesFtp(extensionContextMock);
         ftpClient.suspend();
 
         assert.strictEqual(ftpClient.suspended(), true);
@@ -80,5 +83,27 @@ suite('External files (FTP)', () => {
         assert.strictEqual(await p, false);
 
         ftpClient.dispose();
+    });
+
+    test('Invalid messages', async () => {
+        const ext = new HLASMExternalFiles('test', {
+            onNotification: (_, __) => { return { dispose: () => { } }; },
+            sendNotification: (_: any, __: any) => Promise.resolve(),
+        });
+
+        assert.strictEqual(await ext.handleRawMessage(null), null);
+        assert.strictEqual(await ext.handleRawMessage(undefined), null);
+        assert.strictEqual(await ext.handleRawMessage({}), null);
+        assert.strictEqual(await ext.handleRawMessage(5), null);
+        assert.strictEqual(await ext.handleRawMessage({ id: 'id', op: '' }), null);
+        assert.strictEqual(await ext.handleRawMessage({ id: 5, op: 5 }), null);
+
+        assert.deepEqual(await ext.handleRawMessage({ id: 5, op: '' }), { id: 5, error: { code: -5, msg: 'Invalid request' } });
+        assert.deepEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: 5 }), { id: 5, error: { code: -5, msg: 'Invalid request' } });
+        assert.deepEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: {} }), { id: 5, error: { code: -5, msg: 'Invalid request' } });
+
+        assert.deepEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: 'unknown:scheme' }), { id: 5, error: { code: -5, msg: 'Invalid request' } });
+
+        assert.deepEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: 'test:/SERVICE' }), { id: 5, error: { code: -1000, msg: 'No client' } });
     });
 });

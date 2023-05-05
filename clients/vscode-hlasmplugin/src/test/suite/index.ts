@@ -18,30 +18,31 @@ import * as glob from 'glob';
 import * as vscode from 'vscode';
 import * as process from 'process';
 import { popWaitRequestResolver, timeout } from './testHelper';
-import { EXTENSION_ID } from '../../extension';
+import { EXTENSION_ID, activate } from '../../extension';
+import { ClientUriDetails } from '../../hlasmExternalFiles';
 
 async function primeExtension(): Promise<vscode.Disposable[]> {
-	const ext = await vscode.extensions.getExtension(EXTENSION_ID).activate();
+	const ext = await vscode.extensions.getExtension<ReturnType<typeof activate>>(EXTENSION_ID)!.activate();
 	const lang: {
 		sendRequest<R>(method: string, param: any, token?: vscode.CancellationToken): Promise<R>;
-	} = ext!.getExtension()!;
+	} = ext.getExtension()!;
 	// prime opcode suggestions to avoid timeouts
 	await Promise.race([lang.sendRequest<object>('textDocument/$/opcode_suggestion', { opcodes: ['OPCODE'] }), timeout(30000, 'Opcode suggestion request failed')]);
 
-	ext.registerExternalFileClient('TEST', {
-		listMembers(args: { path: string, file: string }) {
+	const fileClientMock = {
+		listMembers(_: { path: string, file: string } & ClientUriDetails) {
 			if (this.clientSuspended)
 				throw new vscode.CancellationError();
 			return Promise.resolve(['MACA', 'MACB', 'MACC']);
 		},
-		readMember(args: { path: string, file: string }) {
+		readMember(args: { path: string, file: string } & ClientUriDetails) {
 			if (this.clientSuspended)
 				throw new vscode.CancellationError();
 			if (/^MAC[A-C]$/.test(args.file))
 				return Promise.resolve(`.*
-         MACRO
-		 ${args.file}
-		 MEND`);
+          MACRO
+          ${args.file}
+          MEND`);
 
 			return Promise.resolve(null);
 		},
@@ -67,7 +68,9 @@ async function primeExtension(): Promise<vscode.Disposable[]> {
 				normalizedPath() { return `/${this.path}/${this.file}`; },
 			}
 		}
-	});
+	};
+
+	ext.registerExternalFileClient('TEST', fileClientMock);
 
 	return [vscode.debug.registerDebugAdapterTrackerFactory('hlasm', {
 		createDebugAdapterTracker: function (session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {

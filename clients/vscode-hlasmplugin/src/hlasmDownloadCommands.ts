@@ -162,7 +162,7 @@ function generateJobHeader(header: ParsedJobHeader, jobNo: number): string {
 
 export function adjustJobHeader(hdr: string): string[] {
     const recordLength = 72;
-    const splitFailed = () => {
+    const splitFailed: () => never = () => {
         throw Error("Unable to split the job card into records: " + hdr);
     };
 
@@ -185,7 +185,7 @@ export function adjustJobHeader(hdr: string): string[] {
                 to_split = to_split.slice(symbol + 1);
                 break;
             case '\'':
-                const quoted = to_split.match(/[^']*'(?:[^']|'')*'\)*,?/);
+                const quoted = /[^']*'(?:[^']|'')*'\)*,?/.exec(to_split);
                 if (!quoted) splitFailed();
                 split_result.push(quoted[0]);
                 to_split = to_split.slice(quoted[0].length);
@@ -252,7 +252,7 @@ function fixPath(p: string): string {
 }
 
 function getWasmRuntimeArgs(): Array<string> {
-    const v8Version = process && process.versions && process.versions.v8 || "1.0";
+    const v8Version = process?.versions?.v8 ?? "1.0";
     const v8Major = +v8Version.split(".")[0];
     if (v8Major >= 10)
         return [];
@@ -535,7 +535,7 @@ async function isDirectoryEmpty(dir: string): Promise<boolean> {
             return false;
         }
     }
-    catch (e) { if (e.code !== 'ENOENT') throw e; }
+    catch (e) { if (e instanceof Error && 'code' in e && e.code !== 'ENOENT') throw e; }
 
     return true;
 }
@@ -635,6 +635,6 @@ export async function downloadDependencies(context: vscode.ExtensionContext, tel
     catch (e) {
         if (isCancellationError(e))
             return;
-        vscode.window.showErrorMessage("Error occured while downloading dependencies: " + (e.message || e));
+        vscode.window.showErrorMessage("Error occured while downloading dependencies: " + (e instanceof Error && e.message || e));
     }
 }

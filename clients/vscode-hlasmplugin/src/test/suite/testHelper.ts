@@ -20,7 +20,7 @@ export function registerWaitRequest(message: string, sessionId: string): Promise
     return new Promise<void>((resolve) => debuggerWaitRequests.set(sessionId + '_' + message, resolve));
 }
 
-export function popWaitRequestResolver(message: string, sessionId: string): () => void {
+export function popWaitRequestResolver(message: string, sessionId: string): (() => void) | undefined {
     const key = sessionId + '_' + message;
 
     const result = debuggerWaitRequests.get(key);
@@ -42,7 +42,7 @@ export function activeEditorChanged(): Promise<vscode.TextEditor> {
 }
 
 export function getWorkspacePath(): string {
-    return vscode.workspace.workspaceFolders[0].uri.fsPath;
+    return vscode.workspace.workspaceFolders![0].uri.fsPath;
 }
 
 export async function getWorkspaceFile(workspace_file: string) {
@@ -81,7 +81,7 @@ export async function removeAllBreakpoints() {
     await vscode.debug.removeBreakpoints(vscode.debug.breakpoints);
 }
 
-function sessionStoppedEvent(session: vscode.DebugSession = vscode.debug.activeDebugSession) {
+function sessionStoppedEvent(session: vscode.DebugSession | undefined = vscode.debug.activeDebugSession) {
     if (!session)
         return Promise.resolve();
     else
@@ -100,7 +100,7 @@ export async function debugStartSession(waitForStopped = true): Promise<vscode.D
         });
     });
     // start debugging
-    if (!await vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], 'Macro tracer: current program'))
+    if (!await vscode.debug.startDebugging(vscode.workspace.workspaceFolders![0], 'Macro tracer: current program'))
         throw new Error("Failed to start a debugging session");
 
     const session = await session_started_event;
@@ -161,7 +161,7 @@ export async function waitForDiagnostics(file: string | vscode.Uri, nonEmptyOnly
     const result = new Promise<vscode.Diagnostic[]>((resolve) => {
         const file_promise = typeof file === 'string' ? getWorkspaceFile(file).then(uri => uri.toString()) : Promise.resolve(file.toString());
 
-        let listener = vscode.languages.onDidChangeDiagnostics((e) => {
+        let listener: vscode.Disposable | null = vscode.languages.onDidChangeDiagnostics((e) => {
             file_promise.then((file) => {
                 if (!listener)
                     return;
@@ -187,7 +187,7 @@ export async function waitForDiagnosticsChange(file: string | vscode.Uri, action
     const initialDiags = vscode.languages.getDiagnostics(fileUri).map(x => JSON.stringify(x)).sort();
 
     const result = new Promise<vscode.Diagnostic[]>((resolve) => {
-        let listener = vscode.languages.onDidChangeDiagnostics((e) => {
+        let listener: vscode.Disposable | null = vscode.languages.onDidChangeDiagnostics((e) => {
             if (!listener)
                 return;
             const forFile = e.uris.find(v => v.toString() === fileUri.toString());

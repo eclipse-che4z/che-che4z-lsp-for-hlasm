@@ -18,7 +18,7 @@ import { convertBuffer } from "./conversions";
 
 export class FBWritable extends Writable {
     private chunks: Buffer[] = [];
-    private result: string = null;
+    private result?: string;
 
     constructor(private lrecl: number = 80) { super(); }
 
@@ -36,5 +36,5 @@ export class FBWritable extends Writable {
         callback();
     };
 
-    getResult() { return this.result; }
+    getResult() { return this.result!; }
 }

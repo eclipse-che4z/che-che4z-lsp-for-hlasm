@@ -41,7 +41,7 @@ export class EventsHandler {
         this.configSetup = new ConfigurationsHandler();
         this.langDetect = new HLASMLanguageDetection(this.configSetup);
 
-        this.onDidChangeWorkspaceFolders(undefined);
+        this.setWildcards();
     }
 
     dispose() { }
@@ -89,7 +89,7 @@ export class EventsHandler {
     }
 
     // when active editor changes, try to set a language for it
-    async onDidChangeActiveTextEditor(editor: vscode.TextEditor) {
+    async onDidChangeActiveTextEditor(editor?: vscode.TextEditor) {
         if (editor)
             await this.editorChanged(editor.document);
     }
@@ -99,7 +99,7 @@ export class EventsHandler {
         const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
         if (workspace) {
             await this.configSetup.generateWildcards(workspace.uri, document.uri).then(wildcards =>
-                this.configSetup.updateWildcards(workspace.uri, wildcards || [])
+                this.configSetup.updateWildcards(workspace.uri, wildcards ?? [])
             );
         }
     }
@@ -121,10 +121,14 @@ export class EventsHandler {
     }
 
     async onDidChangeWorkspaceFolders(wsChanges: vscode.WorkspaceFoldersChangeEvent) {
+        await this.setWildcards();
+    }
+
+    private async setWildcards() {
         this.configSetup.setWildcards(
             (await Promise.all(
                 (vscode.workspace.workspaceFolders || []).map(
-                    x => this.configSetup.generateWildcards(x.uri).then((regset) => regset.map(regex => { return { regex, workspaceUri: x.uri }; }))
+                    x => this.configSetup.generateWildcards(x.uri).then((regset) => regset?.map(regex => { return { regex, workspaceUri: x.uri }; }) ?? [])
                 )
             )
             ).flat()
@@ -137,7 +141,7 @@ export class EventsHandler {
  * @param option name of the option (e.g. for hlasmplugin.path should be path)
  * @param defaultValue default value to return if option is not set
  */
-export function getConfig<T>(option: string, defaultValue?: T): T {
+export function getConfig<T>(option: string, defaultValue: T) {
     const config = vscode.workspace.getConfiguration('hlasm');
     return config.get<T>(option, defaultValue);
 }

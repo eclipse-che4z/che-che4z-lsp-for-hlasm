@@ -21,8 +21,8 @@ const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY;
 
 export class Telemetry {
 
-    private reporter: TelemetryReporter = null;
-    private telemetry_key: string = undefined;
+    private reporter: TelemetryReporter | null = null;
+    private telemetry_key?: string = undefined;
 
     private getTelemetryKey(): string {
         if (this.telemetry_key === undefined)

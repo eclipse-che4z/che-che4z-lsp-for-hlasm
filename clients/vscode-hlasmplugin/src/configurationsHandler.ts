@@ -73,7 +73,7 @@ export class ConfigurationsHandler {
                             return;
                         }
                         const empty = selection == 'Create empty pgm_conf.json';
-                        ConfigurationsHandler.createPgmTemplate(empty ? '' : vscode.window.activeTextEditor.document.uri.path.split('\\/').pop(), workspace).then(uri => vscode.commands.executeCommand("vscode.open", uri));
+                        ConfigurationsHandler.createPgmTemplate(empty ? '' : vscode.window.activeTextEditor?.document.uri.path.split('\\/').pop() ?? '', workspace).then(uri => vscode.commands.executeCommand("vscode.open", uri));
                     }
                 });
     }
@@ -87,7 +87,7 @@ export class ConfigurationsHandler {
     }
 
     // update wildcards when pgm conf changes (on save)
-    async generateWildcards(workspaceUri: vscode.Uri, reloadedFile: vscode.Uri = undefined): Promise<RegExp[]> {
+    async generateWildcards(workspaceUri: vscode.Uri, reloadedFile?: vscode.Uri): Promise<RegExp[] | null> {
         const procGrps = vscode.Uri.joinPath(workspaceUri, hlasmplugin_folder, proc_grps_file);
         const pgmConf = vscode.Uri.joinPath(workspaceUri, hlasmplugin_folder, pgm_conf_file);
         // the reloaded file is not a config file

@@ -16,6 +16,7 @@ import { PassThrough, Writable } from 'stream';
 import { Uri } from 'vscode';
 
 import { downloadDependenciesWithClient, extractDsn, gatherDownloadList, JobDescription, replaceVariables, adjustJobHeader } from '../../hlasmDownloadCommands';
+import { isCancellationError } from '../../helpers';
 
 suite('HLASM Download data sets', () => {
     const getClient = (listResponses: JobDescription[][]) => {
@@ -162,7 +163,7 @@ suite('HLASM Download data sets', () => {
             assert.fail();
         }
         catch (e) {
-            assert.equal(e.message, 'Canceled');
+            assert.ok(isCancellationError(e));
         }
 
         assert.equal(client.disposeCalls, 1);
@@ -246,9 +247,9 @@ suite('HLASM Download data sets', () => {
 
     test('Data set name extractor', () => {
         const ws = Uri.parse("file:///workspace");
-        assert.equal(extractDsn("~/dir/MY.DATA.SET", ws).dsn, "MY.DATA.SET");
-        assert.equal(extractDsn("~/dir/MY.DATA.SET/", ws).dsn, "MY.DATA.SET");
-        assert.equal(extractDsn("~/dir/MY.DATA.SET//", ws).dsn, "MY.DATA.SET");
+        assert.strictEqual(extractDsn("~/dir/MY.DATA.SET", ws)?.dsn, "MY.DATA.SET");
+        assert.strictEqual(extractDsn("~/dir/MY.DATA.SET/", ws)?.dsn, "MY.DATA.SET");
+        assert.strictEqual(extractDsn("~/dir/MY.DATA.SET//", ws)?.dsn, "MY.DATA.SET");
 
         if (process.platform === "win32")
             assert.deepEqual(extractDsn("C:\\dir\\my.data.set\\\\", ws), { dsn: "MY.DATA.SET", path: "c:/dir/my.data.set" });
@@ -280,7 +281,7 @@ suite('HLASM Download data sets', () => {
 
     test('Variable replacer', () => {
         const ws = Uri.parse("file:///workspace");
-        assert.deepEqual(replaceVariables([{ key: "${workspaceFolder}/${config:test}" }], (k) => (k === 'test' && 'replacement'), ws), [{ key: "file:///workspace/replacement" }]);
+        assert.deepEqual(replaceVariables([{ key: "${workspaceFolder}/${config:test}" }], k => k === 'test' ? 'replacement' : undefined, ws), [{ key: "file:///workspace/replacement" }]);
     });
 
     test('Job card splitter', () => {

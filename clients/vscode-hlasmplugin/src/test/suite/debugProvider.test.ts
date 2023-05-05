@@ -16,7 +16,6 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { HLASMConfigurationProvider, getCurrentProgramName } from '../../debugProvider';
-import { DebugConfigurationMock } from '../mocks';
 import * as helper from './testHelper';
 
 suite('Debug Provider Test Suite', () => {
@@ -25,21 +24,26 @@ suite('Debug Provider Test Suite', () => {
         await helper.closeAllEditors();
     });
 
-    test('Debug Configuration Provider test', () => {
+    test('Debug Configuration Provider test', async () => {
         const debugProvider = new HLASMConfigurationProvider();
 
         // resolve empty configuration
-        const emptyDebugConf = new DebugConfigurationMock();
-        let result = <vscode.DebugConfiguration>(debugProvider.resolveDebugConfiguration(vscode.workspace.workspaceFolders[0], emptyDebugConf));
+        let result = await Promise.resolve(debugProvider.resolveDebugConfiguration(vscode.workspace.workspaceFolders![0], {
+            name: '',
+            request: '',
+            type: ''
+        }));
+        assert.ok(result);
         assert.equal(result.type, 'hlasm');
         assert.equal(result.name, 'Macro tracer: current program');
 
         // resolve defined configuration
-        const debugConf = new DebugConfigurationMock();
-        debugConf.name = 'Macro tracer: Ask for file name';
-        debugConf.request = 'launch';
-        debugConf.type = 'hlasm';
-        result = <vscode.DebugConfiguration>(debugProvider.resolveDebugConfiguration(vscode.workspace.workspaceFolders[0], debugConf));
+        result = await Promise.resolve(debugProvider.resolveDebugConfiguration(vscode.workspace.workspaceFolders![0], {
+            name: 'Macro tracer: Ask for file name',
+            request: 'launch',
+            type: 'hlasm'
+        }));
+        assert.ok(result);
         assert.equal(result.type, 'hlasm');
         assert.equal(result.name, 'Macro tracer: Ask for file name');
     });
@@ -54,6 +58,6 @@ suite('Debug Provider Test Suite', () => {
 
         // HLASM file active
         await helper.showDocument('test', 'hlasm');
-        assert.equal(getCurrentProgramName(), path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'test'));
+        assert.equal(getCurrentProgramName(), path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, 'test'));
     }).slow(1000);
 });

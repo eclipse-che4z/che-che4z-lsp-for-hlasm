@@ -53,14 +53,14 @@ export class ServerFactory {
         else if (method === 'native') {
             const server: vscodelc.Executable = {
                 command: path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
-                args: ServerFactory.decorateArgs(getConfig<string[]>('arguments'))
+                args: ServerFactory.decorateArgs(getConfig<string[]>('arguments', []))
             };
             return server;
         }
         else if (method === 'wasm') {
             const server: vscodelc.NodeModule = {
                 module: path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
-                args: ServerFactory.decorateArgs(getConfig<string[]>('arguments')),
+                args: ServerFactory.decorateArgs(getConfig<string[]>('arguments', [])),
                 options: { execArgv: ServerFactory.getWasmRuntimeArgs() }
             };
             return server;
@@ -79,7 +79,7 @@ export class ServerFactory {
     }
 
     public static getWasmRuntimeArgs(): Array<string> {
-        const v8Version = process && process.versions && process.versions.v8 || "1.0";
+        const v8Version = process?.versions?.v8 ?? "1.0";
         const v8Major = +v8Version.split(".")[0];
         if (v8Major >= 9)
             return [];

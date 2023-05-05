@@ -126,15 +126,24 @@ function isolateBlocks(block_candidates: CodeBlock[]): CodeBlock[] {
         if (b.first > last_last)
             blocks.push(b);
         else
-            blocks.at(-1).last = Math.max(b.last, last_last);
+            blocks.at(-1)!.last = Math.max(b.last, last_last);
 
-        last_last = blocks.at(-1).last;
+        last_last = blocks.at(-1)!.last;
     }
 
     return blocks;
 }
 
-function processBlock(doc: vscode.TextDocument, b: CodeBlock) {
+function processBlock(doc: vscode.TextDocument, b: CodeBlock): {
+    addComment: true;
+    commentArea: CodeBlock;
+} | {
+    addComment: false;
+    removeLines: {
+        begin: number;
+        end: number;
+    }[];
+} {
     const begin = /^ +AGO +(\.[A-Z@#$_][A-Z@#$0-9_]*)(:? .+)?/i;
 
     let start_line = b.first;

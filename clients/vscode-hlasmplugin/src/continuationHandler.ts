@@ -27,7 +27,7 @@ export class ContinuationHandler {
         if (line >= 0 && line < document.lineCount) {
             const lineText = document.lineAt(line).text;
             if (continuationOffset < lineText.length) {
-                const character = lineText.at(continuationOffset);
+                const character = lineText.at(continuationOffset)!;
                 if (character != " ")
                     return character;
             }
@@ -41,7 +41,7 @@ export class ContinuationHandler {
             const lineText = document.lineAt(i).text;
             if (continuationOffset >= lineText.length)
                 continue;
-            const candidate = lineText.at(continuationOffset);
+            const candidate = lineText.at(continuationOffset)!;
             if (candidate == ' ')
                 continue;
             continuationSymbols[candidate] = (continuationSymbols[candidate] || 0) + 1;
@@ -115,7 +115,7 @@ export class ContinuationHandler {
                 result.push(l);
             return result;
         };
-        const all_lines = [... new Set(editor.selections.map(selection_to_lines).flat(1))].sort();
+        const all_lines = [... new Set(editor.selections.map(selection_to_lines).flat(1))].sort((l, r) => l - r);
         let last = -2;
         let result: { start: number, end: number }[] = [];
         for (let l of all_lines) {

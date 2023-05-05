@@ -37,7 +37,7 @@ suite('Utilities', () => {
 
         let i = 0;
 
-        let wakeupCallback: () => void;
+        let wakeupCallback = () => { };
         const wakeup = new Promise<void>(r => { wakeupCallback = r; });
 
         const a1 = mutex.locked(async () => {
@@ -65,7 +65,7 @@ suite('Utilities', () => {
 
         let i = 0;
 
-        let wakeupCallback: () => void;
+        let wakeupCallback = () => { };
         const wakeup = new Promise<void>(r => { wakeupCallback = r; });
 
         const a1 = sem.locked(async () => {
@@ -109,8 +109,8 @@ suite('Utilities', () => {
     test('Semaphore argument validation', (done) => {
         try { new AsyncSemaphore(0); done(Error("Failed")); } catch (e) { }
         try { new AsyncSemaphore(-1); done(Error("Failed")); } catch (e) { }
-        try { new AsyncSemaphore(null); done(Error("Failed")); } catch (e) { }
-        try { new AsyncSemaphore(undefined); done(Error("Failed")); } catch (e) { }
+        try { new AsyncSemaphore(<any>null); done(Error("Failed")); } catch (e) { }
+        try { new AsyncSemaphore(<any>undefined); done(Error("Failed")); } catch (e) { }
 
         done();
     });

@@ -15,7 +15,7 @@
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
 
-class FileContent {
+interface FileContent {
     content: string;
 }
 

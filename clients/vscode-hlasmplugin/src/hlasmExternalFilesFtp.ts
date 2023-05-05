@@ -43,7 +43,7 @@ class DatasetUriDetails implements ClientUriDetails {
     }
 
     normalizedPath() {
-        return `/${this.dataset}/${this.member || ''}`;
+        return `/${this.dataset}/${this.member ?? ''}`;
     }
 };
 
@@ -59,7 +59,7 @@ export class HLASMExternalFilesFtp implements ExternalFilesClient {
 
     private stateChanged = new vscode.EventEmitter<boolean>();
 
-    constructor(private context?: vscode.ExtensionContext) {
+    constructor(private context: vscode.ExtensionContext) {
         this.clientPool = new ConnectionPool<ftp.Client>({
             create: () => this.getConnectedClient(),
             reusable: (client: ftp.Client) => !client.closed && !this.clientSuspended,
@@ -106,9 +106,9 @@ export class HLASMExternalFilesFtp implements ExternalFilesClient {
 
             this.clientPool.closeClients();
 
-            const last = getLastRunConfig(this.context!);
+            const last = getLastRunConfig(this.context);
             const connection = await gatherConnectionInfo(last);
-            await updateLastRunConfig(this.context!, { host: connection.host, user: connection.user, jobcard: last.jobcard });
+            await updateLastRunConfig(this.context, { host: connection.host, user: connection.user, jobcard: last.jobcard });
 
             return connection;
         }

@@ -41,11 +41,11 @@ suite('Debugging Test Suite', () => {
         // Start by stepping into a macro and checking the file has been accessed
         await helper.debugStepOver(4);
         await helper.debugStepInto();
-        assert.strictEqual(vscode.window.activeTextEditor.document.uri.fsPath, path.join(helper.getWorkspacePath(), 'libs', 'mac.asm'), 'Wrong macro file entered');
+        assert.strictEqual(vscode.window.activeTextEditor?.document.uri.fsPath, path.join(helper.getWorkspacePath(), 'libs', 'mac.asm'), 'Wrong macro file entered');
 
         // Step out and check the file
         await helper.debugStepOver(3);
-        assert.strictEqual(vscode.window.activeTextEditor.document.uri.fsPath, editor.document.uri.fsPath, 'Stepped out to a wrong file');
+        assert.strictEqual(vscode.window.activeTextEditor?.document.uri.fsPath, editor.document.uri.fsPath, 'Stepped out to a wrong file');
 
         await helper.debugStop();
 
@@ -59,15 +59,15 @@ suite('Debugging Test Suite', () => {
 
         // Continue until breakpoint is hit
         await helper.debugContinue();
-        assert.strictEqual(vscode.window.activeTextEditor.document.uri.fsPath, editor.document.uri.fsPath, 'Expected to be in the source file');
+        assert.strictEqual(vscode.window.activeTextEditor?.document.uri.fsPath, editor.document.uri.fsPath, 'Expected to be in the source file');
 
         // Continue until breakpoint is hit
         await helper.debugContinue();
-        assert.strictEqual(vscode.window.activeTextEditor.document.uri.fsPath ,  path.join(helper.getWorkspacePath(), 'libs', 'mac.asm'), 'Expected to be in the macro file');
+        assert.strictEqual(vscode.window.activeTextEditor?.document.uri.fsPath, path.join(helper.getWorkspacePath(), 'libs', 'mac.asm'), 'Expected to be in the macro file');
 
         // Continue until breakpoint is hit
         await helper.debugContinue();
-        assert.strictEqual(vscode.window.activeTextEditor.document.uri.fsPath, editor.document.uri.fsPath, 'Expected to be in the source file');
+        assert.strictEqual(vscode.window.activeTextEditor?.document.uri.fsPath, editor.document.uri.fsPath, 'Expected to be in the source file');
 
         await helper.debugStop();
 
@@ -81,20 +81,20 @@ suite('Debugging Test Suite', () => {
 
         // Continue until breakpoint is hit
         await helper.debugContinue();
-        assert.strictEqual(vscode.window.activeTextEditor.document.uri.fsPath, path.join(helper.getWorkspacePath(), 'virtual'), 'Expected to be in the source file');
+        assert.strictEqual(vscode.window.activeTextEditor?.document.uri.fsPath, path.join(helper.getWorkspacePath(), 'virtual'), 'Expected to be in the source file');
 
         // Step into a virtual file
         await helper.debugStepInto();
-        assert.strictEqual(vscode.window.activeTextEditor.document.uri.path, '/AINSERT_1.hlasm', 'Expected to be in the virtual AINSERT file');
+        assert.strictEqual(vscode.window.activeTextEditor?.document.uri.path, '/AINSERT_1.hlasm', 'Expected to be in the virtual AINSERT file');
 
         // Continue until breakpoint is hit and enter the virtual file again
         await helper.debugContinue();
         await helper.debugStepInto();
-        assert.strictEqual(vscode.window.activeTextEditor.document.uri.path, '/AINSERT_1.hlasm', 'Expected to be in the virtual AINSERT file');
+        assert.strictEqual(vscode.window.activeTextEditor?.document.uri.path, '/AINSERT_1.hlasm', 'Expected to be in the virtual AINSERT file');
 
         // Continue until breakpoint is hit and enter virtual file through generated macro
         await helper.debugContinue();
-        assert.strictEqual(vscode.window.activeTextEditor.document.uri.fsPath, path.join(helper.getWorkspacePath(), 'virtual'), 'Expected to be in the source file');
+        assert.strictEqual(vscode.window.activeTextEditor?.document.uri.fsPath, path.join(helper.getWorkspacePath(), 'virtual'), 'Expected to be in the source file');
 
         await helper.debugStop();
     }).timeout(20000).slow(10000);

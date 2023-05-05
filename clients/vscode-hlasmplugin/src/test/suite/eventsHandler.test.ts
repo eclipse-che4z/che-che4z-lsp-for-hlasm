@@ -19,7 +19,6 @@ import { EventsHandler } from '../../eventsHandler';
 import {
     LanguageClientMock, LanguageClientOptionsMock,
     TextEditorMock, TextDocumentMock, ConfigurationChangeEventMock,
-    TextDocumentChangeEventMock, TextDocumentContentChangeEventMock,
 } from '../mocks';
 
 suite('Events Handler Test Suite', () => {
@@ -48,11 +47,18 @@ suite('Events Handler Test Suite', () => {
         document.text = ' ';
         document.uri = vscode.Uri.file('file');
         // prepare event 
-        const change = new TextDocumentContentChangeEventMock();
-        const position = new vscode.Position(0, 0);
-        change.range = new vscode.Range(position, position);
-        const event = new TextDocumentChangeEventMock([change]);
-        event.document = document;
+        const position = new vscode.Position(0, 1);
+        const change = {
+            range: new vscode.Range(position, position),
+            rangeOffset: 1,
+            rangeLength: 0,
+            text: 'a'
+        };
+        const event = {
+            document: document,
+            contentChanges: [change],
+            reason: undefined
+        };
         // get completion results
         assert.ok(handler.onDidChangeTextDocument(event, 71));
     });
