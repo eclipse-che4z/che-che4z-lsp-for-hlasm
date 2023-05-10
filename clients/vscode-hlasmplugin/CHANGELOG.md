@@ -6,6 +6,7 @@
 - Implement request cancellation support
 - Warning when files with non-UTF-8 encoding are processed
 - Support on-demand dependency retrieval via FTP
+- Cache contents of remote files
 
 #### Fixed
 - Operands no longer classified as remarks when instruction or macro is not recognized

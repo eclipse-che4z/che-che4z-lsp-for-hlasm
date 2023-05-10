@@ -283,6 +283,11 @@
         "command": "extension.hlasm-plugin.suspendRemoteActivity",
         "category": "HLASM",
         "title": "Suspend retrieval of remote files"
+      },
+      {
+        "command": "extension.hlasm-plugin.clearRemoteActivityCache",
+        "category": "HLASM",
+        "title": "Clear remote files cache"
       }
     ],
     "keybindings": [

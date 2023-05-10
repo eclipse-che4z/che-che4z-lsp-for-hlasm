@@ -197,4 +197,21 @@ export class HLASMExternalFilesFtp implements ExternalFilesClient {
 
         return new DatasetUriDetails(dataset, member?.split('.', 1)[0] || null);
     }
+
+    async uniqueId(): Promise<string | undefined> {
+        return this.mutex.locked(async () => {
+            if (this.activeConnectionInfo) return this.activeConnectionInfo.host + ':' + (this.activeConnectionInfo.port ?? '21');
+
+            if (this.clientSuspended) return undefined
+
+            try {
+                this.activeConnectionInfo = await this.getConnInfo();
+
+                return this.activeConnectionInfo.host + ':' + (this.activeConnectionInfo.port ?? '21');
+            }
+            catch (e) { }
+
+            return undefined;
+        });
+    }
 }

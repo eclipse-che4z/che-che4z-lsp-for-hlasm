@@ -67,7 +67,9 @@ async function primeExtension(): Promise<vscode.Disposable[]> {
 				toString() { return `${this.path}/${this.file}`; },
 				normalizedPath() { return `/${this.path}/${this.file}`; },
 			}
-		}
+		},
+
+		uniqueId() { return Promise.resolve(undefined) },
 	};
 
 	ext.registerExternalFileClient('TEST', fileClientMock);
