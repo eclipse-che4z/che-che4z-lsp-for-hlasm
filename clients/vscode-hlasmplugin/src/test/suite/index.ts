@@ -19,7 +19,7 @@ import * as vscode from 'vscode';
 import * as process from 'process';
 import { popWaitRequestResolver, timeout } from './testHelper';
 import { EXTENSION_ID, activate } from '../../extension';
-import { ClientUriDetails } from '../../hlasmExternalFiles';
+import { ClientUriDetails, ExternalRequestType } from '../../hlasmExternalFiles';
 
 async function primeExtension(): Promise<vscode.Disposable[]> {
 	const ext = await vscode.extensions.getExtension<ReturnType<typeof activate>>(EXTENSION_ID)!.activate();
@@ -30,46 +30,37 @@ async function primeExtension(): Promise<vscode.Disposable[]> {
 	await Promise.race([lang.sendRequest<object>('textDocument/$/opcode_suggestion', { opcodes: ['OPCODE'] }), timeout(30000, 'Opcode suggestion request failed')]);
 
 	const fileClientMock = {
-		listMembers(_: { path: string, file: string } & ClientUriDetails) {
-			if (this.clientSuspended)
-				throw new vscode.CancellationError();
-			return Promise.resolve(['MACA', 'MACB', 'MACC']);
-		},
-		readMember(args: { path: string, file: string } & ClientUriDetails) {
-			if (this.clientSuspended)
-				throw new vscode.CancellationError();
-			if (/^MAC[A-C]$/.test(args.file))
-				return Promise.resolve(`.*
-          MACRO
-          ${args.file}
-          MEND`);
-
-			return Promise.resolve(null);
-		},
-
-		clientSuspended: false,
-		eventEmitter: new vscode.EventEmitter<boolean>(),
-
-		get onStateChange() { return this.eventEmitter.event; },
-
-		suspend() { !this.clientSuspended && this.eventEmitter.fire(this.clientSuspended = true); },
-		resume() { this.clientSuspended && this.eventEmitter.fire(this.clientSuspended = false); },
-
-		suspended() { return this.clientSuspended; },
-
-		dispose() { },
-
-		parseArgs(p: string) {
+		getConnInfo: () => Promise.resolve({ info: '', uniqueId: undefined }),
+		parseArgs(p: string, _purpose: ExternalRequestType) {
 			const [path, file] = p.split('/').slice(1).map(x => x.toUpperCase());
 			return {
 				path: path || '',
 				file: (file || '').split('.')[0],
-				toString() { return `${this.path}/${this.file}`; },
+				toDisplayString() { return `${this.path}/${this.file}`; },
 				normalizedPath() { return `/${this.path}/${this.file}`; },
 			}
 		},
+		createClient: () => {
+			return {
+				connect: (_: string) => Promise.resolve(),
+				listMembers: (_: { path: string, file: string } & ClientUriDetails) => {
+					return Promise.resolve(['MACA', 'MACB', 'MACC']);
+				},
+				readMember: (args: { path: string, file: string } & ClientUriDetails) => {
+					if (/^MAC[A-C]$/.test(args.file))
+						return Promise.resolve(`.*
+          MACRO
+          ${args.file}
+          MEND`);
 
-		uniqueId() { return Promise.resolve(undefined) },
+					return Promise.resolve(null);
+				},
+
+				dispose: () => { },
+
+				reusable: () => true,
+			};
+		},
 	};
 
 	ext.registerExternalFileClient('TEST', fileClientMock);

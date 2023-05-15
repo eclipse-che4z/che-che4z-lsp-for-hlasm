@@ -31,7 +31,7 @@ import { HLASMCodeActionsProvider } from './hlasmCodeActionsProvider';
 import { hlasmplugin_folder } from './constants';
 import { ConfigurationsHandler } from './configurationsHandler';
 import { getLanguageClientMiddleware } from './languageClientMiddleware';
-import { ExternalFilesClient, HLASMExternalFiles } from './hlasmExternalFiles';
+import { ClientInterface, ClientUriDetails, HLASMExternalFiles } from './hlasmExternalFiles';
 import { HLASMExternalFilesFtp } from './hlasmExternalFilesFtp';
 
 export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
@@ -144,7 +144,7 @@ export async function activate(context: vscode.ExtensionContext) {
         getTelemetry(): Telemetry {
             return telemetry;
         },
-        registerExternalFileClient(service: string, client: ExternalFilesClient) {
+        registerExternalFileClient<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails>(service: string, client: ClientInterface<ConnectArgs, ReadArgs, ListArgs>) {
             extFiles.setClient(service, client);
         }
     };
@@ -190,7 +190,7 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
 
     context.subscriptions.push(client.onDidChangeState(e => e.newState === vscodelc.State.Starting && extFiles.reset()));
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(externalFilesScheme, extFiles.getTextDocumentContentProvider()));
-    extFiles.setClient('DATASET', new HLASMExternalFilesFtp(context));
+    extFiles.setClient('DATASET', HLASMExternalFilesFtp(context));
 
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.resumeRemoteActivity', () => extFiles.resumeAll()));
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.suspendRemoteActivity', () => extFiles.suspendAll()));

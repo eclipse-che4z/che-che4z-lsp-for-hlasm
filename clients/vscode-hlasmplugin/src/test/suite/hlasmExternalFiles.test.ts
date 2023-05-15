@@ -15,7 +15,7 @@
 
 import * as assert from 'assert';
 import * as crypto from "crypto";
-import { ClientUriDetails, ExternalFilesClient, ExternalRequestType, HLASMExternalFiles } from '../../hlasmExternalFiles';
+import { ClientInterface, ClientUriDetails, ExternalRequestType, HLASMExternalFiles } from '../../hlasmExternalFiles';
 import { FileSystem, Uri } from 'vscode';
 import { FileType } from 'vscode';
 import { TextEncoder } from 'util';
@@ -129,10 +129,7 @@ suite('External files', () => {
         });
 
         ext.setClient('TEST', {
-            dispose: () => { },
-
-            onStateChange: () => { return { dispose: () => { } }; },
-
+            getConnInfo: () => Promise.resolve({ info: '', uniqueId: 'SERVER' }),
             parseArgs: (path: string, purpose: ExternalRequestType): ClientUriDetails | null => {
                 if (purpose === ExternalRequestType.read_file)
                     return {
@@ -148,11 +145,19 @@ suite('External files', () => {
                     };
                 return null;
             },
+            createClient: () => {
+                return {
+                    dispose: () => { },
 
-            suspended: () => false,
+                    connect: (_: string) => Promise.resolve(),
 
-            uniqueId: () => Promise.resolve('SERVER'),
-        } as any as ExternalFilesClient);
+                    listMembers: (_: ClientUriDetails) => Promise.resolve(null),
+                    readMember: (_: ClientUriDetails) => Promise.resolve(null),
+
+                    reusable: () => false,
+                };
+            }
+        } as any as ClientInterface<string, ClientUriDetails, ClientUriDetails>);
 
         const dir = await ext.handleRawMessage({ id: 4, op: 'read_directory', url: 'test:/TEST/DIR' });
         assert.ok(dir);
@@ -178,5 +183,45 @@ suite('External files', () => {
         assert.strictEqual(dirWritten, true);
         assert.strictEqual(dir2Written, true);
         assert.strictEqual(fileWritten, true);
+    });
+
+    test('Access invalid cache content', async () => {
+        const ext = new HLASMExternalFiles('test', {
+            onNotification: (_, __) => { return { dispose: () => { } }; },
+            sendNotification: (_: any, __: any) => Promise.resolve(),
+        }, {
+            uri: Uri.parse('test:cache/'),
+            fs: {
+                readFile: async (_: Uri) => Uint8Array.from([0]),
+                writeFile: async (_uri: Uri, _content: Uint8Array) => { },
+            } as any as FileSystem
+        });
+
+        ext.setClient('TEST', {
+            getConnInfo: () => Promise.resolve({ info: '', uniqueId: 'SERVER' }),
+            parseArgs: (_path: string, _purpose: ExternalRequestType): ClientUriDetails | null => {
+                return {
+                    normalizedPath: () => '/DIR',
+                };
+            },
+            createClient: () => {
+                return {
+                    dispose: () => { },
+
+                    connect: (_: string) => Promise.resolve(),
+
+                    listMembers: (_: ClientUriDetails) => Promise.resolve(null),
+                    readMember: (_: ClientUriDetails) => Promise.resolve(null),
+
+                    reusable: () => false,
+                };
+            }
+        } as any as ClientInterface<string, ClientUriDetails, ClientUriDetails>);
+
+        const dir = await ext.handleRawMessage({ id: 4, op: 'read_directory', url: 'test:/TEST/DIR' });
+        assert.ok(dir);
+        assert.strictEqual(dir.id, 4);
+        assert.ok('error' in dir);
+        assert.strictEqual(dir?.error?.code, 0);
     });
 });
