@@ -8,7 +8,7 @@ tsconfig.json
 CMakeLists.txt
 hlasmplugin.log
 build/bin/**
-lib/test/**
+lib/**
 terse/**
 prepare_release.sh
 start_release.sh

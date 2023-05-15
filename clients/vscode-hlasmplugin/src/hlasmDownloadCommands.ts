@@ -17,7 +17,7 @@ import { fork } from 'child_process';
 import { Client, FTPResponse, FileInfo, FTPError } from 'basic-ftp'
 import { Readable, Writable } from 'stream';
 import { homedir } from 'os';
-import path = require('node:path');
+import * as path from 'path';
 import { promises as fsp } from "fs";
 import { hlasmplugin_folder, proc_grps_file } from './constants';
 import { Telemetry } from './telemetry';

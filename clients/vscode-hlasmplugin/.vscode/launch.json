@@ -15,6 +15,7 @@
             ],
             "sourceMaps": true,
             "outFiles": [
+                "${workspaceFolder}/dist/**/*.js",
                 "${workspaceFolder}/lib/**/*.js"
             ],
             "preLaunchTask": "prepareTest"
@@ -29,6 +30,7 @@
             ],
             "sourceMaps": true,
             "outFiles": [
+                "${workspaceFolder}/dist/**/*.js",
                 "${workspaceFolder}/lib/**/*.js"
             ],
             "preLaunchTask": "npm"

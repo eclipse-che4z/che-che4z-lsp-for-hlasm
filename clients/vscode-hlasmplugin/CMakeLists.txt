@@ -90,7 +90,7 @@ add_custom_command(
 		COMMAND
 			${CMAKE_COMMAND} -E copy  $<TARGET_FILE:language_server> ${BIN_EXTRAS} ${BIN_FOLDER}
 		COMMAND
-			npx vsce package -o ${GLOBAL_OUTPUT_PATH}/vscode-hlasmplugin.vsix
+			npx vsce package --no-dependencies -o ${GLOBAL_OUTPUT_PATH}/vscode-hlasmplugin.vsix
 		COMMAND 
 			${CMAKE_COMMAND} -E touch ${CHECK_BUILD}
 		DEPENDS

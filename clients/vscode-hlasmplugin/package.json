@@ -28,8 +28,7 @@
     "onStartupFinished"
   ],
   "icon": "resources/logo.png",
-  "main": "./lib/extension.js",
-  "typings": "./lib/extension",
+  "main": "./dist/extension.js",
   "engines": {
     "vscode": "^1.67.0"
   },
@@ -51,6 +50,7 @@
     "@vscode/vsce": "^2.19.0",
     "c8": "^7.12.0",
     "conventional-changelog-conventionalcommits": "^4.5.0",
+    "esbuild": "^0.17.18",
     "glob": "^7.1.6",
     "mocha": "^10.1.0",
     "puppeteer": "^4.0.0",
@@ -66,12 +66,13 @@
   },
   "scripts": {
     "postinstall": "node ./build/bin/postinstall.js",
-    "compile": "tsc -p ./tsconfig.json",
+    "compile": "esbuild --bundle src/extension.ts --outdir=dist --sourcemap --external:vscode --platform=node --minify",
+    "compile:test": "tsc -p ./tsconfig.json && npm run compile",
     "clean": "node ./build/bin/clean.js",
-    "test": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js",
-    "test:wasm": "npm run compile && node ./build/bin/prepareWorkspace.js wasm && node ./lib/test/runTest.js",
-    "test:insiders": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js insiders",
-    "test:theia": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./build/bin/theiaTest.js"
+    "test": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js",
+    "test:wasm": "npm run compile:test && node ./build/bin/prepareWorkspace.js wasm && node ./lib/test/runTest.js",
+    "test:insiders": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js insiders",
+    "test:theia": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./build/bin/theiaTest.js"
   },
   "contributes": {
     "jsonValidation": [
