@@ -1,3 +1,48 @@
+## [1.8.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.7.0...1.8.0) (2023-05-24)
+
+
+### Features
+
+* Cache contents of remote files ([db60a63](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/db60a636ee92ff7c6fef8a10ab7c0418cf7c668d))
+* Infrastructure for fetching of remote files ([3650d48](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/3650d48ac3753b88ffead8cf7f02c080a3e930d2))
+* Non-UTF-8 encoding detection ([65ed2f7](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/65ed2f7bc6ffb74cbb515e89d492cfe5c1e43290))
+* Support on-demand dependency retrieval via FTP ([742e398](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/742e398713b3266e0ed6ea86057c334e2d152016))
+
+
+### Fixes
+
+* Adjust extension activation event ([4abf755](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/4abf7551f7423b9f96abda41ccc66a3825b97340))
+* Best-effort support for setting breakpoints in non-filesystem documents ([26ebd94](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/26ebd9406271e8e8a273cf8e863c01ae736e3519))
+* Closing a dependency without saving does not trigger reparsing ([8b576fa](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/8b576fab7da69e83b03aab1713d89715052f711d))
+* Configuration request sent before initialization is done ([a811a3b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a811a3b1b1e6fa8600734f30f4c5e4500641ff82))
+* **deps:** Broken ZIP extraction in VSCode test ([1582f04](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1582f04cad3d5952fda89425bc50e15041eb95a9))
+* High CPU usage while going to the symbol definition ([ef737c8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ef737c858c23d55a5bc280053949e693d434bf84))
+* Implicit *NOPROC* processor group ([2aa82d1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2aa82d14e7b102b8184db127132d2e04d3154090))
+* Inconsistent identification of inactive statements ([0e18699](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0e18699edae834f93c0e4d1d153a69018291f018))
+* New or changed files are parsed only when they are opened in the editor ([c52e4f7](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c52e4f77939e01627b61a34f48f1eb03b063f9d0))
+* Notify diagnostic consumers after document close ([5bf404b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5bf404bae34ec1ccdecd3ac39aecb182cb9c2f69))
+* Only refresh libraries that are caching content ([2d7a98a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2d7a98a0fcc9af2543bf6b0d79de5212e3f21b6a))
+* Operands no longer classified as remarks when instruction or macro is not recognized ([189fd2d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/189fd2d1d0a3a448775ac75fea8d5d17c04f39bb))
+* Prevent pgm_conf not found prompt ([d57895e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/d57895efa236fbd3c7b6f1f96146377e61a1ed18))
+* Source code not reparsed after missing dependency is provided ([fbdd27d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/fbdd27db95b1dfb3b60bf4a53b71d295ff9a89dd))
+* The parsing library may crash when the external library parsing is actually asynchronous ([471a8ad](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/471a8ad510207ad60e24639fbc9364c4ae77c689))
+* VSCode enters an infinite loop of opening and closing files ([6b92479](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/6b92479d6c29d5ff775924a108ed34d35124c70c))
+
+
+### Other changes
+
+* Asyncify handling of requests in the language server ([a57504c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a57504c65687b627d9f3a261e4b8f26633789239))
+* Coverage issues ([ba12f50](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ba12f5009a84bad7d215b8755d7aeea2be92d586))
+* Do not keep analyzers, only the results ([d68f492](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/d68f492b09ac1151504e9a1b8ef736d5a3122b48))
+* Enable typescript strict mode ([d98025a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/d98025a387b4f3e425372e9d850748c2bb78fd21))
+* File manager responsibilities ([166ecd0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/166ecd0ba29601e336d82e94e19cbf2caa29fe7f))
+* FTP Connection pooling ([baa4076](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/baa40765374de5fcb2bf4daaf9c4bb813fda3b13))
+* Patch semantic release rate limit issues ([2a5db19](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2a5db197c30b409787246a93fccd98d744486f42))
+* Reorganize handling of requests and file parsing ([33895b8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/33895b8712a84e87abd826f3879f66e57801c208))
+* Task control transfer enhancements ([3d1b562](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/3d1b56275b6b24114be681c391c16d43589670cf))
+* Task yield ([5267118](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5267118d2501235e37346eded1586ddfb914ff89))
+* Update workflow permissions ([0f59395](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0f593952f35541ae29e2a6ca7b7b25450bdb344f))
+
 ## [1.7.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.6.0...1.7.0) (2023-03-08)
 
 
