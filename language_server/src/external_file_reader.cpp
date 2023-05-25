@@ -29,12 +29,19 @@ constexpr std::string_view request_type_message = "external_file_request";
 constexpr std::string_view response_type_message = "external_file_response";
 
 namespace {
-std::pair<int, std::string> extract_error(const nlohmann::json& errmsg)
+constexpr std::pair<int, const char*> unknown_error { -1, "Unknown error" };
+std::pair<int, const char*> extract_error(const nlohmann::json& errmsg) noexcept
 {
     if (!errmsg.is_object())
-        return { -1, "Unknown error" };
+        return unknown_error;
 
-    return { errmsg.value("code", -1), errmsg.value("msg", "Unknown error") };
+    auto code = errmsg.find("code");
+    auto msg = errmsg.find("msg");
+
+    if (code == errmsg.end() || msg == errmsg.end() || !code->is_number_integer() || !msg->is_string())
+        return unknown_error;
+
+    return { code->get<int>(), msg->get<const std::string*>()->c_str() };
 }
 } // namespace
 
@@ -66,7 +73,7 @@ void external_file_reader::read_external_file(const char* url, workspace_manager
         if (error)
         {
             auto [err, errmsg] = extract_error(result);
-            content.error(err, errmsg.c_str());
+            content.error(err, errmsg);
         }
         else if (!result.is_string())
             content.error(utils::error::invalid_json);
@@ -92,7 +99,7 @@ void external_file_reader::read_external_directory(
         if (error)
         {
             auto [err, errmsg] = extract_error(result);
-            members.error(err, errmsg.c_str());
+            members.error(err, errmsg);
             return;
         }
         auto member_list = result.find("members");
