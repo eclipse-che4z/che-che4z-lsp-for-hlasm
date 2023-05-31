@@ -13,7 +13,7 @@
  */
 
 import { Readable, Stream } from "stream";
-import { FBWritable } from "../../FBWritable";
+import { FBStreamingConvertor, FBWritable } from "../../FBWritable";
 import * as assert from 'assert';
 import { AsyncMutex, AsyncSemaphore } from "../../asyncMutex";
 import { isCancellationError } from "../../helpers";
@@ -29,6 +29,18 @@ suite('Utilities', () => {
 
         await Stream.promises.pipeline(Readable.from(input), convertor);
 
+        assert.deepStrictEqual(convertor.getResult().split(/\r?\n/), ["AAAAAAAAAA", "BBBBBBBBBB", ""]);
+    });
+
+    test('FB Streaming Convertor', async () => {
+        const convertor = new FBStreamingConvertor(10);
+
+        convertor.write(Uint8Array.from([0xc1, 0xc1, 0xc1, 0xc1, 0xc1,]));
+        convertor.write(Uint8Array.from([0xc1, 0xc1, 0xc1, 0xc1, 0xc1, 0xc2, 0xc2, 0xc2, 0xc2,]));
+        convertor.write(Uint8Array.from([0xc2, 0xc2, 0xc2, 0xc2, 0xc2, 0xc2]));
+
+        assert.deepStrictEqual(convertor.getResult().split(/\r?\n/), ["AAAAAAAAAA", "BBBBBBBBBB", ""]);
+        // subsequent call should return the same content
         assert.deepStrictEqual(convertor.getResult().split(/\r?\n/), ["AAAAAAAAAA", "BBBBBBBBBB", ""]);
     });
 

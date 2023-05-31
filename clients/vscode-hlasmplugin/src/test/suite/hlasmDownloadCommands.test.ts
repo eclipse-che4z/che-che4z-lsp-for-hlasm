@@ -14,8 +14,11 @@
 import * as assert from 'assert';
 import { PassThrough, Writable } from 'stream';
 import { Uri } from 'vscode';
+import * as fsp from 'fs/promises';
+import * as path from 'path';
+import * as os from 'os';
 
-import { downloadDependenciesWithClient, extractDsn, gatherDownloadList, JobDescription, replaceVariables, adjustJobHeader } from '../../hlasmDownloadCommands';
+import { downloadDependenciesWithClient, extractDsn, gatherDownloadList, JobDescription, replaceVariables, adjustJobHeader, unterse } from '../../hlasmDownloadCommands';
 import { isCancellationError } from '../../helpers';
 
 suite('HLASM Download data sets', () => {
@@ -56,7 +59,6 @@ suite('HLASM Download data sets', () => {
     const getIoOps = () => {
         return {
             unterseCalls: new Array<string>(),
-            translateCalls: new Array<string>(),
             copyCalls: new Array<{ source: string, target: string }>(),
             async unterse(outDir: string) {
                 this.unterseCalls.push(outDir);
@@ -64,9 +66,6 @@ suite('HLASM Download data sets', () => {
                 const process = Promise.resolve();
                 const input = new PassThrough();
                 return { process, input };
-            },
-            async translateFiles(dir: string) {
-                this.translateCalls.push(dir);
             },
             async copyDirectory(source: string, target: string) {
                 this.copyCalls.push({ source, target });
@@ -110,9 +109,8 @@ suite('HLASM Download data sets', () => {
         assert.equal(client.listCalls, 2);
         assert.deepEqual(client.setListMaskCalls, ['JOBNAME']);
         assert.equal(io.copyCalls.length, 0);
-        assert.deepEqual(io.translateCalls, ['/dir1']);
         assert.deepEqual(io.unterseCalls, ['/dir1']);
-        assert.equal(stages.stages, 4);
+        assert.equal(stages.stages, 3);
     });
 
     test('Jobcard pattern', async () => {
@@ -140,9 +138,8 @@ suite('HLASM Download data sets', () => {
         assert.equal(client.listCalls, 1);
         assert.deepEqual(client.setListMaskCalls, ['JOBNAME*']);
         assert.equal(io.copyCalls.length, 0);
-        assert.deepEqual(io.translateCalls, ['/dir1']);
         assert.deepEqual(io.unterseCalls, ['/dir1']);
-        assert.equal(stages.stages, 4);
+        assert.equal(stages.stages, 3);
     });
 
     test('Cancelled', async () => {
@@ -172,7 +169,6 @@ suite('HLASM Download data sets', () => {
         assert.equal(client.listCalls, 0);
         assert.deepEqual(client.setListMaskCalls, []);
         assert.equal(io.copyCalls.length, 0);
-        assert.deepEqual(io.translateCalls, []);
         assert.deepEqual(io.unterseCalls, []);
         assert.equal(stages.stages, 0);
     });
@@ -212,9 +208,8 @@ suite('HLASM Download data sets', () => {
         assert.equal(client.listCalls, 2);
         assert.deepEqual(client.setListMaskCalls, ['JOBNAME*']);
         assert.deepEqual(io.copyCalls, [{ source: '/dir2', target: '/dir3' }]);
-        assert.deepEqual(io.translateCalls, ['/dir1', '/dir2']);
         assert.deepEqual(io.unterseCalls, ['/dir1', '/dir2']);
-        assert.equal(stages.stages, 4 + 5);
+        assert.equal(stages.stages, 3 + 4);
     });
 
     test('Failed job', async () => {
@@ -300,4 +295,17 @@ suite('HLASM Download data sets', () => {
             '// 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,\'A\'),USER=USER01'
         ]);
     });
+
+    test('Test unterse', async () => {
+        const folder = await fsp.mkdtemp(path.join(os.tmpdir(), 'terse-test-'));
+
+        const { process, input } = await unterse(folder);
+        await new Promise((resolve) => input.write(Buffer.from('070000500C00005000000000001001002FFFFFCFFB00501BFFC0F10510270010300E60A3FFCFFD001003FFC0700410030020A1075081FFB02D025FFF07C0610FD0130E40420510010CC00900900BFFFFEE001051031002031031FFF0700B10020E307B059081FC7059FFCFD90E3072089FFB101FFFFEC0C2FB8FB7FB8FFF004FFBFB2FB1FB0FAFFAEFADFACFB2108FBB001005004150101100FA21000000', 'hex'), resolve));
+        await new Promise((resolve) => input.end(resolve));
+        await process;
+
+        const data = await fsp.readFile(path.join(folder, 'AAAAAAAA'), 'utf-8');
+
+        assert.match(data, / {80}\r?\n/);
+    }).timeout(2000);
 });

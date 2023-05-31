@@ -14,11 +14,11 @@
 
 import * as assert from 'assert';
 import { convertBuffer, uriFriendlyBase16Decode, uriFriendlyBase16Encode } from '../../conversions';
-import { TextDecoder } from 'util';
+import { TextEncoder } from 'util';
 
 suite('Conversions', () => {
     test('Buffer conversion', () => {
-        assert.equal(convertBuffer(Buffer.from([0x40, 0xC1, 0x40]), 80), ' A ');
+        assert.deepEqual(convertBuffer(Uint8Array.from([0x40, 0xC1, 0x40]), 80), new TextEncoder().encode(' A '));
     });
 
     test('URI friendly Base16 encode', () => {

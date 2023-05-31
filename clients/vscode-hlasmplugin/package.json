@@ -62,7 +62,8 @@
   "dependencies": {
     "@vscode/extension-telemetry": "^0.7.5",
     "basic-ftp": "^5.0.0",
-    "vscode-languageclient": "^8.1.0"
+    "vscode-languageclient": "^8.1.0",
+    "terse.js": "file:./terse/terse.js-1.0.0.tgz"
   },
   "scripts": {
     "postinstall": "node ./build/bin/postinstall.js",

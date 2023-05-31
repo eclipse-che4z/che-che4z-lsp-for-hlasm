@@ -38,3 +38,13 @@ export function isCancellationError(e: any) {
 export function asError(x: unknown) {
     return x instanceof Error ? x : Error('Unknown error:' + x);
 }
+
+export function concat(...is: Uint8Array[]) {
+    const result = new Uint8Array(is.reduce((t, b) => t + b.length, 0));
+    let idx = 0;
+    for (const i of is) {
+        result.set(i, idx);
+        idx += i.length;
+    }
+    return result;
+}

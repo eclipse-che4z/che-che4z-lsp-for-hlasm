@@ -13,7 +13,6 @@
  */
 
 import * as vscode from 'vscode';
-import { fork } from 'child_process';
 import { Client, FTPResponse, FileInfo, FTPError } from 'basic-ftp'
 import { Readable, Writable } from 'stream';
 import { homedir } from 'os';
@@ -23,8 +22,9 @@ import { hlasmplugin_folder, proc_grps_file } from './constants';
 import { Telemetry } from './telemetry';
 import { askUser } from './uiUtils';
 import { connectionSecurityLevel, gatherConnectionInfo, getLastRunConfig, translateConnectionInfo, updateLastRunConfig } from './ftpCreds';
-import { convertBuffer } from './conversions';
 import { isCancellationError } from './helpers';
+import { unterseFile } from "terse.js";
+import { FBStreamingConvertor } from './FBWritable';
 
 export type JobId = string;
 export interface JobDescription {
@@ -135,7 +135,7 @@ interface ParsedJobHeader {
     } | string;
     jobMask: string;
 }
-const translationTable: string = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
 function prepareJobHeader(pattern: string): ParsedJobHeader {
     const match = /^(\/\/[^ ?]+)(\?*)( .*)$/.exec(pattern);
 
@@ -251,46 +251,133 @@ function fixPath(p: string): string {
     return p;
 }
 
-function getWasmRuntimeArgs(): Array<string> {
-    const v8Version = process?.versions?.v8 ?? "1.0";
-    const v8Major = +v8Version.split(".")[0];
-    if (v8Major >= 10)
-        return [];
-    else
-        return [
-            '--experimental-wasm-eh'
-        ];
-}
-
-async function unterse(outDir: string): Promise<{ process: Promise<void>, input: Writable }> {
+export async function unterse(outDir: string): Promise<{ process: Promise<void>, input: Writable }> {
     await fsp.mkdir(outDir, { recursive: true });
-    const unpacker = fork(
-        path.join(__dirname, '..', 'bin', 'terse'),
-        ["--op", "unpack", "--overwrite", "--copy-if-symlink-fails", "-o", outDir],
-        { execArgv: getWasmRuntimeArgs(), stdio: ['pipe', 'ignore', 'pipe', 'ipc'] }
-    );
-    const promise = new Promise<void>((resolve, reject) => {
-        unpacker.stderr!.on('data', (chunk) => console.log(chunk.toString()));
-        unpacker.on('exit', (code, signal) => {
-            if (code === 0)
-                resolve();
-            else if (code)
-                reject("Unterse ended with error code: " + code);
-            else
-                reject("Signal received from unterse: " + signal);
-        })
-    });
-    return { process: promise, input: unpacker.stdin! };
-}
 
-async function translateFiles(dir: string) {
-    const files = await fsp.readdir(dir, { withFileTypes: true });
-    for (const file of files) {
-        if (!file.isFile() || file.isSymbolicLink())
-            continue;
-        const filePath = path.join(dir, file.name);
-        await fsp.writeFile(filePath, convertBuffer(await fsp.readFile(filePath), 80), "utf-8");
-    }
+    class DownloadStream extends Writable {
+        private chunks: Uint8Array[] = [];
+        private done = false;
+        private notinterested = false;
+        private pendingFetch?: { resolve: () => void, reject: (e: Error) => void };
+
+        _write(chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
+            if (this.notinterested) return;
+            this.chunks.push(chunk);
+            this.getCallback()?.resolve();
+
+            callback();
+        }
+
+        _final(callback: (error?: Error | null) => void) {
+            this.done = true;
+            this.getCallback()?.reject(Error("Unexpected EOF"));
+            callback();
+        }
+
+        private getCallback() {
+            const cb = this.pendingFetch;
+            this.pendingFetch = undefined;
+            return cb;
+        }
+
+        async fetchChunk() {
+            while (true) {
+                if (this.chunks.length > 0)
+                    return this.chunks.shift()!;
+                else if (this.done)
+                    throw Error("Unexpected EOF");
+
+                await new Promise<void>((resolve, reject) => { input.pendingFetch = { resolve, reject } });
+            }
+        }
+
+        lostInterest() { this.notinterested = true; }
+    };
+    const input = new DownloadStream();
+
+    let pendingTake: number[] = [];
+    let pendingAction = Promise.resolve();
+    let activeActions = 0;
+    let fb: FBStreamingConvertor | undefined;
+    let currentMember = '';
+
+    const scheduleAction = (action: () => Promise<void>) => {
+        ++activeActions;
+        pendingAction = pendingAction.then(action).finally(() => --activeActions);
+    };
+
+    const writeCurrentMember = () => {
+        if (!fb) return;
+
+        const _currentMember = currentMember;
+        const _fb = fb;
+
+        scheduleAction(() => fsp.writeFile(path.join(outDir, _currentMember), _fb.getResult()));
+
+        fb = undefined;
+        currentMember = '';
+    };
+
+    const { resolve, error, process } = (() => {
+        let _resolve: (() => void) | undefined;
+        let _error: ((e: Error) => void) | undefined;
+        const process = new Promise<void>((r, e) => { _resolve = r; _error = e; });
+        return { resolve: _resolve!, error: _error!, process };
+    })();
+
+    unterseFile({
+        async take(n: number): Promise<number[]> {
+            while (pendingTake.length < n)
+                pendingTake = pendingTake.concat(...await input.fetchChunk());
+            return pendingTake.splice(0, n);
+        },
+        async rest(f: (b: Uint8Array) => boolean | Promise<boolean>): Promise<void> {
+            if (pendingTake.length > 0) {
+                const b = Uint8Array.from(pendingTake);
+                pendingTake = [];
+                if (!await f(b))
+                    return;
+            }
+            while (await f(await input.fetchChunk())) {
+                if (activeActions > 16)
+                    await pendingAction;
+            }
+            await pendingAction;
+        },
+    }, (header) => {
+        if (!header.pds) throw Error("PDS(E) expected");
+        if (header.lrecl !== 80 || !header.recfm.startsWith('F')) throw Error("Expected FB80 data set");
+
+        return {
+            write: (data: Uint8Array) => {
+                fb!.write(data)
+            },
+            check_next_member: (name: string) => {
+                if (!/[A-Z$#@][A-Z$#@0-9]*/.test(name))
+                    throw Error("Invalid member name");
+            },
+            start_member: (name: string) => {
+                writeCurrentMember();
+
+                fb = new FBStreamingConvertor(80);
+                currentMember = name;
+            },
+            alias_member: (name: string, target: string) => {
+                writeCurrentMember();
+
+                scheduleAction(() => fsp.symlink(path.join(outDir, target), path.join(outDir, name)).catch(
+                    () => fsp.copyFile(path.join(outDir, target), path.join(outDir, name))
+                ));
+            },
+        };
+    }).then(() => {
+        input.lostInterest();
+
+        writeCurrentMember();
+
+        return pendingAction;
+    }).then(resolve).catch(error);
+    return { process, input };
 }
 
 async function copyDirectory(source: string, target: string) {
@@ -310,7 +397,6 @@ async function copyDirectory(source: string, target: string) {
 
 export interface IoOps {
     unterse: (outDir: string) => Promise<{ process: Promise<void>, input: Writable }>;
-    translateFiles: (dir: string) => Promise<void>;
     copyDirectory: (source: string, target: string) => Promise<void>;
 }
 
@@ -340,10 +426,6 @@ async function downloadJobAndProcess(
             unpacker:
                 (async () => {
                     await process;
-                    progress.stageCompleted();
-
-                    await io.translateFiles(firstDir);
-
                     progress.stageCompleted();
 
                     for (const dir__ of job.details.dirs.slice(1)) {
@@ -610,8 +692,8 @@ export async function downloadDependencies(context: vscode.ExtensionContext, tel
                 }),
                 thingsToDownload,
                 jobcardPattern,
-                new ProgressReporter(p, thingsToDownload.reduce((prev, cur) => { return prev + cur.dirs.length + 3 }, 0)),
-                { unterse, translateFiles, copyDirectory },
+                new ProgressReporter(p, thingsToDownload.reduce((prev, cur) => { return prev + cur.dirs.length + 2 }, 0)),
+                { unterse, copyDirectory },
                 () => t.isCancellationRequested);
         });
 

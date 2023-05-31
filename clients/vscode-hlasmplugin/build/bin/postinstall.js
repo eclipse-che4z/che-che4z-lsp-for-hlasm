@@ -19,8 +19,6 @@ const path = require('path');
 const base = path.join(__dirname, "..", "..");
 
 fs.mkdirSync(path.join(base, "bin"), { recursive: true });
-fs.copyFileSync(path.join(base, "terse", "terse.js"), path.join(base, "bin", "terse.js"));
-fs.copyFileSync(path.join(base, "terse", "terse.wasm"), path.join(base, "bin", "terse.wasm"));
 
 const rate_limit_js = path.join(base, "node_modules", "@semantic-release", "github", "lib", "definitions", "rate-limit.js");
 const rateLimits = fs.readFileSync(rate_limit_js, "utf8")

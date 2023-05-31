@@ -70,7 +70,7 @@ add_custom_command(
 		COMMAND
 			${CMAKE_COMMAND} -E touch ${CHECK_CI}
 		DEPENDS
-			package.json package-lock.json build/bin/postinstall.js terse/terse.wasm terse/terse.js
+			package.json package-lock.json build/bin/postinstall.js
 		WORKING_DIRECTORY
 			${CMAKE_CURRENT_SOURCE_DIR}
 )

@@ -28,7 +28,7 @@
             },
 
             // we run the custom script "compile" as defined in package.json
-            "args": ["run", "compile", "--loglevel", "silent"],
+            "args": ["run", "compile:test", "--loglevel", "silent"],
 
             // The tsc compiler is started in watching mode
             "isBackground": true,
