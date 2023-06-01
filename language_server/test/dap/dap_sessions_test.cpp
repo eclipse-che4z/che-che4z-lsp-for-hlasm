@@ -43,14 +43,25 @@ public:
     void write(const nlohmann::json& j) override { ss << j.dump(); }
     void write(nlohmann::json&& j) override { ss << j.dump(); }
 };
+
+struct dummy_debugger_configuration_provider : hlasm_plugin::parser_library::debugger_configuration_provider
+{
+    void provide_debugger_configuration(hlasm_plugin::parser_library::sequence<char>,
+        hlasm_plugin::parser_library::workspace_manager_response<
+            hlasm_plugin::parser_library::debugging::debugger_configuration> conf) override
+    {
+        conf.error(-1, "");
+    }
+};
+
 } // namespace
 
 TEST(dap_sessions, simple_start_stop)
 {
     std::atomic<bool> term = false;
-    test::ws_mngr_mock mock_ws;
+    dummy_debugger_configuration_provider mock_dc;
     stream_json_sink session_out;
-    dap::session session(term, mock_ws, session_out);
+    dap::session session(term, mock_dc, session_out);
 
     EXPECT_TRUE(session.is_running());
     EXPECT_EQ(session.get_session_id(), "hlasm/dap_tunnel/0");
@@ -63,9 +74,9 @@ TEST(dap_sessions, simple_start_stop)
 
 TEST(dap_sessions, session_manager)
 {
-    test::ws_mngr_mock mock_ws;
+    dummy_debugger_configuration_provider mock_dc;
     stream_json_sink session_out;
-    dap::session_manager sess_mgr(mock_ws, session_out);
+    dap::session_manager sess_mgr(mock_dc, session_out);
 
     auto session_manager_matcher = sess_mgr.get_filtering_predicate();
     EXPECT_TRUE(session_manager_matcher(nlohmann::json { { "method", "hlasm/dap_tunnel" } }));

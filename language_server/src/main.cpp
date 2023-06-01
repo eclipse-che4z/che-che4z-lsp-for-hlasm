@@ -38,10 +38,16 @@ using namespace hlasm_plugin::language_server;
 
 namespace {
 
-class main_program : public json_sink, send_message_provider
+class main_program final : public json_sink,
+                           send_message_provider,
+                           hlasm_plugin::parser_library::debugger_configuration_provider
 {
     external_file_reader external_files;
-    hlasm_plugin::parser_library::workspace_manager ws_mngr;
+    std::unique_ptr<hlasm_plugin::parser_library::workspace_manager> ws_mngr;
+
+    hlasm_plugin::parser_library::debugger_configuration_provider& dc_provider;
+    std::mutex proxies_mutex;
+    std::deque<std::function<void()>> proxies;
 
     json_sink& json_output;
     json_queue_channel lsp_queue;
@@ -55,14 +61,27 @@ class main_program : public json_sink, send_message_provider
 
     void reply(const nlohmann::json& message) final { json_output.write(message); }
 
+    void provide_debugger_configuration(hlasm_plugin::parser_library::sequence<char> document_uri,
+        hlasm_plugin::parser_library::workspace_manager_response<
+            hlasm_plugin::parser_library::debugging::debugger_configuration> conf) override
+    {
+        std::unique_lock g(proxies_mutex);
+        proxies.emplace_back([this, uri = std::string(document_uri), conf = std::move(conf)]() {
+            dc_provider.provide_debugger_configuration(hlasm_plugin::parser_library::sequence<char>(uri), conf);
+        });
+        g.unlock();
+        lsp_queue.write(nlohmann::json::value_t::discarded);
+    }
+
 public:
     main_program(json_sink& json_output, int& ret)
         : external_files(json_output)
-        , ws_mngr(&external_files)
+        , ws_mngr(hlasm_plugin::parser_library::create_workspace_manager(&external_files))
+        , dc_provider(ws_mngr->get_debugger_configuration_provider())
         , json_output(json_output)
         , router(&lsp_queue)
-        , dap_sessions(ws_mngr, json_output, &dap_telemetry_broker)
-        , virtual_files(ws_mngr, json_output)
+        , dap_sessions(*this, json_output, &dap_telemetry_broker)
+        , virtual_files(*ws_mngr, json_output)
     {
         router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
         router.register_route(virtual_files.get_filtering_predicate(), virtual_files);
@@ -71,10 +90,12 @@ public:
         lsp_thread = std::thread([&ret, this]() {
             try
             {
-                auto ext_reg =
-                    external_files.register_thread([this]() { lsp_queue.write(nlohmann::json::value_t::discarded); });
+                auto ext_reg = external_files.register_thread([this]() noexcept {
+                    // terminates on failure
+                    lsp_queue.write(nlohmann::json::value_t::discarded);
+                });
 
-                lsp::server server(ws_mngr);
+                lsp::server server(*ws_mngr);
                 server.set_send_message_provider(this);
 
                 hlasm_plugin::utils::scope_exit disconnect_telemetry(
@@ -84,7 +105,7 @@ public:
                 for (;;)
                 {
                     if (lsp_queue.will_read_block())
-                        ws_mngr.idle_handler(lsp_queue.will_block_preview());
+                        ws_mngr->idle_handler(lsp_queue.will_block_preview());
 
                     auto message = lsp_queue.read();
                     if (!message.has_value())
@@ -94,7 +115,14 @@ public:
                     }
 
                     if (message->is_discarded())
+                    {
+                        for (std::unique_lock g(proxies_mutex); !proxies.empty();)
+                        {
+                            proxies.front()();
+                            proxies.pop_front();
+                        }
                         continue;
+                    }
 
                     server.message_received(message.value());
 

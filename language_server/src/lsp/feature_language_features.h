@@ -47,6 +47,8 @@ private:
 
     nlohmann::json document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol);
     nlohmann::json document_symbol_list_json(hlasm_plugin::parser_library::document_symbol_list symbol_list);
+
+    parser_library::workspace_manager& ws_mngr_;
 };
 
 } // namespace hlasm_plugin::language_server::lsp

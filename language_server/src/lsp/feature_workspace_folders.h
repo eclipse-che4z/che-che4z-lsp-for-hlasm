@@ -59,6 +59,7 @@ private:
 
     void send_configuration_request();
 
+    parser_library::workspace_manager& ws_mngr_;
     std::vector<std::pair<std::string, std::string>> m_initial_workspaces;
 };
 

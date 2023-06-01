@@ -31,7 +31,7 @@ namespace hlasm_plugin::language_server::dap {
 class session;
 class session_manager final : public json_sink
 {
-    hlasm_plugin::parser_library::workspace_manager* ws_mngr;
+    parser_library::debugger_configuration_provider* dc_provider;
     json_sink* out_stream;
     std::map<std::string, std::unique_ptr<dap::session>, std::less<>> sessions;
     telemetry_sink* telemetry_reporter;
@@ -41,7 +41,7 @@ class session_manager final : public json_sink
     void handle_registration_request(size_t new_id);
 
 public:
-    session_manager(hlasm_plugin::parser_library::workspace_manager& ws,
+    session_manager(parser_library::debugger_configuration_provider& dc_provider,
         json_sink& out,
         telemetry_sink* telemetry_reporter = nullptr,
         external_file_reader* ext_files = nullptr);

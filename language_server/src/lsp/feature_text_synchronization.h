@@ -53,6 +53,8 @@ private:
     void on_did_change(const nlohmann::json& params);
     // Handles textDocument/didClose notification.
     void on_did_close(const nlohmann::json& params);
+
+    parser_library::workspace_manager& ws_mngr_;
 };
 
 } // namespace hlasm_plugin::language_server::lsp

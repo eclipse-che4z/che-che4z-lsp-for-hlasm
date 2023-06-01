@@ -151,12 +151,12 @@ TEST(workspace_folders, initialize_folders)
 TEST(workspace_folders, initialize_folder_with_configuration)
 {
     using namespace ::testing;
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     NiceMock<workspace_manager_requests_mock> req_mock;
     response_provider_mock rpm;
-    lsp::feature_workspace_folders f(ws_mngr, rpm);
+    lsp::feature_workspace_folders f(*ws_mngr, rpm);
 
-    ws_mngr.set_request_interface(&req_mock);
+    ws_mngr->set_request_interface(&req_mock);
 
     EXPECT_CALL(rpm, request(std::string("workspace/configuration"), _, _)).Times(1);
 
@@ -219,16 +219,16 @@ TEST(workspace_folders, did_change_configuration_with_requests)
 {
     using namespace ::testing;
 
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     NiceMock<workspace_manager_requests_mock> req_mock;
 
-    ws_mngr.add_workspace("test", "testurl");
+    ws_mngr->add_workspace("test", "testurl");
 
-    ws_mngr.set_request_interface(&req_mock);
+    ws_mngr->set_request_interface(&req_mock);
 
     EXPECT_CALL(req_mock, request_workspace_configuration(StrEq("testurl"), _));
 
-    ws_mngr.configuration_changed({});
+    ws_mngr->configuration_changed({});
 }
 
 TEST(workspace_folders, did_change_configuration_empty_configuration_params)

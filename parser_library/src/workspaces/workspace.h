@@ -28,6 +28,7 @@
 #include <variant>
 #include <vector>
 
+#include "debugging/debugger_configuration.h"
 #include "diagnosable_impl.h"
 #include "file_manager_vfm.h"
 #include "lib_config.h"
@@ -133,6 +134,8 @@ public:
         const resource_location& file, std::string_view opcode, bool extended);
 
     void retrieve_fade_messages(std::vector<fade_message_s>& fms) const;
+
+    utils::value_task<debugging::debugger_configuration> get_debugger_configuration(resource_location url);
 
 private:
     std::string name_;

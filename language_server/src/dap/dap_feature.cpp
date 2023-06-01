@@ -65,10 +65,11 @@ void dap_feature::initialize_feature(const nlohmann::json&)
 { /* nothing to do */
 }
 
-dap_feature::dap_feature(parser_library::workspace_manager& ws_mngr,
+dap_feature::dap_feature(parser_library::debugger_configuration_provider& dc_provider,
     response_provider& response_provider,
     dap_disconnect_listener* disconnect_listener)
-    : feature(ws_mngr, response_provider)
+    : feature(response_provider)
+    , dc_provider(dc_provider)
     , disconnect_listener_(disconnect_listener)
 {}
 
@@ -150,7 +151,6 @@ void dap_feature::on_launch(const request_id& request_seq, const nlohmann::json&
     // wait for configurationDone?
     std::string program_path = server_conformant_path(args["program"].get<std::string_view>(), client_path_format_);
     bool stop_on_entry = args["stopOnEntry"].get<bool>();
-    auto workspace_id = ws_mngr_.find_workspace(program_path.c_str());
     debugger->set_event_consumer(this);
 
     struct launch_handler
@@ -174,7 +174,7 @@ void dap_feature::on_launch(const request_id& request_seq, const nlohmann::json&
     };
 
     debugger->launch(program_path.c_str(),
-        *workspace_id,
+        dc_provider,
         stop_on_entry,
         parser_library::make_workspace_manager_response(launch_handler { request_seq, response_ }).first);
 }

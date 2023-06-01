@@ -44,7 +44,6 @@ target_sources(parser_library PRIVATE
 	tagged_index.h
 	virtual_file_monitor.h
 	workspace_manager.cpp
-	workspace_manager_impl.h
 )
 
 add_subdirectory(checking)

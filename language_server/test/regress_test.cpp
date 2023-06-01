@@ -39,15 +39,15 @@ nlohmann::json make_notification(std::string method_name, nlohmann::json paramet
 
 TEST(regress_test, behaviour_error)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     message_provider_mock mess_p;
-    lsp::server s(ws_mngr);
+    lsp::server s(*ws_mngr);
     s.set_send_message_provider(&mess_p);
 
     auto notf = make_notification("textDocument/didOpen",
         R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","languageId":"plaintext","version":1,"text":"LABEL LR 1,20 REMARK"}})#"_json);
     s.message_received(notf);
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 
     ASSERT_EQ(mess_p.notfs.size(), (size_t)3); // diags+open+parsing
     auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](nlohmann::json notif) {
@@ -64,7 +64,7 @@ TEST(regress_test, behaviour_error)
     notf = make_notification("textDocument/didChange",
         R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","version":2},"contentChanges":[{"range":{"start":{"line":0,"character":12},"end":{"line":0,"character":13}},"rangeLength":1,"text":""}]})#"_json);
     s.message_received(notf);
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 
     ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
     ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/publishDiagnostics");
@@ -75,7 +75,7 @@ TEST(regress_test, behaviour_error)
     notf = make_notification("textDocument/didChange",
         R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","version":2},"contentChanges":[{"range":{"start":{"line":0,"character":5},"end":{"line":0,"character":19}},"rangeLength":14,"text":""}]})#"_json);
     s.message_received(notf);
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 
     ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
     ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/publishDiagnostics");
@@ -88,7 +88,7 @@ TEST(regress_test, behaviour_error)
     notf = make_notification(
         "textDocument/didClose", R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm"}})#"_json);
     s.message_received(notf);
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 
     auto notfs_it = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [](const auto& msg_notification) {
         return msg_notification["method"] == "textDocument/publishDiagnostics";
@@ -577,45 +577,45 @@ const static std::vector<nlohmann::json> messages = {
 // fast typing (async, cancellations test)
 TEST(regress_test, stability_async)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     message_provider_mock mess_p;
-    lsp::server s(ws_mngr);
+    lsp::server s(*ws_mngr);
     s.set_send_message_provider(&mess_p);
 
     // series of lsp notification calls
     for (const auto& message : messages)
         s.message_received(message);
 
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 }
 
 // slow typing (sync, no cancellation)
 TEST(regress_test, stability_sync)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     message_provider_mock mess_p;
-    lsp::server s(ws_mngr);
+    lsp::server s(*ws_mngr);
     s.set_send_message_provider(&mess_p);
 
     // series of lsp notification calls
     for (const auto& message : messages)
     {
         s.message_received(message);
-        ws_mngr.idle_handler();
+        ws_mngr->idle_handler();
     }
 }
 
 TEST(regress_test, check_diagnostic_tags)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     message_provider_mock mess_p;
-    lsp::server s(ws_mngr);
+    lsp::server s(*ws_mngr);
     s.set_send_message_provider(&mess_p);
 
     auto notf = make_notification("textDocument/didOpen",
         R"#({"textDocument":{"uri":"file:///c%3A/test/note_test.hlasm","languageId":"plaintext","version":1,"text":" MNOTE 'test note'"}})#"_json);
     s.message_received(notf);
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 
     ASSERT_EQ(mess_p.notfs.size(), (size_t)3); // diags+open+parsing
     auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](nlohmann::json notif) {

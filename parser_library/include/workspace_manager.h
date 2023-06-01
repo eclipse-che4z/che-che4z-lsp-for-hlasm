@@ -20,6 +20,7 @@
 // It implements LSP requests and notifications and is used by the language server.
 
 #include <atomic>
+#include <memory>
 #include <utility>
 
 #include "lib_config.h"
@@ -31,13 +32,9 @@
 
 namespace hlasm_plugin::parser_library {
 class workspace_manager_external_file_requests;
-
-namespace workspaces {
-class workspace;
-class parse_lib_provider;
-} // namespace workspaces
-
-using ws_id = workspaces::workspace*;
+namespace debugging {
+struct debugger_configuration;
+} // namespace debugging
 
 // Interface that can be implemented to be able to get list of
 // diagnostics from workspace manager whenever a file is parsed
@@ -85,73 +82,72 @@ struct opcode_suggestion
 template<typename T>
 class workspace_manager_response;
 
-// The main class that encapsulates all functionality of parser library.
-// All the methods are C++ version of LSP and DAP methods.
-class PARSER_LIBRARY_EXPORT workspace_manager
+class debugger_configuration_provider
 {
-    class impl;
+protected:
+    ~debugger_configuration_provider() = default;
 
 public:
-    explicit workspace_manager(workspace_manager_external_file_requests* external_file_requests = nullptr);
+    virtual void provide_debugger_configuration(
+        sequence<char> document_uri, workspace_manager_response<debugging::debugger_configuration> conf) = 0;
+};
 
-    workspace_manager(const workspace_manager&) = delete;
-    workspace_manager& operator=(const workspace_manager&) = delete;
+class workspace_manager
+{
+public:
+    virtual ~workspace_manager() = default;
+    virtual void add_workspace(const char* name, const char* uri) = 0;
+    virtual void remove_workspace(const char* uri) = 0;
 
-    workspace_manager(workspace_manager&&) noexcept;
-    workspace_manager& operator=(workspace_manager&&) noexcept;
-
-    virtual ~workspace_manager();
-
-
-    virtual size_t get_workspaces(ws_id* workspaces, size_t max_size);
-    virtual size_t get_workspaces_count();
-
-    virtual void add_workspace(const char* name, const char* uri);
-    virtual ws_id find_workspace(const char* document_uri);
-    virtual void remove_workspace(const char* uri);
-
-    virtual void did_open_file(const char* document_uri, version_t version, const char* text, size_t text_size);
+    virtual void did_open_file(const char* document_uri, version_t version, const char* text, size_t text_size) = 0;
     virtual void did_change_file(
-        const char* document_uri, version_t version, const document_change* changes, size_t ch_size);
-    virtual void did_close_file(const char* document_uri);
-    virtual void did_change_watched_files(sequence<fs_change> changes);
+        const char* document_uri, version_t version, const document_change* changes, size_t ch_size) = 0;
+    virtual void did_close_file(const char* document_uri) = 0;
+    virtual void did_change_watched_files(sequence<fs_change> changes) = 0;
 
-    virtual void definition(const char* document_uri, position pos, workspace_manager_response<position_uri> resp);
-    virtual void references(const char* document_uri, position pos, workspace_manager_response<position_uri_list> resp);
-    virtual void hover(const char* document_uri, position pos, workspace_manager_response<sequence<char>> resp);
+    virtual void definition(const char* document_uri, position pos, workspace_manager_response<position_uri> resp) = 0;
+    virtual void references(
+        const char* document_uri, position pos, workspace_manager_response<position_uri_list> resp) = 0;
+    virtual void hover(const char* document_uri, position pos, workspace_manager_response<sequence<char>> resp) = 0;
     virtual void completion(const char* document_uri,
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind,
-        workspace_manager_response<completion_list> resp);
+        workspace_manager_response<completion_list> resp) = 0;
 
     virtual void semantic_tokens(
-        const char* document_uri, workspace_manager_response<continuous_sequence<token_info>> resp);
+        const char* document_uri, workspace_manager_response<continuous_sequence<token_info>> resp) = 0;
     virtual void document_symbol(
-        const char* document_uri, long long limit, workspace_manager_response<document_symbol_list> resp);
+        const char* document_uri, long long limit, workspace_manager_response<document_symbol_list> resp) = 0;
 
-    virtual void configuration_changed(const lib_config& new_config);
+    virtual void configuration_changed(const lib_config& new_config) = 0;
 
     // implementation of observer pattern - register consumer.
-    virtual void register_diagnostics_consumer(diagnostics_consumer* consumer);
-    virtual void unregister_diagnostics_consumer(diagnostics_consumer* consumer);
-    virtual void register_parsing_metadata_consumer(parsing_metadata_consumer* consumer);
-    virtual void unregister_parsing_metadata_consumer(parsing_metadata_consumer* consumer);
-    virtual void set_message_consumer(message_consumer* consumer);
-    virtual void set_request_interface(workspace_manager_requests* requests);
+    virtual void register_diagnostics_consumer(diagnostics_consumer* consumer) = 0;
+    virtual void unregister_diagnostics_consumer(diagnostics_consumer* consumer) = 0;
+    virtual void register_parsing_metadata_consumer(parsing_metadata_consumer* consumer) = 0;
+    virtual void unregister_parsing_metadata_consumer(parsing_metadata_consumer* consumer) = 0;
+    virtual void set_message_consumer(message_consumer* consumer) = 0;
+    virtual void set_request_interface(workspace_manager_requests* requests) = 0;
 
-    virtual continuous_sequence<char> get_virtual_file_content(unsigned long long id) const;
+    virtual continuous_sequence<char> get_virtual_file_content(unsigned long long id) const = 0;
 
     virtual void make_opcode_suggestion(const char* document_uri,
         const char* opcode,
         bool extended,
-        workspace_manager_response<continuous_sequence<opcode_suggestion>>) const;
+        workspace_manager_response<continuous_sequence<opcode_suggestion>>) = 0;
 
-    virtual void idle_handler(const std::atomic<unsigned char>* yield_indicator = nullptr);
+    virtual void idle_handler(const std::atomic<unsigned char>* yield_indicator = nullptr) = 0;
 
-private:
-    impl* impl_;
+    virtual debugger_configuration_provider& get_debugger_configuration_provider() = 0;
 };
+
+workspace_manager* create_workspace_manager_impl(workspace_manager_external_file_requests* external_requests);
+inline std::unique_ptr<workspace_manager> create_workspace_manager(
+    workspace_manager_external_file_requests* external_requests = nullptr)
+{
+    return std::unique_ptr<workspace_manager>(create_workspace_manager_impl(external_requests));
+}
 
 } // namespace hlasm_plugin::parser_library
 #endif // !HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_H

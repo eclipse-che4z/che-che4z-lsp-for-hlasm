@@ -125,9 +125,9 @@ public:
 
 TEST(lsp_server, request_correct)
 {
-    parser_library::workspace_manager mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     send_message_provider_mock message_provider;
-    lsp::server s(mngr);
+    lsp::server s(*ws_mngr);
     s.set_send_message_provider(&message_provider);
     response_provider& rp = s;
     request_handler handler;
@@ -149,9 +149,9 @@ TEST(lsp_server, request_correct)
 
 TEST(lsp_server, request_no_handler)
 {
-    parser_library::workspace_manager mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     send_message_provider_mock message_provider;
-    lsp::server s(mngr);
+    lsp::server s(*ws_mngr);
     s.set_send_message_provider(&message_provider);
 
     auto request_response = R"({"id":"a_request","jsonrpc":"2.0","result":"response_result"})"_json;
@@ -171,9 +171,9 @@ TEST(lsp_server, request_no_handler)
 
 TEST(lsp_server, request_no_id)
 {
-    parser_library::workspace_manager mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     send_message_provider_mock message_provider;
-    lsp::server s(mngr);
+    lsp::server s(*ws_mngr);
     s.set_send_message_provider(&message_provider);
 
     auto request_response = R"({"jsonrpc":"2.0","result":"response_result"})"_json;
@@ -195,9 +195,9 @@ TEST(lsp_server, request_no_id)
 
 TEST(lsp_server, request_error)
 {
-    parser_library::workspace_manager mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     send_message_provider_mock message_provider;
-    lsp::server s(mngr);
+    lsp::server s(*ws_mngr);
     s.set_send_message_provider(&message_provider);
 
     auto request_response = R"({"id":"a_request","jsonrpc":"2.0","error":{"message":"the_error_message"}})"_json;
@@ -217,9 +217,9 @@ TEST(lsp_server, request_error)
 
 TEST(lsp_server, request_error_no_message)
 {
-    parser_library::workspace_manager mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     send_message_provider_mock message_provider;
-    lsp::server s(mngr);
+    lsp::server s(*ws_mngr);
     s.set_send_message_provider(&message_provider);
 
     auto request_response = R"({"id":"a_request","jsonrpc":"2.0","error":null})"_json;

@@ -17,6 +17,7 @@ target_sources(parser_library PRIVATE
 	debug_lib_provider.h
 	debug_types.h
 	debugger.cpp
+	debugger_configuration.h
 	macro_param_variable.cpp
 	macro_param_variable.h
 	ordinary_symbol_variable.cpp

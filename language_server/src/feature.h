@@ -147,15 +147,10 @@ protected:
 class feature
 {
 public:
-    // Constructs the feature with workspace_manager.
-    // All the requests and notification are passed to the workspace manager
-    explicit feature(parser_library::workspace_manager& ws_mngr)
-        : ws_mngr_(ws_mngr)
-    {}
-    // Constructs the feature with workspace_manager and response_provider through which the feature can send messages.
-    feature(parser_library::workspace_manager& ws_mngr, response_provider& response_provider)
-        : ws_mngr_(ws_mngr)
-        , response_(&response_provider)
+    explicit feature() = default;
+    // Constructs the feature with response_provider through which the feature can send messages.
+    explicit feature(response_provider& response_provider)
+        : response_(&response_provider)
     {}
 
     // Implement to add methods to server.
@@ -180,7 +175,6 @@ public:
     virtual ~feature() = default;
 
 protected:
-    parser_library::workspace_manager& ws_mngr_;
     bool callbacks_registered_ = false;
     response_provider* response_ = nullptr;
 };

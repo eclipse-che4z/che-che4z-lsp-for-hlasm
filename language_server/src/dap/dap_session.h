@@ -30,10 +30,10 @@ class external_file_reader;
 
 namespace hlasm_plugin::language_server::dap {
 
-class session final : public json_sink
+class session final : public json_sink, parser_library::debugger_configuration_provider
 {
     std::string session_id;
-    hlasm_plugin::parser_library::workspace_manager* ws_mngr;
+    parser_library::debugger_configuration_provider* dc_provider;
     json_queue_channel queue;
     dap::message_wrapper msg_wrapper;
     dap::message_unwrapper msg_unwrapper;
@@ -44,9 +44,12 @@ class session final : public json_sink
 
     void thread_routine();
 
+    void provide_debugger_configuration(parser_library::sequence<char> document_uri,
+        parser_library::workspace_manager_response<parser_library::debugging::debugger_configuration> conf) override;
+
 public:
     session(size_t session_id,
-        hlasm_plugin::parser_library::workspace_manager& ws,
+        parser_library::debugger_configuration_provider& dc_provider,
         json_sink& out,
         telemetry_sink* telemetry_reporter = nullptr,
         external_file_reader* ext_files = nullptr);

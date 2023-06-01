@@ -93,7 +93,7 @@ struct response_provider_mock : public response_provider
 struct feature_launch_test : public testing::Test
 {
     feature_launch_test()
-        : feature(ws_mngr, resp_provider, nullptr)
+        : feature(ws_mngr->get_debugger_configuration_provider(), resp_provider, nullptr)
     {
         feature.on_initialize(
             request_id(0), R"({"linesStartAt1":false, "columnsStartAt1":false, "pathFormat":"path"})"_json);
@@ -150,20 +150,21 @@ struct feature_launch_test : public testing::Test
 
     std::map<std::string, method> methods;
     response_provider_mock resp_provider;
-    parser_library::workspace_manager ws_mngr;
+    std::unique_ptr<parser_library::workspace_manager> ws_mngr = parser_library::create_workspace_manager();
     dap::dap_feature feature;
     std::string file_path;
 };
 
-std::string file_stop_on_entry = "  LR 1,1";
+const std::string file_stop_on_entry = "  LR 1,1";
 
 TEST_F(feature_launch_test, stop_on_entry)
 {
-    ws_mngr.did_open_file(
+    ws_mngr->did_open_file(
         utils::path::path_to_uri(file_path).c_str(), 0, file_stop_on_entry.c_str(), file_stop_on_entry.size());
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
+    ws_mngr->idle_handler();
     feature.idle_handler(nullptr);
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
@@ -175,7 +176,7 @@ TEST_F(feature_launch_test, stop_on_entry)
     feature.on_disconnect(request_id(2), {});
 }
 
-std::string file_step = R"(  LR 1,1
+const std::string file_step = R"(  LR 1,1
   MACRO
   MAC
   LR 1,1
@@ -189,10 +190,11 @@ std::string file_step = R"(  LR 1,1
 
 TEST_F(feature_launch_test, step)
 {
-    ws_mngr.did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, file_step.c_str(), file_step.size());
-    ws_mngr.idle_handler();
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, file_step.c_str(), file_step.size());
+    ws_mngr->idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
+    ws_mngr->idle_handler();
     feature.idle_handler(nullptr);
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
@@ -273,7 +275,7 @@ TEST_F(feature_launch_test, step)
     feature.on_disconnect(request_id(48), {});
 }
 
-std::string file_breakpoint = R"(  LR 1,1
+const std::string file_breakpoint = R"(  LR 1,1
   LR 1,1  First breakpoint comes on this line
 
   LR 1,1  Second breakpoint on this line
@@ -281,9 +283,9 @@ std::string file_breakpoint = R"(  LR 1,1
 
 TEST_F(feature_launch_test, breakpoint)
 {
-    ws_mngr.did_open_file(
+    ws_mngr->did_open_file(
         utils::path::path_to_uri(file_path).c_str(), 0, file_breakpoint.c_str(), file_breakpoint.size());
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 
     nlohmann::json bp_args { { "source", { { "path", file_path } } },
         { "breakpoints", R"([{"line":1}, {"line":3}])"_json } };
@@ -297,6 +299,7 @@ TEST_F(feature_launch_test, breakpoint)
     resp_provider.reset();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
+    ws_mngr->idle_handler();
     feature.idle_handler(nullptr);
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
@@ -318,18 +321,19 @@ TEST_F(feature_launch_test, breakpoint)
     feature.on_disconnect(request_id(5), {});
 }
 
-std::string file_variables = R"(&VARA SETA 4
+const std::string file_variables = R"(&VARA SETA 4
 &VARB SETB 1
 &VARC SETC 'STH'
       LR 1,1)";
 
 TEST_F(feature_launch_test, variables)
 {
-    ws_mngr.did_open_file(
+    ws_mngr->did_open_file(
         utils::path::path_to_uri(file_path).c_str(), 0, file_variables.c_str(), file_variables.size());
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
+    ws_mngr->idle_handler();
     feature.idle_handler(nullptr);
     std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
@@ -422,15 +426,16 @@ TEST_F(feature_launch_test, variables)
 }
 
 namespace {
-std::string pause_file = ".A AGO .A";
+const std::string pause_file = ".A AGO .A";
 }
 
 TEST_F(feature_launch_test, pause)
 {
-    ws_mngr.did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, pause_file.c_str(), pause_file.size());
-    ws_mngr.idle_handler();
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, pause_file.c_str(), pause_file.size());
+    ws_mngr->idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
+    ws_mngr->idle_handler();
 
     std::atomic<unsigned char> yield = 1;
 

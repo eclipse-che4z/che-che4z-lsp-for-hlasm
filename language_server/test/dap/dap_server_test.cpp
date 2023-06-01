@@ -42,12 +42,12 @@ TEST(dap_server, dap_server)
     file_name[0] = (char)std::tolower((unsigned char)file_name[0]);
 
     std::string file_text = " LR 1,1";
-    parser_library::workspace_manager ws_mngr;
-    ws_mngr.did_open_file(file_name.c_str(), 0, file_text.c_str(), file_text.size());
-    ws_mngr.idle_handler();
+    auto ws_mngr = parser_library::create_workspace_manager();
+    ws_mngr->did_open_file(file_name.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->idle_handler();
 
     send_message_provider_mock smp;
-    dap::server serv(ws_mngr);
+    dap::server serv(ws_mngr->get_debugger_configuration_provider());
     serv.set_send_message_provider(&smp);
 
     // actual message sent by VS Code
@@ -80,9 +80,9 @@ TEST(dap_server, dap_server)
 
 TEST(dap_server, malformed_message)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     auto malf = R"({"commnd":"disconnect"})"_json;
-    dap::server serv(ws_mngr);
+    dap::server serv(ws_mngr->get_debugger_configuration_provider());
 
 
     serv.message_received(malf);

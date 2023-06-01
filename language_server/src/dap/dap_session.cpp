@@ -27,7 +27,10 @@ void session::thread_routine()
     {
         const auto ext = [this]() {
             if (ext_files)
-                return ext_files->register_thread([this]() { queue.write(nlohmann::json::value_t::discarded); });
+                return ext_files->register_thread([this]() noexcept {
+                    // terminates on failure
+                    queue.write(nlohmann::json::value_t::discarded);
+                });
             else
                 return external_file_reader::thread_registration();
         }();
@@ -44,7 +47,7 @@ void session::thread_routine()
 
         utils::scope_exit indicate_end([this]() noexcept { running = false; });
 
-        dap::server server(*ws_mngr, telemetry_reporter);
+        dap::server server(*this, telemetry_reporter);
         server.set_send_message_provider(&smp);
 
         while (!server.is_exit_notification_received())
@@ -71,13 +74,41 @@ void session::thread_routine()
         LOG_ERROR("DAP Thread encountered an unknown exception.");
     }
 }
+void session::provide_debugger_configuration(parser_library::sequence<char> document_uri,
+    parser_library::workspace_manager_response<parser_library::debugging::debugger_configuration> conf)
+{
+    struct proxy
+    {
+        parser_library::workspace_manager_response<parser_library::debugging::debugger_configuration> conf;
+        json_queue_channel& queue;
+
+        void wakeup() const noexcept
+        {
+            // terminates on failure
+            queue.write(nlohmann::json::value_t::discarded);
+        }
+
+        void provide(parser_library::debugging::debugger_configuration&& r) const
+        {
+            conf.provide(std::move(r));
+            wakeup();
+        }
+        void error(int err, const char* errmsg) const noexcept
+        {
+            conf.error(err, errmsg);
+            wakeup();
+        }
+    };
+    dc_provider->provide_debugger_configuration(
+        document_uri, parser_library::make_workspace_manager_response(proxy { std::move(conf), queue }).first);
+}
 session::session(size_t s_id,
-    hlasm_plugin::parser_library::workspace_manager& ws,
+    parser_library::debugger_configuration_provider& dc_provider,
     json_sink& out,
     telemetry_sink* telem_reporter,
     external_file_reader* ext_files)
     : session_id(message_wrapper::generate_method_name(s_id))
-    , ws_mngr(&ws)
+    , dc_provider(&dc_provider)
     , msg_wrapper(out, s_id)
     , msg_unwrapper(queue)
     , telemetry_reporter(telem_reporter)

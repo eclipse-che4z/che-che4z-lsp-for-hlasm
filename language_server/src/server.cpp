@@ -23,9 +23,8 @@
 
 namespace hlasm_plugin::language_server {
 
-server::server(parser_library::workspace_manager& ws_mngr, telemetry_sink* telemetry_provider)
-    : ws_mngr_(ws_mngr)
-    , telemetry_provider_(telemetry_provider)
+server::server(telemetry_sink* telemetry_provider)
+    : telemetry_provider_(telemetry_provider)
 {}
 
 void server::register_feature_methods()

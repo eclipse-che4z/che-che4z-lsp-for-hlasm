@@ -64,10 +64,10 @@ TEST(language_features, hover)
 
 TEST(language_features, definition)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
 
     NiceMock<response_provider_mock> response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -77,7 +77,7 @@ TEST(language_features, definition)
     EXPECT_CALL(response_mock, respond(request_id(0), "", _));
     notifs["textDocument/definition"].as_request_handler()(request_id(0), params1);
 
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 }
 
 TEST(language_features, references)
@@ -97,15 +97,15 @@ TEST(language_features, references)
 
 TEST(language_features, document_symbol)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
     std::string file_text = "A EQU 1";
 
-    ws_mngr.did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     nlohmann::json r = { { "start", { { "line", 0 }, { "character", 0 } } },
@@ -121,20 +121,20 @@ TEST(language_features, document_symbol)
     EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
     notifs["textDocument/documentSymbol"].as_request_handler()(request_id(0), params1);
 
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 }
 
 TEST(language_features, semantic_tokens)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
     std::string file_text = "A EQU 1\n SAM31";
 
-    ws_mngr.did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     nlohmann::json response { { "data", { 0, 0, 1, 0, 0, 0, 2, 3, 1, 0, 0, 4, 1, 10, 0, 1, 1, 5, 1, 0 } } };
@@ -142,20 +142,20 @@ TEST(language_features, semantic_tokens)
 
     notifs["textDocument/semanticTokens/full"].as_request_handler()(request_id(0), params1);
 
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 }
 
 TEST(language_features, semantic_tokens_cancelled)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
     std::string file_text = "A EQU 1\n SAM31";
 
-    ws_mngr.did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     nlohmann::json response { { "data", { 0, 0, 1, 0, 0, 0, 2, 3, 1, 0, 0, 4, 1, 10, 0, 1, 1, 5, 1, 0 } } };
@@ -169,14 +169,14 @@ TEST(language_features, semantic_tokens_cancelled)
     request_invalidator();
 
     EXPECT_CALL(response_mock, respond_error(request_id(0), _, -32800, "Canceled", _));
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 }
 
 TEST(language_features, semantic_tokens_multiline)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -185,7 +185,7 @@ D EQU                                                                 1X3145
 IIIIIIIIIIIIIII1
 )";
 
-    ws_mngr.did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     // clang-format off
@@ -203,14 +203,14 @@ IIIIIIIIIIIIIII1
 
     notifs["textDocument/semanticTokens/full"].as_request_handler()(request_id(0), params1);
 
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 }
 
 TEST(language_features, semantic_tokens_multiline_overlap)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -220,7 +220,7 @@ TEST(language_features, semantic_tokens_multiline_overlap)
 .Y ANOP
 )";
 
-    ws_mngr.did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     // clang-format off
@@ -248,7 +248,7 @@ TEST(language_features, semantic_tokens_multiline_overlap)
 
     notifs["textDocument/semanticTokens/full"].as_request_handler()(request_id(0), params1);
 
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 }
 
 
@@ -351,9 +351,9 @@ TEST_P(convert_tokens_fixture, test)
 
 TEST(language_features, opcode_suggestion)
 {
-    parser_library::workspace_manager ws_mngr;
+    auto ws_mngr = parser_library::create_workspace_manager();
     NiceMock<response_provider_mock> response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 

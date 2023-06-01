@@ -27,10 +27,7 @@ using namespace parser_library;
 class ws_mngr_mock : public workspace_manager
 {
 public:
-    MOCK_METHOD2(get_workspaces, size_t(ws_id* workspaces, size_t max_size));
-    MOCK_METHOD0(get_workspaces_count, size_t());
     MOCK_METHOD2(add_workspace, void(const char* name, const char* uri));
-    MOCK_METHOD1(find_workspace, ws_id(const char* document_uri));
     MOCK_METHOD1(remove_workspace, void(const char* uri));
 
     MOCK_METHOD4(
@@ -38,8 +35,7 @@ public:
     MOCK_METHOD4(did_change_file,
         void(const char* document_uri, version_t version, const document_change* changes, size_t ch_size));
     MOCK_METHOD1(did_close_file, void(const char* document_uri));
-
-    MOCK_METHOD(void, configuration_changed, (const lib_config& new_config), (override));
+    MOCK_METHOD(void, did_change_watched_files, (sequence<fs_change> changes), (override));
 
     MOCK_METHOD(void,
         definition,
@@ -68,6 +64,15 @@ public:
         (const char*, long long limit, workspace_manager_response<document_symbol_list>),
         (override));
 
+    MOCK_METHOD(void, configuration_changed, (const lib_config& new_config), (override));
+
+    MOCK_METHOD(void, register_diagnostics_consumer, (diagnostics_consumer * consumer), (override));
+    MOCK_METHOD(void, unregister_diagnostics_consumer, (diagnostics_consumer * consumer), (override));
+    MOCK_METHOD(void, register_parsing_metadata_consumer, (parsing_metadata_consumer * consumer), (override));
+    MOCK_METHOD(void, unregister_parsing_metadata_consumer, (parsing_metadata_consumer * consumer), (override));
+    MOCK_METHOD(void, set_message_consumer, (message_consumer * consumer), (override));
+    MOCK_METHOD(void, set_request_interface, (workspace_manager_requests * requests), (override));
+
     MOCK_METHOD(continuous_sequence<char>, get_virtual_file_content, (unsigned long long id), (const override));
 
 
@@ -77,7 +82,11 @@ public:
             const char* opcode,
             bool extended,
             workspace_manager_response<continuous_sequence<opcode_suggestion>>),
-        (const override));
+        (override));
+
+    MOCK_METHOD(void, idle_handler, (const std::atomic<unsigned char>* yield_indicator), (override));
+
+    MOCK_METHOD(debugger_configuration_provider&, get_debugger_configuration_provider, (), (override));
 };
 
 } // namespace hlasm_plugin::language_server::test

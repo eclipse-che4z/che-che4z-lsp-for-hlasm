@@ -130,6 +130,10 @@ class
     T provide_type(void (U::*)(T)) const;
     template<typename U, typename T>
     T provide_type(void (U::*)(T) const) const;
+    template<typename U, typename T>
+    T provide_type(void (U::*)(T&&)) const;
+    template<typename U, typename T>
+    T provide_type(void (U::*)(T&&) const) const;
 
 public:
     template<typename U>
@@ -228,7 +232,7 @@ public:
     using workspace_manager_response_base::resolved;
     using workspace_manager_response_base::valid;
 
-    void provide(T t) const noexcept { workspace_manager_response_base::provide(&t); }
+    void provide(T&& t) const noexcept { workspace_manager_response_base::provide(&t); }
 
     friend decltype(make_workspace_manager_response);
 };

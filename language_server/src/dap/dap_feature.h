@@ -45,7 +45,7 @@ class dap_feature : public feature, public hlasm_plugin::parser_library::debuggi
 public:
     void initialize_feature(const nlohmann::json& client_capabilities) override;
 
-    dap_feature(parser_library::workspace_manager& ws_mngr,
+    dap_feature(parser_library::debugger_configuration_provider& dc_provider,
         response_provider& response_provider,
         dap_disconnect_listener* disconnect_listener);
 
@@ -77,6 +77,7 @@ private:
         hlasm_plugin::parser_library::sequence<char> addtl_info) override;
     void exited(int exit_code) override;
 
+    parser_library::debugger_configuration_provider& dc_provider;
     std::optional<hlasm_plugin::parser_library::debugging::debugger> debugger;
 
     int column_1_based_ = 0;

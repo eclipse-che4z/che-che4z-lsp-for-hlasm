@@ -53,8 +53,8 @@ auto get_telemetry_method_matcher(std::string method)
 } // namespace
 TEST(telemetry, lsp_server_did_open)
 {
-    parser_library::workspace_manager ws_mngr;
-    lsp::server lsp_server(ws_mngr);
+    auto ws_mngr = parser_library::create_workspace_manager();
+    lsp::server lsp_server(*ws_mngr);
     send_message_provider_mock lsp_smpm;
     lsp_server.set_send_message_provider(&lsp_smpm);
 
@@ -68,7 +68,7 @@ TEST(telemetry, lsp_server_did_open)
     EXPECT_CALL(lsp_smpm, reply(Truly(get_telemetry_method_matcher("textDocument/didOpen"))));
 
     lsp_server.message_received(open_file_message);
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 
     EXPECT_EQ(diags_reply["params"]["diagnostics"].size(), 1);
 
@@ -85,8 +85,8 @@ TEST(telemetry, lsp_server_did_open)
 
 TEST(telemetry, telemetry_broker)
 {
-    parser_library::workspace_manager ws_mngr;
-    lsp::server lsp_server(ws_mngr);
+    auto ws_mngr = parser_library::create_workspace_manager();
+    lsp::server lsp_server(*ws_mngr);
     send_message_provider_mock lsp_smpm;
     lsp_server.set_send_message_provider(&lsp_smpm);
 
@@ -108,19 +108,20 @@ TEST(telemetry, telemetry_broker)
     broker.set_telemetry_sink(&lsp_server);
 
     lsp_server.message_received(open_file_message);
-    ws_mngr.idle_handler();
+    ws_mngr->idle_handler();
 
     //"textDocument/hover",R"#({"textDocument":{"uri":"file:///c%3A/test/stability.hlasm"},"position":{"line":0,"character":7}})#"_json),
 
     std::thread lsp_thread([&lsp_server, &ws_mngr]() {
         lsp_server.message_received(
             R"({"jsonrpc":"2.0","id":48,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///test_file"},"position":{"line":0,"character":2} }})"_json);
-        ws_mngr.idle_handler();
+        ws_mngr->idle_handler();
     });
+    lsp_thread.join();
 
 
     std::thread dap_thread([&]() {
-        dap::server dap_server(ws_mngr, &broker);
+        dap::server dap_server(ws_mngr->get_debugger_configuration_provider(), &broker);
         ::testing::NiceMock<send_message_provider_mock> dap_smpm;
         dap_server.set_send_message_provider(&dap_smpm);
 
@@ -134,13 +135,13 @@ TEST(telemetry, telemetry_broker)
             R"({"command":"launch","arguments":{"program":"file:///test_file","stopOnEntry":true,"restart":false},"type":"request","seq":10})"_json;
 
         dap_server.message_received(launch_message);
+        ws_mngr->idle_handler();
+        dap_server.idle_handler(nullptr);
 
         auto disconnect_message =
             R"({"command":"disconnect","arguments":{"restart":false},"type":"request","seq":10})"_json;
 
         dap_server.message_received(disconnect_message);
     });
-
     dap_thread.join();
-    lsp_thread.join();
 }

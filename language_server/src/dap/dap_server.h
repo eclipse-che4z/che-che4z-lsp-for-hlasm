@@ -30,7 +30,8 @@ namespace hlasm_plugin::language_server::dap {
 class server final : public hlasm_plugin::language_server::server, public dap_disconnect_listener
 {
 public:
-    explicit server(parser_library::workspace_manager& ws_mngr, telemetry_sink* telemetry_reporter = nullptr);
+    explicit server(
+        parser_library::debugger_configuration_provider& dc_provider, telemetry_sink* telemetry_reporter = nullptr);
 
     void request(const std::string& requested_method,
         const nlohmann::json& args,

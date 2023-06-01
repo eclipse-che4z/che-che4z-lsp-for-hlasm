@@ -383,7 +383,7 @@ private:
 
     struct parse_parameters
     {
-        parser_library::workspace_manager ws;
+        std::unique_ptr<parser_library::workspace_manager> ws = parser_library::create_workspace_manager();
         benchmark::diagnostic_counter diag_counter;
         parsing_metadata_collector collector;
         const std::string& source_file;
@@ -395,10 +395,10 @@ private:
             , source_path(bc.ws_folder + "/" + source_file)
         {
             annotation = get_file_message(current_iteration, bc);
-            ws.register_diagnostics_consumer(&diag_counter);
-            ws.register_parsing_metadata_consumer(&collector);
-            ws.add_workspace(bc.ws_folder.c_str(), bc.ws_folder.c_str());
-            ws.idle_handler();
+            ws->register_diagnostics_consumer(&diag_counter);
+            ws->register_parsing_metadata_consumer(&collector);
+            ws->add_workspace(bc.ws_folder.c_str(), bc.ws_folder.c_str());
+            ws->idle_handler();
         }
 
     private:
@@ -599,10 +599,10 @@ private:
         // open file/parse
         try
         {
-            reparse ? ws.did_change_file(source_path_c_str, 1, &dummy_change, 1)
-                    : ws.did_open_file(source_path_c_str, 1, content.c_str(), content.length());
+            reparse ? ws->did_change_file(source_path_c_str, 1, &dummy_change, 1)
+                    : ws->did_open_file(source_path_c_str, 1, content.c_str(), content.length());
 
-            ws.idle_handler();
+            ws->idle_handler();
         }
         catch (const std::exception& e)
         {

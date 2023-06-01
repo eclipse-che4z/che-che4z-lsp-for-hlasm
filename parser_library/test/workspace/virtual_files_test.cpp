@@ -136,41 +136,41 @@ TEST(virtual_files, file_manager_vfm)
 
 TEST(virtual_files, workspace)
 {
-    workspace_manager wm;
-    wm.add_workspace("ws", "ws");
+    auto ws_mngr = create_workspace_manager();
+    ws_mngr->add_workspace("ws", "ws");
     std::string_view input = R"(
     AINSERT 'A DC H',BACK
 )";
-    wm.did_open_file("ws/file", 1, input.data(), input.size());
-    wm.idle_handler();
-    wm.did_close_file("ws/file");
-    wm.idle_handler();
+    ws_mngr->did_open_file("ws/file", 1, input.data(), input.size());
+    ws_mngr->idle_handler();
+    ws_mngr->did_close_file("ws/file");
+    ws_mngr->idle_handler();
 }
 
 TEST(virtual_files, workspace_auto_cleanup)
 {
-    workspace_manager wm;
-    wm.add_workspace("ws", "ws");
+    auto ws_mngr = create_workspace_manager();
+    ws_mngr->add_workspace("ws", "ws");
     std::string_view input = R"(
     AINSERT 'A DC H',BACK
 )";
-    wm.did_open_file("ws/file", 1, input.data(), input.size());
-    wm.idle_handler();
+    ws_mngr->did_open_file("ws/file", 1, input.data(), input.size());
+    ws_mngr->idle_handler();
 }
 
 TEST(virtual_files, hover)
 {
     diag_consumer_mock diag_mock;
-    workspace_manager wm;
-    wm.add_workspace("ws", "ws");
+    auto ws_mngr = create_workspace_manager();
+    ws_mngr->add_workspace("ws", "ws");
     std::string_view input = R"(
 MY  DSECT
     DS  F
     AINSERT 'A DC H',BACK
 )";
-    wm.register_diagnostics_consumer(&diag_mock);
-    wm.did_open_file("ws/file", 1, input.data(), input.size());
-    wm.idle_handler();
+    ws_mngr->register_diagnostics_consumer(&diag_mock);
+    ws_mngr->did_open_file("ws/file", 1, input.data(), input.size());
+    ws_mngr->idle_handler();
 
     ASSERT_EQ(diag_mock.diags.diagnostics_size(), 1);
 
@@ -186,6 +186,6 @@ MY  DSECT
         return std::string_view(hover_text).find("MY + X'4' (4)") != std::string::npos;
     })));
 
-    wm.hover(vf.c_str(), position(0, 0), resp);
-    wm.idle_handler();
+    ws_mngr->hover(vf.c_str(), position(0, 0), resp);
+    ws_mngr->idle_handler();
 }

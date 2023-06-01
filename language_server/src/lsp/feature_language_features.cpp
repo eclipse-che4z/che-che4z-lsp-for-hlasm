@@ -222,7 +222,8 @@ auto make_response(const request_id& id, response_provider* response, U handler)
 
 feature_language_features::feature_language_features(
     parser_library::workspace_manager& ws_mngr, response_provider& response_provider)
-    : feature(ws_mngr, response_provider)
+    : feature(response_provider)
+    , ws_mngr_(ws_mngr)
 {}
 
 void feature_language_features::register_methods(std::map<std::string, method>& methods)

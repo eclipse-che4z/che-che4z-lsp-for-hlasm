@@ -37,19 +37,19 @@
 namespace hlasm_plugin::language_server::lsp {
 
 server::server(parser_library::workspace_manager& ws_mngr)
-    : language_server::server(ws_mngr, this)
+    : language_server::server(this)
 {
-    features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr_, *this));
-    features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr_, *this));
-    features_.push_back(std::make_unique<feature_language_features>(ws_mngr_, *this));
+    features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr, *this));
+    features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr, *this));
+    features_.push_back(std::make_unique<feature_language_features>(ws_mngr, *this));
     register_feature_methods();
     register_methods();
 
-    ws_mngr_.register_diagnostics_consumer(this);
-    ws_mngr_.set_message_consumer(this);
-    ws_mngr_.set_request_interface(this);
+    ws_mngr.register_diagnostics_consumer(this);
+    ws_mngr.set_message_consumer(this);
+    ws_mngr.set_request_interface(this);
 
-    ws_mngr_.register_parsing_metadata_consumer(this);
+    ws_mngr.register_parsing_metadata_consumer(this);
 }
 
 void server::consume_parsing_metadata(

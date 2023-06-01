@@ -603,6 +603,18 @@ utils::value_task<parse_file_result> workspace::parse_file(const resource_locati
     }(comp, *this);
 }
 
+utils::value_task<debugging::debugger_configuration> workspace::get_debugger_configuration(resource_location url)
+{
+    co_await m_configuration.load_alternative_config_if_needed(url);
+    co_return debugging::debugger_configuration {
+        .fm = &file_manager_,
+        .libraries = get_libraries(url),
+        .workspace_uri = location_,
+        .opts = get_asm_options(url),
+        .pp_opts = get_preprocessor_options(url),
+    };
+}
+
 namespace {
 bool trigger_reparse(const resource_location& file_location) { return !file_location.get_uri().starts_with("hlasm:"); }
 } // namespace
