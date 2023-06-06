@@ -109,9 +109,10 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
     std::unordered_map<resource_location, std::shared_ptr<file>, resource_location_hasher, std::equal_to<>>
         current_file_map;
 
-    workspace_parse_lib_provider(workspace& ws, workspace::processor_file_compoments& pfc)
+    workspace_parse_lib_provider(
+        workspace& ws, std::vector<std::shared_ptr<library>> libraries, workspace::processor_file_compoments& pfc)
         : ws(ws)
-        , libraries(ws.get_proc_grp(pfc.m_file->get_location()).libraries())
+        , libraries(std::move(libraries))
         , pfc(pfc)
     {}
 
@@ -255,28 +256,23 @@ workspace::workspace(const resource_location& location,
     const std::string& name,
     file_manager& file_manager,
     const lib_config& global_config,
-    const shared_json& global_settings)
+    const shared_json& global_settings,
+    external_configuration_requests* ecr)
     : name_(name)
     , location_(location.lexically_normal())
     , file_manager_(file_manager)
     , fm_vfm_(file_manager_, location)
     , implicit_proc_grp("pg_implicit", {}, {})
     , global_config_(global_config)
-    , m_configuration(file_manager, location_, global_settings)
-{}
-
-workspace::workspace(const resource_location& location,
-    file_manager& file_manager,
-    const lib_config& global_config,
-    const shared_json& global_settings)
-    : workspace(location, location.get_uri(), file_manager, global_config, global_settings)
+    , m_configuration(file_manager, location_, global_settings, ecr)
 {}
 
 workspace::workspace(file_manager& file_manager,
     const lib_config& global_config,
     const shared_json& global_settings,
-    std::shared_ptr<library> implicit_library)
-    : workspace(resource_location(""), file_manager, global_config, global_settings)
+    std::shared_ptr<library> implicit_library,
+    external_configuration_requests* ecr)
+    : workspace(resource_location(""), "", file_manager, global_config, global_settings, ecr)
 {
     opened_ = true;
     if (implicit_library)
@@ -560,8 +556,10 @@ utils::value_task<parse_file_result> workspace::parse_file(const resource_locati
     return [](processor_file_compoments& comp, workspace& self) -> utils::value_task<parse_file_result> {
         const auto& url = comp.m_file->get_location();
 
-        comp.m_alternative_config = co_await self.m_configuration.load_alternative_config_if_needed(url);
-        workspace_parse_lib_provider ws_lib(self, comp);
+        auto config = co_await self.get_analyzer_configuration(url);
+
+        comp.m_alternative_config = std::move(config.alternative_config_url);
+        workspace_parse_lib_provider ws_lib(self, std::move(config.libraries), comp);
 
         if (auto prefetch = ws_lib.prefetch_libraries(); prefetch.valid())
             co_await std::move(prefetch);
@@ -571,8 +569,8 @@ utils::value_task<parse_file_result> workspace::parse_file(const resource_locati
         auto results = co_await parse_one_file(comp.m_last_opencode_id_storage,
             comp.m_file,
             ws_lib,
-            self.get_asm_options(url),
-            self.get_preprocessor_options(url),
+            std::move(config.opts),
+            std::move(config.pp_opts),
             &self.fm_vfm_);
         results.hc_macro_map = std::move(comp.m_last_results->hc_macro_map); // save macro stuff
         results.macro_diagnostics = std::move(comp.m_last_results->macro_diagnostics);
@@ -605,13 +603,24 @@ utils::value_task<parse_file_result> workspace::parse_file(const resource_locati
 
 utils::value_task<debugging::debugger_configuration> workspace::get_debugger_configuration(resource_location url)
 {
-    co_await m_configuration.load_alternative_config_if_needed(url);
-    co_return debugging::debugger_configuration {
-        .fm = &file_manager_,
+    return get_analyzer_configuration(std::move(url)).then([this](auto c) {
+        return debugging::debugger_configuration {
+            .fm = &file_manager_,
+            .libraries = std::move(c.libraries),
+            .workspace_uri = location_,
+            .opts = std::move(c.opts),
+            .pp_opts = std::move(c.pp_opts),
+        };
+    });
+}
+utils::value_task<workspace::analyzer_configuration> workspace::get_analyzer_configuration(resource_location url)
+{
+    auto alt_config = co_await m_configuration.load_alternative_config_if_needed(url);
+    co_return analyzer_configuration {
         .libraries = get_libraries(url),
-        .workspace_uri = location_,
         .opts = get_asm_options(url),
         .pp_opts = get_preprocessor_options(url),
+        .alternative_config_url = std::move(alt_config),
     };
 }
 
@@ -654,6 +663,16 @@ utils::task workspace::mark_file_for_parsing(
     }
 
     return {};
+}
+
+
+void workspace::invalidate_external_configuration(const resource_location& url)
+{
+    m_configuration.prune_external_processor_groups(url);
+    if (url.empty())
+        mark_all_opened_files();
+    else if (auto it = m_processor_files.find(url); it != m_processor_files.end() && it->second.m_opened)
+        m_parsing_pending.emplace(url);
 }
 
 workspace_file_info workspace::parse_successful(processor_file_compoments& comp, workspace_parse_lib_provider libs)
@@ -704,6 +723,8 @@ utils::task workspace::did_open_file(resource_location file_location, file_conte
 
 utils::task workspace::did_close_file(resource_location file_location)
 {
+    m_configuration.prune_external_processor_groups(file_location);
+
     auto fcomp = m_processor_files.find(file_location);
     if (fcomp == m_processor_files.end())
         co_return; // this indicates some kind of double close or configuration file close

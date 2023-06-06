@@ -35,7 +35,8 @@ public:
 
     void request(const std::string& requested_method,
         const nlohmann::json& args,
-        std::function<void(const nlohmann::json& params)> handler) override;
+        std::function<void(const nlohmann::json& params)> handler,
+        std::function<void(int, const char*)> error_handler) override;
 
     void respond(const request_id& id, const std::string& requested_method, const nlohmann::json& args) override;
 

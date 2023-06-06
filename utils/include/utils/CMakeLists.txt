@@ -11,6 +11,7 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(hlasm_utils PUBLIC
+	async_busy_wait.h
 	bk_tree.h
 	content_loader.h
 	encoding.h

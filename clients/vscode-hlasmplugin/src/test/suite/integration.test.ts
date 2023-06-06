@@ -17,6 +17,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as helper from './testHelper';
 import { waitForDiagnostics } from './testHelper';
+import { EXTENSION_ID, activate } from '../../extension';
 
 suite('Integration Test Suite', () => {
     const workspace_file = 'open';
@@ -238,5 +239,51 @@ suite('Integration Test Suite', () => {
 
         assert.ok(diags2);
         assert.strictEqual(diags2.length, 0);
+    }).timeout(10000).slow(2500);
+
+    test('External configuration', async () => {
+        const testFile = (s: string) => helper.waitForDiagnosticsChange(s, async () => { await helper.showDocument(s); })
+        const diagsA = await testFile('AAAAA.hlasm');
+        assert.ok(diagsA);
+        assert.deepStrictEqual(diagsA.map(x => [x.code, x.message]), [['MNOTE', 'AAAAA']]);
+
+        const diagsB = await testFile('BBBBB.hlasm');
+        assert.ok(diagsB);
+        assert.deepStrictEqual(diagsB.map(x => [x.code, x.message]), [['MNOTE', 'DONE']]);
+
+        const diagsC = await testFile('CCCCC.hlasm');
+        assert.ok(diagsC);
+        assert.deepStrictEqual(diagsC.map(x => x.code), ['E049']);
+
+        const ext = await vscode.extensions.getExtension<ReturnType<typeof activate>>(EXTENSION_ID)!.activate();
+        const tmp = ext.registerExternalConfigurationProvider((uri: vscode.Uri) => {
+            const uriString = uri.toString();
+            if (uriString.includes("CCCCC"))
+                return {
+                    configuration: {
+                        name: "P1",
+                        asm_options: {
+                            SYSPARM: "AAAAA"
+                        },
+                        libs: [
+                            {
+                                path: "libs"
+                            },
+                            "copy"
+                        ]
+                    }
+                };
+            else
+                return null;
+        });
+
+        const newDiagsC = await helper.waitForDiagnosticsChange('CCCCC.hlasm', () => tmp.invalidate(null));
+        assert.ok(newDiagsC);
+        assert.deepStrictEqual(newDiagsC.length, 0);
+
+        const newNewDiagsC = await helper.waitForDiagnosticsChange('CCCCC.hlasm', () => tmp.dispose());
+        assert.ok(newNewDiagsC);
+        assert.deepStrictEqual(newNewDiagsC.map(x => x.code), ['E049']);
+
     }).timeout(10000).slow(2500);
 });

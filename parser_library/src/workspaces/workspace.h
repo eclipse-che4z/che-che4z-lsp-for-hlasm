@@ -39,6 +39,9 @@
 #include "utils/task.h"
 #include "workspace_configuration.h"
 
+namespace hlasm_plugin::parser_library {
+class external_configuration_requests;
+} // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::workspaces {
 class file_manager;
 class library;
@@ -68,16 +71,14 @@ public:
     workspace(file_manager& file_manager,
         const lib_config& global_config,
         const shared_json& global_settings,
-        std::shared_ptr<library> implicit_library = nullptr);
-    workspace(const resource_location& location,
-        file_manager& file_manager,
-        const lib_config& global_config,
-        const shared_json& global_settings);
+        std::shared_ptr<library> implicit_library = nullptr,
+        external_configuration_requests* ecr = nullptr);
     workspace(const resource_location& location,
         const std::string& name,
         file_manager& file_manager,
         const lib_config& global_config,
-        const shared_json& global_settings);
+        const shared_json& global_settings,
+        external_configuration_requests* ecr = nullptr);
 
     workspace(const workspace& ws) = delete;
     workspace& operator=(const workspace&) = delete;
@@ -136,6 +137,8 @@ public:
     void retrieve_fade_messages(std::vector<fade_message_s>& fms) const;
 
     utils::value_task<debugging::debugger_configuration> get_debugger_configuration(resource_location url);
+
+    void invalidate_external_configuration(const resource_location& url);
 
 private:
     std::string name_;
@@ -209,6 +212,15 @@ private:
     std::vector<const processor_file_compoments*> find_related_opencodes(const resource_location& document_loc) const;
     void filter_and_close_dependencies(std::set<resource_location> files_to_close_candidates,
         const processor_file_compoments* file_to_ignore = nullptr);
+
+    struct analyzer_configuration
+    {
+        std::vector<std::shared_ptr<workspaces::library>> libraries;
+        asm_option opts;
+        std::vector<preprocessor_options> pp_opts;
+        resource_location alternative_config_url;
+    };
+    utils::value_task<analyzer_configuration> get_analyzer_configuration(resource_location url);
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

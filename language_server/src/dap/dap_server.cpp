@@ -30,7 +30,10 @@ server::server(parser_library::debugger_configuration_provider& dc_provider, tel
     register_feature_methods();
 }
 
-void server::request(const std::string&, const nlohmann::json&, std::function<void(const nlohmann::json& params)>)
+void server::request(const std::string&,
+    const nlohmann::json&,
+    std::function<void(const nlohmann::json& params)>,
+    std::function<void(int, const char*)>)
 {
     // Currently, there are no supported DAP requests from client to server
     /*send_message_->reply(nlohmann::json {

@@ -54,7 +54,9 @@ protected:
     std::vector<std::unique_ptr<feature>> features_;
 
     std::map<std::string, method> methods_;
-    std::unordered_map<request_id, std::function<void(const nlohmann::json& params)>> request_handlers_;
+    std::unordered_map<request_id,
+        std::pair<std::function<void(const nlohmann::json& params)>, std::function<void(int, const char*)>>>
+        request_handlers_;
 
     struct method_telemetry_data
     {

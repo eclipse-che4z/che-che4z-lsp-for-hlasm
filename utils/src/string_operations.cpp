@@ -30,6 +30,20 @@ size_t trim_left(std::string_view& s)
     return to_trim;
 }
 
+size_t trim_left(std::string_view& s, std::string_view to_trim)
+{
+    const auto to_trim_idx = s.find_first_not_of(to_trim);
+    if (to_trim_idx == std::string_view::npos)
+    {
+        auto s_length = s.length();
+        s = {};
+        return s_length;
+    }
+
+    s.remove_prefix(to_trim_idx);
+    return to_trim_idx;
+}
+
 size_t trim_right(std::string_view& s)
 {
     const auto to_trim = s.find_last_not_of(' ');
@@ -42,6 +56,20 @@ size_t trim_right(std::string_view& s)
 
     s = s.substr(0, to_trim + 1);
     return to_trim;
+}
+
+size_t trim_right(std::string_view& s, std::string_view to_trim)
+{
+    const auto to_trim_idx = s.find_last_not_of(to_trim);
+    if (to_trim_idx == std::string_view::npos)
+    {
+        auto s_length = s.length();
+        s = {};
+        return s_length;
+    }
+
+    s = s.substr(0, to_trim_idx + 1);
+    return to_trim_idx;
 }
 
 size_t consume(std::string_view& s, std::string_view lit)

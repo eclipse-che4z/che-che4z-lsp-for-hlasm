@@ -28,6 +28,12 @@ public:
             hlasm_plugin::parser_library::workspace_manager_response<hlasm_plugin::parser_library::sequence<char>>
                 json_text),
         (override));
+    MOCK_METHOD(void,
+        request_file_configuration,
+        (hlasm_plugin::parser_library::sequence<char> url,
+            hlasm_plugin::parser_library::workspace_manager_response<hlasm_plugin::parser_library::sequence<char>>
+                json_text),
+        (override));
 };
 
 #endif

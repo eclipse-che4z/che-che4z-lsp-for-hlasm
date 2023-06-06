@@ -87,6 +87,8 @@ public:
     MOCK_METHOD(void, idle_handler, (const std::atomic<unsigned char>* yield_indicator), (override));
 
     MOCK_METHOD(debugger_configuration_provider&, get_debugger_configuration_provider, (), (override));
+
+    MOCK_METHOD(void, invalidate_external_configuration, (sequence<char> uri), (override));
 };
 
 } // namespace hlasm_plugin::language_server::test

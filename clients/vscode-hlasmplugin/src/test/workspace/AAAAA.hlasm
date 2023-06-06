@@ -1,0 +1,14 @@
+         MAC   1
+
+         MACRO
+         TEST
+         MNOTE 4,'&SYSPARM'
+         MEND
+         TEST
+
+
+
+
+
+
+

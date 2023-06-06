@@ -3,6 +3,7 @@
 ## ****Unreleased****
 
 #### Added
+- Infrastructure for remote configuration
 
 #### Fixed
 - Bridge for Git configuration files may be ignored by the macro tracer

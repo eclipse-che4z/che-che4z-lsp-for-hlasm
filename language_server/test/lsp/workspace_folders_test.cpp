@@ -89,7 +89,7 @@ TEST(workspace_folders, initialize_folders)
     response_provider_mock rpm;
     lsp::feature_workspace_folders f(ws_mngr, rpm);
 
-    EXPECT_CALL(rpm, request(std::string("workspace/configuration"), _, _)).Times(5);
+    EXPECT_CALL(rpm, request(std::string("workspace/configuration"), _, _, _)).Times(5);
 
     // workspace folders on, but no workspaces provided
     auto init1 = R"({"processId":5236,
@@ -158,7 +158,7 @@ TEST(workspace_folders, initialize_folder_with_configuration)
 
     ws_mngr->set_request_interface(&req_mock);
 
-    EXPECT_CALL(rpm, request(std::string("workspace/configuration"), _, _)).Times(1);
+    EXPECT_CALL(rpm, request(std::string("workspace/configuration"), _, _, _)).Times(1);
 
     parser_library::workspace_manager_response<parser_library::sequence<char>> json_text;
     EXPECT_CALL(req_mock, request_workspace_configuration(StrEq(ws1_uri), _))
@@ -202,7 +202,7 @@ TEST(workspace_folders, did_change_configuration)
         },
     };
 
-    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, ::testing::_))
+    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, ::testing::_, ::testing::_))
         .WillOnce(::testing::SaveArg<2>(&handler));
 
     methods["workspace/didChangeConfiguration"].as_notification_handler()("{}"_json);
@@ -255,7 +255,7 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
         },
     };
 
-    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, ::testing::_))
+    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, ::testing::_, ::testing::_))
         .WillOnce(::testing::SaveArg<2>(&handler));
 
     methods["workspace/didChangeConfiguration"].as_notification_handler()("{}"_json);

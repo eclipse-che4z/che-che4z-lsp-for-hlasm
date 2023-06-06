@@ -22,14 +22,17 @@
 #include <string_view>
 #include <tuple>
 
+#include "external_configuration_requests.h"
 #include "file_manager.h"
 #include "library_local.h"
 #include "nlohmann/json.hpp"
+#include "utils/async_busy_wait.h"
 #include "utils/content_loader.h"
 #include "utils/encoding.h"
 #include "utils/path.h"
 #include "utils/path_conversions.h"
 #include "utils/platform.h"
+#include "utils/string_operations.h"
 #include "wildcard.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
@@ -215,11 +218,14 @@ const std::regex json_settings_replacer::config_reference(R"(\$\{([^}]+)\})");
 
 } // namespace
 
-workspace_configuration::workspace_configuration(
-    file_manager& fm, utils::resource::resource_location location, const shared_json& global_settings)
+workspace_configuration::workspace_configuration(file_manager& fm,
+    utils::resource::resource_location location,
+    const shared_json& global_settings,
+    external_configuration_requests* ecr)
     : m_file_manager(fm)
     , m_location(std::move(location))
     , m_global_settings(global_settings)
+    , m_external_configuration_requests(ecr)
 {
     auto hlasm_folder = utils::resource::resource_location::join(m_location, HLASM_PLUGIN_FOLDER);
     m_proc_grps_loc = utils::resource::resource_location::join(hlasm_folder, FILENAME_PROC_GRPS);
@@ -276,7 +282,10 @@ void workspace_configuration::process_processor_group(const config::processor_gr
             },
             lib_or_dataset);
     }
-    m_proc_grps.try_emplace(std::make_pair(prc_grp.name(), alternative_root), std::move(prc_grp));
+    if (alternative_root.empty())
+        m_proc_grps.try_emplace(basic_conf { prc_grp.name() }, std::move(prc_grp));
+    else
+        m_proc_grps.try_emplace(b4g_conf { prc_grp.name(), alternative_root }, std::move(prc_grp));
 }
 
 constexpr std::string_view external_uri_scheme = "hlasm-external";
@@ -373,7 +382,7 @@ bool workspace_configuration::process_program(const config::program_mapping& pgm
     std::optional<proc_grp_id> grp_id;
     if (pgm.pgroup != NOPROC_GROUP_ID)
     {
-        grp_id = proc_grp_id { pgm.pgroup, utils::resource::resource_location() };
+        grp_id.emplace(basic_conf { pgm.pgroup });
         if (!m_proc_grps.contains(*grp_id))
             return false;
     }
@@ -387,10 +396,10 @@ bool workspace_configuration::process_program(const config::program_mapping& pgm
 
     if (auto rl = transform_to_resource_location(*pgm_name, m_location);
         pgm_name->find_first_of("*?") == std::string::npos)
-        m_exact_pgm_conf.try_emplace(rl, tagged_program { program(rl, grp_id, pgm.opts) });
+        m_exact_pgm_conf.try_emplace(rl, tagged_program { program(rl, grp_id, pgm.opts, false) });
     else
         m_regex_pgm_conf.emplace_back(
-            tagged_program { program { rl, grp_id, pgm.opts } }, wildcard2regex(rl.get_uri()));
+            tagged_program { program { rl, grp_id, pgm.opts, false } }, wildcard2regex(rl.get_uri()));
 
     return true;
 }
@@ -539,6 +548,13 @@ bool workspace_configuration::settings_updated() const
     return false;
 }
 
+struct
+{
+    std::string_view operator()(const basic_conf& c) const noexcept { return c.name; }
+    std::string_view operator()(const b4g_conf& c) const noexcept { return c.name; }
+    std::string_view operator()(const external_conf&) const noexcept { return {}; }
+} static constexpr proc_group_name;
+
 std::optional<std::pair<utils::resource::resource_location, workspace_configuration::tagged_program>>
 workspace_configuration::try_creating_rl_tagged_pgm_pair(
     std::unordered_set<std::string, utils::hashers::string_hasher, std::equal_to<>>& missing_pgroups,
@@ -551,9 +567,9 @@ workspace_configuration::try_creating_rl_tagged_pgm_pair(
     std::optional<proc_grp_id> grp_id_o;
     if (m_proc_grps.contains(grp_id))
         grp_id_o = std::move(grp_id);
-    else if (grp_id.first != NOPROC_GROUP_ID)
+    else if (auto pg_name = std::visit(proc_group_name, grp_id); pg_name != NOPROC_GROUP_ID)
     {
-        missing_pgroups.emplace(grp_id.first);
+        missing_pgroups.emplace(pg_name);
 
         if (default_b4g_proc_group)
             return {};
@@ -568,6 +584,7 @@ workspace_configuration::try_creating_rl_tagged_pgm_pair(
                 rl,
                 std::move(grp_id_o),
                 {},
+                false,
             },
             tag,
         });
@@ -585,7 +602,10 @@ utils::value_task<parse_config_file_result> workspace_configuration::parse_b4g_c
     {
         std::erase_if(m_exact_pgm_conf, [tag = std::to_address(it)](const auto& e) { return e.second.tag == tag; });
         std::erase_if(m_regex_pgm_conf, [tag = std::to_address(it)](const auto& e) { return e.first.tag == tag; });
-        std::erase_if(m_proc_grps, [&alternative_root](const auto& e) { return e.first.second == alternative_root; });
+        std::erase_if(m_proc_grps, [&alternative_root](const auto& e) {
+            const auto* b4g = std::get_if<b4g_conf>(&e.first);
+            return b4g && b4g->bridge_json_uri == alternative_root;
+        });
         it->second = {};
     }
 
@@ -614,7 +634,7 @@ utils::value_task<parse_config_file_result> workspace_configuration::parse_b4g_c
     for (const auto& [name, details] : conf.config.value().files)
         m_exact_pgm_conf.insert(*try_creating_rl_tagged_pgm_pair(missing_pgroups,
             false,
-            proc_grp_id {
+            b4g_conf {
                 details.processor_group_name,
                 alternative_root,
             },
@@ -626,7 +646,7 @@ utils::value_task<parse_config_file_result> workspace_configuration::parse_b4g_c
     {
         if (auto rl_tagged_pgm = try_creating_rl_tagged_pgm_pair(missing_pgroups,
                 true,
-                proc_grp_id {
+                b4g_conf {
                     def_grp,
                     alternative_root,
                 },
@@ -708,8 +728,10 @@ void workspace_configuration::copy_diagnostics(const diagnosable& target,
     const std::unordered_set<utils::resource::resource_location, utils::resource::resource_location_hasher>& b4g_filter)
     const
 {
-    for (auto& [_, pg] : m_proc_grps)
+    for (auto& [key, pg] : m_proc_grps)
     {
+        if (const auto* e = std::get_if<external_conf>(&key); e && e->definition.use_count() <= 1)
+            continue;
         pg.collect_diags();
         for (const auto& d : pg.diags())
             target.add_diagnostic(d);
@@ -821,30 +843,165 @@ const processor_group& workspace_configuration::get_proc_grp(const proc_grp_id& 
 
 const program* workspace_configuration::get_program(const utils::resource::resource_location& file_location) const
 {
-    return get_program_normalized(file_location.lexically_normal());
+    return get_program_normalized(file_location.lexically_normal()).first;
 }
 
-const program* workspace_configuration::get_program_normalized(
+std::pair<const program*, bool> workspace_configuration::get_program_normalized(
     const utils::resource::resource_location& file_location_normalized) const
 {
     // direct match
     if (auto program = m_exact_pgm_conf.find(file_location_normalized); program != m_exact_pgm_conf.cend())
-        return &program->second.pgm;
+        return { &program->second.pgm, true };
 
     for (const auto& [program, pattern] : m_regex_pgm_conf)
     {
         if (std::regex_match(file_location_normalized.get_uri(), pattern))
-            return &program.pgm;
+            return { &program.pgm, false };
     }
-    return nullptr;
+    return { nullptr, false };
+}
+
+
+decltype(workspace_configuration::m_proc_grps)::iterator workspace_configuration::make_external_proc_group(
+    const utils::resource::resource_location& normalized_location, std::string group_json)
+{
+    config::processor_group pg;
+    global_settings_map utilized_settings_values;
+
+    const auto current_settings = m_global_settings.load();
+    json_settings_replacer json_visitor { *current_settings, utilized_settings_values, m_location };
+
+    std::vector<diagnostic_s> diags;
+
+    auto proc_json = nlohmann::json::parse(group_json);
+    json_visitor(proc_json);
+    proc_json.get_to(pg);
+
+    if (!pg.asm_options.valid())
+        diags.push_back(diagnostic_s::error_W0005(normalized_location, pg.name, "external processor group"));
+    for (const auto& p : pg.preprocessors)
+    {
+        if (!p.valid())
+            diags.push_back(diagnostic_s::error_W0006(normalized_location, pg.name, p.type()));
+    }
+
+    processor_group prc_grp("", pg.asm_options, pg.preprocessors);
+
+    for (auto& lib_or_dataset : pg.libs)
+    {
+        std::visit(
+            [this, &diags, &prc_grp](const auto& lib) {
+                process_processor_group_library(lib, utils::resource::resource_location(), diags, {}, prc_grp);
+            },
+            lib_or_dataset);
+    }
+    m_utilized_settings_values.merge(std::move(utilized_settings_values));
+
+    for (auto&& d : diags)
+        prc_grp.add_diagnostic(std::move(d));
+
+    return m_proc_grps
+        .try_emplace(external_conf { std::make_shared<std::string>(std::move(group_json)) }, std::move(prc_grp))
+        .first;
+}
+
+void workspace_configuration::update_external_configuration(
+    const utils::resource::resource_location& normalized_location, std::string group_json)
+{
+    if (std::string_view group_name(group_json); utils::trim_left(group_name, " \t\n\r"), group_name.starts_with("\""))
+    {
+        m_exact_pgm_conf.insert_or_assign(normalized_location,
+            tagged_program {
+                program {
+                    normalized_location,
+                    basic_conf { nlohmann::json::parse(group_json).get<std::string>() },
+                    {},
+                    true,
+                },
+            });
+        return;
+    }
+
+    auto pg = m_proc_grps.find(tagged_string_view<external_conf> { group_json });
+    if (pg == m_proc_grps.end())
+    {
+        pg = make_external_proc_group(normalized_location, std::move(group_json));
+    }
+
+    m_exact_pgm_conf.insert_or_assign(normalized_location,
+        tagged_program {
+            program {
+                normalized_location,
+                pg->first,
+                {},
+                true,
+            },
+        });
+}
+
+
+void workspace_configuration::prune_external_processor_groups(const utils::resource::resource_location& location)
+{
+    if (!location.empty())
+    {
+        if (auto p = m_exact_pgm_conf.find(location.lexically_normal());
+            p != m_exact_pgm_conf.end() && p->second.pgm.external)
+            m_exact_pgm_conf.erase(p);
+    }
+    else
+        std::erase_if(m_exact_pgm_conf, [](const auto& p) { return p.second.pgm.external; });
+
+    std::erase_if(m_proc_grps, [](const auto& pg) {
+        const auto* e = std::get_if<external_conf>(&pg.first);
+        return e && e->definition.use_count() == 1;
+    });
 }
 
 utils::value_task<utils::resource::resource_location> workspace_configuration::load_alternative_config_if_needed(
     const utils::resource::resource_location& file_location)
 {
     const auto rl = file_location.lexically_normal();
-    if (auto pgm = get_program_normalized(rl);
-        pgm && pgm->pgroup.has_value() && pgm->pgroup.value().second == utils::resource::resource_location())
+    auto [pgm, direct] = get_program_normalized(rl);
+
+    if (direct && pgm && pgm->pgroup
+        && (std::holds_alternative<basic_conf>(*pgm->pgroup) || std::holds_alternative<external_conf>(*pgm->pgroup)))
+        co_return utils::resource::resource_location();
+
+    if (m_external_configuration_requests)
+    {
+        struct resp
+        {
+            std::variant<int, std::string> result;
+            void provide(sequence<char> c) { result = std::string(c); }
+            void error(int err, const char*) noexcept { result = err; }
+        };
+        auto [c, i] = make_workspace_manager_response(std::in_place_type<resp>);
+        m_external_configuration_requests->read_external_configuration(sequence<char>(rl.get_uri()), c);
+
+        auto json_data = co_await utils::async_busy_wait(std::move(c), &i->result);
+        if (std::holds_alternative<std::string>(json_data))
+        {
+            try
+            {
+                update_external_configuration(rl, std::move(std::get<std::string>(json_data)));
+                co_return utils::resource::resource_location();
+            }
+            catch (const nlohmann::json&)
+            {
+                // incompatible json in the response
+                json_data = -1;
+            }
+        }
+
+        if (std::get<int>(json_data) != 0)
+        {
+            // TODO: do we do something with the error?
+            // this basically indicates either an error on the client side,
+            //  or an allocation failure while processing the response
+        }
+    }
+
+    if (pgm && pgm->pgroup && std::holds_alternative<basic_conf>(*pgm->pgroup))
         co_return utils::resource::resource_location();
 
     auto configuration_url = utils::resource::resource_location::replace_filename(rl, B4G_CONF_FILE);

@@ -13,6 +13,7 @@
 
 target_sources(parser_library PUBLIC
 	debugger.h
+	external_configuration_requests.h
 	lib_config.h
 	message_consumer.h
 	protocol.h

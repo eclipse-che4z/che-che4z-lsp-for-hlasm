@@ -64,6 +64,30 @@ async function primeExtension(): Promise<vscode.Disposable[]> {
 	};
 
 	ext.registerExternalFileClient('TEST', fileClientMock);
+	ext.registerExternalConfigurationProvider((uri: vscode.Uri) => {
+		const uriString = uri.toString();
+		if (uriString.includes("AAAAA"))
+			return {
+				configuration: {
+					name: "P1",
+					asm_options: {
+						SYSPARM: "AAAAA"
+					},
+					libs: [
+						{
+							path: "libs"
+						},
+						"copy"
+					]
+				}
+			};
+		else if (uriString.includes("BBBBB"))
+			return {
+				configuration: 'P1'
+			};
+		else
+			return null;
+	});
 
 	return [vscode.debug.registerDebugAdapterTrackerFactory('hlasm', {
 		createDebugAdapterTracker: function (session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {

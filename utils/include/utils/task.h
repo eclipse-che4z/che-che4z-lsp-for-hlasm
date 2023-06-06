@@ -196,6 +196,7 @@ public:
     {
         assert(m_handle);
         m_handle.promise().yield_indicator = nullptr;
+        m_handle.promise().next_step.promise().top_waiter = m_handle;
         while (!m_handle.done())
             m_handle.promise().next_step();
     }

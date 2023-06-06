@@ -35,6 +35,7 @@
 #include "macro_param_variable.h"
 #include "ordinary_symbol_variable.h"
 #include "set_symbol_variable.h"
+#include "utils/async_busy_wait.h"
 #include "utils/task.h"
 #include "variable.h"
 #include "virtual_file_monitor.h"
@@ -159,18 +160,6 @@ class debugger::impl final : public processing::statement_analyzer
 public:
     impl() = default;
 
-    struct
-    {
-        template<typename Channel, typename T>
-        utils::value_task<T> operator()(Channel channel, T* result) const
-        {
-            while (!channel.resolved())
-                co_await utils::task::suspend();
-
-            co_return std::move(*result);
-        }
-    } static constexpr async_busy_wait = {}; // clang 14
-
     void launch(std::string_view source,
         debugger_configuration_provider& dc_provider,
         bool stop_on_entry,
@@ -191,7 +180,7 @@ public:
         auto [conf_resp, conf] = make_workspace_manager_response(std::in_place_type<conf_t>);
         dc_provider.provide_debugger_configuration(sequence<char>(source), conf_resp);
         analyzer_task =
-            async_busy_wait(std::move(conf_resp), &conf->conf)
+            utils::async_busy_wait(std::move(conf_resp), &conf->conf)
                 .then(std::bind_front(
                     &impl::start_main_analyzer, this, utils::resource::resource_location(source), std::move(resp)));
     }

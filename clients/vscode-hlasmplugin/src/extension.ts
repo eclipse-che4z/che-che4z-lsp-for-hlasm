@@ -33,6 +33,7 @@ import { ConfigurationsHandler } from './configurationsHandler';
 import { getLanguageClientMiddleware } from './languageClientMiddleware';
 import { ClientInterface, ClientUriDetails, HLASMExternalFiles } from './hlasmExternalFiles';
 import { HLASMExternalFilesFtp } from './hlasmExternalFilesFtp';
+import { HLASMExternalConfigurationProvider, HLASMExternalConfigurationProviderHandler } from './hlasmExternalConfigurationProvider';
 
 export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
 
@@ -109,6 +110,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
     clientErrorHandler.defaultHandler = hlasmpluginClient.createDefaultErrorHandler();
 
+    const extConfProvider = new HLASMExternalConfigurationProvider(hlasmpluginClient)
+    context.subscriptions.push(extConfProvider);
+
     // The objectToString is necessary, because telemetry reporter only takes objects with
     // string properties and there are some boolean that we receive from the language server
     hlasmpluginClient.onTelemetry((object) => { telemetry.reportEvent(object.method_name, objectToString(object.properties), object.measurements) });
@@ -146,7 +150,10 @@ export async function activate(context: vscode.ExtensionContext) {
         },
         registerExternalFileClient<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails>(service: string, client: ClientInterface<ConnectArgs, ReadArgs, ListArgs>) {
             extFiles.setClient(service, client);
-        }
+        },
+        registerExternalConfigurationProvider(h: HLASMExternalConfigurationProviderHandler) {
+            return extConfProvider.addHandler(h);
+        },
     };
     return api;
 }

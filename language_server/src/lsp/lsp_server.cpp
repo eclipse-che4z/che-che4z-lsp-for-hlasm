@@ -38,6 +38,7 @@ namespace hlasm_plugin::language_server::lsp {
 
 server::server(parser_library::workspace_manager& ws_mngr)
     : language_server::server(this)
+    , ws_mngr(ws_mngr)
 {
     features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr, *this));
     features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr, *this));
@@ -65,6 +66,23 @@ void server::consume_parsing_metadata(
     });
 }
 
+namespace {
+constexpr std::pair<int, const char*> unknown_error { -1, "Unknown error" };
+std::pair<int, const char*> extract_lsp_error(const nlohmann::json& errmsg) noexcept
+{
+    if (!errmsg.is_object())
+        return unknown_error;
+
+    auto code = errmsg.find("code");
+    auto msg = errmsg.find("message");
+
+    if (code == errmsg.end() || msg == errmsg.end() || !code->is_number_integer() || !msg->is_string())
+        return unknown_error;
+
+    return { code->get<int>(), msg->get<const std::string*>()->c_str() };
+}
+} // namespace
+
 void server::message_received(const nlohmann::json& message)
 {
     std::optional<request_id> id;
@@ -74,7 +92,6 @@ void server::message_received(const nlohmann::json& message)
         send_telemetry_error("lsp_server/invliad_id");
         return;
     }
-
 
     if (auto result_found = message.find("result"); result_found != message.end())
     {
@@ -86,7 +103,7 @@ void server::message_received(const nlohmann::json& message)
         }
         else if (auto handler = request_handlers_.extract(*id))
         {
-            handler.mapped()(result_found.value());
+            handler.mapped().first(result_found.value());
         }
         else
         {
@@ -96,13 +113,25 @@ void server::message_received(const nlohmann::json& message)
     }
     else if (auto error_result_found = message.find("error"); error_result_found != message.end())
     {
-        std::string warn_message;
-        if (auto message_found = error_result_found->find("message"); message_found != error_result_found->end())
-            warn_message = message_found->dump();
+        decltype(request_handlers_.extract(*id)) handler;
+        if (id)
+            handler = request_handlers_.extract(*id);
+        if (handler)
+        {
+            auto [err, msg] = extract_lsp_error(*error_result_found);
+            handler.mapped().second(err, msg);
+        }
         else
-            warn_message = "Request with id " + (id ? id->to_string() : "<null>") + " returned with unspecified error.";
-        LOG_WARNING(warn_message);
-        send_telemetry_error("lsp_server/response_error_returned", warn_message);
+        {
+            std::string warn_message;
+            if (auto message_found = error_result_found->find("message"); message_found != error_result_found->end())
+                warn_message = message_found->dump();
+            else
+                warn_message =
+                    "Request with id " + (id ? id->to_string() : "<null>") + " returned with unspecified error.";
+            LOG_WARNING(warn_message);
+            send_telemetry_error("lsp_server/response_error_returned", warn_message);
+        }
     }
     else if (auto method_found = message.find("method"); method_found == message.end())
     {
@@ -128,7 +157,8 @@ void server::message_received(const nlohmann::json& message)
 
 void server::request(const std::string& requested_method,
     const nlohmann::json& args,
-    std::function<void(const nlohmann::json& params)> handler)
+    std::function<void(const nlohmann::json& params)> handler,
+    std::function<void(int, const char*)> error_handler)
 {
     auto id = request_id_counter++;
     nlohmann::json reply {
@@ -137,7 +167,7 @@ void server::request(const std::string& requested_method,
         { "method", requested_method },
         { "params", args },
     };
-    request_handlers_.emplace(id, std::move(handler));
+    request_handlers_.try_emplace(request_id(id), std::move(handler), std::move(error_handler));
     send_message_->reply(reply);
 }
 
@@ -208,11 +238,18 @@ void server::register_methods()
     methods_.try_emplace("$/cancelRequest",
         method {
             [this](const nlohmann::json& args) { cancel_request_handler(args); }, telemetry_log_level::NO_TELEMETRY });
+    methods_.try_emplace("invalidate_external_configuration",
+        method {
+            std::bind_front(&server::invalidate_external_configuration, this), telemetry_log_level::NO_TELEMETRY });
 }
 
 void server::send_telemetry(const telemetry_message& message) { notify("telemetry/event", nlohmann::json(message)); }
 
 void empty_handler(const nlohmann::json&)
+{
+    // Does nothing
+}
+void empty_error_handler(int, const char*)
 {
     // Does nothing
 }
@@ -255,7 +292,7 @@ void server::on_initialize(const request_id& id, const nlohmann::json& param)
         },
     };
 
-    request("client/registerCapability", register_configuration_changed_args, &empty_handler);
+    request("client/registerCapability", register_configuration_changed_args, &empty_handler, &empty_error_handler);
 
     for (auto& f : features_)
     {
@@ -408,19 +445,48 @@ void server::consume_diagnostics(
 void server::request_workspace_configuration(
     const char* url, parser_library::workspace_manager_response<parser_library::sequence<char>> json_text)
 {
-    request("workspace/configuration",
+    request(
+        "workspace/configuration",
         nlohmann::json { {
             "items",
             nlohmann::json::array_t {
                 { { "scopeUri", url } },
             },
         } },
-        [json_text = std::move(json_text)](const nlohmann::json& params) {
+        [json_text](const nlohmann::json& params) {
             if (!params.is_array() || params.size() != 1)
                 json_text.error(utils::error::invalid_conf_response);
             else
                 json_text.provide(parser_library::sequence<char>(params.at(0).dump()));
-        });
+        },
+        [json_text](int err, const char* msg) { json_text.error(err, msg); });
+}
+
+void server::request_file_configuration(parser_library::sequence<char> uri,
+    parser_library::workspace_manager_response<parser_library::sequence<char>> json_text)
+{
+    request(
+        "external_configuration_request",
+        nlohmann::json { {
+            "uri",
+            std::string_view(uri),
+        } },
+        [json_text](const nlohmann::json& params) {
+            if (!params.is_object() || !params.contains("configuration"))
+                json_text.error(utils::error::invalid_external_configuration);
+            else
+                json_text.provide(parser_library::sequence<char>(params.at("configuration").dump()));
+        },
+        [json_text](int err, const char* msg) { json_text.error(err, msg); });
+}
+
+void server::invalidate_external_configuration(const nlohmann::json& data)
+{
+    auto uri = data.find("uri");
+    if (uri != data.end() && uri->is_string())
+        ws_mngr.invalidate_external_configuration(parser_library::sequence<char>(*uri->get_ptr<const std::string*>()));
+    else
+        ws_mngr.invalidate_external_configuration({});
 }
 
 } // namespace hlasm_plugin::language_server::lsp

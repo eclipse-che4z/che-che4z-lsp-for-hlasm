@@ -165,9 +165,13 @@ void feature_workspace_folders::send_configuration_request()
             { { "section", "hlasm" } },
         },
     } };
-    response_->request("workspace/configuration", config_request_args, [this](const nlohmann::json& params) {
-        configuration(params);
-    });
+    response_->request(
+        "workspace/configuration",
+        config_request_args,
+        [this](const nlohmann::json& params) { configuration(params); },
+        [](int, [[maybe_unused]] const char* msg) {
+            LOG_WARNING("Unexpected error configuration response received: " + std::string(msg));
+        });
 }
 
 void feature_workspace_folders::configuration(const nlohmann::json& params) const

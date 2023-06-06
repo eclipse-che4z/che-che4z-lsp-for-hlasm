@@ -191,7 +191,7 @@ TEST(workspace, load_config_synthetic)
     ws.open().run();
 
     // Check P1
-    auto& pg = ws.get_proc_grp({ "P1", resource_location() });
+    auto& pg = ws.get_proc_grp(basic_conf { "P1" });
     EXPECT_EQ("P1", pg.name());
     auto expected = []() -> std::array<resource_location, 5> {
         if (is_windows())
@@ -210,7 +210,7 @@ TEST(workspace, load_config_synthetic)
     check_process_group(pg, expected);
 
     // Check P2
-    auto& pg2 = ws.get_proc_grp({ "P2", resource_location() });
+    auto& pg2 = ws.get_proc_grp(basic_conf { "P2" });
     EXPECT_EQ("P2", pg2.name());
 
     auto expected2 = []() -> std::array<resource_location, 3> {
@@ -448,7 +448,7 @@ TEST(workspace, proc_grps_with_substitutions)
 
     EXPECT_TRUE(ws.diags().empty());
 
-    const auto& pg = ws.get_proc_grp({ "aproc_groupb", resource_location() });
+    const auto& pg = ws.get_proc_grp(basic_conf { "aproc_groupb" });
 
     using hlasm_plugin::utils::resource::resource_location;
 

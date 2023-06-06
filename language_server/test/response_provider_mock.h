@@ -21,10 +21,11 @@ namespace hlasm_plugin::language_server {
 class response_provider_mock : public response_provider
 {
 public:
-    MOCK_METHOD3(request,
+    MOCK_METHOD4(request,
         void(const std::string& requested_method,
             const nlohmann::json& args,
-            std::function<void(const nlohmann::json& params)> handler));
+            std::function<void(const nlohmann::json& params)> handler,
+            std::function<void(int, const char*)> error_handler));
     MOCK_METHOD3(respond, void(const request_id& id, const std::string& requested_method, const nlohmann::json& args));
     MOCK_METHOD2(notify, void(const std::string& method, const nlohmann::json& args));
     MOCK_METHOD5(respond_error,

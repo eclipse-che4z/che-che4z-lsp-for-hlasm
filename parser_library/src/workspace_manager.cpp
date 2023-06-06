@@ -32,10 +32,12 @@
 #include <vector>
 
 #include "debugging/debugger_configuration.h"
+#include "external_configuration_requests.h"
 #include "lsp/completion_item.h"
 #include "lsp/document_symbol_item.h"
 #include "nlohmann/json.hpp"
 #include "protocol.h"
+#include "utils/async_busy_wait.h"
 #include "utils/content_loader.h"
 #include "utils/encoding.h"
 #include "utils/error_codes.h"
@@ -58,7 +60,8 @@ namespace hlasm_plugin::parser_library {
 class workspace_manager_impl final : public workspace_manager,
                                      debugger_configuration_provider,
                                      public diagnosable_impl,
-                                     workspaces::external_file_reader
+                                     workspaces::external_file_reader,
+                                     external_configuration_requests
 {
     static constexpr lib_config supress_all { 0 };
     using resource_location = utils::resource::resource_location;
@@ -68,8 +71,9 @@ class workspace_manager_impl final : public workspace_manager,
         opened_workspace(const resource_location& location,
             const std::string& name,
             workspaces::file_manager& file_manager,
-            const lib_config& global_config)
-            : ws(location, name, file_manager, global_config, settings)
+            const lib_config& global_config,
+            external_configuration_requests* ecr)
+            : ws(location, name, file_manager, global_config, settings, ecr)
         {}
         opened_workspace(workspaces::file_manager& file_manager, const lib_config& global_config)
             : ws(file_manager, global_config, settings)
@@ -839,18 +843,6 @@ private:
 
     static constexpr std::string_view hlasm_external_scheme = "hlasm-external://";
 
-    struct
-    {
-        template<typename Channel, typename T>
-        utils::value_task<T> operator()(Channel channel, T* result) const
-        {
-            while (!channel.resolved())
-                co_await utils::task::suspend();
-
-            co_return std::move(*result);
-        }
-    } static constexpr async_busy_wait = {}; // clang 14
-
     [[nodiscard]] utils::value_task<std::optional<std::string>> load_text_external(
         const utils::resource::resource_location& document_loc) const
     {
@@ -864,7 +856,7 @@ private:
         auto [channel, data] = make_workspace_manager_response(std::in_place_type<content_t>);
         m_external_file_requests->read_external_file(document_loc.get_uri().c_str(), channel);
 
-        return async_busy_wait(std::move(channel), &data->result);
+        return utils::async_busy_wait(std::move(channel), &data->result);
     }
 
     [[nodiscard]] utils::value_task<std::optional<std::string>> load_text(
@@ -924,7 +916,7 @@ private:
         auto [channel, data] = make_workspace_manager_response(std::in_place_type<content_t>, directory);
         m_external_file_requests->read_external_directory(data->dir.get_uri().c_str(), channel);
 
-        return async_busy_wait(std::move(channel), &data->result);
+        return utils::async_busy_wait(std::move(channel), &data->result);
     }
 
     [[nodiscard]] utils::value_task<std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
@@ -972,9 +964,14 @@ private:
 
     void add_workspace(const char* name, const char* uri) override
     {
-        auto& ows =
-            m_workspaces.try_emplace(name, resource_location(std::move(uri)), name, m_file_manager, m_global_config)
-                .first->second;
+        auto& ows = m_workspaces
+                        .try_emplace(name,
+                            resource_location(std::move(uri)),
+                            name,
+                            m_file_manager,
+                            m_global_config,
+                            static_cast<external_configuration_requests*>(this))
+                        .first->second;
         ows.ws.set_message_consumer(m_message_consumer);
 
         auto& new_workspace = m_work_queue.emplace_back(work_item {
@@ -1043,6 +1040,33 @@ private:
             m_work_queue.insert(++it, std::move(wi));
         else
             m_work_queue.push_front(std::move(wi));
+    }
+
+
+    void read_external_configuration(sequence<char> uri, workspace_manager_response<sequence<char>> content) override
+    {
+        if (!m_requests)
+        {
+            content.error(utils::error::not_found);
+            return;
+        }
+
+        m_requests->request_file_configuration(uri, content);
+    }
+
+    void invalidate_external_configuration(sequence<char> uri) override
+    {
+        if (uri.size() == 0)
+        {
+            resource_location res;
+            for (auto& [_, ows] : m_workspaces)
+                ows.ws.invalidate_external_configuration(res);
+            m_implicit_workspace.ws.invalidate_external_configuration(res);
+            m_quiet_implicit_workspace.ws.invalidate_external_configuration(res);
+        }
+        else
+            ws_path_match(std::string_view(uri))
+                .ws.invalidate_external_configuration(resource_location(std::string_view(uri)));
     }
 };
 

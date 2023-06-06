@@ -58,7 +58,10 @@ struct notif_mock
 
 struct response_provider_mock : public response_provider
 {
-    void request(const std::string&, const nlohmann::json&, std::function<void(const nlohmann::json& params)>) override
+    void request(const std::string&,
+        const nlohmann::json&,
+        std::function<void(const nlohmann::json& params)>,
+        std::function<void(int, const char*)>) override
     {}
     void respond(const request_id& id, const std::string& requested_method, const nlohmann::json& args) override
     {

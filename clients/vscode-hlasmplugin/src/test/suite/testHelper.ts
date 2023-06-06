@@ -48,7 +48,7 @@ export function getWorkspacePath(): string {
 export async function getWorkspaceFile(workspace_file: string) {
     const files = await vscode.workspace.findFiles(workspace_file);
 
-    assert.ok(files && files[0]);
+    assert.ok(files && files[0], workspace_file);
 
     return files[0];
 }

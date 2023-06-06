@@ -32,6 +32,7 @@
 
 namespace hlasm_plugin::parser_library {
 class workspace_manager_external_file_requests;
+class external_configuration_requests;
 namespace debugging {
 struct debugger_configuration;
 } // namespace debugging
@@ -140,6 +141,8 @@ public:
     virtual void idle_handler(const std::atomic<unsigned char>* yield_indicator = nullptr) = 0;
 
     virtual debugger_configuration_provider& get_debugger_configuration_provider() = 0;
+
+    virtual void invalidate_external_configuration(sequence<char> uri) = 0;
 };
 
 workspace_manager* create_workspace_manager_impl(workspace_manager_external_file_requests* external_requests);
