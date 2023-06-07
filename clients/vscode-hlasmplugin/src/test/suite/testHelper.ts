@@ -181,7 +181,7 @@ export async function waitForDiagnostics(file: string | vscode.Uri, nonEmptyOnly
     return result;
 }
 
-export async function waitForDiagnosticsChange(file: string | vscode.Uri, action: () => PromiseLike<void>) {
+export async function waitForDiagnosticsChange(file: string | vscode.Uri, action: () => PromiseLike<void> | void) {
     const fileUri = typeof file === 'string' ? await getWorkspaceFile(file) : file;
 
     const initialDiags = vscode.languages.getDiagnostics(fileUri).map(x => JSON.stringify(x)).sort();

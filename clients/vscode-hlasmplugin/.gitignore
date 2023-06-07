@@ -6,3 +6,4 @@ hlasmplugin.log
 .nyc_output/
 coverage/
 /bin
+typings/

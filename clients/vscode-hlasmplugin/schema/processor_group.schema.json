@@ -1,0 +1,85 @@
+{
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "User-defined name of processor group"
+        },
+        "libs": {
+            "type": "array",
+            "description": "List of folders that contain external files, such as macros and copybooks.\nAll files inside these folders are automatically recognized as HLASM.\nIf you want to use dependency files with a specific extension, create an extension wildcard in pgm_conf.json for the extension.\nEnsure that extension wildcards follow the [anything]*.[1+ non-whitespace characters] format. For example, libs/*.hlasm or *.asm",
+            "items": {
+                "anyOf": [
+                    {
+                        "type": "string"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "path": {
+                                "type": "string",
+                                "description": "Path to the folder that contains external files."
+                            },
+                            "optional": {
+                                "type": "boolean",
+                                "description": "Specify 'true' if it is acceptable to not locate the folder."
+                            },
+                            "macro_extensions": {
+                                "type": "array",
+                                "description": "Files with macro definitions may have an extension defined in this list (overrides the top level list).\nNo extension is represented by an empty string.",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "prefer_alternate_root": {
+                                "type": "boolean",
+                                "description": "Specify 'true' to resolve relative paths with respect to a different root folder than the workspace root (e.g. a folder provided by Endevor Bridge for Git).",
+                                "default": false
+                            }
+                        },
+                        "required": [
+                            "path"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "dataset": {
+                                "type": "string",
+                                "description": "Name of a data set located on the mainframe."
+                            },
+                            "optional": {
+                                "type": "boolean",
+                                "description": "Specify 'true' if it is acceptable to not locate the data set."
+                            }
+                        },
+                        "required": [
+                            "dataset"
+                        ]
+                    }
+                ]
+            }
+        },
+        "asm_options": {
+            "$ref": "asm_options.schema.json"
+        },
+        "preprocessor": {
+            "description": "Defines preprocessor passes for the open code.",
+            "anyOf": [
+                {
+                    "$ref": "preprocessor_entry.schema.json"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "$ref": "preprocessor_entry.schema.json"
+                    }
+                }
+            ]
+        }
+    },
+    "required": [
+        "name",
+        "libs"
+    ]
+}

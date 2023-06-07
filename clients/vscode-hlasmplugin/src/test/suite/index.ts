@@ -21,13 +21,8 @@ import { popWaitRequestResolver, timeout } from './testHelper';
 import { EXTENSION_ID, activate } from '../../extension';
 import { ClientUriDetails, ExternalRequestType } from '../../hlasmExternalFiles';
 
-async function primeExtension(): Promise<vscode.Disposable[]> {
+async function registerTestImplementations(): Promise<vscode.Disposable[]> {
 	const ext = await vscode.extensions.getExtension<ReturnType<typeof activate>>(EXTENSION_ID)!.activate();
-	const lang: {
-		sendRequest<R>(method: string, param: any, token?: vscode.CancellationToken): Promise<R>;
-	} = ext.getExtension()!;
-	// prime opcode suggestions to avoid timeouts
-	await Promise.race([lang.sendRequest<object>('textDocument/$/opcode_suggestion', { opcodes: ['OPCODE'] }), timeout(30000, 'Opcode suggestion request failed')]);
 
 	const fileClientMock = {
 		getConnInfo: () => Promise.resolve({ info: '', uniqueId: undefined }),
@@ -123,7 +118,7 @@ export async function run(): Promise<void> {
 	// Add files to the test suite
 	files.forEach(file => mocha.addFile(path.resolve(testsPath, file)));
 
-	const toDispose = await primeExtension();
+	const toDispose = await registerTestImplementations();
 
 	await new Promise((resolve, reject) => {
 		// Run the mocha test

@@ -34,6 +34,7 @@ import { getLanguageClientMiddleware } from './languageClientMiddleware';
 import { ClientInterface, ClientUriDetails, HLASMExternalFiles } from './hlasmExternalFiles';
 import { HLASMExternalFilesFtp } from './hlasmExternalFilesFtp';
 import { HLASMExternalConfigurationProvider, HLASMExternalConfigurationProviderHandler } from './hlasmExternalConfigurationProvider';
+import { HlasmExtension } from './extension.interface';
 
 export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
 
@@ -71,7 +72,7 @@ const getCacheInfo = async (uri: vscode.Uri, fs: vscode.FileSystem) => {
  * ACTIVATION
  * activates the extension
  */
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext): Promise<HlasmExtension> {
     const serverVariant = getConfig<ServerVariant>('serverVariant', 'native');
 
     const telemetry = new Telemetry();
@@ -142,12 +143,6 @@ export async function activate(context: vscode.ExtensionContext) {
     await registerToContext(context, hlasmpluginClient, telemetry, extFiles);
 
     let api = {
-        getExtension(): vscodelc.LanguageClient {
-            return hlasmpluginClient;
-        },
-        getTelemetry(): Telemetry {
-            return telemetry;
-        },
         registerExternalFileClient<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails>(service: string, client: ClientInterface<ConnectArgs, ReadArgs, ListArgs>) {
             extFiles.setClient(service, client);
         },

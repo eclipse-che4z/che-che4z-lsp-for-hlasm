@@ -18,7 +18,147 @@ import * as vscodelc from 'vscode-languageclient';
 interface ExternalConfigurationRequest {
     uri: string;
 };
-interface ProcGrpsSchemaJson { };
+
+type AsmOptions = (
+    {
+        GOFF: boolean;
+    } | {
+        XOBJECT: boolean;
+    }
+    | {}
+) & ({
+    MACHINE:
+    | "ARCH-0"
+    | "ARCH-1"
+    | "ARCH-10"
+    | "ARCH-11"
+    | "ARCH-12"
+    | "ARCH-13"
+    | "ARCH-14"
+    | "ARCH-2"
+    | "ARCH-3"
+    | "ARCH-4"
+    | "ARCH-5"
+    | "ARCH-6"
+    | "ARCH-7"
+    | "ARCH-8"
+    | "ARCH-9"
+    | "S370"
+    | "S370ESA"
+    | "S370XA"
+    | "S390"
+    | "S390E"
+    | "ZS"
+    | "ZS-1"
+    | "ZS-2"
+    | "ZS-3"
+    | "ZS-4"
+    | "ZS-5"
+    | "ZS-6"
+    | "ZS-7"
+    | "ZS-8"
+    | "ZS-9"
+    | "ZS-10"
+    | "z10"
+    | "z11"
+    | "z114"
+    | "z12"
+    | "z13"
+    | "z14"
+    | "z15"
+    | "z16"
+    | "z196"
+    | "z800"
+    | "z890"
+    | "z9"
+    | "z900"
+    | "z990"
+    | "zBC12"
+    | "zEC12"
+    | "zSeries"
+    | "zSeries-1"
+    | "zSeries-2"
+    | "zSeries-3"
+    | "zSeries-4"
+    | "zSeries-5"
+    | "zSeries-6"
+    | "zSeries-7"
+    | "zSeries-8"
+    | "zSeries-9"
+    | "zSeries-10";
+} | {
+    OPTABLE:
+    | "UNI"
+    | "DOS"
+    | "370"
+    | "XA"
+    | "ESA"
+    | "ZOP"
+    | "ZS1"
+    | "YOP"
+    | "ZS2"
+    | "Z9"
+    | "ZS3"
+    | "Z10"
+    | "ZS4"
+    | "Z11"
+    | "ZS5"
+    | "Z12"
+    | "ZS6"
+    | "Z13"
+    | "ZS7"
+    | "Z14"
+    | "ZS8"
+    | "Z15"
+    | "ZS9"
+    | "Z16"
+    | "ZSA";
+}
+    | {}
+    ) & {
+        SYSPARM?: string;
+        PROFILE?: string;
+        SYSTEM_ID?: string;
+    };
+
+type Preprocessor = ("DB2" | "CICS" | "ENDEVOR")
+    | {
+        name: "DB2";
+        options?: {
+            version?: string;
+            conditional?: boolean;
+        };
+    }
+    | {
+        name: "CICS";
+        options?: string[];
+    }
+    | {
+        name: "ENDEVOR";
+    };
+
+type Library = string
+    | {
+        path: string;
+        optional?: boolean;
+        macro_extensions?: string[];
+        prefer_alternate_root?: boolean;
+    }
+    | {
+        dataset: string;
+        optional?: boolean;
+    };
+
+/**
+ * Derived from schema/processor_entry.schema.json
+ */
+interface ProcGrpsSchemaJson {
+    name: string;
+    libs: Library[];
+    asm_options?: AsmOptions;
+    preprocessor?: Preprocessor | Preprocessor[];
+};
+
 interface ExternalConfigurationResponse {
     configuration: string | ProcGrpsSchemaJson;
 };
@@ -32,6 +172,11 @@ function isExternalConfigurationRequest(p: any): p is ExternalConfigurationReque
 function isError(e: any): e is Error {
     return e instanceof Error;
 }
+
+export interface ConfigurationProviderRegistration {
+    dispose(): void;
+    invalidate(uri: vscode.Uri | null): PromiseLike<void> | void;
+};
 
 export class HLASMExternalConfigurationProvider {
     private toDispose: vscode.Disposable[] = [];
@@ -77,10 +222,10 @@ export class HLASMExternalConfigurationProvider {
     }
 
     private invalidateConfiguration(uri: vscode.Uri | null) {
-        return this.channel.sendNotification('invalidate_external_configuration', uri ? { uri: uri.toString() } : {});
+        this.channel.sendNotification('invalidate_external_configuration', uri ? { uri: uri.toString() } : {});
     }
 
-    public addHandler(h: HLASMExternalConfigurationProviderHandler) {
+    public addHandler(h: HLASMExternalConfigurationProviderHandler): ConfigurationProviderRegistration {
         this.requestHandlers.push(h);
 
         return {
@@ -88,9 +233,9 @@ export class HLASMExternalConfigurationProvider {
                 const idx = this.requestHandlers.indexOf(h);
                 if (idx >= 0)
                     this.requestHandlers.splice(idx, 1);
-                return this.invalidateConfiguration(null);
+                this.invalidateConfiguration(null);
             },
-            invalidate: (uri: vscode.Uri | null) => this.invalidateConfiguration(uri)
+            invalidate: (uri: vscode.Uri | null) => { this.invalidateConfiguration(uri); }
         };
     }
 }

@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-import * as vscode from "vscode";
-import * as vscodelc from "vscode-languageclient";
+import * as vscode from 'vscode';
+import * as vscodelc from 'vscode-languageclient';
 import { asError, isCancellationError } from "./helpers";
 import { uriFriendlyBase16Decode, uriFriendlyBase16Encode } from "./conversions";
 
@@ -73,7 +73,9 @@ export interface ClientInterface<ConnectArgs, ReadArgs extends ClientUriDetails,
     createClient: () => ExternalFilesClient<ConnectArgs, ReadArgs, ListArgs>
 };
 
-export interface ExternalFilesClient<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails> extends vscode.Disposable {
+export interface ExternalFilesClient<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails> {
+    dispose(): void;
+
     connect(arg: ConnectArgs): Promise<void>;
 
     listMembers(arg: ListArgs): Promise<string[] | null>;

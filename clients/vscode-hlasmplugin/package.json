@@ -29,6 +29,7 @@
   ],
   "icon": "resources/logo.png",
   "main": "./dist/extension.js",
+  "typings": "./typings/extension.d.ts",
   "engines": {
     "vscode": "^1.67.0"
   },
@@ -50,6 +51,7 @@
     "@vscode/vsce": "^2.19.0",
     "c8": "^7.12.0",
     "conventional-changelog-conventionalcommits": "^4.5.0",
+    "dts-bundle-generator": "^8.0.1",
     "esbuild": "^0.17.18",
     "glob": "^7.1.6",
     "mocha": "^10.1.0",
@@ -62,12 +64,12 @@
   "dependencies": {
     "@vscode/extension-telemetry": "^0.7.5",
     "basic-ftp": "^5.0.0",
-    "vscode-languageclient": "^8.1.0",
-    "terse.js": "file:./terse/terse.js-1.0.0.tgz"
+    "terse.js": "file:./terse/terse.js-1.0.0.tgz",
+    "vscode-languageclient": "^8.1.0"
   },
   "scripts": {
     "postinstall": "node ./build/bin/postinstall.js",
-    "compile": "esbuild --bundle src/extension.ts --outdir=dist --sourcemap --external:vscode --platform=node --minify",
+    "compile": "esbuild --bundle src/extension.ts --outdir=dist --sourcemap --external:vscode --platform=node --minify && dts-bundle-generator --no-banner --export-referenced-types=false -o typings/extension.d.ts src/extension.interface.ts",
     "compile:test": "tsc -p ./tsconfig.json && npm run compile",
     "clean": "node ./build/bin/clean.js",
     "test": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js",
