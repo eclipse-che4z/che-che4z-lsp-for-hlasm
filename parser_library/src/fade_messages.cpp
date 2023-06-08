@@ -23,12 +23,12 @@ fade_message_s fade_message_s::preprocessor_statement(std::string uri, const ran
 
 fade_message_s fade_message_s::inactive_statement(std::string uri, const range& range)
 {
-    return fade_message_s("INACT", "Inactive statement", std::move(uri), range);
+    return fade_message_s("INACT", "Inactive statement (based on opened files)", std::move(uri), range);
 }
 
 fade_message_s fade_message_s::unused_macro(std::string uri, const range& range)
 {
-    return fade_message_s("MAC_UNUSED", "Macro defined but not used", std::move(uri), range);
+    return fade_message_s("MAC_UNUSED", "Macro defined but not used (based on opened files)", std::move(uri), range);
 }
 
 } // namespace hlasm_plugin::parser_library
