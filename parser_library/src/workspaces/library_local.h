@@ -79,15 +79,13 @@ public:
 
     library_local(library_local&&) noexcept;
 
-    const utils::resource::resource_location& get_location() const;
+    const utils::resource::resource_location& get_location() const override;
 
     [[nodiscard]] utils::task refresh() override;
 
     [[nodiscard]] utils::task prefetch() override;
 
     std::vector<std::string> list_files() override;
-
-    std::string refresh_url_prefix() const override;
 
     bool has_file(std::string_view file, utils::resource::resource_location* url = nullptr) override;
 

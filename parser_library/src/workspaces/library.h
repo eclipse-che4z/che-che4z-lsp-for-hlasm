@@ -40,7 +40,7 @@ public:
     [[nodiscard]] virtual utils::task refresh() = 0;
     [[nodiscard]] virtual utils::task prefetch() = 0;
     virtual std::vector<std::string> list_files() = 0;
-    virtual std::string refresh_url_prefix() const = 0;
+    virtual const utils::resource::resource_location& get_location() const = 0;
     virtual bool has_file(std::string_view file, utils::resource::resource_location* url = nullptr) = 0;
     virtual void copy_diagnostics(std::vector<diagnostic_s>&) const = 0;
     virtual bool has_cached_content() const = 0;

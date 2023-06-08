@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <span>
-#include <string_view>
 #include <variant>
 
 namespace hlasm_plugin::parser_library::workspaces {
@@ -112,39 +111,47 @@ std::vector<std::pair<std::string, size_t>> processor_group::suggest(std::string
     }
 }
 
-bool processor_group::refresh_needed(const std::vector<utils::resource::resource_location>& urls) const
+bool processor_group::refresh_needed(
+    const std::unordered_set<utils::resource::resource_location, utils::resource::resource_location_hasher>&
+        no_filename_rls,
+    const std::vector<utils::resource::resource_location>& original_rls) const
 {
-    return std::any_of(urls.begin(), urls.end(), [this](const auto& res_location) {
-        constexpr auto matching_prefix = [](std::string_view l, std::string_view r) {
-            const auto common_len = std::min(l.size(), r.size());
-            return l.substr(0, common_len) == r.substr(0, common_len);
-        };
-        const auto has_cached_content = [this](std::span<const size_t> idx) {
-            return std::any_of(idx.begin(), idx.end(), [this](auto i) { return m_libs[i]->has_cached_content(); });
-        };
+    if (std::any_of(no_filename_rls.begin(),
+            no_filename_rls.end(),
+            [&libs = m_libs, &lib_locations = m_lib_locations](const auto& no_filename_rl) {
+                auto candidate = lib_locations.find(no_filename_rl);
+                return candidate != lib_locations.end() && libs[candidate->second]->has_cached_content();
+            }))
+        return true;
 
-        const std::string_view url = res_location.get_uri();
-        const auto candidate = m_refresh_prefix.lower_bound(url);
-        return candidate != m_refresh_prefix.end() && matching_prefix(url, candidate->first)
-            && has_cached_content(candidate->second)
-            || candidate != m_refresh_prefix.begin() && matching_prefix(url, std::prev(candidate)->first)
-            && has_cached_content(std::prev(candidate)->second);
-    });
+    return std::any_of(original_rls.begin(),
+        original_rls.end(),
+        [&libs = m_libs, &lib_locations = m_lib_locations](const auto& original_rl) {
+            auto candidate = lib_locations.upper_bound(original_rl);
+
+            while (candidate != lib_locations.end() && candidate->first.is_prefix_of(original_rl))
+            {
+                if (libs[candidate->second]->has_cached_content())
+                    return true;
+
+                candidate++;
+            }
+
+            return false;
+        });
 }
 
 void processor_group::collect_diags() const
 {
     for (auto&& lib : m_libs)
-    {
         lib->copy_diagnostics(diags());
-    }
 }
 
 void processor_group::add_library(std::shared_ptr<library> library)
 {
     auto next_id = m_libs.size();
     const auto& lib = m_libs.emplace_back(std::move(library));
-    m_refresh_prefix[lib->refresh_url_prefix()].emplace_back(next_id);
+    m_lib_locations[lib->get_location()] = next_id;
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

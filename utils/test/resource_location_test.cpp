@@ -942,3 +942,23 @@ TEST(resource_location, get_local_path_or_uri)
                   .get_local_path_or_uri(),
         is_windows() ? "c:\\dir\\file" : "/home/file");
 }
+
+TEST(resource_location, is_prefix)
+{
+    const resource_location base("scheme://d1/d2/f1");
+
+    EXPECT_TRUE(resource_location::is_prefix(resource_location("scheme://d1/d2/f1/"), base));
+    EXPECT_TRUE(resource_location::is_prefix(resource_location("scheme://d1/d2/f1"), base));
+    EXPECT_TRUE(resource_location::is_prefix(resource_location("scheme://d1/d2/"), base));
+    EXPECT_TRUE(resource_location::is_prefix(resource_location("scheme://d1/d2"), base));
+    EXPECT_TRUE(resource_location::is_prefix(resource_location("scheme://d1/"), base));
+    EXPECT_TRUE(resource_location::is_prefix(resource_location("scheme://d1"), base));
+
+    EXPECT_FALSE(resource_location::is_prefix(resource_location("scheme://d1/d2/f"), base));
+    EXPECT_FALSE(resource_location::is_prefix(resource_location("scheme://d1/d2/f1/f2"), base));
+    EXPECT_FALSE(resource_location::is_prefix(resource_location("scheme://d1/d2/d3"), base));
+    EXPECT_FALSE(resource_location::is_prefix(resource_location("scheme://d1/d2/d3/"), base));
+    EXPECT_FALSE(resource_location::is_prefix(resource_location("scheme://d1/d2/d3/f1"), base));
+    EXPECT_FALSE(resource_location::is_prefix(resource_location("scheme://d9/d8/f1"), base));
+    EXPECT_FALSE(resource_location::is_prefix(resource_location("diff_scheme://d1/d2/f1"), base));
+}

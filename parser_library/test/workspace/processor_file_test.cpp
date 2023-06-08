@@ -45,7 +45,11 @@ TEST(processor_file, parse_macro)
     using namespace ::testing;
     shared_json global_settings = make_empty_shared_json();
     lib_config config;
+    resource_location lib_loc("");
     auto library = std::make_shared<NiceMock<library_mock>>();
+
+    EXPECT_CALL(*library, get_location).WillOnce(ReturnRef(lib_loc));
+
     workspace ws(mngr, config, global_settings, library);
 
     EXPECT_CALL(*library, has_file(std::string_view("MAC"), _))

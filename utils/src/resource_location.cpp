@@ -575,6 +575,28 @@ resource_location resource_location::relative_reference_resolution(resource_loca
     return rl;
 }
 
+bool resource_location::is_prefix_of(const resource_location& candidate) const
+{
+    constexpr auto is_parent = [](std::string_view u) {
+        while (u.starts_with(".."))
+        {
+            u.remove_prefix(2);
+            if (u.starts_with("/") || u.starts_with("\\"))
+                u.remove_prefix(1);
+        }
+
+        return u.empty();
+    };
+    const auto lex_rel = candidate.lexically_relative(*this);
+    const auto& u = lex_rel.get_uri();
+    return !u.empty() && (u == "." || is_parent(u));
+}
+
+bool resource_location::is_prefix(const resource_location& candidate, const resource_location& base)
+{
+    return base.is_prefix_of(candidate);
+}
+
 std::size_t resource_location_hasher::operator()(const resource_location& rl) const
 {
     return std::hash<std::string> {}(rl.get_uri());

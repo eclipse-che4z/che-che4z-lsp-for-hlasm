@@ -437,11 +437,12 @@ public:
 
             void copy_diagnostics(std::vector<diagnostic_s>&) const override { assert(false); }
 
-            std::string refresh_url_prefix() const override
+            const resource_location& get_location() const
             {
                 assert(false);
-                return {};
-            }
+                static resource_location rl("");
+                return rl;
+            };
 
             bool has_cached_content() const override { return false; }
 
