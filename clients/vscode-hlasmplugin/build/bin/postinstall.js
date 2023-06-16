@@ -20,19 +20,6 @@ const base = path.join(__dirname, "..", "..");
 
 fs.mkdirSync(path.join(base, "bin"), { recursive: true });
 
-const rate_limit_js = path.join(base, "node_modules", "@semantic-release", "github", "lib", "definitions", "rate-limit.js");
-const rateLimits = fs.readFileSync(rate_limit_js, "utf8")
-fs.writeFileSync(rate_limit_js, rateLimits.replace("minTimeout: 1000", "minTimeout: 5000").replace("GLOBAL_RATE_LIMIT = 1000", "GLOBAL_RATE_LIMIT = 5000").replaceAll("* 1.1", "* 3"));
-
-const get_client_js = path.join(base, "node_modules", "@semantic-release", "github", "lib", "get-client.js");
-const getClient = fs.readFileSync(get_client_js, "utf8");
-fs.writeFileSync(get_client_js, getClient.replace("catch (error) {", `catch (error) {
-        if (error.status == 403 && /exceeded a secondary rate limit/i.test(error.message)) {
-          const resetTimestamp = +(error.response && error.response.headers && error.response.headers['x-ratelimit-reset'] || '') * 1000;
-          await new Promise((resolve) => setTimeout(resolve, Math.max(5000, resetTimestamp - Date.now())));
-          throw error;
-        }`));
-
 // remove non-standard LIST command
 const basic_ftp_client_js = path.join(base, "node_modules", "basic-ftp", "dist", "Client.js");
 const basic_ftp_client = fs.readFileSync(basic_ftp_client_js, "utf8");
