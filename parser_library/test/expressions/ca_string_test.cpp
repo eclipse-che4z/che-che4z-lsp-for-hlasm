@@ -44,9 +44,10 @@ TEST(ca_string, undefined_attributes)
 
     ca_string s(std::move(value), std::move(dupl), std::move(substr), range());
 
-    auto res = s.get_undefined_attributed_symbols(eval_ctx);
+    std::set<context::id_index> references;
+    EXPECT_FALSE(s.get_undefined_attributed_symbols(references, eval_ctx));
 
-    ASSERT_EQ(res.size(), 0U);
+    EXPECT_EQ(references.size(), 0U);
 }
 
 struct test_param

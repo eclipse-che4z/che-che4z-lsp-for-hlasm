@@ -193,19 +193,19 @@ const var_sym_conc* concatenation_point::find_var_sym(
     return nullptr;
 }
 
-std::set<context::id_index> concatenation_point::get_undefined_attributed_symbols(
-    const concat_chain& chain, const expressions::evaluation_context& eval_ctx)
+bool concatenation_point::get_undefined_attributed_symbols(
+    std::set<context::id_index>& symbols, const concat_chain& chain, const expressions::evaluation_context& eval_ctx)
 {
-    std::set<context::id_index> ret;
+    bool result = false;
     for (auto it = chain.begin(); it != chain.end(); ++it)
     {
         if (auto* var = std::get_if<var_sym_conc>(&it->value))
-            ret.merge(expressions::ca_var_sym::get_undefined_attributed_symbols_vs(var->symbol, eval_ctx));
+            result |= expressions::ca_var_sym::get_undefined_attributed_symbols_vs(symbols, var->symbol, eval_ctx);
         else if (auto* sublist = std::get_if<sublist_conc>(&it->value))
             for (const auto& entry : sublist->list)
-                ret.merge(get_undefined_attributed_symbols(entry, eval_ctx));
+                result |= get_undefined_attributed_symbols(symbols, entry, eval_ctx);
     }
-    return ret;
+    return result;
 }
 
 std::string char_str_conc::evaluate(const expressions::evaluation_context&) const { return value; }

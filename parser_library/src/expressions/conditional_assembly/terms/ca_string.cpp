@@ -37,16 +37,16 @@ ca_string::ca_string(
     , substring(std::move(substring))
 {}
 
-undef_sym_set ca_string::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+bool ca_string::get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const
 {
-    undef_sym_set tmp;
+    bool result = false;
     if (duplication_factor)
-        tmp = duplication_factor->get_undefined_attributed_symbols(eval_ctx);
+        result |= duplication_factor->get_undefined_attributed_symbols(symbols, eval_ctx);
     if (substring.start)
-        tmp.merge(substring.start->get_undefined_attributed_symbols(eval_ctx));
+        result |= substring.start->get_undefined_attributed_symbols(symbols, eval_ctx);
     if (substring.count)
-        tmp.merge(substring.count->get_undefined_attributed_symbols(eval_ctx));
-    return tmp;
+        result |= substring.count->get_undefined_attributed_symbols(symbols, eval_ctx);
+    return result;
 }
 
 void ca_string::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)

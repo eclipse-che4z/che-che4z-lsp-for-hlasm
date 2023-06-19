@@ -62,7 +62,7 @@ public:
         , value(std::move(value))
     {}
 
-    undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override { return {}; };
+    bool get_undefined_attributed_symbols(undef_sym_set&, const evaluation_context&) const override { return false; };
 
     void resolve_expression_tree(ca_expression_ctx, diagnostic_op_consumer&) override {}
 

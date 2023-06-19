@@ -97,9 +97,10 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
 
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
-    auto res = expr_list.get_undefined_attributed_symbols(eval_ctx);
+    std::set<context::id_index> references;
+    EXPECT_TRUE(expr_list.get_undefined_attributed_symbols(references, eval_ctx));
 
-    ASSERT_TRUE(res.size());
+    EXPECT_GT(references.size(), 0);
 }
 
 TEST(ca_expr_list, is_character_expression)

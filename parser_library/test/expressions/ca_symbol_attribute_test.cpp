@@ -39,9 +39,10 @@ TEST(ca_symbol_attr, undefined_attributes)
 
     ca_symbol_attribute attr(std::move(vs), context::data_attr_kind::D, range(), range());
 
-    auto res = attr.get_undefined_attributed_symbols(eval_ctx);
+    std::set<context::id_index> references;
+    EXPECT_FALSE(attr.get_undefined_attributed_symbols(references, eval_ctx));
 
-    ASSERT_EQ(res.size(), 0U);
+    EXPECT_EQ(references.size(), 0U);
 }
 
 ca_symbol_attribute create_var_sym_attr(context::data_attr_kind kind, context::id_index name)

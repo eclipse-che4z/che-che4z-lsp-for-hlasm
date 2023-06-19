@@ -39,9 +39,10 @@ TEST(ca_var_sym_basic, undefined_attributes)
 
     ca_var_sym var(std::move(vs), range());
 
-    auto res = var.get_undefined_attributed_symbols(eval_ctx);
+    std::set<context::id_index> references;
+    EXPECT_FALSE(var.get_undefined_attributed_symbols(references, eval_ctx));
 
-    ASSERT_EQ(res.size(), 0U);
+    EXPECT_EQ(references.size(), 0U);
 }
 
 TEST(ca_var_sym_created, undefined_attributes)
@@ -62,9 +63,10 @@ TEST(ca_var_sym_created, undefined_attributes)
 
     ca_var_sym var(std::move(vs), range());
 
-    auto res = var.get_undefined_attributed_symbols(eval_ctx);
+    std::set<context::id_index> references;
+    EXPECT_FALSE(var.get_undefined_attributed_symbols(references, eval_ctx));
 
-    ASSERT_EQ(res.size(), 0U);
+    EXPECT_EQ(references.size(), 0U);
 }
 
 TEST(ca_var_sym, invalid_definitions)

@@ -39,7 +39,7 @@ public:
 
     ca_string(semantics::concat_chain value, ca_expr_ptr duplication_factor, substring_t substring, range expr_range);
 
-    undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
+    bool get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const override;
 
     void resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags) override;
 

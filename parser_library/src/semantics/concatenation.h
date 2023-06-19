@@ -119,8 +119,9 @@ struct concatenation_point
 
     static const var_sym_conc* find_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
-    static std::set<context::id_index> get_undefined_attributed_symbols(
-        const concat_chain& chain, const expressions::evaluation_context& eval_ctx);
+    static bool get_undefined_attributed_symbols(std::set<context::id_index>& symbols,
+        const concat_chain& chain,
+        const expressions::evaluation_context& eval_ctx);
 
     explicit concatenation_point(char_str_conc v)
         : value(std::move(v))

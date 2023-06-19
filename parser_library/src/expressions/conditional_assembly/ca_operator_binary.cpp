@@ -33,11 +33,13 @@ ca_binary_operator::ca_binary_operator(
     , right_expr(std::move(right_expr))
 {}
 
-undef_sym_set ca_binary_operator::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+bool ca_binary_operator::get_undefined_attributed_symbols(
+    undef_sym_set& symbols, const evaluation_context& eval_ctx) const
 {
-    auto tmp = left_expr->get_undefined_attributed_symbols(eval_ctx);
-    tmp.merge(right_expr->get_undefined_attributed_symbols(eval_ctx));
-    return tmp;
+    bool result = false;
+    result |= left_expr->get_undefined_attributed_symbols(symbols, eval_ctx);
+    result |= right_expr->get_undefined_attributed_symbols(symbols, eval_ctx);
+    return result;
 }
 
 void ca_binary_operator::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)
@@ -79,8 +81,10 @@ ca_function_binary_operator::ca_function_binary_operator(ca_expr_ptr left_expr,
 {}
 
 // Detects (T'&VAR EQ 'O') condition
-std::optional<undef_sym_set> t_attr_special_case(
-    const expressions::ca_expression* left, const expressions::ca_expression* right, const evaluation_context& eval_ctx)
+std::optional<bool> t_attr_special_case(undef_sym_set& symbols,
+    const expressions::ca_expression* left,
+    const expressions::ca_expression* right,
+    const evaluation_context& eval_ctx)
 {
     const expressions::ca_symbol_attribute* t_attr = nullptr;
     const expressions::ca_string* o_string = nullptr;
@@ -99,27 +103,29 @@ std::optional<undef_sym_set> t_attr_special_case(
     if (!basic)
         return std::nullopt;
 
-    undef_sym_set deps = o_string->get_undefined_attributed_symbols(eval_ctx);
+    bool result = false;
+    result |= o_string->get_undefined_attributed_symbols(symbols, eval_ctx);
     for (const auto& expr : basic->subscript)
-        deps.merge(expr->get_undefined_attributed_symbols(eval_ctx));
+        result |= expr->get_undefined_attributed_symbols(symbols, eval_ctx);
 
-    if (!deps.empty())
-        return deps;
+    if (result)
+        return result;
 
     if (auto v = o_string->evaluate(eval_ctx); v.type != context::SET_t_enum::C_TYPE || v.access_c() != "O")
         return std::nullopt;
 
-    return deps;
+    return result;
 }
 
-undef_sym_set ca_function_binary_operator::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+bool ca_function_binary_operator::get_undefined_attributed_symbols(
+    undef_sym_set& symbols, const evaluation_context& eval_ctx) const
 {
     if (is_relational() && m_expr_ctx.parent_expr_kind == context::SET_t_enum::B_TYPE)
     {
-        if (auto special = t_attr_special_case(left_expr.get(), right_expr.get(), eval_ctx); special.has_value())
-            return std::move(special).value();
+        if (auto special = t_attr_special_case(symbols, left_expr.get(), right_expr.get(), eval_ctx))
+            return *special;
     }
-    return ca_binary_operator::get_undefined_attributed_symbols(eval_ctx);
+    return ca_binary_operator::get_undefined_attributed_symbols(symbols, eval_ctx);
 }
 
 void ca_function_binary_operator::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)

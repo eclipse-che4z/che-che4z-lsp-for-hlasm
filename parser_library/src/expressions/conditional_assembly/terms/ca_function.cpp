@@ -47,14 +47,14 @@ ca_function::ca_function(context::id_index function_name,
     , duplication_factor(std::move(duplication_factor))
 {}
 
-undef_sym_set ca_function::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+bool ca_function::get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const
 {
-    undef_sym_set ret;
+    bool result = false;
     for (auto&& expr : parameters)
-        ret.merge(expr->get_undefined_attributed_symbols(eval_ctx));
+        result |= expr->get_undefined_attributed_symbols(symbols, eval_ctx);
     if (duplication_factor)
-        ret.merge(duplication_factor->get_undefined_attributed_symbols(eval_ctx));
-    return ret;
+        result |= duplication_factor->get_undefined_attributed_symbols(symbols, eval_ctx);
+    return result;
 }
 
 void ca_function::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)

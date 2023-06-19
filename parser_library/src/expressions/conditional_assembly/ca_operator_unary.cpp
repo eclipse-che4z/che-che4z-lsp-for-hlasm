@@ -27,9 +27,10 @@ ca_unary_operator::ca_unary_operator(ca_expr_ptr expr, context::SET_t_enum expr_
     , expr(std::move(expr))
 {}
 
-undef_sym_set ca_unary_operator::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+bool ca_unary_operator::get_undefined_attributed_symbols(
+    undef_sym_set& symbols, const evaluation_context& eval_ctx) const
 {
-    return expr->get_undefined_attributed_symbols(eval_ctx);
+    return expr->get_undefined_attributed_symbols(symbols, eval_ctx);
 }
 
 void ca_unary_operator::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)

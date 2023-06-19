@@ -27,7 +27,8 @@ bool statement_provider::try_trigger_attribute_lookahead(const semantics::instru
     expressions::evaluation_context eval_ctx,
     processing::processing_state_listener& listener)
 {
-    auto references = process_instruction(instruction, eval_ctx);
+    std::set<context::id_index> references;
+    process_instruction(references, instruction, eval_ctx);
 
     if (references.empty())
         return false;
@@ -52,12 +53,12 @@ bool statement_provider::try_trigger_attribute_lookahead(const context::hlasm_st
     {
         label = &res_stmt->label_ref();
 
-        references.merge(process_operands(res_stmt->operands_ref(), eval_ctx));
+        process_operands(references, res_stmt->operands_ref(), eval_ctx);
     }
     else
         return false;
 
-    references.merge(process_label(*label, eval_ctx));
+    process_label(references, *label, eval_ctx);
 
     if (references.empty())
         return false;
@@ -76,58 +77,61 @@ void statement_provider::trigger_attribute_lookahead(std::set<context::id_index>
     listener.start_lookahead(lookahead_start_data(std::move(references), statement_position, std::move(snapshot)));
 }
 
-std::set<context::id_index> statement_provider::process_label(
-    const semantics::label_si& label, const expressions::evaluation_context& eval_ctx)
+bool statement_provider::process_label(std::set<context::id_index>& symbols,
+    const semantics::label_si& label,
+    const expressions::evaluation_context& eval_ctx)
 {
     switch (label.type)
     {
         case semantics::label_si_type::CONC:
             return semantics::concatenation_point::get_undefined_attributed_symbols(
-                std::get<semantics::concat_chain>(label.value), eval_ctx);
+                symbols, std::get<semantics::concat_chain>(label.value), eval_ctx);
         case semantics::label_si_type::VAR:
             return expressions::ca_var_sym::get_undefined_attributed_symbols_vs(
-                std::get<semantics::vs_ptr>(label.value), eval_ctx);
+                symbols, std::get<semantics::vs_ptr>(label.value), eval_ctx);
         default:
-            return {};
+            return false;
     }
 }
 
-std::set<context::id_index> statement_provider::process_instruction(
-    const semantics::instruction_si& instruction, const expressions::evaluation_context& eval_ctx)
+bool statement_provider::process_instruction(std::set<context::id_index>& symbols,
+    const semantics::instruction_si& instruction,
+    const expressions::evaluation_context& eval_ctx)
 {
     if (instruction.type != semantics::instruction_si_type::CONC)
-        return {};
+        return false;
 
     const auto& chain = std::get<semantics::concat_chain>(instruction.value);
 
-    return semantics::concatenation_point::get_undefined_attributed_symbols(chain, eval_ctx);
+    return semantics::concatenation_point::get_undefined_attributed_symbols(symbols, chain, eval_ctx);
 }
 
-std::set<context::id_index> statement_provider::process_operands(
-    const semantics::operands_si& operands, const expressions::evaluation_context& eval_ctx)
+bool statement_provider::process_operands(std::set<context::id_index>& symbols,
+    const semantics::operands_si& operands,
+    const expressions::evaluation_context& eval_ctx)
 {
-    std::set<context::id_index> ret;
+    bool result = false;
     for (const auto& op : operands.value)
     {
         switch (op->type)
         {
             case semantics::operand_type::MODEL:
-                ret.merge(semantics::concatenation_point::get_undefined_attributed_symbols(
-                    op->access_model()->chain, eval_ctx));
+                result |= semantics::concatenation_point::get_undefined_attributed_symbols(
+                    symbols, op->access_model()->chain, eval_ctx);
                 break;
             case semantics::operand_type::MAC:
                 if (op->access_mac()->kind == semantics::mac_kind::CHAIN)
-                    ret.merge(semantics::concatenation_point::get_undefined_attributed_symbols(
-                        op->access_mac()->access_chain()->chain, eval_ctx));
+                    result |= semantics::concatenation_point::get_undefined_attributed_symbols(
+                        symbols, op->access_mac()->access_chain()->chain, eval_ctx);
                 break;
             case semantics::operand_type::CA:
-                ret.merge(op->access_ca()->get_undefined_attributed_symbols(eval_ctx));
+                result |= op->access_ca()->get_undefined_attributed_symbols(symbols, eval_ctx);
                 break;
             default:
                 break;
         }
     }
-    return ret;
+    return result;
 }
 
 } // namespace hlasm_plugin::parser_library::processing

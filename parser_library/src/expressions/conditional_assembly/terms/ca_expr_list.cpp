@@ -31,12 +31,12 @@ ca_expr_list::ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range,
     , parenthesized(parenthesized)
 {}
 
-undef_sym_set ca_expr_list::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+bool ca_expr_list::get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const
 {
-    undef_sym_set tmp;
+    bool result = false;
     for (auto&& expr : expr_list)
-        tmp.merge(expr->get_undefined_attributed_symbols(eval_ctx));
-    return tmp;
+        result |= expr->get_undefined_attributed_symbols(symbols, eval_ctx);
+    return result;
 }
 
 bool is_symbol(const ca_expr_ptr& expr) { return dynamic_cast<const ca_symbol*>(expr.get()) != nullptr; }

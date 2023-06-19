@@ -42,7 +42,7 @@ public:
     ca_symbol_attribute(
         semantics::literal_si lit, context::data_attr_kind attribute, range expr_range, range symbol_range);
 
-    undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
+    bool get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const override;
 
     void resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags) override;
 

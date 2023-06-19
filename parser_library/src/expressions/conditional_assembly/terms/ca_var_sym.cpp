@@ -26,26 +26,27 @@ ca_var_sym::ca_var_sym(semantics::vs_ptr symbol, range expr_range)
     , symbol(std::move(symbol))
 {}
 
-undef_sym_set ca_var_sym::get_undefined_attributed_symbols_vs(
-    const semantics::vs_ptr& symbol, const evaluation_context& eval_ctx)
+bool ca_var_sym::get_undefined_attributed_symbols_vs(
+    undef_sym_set& symbols, const semantics::vs_ptr& symbol, const evaluation_context& eval_ctx)
 {
-    undef_sym_set tmp;
+    bool result = false;
+
     for (auto&& expr : symbol->subscript)
-        tmp.merge(expr->get_undefined_attributed_symbols(eval_ctx));
+        result |= expr->get_undefined_attributed_symbols(symbols, eval_ctx);
 
     if (symbol->created)
     {
         auto created = symbol->access_created();
         for (auto&& point : created->created_name)
             if (const auto* var = std::get_if<semantics::var_sym_conc>(&point.value))
-                tmp.merge(get_undefined_attributed_symbols_vs(var->symbol, eval_ctx));
+                result |= get_undefined_attributed_symbols_vs(symbols, var->symbol, eval_ctx);
     }
-    return tmp;
+    return result;
 }
 
-undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+bool ca_var_sym::get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const
 {
-    return get_undefined_attributed_symbols_vs(symbol, eval_ctx);
+    return get_undefined_attributed_symbols_vs(symbols, symbol, eval_ctx);
 }
 
 void ca_var_sym::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)

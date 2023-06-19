@@ -29,7 +29,7 @@ public:
 
     ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, context::SET_t_enum expr_kind, range expr_range);
 
-    undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
+    bool get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const override;
 
     void resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags) override;
 
@@ -69,7 +69,7 @@ public:
         range expr_range,
         context::SET_t_enum parent_expr_kind = context::SET_t_enum::UNDEF_TYPE);
 
-    undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
+    bool get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const override;
 
     void resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags) override;
 
