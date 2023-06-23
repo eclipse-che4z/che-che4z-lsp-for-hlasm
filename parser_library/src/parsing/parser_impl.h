@@ -110,7 +110,6 @@ protected:
     void enable_continuation();
     void disable_continuation();
     bool is_self_def();
-    bool is_var_def();
 
     bool allow_ca_string() const { return ca_string_enabled; }
     void enable_ca_string() { ca_string_enabled = true; }
@@ -152,9 +151,6 @@ protected:
     semantics::collector collector;
     semantics::range_provider provider;
 
-    bool MACH();
-    bool ASM();
-    bool DAT();
     bool ALIAS();
     bool END();
     bool NOT(const antlr4::Token* token) const;
@@ -191,7 +187,8 @@ struct parser_holder
     virtual void op_rem_body_noop() const = 0;
     virtual void op_rem_body_ignored() const = 0;
     virtual void op_rem_body_deferred() const = 0;
-    virtual void lookahead_operands_and_remarks() const = 0;
+    virtual void lookahead_operands_and_remarks_asm() const = 0;
+    virtual void lookahead_operands_and_remarks_dat() const = 0;
 
     virtual semantics::op_rem op_rem_body_mac_r() const = 0;
     virtual semantics::operand_list macro_ops() const = 0;

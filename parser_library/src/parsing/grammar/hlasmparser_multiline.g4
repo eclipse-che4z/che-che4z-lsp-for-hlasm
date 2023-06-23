@@ -159,11 +159,8 @@ first_part
 		collector.add_hl_symbol(token_info(provider.get_range($PROCESS),hl_scopes::instruction));
 	};
 
-operand_field_rest
-	: (~EOF)*;
-
 lab_instr returns [std::optional<std::string> op_text, range op_range]
-	: first_part operand_field_rest EOF
+	: first_part (SPACE (~EOF)*)? EOF
 	{
 		if (!$first_part.ctx->exception)
 		{

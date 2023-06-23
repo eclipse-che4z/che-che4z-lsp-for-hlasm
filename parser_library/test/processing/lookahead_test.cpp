@@ -190,6 +190,25 @@ TEST(lookahead, forward_jump_before_continued_comment)
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
+TEST(lookahead, jump_to_incomplete_instruction)
+{
+    std::string input(
+        R"(
+&A       SETC  'P'
+         AGO   .A
+         MNOTE '123'
+         AGO   .END
+.A       ANO&A
+.END     END
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
 TEST(attribute_lookahead, lookup_triggered)
 {
     std::string input("L'X");

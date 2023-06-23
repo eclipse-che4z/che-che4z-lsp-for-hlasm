@@ -270,6 +270,16 @@ void opencode_provider::generate_continuation_error_messages(diagnostic_op_consu
     }
 }
 
+namespace {
+bool operands_relevant_in_lookahead(bool has_label, const processing_status& status)
+{
+    static constexpr context::id_index EQU("EQU");
+    return status.first.form == processing_form::ASM && status.second.value == context::id_storage::well_known::COPY
+        || status.first.form == processing_form::ASM && status.second.value == EQU && has_label
+        || status.first.form == processing_form::DAT && has_label;
+}
+} // namespace
+
 std::shared_ptr<const context::hlasm_statement> opencode_provider::process_lookahead(const statement_processor& proc,
     semantics::collector& collector,
     std::pair<std::optional<std::string>, range> operands)
@@ -280,21 +290,26 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
     auto proc_status =
         proc.get_processing_status(proc.resolve_instruction(current_instr), current_instr.field_range).value();
 
-    m_ctx->hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
+    m_ctx->hlasm_ctx->set_source_position(current_instr.field_range.start);
 
     const auto& [op_text, op_range] = operands;
 
-    if (op_text
-        && proc_status.first.form != processing_form::IGNORED
-        // optimization : if statement has no label and is not COPY, do not even parse operands
-        && (collector.has_label() || collector.current_instruction().type != semantics::instruction_si_type::ORD
-            || std::get<context::id_index>(collector.current_instruction().value)
-                == context::id_storage::well_known::COPY))
+    if (op_text && operands_relevant_in_lookahead(collector.has_label(), proc_status))
+    // optimization : if statement has no label and is not COPY, do not even parse operands)
+    // optimization : only COPY, EQU and DC/DS/DXD statements actually need operands in lookahead mode
     {
         const auto& h = prepare_operand_parser(
             *op_text, *m_ctx->hlasm_ctx, nullptr, semantics::range_provider(), op_range, proc_status, true);
 
-        h.lookahead_operands_and_remarks();
+        switch (proc_status.first.form)
+        {
+            case processing_form::ASM:
+                h.lookahead_operands_and_remarks_asm();
+                break;
+            case processing_form::DAT:
+                h.lookahead_operands_and_remarks_dat();
+                break;
+        }
 
         h.parser->get_collector().clear_hl_symbols();
         collector.append_operand_field(std::move(h.parser->get_collector()));

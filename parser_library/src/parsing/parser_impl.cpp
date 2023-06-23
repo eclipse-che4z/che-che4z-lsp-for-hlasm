@@ -92,7 +92,8 @@ struct parser_holder_impl final : parser_holder
     void op_rem_body_noop() const override { get_parser().op_rem_body_noop(); }
     void op_rem_body_ignored() const override { get_parser().op_rem_body_ignored(); }
     void op_rem_body_deferred() const override { get_parser().op_rem_body_deferred(); }
-    void lookahead_operands_and_remarks() const override { get_parser().lookahead_operands_and_remarks(); }
+    void lookahead_operands_and_remarks_asm() const override { get_parser().lookahead_operands_and_remarks_asm(); }
+    void lookahead_operands_and_remarks_dat() const override { get_parser().lookahead_operands_and_remarks_dat(); }
 
     semantics::op_rem op_rem_body_mac_r() const override { return std::move(get_parser().op_rem_body_mac_r()->line); }
     semantics::operand_list macro_ops() const override { return std::move(get_parser().macro_ops()->list); }
@@ -138,14 +139,6 @@ bool parser_impl::is_self_def()
     std::string tmp(_input->LT(1)->getText());
     utils::to_upper(tmp);
     return tmp == "B" || tmp == "X" || tmp == "C" || tmp == "G";
-}
-
-bool parser_impl::is_var_def()
-{
-    auto [_, opcode] = *proc_status;
-    using wk = id_storage::well_known;
-    return opcode.value == wk::GBLA || opcode.value == wk::GBLB || opcode.value == wk::GBLC || opcode.value == wk::LCLA
-        || opcode.value == wk::LCLB || opcode.value == wk::LCLC;
 }
 
 self_def_t parser_impl::parse_self_def_term(const std::string& option, const std::string& value, range term_range)
@@ -311,24 +304,6 @@ void parser_impl::resolve_concat_chain(const semantics::concat_chain& chain) con
     });
     for (const auto& e : chain)
         e.resolve(diags);
-}
-
-bool parser_impl::MACH()
-{
-    auto& [format, _] = *proc_status;
-    return format.form == processing::processing_form::MACH;
-}
-
-bool parser_impl::ASM()
-{
-    auto& [format, _] = *proc_status;
-    return format.form == processing::processing_form::ASM;
-}
-
-bool parser_impl::DAT()
-{
-    auto& [format, _] = *proc_status;
-    return format.form == processing::processing_form::DAT;
 }
 
 bool parser_impl::ALIAS()

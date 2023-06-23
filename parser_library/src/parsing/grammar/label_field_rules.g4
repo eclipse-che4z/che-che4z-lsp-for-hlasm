@@ -126,7 +126,7 @@ l_ch returns [std::string value]
 	| LPAR													{$value = "(";}
 	| RPAR													{$value = ")";};
 
-common_ch_v [concat_chain* chain]
+l_ch_v [concat_chain* chain]
 	: ASTERISK												{$chain->emplace_back(char_str_conc("*", provider.get_range($ASTERISK)));}
 	| MINUS													{$chain->emplace_back(char_str_conc("-", provider.get_range($MINUS)));}
 	| PLUS													{$chain->emplace_back(char_str_conc("+", provider.get_range($PLUS)));}
@@ -145,13 +145,10 @@ common_ch_v [concat_chain* chain]
 		|
 		var_symbol											{$chain->emplace_back(var_sym_conc(std::move($var_symbol.vs)));}
 	)
-	;
-
-l_ch_v [concat_chain* chain]
-	: common_ch_v[$chain]
 	| COMMA													{$chain->emplace_back(char_str_conc(",", provider.get_range($COMMA)));}
 	| LPAR													{$chain->emplace_back(char_str_conc("(", provider.get_range($LPAR)));}
-	| RPAR													{$chain->emplace_back(char_str_conc(")", provider.get_range($RPAR)));};
+	| RPAR													{$chain->emplace_back(char_str_conc(")", provider.get_range($RPAR)));}
+	;
 
 l_string returns [std::string value]
 	: l_ch													{$value = std::move($l_ch.value);}

@@ -853,7 +853,7 @@ TEST(macro, invalid_invoked)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "E049" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
 
 TEST(macro, invalid_prototype)

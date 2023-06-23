@@ -24,7 +24,24 @@ op_ch returns [std::string value]
 	| ATTR									{$value = "'"; };
 
 op_ch_v [concat_chain* chain]
-	: common_ch_v[$chain]
+	: ASTERISK												{$chain->emplace_back(char_str_conc("*", provider.get_range($ASTERISK)));}
+	| MINUS													{$chain->emplace_back(char_str_conc("-", provider.get_range($MINUS)));}
+	| PLUS													{$chain->emplace_back(char_str_conc("+", provider.get_range($PLUS)));}
+	| LT													{$chain->emplace_back(char_str_conc("<", provider.get_range($LT)));}
+	| GT													{$chain->emplace_back(char_str_conc(">", provider.get_range($GT)));}
+	| SLASH													{$chain->emplace_back(char_str_conc("/", provider.get_range($SLASH)));}
+	| EQUALS												{$chain->emplace_back(equals_conc(provider.get_range($EQUALS)));}
+	| VERTICAL												{$chain->emplace_back(char_str_conc("|", provider.get_range($VERTICAL)));}
+	| IDENTIFIER											{$chain->emplace_back(char_str_conc($IDENTIFIER->getText(), provider.get_range($IDENTIFIER)));}
+	| NUM													{$chain->emplace_back(char_str_conc($NUM->getText(), provider.get_range($NUM)));}
+	| ORDSYMBOL												{$chain->emplace_back(char_str_conc($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL)));}
+	| DOT													{$chain->emplace_back(dot_conc(provider.get_range($DOT)));}
+	|
+	(
+		l=AMPERSAND r=AMPERSAND								{$chain->emplace_back(char_str_conc("&&", provider.get_range($l,$r)));}
+		|
+		var_symbol											{$chain->emplace_back(var_sym_conc(std::move($var_symbol.vs)));}
+	)
 	| lpar									{$chain->emplace_back(char_str_conc("(", provider.get_range($lpar.ctx->getStart()))); }
 	| rpar									{$chain->emplace_back(char_str_conc(")", provider.get_range($rpar.ctx->getStart()))); }
 	| comma									{$chain->emplace_back(char_str_conc(",", provider.get_range($comma.ctx->getStart()))); }
