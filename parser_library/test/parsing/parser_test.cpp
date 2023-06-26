@@ -36,7 +36,7 @@ protected:
     std::string input;
 };
 
-// 3 instruction statements and 3 EOLLN
+// 3 instruction statements
 TEST_F(library_test, simple)
 {
     std::string tcase = "simple";

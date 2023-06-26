@@ -31,14 +31,6 @@ label locals [concat_chain chain, std::string buffer, bool has_variables = false
 			SLASH|
 			EQUALS|
 			IDENTIFIER|
-			OR|
-			AND|
-			EQ|
-			LE|
-			LTx|
-			GTx|
-			GE|
-			NE|
 			VERTICAL|
 			NUM|
 			ORDSYMBOL
@@ -108,14 +100,6 @@ label_string [concat_chain* chain, std::string* buffer, bool* has_variables, boo
 				EQUALS|
 				ORDSYMBOL|
 				IDENTIFIER|
-				OR|
-				AND|
-				EQ|
-				LE|
-				LTx|
-				GTx|
-				GE|
-				NE|
 				VERTICAL|
 				NUM
 			) {add_label_component($t, *$chain, *$buffer, *$has_variables);}

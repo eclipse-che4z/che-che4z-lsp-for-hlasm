@@ -26,15 +26,11 @@ using namespace hlasm_plugin::parser_library::lexing;
 
 namespace hlasm_plugin::parser_library::parsing {
 namespace {
-bool is_comparative_sign(size_t input)
-{
-    return (input == LT || input == GT || input == EQUALS || input == EQ || input == OR || input == AND || input == LE
-        || input == LTx || input == GTx || input == GE || input == NE);
-}
+bool is_comparative_sign(size_t input) { return input == LT || input == GT || input == EQUALS; }
 
 bool is_sign(size_t input)
 {
-    return (input == ASTERISK || input == MINUS || input == PLUS || is_comparative_sign(input) || input == SLASH);
+    return input == ASTERISK || input == MINUS || input == PLUS || is_comparative_sign(input) || input == SLASH;
 }
 
 // return last symbol before eolln in line
@@ -174,12 +170,10 @@ void parser_error_listener_base::syntaxError(
 
         auto end_index = get_end_index(input_stream, start_index);
 
-        // no eolln, end index at last index of the stream
+        // end index at last index of the stream
         if (end_index == -1)
         {
             end_index = (int)input_stream->size() - 1;
-            // add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0004", "HLASM
-            // plugin", "NO EOLLN - TO DO"); return;
         }
 
         bool sign_followed = true;
