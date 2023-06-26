@@ -385,6 +385,25 @@ void parser_impl::add_diagnostic(diagnostic_op d) const
 context::id_index parser_impl::add_id(std::string s) const { return hlasm_ctx->ids().add(std::move(s)); }
 context::id_index parser_impl::add_id(std::string_view s) const { return hlasm_ctx->ids().add(s); }
 
+void parser_impl::add_label_component(
+    const antlr4::Token* token, semantics::concat_chain& chain, std::string& buffer, bool& has_variables) const
+{
+    auto text = token->getText();
+    buffer.append(text);
+    if (text == ".")
+        chain.emplace_back(dot_conc(provider.get_range(token)));
+    else if (text == "=")
+        chain.emplace_back(equals_conc(provider.get_range(token)));
+    else
+        chain.emplace_back(char_str_conc(std::move(text), provider.get_range(token)));
+}
+void parser_impl::add_label_component(
+    semantics::vs_ptr s, semantics::concat_chain& chain, std::string& buffer, bool& has_variables) const
+{
+    has_variables = true;
+    chain.emplace_back(var_sym_conc(std::move(s)));
+}
+
 parser_holder::~parser_holder() = default;
 
 void parser_holder::prepare_parser(const std::string& text,

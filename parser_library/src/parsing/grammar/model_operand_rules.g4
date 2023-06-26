@@ -17,7 +17,19 @@ parser grammar model_operand_rules;
 
 
 op_ch returns [std::string value]
-	: common_ch								{$value = std::move($common_ch.value);}
+	: ASTERISK								{$value = "*";}
+	| MINUS									{$value = "-";}
+	| PLUS									{$value = "+";}
+	| LT									{$value = "<";}
+	| GT									{$value = ">";}
+	| SLASH									{$value = "/";}
+	| EQUALS								{$value = "=";}
+	| AMPERSAND AMPERSAND					{$value = "&&";}
+	| VERTICAL								{$value = "|";}
+	| IDENTIFIER							{$value = $IDENTIFIER->getText();}
+	| NUM									{$value = $NUM->getText();}
+	| ORDSYMBOL								{$value = $ORDSYMBOL->getText();}
+	| DOT									{$value = ".";}
 	| lpar									{$value = "("; }
 	| rpar									{$value = ")"; }
 	| comma									{$value = ","; }

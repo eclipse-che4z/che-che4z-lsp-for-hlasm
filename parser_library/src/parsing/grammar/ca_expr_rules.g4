@@ -217,7 +217,9 @@ subscript returns [std::vector<ca_expr_ptr> value]
 	{
 		$value = std::move($expr_comma_c.ca_exprs);
 	}
-	|;
+	|
+	{_input->LA(1) != LPAR }?
+	;
 
 
 expr_comma_c returns [std::vector<ca_expr_ptr> ca_exprs]
@@ -388,7 +390,7 @@ substring returns [expressions::ca_string::substring_t value]
 ca_string returns [ca_expr_ptr ca_expr]
 	:
 	(
-		ca_dupl_factor (apostrophe|attr) string_ch_v_c l_apo substring
+		ca_dupl_factor (apostrophe|attr) string_ch_v_c (APOSTROPHE|ATTR) substring
 		{
 			auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $substring.ctx->getStop());
 			auto next = std::make_unique<expressions::ca_string>(std::move($string_ch_v_c.chain), std::move($ca_dupl_factor.value), std::move($substring.value), r);

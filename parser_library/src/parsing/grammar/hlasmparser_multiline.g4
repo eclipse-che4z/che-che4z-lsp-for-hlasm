@@ -48,6 +48,7 @@ deferred_operand_rules;
 	#include "expressions/data_definition.h"
 	#include "semantics/operand_impls.h"
 	#include "utils/string_operations.h"
+	#include "utils/truth_table.h"
 
 	namespace hlasm_plugin::parser_library::parsing
 	{
@@ -144,32 +145,49 @@ codepage: id VERTICAL id string;
 
 program : EOF;
 
-
-first_part 
-	: label SPACE instruction 
-	{
-		_localctx->exception = std::move($instruction.ctx->exception);
-	}
-	| PROCESS 
+lab_instr returns [std::optional<std::string> op_text, range op_range]
+	: PROCESS (SPACE (~EOF)*)? EOF
 	{
 		collector.set_label_field(provider.get_range($PROCESS));
 		collector.set_instruction_field(
 			parse_identifier($PROCESS->getText(),provider.get_range($PROCESS)),
 			provider.get_range( $PROCESS));
 		collector.add_hl_symbol(token_info(provider.get_range($PROCESS),hl_scopes::instruction));
-	};
 
-lab_instr returns [std::optional<std::string> op_text, range op_range]
-	: first_part (SPACE (~EOF)*)? EOF
+		auto op_index = $PROCESS->getTokenIndex()+1;
+		$op_text = _input->getText(misc::Interval(op_index,_input->size()-1));
+		$op_range = provider.get_range(_input->get(op_index),_input->get(_input->size()-1));
+	}
+	| label SPACE instruction (SPACE (~EOF)*)? EOF
 	{
-		if (!$first_part.ctx->exception)
+		if (!$instruction.ctx->exception)
 		{
-			auto op_index = $first_part.stop->getTokenIndex()+1;
+			auto op_index = $instruction.stop->getTokenIndex()+1;
 			$op_text = _input->getText(misc::Interval(op_index,_input->size()-1));
 			$op_range = provider.get_range(_input->get(op_index),_input->get(_input->size()-1));
 		}
 	}
-	| SPACE? EOF
+	| SPACE
+	(
+		instruction (SPACE (~EOF)*)? EOF
+		{
+			collector.set_label_field(provider.get_empty_range( _localctx->getStart()));
+			if (!$instruction.ctx->exception)
+			{
+				auto op_index = $instruction.stop->getTokenIndex()+1;
+				$op_text = _input->getText(misc::Interval(op_index,_input->size()-1));
+				$op_range = provider.get_range(_input->get(op_index),_input->get(_input->size()-1));
+			}
+		}
+		|
+		EOF
+		{
+			collector.set_label_field(provider.get_range( _localctx));
+			collector.set_instruction_field(provider.get_range( _localctx));
+			collector.set_operand_remark_field(provider.get_range( _localctx));
+		}
+	)
+	| EOF
 	{
 		collector.set_label_field(provider.get_range( _localctx));
 		collector.set_instruction_field(provider.get_range( _localctx));

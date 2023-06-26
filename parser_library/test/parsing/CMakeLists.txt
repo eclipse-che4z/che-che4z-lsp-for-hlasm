@@ -12,6 +12,7 @@
 
 target_sources(library_test PRIVATE
 	deferred_statement_test.cpp
+	label_parsing_test.cpp
 	parser_model_test.cpp
 	parser_range_test.cpp
 	parser_test.cpp

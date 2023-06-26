@@ -161,6 +161,11 @@ protected:
     context::id_index add_id(std::string s) const;
     context::id_index add_id(std::string_view s) const;
 
+    void add_label_component(
+        const antlr4::Token* token, semantics::concat_chain& chain, std::string& buffer, bool& has_variables) const;
+    void add_label_component(
+        semantics::vs_ptr s, semantics::concat_chain& chain, std::string& buffer, bool& has_variables) const;
+
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;
     diagnostic_op_consumer* diagnoser_ = nullptr;

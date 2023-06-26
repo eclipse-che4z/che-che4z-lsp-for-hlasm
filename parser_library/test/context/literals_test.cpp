@@ -504,7 +504,7 @@ TEST(literals, invalid_loctr_references)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0012", "S0012", "S0009", "S0009" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0012", "S0012", "S0005", "S0005" }));
 }
 
 TEST(literals, part_of_expression)

@@ -865,9 +865,8 @@ $        MAC   $
 _        MAC   _
 A_       MAC   A_
 =        MAC   =
-* TODO: not supported because of outstanding label parsing issue
-* =C' '    MAC   =C' '
-* =C'a'    MAC   =C'A'
+=C' '    MAC   =C' '
+=C'a'    MAC   =C'A'
 =A(0)    MAC   =A(0)
 =A(0)    MAC   =A(0+0)
          END
@@ -888,8 +887,8 @@ A_       MAC   A_
             "_ = M M M",
             "A_ = M M M",
             "= = M M M",
-            /* TODO "=C' ' = M M M", */
-            /* TODO "=C'a' = C M M", */
+            "=C'' '' = M M M",
+            "=C''a'' = M C C",
             "=A(0) = M M M",
             "=A(0) = M A A",
         }));
