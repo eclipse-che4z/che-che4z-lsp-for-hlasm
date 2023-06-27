@@ -227,7 +227,7 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
 
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("hlasm", new HLASMVirtualFileContentProvider(client)));
 
-    context.subscriptions.push(vscode.commands.registerCommand("extension.hlasm-plugin.downloadDependencies", (...args: any[]) => downloadDependencies(context, telemetry, ...args)));
+    context.subscriptions.push(vscode.commands.registerCommand("extension.hlasm-plugin.downloadDependencies", (...args: any[]) => downloadDependencies(context, telemetry, client.outputChannel, ...args)));
 
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.createCompleteConfig', ConfigurationsHandler.createCompleteConfig));
 

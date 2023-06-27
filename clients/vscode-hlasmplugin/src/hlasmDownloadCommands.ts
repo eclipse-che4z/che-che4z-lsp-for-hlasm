@@ -654,7 +654,7 @@ class ProgressReporter implements StageProgressReporter {
     }
 }
 
-export async function downloadDependencies(context: vscode.ExtensionContext, telemetry: Telemetry, ...args: any[]) {
+export async function downloadDependencies(context: vscode.ExtensionContext, telemetry: Telemetry, channel: vscode.OutputChannel, ...args: any[]) {
     try {
         telemetry.reportEvent("downloadDependencies/started");
 
@@ -704,7 +704,6 @@ export async function downloadDependencies(context: vscode.ExtensionContext, tel
         if (result.failed.length > 0) // TODO: offer re-run?
             vscode.window.showErrorMessage(result.failed.length + " jobs out of " + result.total + " failed", showFailedJobs).then((choice) => {
                 if (choice !== showFailedJobs) return;
-                const channel: vscode.OutputChannel = context.extension.exports.getExtension().outputChannel;
                 channel.appendLine("The following data sets could not have been downloaded:");
                 result.failed.forEach(x => { channel.append('  '); channel.appendLine(x.dsn) });
                 channel.show();
