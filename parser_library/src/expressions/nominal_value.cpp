@@ -63,7 +63,9 @@ dependency_collector nominal_value_exprs::get_dependencies(dependency_solver& so
         else if (std::holds_alternative<address_nominal>(e))
             list = std::get<address_nominal>(e).get_dependencies(solver);
 
-        conjunction.undefined_symbols.insert(list.undefined_symbols.begin(), list.undefined_symbols.end());
+        conjunction.undefined_symbols.merge(std::move(list.undefined_symbols));
+        for (const auto& [_, sym] : list.undefined_attr_refs)
+            conjunction.undefined_symbols.emplace(sym);
     }
     return conjunction;
 }

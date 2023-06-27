@@ -342,3 +342,45 @@ TEST(DC, correctly_count_long_utf8_chars)
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LENE"), 1);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LENU"), 2);
 }
+
+TEST(DC, validate_attribute_in_nominal)
+{
+    std::string input = R"(
+    DC A(L'X)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E010" }));
+}
+
+TEST(DC, validate_attribute_in_nominal_self_reference)
+{
+    std::string input = R"(
+C        CSECT
+         DS    C
+H        DS    CL(H-C)
+         DC    A(L'H)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(DC, invalid_self_reference)
+{
+    std::string input = R"(
+H        DS    CL(L'H)
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E033" }));
+}
