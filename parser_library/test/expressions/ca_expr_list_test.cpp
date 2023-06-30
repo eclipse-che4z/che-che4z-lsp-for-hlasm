@@ -14,6 +14,8 @@
 
 #include "gmock/gmock.h"
 
+#include "../common_testing.h"
+#include "expressions/conditional_assembly/ca_operator_binary.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_expr_list.h"
 #include "expressions/conditional_assembly/terms/ca_function.h"
@@ -127,7 +129,7 @@ TEST(ca_expr_list, unfinished_expressions)
         ca_expr_list expr_list({}, range(), true);
         expr_list.resolve_expression_tree({ context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, true }, diags);
 
-        EXPECT_FALSE(diags.diags.empty());
+        EXPECT_TRUE(matches_message_codes(diags.diags, { "CE003" }));
     }
     // (NOT)
     {
@@ -140,7 +142,7 @@ TEST(ca_expr_list, unfinished_expressions)
         ca_expr_list expr_list(std::move(list), range(), true);
         expr_list.resolve_expression_tree({ context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, true }, diags);
 
-        EXPECT_FALSE(diags.diags.empty());
+        EXPECT_TRUE(matches_message_codes(diags.diags, { "CE003" }));
     }
     // (1 AND)
     {
@@ -156,7 +158,7 @@ TEST(ca_expr_list, unfinished_expressions)
         ca_expr_list expr_list(std::move(list), range(), true);
         expr_list.resolve_expression_tree({ context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, true }, diags);
 
-        EXPECT_FALSE(diags.diags.empty());
+        EXPECT_TRUE(matches_message_codes(diags.diags, { "CE003" }));
     }
     // (1 AND 1 EQ)
     {
@@ -176,6 +178,31 @@ TEST(ca_expr_list, unfinished_expressions)
         ca_expr_list expr_list(std::move(list), range(), true);
         expr_list.resolve_expression_tree({ context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, true }, diags);
 
-        EXPECT_FALSE(diags.diags.empty());
+        EXPECT_TRUE(matches_message_codes(diags.diags, { "CE003" }));
     }
+}
+
+TEST(ca_expr_list, different_return_type)
+{
+    // ((1 AND 1)+1)
+    context::hlasm_context ctx;
+    diagnostic_op_consumer_container diags;
+    evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
+
+    std::vector<ca_expr_ptr> inner_list;
+    inner_list.emplace_back(std::make_unique<ca_constant>(1, range()));
+    inner_list.emplace_back(std::make_unique<ca_symbol>(context::id_index("AND"), range()));
+    inner_list.emplace_back(std::make_unique<ca_constant>(1, range()));
+
+    std::vector<ca_expr_ptr> list;
+    list.emplace_back(std::make_unique<ca_basic_binary_operator<ca_add>>(
+        std::make_unique<ca_expr_list>(std::move(inner_list), range(), true),
+        std::make_unique<ca_constant>(1, range()),
+        range()));
+
+    ca_expr_list final_expr_list(std::move(list), range(), true);
+    final_expr_list.resolve_expression_tree({ context::SET_t_enum::B_TYPE, context::SET_t_enum::B_TYPE, true }, diags);
+    final_expr_list.evaluate(eval_ctx);
+
+    EXPECT_TRUE(matches_message_codes(diags.diags, { "CE004" }));
 }

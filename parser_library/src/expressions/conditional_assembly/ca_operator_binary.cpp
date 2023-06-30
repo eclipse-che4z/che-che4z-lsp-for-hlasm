@@ -46,11 +46,9 @@ void ca_binary_operator::resolve_expression_tree(ca_expression_ctx expr_ctx, dia
 {
     if (expr_kind != expr_ctx.kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
-    else
-    {
-        left_expr->resolve_expression_tree(expr_ctx, diags);
-        right_expr->resolve_expression_tree(expr_ctx, diags);
-    }
+
+    left_expr->resolve_expression_tree(expr_ctx, diags);
+    right_expr->resolve_expression_tree(expr_ctx, diags);
 }
 
 bool ca_binary_operator::is_character_expression(character_expression_purpose purpose) const
