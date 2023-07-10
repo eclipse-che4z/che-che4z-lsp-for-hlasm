@@ -52,6 +52,7 @@ public:
     parse_result parse_operand_field(std::string field,
         bool after_substitution,
         semantics::range_provider field_range,
+        size_t logical_column,
         processing::processing_status status,
         diagnostic_op_consumer& add_diag);
 

@@ -466,6 +466,7 @@ semantics::literal_si ca_symbol_attribute::reparse_substituted_literal(
         &add_diag_subst,
         semantics::range_provider(var_range, semantics::adjusting_state::SUBSTITUTION),
         var_range,
+        0,
         processing::processing_status(processing::processing_format(processing::processing_kind::ORDINARY,
                                           processing::processing_form::CA,
                                           processing::operand_occurrence::ABSENT),

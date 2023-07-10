@@ -186,8 +186,15 @@ struct parser_holder
 
     virtual ~parser_holder();
 
-    virtual std::pair<std::optional<std::string>, range> lab_instr() const = 0;
-    virtual std::pair<std::optional<std::string>, range> look_lab_instr() const = 0;
+    struct op_data
+    {
+        std::optional<std::string> op_text;
+        range op_range;
+        size_t op_logical_column;
+    };
+
+    virtual op_data lab_instr() const = 0;
+    virtual op_data look_lab_instr() const = 0;
 
     virtual void op_rem_body_noop() const = 0;
     virtual void op_rem_body_ignored() const = 0;
@@ -209,7 +216,14 @@ struct parser_holder
     virtual void op_rem_body_mach() const = 0;
     virtual void op_rem_body_asm() const = 0;
 
-    virtual std::pair<semantics::op_rem, range> op_rem_body_mac() const = 0;
+    struct mac_op_data
+    {
+        semantics::op_rem operands;
+        range op_range;
+        size_t op_logical_column;
+    };
+
+    virtual mac_op_data op_rem_body_mac() const = 0;
 
     virtual semantics::literal_si literal_reparse() const = 0;
 
@@ -218,6 +232,7 @@ struct parser_holder
         diagnostic_op_consumer* diags,
         semantics::range_provider range_prov,
         range text_range,
+        size_t logical_column,
         const processing::processing_status& proc_status,
         bool unlimited_line) const;
 

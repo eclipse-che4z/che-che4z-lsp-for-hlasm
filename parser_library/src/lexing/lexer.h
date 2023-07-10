@@ -24,7 +24,6 @@
 #include "parser_library_export.h"
 #include "range.h"
 #include "semantics/source_info_processor.h"
-#include "token_factory.h"
 
 
 namespace hlasm_plugin::parser_library::lexing {
@@ -63,7 +62,10 @@ public:
 
     std::string getSourceName() override;
 
-    antlr4::TokenFactory<antlr4::CommonToken>* getTokenFactory() override { return dummy_factory.get(); };
+    antlr4::TokenFactory<antlr4::CommonToken>* getTokenFactory() override
+    {
+        return antlr4::CommonTokenFactory::DEFAULT.get();
+    };
 
     enum Tokens
     {
@@ -93,26 +95,25 @@ public:
     bool is_space() const;
     void set_unlimited_line(bool unlimited_lines);
     // set lexer's input state to file position
-    void set_file_offset(position file_offset, bool process_allowed = false);
+    void set_file_offset(position file_offset, size_t logical_column, bool process_allowed = false);
+
+    const std::vector<size_t>& get_line_limits() const { return line_limits; }
 
 protected:
     // creates token and inserts to input stream
-    void create_token(size_t ttype, size_t channel);
+    void create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNEL);
     // consumes char from input & updates lexer state
     void consume();
 
 private:
-    bool last_char_utf16_long_ = false;
     bool creating_var_symbol_ = false;
     bool creating_attr_ref_ = false;
     bool process_allowed_ = false;
 
     size_t last_token_id_ = 0;
 
-    size_t last_line_pos_ = 0;
-
     std::queue<token_ptr> token_queue_;
-    Ref<antlr4::CommonTokenFactory> dummy_factory;
+    std::vector<size_t> line_limits;
 
     bool double_byte_enabled_ = false;
     bool continuation_enabled_ = true;
@@ -123,7 +124,6 @@ private:
     size_t end_ = 71;
     size_t continue_ = 15;
 
-    std::unique_ptr<token_factory> factory_;
     antlr4::CharStream* input_;
     semantics::source_info_processor* src_proc_;
 
@@ -142,7 +142,7 @@ private:
 
     // captures lexer state at the beginning of a token
     input_state token_start_state_;
-
+    input_state last_line;
 
     bool eof() const;
     bool identifier_divider() const;

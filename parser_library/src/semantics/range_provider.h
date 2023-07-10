@@ -44,6 +44,7 @@ public:
     range original_range;
     std::vector<range> original_operand_ranges;
     std::vector<std::pair<std::pair<size_t, bool>, range>> model_substitutions;
+    std::vector<size_t> line_limits;
     adjusting_state state;
     size_t m_continued_code_line_column = 15;
 
@@ -51,8 +52,10 @@ public:
     explicit range_provider(range original_field_range,
         std::vector<range> original_operand_ranges,
         adjusting_state state,
+        std::vector<size_t> line_limits,
         size_t continued_code_line_column = 15);
-    explicit range_provider(std::vector<std::pair<std::pair<size_t, bool>, range>> model_substitutions);
+    explicit range_provider(
+        std::vector<std::pair<std::pair<size_t, bool>, range>> model_substitutions, std::vector<size_t> line_limits);
     explicit range_provider();
 
     range get_range(const antlr4::Token* start, const antlr4::Token* stop) const;
@@ -66,6 +69,8 @@ public:
 private:
     position adjust_position(position pos, bool end) const;
     position adjust_model_position(position pos, bool end) const;
+
+    size_t get_line_limit(size_t relative_line) const;
 };
 
 template<typename It>

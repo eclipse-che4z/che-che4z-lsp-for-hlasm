@@ -29,6 +29,7 @@
 #include "item_convertors.h"
 #include "lsp/macro_info.h"
 #include "utils/similar.h"
+#include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::lsp {
@@ -690,7 +691,7 @@ completion_list_source lsp_context::complete_instr(const file_info& fi, position
 
     auto& value = std::get<completion_list_instructions>(result);
 
-    value.completed_text = fi.data.get_line(pos.line).substr(0, pos.column);
+    value.completed_text = utils::utf8_substr<false>(fi.data.get_line(pos.line), 0, pos.column).str;
     value.lsp_ctx = this;
 
     if (auto completion_start = value.completed_text.rfind(' '); completion_start == std::string_view::npos)

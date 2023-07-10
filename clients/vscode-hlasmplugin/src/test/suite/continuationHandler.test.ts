@@ -15,11 +15,10 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 
-import { ContinuationHandler } from '../../continuationHandler';
+import { insertContinuation, rearrangeSequenceNumbers, removeContinuation } from '../../continuationHandler';
 import { TextDocumentMock, TextEditorEditMock, TextEditorMock } from '../mocks';
 
 suite('Continuation Handler Test Suite', () => {
-    const handler = new ContinuationHandler();
     const config = vscode.workspace.getConfiguration('hlasm');
 
     test('Insert Continuation Test', () => {
@@ -35,12 +34,12 @@ suite('Continuation Handler Test Suite', () => {
         document.text = edit.text;
 
         // insert new continuation
-        handler.insertContinuation(editor, edit, 15, 5);
+        insertContinuation(editor, edit, 15, 5);
         document.text = edit.text;
         assert.equal(document.text, 'this           X\r\n     ');
 
         // insert continuation on continued line
-        handler.insertContinuation(editor, edit, 15, 5);
+        insertContinuation(editor, edit, 15, 5);
         document.text = edit.text;
         assert.equal(document.text, 'this           X\r\n               X\r\n     ');
     });
@@ -60,7 +59,7 @@ suite('Continuation Handler Test Suite', () => {
         document.text = edit.text;
 
         // insert new continuation
-        handler.insertContinuation(editor, edit, 50, 5);
+        insertContinuation(editor, edit, 50, 5);
         document.text = edit.text;
         assert.equal(document.text, 'label instr arg1,arg3,  comment                   X\r\n     arg2,arg4');
     });
@@ -79,7 +78,7 @@ suite('Continuation Handler Test Suite', () => {
         document.text = edit.text;
 
         // insert new continuation
-        handler.insertContinuation(editor, edit, 10, 5);
+        insertContinuation(editor, edit, 10, 5);
         document.text = edit.text;
         assert.equal(document.text, '    aaa   +\r\n\r\n    bbb   +\r\n     ');
     });
@@ -97,7 +96,7 @@ suite('Continuation Handler Test Suite', () => {
         document.text = edit.text;
 
         // delete existing continuation
-        handler.removeContinuation(editor, edit, 15);
+        removeContinuation(editor, edit, 15);
         document.text = edit.text;
         assert.equal(document.text, 'continuation    ');
 
@@ -106,7 +105,7 @@ suite('Continuation Handler Test Suite', () => {
         editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
 
         // delete non existing continuation - nothing happens
-        handler.removeContinuation(editor, edit, 15);
+        removeContinuation(editor, edit, 15);
         document.text = edit.text;
         assert.equal(document.text, 'continuation    ');
     });
@@ -125,7 +124,7 @@ suite('Continuation Handler Test Suite', () => {
         document.text = edit.text;
 
         // insert new continuation
-        handler.rearrangeSequenceNumbers(editor, edit, 50);
+        rearrangeSequenceNumbers(editor, edit, 50);
         document.text = edit.text;
         assert.equal(document.text, 'label instr arg1,arg2,arg3,arg4   comment          12345678');
     });
@@ -144,7 +143,7 @@ suite('Continuation Handler Test Suite', () => {
         document.text = edit.text;
 
         // insert new continuation
-        handler.rearrangeSequenceNumbers(editor, edit, 50);
+        rearrangeSequenceNumbers(editor, edit, 50);
         document.text = edit.text;
         assert.equal(document.text, 'label instr arg1,arg2,arg3   comment               12345678');
     });

@@ -17,10 +17,11 @@
 using namespace hlasm_plugin::parser_library::lexing;
 using namespace antlr4;
 
-token_stream::token_stream(antlr4::TokenSource* token_source)
+token_stream::token_stream(lexer* token_source)
     : antlr4::BufferedTokenStream(token_source)
     , enabled_cont_(false)
     , needSetup_(true)
+    , token_source(token_source)
 {}
 
 void token_stream::enable_continuation() { enabled_cont_ = true; }
@@ -76,6 +77,7 @@ std::string token_stream::getText(const antlr4::misc::Interval& interval)
     {
         return "";
     }
+
     if (stop >= _tokens.size())
     {
         stop = _tokens.size() - 1;
@@ -83,7 +85,7 @@ std::string token_stream::getText(const antlr4::misc::Interval& interval)
 
     sync(stop);
 
-    std::stringstream ss;
+    std::string ss;
     for (size_t i = start; i <= stop; i++)
     {
         Token* t = _tokens[i].get();
@@ -91,9 +93,9 @@ std::string token_stream::getText(const antlr4::misc::Interval& interval)
         {
             break;
         }
-        ss << t->getText();
+        ss.append(t->getText());
     }
-    return ss.str();
+    return ss;
 }
 
 ssize_t token_stream::adjustSeekIndex(size_t i)

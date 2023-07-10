@@ -63,6 +63,8 @@ public:
 
     size_t get_end_of_token_in_line_utf16() const;
 
+    size_t get_logical_column() const { return char_position_in_line_; }
+
 private:
     antlr4::TokenSource* source_ {};
     antlr4::CharStream* input_ {};

@@ -131,10 +131,15 @@ nlohmann::json get_markup_content(std::string_view content)
 
 std::string decorate_suggestion(std::string_view s)
 {
-    std::string result("##");
+    std::string result;
 
     for (char c : s)
-        result.append(1, c).append(2, '#');
+    {
+        if (c < 0x80)
+            result.append(2, '#');
+        result.append(1, c);
+    }
+    result.append(2, '#');
 
     return result;
 }

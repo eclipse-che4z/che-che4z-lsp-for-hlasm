@@ -137,11 +137,18 @@ class opencode_provider final : public statement_provider
     virtual_file_monitor* m_virtual_file_monitor;
     std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>>& m_vf_handles;
 
+    struct op_data
+    {
+        std::optional<std::string> op_text;
+        range op_range;
+        size_t op_logical_column;
+    };
+
     struct process_ordinary_restart_data
     {
         const statement_processor& proc;
         semantics::collector& collector;
-        std::pair<std::optional<std::string>, range> operands;
+        op_data operands;
         diagnostic_op_consumer* diags;
         std::optional<context::id_index> resolved_instr;
     };
@@ -200,16 +207,16 @@ private:
         diagnostic_op_consumer* diag_collector,
         semantics::range_provider range_prov,
         range text_range,
+        size_t logical_column,
         const processing_status& proc_status,
         bool unlimited_line);
 
-    std::shared_ptr<const context::hlasm_statement> process_lookahead(const statement_processor& proc,
-        semantics::collector& collector,
+    std::shared_ptr<const context::hlasm_statement> process_lookahead(
+        const statement_processor& proc, semantics::collector& collector, op_data operands);
 
-        std::pair<std::optional<std::string>, range> operands);
     std::shared_ptr<const context::hlasm_statement> process_ordinary(const statement_processor& proc,
         semantics::collector& collector,
-        std::pair<std::optional<std::string>, range> operands,
+        op_data operands,
         diagnostic_op_consumer* diags,
         std::optional<context::id_index> resolved_instr);
 

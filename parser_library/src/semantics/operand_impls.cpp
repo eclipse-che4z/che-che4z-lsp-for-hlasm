@@ -61,9 +61,10 @@ empty_operand::empty_operand(range operand_range)
 
 void empty_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
-model_operand::model_operand(concat_chain chain, range operand_range)
+model_operand::model_operand(concat_chain chain, std::vector<size_t> line_limits, range operand_range)
     : operand(operand_type::MODEL, std::move(operand_range))
     , chain(std::move(chain))
+    , line_limits(std::move(line_limits))
 {}
 
 void model_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }

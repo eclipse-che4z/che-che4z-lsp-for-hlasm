@@ -190,11 +190,28 @@ export function setCursor(editor: vscode.TextEditor, position: vscode.Position) 
     editor.selection = new vscode.Selection(position, position);
 }
 
-export function isLineContinued(document: vscode.TextDocument, line: number, offset: number): boolean {
-    if (line < 0 || offset < 0)
-        return false;
-    const continuationPosition = new vscode.Position(line, offset);
-    return document.validatePosition(continuationPosition) == continuationPosition &&
-        offset < document.lineAt(line).text.length &&
-        document.lineAt(line).text[offset] != " ";
+export function codepointToOffset(s: string, codepointOffset: number) {
+    if (s.length < codepointOffset) return undefined;
+    const codepoints = [...s];
+    if (codepoints.length < codepointOffset) return undefined;
+    return codepoints.slice(0, codepointOffset).reduce((p, c) => p + c.length, 0);
+}
+
+export function offsetToCodepoint(s: string, offset: number) {
+    if (offset > s.length) return undefined;
+    return [...s.slice(0, offset)].length;
+}
+
+export function isLineContinued(document: vscode.TextDocument, line: number, offset: number): { symbol: string, actualOffset: number } | undefined {
+    if (line < 0 || offset < 0 || line >= document.lineCount)
+        return undefined;
+    const codepoints = [...document.lineAt(line).text];
+    const codepoint = codepoints[offset] ?? ' ';
+    if (codepoint === ' ')
+        return undefined;
+
+    return {
+        symbol: codepoint,
+        actualOffset: codepoints.slice(0, offset).reduce((p, c) => p + c.length, 0),
+    };
 }

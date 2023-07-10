@@ -35,7 +35,7 @@ function seq(low: number, high: number): number[] {
 }
 
 function isContinued(text: string): boolean {
-    return text.length > 71 && text.substring(71, 72) !== ' ';
+    return text.length > 71 && ([...text][71] ?? ' ') !== ' ';
 }
 
 function findFirstLine(doc: vscode.TextDocument, lineno: number): number {

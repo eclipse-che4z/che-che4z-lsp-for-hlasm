@@ -176,3 +176,42 @@ R1       EQU   1
     EXPECT_EQ(a.context().lsp_ctx->references(empty_loc, { 2, 70 }).size(), 4);
     EXPECT_EQ(a.context().lsp_ctx->references(empty_loc, { 3, 15 }).size(), 4);
 }
+
+TEST(references, long_unicode_chars)
+{
+    std::string input = (const char*)u8R"(
+     MACRO
+     )"
+                                     u8"\U0001F600"
+                                     u8R"(    &P1
+     LARL  0,&P1
+     MEND
+
+     )"
+                                     u8"\U0001F600"
+                                     u8R"(        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAX
+               AAAAAA,B
+
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA DS H
+B DS F
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto b_ = a.context().lsp_ctx->references(empty_loc, { 7, 22 });
+
+    std::vector<position> a_pos;
+    std::vector<position> b_pos;
+    for (const auto& r : a.context().lsp_ctx->references(empty_loc, { 6, 15 }))
+        a_pos.push_back(r.pos);
+    for (const auto& r : a.context().lsp_ctx->references(empty_loc, { 7, 22 }))
+        b_pos.push_back(r.pos);
+    std::sort(a_pos.begin(), a_pos.end());
+    std::sort(b_pos.begin(), b_pos.end());
+
+    EXPECT_EQ(a_pos, (std::vector<position> { { 3, 13 }, { 6, 15 }, { 9, 0 } }));
+    EXPECT_EQ(b_pos, (std::vector<position> { { 7, 22 }, { 10, 0 } }));
+}

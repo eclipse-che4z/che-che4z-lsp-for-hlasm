@@ -111,7 +111,7 @@ bool access_mac_op(mac_kind kind, macro_operand* o)
 TEST(operand, access_operand)
 {
     // model operand
-    model_operand mo({}, range());
+    model_operand mo({}, {}, range());
     EXPECT_TRUE(access_op(operand_type::MODEL, &mo));
 
     // machine operand

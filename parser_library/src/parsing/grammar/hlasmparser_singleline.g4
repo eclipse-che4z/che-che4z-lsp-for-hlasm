@@ -33,6 +33,8 @@ deferred_operand_rules;
 
 @header
 {
+	#include "lexing/token.h"
+	#include "lexing/token_stream.h"
 	#include "parsing/parser_impl.h"
 	#include "expressions/conditional_assembly/ca_operator_unary.h"
 	#include "expressions/conditional_assembly/ca_operator_binary.h"
@@ -145,7 +147,7 @@ codepage: id VERTICAL id string;
 
 program : EOF;
 
-lab_instr returns [std::optional<std::string> op_text, range op_range]
+lab_instr returns [std::optional<std::string> op_text, range op_range, size_t op_logical_column = 0]
 	: PROCESS (SPACE (~EOF)*)? EOF
 	{
 		collector.set_label_field(provider.get_range($PROCESS));
@@ -157,6 +159,7 @@ lab_instr returns [std::optional<std::string> op_text, range op_range]
 		auto op_index = $PROCESS->getTokenIndex()+1;
 		$op_text = _input->getText(misc::Interval(op_index,_input->size()-1));
 		$op_range = provider.get_range(_input->get(op_index),_input->get(_input->size()-1));
+		$op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>(_input->get(op_index))->get_logical_column();
 	}
 	| label SPACE instruction (SPACE (~EOF)*)? EOF
 	{
@@ -165,6 +168,7 @@ lab_instr returns [std::optional<std::string> op_text, range op_range]
 			auto op_index = $instruction.stop->getTokenIndex()+1;
 			$op_text = _input->getText(misc::Interval(op_index,_input->size()-1));
 			$op_range = provider.get_range(_input->get(op_index),_input->get(_input->size()-1));
+			$op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>(_input->get(op_index))->get_logical_column();
 		}
 	}
 	| SPACE
@@ -177,6 +181,7 @@ lab_instr returns [std::optional<std::string> op_text, range op_range]
 				auto op_index = $instruction.stop->getTokenIndex()+1;
 				$op_text = _input->getText(misc::Interval(op_index,_input->size()-1));
 				$op_range = provider.get_range(_input->get(op_index),_input->get(_input->size()-1));
+				$op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>(_input->get(op_index))->get_logical_column();
 			}
 		}
 		|
@@ -193,6 +198,18 @@ lab_instr returns [std::optional<std::string> op_text, range op_range]
 		collector.set_instruction_field(provider.get_range( _localctx));
 		collector.set_operand_remark_field(provider.get_range( _localctx));
 	};
+	catch[const FailedPredicateException&]
+	{
+		collector.set_label_field(provider.get_range( _localctx));
+		collector.set_instruction_field(provider.get_range( _localctx));
+		collector.set_operand_remark_field(provider.get_range( _localctx));
+	}
+	catch[RecognitionException &e]
+	{
+		_errHandler->reportError(this, e);
+		_localctx->exception = std::current_exception();
+		_errHandler->recover(this, _localctx->exception);
+	}
 
 num_ch
 	: NUM+;
@@ -436,7 +453,7 @@ op_rem_body_ca_var_def locals [bool pending_empty_op = true, std::vector<range> 
 
 //////////////////////////////////////// mac
 
-op_rem_body_mac returns [op_rem line, range line_range]
+op_rem_body_mac returns [op_rem line, range line_range, size_t line_logical_column = 0]
 	:
 	SPACE* EOF {$line_range = provider.get_range(_localctx);}
 	|
@@ -444,6 +461,7 @@ op_rem_body_mac returns [op_rem line, range line_range]
 	{
 		$line = std::move($op_rem_body_alt_mac.line);
 		$line_range = provider.get_range($op_rem_body_alt_mac.ctx);
+		$line_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>($op_rem_body_alt_mac.start)->get_logical_column();
 	} EOF;
 
 op_rem_body_alt_mac returns [op_rem line]

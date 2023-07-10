@@ -136,7 +136,10 @@ size_t constexpr continuation_column = 71;
 
 bool is_continued_line(std::string_view line)
 {
-    return line.size() > continuation_column && !utils::isblank32(line[continuation_column]);
+    if (line.size() <= continuation_column)
+        return false;
+    auto c = utils::utf8_substr(line, continuation_column).str;
+    return !c.empty() && !utils::isblank32(c.front());
 }
 
 namespace {

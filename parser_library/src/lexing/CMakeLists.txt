@@ -19,8 +19,6 @@ target_sources(parser_library PRIVATE
 	logical_line.h
 	token.cpp
 	token.h
-	token_factory.cpp
-	token_factory.h
 	token_stream.cpp
 	token_stream.h
 	tools.cpp

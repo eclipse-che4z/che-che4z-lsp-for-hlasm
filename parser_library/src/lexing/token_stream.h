@@ -31,9 +31,10 @@ class token_stream : public antlr4::BufferedTokenStream
 {
     bool enabled_cont_;
     bool needSetup_;
+    lexer* token_source;
 
 public:
-    token_stream(antlr4::TokenSource* token_source);
+    explicit token_stream(lexer* token_source);
 
     // enable continuation token in the token stream
     void enable_continuation();
@@ -47,6 +48,8 @@ public:
     void reset() override;
     // prepares this object to append more tokens
     void append();
+
+    auto get_line_limits() const { return token_source->get_line_limits(); }
 
 protected:
     ssize_t adjustSeekIndex(size_t i) override;

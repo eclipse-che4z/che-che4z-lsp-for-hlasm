@@ -29,9 +29,9 @@ op_rem_body_mach
 		operand_ptr op;
 		std::vector<operand_ptr> operands;
 		if($model_op.chain_opt)
-			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),static_cast<lexing::token_stream*>(_input)->get_line_limits(),provider.get_range( $model_op.ctx));
 		else
-			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx));
 		operands.push_back(std::move(op));
 		auto remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		auto line_range = provider.get_range($model_op.ctx->getStart(),$remark_o.ctx->getStop());
@@ -67,9 +67,9 @@ op_rem_body_dat
 		operand_ptr op;
 		std::vector<operand_ptr> operands;
 		if($model_op.chain_opt)
-			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),static_cast<lexing::token_stream*>(_input)->get_line_limits(),provider.get_range( $model_op.ctx));
 		else
-			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx));
 		operands.push_back(std::move(op));
 		auto remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		auto line_range = provider.get_range($model_op.ctx->getStart(),$remark_o.ctx->getStop());
@@ -105,9 +105,9 @@ op_rem_body_asm
 		operand_ptr op;
 		std::vector<operand_ptr> operands;
 		if($model_op.chain_opt)
-			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),static_cast<lexing::token_stream*>(_input)->get_line_limits(),provider.get_range( $model_op.ctx));
 		else
-			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx));
 		operands.push_back(std::move(op));
 		auto remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		auto line_range = provider.get_range($model_op.ctx->getStart(),$remark_o.ctx->getStop());
@@ -143,7 +143,7 @@ op_rem_body_deferred
 	| SPACE+ deferred_op_rem EOF
 	{
 		auto r = provider.get_range(_input->get($SPACE.index+1),_input->get(_input->size()-1));
-		collector.set_operand_remark_field(_input->getText(misc::Interval($SPACE.index+1,_input->size()-1)),std::move($deferred_op_rem.var_list),std::move($deferred_op_rem.remarks),r);
+		collector.set_operand_remark_field(_input->getText(misc::Interval($SPACE.index+1,_input->size()-1)),std::move($deferred_op_rem.var_list),std::move($deferred_op_rem.remarks),r, static_cast<hlasm_plugin::parser_library::lexing::token*>(_input->get($SPACE.index+1))->get_logical_column());
 	} EOF;
 
 op_rem_body_noop
@@ -164,9 +164,9 @@ op_rem_body_mach_r returns [op_rem line]
 	{
 		operand_ptr op;
 		if($model_op.chain_opt)
-			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),static_cast<lexing::token_stream*>(_input)->get_line_limits(),provider.get_range( $model_op.ctx));
 		else
-			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx));
 		$line.operands.push_back(std::move(op));
 		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 	} EOF
@@ -184,9 +184,9 @@ op_rem_body_dat_r returns [op_rem line]
 	{
 		operand_ptr op;
 		if($model_op.chain_opt)
-			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),static_cast<lexing::token_stream*>(_input)->get_line_limits(),provider.get_range( $model_op.ctx));
 		else
-			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx));
 		$line.operands.push_back(std::move(op));
 		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 	} EOF
@@ -204,9 +204,9 @@ op_rem_body_asm_r returns [op_rem line]
 	{
 		operand_ptr op;
 		if($model_op.chain_opt)
-			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),static_cast<lexing::token_stream*>(_input)->get_line_limits(),provider.get_range( $model_op.ctx));
 		else
-			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx)); 
+			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx));
 		$line.operands.push_back(std::move(op));
 		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 	} EOF

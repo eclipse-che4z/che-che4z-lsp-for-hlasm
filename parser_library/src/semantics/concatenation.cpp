@@ -15,6 +15,7 @@
 #include "concatenation.h"
 
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
+#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::semantics {
 
@@ -30,20 +31,29 @@ struct concatenation_point_evaluator
     const expressions::evaluation_context& eval_ctx;
     bool was_var = false;
     std::vector<std::pair<std::pair<size_t, bool>, range>> ranges;
+    size_t utf16_offset = 0;
 
     void operator()(const char_str_conc& v)
     {
+        auto value = v.evaluate(eval_ctx);
         if constexpr (collect_ranges)
-            ranges.emplace_back(std::pair(result.size(), false), v.conc_range);
-        result.append(v.evaluate(eval_ctx));
+        {
+            ranges.emplace_back(std::pair(utf16_offset, false), v.conc_range);
+            utf16_offset += utils::length_utf16_no_validation(value);
+        }
+        result.append(std::move(value));
         was_var = false;
     }
 
     void operator()(const var_sym_conc& v)
     {
+        auto value = v.evaluate(eval_ctx);
         if constexpr (collect_ranges)
-            ranges.emplace_back(std::pair(result.size(), true), v.symbol->symbol_range);
-        result.append(v.evaluate(eval_ctx));
+        {
+            ranges.emplace_back(std::pair(utf16_offset, true), v.symbol->symbol_range);
+            utf16_offset += utils::length_utf16_no_validation(value);
+        }
+        result.append(std::move(value));
         was_var = true;
     }
 
@@ -51,9 +61,13 @@ struct concatenation_point_evaluator
     {
         if (!was_var)
         {
+            auto value = v.evaluate(eval_ctx);
             if constexpr (collect_ranges)
-                ranges.emplace_back(std::pair(result.size(), false), v.conc_range);
-            result.append(v.evaluate(eval_ctx));
+            {
+                ranges.emplace_back(std::pair(utf16_offset, false), v.conc_range);
+                utf16_offset += utils::length_utf16_no_validation(value);
+            }
+            result.append(std::move(value));
         }
         was_var = false;
     }
@@ -67,9 +81,13 @@ struct concatenation_point_evaluator
 
     void operator()(const equals_conc& v)
     {
+        auto value = v.evaluate(eval_ctx);
         if constexpr (collect_ranges)
-            ranges.emplace_back(std::pair(result.size(), false), v.conc_range);
-        result.append(v.evaluate(eval_ctx));
+        {
+            ranges.emplace_back(std::pair(utf16_offset, false), v.conc_range);
+            utf16_offset += utils::length_utf16_no_validation(value);
+        }
+        result.append(std::move(value));
         was_var = false;
     }
 };

@@ -15,7 +15,7 @@
  //rules for lookahead statement
 parser grammar lookahead_rules; 
 
-look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
+look_lab_instr  returns [std::optional<std::string> op_text, range op_range, size_t op_logical_column = 0]
 	: DOT s=ORDSYMBOL (SPACE instr=ORDSYMBOL? lookahead_operand_field_rest)?
 	{
 		auto seq_symbol = seq_sym{parse_identifier($s->getText(),provider.get_range($s)),provider.get_range($DOT, $s)};
@@ -26,6 +26,7 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 			collector.set_operand_remark_field(provider.get_range($lookahead_operand_field_rest.ctx));
 			$op_text = $lookahead_operand_field_rest.ctx->getText();
 			$op_range = provider.get_range($lookahead_operand_field_rest.ctx);
+			$op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>($lookahead_operand_field_rest.start)->get_logical_column();
 		}
 		else
 		{
@@ -42,6 +43,7 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 			collector.set_operand_remark_field(provider.get_range($lookahead_operand_field_rest.ctx));
 			$op_text = $lookahead_operand_field_rest.ctx->getText();
 			$op_range = provider.get_range($lookahead_operand_field_rest.ctx);
+			$op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>($lookahead_operand_field_rest.start)->get_logical_column();
 		}
 		else
 		{
@@ -58,6 +60,7 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 			collector.set_operand_remark_field(provider.get_range($lookahead_operand_field_rest.ctx));
 			$op_text = $lookahead_operand_field_rest.ctx->getText();
 			$op_range = provider.get_range($lookahead_operand_field_rest.ctx);
+			$op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>($lookahead_operand_field_rest.start)->get_logical_column();
 		}
 		else
 		{

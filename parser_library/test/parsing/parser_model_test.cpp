@@ -36,6 +36,7 @@ auto parse_model(std::string s,
         .parse_operand_field(std::move(s),
             after_substitution,
             range_provider(r, adjusting_state::NONE),
+            r.start.column,
             std::make_pair(processing_format(processing_kind::ORDINARY, form), op_code()),
             diag_consumer ? *diag_consumer : fallback_container);
 }

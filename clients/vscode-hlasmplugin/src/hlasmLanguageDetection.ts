@@ -80,10 +80,7 @@ export class HLASMLanguageDetection {
                 if ((this.referenceInstructions.test(line.toUpperCase()) || lastContinued) && line.length <= 80) {
                     score++;
                     // naive continuation check
-                    if (line.length > 71 && line[71] != " ")
-                        lastContinued = true;
-                    else
-                        lastContinued = false;
+                    lastContinued = line.length > 71 && ([...line][71] ?? ' ') !== ' ';
                 }
             }
         });

@@ -128,17 +128,17 @@ void collector::set_operand_remark_field(range symbol_range)
         throw std::runtime_error("field already assigned");
     op_.emplace(symbol_range, operand_list());
     rem_.emplace(symbol_range, std::vector<range>());
-    def_.emplace(symbol_range, "", std::vector<vs_ptr>());
+    def_.emplace(symbol_range, 0, "", std::vector<vs_ptr>());
 
     add_operand_remark_hl_symbols();
 }
 
 void collector::set_operand_remark_field(
-    std::string deferred, std::vector<vs_ptr> vars, remark_list remarks, range symbol_range)
+    std::string deferred, std::vector<vs_ptr> vars, remark_list remarks, range symbol_range, size_t logical_column)
 {
     if (op_ || rem_ || def_)
         throw std::runtime_error("field already assigned");
-    def_.emplace(symbol_range, std::move(deferred), std::move(vars));
+    def_.emplace(symbol_range, logical_column, std::move(deferred), std::move(vars));
     rem_.emplace(symbol_range, std::move(remarks));
 
     add_operand_remark_hl_symbols();
@@ -205,7 +205,7 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
     {
         assert(lit_.empty());
         if (!def_)
-            def_.emplace(instr_->field_range, "", std::vector<vs_ptr>());
+            def_.emplace(instr_->field_range, 0, "", std::vector<vs_ptr>());
         return std::make_shared<statement_si_deferred>(union_range(lbl_->field_range, def_->field_range),
             std::move(*lbl_),
             std::move(*instr_),

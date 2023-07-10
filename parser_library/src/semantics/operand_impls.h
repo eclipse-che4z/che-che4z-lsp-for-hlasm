@@ -43,9 +43,10 @@ struct empty_operand final : operand
 // operand that contains variable symbol thus is 'model operand'
 struct model_operand final : operand
 {
-    model_operand(concat_chain chain, const range operand_range);
+    model_operand(concat_chain chain, std::vector<size_t> line_limits, const range operand_range);
 
     concat_chain chain;
+    std::vector<size_t> line_limits;
 
     void apply(operand_visitor& visitor) const override;
 };

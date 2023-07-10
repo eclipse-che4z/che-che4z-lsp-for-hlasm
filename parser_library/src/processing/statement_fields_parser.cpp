@@ -44,6 +44,7 @@ constexpr bool is_multiline(std::string_view v)
 statement_fields_parser::parse_result statement_fields_parser::parse_operand_field(std::string field,
     bool after_substitution,
     semantics::range_provider field_range,
+    size_t logical_column,
     processing::processing_status status,
     diagnostic_op_consumer& add_diag)
 {
@@ -57,8 +58,14 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
         add_diag.add_diagnostic(std::move(diag));
     });
     const auto& h = is_multiline(field) ? *m_parser_multiline : *m_parser_singleline;
-    h.prepare_parser(
-        field, m_hlasm_ctx, &add_diag_subst, std::move(field_range), original_range, status, after_substitution);
+    h.prepare_parser(field,
+        m_hlasm_ctx,
+        &add_diag_subst,
+        std::move(field_range),
+        original_range,
+        logical_column,
+        status,
+        after_substitution);
 
     semantics::op_rem line;
     std::vector<semantics::literal_si> literals;
@@ -87,8 +94,10 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
                     h_second.prepare_parser(to_parse,
                         m_hlasm_ctx,
                         &add_diag_subst,
-                        semantics::range_provider(r, std::move(ranges), semantics::adjusting_state::MACRO_REPARSE),
+                        semantics::range_provider(
+                            r, std::move(ranges), semantics::adjusting_state::MACRO_REPARSE, h.lex->get_line_limits()),
                         original_range,
+                        logical_column,
                         status,
                         true);
 

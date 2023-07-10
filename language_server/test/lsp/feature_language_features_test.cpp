@@ -194,7 +194,7 @@ IIIIIIIIIIIIIII1
             0,2,3,1,0,    // instruction   EQU
             0,68,1,10,0,  // number        1
             0,1,1,5,0,    // continuation  X
-            0,1,4,3,0,    // ignored       3145
+            0,1,5,3,0,    // ignored       3145\n
             1,0,15,3,0,   // ignored       IIIIIIIIIIIIIII
             0,15,1,10,0   // number        1
         } } };

@@ -73,6 +73,8 @@ async function generateOpcodeCodeActions(opcodeTasks: {
     return result;
 }
 
+const invalidUTF16Sequences = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+
 export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
     constructor(private client: vscodelc.BaseLanguageClient) { }
 
@@ -81,7 +83,7 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
 
         const E049 = context.diagnostics.filter(x => x.code === 'E049');
         if (E049.length > 0)
-            result.push(...await generateOpcodeCodeActions(E049.map(diag => { return { diag, opcode: document.getText(diag.range).toUpperCase() }; }), this.client, document.uri, 1000));
+            result.push(...await generateOpcodeCodeActions(E049.map(diag => { return { diag, opcode: document.getText(diag.range).replace(invalidUTF16Sequences, '').toUpperCase() }; }), this.client, document.uri, 1000));
 
         const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
         if (!workspace) return result;

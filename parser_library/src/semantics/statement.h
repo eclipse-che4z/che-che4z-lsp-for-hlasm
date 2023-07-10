@@ -66,7 +66,7 @@ protected:
 
 // implementation of deferred statement
 // struct holding deferred semantic information (si) about whole instruction statement, whole logical line
-struct statement_si_deferred : public deferred_statement
+struct statement_si_deferred final : public deferred_statement
 {
     statement_si_deferred(range stmt_range,
         label_si label,

@@ -68,6 +68,39 @@ TEST(deferred_statement, nested_macro_def_with_continuation)
     EXPECT_TRUE(a.diags().empty());
 }
 
+TEST(deferred_statement, long_unicode_characters)
+{
+    std::string input = (const char*)u8R"(     MACRO
+     )"
+                                     u8"\U0001F600\U0001F600"
+                                     u8R"(    &P1
+     LARL  0,&P1
+     MEND
+
+     MACRO
+     )"
+                                     u8"\U0001F600"
+                                     u8R"(    &P1
+     LARL  0,&P1
+     )"
+                                     u8"\U0001F600\U0001F600"
+                                     u8R"( &P1
+     MEND
+
+     )"
+                                     u8"\U0001F600"
+                                     u8R"(        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAX
+               AAAAAA
+
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA DS H
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+}
+
 TEST(deferred_statement, recognize_comment)
 {
     std::string input = R"(

@@ -111,12 +111,13 @@ void members_statement_provider::fill_cache(context::statement_cache& cache,
     const processing_status& status)
 {
     context::statement_cache::cached_statement_t reparsed_stmt { {}, filter_cached_diagnostics(*def_stmt) };
+    const auto& def_s = def_stmt->deferred_ref();
 
     if (status.first.occurrence == operand_occurrence::ABSENT || status.first.form == processing_form::UNKNOWN
         || status.first.form == processing_form::IGNORED)
     {
-        semantics::operands_si op(def_stmt->deferred_ref().field_range, semantics::operand_list());
-        semantics::remarks_si rem(def_stmt->deferred_ref().field_range, {});
+        semantics::operands_si op(def_s.field_range, semantics::operand_list());
+        semantics::remarks_si rem(def_s.field_range, {});
 
         reparsed_stmt.stmt = std::make_shared<semantics::statement_si_defer_done>(
             std::move(def_stmt), std::move(op), std::move(rem), std::vector<semantics::literal_si>());
@@ -125,9 +126,10 @@ void members_statement_provider::fill_cache(context::statement_cache& cache,
     {
         diagnostic_consumer_transform diag_consumer(
             [&reparsed_stmt](diagnostic_op diag) { reparsed_stmt.diags.push_back(std::move(diag)); });
-        auto [op, rem, lits] = m_parser.parse_operand_field(def_stmt->deferred_ref().value,
+        auto [op, rem, lits] = m_parser.parse_operand_field(def_s.value,
             false,
-            semantics::range_provider(def_stmt->deferred_ref().field_range, semantics::adjusting_state::NONE),
+            semantics::range_provider(def_s.field_range, semantics::adjusting_state::NONE),
+            def_s.logical_column,
             status,
             diag_consumer);
 

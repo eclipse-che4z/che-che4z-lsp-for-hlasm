@@ -133,11 +133,12 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
         !operands_ref.value.empty() && operands_ref.value[0]->type == operand_type::MODEL)
     {
         assert(operands_ref.value.size() == 1);
-        auto [field, map] =
-            concatenation_point::evaluate_with_range_map(operands_ref.value[0]->access_model()->chain, eval_ctx);
+        const auto* model = operands_ref.value[0]->access_model();
+        auto [field, map] = concatenation_point::evaluate_with_range_map(model->chain, eval_ctx);
         auto [operands, _, literals] = parser.parse_operand_field(std::move(field),
             true,
-            range_provider(std::move(map)),
+            range_provider(std::move(map), model->line_limits),
+            0,
             processing_status(stmt.format_ref(), stmt.opcode_ref()),
             *this);
         result.operands.emplace(std::move(operands));
