@@ -114,7 +114,7 @@ bool lsp_analyzer::analyze(const context::hlasm_statement& statement,
             break;
     }
 
-    assign_statement_occurrences(hlasm_ctx_.current_statement_location().resource_loc);
+    assign_statement_occurrences(hlasm_ctx_.current_statement_source());
 
     return false;
 }
@@ -395,11 +395,8 @@ void lsp_analyzer::add_var_def(const semantics::variable_symbol* var, context::S
         != opencode_var_defs_.end())
         return;
 
-    opencode_var_defs_.emplace_back(var->access_basic()->name,
-        type,
-        global,
-        hlasm_ctx_.current_statement_location().resource_loc,
-        var->symbol_range.start);
+    opencode_var_defs_.emplace_back(
+        var->access_basic()->name, type, global, hlasm_ctx_.current_statement_source(), var->symbol_range.start);
 }
 
 void lsp_analyzer::add_copy_operand(context::id_index name, const range& operand_range, bool evaluated_model)

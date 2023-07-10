@@ -596,6 +596,23 @@ location hlasm_context::current_statement_location(bool consider_macros) const
     }
 }
 
+const utils::resource::resource_location& hlasm_context::current_statement_source(bool consider_macros) const
+{
+    if (!consider_macros || source_stack_.size() > 1 || scope_stack_.size() == 1)
+    {
+        if (source_stack_.back().copy_stack.size())
+            return source_stack_.back().copy_stack.back().definition_location()->resource_loc;
+        else
+            return source_stack_.back().current_instruction.resource_loc;
+    }
+    else
+    {
+        const auto& mac_invo = scope_stack_.back().this_macro;
+
+        return mac_invo->copy_nests[mac_invo->current_statement].back().loc.resource_loc;
+    }
+}
+
 const std::deque<code_scope>& hlasm_context::scope_stack() const { return scope_stack_; }
 
 const source_context& hlasm_context::current_source() const { return source_stack_.back(); }

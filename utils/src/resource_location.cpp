@@ -17,10 +17,10 @@
 #include <algorithm>
 #include <assert.h>
 #include <cstddef>
-#include <deque>
 #include <iterator>
 #include <regex>
 #include <utility>
+#include <vector>
 
 #include "utils/encoding.h"
 #include "utils/path_conversions.h"
@@ -40,8 +40,14 @@ const std::regex local_windows("^file:" + slash + "*" + windows_drive_letter + c
 const std::regex local_non_windows("^file:(?:" + slash + "{3}|(?:" + slash + "(?:[^/\\\\])+))");
 } // namespace
 
+
+resource_location::data::data(std::string s)
+    : hash(std::hash<std::string>()(s))
+    , uri(std::move(s))
+{}
+
 resource_location::resource_location(std::string uri)
-    : m_uri(std::move(uri))
+    : m_data(uri.empty() ? nullptr : std::make_shared<const data>(std::move(uri)))
 {}
 
 resource_location::resource_location(std::string_view uri)
@@ -52,16 +58,20 @@ resource_location::resource_location(const char* uri)
     : resource_location(std::string(uri))
 {}
 
-const std::string& resource_location::get_uri() const { return m_uri; }
+const std::string empty_resource_location_uri;
+const std::string& resource_location::get_uri() const { return m_data ? m_data->uri : empty_resource_location_uri; }
 
-std::string resource_location::get_path() const { return m_uri.size() != 0 ? utils::path::uri_to_path(m_uri) : m_uri; }
+std::string resource_location::get_path() const
+{
+    return m_data ? utils::path::uri_to_path(m_data->uri) : empty_resource_location_uri;
+}
 
 std::string resource_location::to_presentable(bool debug) const
 {
-    return utils::path::get_presentable_uri(m_uri, debug);
+    return utils::path::get_presentable_uri(get_uri(), debug);
 }
 
-bool resource_location::is_local() const { return is_local(m_uri); }
+bool resource_location::is_local() const { return is_local(get_uri()); }
 
 bool resource_location::is_local(std::string_view uri)
 {
@@ -182,7 +192,7 @@ private:
 
 std::string normalize_path(std::string_view orig_path, bool has_file_scheme, bool has_host)
 {
-    std::deque<std::string_view> elements;
+    std::vector<std::string_view> elements;
     std::string_view path = orig_path;
     std::string_view win_root_dir;
     bool first = true;
@@ -217,11 +227,8 @@ std::string normalize_path(std::string_view orig_path, bool has_file_scheme, boo
         ret.append(win_root_dir);
 
     // Append elements to uri
-    while (!elements.empty())
-    {
-        uri_append(ret, elements.front());
-        elements.pop_front();
-    }
+    for (const auto& e : elements)
+        uri_append(ret, e);
 
     // Add a missing '/' if the last part of the original uri is "/." , "/..", "." or ".."
     if (orig_path.ends_with("/.") || orig_path.ends_with("/..") || orig_path.ends_with(".")
@@ -272,7 +279,7 @@ void normalize_windows_like_uri(utils::path::dissected_uri& dis_uri)
 
 resource_location resource_location::lexically_normal() const
 {
-    auto uri = m_uri;
+    auto uri = get_uri();
 
     std::replace(uri.begin(), uri.end(), '\\', '/');
 
@@ -281,7 +288,7 @@ resource_location resource_location::lexically_normal() const
 
     auto dis_uri = utils::path::dissect_uri(uri);
     if (dis_uri.path.empty())
-        return resource_location(m_uri);
+        return *this;
 
     std::transform(dis_uri.scheme.begin(), dis_uri.scheme.end(), dis_uri.scheme.begin(), [](unsigned char c) {
         return static_cast<const char>(tolower(c));
@@ -297,7 +304,7 @@ resource_location resource_location::lexically_normal() const
 
 resource_location resource_location::lexically_relative(const resource_location& base) const
 {
-    std::string_view this_uri = m_uri;
+    std::string_view this_uri = get_uri();
     std::string_view base_uri = base.get_uri();
 
     // Compare schemes
@@ -356,81 +363,79 @@ resource_location resource_location::lexically_relative(const resource_location&
 
 bool resource_location::lexically_out_of_scope() const
 {
-    return m_uri == std::string_view("..") || m_uri.starts_with("../") || m_uri.starts_with("..\\");
+    std::string_view uri = get_uri();
+    return uri == std::string_view("..") || uri.starts_with("../") || uri.starts_with("..\\");
 }
 
-resource_location& resource_location::join(std::string_view other)
-{
-    if (utils::path::is_uri(other))
-        m_uri = other;
-    else if (other.starts_with("/"))
-    {
-        auto dis_uri = utils::path::dissect_uri(m_uri);
-        dis_uri.path = other;
-        m_uri = utils::path::reconstruct_uri(dis_uri);
-    }
-    else
-        uri_append(m_uri, other);
-
-    return *this;
-}
+resource_location& resource_location::join(std::string_view other) { return *this = join(std::move(*this), other); }
 
 resource_location resource_location::join(resource_location rl, std::string_view other)
 {
-    rl.join(other);
-
-    return rl;
+    if (utils::path::is_uri(other))
+        return resource_location(other);
+    else if (other.starts_with("/"))
+    {
+        auto dis_uri = utils::path::dissect_uri(rl.get_uri());
+        dis_uri.path = other;
+        return resource_location(utils::path::reconstruct_uri(dis_uri));
+    }
+    else
+    {
+        std::string uri = rl.get_uri();
+        uri_append(uri, other);
+        return resource_location(std::move(uri));
+    }
 }
 
 resource_location& resource_location::replace_filename(std::string_view other)
 {
-    if (!utils::path::is_uri(m_uri))
+    return *this = replace_filename(std::move(*this), other);
+}
+
+resource_location resource_location::replace_filename(resource_location rl, std::string_view other)
+{
+    if (!utils::path::is_uri(rl.get_uri()))
     {
-        m_uri.erase(m_uri.find_last_of("/\\") + 1);
-        m_uri.append(other);
-        return *this;
+        auto uri = rl.get_uri();
+        uri.erase(uri.find_last_of("/\\") + 1);
+        uri.append(other);
+
+        return resource_location(std::move(uri));
     }
 
-    auto dis_uri = utils::path::dissect_uri(m_uri);
+    auto dis_uri = utils::path::dissect_uri(rl.get_uri());
 
     if (auto pos = dis_uri.path.rfind('/'); pos == std::string::npos)
         dis_uri.path = other;
     else
         dis_uri.path.erase(pos + 1).append(other);
 
-    m_uri = utils::path::reconstruct_uri(dis_uri);
-
-    return *this;
-}
-
-resource_location resource_location::replace_filename(resource_location rl, std::string_view other)
-{
-    rl.replace_filename(other);
-
-    return rl;
+    return resource_location(utils::path::reconstruct_uri(dis_uri));
 }
 
 std::string resource_location::filename() const
 {
-    if (!utils::path::is_uri(m_uri))
-        return m_uri.substr(m_uri.find_last_of("/\\") + 1);
+    const auto& uri = get_uri();
+    if (!utils::path::is_uri(uri))
+        return uri.substr(uri.find_last_of("/\\") + 1);
 
-    auto dis_uri = utils::path::dissect_uri(m_uri);
+    auto dis_uri = utils::path::dissect_uri(uri);
 
     return dis_uri.path.substr(dis_uri.path.rfind('/') + 1);
 }
 
 resource_location resource_location::parent() const
 {
-    if (!utils::path::is_uri(m_uri))
+    const auto& uri = get_uri();
+    if (!utils::path::is_uri(uri))
     {
-        if (auto slash_pos = m_uri.find_last_of("/\\"); slash_pos != std::string::npos)
-            return resource_location(m_uri.substr(0, slash_pos));
+        if (auto slash_pos = uri.find_last_of("/\\"); slash_pos != std::string::npos)
+            return resource_location(uri.substr(0, slash_pos));
         else
             return resource_location();
     }
 
-    auto dis_uri = utils::path::dissect_uri(m_uri);
+    auto dis_uri = utils::path::dissect_uri(uri);
 
     if (auto slash_pos = dis_uri.path.rfind('/'); slash_pos != std::string::npos)
         dis_uri.path.erase(slash_pos);
@@ -440,7 +445,7 @@ resource_location resource_location::parent() const
     return resource_location(utils::path::reconstruct_uri(dis_uri));
 }
 
-std::string resource_location::get_local_path_or_uri() const { return is_local() ? get_path() : m_uri; }
+std::string resource_location::get_local_path_or_uri() const { return is_local() ? get_path() : get_uri(); }
 
 namespace {
 utils::path::dissected_uri::authority relative_reference_process_new_auth(
@@ -474,7 +479,7 @@ void merge(std::string& uri, std::string_view r)
 std::string remove_dot_segments(std::string_view path)
 {
     std::string ret;
-    std::deque<std::string_view> elements;
+    std::vector<std::string_view> elements;
 
     while (!path.empty())
     {
@@ -522,24 +527,34 @@ std::string remove_dot_segments(std::string_view path)
 }
 } // namespace
 
-void resource_location::relative_reference_resolution(
+resource_location& resource_location::relative_reference_resolution(
     std::string_view other) // TODO enhancements can be made based on rfc3986 if needed
 {
+    return *this = relative_reference_resolution(std::move(*this), other);
+}
+
+resource_location resource_location::relative_reference_resolution(resource_location rl, std::string_view other)
+{
     if (other.empty())
-        return;
+        return rl;
 
     if (utils::path::is_uri(other))
     {
         auto dis_uri = utils::path::dissect_uri(other);
         dis_uri.path = remove_dot_segments(dis_uri.path);
-        m_uri = utils::path::reconstruct_uri(dis_uri);
+        return resource_location(utils::path::reconstruct_uri(dis_uri));
     }
     else
     {
-        auto dis_uri = utils::path::dissect_uri(m_uri);
+        auto dis_uri = utils::path::dissect_uri(rl.get_uri());
 
         if (dis_uri.scheme.empty() && dis_uri.path.empty())
-            uri_append(m_uri, other); // This is a regular path and not a uri. Let's proceed in a regular way
+        {
+            auto uri = rl.get_uri();
+            uri_append(uri, other);
+            return resource_location(
+                std::move(uri)); // This is a regular path and not a uri. Let's proceed in a regular way
+        }
         else if (other.front() == '?')
             dis_uri.query = other.substr(1);
         else if (other.front() == '#')
@@ -564,15 +579,8 @@ void resource_location::relative_reference_resolution(
             dis_uri.fragment = std::nullopt;
         }
 
-        m_uri = utils::path::reconstruct_uri(dis_uri);
+        return resource_location(utils::path::reconstruct_uri(dis_uri));
     }
-}
-
-resource_location resource_location::relative_reference_resolution(resource_location rl, std::string_view other)
-{
-    rl.relative_reference_resolution(other);
-
-    return rl;
 }
 
 bool resource_location::is_prefix_of(const resource_location& candidate) const
@@ -597,8 +605,4 @@ bool resource_location::is_prefix(const resource_location& candidate, const reso
     return base.is_prefix_of(candidate);
 }
 
-std::size_t resource_location_hasher::operator()(const resource_location& rl) const
-{
-    return std::hash<std::string> {}(rl.get_uri());
-}
 } // namespace hlasm_plugin::utils::resource

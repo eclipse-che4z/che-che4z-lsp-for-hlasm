@@ -16,7 +16,9 @@
 #define HLASMPLUGIN_UTILS_RESOURCE_LOCATION_H
 
 #include <compare>
+#include <memory>
 #include <string>
+#include <string_view>
 
 namespace hlasm_plugin::utils::resource {
 
@@ -32,7 +34,7 @@ public:
     std::string get_path() const;
     std::string to_presentable(bool debug = false) const;
 
-    bool empty() const { return m_uri.empty(); }
+    bool empty() const { return !m_data; }
 
     bool is_local() const;
     static bool is_local(std::string_view uri);
@@ -51,7 +53,7 @@ public:
     static resource_location join(resource_location rl, std::string_view other);
 
     // Relative reference resolution based on RFC 3986
-    void relative_reference_resolution(std::string_view other);
+    resource_location& relative_reference_resolution(std::string_view other);
     static resource_location relative_reference_resolution(resource_location rl, std::string_view other);
 
     resource_location& replace_filename(std::string_view other);
@@ -65,15 +67,40 @@ public:
     bool is_prefix_of(const resource_location& candidate) const;
     static bool is_prefix(const resource_location& candidate, const resource_location& base);
 
-    std::strong_ordering operator<=>(const resource_location& rl) const noexcept = default;
+    bool operator==(const resource_location& rl) const noexcept
+    {
+        return m_data == rl.m_data
+            || m_data && rl.m_data && m_data->hash == rl.m_data->hash && m_data->uri == rl.m_data->uri;
+    }
+    std::strong_ordering operator<=>(const resource_location& rl) const noexcept
+    {
+        if (m_data == rl.m_data)
+            return std::strong_ordering::equal;
+
+        std::string_view l;
+        std::string_view r;
+        if (m_data)
+            l = m_data->uri;
+        if (rl.m_data)
+            r = rl.m_data->uri;
+        return l.compare(r) <=> 0; // libc++14
+    }
 
 private:
-    std::string m_uri;
+    struct data
+    {
+        data(std::string s);
+        size_t hash;
+        std::string uri;
+    };
+    std::shared_ptr<const data> m_data;
+
+    friend struct resource_location_hasher;
 };
 
 struct resource_location_hasher
 {
-    std::size_t operator()(const resource_location& rl) const;
+    std::size_t operator()(const resource_location& rl) const { return rl.m_data ? rl.m_data->hash : 0; }
 };
 
 } // namespace hlasm_plugin::utils::resource

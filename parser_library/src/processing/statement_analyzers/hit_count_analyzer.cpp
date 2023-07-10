@@ -62,9 +62,9 @@ std::optional<stmt_lines_range> get_stmt_lines_range(const semantics::core_state
 }
 } // namespace
 
-utils::resource::resource_location hit_count_analyzer::get_current_stmt_rl(processing_kind proc_kind) const
+const utils::resource::resource_location& hit_count_analyzer::get_current_stmt_rl(processing_kind proc_kind) const
 {
-    return m_ctx.current_statement_location(proc_kind != processing_kind::LOOKAHEAD).resource_loc;
+    return m_ctx.current_statement_source(proc_kind != processing_kind::LOOKAHEAD);
 }
 
 hit_count_entry& hit_count_analyzer::get_hc_entry_reference(const utils::resource::resource_location& rl)

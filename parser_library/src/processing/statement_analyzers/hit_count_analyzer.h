@@ -164,7 +164,7 @@ private:
     statement_type m_next_stmt_type = statement_type::REGULAR;
     size_t m_macro_level = 0;
 
-    utils::resource::resource_location get_current_stmt_rl(processing_kind proc_kind) const;
+    const utils::resource::resource_location& get_current_stmt_rl(processing_kind proc_kind) const;
     hit_count_entry& get_hc_entry_reference(const utils::resource::resource_location& rl);
 
     statement_type get_stmt_type(const semantics::core_statement& statement);
