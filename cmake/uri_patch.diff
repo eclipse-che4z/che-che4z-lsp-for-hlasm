@@ -1,3 +1,18 @@
+diff --git a/include/network/string_view.hpp b/include/network/string_view.hpp
+index 8ff7a5e..a482a51 100644
+--- a/include/network/string_view.hpp
++++ b/include/network/string_view.hpp
+@@ -164,8 +164,8 @@ class basic_string_view {
+                ? traits::compare(data(), s.data(), size())
+                : (size() < s.size()
+                       ? (traits::compare(data(), s.data(), size()) > 0 ? 1 : -1)
+-                      : (traits::compare(data(), s.data(), size()) < 0 ? -1
+-                                                                       : 1));
++                      : (traits::compare(data(), s.data(), s.size()) < 0 ? -1
++                                                                         : 1));
+   }
+ 
+   constexpr int compare(size_type pos1, size_type n1,
 diff --git a/src/detail/uri_parse.cpp b/src/detail/uri_parse.cpp
 index 7f77148..73f581e 100644
 --- a/src/detail/uri_parse.cpp

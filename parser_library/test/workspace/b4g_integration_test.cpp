@@ -30,16 +30,25 @@ using namespace hlasm_plugin::parser_library::workspaces;
 using hlasm_plugin::utils::resource::resource_location;
 
 namespace {
+constexpr auto prepend_ws_loc = [](std::string path) {
+    static const resource_location rl("scheme://ws/");
+    return resource_location::join(rl, path).lexically_normal();
+};
+
 const std::string empty_b4g_conf(R"({})");
-const resource_location b4g_conf_name("SYS/SUB/ASMPGM/.bridge.json");
-const resource_location pgm_a("SYS/SUB/ASMPGM/A");
-const resource_location pgm_b("SYS/SUB/ASMPGM/B");
-const resource_location sys_sub_p1_mac1("SYS/SUB/ASMMACP1/MAC1");
-const resource_location sys_sub_p2_mac1("SYS/SUB/ASMMACP2/MAC1");
-const resource_location sys_sub_p3_mac1("SYS/SUB/ASMMACP3/MAC1");
-const resource_location p1_mac2("ASMMACP1/MAC2");
-const resource_location p2_mac2("ASMMACP2/MAC2");
-const resource_location empty_rl("");
+const auto ws_rl = prepend_ws_loc("");
+const auto proc_grps_rl = prepend_ws_loc(proc_grps_name.get_uri());
+const auto pgm_conf_rl = prepend_ws_loc(pgm_conf_name.get_uri());
+const auto b4g_conf_rl = prepend_ws_loc("SYS/SUB/ASMPGM/.bridge.json");
+const auto pgm_a = prepend_ws_loc("SYS/SUB/ASMPGM/A");
+const auto pgm_b = prepend_ws_loc("SYS/SUB/ASMPGM/B");
+const auto pgm_dollars = prepend_ws_loc("SYS/SUB/ASMPGM/$$$");
+const auto sys_sub_p1_mac1 = prepend_ws_loc("SYS/SUB/ASMMACP1/MAC1");
+const auto sys_sub_p2_mac1 = prepend_ws_loc("SYS/SUB/ASMMACP2/MAC1");
+const auto sys_sub_p3_mac1 = prepend_ws_loc("SYS/SUB/ASMMACP3/MAC1");
+const auto p1_mac2 = prepend_ws_loc("ASMMACP1/MAC2");
+const auto p2_mac2 = prepend_ws_loc("ASMMACP2/MAC2");
+const auto p3_mac2 = prepend_ws_loc("ASMMACP3/MAC2");
 
 std::string macro_template(R"(        MACRO
         MAC$x
@@ -61,7 +70,7 @@ void change_and_reparse(file_manager& fm, workspace& ws, const resource_location
     run_if_valid(ws.did_change_file(rl, file_content_state::changed_content));
     parse_all_files(ws);
 }
-} // namespace
+
 
 struct file_manager_impl_test : public file_manager_impl
 {
@@ -109,50 +118,68 @@ struct file_manager_impl_test : public file_manager_impl
         return result;
     }
 };
+
+class workspace_test : public workspace
+{
+public:
+    workspace_test(file_manager& fm)
+        : workspace(ws_rl, "workspace_name", fm, m_config, m_global_settings)
+    {
+        open().run();
+    }
+
+private:
+    lib_config m_config;
+    shared_json m_global_settings = make_empty_shared_json();
+};
+
+} // namespace
+
 TEST(b4g_integration_test, basic_pgm_conf_retrieval)
 {
-    file_manager_impl_test file_manager;
+    file_manager_impl_test fm;
 
-    file_manager.did_open_file(proc_grps_name,
+    fm.did_open_file(proc_grps_rl,
         1,
-        R"({"pgroups":[{"name":"P1","libs":[{"path":"ASMMACP1","prefer_alternate_root":true},"ASMMACP1"]},{"name":"P2","libs":[{"path":"ASMMACP2","prefer_alternate_root":true},"ASMMACP2"]}]})");
-    file_manager.did_open_file(b4g_conf_name,
+        R"({"pgroups":[{"name":"P1","libs":[{"path":"ASMMACP1","prefer_alternate_root":true},"ASMMACP1"]},{"name":"P2","libs":[{"path":"ASMMACP2","prefer_alternate_root":true},"ASMMACP2"]},{"name":"P3","libs":[{"path":"ASMMACP3","prefer_alternate_root":true},"ASMMACP3"]}]})");
+    fm.did_open_file(b4g_conf_rl,
         1,
-        R"({"elements":{"A":{"processorGroup":"P1"}},"defaultProcessorGroup":"P2","fileExtension":""})");
-    file_manager.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1.get_uri()));
-    file_manager.did_open_file(sys_sub_p2_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p2_mac1.get_uri()));
-    file_manager.did_open_file(p1_mac2, 1, get_macro_content(macro_template, "2", p1_mac2.get_uri()));
-    file_manager.did_open_file(p2_mac2, 1, get_macro_content(macro_template, "2", p2_mac2.get_uri()));
+        R"({"elements":{"A":{"processorGroup":"P1"},"$$$":{"processorGroup":"P3"}},"defaultProcessorGroup":"P2","fileExtension":""})");
+    fm.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1.get_uri()));
+    fm.did_open_file(sys_sub_p2_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p2_mac1.get_uri()));
+    fm.did_open_file(sys_sub_p3_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p3_mac1.get_uri()));
+    fm.did_open_file(p1_mac2, 1, get_macro_content(macro_template, "2", p1_mac2.get_uri()));
+    fm.did_open_file(p2_mac2, 1, get_macro_content(macro_template, "2", p2_mac2.get_uri()));
+    fm.did_open_file(p3_mac2, 1, get_macro_content(macro_template, "2", p3_mac2.get_uri()));
 
     std::string pgm_template(R"(
         MAC1
         MAC2
 )");
-    file_manager.did_open_file(pgm_a, 1, pgm_template);
-    file_manager.did_open_file(pgm_b, 1, pgm_template);
 
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
-    workspace ws(empty_rl, "workspace_name", file_manager, config, global_settings);
-    ws.open().run();
+    fm.did_open_file(pgm_a, 1, pgm_template);
+    fm.did_open_file(pgm_b, 1, pgm_template);
+    fm.did_open_file(pgm_dollars, 1, pgm_template);
 
-    run_if_valid(ws.did_open_file(pgm_a));
-    parse_all_files(ws);
-    ws.collect_diags();
+    workspace_test ws(fm);
 
-    EXPECT_TRUE(matches_message_text(ws.diags(), { sys_sub_p1_mac1.get_uri(), p1_mac2.get_uri() }));
-    ws.diags().clear();
+    const auto check_mnote = [&ws](const resource_location& pgm, std::initializer_list<std::string> mnote_locations) {
+        run_if_valid(ws.did_open_file(pgm));
+        parse_all_files(ws);
+        ws.collect_diags();
 
-    run_if_valid(ws.did_close_file(pgm_a));
-    parse_all_files(ws);
+        auto match = matches_message_text(ws.diags(), mnote_locations);
+        ws.diags().clear();
 
-    run_if_valid(ws.did_open_file(pgm_b));
-    parse_all_files(ws);
-    ws.collect_diags();
+        run_if_valid(ws.did_close_file(pgm));
+        parse_all_files(ws);
 
-    EXPECT_TRUE(matches_message_text(ws.diags(), { sys_sub_p2_mac1.get_uri(), p2_mac2.get_uri() }));
+        return match;
+    };
 
-    run_if_valid(ws.did_close_file(pgm_b));
+    EXPECT_TRUE(check_mnote(pgm_a, { sys_sub_p1_mac1.get_uri(), p1_mac2.get_uri() }));
+    EXPECT_TRUE(check_mnote(pgm_b, { sys_sub_p2_mac1.get_uri(), p2_mac2.get_uri() }));
+    EXPECT_TRUE(check_mnote(pgm_dollars, { sys_sub_p3_mac1.get_uri(), p3_mac2.get_uri() }));
 }
 
 class pgm_conf_preference_helper
@@ -161,7 +188,7 @@ public:
     file_manager_impl_test fm;
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws = workspace(resource_location(), "workspace_name", fm, config, global_settings);
+    workspace ws = workspace(ws_rl, "workspace_name", fm, config, global_settings);
 
     const std::string pgm_conf_template = R"({
   "pgms": [
@@ -174,12 +201,12 @@ public:
 
     pgm_conf_preference_helper(std::string pgm_name)
     {
-        fm.did_open_file(proc_grps_name,
+        fm.did_open_file(proc_grps_rl,
             1,
             R"({"pgroups":[{"name":"P1","libs":["SYS/SUB/ASMMACP1"]},{"name":"P2","libs":["SYS/SUB/ASMMACP2"]},{"name":"P3","libs":["SYS/SUB/ASMMACP3"]}]})");
 
-        fm.did_open_file(pgm_conf_name, 0, std::regex_replace(pgm_conf_template, std::regex("\\$x"), pgm_name));
-        fm.did_open_file(b4g_conf_name,
+        fm.did_open_file(pgm_conf_rl, 0, std::regex_replace(pgm_conf_template, std::regex("\\$x"), pgm_name));
+        fm.did_open_file(b4g_conf_rl,
             0,
             R"({"elements":{"A":{"processorGroup":"P2"},"B":{"processorGroup":"P2"}},"defaultProcessorGroup":"P3","fileExtension":""})");
 
@@ -226,7 +253,7 @@ TEST(b4g_integration_test, pgm_conf_preference_regex_path)
     EXPECT_TRUE(matches_message_text(ws.diags(), { sys_sub_p2_mac1.get_uri() }));
 
     ws.diags().clear();
-    change_and_reparse(fm, ws, pgm_conf_name, std::regex_replace(helper.pgm_conf_template, std::regex("\\$x"), "*"));
+    change_and_reparse(fm, ws, pgm_conf_rl, std::regex_replace(helper.pgm_conf_template, std::regex("\\$x"), "*"));
 
     run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
@@ -237,16 +264,13 @@ TEST(b4g_integration_test, pgm_conf_preference_regex_path)
 
 TEST(b4g_integration_test, invalid_bridge_json)
 {
-    file_manager_impl_test file_manager;
+    file_manager_impl_test fm;
 
-    file_manager.did_open_file(proc_grps_name, 1, empty_proc_grps);
-    file_manager.did_open_file(b4g_conf_name, 1, empty_b4g_conf);
-    file_manager.did_open_file(pgm_a, 1, "");
+    fm.did_open_file(proc_grps_rl, 1, empty_proc_grps);
+    fm.did_open_file(b4g_conf_rl, 1, empty_b4g_conf);
+    fm.did_open_file(pgm_a, 1, "");
 
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
-    workspace ws(resource_location(), "workspace_name", file_manager, config, global_settings);
-    ws.open().run();
+    workspace_test ws(fm);
 
     run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
@@ -257,18 +281,15 @@ TEST(b4g_integration_test, invalid_bridge_json)
 
 TEST(b4g_integration_test, missing_pgroup)
 {
-    file_manager_impl_test file_manager;
+    file_manager_impl_test fm;
 
-    file_manager.did_open_file(proc_grps_name, 1, empty_proc_grps);
-    file_manager.did_open_file(b4g_conf_name,
+    fm.did_open_file(proc_grps_rl, 1, empty_proc_grps);
+    fm.did_open_file(b4g_conf_rl,
         1,
         R"({"elements":{"A":{"processorGroup":"P1"}},"defaultProcessorGroup":"P2","fileExtension":""})");
-    file_manager.did_open_file(pgm_a, 1, "");
+    fm.did_open_file(pgm_a, 1, "");
 
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
-    workspace ws(empty_rl, "workspace_name", file_manager, config, global_settings);
-    ws.open().run();
+    workspace_test ws(fm);
 
     run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
@@ -279,18 +300,15 @@ TEST(b4g_integration_test, missing_pgroup)
 
 TEST(b4g_integration_test, missing_pgroup_but_not_used)
 {
-    file_manager_impl_test file_manager;
+    file_manager_impl_test fm;
 
-    file_manager.did_open_file(proc_grps_name, 1, empty_proc_grps);
-    file_manager.did_open_file(b4g_conf_name,
+    fm.did_open_file(proc_grps_rl, 1, empty_proc_grps);
+    fm.did_open_file(b4g_conf_rl,
         1,
         R"({"elements":{"A":{"processorGroup":"P1"}},"defaultProcessorGroup":"P2","fileExtension":""})");
-    file_manager.did_open_file(pgm_a, 1, "");
+    fm.did_open_file(pgm_a, 1, "");
 
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
-    workspace ws(empty_rl, "workspace_name", file_manager, config, global_settings);
-    ws.open().run();
+    workspace_test ws(fm);
 
     run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
@@ -304,18 +322,15 @@ TEST(b4g_integration_test, missing_pgroup_but_not_used)
 
 TEST(b4g_integration_test, bridge_config_changed)
 {
-    file_manager_impl_test file_manager;
+    file_manager_impl_test fm;
 
-    file_manager.did_open_file(
-        proc_grps_name, 1, R"({"pgroups":[{"name":"P1","libs":[{"path":"ASMMACP1","prefer_alternate_root":true}]}]})");
-    file_manager.did_open_file(b4g_conf_name, 1, empty_b4g_conf);
-    file_manager.did_open_file(pgm_a, 1, " MAC1");
-    file_manager.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1.get_uri()));
+    fm.did_open_file(
+        proc_grps_rl, 1, R"({"pgroups":[{"name":"P1","libs":[{"path":"ASMMACP1","prefer_alternate_root":true}]}]})");
+    fm.did_open_file(b4g_conf_rl, 1, empty_b4g_conf);
+    fm.did_open_file(pgm_a, 1, " MAC1");
+    fm.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1.get_uri()));
 
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
-    workspace ws(empty_rl, "workspace_name", file_manager, config, global_settings);
-    ws.open().run();
+    workspace_test ws(fm);
 
     run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
@@ -324,22 +339,21 @@ TEST(b4g_integration_test, bridge_config_changed)
     EXPECT_TRUE(matches_message_codes(ws.diags(), { "E049", "B4G001" }));
 
     ws.diags().clear();
-    change_and_reparse(
-        file_manager, ws, b4g_conf_name, R"({"elements":{},"defaultProcessorGroup":"P1","fileExtension":""})");
+    change_and_reparse(fm, ws, b4g_conf_rl, R"({"elements":{},"defaultProcessorGroup":"P1","fileExtension":""})");
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(ws.diags(), { "MNOTE" }));
 
     ws.diags().clear();
 
-    change_and_reparse(file_manager, ws, b4g_conf_name, empty_b4g_conf);
+    change_and_reparse(fm, ws, b4g_conf_rl, empty_b4g_conf);
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(ws.diags(), { "MNOTE", "B4G001" }));
 
     ws.diags().clear();
 
-    change_and_reparse(file_manager, ws, pgm_a, " MAC1 ");
+    change_and_reparse(fm, ws, pgm_a, " MAC1 ");
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(ws.diags(), { "E049", "B4G001" }));
@@ -347,17 +361,14 @@ TEST(b4g_integration_test, bridge_config_changed)
 
 TEST(b4g_integration_test, proc_config_changed)
 {
-    file_manager_impl_test file_manager;
+    file_manager_impl_test fm;
 
-    file_manager.did_open_file(proc_grps_name, 1, empty_proc_grps);
-    file_manager.did_open_file(b4g_conf_name, 1, R"({"elements":{},"defaultProcessorGroup":"P1","fileExtension":""})");
-    file_manager.did_open_file(pgm_a, 1, " MAC1");
-    file_manager.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1.get_uri()));
+    fm.did_open_file(proc_grps_rl, 1, empty_proc_grps);
+    fm.did_open_file(b4g_conf_rl, 1, R"({"elements":{},"defaultProcessorGroup":"P1","fileExtension":""})");
+    fm.did_open_file(pgm_a, 1, " MAC1");
+    fm.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1.get_uri()));
 
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
-    workspace ws(empty_rl, "workspace_name", file_manager, config, global_settings);
-    ws.open().run();
+    workspace_test ws(fm);
 
     run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
@@ -367,9 +378,9 @@ TEST(b4g_integration_test, proc_config_changed)
 
     ws.diags().clear();
 
-    change_and_reparse(file_manager,
+    change_and_reparse(fm,
         ws,
-        proc_grps_name,
+        proc_grps_rl,
         R"({"pgroups":[{"name":"P1","libs":[{"path":"ASMMACP1","prefer_alternate_root":true}]}]})");
     ws.collect_diags();
 
@@ -379,16 +390,14 @@ TEST(b4g_integration_test, proc_config_changed)
 TEST(b4g_integration_test, only_default_proc_group_exists)
 {
     file_manager_impl fm;
-    fm.did_open_file(b4g_conf_name,
+    fm.did_open_file(b4g_conf_rl,
         0,
         R"({"elements":{"A":{"processorGroup":"MISSING"}},"defaultProcessorGroup":"P1","fileExtension":""})");
-    fm.did_open_file(proc_grps_name, 1, R"({"pgroups":[{"name":"P1","libs":[]}]})");
+    fm.did_open_file(proc_grps_rl, 1, R"({"pgroups":[{"name":"P1","libs":[]}]})");
     fm.did_open_file(pgm_a, 1, "");
 
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
-    workspace ws(fm, config, global_settings);
-    ws.open().run();
+    workspace_test ws(fm);
+
     run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
 
@@ -406,16 +415,13 @@ TEST(b4g_integration_test, only_default_proc_group_exists)
 TEST(b4g_integration_test, b4g_conf_noproc_proc_group)
 {
     file_manager_impl fm;
-    fm.did_open_file(b4g_conf_name,
+    fm.did_open_file(b4g_conf_rl,
         0,
         R"({"elements":{"A":{"processorGroup":"*NOPROC*"}},"defaultProcessorGroup":"MISSING","fileExtension":""})");
-    fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
+    fm.did_open_file(proc_grps_rl, 0, empty_proc_grps);
     fm.did_open_file(pgm_a, 1, "");
 
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
-    workspace ws(fm, config, global_settings);
-    ws.open().run();
+    workspace_test ws(fm);
     run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
 
@@ -433,16 +439,13 @@ TEST(b4g_integration_test, b4g_conf_noproc_proc_group)
 TEST(b4g_integration_test, b4g_conf_noproc_proc_group_default)
 {
     file_manager_impl fm;
-    fm.did_open_file(b4g_conf_name,
+    fm.did_open_file(b4g_conf_rl,
         0,
         R"({"elements":{"A":{"processorGroup":"MISSING"}},"defaultProcessorGroup":"*NOPROC*","fileExtension":""})");
-    fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
+    fm.did_open_file(proc_grps_rl, 0, empty_proc_grps);
     fm.did_open_file(pgm_a, 1, "");
 
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
-    workspace ws(fm, config, global_settings);
-    ws.open().run();
+    workspace_test ws(fm);
     run_if_valid(ws.did_open_file(pgm_a));
     parse_all_files(ws);
 

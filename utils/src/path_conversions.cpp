@@ -42,27 +42,32 @@ std::string uri_to_path(std::string_view uri)
         return "";
 
     std::string auth_path;
-    if (u.has_authority() && u.authority().to_string() != "")
+    if (u.has_authority() && !u.authority().empty())
     {
         if (!utils::platform::is_windows())
             return ""; // There is no path representation for URIs like "file://share/home/etc" on linux
 
-        auth_path = u.authority().to_string() + u.path().to_string();
+        auto auth = u.authority();
+        auto path = u.path();
+
+        auth_path.reserve(auth.size() + path.size() + 2);
+        auth_path.assign(auth.cbegin(), auth.cend());
+        auth_path.append(path.cbegin(), path.cend());
 
         if (!std::regex_search(auth_path, windows_drive))
             // handle remote locations correctly, like \\server\path, if the auth doesn't start with e.g. C:/
-            auth_path = "//" + auth_path;
+            auth_path.insert(0, "//");
     }
     else
     {
-        network::string_view path = u.path();
+        auto path = u.path();
 
         if (utils::platform::is_windows() && path.size() >= 2
             && ((path[0] == '/' || path[0] == '\\') && path[1] != '/' && path[1] != '\\'))
             // If Windows path begins with exactly 1 slash, remove it e.g. /c:/Users/path -> c:/Users/path
             path.remove_prefix(1);
 
-        auth_path = path.to_string();
+        auth_path.assign(path.cbegin(), path.cend());
 
         if (utils::platform::is_windows())
         {

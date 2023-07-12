@@ -411,7 +411,7 @@ bool workspace_configuration::is_config_file(const utils::resource::resource_loc
 
 bool workspace_configuration::is_b4g_config_file(const utils::resource::resource_location& file) const
 {
-    return file.get_uri().ends_with(B4G_CONF_FILE) && utils::resource::filename(file) == B4G_CONF_FILE;
+    return file.filename() == B4G_CONF_FILE;
 }
 
 // open config files and parse them
@@ -576,7 +576,7 @@ workspace_configuration::try_creating_rl_tagged_pgm_pair(
     }
 
     auto rl = default_b4g_proc_group ? utils::resource::resource_location::join(file_root, "*")
-                                     : utils::resource::resource_location::join(file_root, filename);
+                                     : utils::resource::resource_location::join(file_root, filename).lexically_normal();
 
     return std::make_pair(std::move(rl),
         tagged_program {

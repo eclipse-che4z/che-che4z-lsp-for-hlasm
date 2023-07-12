@@ -13,6 +13,7 @@
 - Incorrect processing of self-referencing data definition statements
 - Enhanced multiline support in TextMate grammar for source files
 - Better handling of Unicode Supplementary Planes
+- Incorrect processor group could be assigned to programs stated in `.bridge.json`
 
 ## [1.8.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.7.0...1.8.0) (2023-05-24)
 
