@@ -19,6 +19,10 @@ on:
     branches:
       - development
 
+defaults:
+  run:
+    shell: sh
+
 jobs:
   docs-to-wiki:
     name: Publish documentation to wiki

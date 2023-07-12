@@ -20,6 +20,10 @@ on:
     types:
       - completed
 
+defaults:
+  run:
+    shell: sh
+
 jobs:
   sonar:
     name: SonarCloud scan

@@ -24,6 +24,10 @@ on:
       - development
       - master
 
+defaults:
+  run:
+    shell: sh
+
 jobs:
   sonarcloud-build:
     name: SonarCloud build

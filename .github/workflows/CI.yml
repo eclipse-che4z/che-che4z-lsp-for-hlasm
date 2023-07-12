@@ -28,6 +28,10 @@ on:
 env:
   CLIENT_DIR: clients/vscode-hlasmplugin
 
+defaults:
+  run:
+    shell: sh
+
 jobs:
   formal-checks:
     name: Checks
