@@ -221,26 +221,16 @@ void server::register_cancellable_request(const request_id& id, request_invalida
 
 void server::register_methods()
 {
-    methods_.try_emplace("initialize",
-        method { [this](const request_id& id, const nlohmann::json& params) { on_initialize(id, params); },
-            telemetry_log_level::LOG_EVENT });
-    methods_.try_emplace("initialized",
-        method { [this](const nlohmann::json&) {
-                    for (const auto& f : features_)
-                        f->initialized();
-                },
-            telemetry_log_level::NO_TELEMETRY });
-    methods_.try_emplace("shutdown",
-        method { [this](const request_id& id, const nlohmann::json& params) { on_shutdown(id, params); },
-            telemetry_log_level::NO_TELEMETRY });
-    methods_.try_emplace("exit",
-        method { [this](const nlohmann::json& params) { on_exit(params); }, telemetry_log_level::NO_TELEMETRY });
-    methods_.try_emplace("$/cancelRequest",
-        method {
-            [this](const nlohmann::json& args) { cancel_request_handler(args); }, telemetry_log_level::NO_TELEMETRY });
-    methods_.try_emplace("invalidate_external_configuration",
-        method {
-            std::bind_front(&server::invalidate_external_configuration, this), telemetry_log_level::NO_TELEMETRY });
+    const auto add_method =
+        [this](std::string_view name, auto func, telemetry_log_level telem = telemetry_log_level::NO_TELEMETRY) {
+            methods_.try_emplace(std::string(name), method { std::bind_front(func, this), telem });
+        };
+    add_method("initialize", &server::on_initialize, telemetry_log_level::LOG_EVENT);
+    add_method("initialized", &server::on_initialized);
+    add_method("shutdown", &server::on_shutdown);
+    add_method("exit", &server::on_exit);
+    add_method("$/cancelRequest", &server::cancel_request_handler);
+    add_method("invalidate_external_configuration", &server::invalidate_external_configuration);
 }
 
 void server::send_telemetry(const telemetry_message& message) { notify("telemetry/event", nlohmann::json(message)); }
@@ -298,6 +288,12 @@ void server::on_initialize(const request_id& id, const nlohmann::json& param)
     {
         f->initialize_feature(param);
     }
+}
+
+void server::on_initialized(const nlohmann::json&)
+{
+    for (const auto& f : features_)
+        f->initialized();
 }
 
 void server::on_shutdown(const request_id& id, const nlohmann::json&)

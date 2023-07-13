@@ -233,27 +233,20 @@ feature_language_features::feature_language_features(
 
 void feature_language_features::register_methods(std::map<std::string, method>& methods)
 {
-    const auto this_bind = [this](void (feature_language_features::*func)(const request_id& id, const nlohmann::json&),
-                               telemetry_log_level telem) {
-        return method {
-            [this, func](const request_id& id, const nlohmann::json& args) { (this->*func)(id, args); },
-            telem,
-        };
+    using enum telemetry_log_level;
+    const auto add_method = [this, &methods](std::string_view name,
+                                auto func,
+                                telemetry_log_level telem = telemetry_log_level::NO_TELEMETRY) {
+        methods.try_emplace(std::string(name), method { std::bind_front(func, this), telem });
     };
 
-    methods.emplace(
-        "textDocument/definition", this_bind(&feature_language_features::definition, telemetry_log_level::LOG_EVENT));
-    methods.emplace(
-        "textDocument/references", this_bind(&feature_language_features::references, telemetry_log_level::LOG_EVENT));
-    methods.emplace("textDocument/hover", this_bind(&feature_language_features::hover, telemetry_log_level::LOG_EVENT));
-    methods.emplace(
-        "textDocument/completion", this_bind(&feature_language_features::completion, telemetry_log_level::LOG_EVENT));
-    methods.emplace("textDocument/semanticTokens/full",
-        this_bind(&feature_language_features::semantic_tokens, telemetry_log_level::NO_TELEMETRY));
-    methods.emplace("textDocument/documentSymbol",
-        this_bind(&feature_language_features::document_symbol, telemetry_log_level::NO_TELEMETRY));
-    methods.try_emplace("textDocument/$/opcode_suggestion",
-        this_bind(&feature_language_features::opcode_suggestion, telemetry_log_level::LOG_EVENT));
+    add_method("textDocument/definition", &feature_language_features::definition, LOG_EVENT);
+    add_method("textDocument/references", &feature_language_features::references, LOG_EVENT);
+    add_method("textDocument/hover", &feature_language_features::hover, LOG_EVENT);
+    add_method("textDocument/completion", &feature_language_features::completion, LOG_EVENT);
+    add_method("textDocument/semanticTokens/full", &feature_language_features::semantic_tokens);
+    add_method("textDocument/documentSymbol", &feature_language_features::document_symbol);
+    add_method("textDocument/$/opcode_suggestion", &feature_language_features::opcode_suggestion);
 }
 
 nlohmann::json feature_language_features::register_capabilities()

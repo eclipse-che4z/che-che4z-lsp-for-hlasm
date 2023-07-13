@@ -142,28 +142,17 @@ void lookahead_processor::process_COPY(const resolved_statement& statement)
 lookahead_processor::process_table_t lookahead_processor::create_table()
 {
     process_table_t table;
-    table.emplace(context::id_index("CSECT"),
-        std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(context::id_index("DSECT"),
-        std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(context::id_index("RSECT"),
-        std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(context::id_index("COM"),
-        std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(context::id_index("DXD"),
-        std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(context::id_index("LOCTR"),
-        std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(context::id_index("EQU"),
-        std::bind(&lookahead_processor::assign_EQU_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(context::id_index("DC"),
-        std::bind(
-            &lookahead_processor::assign_data_def_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(context::id_index("DS"),
-        std::bind(
-            &lookahead_processor::assign_data_def_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(context::id_index("CXD"),
-        std::bind(&lookahead_processor::assign_cxd_attributes, this, std::placeholders::_1, std::placeholders::_2));
+    using context::id_index;
+    table.try_emplace(id_index("CSECT"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
+    table.try_emplace(id_index("DSECT"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
+    table.try_emplace(id_index("RSECT"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
+    table.try_emplace(id_index("COM"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
+    table.try_emplace(id_index("DXD"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
+    table.try_emplace(id_index("LOCTR"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
+    table.try_emplace(id_index("EQU"), std::bind_front(&lookahead_processor::assign_EQU_attributes, this));
+    table.try_emplace(id_index("DC"), std::bind_front(&lookahead_processor::assign_data_def_attributes, this));
+    table.try_emplace(id_index("DS"), std::bind_front(&lookahead_processor::assign_data_def_attributes, this));
+    table.try_emplace(id_index("CXD"), std::bind_front(&lookahead_processor::assign_cxd_attributes, this));
 
     return table;
 }

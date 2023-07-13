@@ -14,6 +14,8 @@
 
 #include "dap_feature.h"
 
+#include <functional>
+
 #include "nlohmann/json.hpp"
 #include "utils/path.h"
 #include "utils/path_conversions.h"
@@ -76,30 +78,27 @@ dap_feature::dap_feature(parser_library::debugger_configuration_provider& dc_pro
 
 void dap_feature::register_methods(std::map<std::string, method>& methods)
 {
-    const auto this_bind = [this](void (dap_feature::*func)(const request_id&, const nlohmann::json&),
-                               telemetry_log_level telem = telemetry_log_level::NO_TELEMETRY) {
-        return method {
-            [this, func](
-                const request_id& requested_seq, const nlohmann::json& args) { (this->*func)(requested_seq, args); },
-            telem,
-        };
+    using enum telemetry_log_level;
+    const auto add_method = [this, &methods](std::string_view name,
+                                auto func,
+                                telemetry_log_level telem = telemetry_log_level::NO_TELEMETRY) {
+        methods.try_emplace(std::string(name), method { std::bind_front(func, this), telem });
     };
-    methods.try_emplace("initialize", this_bind(&dap_feature::on_initialize));
-    methods.try_emplace("disconnect", this_bind(&dap_feature::on_disconnect, telemetry_log_level::LOG_EVENT));
-    methods.try_emplace("launch", this_bind(&dap_feature::on_launch, telemetry_log_level::LOG_EVENT));
-    methods.try_emplace("setBreakpoints", this_bind(&dap_feature::on_set_breakpoints, telemetry_log_level::LOG_EVENT));
-    methods.try_emplace("setExceptionBreakpoints",
-        this_bind(&dap_feature::on_set_exception_breakpoints, telemetry_log_level::LOG_EVENT));
-    methods.try_emplace("configurationDone", this_bind(&dap_feature::on_configuration_done));
-    methods.try_emplace("threads", this_bind(&dap_feature::on_threads));
-    methods.try_emplace("stackTrace", this_bind(&dap_feature::on_stack_trace));
-    methods.try_emplace("scopes", this_bind(&dap_feature::on_scopes));
-    methods.try_emplace("next", this_bind(&dap_feature::on_next, telemetry_log_level::LOG_EVENT));
-    methods.try_emplace("stepIn", this_bind(&dap_feature::on_step_in, telemetry_log_level::LOG_EVENT));
-    methods.try_emplace("stepOut", this_bind(&dap_feature::on_step_out, telemetry_log_level::LOG_EVENT));
-    methods.try_emplace("variables", this_bind(&dap_feature::on_variables));
-    methods.try_emplace("continue", this_bind(&dap_feature::on_continue, telemetry_log_level::LOG_EVENT));
-    methods.try_emplace("pause", this_bind(&dap_feature::on_pause, telemetry_log_level::LOG_EVENT));
+    add_method("initialize", &dap_feature::on_initialize);
+    add_method("disconnect", &dap_feature::on_disconnect, LOG_EVENT);
+    add_method("launch", &dap_feature::on_launch, LOG_EVENT);
+    add_method("setBreakpoints", &dap_feature::on_set_breakpoints, LOG_EVENT);
+    add_method("setExceptionBreakpoints", &dap_feature::on_set_exception_breakpoints, LOG_EVENT);
+    add_method("configurationDone", &dap_feature::on_configuration_done);
+    add_method("threads", &dap_feature::on_threads);
+    add_method("stackTrace", &dap_feature::on_stack_trace);
+    add_method("scopes", &dap_feature::on_scopes);
+    add_method("next", &dap_feature::on_next, LOG_EVENT);
+    add_method("stepIn", &dap_feature::on_step_in, LOG_EVENT);
+    add_method("stepOut", &dap_feature::on_step_out, LOG_EVENT);
+    add_method("variables", &dap_feature::on_variables);
+    add_method("continue", &dap_feature::on_continue, LOG_EVENT);
+    add_method("pause", &dap_feature::on_pause, LOG_EVENT);
 }
 nlohmann::json dap_feature::register_capabilities() { return nlohmann::json(); }
 
