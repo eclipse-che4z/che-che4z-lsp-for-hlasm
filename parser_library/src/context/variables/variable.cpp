@@ -19,18 +19,24 @@
 
 namespace hlasm_plugin::parser_library::context {
 
-set_symbol_base* variable_symbol::access_set_symbol_base() { return dynamic_cast<set_symbol_base*>(this); }
+set_symbol_base* variable_symbol::access_set_symbol_base()
+{
+    return var_kind == variable_kind::SET_VAR_KIND ? static_cast<set_symbol_base*>(this) : nullptr;
+}
 
 const set_symbol_base* variable_symbol::access_set_symbol_base() const
 {
-    return dynamic_cast<const set_symbol_base*>(this);
+    return var_kind == variable_kind::SET_VAR_KIND ? static_cast<const set_symbol_base*>(this) : nullptr;
 }
 
-macro_param_base* variable_symbol::access_macro_param_base() { return dynamic_cast<macro_param_base*>(this); }
+macro_param_base* variable_symbol::access_macro_param_base()
+{
+    return var_kind == variable_kind::MACRO_VAR_KIND ? static_cast<macro_param_base*>(this) : nullptr;
+}
 
 const macro_param_base* variable_symbol::access_macro_param_base() const
 {
-    return dynamic_cast<const macro_param_base*>(this);
+    return var_kind == variable_kind::MACRO_VAR_KIND ? static_cast<const macro_param_base*>(this) : nullptr;
 }
 
 variable_symbol::variable_symbol(variable_kind var_kind, id_index name, bool is_global)

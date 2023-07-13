@@ -529,7 +529,7 @@ TEST(literals, propagate_error_from_literals)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "D003" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0003", "D031" }));
 }
 
 TEST(literals, everywhere)

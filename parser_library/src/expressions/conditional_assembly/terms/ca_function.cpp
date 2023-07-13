@@ -399,9 +399,13 @@ context::SET_t ca_function::A2D(context::A_t param)
 
 context::SET_t ca_function::A2X(context::A_t param)
 {
-    std::stringstream stream;
-    stream << std::setfill('0') << std::setw(8) << std::uppercase << std::hex << param;
-    return stream.str();
+    unsigned long uparam = param;
+    std::string result;
+
+    for (int shift = 28; shift >= 0; shift -= 4)
+        result.push_back("0123456789ABCDEF"[(uparam >> shift) & 0xf]);
+
+    return result;
 }
 
 context::SET_t ca_function::B2C(const context::C_t& param, diagnostic_adder& add_diagnostic)
@@ -528,11 +532,10 @@ context::SET_t ca_function::C2X(const context::C_t& param, diagnostic_adder& add
     ret.reserve(param.size() * 2);
     for (const char* c = param.c_str(); c != param.c_str() + param.size(); ++c)
     {
-        int value = ebcdic_encoding::to_ebcdic(ebcdic_encoding::to_pseudoascii(c));
+        auto value = ebcdic_encoding::to_ebcdic(ebcdic_encoding::to_pseudoascii(c));
 
-        std::stringstream stream;
-        stream << std::setfill('0') << std::setw(2) << std::uppercase << std::hex << value;
-        ret.append(stream.str());
+        ret.push_back("0123456789ABCDEF"[value >> 4]);
+        ret.push_back("0123456789ABCDEF"[value & 0xf]);
     }
     return ret;
 }

@@ -160,14 +160,14 @@ void processing_manager::run_analyzers(const context::hlasm_statement& statement
 
 bool processing_manager::attr_lookahead_active() const
 {
-    auto look_pr = dynamic_cast<lookahead_processor*>(std::to_address(procs_.back()));
-    return look_pr && look_pr->action == lookahead_action::ORD;
+    return procs_.back()->kind == processing_kind::LOOKAHEAD
+        && static_cast<lookahead_processor*>(std::to_address(procs_.back()))->action == lookahead_action::ORD;
 }
 
 bool processing_manager::seq_lookahead_active() const
 {
-    auto look_pr = dynamic_cast<lookahead_processor*>(std::to_address(procs_.back()));
-    return look_pr && look_pr->action == lookahead_action::SEQ;
+    return procs_.back()->kind == processing_kind::LOOKAHEAD
+        && static_cast<lookahead_processor*>(std::to_address(procs_.back()))->action == lookahead_action::SEQ;
 }
 
 bool processing_manager::lookahead_active() const { return procs_.back()->kind == processing_kind::LOOKAHEAD; }

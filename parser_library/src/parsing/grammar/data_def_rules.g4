@@ -92,16 +92,34 @@ data_def_base [data_definition_parser* p]
 		$p->push($data_def_text.value, provider.get_range($data_def_text.ctx));
 	}
 	{
-		if (!($p->allowed().expression || $p->allowed().string || $p->allowed().plus_minus || $p->allowed().dot)) goto PERF_HACK_SKIP_EXTRAS;
+		if (const auto allowed = $p->allowed(); !allowed.expression && !allowed.string && !allowed.plus_minus && !allowed.dot)
+			goto PERF_HACK_SKIP_EXTRAS;
+		goto PERF_HACK_EXTRAS;
 	}
 	(
-		{ $p->allowed().expression }? mach_expr_pars {if ($mach_expr_pars.e) $p->push(std::move($mach_expr_pars.e), provider.get_range($mach_expr_pars.ctx)); }
-		|
-		{ $p->allowed().string }? data_def_text {$p->push($data_def_text.value, provider.get_range($data_def_text.ctx));}
-		|
-		{ $p->allowed().plus_minus }? data_def_text_plus_minus {$p->push($data_def_text_plus_minus.value, provider.get_range($data_def_text_plus_minus.ctx));}
-		|
-		{ $p->allowed().dot }? DOT {$p->push(".", provider.get_range($DOT));}
+		{
+			PERF_HACK_EXTRAS:
+			if (const auto [allowed, next_token] = std::make_pair($p->allowed(), _input->LA(1));
+				!allowed.expression && next_token == LPAR ||
+				!allowed.string && (next_token == IDENTIFIER || next_token == NUM || next_token == ORDSYMBOL) ||
+				!allowed.plus_minus && (next_token == PLUS || next_token == MINUS) ||
+				!allowed.dot && next_token == DOT)
+				goto PERF_HACK_SKIP_EXTRAS;
+			else if (!(next_token == LPAR || next_token == IDENTIFIER || next_token == NUM || next_token == ORDSYMBOL || next_token == PLUS || next_token == MINUS || next_token == DOT))
+				goto PERF_HACK_SKIP_EXTRAS;
+		}
+		(
+			mach_expr_pars {if ($mach_expr_pars.e) $p->push(std::move($mach_expr_pars.e), provider.get_range($mach_expr_pars.ctx)); }
+			|
+			data_def_text {$p->push($data_def_text.value, provider.get_range($data_def_text.ctx));}
+			|
+			data_def_text_plus_minus {$p->push($data_def_text_plus_minus.value, provider.get_range($data_def_text_plus_minus.ctx));}
+			|
+			DOT {$p->push(".", provider.get_range($DOT));}
+		)
+		{
+			goto PERF_HACK_EXTRAS;
+		}
 	)*
 	{
 		PERF_HACK_SKIP_EXTRAS:;

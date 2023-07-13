@@ -1049,12 +1049,8 @@ index_t<using_collection> hlasm_context::using_current() const { return m_active
 
 hlasm_context::name_result hlasm_context::try_get_symbol_name(std::string_view symbol)
 {
-    if (symbol.empty() || symbol.size() > 63 || isdigit((unsigned char)symbol.front()))
+    if (!lexing::lexer::ord_symbol(symbol))
         return std::make_pair(false, context::id_index());
-
-    for (const auto& c : symbol)
-        if (!lexing::lexer::ord_char(c))
-            return std::make_pair(false, context::id_index());
 
     return std::make_pair(true, ids().add(symbol));
 }

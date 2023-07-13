@@ -34,3 +34,85 @@ index baf46ca..35f00ff 100644
    set(static_lib_suffix "-static")
  endif()
  
+diff --git a/runtime/Cpp/runtime/src/BufferedTokenStream.cpp b/runtime/Cpp/runtime/src/BufferedTokenStream.cpp
+index 241dfe5..e02b63c 100755
+--- a/runtime/Cpp/runtime/src/BufferedTokenStream.cpp
++++ b/runtime/Cpp/runtime/src/BufferedTokenStream.cpp
+@@ -374,15 +374,15 @@ std::string BufferedTokenStream::getText(const misc::Interval &interval) {
+     stop = _tokens.size() - 1;
+   }
+ 
+-  std::stringstream ss;
++  std::string result;
+   for (size_t i = start; i <= stop; i++) {
+     Token *t = _tokens[i].get();
+     if (t->getType() == Token::EOF) {
+       break;
+     }
+-    ss << t->getText();
++    result.append(t->getText());
+   }
+-  return ss.str();
++  return result;
+ }
+ 
+ std::string BufferedTokenStream::getText(RuleContext *ctx) {
+diff --git a/runtime/Cpp/runtime/src/DefaultErrorStrategy.cpp b/runtime/Cpp/runtime/src/DefaultErrorStrategy.cpp
+index 54d35ee..289f15d 100755
+--- a/runtime/Cpp/runtime/src/DefaultErrorStrategy.cpp
++++ b/runtime/Cpp/runtime/src/DefaultErrorStrategy.cpp
+@@ -101,7 +101,7 @@ void DefaultErrorStrategy::sync(Parser *recognizer) {
+   size_t la = tokens->LA(1);
+ 
+   // try cheaper subset first; might get lucky. seems to shave a wee bit off
+-  auto nextTokens = recognizer->getATN().nextTokens(s);
++  const auto &nextTokens = recognizer->getATN().nextTokens(s);
+   if (nextTokens.contains(Token::EPSILON) || nextTokens.contains(la)) {
+     return;
+   }
+@@ -310,8 +310,7 @@ misc::IntervalSet DefaultErrorStrategy::getErrorRecoverySet(Parser *recognizer)
+     // compute what follows who invoked us
+     atn::ATNState *invokingState = atn.states[ctx->invokingState];
+     const atn::RuleTransition *rt = downCast<const atn::RuleTransition*>(invokingState->transitions[0].get());
+-    misc::IntervalSet follow = atn.nextTokens(rt->followState);
+-    recoverSet.addAll(follow);
++    recoverSet.addAll(atn.nextTokens(rt->followState));
+ 
+     if (ctx->parent == nullptr)
+       break;
+diff --git a/runtime/Cpp/runtime/src/RuleContext.cpp b/runtime/Cpp/runtime/src/RuleContext.cpp
+index 3ed945f..79b87cf 100755
+--- a/runtime/Cpp/runtime/src/RuleContext.cpp
++++ b/runtime/Cpp/runtime/src/RuleContext.cpp
+@@ -51,14 +51,14 @@ std::string RuleContext::getText() {
+     return "";
+   }
+ 
+-  std::stringstream ss;
++  std::string result;
+   for (size_t i = 0; i < children.size(); i++) {
+     ParseTree *tree = children[i];
+     if (tree != nullptr)
+-      ss << tree->getText();
++      result.append(tree->getText());
+   }
+ 
+-  return ss.str();
++  return result;
+ }
+ 
+ size_t RuleContext::getRuleIndex() const {
+diff --git a/runtime/Cpp/runtime/src/atn/ParserATNSimulator.cpp b/runtime/Cpp/runtime/src/atn/ParserATNSimulator.cpp
+index c799150..b60dae3 100755
+--- a/runtime/Cpp/runtime/src/atn/ParserATNSimulator.cpp
++++ b/runtime/Cpp/runtime/src/atn/ParserATNSimulator.cpp
+@@ -583,8 +583,7 @@ ATNConfigSet* ParserATNSimulator::removeAllConfigsNotInRuleStopState(ATNConfigSe
+     }
+ 
+     if (lookToEndOfRule && config->state->epsilonOnlyTransitions) {
+-      misc::IntervalSet nextTokens = atn.nextTokens(config->state);
+-      if (nextTokens.contains(Token::EPSILON)) {
++      if (atn.nextTokens(config->state).contains(Token::EPSILON)) {
+         ATNState *endOfRuleState = atn.ruleToStopState[config->state->ruleIndex];
+         result->add(std::make_shared<ATNConfig>(*config, endOfRuleState), &mergeCache);
+       }

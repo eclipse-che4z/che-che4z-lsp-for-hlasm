@@ -42,9 +42,16 @@ const std::regex local_non_windows("^file:(?:" + slash + "{3}|(?:" + slash + "(?
 
 
 resource_location::data::data(std::string s)
-    : hash(std::hash<std::string>()(s))
-    , uri(std::move(s))
+    : uri(std::move(s))
 {}
+
+size_t resource_location::data::update_hash() const noexcept
+{
+    auto h = std::hash<std::string>()(uri);
+    h |= !h;
+    hash.store(h, std::memory_order_relaxed);
+    return h;
+}
 
 resource_location::resource_location(std::string uri)
     : m_data(uri.empty() ? nullptr : std::make_shared<const data>(std::move(uri)))

@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_UTILS_RESOURCE_LOCATION_H
 #define HLASMPLUGIN_UTILS_RESOURCE_LOCATION_H
 
+#include <atomic>
 #include <compare>
 #include <memory>
 #include <string>
@@ -70,7 +71,7 @@ public:
     bool operator==(const resource_location& rl) const noexcept
     {
         return m_data == rl.m_data
-            || m_data && rl.m_data && m_data->hash == rl.m_data->hash && m_data->uri == rl.m_data->uri;
+            || m_data && rl.m_data && m_data->get_hash() == rl.m_data->get_hash() && m_data->uri == rl.m_data->uri;
     }
     std::strong_ordering operator<=>(const resource_location& rl) const noexcept
     {
@@ -90,8 +91,16 @@ private:
     struct data
     {
         data(std::string s);
-        size_t hash;
         std::string uri;
+        mutable std::atomic<size_t> hash = 0;
+
+        size_t get_hash() const noexcept
+        {
+            if (auto h = hash.load(std::memory_order_relaxed))
+                return h;
+            return update_hash();
+        }
+        size_t update_hash() const noexcept;
     };
     std::shared_ptr<const data> m_data;
 
@@ -100,7 +109,7 @@ private:
 
 struct resource_location_hasher
 {
-    std::size_t operator()(const resource_location& rl) const { return rl.m_data ? rl.m_data->hash : 0; }
+    std::size_t operator()(const resource_location& rl) const noexcept { return rl.m_data ? rl.m_data->get_hash() : 0; }
 };
 
 } // namespace hlasm_plugin::utils::resource

@@ -88,11 +88,10 @@ public:
     // enable ictl
     void set_ictl();
 
-    static bool ord_char(char_t c);
+    static bool ord_char(char_t c) noexcept;
+    static bool ord_symbol(std::string_view symbol) noexcept;
 
     // is next input char an ord char?
-    bool is_ord_char() const;
-    bool is_space() const;
     void set_unlimited_line(bool unlimited_lines);
     // set lexer's input state to file position
     void set_file_offset(position file_offset, size_t logical_column, bool process_allowed = false);
@@ -124,7 +123,7 @@ private:
     size_t end_ = 71;
     size_t continue_ = 15;
 
-    antlr4::CharStream* input_;
+    input_source* input_;
     semantics::source_info_processor* src_proc_;
 
     struct input_state
@@ -145,7 +144,6 @@ private:
     input_state last_line;
 
     bool eof() const;
-    bool identifier_divider() const;
 
     // captures lexer state at the beginning of a token
     void start_token();
