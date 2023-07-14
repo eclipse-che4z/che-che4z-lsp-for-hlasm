@@ -4,6 +4,7 @@
 
 #### Added
 - Infrastructure for remote configuration
+- Implement completion item resolver
 
 #### Fixed
 - Bridge for Git configuration files may be ignored by the macro tracer

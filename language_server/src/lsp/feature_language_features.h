@@ -15,6 +15,8 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_FEATURE_LANGUAGEFEATURES_H
 #define HLASMPLUGIN_LANGUAGESERVER_FEATURE_LANGUAGEFEATURES_H
 
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "../feature.h"
@@ -41,6 +43,7 @@ private:
     void references(const request_id& id, const nlohmann::json& params);
     void hover(const request_id& id, const nlohmann::json& params);
     void completion(const request_id& id, const nlohmann::json& params);
+    void completion_resolve(const request_id& id, const nlohmann::json& params);
     void semantic_tokens(const request_id& id, const nlohmann::json& params);
     void document_symbol(const request_id& id, const nlohmann::json& params);
     void opcode_suggestion(const request_id& id, const nlohmann::json& params);
@@ -49,6 +52,9 @@ private:
     nlohmann::json document_symbol_list_json(hlasm_plugin::parser_library::document_symbol_list symbol_list);
 
     parser_library::workspace_manager& ws_mngr_;
+
+    nlohmann::json translate_completion_list_and_save_doc(hlasm_plugin::parser_library::completion_list list);
+    std::unordered_map<std::string, std::string> saved_completion_list_doc;
 };
 
 } // namespace hlasm_plugin::language_server::lsp

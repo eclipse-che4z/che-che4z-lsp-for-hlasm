@@ -16,6 +16,7 @@
 
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
+#include "lsp/completion_item.h"
 #include "lsp/feature_language_features.h"
 #include "nlohmann/json.hpp"
 #include "utils/platform.h"
@@ -44,6 +45,54 @@ TEST(language_features, completion)
         completion(
             StrEq(uri), parser_library::position(0, 1), '\0', parser_library::completion_trigger_kind::invoked, _));
     notifs["textDocument/completion"].as_request_handler()(request_id(0), params1);
+}
+
+TEST(language_features, completion_resolve)
+{
+    test::ws_mngr_mock ws_mngr;
+    NiceMock<response_provider_mock> response_mock;
+    lsp::feature_language_features f(ws_mngr, response_mock);
+    std::map<std::string, method> notifs;
+    f.register_methods(notifs);
+
+    auto params1 = nlohmann::json::parse(
+        R"({"textDocument":{"uri":")" + uri + R"("},"position":{"line":0,"character":1},"context":{"triggerKind":1}})");
+
+    static const hlasm_plugin::parser_library::lsp::completion_list_s compl_list {
+        hlasm_plugin::parser_library::lsp::completion_item_s("LABEL", "", "", "DOC"),
+    };
+    EXPECT_CALL(ws_mngr,
+        completion(
+            StrEq(uri), parser_library::position(0, 1), '\0', parser_library::completion_trigger_kind::invoked, _))
+        .WillOnce(WithArg<4>(Invoke([](auto channel) {
+            channel.provide({ compl_list.data(), compl_list.size() });
+        })));
+    nlohmann::json completion_response;
+    EXPECT_CALL(response_mock, respond(request_id(0), StrEq(""), _)).WillOnce(SaveArg<2>(&completion_response));
+    notifs["textDocument/completion"].as_request_handler()(request_id(0), params1);
+    EXPECT_EQ(completion_response.at("/items/0/label"_json_pointer), "LABEL");
+    EXPECT_FALSE(completion_response.contains("/items/0/documentation"_json_pointer));
+
+    nlohmann::json completion_resolve_response;
+    EXPECT_CALL(response_mock, respond(request_id(1), StrEq(""), _)).WillOnce(SaveArg<2>(&completion_resolve_response));
+    notifs["completionItem/resolve"].as_request_handler()(request_id(1), nlohmann::json { { "label", "LABEL" } });
+    EXPECT_EQ(completion_resolve_response.at("/label"_json_pointer), "LABEL");
+    EXPECT_EQ(completion_resolve_response.at("/documentation/value"_json_pointer), "DOC");
+}
+
+TEST(language_features, completion_resolve_invalid)
+{
+    test::ws_mngr_mock ws_mngr;
+    NiceMock<response_provider_mock> response_mock;
+    lsp::feature_language_features f(ws_mngr, response_mock);
+    std::map<std::string, method> notifs;
+    f.register_methods(notifs);
+
+    nlohmann::json completion_resolve_response;
+    EXPECT_CALL(response_mock, respond(request_id(1), StrEq(""), _)).WillOnce(SaveArg<2>(&completion_resolve_response));
+    notifs["completionItem/resolve"].as_request_handler()(request_id(1), nlohmann::json { { "label", "LABEL" } });
+    EXPECT_EQ(completion_resolve_response.at("/label"_json_pointer), "LABEL");
+    EXPECT_EQ(completion_resolve_response.at("/documentation"_json_pointer), "");
 }
 
 TEST(language_features, hover)

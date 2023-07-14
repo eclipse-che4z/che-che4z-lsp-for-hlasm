@@ -15,6 +15,7 @@
 
 #include "feature_language_features.h"
 
+#include <functional>
 #include <stack>
 #include <utility>
 
@@ -144,35 +145,6 @@ std::string decorate_suggestion(std::string_view s)
     return result;
 }
 
-nlohmann::json translate_completion_list(completion_list list)
-{
-    auto to_ret = nlohmann::json::object();
-    auto completion_item_array = nlohmann::json::array();
-    for (size_t i = 0; i < list.size(); ++i)
-    {
-        const auto& item = list.item(i);
-        auto& json_item = completion_item_array.emplace_back(nlohmann::json {
-            { "label", item.label() },
-            { "kind", completion_item_kind_mapping.at(item.kind()) },
-            { "detail", item.detail() },
-            { "documentation", get_markup_content(item.documentation()) },
-            { "insertText", item.insert_text() },
-            { "insertTextFormat", 1 + (int)item.is_snippet() },
-        });
-        if (auto suggestion = item.suggestion_for(); !suggestion.empty())
-        {
-            json_item["filterText"] = std::string("~~~") + decorate_suggestion(suggestion);
-            json_item["sortText"] = std::string("~~~") + std::string(item.label());
-        }
-    }
-    // needs to be incomplete, otherwise we are unable to include new suggestions
-    // when user continues typing (vscode keeps using the first list)
-    to_ret["isIncomplete"] = true;
-    to_ret["items"] = std::move(completion_item_array);
-
-    return to_ret;
-}
-
 template<typename T>
 struct first_arg;
 template<typename T, typename Arg, typename... Args>
@@ -244,6 +216,7 @@ void feature_language_features::register_methods(std::map<std::string, method>& 
     add_method("textDocument/references", &feature_language_features::references, LOG_EVENT);
     add_method("textDocument/hover", &feature_language_features::hover, LOG_EVENT);
     add_method("textDocument/completion", &feature_language_features::completion, LOG_EVENT);
+    add_method("completionItem/resolve", &feature_language_features::completion_resolve);
     add_method("textDocument/semanticTokens/full", &feature_language_features::semantic_tokens);
     add_method("textDocument/documentSymbol", &feature_language_features::document_symbol);
     add_method("textDocument/$/opcode_suggestion", &feature_language_features::opcode_suggestion);
@@ -257,8 +230,13 @@ nlohmann::json feature_language_features::register_capabilities()
         { "definitionProvider", true },
         { "referencesProvider", true },
         { "hoverProvider", true },
-        { "completionProvider",
-            { { "resolveProvider", false }, { "triggerCharacters", { "&", ".", "_", "$", "#", "@", "*" } } } },
+        {
+            "completionProvider",
+            {
+                { "resolveProvider", true },
+                { "triggerCharacters", { "&", ".", "_", "$", "#", "@", "*" } },
+            },
+        },
         {
             "semanticTokensProvider",
             {
@@ -353,7 +331,6 @@ void feature_language_features::hover(const request_id& id, const nlohmann::json
     response_->register_cancellable_request(id, std::move(resp));
 }
 
-
 void feature_language_features::completion(const request_id& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
@@ -361,10 +338,54 @@ void feature_language_features::completion(const request_id& id, const nlohmann:
 
     auto [trigger_kind, trigger_char] = extract_trigger(params);
 
-    auto resp = make_response(id, response_, translate_completion_list);
+    auto resp = make_response(
+        id, response_, [this](completion_list cl) { return translate_completion_list_and_save_doc(std::move(cl)); });
     ws_mngr_.completion(document_uri.c_str(), pos, trigger_char, trigger_kind, resp);
 
     response_->register_cancellable_request(id, std::move(resp));
+}
+
+nlohmann::json feature_language_features::translate_completion_list_and_save_doc(completion_list list)
+{
+    auto to_ret = nlohmann::json::object();
+    auto completion_item_array = nlohmann::json::array();
+    saved_completion_list_doc.clear();
+    for (size_t i = 0; i < list.size(); ++i)
+    {
+        const auto& item = list.item(i);
+        auto& json_item = completion_item_array.emplace_back(nlohmann::json {
+            { "label", item.label() },
+            { "kind", completion_item_kind_mapping.at(item.kind()) },
+            { "detail", item.detail() },
+            { "insertText", item.insert_text() },
+            { "insertTextFormat", 1 + (int)item.is_snippet() },
+        });
+        saved_completion_list_doc.emplace(item.label(), item.documentation());
+        if (auto suggestion = item.suggestion_for(); !suggestion.empty())
+        {
+            json_item["filterText"] = std::string("~~~") + decorate_suggestion(suggestion);
+            json_item["sortText"] = std::string("~~~") + std::string(item.label());
+        }
+    }
+    // needs to be incomplete, otherwise we are unable to include new suggestions
+    // when user continues typing (vscode keeps using the first list)
+    to_ret["isIncomplete"] = true;
+    to_ret["items"] = std::move(completion_item_array);
+
+    return to_ret;
+}
+
+void feature_language_features::completion_resolve(const request_id& id, const nlohmann::json& params)
+{
+    auto response = params;
+    if (auto it = response.find("label"); it != response.end() && it->is_string())
+    {
+        if (auto doc = saved_completion_list_doc.find(it->get<std::string>()); doc != saved_completion_list_doc.end())
+            response["documentation"] = get_markup_content(doc->second);
+        else
+            response["documentation"] = "";
+    }
+    response_->respond(id, "", std::move(response));
 }
 
 void add_token(nlohmann::json& encoded_tokens,

@@ -290,7 +290,7 @@ void server::on_initialize(const request_id& id, const nlohmann::json& param)
     }
 }
 
-void server::on_initialized(const nlohmann::json&)
+void server::on_initialized(const nlohmann::json&) const
 {
     for (const auto& f : features_)
         f->initialized();

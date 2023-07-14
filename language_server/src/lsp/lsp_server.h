@@ -74,7 +74,7 @@ private:
     // Implements initialize request.
     void on_initialize(const request_id& id, const nlohmann::json& param);
     // Implements initialized notification.
-    void on_initialized(const nlohmann::json&);
+    void on_initialized(const nlohmann::json&) const;
     // Implements the LSP shutdown request.
     void on_shutdown(const request_id& id, const nlohmann::json& param);
 
