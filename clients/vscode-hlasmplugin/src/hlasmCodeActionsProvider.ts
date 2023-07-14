@@ -12,68 +12,12 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-import { relative } from 'path';
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
-import { configurationExists } from './helpers';
-
-
-type OpcodeSuggestionList = {
-    [key: string]: {
-        opcode: string;
-        distance: number;
-    }[]
-};
-interface OpcodeSuggestionResponse {
-    uri: string;
-    suggestions: OpcodeSuggestionList;
-};
-
-function unique(a: string[]) {
-    return [...new Set(a)];
-}
-
-async function gatherOpcodeSuggestions(opcodes: string[], client: vscodelc.BaseLanguageClient, uri: vscode.Uri): Promise<OpcodeSuggestionList> {
-    const suggestionsResponse = await client.sendRequest<OpcodeSuggestionResponse>("textDocument/$/opcode_suggestion", {
-        textDocument: { uri: uri.toString() },
-        opcodes: opcodes,
-        extended: false,
-    });
-
-    return suggestionsResponse.suggestions;
-
-}
-
-async function opcodeTimeout(timeout: number): Promise<OpcodeSuggestionList> {
-    return new Promise<OpcodeSuggestionList>((resolve, _) => { setTimeout(() => { resolve({}); }, timeout); })
-}
-
-async function generateOpcodeCodeActions(opcodeTasks: {
-    diag: vscode.Diagnostic;
-    opcode: string;
-}[], client: vscodelc.BaseLanguageClient, uri: vscode.Uri, timeout: number): Promise<vscode.CodeAction[]> {
-    const result: vscode.CodeAction[] = [];
-    const suggestions = await Promise.race([gatherOpcodeSuggestions(unique(opcodeTasks.map(x => x.opcode)), client, uri), opcodeTimeout(timeout)]);
-
-    for (const { diag, opcode } of opcodeTasks) {
-        if (opcode in suggestions) {
-            const subst = suggestions[opcode];
-            for (const s of subst) {
-                const edit = new vscode.WorkspaceEdit();
-                edit.replace(uri, diag.range, s.opcode)
-                result.push({
-                    title: `Did you mean '${s.opcode}'?`,
-                    diagnostics: [diag],
-                    kind: vscode.CodeActionKind.QuickFix,
-                    edit: edit
-                });
-            }
-        }
-    }
-    return result;
-}
-
-const invalidUTF16Sequences = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+import { retrieveConfigurationNodes } from './configurationNodes';
+import { generateOpcodeSuggestionsCodeActions } from './code_actions/opcodeSuggestionsActions'
+import { generateDownloadDependenciesCodeActions } from './code_actions/downloadDependenciesActions'
+import { generateConfigurationFilesCodeActions } from './code_actions/configurationFilesActions'
 
 export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
     constructor(private client: vscodelc.BaseLanguageClient) { }
@@ -83,100 +27,20 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
 
         const E049 = context.diagnostics.filter(x => x.code === 'E049');
         if (E049.length > 0)
-            result.push(...await generateOpcodeCodeActions(E049.map(diag => { return { diag, opcode: document.getText(diag.range).replace(invalidUTF16Sequences, '').toUpperCase() }; }), this.client, document.uri, 1000));
+            result.push(...await generateOpcodeSuggestionsCodeActions(E049, this.client, document));
 
-        const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
-        if (!workspace) return result;
-        const [procGrps, pgmConf, bridgeJson, ebgConf] = await configurationExists(workspace.uri, document.uri);
+        const wsUri = vscode.workspace.getWorkspaceFolder(document.uri)?.uri;
+        if (!wsUri)
+            return result;
 
-        if (E049.length > 0) {
-            if (procGrps.exists) {
-                result.push({
-                    title: 'Download missing dependencies',
-                    command: {
-                        title: 'Download dependencies',
-                        command: 'extension.hlasm-plugin.downloadDependencies',
-                        arguments: ['newOnly']
-                    },
-                    kind: vscode.CodeActionKind.QuickFix
-                });
-                result.push({
-                    title: 'Download all dependencies',
-                    command: {
-                        title: 'Download dependencies',
-                        command: 'extension.hlasm-plugin.downloadDependencies'
-                    },
-                    kind: vscode.CodeActionKind.QuickFix
-                });
-            }
-        }
+        const configNodes = await retrieveConfigurationNodes(wsUri, document.uri);
 
-        let suggestProcGrpsChange = E049.length > 0;
-        let suggestPgmConfChange = E049.length > 0 || context.diagnostics.some(x => x.code === 'SUP');
+        if (E049.length > 0 && configNodes.procGrps.exists)
+            result.push(...generateDownloadDependenciesCodeActions());
 
-        if (suggestProcGrpsChange || suggestPgmConfChange) {
-            if (!procGrps.exists && !pgmConf.exists && !bridgeJson.exists && !ebgConf.exists) {
-                suggestProcGrpsChange = false;
-                suggestPgmConfChange = false;
-                result.push({
-                    title: 'Create configuration files',
-                    command: {
-                        title: 'Create configuration files',
-                        command: 'extension.hlasm-plugin.createCompleteConfig',
-                        arguments: [workspace.uri, relative(workspace.uri.path, document.uri.path), 'GRP1']
-                    },
-                    kind: vscode.CodeActionKind.QuickFix
-                });
-            }
-            if (suggestProcGrpsChange) {
-                if (procGrps.exists)
-                    result.push({
-                        title: 'Modify proc_grps.json configuration file',
-                        command: {
-                            title: 'Open proc_grps.json',
-                            command: 'vscode.open',
-                            arguments: [procGrps.uri]
-                        },
-                        kind: vscode.CodeActionKind.QuickFix
-                    });
-                else
-                    result.push({
-                        title: 'Create proc_grps.json configuration file',
-                        command: {
-                            title: 'Create proc_grps.json',
-                            command: 'extension.hlasm-plugin.createCompleteConfig',
-                            arguments: [workspace.uri, null, '']
-                        },
-                        kind: vscode.CodeActionKind.QuickFix
-                    });
-            }
-            if (suggestPgmConfChange) {
-                if (pgmConf.exists)
-                    result.push({
-                        title: 'Modify pgm_conf.json configuration file',
-                        command: {
-                            title: 'Open pgm_conf.json',
-                            command: 'vscode.open',
-                            arguments: [pgmConf.uri]
-                        },
-                        kind: vscode.CodeActionKind.QuickFix
-                    });
-                else {
-                    if (bridgeJson.exists || ebgConf.exists) {
-                        // TODO: could we trigger B4G sync?
-                    }
-                    result.push({
-                        title: 'Create pgm_conf.json configuration file',
-                        command: {
-                            title: 'Create pgm_conf.json',
-                            command: 'extension.hlasm-plugin.createCompleteConfig',
-                            arguments: [workspace.uri, relative(workspace.uri.path, document.uri.path), null]
-                        },
-                        kind: vscode.CodeActionKind.QuickFix
-                    });
-                }
-            }
-        }
+        const suggestProcGrpsChange = E049.length > 0;
+        const suggestPgmConfChange = E049.length > 0 || context.diagnostics.some(x => x.code === 'SUP');
+        result.push(...generateConfigurationFilesCodeActions(suggestProcGrpsChange, suggestPgmConfChange, configNodes, wsUri, document));
 
         return result;
     }

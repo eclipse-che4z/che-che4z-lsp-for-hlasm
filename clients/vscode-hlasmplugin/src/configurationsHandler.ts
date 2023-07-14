@@ -15,7 +15,7 @@
 import * as vscode from 'vscode';
 import { hlasmplugin_folder, proc_grps_file, pgm_conf_file } from './constants';
 import { TextDecoder, TextEncoder } from 'util';
-import { configurationExists } from './helpers';
+import { retrieveConfigurationNodes } from './configurationNodes';
 
 /**
  * Handles changes in configurations files.
@@ -46,12 +46,12 @@ export class ConfigurationsHandler {
      * Creates proc_grps.json or pgm_conf.json on demand if not
      */
     async checkConfigs(workspace: vscode.Uri, documentUri: vscode.Uri) {
-        const [g, p, b, e] = await configurationExists(workspace, documentUri);
+        const configNodes = await retrieveConfigurationNodes(workspace, documentUri);
 
         const doNotShowAgain = 'Do not track';
 
         // give option to create proc_grps
-        if (!g.exists)
+        if (!configNodes.procGrps.exists)
             vscode.window.showWarningMessage('proc_grps.json not found',
                 ...['Create empty proc_grps.json', doNotShowAgain])
                 .then((selection) => {
@@ -63,7 +63,7 @@ export class ConfigurationsHandler {
                         ConfigurationsHandler.createProcTemplate(workspace).then(uri => vscode.commands.executeCommand("vscode.open", uri));
                     }
                 });
-        if (!p.exists && !b.exists && !e.exists)
+        if (!configNodes.pgmConf.exists && !configNodes.bridgeJson.exists && !configNodes.ebgFolder.exists)
             vscode.window.showWarningMessage('pgm_conf.json not found',
                 ...['Create empty pgm_conf.json', 'Create pgm_conf.json with this file', doNotShowAgain])
                 .then((selection) => {
@@ -181,14 +181,14 @@ export class ConfigurationsHandler {
             + '$');
     }
 
-
     /**
      * Checks if the configs are there and stores their complete paths
      */
     public static async configFilesExist(workspace: vscode.Uri): Promise<boolean> {
-        const [g, p] = await configurationExists(workspace, undefined);
-        return g.exists && p.exists;
+        const configNodes = await retrieveConfigurationNodes(workspace, undefined);
+        return configNodes.procGrps.exists && configNodes.pgmConf.exists;
     }
+
     public static createCompleteConfig(workspace: vscode.Uri, program: string, group: string) {
         if (program)
             ConfigurationsHandler.createPgmTemplate(program, workspace, group || '').then((uri) => vscode.commands.executeCommand('vscode.open', uri, { preview: false }));

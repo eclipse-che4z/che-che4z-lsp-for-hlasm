@@ -17,7 +17,7 @@ import * as vscode from 'vscode';
 
 import { ConfigurationsHandler } from '../../configurationsHandler';
 import { ebg_folder, bridge_json_file } from '../../constants';
-import { configurationExists } from '../../helpers';
+import { retrieveConfigurationNodes } from '../../configurationNodes';
 import { FileSystemMock } from '../mocks';
 
 suite('Configurations Handler Test Suite', () => {
@@ -50,11 +50,11 @@ suite('Configurations Handler Test Suite', () => {
         fsMock.addResource(ebgUri);
         fsMock.addResource(pgmUri);
 
-        const [g, p, b, e] = await configurationExists(workspaceUri, pgmUri, fsMock);
-        assert.equal(b.exists, true);
-        assert.equal(e.exists, true);
-        assert.deepStrictEqual(b.uri, bridgeJsonUri);
-        assert.deepStrictEqual(e.uri, ebgUri);
+        const configNodes = await retrieveConfigurationNodes(workspaceUri, pgmUri, fsMock);
+        assert.equal(configNodes.bridgeJson.exists, true);
+        assert.equal(configNodes.ebgFolder.exists, true);
+        assert.deepStrictEqual(configNodes.bridgeJson.uri, bridgeJsonUri);
+        assert.deepStrictEqual(configNodes.ebgFolder.uri, ebgUri);
     });
 
     test('Non-existing b4g configs', async () => {
@@ -63,8 +63,8 @@ suite('Configurations Handler Test Suite', () => {
 
         fsMock.addResource(pgmUri);
 
-        const [g, p, b, e] = await configurationExists(workspaceUri, pgmUri, fsMock);
-        assert.equal(b.exists, false);
-        assert.equal(e.exists, false);
+        const configNodes = await retrieveConfigurationNodes(workspaceUri, pgmUri, fsMock);
+        assert.equal(configNodes.bridgeJson.exists, false);
+        assert.equal(configNodes.ebgFolder.exists, false);
     });
 });
