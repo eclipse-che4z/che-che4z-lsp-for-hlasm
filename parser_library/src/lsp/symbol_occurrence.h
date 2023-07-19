@@ -23,14 +23,14 @@
 
 namespace hlasm_plugin::parser_library::lsp {
 
-enum class occurrence_kind
+enum class occurrence_kind : unsigned char
 {
     ORD,
     VAR,
     SEQ,
     INSTR,
     INSTR_LIKE,
-    COPY_OP
+    COPY_OP,
 };
 
 struct symbol_occurrence
@@ -69,8 +69,6 @@ struct symbol_occurrence
 
     bool operator==(const symbol_occurrence&) const noexcept = default;
 };
-
-using occurrence_storage = std::vector<symbol_occurrence>;
 
 } // namespace hlasm_plugin::parser_library::lsp
 

@@ -73,3 +73,29 @@ TEST(lsp_completion, completion_list_empty)
 
     EXPECT_TRUE(result.empty());
 }
+
+TEST(lsp_completion, macro_operands)
+{
+    const std::string input = R"(
+         MACRO
+         MAC   &A,&B=(DEFAULTB,                                        X
+               1)
+
+         MEND
+)";
+    analyzer a(input);
+    a.analyze();
+
+    auto mac = a.context().lsp_ctx->get_macro_info(context::id_index("MAC"));
+    ASSERT_TRUE(mac);
+
+    auto result = lsp::generate_completion(lsp::completion_list_source(mac->macro_definition.get()));
+
+    EXPECT_EQ(result.size(), 2);
+
+    EXPECT_TRUE(std::any_of(
+        result.begin(), result.end(), [](const auto& e) { return e.label == "&A" && e.documentation.empty(); }));
+    EXPECT_TRUE(std::any_of(result.begin(), result.end(), [](const auto& e) {
+        return e.label == "&B" && e.documentation.find("&B=(DEFAULTB,1)") != std::string::npos;
+    }));
+}

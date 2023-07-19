@@ -24,7 +24,7 @@ using namespace hlasm_plugin::parser_library;
 struct operand_occurrence_analyzer_mock : public processing::statement_analyzer
 {
     analyzer a;
-    lsp::occurrence_storage st;
+    std::vector<lsp::symbol_occurrence> st;
     lsp::occurrence_kind occ_kind;
 
     operand_occurrence_analyzer_mock(const std::string& text, lsp::occurrence_kind kind)

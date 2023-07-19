@@ -310,7 +310,7 @@ op_rem_body_ca_branch locals [bool pending_empty_op = false, std::vector<range> 
 	(
 		EOF
 		{
-			collector.set_operand_remark_field(provider.get_range(_localctx));
+			collector.set_operand_remark_field(provider.get_range($ctx->getStart(),_input->LT(-1)));
 		}
 		|
 		{
@@ -398,7 +398,7 @@ op_rem_body_ca_expr locals [bool pending_empty_op = false, std::vector<range> re
 	(
 		EOF
 		{
-			collector.set_operand_remark_field(provider.get_range(_localctx));
+			collector.set_operand_remark_field(provider.get_range($ctx->getStart(),_input->LT(-1)));
 		}
 		|
 		{
@@ -486,7 +486,7 @@ op_rem_body_ca_var_def locals [bool pending_empty_op = false, std::vector<range>
 	(
 		EOF
 		{
-			collector.set_operand_remark_field(provider.get_range(_localctx));
+			collector.set_operand_remark_field(provider.get_range($ctx->getStart(),_input->LT(-1)));
 		}
 		|
 		{
@@ -567,7 +567,7 @@ op_rem_body_ca_var_def locals [bool pending_empty_op = false, std::vector<range>
 
 op_rem_body_mac returns [op_rem line, range line_range, size_t line_logical_column = 0]
 	:
-	SPACE* EOF {$line_range = provider.get_range(_localctx);}
+	SPACE* EOF {$line_range = provider.get_range($ctx->getStart(), _input->LT(-1));}
 	|
 	SPACE+ op_rem_body_alt_mac
 	{

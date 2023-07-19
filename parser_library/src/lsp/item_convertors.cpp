@@ -360,5 +360,43 @@ completion_list_s generate_completion(const completion_list_instructions& cli)
     return result;
 }
 
+std::string_view ordinal_suffix(size_t i)
+{
+    static constexpr std::string_view suffixes[] { "th", "st", "nd", "rd" };
+    return suffixes[i < std::size(suffixes) ? i : 0];
+}
+
+std::vector<completion_item_s> generate_completion(const context::macro_definition* md)
+{
+    completion_list_s result;
+    for (const auto& positional : md->get_positional_params())
+    {
+        if (positional->position == 0 || positional->id.empty()) // label parameter or invalid
+            continue;
+
+        std::string suffix = " (" + std::to_string(positional->position)
+            + std::string(ordinal_suffix(positional->position)) + " positional argument)";
+        result.emplace_back("&" + positional->id.to_string(),
+            "&" + positional->id.to_string() + suffix,
+            "$0", // workaround - vscode does not support empty insertText
+            "",
+            completion_item_kind::var_sym,
+            true);
+    }
+    for (const auto& keyword : md->get_keyword_params())
+    {
+        if (keyword->id.empty()) // invalid
+            continue;
+
+        result.emplace_back("&" + keyword->id.to_string(),
+            "&" + keyword->id.to_string() + " (keyword argument)",
+            keyword->id.to_string() + "=",
+            "```hlasm\n " + md->id.to_string() + " " + "&" + keyword->id.to_string() + "="
+                + keyword->default_data->get_value() + "\n```\n",
+            completion_item_kind::var_sym);
+    }
+    return result;
+}
+
 
 } // namespace hlasm_plugin::parser_library::lsp

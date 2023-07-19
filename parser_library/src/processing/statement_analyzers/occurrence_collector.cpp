@@ -21,7 +21,7 @@ namespace hlasm_plugin::parser_library::processing {
 
 occurrence_collector::occurrence_collector(lsp::occurrence_kind collector_kind,
     context::hlasm_context& hlasm_ctx,
-    lsp::occurrence_storage& storage,
+    std::vector<lsp::symbol_occurrence>& storage,
     bool evaluated_model)
     : collector_kind(collector_kind)
     , hlasm_ctx(hlasm_ctx)

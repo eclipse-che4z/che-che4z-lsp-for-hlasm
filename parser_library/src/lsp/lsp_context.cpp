@@ -596,7 +596,7 @@ void collect_references(location_list& refs, const symbol_occurrence& occ, const
 {
     for (const auto& [file, occs] : file_occs)
     {
-        auto file_refs = file_info::find_references(occ, occs);
+        auto file_refs = file_info::find_references(occ, occs.first);
         for (auto&& ref : file_refs)
             refs.emplace_back(std::move(ref), file);
     }
@@ -667,6 +667,8 @@ completion_list_source lsp_context::completion(const utils::resource::resource_l
         return complete_seq(*file_info, pos);
     else if (should_complete_instr(text, pos))
         return complete_instr(*file_info, pos);
+    else if (auto instr = file_info->find_closest_instruction(pos); instr && instr->opcode)
+        return instr->opcode.get();
 
     return {};
 }
@@ -707,7 +709,6 @@ completion_list_source lsp_context::complete_instr(const file_info& fi, position
     return result;
 }
 
-
 template<typename T>
 bool files_present(const std::unordered_map<utils::resource::resource_location,
                        file_info_ptr,
@@ -735,7 +736,7 @@ void lsp_context::distribute_file_occurrences(const file_occurrences_t& occurren
     assert(files_present(m_files, occurrences));
 
     for (const auto& [file, occs] : occurrences)
-        m_files[file]->update_occurrences(occs);
+        m_files[file]->update_occurrences(occs.first, occs.second);
 }
 
 occurrence_scope_t lsp_context::find_occurrence_with_scope(

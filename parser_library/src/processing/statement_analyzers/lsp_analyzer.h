@@ -16,6 +16,7 @@
 #define PROCESSING_LSP_ANALYZER_H
 
 #include <array>
+#include <map>
 #include <string_view>
 
 #include "context/common_types.h"
@@ -82,7 +83,13 @@ class lsp_analyzer : public statement_analyzer
     lsp::file_occurrences_t opencode_occurrences_;
     lsp::vardef_storage opencode_var_defs_;
 
-    lsp::occurrence_storage stmt_occurrences_;
+    struct collection_info_t
+    {
+        std::vector<lsp::symbol_occurrence>* stmt_occurrences;
+        size_t stmt_occurrences_last;
+        std::map<size_t, size_t>* stmt_ranges;
+        bool evaluated_model;
+    };
 
 public:
     lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx, std::string_view file_text);
@@ -104,11 +111,11 @@ public:
     void opencode_finished(workspaces::parse_lib_provider& libs);
 
 private:
-    void assign_statement_occurrences(const utils::resource::resource_location& doc_location);
-
     void collect_occurrences(
-        lsp::occurrence_kind kind, const context::hlasm_statement& statement, bool evaluated_model);
-    void collect_occurrences(lsp::occurrence_kind kind, const semantics::preprocessor_statement_si& statement);
+        lsp::occurrence_kind kind, const context::hlasm_statement& statement, const collection_info_t& collection_info);
+    void collect_occurrences(lsp::occurrence_kind kind,
+        const semantics::preprocessor_statement_si& statement,
+        const collection_info_t& collection_info);
 
     void collect_occurrence(const semantics::label_si& label, occurrence_collector& collector);
     void collect_occurrence(const semantics::instruction_si& instruction, occurrence_collector& collector);
@@ -116,18 +123,21 @@ private:
     void collect_occurrence(const semantics::deferred_operands_si& operands, occurrence_collector& collector);
 
     void collect_var_definition(const processing::resolved_statement& statement);
-    void collect_copy_operands(const processing::resolved_statement& statement, bool evaluated_model);
+    void collect_copy_operands(
+        const processing::resolved_statement& statement, const collection_info_t& collection_info);
 
     void collect_SET_defs(const processing::resolved_statement& statement, context::SET_t_enum type);
     void collect_LCL_GBL_defs(const processing::resolved_statement& statement, context::SET_t_enum type, bool global);
     void add_var_def(const semantics::variable_symbol* var, context::SET_t_enum type, bool global);
 
-    void add_copy_operand(context::id_index name, const range& operand_range, bool evaluated_model);
+    void add_copy_operand(context::id_index name, const range& operand_range, const collection_info_t& collection_info);
 
     void update_macro_nest(const processing::resolved_statement& statement);
 
     bool is_LCL_GBL(const processing::resolved_statement& statement, context::SET_t_enum& set_type, bool& global) const;
     bool is_SET(const processing::resolved_statement& statement, context::SET_t_enum& set_type) const;
+
+    collection_info_t get_active_collection(const utils::resource::resource_location& loc, bool evaluated_model);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

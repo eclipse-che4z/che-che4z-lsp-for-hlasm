@@ -74,20 +74,22 @@ bool lsp_analyzer::analyze(const context::hlasm_statement& statement,
     processing_kind proc_kind,
     bool evaluated_model)
 {
+    auto collection_info = get_active_collection(hlasm_ctx_.current_statement_source(), evaluated_model);
+
     const auto* resolved_stmt = statement.access_resolved();
     switch (proc_kind)
     {
         case processing_kind::ORDINARY:
-            collect_occurrences(lsp::occurrence_kind::ORD, statement, evaluated_model);
-            collect_occurrences(lsp::occurrence_kind::INSTR, statement, evaluated_model);
+            collect_occurrences(lsp::occurrence_kind::ORD, statement, collection_info);
+            collect_occurrences(lsp::occurrence_kind::INSTR, statement, collection_info);
             if (prov_kind != statement_provider_kind::MACRO) // macros already processed during macro def processing
             {
-                collect_occurrences(lsp::occurrence_kind::VAR, statement, evaluated_model);
-                collect_occurrences(lsp::occurrence_kind::SEQ, statement, evaluated_model);
+                collect_occurrences(lsp::occurrence_kind::VAR, statement, collection_info);
+                collect_occurrences(lsp::occurrence_kind::SEQ, statement, collection_info);
                 if (resolved_stmt)
                 {
                     collect_var_definition(*resolved_stmt);
-                    collect_copy_operands(*resolved_stmt, evaluated_model);
+                    collect_copy_operands(*resolved_stmt, collection_info);
                 }
             }
             break;
@@ -97,24 +99,22 @@ bool lsp_analyzer::analyze(const context::hlasm_statement& statement,
             if (macro_nest_ > 1)
                 break; // Do not collect occurrences in nested macros to avoid collecting occurrences multiple times
             if (statement.kind == context::statement_kind::DEFERRED)
-                collect_occurrences(lsp::occurrence_kind::INSTR_LIKE, statement, evaluated_model);
+                collect_occurrences(lsp::occurrence_kind::INSTR_LIKE, statement, collection_info);
             else if (resolved_stmt)
             {
                 if (const auto& instr = statement.access_resolved()->instruction_ref();
                     instr.type == semantics::instruction_si_type::ORD
                     && context::instruction_resolved_during_macro_parsing(std::get<context::id_index>(instr.value)))
-                    collect_occurrences(lsp::occurrence_kind::INSTR, statement, evaluated_model);
+                    collect_occurrences(lsp::occurrence_kind::INSTR, statement, collection_info);
             }
-            collect_occurrences(lsp::occurrence_kind::VAR, statement, evaluated_model);
-            collect_occurrences(lsp::occurrence_kind::SEQ, statement, evaluated_model);
+            collect_occurrences(lsp::occurrence_kind::VAR, statement, collection_info);
+            collect_occurrences(lsp::occurrence_kind::SEQ, statement, collection_info);
             if (resolved_stmt)
-                collect_copy_operands(*resolved_stmt, evaluated_model);
+                collect_copy_operands(*resolved_stmt, collection_info);
             break;
         default:
             break;
     }
-
-    assign_statement_occurrences(hlasm_ctx_.current_statement_source());
 
     return false;
 }
@@ -136,12 +136,15 @@ const expressions::mach_expr_symbol* get_single_mach_symbol(const semantics::ope
 
 void lsp_analyzer::analyze(const semantics::preprocessor_statement_si& statement)
 {
-    collect_occurrences(lsp::occurrence_kind::ORD, statement);
+    auto collection_info = get_active_collection(hlasm_ctx_.opencode_location(), false);
+
+    auto& end_line = (*collection_info.stmt_ranges)[statement.m_details.stmt_r.start.line];
+    end_line = std::max(end_line, statement.m_details.stmt_r.end.line);
+
+    collect_occurrences(lsp::occurrence_kind::ORD, statement, collection_info);
 
     if (const auto& operands = statement.m_details.operands; statement.m_copylike && operands.size() == 1)
-        add_copy_operand(hlasm_ctx_.ids().add(operands.front().name), operands.front().r, false);
-
-    assign_statement_occurrences(hlasm_ctx_.opencode_location());
+        add_copy_operand(hlasm_ctx_.ids().add(operands.front().name), operands.front().r, collection_info);
 }
 
 void lsp_analyzer::macrodef_started(const macrodef_start_data& data)
@@ -160,7 +163,7 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
     {
         // add instruction occurrence of macro name
         const auto& macro_file = macrodef->definition_location.resource_loc;
-        macro_occurrences_[macro_file].emplace_back(macrodef->id, macrodef, result.prototype.macro_name_range);
+        macro_occurrences_[macro_file].first.emplace_back(macrodef->id, macrodef, result.prototype.macro_name_range);
 
         auto m_i = std::make_shared<lsp::macro_info>(result.external,
             location(result.prototype.macro_name_range.start, macro_file),
@@ -192,62 +195,48 @@ void lsp_analyzer::opencode_finished(workspaces::parse_lib_provider& libs)
         libs);
 }
 
-void lsp_analyzer::assign_statement_occurrences(const utils::resource::resource_location& doc_location)
-{
-    if (in_macro_)
-    {
-        auto& file_occs = macro_occurrences_[doc_location];
-        file_occs.insert(file_occs.end(),
-            std::move_iterator(stmt_occurrences_.begin()),
-            std::move_iterator(stmt_occurrences_.end()));
-    }
-    else
-    {
-        auto& file_occs = opencode_occurrences_[doc_location];
-        file_occs.insert(file_occs.end(),
-            std::move_iterator(stmt_occurrences_.begin()),
-            std::move_iterator(stmt_occurrences_.end()));
-    }
-    stmt_occurrences_.clear();
-}
-
 void lsp_analyzer::collect_occurrences(
-    lsp::occurrence_kind kind, const context::hlasm_statement& statement, bool evaluated_model)
+    lsp::occurrence_kind kind, const context::hlasm_statement& statement, const collection_info_t& ci)
 {
-    occurrence_collector collector(kind, hlasm_ctx_, stmt_occurrences_, evaluated_model);
+    occurrence_collector collector(kind, hlasm_ctx_, *ci.stmt_occurrences, ci.evaluated_model);
 
     if (auto def_stmt = statement.access_deferred())
     {
+        const auto& stmt_range = def_stmt->stmt_range_ref();
+        auto& end_line = (*ci.stmt_ranges)[stmt_range.start.line];
+        end_line = std::max(end_line, stmt_range.end.line);
         collect_occurrence(def_stmt->label_ref(), collector);
         collect_occurrence(def_stmt->instruction_ref(), collector);
         collect_occurrence(def_stmt->deferred_ref(), collector);
     }
     else if (auto res_stmt = statement.access_resolved())
     {
+        const auto& stmt_range = res_stmt->stmt_range_ref();
+        auto& end_line = (*ci.stmt_ranges)[stmt_range.start.line];
+        end_line = std::max(end_line, stmt_range.end.line);
         collect_occurrence(res_stmt->label_ref(), collector);
         collect_occurrence(res_stmt->instruction_ref(), collector);
         collect_occurrence(res_stmt->operands_ref(), collector);
     }
 }
 
-void lsp_analyzer::collect_occurrences(lsp::occurrence_kind kind, const semantics::preprocessor_statement_si& statement)
+void lsp_analyzer::collect_occurrences(
+    lsp::occurrence_kind kind, const semantics::preprocessor_statement_si& statement, const collection_info_t& ci)
 {
-    const bool evaluated_model = false;
-
-    occurrence_collector collector(kind, hlasm_ctx_, stmt_occurrences_, evaluated_model);
+    occurrence_collector collector(kind, hlasm_ctx_, *ci.stmt_occurrences, ci.evaluated_model);
     const auto& details = statement.m_details;
 
     collector.occurrences.emplace_back(
-        lsp::occurrence_kind::ORD, hlasm_ctx_.ids().add(details.label.name), details.label.r, evaluated_model);
+        lsp::occurrence_kind::ORD, hlasm_ctx_.ids().add(details.label.name), details.label.r, ci.evaluated_model);
 
     collector.occurrences.emplace_back(lsp::occurrence_kind::INSTR,
         hlasm_ctx_.ids().add(details.instruction.nr.name),
         details.instruction.nr.r,
-        evaluated_model);
+        ci.evaluated_model);
 
     for (const auto& ops : details.operands)
         collector.occurrences.emplace_back(
-            lsp::occurrence_kind::ORD, hlasm_ctx_.ids().add(ops.name), ops.r, evaluated_model);
+            lsp::occurrence_kind::ORD, hlasm_ctx_.ids().add(ops.name), ops.r, ci.evaluated_model);
 }
 
 void lsp_analyzer::collect_occurrence(const semantics::label_si& label, occurrence_collector& collector)
@@ -346,12 +335,13 @@ void lsp_analyzer::collect_var_definition(const processing::resolved_statement& 
         collect_LCL_GBL_defs(statement, type, global);
 }
 
-void lsp_analyzer::collect_copy_operands(const processing::resolved_statement& statement, bool evaluated_model)
+void lsp_analyzer::collect_copy_operands(
+    const processing::resolved_statement& statement, const collection_info_t& collection_info)
 {
     if (statement.opcode_ref().value != context::id_storage::well_known::COPY)
         return;
     if (auto sym_expr = get_single_mach_symbol(statement.operands_ref().value))
-        add_copy_operand(sym_expr->value, sym_expr->get_range(), evaluated_model);
+        add_copy_operand(sym_expr->value, sym_expr->get_range(), collection_info);
 }
 
 void lsp_analyzer::collect_SET_defs(const processing::resolved_statement& statement, context::SET_t_enum type)
@@ -399,16 +389,16 @@ void lsp_analyzer::add_var_def(const semantics::variable_symbol* var, context::S
         var->access_basic()->name, type, global, hlasm_ctx_.current_statement_source(), var->symbol_range.start);
 }
 
-void lsp_analyzer::add_copy_operand(context::id_index name, const range& operand_range, bool evaluated_model)
+void lsp_analyzer::add_copy_operand(context::id_index name, const range& operand_range, const collection_info_t& ci)
 {
     // find ORD occurrence of COPY_OP
-    lsp::symbol_occurrence occ(lsp::occurrence_kind::ORD, name, operand_range, evaluated_model);
-    auto ord_sym = std::find(stmt_occurrences_.begin(), stmt_occurrences_.end(), occ);
+    lsp::symbol_occurrence occ(lsp::occurrence_kind::ORD, name, operand_range, ci.evaluated_model);
+    auto ord_sym = std::find(ci.stmt_occurrences->begin() + ci.stmt_occurrences_last, ci.stmt_occurrences->end(), occ);
 
-    if (ord_sym != stmt_occurrences_.end())
+    if (ord_sym != ci.stmt_occurrences->end())
         ord_sym->kind = lsp::occurrence_kind::COPY_OP;
     else
-        stmt_occurrences_.emplace_back(lsp::occurrence_kind::COPY_OP, name, operand_range, evaluated_model);
+        ci.stmt_occurrences->emplace_back(lsp::occurrence_kind::COPY_OP, name, operand_range, ci.evaluated_model);
 }
 
 void lsp_analyzer::update_macro_nest(const processing::resolved_statement& statement)
@@ -418,6 +408,13 @@ void lsp_analyzer::update_macro_nest(const processing::resolved_statement& state
         macro_nest_++;
     else if (opcode == context::id_storage::well_known::MEND)
         macro_nest_--;
+}
+
+lsp_analyzer::collection_info_t lsp_analyzer::get_active_collection(
+    const utils::resource::resource_location& loc, bool evaluated_model)
+{
+    auto& [stmt_occurrences, stmt_ranges] = in_macro_ ? macro_occurrences_[loc] : opencode_occurrences_[loc];
+    return { &stmt_occurrences, stmt_occurrences.size(), &stmt_ranges, evaluated_model };
 }
 
 } // namespace hlasm_plugin::parser_library::processing

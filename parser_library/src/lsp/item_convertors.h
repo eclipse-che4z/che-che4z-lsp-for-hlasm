@@ -54,6 +54,7 @@ std::vector<completion_item_s> generate_completion(const std::vector<variable_sy
 std::vector<completion_item_s> generate_completion(
     const std::unordered_map<context::id_index, std::unique_ptr<context::sequence_symbol>>*);
 std::vector<completion_item_s> generate_completion(const completion_list_instructions&);
+std::vector<completion_item_s> generate_completion(const context::macro_definition*);
 
 } // namespace hlasm_plugin::parser_library::lsp
 

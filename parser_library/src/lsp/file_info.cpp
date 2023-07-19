@@ -82,6 +82,29 @@ occurrence_scope_t file_info::find_occurrence_with_scope(position pos) const
     return std::make_pair(found, std::move(macro_i));
 }
 
+const symbol_occurrence* file_info::find_closest_instruction(position pos) const noexcept
+{
+    auto l = std::upper_bound(occurrences.begin(), occurrences.end(), pos.line, [](const auto& p, const auto& occ) {
+        return p < occ.occurrence_range.end.line;
+    });
+    auto instr = std::find_if(std::make_reverse_iterator(l), occurrences.rend(), [](const auto& occ) {
+        return occ.kind == occurrence_kind::INSTR || occ.kind == occurrence_kind::INSTR_LIKE;
+    });
+    if (instr == occurrences.rend() || instr->kind != occurrence_kind::INSTR)
+        return nullptr;
+
+    auto line = std::upper_bound(statement_lines.begin(), statement_lines.end(), std::make_pair(pos.line, (size_t)-1));
+
+    if (line == statement_lines.begin())
+        return nullptr;
+    --line;
+    // pos.column == 15 is a workaround around incorrect range assignment for statements that were freshly continued
+    if (line->first != instr->occurrence_range.start.line || pos.line > line->second + (pos.column == 15))
+        return nullptr;
+
+    return std::to_address(instr);
+}
+
 macro_info_ptr file_info::find_scope(position pos) const
 {
     for (const auto& [_, scope] : slices)
@@ -102,9 +125,34 @@ std::vector<position> file_info::find_references(
     return result;
 }
 
-void file_info::update_occurrences(const occurrence_storage& occurrences_upd)
+void file_info::update_occurrences(
+    const std::vector<symbol_occurrence>& occurrences_upd, const std::map<size_t, size_t>& stmt_line_upd)
 {
     occurrences.insert(occurrences.end(), occurrences_upd.begin(), occurrences_upd.end());
+
+    const auto init_size = statement_lines.size();
+    auto it = stmt_line_upd.begin();
+    const auto ite = stmt_line_upd.end();
+    for (size_t i = 0; i < init_size && it != ite;)
+    {
+        auto& el = statement_lines[i];
+        if (auto c = el.first <=> it->first; c == 0)
+        {
+            el.second = std::max(el.second, it->second);
+            ++i;
+            ++it;
+        }
+        else if (c > 0)
+            statement_lines.push_back(*it++);
+        else
+            ++i;
+    }
+    statement_lines.insert(statement_lines.end(), it, ite);
+
+    std::inplace_merge(statement_lines.begin(),
+        statement_lines.begin() + init_size,
+        statement_lines.end(),
+        [](const auto& l, const auto& r) { return l.first < r.first; });
 }
 
 void file_info::update_slices(const std::vector<file_slice_t>& slices_upd)
