@@ -105,5 +105,5 @@ instruction returns [id_index instr] locals [concat_chain chain, std::string ins
 	| b=~(ORDSYMBOL|AMPERSAND|SPACE|CONTINUATION|EOF) ~(SPACE)*
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($b,_input->LT(-1)),hl_scopes::instruction));
-		collector.set_instruction_field(add_id($ctx->getText()), provider.get_range($b, _input->LT(-1)));
+		collector.set_instruction_field(add_id(get_context_text($ctx)), provider.get_range($b, _input->LT(-1)));
 	};

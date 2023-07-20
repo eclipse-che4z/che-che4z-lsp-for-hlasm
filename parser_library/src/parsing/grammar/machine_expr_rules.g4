@@ -117,7 +117,7 @@ mach_term returns [mach_expr_ptr m_e]
 	};
 
 mach_signed_num returns [self_def_t value]
-	: signed_num_ch									{$value = parse_self_def_term_in_mach("D",$signed_num_ch.ctx->getText(),provider.get_range($signed_num_ch.ctx));};
+	: signed_num_ch									{$value = parse_self_def_term_in_mach("D",get_context_text($signed_num_ch.ctx),provider.get_range($signed_num_ch.ctx));};
 
 mach_self_def_term returns [self_def_t value]
 	: ORDSYMBOL string							
@@ -131,14 +131,14 @@ literal_reparse returns [literal_si value]
 	: literal_internal EOF
 	{
 		if (auto& v = $literal_internal.value; v.has_value())
-			$value = collector.add_literal($literal_internal.text, std::move(v.value()), provider.get_range($literal_internal.ctx));
+			$value = collector.add_literal(get_context_text($literal_internal.ctx), std::move(v.value()), provider.get_range($literal_internal.ctx));
 	};
 
 literal returns [literal_si value]
 	: literal_internal
 	{
 		if (auto& v = $literal_internal.value; v.has_value())
-			$value = collector.add_literal($literal_internal.text, std::move(v.value()), provider.get_range($literal_internal.ctx));
+			$value = collector.add_literal(get_context_text($literal_internal.ctx), std::move(v.value()), provider.get_range($literal_internal.ctx));
 	};
 
 literal_internal returns [std::optional<data_definition> value]

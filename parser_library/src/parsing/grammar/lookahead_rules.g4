@@ -24,7 +24,7 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range, siz
 		{
 			collector.set_instruction_field(parse_identifier($instr->getText(),provider.get_range($instr)),provider.get_range($instr));
 			collector.set_operand_remark_field(provider.get_range($lookahead_operand_field_rest.ctx));
-			$op_text = $lookahead_operand_field_rest.ctx->getText();
+			$op_text = get_context_text($lookahead_operand_field_rest.ctx);
 			$op_range = provider.get_range($lookahead_operand_field_rest.ctx);
 			$op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>($lookahead_operand_field_rest.start)->get_logical_column();
 		}
@@ -41,7 +41,7 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range, siz
 		{
 			collector.set_instruction_field(parse_identifier($instr->getText(),provider.get_range($instr)),provider.get_range($instr));
 			collector.set_operand_remark_field(provider.get_range($lookahead_operand_field_rest.ctx));
-			$op_text = $lookahead_operand_field_rest.ctx->getText();
+			$op_text = get_context_text($lookahead_operand_field_rest.ctx);
 			$op_range = provider.get_range($lookahead_operand_field_rest.ctx);
 			$op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>($lookahead_operand_field_rest.start)->get_logical_column();
 		}
@@ -58,7 +58,7 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range, siz
 		{
 			collector.set_instruction_field(parse_identifier($instr->getText(),provider.get_range($instr)),provider.get_range($instr));
 			collector.set_operand_remark_field(provider.get_range($lookahead_operand_field_rest.ctx));
-			$op_text = $lookahead_operand_field_rest.ctx->getText();
+			$op_text = get_context_text($lookahead_operand_field_rest.ctx);
 			$op_range = provider.get_range($lookahead_operand_field_rest.ctx);
 			$op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>($lookahead_operand_field_rest.start)->get_logical_column();
 		}

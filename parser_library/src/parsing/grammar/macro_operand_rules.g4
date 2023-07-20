@@ -19,7 +19,7 @@ parser grammar macro_operand_rules;
 mac_op returns [operand_ptr op]
 	: mac_preproc
 	{
-		$op = std::make_unique<macro_operand_string>($mac_preproc.ctx->getText(),provider.get_range($mac_preproc.ctx));
+		$op = std::make_unique<macro_operand_string>(get_context_text($mac_preproc.ctx),provider.get_range($mac_preproc.ctx));
 	};
 
 mac_op_o returns [operand_ptr op] 

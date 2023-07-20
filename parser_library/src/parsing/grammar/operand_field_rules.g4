@@ -40,14 +40,8 @@ op_rem_body_mach
 	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOF;
 
 op_list_mach returns [std::vector<operand_ptr> operands]
-	: operand_mach (comma operand_mach)*												
-	{
-		auto& result = $operands;
-		auto operands = $ctx->operand_mach();
-		result.reserve(operands.size());
-		for(auto&op:operands)
-		result.push_back(std::move(op->op));
-	};
+	: operand_mach {$operands.push_back(std::move($operand_mach.op));} (comma operand_mach {$operands.push_back(std::move($operand_mach.op));})*	
+	;
 
 operand_mach returns [operand_ptr op]
 	: mach_op							{$op = std::move($mach_op.op);}
@@ -78,14 +72,8 @@ op_rem_body_dat
 	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOF;
 
 op_list_dat returns [std::vector<operand_ptr> operands]
-	: {auto lit_restore = disable_literals();} operand_dat (comma operand_dat)*
-	{
-		auto& result = $operands;
-		auto operands = $ctx->operand_dat();
-		result.reserve(operands.size());
-		for(auto&op:operands)
-		result.push_back(std::move(op->op));
-	};
+	: {auto lit_restore = disable_literals();} operand_dat {$operands.push_back(std::move($operand_dat.op));} (comma operand_dat {$operands.push_back(std::move($operand_dat.op));})*
+	;
 
 operand_dat returns [operand_ptr op]
 	: dat_op							{$op = std::move($dat_op.op);}
@@ -116,14 +104,8 @@ op_rem_body_asm
 	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOF;
 
 op_list_asm returns [std::vector<operand_ptr> operands]
-	: operand_asm (comma operand_asm)*												
-	{
-		auto& result = $operands;
-		auto operands = $ctx->operand_asm();
-		result.reserve(operands.size());
-		for(auto&op:operands)
-		result.push_back(std::move(op->op));
-	};
+	: operand_asm {$operands.push_back(std::move($operand_asm.op));} (comma operand_asm {$operands.push_back(std::move($operand_asm.op));})*
+	;
 
 operand_asm returns [operand_ptr op]
 	: asm_op							{$op = std::move($asm_op.op);}

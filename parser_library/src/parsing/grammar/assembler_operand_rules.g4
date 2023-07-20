@@ -21,7 +21,7 @@ asm_op returns [operand_ptr op]
 	{
 		auto range = provider.get_range($ORDSYMBOL,$string.ctx->getStop());
 		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL),hl_scopes::self_def_type));
-		$op = std::make_unique<expr_assembler_operand>(std::make_unique<mach_expr_default>(range),$ctx->getText(),range);
+		$op = std::make_unique<expr_assembler_operand>(std::make_unique<mach_expr_default>(range),get_context_text($ctx),range);
 	}
 	| id lpar asm_op_comma_c rpar
 	{
@@ -55,14 +55,14 @@ asm_op returns [operand_ptr op]
 		$op = std::make_unique<using_instr_assembler_operand>(
 			std::move($base.m_e), 
 			std::move($end.m_e),
-			$base.text,
-			$end.text,
+			get_context_text($base.ctx),
+			get_context_text($end.ctx),
 			provider.get_range($lpar.ctx->getStart(),$rpar.ctx->getStop())
 		);
 	}
 	| { !ALIAS() }? mach_expr
 	{
-		$op = std::make_unique<expr_assembler_operand>(std::move($mach_expr.m_e),utils::to_upper_copy($mach_expr.ctx->getText()),provider.get_range($mach_expr.ctx));
+		$op = std::make_unique<expr_assembler_operand>(std::move($mach_expr.m_e),utils::to_upper_copy(get_context_text($mach_expr.ctx)),provider.get_range($mach_expr.ctx));
 	}
 	| string
 	{

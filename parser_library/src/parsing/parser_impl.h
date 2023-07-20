@@ -166,6 +166,8 @@ protected:
     void add_label_component(
         semantics::vs_ptr s, semantics::concat_chain& chain, std::string& buffer, bool& has_variables) const;
 
+    std::string get_context_text(const antlr4::ParserRuleContext* ctx) const;
+
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;
     diagnostic_op_consumer* diagnoser_ = nullptr;

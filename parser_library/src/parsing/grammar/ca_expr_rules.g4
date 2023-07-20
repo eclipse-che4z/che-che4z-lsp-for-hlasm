@@ -165,7 +165,7 @@ term returns [ca_expr_ptr ca_expr]
 	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
 signed_num returns [self_def_t value]
-	: signed_num_ch									{$value = parse_self_def_term("D",$signed_num_ch.ctx->getText(),provider.get_range($signed_num_ch.ctx));};
+	: signed_num_ch									{$value = parse_self_def_term("D",get_context_text($signed_num_ch.ctx),provider.get_range($signed_num_ch.ctx));};
 
 self_def_term returns [self_def_t value]
 	: ORDSYMBOL string

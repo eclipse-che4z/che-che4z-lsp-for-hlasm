@@ -37,7 +37,9 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     , hlasm_ctx(nullptr)
     , provider()
     , err_listener_(&provider)
-{}
+{
+    setBuildParseTree(false);
+}
 
 void parser_impl::initialize(context::hlasm_context* hl_ctx, diagnostic_op_consumer* d)
 {
@@ -402,6 +404,27 @@ void parser_impl::add_label_component(
 {
     has_variables = true;
     chain.emplace_back(var_sym_conc(std::move(s)));
+}
+
+std::string parser_impl::get_context_text(const antlr4::ParserRuleContext* ctx) const
+{
+    auto start = ctx->start;
+    auto stop = ctx->stop;
+
+    if (!stop)
+        stop = input.LT(-1);
+
+    auto startId = start->getTokenIndex();
+    auto stopId = stop->getTokenIndex();
+
+    std::string result;
+
+    for (auto id = startId; id <= stopId; ++id)
+        if (auto token = input.get(id);
+            token->getChannel() == lexing::lexer::Channels::DEFAULT_CHANNEL && token->getType() != antlr4::Token::EOF)
+            result.append(token->getText());
+
+    return result;
 }
 
 parser_holder::~parser_holder() = default;
