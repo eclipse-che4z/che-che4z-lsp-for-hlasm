@@ -269,9 +269,9 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(
     context::ordinary_assembly_dependency_solver dep_solver(m_sym_ctx, dep_ctx, li);
     auto deps = dependency_source->get_dependencies(dep_solver);
 
-    ret.insert(ret.end(),
-        std::make_move_iterator(deps.undefined_symbols.begin()),
-        std::make_move_iterator(deps.undefined_symbols.end()));
+    for (const auto& ref : deps.undefined_symbolics)
+        if (ref.get())
+            ret.emplace_back(ref.name);
 
     if (!ret.empty())
         return ret;
@@ -283,9 +283,12 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(
     if (!ret.empty())
         return ret;
 
-    ret.insert(ret.end(),
-        std::make_move_iterator(deps.undefined_attr_refs.begin()),
-        std::make_move_iterator(deps.undefined_attr_refs.end()));
+    for (const auto& ref : deps.undefined_symbolics)
+    {
+        for (int i = 1; i < static_cast<int>(data_attr_kind::max); ++i)
+            if (ref.get(static_cast<data_attr_kind>(i)))
+                ret.emplace_back(attr_ref { static_cast<data_attr_kind>(i), ref.name });
+    }
 
     if (deps.unresolved_address)
         for (auto& [space_id, count] : deps.unresolved_address->normalized_spaces())
@@ -306,14 +309,15 @@ bool symbol_dependency_tables::update_dependencies(dependency_value& d, const li
     d.m_last_dependencies.clear();
     d.m_has_t_attr_dependency = false;
 
-    d.m_last_dependencies.insert(
-        d.m_last_dependencies.end(), deps.undefined_symbols.begin(), deps.undefined_symbols.end());
-    for (const auto& dep : deps.undefined_attr_refs)
+    for (const auto& ref : deps.undefined_symbolics)
     {
-        if (dep.attribute != context::data_attr_kind::T)
-            d.m_last_dependencies.emplace_back(dep.symbol_id);
-        else
+        if (ref.get(context::data_attr_kind::T))
             d.m_has_t_attr_dependency = true;
+
+        if (ref.has_only(context::data_attr_kind::T))
+            continue;
+
+        d.m_last_dependencies.emplace_back(ref.name);
     }
 
     if (!d.m_last_dependencies.empty() || d.m_has_t_attr_dependency)

@@ -21,6 +21,7 @@ target_sources(hlasm_utils PUBLIC
 	general_hashers.h
 	levenshtein_distance.h
 	list_directory_rc.h
+	merge_sorted.h
 	path.h
 	path_conversions.h
 	platform.h

@@ -16,6 +16,8 @@
 
 #include <algorithm>
 
+#include "utils/merge_sorted.h"
+
 namespace hlasm_plugin::parser_library::lsp {
 
 bool operator==(const line_range& lhs, const line_range& rhs) { return lhs.begin == rhs.begin && lhs.end == rhs.end; }
@@ -130,29 +132,11 @@ void file_info::update_occurrences(
 {
     occurrences.insert(occurrences.end(), occurrences_upd.begin(), occurrences_upd.end());
 
-    const auto init_size = statement_lines.size();
-    auto it = stmt_line_upd.begin();
-    const auto ite = stmt_line_upd.end();
-    for (size_t i = 0; i < init_size && it != ite;)
-    {
-        auto& el = statement_lines[i];
-        if (auto c = el.first <=> it->first; c == 0)
-        {
-            el.second = std::max(el.second, it->second);
-            ++i;
-            ++it;
-        }
-        else if (c > 0)
-            statement_lines.push_back(*it++);
-        else
-            ++i;
-    }
-    statement_lines.insert(statement_lines.end(), it, ite);
-
-    std::inplace_merge(statement_lines.begin(),
-        statement_lines.begin() + init_size,
-        statement_lines.end(),
-        [](const auto& l, const auto& r) { return l.first < r.first; });
+    utils::merge_sorted(
+        statement_lines,
+        stmt_line_upd,
+        [](const auto& l, const auto& r) { return l.first <=> r.first; },
+        [](auto& l, const auto& r) { l.second = std::max(l.second, r.second); });
 }
 
 void file_info::update_slices(const std::vector<file_slice_t>& slices_upd)

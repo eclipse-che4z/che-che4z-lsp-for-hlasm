@@ -1103,6 +1103,7 @@ SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
     else if (auto mac_par = var->access_macro_param_base())
     {
         std::vector<size_t> tmp;
+        tmp.reserve(subscript.size()); // TODO: This is ridiculous
         for (auto& v : subscript)
         {
             tmp.push_back((size_t)v);

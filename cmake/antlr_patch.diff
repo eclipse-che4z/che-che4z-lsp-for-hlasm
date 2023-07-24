@@ -35,7 +35,7 @@ index baf46ca..35f00ff 100644
  endif()
  
 diff --git a/runtime/Cpp/runtime/src/BufferedTokenStream.cpp b/runtime/Cpp/runtime/src/BufferedTokenStream.cpp
-index 241dfe5..e02b63c 100755
+index 241dfe5..f65b1ce 100755
 --- a/runtime/Cpp/runtime/src/BufferedTokenStream.cpp
 +++ b/runtime/Cpp/runtime/src/BufferedTokenStream.cpp
 @@ -374,15 +374,15 @@ std::string BufferedTokenStream::getText(const misc::Interval &interval) {
@@ -58,7 +58,7 @@ index 241dfe5..e02b63c 100755
  
  std::string BufferedTokenStream::getText(RuleContext *ctx) {
 diff --git a/runtime/Cpp/runtime/src/DefaultErrorStrategy.cpp b/runtime/Cpp/runtime/src/DefaultErrorStrategy.cpp
-index 54d35ee..289f15d 100755
+index 54d35ee..f7d033e 100755
 --- a/runtime/Cpp/runtime/src/DefaultErrorStrategy.cpp
 +++ b/runtime/Cpp/runtime/src/DefaultErrorStrategy.cpp
 @@ -101,7 +101,7 @@ void DefaultErrorStrategy::sync(Parser *recognizer) {
@@ -81,7 +81,7 @@ index 54d35ee..289f15d 100755
      if (ctx->parent == nullptr)
        break;
 diff --git a/runtime/Cpp/runtime/src/RuleContext.cpp b/runtime/Cpp/runtime/src/RuleContext.cpp
-index 3ed945f..79b87cf 100755
+index 3ed945f..a29e5f4 100755
 --- a/runtime/Cpp/runtime/src/RuleContext.cpp
 +++ b/runtime/Cpp/runtime/src/RuleContext.cpp
 @@ -51,14 +51,14 @@ std::string RuleContext::getText() {
@@ -116,3 +116,98 @@ index c799150..b60dae3 100755
          ATNState *endOfRuleState = atn.ruleToStopState[config->state->ruleIndex];
          result->add(std::make_shared<ATNConfig>(*config, endOfRuleState), &mergeCache);
        }
+diff --git a/runtime/Cpp/runtime/src/atn/PredictionContextMergeCache.cpp b/runtime/Cpp/runtime/src/atn/PredictionContextMergeCache.cpp
+index 7160b59..f2a3fbe 100644
+--- a/runtime/Cpp/runtime/src/atn/PredictionContextMergeCache.cpp
++++ b/runtime/Cpp/runtime/src/atn/PredictionContextMergeCache.cpp
+@@ -47,28 +47,22 @@ Ref<const PredictionContext> PredictionContextMergeCache::put(
+ 
+   auto [existing, inserted] = _entries.try_emplace(std::make_pair(key1.get(), key2.get()));
+   if (inserted) {
+-    try {
+-      existing->second.reset(new Entry());
+-    } catch (...) {
+-      _entries.erase(existing);
+-      throw;
+-    }
+-    existing->second->key = std::make_pair(key1, key2);
+-    existing->second->value = std::move(value);
+-    pushToFront(existing->second.get());
++    existing->second.key = std::make_pair(key1, key2);
++    existing->second.value = std::move(value);
++    pushToFront(&existing->second);
+   } else {
+-    if (existing->second->value != value) {
+-      existing->second->value = std::move(value);
++    if (existing->second.value != value) {
++      existing->second.value = std::move(value);
+     }
+-    moveToFront(existing->second.get());
++    moveToFront(&existing->second);
+   }
+-  compact(existing->second.get());
+-  return existing->second->value;
++  compact(&existing->second);
++  return existing->second.value;
+ }
+ 
+ Ref<const PredictionContext> PredictionContextMergeCache::get(
+     const Ref<const PredictionContext> &key1,
+-    const Ref<const PredictionContext> &key2) const {
++    const Ref<const PredictionContext> &key2) {
+   assert(key1);
+   assert(key2);
+ 
+@@ -81,17 +75,17 @@ Ref<const PredictionContext> PredictionContextMergeCache::get(
+   if (iterator == _entries.end()) {
+     return nullptr;
+   }
+-  moveToFront(iterator->second.get());
+-  return iterator->second->value;
++  moveToFront(&iterator->second);
++  return iterator->second.value;
+ }
+ 
+ void PredictionContextMergeCache::clear() {
+-  Container().swap(_entries);
++  _entries.clear();
+   _head = _tail = nullptr;
+   _size = 0;
+ }
+ 
+-void PredictionContextMergeCache::moveToFront(Entry *entry) const {
++void PredictionContextMergeCache::moveToFront(Entry *entry) {
+   if (entry->prev == nullptr) {
+     assert(entry == _head);
+     return;
+diff --git a/runtime/Cpp/runtime/src/atn/PredictionContextMergeCache.h b/runtime/Cpp/runtime/src/atn/PredictionContextMergeCache.h
+index efbeb10..88c0fc8 100644
+--- a/runtime/Cpp/runtime/src/atn/PredictionContextMergeCache.h
++++ b/runtime/Cpp/runtime/src/atn/PredictionContextMergeCache.h
+@@ -52,7 +52,7 @@ namespace atn {
+                                      Ref<const PredictionContext> value);
+ 
+     Ref<const PredictionContext> get(const Ref<const PredictionContext> &key1,
+-                                     const Ref<const PredictionContext> &key2) const;
++                                     const Ref<const PredictionContext> &key2);
+ 
+     const PredictionContextMergeCacheOptions& getOptions() const { return _options; }
+ 
+@@ -76,7 +76,7 @@ namespace atn {
+       Entry *next = nullptr;
+     };
+ 
+-    void moveToFront(Entry *entry) const;
++    void moveToFront(Entry *entry);
+ 
+     void pushToFront(Entry *entry);
+ 
+@@ -84,7 +84,7 @@ namespace atn {
+ 
+     void compact(const Entry *preserve);
+ 
+-    using Container = std::unordered_map<PredictionContextPair, std::unique_ptr<Entry>,
++    using Container = std::unordered_map<PredictionContextPair, Entry,
+                                          PredictionContextHasher, PredictionContextComparer>;
+ 
+     const PredictionContextMergeCacheOptions _options;

@@ -312,10 +312,18 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         const auto has_deps = [label](auto deps, bool& self_ref) {
             if (!deps.contains_dependencies())
                 return false;
-            self_ref = deps.undefined_symbols.contains(label)
-                || std::any_of(deps.undefined_attr_refs.begin(),
-                    deps.undefined_attr_refs.end(),
-                    [label](const auto& attr) { return attr.symbol_id == label; });
+            struct
+            {
+                bool operator()(const context::symbolic_reference& l, const context::id_index& r) const
+                {
+                    return l.name < r;
+                }
+                bool operator()(const context::id_index& l, const context::symbolic_reference& r) const
+                {
+                    return l < r.name;
+                }
+            } cmp;
+            self_ref = std::binary_search(deps.undefined_symbolics.begin(), deps.undefined_symbolics.end(), label, cmp);
             return true;
         };
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
@@ -633,8 +641,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
 
     context::address reloc_val;
     auto deps = reloc_expr->expression->get_dependencies(dep_solver);
-    bool undefined_absolute_part =
-        deps.undefined_attr_refs.size() || deps.undefined_symbols.size() || deps.unresolved_spaces.size();
+    bool undefined_absolute_part = !deps.undefined_symbolics.empty() || !deps.unresolved_spaces.empty();
 
     if (!undefined_absolute_part)
     {

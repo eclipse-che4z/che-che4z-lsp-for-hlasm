@@ -292,7 +292,9 @@ low_language_processor::transform_result low_language_processor::transform_defau
     const resolved_statement& stmt, context::dependency_solver& dep_solver, const diagnostic_collector& add_diagnostic)
 {
     std::vector<checking::check_op_ptr> operand_vector;
-    for (auto& op : stmt.operands_ref().value)
+    const auto& ops = stmt.operands_ref().value;
+    operand_vector.reserve(ops.size());
+    for (const auto& op : ops)
     {
         // check whether operand isn't empty
         if (op->type == semantics::operand_type::EMPTY)
@@ -394,6 +396,7 @@ bool low_language_processor::check(const resolved_statement& stmt,
     if (!operand_vector)
         return false;
 
+    operand_ptr_vector.reserve(operand_vector->size());
     for (const auto& op : *operand_vector)
         operand_ptr_vector.push_back(op.get());
 

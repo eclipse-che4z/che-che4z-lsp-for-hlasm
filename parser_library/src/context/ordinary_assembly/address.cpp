@@ -116,20 +116,20 @@ int address::offset() const { return offset_ + get_space_offset(spaces_); }
 std::vector<address::space_entry>& address::spaces() { return spaces_; }
 
 void insert(const address::space_entry& sp,
-    std::unordered_map<space_ptr, size_t>& normalized_map,
+    std::unordered_map<space*, size_t>& normalized_map,
     std::vector<address::space_entry>& normalized_spaces)
 {
-    if (auto it = normalized_map.find(sp.first); it != normalized_map.end())
+    if (auto it = normalized_map.find(sp.first.get()); it != normalized_map.end())
         normalized_spaces[it->second].second += sp.second;
     else
     {
         normalized_spaces.push_back(sp);
-        normalized_map.emplace(sp.first, normalized_spaces.size() - 1);
+        normalized_map.emplace(sp.first.get(), normalized_spaces.size() - 1);
     }
 }
 
 int get_unresolved_spaces(const std::vector<address::space_entry>& spaces,
-    std::unordered_map<space_ptr, size_t>& normalized_map,
+    std::unordered_map<space*, size_t>& normalized_map,
     std::vector<address::space_entry>& normalized_spaces)
 {
     int offset = 0;
@@ -153,13 +153,11 @@ const std::vector<address::space_entry>& address::spaces() const { return spaces
 std::vector<address::space_entry> address::normalized_spaces() const
 {
     std::vector<space_entry> res_spaces;
-    std::unordered_map<space_ptr, size_t> tmp_map;
+    std::unordered_map<space*, size_t> tmp_map;
 
     get_unresolved_spaces(spaces_, tmp_map, res_spaces);
 
-    res_spaces.erase(
-        std::remove_if(res_spaces.begin(), res_spaces.end(), [](const space_entry& e) { return e.second == 0; }),
-        res_spaces.end());
+    std::erase_if(res_spaces, [](const space_entry& e) { return e.second == 0; });
 
     return res_spaces;
 }
@@ -169,6 +167,7 @@ address::address(base address_base, int offset, const space_storage& spaces)
 {
     bases_.emplace_back(address_base, 1);
 
+    spaces_.reserve(spaces.size());
     for (auto& space : spaces)
     {
         spaces_.emplace_back(space, 1);
@@ -317,13 +316,11 @@ address::address(std::vector<base_entry> bases_, int offset_, std::vector<space_
 void address::normalize()
 {
     std::vector<space_entry> res_spaces;
-    std::unordered_map<space_ptr, size_t> tmp_map;
+    std::unordered_map<space*, size_t> tmp_map;
 
     offset_ += get_unresolved_spaces(spaces_, tmp_map, res_spaces);
 
-    res_spaces.erase(
-        std::remove_if(res_spaces.begin(), res_spaces.end(), [](const space_entry& e) { return e.second == 0; }),
-        res_spaces.end());
+    std::erase_if(res_spaces, [](const space_entry& e) { return e.second == 0; });
 
     spaces_ = std::move(res_spaces);
 }

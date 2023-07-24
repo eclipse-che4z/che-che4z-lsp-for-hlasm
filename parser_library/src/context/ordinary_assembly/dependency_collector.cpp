@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include "utils/merge_sorted.h"
+
 using namespace hlasm_plugin::parser_library::context;
 
 dependency_collector::dependency_collector() = default;
@@ -25,7 +27,10 @@ dependency_collector::dependency_collector(error)
     : has_error(true)
 {}
 
-dependency_collector::dependency_collector(id_index undefined_symbol) { undefined_symbols.insert(undefined_symbol); }
+dependency_collector::dependency_collector(id_index undefined_symbol)
+{
+    undefined_symbolics.emplace_back(undefined_symbol);
+}
 
 dependency_collector::dependency_collector(address u_a)
     : unresolved_address(std::move(u_a))
@@ -35,7 +40,7 @@ dependency_collector::dependency_collector(address u_a)
 
 dependency_collector::dependency_collector(attr_ref attribute_reference)
 {
-    undefined_attr_refs.insert(std::move(attribute_reference));
+    undefined_symbolics.emplace_back(attribute_reference.symbol_id, attribute_reference.attribute);
 }
 
 dependency_collector& dependency_collector::operator+=(const dependency_collector& holder)
@@ -70,21 +75,54 @@ dependency_collector& dependency_collector::operator/=(const dependency_collecto
     return *this;
 }
 
+namespace {
+struct merge_spaces_comparator
+{
+    auto operator()(const space_ptr& l, const address::space_entry& r) const { return l.get() <=> r.first.get(); }
+    auto operator()(const space_ptr& l, const space_ptr& r) const { return l.get() <=> r.get(); } // libc++
+};
+struct merge_spaces
+{
+    void operator()(space_ptr&, const address::space_entry&) const {}
+    auto operator()(const address::space_entry& e) const { return e.first; }
+};
+struct name_comparator
+{
+    auto operator()(const id_index& l, const id_index& r) const { return l <=> r; }
+    auto operator()(const id_index& l, const symbolic_reference& r) const { return l <=> r.name; }
+    auto operator()(const symbolic_reference& l, const symbolic_reference& r) const { return l.name <=> r.name; }
+};
+struct name_merger
+{
+    void operator()(id_index&, const symbolic_reference&) const {}
+    auto operator()(const symbolic_reference& e) const { return e.name; }
+};
+struct flags_merger
+{
+    void operator()(symbolic_reference& l, const symbolic_reference& r) const { l.flags |= r.flags; }
+    auto operator()(const symbolic_reference& e) const { return e; }
+};
+} // namespace
+
 dependency_collector& hlasm_plugin::parser_library::context::dependency_collector::merge(const dependency_collector& dc)
 {
     merge_undef(dc);
 
     if (unresolved_address)
     {
-        for (const auto& [sp, c] : unresolved_address->spaces())
-            unresolved_spaces.insert(sp);
+        auto& spaces = unresolved_address->spaces();
+        utils::merge_unsorted(unresolved_spaces,
+            std::make_move_iterator(spaces.begin()),
+            std::make_move_iterator(spaces.end()),
+            merge_spaces_comparator(),
+            merge_spaces());
         unresolved_address.reset();
     }
 
     if (dc.unresolved_address)
     {
-        for (const auto& [sp, c] : dc.unresolved_address->spaces())
-            unresolved_spaces.insert(sp);
+        utils::merge_unsorted(
+            unresolved_spaces, dc.unresolved_address->spaces(), merge_spaces_comparator(), merge_spaces());
     }
 
     return *this;
@@ -92,38 +130,35 @@ dependency_collector& hlasm_plugin::parser_library::context::dependency_collecto
 
 bool dependency_collector::is_address() const
 {
-    return undefined_symbols.empty() && unresolved_address && !unresolved_address.value().bases().empty();
+    return std::all_of(undefined_symbolics.begin(), undefined_symbolics.end(), [](const auto& e) { return !e.get(); })
+        && unresolved_address && !unresolved_address.value().bases().empty();
 }
 
 bool dependency_collector::contains_dependencies() const
 {
-    return !undefined_symbols.empty() || !undefined_attr_refs.empty() || !unresolved_spaces.empty()
+    return !undefined_symbolics.empty() || !unresolved_spaces.empty()
         || (unresolved_address && unresolved_address->has_unresolved_space());
 }
 
 void dependency_collector::collect_unique_symbolic_dependencies(std::vector<context::id_index>& missing_symbols) const
 {
-    missing_symbols.insert(missing_symbols.end(), undefined_symbols.begin(), undefined_symbols.end());
-    std::transform(undefined_attr_refs.begin(),
-        undefined_attr_refs.end(),
-        std::back_inserter(missing_symbols),
-        [](const auto& ref) { return ref.symbol_id; });
-
     std::sort(missing_symbols.begin(), missing_symbols.end());
-    missing_symbols.erase(std::unique(missing_symbols.begin(), missing_symbols.end()), missing_symbols.end());
+
+    utils::merge_sorted(missing_symbols, undefined_symbolics, name_comparator(), name_merger());
 }
 
 bool dependency_collector::merge_undef(const dependency_collector& holder)
 {
     has_error |= holder.has_error;
 
-    undefined_symbols.insert(holder.undefined_symbols.begin(), holder.undefined_symbols.end());
+    utils::merge_sorted(undefined_symbolics, holder.undefined_symbolics, name_comparator(), flags_merger());
 
-    undefined_attr_refs.insert(holder.undefined_attr_refs.begin(), holder.undefined_attr_refs.end());
+    utils::merge_sorted(unresolved_spaces, holder.unresolved_spaces, [](const auto& l, const auto& r) {
+        return l.get() <=> r.get(); // libc++
+    });
 
-    unresolved_spaces.insert(holder.unresolved_spaces.begin(), holder.unresolved_spaces.end());
-
-    return has_error || !undefined_symbols.empty();
+    return has_error
+        || std::any_of(undefined_symbolics.begin(), undefined_symbolics.end(), [](const auto& e) { return e.get(); });
 }
 
 void dependency_collector::add_sub(const dependency_collector& holder, bool add)
@@ -152,11 +187,11 @@ void dependency_collector::div_mul(const dependency_collector& holder)
     else
     {
         if (unresolved_address)
-            for (const auto& [sp, c] : unresolved_address->spaces())
-                unresolved_spaces.insert(sp);
+            utils::merge_unsorted(
+                unresolved_spaces, unresolved_address->spaces(), merge_spaces_comparator(), merge_spaces());
         if (holder.unresolved_address)
-            for (const auto& [sp, c] : holder.unresolved_address->spaces())
-                unresolved_spaces.insert(sp);
+            utils::merge_unsorted(
+                unresolved_spaces, holder.unresolved_address->spaces(), merge_spaces_comparator(), merge_spaces());
     }
 }
 

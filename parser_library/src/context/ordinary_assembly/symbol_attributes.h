@@ -24,6 +24,7 @@ namespace hlasm_plugin::parser_library::context {
 // enumeration of all data attributes
 enum class data_attr_kind
 {
+    UNKNOWN,
     T,
     L,
     S,
@@ -32,7 +33,8 @@ enum class data_attr_kind
     N,
     D,
     O,
-    UNKNOWN
+
+    max = O,
 };
 
 // tells how symbol is created

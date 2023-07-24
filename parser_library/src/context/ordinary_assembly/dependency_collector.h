@@ -14,15 +14,52 @@
 
 #ifndef CONTEXT_DEPENDENCY_COLLECTOR_H
 #define CONTEXT_DEPENDENCY_COLLECTOR_H
-
+#include <cassert>
 #include <optional>
-#include <set>
+#include <vector>
 
 #include "address.h"
 #include "dependant.h"
 #include "symbol_attributes.h"
 
 namespace hlasm_plugin::parser_library::context {
+
+struct symbolic_reference
+{
+    id_index name;
+    unsigned flags = 0;
+
+    explicit symbolic_reference() = default;
+    explicit symbolic_reference(id_index name)
+        : name(name)
+    {
+        set();
+    }
+    explicit symbolic_reference(id_index name, data_attr_kind attr)
+        : name(name)
+    {
+        set(attr);
+    }
+
+    void set() { flags |= 1u; }
+    bool get() const { return flags & 1u; }
+    void set(data_attr_kind attr)
+    {
+        assert(attr != data_attr_kind::UNKNOWN);
+        flags |= 1u << static_cast<int>(attr);
+    }
+    bool get(data_attr_kind attr) const
+    {
+        assert(attr != data_attr_kind::UNKNOWN);
+        return flags & 1u << static_cast<int>(attr);
+    }
+
+    bool has_only(data_attr_kind attr) const
+    {
+        assert(attr != data_attr_kind::UNKNOWN);
+        return (flags & 1u << static_cast<int>(attr)) == 1u << static_cast<int>(attr);
+    }
+};
 
 // helper structure that holds dependencies throughout whole process of getting dependencies
 struct dependency_collector
@@ -32,15 +69,16 @@ struct dependency_collector
 
     // errorous holder
     bool has_error = false;
+
     // dependent address
     std::optional<address> unresolved_address;
-    // dependent symbol
-    std::set<id_index> undefined_symbols;
-    // dependent symbol dependencies
-    std::set<attr_ref> undefined_attr_refs;
+
+    // symbolic dependencies
+    std::vector<symbolic_reference> undefined_symbolics;
+
     // unresolved spaces that must be resolved due to * or / operator
     // nonempty when address without base but with spaces is multiplied or divided
-    std::set<space_ptr> unresolved_spaces;
+    std::vector<space_ptr> unresolved_spaces;
 
     dependency_collector();
     dependency_collector(error);
