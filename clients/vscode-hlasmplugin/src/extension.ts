@@ -229,6 +229,8 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
 
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.createCompleteConfig', ConfigurationsHandler.createCompleteConfig));
 
+    context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: 'hlasm' }, { provideCodeLenses: ConfigurationsHandler.provideCodeLenses }));
+
     // register continuation handlers
     if (!((await vscode.commands.getCommands()).find(command => command == "extension.hlasm-plugin.insertContinuation" || command == "extension.hlasm-plugin.removeContinuation"))) {
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("extension.hlasm-plugin.insertContinuation",

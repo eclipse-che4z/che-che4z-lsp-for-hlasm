@@ -16,6 +16,7 @@ import * as vscode from 'vscode';
 import { hlasmplugin_folder, proc_grps_file, pgm_conf_file } from './constants';
 import { TextDecoder, TextEncoder } from 'util';
 import { retrieveConfigurationNodes } from './configurationNodes';
+import { generateConfigurationFilesCodeActions } from './code_actions/configurationFilesActions';
 
 /**
  * Handles changes in configurations files.
@@ -25,12 +26,9 @@ import { retrieveConfigurationNodes } from './configurationNodes';
 export class ConfigurationsHandler {
     // defined regex expression to match files and recognize them as HLASM
     private definedExpressions: { regex: RegExp, workspaceUri: vscode.Uri }[] = [];
-    // whether to create warning prompts on missing configs
-    shouldCheckConfigs: boolean;
 
     constructor() {
         this.definedExpressions = [];
-        this.shouldCheckConfigs = true;
     }
 
     /**
@@ -39,43 +37,6 @@ export class ConfigurationsHandler {
      */
     match(file: vscode.Uri): boolean {
         return this.definedExpressions.find(expr => expr.regex.test(file.toString())) !== undefined;
-    }
-
-    /**
-     * Checks whether config files are present
-     * Creates proc_grps.json or pgm_conf.json on demand if not
-     */
-    async checkConfigs(workspace: vscode.Uri, documentUri: vscode.Uri) {
-        const configNodes = await retrieveConfigurationNodes(workspace, documentUri);
-
-        const doNotShowAgain = 'Do not track';
-
-        // give option to create proc_grps
-        if (!configNodes.procGrps.exists)
-            vscode.window.showWarningMessage('proc_grps.json not found',
-                ...['Create empty proc_grps.json', doNotShowAgain])
-                .then((selection) => {
-                    if (selection) {
-                        if (selection == doNotShowAgain) {
-                            this.shouldCheckConfigs = false;
-                            return;
-                        }
-                        ConfigurationsHandler.createProcTemplate(workspace).then(uri => vscode.commands.executeCommand("vscode.open", uri));
-                    }
-                });
-        if (!configNodes.pgmConf.exists && !configNodes.bridgeJson.exists && !configNodes.ebgFolder.exists)
-            vscode.window.showWarningMessage('pgm_conf.json not found',
-                ...['Create empty pgm_conf.json', 'Create pgm_conf.json with this file', doNotShowAgain])
-                .then((selection) => {
-                    if (selection) {
-                        if (selection == doNotShowAgain) {
-                            this.shouldCheckConfigs = false;
-                            return;
-                        }
-                        const empty = selection == 'Create empty pgm_conf.json';
-                        ConfigurationsHandler.createPgmTemplate(empty ? '' : vscode.window.activeTextEditor?.document.uri.path.split('\\/').pop() ?? '', workspace).then(uri => vscode.commands.executeCommand("vscode.open", uri));
-                    }
-                });
     }
 
     updateWildcards(workspaceUri: vscode.Uri, matches: RegExp[]) {
@@ -194,5 +155,21 @@ export class ConfigurationsHandler {
             ConfigurationsHandler.createPgmTemplate(program, workspace, group || '').then((uri) => vscode.commands.executeCommand('vscode.open', uri, { preview: false }));
         if (group || group === '')
             ConfigurationsHandler.createProcTemplate(workspace, group).then((uri) => vscode.commands.executeCommand('vscode.open', uri, { preview: false }));
+    }
+
+    public static async provideCodeLenses(document: vscode.TextDocument): Promise<vscode.CodeLens[]> {
+        if (document.isClosed) return [];
+        const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
+        if (!workspace) return [];
+
+        const configNodes = await retrieveConfigurationNodes(workspace.uri, document.uri);
+
+        return generateConfigurationFilesCodeActions(
+            !configNodes.procGrps.exists,
+            !(configNodes.pgmConf.exists || configNodes.bridgeJson.exists || configNodes.ebgFolder.exists),
+            configNodes,
+            workspace.uri,
+            document)
+            .map(x => new vscode.CodeLens(document.lineAt(0).range, x.command));
     }
 }

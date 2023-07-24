@@ -106,17 +106,13 @@ export class EventsHandler {
 
     // should the configs be checked
     private async editorChanged(document: vscode.TextDocument) {
-        if (!this.configSetup.shouldCheckConfigs || document.isClosed)
+        if (document.isClosed)
             return;
 
         // delay the autodetection as it can apparently trigger an infinite loop of
         // opening and closing of the file
         setTimeout(() => {
-            if (!document.isClosed && this.langDetect.setHlasmLanguage(document)) {
-                const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
-                if (workspace)
-                    this.configSetup.checkConfigs(workspace.uri, document.uri);
-            }
+            if (!document.isClosed) this.langDetect.setHlasmLanguage(document);
         }, 50);
     }
 
