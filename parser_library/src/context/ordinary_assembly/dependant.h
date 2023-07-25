@@ -34,6 +34,7 @@ struct attr_ref
 
 // structure representing objects with dependencies
 using dependant = std::variant<id_index, attr_ref, space_ptr>;
+using dependant_ref = std::variant<id_index, attr_ref, space*>;
 
 } // namespace hlasm_plugin::parser_library::context
 

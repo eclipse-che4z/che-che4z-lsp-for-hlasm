@@ -15,10 +15,16 @@
 #include "symbol_dependency_tables.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
+#include <cstddef>
 #include <memory>
+#if __cpp_lib_polymorphic_allocator >= 201902L && __cpp_lib_memory_resource >= 201603L
+#    include <memory_resource>
+#endif
 #include <queue>
 #include <stack>
+#include <unordered_set>
 
 #include "ordinary_assembly_context.h"
 #include "ordinary_assembly_dependency_solver.h"
@@ -29,12 +35,35 @@ namespace hlasm_plugin::parser_library::context {
 bool symbol_dependency_tables::check_cycle(
     dependant target, std::vector<dependant> dependencies, const library_info& li)
 {
+    if (dependencies.empty())
+        return true;
+
     if (std::find(dependencies.begin(), dependencies.end(), target)
         != dependencies.end()) // dependencies contain target itself
     {
         resolve_dependant_default(target);
         return false;
     }
+
+    const auto dep_to_depref = [](const dependant& d) -> dependant_ref {
+        if (std::holds_alternative<id_index>(d))
+            return std::get<id_index>(d);
+        if (std::holds_alternative<attr_ref>(d))
+            return std::get<attr_ref>(d);
+        if (std::holds_alternative<space_ptr>(d))
+            return std::get<space_ptr>(d).get();
+        assert(false);
+    };
+
+#if __cpp_lib_polymorphic_allocator >= 201902L && __cpp_lib_memory_resource >= 201603L
+    alignas(std::max_align_t) std::array<unsigned char, 8 * 1024> buffer;
+    std::pmr::monotonic_buffer_resource buffer_resource(buffer.data(), buffer.size());
+    std::pmr::unordered_set<dependant_ref> seen_before(&buffer_resource);
+#else
+    std::unordered_set<dependant_ref> seen_before;
+#endif
+    for (const auto& d : dependencies)
+        seen_before.emplace(dep_to_depref(d));
 
     while (!dependencies.empty())
     {
@@ -52,6 +81,8 @@ bool symbol_dependency_tables::check_cycle(
                 resolve_dependant_default(target);
                 return false;
             }
+            if (!seen_before.emplace(dep_to_depref(dep)).second)
+                continue;
             dependencies.push_back(std::move(dep));
         }
     }

@@ -16,6 +16,7 @@
 - Enhanced multiline support in TextMate grammar for source files
 - Better handling of Unicode Supplementary Planes
 - Incorrect processor group could be assigned to programs stated in `.bridge.json`
+- Almost infinite loop while checking dependency cycles
 
 #### Changed
 - Performance improvements
