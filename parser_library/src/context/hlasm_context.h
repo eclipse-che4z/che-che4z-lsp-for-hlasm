@@ -329,6 +329,7 @@ public:
 
     using name_result = std::pair<bool, context::id_index>;
     name_result try_get_symbol_name(std::string_view symbol);
+    name_result try_get_symbol_name(id_index symbol) const;
 
     bool next_statement() { return --m_statements_remaining >= 0; }
 

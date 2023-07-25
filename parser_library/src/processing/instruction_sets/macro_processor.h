@@ -53,6 +53,7 @@ private:
     std::vector<context::macro_arg> get_operand_args(const resolved_statement& statement) const;
 
     void get_keyword_arg(const resolved_statement& statement,
+        context::id_index arg_name,
         const semantics::concat_chain& chain,
         std::vector<context::macro_arg>& args,
         std::vector<context::id_index>& keyword_params,

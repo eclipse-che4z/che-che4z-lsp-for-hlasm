@@ -51,8 +51,7 @@ context::id_index low_language_processor::find_label_symbol(const rebuilt_statem
     if (const auto& label = stmt.label_ref(); label.type == semantics::label_si_type::ORD)
     {
         diagnostic_consumer_transform diags([this](diagnostic_op d) { add_diagnostic(std::move(d)); });
-        auto [valid, id] =
-            hlasm_ctx.try_get_symbol_name(std::get<semantics::ord_symbol_string>(label.value).symbol.to_string_view());
+        auto [valid, id] = hlasm_ctx.try_get_symbol_name(std::get<semantics::ord_symbol_string>(label.value).symbol);
         if (!valid)
             diags.add_diagnostic(diagnostic_op::error_E065(label.field_range));
         return id;
@@ -65,8 +64,8 @@ context::id_index low_language_processor::find_using_label(const rebuilt_stateme
 {
     if (const auto& label = stmt.label_ref(); label.type == semantics::label_si_type::ORD)
     {
-        if (auto [valid, id] = hlasm_ctx.try_get_symbol_name(
-                std::get<semantics::ord_symbol_string>(label.value).symbol.to_string_view());
+        if (auto [valid, id] =
+                hlasm_ctx.try_get_symbol_name(std::get<semantics::ord_symbol_string>(label.value).symbol);
             valid)
             return id;
 

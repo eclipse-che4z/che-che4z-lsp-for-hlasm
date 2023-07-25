@@ -41,8 +41,7 @@ void macro_processor::process(std::shared_ptr<const processing::resolved_stateme
 
     if (const auto& label = stmt->label_ref(); label.type == semantics::label_si_type::ORD)
     {
-        auto [valid, id] =
-            hlasm_ctx.try_get_symbol_name(std::get<semantics::ord_symbol_string>(label.value).symbol.to_string_view());
+        auto [valid, id] = hlasm_ctx.try_get_symbol_name(std::get<semantics::ord_symbol_string>(label.value).symbol);
         if (valid && !hlasm_ctx.ord_ctx.get_symbol(id))
         {
             hlasm_ctx.ord_ctx.add_symbol_reference(
@@ -257,11 +256,12 @@ context::macro_data_ptr macro_processor::get_label_args(const resolved_statement
     }
 }
 
-bool is_keyword(const semantics::concat_chain& chain, context::hlasm_context& hlasm_ctx)
+context::hlasm_context::name_result is_keyword(const semantics::concat_chain& chain, context::hlasm_context& hlasm_ctx)
 {
     using namespace semantics;
-    return concat_chain_starts_with<char_str_conc, equals_conc>(chain)
-        && hlasm_ctx.try_get_symbol_name(std::get<char_str_conc>(chain[0].value).value).first;
+    if (!concat_chain_starts_with<char_str_conc, equals_conc>(chain))
+        return std::make_pair(false, context::id_index());
+    return hlasm_ctx.try_get_symbol_name(std::get<char_str_conc>(chain[0].value).value);
 }
 
 bool can_chain_be_forwarded(const semantics::concat_chain& chain)
@@ -292,9 +292,9 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
 
         auto& tmp_chain = tmp->chain;
 
-        if (is_keyword(tmp_chain, hlasm_ctx)) // keyword
+        if (auto [valid, arg_name] = is_keyword(tmp_chain, hlasm_ctx); valid) // keyword
         {
-            get_keyword_arg(statement, tmp_chain, args, keyword_params, tmp->operand_range);
+            get_keyword_arg(statement, arg_name, tmp_chain, args, keyword_params, tmp->operand_range);
         }
         else if (can_chain_be_forwarded(tmp_chain)) // single varsym
         {
@@ -312,15 +312,13 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
 }
 
 void macro_processor::get_keyword_arg(const resolved_statement& statement,
+    context::id_index arg_name,
     const semantics::concat_chain& chain,
     std::vector<context::macro_arg>& args,
     std::vector<context::id_index>& keyword_params,
     range op_range) const
 {
-    auto id = hlasm_ctx.try_get_symbol_name(std::get<semantics::char_str_conc>(chain[0].value).value).second;
-    assert(!id.empty());
-
-    auto named = hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().find(id);
+    auto named = hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().find(arg_name);
     if (named == hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().end()
         || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
     {
@@ -334,10 +332,10 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
     }
     else
     {
-        if (std::find(keyword_params.begin(), keyword_params.end(), id) != keyword_params.end())
+        if (std::find(keyword_params.begin(), keyword_params.end(), arg_name) != keyword_params.end())
             add_diagnostic(diagnostic_op::error_E011("Keyword", op_range));
         else
-            keyword_params.push_back(id);
+            keyword_params.push_back(arg_name);
 
         auto chain_begin = chain.begin() + 2;
         auto chain_end = chain.end();
@@ -351,7 +349,7 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
         else
             data = string_to_macrodata(semantics::concatenation_point::evaluate(chain_begin, chain_end, eval_ctx));
 
-        args.emplace_back(std::move(data), id);
+        args.emplace_back(std::move(data), arg_name);
     }
 }
 

@@ -1055,6 +1055,14 @@ hlasm_context::name_result hlasm_context::try_get_symbol_name(std::string_view s
     return std::make_pair(true, ids().add(symbol));
 }
 
+hlasm_context::name_result hlasm_context::try_get_symbol_name(id_index symbol) const
+{
+    if (!lexing::lexer::ord_symbol(symbol.to_string_view()))
+        return std::make_pair(false, context::id_index());
+
+    return std::make_pair(true, symbol);
+}
+
 SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
     id_index name,
     std::span<const context::A_t> subscript,
