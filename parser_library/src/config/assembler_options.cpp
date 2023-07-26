@@ -192,6 +192,8 @@ void assembler_options::apply_options_to(asm_option& opts) const
         opts.system_id = system_id.value();
     if (goff.has_value())
         opts.sysopt_xobject = goff.value();
+    if (rent.has_value())
+        opts.sysopt_rent = rent.value();
     if (machine.has_value() || optable.has_value()) // Only one of them should have value at this point
     {
         const auto& instr_set_name = machine.has_value() ? machine.value() : optable.value();
@@ -209,7 +211,7 @@ void assembler_options::apply_options_to(asm_option& opts) const
 bool assembler_options::has_value() const noexcept
 {
     return sysparm.has_value() || profile.has_value() || machine.has_value() || optable.has_value()
-        || system_id.has_value() || goff.has_value();
+        || system_id.has_value() || goff.has_value() || rent.has_value();
 }
 
 template<typename T>
@@ -239,6 +241,7 @@ void to_json(nlohmann::json& j, const assembler_options& p)
     optional_to_json(j, "MACHINE", p.machine);
     optional_to_json(j, "OPTABLE", p.optable);
     optional_to_json(j, "PROFILE", p.profile);
+    optional_to_json(j, "RENT", p.rent);
     optional_to_json(j, "SYSPARM", p.sysparm);
     optional_to_json(j, "SYSTEM_ID", p.system_id);
 }
@@ -252,6 +255,7 @@ void from_json(const nlohmann::json& j, assembler_options& p)
     optional_from_json(j, "MACHINE", p.machine);
     optional_from_json(j, "OPTABLE", p.optable);
     optional_from_json(j, "PROFILE", p.profile);
+    optional_from_json(j, "RENT", p.rent);
     optional_from_json(j, "SYSPARM", p.sysparm);
     optional_from_json(j, "SYSTEM_ID", p.system_id);
     optional_from_json(j, "XOBJECT", p.goff);

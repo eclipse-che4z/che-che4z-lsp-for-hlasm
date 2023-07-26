@@ -119,6 +119,7 @@ type AsmOptions = (
         SYSPARM?: string;
         PROFILE?: string;
         SYSTEM_ID?: string;
+        RENT?: boolean;
     };
 
 type Preprocessor = ("DB2" | "CICS" | "ENDEVOR")

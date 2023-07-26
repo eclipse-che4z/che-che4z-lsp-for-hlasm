@@ -6,6 +6,7 @@
 - Infrastructure for remote configuration
 - Implement completion item resolver
 - Macro operand completion support
+- Support RENT compiler option
 
 #### Fixed
 - Bridge for Git configuration files may be ignored by the macro tracer

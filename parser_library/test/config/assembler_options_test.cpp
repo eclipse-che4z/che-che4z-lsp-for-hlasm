@@ -34,9 +34,17 @@ TEST(assembler_options, read)
         std::make_pair(R"({"SYSTEM_ID":"VSE"})"_json, assembler_options { .system_id = "VSE" }),
         std::make_pair(R"({"GOFF":true})"_json, assembler_options { .goff = true }),
         std::make_pair(R"({"XOBJECT":true})"_json, assembler_options { .goff = true }),
-        std::make_pair(R"({"GOFF":true,"PROFILE":"MAC","SYSPARM":"TESTPARM","OPTABLE":"ZS9","SYSTEM_ID":"VSE"})"_json,
+        std::make_pair(R"({"RENT":true})"_json, assembler_options { .rent = true }),
+        std::make_pair(
+            R"({"GOFF":true,"PROFILE":"MAC","SYSPARM":"TESTPARM","OPTABLE":"ZS9","SYSTEM_ID":"VSE","RENT":true})"_json,
             assembler_options {
-                .sysparm = "TESTPARM", .profile = "MAC", .optable = "ZS9", .system_id = "VSE", .goff = true }),
+                .sysparm = "TESTPARM",
+                .profile = "MAC",
+                .optable = "ZS9",
+                .system_id = "VSE",
+                .goff = true,
+                .rent = true,
+            }),
     };
 
     for (const auto& [input, expected] : cases)
@@ -55,9 +63,17 @@ TEST(assembler_options, write)
         std::make_pair(R"({"OPTABLE":"ZS9"})"_json, assembler_options { .optable = "ZS9" }),
         std::make_pair(R"({"SYSTEM_ID":"VSE"})"_json, assembler_options { .system_id = "VSE" }),
         std::make_pair(R"({"GOFF":true})"_json, assembler_options { .goff = true }),
-        std::make_pair(R"({"GOFF":true,"PROFILE":"MAC","SYSPARM":"TESTPARM","OPTABLE":"ZS9","SYSTEM_ID":"VSE"})"_json,
+        std::make_pair(R"({"RENT":true})"_json, assembler_options { .rent = true }),
+        std::make_pair(
+            R"({"GOFF":true,"PROFILE":"MAC","SYSPARM":"TESTPARM","OPTABLE":"ZS9","SYSTEM_ID":"VSE","RENT":true})"_json,
             assembler_options {
-                .sysparm = "TESTPARM", .profile = "MAC", .optable = "ZS9", .system_id = "VSE", .goff = true }),
+                .sysparm = "TESTPARM",
+                .profile = "MAC",
+                .optable = "ZS9",
+                .system_id = "VSE",
+                .goff = true,
+                .rent = true,
+            }),
     };
 
     for (const auto& [expected, input] : cases)
@@ -81,6 +97,8 @@ TEST(assembler_options, validate)
         std::make_pair(assembler_options { .machine = "A" }, false),
         std::make_pair(assembler_options { .goff = false }, true),
         std::make_pair(assembler_options { .goff = true }, true),
+        std::make_pair(assembler_options { .rent = false }, true),
+        std::make_pair(assembler_options { .rent = true }, true),
     };
 
     for (const auto& [input, expected] : cases)
@@ -103,6 +121,8 @@ TEST(assembler_options, has_value)
         std::make_pair(assembler_options { .machine = "A" }, true),
         std::make_pair(assembler_options { .goff = false }, true),
         std::make_pair(assembler_options { .goff = true }, true),
+        std::make_pair(assembler_options { .rent = false }, true),
+        std::make_pair(assembler_options { .rent = true }, true),
     };
 
     for (const auto& [input, expected] : cases)
@@ -193,6 +213,18 @@ TEST(assembler_options, apply)
                 { .goff = true },
             },
             asm_option { .system_id = "PARM", .sysopt_xobject = true }),
+        std::make_pair(
+            std::vector<assembler_options> {
+                { .rent = true },
+                {},
+            },
+            asm_option { .sysopt_rent = true }),
+        std::make_pair(
+            std::vector<assembler_options> {
+                { .system_id = "PARM" },
+                { .rent = true },
+            },
+            asm_option { .system_id = "PARM", .sysopt_rent = true }),
     };
 
     for (const auto& [input, expected] : cases)

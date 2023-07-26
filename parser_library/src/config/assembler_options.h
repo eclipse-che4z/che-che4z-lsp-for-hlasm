@@ -34,6 +34,7 @@ struct assembler_options
     std::optional<std::string> machine;
     std::optional<std::string> system_id;
     std::optional<bool> goff;
+    std::optional<bool> rent;
 
     bool operator==(const assembler_options&) const = default;
     bool valid() const noexcept;
