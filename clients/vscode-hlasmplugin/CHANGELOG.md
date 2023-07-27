@@ -18,6 +18,7 @@
 - Better handling of Unicode Supplementary Planes
 - Incorrect processor group could be assigned to programs stated in `.bridge.json`
 - Almost infinite loop while checking dependency cycles
+- CICS status codes substitutions are not always performed
 
 #### Changed
 - Performance improvements

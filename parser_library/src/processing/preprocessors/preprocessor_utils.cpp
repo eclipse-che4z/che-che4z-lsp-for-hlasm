@@ -121,22 +121,16 @@ std::vector<semantics::preproc_details::name_range> get_operands_list(
 namespace {
 template<typename ITERATOR>
 semantics::preproc_details::name_range get_stmt_part_name_range(
-    const std::match_results<ITERATOR>& matches, size_t index, const semantics::range_provider& rp)
+    std::span<const std::pair<ITERATOR, ITERATOR>> matches, size_t index, const semantics::range_provider& rp)
 {
     semantics::preproc_details::name_range nr;
     auto lineno = rp.original_range.start.line;
-
-    if (index < matches.size() && matches[index].length())
+    ++index;
+    if (index < matches.size() && (index == 0 || matches[index].first != matches[index].second))
     {
-        nr.name = matches[index].str();
-        nr.r = rp.adjust_range(range(position(lineno, std::distance(matches[0].first, matches[index].first)),
-            position(lineno, std::distance(matches[0].first, matches[index].second))));
-    }
-    else if (index == (size_t)-1)
-    {
-        nr.name = matches.suffix().str();
-        nr.r = rp.adjust_range(range(position(lineno, std::distance(matches[0].first, matches.suffix().first)),
-            position(lineno, std::distance(matches[0].first, matches.suffix().second))));
+        nr.name = std::string(matches[index].first, matches[index].second);
+        nr.r = rp.adjust_range(range(position(lineno, std::distance(matches[1].first, matches[index].first)),
+            position(lineno, std::distance(matches[1].first, matches[index].second))));
     }
 
     return nr;
@@ -144,7 +138,7 @@ semantics::preproc_details::name_range get_stmt_part_name_range(
 } // namespace
 
 template<typename PREPROC_STATEMENT, typename ITERATOR>
-std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(const std::match_results<ITERATOR>& matches,
+std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(std::span<const std::pair<ITERATOR, ITERATOR>> matches,
     const stmt_part_ids& ids,
     size_t lineno,
     bool contains_preproc_specific_instruction,
@@ -153,16 +147,12 @@ std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(const std::match_result
     assert(!matches.empty() && (ids.operands < matches.size() || ids.operands == -1)
         && (!ids.remarks || *ids.remarks < matches.size() || *ids.remarks == -1));
 
-    const auto matches_ = [&matches](size_t n) {
-        if (n == (size_t)-1)
-            return matches.suffix();
-        else
-            return matches[n];
-    };
+    const auto matches_ = [&matches](size_t n) { return matches[1 + n]; };
+    const auto lengths_ = [&matches](size_t n) { return std::distance(matches[1 + n].first, matches[1 + n].second); };
 
     semantics::preproc_details details;
 
-    details.stmt_r = range({ lineno, 0 }, { lineno, static_cast<size_t>(matches_(0).length()) });
+    details.stmt_r = range({ lineno, 0 }, { lineno, static_cast<size_t>(lengths_(0)) });
     auto rp = semantics::range_provider(details.stmt_r, semantics::adjusting_state::MACRO_REPARSE, continue_column);
 
     if (ids.label)
@@ -180,12 +170,12 @@ std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(const std::match_result
             details.instruction.preproc_specific_r = std::move(front_instr_r);
     }
 
-    if (matches_(ids.operands).length())
+    if (lengths_(ids.operands))
         details.operands = get_operands_list(get_stmt_part_name_range<ITERATOR>(matches, ids.operands, rp).name,
-            std::distance(matches[0].first, matches_(ids.operands).first),
+            std::distance(matches_(0).first, matches_(ids.operands).first),
             rp);
 
-    if (ids.remarks && matches_(*ids.remarks).length())
+    if (ids.remarks && lengths_(*ids.remarks))
         details.remarks.emplace_back(get_stmt_part_name_range<ITERATOR>(matches, *ids.remarks, rp).r);
 
     return std::make_shared<PREPROC_STATEMENT>(std::move(details));
@@ -194,7 +184,8 @@ std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(const std::match_result
 template std::shared_ptr<semantics::preprocessor_statement_si>
 get_preproc_statement<semantics::preprocessor_statement_si,
     lexing::logical_line<std::string_view::iterator>::const_iterator>(
-    const std::match_results<lexing::logical_line<std::string_view::iterator>::const_iterator>& matches,
+    std::span<const std::pair<lexing::logical_line<std::string_view::iterator>::const_iterator,
+        lexing::logical_line<std::string_view::iterator>::const_iterator>> matches,
     const stmt_part_ids& ids,
     size_t lineno,
     bool contains_preproc_specific_instruction,
@@ -202,7 +193,7 @@ get_preproc_statement<semantics::preprocessor_statement_si,
 
 template std::shared_ptr<semantics::endevor_statement_si>
 get_preproc_statement<semantics::endevor_statement_si, std::string_view::iterator>(
-    const std::match_results<std::string_view::iterator>& matches,
+    std::span<const std::pair<std::string_view::iterator, std::string_view::iterator>> matches,
     const stmt_part_ids& ids,
     size_t lineno,
     bool contains_preproc_specific_instruction,

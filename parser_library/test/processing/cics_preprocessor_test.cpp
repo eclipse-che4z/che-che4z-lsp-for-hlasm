@@ -546,3 +546,22 @@ TEST(cics_preprocessor, dfhvalue_substitution)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(cics_preprocessor, substitution_in_macros)
+{
+    std::string input = R"(
+         MACRO
+         MAC  &P1
+         LARL 0,&P1(1)
+         LARL 0,&P1(2)
+         MEND
+         MAC  (DFHRESP(NORMAL),DFHVALUE(FIRSTQUIESCE))
+         END
+)";
+    analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}

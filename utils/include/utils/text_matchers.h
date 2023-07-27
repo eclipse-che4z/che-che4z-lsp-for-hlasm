@@ -98,6 +98,51 @@ public:
 using char_matcher = char_matcher_impl<false>;
 using not_char_matcher = char_matcher_impl<true>;
 
+class byte_matcher
+{
+    const std::array<bool, 1 + (unsigned char)-1>& table;
+
+public:
+    explicit constexpr byte_matcher(const std::array<bool, 1 + (unsigned char)-1>& table)
+        : table(table)
+    {}
+
+    template<typename It>
+    constexpr bool operator()(It& b, const It& e) const noexcept
+    {
+        if (b == e)
+            return false;
+        auto result = table[(unsigned char)*b];
+        if (result)
+            ++b;
+        return result;
+    }
+};
+
+class any_matcher
+{
+public:
+    template<typename It>
+    constexpr bool operator()(It& b, const It& e) const noexcept
+    {
+        if (b == e)
+            return false;
+        ++b;
+        return true;
+    }
+};
+
+class skip_to_end
+{
+public:
+    template<typename It>
+    constexpr bool operator()(It& b, const It& e) const noexcept
+    {
+        b = e;
+        return true;
+    }
+};
+
 template<typename Matcher>
 constexpr auto star(Matcher&& matcher)
 {
@@ -248,6 +293,20 @@ constexpr auto capture(std::optional<std::pair<It, It>>& capture, Matcher&& matc
             capture.reset();
             return false;
         }
+    };
+}
+
+template<typename It, typename Matcher>
+constexpr auto capture(std::pair<It, It>& capture, Matcher&& matcher)
+{
+    return [&capture, matcher = std::forward<Matcher>(matcher)](It& b, const It& e) noexcept {
+        auto work = b;
+        if (matcher(b, e))
+        {
+            capture = std::pair<It, It>(work, b);
+            return true;
+        }
+        return false;
     };
 }
 

@@ -40,6 +40,7 @@
 #include "utils/string_operations.h"
 #include "utils/task.h"
 #include "utils/text_matchers.h"
+#include "utils/truth_table.h"
 #include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -711,13 +712,16 @@ public:
     class parse_and_substitute_result
     {
         std::variant<size_t, std::string_view> m_value;
+        It m_last;
 
     public:
-        explicit parse_and_substitute_result(size_t substitutions_performed)
+        explicit parse_and_substitute_result(size_t substitutions_performed, It last)
             : m_value(substitutions_performed)
+            , m_last(last)
         {}
-        explicit parse_and_substitute_result(std::string_view var_name)
+        explicit parse_and_substitute_result(std::string_view var_name, It last)
             : m_value(var_name)
+            , m_last(last)
         {}
 
         bool error() const { return std::holds_alternative<std::string_view>(m_value); }
@@ -725,6 +729,8 @@ public:
         std::string_view error_variable_name() const { return std::get<std::string_view>(m_value); }
 
         size_t substitutions_performed() const { return std::get<size_t>(m_value); }
+
+        auto get_last() const { return m_last; }
     };
 
     parse_and_substitute_result parse_and_substitute(It b, It e)
@@ -777,9 +783,9 @@ public:
                             else
                             {
                                 if (auto c3 = *std::next(b, 3); c3 == 'R' || c3 == 'r') // indicate NULL argument error
-                                    return parse_and_substitute_result("DFHRESP");
+                                    return parse_and_substitute_result("DFHRESP", m_matches.suffix().first);
                                 else
-                                    return parse_and_substitute_result("DFHVALUE");
+                                    return parse_and_substitute_result("DFHVALUE", m_matches.suffix().first);
                             }
 
                             b = m_matches.suffix().first;
@@ -832,13 +838,17 @@ public:
         }
 
     done:
-        return parse_and_substitute_result(valid_dfh);
+        return parse_and_substitute_result(valid_dfh, b);
     }
 };
 
 class cics_preprocessor final : public preprocessor
 {
-    lexing::logical_line<std::string_view::iterator> m_logical_line;
+    using ll_t = lexing::logical_line<std::string_view::iterator>;
+    using ll_iterator = ll_t::const_iterator;
+    using ll_range = std::pair<ll_iterator, ll_iterator>;
+
+    ll_t m_logical_line;
     library_fetcher m_libs;
     diagnostic_op_consumer* m_diags = nullptr;
     std::vector<document_line> m_result;
@@ -851,9 +861,9 @@ class cics_preprocessor final : public preprocessor
     std::string_view m_pending_dfh_null_error;
 
     std::match_results<std::string_view::iterator> m_matches_sv;
-    std::match_results<lexing::logical_line<std::string_view::iterator>::const_iterator> m_matches_ll;
+    std::match_results<ll_iterator> m_matches_ll;
 
-    mini_parser<lexing::logical_line<std::string_view::iterator>::const_iterator> m_mini_parser;
+    mini_parser<ll_iterator> m_mini_parser;
 
     semantics::source_info_processor& m_src_proc;
 
@@ -1087,8 +1097,7 @@ public:
         // TODO: generate correct calls
     }
 
-    void process_exec_cics(
-        const std::match_results<lexing::logical_line<std::string_view::iterator>::const_iterator>& matches)
+    void process_exec_cics(const std::match_results<ll_iterator>& matches)
     {
         auto label_b = matches[1].first;
         auto label_e = matches[1].second;
@@ -1100,11 +1109,7 @@ public:
         inject_call(label_b, label_e, li);
     }
 
-    static bool is_command_present(
-        const std::match_results<lexing::logical_line<std::string_view::iterator>::const_iterator>& matches)
-    {
-        return matches[3].matched;
-    }
+    static bool is_command_present(const std::match_results<ll_iterator>& matches) { return matches[3].matched; }
 
     bool try_exec_cics(preprocessor::line_iterator& it,
         const preprocessor::line_iterator& end,
@@ -1149,8 +1154,9 @@ public:
         if (potential_lineno)
         {
             static const stmt_part_ids part_ids { 1, { 2, 3 }, (size_t)-1, std::nullopt };
-            auto stmt =
-                get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno, true, 1);
+            auto matches = make_preproc_matches<3>(m_matches_ll);
+            auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(
+                std::span(matches.cbegin(), matches.cend()), part_ids, lineno, true, 1);
             do_highlighting(*stmt, m_logical_line, m_src_proc, 1);
             set_statement(std::move(stmt));
         }
@@ -1158,14 +1164,12 @@ public:
         return true;
     }
 
-    auto try_substituting_dfh(
-        const std::match_results<lexing::logical_line<std::string_view::iterator>::const_iterator>& matches)
+    auto try_substituting_dfh(const ll_range& label, const ll_range& instruction, const ll_range& rest)
     {
-        auto events = m_mini_parser.parse_and_substitute(matches[3].first, matches[3].second);
+        auto events = m_mini_parser.parse_and_substitute(rest.first, rest.second);
         if (!events.error() && events.substitutions_performed() > 0)
         {
-            auto label_b = matches[1].first;
-            auto label_e = matches[1].second;
+            const auto& [label_b, label_e] = label;
             label_info li {
                 (size_t)std::distance(label_b, label_e),
                 (size_t)std::count_if(label_b, label_e, [](unsigned char c) { return (c & 0xc0) != 0x80; }),
@@ -1173,7 +1177,7 @@ public:
 
             echo_text(li);
 
-            std::string text_to_add = matches[2].str();
+            std::string text_to_add(instruction.first, instruction.second);
             if (auto instr_len = utils::utf8_substr(text_to_add).char_count; instr_len < 4)
                 text_to_add.append(4 - instr_len, ' ');
             text_to_add.append(1, ' ').append(m_mini_parser.operands());
@@ -1182,7 +1186,7 @@ public:
             std::string_view prefix;
             std::string_view t = text_to_add;
 
-            size_t line_limit = 62;
+            size_t line_limit = 72;
             while (true)
             {
                 auto part = utils::utf8_substr(t, 0, line_limit);
@@ -1208,9 +1212,19 @@ public:
         const preprocessor::line_iterator& end,
         const std::optional<size_t>& potential_lineno)
     {
-        static const std::regex dfh_lookup("^([^ ]*)[ ]+([A-Z#$@][A-Z#$@0-9]*)[ ]+((?:\\S+,)?(?:DFHRESP|DFHVALUE)[ ]*"
-                                           "\\([ ]*[A-Z0-9]*[ ]*\\))(?= |$)",
-            std::regex_constants::icase);
+        std::array<std::pair<ll_iterator, ll_iterator>, 5> matches;
+
+        namespace m = utils::text_matchers;
+        static constexpr auto first_letter =
+            utils::create_truth_table("$#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        static constexpr auto next_letter =
+            utils::create_truth_table("_$#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+
+        const auto line_matcher = m::seq(m::capture(matches[2], m::star(m::not_char_matcher(" "))),
+            m::space_matcher<false, false>(),
+            m::capture(matches[3], m::seq(m::byte_matcher(first_letter), m::star(m::byte_matcher(next_letter)))),
+            m::space_matcher<false, false>(),
+            m::capture(matches[4], m::seq(m::not_char_matcher(" "), m::skip_to_end())));
 
         bool ret_val = false;
         auto lineno = potential_lineno.value_or(0);
@@ -1221,9 +1235,9 @@ public:
             if (m_diags)
                 m_diags->add_diagnostic(diagnostic_op::warn_CIC001(range(position(lineno, 0))));
         }
-        else if (std::regex_search(m_logical_line.begin(), m_logical_line.end(), m_matches_ll, dfh_lookup))
+        else if (auto b = m_logical_line.begin(); line_matcher(b, m_logical_line.end()))
         {
-            auto r = try_substituting_dfh(m_matches_ll);
+            auto r = try_substituting_dfh(matches[2], matches[3], matches[4]);
             if (r.error())
             {
                 if (m_diags)
@@ -1234,11 +1248,15 @@ public:
             else if (r.substitutions_performed() > 0)
                 ret_val = true;
 
-            if (potential_lineno)
+            if ((r.error() || r.substitutions_performed() > 0) && potential_lineno)
             {
                 static const stmt_part_ids part_ids { 1, { 2 }, 3, (size_t)-1 };
-                auto stmt =
-                    get_preproc_statement<semantics::preprocessor_statement_si>(m_matches_ll, part_ids, lineno, false);
+                matches[0] = { r.get_last(), m_logical_line.end() };
+                matches[1] = { m_logical_line.begin(), r.get_last() };
+                matches[4].second = r.get_last();
+
+                auto stmt = get_preproc_statement<semantics::preprocessor_statement_si>(
+                    std::span(matches.cbegin(), matches.cend()), part_ids, lineno, false);
                 do_highlighting(*stmt, m_logical_line, m_src_proc);
                 set_statement(std::move(stmt));
             }
