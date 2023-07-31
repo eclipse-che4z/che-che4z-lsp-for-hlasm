@@ -43,6 +43,14 @@
     {
       "program": "remote2.hlasm",
       "pgroup": "remote2"
+    },
+    {
+      "program": "missing_pgroup/A.hlasm",
+      "pgroup": "MISSING_PGM_CONF_PROC_GROUP_A"
+    },
+    {
+      "program": "missing_pgroup/B.hlasm",
+      "pgroup": "MISSING_PGM_CONF_PROC_GROUP_B"
     }
   ],
   "alwaysRecognize": [

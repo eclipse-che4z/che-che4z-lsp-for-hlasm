@@ -1,0 +1,9 @@
+{
+  "elements": {
+    "A": {
+      "processorGroup": "MISSING_B4G_PROC_GROUP"
+    }
+  },
+  "defaultProcessorGroup": "MISSING_B4G_PROC_GROUP_DEFAULT",
+  "fileExtension": ""
+}

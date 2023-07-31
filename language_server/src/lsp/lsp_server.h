@@ -111,6 +111,8 @@ private:
         parser_library::workspace_manager_response<parser_library::sequence<char>> json_text) override;
 
     void invalidate_external_configuration(const nlohmann::json& error);
+
+    void toggle_advisory_configuration_diagnostics(const nlohmann::json&);
 };
 
 } // namespace hlasm_plugin::language_server::lsp

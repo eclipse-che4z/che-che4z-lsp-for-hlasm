@@ -265,6 +265,7 @@ workspace::workspace(const resource_location& location,
     , implicit_proc_grp("pg_implicit", {}, {})
     , global_config_(global_config)
     , m_configuration(file_manager, location_, global_settings, ecr)
+    , m_include_advisory_cfg_diags(false)
 {}
 
 workspace::workspace(file_manager& file_manager,
@@ -281,15 +282,24 @@ workspace::workspace(file_manager& file_manager,
 
 workspace::~workspace() = default;
 
+configuration_diagnostics_parameters workspace::get_configuration_diagnostics_params() const
+{
+    configuration_diagnostics_parameters config_diags_params;
+    config_diags_params.include_advisory_cfg_diags = m_include_advisory_cfg_diags;
+
+    for (const auto& [processor_file_rl, component] : m_processor_files)
+    {
+        if (component.m_opened)
+            config_diags_params.used_configs_opened_files_map[component.m_alternative_config].emplace_back(
+                processor_file_rl);
+    }
+
+    return config_diags_params;
+}
+
 void workspace::collect_diags() const
 {
-    std::unordered_set<resource_location, resource_location_hasher> used_b4g_configs;
-
-    for (const auto& [_, component] : m_processor_files)
-        if (component.m_opened)
-            used_b4g_configs.emplace(component.m_alternative_config);
-
-    m_configuration.copy_diagnostics(*this, used_b4g_configs);
+    m_configuration.produce_diagnostics(*this, get_configuration_diagnostics_params());
 
     for (const auto& [url, pfc] : m_processor_files)
     {
@@ -302,6 +312,11 @@ void workspace::collect_diags() const
                 pfc.m_last_results->opencode_diagnostics.begin(),
                 pfc.m_last_results->opencode_diagnostics.end());
     }
+}
+
+void workspace::include_advisory_configuration_diagnostics(bool include_advisory_cfg_diags)
+{
+    m_include_advisory_cfg_diags = include_advisory_cfg_diags;
 }
 
 namespace {

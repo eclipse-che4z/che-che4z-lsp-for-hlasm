@@ -74,6 +74,7 @@ public:
     MOCK_METHOD(void, set_request_interface, (workspace_manager_requests * requests), (override));
 
     MOCK_METHOD(continuous_sequence<char>, get_virtual_file_content, (unsigned long long id), (const override));
+    MOCK_METHOD(void, toggle_advisory_configuration_diagnostics, (), (override));
 
 
     MOCK_METHOD(void,

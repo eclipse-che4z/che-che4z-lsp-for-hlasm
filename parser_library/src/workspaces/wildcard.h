@@ -16,6 +16,8 @@
 #define HLASMPLUGIN_PARSERLIBRARY_WILDCARD_H
 
 #include <regex>
+#include <string>
+#include <string_view>
 
 namespace hlasm_plugin::parser_library::workspaces {
 // Returns a regex that can be used for wildcard matching.

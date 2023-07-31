@@ -2595,7 +2595,7 @@ diagnostic_s diagnostic_s::error_W0004(const utils::resource::resource_location&
 {
     return diagnostic_s(file_name.get_uri(),
         {},
-        diagnostic_severity::warning,
+        diagnostic_severity::error,
         "W0004",
         get_not_defined_proc_group_msg("pgm_conf.json", pgroup),
         {},
@@ -2645,6 +2645,17 @@ diagnostic_s diagnostic_s::warn_W0007(
         diagnostic_tag::none);
 }
 
+diagnostic_s diagnostic_s::warn_W0008(const utils::resource::resource_location& file_name, std::string_view pgroup)
+{
+    return diagnostic_s(file_name.get_uri(),
+        {},
+        diagnostic_severity::warning,
+        "W0008",
+        get_not_defined_proc_group_msg("pgm_conf.json", pgroup),
+        {},
+        diagnostic_tag::none);
+}
+
 diagnostic_s diagnostic_s::error_B4G001(const utils::resource::resource_location& file_name)
 {
     return diagnostic_s(file_name.get_uri(),
@@ -2660,8 +2671,19 @@ diagnostic_s diagnostic_s::error_B4G002(const utils::resource::resource_location
 {
     return diagnostic_s(file_name.get_uri(),
         {},
-        diagnostic_severity::warning,
+        diagnostic_severity::error,
         "B4G002",
+        get_not_defined_proc_group_msg(".bridge.json", grp_name),
+        {},
+        diagnostic_tag::none);
+}
+
+diagnostic_s diagnostic_s::warn_B4G003(const utils::resource::resource_location& file_name, std::string_view grp_name)
+{
+    return diagnostic_s(file_name.get_uri(),
+        {},
+        diagnostic_severity::warning,
+        "B4G003",
         get_not_defined_proc_group_msg(".bridge.json", grp_name),
         {},
         diagnostic_tag::none);

@@ -42,6 +42,7 @@ const auto pgm_conf_rl = prepend_ws_loc(pgm_conf_name.get_uri());
 const auto b4g_conf_rl = prepend_ws_loc("SYS/SUB/ASMPGM/.bridge.json");
 const auto pgm_a = prepend_ws_loc("SYS/SUB/ASMPGM/A");
 const auto pgm_b = prepend_ws_loc("SYS/SUB/ASMPGM/B");
+const auto pgm_a_diff_path = prepend_ws_loc("PGMS/A");
 const auto pgm_dollars = prepend_ws_loc("SYS/SUB/ASMPGM/$$$");
 const auto sys_sub_p1_mac1 = prepend_ws_loc("SYS/SUB/ASMMACP1/MAC1");
 const auto sys_sub_p2_mac1 = prepend_ws_loc("SYS/SUB/ASMMACP2/MAC1");
@@ -295,7 +296,12 @@ TEST(b4g_integration_test, missing_pgroup)
     parse_all_files(ws);
     ws.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002", "B4G002" }));
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002" }));
+
+    ws.include_advisory_configuration_diagnostics(true);
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002", "B4G003" }));
 }
 
 TEST(b4g_integration_test, missing_pgroup_but_not_used)
@@ -426,14 +432,20 @@ TEST(b4g_integration_test, b4g_conf_noproc_proc_group)
     parse_all_files(ws);
 
     ws.collect_diags();
-    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002" }));
+    EXPECT_TRUE(ws.diags().empty());
 
     ws.diags().clear();
 
     change_and_reparse(fm, ws, pgm_a, " ");
     ws.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002" }));
+    EXPECT_TRUE(ws.diags().empty());
+
+    ws.include_advisory_configuration_diagnostics(true);
+    ws.diags().clear();
+    ws.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G003" }));
 }
 
 TEST(b4g_integration_test, b4g_conf_noproc_proc_group_default)
@@ -458,4 +470,113 @@ TEST(b4g_integration_test, b4g_conf_noproc_proc_group_default)
     ws.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002" }));
+}
+
+TEST(b4g_integration_test, missing_proc_group_diags)
+{
+    file_manager_impl_test fm;
+
+    fm.did_open_file(proc_grps_rl, 1, empty_proc_grps);
+    fm.did_open_file(b4g_conf_rl,
+        1,
+        R"({"elements":{"A":{"processorGroup":"P1"}},"defaultProcessorGroup":"P2","fileExtension":""})");
+    fm.did_open_file(pgm_a, 1, "");
+    fm.did_open_file(pgm_b, 1, "");
+    fm.did_open_file(pgm_a_diff_path, 1, "");
+
+    workspace_test ws(fm);
+
+    run_if_valid(ws.did_open_file(pgm_a));
+    parse_all_files(ws);
+    ws.collect_diags();
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002" }));
+
+    ws.include_advisory_configuration_diagnostics(true);
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002", "B4G003" }));
+
+    run_if_valid(ws.did_close_file(pgm_a));
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(ws.diags().empty());
+
+    ws.include_advisory_configuration_diagnostics(false);
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(ws.diags().empty());
+
+    run_if_valid(ws.did_open_file(pgm_b));
+    parse_all_files(ws);
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G002" }));
+
+    run_if_valid(ws.did_close_file(pgm_b));
+    parse_all_files(ws);
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(ws.diags().empty());
+
+    run_if_valid(ws.did_open_file(pgm_a_diff_path));
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(ws.diags().empty());
+}
+
+TEST(b4g_integration_test, missing_proc_group_diags_wildcards)
+{
+    file_manager_impl_test fm;
+
+    fm.did_open_file(proc_grps_rl, 1, R"({"pgroups":[{"name":"P1","libs":[]}]})");
+    // Wildcards implicitly in default proc group
+    fm.did_open_file(b4g_conf_rl,
+        1,
+        R"({"elements":{"A":{"processorGroup":"P1"}},"defaultProcessorGroup":"P2","fileExtension":""})");
+    fm.did_open_file(pgm_a, 1, "");
+
+    workspace_test ws(fm);
+
+    run_if_valid(ws.did_open_file(pgm_a));
+    parse_all_files(ws);
+    ws.collect_diags();
+    EXPECT_TRUE(ws.diags().empty());
+
+    ws.include_advisory_configuration_diagnostics(true);
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G003" }));
+
+    run_if_valid(ws.did_close_file(pgm_a));
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(ws.diags().empty());
+}
+
+TEST(b4g_integration_test, missing_proc_group_diags_wildcards_noproc)
+{
+    file_manager_impl_test fm;
+
+    fm.did_open_file(proc_grps_rl, 1, empty_proc_grps);
+    fm.did_open_file(b4g_conf_rl,
+        1,
+        R"({"elements":{"A":{"processorGroup":"*NOPROC*"}},"defaultProcessorGroup":"P2","fileExtension":""})");
+    fm.did_open_file(pgm_a, 1, "");
+
+    workspace_test ws(fm);
+
+    run_if_valid(ws.did_open_file(pgm_a));
+    parse_all_files(ws);
+    ws.collect_diags();
+    EXPECT_TRUE(ws.diags().empty());
+
+    ws.include_advisory_configuration_diagnostics(true);
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(matches_message_codes(ws.diags(), { "B4G003" }));
+
+    run_if_valid(ws.did_close_file(pgm_a));
+    ws.diags().clear();
+    ws.collect_diags();
+    EXPECT_TRUE(ws.diags().empty());
 }

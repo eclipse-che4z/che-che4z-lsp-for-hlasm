@@ -133,6 +133,8 @@ public:
 
     virtual continuous_sequence<char> get_virtual_file_content(unsigned long long id) const = 0;
 
+    virtual void toggle_advisory_configuration_diagnostics() = 0;
+
     virtual void make_opcode_suggestion(const char* document_uri,
         const char* opcode,
         bool extended,

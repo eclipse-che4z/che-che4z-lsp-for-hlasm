@@ -292,6 +292,11 @@
         "command": "extension.hlasm-plugin.clearRemoteActivityCache",
         "category": "HLASM",
         "title": "Clear remote files cache"
+      },
+      {
+        "command": "extension.hlasm-plugin.toggleAdvisoryConfigurationDiagnostics",
+        "category": "HLASM",
+        "title": "Toggle advisory configuration diagnostics"
       }
     ],
     "keybindings": [

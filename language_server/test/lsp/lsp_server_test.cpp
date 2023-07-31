@@ -350,3 +350,14 @@ TEST(lsp_server_test, external_configuration_request_error)
     EXPECT_EQ(i->result,
         (std::variant<std::string, std::pair<int, std::string>>(std::pair<int, std::string>(123456, "error message"))));
 }
+
+TEST(lsp_server_test, toggle_advisory_configuration_diagnostics)
+{
+    NiceMock<test::ws_mngr_mock> ws_mngr;
+    lsp::server s(ws_mngr);
+
+    EXPECT_CALL(ws_mngr, toggle_advisory_configuration_diagnostics());
+
+    s.message_received(
+        R"({"jsonrpc":"2.0","method":"toggle_advisory_configuration_diagnostics","params":[null]})"_json);
+}

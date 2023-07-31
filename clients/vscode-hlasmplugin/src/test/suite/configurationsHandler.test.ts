@@ -24,11 +24,11 @@ suite('Configurations Handler Test Suite', () => {
     const handler = new ConfigurationsHandler();
     const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 
-    // 24 expressions - 2 for always recognize, 11 open codes (pgm_conf.json) and 11 library definitions (proc_grps.json)
+    // 26 expressions - 2 for always recognize, 13 open codes (pgm_conf.json) and 11 library definitions (proc_grps.json)
     test('Update wildcards test', async () => {
         const wildcards = await handler.generateWildcards(workspaceUri);
         assert.ok(wildcards);
-        assert.equal(wildcards.length, 24);
+        assert.equal(wildcards.length, 26);
     });
 
     // 2 files matching the wildcards

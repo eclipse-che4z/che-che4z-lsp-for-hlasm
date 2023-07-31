@@ -157,7 +157,10 @@ export function timeout(ms: number, error_message: string | undefined = undefine
     return new Promise<void>((_, reject) => { setTimeout(() => reject(error_message && Error(error_message)), ms); });
 }
 
-export async function waitForDiagnostics(file: string | vscode.Uri, nonEmptyOnly: boolean = false) {
+/**
+ * @deprecated Use `waitForDiagnosticsChange()` instead
+ */
+export async function waitForDiagnostics(file: string | vscode.Uri, nonEmptyOnly: boolean = false, source: string | undefined = undefined) {
     const result = new Promise<vscode.Diagnostic[]>((resolve) => {
         const file_promise = typeof file === 'string' ? getWorkspaceFile(file).then(uri => uri.toString()) : Promise.resolve(file.toString());
 
@@ -171,6 +174,8 @@ export async function waitForDiagnostics(file: string | vscode.Uri, nonEmptyOnly
                 const diags = vscode.languages.getDiagnostics(forFile);
                 if (nonEmptyOnly && diags.length === 0)
                     return;
+                if (source && !diags.find(x => x.source === source))
+                    return;
                 listener.dispose();
                 listener = null;
                 resolve(diags);
@@ -181,10 +186,13 @@ export async function waitForDiagnostics(file: string | vscode.Uri, nonEmptyOnly
     return result;
 }
 
-export async function waitForDiagnosticsChange(file: string | vscode.Uri, action: () => PromiseLike<void> | void) {
-    const fileUri = typeof file === 'string' ? await getWorkspaceFile(file) : file;
+export async function waitForDiagnosticsChange(file: string | vscode.Uri, action: () => PromiseLike<void> | void, source: string | undefined = undefined) {
+    const diags_retriever = (fileUri: vscode.Uri) => {
+        return source ? vscode.languages.getDiagnostics(fileUri).filter(d => { return d.source === source }) : vscode.languages.getDiagnostics(fileUri);
+    };
 
-    const initialDiags = vscode.languages.getDiagnostics(fileUri).map(x => JSON.stringify(x)).sort();
+    const fileUri = typeof file === 'string' ? await getWorkspaceFile(file) : file;
+    const initialDiags = diags_retriever(fileUri).map(x => JSON.stringify(x)).sort();
 
     const result = new Promise<vscode.Diagnostic[]>((resolve) => {
         let listener: vscode.Disposable | null = vscode.languages.onDidChangeDiagnostics((e) => {
@@ -193,7 +201,7 @@ export async function waitForDiagnosticsChange(file: string | vscode.Uri, action
             const forFile = e.uris.find(v => v.toString() === fileUri.toString());
             if (!forFile)
                 return;
-            const diags = vscode.languages.getDiagnostics(forFile);
+            const diags = diags_retriever(forFile);
             if (diags.length === initialDiags.length && diags.map(x => JSON.stringify(x)).sort().every((x, i) => x === initialDiags[i]))
                 return;
             listener.dispose();
@@ -204,4 +212,11 @@ export async function waitForDiagnosticsChange(file: string | vscode.Uri, action
     await Promise.resolve(action());
 
     return await result;
+}
+
+export function assertMatchingMessageCodes(diags: vscode.Diagnostic[], expectedDiags: (string | number)[], source: string | undefined = undefined) {
+    if (source)
+        diags = diags.filter(x => x.source === source);
+
+    assert.deepStrictEqual(diags.map(x => x.code || '').flat().sort(), expectedDiags.sort());
 }
