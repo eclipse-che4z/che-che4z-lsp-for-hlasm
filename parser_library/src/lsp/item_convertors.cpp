@@ -371,7 +371,7 @@ std::vector<completion_item_s> generate_completion(const context::macro_definiti
     completion_list_s result;
     for (const auto& positional : md->get_positional_params())
     {
-        if (positional->position == 0 || positional->id.empty()) // label parameter or invalid
+        if (!positional || positional->position == 0 || positional->id.empty()) // label parameter or invalid
             continue;
 
         std::string suffix = " (" + std::to_string(positional->position)
