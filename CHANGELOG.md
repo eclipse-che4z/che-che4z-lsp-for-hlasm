@@ -1,3 +1,44 @@
+## [1.9.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.8.0...1.9.0) (2023-08-03)
+
+
+### Features
+
+* Code action for toggling advisory configuration diagnostics ([e72f51f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/e72f51fa2b904038059fac437891feff4540bc30))
+* Implement completion item resolver ([0301a2f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0301a2fdf93001a05fa778e5682e8a9a925a791f))
+* Infrastructure for remote configuration ([818881d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/818881d9cb9f875864a50734fc159b05aa4f9db1))
+* Macro operand completion support ([08b297c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/08b297c7f21437cfc3ed3558c4600c2d2f4fc342))
+* Support RENT compiler option ([e2a5d85](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/e2a5d8590561fd27cec25627b06a19349fc93c0d))
+
+
+### Other changes
+
+* Cleanup std::bind ([fd86c3a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/fd86c3a1e45506ee355aabddc8c6cb540ac4157a))
+* Code actions + configuration nodes ([0a6b5e9](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0a6b5e9ddd5b195e52527c557649858d19e43191))
+* Collect undefined attribute symbols ([b372630](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/b3726302970de430a21d5e49ee2fc754bc4f5878))
+* Ensure consistent behavior of multiline commands ([2466c06](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2466c06a6dbd6c5208946fc2f1e4cadefe7bd38f))
+* Remove obsolete tokens ([e1c4378](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/e1c43783954956a66570c16a77565b88985a07d1))
+* Update engine for dependency downloading ([f051e7f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/f051e7fe68b4c31190ceded92cbdab506d13f400))
+
+
+### Fixes
+
+* Adjust lookahead grammar ([1bcef05](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1bcef057ed98a2cbc48bdbb8d634c11cf9cd5331))
+* Almost infinite loop while checking dependency cycles ([c5ac21e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c5ac21e546538f8fff945c9f8fe04c3092bcb4c7))
+* Attribute references in nominal values are not checked properly ([560f499](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/560f499c9ddea289bf96bd019c7298f2dea621c3))
+* Better handling of Unicode Supplementary Planes ([75cbcd6](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/75cbcd60a02fbe2ff7383bc6d17f7c88204a5a2f))
+* Bridge for Git configuration files may be ignored by the macro tracer ([98da01d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/98da01d23d86c15c7c7dfc060c2c2c69baef18f4))
+* CICS status codes substitutions are not always performed ([bdde1de](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/bdde1de05bd4f189323efb5b2d887e1b67e4357e))
+* Dependency collector improvements ([7dfc2f0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7dfc2f01100384975887e48b7588270101329291))
+* Disable unused antlr features ([917cf3d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/917cf3d7e0a54c5bdcba72a0c1935c985fd4fe67))
+* Enhanced multiline support in TextMate grammar for source files ([aa7dc9c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/aa7dc9cbb6988f3ea1c201fe582c270d78452b3e))
+* Improve label parsing accuracy and performance ([6e50e1b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/6e50e1bbcc4a6044050a8fc3768a337a2522aff3))
+* Long URIs may cause high CPU usage ([f0536df](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/f0536df198f1ec189c6400e1e657e3108327d986))
+* Miscellaneous performance enhancements ([e06c31d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/e06c31d0d08691b304d368f4de203ffab1c34315))
+* Normalize B4G program names ([db46aa7](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/db46aa7f968955e0bfdafb03b8309532f581baf6))
+* Redudant id_index formation ([504a200](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/504a200221892424e66130d96591d3d06d5af381))
+* Replace configuration pop-ups with CodeLens ([c25906a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c25906a4e7311b9caa89ab81e4c2131f4ec280f9))
+* Source code might not be reparsed when dependency name or location changes ([33c239b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/33c239b0d8c48cae911d9266fd2990115abc5765))
+
 ## [1.8.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.7.0...1.8.0) (2023-05-24)
 
 
