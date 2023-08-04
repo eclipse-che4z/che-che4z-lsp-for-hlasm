@@ -71,7 +71,13 @@ std::string hover_text(const context::symbol& sym)
     {
         bool first = true;
         const auto& reloc = sym.value().get_reloc();
-        for (const auto& [base, d] : reloc.bases())
+        auto bases = reloc.bases();
+        std::sort(bases.begin(), bases.end(), [](const auto& l, const auto& r) {
+            if (auto c = l.first.owner->name <=> r.first.owner->name; c != 0)
+                return c < 0;
+            return l.first.qualifier < r.first.qualifier;
+        });
+        for (const auto& [base, d] : bases)
         {
             if (base.owner->name.empty() || d == 0)
                 continue;

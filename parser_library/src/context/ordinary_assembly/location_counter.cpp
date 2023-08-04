@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <assert.h>
-#include <stdexcept>
 
 #include "section.h"
 
@@ -41,7 +40,7 @@ location_counter::location_counter(id_index name, const section& owner, loctr_ki
 
 address location_counter::current_address() const
 {
-    return address({ &owner, id_index() }, curr_data().storage, curr_data().spaces());
+    return address({ { { &owner, id_index() }, 1 } }, curr_data().storage, curr_data().spaces_for_address());
 }
 
 address location_counter::current_address_for_alignment_evaluation(alignment align) const
@@ -51,7 +50,7 @@ address location_counter::current_address_for_alignment_evaluation(alignment ali
         return up.unknown_space->align.boundary >= align.boundary;
     }).base();
     if (it == spaces.begin())
-        return address({ &owner, id_index() }, curr_data().storage, curr_data().spaces());
+        return address({ { { &owner, id_index() }, 1 } }, curr_data().storage, curr_data().spaces_for_address());
 
     space_storage alignment_spaces;
     alignment_spaces.reserve(std::distance(it, spaces.end()));
@@ -81,7 +80,8 @@ aligned_addr location_counter::reserve_storage_area(size_t length, alignment a)
 
     check_available_value();
 
-    return std::make_pair(address({ &owner, id_index() }, (int)curr_data().storage, curr_data().spaces()), sp);
+    return std::make_pair(
+        address({ { { &owner, id_index() }, 1 } }, (int)curr_data().storage, curr_data().spaces_for_address()), sp);
 }
 
 aligned_addr location_counter::align(alignment align) { return reserve_storage_area(0, align); }
@@ -98,44 +98,39 @@ space_ptr location_counter::register_align_space(alignment align)
 
 bool location_counter::need_space_alignment(alignment align) const { return curr_data().need_space_alignment(align); }
 
-space_ptr location_counter::set_value(const address& addr, size_t boundary, int offset, bool has_undefined_part)
+std::pair<address, space_ptr> location_counter::set_value(const address& addr, size_t boundary, int offset)
 {
-    int al = boundary ? (int)((boundary - (addr.offset() % boundary)) % boundary) : 0;
-
     auto curr_addr = current_address();
 
-    // checks whether addr is in this location counter and if it is well formed
-    if (!addr.in_same_loctr(curr_addr) || (!addr.has_dependant_space() && addr.offset() + al + offset < 0))
-        throw std::runtime_error("set incompatible loctr value");
+    auto diff = curr_addr - addr;
+    auto diff_offset = diff.offset();
 
-    if (has_undefined_part)
-    {
-        // when address has undefined absolute part, register space
-        org_data_.emplace_back();
-        return register_space(context::no_align, boundary, offset);
-    }
-
-    if (curr_addr.spaces() != addr.spaces() || curr_data().storage - addr.offset() > curr_data().current_safe_area
-        || (boundary && curr_data().storage - addr.offset() > curr_data().current_safe_area + offset))
+    if (!diff.bases().empty() || diff.has_spaces() || diff_offset > curr_data().current_safe_area
+        || (boundary && diff_offset > curr_data().current_safe_area + offset))
     {
         // when addr is composed of different spaces or falls outside safe area, register space
         org_data_.emplace_back();
-        return register_space(context::no_align, space_kind::LOCTR_SET);
+        return { std::move(curr_addr), register_space(context::no_align, space_kind::LOCTR_SET) };
     }
     else
     {
-        int diff = addr.offset() - curr_data().storage;
-        if (diff < 0 && curr_data().kind == loctr_data_kind::POTENTIAL_MAX)
+        if (diff_offset > 0 && curr_data().kind == loctr_data_kind::POTENTIAL_MAX)
         {
             // when value of addr is lower than loctr's and current loctr value is at its maximum, create new loctr data
             // so that we can track new loctr value for later maximum retrieval (in method set_available_value)
             org_data_.emplace_back(curr_data());
             curr_data().kind = loctr_data_kind::UNKNOWN_MAX;
         }
-        curr_data().append_storage(diff);
+        curr_data().append_storage(-diff_offset);
         check_available_value();
-        return nullptr;
+        return { std::move(curr_addr), nullptr };
     }
+}
+
+space_ptr location_counter::set_value_undefined(size_t boundary, int offset)
+{
+    org_data_.emplace_back();
+    return register_space(context::no_align, boundary, offset);
 }
 
 std::pair<space_ptr, std::vector<address>> location_counter::set_available_value()
@@ -157,25 +152,20 @@ std::pair<space_ptr, std::vector<address>> location_counter::set_available_value
     // and register space that will represent the highest loctr value
 
     std::vector<address> addr_arr;
-
-    for (auto& entry : org_data_)
-        addr_arr.emplace_back(address::base { &owner, id_index() }, entry.storage, entry.spaces());
-
     space_ptr loctr_start = nullptr;
     if (kind == loctr_kind::NONSTARTING)
     {
-        loctr_start = addr_arr.front().spaces().front().first;
+        loctr_start = org_data_.front().fist_space();
         assert(loctr_start->kind == space_kind::LOCTR_BEGIN);
-        for (auto& addr : addr_arr)
-        {
-            // make addresses (pseudo-)relative to current location counter
-            if (addr.spaces().front().first->kind == space_kind::LOCTR_BEGIN)
-                addr.spaces().erase(addr.spaces().begin());
-            else if (addr.spaces().front().first->kind == space_kind::LOCTR_SET)
-                addr.spaces().emplace_back(loctr_start, -1);
-            else if (addr.spaces().front().first->kind == space_kind::LOCTR_UNKNOWN)
-                addr.spaces().emplace_back(loctr_start, -1);
-        }
+    }
+
+    for (auto& entry : org_data_)
+    {
+        addr_arr.push_back({
+            std::vector<address::base_entry> { { address::base { &owner, id_index() }, 1 } },
+            entry.storage,
+            entry.pseudo_relative_spaces(loctr_start),
+        });
     }
 
     org_data_.emplace_back(loctr_data_kind::POTENTIAL_MAX);
@@ -211,8 +201,7 @@ bool location_counter::check_if_higher_value(size_t idx) const
 
 void location_counter::finish_layout(size_t offset)
 {
-    if (layuot_created_)
-        throw std::runtime_error("layout already created");
+    assert(!layuot_created_);
 
     assert(!(kind == loctr_kind::STARTING) || offset == 0); // (STARTING => offset==0) <=> (!STARTING v offset==0)
 

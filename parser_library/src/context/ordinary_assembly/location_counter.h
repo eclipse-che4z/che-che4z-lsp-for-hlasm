@@ -66,7 +66,8 @@ public:
     bool need_space_alignment(alignment align) const;
 
     // sets value of the location counter to the specified address (ORG instruction)
-    space_ptr set_value(const address& addr, size_t boundary, int offset, bool has_undefined_part);
+    std::pair<address, space_ptr> set_value(const address& addr, size_t boundary, int offset);
+    space_ptr set_value_undefined(size_t boundary, int offset);
 
     // sets the location counter to the next available location (ORG with empty first param)
     std::pair<space_ptr, std::vector<address>> set_available_value();

@@ -151,10 +151,12 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 check_org_result hlasm_plugin::parser_library::processing::check_address_for_ORG(
     const context::address& addr_to_check, const context::address& curr_addr, size_t boundary, int offset)
 {
-    int al = boundary ? (int)((boundary - (addr_to_check.offset() % boundary)) % boundary) : 0;
+    int addr_to_check_offset = addr_to_check.offset();
 
-    bool underflow = !addr_to_check.has_dependant_space() && addr_to_check.offset() + al + offset < 0;
-    if (!curr_addr.in_same_loctr(addr_to_check) || underflow)
+    int al = boundary ? (int)((boundary - (addr_to_check_offset % boundary)) % boundary) : 0;
+
+    bool underflow = !addr_to_check.has_dependant_space() && addr_to_check_offset + al + offset < 0;
+    if (underflow || !curr_addr.in_same_loctr(addr_to_check))
         return check_org_result::underflow;
 
     if (!addr_to_check.is_simple())

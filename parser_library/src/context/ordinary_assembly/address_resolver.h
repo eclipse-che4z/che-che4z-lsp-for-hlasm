@@ -30,41 +30,47 @@ using addr_res_ptr = std::unique_ptr<address_resolver_base>;
 // structure wrapping address providing resolvable interface to it
 struct address_resolver : public address_resolver_base
 {
-    explicit address_resolver(address dependency_address);
+    explicit address_resolver(address dependency_address, size_t boundary);
 
     dependency_collector get_dependencies(dependency_solver& solver) const override;
 
     symbol_value resolve(dependency_solver& solver) const override;
 
+    static address extract_dep_address(const address& addr, size_t boundary);
+
 protected:
     address dependency_address;
-    dependency_collector cached_deps_;
-    static address extract_dep_address(const address& addr);
+    size_t boundary;
 };
 
 // provides resolvable interface for address that require certain alignment
-struct alignable_address_resolver : public address_resolver
+struct alignable_address_resolver final : public address_resolver
 {
     alignable_address_resolver(
         address dependency_address, std::vector<address> base_addrs, size_t boundary, int offset);
 
     symbol_value resolve(dependency_solver& solver) const override;
 
-protected:
+private:
     std::vector<address> base_addrs;
-    size_t boundary;
     int offset;
     symbol_value resolve(const address& addr) const;
-    alignable_address_resolver(
-        address dependency_address, std::vector<address>& base_addrs, size_t boundary, int offset, bool);
 };
 
 // provides resolvable interface for the agregate of addresses
-struct aggregate_address_resolver final : public alignable_address_resolver
+struct aggregate_address_resolver final : public address_resolver_base
 {
     aggregate_address_resolver(std::vector<address> base_addrs, size_t boundary, int offset);
 
     symbol_value resolve(dependency_solver& solver) const override;
+
+    dependency_collector get_dependencies(dependency_solver& solver) const override;
+
+private:
+    mutable size_t last_base_addrs;
+    std::vector<address> base_addrs;
+    size_t boundary;
+    int offset;
 };
 
 // provides resolvable interface for absolute part of the address

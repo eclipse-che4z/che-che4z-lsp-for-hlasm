@@ -15,8 +15,8 @@
 #include "location_counter_data.h"
 
 #include <algorithm>
-#include <assert.h>
-#include <stdexcept>
+#include <bit>
+#include <cassert>
 
 using namespace hlasm_plugin::parser_library::context;
 
@@ -33,7 +33,13 @@ location_counter_data::location_counter_data(loctr_data_kind kind)
 
 void location_counter_data::append_space(space_ptr sp)
 {
+    if (cached_spaces_for_address && cached_spaces_for_address->size() == cached_spaces_for_address->capacity())
+        cached_spaces_for_address.reset();
+    cached_pseudo_relative_spaces_for_address.reset();
+
     unknown_parts.emplace_back(space_storage_t { std::move(sp), 0 });
+    if (cached_spaces_for_address)
+        cached_spaces_for_address->push_back({ unknown_parts.back().unknown_space, 1 });
     current_safe_area = 0;
 }
 
@@ -49,6 +55,9 @@ void location_counter_data::append_storage(int st)
 
 void location_counter_data::append_data(location_counter_data data)
 {
+    cached_spaces_for_address.reset();
+    cached_pseudo_relative_spaces_for_address.reset();
+
     append_storage(data.unknown_parts.front().storage_after);
 
     data.unknown_parts.pop_front(); // the first unknown part is substitiuted by this data
@@ -64,6 +73,9 @@ void location_counter_data::resolve_space(const space* sp, size_t length)
         unknown_parts.begin(), unknown_parts.end(), [sp](const auto& p) { return p.unknown_space.get() == sp; });
     if (match == unknown_parts.end())
         return;
+
+    cached_spaces_for_address.reset();
+    cached_pseudo_relative_spaces_for_address.reset();
 
     storage += length;
 
@@ -82,6 +94,8 @@ void location_counter_data::resolve_space(const space* sp, space_ptr new_space)
     if (match == unknown_parts.end())
         return;
 
+    cached_spaces_for_address.reset();
+    cached_pseudo_relative_spaces_for_address.reset();
     match->unknown_space = std::move(new_space);
 }
 
@@ -158,11 +172,48 @@ space_ptr location_counter_data::last_space() const
         return nullptr;
 }
 
-space_storage location_counter_data::spaces() const
+address::space_list location_counter_data::spaces_for_address() const
 {
-    space_storage res;
-    res.reserve(unknown_parts.size());
+    if (cached_spaces_for_address)
+        return address::space_list(cached_spaces_for_address);
+
+    auto result = std::make_shared<std::vector<address::space_entry>>();
+    result->reserve(std::bit_ceil(unknown_parts.size() + unknown_parts.size() / 2));
     for (const auto& e : unknown_parts)
-        res.push_back(e.unknown_space);
-    return res;
+        result->push_back({ e.unknown_space, 1 });
+
+    cached_spaces_for_address = result;
+
+    return address::space_list(result);
+}
+
+address::space_list location_counter_data::pseudo_relative_spaces(space_ptr loctr_start) const
+{
+    if (cached_pseudo_relative_spaces_for_address)
+        return *cached_pseudo_relative_spaces_for_address;
+
+    auto result = std::make_shared<std::vector<address::space_entry>>();
+    result->reserve(unknown_parts.size() + 1);
+    for (const auto& e : unknown_parts)
+        result->emplace_back(e.unknown_space, 1);
+
+    const auto loctr_begin = loctr_start && result->front().first->kind == space_kind::LOCTR_BEGIN;
+    const auto loctr_set = loctr_start && result->front().first->kind == space_kind::LOCTR_SET;
+    const auto loctr_unknown = loctr_start && result->front().first->kind == space_kind::LOCTR_UNKNOWN;
+
+    // make addresses (pseudo-)relative to current location counter
+    if (loctr_set)
+        result->push_back({ loctr_start, -1 });
+    else if (loctr_unknown)
+        result->push_back({ loctr_start, -1 });
+
+    address::space_list result_list(std::move(result));
+
+    // make addresses (pseudo-)relative to current location counter
+    if (loctr_begin)
+        result_list.spaces = result_list.spaces.subspan(1);
+
+    cached_pseudo_relative_spaces_for_address = result_list;
+
+    return result_list;
 }

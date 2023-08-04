@@ -78,7 +78,8 @@ public:
     std::variant<const symbol*, symbol_candidate> get_symbol_candidate(id_index name) const override;
     std::string get_opcode_attr(id_index name) const override;
 
-    dependency_evaluation_context derive_current_dependency_evaluation_context() const;
+    dependency_evaluation_context derive_current_dependency_evaluation_context() const&;
+    dependency_evaluation_context derive_current_dependency_evaluation_context() &&;
 };
 
 } // namespace hlasm_plugin::parser_library::context

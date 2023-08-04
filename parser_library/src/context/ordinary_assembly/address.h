@@ -17,6 +17,7 @@
 
 #include <compare>
 #include <memory>
+#include <span>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -44,11 +45,30 @@ struct address
         const section* owner = nullptr;
         id_index qualifier;
 
-        friend bool operator==(const base&, const base&) = default;
+        friend auto operator<=>(const base&, const base&) = default;
     };
 
     using space_entry = std::pair<space_ptr, int>;
     using base_entry = std::pair<base, int>;
+
+    struct space_list
+    {
+        space_list() = default;
+        template<typename T>
+        explicit space_list(std::shared_ptr<T> ptr)
+            : spaces(*ptr)
+            , owner(std::move(ptr))
+        {}
+        explicit space_list(std::span<const space_entry> spaces, std::shared_ptr<void> owner)
+            : spaces(spaces)
+            , owner(std::move(owner))
+        {}
+
+        std::span<const space_entry> spaces;
+        std::shared_ptr<void> owner;
+
+        bool empty() const { return spaces.empty(); }
+    };
 
 private:
     // list of bases and their counts to which is the address relative
@@ -56,7 +76,7 @@ private:
     // offset relative to bases
     int offset_ = 0;
     // list of spaces with their counts this address contains
-    std::vector<space_entry> spaces_;
+    space_list spaces_;
 
 public:
     // list of bases and their counts to which is the address relative
@@ -64,13 +84,14 @@ public:
     std::vector<base_entry>& bases();
     // offset relative to bases
     int offset() const;
+    int unresolved_offset() const;
     // list of spaces with their counts this address contains
-    std::vector<space_entry>& spaces();
-    const std::vector<space_entry>& spaces() const;
-    std::vector<space_entry> normalized_spaces() const;
+    static std::pair<std::vector<space_entry>, int> normalized_spaces(std::span<const space_entry> spaces);
+    std::pair<std::vector<space_entry>, int> normalized_spaces() const;
 
     address() = default;
     address(base address_base, int offset, const space_storage& spaces);
+    address(base address_base, int offset, space_storage&& spaces);
 
     address operator+(const address& addr) const;
     address operator+(int offs) const;
@@ -83,11 +104,13 @@ public:
     bool is_simple() const;
     bool has_dependant_space() const;
     bool has_unresolved_space() const;
-
-    void normalize();
+    bool has_spaces() const;
 
 private:
-    address(std::vector<base_entry> bases, int offset, std::vector<space_entry> spaces);
+    address(std::vector<base_entry> bases, int offset, space_list spaces);
+
+    friend struct address_resolver;
+    friend class location_counter;
 };
 
 enum class space_kind
@@ -125,9 +148,7 @@ struct space
     // replace space with another
     static void resolve(space_ptr this_space, space_ptr value);
     // fill space with the whole address
-    static void resolve(space_ptr this_space, address value);
-    // common resolver for 2 methods above
-    static void resolve(space_ptr this_space, std::variant<space_ptr, address> value);
+    static void resolve(space_ptr this_space, int length, std::vector<address::space_entry> unresolved);
 
     bool resolved() const { return resolved_; }
     int resolved_length;

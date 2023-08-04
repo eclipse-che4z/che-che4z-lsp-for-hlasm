@@ -126,8 +126,8 @@ C1 CSECT
 C2 CSECT
    DS  C
 A  EQU 0-*
-B  EQU 0-*+C1
-C  EQU C1-C0
+B  EQU 0-C1+*
+C  EQU C0-C1
 D  EQU 0-C1-C1
 )";
     analyzer a(input);
@@ -137,8 +137,8 @@ D  EQU 0-C1-C1
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 5, 0 }).starts_with("-C2 + X'FFFFFFFF' (-1)"));
-    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 6, 0 }).starts_with("-C2 + C1 + X'FFFFFFFF' (-1)"));
-    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 7, 0 }).starts_with("C1 - C0 + X'0' (0)"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 6, 0 }).starts_with("-C1 + C2 + X'1' (1)"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 7, 0 }).starts_with("C0 - C1 + X'0' (0)"));
     EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 8, 0 }).starts_with("-2*C1 + X'0' (0)"));
 }
 

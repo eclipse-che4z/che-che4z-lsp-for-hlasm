@@ -105,8 +105,6 @@ private:
     void add_sub(const dependency_collector& holder, bool add);
 
     void div_mul(const dependency_collector& holder);
-
-    static void adjust_address(address& addr);
 };
 
 } // namespace hlasm_plugin::parser_library::context

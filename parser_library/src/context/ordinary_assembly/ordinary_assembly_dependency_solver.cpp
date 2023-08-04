@@ -37,10 +37,21 @@ id_index ordinary_assembly_dependency_solver::get_literal_id(
 }
 
 
-dependency_evaluation_context ordinary_assembly_dependency_solver::derive_current_dependency_evaluation_context() const
+dependency_evaluation_context ordinary_assembly_dependency_solver::derive_current_dependency_evaluation_context() const&
 {
     return dependency_evaluation_context {
         loctr_addr,
+        literal_pool_generation,
+        unique_id,
+        active_using,
+        opcode_gen,
+    };
+}
+
+dependency_evaluation_context ordinary_assembly_dependency_solver::derive_current_dependency_evaluation_context() &&
+{
+    return dependency_evaluation_context {
+        std::move(loctr_addr),
         literal_pool_generation,
         unique_id,
         active_using,

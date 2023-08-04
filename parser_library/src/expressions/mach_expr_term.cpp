@@ -113,7 +113,7 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
                 return context::dependency_collector::error();
             reloc_value.bases().front().first.qualifier = qualifier;
         }
-        return reloc_value;
+        return std::move(reloc_value);
     }
     else
         return context::dependency_collector();
@@ -148,7 +148,7 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(
         {
             diags.add_diagnostic(diagnostic_op::error_ME006(get_range()));
         }
-        return reloc_value;
+        return std::move(reloc_value);
     }
 
     assert(false);
@@ -186,7 +186,7 @@ context::dependency_collector mach_expr_location_counter::get_dependencies(conte
     if (!location_counter.has_value())
         return context::dependency_collector::error();
     else
-        return context::dependency_collector(*location_counter);
+        return context::dependency_collector(std::move(*location_counter));
 }
 
 mach_expression::value_t mach_expr_location_counter::evaluate(
@@ -196,7 +196,7 @@ mach_expression::value_t mach_expr_location_counter::evaluate(
     if (!location_counter.has_value())
         return context::address(context::address::base {}, 0, {});
     else
-        return *location_counter;
+        return std::move(*location_counter);
 }
 
 const mach_expression* mach_expr_location_counter::leftmost_term() const { return this; }
