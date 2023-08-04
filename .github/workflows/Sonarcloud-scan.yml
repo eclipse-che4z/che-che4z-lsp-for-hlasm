@@ -77,6 +77,12 @@ jobs:
           mv sonar-scanner-$SONAR_SCANNER_VERSION-linux sonar-scanner-linux
         working-directory: ${{ runner.temp }}
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'temurin'
+
       - name: Sonar scan
         env:
           SONAR_SCANNER_OPTS: -server
@@ -87,7 +93,7 @@ jobs:
           -Dsonar.sources=benchmark,clients/vscode-hlasmplugin/src/,language_server/src,parser_library/src,parser_library/include,build/generated_parser/,utils/src,utils/include
           -Dsonar.tests=parser_library/test,language_server/test,clients/vscode-hlasmplugin/src/test,utils/test
           -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
           -Dsonar.cfamily.build-wrapper-output=build/bw-output
           -Dsonar.cfamily.llvm-cov.reportPath=build/coverage.txt
           -Dsonar.javascript.lcov.reportPaths=clients/vscode-hlasmplugin/coverage/lcov.info
