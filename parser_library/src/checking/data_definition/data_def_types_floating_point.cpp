@@ -15,6 +15,9 @@
 // This file contains implementation of the data_def_type for
 // floating point types: E, D, L
 
+#include <span>
+#include <string_view>
+
 #include "checking/checker_helper.h"
 #include "checking/diagnostic_collector.h"
 #include "data_def_types.h"
@@ -70,6 +73,72 @@ public:
     static bool is_sign_char(char c) { return c == '+' || c == '-'; }
 };
 
+std::span<const std::string_view> floating_point_special_values(char subtype)
+{
+    static constexpr std::string_view bd_type[] = {
+        "(SNAN)",
+        "(QNAN)",
+        "(NAN)",
+        "(INF)",
+        "(MAX)",
+        "(MIN)",
+        "(DMIN)",
+    };
+    static constexpr std::string_view h_type[] = {
+        "(MAX)",
+        "(MIN)",
+        "(DMIN)",
+    };
+    if (subtype == 'B' || subtype == 'D')
+        return bd_type;
+    else if (subtype == 'H' || subtype == 'Q')
+        return h_type;
+    else
+        return {};
+}
+
+enum class matched_special_value
+{
+    no,
+    yes,
+    error,
+};
+
+matched_special_value try_matching_special_value(
+    std::string_view num, size_t& i, std::span<const std::string_view> list)
+{
+    if (list.empty())
+        return matched_special_value::no;
+
+    auto start = num.find_first_not_of(' ', i);
+    if (start == std::string_view::npos)
+        return matched_special_value::no;
+    if (auto wo_spaces = num.substr(start);
+        !wo_spaces.starts_with("(") && !wo_spaces.starts_with("+(") && !wo_spaces.starts_with("-("))
+        return matched_special_value::no;
+    else
+        start += wo_spaces.front() != '(';
+
+    for (auto s : list)
+    {
+        if (auto to_match = num.substr(start, s.size());
+            !std::equal(to_match.begin(), to_match.end(), s.begin(), s.end(), [](unsigned char l, unsigned char r) {
+                return toupper(l) == toupper(r);
+            }))
+            continue;
+        i = start + s.size();
+        if (i >= num.size())
+            return matched_special_value::yes;
+        if (num[i] == ',')
+        {
+            ++i;
+            return matched_special_value::yes;
+        }
+        return matched_special_value::error;
+    }
+    return matched_special_value::error;
+}
+
 bool data_def_type_E_D_L::check(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
 {
@@ -90,12 +159,25 @@ bool data_def_type_E_D_L::check(
     }
     while (i < nom.size())
     {
+        switch (try_matching_special_value(nom, i, floating_point_special_values(extension)))
+        {
+            case matched_special_value::no:
+                break;
+            case matched_special_value::yes:
+                continue;
+            case matched_special_value::error:
+                add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+                return false;
+        }
         // the number may end with E, R or ',' and begin with + or -.
         if (!check_number<E_D_L_number_spec>(nom, i))
         {
             add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
             return false;
         }
+
+        if (i >= nom.size())
+            break;
 
         // After E comes exponent
         if (nom[i] == 'E' || nom[i] == 'e')
@@ -106,7 +188,7 @@ bool data_def_type_E_D_L::check(
                 return false;
             }
             if (i >= nom.size())
-                return true;
+                break;
         }
 
         // After R comes rounding mode

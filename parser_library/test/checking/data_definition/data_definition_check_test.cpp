@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-
+#include "../../common_testing.h"
 #include "data_definition_common.h"
 
 using namespace hlasm_plugin::parser_library::checking;
@@ -27,9 +27,8 @@ TEST(data_def_checker, unknown_type)
 
     diag_collector col;
 
-    ASSERT_FALSE(d.check({ &op }, {}, ADD_DIAG(col)));
-    ASSERT_EQ(col.diags().size(), 1U);
-    ASSERT_EQ(col.diags()[0].code, "D012");
+    EXPECT_FALSE(d.check({ &op }, {}, ADD_DIAG(col)));
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D012" }));
 }
 
 TEST(data_def_checker, unknown_extension)
@@ -39,9 +38,8 @@ TEST(data_def_checker, unknown_extension)
     diag_collector col;
 
     data_definition_operand op = setup_data_def_op('B', 'A', "");
-    ASSERT_FALSE(d.check({ &op }, {}, ADD_DIAG(col)));
-    ASSERT_EQ(col.diags().size(), 1U);
-    ASSERT_EQ(col.diags()[0].code, "D013");
+    EXPECT_FALSE(d.check({ &op }, {}, ADD_DIAG(col)));
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D013" }));
 }
 
 TEST(data_def_checker, operands_too_long)
@@ -53,9 +51,8 @@ TEST(data_def_checker, operands_too_long)
     data_definition_operand op = setup_data_def_op('C', '\0', 1);
     op.dupl_factor = 1 << 30;
 
-    ASSERT_FALSE(d.check({ &op, &op }, {}, ADD_DIAG(col)));
-    ASSERT_EQ(col.diags().size(), 1U);
-    ASSERT_EQ(col.diags()[0].code, "D029");
+    EXPECT_FALSE(d.check({ &op, &op }, {}, ADD_DIAG(col)));
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D029" }));
 }
 
 TEST(data_def_checker, unknown_extension_analyzer)
@@ -65,8 +62,7 @@ TEST(data_def_checker, unknown_extension_analyzer)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), 1U);
-    EXPECT_EQ(a.diags()[0].code, "D006");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D006" }));
 }
 
 TEST(data_def_checker, unexpected_expr)
@@ -77,8 +73,7 @@ TEST(data_def_checker, unexpected_expr)
     diag_collector col;
     EXPECT_FALSE(B.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D018");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D018" }));
 }
 
 TEST(data_def_checker, unexpected_string)
@@ -90,8 +85,7 @@ TEST(data_def_checker, unexpected_string)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D017");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D017" }));
 }
 
 TEST(data_def_checker, unexpected_address)
@@ -105,8 +99,7 @@ TEST(data_def_checker, unexpected_address)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D020");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D020" }));
 }
 
 TEST(data_def_checker, DC_nominal_expected)
@@ -117,8 +110,7 @@ TEST(data_def_checker, DC_nominal_expected)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D016");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D016" }));
 }
 
 TEST(data_def_checker, DS_no_nominal_ok)
@@ -129,7 +121,7 @@ TEST(data_def_checker, DS_no_nominal_ok)
     diag_collector col;
     EXPECT_TRUE(t.check_DS(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, nominal_checked_when_dupl_zero)
@@ -141,8 +133,7 @@ TEST(data_def_checker, nominal_checked_when_dupl_zero)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D022");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D022" }));
 }
 
 TEST(data_def_checker, operand_too_long)
@@ -153,8 +144,7 @@ TEST(data_def_checker, operand_too_long)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D028");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D028" }));
 }
 
 TEST(data_def_checker, B_correct)
@@ -169,7 +159,7 @@ TEST(data_def_checker, B_correct)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(col.diags().size(), 0U);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, B_multiple_correct)
@@ -181,7 +171,7 @@ TEST(data_def_checker, B_multiple_correct)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(col.diags().size(), 0U);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, B_multiple_wrong_end)
@@ -193,8 +183,7 @@ TEST(data_def_checker, B_multiple_wrong_end)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, DS_nominal_is_checked)
@@ -206,8 +195,7 @@ TEST(data_def_checker, DS_nominal_is_checked)
     diag_collector col;
     EXPECT_FALSE(t.check_DS(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, B_multiple_wrong_middle)
@@ -219,8 +207,7 @@ TEST(data_def_checker, B_multiple_wrong_middle)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, B_multiple_wrong_beginning)
@@ -232,8 +219,7 @@ TEST(data_def_checker, B_multiple_wrong_beginning)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, B_wrong)
@@ -248,8 +234,7 @@ TEST(data_def_checker, B_wrong)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, C_DC_length_too_big)
@@ -261,8 +246,7 @@ TEST(data_def_checker, C_DC_length_too_big)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D008");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D008" }));
 }
 
 TEST(data_def_checker, C_DS_length)
@@ -273,7 +257,7 @@ TEST(data_def_checker, C_DS_length)
 
     diag_collector col;
     EXPECT_TRUE(t.check_DS(op, ADD_DIAG(col)));
-    EXPECT_EQ(col.diags().size(), 0U);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, C_DS_length_too_big)
@@ -285,8 +269,7 @@ TEST(data_def_checker, C_DS_length_too_big)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D008");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D008" }));
 }
 
 TEST(data_def_checker, CA_correct)
@@ -297,7 +280,7 @@ TEST(data_def_checker, CA_correct)
 
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
-    EXPECT_EQ(col.diags().size(), 0U);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, CE_correct)
@@ -309,7 +292,7 @@ TEST(data_def_checker, CE_correct)
     diag_collector col;
     EXPECT_TRUE(CE.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(col.diags().size(), 0U);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, CU_correct)
@@ -321,7 +304,7 @@ TEST(data_def_checker, CU_correct)
     diag_collector col;
     EXPECT_TRUE(CU.check_DC(op, ADD_DIAG(col)));
 
-    EXPECT_EQ(col.diags().size(), 0U);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, CU_not_even)
@@ -334,8 +317,7 @@ TEST(data_def_checker, CU_not_even)
     diag_collector col;
     EXPECT_FALSE(CU.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D014");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D014" }));
 }
 
 TEST(data_def_checker, CU_bit_length_not_allowed)
@@ -349,8 +331,7 @@ TEST(data_def_checker, CU_bit_length_not_allowed)
     diag_collector col;
     EXPECT_FALSE(CU.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D007");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D007" }));
 }
 
 TEST(data_def_checker, G_not_even)
@@ -363,8 +344,7 @@ TEST(data_def_checker, G_not_even)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D014");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D014" }));
 }
 
 TEST(data_def_checker, X_correct)
@@ -377,7 +357,7 @@ TEST(data_def_checker, X_correct)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 0U);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, X_multiple)
@@ -390,7 +370,7 @@ TEST(data_def_checker, X_multiple)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 0U);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, X_hexa_digit_expected)
@@ -402,8 +382,7 @@ TEST(data_def_checker, X_hexa_digit_expected)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 
@@ -416,7 +395,7 @@ TEST(data_def_checker, F_correct)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, FD_correct)
@@ -428,7 +407,7 @@ TEST(data_def_checker, FD_correct)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, FD_correct_case_insensitive)
@@ -440,7 +419,7 @@ TEST(data_def_checker, FD_correct_case_insensitive)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, H_correct)
@@ -452,7 +431,7 @@ TEST(data_def_checker, H_correct)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, H_correct_no_fractional)
@@ -464,7 +443,7 @@ TEST(data_def_checker, H_correct_no_fractional)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, H_sign_after_dot)
@@ -476,8 +455,7 @@ TEST(data_def_checker, H_sign_after_dot)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, H_two_signs)
@@ -489,8 +467,7 @@ TEST(data_def_checker, H_two_signs)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, H_no_exponent)
@@ -502,8 +479,7 @@ TEST(data_def_checker, H_no_exponent)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 1U);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, H_no_fraction)
@@ -515,7 +491,7 @@ TEST(data_def_checker, H_no_fraction)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 0U);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, H_no_integral)
@@ -527,7 +503,7 @@ TEST(data_def_checker, H_no_integral)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), 0U);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 
@@ -540,7 +516,7 @@ TEST(data_def_checker, P_correct)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, Z_correct)
@@ -552,7 +528,7 @@ TEST(data_def_checker, Z_correct)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, Z_two_signs)
@@ -564,8 +540,7 @@ TEST(data_def_checker, Z_two_signs)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, Z_two_dots)
@@ -577,8 +552,7 @@ TEST(data_def_checker, Z_two_dots)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, Z_two_commas)
@@ -590,8 +564,7 @@ TEST(data_def_checker, Z_two_commas)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, Z_plus_only)
@@ -603,8 +576,7 @@ TEST(data_def_checker, Z_plus_only)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, Z_plus_end)
@@ -616,8 +588,7 @@ TEST(data_def_checker, Z_plus_end)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, Z_comma_only)
@@ -629,8 +600,7 @@ TEST(data_def_checker, Z_comma_only)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, A_sym_bit_length)
@@ -644,8 +614,7 @@ TEST(data_def_checker, A_sym_bit_length)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D007");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D007" }));
 }
 
 TEST(data_def_checker, A_sym_length_too_big)
@@ -656,8 +625,7 @@ TEST(data_def_checker, A_sym_length_too_big)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D008");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D008" }));
 }
 
 TEST(data_def_checker, A_abs_length_ok)
@@ -668,7 +636,7 @@ TEST(data_def_checker, A_abs_length_ok)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, RD_wrong_length)
@@ -679,8 +647,7 @@ TEST(data_def_checker, RD_wrong_length)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    ASSERT_EQ(col.diags()[0].code, "D021");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D021" }));
 }
 
 TEST(data_def_checker, S_expr_out_of_range)
@@ -691,8 +658,7 @@ TEST(data_def_checker, S_expr_out_of_range)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    ASSERT_EQ(col.diags()[0].code, "D022");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D022" }));
 }
 
 TEST(data_def_checker, S_expr_out_of_range_negative)
@@ -703,8 +669,7 @@ TEST(data_def_checker, S_expr_out_of_range_negative)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    ASSERT_EQ(col.diags()[0].code, "D022");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D022" }));
 }
 
 TEST(data_def_checker, S_displacement_out_of_range)
@@ -715,8 +680,7 @@ TEST(data_def_checker, S_displacement_out_of_range)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    ASSERT_EQ(col.diags()[0].code, "D022");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D022" }));
 }
 
 TEST(data_def_checker, S_base_out_of_range)
@@ -727,8 +691,7 @@ TEST(data_def_checker, S_base_out_of_range)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    ASSERT_EQ(col.diags()[0].code, "D023");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D023" }));
 }
 
 TEST(data_def_checker, SY_negative_displacement_OK)
@@ -739,7 +702,7 @@ TEST(data_def_checker, SY_negative_displacement_OK)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, J_wrong_length)
@@ -750,8 +713,7 @@ TEST(data_def_checker, J_wrong_length)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    ASSERT_EQ(col.diags()[0].code, "D024");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D024" }));
 }
 
 TEST(data_def_checker, J_length_ok)
@@ -762,7 +724,7 @@ TEST(data_def_checker, J_length_ok)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, V_ok)
@@ -771,7 +733,8 @@ TEST(data_def_checker, V_ok)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), 0U);
+
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(data_def_checker, V_single_symbol_expected)
@@ -780,15 +743,15 @@ TEST(data_def_checker, V_single_symbol_expected)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), 1U);
-    EXPECT_EQ(a.diags()[0].code, "D030");
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D030" }));
 
     std::string input2 = " DC V(12(13))";
     analyzer a2(input);
     a2.analyze();
     a2.collect_diags();
-    ASSERT_EQ(a2.diags().size(), 1U);
-    EXPECT_EQ(a2.diags()[0].code, "D030");
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D030" }));
 }
 
 TEST(data_def_checker, L_two_commas)
@@ -800,8 +763,7 @@ TEST(data_def_checker, L_two_commas)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
 TEST(data_def_checker, L_correct)
@@ -813,7 +775,19 @@ TEST(data_def_checker, L_correct)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
+}
+
+TEST(data_def_checker, L_correct_space_at_end)
+{
+    data_def_type_L t;
+
+    data_definition_operand op = setup_data_def_op('L', '\0', "456E10,5 ");
+
+    diag_collector col;
+    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, L_invalid_round_mode)
@@ -825,8 +799,7 @@ TEST(data_def_checker, L_invalid_round_mode)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D026");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D026" }));
 }
 
 TEST(data_def_checker, LB_correct_case_insensitive)
@@ -838,7 +811,7 @@ TEST(data_def_checker, LB_correct_case_insensitive)
     diag_collector col;
     EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)0);
+    EXPECT_TRUE(col.diags().empty());
 }
 
 TEST(data_def_checker, LD_invalid_round_mode)
@@ -850,8 +823,7 @@ TEST(data_def_checker, LD_invalid_round_mode)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D026");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D026" }));
 }
 
 TEST(data_def_checker, LD_no_round_mode)
@@ -863,8 +835,7 @@ TEST(data_def_checker, LD_no_round_mode)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D026");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D026" }));
 }
 
 TEST(data_def_checker, LD_no_exponent)
@@ -876,6 +847,135 @@ TEST(data_def_checker, LD_no_exponent)
     diag_collector col;
     EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
 
-    ASSERT_EQ(col.diags().size(), (size_t)1);
-    EXPECT_EQ(col.diags()[0].code, "D010");
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
+}
+
+TEST(data_def_checker, special_values_BD)
+{
+    diag_collector col;
+
+    EXPECT_TRUE(data_def_type_LD().check_DC(setup_data_def_op('L', 'D', "(SNAN)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_ED().check_DC(setup_data_def_op('E', 'D', "+(SNAN)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_DD().check_DC(setup_data_def_op('D', 'D', "-(SNAN)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_LB().check_DC(setup_data_def_op('L', 'B', "(QNAN)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_EB().check_DC(setup_data_def_op('E', 'B', "+(QNAN)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_DB().check_DC(setup_data_def_op('D', 'B', "-(QNAN)"), ADD_DIAG(col)));
+
+    EXPECT_TRUE(data_def_type_LD().check_DC(setup_data_def_op('L', 'D', "(nan)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_ED().check_DC(setup_data_def_op('E', 'D', "+(inf)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_DD().check_DC(setup_data_def_op('D', 'D', "-(max)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_LB().check_DC(setup_data_def_op('L', 'B', "(min)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_EB().check_DC(setup_data_def_op('E', 'B', "+(dmin)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_DB().check_DC(setup_data_def_op('D', 'B', "-(qnan)"), ADD_DIAG(col)));
+
+    EXPECT_TRUE(col.diags().empty());
+}
+
+TEST(data_def_checker, special_values_BD_space_after)
+{
+    diag_collector col;
+
+    EXPECT_FALSE(data_def_type_LD().check_DC(setup_data_def_op('L', 'D', "(SNAN) "), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_ED().check_DC(setup_data_def_op('E', 'D', "+(SNAN) "), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DD().check_DC(setup_data_def_op('D', 'D', "-(SNAN) "), ADD_DIAG(col)));
+
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010", "D010", "D010" }));
+}
+
+TEST(data_def_checker, special_values_BD_incomplete)
+{
+    diag_collector col;
+
+    EXPECT_FALSE(data_def_type_LB().check_DC(setup_data_def_op('L', 'B', "(QNAN),"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_EB().check_DC(setup_data_def_op('E', 'B', "+(QNAN),"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DB().check_DC(setup_data_def_op('D', 'B', "-(QNAN),"), ADD_DIAG(col)));
+
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010", "D010", "D010" }));
+}
+
+TEST(data_def_checker, special_values_BD_wrong)
+{
+    diag_collector col;
+
+    EXPECT_FALSE(data_def_type_LB().check_DC(setup_data_def_op('L', 'B', "( QNAN)"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_EB().check_DC(setup_data_def_op('E', 'B', "+(QN AN)"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DB().check_DC(setup_data_def_op('D', 'B', "-(QNAN )"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DB().check_DC(setup_data_def_op('D', 'B', "-(SOMETHING)"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DB().check_DC(setup_data_def_op('D', 'B', " "), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DB().check_DC(setup_data_def_op('D', 'B', "("), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DB().check_DC(setup_data_def_op('D', 'B', ")"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DB().check_DC(setup_data_def_op('D', 'B', "()"), ADD_DIAG(col)));
+
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010", "D010", "D010", "D010", "D010", "D010", "D010", "D010" }));
+}
+
+TEST(data_def_checker, special_values_no_extension)
+{
+    diag_collector col;
+
+    EXPECT_FALSE(data_def_type_L().check_DC(setup_data_def_op('L', '\0', "(MAX)"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_E().check_DC(setup_data_def_op('E', '\0', "+(MAX)"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_D().check_DC(setup_data_def_op('D', '\0', "-(MAX)"), ADD_DIAG(col)));
+
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010", "D010", "D010" }));
+}
+
+TEST(data_def_checker, special_values_H)
+{
+    diag_collector col;
+
+    EXPECT_TRUE(data_def_type_LH().check_DC(setup_data_def_op('L', 'H', "(MAX)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_EH().check_DC(setup_data_def_op('E', 'H', "+(MAX)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_DH().check_DC(setup_data_def_op('D', 'H', "-(MAX)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_LQ().check_DC(setup_data_def_op('L', 'Q', "(MIN)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_LQ().check_DC(setup_data_def_op('L', 'Q', "+(MIN)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_LQ().check_DC(setup_data_def_op('L', 'Q', "-(MIN)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_LQ().check_DC(setup_data_def_op('L', 'Q', "(DMIN)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_LQ().check_DC(setup_data_def_op('L', 'Q', "+(DMIN)"), ADD_DIAG(col)));
+    EXPECT_TRUE(data_def_type_LQ().check_DC(setup_data_def_op('L', 'Q', "-(DMIN)"), ADD_DIAG(col)));
+
+    EXPECT_TRUE(col.diags().empty());
+}
+
+TEST(data_def_checker, special_values_H_space_after)
+{
+    diag_collector col;
+
+    EXPECT_FALSE(data_def_type_LH().check_DC(setup_data_def_op('L', 'H', "(MAX) "), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_EH().check_DC(setup_data_def_op('E', 'H', "+(MAX) "), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DH().check_DC(setup_data_def_op('D', 'H', "-(MAX) "), ADD_DIAG(col)));
+
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010", "D010", "D010" }));
+}
+
+TEST(data_def_checker, special_values_H_incomplete)
+{
+    diag_collector col;
+
+    EXPECT_FALSE(data_def_type_LH().check_DC(setup_data_def_op('L', 'H', "(MAX),"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_EH().check_DC(setup_data_def_op('E', 'H', "+(MAX),"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DH().check_DC(setup_data_def_op('D', 'H', "-(MAX),"), ADD_DIAG(col)));
+
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D010", "D010", "D010" }));
+}
+
+TEST(data_def_checker, special_values_H_wrong)
+{
+    diag_collector col;
+
+    EXPECT_FALSE(data_def_type_LH().check_DC(setup_data_def_op('L', 'H', "( DMIN)"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_EH().check_DC(setup_data_def_op('E', 'H', "+(DM IN)"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DH().check_DC(setup_data_def_op('D', 'H', "-(DMIN )"), ADD_DIAG(col)));
+
+    EXPECT_FALSE(data_def_type_LH().check_DC(setup_data_def_op('L', 'H', "(SNAN)"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_EH().check_DC(setup_data_def_op('E', 'H', "+(QNAN)"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DH().check_DC(setup_data_def_op('D', 'H', "-(INF)"), ADD_DIAG(col)));
+
+    EXPECT_FALSE(data_def_type_LH().check_DC(setup_data_def_op('L', 'H', "()"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_EH().check_DC(setup_data_def_op('E', 'H', "("), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DH().check_DC(setup_data_def_op('D', 'H', ")"), ADD_DIAG(col)));
+    EXPECT_FALSE(data_def_type_DH().check_DC(setup_data_def_op('D', 'H', " "), ADD_DIAG(col)));
+
+    EXPECT_TRUE(matches_message_codes(
+        col.diags(), { "D010", "D010", "D010", "D010", "D010", "D010", "D010", "D010", "D010", "D010" }));
 }
