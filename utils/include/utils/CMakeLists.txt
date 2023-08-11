@@ -18,6 +18,7 @@ target_sources(hlasm_utils PUBLIC
 	error_codes.h
 	factory.h
 	filesystem_content_loader.h
+	filter_vector.h
 	general_hashers.h
 	levenshtein_distance.h
 	list_directory_rc.h

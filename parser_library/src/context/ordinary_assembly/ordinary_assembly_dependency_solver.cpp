@@ -18,8 +18,42 @@
 #include "context/literal_pool.h"
 #include "context/using.h"
 #include "library_info.h"
+#include "ordinary_assembly_context.h"
+#include "symbol_dependency_tables.h"
 
 namespace hlasm_plugin::parser_library::context {
+
+ordinary_assembly_dependency_solver::ordinary_assembly_dependency_solver(
+    ordinary_assembly_context& ord_context, const library_info& li)
+    : ord_context(ord_context)
+    , literal_pool_generation(ord_context.current_literal_pool_generation())
+    , unique_id(ord_context.current_unique_id())
+    , active_using(ord_context.current_using())
+    , opcode_gen(ord_context.current_opcode_generation())
+    , lib_info(li)
+{}
+
+ordinary_assembly_dependency_solver::ordinary_assembly_dependency_solver(
+    ordinary_assembly_context& ord_context, context::address loctr_addr, const library_info& li)
+    : ord_context(ord_context)
+    , loctr_addr(std::move(loctr_addr))
+    , literal_pool_generation(ord_context.current_literal_pool_generation())
+    , unique_id(ord_context.current_unique_id())
+    , active_using(ord_context.current_using())
+    , opcode_gen(ord_context.current_opcode_generation())
+    , lib_info(li)
+{}
+
+ordinary_assembly_dependency_solver::ordinary_assembly_dependency_solver(
+    ordinary_assembly_context& ord_context, const dependency_evaluation_context& dep_ctx, const library_info& li)
+    : ord_context(ord_context)
+    , loctr_addr(dep_ctx.loctr_address)
+    , literal_pool_generation(dep_ctx.literal_pool_generation)
+    , unique_id(dep_ctx.unique_id)
+    , active_using(dep_ctx.active_using)
+    , opcode_gen(dep_ctx.opcode_gen)
+    , lib_info(li)
+{}
 
 const symbol* ordinary_assembly_dependency_solver::get_symbol(id_index name) const
 {

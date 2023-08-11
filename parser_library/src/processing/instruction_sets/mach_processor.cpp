@@ -18,6 +18,7 @@
 
 #include "context/instruction_type.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
+#include "context/ordinary_assembly/symbol_dependency_tables.h"
 #include "postponed_statement_impl.h"
 #include "semantics/operand_impls.h"
 
@@ -66,7 +67,7 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
 
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr, lib_info);
 
-    hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
+    hlasm_ctx.ord_ctx.symbol_dependencies().add_dependency(
         std::make_unique<postponed_statement_impl>(std::move(rebuilt_stmt), hlasm_ctx.processing_stack()),
         std::move(dep_solver).derive_current_dependency_evaluation_context(),
         lib_info);

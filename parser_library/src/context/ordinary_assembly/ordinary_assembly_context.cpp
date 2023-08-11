@@ -22,6 +22,7 @@
 #include "context/hlasm_context.h"
 #include "context/literal_pool.h"
 #include "context/using.h"
+#include "symbol_dependency_tables.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -42,7 +43,7 @@ ordinary_assembly_context::ordinary_assembly_context(hlasm_context& hlasm_ctx)
     : curr_section_(nullptr)
     , m_literals(std::make_unique<literal_pool>(hlasm_ctx))
     , hlasm_ctx_(hlasm_ctx)
-    , symbol_dependencies(*this)
+    , m_symbol_dependencies(std::make_unique<symbol_dependency_tables>(*this))
 {}
 ordinary_assembly_context::ordinary_assembly_context(ordinary_assembly_context&&) noexcept = default;
 ordinary_assembly_context::~ordinary_assembly_context() = default;
@@ -58,7 +59,7 @@ bool ordinary_assembly_context::create_symbol(
     bool ok = true;
 
     if (value.value_kind() != symbol_value_kind::UNDEF)
-        symbol_dependencies.add_defined(name, nullptr, li);
+        m_symbol_dependencies->add_defined(name, nullptr, li);
 
     return ok;
 }
@@ -66,7 +67,7 @@ bool ordinary_assembly_context::create_symbol(
 void ordinary_assembly_context::add_symbol_reference(symbol sym, const library_info& li)
 {
     auto [it, _] = symbol_refs_.try_emplace(sym.name(), std::move(sym));
-    symbol_dependencies.add_defined(it->first, nullptr, li);
+    m_symbol_dependencies->add_defined(it->first, nullptr, li);
 }
 
 const symbol* ordinary_assembly_context::get_symbol_reference(context::id_index name) const
@@ -120,7 +121,7 @@ section* ordinary_assembly_context::set_section(
                     symbol_attributes::make_section_attrs(),
                     std::move(symbol_location),
                     hlasm_ctx_.processing_stack()));
-            symbol_dependencies.add_defined(name, nullptr, li);
+            m_symbol_dependencies->add_defined(name, nullptr, li);
         }
     }
 
@@ -182,7 +183,7 @@ void ordinary_assembly_context::set_location_counter(id_index name, location sym
                 std::move(symbol_location),
                 hlasm_ctx_.processing_stack()));
 
-        symbol_dependencies.add_defined(name, nullptr, li);
+        m_symbol_dependencies->add_defined(name, nullptr, li);
     }
 }
 
@@ -219,7 +220,7 @@ space_ptr ordinary_assembly_context::set_location_counter_value_space(const addr
     if (undefined_address)
     {
         auto sp = curr_section_->current_location_counter().set_value_undefined(boundary, offset);
-        symbol_dependencies.add_dependency(sp,
+        m_symbol_dependencies->add_dependency(sp,
             std::make_unique<alignable_address_abs_part_resolver>(undefined_address),
             dep_ctx,
             li,
@@ -230,7 +231,7 @@ space_ptr ordinary_assembly_context::set_location_counter_value_space(const addr
 
     if (auto [curr_addr, sp] = curr_section_->current_location_counter().set_value(addr, boundary, offset); sp)
     {
-        symbol_dependencies.add_dependency(sp,
+        m_symbol_dependencies->add_dependency(sp,
             std::make_unique<alignable_address_resolver>(
                 std::move(curr_addr), std::vector<address> { addr }, boundary, offset),
             dep_ctx,
@@ -249,7 +250,7 @@ void ordinary_assembly_context::set_available_location_counter_value(const libra
     auto [sp, addr] = curr_section_->current_location_counter().set_available_value();
 
     if (sp)
-        symbol_dependencies.add_dependency(sp,
+        m_symbol_dependencies->add_dependency(sp,
             std::make_unique<aggregate_address_resolver>(std::move(addr), 0, 0),
             dependency_evaluation_context(current_opcode_generation()),
             li);
@@ -318,8 +319,7 @@ void ordinary_assembly_context::finish_module_layout(diagnostic_s_consumer* diag
         size_t last_offset = 0;
         for (const auto& loctr : sect->location_counters())
         {
-            loctr->finish_layout(last_offset);
-            symbol_dependencies.add_defined(id_index(), diag_consumer, li);
+            symbol_dependencies().add_defined(loctr->finish_layout(last_offset), diag_consumer, li);
             if (loctr->has_unresolved_spaces())
                 return;
             last_offset = loctr->storage();
@@ -339,7 +339,8 @@ std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_sp
         auto [ret_addr, sp] = curr_section_->current_location_counter().reserve_storage_area(length, align);
         assert(sp);
 
-        symbol_dependencies.add_dependency(sp, std::make_unique<address_resolver>(addr, align.boundary), dep_ctx, li);
+        m_symbol_dependencies->add_dependency(
+            sp, std::make_unique<address_resolver>(addr, align.boundary), dep_ctx, li);
         return std::make_pair(ret_addr, sp);
     }
     return std::make_pair(curr_section_->current_location_counter().reserve_storage_area(length, align).first, nullptr);

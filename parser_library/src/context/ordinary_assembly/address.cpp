@@ -65,7 +65,7 @@ void space::resolve(space_ptr this_space, int length)
 
     this_space->resolved_length = length;
 
-    this_space->owner.resolve_space(this_space, length);
+    this_space->owner.resolve_space(this_space.get(), length);
 
     this_space->resolved_ = true;
 }

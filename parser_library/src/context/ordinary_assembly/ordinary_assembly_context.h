@@ -15,16 +15,18 @@
 #ifndef CONTEXT_ORDINARY_ASSEMBLY_CONTEXT_H
 #define CONTEXT_ORDINARY_ASSEMBLY_CONTEXT_H
 
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <variant>
+#include <vector>
 
 #include "alignment.h"
 #include "dependable.h"
 #include "diagnostic_consumer.h"
 #include "section.h"
 #include "symbol.h"
-#include "symbol_dependency_tables.h"
+#include "tagged_index.h"
 
 namespace hlasm_plugin::parser_library {
 class diagnosable_ctx;
@@ -36,10 +38,14 @@ struct data_definition;
 } // namespace hlasm_plugin::parser_library::expressions
 
 namespace hlasm_plugin::parser_library::context {
+struct dependency_evaluation_context;
 class hlasm_context;
 class literal_pool;
 class location_counter;
 class opcode_generation;
+struct postponed_statement;
+class symbol_dependency_tables;
+class using_collection;
 
 struct using_label_tag
 {};
@@ -69,6 +75,8 @@ class ordinary_assembly_context
 
     hlasm_context& hlasm_ctx_;
 
+    std::unique_ptr<symbol_dependency_tables> m_symbol_dependencies;
+
 public:
     // access sections
     const std::vector<std::unique_ptr<section>>& sections() const;
@@ -77,7 +85,7 @@ public:
     const auto& symbols() const { return symbols_; }
 
     // access symbol dependency table
-    symbol_dependency_tables symbol_dependencies;
+    symbol_dependency_tables& symbol_dependencies() { return *m_symbol_dependencies; }
 
     explicit ordinary_assembly_context(hlasm_context& hlasm_ctx);
     ordinary_assembly_context(ordinary_assembly_context&&) noexcept;
@@ -117,7 +125,7 @@ public:
         size_t boundary,
         int offset,
         const resolvable* undefined_address,
-        post_stmt_ptr dependency_source,
+        std::unique_ptr<postponed_statement> dependency_source,
         const dependency_evaluation_context& dep_ctx,
         const library_info& li);
     void set_location_counter_value(const address& addr, size_t boundary, int offset, const library_info& li);
@@ -125,7 +133,7 @@ public:
         size_t boundary,
         int offset,
         const resolvable* undefined_address,
-        post_stmt_ptr dependency_source,
+        std::unique_ptr<postponed_statement> dependency_source,
         const dependency_evaluation_context& dep_ctx,
         const library_info& li);
 

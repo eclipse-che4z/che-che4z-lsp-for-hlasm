@@ -29,6 +29,7 @@
 #include "diagnostic_consumer.h"
 #include "postponed_statement.h"
 #include "tagged_index.h"
+#include "utils/filter_vector.h"
 
 namespace hlasm_plugin::parser_library {
 class library_info;
@@ -82,17 +83,36 @@ class symbol_dependency_tables
     {
         const resolvable* m_resolvable;
         dependency_evaluation_context m_dec;
-        std::vector<std::variant<id_index, space_ptr>> m_last_dependencies;
-        bool m_has_t_attr_dependency = false;
+        size_t m_last_dependencies;
 
-        dependency_value(const resolvable* r, dependency_evaluation_context dec)
+        dependency_value(const resolvable* r, dependency_evaluation_context dec, size_t last_dependencies)
             : m_resolvable(r)
             , m_dec(std::move(dec))
+            , m_last_dependencies(last_dependencies)
         {}
     };
 
     // actual dependecies of symbol or space
     std::unordered_map<dependant, dependency_value> m_dependencies;
+
+    std::vector<std::unordered_map<dependant, dependency_value>::iterator> m_dependencies_iterators;
+    utils::filter_vector<uint32_t> m_dependencies_filters;
+    std::vector<bool> m_dependencies_has_t_attr;
+    std::vector<bool> m_dependencies_space_ptr_type;
+
+    void insert_depenency(
+        dependant target, const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx);
+
+    dependant delete_dependency(std::unordered_map<dependant, dependency_value>::iterator it);
+
+    class dep_value;
+    class dep_reference;
+    class dep_iterator;
+    friend void swap(dep_reference l, dep_reference r) noexcept;
+    dep_iterator dependency_iterator(size_t idx);
+    dep_iterator dep_begin();
+    dep_iterator dep_end();
+    size_t m_dependencies_skip_index = 0;
 
     // statements where dependencies are from
     std::unordered_map<dependant, statement_ref> m_dependency_source_stmts;
@@ -118,7 +138,7 @@ class symbol_dependency_tables
 
     std::vector<dependant> extract_dependencies(
         const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx, const library_info& li);
-    bool update_dependencies(dependency_value& v, const library_info& li);
+    bool update_dependencies(const dependency_value& v, const library_info& li);
     std::vector<dependant> extract_dependencies(const std::vector<const resolvable*>& dependency_sources,
         const dependency_evaluation_context& dep_ctx,
         const library_info& li);

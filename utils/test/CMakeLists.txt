@@ -15,6 +15,7 @@ add_executable(hlasm_utils_test)
 target_sources(hlasm_utils_test PRIVATE
 	bk_tree_test.cpp
 	encoding_test.cpp
+	filter_vector_test.cpp
 	levenshtein_distance_test.cpp
 	merge_sorted_test.cpp
 	path_conversions_test.cpp

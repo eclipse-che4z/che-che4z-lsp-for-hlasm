@@ -199,7 +199,7 @@ bool location_counter::check_if_higher_value(size_t idx) const
     return org_data_[idx - 1].storage <= org_data_[idx].storage;
 }
 
-void location_counter::finish_layout(size_t offset)
+space_ptr location_counter::finish_layout(size_t offset)
 {
     assert(!layuot_created_);
 
@@ -208,24 +208,29 @@ void location_counter::finish_layout(size_t offset)
     assert(!(kind == loctr_kind::NONSTARTING) || org_data_.front().fist_space()->kind == space_kind::LOCTR_BEGIN);
 
     if (kind == loctr_kind::NONSTARTING)
-        space::resolve(org_data_.front().fist_space(), (int)offset);
+    {
+        auto sp = org_data_.front().fist_space();
+        space::resolve(sp, (int)offset);
+        return sp;
+    }
 
     layuot_created_ = true;
+
+    return {};
 }
 
-void location_counter::resolve_space(space_ptr sp, int length)
+void location_counter::resolve_space(const space* sp, int length)
 {
     if (sp->kind == space_kind::LOCTR_MAX && !org_data_.empty())
     {
-        auto it = std::find_if(std::next(org_data_.begin()), org_data_.end(), [s = sp.get()](const auto& d) {
-            return d.matches_first_space(s);
-        });
+        auto it = std::find_if(
+            std::next(org_data_.begin()), org_data_.end(), [sp](const auto& d) { return d.matches_first_space(sp); });
         if (it != org_data_.end())
             org_data_.erase(org_data_.begin(), std::prev(it));
     }
     for (auto& data : org_data_)
     {
-        data.resolve_space(sp.get(), (size_t)length);
+        data.resolve_space(sp, (size_t)length);
     }
 }
 

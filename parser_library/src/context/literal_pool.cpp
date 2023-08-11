@@ -20,6 +20,7 @@
 #include "context/ordinary_assembly/ordinary_assembly_context.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/ordinary_assembly/postponed_statement.h"
+#include "context/ordinary_assembly/symbol_dependency_tables.h"
 #include "diagnosable_ctx.h"
 #include "ebcdic_encoding.h"
 #include "hlasm_context.h"
@@ -211,7 +212,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
             diags.add_diagnostic(diagnostic_op::error_E033(it->second.r));
         else
         {
-            auto adder = ord_ctx.symbol_dependencies.add_dependencies(
+            auto adder = ord_ctx.symbol_dependencies().add_dependencies(
                 std::make_unique<literal_postponed_statement>(lit, lit_val),
                 dependency_evaluation_context {
                     lit_val.loctr,

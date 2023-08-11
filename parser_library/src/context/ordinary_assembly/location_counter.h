@@ -73,9 +73,9 @@ public:
     std::pair<space_ptr, std::vector<address>> set_available_value();
 
     // creates layout
-    void finish_layout(size_t offset);
+    space_ptr finish_layout(size_t offset);
 
-    void resolve_space(space_ptr sp, int length);
+    void resolve_space(const space* sp, int length);
 
     // switches to unresolved ORG identified by space
     void switch_to_unresolved_value(space_ptr sp);

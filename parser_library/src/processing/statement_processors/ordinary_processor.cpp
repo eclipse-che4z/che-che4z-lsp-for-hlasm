@@ -19,6 +19,7 @@
 #include "checking/instruction_checker.h"
 #include "context/literal_pool.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
+#include "context/ordinary_assembly/symbol_dependency_tables.h"
 #include "diagnostic_consumer.h"
 #include "ebcdic_encoding.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
@@ -142,21 +143,21 @@ void ordinary_processor::end_processing()
 
     hlasm_ctx.ord_ctx.start_reporting_label_candidates();
 
-    if (!hlasm_ctx.ord_ctx.symbol_dependencies.check_loctr_cycle(lib_info))
+    if (!hlasm_ctx.ord_ctx.symbol_dependencies().check_loctr_cycle(lib_info))
         add_diagnostic(diagnostic_op::error_E033(range())); // TODO: at least we say something
 
-    hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(context::id_index(), &asm_proc_, lib_info);
+    hlasm_ctx.ord_ctx.symbol_dependencies().add_defined(context::id_index(), &asm_proc_, lib_info);
 
     hlasm_ctx.ord_ctx.finish_module_layout(&asm_proc_, lib_info);
 
-    hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
+    hlasm_ctx.ord_ctx.symbol_dependencies().resolve_all_as_default();
 
     // do not replace stack trace in the messages - it is already provided
     diagnostic_consumer_transform using_diags(
         [this](diagnostic_s d) { diagnosable_impl::add_diagnostic(std::move(d)); });
     hlasm_ctx.using_resolve(using_diags, lib_info);
 
-    check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
+    check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies().collect_postponed());
 
     hlasm_ctx.pop_statement_processing();
 
