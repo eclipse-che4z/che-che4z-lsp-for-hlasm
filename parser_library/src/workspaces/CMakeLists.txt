@@ -11,6 +11,7 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
+	configuration_datatypes.h
 	file.cpp
 	file.h
 	file_manager.h
@@ -27,6 +28,8 @@ target_sources(parser_library PRIVATE
 	parse_lib_provider.h
 	processor_group.cpp
 	processor_group.h
+	program_configuration_storage.cpp
+	program_configuration_storage.h
 	wildcard.cpp
 	wildcard.h
 	workspace.cpp

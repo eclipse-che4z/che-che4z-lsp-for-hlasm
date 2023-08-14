@@ -20,11 +20,9 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <regex>
 #include <span>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <version>
@@ -39,69 +37,18 @@
 #include "utils/general_hashers.h"
 #include "utils/resource_location.h"
 #include "utils/task.h"
+#include "workspaces/configuration_datatypes.h"
 
 namespace hlasm_plugin::parser_library {
 class external_configuration_requests;
 } // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::workspaces {
-using program_id = utils::resource::resource_location;
 using global_settings_map =
     std::unordered_map<std::string, std::optional<std::string>, utils::hashers::string_hasher, std::equal_to<>>;
 
-struct basic_conf
-{
-    std::string name;
-
-    auto operator<=>(const basic_conf&) const = default;
-
-    size_t hash() const noexcept { return std::hash<std::string_view>()(name); }
-};
-
-struct b4g_conf
-{
-    std::string name;
-    utils::resource::resource_location bridge_json_uri;
-
-    auto operator<=>(const b4g_conf&) const = default;
-
-    size_t hash() const noexcept
-    {
-        return std::hash<std::string_view>()(name) ^ utils::resource::resource_location_hasher()(bridge_json_uri);
-    }
-};
-
-struct external_conf
-{
-    std::shared_ptr<std::string> definition;
-
-    bool operator==(const external_conf& o) const { return *definition == *o.definition; }
-    auto operator<=>(const external_conf& o) const { return definition->compare(*o.definition) <=> 0; } // clang 14
-
-    bool operator==(std::string_view o) const { return *definition == o; }
-    auto operator<=>(std::string_view o) const { return definition->compare(o) <=> 0; } // clang 14
-
-    size_t hash() const noexcept { return std::hash<std::string_view>()(*definition); }
-};
-
-using proc_grp_id = std::variant<basic_conf, b4g_conf, external_conf>;
 class file_manager;
+class program_configuration_storage;
 struct library_local_options;
-// represents pair program => processor group - saves
-// information that a program uses certain processor group
-struct program
-{
-    program(program_id prog_id, std::optional<proc_grp_id> pgroup, config::assembler_options asm_opts, bool external)
-        : prog_id(std::move(prog_id))
-        , pgroup(std::move(pgroup))
-        , asm_opts(std::move(asm_opts))
-        , external(external)
-    {}
-
-    program_id prog_id;
-    std::optional<proc_grp_id> pgroup;
-    config::assembler_options asm_opts;
-    bool external;
-};
 
 struct configuration_diagnostics_parameters
 {
@@ -227,7 +174,6 @@ class workspace_configuration
     static constexpr const char FILENAME_PGM_CONF[] = "pgm_conf.json";
     static constexpr const char HLASM_PLUGIN_FOLDER[] = ".hlasmplugin";
     static constexpr const char B4G_CONF_FILE[] = ".bridge.json";
-    static constexpr std::string_view NOPROC_GROUP_ID = "*NOPROC*";
 
     file_manager& m_file_manager;
     utils::resource::resource_location m_location;
@@ -236,62 +182,8 @@ class workspace_configuration
     utils::resource::resource_location m_proc_grps_loc;
     utils::resource::resource_location m_pgm_conf_loc;
 
-    template<typename T>
-    struct tagged_string_view
-    {
-        std::string_view value;
-    };
-
-    struct proc_grp_id_hasher
-    {
-        using is_transparent = void;
-
-        size_t operator()(const proc_grp_id& pgid) const noexcept
-        {
-            return std::visit([](const auto& x) { return x.hash(); }, pgid);
-        }
-
-        size_t operator()(const tagged_string_view<external_conf>& external_conf_candidate) const noexcept
-        {
-            return std::hash<std::string_view>()(external_conf_candidate.value);
-        }
-    };
-    struct proc_grp_id_equal
-    {
-        using is_transparent = void;
-
-        bool operator()(const proc_grp_id& l, const proc_grp_id& r) const noexcept { return l == r; }
-        bool operator()(const proc_grp_id& l, const tagged_string_view<external_conf>& r) const noexcept
-        {
-            return std::holds_alternative<external_conf>(l) && *std::get<external_conf>(l).definition == r.value;
-        }
-        bool operator()(const tagged_string_view<external_conf>& l, const proc_grp_id& r) const noexcept
-        {
-            return std::holds_alternative<external_conf>(r) && l.value == *std::get<external_conf>(r).definition;
-        }
-    };
-
-    using name_set = std::unordered_set<std::string, utils::hashers::string_hasher, std::equal_to<>>;
     config::proc_grps m_proc_grps_source;
-    std::unordered_map<proc_grp_id, processor_group, proc_grp_id_hasher, proc_grp_id_equal> m_proc_grps;
-    std::unordered_map<utils::resource::resource_location, name_set, utils::resource::resource_location_hasher>
-        m_missing_proc_grps;
-
-    struct tagged_program
-    {
-        program pgm;
-        const void* tag = nullptr;
-    };
-
-    struct missing_pgroup_details
-    {
-        std::string pgroup_name;
-        utils::resource::resource_location config_rl;
-    };
-
-    using program_related_details = std::variant<tagged_program, missing_pgroup_details>;
-    std::map<utils::resource::resource_location, program_related_details> m_exact_pgm_conf;
-    std::vector<std::pair<program_related_details, std::regex>> m_regex_pgm_conf;
+    proc_groups_map m_proc_grps;
 
     struct b4g_config
     {
@@ -314,6 +206,7 @@ class workspace_configuration
         m_libraries;
 
     external_configuration_requests* m_external_configuration_requests;
+    std::unique_ptr<program_configuration_storage> m_pgm_conf_store;
 
     std::shared_ptr<library> get_local_library(
         const utils::resource::resource_location& url, const library_local_options& opts);
@@ -339,31 +232,10 @@ class workspace_configuration
         const utils::resource::resource_location& alternative_root,
         std::vector<diagnostic_s>& diags);
 
-    missing_pgroup_details new_missing_pgroup_helper(name_set& missing_proc_grps,
-        std::string missing_pgroup_name,
-        utils::resource::resource_location config_rl) const;
-
-    struct pgm_conf_parameters
-    {
-        proc_grp_id pgroup_id;
-        utils::resource::resource_location pgm_rl;
-        const utils::resource::resource_location& alternative_cfg_rl;
-        const config::assembler_options& asm_opts;
-        name_set& missing_proc_grps;
-        const void* tag;
-    };
-
-    void add_exact_pgm_conf(pgm_conf_parameters params);
-
-    void add_regex_pgm_conf(pgm_conf_parameters params);
-
-    void process_program(
-        const config::program_mapping& pgm, name_set& missing_proc_grps, std::vector<diagnostic_s>& diags);
+    void process_program(const config::program_mapping& pgm, std::vector<diagnostic_s>& diags);
 
     bool is_config_file(const utils::resource::resource_location& file_location) const;
     bool is_b4g_config_file(const utils::resource::resource_location& file) const;
-    std::pair<const program*, bool> get_program_normalized(
-        const utils::resource::resource_location& file_location_normalized) const;
 
     [[nodiscard]] utils::value_task<parse_config_file_result> parse_b4g_config_file(
         const utils::resource::resource_location& cfg_file_rl);
@@ -382,13 +254,6 @@ class workspace_configuration
         const library_local_options& opts,
         std::vector<diagnostic_s>& diags);
 
-    const missing_pgroup_details* get_missing_pgroup_details(
-        const utils::resource::resource_location& file_location) const;
-
-    std::unordered_map<std::string, bool, utils::hashers::string_hasher, std::equal_to<>>
-    get_categorized_missing_pgroups(const utils::resource::resource_location& config_file_rl,
-        const std::vector<utils::resource::resource_location>& opened_files) const;
-
     void add_missing_diags(const diagnosable& target,
         const utils::resource::resource_location& config_file_rl,
         const std::vector<utils::resource::resource_location>& opened_files,
@@ -399,6 +264,13 @@ public:
         utils::resource::resource_location location,
         const shared_json& global_settings,
         external_configuration_requests* ecr);
+
+    ~workspace_configuration();
+
+    workspace_configuration(const workspace_configuration&) = delete;
+    workspace_configuration(workspace_configuration&&) = delete;
+    workspace_configuration& operator=(const workspace_configuration&) = delete;
+    workspace_configuration& operator=(workspace_configuration&&) = delete;
 
     bool is_configuration_file(const utils::resource::resource_location& file) const;
     [[nodiscard]] utils::value_task<parse_config_file_result> parse_configuration_file(

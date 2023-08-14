@@ -160,7 +160,7 @@ TEST(workspace_configuration, external_configurations_group_name)
     EXPECT_TRUE(pgm->external);
     EXPECT_EQ(pgm->pgroup, proc_grp_id(basic_conf { "GRP1" }));
 
-    const auto& grp = cfg.get_proc_grp(pgm->pgroup.value());
+    const auto& grp = cfg.get_proc_grp(pgm->pgroup);
 
     asm_option opts;
     grp.apply_options_to(opts);
@@ -200,9 +200,9 @@ TEST(workspace_configuration, external_configurations_group_inline)
     const auto* pgm = cfg.get_program(pgm_loc);
     ASSERT_TRUE(pgm);
     EXPECT_TRUE(pgm->external);
-    EXPECT_TRUE(std::holds_alternative<external_conf>(pgm->pgroup.value()));
+    EXPECT_TRUE(std::holds_alternative<external_conf>(pgm->pgroup));
 
-    const auto& grp = cfg.get_proc_grp(pgm->pgroup.value());
+    const auto& grp = cfg.get_proc_grp(pgm->pgroup);
 
     asm_option opts;
     grp.apply_options_to(opts);

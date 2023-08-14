@@ -16,11 +16,13 @@
 #define HLASMPLUGIN_HLASMPARSERLIBRARY_COMMON_TESTING_H
 
 #include <algorithm>
+#include <concepts>
 #include <functional>
 #include <initializer_list>
 #include <iterator>
 #include <span>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
@@ -43,7 +45,10 @@ const size_t size_t_zero = static_cast<size_t>(0);
 
 namespace hlasm_plugin::utils {
 class task;
+namespace resource {
+class resource_location;
 }
+} // namespace hlasm_plugin::utils
 namespace hlasm_plugin::parser_library {
 class workspace_manager;
 namespace workspaces {
@@ -53,6 +58,11 @@ class workspace;
 void parse_all_files(hlasm_plugin::parser_library::workspaces::workspace& ws);
 
 void run_if_valid(hlasm_plugin::utils::task t);
+
+void open_parse_and_recollect_diags(hlasm_plugin::parser_library::workspaces::workspace& ws,
+    const std::vector<hlasm_plugin::utils::resource::resource_location>& files);
+void close_parse_and_recollect_diags(hlasm_plugin::parser_library::workspaces::workspace& ws,
+    const std::vector<hlasm_plugin::utils::resource::resource_location>& files);
 
 template<typename T>
 std::optional<T> get_var_value(hlasm_context& ctx, std::string name)
@@ -148,14 +158,16 @@ std::optional<std::unordered_map<size_t, T>> get_var_vector_map(hlasm_context& c
 
 template<typename Msg,
     typename Proj,
+    std::predicate<std::decay_t<std::invoke_result_t<Proj, const Msg&>>,
+        std::decay_t<std::invoke_result_t<Proj, const Msg&>>> BinPred = std::equal_to<>,
     typename C = std::initializer_list<std::decay_t<std::invoke_result_t<Proj, const Msg&>>>>
-inline bool matches_message_properties(const std::vector<Msg>& d, const C& c, Proj p)
+inline bool matches_message_properties(const std::vector<Msg>& d, const C& c, Proj p, BinPred b = BinPred())
 {
     std::vector<std::decay_t<std::invoke_result_t<Proj, const Msg&>>> properties;
     std::transform(
         d.begin(), d.end(), std::back_inserter(properties), [&p](const auto& d) { return std::invoke(p, d); });
 
-    return std::is_permutation(properties.begin(), properties.end(), c.begin(), c.end());
+    return std::is_permutation(properties.begin(), properties.end(), c.begin(), c.end(), b);
 }
 
 template<typename Msg,
@@ -214,6 +226,14 @@ template<typename Msg, typename C = std::initializer_list<std::string>>
 inline bool contains_message_text(const std::vector<Msg>& d, const C& c)
 {
     return contains_message_properties(d, c, &Msg::message);
+}
+
+template<typename Msg, typename C = std::initializer_list<std::string>>
+inline bool matches_partial_message_text(const std::vector<Msg>& d, const C& c)
+{
+    return matches_message_properties(d, c, &Msg::message, [](std::string_view a, std::string_view b) -> bool {
+        return a.find(b) != std::string_view::npos;
+    });
 }
 
 inline bool matches_fade_messages(const std::vector<fade_message_s>& a, const std::vector<fade_message_s>& b)
