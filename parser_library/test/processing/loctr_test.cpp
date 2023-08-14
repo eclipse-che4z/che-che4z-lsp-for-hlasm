@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "context/ordinary_assembly/symbol.h"
 
 // tests for LOCTR instruction
 
@@ -46,7 +47,7 @@ Z EQU Y-X
     ASSERT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 16);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), (size_t)2);
 }
 
 TEST(LOCTR, different_counter)
@@ -73,7 +74,7 @@ Z EQU Y-X
     ASSERT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 2);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(LOCTR, valid_alignment)
@@ -89,5 +90,5 @@ X2   DS   0H
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }

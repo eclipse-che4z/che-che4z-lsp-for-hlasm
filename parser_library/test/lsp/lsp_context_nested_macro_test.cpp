@@ -16,7 +16,6 @@
 
 #include "analyzer_fixture.h"
 #include "lsp/lsp_context.h"
-#include "lsp_context_test_helper.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
@@ -49,7 +48,7 @@ struct lsp_context_nested_macro : public analyzer_fixture
 TEST_F(lsp_context_nested_macro, definition_nested)
 {
     location res = a.context().lsp_ctx->definition(opencode_loc, { 8, 15 });
-    check_location_with_position(res, opencode_loc, 7, 16);
+    EXPECT_EQ(res, location(position(7, 16), opencode_loc));
 }
 
 TEST_F(lsp_context_nested_macro, references_inner_var)
@@ -58,8 +57,8 @@ TEST_F(lsp_context_nested_macro, references_inner_var)
 
     ASSERT_EQ(res.size(), 2U);
 
-    check_location_with_position(res[0], opencode_loc, 7, 16);
-    check_location_with_position(res[1], opencode_loc, 8, 14);
+    EXPECT_EQ(res[0], location(position(7, 16), opencode_loc));
+    EXPECT_EQ(res[1], location(position(8, 14), opencode_loc));
 }
 
 TEST_F(lsp_context_nested_macro, references_inner_macro_param)
@@ -68,14 +67,14 @@ TEST_F(lsp_context_nested_macro, references_inner_macro_param)
 
     ASSERT_EQ(res.size(), 2U);
 
-    check_location_with_position(res[0], opencode_loc, 6, 16);
-    check_location_with_position(res[1], opencode_loc, 8, 19);
+    EXPECT_EQ(res[0], location(position(6, 16), opencode_loc));
+    EXPECT_EQ(res[1], location(position(8, 19), opencode_loc));
 }
 
 TEST_F(lsp_context_nested_macro, definition_outer)
 {
     location res = a.context().lsp_ctx->definition(opencode_loc, { 10, 11 });
-    check_location_with_position(res, opencode_loc, 3, 12);
+    EXPECT_EQ(res, location(position(3, 12), opencode_loc));
 }
 
 TEST_F(lsp_context_nested_macro, references_outer)
@@ -84,6 +83,6 @@ TEST_F(lsp_context_nested_macro, references_outer)
 
     ASSERT_EQ(res.size(), 2U);
 
-    check_location_with_position(res[0], opencode_loc, 3, 12);
-    check_location_with_position(res[1], opencode_loc, 10, 10);
+    EXPECT_EQ(res[0], location(position(3, 12), opencode_loc));
+    EXPECT_EQ(res[1], location(position(10, 10), opencode_loc));
 }

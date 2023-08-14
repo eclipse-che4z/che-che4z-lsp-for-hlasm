@@ -14,7 +14,7 @@
 
 #include "gmock/gmock.h"
 
-#include "expr_mocks.h"
+#include "context/hlasm_context.h"
 #include "expressions/conditional_assembly/terms/ca_function.h"
 #include "expressions/evaluation_context.h"
 #include "library_info_transitional.h"
@@ -201,18 +201,18 @@ INSTANTIATE_TEST_SUITE_P(func_parameters_suite,
         func_test_param { ca_expr_funcs::C2B, { "" }, "", false, "C2B_empty" },
         func_test_param { ca_expr_funcs::C2B, { "\0"s }, "00000000", false, "C2B_zero" },
         func_test_param { ca_expr_funcs::C2B, { "1234" }, "11110001111100101111001111110100", false, "C2B_valid" },
-        func_test_param { ca_expr_funcs::C2B, { big_string() }, {}, true, "C2B_exceeds" },
+        func_test_param { ca_expr_funcs::C2B, { std::string(4000, '1') }, {}, true, "C2B_exceeds" },
 
         func_test_param { ca_expr_funcs::C2D, { "" }, "+0", false, "C2D_empty" },
         func_test_param { ca_expr_funcs::C2D, { "\0"s }, "+0", false, "C2D_zero" },
         func_test_param { ca_expr_funcs::C2D, { "\0j"s }, "+145", false, "C2D_positive" },
         func_test_param { ca_expr_funcs::C2D, { "0000" }, "-252645136", false, "C2D_negative" },
-        func_test_param { ca_expr_funcs::C2D, { big_string() }, {}, true, "C2D_exceeds" },
+        func_test_param { ca_expr_funcs::C2D, { std::string(4000, '1') }, {}, true, "C2D_exceeds" },
 
         func_test_param { ca_expr_funcs::C2X, { "" }, "", false, "C2X_empty" },
         func_test_param { ca_expr_funcs::C2X, { "\0"s }, "00", false, "C2X_zero" },
         func_test_param { ca_expr_funcs::C2X, { "1234567R" }, "F1F2F3F4F5F6F7D9", false, "C2X_valid" },
-        func_test_param { ca_expr_funcs::C2X, { big_string() }, {}, true, "C2X_exceeds" },
+        func_test_param { ca_expr_funcs::C2X, { std::string(4000, '1') }, {}, true, "C2X_exceeds" },
 
         func_test_param { ca_expr_funcs::D2B, { "" }, "", false, "D2B_empty" },
         func_test_param { ca_expr_funcs::D2B, { "000" }, "00000000000000000000000000000000", false, "D2B_zeros" },
@@ -261,7 +261,7 @@ INSTANTIATE_TEST_SUITE_P(func_parameters_suite,
         func_test_param { ca_expr_funcs::DEQUOTE, { "'" }, "", false, "DEQUOTE_apo_one_side" },
 
         func_test_param { ca_expr_funcs::DOUBLE, { "a&&''&b" }, "a&&&&''''&&b", false, "DOUBLE_simple" },
-        func_test_param { ca_expr_funcs::DOUBLE, { big_string('\'') }, {}, true, "DOUBLE_exceeds" },
+        func_test_param { ca_expr_funcs::DOUBLE, { std::string(4000, '\'') }, {}, true, "DOUBLE_exceeds" },
 
         func_test_param { ca_expr_funcs::LOWER, { "aBcDefG321&^%$" }, "abcdefg321&^%$", false, "LOWER_simple" },
 
@@ -275,7 +275,7 @@ INSTANTIATE_TEST_SUITE_P(func_parameters_suite,
         func_test_param { ca_expr_funcs::X2B, { "00" }, "00000000", false, "X2B_zeros" },
         func_test_param { ca_expr_funcs::X2B, { "f3" }, "11110011", false, "X2B_basic" },
         func_test_param { ca_expr_funcs::X2B, { "0g1" }, {}, true, "X2B_bad_char" },
-        func_test_param { ca_expr_funcs::X2B, { big_string() }, {}, true, "X2B_exceeds" },
+        func_test_param { ca_expr_funcs::X2B, { std::string(4000, '1') }, {}, true, "X2B_exceeds" },
 
         func_test_param { ca_expr_funcs::X2C, { "" }, "", false, "X2C_empty" },
         func_test_param { ca_expr_funcs::X2C, { "0" }, "\0"s, false, "X2C_zeros" },

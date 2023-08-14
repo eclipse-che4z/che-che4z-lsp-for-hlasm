@@ -15,6 +15,7 @@
 #include "gmock/gmock.h"
 
 #include "../common_testing.h"
+#include "context/hlasm_context.h"
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"

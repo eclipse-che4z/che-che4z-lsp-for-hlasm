@@ -17,7 +17,6 @@
 #include "analyzer_fixture.h"
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"
-#include "lsp_context_test_helper.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -53,13 +52,13 @@ struct lsp_context_seq_sym : public analyzer_fixture
 TEST_F(lsp_context_seq_sym, definition_in_macro)
 {
     location res = a.context().lsp_ctx->definition(opencode_loc, { 4, 12 });
-    check_location_with_position(res, opencode_loc, 5, 0);
+    EXPECT_EQ(res, location(position(5, 0), opencode_loc));
 }
 
 TEST_F(lsp_context_seq_sym, definition_out_of_macro)
 {
     location res = a.context().lsp_ctx->definition(opencode_loc, { 11, 12 });
-    check_location_with_position(res, opencode_loc, 12, 0);
+    EXPECT_EQ(res, location(position(12, 0), opencode_loc));
 }
 
 TEST_F(lsp_context_seq_sym, references_in_macro)
@@ -68,8 +67,8 @@ TEST_F(lsp_context_seq_sym, references_in_macro)
 
     ASSERT_EQ(res.size(), 2U);
 
-    check_location_with_position(res[0], opencode_loc, 4, 11);
-    check_location_with_position(res[1], opencode_loc, 5, 0);
+    EXPECT_EQ(res[0], location(position(4, 11), opencode_loc));
+    EXPECT_EQ(res[1], location(position(5, 0), opencode_loc));
 }
 
 TEST_F(lsp_context_seq_sym, references_out_of_macro)
@@ -78,8 +77,8 @@ TEST_F(lsp_context_seq_sym, references_out_of_macro)
 
     ASSERT_EQ(res.size(), 2U);
 
-    check_location_with_position(res[0], opencode_loc, 11, 11);
-    check_location_with_position(res[1], opencode_loc, 12, 0);
+    EXPECT_EQ(res[0], location(position(11, 11), opencode_loc));
+    EXPECT_EQ(res[1], location(position(12, 0), opencode_loc));
 }
 
 TEST_F(lsp_context_seq_sym, hover)
@@ -116,7 +115,7 @@ TEST_F(lsp_context_seq_sym, completion_out_of_macro)
 TEST_F(lsp_context_seq_sym, definition_no_definition)
 {
     location res = a.context().lsp_ctx->definition(opencode_loc, { 14, 12 });
-    check_location_with_position(res, opencode_loc, 14, 12);
+    EXPECT_EQ(res, location(position(14, 12), opencode_loc));
 }
 
 TEST_F(lsp_context_seq_sym, references_no_definition)
@@ -125,5 +124,5 @@ TEST_F(lsp_context_seq_sym, references_no_definition)
 
     ASSERT_EQ(res.size(), 1U);
 
-    check_location_with_position(res[0], opencode_loc, 14, 11);
+    EXPECT_EQ(res[0], location(position(14, 11), opencode_loc));
 }

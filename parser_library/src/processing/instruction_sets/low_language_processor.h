@@ -25,13 +25,6 @@ class processing_manager;
 // common ancestor for ASM and MACH processing containing useful methods
 class low_language_processor : public instruction_processor
 {
-public:
-    static bool check(const resolved_statement& stmt,
-        const context::processing_stack_t& processing_stack,
-        context::dependency_solver& dep_solver,
-        const checking::instruction_checker& checker,
-        const diagnosable_ctx& diagnoser);
-
 protected:
     statement_fields_parser& parser;
     const processing_manager& proc_mgr;
@@ -65,23 +58,6 @@ private:
         bool was_model = false;
     };
     preprocessed_part preprocess_inner(const resolved_statement& stmt);
-
-    using transform_result = std::optional<std::vector<checking::check_op_ptr>>;
-    // transform semantic operands to checking operands - machine mnemonics instructions
-    static transform_result transform_mnemonic(const resolved_statement& stmt,
-        context::dependency_solver& dep_solver,
-        const context::mnemonic_code& mnemonic,
-        const diagnostic_collector& collector);
-    // transform semantic operands to checking operands - default machine instructions
-    static transform_result transform_default(
-        const resolved_statement& stmt, context::dependency_solver& dep_solver, const diagnostic_collector& collector);
-
-    static checking::check_op_ptr get_check_op(const semantics::operand* op,
-        context::dependency_solver& dep_solver,
-        const diagnostic_collector& collector,
-        const resolved_statement& stmt,
-        size_t op_position,
-        const context::mnemonic_code* mnemonic = nullptr);
 };
 
 enum class check_org_result

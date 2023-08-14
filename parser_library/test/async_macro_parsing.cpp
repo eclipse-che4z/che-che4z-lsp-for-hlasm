@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "common_testing.h"
+#include "utils/general_hashers.h"
 #include "utils/task.h"
 
 using namespace hlasm_plugin::parser_library;

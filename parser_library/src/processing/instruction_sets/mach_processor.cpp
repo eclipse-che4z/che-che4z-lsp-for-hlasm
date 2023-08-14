@@ -16,6 +16,7 @@
 
 #include <algorithm>
 
+#include "context/hlasm_context.h"
 #include "context/instruction_type.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/ordinary_assembly/symbol_dependency_tables.h"

@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "context/hlasm_context.h"
 #include "expressions/conditional_assembly/ca_operator_binary.h"
 #include "expressions/conditional_assembly/ca_operator_unary.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"

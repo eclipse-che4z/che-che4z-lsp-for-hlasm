@@ -403,7 +403,7 @@ public:
     MOCK_METHOD(hlasm_plugin::utils::value_task<list_directory_result>,
         list_directory_files,
         (const hlasm_plugin::utils::resource::resource_location& path),
-        (const override));
+        (const, override));
 
     std::string canonical(
         const hlasm_plugin::utils::resource::resource_location& res_loc, std::error_code&) const override

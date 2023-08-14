@@ -15,9 +15,23 @@
 #ifndef SEMANTICS_OPERAND_VISITOR_H
 #define SEMANTICS_OPERAND_VISITOR_H
 
-#include "operand_impls.h"
-
 namespace hlasm_plugin::parser_library::semantics {
+
+struct empty_operand;
+struct model_operand;
+struct expr_machine_operand;
+struct address_machine_operand;
+struct expr_assembler_operand;
+struct using_instr_assembler_operand;
+struct complex_assembler_operand;
+struct string_assembler_operand;
+struct data_def_operand;
+struct var_ca_operand;
+struct expr_ca_operand;
+struct seq_ca_operand;
+struct branch_ca_operand;
+struct macro_operand_chain;
+struct macro_operand_string;
 
 // base class for a visitor pattern over operand structures
 class operand_visitor

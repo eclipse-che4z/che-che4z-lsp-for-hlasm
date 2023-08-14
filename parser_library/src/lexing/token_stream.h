@@ -18,10 +18,8 @@
 #include <memory>
 #include <utility>
 
-#include "antlr4-runtime.h"
-
+#include "BufferedTokenStream.h"
 #include "lexer.h"
-
 
 namespace hlasm_plugin::parser_library::lexing {
 

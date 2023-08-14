@@ -21,6 +21,7 @@
 #include "checking/asm_instr_check.h"
 #include "checking/data_definition/data_def_types.h"
 #include "checking/diagnostic_collector.h"
+#include "context/hlasm_context.h"
 
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;

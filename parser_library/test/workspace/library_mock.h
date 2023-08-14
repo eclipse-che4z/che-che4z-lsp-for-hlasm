@@ -15,6 +15,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "diagnostic.h"
 #include "utils/task.h"
 #include "workspaces/library.h"
 
@@ -26,9 +27,9 @@ public:
     MOCK_METHOD(hlasm_plugin::utils::task, refresh, (), (override));
     MOCK_METHOD(hlasm_plugin::utils::task, prefetch, (), (override));
     MOCK_METHOD(std::vector<std::string>, list_files, (), (override));
-    MOCK_METHOD(const hlasm_plugin::utils::resource::resource_location&, get_location, (), (const override));
+    MOCK_METHOD(const hlasm_plugin::utils::resource::resource_location&, get_location, (), (const, override));
     MOCK_METHOD(bool, has_file, (std::string_view, hlasm_plugin::utils::resource::resource_location* url), (override));
-    MOCK_METHOD(void, copy_diagnostics, (std::vector<hlasm_plugin::parser_library::diagnostic_s>&), (const override));
-    MOCK_METHOD(bool, has_cached_content, (), (const override));
+    MOCK_METHOD(void, copy_diagnostics, (std::vector<hlasm_plugin::parser_library::diagnostic_s>&), (const, override));
+    MOCK_METHOD(bool, has_cached_content, (), (const, override));
 };
 } // namespace

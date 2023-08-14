@@ -25,6 +25,7 @@
 #include "lsp/lsp_context.h"
 #include "range.h"
 #include "utils/resource_location.h"
+#include "virtual_file_monitor.h"
 #include "workspaces/parse_lib_provider.h"
 
 using namespace hlasm_plugin::parser_library;

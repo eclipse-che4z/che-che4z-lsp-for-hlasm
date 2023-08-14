@@ -18,6 +18,7 @@
 #include <utility>
 
 #include "analyzer.h"
+#include "utils/general_hashers.h"
 
 namespace hlasm_plugin::parser_library {
 

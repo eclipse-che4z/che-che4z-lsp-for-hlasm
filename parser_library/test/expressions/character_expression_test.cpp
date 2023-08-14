@@ -19,14 +19,6 @@
 // test for
 // arithmetic SETC expressions
 
-#define SETCEQ(X, Y)                                                                                                   \
-    EXPECT_EQ(a.hlasm_ctx()                                                                                            \
-                  .get_var_sym(context::id_index(X))                                                                   \
-                  ->access_set_symbol_base()                                                                           \
-                  ->access_set_symbol<C_t>()                                                                           \
-                  ->get_value(),                                                                                       \
-        Y)
-
 TEST(character_expression, operator_priority)
 {
     std::string input =
@@ -38,10 +30,10 @@ TEST(character_expression, operator_priority)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETCEQ("C1", "ABCDEFDEFDEF");
-    SETCEQ("C2", "ABCDEFDEF");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C1"), "ABCDEFDEFDEF");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C2"), "ABCDEFDEF");
 }
 
 TEST(character_expression, substring_notation)
@@ -59,14 +51,14 @@ TEST(character_expression, substring_notation)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETCEQ("C1", "ABC");
-    SETCEQ("C2", "ABDEF");
-    SETCEQ("C3", "");
-    SETCEQ("C4", "YZ");
-    SETCEQ("C5", "");
-    SETCEQ("C6", "XX");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C1"), "ABC");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C2"), "ABDEF");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C3"), "");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C4"), "YZ");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C5"), "");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C6"), "XX");
 }
 
 TEST(character_expression, invalid_substring_notation)
@@ -81,7 +73,7 @@ TEST(character_expression, invalid_substring_notation)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)3);
+    EXPECT_EQ(a.diags().size(), (size_t)3);
 }
 
 /*TODO uncomment when assembler options will be implemented
@@ -129,14 +121,14 @@ TEST(character_expression, escaping)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETCEQ("C1", "L'SYMBOL");
-    SETCEQ("C2", "&");
-    SETCEQ("C3", "HALF&&");
-    SETCEQ("C4", "L'SYMBOL.S");
-    SETCEQ("C5", "A..");
-    SETCEQ("C6", "&A");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C1"), "L'SYMBOL");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C2"), "&");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C3"), "HALF&&");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C4"), "L'SYMBOL.S");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C5"), "A..");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C6"), "&A");
 }
 
 TEST(character_expression, single_operand_with_spaces)
@@ -153,13 +145,13 @@ TEST(character_expression, single_operand_with_spaces)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETCEQ("C1", "A");
-    SETCEQ("C2", "A");
-    SETCEQ("C3", "A");
-    SETCEQ("C4", "A");
-    SETCEQ("C5", "A");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C1"), "A");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C2"), "A");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C3"), "A");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C4"), "A");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C5"), "A");
 }
 
 TEST(character_expression, single_operand_fail)
@@ -190,7 +182,7 @@ TEST(character_expression, zero_length_substring)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(character_expression, dots)

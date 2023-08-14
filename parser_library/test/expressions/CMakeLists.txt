@@ -21,7 +21,6 @@ target_sources(library_test PRIVATE
 	ca_symbol_test.cpp
 	ca_var_sym_test.cpp
 	character_expression_test.cpp
-	expr_mocks.h
 	logical_expression_test.cpp
 )
 

@@ -72,6 +72,8 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_vf_handles(vf_handles)
 {}
 
+opencode_provider::~opencode_provider() = default;
+
 utils::task opencode_provider::start_preprocessor()
 {
     m_input_document = co_await m_preprocessor->generate_replacement(std::move(m_input_document));

@@ -17,8 +17,7 @@
 
 #include <optional>
 
-#include "antlr4-runtime.h"
-
+#include "ParserRuleContext.h"
 #include "processing/op_code.h"
 #include "source_info_processor.h"
 #include "statement.h"

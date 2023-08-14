@@ -30,6 +30,8 @@ public:
         holder = std::make_unique<analyzer>(input);
     }
 
+    static constexpr const size_t size_t_zero = static_cast<size_t>(0);
+
 protected:
     std::unique_ptr<analyzer> holder;
     std::string input;
@@ -46,7 +48,7 @@ TEST_F(library_test, simple)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
+    EXPECT_EQ(get_syntax_errors(*holder), size_t_zero);
 }
 
 // 5 instruction statements that have 1,1,1,2 and 4 operands respectively
@@ -60,7 +62,7 @@ TEST_F(library_test, operand)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
+    EXPECT_EQ(get_syntax_errors(*holder), size_t_zero);
 }
 
 // 3 alternative forms of instructions
@@ -72,7 +74,7 @@ TEST_F(library_test, continuation)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
+    EXPECT_EQ(get_syntax_errors(*holder), size_t_zero);
 }
 
 // finding 3 variable symbols in model statement
@@ -85,7 +87,7 @@ TEST_F(library_test, model_statement)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
+    EXPECT_EQ(get_syntax_errors(*holder), size_t_zero);
 }
 
 // simply parse correctly
@@ -99,7 +101,7 @@ TEST_F(library_test, comment)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
+    EXPECT_EQ(get_syntax_errors(*holder), size_t_zero);
 }
 
 // simply parse correctly
@@ -110,7 +112,7 @@ TEST_F(library_test, empty_string)
     analyzer a(es_input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), (size_t)2);
 }
 
 TEST_F(library_test, long_macro)
@@ -123,7 +125,7 @@ TEST_F(library_test, long_macro)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
+    EXPECT_EQ(get_syntax_errors(*holder), size_t_zero);
 }
 
 TEST_F(library_test, process_statement)
@@ -136,7 +138,7 @@ TEST_F(library_test, process_statement)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
+    EXPECT_EQ(get_syntax_errors(*holder), size_t_zero);
 }
 
 TEST_F(library_test, macro_model)
@@ -149,5 +151,5 @@ TEST_F(library_test, macro_model)
 
     holder->analyze();
     // no errors found while parsing
-    ASSERT_EQ(holder->debug_syntax_errors(), size_t_zero);
+    EXPECT_EQ(get_syntax_errors(*holder), size_t_zero);
 }

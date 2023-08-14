@@ -17,7 +17,6 @@
 #include "../mock_parse_lib_provider.h"
 #include "analyzer_fixture.h"
 #include "lsp/lsp_context.h"
-#include "lsp_context_test_helper.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
@@ -75,41 +74,41 @@ SYM    LR &VAR,1
 TEST_F(lsp_context_copy_in_macro, definition_macro)
 {
     location res = a->context().lsp_ctx->definition(opencode_file_loc, { 1, 8 });
-    check_location_with_position(res, macro_file_loc, 1, 7);
+    EXPECT_EQ(res, location(position(1, 7), macro_file_loc));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_copyfile_from_opencode)
 {
     location res = a->context().lsp_ctx->definition(opencode_file_loc, { 3, 13 });
-    check_location_with_position(res, copyfile_file_loc, 0, 0);
+    EXPECT_EQ(res, location(position(0, 0), copyfile_file_loc));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_copyfile_from_macro)
 {
     location res = a->context().lsp_ctx->definition(macro_file_loc, { 3, 13 });
-    check_location_with_position(res, copyfile_file_loc, 0, 0);
+    EXPECT_EQ(res, location(position(0, 0), copyfile_file_loc));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_macro_param_from_copyfile)
 {
     location res = a->context().lsp_ctx->definition(copyfile_file_loc, { 2, 11 });
-    check_location_with_position(res, macro_file_loc, 1, 11);
+    EXPECT_EQ(res, location(position(1, 11), macro_file_loc));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_var_from_macro)
 {
     location res = a->context().lsp_ctx->definition(macro_file_loc, { 5, 11 });
-    check_location_with_position(res, copyfile_file_loc, 3, 0);
+    EXPECT_EQ(res, location(position(3, 0), copyfile_file_loc));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_var_from_opencode)
 {
     location res = a->context().lsp_ctx->definition(opencode_file_loc, { 4, 11 });
-    check_location_with_position(res, copyfile_file_loc, 3, 0);
+    EXPECT_EQ(res, location(position(3, 0), copyfile_file_loc));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_no_exist_copyfile)
 {
     location res = a->context().lsp_ctx->definition(opencode_file_loc, { 7, 15 });
-    check_location_with_position(res, opencode_file_loc, 7, 15);
+    EXPECT_EQ(res, location(position(7, 15), opencode_file_loc));
 }

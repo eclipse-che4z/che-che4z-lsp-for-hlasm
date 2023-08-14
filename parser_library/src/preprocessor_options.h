@@ -15,6 +15,7 @@
 #ifndef HLASMPARSER_PARSERLIBRARY_PREPROCESSOR_OPTIONS_H
 #define HLASMPARSER_PARSERLIBRARY_PREPROCESSOR_OPTIONS_H
 
+#include <string>
 #include <variant>
 
 // This file contains assembler compiler options definitions.

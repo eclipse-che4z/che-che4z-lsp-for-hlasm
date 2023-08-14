@@ -19,14 +19,6 @@
 // test for
 // arithmetic SETA expressions
 
-#define SETAEQ(X, Y)                                                                                                   \
-    EXPECT_EQ(a.hlasm_ctx()                                                                                            \
-                  .get_var_sym(context::id_index(X))                                                                   \
-                  ->access_set_symbol_base()                                                                           \
-                  ->access_set_symbol<A_t>()                                                                           \
-                  ->get_value(),                                                                                       \
-        Y)
-
 TEST(arithmetic_expressions, valid_self_defining_term)
 {
     std::string input =
@@ -45,16 +37,16 @@ TEST(arithmetic_expressions, valid_self_defining_term)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETAEQ("A1", 1);
-    SETAEQ("A2", 196);
-    SETAEQ("A3", 386);
-    SETAEQ("A4", 0);
-    SETAEQ("A5", 0);
-    SETAEQ("A6", 0);
-    SETAEQ("A7", 0);
-    SETAEQ("A8", 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A1"), 1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A2"), 196);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A3"), 386);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A4"), 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A5"), 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A6"), 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A7"), 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A8"), 0);
 }
 
 TEST(arithmetic_expressions, valid_expressions)
@@ -71,13 +63,13 @@ TEST(arithmetic_expressions, valid_expressions)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETAEQ("A1", 1);
-    SETAEQ("A2", -1);
-    SETAEQ("A3", 1);
-    SETAEQ("A4", 0);
-    SETAEQ("A5", -3);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A1"), 1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A2"), -1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A3"), 1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A4"), 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A5"), -3);
 }
 
 TEST(arithmetic_expressions, empty_string_conversion)
@@ -90,9 +82,9 @@ TEST(arithmetic_expressions, empty_string_conversion)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETAEQ("A1", 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A1"), 0);
 }
 
 TEST(arithmetic_expressions, invalid_self_defining_term)
@@ -130,7 +122,7 @@ TEST(arithmetic_expressions, substitution_to_character_expression)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "5-10*10");
 
@@ -163,9 +155,9 @@ TEST(arithmetic_expressions, unary_operators)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETAEQ("C", -24);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "C"), -24);
 }
 
 TEST(arithmetic_expressions, binary_space_separated_operator)
@@ -178,9 +170,9 @@ TEST(arithmetic_expressions, binary_space_separated_operator)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETAEQ("A", 2);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A"), 2);
 }
 
 // requires proper lexer token that recognises number with minus sign
@@ -218,12 +210,12 @@ TEST(arithmetic_expressions, division)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETAEQ("B1", 0);
-    SETAEQ("B2", 0);
-    SETAEQ("B3", 1);
-    SETAEQ("B4", 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "B1"), 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "B2"), 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "B3"), 1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "B4"), 0);
 }
 
 TEST(arithmetic_expressions, operator_priorities)
@@ -241,14 +233,15 @@ TEST(arithmetic_expressions, operator_priorities)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETAEQ("A", -1);
-    SETAEQ("B", 11);
-    SETAEQ("C", 10);
-    SETAEQ("D", 40);
-    SETAEQ("E", 7);
-    // SETAEQ("F", -4); // TODO Resolve when CA expression parsing is extended
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A"), -1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "B"), 11);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "C"), 10);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "D"), 40);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "E"), 7);
+    // EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "F"), -4); // TODO Resolve when CA expression parsing is
+    // extended
 }
 
 TEST(arithmetic_expressions, operator_priorities_invalid)
@@ -279,13 +272,13 @@ TEST(arithmetic_expressions, not_operator)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETAEQ("A1", -81);
-    SETAEQ("A2", -88);
-    SETAEQ("A3", 6);
-    SETAEQ("A4", -3);
-    SETAEQ("A5", 4);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A1"), -81);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A2"), -88);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A3"), 6);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A4"), -3);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A5"), 4);
 }
 
 TEST(arithmetic_expressions, not_operator_precedence)
@@ -334,8 +327,7 @@ TEST(arithmetic_expressions, invalid_operator)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.diags().front().code, "CE002");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE002" }));
 }
 
 TEST(arithmetic_expressions, illegal_dupl_factor)
@@ -348,8 +340,7 @@ TEST(arithmetic_expressions, illegal_dupl_factor)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.diags().front().code, "CE005");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE005" }));
 }
 
 
@@ -379,10 +370,10 @@ TEST(arithmetic_expressions, conversion_from_binary)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETAEQ("A", 1);
-    SETAEQ("B", 0);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A"), 1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "B"), 0);
 }
 
 TEST(arithmetic_expressions, dots)

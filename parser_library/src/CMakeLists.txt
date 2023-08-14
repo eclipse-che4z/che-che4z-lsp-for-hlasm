@@ -24,8 +24,10 @@ target_sources(parser_library PRIVATE
 	diagnosable_impl.h
 	diagnostic.cpp
 	diagnostic.h
-	diagnostic_consumer.h
 	diagnostic_adder.h
+	diagnostic_consumer.h
+	diagnostic_tools.h
+	diagnostic_tools.cpp
 	document.cpp
 	document.h
 	ebcdic_encoding.cpp

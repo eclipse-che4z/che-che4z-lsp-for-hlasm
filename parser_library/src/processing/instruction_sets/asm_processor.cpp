@@ -19,9 +19,12 @@
 #include <optional>
 
 #include "analyzing_context.h"
+#include "checking/diagnostic_collector.h"
 #include "checking/instr_operand.h"
 #include "context/common_types.h"
+#include "context/hlasm_context.h"
 #include "context/literal_pool.h"
+#include "context/ordinary_assembly/location_counter.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/ordinary_assembly/symbol_dependency_tables.h"
 #include "data_def_postponed_statement.h"

@@ -30,6 +30,10 @@ class diagnosable_ctx;
 struct range;
 } // namespace hlasm_plugin::parser_library
 
+namespace hlasm_plugin::parser_library::context {
+enum class section_kind;
+} // namespace hlasm_plugin::parser_library::context
+
 namespace hlasm_plugin::parser_library::processing {
 class branching_provider;
 class opencode_provider;

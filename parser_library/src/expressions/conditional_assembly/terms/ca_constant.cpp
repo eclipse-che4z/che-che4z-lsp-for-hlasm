@@ -15,6 +15,7 @@
 #include "ca_constant.h"
 
 #include "ca_function.h"
+#include "context/hlasm_context.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 

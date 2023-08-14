@@ -16,6 +16,8 @@
 
 #include "../common_testing.h"
 #include "analyzer.h"
+#include "context/hlasm_context.h"
+#include "context/ordinary_assembly/symbol.h"
 #include "ebcdic_encoding.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -31,7 +33,7 @@ ADDR   DS CL4
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), 0U);
+    EXPECT_TRUE(a.diags().empty());
 
     auto& ctx = *a.context().hlasm_ctx;
 
@@ -52,8 +54,7 @@ SYM  DS   CL249
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), 1U);
-    EXPECT_EQ(a.diags()[0].code, "M122");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M122" }));
 }
 
 TEST(asm_instr_processing, CNOP)
@@ -69,7 +70,7 @@ A LR 1,1
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), 0U);
+    EXPECT_TRUE(a.diags().empty());
 
     auto& ctx = *a.context().hlasm_ctx;
 
@@ -97,7 +98,7 @@ A        LR 1,1
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), 0U);
+    EXPECT_TRUE(a.diags().empty());
 
     auto& ctx = *a.context().hlasm_ctx;
 
@@ -122,7 +123,7 @@ CNOPSYM CNOP ADDR,16
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.diags().size(), 0U);
+    EXPECT_TRUE(a.diags().empty());
 
     // Should emit a diagnostic, but we dont check relocatable symbols at all right now.
     // EXPECT_EQ(a.diags().size(), 1U);

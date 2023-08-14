@@ -14,6 +14,8 @@
 
 #include "parser_error_listener.h"
 
+#include "antlr4-runtime.h"
+
 #include "lexing/token_stream.h"
 #include "parser_impl.h"
 

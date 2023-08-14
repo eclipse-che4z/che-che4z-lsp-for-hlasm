@@ -16,6 +16,7 @@
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
+#include "context/hlasm_context.h"
 #include "context/instruction.h"
 
 // clang-format off

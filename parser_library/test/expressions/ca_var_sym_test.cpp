@@ -15,6 +15,7 @@
 #include "gmock/gmock.h"
 
 #include "../common_testing.h"
+#include "context/hlasm_context.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/evaluation_context.h"

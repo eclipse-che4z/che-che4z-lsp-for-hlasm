@@ -22,6 +22,7 @@
 #include "context/hlasm_context.h"
 #include "context/literal_pool.h"
 #include "context/using.h"
+#include "location_counter.h"
 #include "symbol_dependency_tables.h"
 
 namespace hlasm_plugin::parser_library::context {

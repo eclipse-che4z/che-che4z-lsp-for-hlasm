@@ -16,6 +16,7 @@
 
 #include "../common_testing.h"
 #include "semantics/concatenation.h"
+#include "semantics/variable_symbol.h"
 
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::expressions;

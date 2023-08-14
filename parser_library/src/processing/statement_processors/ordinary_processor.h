@@ -24,6 +24,11 @@
 #include "statement_processor.h"
 #include "workspaces/parse_lib_provider.h"
 
+namespace hlasm_plugin::parser_library::context {
+struct dependency_evaluation_context;
+struct postponed_statement;
+} // namespace hlasm_plugin::parser_library::context
+
 namespace hlasm_plugin::parser_library::processing {
 
 // statement processor that evaluates the written code, processes instructions

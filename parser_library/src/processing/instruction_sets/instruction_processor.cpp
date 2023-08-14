@@ -14,6 +14,7 @@
 
 #include "instruction_processor.h"
 
+#include "context/hlasm_context.h"
 #include "context/literal_pool.h"
 
 namespace hlasm_plugin::parser_library::processing {

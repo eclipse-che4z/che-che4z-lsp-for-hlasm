@@ -30,7 +30,7 @@ OP2 OPSYN OP1
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(OPSYN, undefined_operand)
@@ -41,7 +41,7 @@ OP2 OPSYN OP1
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(OPSYN, undefined_name)
@@ -52,7 +52,7 @@ OP2 OPSYN
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(OPSYN, missing_name)
@@ -64,7 +64,7 @@ TEST(OPSYN, missing_name)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(OPSYN, incorrect_operands)
@@ -75,7 +75,7 @@ LR OPSYN A,B
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(OPSYN, delete_opcode)
@@ -87,7 +87,7 @@ LR OPSYN
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(OPSYN, preserve_opcode)
@@ -100,7 +100,7 @@ LR OPSYN
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(OPSYN, non_CA_instruction_before_macro_def)
@@ -116,7 +116,7 @@ OPSYN_THIS OPSYN SAM31
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(OPSYN, non_CA_instruction_before_macro_call)
@@ -132,7 +132,7 @@ OPSYN_THIS OPSYN SAM31
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(OPSYN, non_CA_instruction_after_macro_call)
@@ -148,7 +148,7 @@ OPSYN_THIS OPSYN SAM31
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(OPSYN, CA_instruction)
@@ -169,7 +169,7 @@ AGO OPSYN ACTR
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(OPSYN, macro_definition)
@@ -188,7 +188,7 @@ MENDX OPSYN MEND
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(OPSYN, macro_redefinition)
@@ -211,7 +211,7 @@ M_ OPSYN M
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(OPSYN, macro_mach_redefinition)
@@ -229,7 +229,7 @@ LR_ OPSYN LR
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(OPSYN, late_macro_definition)
@@ -247,7 +247,7 @@ LRX OPSYN LR
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(OPSYN, removed_machine_instruction)
@@ -259,7 +259,7 @@ X OPSYN LR
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(OPSYN, macro_after_delete)
@@ -277,7 +277,7 @@ LR OPSYN
     analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(OPSYN, tolerate_comma_argument)

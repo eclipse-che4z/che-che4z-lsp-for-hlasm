@@ -19,6 +19,7 @@ target_sources(parser_library PRIVATE
 	hlasm_context.h
 	hlasm_statement.cpp
 	hlasm_statement.h
+	id_index.h
 	id_storage.cpp
 	id_storage.h
 	instruction.cpp

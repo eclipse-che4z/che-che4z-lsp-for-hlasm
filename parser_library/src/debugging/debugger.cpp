@@ -29,11 +29,14 @@
 #include <vector>
 
 #include "analyzer.h"
+#include "context/hlasm_context.h"
 #include "debug_lib_provider.h"
 #include "debug_types.h"
 #include "debugger_configuration.h"
 #include "macro_param_variable.h"
 #include "ordinary_symbol_variable.h"
+#include "processing/statement.h"
+#include "processing/statement_analyzers/statement_analyzer.h"
 #include "set_symbol_variable.h"
 #include "utils/async_busy_wait.h"
 #include "utils/task.h"
@@ -43,6 +46,7 @@
 #include "workspace_manager_response.h"
 #include "workspaces/file_manager.h"
 #include "workspaces/file_manager_vfm.h"
+
 
 using namespace hlasm_plugin::parser_library::workspaces;
 

@@ -17,8 +17,9 @@
 
 #include <string>
 
-#include "antlr4-runtime.h"
-
+#include "CharStream.h"
+#include "TokenSource.h"
+#include "WritableToken.h" // "Token.h" on windows conflicts with this file
 #include "parser_library_export.h"
 
 namespace hlasm_plugin::parser_library::lexing {

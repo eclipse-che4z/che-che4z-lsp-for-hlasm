@@ -18,8 +18,11 @@
 #include <limits>
 #include <span>
 
+#include "context/ordinary_assembly/ordinary_assembly_context.h"
+#include "context/ordinary_assembly/section.h"
 #include "diagnosable_ctx.h"
 #include "diagnostic_consumer.h"
+#include "diagnostic_tools.h"
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expression.h"
 #include "ordinary_assembly/dependable.h"

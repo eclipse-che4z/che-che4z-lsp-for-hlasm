@@ -15,6 +15,8 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "context/ordinary_assembly/address.h"
+#include "context/ordinary_assembly/symbol.h"
 
 // tests for DC instruction
 

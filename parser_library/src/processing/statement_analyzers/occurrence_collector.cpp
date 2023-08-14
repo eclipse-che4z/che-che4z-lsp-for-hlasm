@@ -15,7 +15,15 @@
 #include "occurrence_collector.h"
 
 #include "context/hlasm_context.h"
+#include "expressions/conditional_assembly/terms/ca_constant.h"
+#include "expressions/conditional_assembly/terms/ca_expr_list.h"
+#include "expressions/conditional_assembly/terms/ca_function.h"
+#include "expressions/conditional_assembly/terms/ca_string.h"
+#include "expressions/conditional_assembly/terms/ca_symbol.h"
+#include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
+#include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/mach_expression.h"
+#include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

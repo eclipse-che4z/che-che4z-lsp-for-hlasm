@@ -30,6 +30,7 @@
 #include "processing/statement_processors/macrodef_processing_info.h"
 #include "processing/statement_processors/macrodef_processor.h"
 #include "range.h"
+#include "semantics/operand_impls.h"
 #include "semantics/statement.h"
 #include "semantics/statement_fields.h"
 #include "semantics/variable_symbol.h"

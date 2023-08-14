@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <memory>
 
+#include "location_counter.h"
+
 using namespace hlasm_plugin::parser_library::context;
 
 const std::vector<std::unique_ptr<location_counter>>& section::location_counters() const { return loctrs_; }

@@ -15,6 +15,8 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "context/hlasm_context.h"
+#include "context/ordinary_assembly/location_counter.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_operator.h"

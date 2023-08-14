@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 
+#include "CommonTokenFactory.h"
 #include "input_source.h"
 #include "token.h"
 #include "utils/string_operations.h"
@@ -65,6 +66,11 @@ size_t lexer::getCharPositionInLine() { return input_state_->char_position_in_li
 antlr4::CharStream* lexer::getInputStream() { return input_; }
 
 std::string lexer::getSourceName() { return input_->getSourceName(); }
+
+antlr4::TokenFactory<antlr4::CommonToken>* lexer::getTokenFactory()
+{
+    return antlr4::CommonTokenFactory::DEFAULT.get();
+}
 
 void lexer::create_token(size_t ttype, size_t channel)
 {

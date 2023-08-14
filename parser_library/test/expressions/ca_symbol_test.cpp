@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "context/hlasm_context.h"
 #include "diagnostic_adder.h"
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
 #include "expressions/evaluation_context.h"

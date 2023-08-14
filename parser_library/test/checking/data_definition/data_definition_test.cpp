@@ -14,8 +14,10 @@
 #include "gtest/gtest.h"
 
 #include "../../common_testing.h"
+#include "context/hlasm_context.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
-#include "hlasmparser_multiline.h"
+#include "expressions/data_definition.h"
+#include "library_info_transitional.h"
 
 void expect_no_errors(const std::string& text)
 {
@@ -188,10 +190,9 @@ TEST(data_definition, duplication_factor)
     std::string input = "13C'A'";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
+
     EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
@@ -206,10 +207,9 @@ TEST(data_definition, duplication_factor_expr)
     std::string input = "(13*2)C'A'";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
+
     EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
@@ -224,10 +224,9 @@ TEST(data_definition, duplication_factor_out_of_range)
     std::string input = "1231312123123123123C'A'";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
+
     EXPECT_GT(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
@@ -240,10 +239,9 @@ TEST(data_definition, duplication_factor_invalid_number)
     std::string input = "-C'A'";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
+
     EXPECT_GT(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
@@ -256,10 +254,9 @@ TEST(data_definition, all_fields)
     std::string input = "(1*8)FDP(123)L2S(2*4)E(-12*2)'2.25'";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
+
     EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
@@ -282,10 +279,9 @@ TEST(data_definition, no_nominal)
     std::string input = "0FDL2";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
+
     EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
@@ -305,10 +301,9 @@ TEST(data_definition, no_nominal_expr)
     std::string input = "0FDL(2+2)";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
+
     EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
@@ -328,10 +323,9 @@ TEST(data_definition, bit_length)
     std::string input = "(1*8)FDP(123)L.2S-8E(-12*2)'2.25'";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
+
     EXPECT_EQ(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
@@ -353,10 +347,9 @@ TEST(data_definition, unexpected_dot)
     std::string input = "(1*8)FDL.2S.-8E(-12*2)'2.25'";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
+
     EXPECT_GT(diags.diags.size(), (size_t)0);
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
@@ -377,10 +370,8 @@ TEST(data_definition, unexpected_minus)
     std::string input = "(1*8)FDL.2S.-E(-12*2)'2.25'";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
 
     EXPECT_GT(diags.diags.size(), (size_t)0);
 }
@@ -390,10 +381,9 @@ TEST(data_definition, wrong_modifier_order)
     std::string input = "1HL-12P(123)S1'1.25'";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
+
     EXPECT_GT(diags.diags.size(), (size_t)0);
 }
 
@@ -451,7 +441,7 @@ TEST(data_definition, trim_labels)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), 0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(data_definition, externals)
@@ -562,10 +552,9 @@ TEST(data_definition, no_loctr_ref)
     std::string input = "(2*2)ADL(2*2)(2*2)";
     analyzer a(input);
     diagnostic_op_consumer_container diags;
-    a.parser().set_diagnoser(&diags);
-    auto res = a.parser().data_def();
 
-    auto parsed = std::move(res->value);
+    auto parsed = parse_data_definition(a, &diags);
+
     EXPECT_EQ(diags.diags.size(), (size_t)0);
     EXPECT_FALSE(parsed.references_loctr);
 }
@@ -576,10 +565,9 @@ TEST(data_definition, loctr_ref)
     {
         analyzer a(input);
         diagnostic_op_consumer_container diags;
-        a.parser().set_diagnoser(&diags);
-        auto res = a.parser().data_def();
 
-        auto parsed = std::move(res->value);
+        auto parsed = parse_data_definition(a, &diags);
+
         EXPECT_EQ(diags.diags.size(), (size_t)0);
         EXPECT_TRUE(parsed.references_loctr);
     }

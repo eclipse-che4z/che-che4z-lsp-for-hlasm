@@ -18,6 +18,7 @@
 #include <memory>
 #include <stack>
 
+#include "context/hlasm_context.h"
 #include "ebcdic_encoding.h"
 #include "parsing/parser_impl.h"
 #include "semantics/operand_impls.h"

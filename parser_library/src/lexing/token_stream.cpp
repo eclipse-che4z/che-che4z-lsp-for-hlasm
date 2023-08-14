@@ -14,6 +14,9 @@
 
 #include "token_stream.h"
 
+#include "misc/Interval.h"
+#include "token.h"
+
 using namespace hlasm_plugin::parser_library::lexing;
 using namespace antlr4;
 

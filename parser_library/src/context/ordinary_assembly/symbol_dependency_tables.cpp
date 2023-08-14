@@ -27,6 +27,8 @@
 #include <stack>
 #include <unordered_set>
 
+#include "diagnostic_tools.h"
+#include "location_counter.h"
 #include "ordinary_assembly_context.h"
 #include "ordinary_assembly_dependency_solver.h"
 #include "processing/instruction_sets/low_language_processor.h"

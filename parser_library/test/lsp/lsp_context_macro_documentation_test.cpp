@@ -17,7 +17,6 @@
 #include "analyzer_fixture.h"
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"
-#include "lsp_context_test_helper.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -62,7 +61,7 @@ struct lsp_context_macro_documentation : public analyzer_fixture
 TEST_F(lsp_context_macro_documentation, definition)
 {
     location res = a.context().lsp_ctx->definition(opencode_loc, { 10, 8 });
-    check_location_with_position(res, opencode_loc, 4, 7);
+    EXPECT_EQ(res, location(position(4, 7), opencode_loc));
 }
 
 TEST_F(lsp_context_macro_documentation, references)
@@ -70,8 +69,8 @@ TEST_F(lsp_context_macro_documentation, references)
     auto res = a.context().lsp_ctx->references(opencode_loc, { 10, 8 });
     ASSERT_EQ(res.size(), 2U);
 
-    check_location_with_position(res[0], opencode_loc, 4, 7);
-    check_location_with_position(res[1], opencode_loc, 10, 7);
+    EXPECT_EQ(res[0], location(position(4, 7), opencode_loc));
+    EXPECT_EQ(res[1], location(position(10, 7), opencode_loc));
 }
 
 TEST_F(lsp_context_macro_documentation, hover)

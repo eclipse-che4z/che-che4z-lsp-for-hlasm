@@ -15,6 +15,8 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "context/hlasm_context.h"
+#include "context/ordinary_assembly/symbol.h"
 
 // tests for EQU instruction
 
@@ -30,7 +32,7 @@ A EQU 1
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(EQU, complex)
@@ -48,7 +50,7 @@ B EQU A+A-10
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), -8);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(EQU, length_explicit)
@@ -68,7 +70,7 @@ X EQU 5,2
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "Y")->attributes().length(), (symbol_attributes::len_attr)12);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(EQU, length_implicit)
@@ -88,7 +90,7 @@ ZZ EQU *+X
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "ZZ")->attributes().length(), (symbol_attributes::len_attr)1);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(EQU, length_dep)
@@ -105,7 +107,7 @@ UNKNOWN EQU L'X
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 11);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(EQU, length_bounds)
@@ -123,7 +125,7 @@ LEM EQU A+1,100000
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEM")->attributes().length(), (symbol_attributes::len_attr)12);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), (size_t)2);
 }
 
 TEST(EQU, type_explicit)
@@ -138,7 +140,7 @@ LEN EQU 11,3,4
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().type(), 4);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(EQU, type_implicit)
@@ -153,7 +155,7 @@ LEN EQU 11,3
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().type(), symbol_attributes::undef_type);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(EQU, type_bounds)
@@ -170,7 +172,7 @@ LEM EQU 11,1,300
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEM")->attributes().type(), symbol_attributes::undef_type);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), (size_t)2);
 }
 
 TEST(EQU, loctr_use)
@@ -185,7 +187,7 @@ C  EQU   B-*+A
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(EQU, deps_with_multiplication)

@@ -21,6 +21,7 @@
 #include "empty_configs.h"
 #include "lsp/completion_item.h"
 #include "nlohmann/json.hpp"
+#include "semantics/highlighting_info.h"
 #include "utils/content_loader.h"
 #include "utils/platform.h"
 #include "utils/resource_location.h"

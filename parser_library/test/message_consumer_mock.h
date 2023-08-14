@@ -15,6 +15,10 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_MESSAGE_CONSUMER_MOCK_H
 #define HLASMPLUGIN_PARSERLIBRARY_MESSAGE_CONSUMER_MOCK_H
 
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "message_consumer.h"
 
 namespace hlasm_plugin::parser_library {

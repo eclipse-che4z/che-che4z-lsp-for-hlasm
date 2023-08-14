@@ -34,9 +34,9 @@ LABEL EQU *+2
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(diagnostics, string_substitution)
@@ -60,9 +60,9 @@ TEST(diagnostics, string_substitution)
 
     a.collect_diags();
 
-    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(diagnostics, division_by_zero) // test ok
@@ -87,9 +87,9 @@ TEST(diagnostics, division_by_zero) // test ok
 
     a.collect_diags();
 
-    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(diagnostics, instr_zero_op) // test ok
@@ -108,9 +108,9 @@ TEST(diagnostics, instr_zero_op) // test ok
 
     a.collect_diags();
 
-    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 /*
@@ -131,9 +131,9 @@ TEST(diagnostics, unkown_symbols) // to do? number of errors?
 
         a.collect_diags();
 
-        ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
+        EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
-        ASSERT_EQ(a.diags().size(), (size_t)0);
+        EXPECT_TRUE(a.diags().empty());
 }*/
 
 
@@ -152,9 +152,9 @@ TEST(diagnostics, case_insensitivity)
 
     a.collect_diags();
 
-    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(diagnostics, machine)
@@ -173,9 +173,9 @@ TEST(diagnostics, machine)
 
     a.collect_diags();
 
-    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 
@@ -236,9 +236,9 @@ LABEL2 equ *+79000
 
     a.collect_diags();
 
-    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(diagnostics,
@@ -292,7 +292,7 @@ label1 RSECT
 
     a.collect_diags();
 
-    ASSERT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
 }
@@ -311,7 +311,7 @@ TEST(diagnostics, parser_diagnostics_passing)
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(diagnostics, previously_defined_enum_operand)
@@ -326,5 +326,5 @@ PRINT EQU *
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }

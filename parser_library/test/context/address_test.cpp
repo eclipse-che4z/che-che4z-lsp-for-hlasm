@@ -15,6 +15,9 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "context/hlasm_context.h"
+#include "context/ordinary_assembly/location_counter.h"
+#include "context/ordinary_assembly/section.h"
 #include "library_info_transitional.h"
 
 // test for

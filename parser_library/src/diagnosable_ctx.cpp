@@ -14,6 +14,9 @@
 
 #include "diagnosable_ctx.h"
 
+#include "context/hlasm_context.h"
+#include "diagnostic_tools.h"
+
 namespace hlasm_plugin::parser_library {
 
 void diagnosable_ctx::add_diagnostic(diagnostic_s diagnostic) const
@@ -27,23 +30,6 @@ void diagnosable_ctx::add_diagnostic(diagnostic_s diagnostic) const
 void diagnosable_ctx::add_diagnostic(diagnostic_op diagnostic) const
 {
     diagnosable_impl::add_diagnostic(add_stack_details(std::move(diagnostic), ctx_.processing_stack()));
-}
-
-diagnostic_s add_stack_details(diagnostic_op diagnostic, context::processing_stack_t stack)
-{
-    if (stack.empty())
-        return diagnostic_s(std::move(diagnostic));
-
-    diagnostic_s diag(stack.frame().resource_loc->get_uri(), std::move(diagnostic));
-
-    for (stack = stack.parent(); !stack.empty(); stack = stack.parent())
-    {
-        const auto& f = stack.frame();
-        diag.related.emplace_back(range_uri_s(f.resource_loc->get_uri(), range(f.pos)),
-            "While compiling " + f.resource_loc->to_presentable() + '(' + std::to_string(f.pos.line + 1) + ")");
-    }
-
-    return diag;
 }
 
 } // namespace hlasm_plugin::parser_library

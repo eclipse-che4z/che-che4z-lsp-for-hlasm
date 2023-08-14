@@ -14,6 +14,7 @@
 
 #include "ca_symbol.h"
 
+#include "context/hlasm_context.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 

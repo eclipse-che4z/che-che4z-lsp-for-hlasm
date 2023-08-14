@@ -15,7 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_ERROR_LISTENER_H
 #define HLASMPLUGIN_PARSERLIBRARY_ERROR_LISTENER_H
 
-#include "antlr4-runtime.h"
+#include "ANTLRErrorListener.h"
 
 #include "diagnostic_consumer.h"
 #include "semantics/range_provider.h"

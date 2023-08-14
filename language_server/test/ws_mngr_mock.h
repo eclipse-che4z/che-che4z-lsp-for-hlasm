@@ -27,14 +27,18 @@ using namespace parser_library;
 class ws_mngr_mock : public workspace_manager
 {
 public:
-    MOCK_METHOD2(add_workspace, void(const char* name, const char* uri));
-    MOCK_METHOD1(remove_workspace, void(const char* uri));
+    MOCK_METHOD(void, add_workspace, (const char* name, const char* uri), (override));
+    MOCK_METHOD(void, remove_workspace, (const char* uri), (override));
 
-    MOCK_METHOD4(
-        did_open_file, void(const char* document_uri, version_t version, const char* text, size_t text_length));
-    MOCK_METHOD4(did_change_file,
-        void(const char* document_uri, version_t version, const document_change* changes, size_t ch_size));
-    MOCK_METHOD1(did_close_file, void(const char* document_uri));
+    MOCK_METHOD(void,
+        did_open_file,
+        (const char* document_uri, version_t version, const char* text, size_t text_length),
+        (override));
+    MOCK_METHOD(void,
+        did_change_file,
+        (const char* document_uri, version_t version, const document_change* changes, size_t ch_size),
+        (override));
+    MOCK_METHOD(void, did_close_file, (const char* document_uri), (override));
     MOCK_METHOD(void, did_change_watched_files, (sequence<fs_change> changes), (override));
 
     MOCK_METHOD(void,
@@ -73,7 +77,7 @@ public:
     MOCK_METHOD(void, set_message_consumer, (message_consumer * consumer), (override));
     MOCK_METHOD(void, set_request_interface, (workspace_manager_requests * requests), (override));
 
-    MOCK_METHOD(continuous_sequence<char>, get_virtual_file_content, (unsigned long long id), (const override));
+    MOCK_METHOD(continuous_sequence<char>, get_virtual_file_content, (unsigned long long id), (const, override));
     MOCK_METHOD(void, toggle_advisory_configuration_diagnostics, (), (override));
 
 

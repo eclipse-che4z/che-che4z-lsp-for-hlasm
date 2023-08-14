@@ -16,6 +16,8 @@
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
+#include "context/hlasm_context.h"
+#include "processing/instruction_sets/macro_processor.h"
 
 // tests for macro feature:
 // definition parsing
@@ -219,7 +221,7 @@ TEST(macro, macro_positional_param_subs)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_keyword_param)
@@ -237,7 +239,7 @@ TEST(macro, macro_keyword_param)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_undefined_keyword_param)
@@ -254,9 +256,8 @@ TEST(macro, macro_undefined_keyword_param)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().front().severity, diagnostic_severity::warning);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_TRUE(contains_message_properties(a.diags(), { diagnostic_severity::warning }, &diagnostic_s::severity));
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_param_expr)
@@ -277,7 +278,7 @@ TEST(macro, macro_param_expr)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)2);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_composite_param_no_err)
@@ -294,7 +295,7 @@ TEST(macro, macro_composite_param_no_err)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_composite_param_err)
@@ -311,7 +312,7 @@ TEST(macro, macro_composite_param_err)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 
@@ -329,7 +330,7 @@ TEST(macro, macro_name_param)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_name_param_repetition)
@@ -356,7 +357,7 @@ TEST(macro, macro_name_param_repetition)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)3);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     auto& m1 = *a.hlasm_ctx().find_macro(id_index("M1"));
     auto& m2 = *a.hlasm_ctx().find_macro(id_index("M2"));
@@ -416,7 +417,7 @@ TEST(macro, MEXIT)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, cyclic_call_infinite)
@@ -435,7 +436,7 @@ TEST(macro, cyclic_call_infinite)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, cyclic_call_finite)
@@ -457,7 +458,7 @@ TEST(macro, cyclic_call_finite)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)10);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, arguments_concatenation)
@@ -485,7 +486,7 @@ TEST(macro, arguments_concatenation)
     EXPECT_EQ(it->second->access_set_symbol_base()->access_set_symbol<C_t>()->get_value(), "(B-C)+(A-D)");
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, arguments_continuation)
@@ -517,7 +518,7 @@ TEST(macro, arguments_continuation)
     EXPECT_EQ(W->second->access_set_symbol_base()->access_set_symbol<C_t>()->get_value(), "Y");
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 TEST(external_macro, bad_name)
 {
@@ -539,7 +540,7 @@ TEST(external_macro, bad_name)
     ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
     EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 1U);
     EXPECT_EQ(a.diags().size(), 2U);
-    EXPECT_EQ(a.debug_syntax_errors(), 0U);
+    EXPECT_EQ(get_syntax_errors(a), 0U);
 }
 
 TEST(external_macro, bad_begin)
@@ -563,7 +564,7 @@ TEST(external_macro, bad_begin)
     ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
     EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 1U);
     EXPECT_EQ(a.diags().size(), 2U);
-    EXPECT_EQ(a.debug_syntax_errors(), 0U);
+    EXPECT_EQ(get_syntax_errors(a), 0U);
 }
 
 TEST(external_macro, library_with_begin_comment)
@@ -586,8 +587,8 @@ TEST(external_macro, library_with_begin_comment)
     a.collect_diags();
     ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
     EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 0U);
-    EXPECT_EQ(a.diags().size(), 0U);
-    EXPECT_EQ(a.debug_syntax_errors(), 0U);
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_syntax_errors(a), 0U);
 }
 
 TEST(external_macro, process_ordinary_restart)
@@ -749,7 +750,7 @@ TEST(macro, parse_args)
     a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, seq_numbers)
@@ -766,7 +767,7 @@ TEST(macro, seq_numbers)
     a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, apostrophe_in_substitution)
@@ -784,7 +785,7 @@ TEST(macro, apostrophe_in_substitution)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
 }
 

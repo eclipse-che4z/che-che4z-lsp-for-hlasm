@@ -19,14 +19,6 @@
 // test for
 // arithmetic SETB expressions
 
-#define SETBEQ(X, Y)                                                                                                   \
-    EXPECT_EQ(a.hlasm_ctx()                                                                                            \
-                  .get_var_sym(context::id_index(X))                                                                   \
-                  ->access_set_symbol_base()                                                                           \
-                  ->access_set_symbol<B_t>()                                                                           \
-                  ->get_value(),                                                                                       \
-        Y)
-
 TEST(logical_expressions, valid_assignment)
 {
     std::string input =
@@ -44,11 +36,11 @@ TEST(logical_expressions, valid_assignment)
     a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
-    SETBEQ("A1", 1);
-    SETBEQ("A2", 0);
-    SETBEQ("A3", 0);
-    SETBEQ("A4", 1);
-    SETBEQ("A5", 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A2"), 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A3"), 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A4"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A5"), 1);
 }
 
 TEST(logical_expressions, empty_string_conversion)
@@ -61,9 +53,9 @@ TEST(logical_expressions, empty_string_conversion)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), 0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETBEQ("B1", false);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "B1"), false);
 }
 
 TEST(logical_expressions, invalid_assignment)
@@ -114,12 +106,12 @@ AND EQU  1
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETBEQ("A1", 1);
-    SETBEQ("A2", 1);
-    SETBEQ("A3", 1);
-    SETBEQ("A4", 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A2"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A3"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A4"), 0);
 }
 TEST(logical_expressions, valid_relational_expression)
 {
@@ -138,16 +130,16 @@ TEST(logical_expressions, valid_relational_expression)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETBEQ("A1", 0);
-    SETBEQ("A2", 1);
-    SETBEQ("A3", 1);
-    SETBEQ("A4", 1);
-    SETBEQ("A5", 1);
-    SETBEQ("A6", 1);
-    SETBEQ("A7", 1);
-    SETBEQ("A8", 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A2"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A3"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A4"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A5"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A6"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A7"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A8"), 1);
 }
 
 TEST(logical_expressions, invalid_relational_expression)
@@ -183,15 +175,15 @@ TEST(logical_expressions, priority)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETBEQ("A1", 1);
-    SETBEQ("A2", 1);
-    SETBEQ("A3", 1);
-    SETBEQ("A4", 0);
-    SETBEQ("A5", 1);
-    SETBEQ("A6", 0);
-    SETBEQ("A7", 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A2"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A3"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A4"), 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A5"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A6"), 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A7"), 1);
 }
 
 TEST(logical_expressions, arithmetic_logical_clash)
@@ -207,12 +199,12 @@ TEST(logical_expressions, arithmetic_logical_clash)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETBEQ("A1", 0);
-    SETBEQ("A2", 1);
-    SETBEQ("A3", 0);
-    SETBEQ("A4", 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A2"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A3"), 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A4"), 0);
 }
 
 TEST(logical_expressions, signs_in_arithmetic_expressions)
@@ -229,10 +221,10 @@ TEST(logical_expressions, signs_in_arithmetic_expressions)
 
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    SETBEQ("A1", 1);
-    SETBEQ("A2", 1);
-    SETBEQ("A3", 0);
-    SETBEQ("A4", 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A2"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A3"), 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A4"), 1);
 }
 
 
@@ -278,11 +270,11 @@ TEST(logical_expressions, no_spaces)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETBEQ("A1", 1);
-    SETBEQ("A2", 1);
-    SETBEQ("A3", 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A2"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A3"), 1);
 }
 
 TEST(logical_expressions, bad_number_of_operands)
@@ -295,8 +287,7 @@ TEST(logical_expressions, bad_number_of_operands)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.diags().front().code, "CE006");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE006" }));
 }
 
 TEST(logical_expressions, is_functions)
@@ -312,12 +303,12 @@ TEST(logical_expressions, is_functions)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
-    SETBEQ("A", 1);
-    SETBEQ("B", 0);
-    SETBEQ("C", 1);
-    SETBEQ("D", 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "B"), 0);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "C"), 1);
+    EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "D"), 0);
 }
 
 TEST(logical_expressions, parenthesis_around_expressions)

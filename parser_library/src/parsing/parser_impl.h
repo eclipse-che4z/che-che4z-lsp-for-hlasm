@@ -17,8 +17,7 @@
 
 #include <type_traits>
 
-#include "antlr4-runtime.h"
-
+#include "Parser.h"
 #include "parser_error_listener.h"
 #include "semantics/collector.h"
 #include "semantics/source_info_processor.h"

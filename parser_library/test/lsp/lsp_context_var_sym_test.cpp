@@ -16,7 +16,6 @@
 
 #include "analyzer_fixture.h"
 #include "lsp/lsp_context.h"
-#include "lsp_context_test_helper.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -40,7 +39,7 @@ struct lsp_context_var_symbol_SET : public analyzer_fixture
 TEST_F(lsp_context_var_symbol_SET, definition)
 {
     location res = a.context().lsp_ctx->definition(opencode_loc, { 2, 7 });
-    check_location_with_position(res, opencode_loc, 1, 0);
+    EXPECT_EQ(res, location(position(1, 0), opencode_loc));
 }
 
 TEST_F(lsp_context_var_symbol_SET, references)
@@ -48,8 +47,8 @@ TEST_F(lsp_context_var_symbol_SET, references)
     auto res = a.context().lsp_ctx->references(opencode_loc, { 2, 7 });
     ASSERT_EQ(res.size(), 2U);
 
-    check_location_with_position(res[0], opencode_loc, 1, 0);
-    check_location_with_position(res[1], opencode_loc, 2, 6);
+    EXPECT_EQ(res[0], location(position(1, 0), opencode_loc));
+    EXPECT_EQ(res[1], location(position(2, 6), opencode_loc));
 }
 
 TEST_F(lsp_context_var_symbol_SET, hover)
@@ -92,7 +91,7 @@ struct lsp_context_var_symbol_GBL : public analyzer_fixture
 TEST_F(lsp_context_var_symbol_GBL, definition)
 {
     location res = a.context().lsp_ctx->definition(opencode_loc, { 2, 7 });
-    check_location_with_position(res, opencode_loc, 1, 6);
+    EXPECT_EQ(res, location(position(1, 6), opencode_loc));
 }
 
 TEST_F(lsp_context_var_symbol_GBL, references)
@@ -100,8 +99,8 @@ TEST_F(lsp_context_var_symbol_GBL, references)
     auto res = a.context().lsp_ctx->references(opencode_loc, { 2, 7 });
     ASSERT_EQ(res.size(), 2U);
 
-    check_location_with_position(res[0], opencode_loc, 1, 6);
-    check_location_with_position(res[1], opencode_loc, 2, 6);
+    EXPECT_EQ(res[0], location(position(1, 6), opencode_loc));
+    EXPECT_EQ(res[1], location(position(2, 6), opencode_loc));
 }
 
 TEST_F(lsp_context_var_symbol_GBL, hover)
@@ -142,7 +141,7 @@ struct lsp_context_var_symbol_LCL : public analyzer_fixture
 TEST_F(lsp_context_var_symbol_LCL, definition)
 {
     auto res = a.context().lsp_ctx->definition(opencode_loc, { 2, 7 });
-    check_location_with_position(res, opencode_loc, 1, 6);
+    EXPECT_EQ(res, location(position(1, 6), opencode_loc));
 }
 
 TEST_F(lsp_context_var_symbol_LCL, references)
@@ -150,8 +149,8 @@ TEST_F(lsp_context_var_symbol_LCL, references)
     auto res = a.context().lsp_ctx->references(opencode_loc, { 2, 7 });
     ASSERT_EQ(res.size(), 2U);
 
-    check_location_with_position(res[0], opencode_loc, 1, 6);
-    check_location_with_position(res[1], opencode_loc, 2, 6);
+    EXPECT_EQ(res[0], location(position(1, 6), opencode_loc));
+    EXPECT_EQ(res[1], location(position(2, 6), opencode_loc));
 }
 
 TEST_F(lsp_context_var_symbol_LCL, hover)
@@ -186,7 +185,7 @@ struct lsp_context_var_symbol_no_definition : public analyzer_fixture
 TEST_F(lsp_context_var_symbol_no_definition, definition)
 {
     auto res = a.context().lsp_ctx->definition(opencode_loc, { 0, 6 });
-    check_location_with_position(res, opencode_loc, 0, 6);
+    EXPECT_EQ(res, location(position(0, 6), opencode_loc));
 }
 
 TEST_F(lsp_context_var_symbol_no_definition, references)
@@ -194,7 +193,7 @@ TEST_F(lsp_context_var_symbol_no_definition, references)
     auto res = a.context().lsp_ctx->references(opencode_loc, { 0, 6 });
     ASSERT_EQ(res.size(), 1U);
 
-    check_location_with_position(res[0], opencode_loc, 0, 4);
+    EXPECT_EQ(res[0], location(position(0, 4), opencode_loc));
 }
 
 TEST_F(lsp_context_var_symbol_no_definition, hover)
@@ -207,7 +206,7 @@ TEST_F(lsp_context_var_symbol_no_definition, hover)
 TEST_F(lsp_context_var_symbol_no_definition, definition_no_occurrence)
 {
     auto res = a.context().lsp_ctx->definition(opencode_loc, { 0, 9 });
-    check_location_with_position(res, opencode_loc, 0, 9);
+    EXPECT_EQ(res, location(position(0, 9), opencode_loc));
 }
 
 TEST_F(lsp_context_var_symbol_no_definition, references_no_occurrence)

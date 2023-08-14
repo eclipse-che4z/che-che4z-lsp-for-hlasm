@@ -19,8 +19,8 @@
 #include <queue>
 #include <string>
 
-#include "antlr4-runtime.h"
-
+#include "TokenFactory.h"
+#include "TokenSource.h"
 #include "parser_library_export.h"
 #include "range.h"
 #include "semantics/source_info_processor.h"
@@ -62,10 +62,7 @@ public:
 
     std::string getSourceName() override;
 
-    antlr4::TokenFactory<antlr4::CommonToken>* getTokenFactory() override
-    {
-        return antlr4::CommonTokenFactory::DEFAULT.get();
-    };
+    antlr4::TokenFactory<antlr4::CommonToken>* getTokenFactory() override;
 
     enum Tokens
     {

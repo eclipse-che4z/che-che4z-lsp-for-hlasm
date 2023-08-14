@@ -23,6 +23,7 @@
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
 #include "analyzer.h"
+#include "lexing/logical_line.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
 #include "semantics/source_info_processor.h"

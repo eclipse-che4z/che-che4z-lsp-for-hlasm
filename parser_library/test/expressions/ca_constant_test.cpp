@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "context/hlasm_context.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/evaluation_context.h"
 #include "library_info_transitional.h"

@@ -16,8 +16,7 @@
 
 #include <cassert>
 
-#include "antlr4-runtime.h"
-
+#include "ParserRuleContext.h"
 #include "lexing/token.h"
 
 using namespace hlasm_plugin::parser_library;

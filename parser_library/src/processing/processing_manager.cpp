@@ -17,6 +17,7 @@
 #include <cassert>
 #include <memory>
 
+#include "diagnostic_tools.h"
 #include "lsp/lsp_context.h"
 #include "lsp/text_data_view.h"
 #include "parsing/parser_impl.h"

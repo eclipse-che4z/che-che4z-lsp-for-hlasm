@@ -16,6 +16,7 @@
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
+#include "context/hlasm_context.h"
 // tests for ordinary symbols feature:
 // relocatable/absolute value and attribute value
 // space/alignment creation
@@ -35,7 +36,7 @@ lbl lr 1,1
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("LCL")));
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(ordinary_symbols, section_continuation)
@@ -52,7 +53,7 @@ B DSECT
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(context::id_index("B"), section_kind::DUMMY));
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(ordinary_symbols, section_duplication)
@@ -66,7 +67,7 @@ A DSECT
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(context::id_index("A"), section_kind::EXECUTABLE));
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(ordinary_symbols, previously_defined_symbol_abs)
@@ -89,7 +90,7 @@ C EQU 10
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C"), 10);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(ordinary_symbols, previously_defined_symbol_reloc)
@@ -113,7 +114,7 @@ Y LR 1,1
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "Y")->value().value_kind(), symbol_value_kind::RELOC);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(ordinary_symbols, cyclic_dependency)
@@ -135,7 +136,7 @@ C EQU A
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "C")->kind() == symbol_value_kind::ABS);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(ordinary_symbols, previously_defined_mach_err)
@@ -155,7 +156,7 @@ B EQU 100
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 100);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(ordinary_symbols, relocatable_bad_place)
@@ -188,7 +189,7 @@ B LR A*2,1
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "A")->kind() == symbol_value_kind::RELOC);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), (size_t)2);
 }
 
 TEST(ordinary_symbols, relocatable_to_absolute)
@@ -207,7 +208,7 @@ Y LR 1,1
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "Y")->kind() == symbol_value_kind::RELOC);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(ordinary_symbols, complex_relocatable_address)
@@ -243,7 +244,7 @@ F EQU V-U
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "F"), 4);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(ordinary_symbols, location_counter_simple)
@@ -276,7 +277,7 @@ X3 EQU F-E
     ASSERT_EQ(get_symbol_abs(a.hlasm_ctx(), "X3"), 2);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(ordinary_symbols, symbol_location)

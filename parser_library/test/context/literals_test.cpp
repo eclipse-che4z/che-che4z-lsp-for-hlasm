@@ -16,6 +16,8 @@
 
 #include "../common_testing.h"
 #include "context/literal_pool.h"
+#include "context/ordinary_assembly/location_counter.h"
+#include "context/ordinary_assembly/section.h"
 
 // test for
 // handling of literals
@@ -163,11 +165,7 @@ B   EQU   *-A
 
     EXPECT_TRUE(a.diags().empty());
 
-    const auto* symbol = get_symbol(a.hlasm_ctx(), "B");
-    ASSERT_TRUE(symbol);
-    auto symbol_value = symbol->value();
-    ASSERT_EQ(symbol_value.value_kind(), context::symbol_value_kind::ABS);
-    EXPECT_EQ(symbol_value.get_abs(), 4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 4);
 }
 
 TEST(literals, ltorg_repeating_literals)

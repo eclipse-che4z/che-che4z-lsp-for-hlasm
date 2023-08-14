@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "context/ordinary_assembly/address.h"
 
 // tests for ORG instruction
 TEST(org, duplicate_labels)
@@ -27,7 +28,7 @@ A ORG ,
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, non_reloc)
@@ -82,7 +83,7 @@ A  LOCTR
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, symbol_in_different_section)
@@ -98,7 +99,7 @@ B1 LR 1,1
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, section_underflow)
@@ -112,7 +113,7 @@ A  CSECT
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, loctr_underflow)
@@ -127,7 +128,7 @@ B LOCTR
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, subtract_from_asterisk)
@@ -144,7 +145,7 @@ B EQU *-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 15);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, add_to_asterisk)
@@ -161,7 +162,7 @@ B EQU *-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 16);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, jump_to_ord_sym)
@@ -175,7 +176,7 @@ X EQU 1
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, jump_to_ord_sym_plus_const)
@@ -192,7 +193,7 @@ B EQU *-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 3);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, jump_after_last_space_and_back_asterisk)
@@ -210,7 +211,7 @@ X  EQU S-*
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 2);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, jump_after_last_space_and_back_asterisk_with_equ)
@@ -229,7 +230,7 @@ Y  EQU S
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 2);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, jump_before_last_space_and_back_asterisk)
@@ -245,7 +246,7 @@ X  EQU S-*
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, jump_after_last_space_and_back_ord_sym)
@@ -264,7 +265,7 @@ X  EQU *-S2
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 2);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, jump_before_last_space_and_back_ord_sym)
@@ -281,7 +282,7 @@ X  EQU *-S2
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, jump_before_space)
@@ -301,7 +302,7 @@ X      EQU 3
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 16);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, jump_before_space_inverted)
@@ -316,7 +317,7 @@ X EQU S-*
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, jump_before_alignment_space)
@@ -333,7 +334,7 @@ X      EQU D-*
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, second_param_invalid)
@@ -349,7 +350,7 @@ TEST(org, second_param_invalid)
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)4);
+    EXPECT_EQ(a.diags().size(), (size_t)4);
 }
 
 TEST(org, second_param_use)
@@ -386,7 +387,7 @@ X  EQU 1
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 4);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, second_param_use_ord_sym_false_alignment)
@@ -422,7 +423,7 @@ X  EQU *-B
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, third_param_invalid)
@@ -439,7 +440,7 @@ S EQU *+1
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)3);
+    EXPECT_EQ(a.diags().size(), (size_t)3);
 }
 
 TEST(org, third_param_use)
@@ -455,7 +456,7 @@ B  EQU *-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 20);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, third_param_bad_use)
@@ -468,7 +469,7 @@ A  DS  1C
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, third_param_use_ord_sym)
@@ -485,7 +486,7 @@ X  EQU A-*
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 3);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, all_params_use)
@@ -501,7 +502,7 @@ X  EQU *-B
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 4);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, all_params_false_use)
@@ -516,7 +517,7 @@ X  EQU A-*
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, available_empty_params)
@@ -534,7 +535,7 @@ Y  EQU *-B
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 0);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, available_use_ord_sym)
@@ -553,7 +554,7 @@ Y  EQU *-B
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 0);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, available_use_ord_sym_loctr)
@@ -573,7 +574,7 @@ Y  EQU *-B
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 0);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, available_cycle)
@@ -588,7 +589,7 @@ X  EQU *-B
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, available_competing_simple)
@@ -608,7 +609,7 @@ X  EQU 2
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 4);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
     std::string input2(R"(
 A  DS  (4)C
@@ -647,7 +648,7 @@ Z  EQU *-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 10);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, available_all_param)
@@ -667,7 +668,7 @@ X  EQU 2
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 6);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, unknown_absolute_part_simple)
@@ -684,7 +685,7 @@ Z EQU *-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 10);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, unknown_absolute_part_space)
@@ -703,7 +704,7 @@ Z EQU *-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 10);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, unknown_absolute_part_simple_all_params)
@@ -722,7 +723,7 @@ Z EQU *-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 13);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, unknown_absolute_part_space_all_params)
@@ -738,7 +739,7 @@ Z EQU *-A
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(org, unknown_absolute_part_multiple_spaces)
@@ -763,7 +764,7 @@ Z2 EQU B-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z2"), 20);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 
@@ -786,7 +787,7 @@ Z EQU *-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 48);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, multiple_unknown_absolute_parts_loctr)
@@ -809,7 +810,7 @@ Z EQU *-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 48);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, unknown_absolute_part_jump_before_space_simple)
@@ -827,7 +828,7 @@ X EQU 10
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 6);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
     std::string input2(R"(
 A DS (X)C
@@ -861,7 +862,7 @@ X EQU 10
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 6);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, unknown_absolute_part_jump_before_space_twice_resolve_in_order)
@@ -882,7 +883,7 @@ Y EQU 4
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C"), 2);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, unknown_absolute_part_jump_before_space_twice_resolve_in_reverse_order)
@@ -904,7 +905,7 @@ Y1 EQU 4
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C"), 2);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, unknown_absolute_part_with_available_value)
@@ -923,7 +924,7 @@ X EQU 10
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 10);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
     std::string input2(R"(
 A  DS (X)C
@@ -959,7 +960,7 @@ X EQU 10
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 10);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
     std::string input2(R"(
 L LOCTR
@@ -1015,7 +1016,7 @@ X EQU 4
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)3);
+    EXPECT_EQ(a.diags().size(), (size_t)3);
 }
 
 TEST(org, true_negative_check)
@@ -1032,7 +1033,7 @@ X EQU 2
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, multiple_same_calls)
@@ -1051,7 +1052,7 @@ B EQU *-A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 1);
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(org, correct_alignment_computation_with_locators)

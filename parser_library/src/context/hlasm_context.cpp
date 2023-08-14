@@ -24,6 +24,7 @@
 #include "instruction.h"
 #include "lexing/lexer.h"
 #include "lexing/tools.h"
+#include "ordinary_assembly/location_counter.h"
 #include "using.h"
 #include "utils/time.h"
 

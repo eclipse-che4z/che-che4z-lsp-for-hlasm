@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 
-#include "location_counter.h"
+#include "../id_index.h"
 
 namespace hlasm_plugin::parser_library::context {
 

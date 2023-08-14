@@ -14,6 +14,8 @@
 
 #include "collector.h"
 
+#include "antlr4-runtime.h"
+
 #include "expressions/data_definition.h"
 #include "lexing/lexer.h"
 #include "operand_impls.h"

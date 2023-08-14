@@ -15,15 +15,15 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CA_EXPRESSION_VISITOR_H
 #define HLASMPLUGIN_PARSERLIBRARY_CA_EXPRESSION_VISITOR_H
 
-#include "terms/ca_constant.h"
-#include "terms/ca_expr_list.h"
-#include "terms/ca_function.h"
-#include "terms/ca_string.h"
-#include "terms/ca_symbol.h"
-#include "terms/ca_symbol_attribute.h"
-#include "terms/ca_var_sym.h"
-
 namespace hlasm_plugin::parser_library::expressions {
+
+class ca_constant;
+class ca_expr_list;
+class ca_function;
+class ca_string;
+class ca_symbol;
+class ca_symbol_attribute;
+class ca_var_sym;
 
 class ca_expr_visitor
 {

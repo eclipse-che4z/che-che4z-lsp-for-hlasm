@@ -16,13 +16,18 @@
 
 #include <stdexcept>
 
+#include "checking/diagnostic_collector.h"
 #include "checking/instruction_checker.h"
+#include "checking/using_label_checker.h"
+#include "context/hlasm_context.h"
 #include "context/literal_pool.h"
+#include "context/ordinary_assembly/location_counter.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/ordinary_assembly/symbol_dependency_tables.h"
 #include "diagnostic_consumer.h"
 #include "ebcdic_encoding.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
+#include "semantics/operand_impls.h"
 #include "utils/truth_table.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -250,6 +255,248 @@ void ordinary_processor::collect_diags() const
     collect_diags_from_child(mach_proc_);
 }
 
+namespace {
+
+checking::check_op_ptr get_check_op(const semantics::operand* op,
+    context::dependency_solver& dep_solver,
+    const diagnostic_collector& add_diagnostic,
+    const resolved_statement& stmt,
+    size_t op_position,
+    const context::mnemonic_code* mnemonic = nullptr)
+{
+    diagnostic_consumer_transform diags([&add_diagnostic](diagnostic_op d) { add_diagnostic(std::move(d)); });
+
+    const auto& ev_op = dynamic_cast<const semantics::evaluable_operand&>(*op);
+
+    auto tmp = context::instruction::find_assembler_instructions(stmt.opcode_ref().value.to_string_view());
+    const bool can_have_ord_syms = tmp ? tmp->has_ord_symbols() : true;
+    const bool postpone_dependencies = tmp ? tmp->postpone_dependencies() : false;
+
+    std::vector<context::id_index> missing_symbols;
+    if (can_have_ord_syms && !postpone_dependencies && ev_op.has_dependencies(dep_solver, &missing_symbols))
+    {
+        for (const auto& symbol : missing_symbols)
+            add_diagnostic(diagnostic_op::error_E010("ordinary symbol", symbol.to_string_view(), ev_op.operand_range));
+        if (missing_symbols.empty()) // this is a fallback message if somehow non-symbolic deps are not resolved
+            add_diagnostic(diagnostic_op::error_E016(ev_op.operand_range));
+        return nullptr;
+    }
+
+    checking::check_op_ptr uniq;
+
+    checking::using_label_checker lc(dep_solver, diags);
+    ev_op.apply_mach_visitor(lc);
+
+    if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(&ev_op))
+    {
+        // TODO: this is less than ideal, we should probably create operand structures
+        // with the correct "type" while parsing and reject incompatible arguments
+        // early when the syntax is incompatible
+        const auto* instr = mnemonic
+            ? mnemonic->instruction()
+            : &context::instruction::get_machine_instructions(stmt.opcode_ref().value.to_string_view());
+        if (op_position < instr->operands().size())
+        {
+            uniq = mach_op->get_operand_value(dep_solver, instr->operands()[op_position], diags);
+        }
+        else
+            uniq = ev_op.get_operand_value(dep_solver, diags);
+    }
+    else if (auto expr_op = dynamic_cast<const semantics::expr_assembler_operand*>(&ev_op))
+    {
+        uniq = expr_op->get_operand_value(dep_solver, can_have_ord_syms, diags);
+    }
+    else
+    {
+        uniq = ev_op.get_operand_value(dep_solver, diags);
+    }
+
+    return uniq;
+}
+
+std::optional<std::vector<checking::check_op_ptr>> transform_mnemonic(const resolved_statement& stmt,
+    context::dependency_solver& dep_solver,
+    const context::mnemonic_code& mnemonic,
+    const diagnostic_collector& add_diagnostic)
+{
+    // operands obtained from the user
+    const auto& operands = stmt.operands_ref().value;
+    // the name of the instruction (mnemonic) obtained from the user
+    auto instr_name = stmt.opcode_ref().value.to_string_view();
+    // the machine instruction structure associated with the given instruction name
+    auto curr_instr = mnemonic.instruction();
+
+    auto transforms = mnemonic.operand_transformations();
+
+    // check size of mnemonic operands
+    if (auto [low, high] = mnemonic.operand_count(); operands.size() < low || operands.size() > high)
+    {
+        add_diagnostic(
+            diagnostic_op::error_optional_number_of_operands(instr_name, high - low, high, stmt.stmt_range_ref()));
+        return std::nullopt;
+    }
+    assert(operands.size() <= context::machine_instruction::max_operand_count);
+
+    struct operand_info
+    {
+        int value;
+        bool failed;
+        range r;
+    };
+
+    std::array<checking::check_op_ptr, context::machine_instruction::max_operand_count> po;
+    std::array<operand_info, context::machine_instruction::max_operand_count> provided_operand_values {};
+    for (size_t op_id = 0, po_id = 0, repl_id = 0, processed = 0; const auto& operand : operands)
+    {
+        while (repl_id < transforms.size() && processed == transforms[repl_id].skip && transforms[repl_id].insert)
+        {
+            ++repl_id;
+            ++op_id;
+            processed = 0;
+        }
+        auto& t = po[po_id];
+        provided_operand_values[po_id].r = operand->operand_range;
+        if (operand->type == semantics::operand_type::EMPTY) // if operand is empty
+        {
+            t = std::make_unique<checking::empty_operand>(operand->operand_range);
+            provided_operand_values[po_id].failed = true;
+        }
+        else // if operand is not empty
+        {
+            t = get_check_op(operand.get(), dep_solver, add_diagnostic, stmt, op_id, &mnemonic);
+            if (!t)
+                return std::nullopt; // contains dependencies
+            t->operand_range = operand->operand_range;
+            if (const auto* ao = dynamic_cast<const checking::one_operand*>(t.get()); ao)
+                provided_operand_values[po_id].value = ao->value;
+            else
+                provided_operand_values[po_id].failed = true;
+        }
+        if (repl_id < transforms.size() && processed == transforms[repl_id].skip)
+        {
+            ++repl_id;
+            processed = 0;
+        }
+        else
+            ++processed;
+        ++op_id;
+        ++po_id;
+    }
+    std::span<checking::check_op_ptr> provided_operands(po.data(), operands.size());
+
+    // create vector of empty operands
+    std::vector<checking::check_op_ptr> result(curr_instr->operands().size());
+
+    // add other
+    for (size_t processed = 0; auto& op : result)
+    {
+        if (!transforms.empty() && transforms.front().skip == processed)
+        {
+            const auto transform = transforms.front();
+            transforms = transforms.subspan(1);
+            processed = 0;
+
+            const auto& [expr_value, failed, r] = provided_operand_values[transform.source];
+            int value = transform.value;
+            switch (transform.type)
+            {
+                case context::mnemonic_transformation_kind::value:
+                    break;
+                case context::mnemonic_transformation_kind::copy:
+                    value = expr_value;
+                    break;
+                case context::mnemonic_transformation_kind::or_with:
+                    value |= expr_value;
+                    break;
+                case context::mnemonic_transformation_kind::add_to:
+                    value += expr_value;
+                    break;
+                case context::mnemonic_transformation_kind::subtract_from:
+                    value -= expr_value;
+                    break;
+                case context::mnemonic_transformation_kind::complement:
+                    value = 1 + ~(unsigned)expr_value & (1u << value) - 1;
+                    break;
+            }
+            if (!transform.has_source() && transform.insert || !failed)
+                op = std::make_unique<checking::one_operand>(value, r);
+            else
+                op = std::make_unique<checking::empty_operand>(r);
+
+            if (!transform.insert && !provided_operands.empty())
+                provided_operands = provided_operands.subspan(1); // consume updated operand
+            continue;
+        }
+        if (provided_operands.empty())
+            break;
+
+        op = std::move(provided_operands.front());
+        provided_operands = provided_operands.subspan(1);
+        ++processed;
+    }
+    std::erase_if(result, [](const auto& x) { return !x; });
+    return result;
+}
+
+std::optional<std::vector<checking::check_op_ptr>> transform_default(
+    const resolved_statement& stmt, context::dependency_solver& dep_solver, const diagnostic_collector& add_diagnostic)
+{
+    std::vector<checking::check_op_ptr> operand_vector;
+    const auto& ops = stmt.operands_ref().value;
+    operand_vector.reserve(ops.size());
+    for (const auto& op : ops)
+    {
+        // check whether operand isn't empty
+        if (op->type == semantics::operand_type::EMPTY)
+        {
+            operand_vector.push_back(std::make_unique<checking::empty_operand>(op->operand_range));
+            continue;
+        }
+
+        auto uniq = get_check_op(op.get(), dep_solver, add_diagnostic, stmt, operand_vector.size());
+
+        if (!uniq)
+            return std::nullopt; // contains dependencies
+
+        uniq->operand_range = op.get()->operand_range;
+        operand_vector.push_back(std::move(uniq));
+    }
+    return operand_vector;
+}
+
+bool statement_check(const resolved_statement& stmt,
+    const context::processing_stack_t& processing_stack,
+    context::dependency_solver& dep_solver,
+    const checking::instruction_checker& checker,
+    const diagnosable_ctx& diagnoser)
+{
+    diagnostic_collector collector(&diagnoser, processing_stack);
+
+    std::vector<const checking::operand*> operand_ptr_vector;
+    std::optional<std::vector<checking::check_op_ptr>> operand_vector;
+
+    std::string_view instruction_name = stmt.opcode_ref().value.to_string_view();
+
+    if (auto mnem_tmp = context::instruction::find_mnemonic_codes(instruction_name))
+    {
+        operand_vector = transform_mnemonic(stmt, dep_solver, *mnem_tmp, collector);
+    }
+    else
+    {
+        operand_vector = transform_default(stmt, dep_solver, collector);
+    }
+
+    if (!operand_vector)
+        return false;
+
+    operand_ptr_vector.reserve(operand_vector->size());
+    for (const auto& op : *operand_vector)
+        operand_ptr_vector.push_back(op.get());
+
+    return checker.check(instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
+}
+} // namespace
+
 void ordinary_processor::check_postponed_statements(
     const std::vector<std::pair<context::post_stmt_ptr, context::dependency_evaluation_context>>& stmts)
 {
@@ -267,11 +514,11 @@ void ordinary_processor::check_postponed_statements(
         switch (rs->opcode_ref().type)
         {
             case hlasm_plugin::parser_library::context::instruction_type::MACH:
-                low_language_processor::check(*rs, stmt->location_stack(), dep_solver, mach_checker, *this);
+                statement_check(*rs, stmt->location_stack(), dep_solver, mach_checker, *this);
                 break;
 
             case hlasm_plugin::parser_library::context::instruction_type::ASM:
-                low_language_processor::check(*rs, stmt->location_stack(), dep_solver, asm_checker, *this);
+                statement_check(*rs, stmt->location_stack(), dep_solver, asm_checker, *this);
                 break;
 
             default:

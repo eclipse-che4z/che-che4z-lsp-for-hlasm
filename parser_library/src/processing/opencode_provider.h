@@ -180,6 +180,7 @@ public:
         opencode_provider_options opts,
         virtual_file_monitor* virtual_file_monitor,
         std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>>& vf_handles);
+    ~opencode_provider();
 
     parsing::hlasmparser_multiline& parser(); // for testing only
 

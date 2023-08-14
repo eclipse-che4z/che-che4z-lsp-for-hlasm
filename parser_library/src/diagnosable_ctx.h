@@ -15,11 +15,13 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DIAGNOSABLE_CTX_H
 #define HLASMPLUGIN_PARSERLIBRARY_DIAGNOSABLE_CTX_H
 
-#include "checking/diagnostic_collector.h"
-#include "context/hlasm_context.h"
 #include "diagnosable_impl.h"
 
 namespace hlasm_plugin::parser_library {
+
+namespace context {
+class hlasm_context;
+} // namespace context
 
 // abstract diagnosable class that enhances collected diagnostics
 // adds a stack of nested file positions that indicate where the diagnostic occured
@@ -38,10 +40,8 @@ protected:
 
     virtual ~diagnosable_ctx() = default;
 
-    friend diagnostic_collector;
+    friend class diagnostic_collector;
 };
-
-diagnostic_s add_stack_details(diagnostic_op diagnostic, context::processing_stack_t stack);
 
 } // namespace hlasm_plugin::parser_library
 

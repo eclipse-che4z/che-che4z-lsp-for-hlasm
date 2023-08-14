@@ -22,6 +22,7 @@
 
 #include "analyzer.h"
 #include "context/instruction.h"
+#include "fade_messages.h"
 #include "file.h"
 #include "file_manager.h"
 #include "lsp/document_symbol_item.h"

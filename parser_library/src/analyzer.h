@@ -25,30 +25,37 @@
 
 #include "analyzing_context.h"
 #include "compiler_options.h"
-#include "context/hlasm_context.h"
-#include "context/id_storage.h"
 #include "diagnosable_ctx.h"
-#include "fade_messages.h"
 #include "preprocessor_options.h"
-#include "processing/processing_format.h"
-#include "processing/processing_manager.h"
-#include "processing/statement_fields_parser.h"
+#include "processing/preprocessor.h"
 #include "protocol.h"
-#include "semantics/source_info_processor.h"
 #include "utils/resource_location.h"
-#include "virtual_file_monitor.h"
 #include "workspaces/parse_lib_provider.h"
-
 
 namespace hlasm_plugin::utils {
 class task;
 } // namespace hlasm_plugin::utils
 
+namespace hlasm_plugin::parser_library::context {
+class hlasm_context;
+} // namespace hlasm_plugin::parser_library::context
+
 namespace hlasm_plugin::parser_library::parsing {
 class hlasmparser_multiline;
 } // namespace hlasm_plugin::parser_library::parsing
 
+namespace hlasm_plugin::parser_library::processing {
+class statement_analyzer;
+} // namespace hlasm_plugin::parser_library::processing
+
+namespace hlasm_plugin::parser_library::semantics {
+class source_info_processor;
+} // namespace hlasm_plugin::parser_library::semantics
+
 namespace hlasm_plugin::parser_library {
+struct fade_message_s;
+class virtual_file_monitor;
+class virtual_file_handle;
 
 enum class collect_highlighting_info : bool
 {
@@ -142,23 +149,19 @@ public:
 // this class analyzes provided text and produces diagnostics and highlighting info with respect to provided context
 class analyzer : public diagnosable_ctx
 {
-    analyzing_context ctx_;
+    struct impl;
 
-    semantics::source_info_processor src_proc_;
-
-    processing::statement_fields_parser field_parser_;
-
-    std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>> vf_handles_;
-
-    processing::processing_manager mngr_;
+    std::unique_ptr<impl> m_impl;
 
 public:
     analyzer(std::string_view text, analyzer_options opts = {});
-    auto take_vf_handles() { return std::move(vf_handles_); }
+    ~analyzer();
+
+    std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>> take_vf_handles();
     analyzing_context context() const;
 
     context::hlasm_context& hlasm_ctx();
-    semantics::lines_info take_semantic_tokens();
+    std::vector<token_info> take_semantic_tokens();
 
     void analyze();
     [[nodiscard]] utils::task co_analyze() &;
@@ -169,7 +172,6 @@ public:
     void register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer);
 
     parsing::hlasmparser_multiline& parser(); // for testing only
-    size_t debug_syntax_errors(); // for testing only
 };
 
 } // namespace hlasm_plugin::parser_library

@@ -14,7 +14,7 @@
 
 #include "gmock/gmock.h"
 
-#include "expr_mocks.h"
+#include "context/hlasm_context.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_string.h"
 #include "expressions/evaluation_context.h"
@@ -71,8 +71,8 @@ INSTANTIATE_TEST_SUITE_P(param_suite,
     ca_string_suite,
     ::testing::Values(test_param { "abc", 0, "", false, "dupl_zero" },
         test_param { "abc", -5, "", true, "dupl_negative" },
-        test_param { big_string() + big_string(), 1, "", true, "too_big_value" },
-        test_param { big_string(), 2, "", true, "too_big_dupl_factor" }),
+        test_param { std::string(8000, '1'), 1, "", true, "too_big_value" },
+        test_param { std::string(4000, '1'), 2, "", true, "too_big_dupl_factor" }),
     stringer());
 
 TEST(ca_string, test)

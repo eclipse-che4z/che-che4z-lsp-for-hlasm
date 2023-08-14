@@ -12,13 +12,14 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include "../../common_testing.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "data_definition_common.h"
 #include "expressions/data_definition.h"
-#include "hlasmparser_multiline.h"
 #include "library_info_transitional.h"
 #include "processing/instruction_sets/data_def_postponed_statement.h"
 #include "semantics/operand.h"
+#include "semantics/operand_impls.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::checking;
@@ -27,8 +28,7 @@ using namespace hlasm_plugin::parser_library;
 std::unique_ptr<semantics::operand> data_def_op_from_string(std::string input)
 {
     analyzer a(input);
-    auto f = a.parser().data_def();
-    return std::make_unique<semantics::data_def_operand>(std::move(f->value), range());
+    return std::make_unique<semantics::data_def_operand>(parse_data_definition(a), range());
 }
 
 TEST(data_def_operands_length, all_bit_len)

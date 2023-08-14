@@ -18,7 +18,7 @@
 #include <string>
 #include <string_view>
 
-#include "antlr4-runtime.h"
+#include "ANTLRInputStream.h"
 
 #include "logical_line.h"
 #include "parser_library_export.h"

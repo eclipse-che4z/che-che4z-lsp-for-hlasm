@@ -16,7 +16,8 @@
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
-#include "hlasmparser_multiline.h"
+#include "expressions/conditional_assembly/ca_expression.h"
+#include "expressions/evaluation_context.h"
 #include "library_info_transitional.h"
 #include "lsp/lsp_context.h"
 
@@ -58,7 +59,7 @@ TEST(lookahead, forward_jump_to_continued)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     EXPECT_FALSE(a.hlasm_ctx().get_var_sym(id_index("BAD")));
     EXPECT_TRUE(a.hlasm_ctx().get_var_sym(id_index("GOOD")));
@@ -81,7 +82,7 @@ TEST(lookahead, forward_jump_from_continued)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     EXPECT_FALSE(a.hlasm_ctx().get_var_sym(id_index("BAD")));
     EXPECT_TRUE(a.hlasm_ctx().get_var_sym(id_index("GOOD")));
@@ -104,7 +105,7 @@ tr9023-22
     auto id = id_index("NEW");
     auto var = a.hlasm_ctx().get_var_sym(id);
     EXPECT_FALSE(var);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(lookahead, forward_jump_fail)
@@ -213,7 +214,7 @@ TEST(attribute_lookahead, lookup_triggered)
 {
     std::string input("L'X");
     analyzer a(input);
-    auto& expr = a.parser().expr()->ca_expr;
+    auto expr = parse_ca_expression(a);
 
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
@@ -229,7 +230,7 @@ TEST(attribute_lookahead, nested_lookup_triggered)
 {
     std::string input("L'&V1(L'&V2)");
     analyzer a(input);
-    auto& expr = a.parser().expr()->ca_expr;
+    auto expr = parse_ca_expression(a);
 
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
@@ -264,7 +265,7 @@ TEST(attribute_lookahead, lookup_not_triggered)
 {
     std::string input("L'X");
     analyzer a(input);
-    auto& expr = a.parser().expr()->ca_expr;
+    auto expr = parse_ca_expression(a);
 
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
@@ -289,7 +290,7 @@ TEST(attribute_lookahead, lookup_of_two_refs)
 {
     std::string input("L'X+L'Y");
     analyzer a(input);
-    auto& expr = a.parser().expr()->ca_expr;
+    auto expr = parse_ca_expression(a);
 
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
@@ -305,7 +306,7 @@ TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
 {
     std::string input("S'X+L'X");
     analyzer a(input);
-    auto& expr = a.parser().expr()->ca_expr;
+    auto expr = parse_ca_expression(a);
 
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };

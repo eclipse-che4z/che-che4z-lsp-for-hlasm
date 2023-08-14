@@ -14,6 +14,7 @@
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
+#include "context/hlasm_context.h"
 
 using namespace hlasm_plugin::utils::resource;
 
@@ -466,7 +467,7 @@ TEST(copy, inner_copy_jump)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(copy, jump_from_copy_fail)
@@ -483,7 +484,7 @@ TEST(copy, jump_from_copy_fail)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)2);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     check_diag(a.diags()[1], 2, copyjf);
     ASSERT_EQ(a.diags()[1].related.size(), (size_t)1);
@@ -513,7 +514,7 @@ TEST(copy, jump_in_macro_from_copy_fail)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)2);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     check_diag(a.diags()[0], 1, copyjf);
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)2);
@@ -541,7 +542,7 @@ TEST(copy, macro_nested_diagnostics)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     check_diag(a.diags()[0], 4, copynd2);
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)3);
@@ -566,7 +567,7 @@ TEST(copy, copy_call_with_jump_before_comment)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.debug_syntax_errors(), (size_t)0);
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(copy, copy_empty_file)
@@ -605,7 +606,7 @@ TEST(copy, copy_empty_file)
     ASSERT_EQ(mac2->used_copy_members.size(), 1U);
     EXPECT_EQ(mac2->used_copy_members.count(a.hlasm_ctx().get_copy_member(id_index("EMPTY"))), 1U);
 
-    ASSERT_EQ(a.diags().size(), 0U);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(copy, skip_invalid)

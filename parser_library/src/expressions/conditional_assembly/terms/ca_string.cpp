@@ -19,6 +19,7 @@
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/conditional_assembly/ca_operator_binary.h"
 #include "expressions/evaluation_context.h"
+#include "semantics/variable_symbol.h"
 #include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::expressions {
