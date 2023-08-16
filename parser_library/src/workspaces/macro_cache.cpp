@@ -34,15 +34,10 @@ std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_
 {
     std::vector<cached_opsyn_mnemo> result;
 
-    context::id_index last_from;
-    auto& opcodes = ctx.opcode_mnemo_storage();
-    for (auto it = opcodes.rbegin(); it != opcodes.rend(); ++it)
+    for (const auto& [from, versions] : ctx.opcode_mnemo_storage())
     {
-        const auto& [from_pair, opcode] = *it;
-        const auto& [from, gen] = from_pair;
-
-        // ignore historical OPSYNs and original instructions
-        if (from == last_from || gen == context::opcode_generation::zero)
+        const auto& [opcode, gen] = versions.back();
+        if (gen == context::opcode_generation::zero)
             continue;
 
         // If there is an opsyn, that aliases an instruction to be CA instruction, add it to result
@@ -50,8 +45,6 @@ std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_
             || context::instruction_resolved_during_macro_parsing(from))
             result.push_back(
                 { from, opcode.opcode, std::holds_alternative<context::macro_def_ptr>(opcode.opcode_detail) });
-
-        last_from = from;
     }
 
     sort_opsyn_state(result);

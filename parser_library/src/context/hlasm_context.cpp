@@ -42,17 +42,17 @@ void hlasm_context::init_instruction_map(opcode_map& opcodes, id_storage& ids, i
             continue;
 
         auto id = ids.add(instr.name());
-        opcodes.try_emplace({ id, opcode_generation::zero }, opcode_t { id, &instr });
+        opcodes[id].emplace_back(opcode_t { id, &instr }, opcode_generation::zero);
     }
     for (const auto& instr : instruction::all_assembler_instructions())
     {
         auto id = ids.add(instr.name());
-        opcodes.try_emplace({ id, opcode_generation::zero }, opcode_t { id, &instr });
+        opcodes[id].emplace_back(opcode_t { id, &instr }, opcode_generation::zero);
     }
     for (const auto& instr : instruction::all_ca_instructions())
     {
         auto id = ids.add(instr.name());
-        opcodes.try_emplace({ id, opcode_generation::zero }, opcode_t { id, &instr });
+        opcodes[id].emplace_back(opcode_t { id, &instr }, opcode_generation::zero);
     }
     for (const auto& instr : instruction::all_mnemonic_codes())
     {
@@ -60,7 +60,7 @@ void hlasm_context::init_instruction_map(opcode_map& opcodes, id_storage& ids, i
             continue;
 
         auto id = ids.add(instr.name());
-        opcodes.try_emplace({ id, opcode_generation::zero }, opcode_t { id, &instr });
+        opcodes[id].emplace_back(opcode_t { id, &instr }, opcode_generation::zero);
     }
 }
 
@@ -728,37 +728,29 @@ void hlasm_context::decrement_branch_counter() { --curr_scope()->branch_counter;
 
 const opcode_t* hlasm_context::find_opcode_mnemo(id_index name, opcode_generation gen) const
 {
-    auto it = opcode_mnemo_.upper_bound({ name, gen });
-    if (it == opcode_mnemo_.begin())
+    auto it = opcode_mnemo_.find(name);
+    if (it == opcode_mnemo_.end())
         return nullptr;
-    it = std::prev(it);
-    if (it->first.first != name)
+    auto op = std::find_if(it->second.rbegin(), it->second.rend(), [gen](const auto& e) { return e.second <= gen; });
+    if (op == it->second.rend())
         return nullptr;
-    if (it->first.second > gen)
-        return nullptr;
-    return &it->second;
+    return &op->first;
 }
 
 const opcode_t* hlasm_context::find_any_valid_opcode(id_index name) const
 {
-    for (auto it = opcode_mnemo_.upper_bound({ name, opcode_generation::current }); it != opcode_mnemo_.begin();)
-    {
-        --it;
-        if (it->first.first != name)
-            break;
-        if (it->second)
-            return &it->second;
-    }
+    if (auto it = opcode_mnemo_.find(name); it != opcode_mnemo_.end() && it->second.back().first)
+        return &it->second.back().first;
 
     return nullptr;
 }
 
 void hlasm_context::add_mnemonic(id_index mnemo, id_index op_code)
 {
-    auto tmp = find_opcode_mnemo(op_code, opcode_generation::current);
-    assert(tmp && *tmp); // mnemonic was not removed
+    auto it = opcode_mnemo_.find(op_code);
+    assert(it != opcode_mnemo_.end() && it->second.back().first);
 
-    opcode_mnemo_.try_emplace({ mnemo, ++m_current_opcode_generation }, *tmp);
+    opcode_mnemo_[mnemo].emplace_back(it->second.back().first, ++m_current_opcode_generation);
 }
 
 void hlasm_context::remove_mnemonic(id_index mnemo)
@@ -767,9 +759,9 @@ void hlasm_context::remove_mnemonic(id_index mnemo)
     assert((test_opcode = find_opcode_mnemo(mnemo, opcode_generation::current)) && *test_opcode);
 
     if (auto it = external_macros_.find(mnemo); it == external_macros_.end())
-        opcode_mnemo_.try_emplace({ mnemo, ++m_current_opcode_generation }, opcode_t());
+        opcode_mnemo_[mnemo].emplace_back(opcode_t(), ++m_current_opcode_generation);
     else // restore external macro when available
-        opcode_mnemo_.try_emplace({ mnemo, ++m_current_opcode_generation }, opcode_t { it->first, it->second });
+        opcode_mnemo_[mnemo].emplace_back(opcode_t { it->first, it->second }, ++m_current_opcode_generation);
 }
 
 opcode_t hlasm_context::get_operation_code(id_index symbol, opcode_generation gen) const
@@ -861,8 +853,8 @@ macro_def_ptr hlasm_context::add_macro(id_index name,
 void hlasm_context::add_macro(macro_def_ptr macro, bool external)
 {
     auto next_gen = ++m_current_opcode_generation;
-    const auto& m = macros_.try_emplace({ macro->id, next_gen }, std::move(macro)).first->second;
-    opcode_mnemo_.try_emplace({ m->id, next_gen }, opcode_t { m->id, m });
+    const auto& m = macros_[macro->id].emplace_back(std::move(macro), next_gen).first;
+    opcode_mnemo_[m->id].emplace_back(opcode_t { m->id, m }, next_gen);
     if (external)
         external_macros_.try_emplace(m->id, m);
 };
@@ -871,11 +863,13 @@ const hlasm_context::macro_storage& hlasm_context::macros() const { return macro
 
 const macro_def_ptr* hlasm_context::find_macro(id_index name, opcode_generation gen) const
 {
-    if (auto it = macros_.upper_bound({ name, gen });
-        it == macros_.begin() || (it = std::prev(it))->first.first != name || it->first.second > gen)
+    auto it = macros_.find(name);
+    if (it == macros_.end())
         return nullptr;
-    else
-        return &it->second;
+    auto mit = std::find_if(it->second.rbegin(), it->second.rend(), [gen](const auto& e) { return e.second <= gen; });
+    if (mit == it->second.rend())
+        return nullptr;
+    return &mit->first;
 }
 
 const hlasm_context::opcode_map& hlasm_context::opcode_mnemo_storage() const { return opcode_mnemo_; }

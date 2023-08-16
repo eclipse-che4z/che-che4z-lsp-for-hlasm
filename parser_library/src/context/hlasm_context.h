@@ -51,10 +51,10 @@ namespace hlasm_plugin::parser_library::context {
 // code
 class hlasm_context
 {
-    using macro_storage = std::map<std::pair<id_index, opcode_generation>, macro_def_ptr>;
+    using macro_storage = std::unordered_map<id_index, std::vector<std::pair<macro_def_ptr, opcode_generation>>>;
     using copy_member_storage = std::unordered_map<id_index, copy_member_ptr>;
     using instruction_storage = std::unordered_map<id_index, opcode_t::opcode_variant>;
-    using opcode_map = std::map<std::pair<id_index, opcode_generation>, opcode_t>;
+    using opcode_map = std::unordered_map<id_index, std::vector<std::pair<opcode_t, opcode_generation>>>;
     using global_variable_storage = std::unordered_map<id_index, var_sym_ptr>;
 
     // storage of global variables
