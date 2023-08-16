@@ -59,20 +59,43 @@ struct address
             : spaces(*ptr)
             , owner(std::move(ptr))
         {}
-        explicit space_list(std::span<const space_entry> spaces, std::shared_ptr<void> owner)
+        explicit space_list(std::span<const space_entry> spaces, std::shared_ptr<const void> owner)
             : spaces(spaces)
             , owner(std::move(owner))
         {}
 
         std::span<const space_entry> spaces;
-        std::shared_ptr<void> owner;
+        std::shared_ptr<const void> owner;
 
         bool empty() const { return spaces.empty(); }
     };
 
+    struct base_list
+    {
+        base_list() = default;
+        template<typename T>
+        explicit base_list(std::shared_ptr<T> ptr) requires(!std::same_as<T, base_entry>)
+            : bases(*ptr)
+            , owner(std::move(ptr))
+        {}
+        explicit base_list(std::shared_ptr<const base_entry> ptr)
+            : bases(std::span(ptr.get(), !!ptr.get()))
+            , owner(std::move(ptr))
+        {}
+        explicit base_list(std::span<const base_entry> bases, std::shared_ptr<const void> owner)
+            : bases(bases)
+            , owner(std::move(owner))
+        {}
+
+        std::span<const base_entry> bases;
+        std::shared_ptr<const void> owner;
+
+        bool empty() const { return bases.empty(); }
+    };
+
 private:
     // list of bases and their counts to which is the address relative
-    std::vector<base_entry> bases_;
+    base_list bases_;
     // offset relative to bases
     int offset_ = 0;
     // list of spaces with their counts this address contains
@@ -80,8 +103,7 @@ private:
 
 public:
     // list of bases and their counts to which is the address relative
-    const std::vector<base_entry>& bases() const;
-    std::vector<base_entry>& bases();
+    std::span<const base_entry> bases() const;
     // offset relative to bases
     int offset() const;
     int unresolved_offset() const;
@@ -106,8 +128,11 @@ public:
     bool has_unresolved_space() const;
     bool has_spaces() const;
 
+    address with_base_list(base_list bl) const&;
+    address with_base_list(base_list bl) &&;
+
 private:
-    address(std::vector<base_entry> bases, int offset, space_list spaces);
+    address(base_list bases, int offset, space_list spaces);
 
     friend struct address_resolver;
     friend class location_counter;

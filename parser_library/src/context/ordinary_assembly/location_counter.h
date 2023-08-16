@@ -39,7 +39,9 @@ class location_counter
     // identifier space of switched unresolved ORG data
     space_ptr switched_;
 
-    bool layuot_created_;
+    bool layout_created_;
+
+    address::base_list base_list_;
 
 public:
     const id_index name;

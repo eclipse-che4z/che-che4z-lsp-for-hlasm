@@ -27,7 +27,8 @@ size_t location_counter::storage() const { return curr_data().storage; }
 
 location_counter::location_counter(id_index name, const section& owner, loctr_kind kind)
     : switched_(nullptr)
-    , layuot_created_(false)
+    , layout_created_(false)
+    , base_list_(std::make_shared<address::base_entry>(address::base { &owner, id_index() }, 1))
     , name(name)
     , owner(owner)
     , kind(kind)
@@ -40,29 +41,32 @@ location_counter::location_counter(id_index name, const section& owner, loctr_ki
 
 address location_counter::current_address() const
 {
-    return address({ { { &owner, id_index() }, 1 } }, curr_data().storage, curr_data().spaces_for_address());
+    return address(base_list_, curr_data().storage, curr_data().spaces_for_address());
 }
 
 address location_counter::current_address_for_alignment_evaluation(alignment align) const
 {
+    auto alignment_spaces = curr_data().spaces_for_address();
+
     const auto& spaces = curr_data().unknown_parts;
     auto it = std::find_if(spaces.rbegin(), spaces.rend(), [align](const auto& up) {
         return up.unknown_space->align.boundary >= align.boundary;
     }).base();
-    if (it == spaces.begin())
-        return address({ { { &owner, id_index() }, 1 } }, curr_data().storage, curr_data().spaces_for_address());
-
-    space_storage alignment_spaces;
-    alignment_spaces.reserve(std::distance(it, spaces.end()));
-
-    int offset = std::prev(it)->unknown_space->align.byte + std::prev(it)->storage_after;
-
-    for (; it != spaces.end(); ++it)
+    int offset = curr_data().storage;
+    if (it != spaces.begin())
     {
-        offset += it->storage_after;
-        alignment_spaces.push_back(it->unknown_space);
+        offset = std::prev(it)->unknown_space->align.byte + std::prev(it)->storage_after;
+
+        size_t count = 0;
+        for (; it != spaces.end(); ++it)
+        {
+            offset += it->storage_after;
+            ++count;
+        }
+
+        alignment_spaces.spaces = alignment_spaces.spaces.last(count);
     }
-    return address({ &owner, id_index() }, offset, alignment_spaces);
+    return address(base_list_, offset, std::move(alignment_spaces));
 }
 
 aligned_addr location_counter::reserve_storage_area(size_t length, alignment a)
@@ -80,8 +84,7 @@ aligned_addr location_counter::reserve_storage_area(size_t length, alignment a)
 
     check_available_value();
 
-    return std::make_pair(
-        address({ { { &owner, id_index() }, 1 } }, (int)curr_data().storage, curr_data().spaces_for_address()), sp);
+    return std::make_pair(address(base_list_, (int)curr_data().storage, curr_data().spaces_for_address()), sp);
 }
 
 aligned_addr location_counter::align(alignment align) { return reserve_storage_area(0, align); }
@@ -161,11 +164,7 @@ std::pair<space_ptr, std::vector<address>> location_counter::set_available_value
 
     for (auto& entry : org_data_)
     {
-        addr_arr.push_back({
-            std::vector<address::base_entry> { { address::base { &owner, id_index() }, 1 } },
-            entry.storage,
-            entry.pseudo_relative_spaces(loctr_start),
-        });
+        addr_arr.push_back({ base_list_, entry.storage, entry.pseudo_relative_spaces(loctr_start) });
     }
 
     org_data_.emplace_back(loctr_data_kind::POTENTIAL_MAX);
@@ -201,7 +200,7 @@ bool location_counter::check_if_higher_value(size_t idx) const
 
 space_ptr location_counter::finish_layout(size_t offset)
 {
-    assert(!layuot_created_);
+    assert(!layout_created_);
 
     assert(!(kind == loctr_kind::STARTING) || offset == 0); // (STARTING => offset==0) <=> (!STARTING v offset==0)
 
@@ -214,7 +213,7 @@ space_ptr location_counter::finish_layout(size_t offset)
         return sp;
     }
 
-    layuot_created_ = true;
+    layout_created_ = true;
 
     return {};
 }

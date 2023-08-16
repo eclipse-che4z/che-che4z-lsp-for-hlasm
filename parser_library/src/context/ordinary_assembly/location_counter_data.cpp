@@ -184,7 +184,7 @@ address::space_list location_counter_data::spaces_for_address() const
 
     cached_spaces_for_address = result;
 
-    return address::space_list(result);
+    return address::space_list(std::move(result));
 }
 
 address::space_list location_counter_data::pseudo_relative_spaces(space_ptr loctr_start) const

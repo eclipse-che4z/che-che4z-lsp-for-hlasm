@@ -111,7 +111,9 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
         {
             if (!reloc_value.is_simple())
                 return context::dependency_collector::error();
-            reloc_value.bases().front().first.qualifier = qualifier;
+            auto bp = std::make_shared<context::address::base_entry>(reloc_value.bases().front());
+            bp->first.qualifier = qualifier;
+            return std::move(reloc_value).with_base_list(context::address::base_list(std::move(bp)));
         }
         return std::move(reloc_value);
     }
@@ -142,7 +144,9 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(
         auto reloc_value = symbol->value().get_reloc();
         if (reloc_value.is_simple())
         {
-            reloc_value.bases().front().first.qualifier = qualifier;
+            auto bp = std::make_shared<context::address::base_entry>(reloc_value.bases().front());
+            bp->first.qualifier = qualifier;
+            return std::move(reloc_value).with_base_list(context::address::base_list(std::move(bp)));
         }
         else
         {

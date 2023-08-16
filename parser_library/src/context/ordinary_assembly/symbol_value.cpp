@@ -166,23 +166,32 @@ symbol_value symbol_value::ignore_qualification() const
         return *this;
 
     auto result = get_reloc();
-    auto& bases = result.bases();
+    if (std::all_of(
+            result.bases().begin(), result.bases().end(), [](const auto& be) { return be.first.qualifier.empty(); }))
+    {
+        if (result.bases().empty() && !result.has_unresolved_space())
+            return result.offset();
+        else
+            return std::move(result);
+    }
 
-    std::for_each(bases.begin(), bases.end(), [](auto& e) { e.first.qualifier = id_index(); });
+    auto bases = std::make_shared<std::vector<address::base_entry>>(result.bases().begin(), result.bases().end());
 
-    std::sort(bases.begin(), bases.end(), [](const auto& l, const auto& r) { return l.first.owner < r.first.owner; });
+    std::for_each(bases->begin(), bases->end(), [](auto& e) { e.first.qualifier = id_index(); });
 
-    bases.erase(aggregate(
-                    bases.begin(),
-                    bases.end(),
-                    [](const auto& l, const auto& r) { return l.first.owner == r.first.owner; },
-                    [](auto& t, const auto& e) { t.second += e.second; }),
-        bases.end());
+    std::sort(bases->begin(), bases->end(), [](const auto& l, const auto& r) { return l.first.owner < r.first.owner; });
 
-    std::erase_if(bases, [](const auto& e) { return e.second == 0; });
+    bases->erase(aggregate(
+                     bases->begin(),
+                     bases->end(),
+                     [](const auto& l, const auto& r) { return l.first.owner == r.first.owner; },
+                     [](auto& t, const auto& e) { t.second += e.second; }),
+        bases->end());
 
-    if (bases.empty() && !result.has_unresolved_space())
+    std::erase_if(*bases, [](const auto& e) { return e.second == 0; });
+
+    if (bases->empty() && !result.has_unresolved_space())
         return result.offset();
     else
-        return std::move(result);
+        return std::move(result).with_base_list(address::base_list(std::move(bases)));
 }
