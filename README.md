@@ -242,7 +242,7 @@ In this `.bridge.json` file, the program `source_code` is mapped to a processor 
 
 #### Configuration Lookup Precedence
 
-If you use multiple program to processor group mapping files (such as `pgm_conf.json` and `.bridge.json`) or wildcards in your program names, the same program might be specified in more than one file. In this case, the following precedence applies when determining the program to processor group mapping:
+If you use multiple program to processor group mapping files (such as `pgm_conf.json` and `.bridge.json`) or wildcards in your program names, the same program might be specified in more than one file. In this case, the program to processor group mapping is determined by the following precedence hierarchy:
 
 1. Processor group bound to a specific program name specified in `pgm_conf.json`
 2. Processor group bound to a wildcarded program name specified in `pgm_conf.json`
