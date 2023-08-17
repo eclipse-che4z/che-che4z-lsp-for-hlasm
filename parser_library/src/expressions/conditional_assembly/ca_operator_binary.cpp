@@ -34,7 +34,7 @@ ca_binary_operator::ca_binary_operator(
 {}
 
 bool ca_binary_operator::get_undefined_attributed_symbols(
-    undef_sym_set& symbols, const evaluation_context& eval_ctx) const
+    std::vector<context::id_index>& symbols, const evaluation_context& eval_ctx) const
 {
     bool result = false;
     result |= left_expr->get_undefined_attributed_symbols(symbols, eval_ctx);
@@ -79,7 +79,7 @@ ca_function_binary_operator::ca_function_binary_operator(ca_expr_ptr left_expr,
 {}
 
 // Detects (T'&VAR EQ 'O') condition
-std::optional<bool> t_attr_special_case(undef_sym_set& symbols,
+std::optional<bool> t_attr_special_case(std::vector<context::id_index>& symbols,
     const expressions::ca_expression* left,
     const expressions::ca_expression* right,
     const evaluation_context& eval_ctx)
@@ -116,7 +116,7 @@ std::optional<bool> t_attr_special_case(undef_sym_set& symbols,
 }
 
 bool ca_function_binary_operator::get_undefined_attributed_symbols(
-    undef_sym_set& symbols, const evaluation_context& eval_ctx) const
+    std::vector<context::id_index>& symbols, const evaluation_context& eval_ctx) const
 {
     if (is_relational() && m_expr_ctx.parent_expr_kind == context::SET_t_enum::B_TYPE)
     {

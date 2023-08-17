@@ -28,7 +28,7 @@ ca_unary_operator::ca_unary_operator(ca_expr_ptr expr, context::SET_t_enum expr_
 {}
 
 bool ca_unary_operator::get_undefined_attributed_symbols(
-    undef_sym_set& symbols, const evaluation_context& eval_ctx) const
+    std::vector<context::id_index>& symbols, const evaluation_context& eval_ctx) const
 {
     return expr->get_undefined_attributed_symbols(symbols, eval_ctx);
 }

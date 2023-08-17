@@ -46,23 +46,25 @@ public:
 protected:
     static bool try_trigger_attribute_lookahead(const semantics::instruction_si& instruction,
         expressions::evaluation_context eval_ctx,
-        processing::processing_state_listener& listener);
+        processing::processing_state_listener& listener,
+        std::vector<context::id_index>&& references_buffer);
     static bool try_trigger_attribute_lookahead(const context::hlasm_statement& statement,
         expressions::evaluation_context eval_ctx,
-        processing::processing_state_listener& listener);
+        processing::processing_state_listener& listener,
+        std::vector<context::id_index>&& references_buffer);
 
 private:
-    static void trigger_attribute_lookahead(std::set<context::id_index> references,
+    static void trigger_attribute_lookahead(std::vector<context::id_index>&& references_buffer,
         const expressions::evaluation_context& eval_ctx,
         processing::processing_state_listener& listener);
 
-    static bool process_label(std::set<context::id_index>& symbols,
+    static bool process_label(std::vector<context::id_index>& symbols,
         const semantics::label_si& label,
         const expressions::evaluation_context& eval_ctx);
-    static bool process_instruction(std::set<context::id_index>& symbols,
+    static bool process_instruction(std::vector<context::id_index>& symbols,
         const semantics::instruction_si& instruction,
         const expressions::evaluation_context& eval_ctx);
-    static bool process_operands(std::set<context::id_index>& symbols,
+    static bool process_operands(std::vector<context::id_index>& symbols,
         const semantics::operands_si& operands,
         const expressions::evaluation_context& eval_ctx);
 };

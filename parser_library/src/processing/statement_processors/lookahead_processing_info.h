@@ -15,7 +15,7 @@
 #ifndef PROCESSING_LOOKAHEAD_PROCESSING_INFO_H
 #define PROCESSING_LOOKAHEAD_PROCESSING_INFO_H
 
-#include <set>
+#include <vector>
 
 #include "context/ordinary_assembly/symbol.h"
 #include "context/source_snapshot.h"
@@ -51,9 +51,9 @@ struct lookahead_start_data
     {}
 
     // ORD action
-    std::set<context::id_index> targets;
+    std::vector<context::id_index> targets;
 
-    lookahead_start_data(std::set<context::id_index> targets,
+    lookahead_start_data(std::vector<context::id_index> targets,
         context::source_position statement_position,
         context::source_snapshot snapshot)
         : action(lookahead_action::ORD)

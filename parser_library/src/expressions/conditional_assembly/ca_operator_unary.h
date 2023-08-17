@@ -27,7 +27,8 @@ public:
 
     ca_unary_operator(ca_expr_ptr expr, context::SET_t_enum expr_kind, range expr_range);
 
-    bool get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const override;
+    bool get_undefined_attributed_symbols(
+        std::vector<context::id_index>& symbols, const evaluation_context& eval_ctx) const override;
 
     void resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags) override;
 

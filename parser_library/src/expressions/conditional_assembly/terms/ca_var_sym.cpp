@@ -27,7 +27,7 @@ ca_var_sym::ca_var_sym(semantics::vs_ptr symbol, range expr_range)
 {}
 
 bool ca_var_sym::get_undefined_attributed_symbols_vs(
-    undef_sym_set& symbols, const semantics::vs_ptr& symbol, const evaluation_context& eval_ctx)
+    std::vector<context::id_index>& symbols, const semantics::vs_ptr& symbol, const evaluation_context& eval_ctx)
 {
     bool result = false;
 
@@ -44,7 +44,8 @@ bool ca_var_sym::get_undefined_attributed_symbols_vs(
     return result;
 }
 
-bool ca_var_sym::get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const
+bool ca_var_sym::get_undefined_attributed_symbols(
+    std::vector<context::id_index>& symbols, const evaluation_context& eval_ctx) const
 {
     return get_undefined_attributed_symbols_vs(symbols, symbol, eval_ctx);
 }

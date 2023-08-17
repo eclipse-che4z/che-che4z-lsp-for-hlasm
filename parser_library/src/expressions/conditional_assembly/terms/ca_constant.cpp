@@ -26,7 +26,10 @@ ca_constant::ca_constant(context::A_t value, range expr_range)
     , value(value)
 {}
 
-bool ca_constant::get_undefined_attributed_symbols(undef_sym_set&, const evaluation_context&) const { return false; }
+bool ca_constant::get_undefined_attributed_symbols(std::vector<context::id_index>&, const evaluation_context&) const
+{
+    return false;
+}
 
 void ca_constant::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags)
 {

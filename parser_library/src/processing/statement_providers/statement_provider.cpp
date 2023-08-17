@@ -26,25 +26,27 @@ statement_provider::statement_provider(const statement_provider_kind kind)
 
 bool statement_provider::try_trigger_attribute_lookahead(const semantics::instruction_si& instruction,
     expressions::evaluation_context eval_ctx,
-    processing::processing_state_listener& listener)
+    processing::processing_state_listener& listener,
+    std::vector<context::id_index>&& references_buffer)
 {
-    std::set<context::id_index> references;
-    process_instruction(references, instruction, eval_ctx);
+    references_buffer.clear();
+    process_instruction(references_buffer, instruction, eval_ctx);
 
-    if (references.empty())
+    if (references_buffer.empty())
         return false;
 
-    trigger_attribute_lookahead(std::move(references), eval_ctx, listener);
+    trigger_attribute_lookahead(std::move(references_buffer), eval_ctx, listener);
 
     return true;
 }
 
 bool statement_provider::try_trigger_attribute_lookahead(const context::hlasm_statement& statement,
     expressions::evaluation_context eval_ctx,
-    processing::processing_state_listener& listener)
+    processing::processing_state_listener& listener,
+    std::vector<context::id_index>&& references_buffer)
 {
+    references_buffer.clear();
     const semantics::label_si* label;
-    std::set<context::id_index> references;
 
     if (auto def_stmt = statement.access_deferred())
     {
@@ -54,31 +56,36 @@ bool statement_provider::try_trigger_attribute_lookahead(const context::hlasm_st
     {
         label = &res_stmt->label_ref();
 
-        process_operands(references, res_stmt->operands_ref(), eval_ctx);
+        process_operands(references_buffer, res_stmt->operands_ref(), eval_ctx);
     }
     else
         return false;
 
-    process_label(references, *label, eval_ctx);
+    process_label(references_buffer, *label, eval_ctx);
 
-    if (references.empty())
+    if (references_buffer.empty())
         return false;
 
-    trigger_attribute_lookahead(std::move(references), eval_ctx, listener);
+    trigger_attribute_lookahead(std::move(references_buffer), eval_ctx, listener);
 
     return true;
 }
 
-void statement_provider::trigger_attribute_lookahead(std::set<context::id_index> references,
+void statement_provider::trigger_attribute_lookahead(std::vector<context::id_index>&& references_buffer,
     const expressions::evaluation_context& eval_ctx,
     processing::processing_state_listener& listener)
 {
     auto&& [statement_position, snapshot] = eval_ctx.hlasm_ctx.get_begin_snapshot(false);
 
-    listener.start_lookahead(lookahead_start_data(std::move(references), statement_position, std::move(snapshot)));
+    std::sort(references_buffer.begin(), references_buffer.end());
+
+    listener.start_lookahead(lookahead_start_data(
+        std::vector(references_buffer.begin(), std::unique(references_buffer.begin(), references_buffer.end())),
+        statement_position,
+        std::move(snapshot)));
 }
 
-bool statement_provider::process_label(std::set<context::id_index>& symbols,
+bool statement_provider::process_label(std::vector<context::id_index>& symbols,
     const semantics::label_si& label,
     const expressions::evaluation_context& eval_ctx)
 {
@@ -95,7 +102,7 @@ bool statement_provider::process_label(std::set<context::id_index>& symbols,
     }
 }
 
-bool statement_provider::process_instruction(std::set<context::id_index>& symbols,
+bool statement_provider::process_instruction(std::vector<context::id_index>& symbols,
     const semantics::instruction_si& instruction,
     const expressions::evaluation_context& eval_ctx)
 {
@@ -107,7 +114,7 @@ bool statement_provider::process_instruction(std::set<context::id_index>& symbol
     return semantics::concatenation_point::get_undefined_attributed_symbols(symbols, chain, eval_ctx);
 }
 
-bool statement_provider::process_operands(std::set<context::id_index>& symbols,
+bool statement_provider::process_operands(std::vector<context::id_index>& symbols,
     const semantics::operands_si& operands,
     const expressions::evaluation_context& eval_ctx)
 {

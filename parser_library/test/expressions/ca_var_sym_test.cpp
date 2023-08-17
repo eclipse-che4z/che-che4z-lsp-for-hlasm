@@ -40,7 +40,7 @@ TEST(ca_var_sym_basic, undefined_attributes)
 
     ca_var_sym var(std::move(vs), range());
 
-    std::set<context::id_index> references;
+    std::vector<context::id_index> references;
     EXPECT_FALSE(var.get_undefined_attributed_symbols(references, eval_ctx));
 
     EXPECT_EQ(references.size(), 0U);
@@ -64,7 +64,7 @@ TEST(ca_var_sym_created, undefined_attributes)
 
     ca_var_sym var(std::move(vs), range());
 
-    std::set<context::id_index> references;
+    std::vector<context::id_index> references;
     EXPECT_FALSE(var.get_undefined_attributed_symbols(references, eval_ctx));
 
     EXPECT_EQ(references.size(), 0U);

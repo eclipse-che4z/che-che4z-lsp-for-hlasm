@@ -219,7 +219,7 @@ TEST(attribute_lookahead, lookup_triggered)
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
-    std::set<context::id_index> references;
+    std::vector<context::id_index> references;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
     EXPECT_EQ(references.size(), (size_t)1);
 
@@ -240,10 +240,10 @@ TEST(attribute_lookahead, nested_lookup_triggered)
     auto v2 = a.hlasm_ctx().create_local_variable<context::C_t>(id_index("V2"), true);
     v2->access_set_symbol<context::C_t>()->set_value("B");
 
-    std::set<context::id_index> references;
+    std::vector<context::id_index> references;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
     EXPECT_EQ(references.size(), (size_t)1);
-    EXPECT_TRUE(references.find(id_index("B")) != references.end());
+    EXPECT_EQ(std::count(references.begin(), references.end(), id_index("B")), 1);
 
     a.hlasm_ctx().ord_ctx.add_symbol_reference(
         context::symbol(id_index("B"),
@@ -256,7 +256,7 @@ TEST(attribute_lookahead, nested_lookup_triggered)
     references.clear();
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
     EXPECT_EQ(references.size(), (size_t)1);
-    EXPECT_TRUE(references.find(id_index("A")) != references.end());
+    EXPECT_EQ(std::count(references.begin(), references.end(), id_index("A")), 1);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -279,7 +279,7 @@ TEST(attribute_lookahead, lookup_not_triggered)
     ASSERT_TRUE(tmp);
 
     // although length is undefined the actual symbol is defined so no lookup should happen
-    std::set<context::id_index> references;
+    std::vector<context::id_index> references;
     EXPECT_FALSE(expr->get_undefined_attributed_symbols(references, eval_ctx));
     EXPECT_EQ(references.size(), (size_t)0);
 
@@ -295,7 +295,7 @@ TEST(attribute_lookahead, lookup_of_two_refs)
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
-    std::set<context::id_index> references;
+    std::vector<context::id_index> references;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
     EXPECT_EQ(references.size(), (size_t)2);
 
@@ -311,9 +311,9 @@ TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
-    std::set<context::id_index> references;
+    std::vector<context::id_index> references;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
-    EXPECT_EQ(references.size(), (size_t)1);
+    EXPECT_EQ(references.size(), (size_t)2);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }

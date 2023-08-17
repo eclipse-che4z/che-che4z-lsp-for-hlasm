@@ -48,7 +48,8 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
         {
             if (try_trigger_attribute_lookahead(*instr,
                     { *m_ctx.hlasm_ctx, library_info_transitional(m_lib_provider), drop_diagnostic_op },
-                    m_listener))
+                    m_listener,
+                    std::move(lookahead_references)))
                 return nullptr;
         }
     }
@@ -83,8 +84,10 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
     }
 
     if (processor.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(
-            *stmt, { *m_ctx.hlasm_ctx, library_info_transitional(m_lib_provider), drop_diagnostic_op }, m_listener))
+        && try_trigger_attribute_lookahead(*stmt,
+            { *m_ctx.hlasm_ctx, library_info_transitional(m_lib_provider), drop_diagnostic_op },
+            m_listener,
+            std::move(lookahead_references)))
         return nullptr;
 
     return stmt;

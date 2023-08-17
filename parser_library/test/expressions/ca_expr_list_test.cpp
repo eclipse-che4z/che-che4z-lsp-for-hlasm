@@ -100,7 +100,7 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
 
     diagnostic_op_consumer_container diags;
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
-    std::set<context::id_index> references;
+    std::vector<context::id_index> references;
     EXPECT_TRUE(expr_list.get_undefined_attributed_symbols(references, eval_ctx));
 
     EXPECT_GT(references.size(), 0);

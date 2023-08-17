@@ -31,7 +31,7 @@ TEST(ca_constant, undefined_attributes)
 
     ca_constant c(1, range());
 
-    std::set<context::id_index> references;
+    std::vector<context::id_index> references;
     EXPECT_FALSE(c.get_undefined_attributed_symbols(references, eval_ctx));
     EXPECT_EQ(references.size(), 0U);
 }

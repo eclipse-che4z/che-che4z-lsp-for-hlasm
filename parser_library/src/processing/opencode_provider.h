@@ -163,6 +163,8 @@ class opencode_provider final : public statement_provider
 
     encoding_warning_issued m_encoding_warning_issued = {};
 
+    std::vector<context::id_index> lookahead_references;
+
 public:
     // rewinds position in file
     void rewind_input(context::source_position pos);

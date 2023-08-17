@@ -559,7 +559,7 @@ var_ca_operand::var_ca_operand(vs_ptr variable_symbol, range operand_range)
 {}
 
 bool var_ca_operand::get_undefined_attributed_symbols(
-    std::set<context::id_index>& symbols, const expressions::evaluation_context& eval_ctx)
+    std::vector<context::id_index>& symbols, const expressions::evaluation_context& eval_ctx)
 {
     return expressions::ca_var_sym::get_undefined_attributed_symbols_vs(symbols, variable_symbol, eval_ctx);
 }
@@ -572,7 +572,7 @@ expr_ca_operand::expr_ca_operand(expressions::ca_expr_ptr expression, range oper
 {}
 
 bool expr_ca_operand::get_undefined_attributed_symbols(
-    std::set<context::id_index>& symbols, const expressions::evaluation_context& eval_ctx)
+    std::vector<context::id_index>& symbols, const expressions::evaluation_context& eval_ctx)
 {
     return expression->get_undefined_attributed_symbols(symbols, eval_ctx);
 }
@@ -585,7 +585,7 @@ seq_ca_operand::seq_ca_operand(seq_sym sequence_symbol, range operand_range)
 {}
 
 bool seq_ca_operand::get_undefined_attributed_symbols(
-    std::set<context::id_index>&, const expressions::evaluation_context&)
+    std::vector<context::id_index>&, const expressions::evaluation_context&)
 {
     return false;
 }
@@ -599,7 +599,7 @@ branch_ca_operand::branch_ca_operand(seq_sym sequence_symbol, expressions::ca_ex
 {}
 
 bool branch_ca_operand::get_undefined_attributed_symbols(
-    std::set<context::id_index>& symbols, const expressions::evaluation_context& eval_ctx)
+    std::vector<context::id_index>& symbols, const expressions::evaluation_context& eval_ctx)
 {
     return expression->get_undefined_attributed_symbols(symbols, eval_ctx);
 }

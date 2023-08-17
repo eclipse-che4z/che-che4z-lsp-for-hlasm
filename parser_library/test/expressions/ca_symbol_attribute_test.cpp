@@ -40,7 +40,7 @@ TEST(ca_symbol_attr, undefined_attributes)
 
     ca_symbol_attribute attr(std::move(vs), context::data_attr_kind::D, range(), range());
 
-    std::set<context::id_index> references;
+    std::vector<context::id_index> references;
     EXPECT_FALSE(attr.get_undefined_attributed_symbols(references, eval_ctx));
 
     EXPECT_EQ(references.size(), 0U);

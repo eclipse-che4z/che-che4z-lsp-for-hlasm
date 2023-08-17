@@ -27,7 +27,6 @@ namespace hlasm_plugin::parser_library::expressions {
 class ca_expr_visitor;
 class ca_expression;
 using ca_expr_ptr = std::unique_ptr<ca_expression>;
-using undef_sym_set = std::set<context::id_index>;
 
 struct evaluation_context;
 
@@ -60,7 +59,8 @@ public:
     ca_expression(context::SET_t_enum expr_kind, range expr_range);
 
     // retrieves set of attributed symbols that are not yet defined
-    virtual bool get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const = 0;
+    virtual bool get_undefined_attributed_symbols(
+        std::vector<context::id_index>& symbols, const evaluation_context& eval_ctx) const = 0;
 
     // builds parts of the expression tree that could not be built during parsing
     virtual void resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic_op_consumer& diags) = 0;

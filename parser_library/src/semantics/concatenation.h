@@ -120,7 +120,7 @@ struct concatenation_point
 
     static const var_sym_conc* find_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
-    static bool get_undefined_attributed_symbols(std::set<context::id_index>& symbols,
+    static bool get_undefined_attributed_symbols(std::vector<context::id_index>& symbols,
         const concat_chain& chain,
         const expressions::evaluation_context& eval_ctx);
 

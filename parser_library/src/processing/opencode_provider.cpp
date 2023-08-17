@@ -477,7 +477,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     if (proc.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(*result,
             { *m_ctx->hlasm_ctx, library_info_transitional(*m_lib_provider), drop_diagnostic_op },
-            *m_state_listener))
+            *m_state_listener,
+            std::move(lookahead_references)))
         return nullptr;
 
     if (m_current_logical_line.segments.size() > 1)
@@ -725,7 +726,8 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
     if (proc.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(collector.current_instruction(),
             { *m_ctx->hlasm_ctx, library_info_transitional(*m_lib_provider), drop_diagnostic_op },
-            *m_state_listener))
+            *m_state_listener,
+            std::move(lookahead_references)))
         return nullptr;
 
     const auto& current_instr = collector.current_instruction();

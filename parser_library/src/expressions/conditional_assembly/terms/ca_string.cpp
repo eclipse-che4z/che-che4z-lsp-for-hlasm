@@ -38,7 +38,8 @@ ca_string::ca_string(
     , substring(std::move(substring))
 {}
 
-bool ca_string::get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const
+bool ca_string::get_undefined_attributed_symbols(
+    std::vector<context::id_index>& symbols, const evaluation_context& eval_ctx) const
 {
     bool result = false;
     if (duplication_factor)

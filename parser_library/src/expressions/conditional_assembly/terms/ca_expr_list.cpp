@@ -31,7 +31,8 @@ ca_expr_list::ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range,
     , parenthesized(parenthesized)
 {}
 
-bool ca_expr_list::get_undefined_attributed_symbols(undef_sym_set& symbols, const evaluation_context& eval_ctx) const
+bool ca_expr_list::get_undefined_attributed_symbols(
+    std::vector<context::id_index>& symbols, const evaluation_context& eval_ctx) const
 {
     bool result = false;
     for (auto&& expr : expr_list)

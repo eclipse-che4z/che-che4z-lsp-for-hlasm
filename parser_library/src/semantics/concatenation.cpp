@@ -213,7 +213,7 @@ const var_sym_conc* concatenation_point::find_var_sym(
 }
 
 bool concatenation_point::get_undefined_attributed_symbols(
-    std::set<context::id_index>& symbols, const concat_chain& chain, const expressions::evaluation_context& eval_ctx)
+    std::vector<context::id_index>& symbols, const concat_chain& chain, const expressions::evaluation_context& eval_ctx)
 {
     bool result = false;
     for (auto it = chain.begin(); it != chain.end(); ++it)

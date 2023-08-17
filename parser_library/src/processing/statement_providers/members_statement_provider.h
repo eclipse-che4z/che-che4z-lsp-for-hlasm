@@ -37,6 +37,8 @@ namespace hlasm_plugin::parser_library::processing {
 // common class for copy and macro statement providers (provider of copy and macro members)
 class members_statement_provider : public statement_provider
 {
+    std::vector<context::id_index> lookahead_references;
+
 public:
     members_statement_provider(const statement_provider_kind kind,
         analyzing_context ctx,
