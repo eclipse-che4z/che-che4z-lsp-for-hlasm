@@ -107,7 +107,7 @@ The HLASM Language Support extension looks for locally stored members when a mac
 - `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries that are defined by a list of directories (some of which can be optional). Additionally, some assembler options can be specified in `asm_options` sections (`SYSPARM`, `SYSTEM_ID` and others).
 
 - `pgm_conf.json` provides a mapping between programs (open-code files) and processor groups. It specifies which list of directories is used with which program.
-    - **Note:** If you use HLASM Language Support together with Endevor Bridge for Git, the Endevor Bridge for Git configuration file `bridge.json` can also be used to link programs and processor groups instead pf `pgm_conf.json`. For more information, see "Other Configuration Files" below. 
+    - **Note:** If you use HLASM Language Support together with Endevor Bridge for Git, the Endevor Bridge for Git configuration file `.bridge.json` can also be used to link programs and processor groups instead pf `pgm_conf.json`. For more information, see the "Other Configuration Files" section below. 
 
 To use a predefined set of macro and copy members, follow these steps: 
 1. Specify any number of library directories or remote data sets to search for macros and COPY files in `proc_grps.json`. These directories and data sets are searched in order that they are listed.
