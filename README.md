@@ -106,7 +106,8 @@ The HLASM Language Support extension looks for locally stored members when a mac
 
 - `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries that are defined by a list of directories (some of which can be optional). Additionally, some assembler options can be specified in `asm_options` sections (`SYSPARM`, `SYSTEM_ID` and others).
 
-- `pgm_conf.json` provides a mapping between programs (open-code files) and processor groups. It specifies which list of directories is used with which program. 
+- `pgm_conf.json` provides a mapping between programs (open-code files) and processor groups.
+    - **Note:** If you use HLASM Language Support together with Endevor Bridge for Git, the Endevor Bridge for Git configuration file `.bridge.json` can also be used to link programs and processor groups instead of `pgm_conf.json`. For more information, see the "Other Configuration Files" section below. 
 
 To use a predefined set of macro and copy members, follow these steps: 
 1. Specify any number of library directories or remote data sets to search for macros and COPY files in `proc_grps.json`. These directories and data sets are searched in order that they are listed.
@@ -222,12 +223,10 @@ Assembler options defined by the processor group can be overridden in the `pgm_c
 ### Other Configuration Files
 
 #### `.bridge.json` Configuration File
-When Endevor Bridge for Git is used, the `.bridge.json` configuration file containing program to processor group mappings is usually present as well. 
-
-Therefore, there is no need to create separate `pgm_conf.json` configuration file in this case. However, `proc_grps.json` still needs to exist to allow successful mapping between programs stated in `.bridge.json` and processor groups defined in `proc_grps.json`.
+If you use Endevor Bridge for Git, your workspace might already have `.bridge.json` configuration files which contain program to processor group mappings. In this case, you do not need to create a separate `pgm_conf.json` file. However, `proc_grps.json` is still required to enable successful mapping between programs specified in `.bridge.json` and processor groups defined in `proc_grps.json`.
 
 #### Example of `.bridge.json`:
-Similarly to the previous example, the program `source_code` is mapped to a processor group `GROUP1` in the following `.bridge.json` file:
+In this `.bridge.json` file, the program `source_code` is mapped to a processor group `GROUP1` and all other existing programs are mapped to `GROUP2` by default.
 
 ```
 {
@@ -241,13 +240,9 @@ Similarly to the previous example, the program `source_code` is mapped to a proc
 }
 ```
 
-You can also observe that any other existing programs are mapped to a processor group `GROUP2` by default.
+#### Configuration Lookup Precedence
 
-### Configuration Lookup Precedence
-
-Conflicting program to processor group mappings can appear when multiple configuration files (such as `.pgm_conf.json` and `.bridge.json`) exist or when the program mapping definition relies on wildcards.
-
-To resolve these conflicts, the following processor groups precedence applies when trying to determine the program to processor group mapping:
+If you use multiple program to processor group mapping files (such as `pgm_conf.json` and `.bridge.json`) or wildcards in your program names, the same program might be specified more than once. In this case, the program to processor group mapping is determined by the following precedence hierarchy:
 
 1. Processor group bound to a specific program name specified in `pgm_conf.json`
 2. Processor group bound to a wildcarded program name specified in `pgm_conf.json`
