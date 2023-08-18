@@ -29,7 +29,7 @@ struct file_manager_vfm final : public virtual_file_monitor
     hlasm_plugin::utils::resource::resource_location related_workspace;
 
     // Inherited via virtual_file_monitor
-    virtual_file_handle file_generated(std::string_view content) override;
+    std::pair<virtual_file_handle, std::string_view> file_generated(std::string_view content) override;
 
     explicit file_manager_vfm(file_manager& fm, hlasm_plugin::utils::resource::resource_location related_workspace)
         : fm(fm)

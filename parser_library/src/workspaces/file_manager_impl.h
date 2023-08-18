@@ -78,7 +78,7 @@ public:
 
     bool dir_exists(const utils::resource::resource_location& dir_loc) const override;
 
-    void put_virtual_file(
+    std::string_view put_virtual_file(
         unsigned long long id, std::string_view text, utils::resource::resource_location related_workspace) override;
     void remove_virtual_file(unsigned long long id) override;
     std::string get_virtual_file(unsigned long long id) const override;

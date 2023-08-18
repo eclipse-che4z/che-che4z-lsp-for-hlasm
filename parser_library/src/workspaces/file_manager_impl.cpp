@@ -389,11 +389,11 @@ bool file_manager_impl::dir_exists(const utils::resource::resource_location& dir
     return utils::resource::dir_exists(dir_loc);
 }
 
-void file_manager_impl::put_virtual_file(
+std::string_view file_manager_impl::put_virtual_file(
     unsigned long long id, std::string_view text, utils::resource::resource_location related_workspace)
 {
     std::lock_guard guard(virtual_files_mutex);
-    m_virtual_files.try_emplace(id, text, std::move(related_workspace));
+    return m_virtual_files.try_emplace(id, text, std::move(related_workspace)).first->second.text;
 }
 
 void file_manager_impl::remove_virtual_file(unsigned long long id)

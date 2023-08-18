@@ -15,8 +15,6 @@
 #include <optional>
 #include <utility>
 
-#include "gtest/gtest.h"
-
 #include "../common_testing.h"
 #include "../workspace_manager_response_mock.h"
 #include "consume_diagnostics_mock.h"
@@ -37,7 +35,8 @@ namespace {
 class vf_mock : public virtual_file_monitor
 {
 public:
-    MOCK_METHOD(virtual_file_handle, file_generated, (std::string_view content), (override));
+    MOCK_METHOD(
+        (std::pair<virtual_file_handle, std::string_view>), file_generated, (std::string_view content), (override));
 };
 } // namespace
 
@@ -45,7 +44,8 @@ TEST(virtual_files, callback_test_ainsert)
 {
     vf_mock vf;
 
-    EXPECT_CALL(vf, file_generated(std::string_view("A DS H\n"))).WillOnce(Return(virtual_file_handle()));
+    EXPECT_CALL(vf, file_generated(std::string_view("A DS H\n")))
+        .WillOnce(Return(std::pair<virtual_file_handle, std::string_view>({}, std::string_view("A DS H\n"))));
 
     std::string input = R"(
     AINSERT 'A DS H',BACK
@@ -59,8 +59,11 @@ TEST(virtual_files, callback_test_ainsert)
 TEST(virtual_files, callback_test_preprocessor)
 {
     vf_mock vf;
+    std::string saved_text;
 
-    EXPECT_CALL(vf, file_generated(Ne(std::string_view()))).WillOnce(Return(virtual_file_handle()));
+    EXPECT_CALL(vf, file_generated(Ne(std::string_view())))
+        .WillOnce(
+            DoAll(SaveArg<0>(&saved_text), Return(std::pair<virtual_file_handle, std::string_view>({}, saved_text))));
 
     std::string input = R"(
 )";
@@ -83,8 +86,9 @@ TEST(virtual_files, file_manager)
 
     EXPECT_EQ(fm.get_virtual_file(0), empty);
 
-    fm.put_virtual_file(0, content, related_workspace);
+    auto stored_text = fm.put_virtual_file(0, content, related_workspace);
 
+    EXPECT_EQ(stored_text, content);
     EXPECT_EQ(fm.get_virtual_file(0), content);
     EXPECT_EQ(fm.get_virtual_file_workspace(0), related_workspace);
 
@@ -98,7 +102,8 @@ TEST(virtual_files, callback_test_ainsert_valid_vfm)
     vf_mock vf;
 
     EXPECT_CALL(vf, file_generated(std::string_view("A DC H\n")))
-        .WillOnce(Return(virtual_file_handle(std::make_shared<const virtual_file_id>(0))));
+        .WillOnce(Return(std::pair<virtual_file_handle, std::string_view>(
+            virtual_file_handle(std::make_shared<const virtual_file_id>(0)), std::string_view("A DC H\n"))));
 
     std::string input = R"(
     AINSERT 'A DC H',BACK
@@ -123,10 +128,15 @@ TEST(virtual_files, file_manager_vfm)
     constexpr auto id_initial = ~0ULL;
     auto id = id_initial;
 
-    EXPECT_CALL(fm, put_virtual_file(_, Eq(test_content), Eq(related_workspace))).WillOnce(SaveArg<0>(&id));
+    EXPECT_CALL(fm, put_virtual_file(_, Eq(test_content), Eq(related_workspace)))
+        .WillOnce(DoAll(SaveArg<0>(&id), Return(test_content)));
     EXPECT_CALL(fm, remove_virtual_file(Eq(std::cref(id)))).Times(1);
 
-    auto file_id = vfm.file_generated(test_content).file_id();
+    auto [file_handle, file_text] = vfm.file_generated(test_content);
+
+    EXPECT_EQ(file_text, test_content);
+
+    auto file_id = file_handle.file_id();
 
     EXPECT_NE(id, id_initial);
 

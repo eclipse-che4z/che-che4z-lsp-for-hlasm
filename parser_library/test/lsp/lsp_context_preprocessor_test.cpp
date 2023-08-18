@@ -72,12 +72,12 @@ protected:
     struct : virtual_file_monitor
     {
         unsigned long long next_id = 12345;
-        std::vector<unsigned long long> generated_handles;
-        virtual_file_handle file_generated(std::string_view) final
+        std::unordered_map<unsigned long long, std::string> generated_handles;
+        std::pair<virtual_file_handle, std::string_view> file_generated(std::string_view text) final
         {
-            generated_handles.emplace_back(next_id++);
+            auto [it, _] = generated_handles.try_emplace(next_id++, text);
 
-            return virtual_file_handle(std::make_shared<virtual_file_id>(generated_handles.back()));
+            return { virtual_file_handle(std::make_shared<virtual_file_id>(it->first)), it->second };
         }
     } vf_monitor;
     analyzer a;

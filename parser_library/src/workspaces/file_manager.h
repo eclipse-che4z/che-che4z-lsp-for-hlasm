@@ -75,7 +75,7 @@ public:
         size_t ch_size) = 0;
     virtual void did_close_file(const utils::resource::resource_location& document_loc) = 0;
 
-    virtual void put_virtual_file(
+    virtual std::string_view put_virtual_file(
         unsigned long long id, std::string_view text, utils::resource::resource_location related_workspace) = 0;
     virtual void remove_virtual_file(unsigned long long id) = 0;
     virtual std::string get_virtual_file(unsigned long long id) const = 0;

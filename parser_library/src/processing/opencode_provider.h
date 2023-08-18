@@ -87,7 +87,7 @@ enum class extract_next_logical_line_result
 };
 
 // uses the parser implementation to produce statements in the opencode(-like) scenario
-class opencode_provider final : public statement_provider
+class opencode_provider final : public statement_provider, virtual_file_monitor
 {
     document m_input_document;
     std::size_t m_next_line_index = 0;
@@ -110,7 +110,7 @@ class opencode_provider final : public statement_provider
 
     std::deque<std::string> m_ainsert_buffer;
 
-    std::unordered_map<context::id_index, std::string> m_virtual_files;
+    std::shared_ptr<std::unordered_map<context::id_index, std::string>> m_virtual_files;
 
     struct parser_set
     {
@@ -164,6 +164,8 @@ class opencode_provider final : public statement_provider
     encoding_warning_issued m_encoding_warning_issued = {};
 
     std::vector<context::id_index> lookahead_references;
+
+    std::pair<virtual_file_handle, std::string_view> file_generated(std::string_view content) override;
 
 public:
     // rewinds position in file

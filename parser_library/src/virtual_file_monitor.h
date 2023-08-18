@@ -47,7 +47,7 @@ class virtual_file_monitor
 {
 public:
     // notifies the monitor that a new virtual file has been produced
-    virtual virtual_file_handle file_generated(std::string_view content) = 0;
+    virtual std::pair<virtual_file_handle, std::string_view> file_generated(std::string_view content) = 0;
 
 protected:
     ~virtual_file_monitor() = default;

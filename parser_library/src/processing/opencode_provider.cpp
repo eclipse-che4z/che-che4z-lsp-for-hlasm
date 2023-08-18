@@ -33,14 +33,6 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-namespace {
-struct dummy_vfm final : public virtual_file_monitor
-{
-    virtual_file_handle file_generated(std::string_view content) override { return virtual_file_handle(); }
-};
-dummy_vfm fallback_vfm;
-} // namespace
-
 opencode_provider::opencode_provider(std::string_view text,
     analyzing_context& ctx,
     workspaces::parse_lib_provider& lib_provider,
@@ -54,6 +46,7 @@ opencode_provider::opencode_provider(std::string_view text,
     std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>>& vf_handles)
     : statement_provider(statement_provider_kind::OPEN)
     , m_input_document(text)
+    , m_virtual_files(std::make_shared<std::unordered_map<context::id_index, std::string>>())
     , m_singleline { parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer, false),
         parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, false),
         parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, false) }
@@ -68,7 +61,7 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_diagnoser(&diag_consumer)
     , m_opts(opts)
     , m_preprocessor(std::move(prep))
-    , m_virtual_file_monitor(virtual_file_monitor ? virtual_file_monitor : &fallback_vfm)
+    , m_virtual_file_monitor(virtual_file_monitor ? virtual_file_monitor : this)
     , m_vf_handles(vf_handles)
 {}
 
@@ -523,6 +516,12 @@ bool opencode_provider::should_run_preprocessor() const noexcept
         && !m_input_document.at(m_next_line_index).is_original();
 }
 
+
+std::pair<virtual_file_handle, std::string_view> opencode_provider::file_generated(std::string_view content)
+{
+    return { virtual_file_handle(std::shared_ptr<const virtual_file_id>(m_virtual_files, nullptr)), content };
+}
+
 utils::task opencode_provider::run_preprocessor()
 {
     const auto current_line = extract_current_line(m_next_line_index, m_input_document);
@@ -541,7 +540,7 @@ utils::task opencode_provider::run_preprocessor()
 
     auto virtual_file_name = m_ctx->hlasm_ctx->ids().add("PREPROCESSOR_" + std::to_string(current_line));
 
-    auto [new_file, inserted] = m_virtual_files.try_emplace(virtual_file_name, std::move(preprocessor_text));
+    auto [new_file, inserted] = m_virtual_files->try_emplace(virtual_file_name, std::move(preprocessor_text));
 
     // set up "call site"
     const auto last_statement_line = stop_line - (stop_line != current_line);
@@ -558,10 +557,10 @@ utils::task opencode_provider::run_preprocessor()
     }
     else
     {
-        auto file_handle = m_virtual_file_monitor->file_generated(new_file->second);
+        auto [file_handle, file_text] = m_virtual_file_monitor->file_generated(new_file->second);
         auto file_location = generate_virtual_file_name(file_handle.file_id(), virtual_file_name.to_string_view());
         m_vf_handles.emplace_back(std::move(file_handle), file_location);
-        return start_nested_parser(new_file->second,
+        return start_nested_parser(file_text,
             analyzer_options {
                 std::move(file_location),
                 m_lib_provider,
@@ -632,12 +631,12 @@ utils::task opencode_provider::convert_ainsert_buffer_to_copybook()
     auto virtual_copy_name =
         m_ctx->hlasm_ctx->ids().add("AINSERT_" + std::to_string(m_ctx->hlasm_ctx->obtain_ainsert_id()));
 
-    auto new_file = m_virtual_files.try_emplace(virtual_copy_name, std::move(result)).first;
+    auto new_file = m_virtual_files->try_emplace(virtual_copy_name, std::move(result)).first;
 
-    auto file_handle = m_virtual_file_monitor->file_generated(new_file->second);
+    auto [file_handle, file_text] = m_virtual_file_monitor->file_generated(new_file->second);
     auto file_location = generate_virtual_file_name(file_handle.file_id(), virtual_copy_name.to_string_view());
     m_vf_handles.emplace_back(std::move(file_handle), file_location);
-    co_await start_nested_parser(new_file->second,
+    co_await start_nested_parser(file_text,
         analyzer_options {
             std::move(file_location),
             m_lib_provider,

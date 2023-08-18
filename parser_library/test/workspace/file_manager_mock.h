@@ -62,7 +62,7 @@ public:
             size_t ch_size),
         (override));
     MOCK_METHOD(void, did_close_file, (const resource_location& document_loc), (override));
-    MOCK_METHOD(void,
+    MOCK_METHOD(std::string_view,
         put_virtual_file,
         (unsigned long long id, std::string_view text, resource_location related_workspace),
         (override));
