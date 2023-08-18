@@ -98,8 +98,8 @@ public:
     static std::vector<position> find_references(
         const symbol_occurrence& occurrence, const std::vector<symbol_occurrence>& occurrences);
 
-    void update_occurrences(
-        const std::vector<symbol_occurrence>& occurrences_upd, const std::map<size_t, size_t>& stmt_line_upd);
+    void update_occurrences(const std::vector<symbol_occurrence>& occurrences_upd,
+        const std::vector<line_occurence_details>& line_details_upd);
     void update_slices(const std::vector<file_slice_t>& slices);
     const std::vector<symbol_occurrence>& get_occurrences() const;
     void process_occurrences();
@@ -108,10 +108,12 @@ public:
 
     const symbol_occurrence* find_closest_instruction(position pos) const noexcept;
 
+    const line_occurence_details* get_line_details(size_t l) const noexcept;
+
 private:
     std::map<line_range, file_slice_t> slices;
     std::vector<symbol_occurrence> occurrences;
-    std::vector<std::pair<size_t, size_t>> statement_lines;
+    std::vector<line_occurence_details> line_details;
     std::vector<size_t> occurrences_start_limit;
 };
 

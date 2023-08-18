@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "analyzer_fixture.h"
+#include "lsp/completion_item.h"
 #include "lsp/lsp_context.h"
 #include "workspaces/workspace.h"
 

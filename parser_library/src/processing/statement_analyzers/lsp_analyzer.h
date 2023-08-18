@@ -87,7 +87,7 @@ class lsp_analyzer : public statement_analyzer
     {
         std::vector<lsp::symbol_occurrence>* stmt_occurrences;
         size_t stmt_occurrences_last;
-        std::map<size_t, size_t>* stmt_ranges;
+        std::vector<lsp::line_occurence_details>* line_details;
         bool evaluated_model;
     };
 
@@ -116,6 +116,8 @@ private:
     void collect_occurrences(lsp::occurrence_kind kind,
         const semantics::preprocessor_statement_si& statement,
         const collection_info_t& collection_info);
+    void collect_endline(const range& r, const collection_info_t& collection_info);
+    void collect_usings(const range& r, const collection_info_t& collection_info);
 
     void collect_occurrence(const semantics::label_si& label, occurrence_collector& collector);
     void collect_occurrence(const semantics::instruction_si& instruction, occurrence_collector& collector);
@@ -138,6 +140,8 @@ private:
     bool is_SET(const processing::resolved_statement& statement, context::SET_t_enum& set_type) const;
 
     collection_info_t get_active_collection(const utils::resource::resource_location& loc, bool evaluated_model);
+
+    lsp::line_occurence_details& line_details(const range& r, const collection_info_t& collection_info);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

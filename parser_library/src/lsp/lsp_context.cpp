@@ -23,9 +23,9 @@
 #include <unordered_map>
 #include <variant>
 
-#include "context/instruction.h"
+#include "completion_item.h"
 #include "context/macro.h"
-#include "ebcdic_encoding.h"
+#include "context/using.h"
 #include "item_convertors.h"
 #include "lsp/macro_info.h"
 #include "utils/similar.h"
@@ -635,7 +635,7 @@ std::string lsp_context::hover(const utils::resource::resource_location& documen
     if (!occ)
         return {};
 
-    return find_hover(*occ, macro_scope);
+    return find_hover(*occ, macro_scope, find_line_details(document_loc, occ->occurrence_range.start.line));
 }
 
 bool lsp_context::should_complete_instr(const text_data_view& text, position pos) const
@@ -745,6 +745,14 @@ occurrence_scope_t lsp_context::find_occurrence_with_scope(
     if (auto file = m_files.find(document_loc); file != m_files.end())
         return file->second->find_occurrence_with_scope(pos);
     return std::make_pair(nullptr, nullptr);
+}
+
+const line_occurence_details* lsp_context::find_line_details(
+    const utils::resource::resource_location& document_loc, size_t l) const
+{
+    if (auto file = m_files.find(document_loc); file != m_files.end())
+        return file->second->get_line_details(l);
+    return nullptr;
 }
 
 location lsp_context::find_symbol_definition_location(
@@ -877,8 +885,20 @@ bool lsp_context::have_suggestions_for_instr_like(context::id_index name) const
     return m_hlasm_ctx->find_any_valid_opcode(name);
 }
 
-std::string lsp_context::find_hover(const symbol_occurrence& occ, macro_info_ptr macro_scope_i) const
+std::string lsp_context::find_hover(
+    const symbol_occurrence& occ, macro_info_ptr macro_scope_i, const line_occurence_details* ld) const
 {
+    const auto prefix_using = [this, ld](std::string s) {
+        auto u = ld ? hover_text(m_hlasm_ctx->usings().describe(ld->active_using)) : "";
+
+        if (u.empty())
+            return s;
+
+        if (!s.empty())
+            u.append("\n---\n").append(s);
+
+        return u;
+    };
     switch (occ.kind)
     {
         case lsp::occurrence_kind::ORD: {
@@ -906,11 +926,11 @@ std::string lsp_context::find_hover(const symbol_occurrence& occ, macro_info_ptr
                 auto it = m_macros.find(occ.opcode);
                 assert(it != m_macros.end());
 
-                return hover_for_macro(*it->second);
+                return prefix_using(hover_for_macro(*it->second));
             }
             else
             {
-                return hover_for_instruction(occ.name);
+                return prefix_using(hover_for_instruction(occ.name));
             }
         }
         case lsp::occurrence_kind::INSTR_LIKE: {
@@ -919,9 +939,10 @@ std::string lsp_context::find_hover(const symbol_occurrence& occ, macro_info_ptr
             if (auto op = m_hlasm_ctx->find_any_valid_opcode(occ.name))
             {
                 if (std::holds_alternative<context::macro_def_ptr>(op->opcode_detail))
-                    return hover_for_macro(*m_macros.at(std::get<context::macro_def_ptr>(op->opcode_detail)));
+                    return prefix_using(
+                        hover_for_macro(*m_macros.at(std::get<context::macro_def_ptr>(op->opcode_detail))));
                 else
-                    return hover_for_instruction(op->opcode);
+                    return prefix_using(hover_for_instruction(op->opcode));
             }
             if (m_instr_like.contains(occ.name))
                 return "Statement not executed, macro with matching name available";

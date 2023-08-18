@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "analyzer_fixture.h"
@@ -20,7 +21,7 @@
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
-
+using namespace ::testing;
 
 struct lsp_context_ord_symbol : public analyzer_fixture
 {
@@ -213,4 +214,20 @@ B DS F
 
     EXPECT_EQ(a_pos, (std::vector<position> { { 3, 13 }, { 6, 15 }, { 9, 0 } }));
     EXPECT_EQ(b_pos, (std::vector<position> { { 7, 22 }, { 10, 0 } }));
+}
+
+TEST(hover, using)
+{
+    std::string input = R"(
+    USING *,15
+    SAM31
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+
+    EXPECT_THAT(a.context().lsp_ctx->hover(empty_loc, { 2, 5 }), StartsWith("Active USINGs: **(PC)"));
 }

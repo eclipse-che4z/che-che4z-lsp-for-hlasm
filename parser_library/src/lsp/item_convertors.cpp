@@ -20,12 +20,12 @@
 #include "completion_item.h"
 #include "context/ordinary_assembly/symbol.h"
 #include "context/sequence_symbol.h"
+#include "context/using.h"
 #include "ebcdic_encoding.h"
 #include "file_info.h"
 #include "lsp/lsp_context.h"
 #include "lsp/macro_info.h"
 #include "text_data_view.h"
-#include "utils/concat.h"
 #include "utils/string_operations.h"
 #include "utils/unicode_text.h"
 
@@ -404,5 +404,80 @@ std::vector<completion_item_s> generate_completion(const context::macro_definiti
     return result;
 }
 
+constexpr const auto to_hex = [](unsigned long long n) {
+    std::string s;
+    do
+    {
+        s.push_back("0123456789ABCDEF"[n & 15]);
+        n >>= 4;
+    } while (n);
+    std::reverse(s.begin(), s.end());
+    return s;
+};
+
+void append_hover_text(std::string& text, const context::using_context_description& u)
+{
+    static constexpr const std::string_view private_csect("(PC)");
+
+    bool named = !u.label.empty() || u.section.has_value();
+
+    if (named)
+    {
+        text.append("**");
+
+        if (!u.label.empty())
+            text.append(u.label.to_string_view()).append(".");
+
+        if (u.section.has_value() && !u.section->empty())
+            text.append(u.section->to_string_view());
+        else if (u.section.has_value() && u.section->empty())
+            text.append(private_csect);
+
+        text.append("**");
+    }
+
+    if (u.offset)
+    {
+        if (u.offset < 0)
+            text.append("-");
+        else if (named)
+            text.append("+");
+
+        text.append("X'").append(to_hex(std::abs((long long)u.offset))).append("'");
+    }
+
+    if (u.length != u.regs.size() * 0x1000)
+        text.append("(X'").append(to_hex(u.length)).append("')");
+
+    for (auto ro = u.reg_offset; auto reg : u.regs)
+    {
+        text.append(",R").append(std::to_string(reg));
+        if (ro)
+            text.append(ro > 0 ? "+" : "-")
+                .append("X'")
+                .append(to_hex(std::abs((long long)std::exchange(ro, 0))))
+                .append("'");
+    }
+}
+
+std::string hover_text(std::span<const context::using_context_description> usings)
+{
+    std::string text;
+
+    if (usings.empty())
+        return text;
+
+    text.append("Active USINGs:");
+
+    for (const auto& u : usings)
+    {
+        text.append(" ");
+        append_hover_text(text, u);
+    }
+
+    text.append("\n");
+
+    return text;
+}
 
 } // namespace hlasm_plugin::parser_library::lsp

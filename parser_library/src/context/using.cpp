@@ -604,4 +604,24 @@ auto using_collection::using_context::evaluate(
         return evaluate(label, owner, offset, min_short, max_short, false);
 }
 
+std::vector<using_context_description> using_collection::describe(index_t<using_collection> context_id) const
+{
+    if (!context_id)
+        return {};
+
+    std::vector<using_context_description> result;
+
+    for (const auto& u : get(context_id).context.m_state)
+        result.push_back({
+            u.label,
+            u.owner ? std::optional(u.owner->name) : std::nullopt,
+            u.offset,
+            (unsigned long)u.length,
+            u.reg_offset,
+            { u.regs.begin(), std::find(u.regs.begin(), u.regs.end(), invalid_register) },
+        });
+
+    return result;
+}
+
 } // namespace hlasm_plugin::parser_library::context

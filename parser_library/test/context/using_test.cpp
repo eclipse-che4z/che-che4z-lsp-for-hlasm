@@ -967,6 +967,43 @@ TEST(using, smaller_offset_but_invalid)
     EXPECT_EQ(coll.evaluate(with_sect2, id_index(), sect, 128, false), evaluate_result(1, 128));
 }
 
+TEST(using, describe)
+{
+    test_context c;
+
+    using_collection coll;
+    index_t<using_collection> current;
+    diagnostic_consumer_container<diagnostic_s> d_s;
+
+    auto sect = c.create_section("SECT");
+    auto label = c.id("LABEL");
+
+    const auto with_sect = coll.add(current,
+        label,
+        c.create_symbol("SECT") + c.number(100),
+        c.create_symbol("SECT") + c.number(120),
+        args(c.number(1), c.number(2)),
+        dependency_evaluation_context(opcode_generation::current),
+        {});
+
+    coll.resolve_all(c.asm_ctx, d_s, library_info_transitional::empty);
+
+    EXPECT_TRUE(d_s.diags.empty());
+
+    const std::vector<using_context_description> expected {
+        using_context_description { label, sect->name, 100, 20, 0, { 1, 2 } },
+    };
+
+    EXPECT_EQ(coll.describe(with_sect), expected);
+}
+
+TEST(using, describe_empty)
+{
+    using_collection coll;
+
+    EXPECT_TRUE(coll.describe({}).empty());
+}
+
 TEST(using, simple_using)
 {
     std::string input = R"(

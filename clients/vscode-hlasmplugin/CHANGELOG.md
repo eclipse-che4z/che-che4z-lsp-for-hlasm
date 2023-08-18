@@ -4,6 +4,7 @@
 
 #### Added
 - Support floating point special values
+- Show active USINGs in the instruction hover text
 
 #### Fixed
 - Program to processor group mapping precedence

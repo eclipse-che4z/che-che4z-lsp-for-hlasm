@@ -23,10 +23,9 @@
 #include <memory>
 #include <optional>
 #include <span>
-#include <unordered_set>
 #include <vector>
 
-#include "id_storage.h"
+#include "id_index.h"
 #include "ordinary_assembly/symbol_dependency_tables.h"
 #include "ordinary_assembly/symbol_value.h"
 #include "source_context.h"
@@ -52,6 +51,7 @@ class ordinary_assembly_context;
 class section;
 class using_context;
 struct using_evaluate_result;
+struct using_context_description;
 
 class using_collection
 {
@@ -359,6 +359,8 @@ public:
         offset_t offset,
         bool long_offset) const;
 
+    std::vector<using_context_description> describe(index_t<using_collection> context_id) const;
+
     bool is_label_mapping_section(index_t<using_collection> context_id, id_index label, const section* owner) const;
 };
 
@@ -373,6 +375,18 @@ struct using_evaluate_result
     {}
 
     friend bool operator==(using_evaluate_result, using_evaluate_result) = default;
+};
+
+struct using_context_description
+{
+    id_index label;
+    std::optional<id_index> section;
+    long offset;
+    unsigned long length;
+    long reg_offset;
+    std::vector<using_collection::register_t> regs;
+
+    bool operator==(const using_context_description&) const noexcept = default;
 };
 
 } // namespace hlasm_plugin::parser_library::context

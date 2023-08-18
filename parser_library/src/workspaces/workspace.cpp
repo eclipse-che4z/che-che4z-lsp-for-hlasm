@@ -25,6 +25,7 @@
 #include "fade_messages.h"
 #include "file.h"
 #include "file_manager.h"
+#include "lsp/completion_item.h"
 #include "lsp/document_symbol_item.h"
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"

@@ -15,8 +15,7 @@
 #include "file_info.h"
 
 #include <algorithm>
-
-#include "utils/merge_sorted.h"
+#include <span>
 
 namespace hlasm_plugin::parser_library::lsp {
 
@@ -95,16 +94,25 @@ const symbol_occurrence* file_info::find_closest_instruction(position pos) const
     if (instr == occurrences.rend() || instr->kind != occurrence_kind::INSTR)
         return nullptr;
 
-    auto line = std::upper_bound(statement_lines.begin(), statement_lines.end(), std::make_pair(pos.line, (size_t)-1));
-
-    if (line == statement_lines.begin())
+    if (instr->occurrence_range.start.line >= line_details.size())
         return nullptr;
-    --line;
+
+    const auto& ld = line_details[instr->occurrence_range.start.line];
+    if (ld.max_endline == 0)
+        return nullptr;
+
     // pos.column == 15 is a workaround around incorrect range assignment for statements that were freshly continued
-    if (line->first != instr->occurrence_range.start.line || pos.line > line->second + (pos.column == 15))
+    if (pos.line >= ld.max_endline + (pos.column == 15))
         return nullptr;
 
     return std::to_address(instr);
+}
+
+const line_occurence_details* file_info::get_line_details(size_t l) const noexcept
+{
+    if (l >= line_details.size())
+        return nullptr;
+    return &line_details[l];
 }
 
 macro_info_ptr file_info::find_scope(position pos) const
@@ -127,16 +135,26 @@ std::vector<position> file_info::find_references(
     return result;
 }
 
-void file_info::update_occurrences(
-    const std::vector<symbol_occurrence>& occurrences_upd, const std::map<size_t, size_t>& stmt_line_upd)
+void file_info::update_occurrences(const std::vector<symbol_occurrence>& occurrences_upd,
+    const std::vector<lsp::line_occurence_details>& line_details_upd)
 {
     occurrences.insert(occurrences.end(), occurrences_upd.begin(), occurrences_upd.end());
 
-    utils::merge_sorted(
-        statement_lines,
-        stmt_line_upd,
-        [](const auto& l, const auto& r) { return l.first <=> r.first; },
-        [](auto& l, const auto& r) { l.second = std::max(l.second, r.second); });
+    auto common_size = std::min(line_details.size(), line_details_upd.size());
+
+    std::transform(line_details.begin(),
+        line_details.begin() + common_size,
+        line_details_upd.begin(),
+        line_details.begin(),
+        [](const auto& o, const auto& n) {
+            return lsp::line_occurence_details {
+                std::max(o.max_endline, n.max_endline),
+                o.active_using ? o.active_using : n.active_using,
+                o.active_using && n.active_using,
+            };
+        });
+
+    line_details.insert(line_details.end(), line_details_upd.begin() + common_size, line_details_upd.end());
 }
 
 void file_info::update_slices(const std::vector<file_slice_t>& slices_upd)

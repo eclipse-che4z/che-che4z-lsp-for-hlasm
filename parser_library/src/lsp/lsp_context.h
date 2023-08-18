@@ -15,18 +15,15 @@
 #ifndef LSP_CONTEXT_H
 #define LSP_CONTEXT_H
 
-#include <algorithm>
 #include <memory>
 #include <span>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
 
-#include "completion_item.h"
 #include "completion_list_source.h"
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "context/macro.h"
 #include "document_symbol_item.h"
 #include "file_info.h"
@@ -104,6 +101,8 @@ private:
 
     occurrence_scope_t find_occurrence_with_scope(
         const utils::resource::resource_location& document_loc, position pos) const;
+    const line_occurence_details* find_line_details(
+        const utils::resource::resource_location& document_loc, size_t l) const;
 
     std::optional<location> find_definition_location(const symbol_occurrence& occ,
         macro_info_ptr macro_i,
@@ -111,7 +110,8 @@ private:
         position pos) const;
     location find_symbol_definition_location(
         const context::symbol& sym, const utils::resource::resource_location& document_loc, position pos) const;
-    std::string find_hover(const symbol_occurrence& occ, macro_info_ptr macro_i) const;
+    std::string find_hover(
+        const symbol_occurrence& occ, macro_info_ptr macro_i, const line_occurence_details* ld) const;
 
     completion_list_source complete_var(const file_info& file, position pos) const;
     completion_list_source complete_seq(const file_info& file, position pos) const;
@@ -166,6 +166,7 @@ private:
 
     std::string hover_for_macro(const macro_info& macro) const;
     std::string hover_for_instruction(context::id_index name) const;
+
     bool have_suggestions_for_instr_like(context::id_index name) const;
 };
 
