@@ -223,7 +223,7 @@ Assembler options defined by the processor group can be overridden in the `pgm_c
 ### Other Configuration Files
 
 #### `.bridge.json` Configuration File
-If you use Endevor Bridge for Git, your workspace might already have a `.bridge.json` configuration file which contains program to processor group mappings. In this case, you do not need to create a separate `pgm_conf.json` file. However, `proc_grps.json` is still required to enable successful mapping between programs specified in `.bridge.json` and processor groups defined in `proc_grps.json`.
+If you use Endevor Bridge for Git, your workspace might already have `.bridge.json` configuration files which contain program to processor group mappings. In this case, you do not need to create a separate `pgm_conf.json` file. However, `proc_grps.json` is still required to enable successful mapping between programs specified in `.bridge.json` and processor groups defined in `proc_grps.json`.
 
 #### Example of `.bridge.json`:
 In this `.bridge.json` file, the program `source_code` is mapped to a processor group `GROUP1` and all other existing programs are mapped to `GROUP2` by default.
