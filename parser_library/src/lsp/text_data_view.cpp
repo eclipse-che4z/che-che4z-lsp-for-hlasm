@@ -46,6 +46,8 @@ char text_data_view::get_character_before(position pos) const
     if (pos.column == 0)
         return '\0';
     size_t index = workspaces::index_from_position(text, line_indices, { pos.line, pos.column - 1 });
+    if (index >= text.size())
+        return '\0';
     return text.at(index);
 }
 

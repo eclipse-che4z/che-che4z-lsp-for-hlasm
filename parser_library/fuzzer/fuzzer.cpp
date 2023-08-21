@@ -25,6 +25,10 @@
 
 #include "analyzer.h"
 #include "analyzing_context.h"
+#include "lsp/completion_item.h"
+#include "lsp/completion_list_source.h"
+#include "lsp/item_convertors.h"
+#include "lsp/lsp_context.h"
 #include "preprocessor_options.h"
 #include "utils/resource_location.h"
 #include "utils/unicode_text.h"
@@ -127,17 +131,50 @@ std::string get_content(const uint8_t* data, size_t size, fuzzer_lib_provider& l
 
     return source;
 }
+
+const hlasm_plugin::utils::resource::resource_location empty_location;
+
 } // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    if (!data || size <= 1)
+    if (!data || size <= 2)
         return 0;
 
     fuzzer_lib_provider lib;
-    auto source = get_content(data + 1, size - 1, lib);
+    auto source = get_content(data + 2, size - 2, lib);
     analyzer a(source, analyzer_options(&lib, get_preprocessor_options(std::bitset<3>(data[0]))));
     a.analyze();
+
+    auto num1 = data[1] >> 4;
+    auto num2 = data[1] & 15;
+
+    switch (data[0] >> 3)
+    {
+        case 0:
+            lsp::generate_completion(a.context().lsp_ctx->completion(
+                empty_location, position(num1, num2), 0, completion_trigger_kind::invoked));
+            break;
+
+        case 1:
+            a.context().lsp_ctx->definition(empty_location, position(num1, num2));
+            break;
+
+        case 2:
+            a.context().lsp_ctx->document_symbol(empty_location, 5000);
+            break;
+
+        case 3:
+            a.context().lsp_ctx->hover(empty_location, position(num1, num2));
+            break;
+
+        case 4:
+            a.context().lsp_ctx->references(empty_location, position(num1, num2));
+            break;
+
+        default:
+            break;
+    }
 
     return 0; // Non-zero return values are reserved for future use.
 }
