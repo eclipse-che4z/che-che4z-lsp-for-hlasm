@@ -107,6 +107,7 @@ public:
         std::unordered_map<context::id_index, utils::resource::resource_location>& m) const;
 
     const symbol_occurrence* find_closest_instruction(position pos) const noexcept;
+    std::pair<const context::section*, index_t<context::using_collection>> find_reachable_sections(position pos) const;
 
     const line_occurence_details* get_line_details(size_t l) const noexcept;
 

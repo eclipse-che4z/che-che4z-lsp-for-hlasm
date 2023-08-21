@@ -169,6 +169,14 @@ void lsp_analyzer::collect_usings(const range& r, const collection_info_t& ci)
     else
         line_detail.using_overflow |= line_detail.active_using != cur;
 }
+void lsp_analyzer::collect_section(const range& r, const collection_info_t& ci)
+{
+    auto& line_detail = line_details(r, ci);
+    if (auto cur = hlasm_ctx_.ord_ctx.current_section(); !line_detail.active_section)
+        line_detail.active_section = cur;
+    else
+        line_detail.section_overflow |= line_detail.active_section != cur;
+}
 
 void lsp_analyzer::macrodef_started(const macrodef_start_data& data)
 {
@@ -230,6 +238,7 @@ void lsp_analyzer::collect_occurrences(
             const auto& r = def_stmt->stmt_range_ref();
             collect_endline(r, ci);
             collect_usings(r, ci);
+            // no section collection for deferred statements
         }
 
         collect_occurrence(def_stmt->label_ref(), collector);
@@ -243,6 +252,7 @@ void lsp_analyzer::collect_occurrences(
             const auto& r = res_stmt->stmt_range_ref();
             collect_endline(r, ci);
             collect_usings(r, ci);
+            collect_section(r, ci);
         }
 
         collect_occurrence(res_stmt->label_ref(), collector);

@@ -90,8 +90,6 @@ public:
 
     const context::hlasm_context& get_related_hlasm_context() const { return *m_hlasm_ctx; }
 
-    void collect_instr_like_suggestions();
-
     const std::unordered_map<context::macro_def_ptr, macro_info_ptr>& macros() const { return m_macros; };
 
 private:

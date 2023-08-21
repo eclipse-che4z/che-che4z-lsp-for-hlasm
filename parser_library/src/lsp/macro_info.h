@@ -23,6 +23,7 @@
 
 namespace hlasm_plugin::parser_library::context {
 class using_collection;
+class section;
 } // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::lsp {
@@ -110,7 +111,9 @@ struct line_occurence_details
 {
     size_t max_endline = 0;
     index_t<context::using_collection> active_using;
-    bool using_overflow = false;
+    const context::section* active_section = nullptr;
+    bool using_overflow : 1 = false;
+    bool section_overflow : 1 = false;
 };
 
 using file_occurrences_t = std::unordered_map<utils::resource::resource_location,

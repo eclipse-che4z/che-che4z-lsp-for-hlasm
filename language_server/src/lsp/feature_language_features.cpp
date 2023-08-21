@@ -120,6 +120,7 @@ const std::unordered_map<completion_item_kind, lsp_completion_item_kind> complet
     { completion_item_kind::macro, lsp_completion_item_kind::file },
     { completion_item_kind::var_sym, lsp_completion_item_kind::variable },
     { completion_item_kind::seq_sym, lsp_completion_item_kind::reference },
+    { completion_item_kind::ord_sym, lsp_completion_item_kind::field },
 };
 
 nlohmann::json get_markup_content(std::string_view content)

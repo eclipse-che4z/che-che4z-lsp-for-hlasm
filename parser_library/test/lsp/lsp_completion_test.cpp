@@ -89,7 +89,8 @@ TEST(lsp_completion, macro_operands)
     auto mac = a.context().lsp_ctx->get_macro_info(context::id_index("MAC"));
     ASSERT_TRUE(mac);
 
-    auto result = lsp::generate_completion(lsp::completion_list_source(mac->macro_definition.get()));
+    auto result = lsp::generate_completion(lsp::completion_list_source(
+        std::pair(mac->macro_definition.get(), std::vector<std::pair<const context::symbol*, context::id_index>>())));
 
     EXPECT_EQ(result.size(), 2);
 
@@ -98,4 +99,90 @@ TEST(lsp_completion, macro_operands)
     EXPECT_TRUE(std::any_of(result.begin(), result.end(), [](const auto& e) {
         return e.label == "&B" && e.documentation.find("&B=(DEFAULTB,1)") != std::string::npos;
     }));
+}
+
+TEST(lsp_completion, ordinary_operands_reloc_no_label)
+{
+    using namespace ::testing;
+
+    const std::string input = R"(
+D   DSECT
+DA  DS  F
+DL  EQU *-D
+C   CSECT
+)";
+    analyzer a(input);
+    a.analyze();
+
+    const auto* da = get_symbol(a.hlasm_ctx(), "DA");
+    ASSERT_TRUE(da);
+
+    auto result = lsp::generate_completion(
+        lsp::completion_list_source(std::pair(nullptr, std::vector { std::pair(da, context::id_index()) })));
+
+    ASSERT_EQ(result.size(), 1);
+    const auto& item = result.front();
+
+    EXPECT_EQ(item.label, "DA");
+    EXPECT_THAT(item.detail, HasSubstr("relocatable symbol"));
+    EXPECT_THAT(item.documentation, HasSubstr("Relocatable Symbol"));
+    EXPECT_EQ(item.insert_text, "DA");
+}
+
+TEST(lsp_completion, ordinary_operands_reloc_label)
+{
+    using namespace ::testing;
+
+    const std::string input = R"(
+D   DSECT
+DA  DS  F
+DL  EQU *-D
+C   CSECT
+)";
+    analyzer a(input);
+    a.analyze();
+
+    constexpr context::id_index L("L");
+
+    const auto* da = get_symbol(a.hlasm_ctx(), "DA");
+    ASSERT_TRUE(da);
+
+    auto result =
+        lsp::generate_completion(lsp::completion_list_source(std::pair(nullptr, std::vector { std::pair(da, L) })));
+
+    ASSERT_EQ(result.size(), 1);
+    const auto& item = result.front();
+
+    EXPECT_EQ(item.label, "L.DA");
+    EXPECT_THAT(item.detail, HasSubstr("relocatable symbol"));
+    EXPECT_THAT(item.documentation, HasSubstr("Relocatable Symbol"));
+    EXPECT_EQ(item.insert_text, "L.DA");
+}
+
+TEST(lsp_completion, ordinary_operands_abs)
+{
+    using namespace ::testing;
+
+    const std::string input = R"(
+D   DSECT
+DA  DS  F
+DL  EQU *-D
+C   CSECT
+)";
+    analyzer a(input);
+    a.analyze();
+
+    const auto* dl = get_symbol(a.hlasm_ctx(), "DL");
+    ASSERT_TRUE(dl);
+
+    auto result = lsp::generate_completion(
+        lsp::completion_list_source(std::pair(nullptr, std::vector { std::pair(dl, context::id_index()) })));
+
+    ASSERT_EQ(result.size(), 1);
+    const auto& item = result.front();
+
+    EXPECT_EQ(item.label, "DL");
+    EXPECT_THAT(item.detail, HasSubstr("absolute symbol"));
+    EXPECT_THAT(item.documentation, HasSubstr("Absolute Symbol"));
+    EXPECT_EQ(item.insert_text, "DL");
 }

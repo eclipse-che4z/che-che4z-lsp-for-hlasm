@@ -372,9 +372,9 @@ std::string_view ordinal_suffix(size_t i)
     return suffixes[i < std::size(suffixes) ? i : 0];
 }
 
-std::vector<completion_item_s> generate_completion(const context::macro_definition* md)
+std::vector<completion_item_s> generate_completion(
+    std::vector<completion_item_s>& result, const context::macro_definition* md)
 {
-    completion_list_s result;
     for (const auto& positional : md->get_positional_params())
     {
         if (!positional || positional->position == 0 || positional->id.empty()) // label parameter or invalid
@@ -401,6 +401,35 @@ std::vector<completion_item_s> generate_completion(const context::macro_definiti
                 + keyword->default_data->get_value() + "\n```\n",
             completion_item_kind::var_sym);
     }
+    return result;
+}
+
+std::vector<completion_item_s> generate_completion(const std::pair<const context::macro_definition*,
+    std::vector<std::pair<const context::symbol*, context::id_index>>>& args)
+{
+    const auto& [md, symbols] = args;
+
+    std::vector<completion_item_s> result;
+
+    if (md)
+        generate_completion(result, md);
+
+    for (const auto& [symbol, label] : symbols)
+    {
+        auto name = label.to_string();
+        if (!name.empty())
+            name.append(".");
+        name.append(symbol->name().to_string_view());
+
+        result.emplace_back(name,
+            name
+                + (symbol->value().value_kind() == context::symbol_value_kind::ABS ? " (absolute symbol)"
+                                                                                   : " (relocatable symbol)"),
+            name,
+            hover_text(*symbol),
+            completion_item_kind::ord_sym);
+    }
+
     return result;
 }
 

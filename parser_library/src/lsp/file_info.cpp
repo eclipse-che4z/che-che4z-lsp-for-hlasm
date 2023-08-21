@@ -108,6 +108,26 @@ const symbol_occurrence* file_info::find_closest_instruction(position pos) const
     return std::to_address(instr);
 }
 
+std::pair<const context::section*, index_t<context::using_collection>> file_info::find_reachable_sections(
+    position pos) const
+{
+    auto l = std::upper_bound(occurrences.begin(), occurrences.end(), pos.line, [](const auto& p, const auto& occ) {
+        return p < occ.occurrence_range.end.line;
+    });
+    auto instr = std::find_if(std::make_reverse_iterator(l), occurrences.rend(), [](const auto& occ) {
+        return occ.kind == occurrence_kind::INSTR || occ.kind == occurrence_kind::INSTR_LIKE;
+    });
+    if (instr == occurrences.rend() || instr->kind != occurrence_kind::INSTR)
+        return {};
+
+    if (instr->occurrence_range.start.line >= line_details.size())
+        return {};
+
+    const auto& ld = line_details[instr->occurrence_range.start.line];
+
+    return { ld.active_section, ld.active_using };
+}
+
 const line_occurence_details* file_info::get_line_details(size_t l) const noexcept
 {
     if (l >= line_details.size())
@@ -150,7 +170,9 @@ void file_info::update_occurrences(const std::vector<symbol_occurrence>& occurre
             return lsp::line_occurence_details {
                 std::max(o.max_endline, n.max_endline),
                 o.active_using ? o.active_using : n.active_using,
-                o.active_using && n.active_using,
+                o.active_section ? o.active_section : n.active_section,
+                o.active_using && n.active_using && o.active_using != n.active_using,
+                o.active_section && n.active_section && o.active_section != n.active_section,
             };
         });
 

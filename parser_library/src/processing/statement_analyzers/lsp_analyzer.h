@@ -118,6 +118,7 @@ private:
         const collection_info_t& collection_info);
     void collect_endline(const range& r, const collection_info_t& collection_info);
     void collect_usings(const range& r, const collection_info_t& collection_info);
+    void collect_section(const range& r, const collection_info_t& collection_info);
 
     void collect_occurrence(const semantics::label_si& label, occurrence_collector& collector);
     void collect_occurrence(const semantics::instruction_si& instruction, occurrence_collector& collector);

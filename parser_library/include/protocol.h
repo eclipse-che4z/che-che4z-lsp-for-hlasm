@@ -98,7 +98,8 @@ enum class PARSER_LIBRARY_EXPORT completion_item_kind
     ca_instr = 2,
     macro = 3,
     var_sym = 4,
-    seq_sym = 5
+    seq_sym = 5,
+    ord_sym = 6,
 };
 
 struct PARSER_LIBRARY_EXPORT completion_item

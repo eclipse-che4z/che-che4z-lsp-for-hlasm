@@ -648,6 +648,70 @@ bool lsp_context::should_complete_instr(const text_data_view& text, position pos
     return !line_before_continued && std::regex_match(line_so_far.begin(), line_so_far.end(), instruction_regex);
 }
 
+std::vector<std::pair<const context::section*, context::id_index>> gather_reachable_sections(
+    context::hlasm_context& ctx, std::pair<const context::section*, index_t<context::using_collection>> reachables)
+{
+    const auto& [sect, usings] = reachables;
+
+    std::vector<std::pair<const context::section*, context::id_index>> reachable_sections;
+    if (sect)
+        reachable_sections.emplace_back(sect, context::id_index());
+    if (usings)
+    {
+        for (const auto& u : ctx.usings().describe(usings))
+        {
+            if (!u.section)
+                continue;
+            if (const auto* s = ctx.ord_ctx.get_section(*u.section))
+                reachable_sections.emplace_back(s, u.label);
+        }
+    }
+    std::sort(reachable_sections.begin(), reachable_sections.end());
+    reachable_sections.erase(
+        std::unique(reachable_sections.begin(), reachable_sections.end()), reachable_sections.end());
+
+    return reachable_sections;
+}
+
+std::vector<std::pair<const context::symbol*, context::id_index>> compute_reachable_symbol_set(
+    const std::vector<std::pair<const context::section*, context::id_index>>& reachable_sections,
+    const context::ordinary_assembly_context& ord_ctx)
+{
+    std::vector<std::pair<const context::symbol*, context::id_index>> reachable_symbols;
+
+    for (const auto& [name, symv] : ord_ctx.symbols())
+    {
+        const auto* sym = std::get_if<context::symbol>(&symv);
+        if (!sym)
+            continue;
+
+        if (sym->kind() == context::symbol_value_kind::ABS)
+        {
+            reachable_symbols.emplace_back(sym, context::id_index());
+            continue;
+        }
+
+        if (sym->kind() != context::symbol_value_kind::RELOC)
+            continue;
+
+        const auto& reloc = sym->value().get_reloc();
+        if (!reloc.is_simple())
+            continue;
+
+        for (const auto& [sect, label] : reachable_sections)
+        {
+            if (sect != reloc.bases().front().first.owner)
+                continue;
+            reachable_symbols.emplace_back(sym, label);
+        }
+    }
+
+    std::sort(reachable_symbols.begin(), reachable_symbols.end());
+    reachable_symbols.erase(std::unique(reachable_symbols.begin(), reachable_symbols.end()), reachable_symbols.end());
+
+    return reachable_symbols;
+}
+
 completion_list_source lsp_context::completion(const utils::resource::resource_location& document_uri,
     position pos,
     const char trigger_char,
@@ -667,10 +731,16 @@ completion_list_source lsp_context::completion(const utils::resource::resource_l
         return complete_seq(*file_info, pos);
     else if (should_complete_instr(text, pos))
         return complete_instr(*file_info, pos);
-    else if (auto instr = file_info->find_closest_instruction(pos); instr && instr->opcode)
-        return instr->opcode.get();
+    else
+    {
+        auto instr = file_info->find_closest_instruction(pos);
 
-    return {};
+        auto reachable_sections = gather_reachable_sections(*m_hlasm_ctx, file_info->find_reachable_sections(pos));
+
+        auto reachable_symbols = compute_reachable_symbol_set(reachable_sections, m_hlasm_ctx->ord_ctx);
+
+        return std::pair(instr ? instr->opcode.get() : nullptr, std::move(reachable_symbols));
+    }
 }
 
 completion_list_source lsp_context::complete_var(const file_info& file, position pos) const

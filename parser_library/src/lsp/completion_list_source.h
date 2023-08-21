@@ -25,6 +25,7 @@ namespace hlasm_plugin::parser_library {
 namespace context {
 class id_index;
 class macro_definition;
+class section;
 struct sequence_symbol;
 class symbol;
 } // namespace context
@@ -50,7 +51,7 @@ using completion_list_source = std::variant<std::monostate,
     const std::vector<variable_symbol_definition>*,
     const std::unordered_map<context::id_index, std::unique_ptr<context::sequence_symbol>>*,
     completion_list_instructions,
-    const context::macro_definition*>;
+    std::pair<const context::macro_definition*, std::vector<std::pair<const context::symbol*, context::id_index>>>>;
 
 } // namespace hlasm_plugin::parser_library::lsp
 
