@@ -73,6 +73,7 @@ export class ServerFactory {
     private static decorateArgs(args: Array<string>): Array<string> {
         return [
             '--hlasm-start',
+            '--vscode-extensions',
             ...args,
             '--hlasm-end'
         ];

@@ -147,11 +147,12 @@ public:
     virtual void invalidate_external_configuration(sequence<char> uri) = 0;
 };
 
-workspace_manager* create_workspace_manager_impl(workspace_manager_external_file_requests* external_requests);
+workspace_manager* create_workspace_manager_impl(
+    workspace_manager_external_file_requests* external_requests, bool vscode_extensions);
 inline std::unique_ptr<workspace_manager> create_workspace_manager(
-    workspace_manager_external_file_requests* external_requests = nullptr)
+    workspace_manager_external_file_requests* external_requests = nullptr, bool vscode_extensions = false)
 {
-    return std::unique_ptr<workspace_manager>(create_workspace_manager_impl(external_requests));
+    return std::unique_ptr<workspace_manager>(create_workspace_manager_impl(external_requests, vscode_extensions));
 }
 
 } // namespace hlasm_plugin::parser_library

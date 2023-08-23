@@ -159,10 +159,9 @@ EMSCRIPTEN_BINDINGS(main_thread)
 
 } // namespace
 
-std::unique_ptr<server_streams> server_streams::create(int argc, char** argv)
+std::unique_ptr<server_streams> server_streams::create(std::span<const char* const> args)
 {
-    (void)argv;
-    if (argc != 0)
+    if (!args.empty())
     {
         std::cerr << "No arguments allowed";
         return {};

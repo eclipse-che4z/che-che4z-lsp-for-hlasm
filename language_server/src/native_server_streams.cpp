@@ -80,18 +80,18 @@ public:
 
 } // namespace
 
-std::unique_ptr<server_streams> server_streams::create(int argc, char** argv)
+std::unique_ptr<server_streams> server_streams::create(std::span<const char* const> args)
 {
-    if (argc > 1)
+    if (args.size() > 1)
     {
         std::cerr << "Invalid arguments. Use language_server [<lsp port>]";
         return {};
     }
-    const bool use_tcp = argc == 1;
+    const bool use_tcp = args.size() == 1;
     int lsp_port = 0;
     if (use_tcp)
     {
-        lsp_port = atoi(argv[0]);
+        lsp_port = atoi(args.front());
         if (lsp_port <= 0 || lsp_port > 65535)
         {
             std::cerr << "Wrong port entered.";

@@ -13,6 +13,7 @@
  */
 
 #include <chrono>
+#include <span>
 #include <thread>
 #ifdef WIN32
 #    include <locale.h>
@@ -74,9 +75,9 @@ class main_program final : public json_sink,
     }
 
 public:
-    main_program(json_sink& json_output, int& ret)
+    main_program(json_sink& json_output, int& ret, bool use_vscode_extensions)
         : external_files(json_output)
-        , ws_mngr(hlasm_plugin::parser_library::create_workspace_manager(&external_files))
+        , ws_mngr(hlasm_plugin::parser_library::create_workspace_manager(&external_files, use_vscode_extensions))
         , dc_provider(ws_mngr->get_debugger_configuration_provider())
         , json_output(json_output)
         , router(&lsp_queue)
@@ -174,7 +175,7 @@ auto separate_arguments(int argc, char** argv)
     else
         ++start;
 
-    return std::make_pair((int)(end - start), start);
+    return std::span<const char* const>(start, end - start);
 }
 
 } // namespace
@@ -186,9 +187,16 @@ int main(int argc, char** argv)
 #endif
     using namespace hlasm_plugin::language_server;
 
-    auto [count, start] = separate_arguments(argc, argv);
+    auto args = separate_arguments(argc, argv);
 
-    auto io_setup = server_streams::create(count, start);
+    bool vscode_extensions = false;
+    if (!args.empty() && std::string_view(args.front()) == "--vscode-extensions")
+    {
+        vscode_extensions = true;
+        args = args.subspan(1);
+    }
+
+    auto io_setup = server_streams::create(args);
     if (!io_setup)
         return 1;
 
@@ -196,7 +204,7 @@ int main(int argc, char** argv)
     {
         int ret = 0;
 
-        main_program pgm(io_setup->get_response_stream(), ret);
+        main_program pgm(io_setup->get_response_stream(), ret, vscode_extensions);
 
         for (auto& source = io_setup->get_request_stream();;)
         {

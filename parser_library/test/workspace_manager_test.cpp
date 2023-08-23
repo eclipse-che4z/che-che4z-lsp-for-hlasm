@@ -115,7 +115,7 @@ TEST(workspace_manager, cancel_debugger_configuration_request)
 
     dc.provide_debugger_configuration(sequence<char>(std::string_view("not_existing/file")), p);
 
-    ws_mngr->remove_workspace("workspace");
+    ws_mngr->remove_workspace("not_existing");
 
     ws_mngr->idle_handler();
 }
