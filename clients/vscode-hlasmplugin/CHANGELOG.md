@@ -10,6 +10,7 @@
 #### Fixed
 - Program to processor group mapping precedence
 - The language server may crash while accessing content of virtual files
+- "Diagnostics suppressed" informational message may be incorrectly generated
 
 ## [1.9.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.8.0...1.9.0) (2023-08-03)
 

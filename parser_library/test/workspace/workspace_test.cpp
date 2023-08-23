@@ -187,6 +187,10 @@ std::string pgmconf_file = R"({
     {
       "program": "source3",
       "pgroup": "P1"
+    },
+    {
+      "program": "source4",
+      "pgroup": "P1"
     }
   ]
 })";
@@ -226,11 +230,23 @@ std::string correct_macro_file = R"( MACRO
  MEND
 )";
 
+std::string cordep_macro_file = R"( MACRO
+ CORDEP
+ COPY DEP
+ MEND
+)";
+
+std::string dep_macro_file = R"(
+ MNOTE 'DEP'
+)";
+
 std::string source_using_macro_file = R"( ERROR
 label
 )";
 
 std::string source_using_macro_file_no_error = R"( CORRECT)";
+
+std::string source_using_macro_with_dep = R"( CORDEP)";
 
 const std::string hlasmplugin_folder = ".hlasmplugin";
 
@@ -241,8 +257,11 @@ const resource_location pgm_conf_loc(hlasmplugin_folder + "/pgm_conf.json");
 const resource_location source1_loc("source1");
 const resource_location source2_loc("source2");
 const resource_location source3_loc("source3");
+const resource_location source4_loc("source4");
 const resource_location faulty_macro_loc("lib/ERROR");
 const resource_location correct_macro_loc("lib/CORRECT");
+const resource_location cordep_macro_loc("lib/CORDEP");
+const resource_location dep_macro_loc("lib/DEP");
 } // namespace
 
 class file_manager_extended : public file_manager_impl, public external_file_reader
@@ -253,8 +272,11 @@ class file_manager_extended : public file_manager_impl, public external_file_rea
         { source1_loc, source_using_macro_file },
         { source2_loc, source_using_macro_file },
         { source3_loc, source_using_macro_file_no_error },
+        { source4_loc, source_using_macro_with_dep },
         { faulty_macro_loc, faulty_macro_file },
         { correct_macro_loc, correct_macro_file },
+        { cordep_macro_loc, cordep_macro_file },
+        { dep_macro_loc, dep_macro_file },
     };
 
 public:
@@ -273,12 +295,16 @@ public:
                 {
                     { "ERROR", faulty_macro_loc },
                     { "CORRECT", correct_macro_loc },
+                    { "CORDEP", cordep_macro_loc },
+                    { "DEP", dep_macro_loc },
                 },
                 hlasm_plugin::utils::path::list_directory_rc::done,
             });
         return hlasm_plugin::utils::value_task<list_directory_result>::from_value({
             {
                 { "ERROR", faulty_macro_loc },
+                { "CORDEP", cordep_macro_loc },
+                { "DEP", dep_macro_loc },
             },
             hlasm_plugin::utils::path::list_directory_rc::done,
         });
@@ -648,4 +674,27 @@ TEST_F(workspace_test, use_external_library)
     run_if_valid(ws.did_open_file(source1_loc));
     parse_all_files(ws);
     EXPECT_EQ(collect_and_get_diags_size(ws), 0);
+}
+
+TEST_F(workspace_test, track_nested_dependencies)
+{
+    file_manager_extended file_manager;
+    config.diag_supress_limit = 0;
+    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+
+    ws.open().run();
+    run_if_valid(ws.did_open_file(source4_loc));
+    parse_all_files(ws);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(diags(), { "MNOTE" }));
+
+    run_if_valid(ws.did_open_file(dep_macro_loc, file_content_state::changed_lsp));
+    parse_all_files(ws);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(diags(), { "MNOTE" }));
+
+    run_if_valid(ws.did_change_file(source4_loc, file_content_state::changed_content));
+    parse_all_files(ws);
+    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)1);
+    EXPECT_TRUE(matches_message_codes(diags(), { "MNOTE" })); // SUP should not appear
 }

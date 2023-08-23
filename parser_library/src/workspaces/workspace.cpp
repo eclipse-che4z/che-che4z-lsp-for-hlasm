@@ -190,8 +190,17 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
 
         auto& mc = get_cache(url, file);
 
-        if (mc.load_from_cache(cache_key, ctx))
+        if (auto files = mc.load_from_cache(cache_key, ctx); files.has_value())
+        {
+            for (const auto& f : files.value())
+            {
+                // carry-over nested copy dependencies
+                current_file_map.try_emplace(f->get_location(), f);
+                (void)get_cache(f->get_location(), f);
+            }
+
             co_return true;
+        }
 
         const bool collect_hl = file->get_lsp_editing() || macro_pfc.m_last_opencode_analyzer_with_lsp
             || macro_pfc.m_last_macro_analyzer_with_lsp || ctx.hlasm_ctx->processing_stack().parent().empty();

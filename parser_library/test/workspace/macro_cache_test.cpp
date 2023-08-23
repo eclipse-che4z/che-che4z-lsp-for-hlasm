@@ -124,7 +124,7 @@ TEST(macro_cache_test, copy_from_macro)
 
     // try recalling the cached results
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, ids);
-    EXPECT_TRUE(macro_c.load_from_cache(macro_key, new_ctx));
+    EXPECT_EQ(macro_c.load_from_cache(macro_key, new_ctx), std::vector { copy_file });
     EXPECT_NE(new_ctx.hlasm_ctx->get_macro_definition(macro_id), nullptr);
     EXPECT_NE(new_ctx.lsp_ctx->get_macro_info(macro_id), nullptr);
     EXPECT_NE(new_ctx.hlasm_ctx->get_copy_member(copy_id), nullptr);

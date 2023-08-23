@@ -85,36 +85,37 @@ const macro_cache_data* macro_cache::find_cached_data(const macro_cache_key& key
     return &cached_data;
 }
 
-bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_context& ctx) const
+std::optional<std::vector<std::shared_ptr<file>>> macro_cache::load_from_cache(
+    const macro_cache_key& key, const analyzing_context& ctx) const
 {
+    std::optional<std::vector<std::shared_ptr<file>>> result;
     if (auto cached_data = find_cached_data(key))
     {
+        auto& locs = result.emplace();
         if (key.data.proc_kind == processing::processing_kind::MACRO)
         {
             lsp::macro_info_ptr info = std::get<lsp::macro_info_ptr>(cached_data->cached_member);
             if (!info)
-                return true; // The file for which the analyzer is cached does not contain definition of macro
+                return result; // The file for which the analyzer is cached does not contain definition of macro
             ctx.hlasm_ctx->add_macro(info->macro_definition, info->external);
             ctx.lsp_ctx->add_macro(info, lsp::text_data_view(macro_file_->get_text()));
 
             // Add all copy members on which this macro is dependant
             for (const auto& copy_ptr : info->macro_definition->used_copy_members)
             {
-                auto file = file_mngr_->find(copy_ptr->definition_location.resource_loc);
+                const auto& file = locs.emplace_back(file_mngr_->find(copy_ptr->definition_location.resource_loc));
                 ctx.hlasm_ctx->add_copy_member(copy_ptr);
                 ctx.lsp_ctx->add_copy(copy_ptr, lsp::text_data_view(file->get_text()));
             }
         }
         else if (key.data.proc_kind == processing::processing_kind::COPY)
         {
-            auto copy_member = std::get<context::copy_member_ptr>(cached_data->cached_member);
+            const auto& copy_member = std::get<context::copy_member_ptr>(cached_data->cached_member);
             ctx.hlasm_ctx->add_copy_member(copy_member);
             ctx.lsp_ctx->add_copy(copy_member, lsp::text_data_view(macro_file_->get_text()));
         }
-
-        return true;
     }
-    return false;
+    return result;
 }
 
 version_stamp macro_cache::get_copy_member_versions(context::macro_def_ptr macro) const
