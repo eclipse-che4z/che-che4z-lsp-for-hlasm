@@ -13,76 +13,12 @@
  */
 
 import * as vscode from 'vscode';
-import * as net from 'net'
 import { BaseLanguageClient } from 'vscode-languageclient';
 
 export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFactory {
-    private theia_local_server?: net.Server;
-    private theia_local_port: number = 0;
-
-    constructor(private client: BaseLanguageClient) {
-        if (typeof (vscode.DebugAdapterInlineImplementation) === 'undefined')
-            this.setup_theia_compatibility_server();
-    }
+    constructor(private client: BaseLanguageClient) { }
     createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
-        if (this.theia_local_server)
-            return new vscode.DebugAdapterServer(this.theia_local_port, '127.0.0.1');
-        else
-            return new vscode.DebugAdapterInlineImplementation(new HLASMDebugAdapter(this.client));
-    }
-
-    dispose() {
-        if (this.theia_local_server)
-            this.theia_local_server.close();
-    }
-
-    // This creates a simple proxy for Theia
-    // and can be removed as soon as DebugAdapterInlineImplementation is supported
-    setup_theia_compatibility_server() {
-        const me = this;
-        const content_length = 'Content-Length: ';
-
-        const server = net.createServer();
-        this.theia_local_server = server;
-        this.theia_local_server.on('connection', function (socket: net.Socket) {
-            const hlasm_client = new HLASMDebugAdapter(me.client);
-            let buffer = Buffer.from([]);
-
-            hlasm_client.onDidSendMessage(function (msg: vscode.DebugProtocolMessage) {
-                const msg_buffer = Buffer.from(JSON.stringify(msg));
-                socket.write(content_length);
-                socket.write(msg_buffer.length.toString());
-                socket.write('\r\n\r\n');
-                socket.write(msg_buffer);
-            });
-            socket.on('data', function (data: Buffer) {
-                buffer = Buffer.concat([buffer, data]);
-                while (true) {
-                    if (buffer.indexOf(content_length) != 0)
-                        return;
-                    const end_of_line = buffer.indexOf('\r\n');
-                    if (end_of_line < 0)
-                        return;
-                    const length = +buffer.slice(content_length.length, end_of_line);
-                    const end_of_headers = buffer.indexOf('\r\n\r\n');
-                    if (end_of_headers < 0)
-                        return;
-                    const data_start = end_of_headers + 4;
-                    const data_end = data_start + length;
-                    if (data_end > buffer.length)
-                        return;
-                    const json = JSON.parse(buffer.slice(data_start, data_end).toString());
-                    hlasm_client.handleMessage(json);
-                    buffer = buffer.slice(data_end);
-                }
-            });
-            socket.on('close', function () {
-                hlasm_client.dispose();
-            });
-        });
-        this.theia_local_server.listen(0, '127.0.0.1', function () {
-            me.theia_local_port = (<net.AddressInfo>server.address()).port;
-        });
+        return new vscode.DebugAdapterInlineImplementation(new HLASMDebugAdapter(this.client));
     }
 }
 
