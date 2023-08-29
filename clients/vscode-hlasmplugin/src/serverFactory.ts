@@ -20,6 +20,13 @@ import { getConfig } from './eventsHandler'
 
 export type ServerVariant = "tcp" | "native" | "wasm";
 
+const supportedNativePlatforms: Readonly<{ [key: string]: string }> = Object.freeze({
+    'win32.x64': 'win32',
+    'linux.x64': 'linux',
+    'darwin.x64': 'darwin',
+    'darwin.arm64': 'darwin',
+});
+
 /**
  * factory to create server options
  * also stores port used for DAP
@@ -32,7 +39,12 @@ export class ServerFactory {
     }
 
     async create(method: ServerVariant): Promise<vscodelc.ServerOptions> {
-        const langServerFolder = process.platform;
+        const langServerFolder = supportedNativePlatforms[process.platform + '.' + process.arch];
+        if (!langServerFolder) {
+            if (method !== 'wasm')
+                console.log('Unsupported platform detected, switching to wasm');
+            method = 'wasm';
+        }
         if (method === 'tcp') {
             const lspPort = await this.getPort();
 
