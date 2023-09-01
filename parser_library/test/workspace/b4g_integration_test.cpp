@@ -31,15 +31,15 @@ using namespace hlasm_plugin::parser_library::workspaces;
 using hlasm_plugin::utils::resource::resource_location;
 
 namespace {
-constexpr auto prepend_ws_loc = [](std::string path) {
+constexpr auto prepend_ws_loc = [](std::string_view path) {
     static const resource_location rl("scheme://ws/");
     return resource_location::join(rl, path).lexically_normal();
 };
 
 const std::string empty_b4g_conf(R"({})");
 const auto ws_rl = prepend_ws_loc("");
-const auto proc_grps_rl = prepend_ws_loc(proc_grps_name.get_uri());
-const auto pgm_conf_rl = prepend_ws_loc(pgm_conf_name.get_uri());
+const auto proc_grps_rl = prepend_ws_loc(proc_grps_name);
+const auto pgm_conf_rl = prepend_ws_loc(pgm_conf_name);
 const auto b4g_conf_rl = prepend_ws_loc("SYS/SUB/ASMPGM/.bridge.json");
 const auto pgm_a = prepend_ws_loc("SYS/SUB/ASMPGM/A");
 const auto pgm_b = prepend_ws_loc("SYS/SUB/ASMPGM/B");
@@ -136,7 +136,7 @@ class workspace_test : public workspace
 {
 public:
     workspace_test(file_manager& fm)
-        : workspace(ws_rl, "workspace_name", fm, m_config, m_global_settings)
+        : workspace(ws_rl, fm, m_config, m_global_settings)
     {
         open().run();
     }
@@ -200,7 +200,7 @@ public:
     file_manager_impl_test fm;
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws = workspace(ws_rl, "workspace_name", fm, config, global_settings);
+    workspace ws = workspace(ws_rl, fm, config, global_settings);
 
     pgm_conf_preference_helper()
     {

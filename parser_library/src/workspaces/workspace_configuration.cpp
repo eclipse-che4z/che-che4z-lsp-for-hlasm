@@ -245,7 +245,7 @@ workspace_configuration::~workspace_configuration() = default;
 
 bool workspace_configuration::is_configuration_file(const utils::resource::resource_location& file) const
 {
-    return is_config_file(file) || is_b4g_config_file(file);
+    return !m_location.empty() && (is_config_file(file) || is_b4g_config_file(file));
 }
 
 template<typename T>
@@ -553,7 +553,7 @@ bool workspace_configuration::settings_updated() const
 }
 
 utils::value_task<parse_config_file_result> workspace_configuration::parse_b4g_config_file(
-    const utils::resource::resource_location& cfg_file_rl)
+    utils::resource::resource_location cfg_file_rl)
 {
     // keep in sync with try_loading_alternative_configuration
     const auto alternative_root =
@@ -737,13 +737,16 @@ void workspace_configuration::produce_diagnostics(
 utils::value_task<parse_config_file_result> workspace_configuration::parse_configuration_file(
     std::optional<utils::resource::resource_location> file)
 {
-    if (!file.has_value() || is_config_file(*file))
-        co_return co_await load_and_process_config(m_config_diags);
+    if (!m_location.empty())
+    {
+        if (!file.has_value() || is_config_file(*file))
+            return load_and_process_config(m_config_diags);
 
-    if (is_b4g_config_file(*file))
-        co_return co_await parse_b4g_config_file(*file);
+        if (is_b4g_config_file(*file))
+            return parse_b4g_config_file(std::move(*file));
+    }
 
-    co_return parse_config_file_result::not_found;
+    return utils::value_task<parse_config_file_result>::from_value(parse_config_file_result::not_found);
 }
 
 utils::value_task<std::optional<std::vector<const processor_group*>>> workspace_configuration::refresh_libraries(
@@ -958,7 +961,7 @@ utils::value_task<utils::resource::resource_location> workspace_configuration::l
         }
     }
 
-    if (affiliation == regex_pgm)
+    if (affiliation == regex_pgm || m_location.empty())
         co_return empty_alternative_cfg_root;
 
     auto configuration_url = utils::resource::resource_location::replace_filename(rl, B4G_CONF_FILE);

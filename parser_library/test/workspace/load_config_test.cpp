@@ -187,7 +187,7 @@ TEST(workspace, load_config_synthetic)
     file_manager_proc_grps_test file_manager;
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(ws_loc, "test_proc_grps_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
 
     ws.open().run();
 
@@ -262,12 +262,12 @@ TEST(workspace, load_config_synthetic)
 TEST(workspace, pgm_conf_malformed)
 {
     file_manager_impl fm;
-    fm.did_open_file(pgm_conf_name, 0, R"({ "pgms": [})");
-    fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
+    fm.did_open_file(empty_pgm_conf_name, 0, R"({ "pgms": [})");
+    fm.did_open_file(empty_proc_grps_name, 0, empty_proc_grps);
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
     ws.open().run();
 
     ws.collect_diags();
@@ -278,12 +278,12 @@ TEST(workspace, proc_grps_malformed)
 {
     file_manager_impl fm;
 
-    fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
-    fm.did_open_file(proc_grps_name, 0, R"({ "pgroups" []})");
+    fm.did_open_file(empty_pgm_conf_name, 0, empty_pgm_conf);
+    fm.did_open_file(empty_proc_grps_name, 0, R"({ "pgroups" []})");
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
     ws.open().run();
 
     ws.collect_diags();
@@ -293,11 +293,11 @@ TEST(workspace, proc_grps_malformed)
 TEST(workspace, pgm_conf_missing)
 {
     file_manager_impl fm;
-    fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
+    fm.did_open_file(empty_proc_grps_name, 0, empty_proc_grps);
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
     ws.open().run();
 
     ws.collect_diags();
@@ -307,11 +307,11 @@ TEST(workspace, pgm_conf_missing)
 TEST(workspace, proc_grps_missing)
 {
     file_manager_impl fm;
-    fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
+    fm.did_open_file(empty_pgm_conf_name, 0, empty_pgm_conf);
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
     ws.open().run();
 
     ws.collect_diags();
@@ -321,7 +321,7 @@ TEST(workspace, proc_grps_missing)
 TEST(workspace, pgm_conf_noproc_proc_group)
 {
     file_manager_impl fm;
-    fm.did_open_file(pgm_conf_name, 0, R"({
+    fm.did_open_file(empty_pgm_conf_name, 0, R"({
   "pgms": [
     {
       "program": "temp.hlasm",
@@ -329,14 +329,15 @@ TEST(workspace, pgm_conf_noproc_proc_group)
     }
   ]
 })");
-    fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
-    fm.did_open_file(resource_location("temp.hlasm"), 1, "");
+    fm.did_open_file(empty_proc_grps_name, 0, empty_proc_grps);
+    const auto temp_hlasm = resource_location::join(empty_ws, "temp.hlasm");
+    fm.did_open_file(temp_hlasm, 1, "");
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
     ws.open().run();
-    run_if_valid(ws.did_open_file(resource_location("temp.hlasm")));
+    run_if_valid(ws.did_open_file(temp_hlasm));
     parse_all_files(ws);
 
     ws.collect_diags();
@@ -346,7 +347,7 @@ TEST(workspace, pgm_conf_noproc_proc_group)
 TEST(workspace, pgm_conf_unknown_proc_group)
 {
     file_manager_impl fm;
-    fm.did_open_file(pgm_conf_name, 0, R"({
+    fm.did_open_file(empty_pgm_conf_name, 0, R"({
   "pgms": [
     {
       "program": "temp.hlasm",
@@ -354,14 +355,15 @@ TEST(workspace, pgm_conf_unknown_proc_group)
     }
   ]
 })");
-    fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
-    fm.did_open_file(resource_location("temp.hlasm"), 1, "");
+    fm.did_open_file(empty_proc_grps_name, 0, empty_proc_grps);
+    const auto temp_hlasm = resource_location::join(empty_ws, "temp.hlasm");
+    fm.did_open_file(temp_hlasm, 1, "");
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
     ws.open().run();
-    run_if_valid(ws.did_open_file(resource_location("temp.hlasm")));
+    run_if_valid(ws.did_open_file(temp_hlasm));
     parse_all_files(ws);
 
     ws.collect_diags();
@@ -371,8 +373,8 @@ TEST(workspace, pgm_conf_unknown_proc_group)
 TEST(workspace, missing_proc_group_diags)
 {
     file_manager_impl fm;
-    const auto pgm_conf_ws_loc = resource_location::join(ws_loc, pgm_conf_name.get_uri());
-    const auto proc_grps_ws_loc = resource_location::join(ws_loc, proc_grps_name.get_uri());
+    const auto pgm_conf_ws_loc = resource_location::join(ws_loc, pgm_conf_name);
+    const auto proc_grps_ws_loc = resource_location::join(ws_loc, proc_grps_name);
     const auto pgm1_wildcard_loc = resource_location::join(ws_loc, "pgms/pgm1");
     const auto pgm1_different_loc = resource_location::join(ws_loc, "different/pgm1");
     fm.did_open_file(pgm_conf_ws_loc, 0, file_pgm_conf_content);
@@ -383,7 +385,7 @@ TEST(workspace, missing_proc_group_diags)
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(ws_loc, "test_ws", fm, config, global_settings);
+    workspace ws(ws_loc, fm, config, global_settings);
     ws.open().run();
     run_if_valid(ws.did_open_file(pgm1_loc));
     parse_all_files(ws);
@@ -425,8 +427,8 @@ TEST(workspace, missing_proc_group_diags)
 TEST(workspace, missing_proc_group_diags_wildcards)
 {
     file_manager_impl fm;
-    const auto pgm_conf_ws_loc = resource_location::join(ws_loc, pgm_conf_name.get_uri());
-    const auto proc_grps_ws_loc = resource_location::join(ws_loc, proc_grps_name.get_uri());
+    const auto pgm_conf_ws_loc = resource_location::join(ws_loc, pgm_conf_name);
+    const auto proc_grps_ws_loc = resource_location::join(ws_loc, proc_grps_name);
     const auto pgm1_wildcard_loc = resource_location::join(ws_loc, "pgms/pgm1");
     const auto pgm1_different_loc = resource_location::join(ws_loc, "different/pgm1");
     fm.did_open_file(
@@ -438,7 +440,7 @@ TEST(workspace, missing_proc_group_diags_wildcards)
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(ws_loc, "test_ws", fm, config, global_settings);
+    workspace ws(ws_loc, fm, config, global_settings);
     ws.open().run();
     run_if_valid(ws.did_open_file(pgm1_loc));
     parse_all_files(ws);
@@ -460,8 +462,8 @@ TEST(workspace, missing_proc_group_diags_wildcards)
 TEST(workspace, missing_proc_group_diags_wildcards_noproc)
 {
     file_manager_impl fm;
-    const auto pgm_conf_ws_loc = resource_location::join(ws_loc, pgm_conf_name.get_uri());
-    const auto proc_grps_ws_loc = resource_location::join(ws_loc, proc_grps_name.get_uri());
+    const auto pgm_conf_ws_loc = resource_location::join(ws_loc, pgm_conf_name);
+    const auto proc_grps_ws_loc = resource_location::join(ws_loc, proc_grps_name);
     const auto pgm1_wildcard_loc = resource_location::join(ws_loc, "pgms/pgm1");
     const auto pgm1_different_loc = resource_location::join(ws_loc, "different/pgm1");
     fm.did_open_file(pgm_conf_ws_loc,
@@ -474,7 +476,7 @@ TEST(workspace, missing_proc_group_diags_wildcards_noproc)
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(ws_loc, "test_ws", fm, config, global_settings);
+    workspace ws(ws_loc, fm, config, global_settings);
     ws.open().run();
     run_if_valid(ws.did_open_file(pgm1_loc));
     parse_all_files(ws);
@@ -508,12 +510,12 @@ TEST(workspace, asm_options_invalid)
   ]
 })";
     file_manager_impl fm;
-    fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
-    fm.did_open_file(proc_grps_name, 0, proc_file);
+    fm.did_open_file(empty_pgm_conf_name, 0, empty_pgm_conf);
+    fm.did_open_file(empty_proc_grps_name, 0, proc_file);
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
     ws.open().run();
 
     ws.collect_diags();
@@ -549,7 +551,7 @@ TEST(workspace, asm_options_goff_xobject_redefinition)
     file_manager_asm_test file_manager;
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(ws_loc, "test_proc_grps_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
 
     ws.open().run();
 
@@ -561,14 +563,15 @@ TEST(workspace, proc_grps_with_substitutions)
 {
     file_manager_impl fm;
 
-    fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
-    fm.did_open_file(
-        proc_grps_name, 0, R"({ "pgroups":[{"name":"a${config:name}b","libs":["${config:lib1}","${config:lib2}"]}]})");
+    fm.did_open_file(empty_pgm_conf_name, 0, empty_pgm_conf);
+    fm.did_open_file(empty_proc_grps_name,
+        0,
+        R"({ "pgroups":[{"name":"a${config:name}b","libs":["${config:lib1}","${config:lib2}"]}]})");
 
     lib_config config;
     shared_json global_settings = std::make_shared<const nlohmann::json>(
         nlohmann::json::parse(R"({"name":"proc_group","lib1":"library1","lib2":"library2"})"));
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
     ws.open().run();
     ws.collect_diags();
 
@@ -580,24 +583,25 @@ TEST(workspace, proc_grps_with_substitutions)
 
     ASSERT_EQ(pg.libraries().size(), 2);
     EXPECT_EQ(dynamic_cast<const library_local*>(pg.libraries()[0].get())->get_location(),
-        resource_location::join(resource_location("library1"), ""));
+        resource_location::join(empty_ws, "library1/"));
     EXPECT_EQ(dynamic_cast<const library_local*>(pg.libraries()[1].get())->get_location(),
-        resource_location::join(resource_location("library2"), ""));
+        resource_location::join(empty_ws, "library2/"));
 }
 
 TEST(workspace, pgm_conf_with_substitutions)
 {
     file_manager_impl fm;
 
-    fm.did_open_file(pgm_conf_name,
+    fm.did_open_file(empty_pgm_conf_name,
         0,
         R"({"pgms":[{"program":"test/${config:pgm_mask.0}","pgroup":"P1","asm_options":{"SYSPARM":"${config:sysparm}${config:sysparm}"}}]})");
-    fm.did_open_file(proc_grps_name, 0, R"({"pgroups":[{"name": "P1","libs":[]}]})");
+    fm.did_open_file(empty_proc_grps_name, 0, R"({"pgroups":[{"name": "P1","libs":[]}]})");
 
     lib_config config;
     shared_json global_settings = std::make_shared<const nlohmann::json>(
         nlohmann::json::parse(R"({"pgm_mask":["file_name"],"sysparm":"DEBUG"})"));
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
+    const auto test_loc = resource_location::join(empty_ws, "test");
     ws.open().run();
     ws.collect_diags();
 
@@ -605,7 +609,7 @@ TEST(workspace, pgm_conf_with_substitutions)
 
     using hlasm_plugin::utils::resource::resource_location;
 
-    const auto& opts = ws.get_asm_options(resource_location::join(resource_location("test"), "file_name"));
+    const auto& opts = ws.get_asm_options(resource_location::join(test_loc, "file_name"));
 
     EXPECT_EQ(opts.sysparm, "DEBUGDEBUG");
 }
@@ -614,12 +618,12 @@ TEST(workspace, missing_substitutions)
 {
     file_manager_impl fm;
 
-    fm.did_open_file(pgm_conf_name, 0, R"({"pgms":[{"program":"test/${config:pgm_mask}","pgroup":"P1"}]})");
-    fm.did_open_file(proc_grps_name, 0, R"({"pgroups":[{"name":"P1","libs":["${config:lib}"]}]})");
+    fm.did_open_file(empty_pgm_conf_name, 0, R"({"pgms":[{"program":"test/${config:pgm_mask}","pgroup":"P1"}]})");
+    fm.did_open_file(empty_proc_grps_name, 0, R"({"pgroups":[{"name":"P1","libs":["${config:lib}"]}]})");
 
     lib_config config;
     shared_json global_settings = std::make_shared<const nlohmann::json>(nlohmann::json::object());
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
     ws.open().run();
     ws.collect_diags();
 
@@ -630,15 +634,16 @@ TEST(workspace, refresh_settings)
 {
     file_manager_impl fm;
 
-    fm.did_open_file(pgm_conf_name,
+    fm.did_open_file(empty_pgm_conf_name,
         0,
         R"({"pgms":[{"program":"test/${config:pgm_mask.0}","pgroup":"P1","asm_options":{"SYSPARM":"${config:sysparm}${config:sysparm}"}}]})");
-    fm.did_open_file(proc_grps_name, 0, R"({"pgroups":[{"name": "P1","libs":[]}]})");
+    fm.did_open_file(empty_proc_grps_name, 0, R"({"pgroups":[{"name": "P1","libs":[]}]})");
 
     lib_config config;
     shared_json global_settings = std::make_shared<const nlohmann::json>(
         nlohmann::json::parse(R"({"pgm_mask":["file_name"],"sysparm":"DEBUG"})"));
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
+    const auto test_loc = resource_location::join(empty_ws, "test");
     ws.open().run();
     ws.collect_diags();
 
@@ -646,29 +651,27 @@ TEST(workspace, refresh_settings)
 
     using hlasm_plugin::utils::resource::resource_location;
 
-    EXPECT_EQ(
-        ws.get_asm_options(resource_location::join(resource_location("test"), "file_name")).sysparm, "DEBUGDEBUG");
+    EXPECT_EQ(ws.get_asm_options(resource_location::join(test_loc, "file_name")).sysparm, "DEBUGDEBUG");
     EXPECT_FALSE(ws.settings_updated().run().value());
 
     global_settings = std::make_shared<const nlohmann::json>(
         nlohmann::json::parse(R"({"pgm_mask":["different_file"],"sysparm":"RELEASE"})"));
     EXPECT_TRUE(ws.settings_updated().run().value());
 
-    EXPECT_EQ(ws.get_asm_options(resource_location::join(resource_location("test"), "file_name")).sysparm, "");
-    EXPECT_EQ(ws.get_asm_options(resource_location::join(resource_location("test"), "different_file")).sysparm,
-        "RELEASERELEASE");
+    EXPECT_EQ(ws.get_asm_options(resource_location::join(test_loc, "file_name")).sysparm, "");
+    EXPECT_EQ(ws.get_asm_options(resource_location::join(test_loc, "different_file")).sysparm, "RELEASERELEASE");
 }
 
 TEST(workspace, opcode_suggestions)
 {
     file_manager_impl fm;
 
-    fm.did_open_file(pgm_conf_name, 0, R"({"pgms":[{"program":"pgm","pgroup":"P1"}]})");
-    fm.did_open_file(proc_grps_name, 0, R"({"pgroups":[{"name": "P1","libs":[]}]})");
+    fm.did_open_file(empty_pgm_conf_name, 0, R"({"pgms":[{"program":"pgm","pgroup":"P1"}]})");
+    fm.did_open_file(empty_proc_grps_name, 0, R"({"pgroups":[{"name": "P1","libs":[]}]})");
 
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(fm, config, global_settings);
+    workspace ws(empty_ws, fm, config, global_settings);
     ws.open().run();
     ws.collect_diags();
 
@@ -677,8 +680,8 @@ TEST(workspace, opcode_suggestions)
     using hlasm_plugin::utils::resource::resource_location;
     std::vector<std::pair<std::string, size_t>> expected { { "LHI", 3 } };
 
-    EXPECT_EQ(ws.make_opcode_suggestion(resource_location("pgm"), "LHIXXX", false), expected);
-    EXPECT_EQ(ws.make_opcode_suggestion(resource_location("pgm_implicit"), "LHIXXX", false), expected);
+    EXPECT_EQ(ws.make_opcode_suggestion(resource_location::join(empty_ws, "pgm"), "LHIXXX", false), expected);
+    EXPECT_EQ(ws.make_opcode_suggestion(resource_location::join(empty_ws, "pgm_implicit"), "LHIXXX", false), expected);
 }
 
 TEST(workspace, lsp_file_not_processed_yet)

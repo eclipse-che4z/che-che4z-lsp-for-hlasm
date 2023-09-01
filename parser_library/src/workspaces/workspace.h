@@ -74,7 +74,6 @@ public:
         std::shared_ptr<library> implicit_library = nullptr,
         external_configuration_requests* ecr = nullptr);
     workspace(const resource_location& location,
-        const std::string& name,
         file_manager& file_manager,
         const lib_config& global_config,
         const shared_json& global_settings,
@@ -142,7 +141,6 @@ public:
     void invalidate_external_configuration(const resource_location& url);
 
 private:
-    std::string name_;
     resource_location location_;
     file_manager& file_manager_;
     file_manager_vfm fm_vfm_;

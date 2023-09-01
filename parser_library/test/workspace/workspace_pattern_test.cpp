@@ -459,7 +459,7 @@ public:
         : file_manager(pgroup_variant, pgmconf_variant)
         , config()
         , global_settings(make_empty_shared_json())
-        , ws(ws_loc, "workspace_name", file_manager, config, global_settings)
+        , ws(ws_loc, file_manager, config, global_settings)
     {
         ws.open().run();
     };
@@ -930,7 +930,7 @@ void verify_infinit_loop(pgroup_symlinks_variants pgroup_variant, pgmconf_varian
             co_return { {}, hlasm_plugin::utils::path::list_directory_rc::done };
         }));
 
-    workspace ws(ws_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
     run_if_valid(ws.did_open_file(pattern_test_source_loc));
     parse_all_files(ws);

@@ -97,12 +97,11 @@ std::string sam31_macro = R"( MACRO
 &VAR    SETA   2
         MEND)";
 
-const char* sam31_macro_path = is_windows() ? "lib\\SAM31" : "lib/SAM31";
-const std::string hlasmplugin_folder = ".hlasmplugin";
-
-const resource_location proc_grps_loc(hlasmplugin_folder + "/proc_grps.json");
-const resource_location pgm_conf_loc(hlasmplugin_folder + "/pgm_conf.json");
-const resource_location source_loc("source");
+const resource_location ws_loc("ws:/");
+const resource_location proc_grps_loc("ws:/.hlasmplugin/proc_grps.json");
+const resource_location pgm_conf_loc("ws:/.hlasmplugin/pgm_conf.json");
+const resource_location source_loc("ws:/source");
+const resource_location sam31_macro_loc("ws:/lib/SAM31");
 
 enum class file_manager_opt_variant
 {
@@ -127,8 +126,6 @@ class file_manager_opt : public file_manager_impl
 public:
     file_manager_opt(file_manager_opt_variant variant)
     {
-        resource_location sam31_macro_loc(sam31_macro_path);
-
         did_open_file(proc_grps_loc, 1, get_proc_grp(variant));
         did_open_file(pgm_conf_loc, 1, pgmconf_file);
         did_open_file(source_loc, 1, source);
@@ -139,10 +136,10 @@ public:
         const hlasm_plugin::utils::resource::resource_location& location) const override
     {
         using hlasm_plugin::utils::value_task;
-        if (location == resource_location("lib/"))
+        if (location == resource_location("ws:/lib/"))
             return value_task<list_directory_result>::from_value({
                 {
-                    { "SAM31", resource_location(sam31_macro_path) },
+                    { "SAM31", sam31_macro_loc },
                 },
                 hlasm_plugin::utils::path::list_directory_rc::done,
             });
@@ -171,7 +168,7 @@ TEST_F(workspace_instruction_sets_test, changed_instr_set_370_Z10)
     file_manager_opt file_manager(file_manager_opt_variant::optable_370);
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
 
     run_if_valid(ws.did_open_file(source_loc));
@@ -190,7 +187,7 @@ TEST_F(workspace_instruction_sets_test, changed_instr_set_Z10_370)
     file_manager_opt file_manager(file_manager_opt_variant::optable_Z10);
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
 
     run_if_valid(ws.did_open_file(source_loc));

@@ -23,6 +23,7 @@
 #include "../common_testing.h"
 #include "empty_configs.h"
 #include "external_configuration_requests.h"
+#include "external_configuration_requests_mock.h"
 #include "file_manager_mock.h"
 #include "utils/resource_location.h"
 #include "utils/task.h"
@@ -105,19 +106,6 @@ TEST(workspace_configuration, refresh_needed_configs)
         cfg.refresh_libraries({ resource_location("test://workspace/.hlasmplugin/pgm_conf.json") }).run().value());
     EXPECT_FALSE(cfg.refresh_libraries({ resource_location("test://workspace/something/else") }).run().value());
 }
-
-namespace {
-class external_configuration_requests_mock : public hlasm_plugin::parser_library::external_configuration_requests
-{
-public:
-    MOCK_METHOD(void,
-        read_external_configuration,
-        (hlasm_plugin::parser_library::sequence<char> url,
-            hlasm_plugin::parser_library::workspace_manager_response<hlasm_plugin::parser_library::sequence<char>>
-                content),
-        (override));
-};
-} // namespace
 
 TEST(workspace_configuration, external_configurations_group_name)
 {

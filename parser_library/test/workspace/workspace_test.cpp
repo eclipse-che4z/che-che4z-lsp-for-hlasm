@@ -19,6 +19,7 @@
 
 #include "../common_testing.h"
 #include "empty_configs.h"
+#include "external_configuration_requests_mock.h"
 #include "external_file_reader_mock.h"
 #include "utils/path.h"
 #include "utils/platform.h"
@@ -248,20 +249,19 @@ std::string source_using_macro_file_no_error = R"( CORRECT)";
 
 std::string source_using_macro_with_dep = R"( CORDEP)";
 
-const std::string hlasmplugin_folder = ".hlasmplugin";
+const resource_location ws_loc("ws:/");
+const resource_location lib_loc("ws:/lib/");
 
-const resource_location empty_loc = resource_location("");
-
-const resource_location proc_grps_loc(hlasmplugin_folder + "/proc_grps.json");
-const resource_location pgm_conf_loc(hlasmplugin_folder + "/pgm_conf.json");
-const resource_location source1_loc("source1");
-const resource_location source2_loc("source2");
-const resource_location source3_loc("source3");
-const resource_location source4_loc("source4");
-const resource_location faulty_macro_loc("lib/ERROR");
-const resource_location correct_macro_loc("lib/CORRECT");
-const resource_location cordep_macro_loc("lib/CORDEP");
-const resource_location dep_macro_loc("lib/DEP");
+const resource_location proc_grps_loc("ws:/.hlasmplugin/proc_grps.json");
+const resource_location pgm_conf_loc("ws:/.hlasmplugin/pgm_conf.json");
+const resource_location source1_loc("ws:/source1");
+const resource_location source2_loc("ws:/source2");
+const resource_location source3_loc("ws:/source3");
+const resource_location source4_loc("ws:/source4");
+const resource_location faulty_macro_loc("ws:/lib/ERROR");
+const resource_location correct_macro_loc("ws:/lib/CORRECT");
+const resource_location cordep_macro_loc("ws:/lib/CORDEP");
+const resource_location dep_macro_loc("ws:/lib/DEP");
 } // namespace
 
 class file_manager_extended : public file_manager_impl, public external_file_reader
@@ -379,7 +379,7 @@ public:
     hlasm_plugin::utils::value_task<list_directory_result> list_directory_files(
         const hlasm_plugin::utils::resource::resource_location& location) const override
     {
-        if (location == resource_location("lib/"))
+        if (location == lib_loc)
             return hlasm_plugin::utils::value_task<list_directory_result>::from_value({
                 {
                     { "CORRECT", correct_macro_loc },
@@ -398,7 +398,7 @@ public:
 TEST_F(workspace_test, did_close_file)
 {
     file_manager_extended file_manager;
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
 
     ws.open().run();
     // 3 files are open
@@ -444,7 +444,7 @@ TEST_F(workspace_test, did_close_file)
 TEST_F(workspace_test, did_close_file_without_save)
 {
     file_manager_extended file_manager;
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
 
     ws.open().run();
 
@@ -476,7 +476,7 @@ TEST_F(workspace_test, did_close_file_without_save)
 TEST_F(workspace_test, did_change_watched_files)
 {
     file_manager_extended file_manager;
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
 
     run_if_valid(ws.did_open_file(source3_loc));
@@ -499,7 +499,7 @@ TEST_F(workspace_test, did_change_watched_files)
 TEST_F(workspace_test, did_change_watched_files_not_opened_file)
 {
     file_manager_extended file_manager;
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
 
     run_if_valid(ws.did_open_file(source3_loc));
@@ -514,7 +514,7 @@ TEST_F(workspace_test, did_change_watched_files_not_opened_file)
 TEST_F(workspace_test, diagnostics_recollection)
 {
     file_manager_opt file_manager(file_manager_opt_variant::required);
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
 
     run_if_valid(ws.did_open_file(source1_loc));
@@ -535,7 +535,7 @@ TEST_F(workspace_test, missing_library_required)
              file_manager_opt_variant::required })
     {
         file_manager_opt file_manager(type);
-        workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+        workspace ws(ws_loc, file_manager, config, global_settings);
         ws.open().run();
 
         run_if_valid(ws.did_open_file(source1_loc));
@@ -548,7 +548,7 @@ TEST_F(workspace_test, missing_library_required)
 TEST_F(workspace_test, missing_library_optional)
 {
     file_manager_opt file_manager(file_manager_opt_variant::optional);
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
 
     run_if_valid(ws.did_open_file(source1_loc));
@@ -559,7 +559,7 @@ TEST_F(workspace_test, missing_library_optional)
 TEST_F(workspace_test, invalid_assembler_options)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_assembler_options);
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
 
     EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
@@ -569,7 +569,7 @@ TEST_F(workspace_test, invalid_assembler_options)
 TEST_F(workspace_test, invalid_assembler_options_in_pgm_conf)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_assembler_options_in_pgm_conf);
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
 
     EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
@@ -579,7 +579,7 @@ TEST_F(workspace_test, invalid_assembler_options_in_pgm_conf)
 TEST_F(workspace_test, invalid_preprocessor_options)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_preprocessor_options);
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
 
     EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
@@ -596,7 +596,7 @@ public:
     hlasm_plugin::utils::value_task<list_directory_result> list_directory_files(
         const hlasm_plugin::utils::resource::resource_location& location) const override
     {
-        if (location == resource_location("lib/"))
+        if (location == lib_loc)
             return hlasm_plugin::utils::value_task<list_directory_result>::from_value({
                 {},
                 hlasm_plugin::utils::path::list_directory_rc::other_failure,
@@ -612,7 +612,7 @@ public:
 TEST_F(workspace_test, library_list_failure)
 {
     file_manager_list_dir_failed file_manager;
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
 
     run_if_valid(ws.did_open_file(source1_loc));
@@ -624,7 +624,7 @@ TEST_F(workspace_test, library_list_failure)
 TEST_F(workspace_test, did_change_watched_files_added_missing)
 {
     file_manager_extended file_manager;
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
     ws.open().run();
 
     file_manager.insert_correct_macro = false;
@@ -662,10 +662,11 @@ TEST_F(workspace_test, use_external_library)
 })");
     fm.did_open_file(source1_loc, 1, "");
 
-    workspace ws(empty_loc, "workspace_name", fm, config, global_settings);
+    workspace ws(ws_loc, fm, config, global_settings);
     ws.open().run();
 
-    EXPECT_CALL(external_files, list_directory_files(resource_location("hlasm-external:///DATASET/REMOTE.DATASET")))
+    EXPECT_CALL(
+        external_files, list_directory_files(resource_location("hlasm-external://hhhddkcp/DATASET/REMOTE.DATASET")))
         .WillOnce(Invoke([]() {
             return value_task<list_directory_result>::from_value({ {}, path::list_directory_rc::done });
         }));
@@ -680,7 +681,7 @@ TEST_F(workspace_test, track_nested_dependencies)
 {
     file_manager_extended file_manager;
     config.diag_supress_limit = 0;
-    workspace ws(empty_loc, "workspace_name", file_manager, config, global_settings);
+    workspace ws(ws_loc, file_manager, config, global_settings);
 
     ws.open().run();
     run_if_valid(ws.did_open_file(source4_loc));

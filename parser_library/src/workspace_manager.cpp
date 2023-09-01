@@ -71,11 +71,11 @@ class workspace_manager_impl final : public workspace_manager,
     struct opened_workspace
     {
         opened_workspace(const resource_location& location,
-            const std::string& name,
+            const std::string&,
             workspaces::file_manager& file_manager,
             const lib_config& global_config,
             external_configuration_requests* ecr)
-            : ws(location, name, file_manager, global_config, settings, ecr)
+            : ws(location, file_manager, global_config, settings, ecr)
         {}
         opened_workspace(workspaces::file_manager& file_manager, const lib_config& global_config)
             : ws(file_manager, global_config, settings)

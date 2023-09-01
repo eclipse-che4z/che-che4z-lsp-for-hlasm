@@ -264,13 +264,11 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
 };
 
 workspace::workspace(const resource_location& location,
-    const std::string& name,
     file_manager& file_manager,
     const lib_config& global_config,
     const shared_json& global_settings,
     external_configuration_requests* ecr)
-    : name_(name)
-    , location_(location.lexically_normal())
+    : location_(location.lexically_normal())
     , file_manager_(file_manager)
     , fm_vfm_(file_manager_, location)
     , implicit_proc_grp("pg_implicit", {}, {})
@@ -284,7 +282,7 @@ workspace::workspace(file_manager& file_manager,
     const shared_json& global_settings,
     std::shared_ptr<library> implicit_library,
     external_configuration_requests* ecr)
-    : workspace(resource_location(""), "", file_manager, global_config, global_settings, ecr)
+    : workspace(resource_location(), file_manager, global_config, global_settings, ecr)
 {
     opened_ = true;
     if (implicit_library)

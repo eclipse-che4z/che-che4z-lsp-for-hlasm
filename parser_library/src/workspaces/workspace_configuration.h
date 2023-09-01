@@ -238,7 +238,7 @@ class workspace_configuration
     bool is_b4g_config_file(const utils::resource::resource_location& file) const;
 
     [[nodiscard]] utils::value_task<parse_config_file_result> parse_b4g_config_file(
-        const utils::resource::resource_location& cfg_file_rl);
+        utils::resource::resource_location cfg_file_rl);
 
     [[nodiscard]] utils::value_task<parse_config_file_result> load_and_process_config(std::vector<diagnostic_s>& diags);
 

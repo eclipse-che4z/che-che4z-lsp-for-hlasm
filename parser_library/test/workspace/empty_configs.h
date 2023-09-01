@@ -17,13 +17,17 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "nlohmann/json_fwd.hpp"
 #include "utils/path.h"
 #include "utils/resource_location.h"
 
-inline const auto pgm_conf_name = hlasm_plugin::utils::resource::resource_location(".hlasmplugin/pgm_conf.json");
-inline const auto proc_grps_name = hlasm_plugin::utils::resource::resource_location(".hlasmplugin/proc_grps.json");
+constexpr const std::string_view pgm_conf_name(".hlasmplugin/pgm_conf.json");
+constexpr const std::string_view proc_grps_name(".hlasmplugin/proc_grps.json");
+inline const hlasm_plugin::utils::resource::resource_location empty_ws("ews:/");
+inline const hlasm_plugin::utils::resource::resource_location empty_pgm_conf_name("ews:/.hlasmplugin/pgm_conf.json");
+inline const hlasm_plugin::utils::resource::resource_location empty_proc_grps_name("ews:/.hlasmplugin/proc_grps.json");
 inline const std::string empty_pgm_conf = R"({ "pgms": []})";
 inline const std::string empty_proc_grps = R"({ "pgroups": []})";
 
