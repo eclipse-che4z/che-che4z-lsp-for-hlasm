@@ -54,10 +54,8 @@ std::filesystem::path absolute(const std::filesystem::path& p)
     if (p.empty() || is_absolute(p))
         return p;
 
-    return join(std::filesystem::current_path(), p);
+    return join(current_path(), p);
 }
-
-std::filesystem::path current_path() { return std::filesystem::current_path(); }
 
 std::filesystem::path join(const std::filesystem::path& left, const std::filesystem::path& right)
 {
@@ -316,6 +314,35 @@ public:
         return buffer;
     }
 
+    std::filesystem::path cwd(std::error_code& ec)
+    {
+        buffer.clear();
+        int result = EM_ASM_INT(
+            {
+                try
+                {
+                    const cwd = process.cwd();
+
+                    const buf_len = lengthBytesUTF8(cwd);
+                    const ptr = Module.directory_op_support_get_buffer($0, buf_len);
+                    stringToUTF8(cwd, ptr, buf_len + 1);
+                    Module.directory_op_support_commit_buffer($0);
+
+                    return 0;
+                }
+                catch (e)
+                {
+                    return e.errno || -1;
+                }
+            },
+            (intptr_t)this);
+
+        if (result != 0)
+            ec = std::error_code(-result, std::system_category());
+
+        return buffer;
+    }
+
     bool is_dir(const std::filesystem::path& path)
     {
         int result = EM_ASM_INT(
@@ -337,6 +364,18 @@ public:
         return result == 1;
     }
 };
+
+std::filesystem::path current_path()
+{
+    // cwd listing seems broken on windows
+    std::error_code ec;
+    auto result = directory_op_support().cwd(ec);
+
+    if (ec)
+        throw std::filesystem::filesystem_error("current_path", ec);
+
+    return result;
+}
 
 list_directory_rc list_directory_regular_files(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)

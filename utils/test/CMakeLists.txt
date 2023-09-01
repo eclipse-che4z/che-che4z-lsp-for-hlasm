@@ -18,6 +18,7 @@ target_sources(hlasm_utils_test PRIVATE
 	filter_vector_test.cpp
 	levenshtein_distance_test.cpp
 	merge_sorted_test.cpp
+	path_test.cpp
 	path_conversions_test.cpp
 	platform_test.cpp
 	resource_location_test.cpp

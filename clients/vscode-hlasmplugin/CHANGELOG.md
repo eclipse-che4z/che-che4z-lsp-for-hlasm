@@ -12,6 +12,7 @@
 - The language server may crash while accessing content of virtual files
 - "Diagnostics suppressed" informational message may be incorrectly generated
 - Auto-select WebAssembly image on platforms without native support
+- Querying current directory fails on Windows (WASM)
 
 ## [1.9.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.8.0...1.9.0) (2023-08-03)
 
