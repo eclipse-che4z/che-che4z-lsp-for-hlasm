@@ -61,6 +61,21 @@ TEST(telemetry, lsp_server_did_open)
     nlohmann::json diags_reply;
     nlohmann::json telemetry_reply;
 
+    EXPECT_CALL(lsp_smpm, reply(Truly(get_method_matcher("external_configuration_request"))))
+        .WillRepeatedly([&lsp_server](const nlohmann ::json& j) {
+            lsp_server.message_received({
+                { "id", j.at("id") },
+                { "jsonrpc", "2.0" },
+                {
+                    "error",
+                    {
+                        { "code", 0 },
+                        { "message", "Not found" },
+                    },
+                },
+            });
+        });
+
     EXPECT_CALL(lsp_smpm, reply(Truly(get_method_matcher("textDocument/publishDiagnostics"))))
         .WillOnce(SaveArg<0>(&diags_reply));
 
@@ -90,6 +105,20 @@ TEST(telemetry, telemetry_broker)
     send_message_provider_mock lsp_smpm;
     lsp_server.set_send_message_provider(&lsp_smpm);
 
+    EXPECT_CALL(lsp_smpm, reply(Truly(get_method_matcher("external_configuration_request"))))
+        .WillRepeatedly([&lsp_server](const nlohmann ::json& j) {
+            lsp_server.message_received({
+                { "id", j.at("id") },
+                { "jsonrpc", "2.0" },
+                {
+                    "error",
+                    {
+                        { "code", 0 },
+                        { "message", "Not found" },
+                    },
+                },
+            });
+        });
 
     EXPECT_CALL(lsp_smpm, reply(Truly(get_method_matcher("textDocument/publishDiagnostics"))));
 

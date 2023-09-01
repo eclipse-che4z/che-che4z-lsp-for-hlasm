@@ -309,8 +309,9 @@ void workspace_configuration::process_processor_group_library(const config::data
 {
     utils::path::dissected_uri new_uri_components;
     new_uri_components.scheme = external_uri_scheme;
-    new_uri_components.auth.emplace().host = utils::encoding::uri_friendly_base16_encode(m_location.get_uri());
     new_uri_components.path = "/DATASET/" + utils::encoding::percent_encode(dsn.dsn);
+    if (!m_location.get_uri().empty())
+        new_uri_components.fragment = utils::encoding::uri_friendly_base16_encode(m_location.get_uri());
     utils::resource::resource_location new_uri(utils::path::reconstruct_uri(new_uri_components));
 
     prc_grp.add_library(get_local_library(new_uri, { .optional_library = dsn.optional }));
@@ -325,13 +326,12 @@ void modify_hlasm_external_uri(
         return;
 
     // mainly to support testing, but could be useful in general
-    // hlasm-external:/path... is transformed into hlasm-external://<friendly workspace uri>/path...
+    // hlasm-external:/path... is transformed into hlasm-external:/path...#<friendly workspace uri>
     utils::path::dissected_uri uri_components = utils::path::dissect_uri(rl_uri);
-    if (uri_components.scheme == external_uri_scheme && !uri_components.auth.has_value())
+    if (uri_components.scheme == external_uri_scheme && !uri_components.fragment.has_value()
+        && !workspace.get_uri().empty())
     {
-        uri_components.auth.emplace().host = utils::encoding::uri_friendly_base16_encode(workspace.get_uri());
-        if (!uri_components.path.empty() && !uri_components.path.starts_with("/"))
-            uri_components.path.insert(0, 1, '/');
+        uri_components.fragment = utils::encoding::uri_friendly_base16_encode(workspace.get_uri());
         rl = utils::resource::resource_location(utils::path::reconstruct_uri(uri_components));
     }
 }

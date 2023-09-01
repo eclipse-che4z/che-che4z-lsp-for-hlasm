@@ -24,14 +24,17 @@
             
             "presentation": {
                 "reveal": "always",
-                "panel": "new"
-            },
+                "panel": "shared",
+                "clear": true
+            },            
+
+            "group": "build",
 
             // we run the custom script "compile" as defined in package.json
             "args": ["run", "compile:test", "--loglevel", "silent"],
 
             // The tsc compiler is started in watching mode
-            "isBackground": true,
+            "isBackground": false,
 
             // use the standard tsc in watch mode problem matcher to find compile problems in the output.
             "problemMatcher": "$tsc-watch"

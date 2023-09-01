@@ -111,7 +111,7 @@ suite('HLASM Download data sets', () => {
         assert.equal(io.copyCalls.length, 0);
         assert.deepEqual(io.unterseCalls, ['/dir1']);
         assert.equal(stages.stages, 3);
-    });
+    }).slow(2000);
 
     test('Jobcard pattern', async () => {
         const client = getClient([

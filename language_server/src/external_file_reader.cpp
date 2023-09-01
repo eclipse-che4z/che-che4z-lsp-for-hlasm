@@ -91,7 +91,7 @@ void external_file_reader::read_external_directory(
     auto next_id = m_next_id.fetch_add(1, std::memory_order_relaxed);
     nlohmann::json msg = {
         { "id", next_id },
-        { "op", "read_directory" },
+        { "op", "list_directory" },
         { "url", url },
     };
 
@@ -102,9 +102,8 @@ void external_file_reader::read_external_directory(
             members.error(err, errmsg);
             return;
         }
-        auto member_list = result.find("members");
-        auto ext = result.find("suggested_extension");
-        if (member_list == result.end() || !member_list->is_array() || ext != result.end() && !ext->is_string())
+        auto member_urls = result.find("member_urls");
+        if (member_urls == result.end() || !member_urls->is_array())
         {
             members.error(utils::error::invalid_json);
             return;
@@ -119,7 +118,7 @@ void external_file_reader::read_external_directory(
             members.error(utils::error::allocation);
             return;
         }
-        for (const auto& item : *member_list)
+        for (const auto& item : *member_urls)
         {
             if (!item.is_string())
             {
@@ -129,11 +128,8 @@ void external_file_reader::read_external_directory(
             tmp.emplace_back(sequence<char>(item.get<std::string_view>()));
         }
 
-        sequence<char> extension(ext != result.end() ? ext->get<std::string_view>() : std::string_view());
-
         members.provide({
-            .members = sequence<sequence<char>>(tmp),
-            .suggested_extension = extension,
+            .member_urls = sequence<sequence<char>>(tmp),
         });
     };
 

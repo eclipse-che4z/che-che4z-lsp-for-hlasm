@@ -69,8 +69,8 @@
   },
   "scripts": {
     "postinstall": "node ./build/bin/postinstall.js",
-    "compile": "esbuild --bundle src/extension.ts --outdir=dist --sourcemap --external:vscode --platform=node --minify && dts-bundle-generator --no-banner --export-referenced-types=false -o typings/extension.d.ts src/extension.interface.ts",
-    "compile:test": "tsc -p ./tsconfig.json && npm run compile",
+    "compile": "dts-bundle-generator --no-banner --respect-preserve-const-enum=true --export-referenced-types=false -o typings/extension.d.ts src/extension.interface.ts && esbuild --bundle src/extension.ts --outdir=dist --sourcemap --external:vscode --platform=node --minify",
+    "compile:test": "npm run compile && tsc -p ./tsconfig.json",
     "clean": "node ./build/bin/clean.js",
     "test": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js",
     "test:wasm": "npm run compile:test && node ./build/bin/prepareWorkspace.js wasm && node ./lib/test/runTest.js",
@@ -292,6 +292,11 @@
         "command": "extension.hlasm-plugin.clearRemoteActivityCache",
         "category": "HLASM",
         "title": "Clear remote files cache"
+      },
+      {
+        "command": "extension.hlasm-plugin.clearRemoteActivityCacheForService",
+        "category": "HLASM",
+        "title": "Clear remote files cache for a specific service"
       },
       {
         "command": "extension.hlasm-plugin.toggleAdvisoryConfigurationDiagnostics",

@@ -22,6 +22,8 @@ std::string percent_encode(std::string_view s);
 // Returns percent encoded string while ignoring already encoded utf-8 chars
 std::string percent_encode_and_ignore_utf8(std::string_view s);
 
+std::string percent_decode(std::string_view s);
+
 std::string uri_friendly_base16_encode(std::string_view s);
 std::string uri_friendly_base16_decode(std::string_view s);
 

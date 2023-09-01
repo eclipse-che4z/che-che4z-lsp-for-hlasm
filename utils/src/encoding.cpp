@@ -129,6 +129,24 @@ std::string percent_encode(std::string_view s)
 
     return uri;
 }
+
+std::string percent_decode(std::string_view s)
+{
+    std::string result;
+    result.reserve(s.size());
+
+    try
+    {
+        network::detail::decode(s.begin(), s.end(), std::back_inserter(result));
+    }
+    catch (const network::percent_decoding_error&)
+    {
+        return {};
+    }
+
+    return result;
+}
+
 std::string percent_encode_and_ignore_utf8(std::string_view s)
 {
     std::string uri;

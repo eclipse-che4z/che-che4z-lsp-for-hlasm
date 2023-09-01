@@ -77,8 +77,10 @@ class workspace_manager_impl final : public workspace_manager,
             external_configuration_requests* ecr)
             : ws(location, file_manager, global_config, settings, ecr)
         {}
-        opened_workspace(workspaces::file_manager& file_manager, const lib_config& global_config)
-            : ws(file_manager, global_config, settings)
+        opened_workspace(workspaces::file_manager& file_manager,
+            const lib_config& global_config,
+            external_configuration_requests* ecr)
+            : ws(file_manager, global_config, settings, nullptr, ecr)
         {}
         workspaces::shared_json settings = std::make_shared<const nlohmann::json>(nlohmann::json::object());
         workspaces::workspace ws;
@@ -89,8 +91,8 @@ public:
         workspace_manager_external_file_requests* external_file_requests, bool vscode_extensions)
         : m_external_file_requests(external_file_requests)
         , m_file_manager(*this)
-        , m_implicit_workspace(m_file_manager, m_global_config)
-        , m_quiet_implicit_workspace(m_file_manager, supress_all)
+        , m_implicit_workspace(m_file_manager, m_global_config, this)
+        , m_quiet_implicit_workspace(m_file_manager, supress_all, this)
         , m_vscode_extensions(vscode_extensions)
     {}
     workspace_manager_impl(const workspace_manager_impl&) = delete;
@@ -99,24 +101,25 @@ public:
     workspace_manager_impl(workspace_manager_impl&&) = delete;
     workspace_manager_impl& operator=(workspace_manager_impl&&) = delete;
 
-    static auto ws_path_match(auto& self, std::string_view uri)
+    static auto ws_path_match(auto& self, std::string_view unnormalized_uri)
     {
-        auto normalized_url = resource_location(uri).lexically_normal();
-        if (auto hlasm_id = extract_hlasm_id(normalized_url.get_uri()); hlasm_id.has_value())
+        auto uri = resource_location(unnormalized_uri).lexically_normal();
+        if (auto hlasm_id = extract_hlasm_id(uri.get_uri()); hlasm_id.has_value())
         {
             if (auto related_ws = self.m_file_manager.get_virtual_file_workspace(hlasm_id.value()); !related_ws.empty())
                 for (auto& [_, ows] : self.m_workspaces)
                     if (ows.ws.uri() == related_ws.get_uri())
-                        return std::pair(&ows, std::move(normalized_url));
+                        return std::pair(&ows, std::move(uri));
         }
 
-        resource_location url_to_match = normalized_url;
-        if (normalized_url.get_uri().starts_with(hlasm_external_scheme))
+        resource_location url_to_match = uri;
+        if (uri.get_uri().starts_with(hlasm_external_scheme))
         {
-            utils::path::dissected_uri uri_components = utils::path::dissect_uri(normalized_url.get_uri());
-            if (uri_components.contains_host())
-                url_to_match =
-                    resource_location(utils::encoding::uri_friendly_base16_decode(uri_components.auth->host));
+            if (utils::path::dissected_uri comp = utils::path::dissect_uri(uri.get_uri()); comp.fragment)
+            {
+                if (auto fragment = utils::encoding::uri_friendly_base16_decode(*comp.fragment); !fragment.empty())
+                    url_to_match = resource_location(std::move(fragment));
+            }
         }
 
         size_t max = 0;
@@ -130,12 +133,17 @@ public:
                 max_ows = &ows;
             }
         }
+
+        static constexpr std::string_view schema_list[] = { "file:", "untitled:", hlasm_external_scheme };
+
         if (max_ows != nullptr)
-            return std::pair(max_ows, std::move(normalized_url));
-        else if (normalized_url.get_uri().starts_with("file:") || normalized_url.get_uri().starts_with("untitled:"))
-            return std::pair(&self.m_implicit_workspace, std::move(normalized_url));
+            return std::pair(max_ows, std::move(uri));
+        else if (std::any_of(std::begin(schema_list), std::end(schema_list), [u = uri.get_uri()](const auto& p) {
+                     return u.starts_with(p);
+                 }))
+            return std::pair(&self.m_implicit_workspace, std::move(uri));
         else
-            return std::pair(&self.m_quiet_implicit_workspace, std::move(normalized_url));
+            return std::pair(&self.m_quiet_implicit_workspace, std::move(uri));
     }
 
     // returns implicit workspace, if the file does not belong to any workspace
@@ -840,7 +848,7 @@ private:
 
     unsigned long long next_unique_id() { return ++m_unique_id_sequence; }
 
-    static constexpr std::string_view hlasm_external_scheme = "hlasm-external://";
+    static constexpr std::string_view hlasm_external_scheme = "hlasm-external:";
 
     [[nodiscard]] utils::value_task<std::optional<std::string>> load_text_external(
         const utils::resource::resource_location& document_loc) const
@@ -889,12 +897,20 @@ private:
             {
                 try
                 {
-                    std::string ext(c.suggested_extension);
                     auto& dirs = result.first;
-                    for (auto s : c.members)
+                    for (auto s : c.member_urls)
                     {
-                        std::string file(s);
-                        dirs.emplace_back(std::move(file), utils::resource::resource_location::join(dir, file + ext));
+                        auto url = utils::resource::resource_location(std::string_view(s));
+                        auto filename = url.filename();
+                        filename = utils::encoding::percent_decode(filename);
+                        if (auto dot = filename.find('.', !filename.empty()); dot != std::string::npos)
+                            filename.erase(dot);
+                        if (filename.empty())
+                        {
+                            result = { {}, other_failure };
+                            break;
+                        }
+                        dirs.emplace_back(std::move(filename), std::move(url));
                     }
                 }
                 catch (...)

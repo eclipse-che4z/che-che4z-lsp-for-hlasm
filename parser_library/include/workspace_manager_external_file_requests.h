@@ -22,8 +22,7 @@ namespace hlasm_plugin::parser_library {
 
 struct workspace_manager_external_directory_result
 {
-    sequence<sequence<char>> members;
-    sequence<char> suggested_extension;
+    sequence<sequence<char>> member_urls;
 };
 
 class workspace_manager_external_file_requests

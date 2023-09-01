@@ -36,6 +36,7 @@
 #include "utils/factory.h"
 #include "utils/levenshtein_distance.h"
 #include "utils/path.h"
+#include "utils/path_conversions.h"
 #include "utils/transform_inserter.h"
 
 using hlasm_plugin::utils::resource::resource_location;
@@ -813,7 +814,22 @@ utils::task workspace::did_change_watched_files(
 {
     assert(file_locations.size() == file_change_status.size());
 
-    auto refreshed = co_await m_configuration.refresh_libraries(file_locations);
+    std::vector<resource_location> file_locations_without_fragment;
+    file_locations_without_fragment.reserve(file_locations.size());
+    for (const auto& file_location : file_locations)
+    {
+        auto dis_uri = utils::path::dissect_uri(file_location.get_uri());
+
+        if (!dis_uri.fragment.has_value())
+            file_locations_without_fragment.emplace_back(file_location);
+        else
+        {
+            dis_uri.fragment.reset();
+            file_locations_without_fragment.emplace_back(utils::path::reconstruct_uri(dis_uri));
+        }
+    }
+
+    auto refreshed = co_await m_configuration.refresh_libraries(file_locations_without_fragment);
     auto cit = file_change_status.begin();
 
     std::vector<utils::task> pending_updates;

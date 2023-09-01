@@ -26,8 +26,32 @@ using server_notification = std::pair<std::string, nlohmann::json>;
 
 class message_provider_mock : public send_message_provider
 {
+    lsp::server& server;
+
 public:
-    void reply(const nlohmann::json& result) override { notfs.push_back(result); }
+    message_provider_mock(lsp::server& server)
+        : server(server)
+    {}
+    void reply(const nlohmann::json& result) override
+    {
+        if (result.value("method", "") == "external_configuration_request")
+        {
+            server.message_received({
+                { "id", result.at("id") },
+                { "jsonrpc", "2.0" },
+                {
+                    "error",
+                    {
+                        { "code", 0 },
+                        { "message", "Not found" },
+                    },
+                },
+            });
+            return;
+        }
+
+        notfs.push_back(result);
+    }
 
     std::vector<nlohmann::json> notfs;
 };
@@ -40,8 +64,8 @@ nlohmann::json make_notification(std::string method_name, nlohmann::json paramet
 TEST(regress_test, behaviour_error)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
-    message_provider_mock mess_p;
     lsp::server s(*ws_mngr);
+    message_provider_mock mess_p(s);
     s.set_send_message_provider(&mess_p);
 
     auto notf = make_notification("textDocument/didOpen",
@@ -578,8 +602,8 @@ const static std::vector<nlohmann::json> messages = {
 TEST(regress_test, stability_async)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
-    message_provider_mock mess_p;
     lsp::server s(*ws_mngr);
+    message_provider_mock mess_p(s);
     s.set_send_message_provider(&mess_p);
 
     // series of lsp notification calls
@@ -593,8 +617,8 @@ TEST(regress_test, stability_async)
 TEST(regress_test, stability_sync)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
-    message_provider_mock mess_p;
     lsp::server s(*ws_mngr);
+    message_provider_mock mess_p(s);
     s.set_send_message_provider(&mess_p);
 
     // series of lsp notification calls
@@ -608,8 +632,8 @@ TEST(regress_test, stability_sync)
 TEST(regress_test, check_diagnostic_tags)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
-    message_provider_mock mess_p;
     lsp::server s(*ws_mngr);
+    message_provider_mock mess_p(s);
     s.set_send_message_provider(&mess_p);
 
     auto notf = make_notification("textDocument/didOpen",

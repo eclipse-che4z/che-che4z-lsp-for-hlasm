@@ -178,7 +178,7 @@ TEST(external_file_reader, directory_reading)
   "method":"external_file_request",
   "params":{
     "id":1,
-    "op":"read_directory",
+    "op":"list_directory",
     "url":"CCC"
   }
 })"_json));
@@ -186,8 +186,8 @@ TEST(external_file_reader, directory_reading)
     reader.read_external_directory("CCC", r);
 
     EXPECT_CALL(*resp, provide(Truly([](workspace_manager_external_directory_result v) {
-        return std::string_view(v.suggested_extension) == ".hlasm" && v.members.size() == 2
-            && std::string_view(v.members.item(0)) == "A" && std::string_view(v.members.item(1)) == "B";
+        return v.member_urls.size() == 2 && std::string_view(v.member_urls.item(0)) == "A"
+            && std::string_view(v.member_urls.item(1)) == "B";
     })));
     EXPECT_CALL(wakeup, Call());
 
@@ -198,10 +198,9 @@ TEST(external_file_reader, directory_reading)
   "params":{
     "id":1,
     "data":{
-      "members": [
+      "member_urls": [
          "A", "B"
-      ],
-      "suggested_extension": ".hlasm"
+      ]
     }
   }
 })"_json);
@@ -226,7 +225,7 @@ TEST(external_file_reader, directory_reading_bad)
   "method":"external_file_request",
   "params":{
     "id":1,
-    "op":"read_directory",
+    "op":"list_directory",
     "url":"CCC"
   }
 })"_json));
@@ -266,7 +265,7 @@ TEST(external_file_reader, directory_reading_bad2)
   "method":"external_file_request",
   "params":{
     "id":1,
-    "op":"read_directory",
+    "op":"list_directory",
     "url":"CCC"
   }
 })"_json));
@@ -306,7 +305,7 @@ TEST(external_file_reader, directory_reading_bad3)
   "method":"external_file_request",
   "params":{
     "id":1,
-    "op":"read_directory",
+    "op":"list_directory",
     "url":"CCC"
   }
 })"_json));
@@ -346,7 +345,7 @@ TEST(external_file_reader, directory_reading_error)
   "method":"external_file_request",
   "params":{
     "id":1,
-    "op":"read_directory",
+    "op":"list_directory",
     "url":"DDD"
   }
 })"_json));

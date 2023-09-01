@@ -17,48 +17,42 @@ import * as Mocha from 'mocha';
 import * as glob from 'glob';
 import * as vscode from 'vscode';
 import * as process from 'process';
-import { popWaitRequestResolver, timeout } from './testHelper';
+import { popWaitRequestResolver } from './testHelper';
 import { EXTENSION_ID, activate } from '../../extension';
-import { ClientUriDetails, ExternalRequestType } from '../../hlasmExternalFiles';
 
 async function registerTestImplementations(): Promise<vscode.Disposable[]> {
 	const ext = await vscode.extensions.getExtension<ReturnType<typeof activate>>(EXTENSION_ID)!.activate();
 
-	const fileClientMock = {
-		getConnInfo: () => Promise.resolve({ info: '', uniqueId: undefined }),
-		parseArgs(p: string, _purpose: ExternalRequestType) {
-			const [path, file] = p.split('/').slice(1).map(x => x.toUpperCase());
+	ext.registerExternalFileClient('TEST', {
+		async parseArgs(p: string, _purpose) {
+			const [path, file] = p.split('/').slice(1).map(decodeURIComponent).map(x => x.toUpperCase());
 			return {
-				path: path || '',
-				file: (file || '').split('.')[0],
-				toDisplayString() { return `${this.path}/${this.file}`; },
-				normalizedPath() { return `/${this.path}/${this.file}`; },
+				details: {
+					path: path || '',
+					file: (file || '').split('.')[0],
+					toDisplayString() { return `${path}/${file}`; },
+					normalizedPath() { return `/${path}/${file}`; },
+				},
+				server: undefined,
 			}
 		},
-		createClient: () => {
-			return {
-				connect: (_: string) => Promise.resolve(),
-				listMembers: (_: { path: string, file: string } & ClientUriDetails) => {
-					return Promise.resolve(['MACA', 'MACB', 'MACC']);
-				},
-				readMember: (args: { path: string, file: string } & ClientUriDetails) => {
-					if (/^MAC[A-C]$/.test(args.file))
-						return Promise.resolve(`.*
+
+		listMembers: (arg) => {
+			const { path } = arg;
+			return Promise.resolve(['MACA', 'MACB', 'MACC'].map(x => `/${path}/${x}`));
+		},
+
+		readMember: (args) => {
+			if (/^MAC[A-C]$/.test(args.file))
+				return Promise.resolve(`.*
           MACRO
           ${args.file}
           MEND`);
 
-					return Promise.resolve(null);
-				},
-
-				dispose: () => { },
-
-				reusable: () => true,
-			};
+			return Promise.resolve(null);
 		},
-	};
+	});
 
-	ext.registerExternalFileClient('TEST', fileClientMock);
 	ext.registerExternalConfigurationProvider((uri: vscode.Uri) => {
 		const uriString = uri.toString();
 		if (uriString.includes("AAAAA"))
