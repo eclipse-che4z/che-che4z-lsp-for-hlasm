@@ -35,7 +35,6 @@
 #include "utils/bk_tree.h"
 #include "utils/factory.h"
 #include "utils/levenshtein_distance.h"
-#include "utils/path.h"
 #include "utils/path_conversions.h"
 #include "utils/transform_inserter.h"
 

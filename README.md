@@ -19,7 +19,11 @@ HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio
 
 ## Compatibility
 
-HLASM Language Support is supported on Visual Studio Code and GitHub Codespaces.
+HLASM Language Support is supported on Visual Studio Code, GitHub Codespaces and Visual Studio Code for the Web. The language server component can be also integrated with other LSP compatible editors (e.g. Neovim).
+
+#### Restriction
+
+Bulk and on-demand downloading of dependencies via FTP is not available in the Web extension environment.
 
 ## Integration with Zowe Explorer
 

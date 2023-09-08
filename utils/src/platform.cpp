@@ -16,6 +16,7 @@
 
 #ifdef __EMSCRIPTEN__
 #    include <emscripten.h>
+#    include <numeric>
 
 #    include <emscripten/bind.h>
 #else
@@ -51,12 +52,18 @@ bool is_web()
 #endif
 }
 
-void log(std::string_view s)
+void log(std::span<const std::string_view> list)
 {
 #ifdef __EMSCRIPTEN__
+    std::string s;
+    s.reserve(std::transform_reduce(list.begin(), list.end(), (size_t)0, std::plus(), [](auto e) { return e.size(); }));
+    for (auto e : list)
+        s.append(e);
     EM_ASM({ console.log(new TextDecoder().decode(HEAPU8.slice($0, $1))); }, s.data(), s.data() + s.size());
 #else
-    std::clog << s << '\n';
+    for (auto e : list)
+        std::clog << e;
+    std::clog << '\n';
 #endif
 }
 
@@ -137,15 +144,17 @@ std::optional<std::string> read_file(const std::string& file)
     if (is_web())
         return s;
 
-    [[maybe_unused]] thread_local const bool prepare_buffer_registered = []() {
+    static thread_local bool prepare_buffer_registered = EM_ASM_INT({ return !!Module.read_file_prepare_buffer; });
+    if (!prepare_buffer_registered)
+    {
+        prepare_buffer_registered = true;
         auto prepare_buffer = +[](intptr_t ptr, ssize_t size) {
             auto& str = *(std::optional<std::string>*)ptr;
             str.emplace((size_t)size, '\0');
             return (intptr_t)str->data();
         };
         emscripten::function("read_file_prepare_buffer", prepare_buffer);
-        return true;
-    }();
+    }
     // clang-format off
         EM_ASM(
             {

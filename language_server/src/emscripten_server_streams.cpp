@@ -193,7 +193,7 @@ std::unique_ptr<server_streams> server_streams::create(std::span<const char* con
 {
     if (!args.empty())
     {
-        std::cerr << "No arguments allowed";
+        utils::platform::log("No arguments allowed");
         return {};
     }
 

@@ -17,6 +17,7 @@
 #include <iostream>
 #include <string>
 
+#include "utils/platform.h"
 #include "utils/time.h"
 
 using namespace hlasm_plugin::language_server;
@@ -34,5 +35,5 @@ void logger::log(std::string_view data)
 {
     std::lock_guard g(mutex_);
 
-    std::clog << current_time() << " " << data << '\n';
+    utils::platform::log(current_time(), " ", data);
 }

@@ -19,7 +19,6 @@
 #include "lib_config.h"
 #include "message_consumer_mock.h"
 #include "nlohmann/json.hpp"
-#include "utils/path.h"
 #include "utils/platform.h"
 #include "workspace/consume_diagnostics_mock.h"
 #include "workspace_manager.h"

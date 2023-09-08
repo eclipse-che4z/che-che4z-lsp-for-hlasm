@@ -19,7 +19,6 @@
 
 #include "../common_testing.h"
 #include "../workspace/empty_configs.h"
-#include "utils/path.h"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"

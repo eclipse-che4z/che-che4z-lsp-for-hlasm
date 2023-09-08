@@ -16,6 +16,7 @@
 #include "base_protocol_channel.h"
 #include "server_streams.h"
 #include "stream_helper.h"
+#include "utils/platform.h"
 
 #define ASIO_STANDALONE
 #include "asio.hpp"
@@ -84,7 +85,7 @@ std::unique_ptr<server_streams> server_streams::create(std::span<const char* con
 {
     if (args.size() > 1)
     {
-        std::cerr << "Invalid arguments. Use language_server [<lsp port>]";
+        utils::platform::log("Invalid arguments. Use language_server [<lsp port>]");
         return {};
     }
     const bool use_tcp = args.size() == 1;
@@ -94,7 +95,7 @@ std::unique_ptr<server_streams> server_streams::create(std::span<const char* con
         lsp_port = atoi(args.front());
         if (lsp_port <= 0 || lsp_port > 65535)
         {
-            std::cerr << "Wrong port entered.";
+            utils::platform::log("Wrong port entered.");
             return {};
         }
         return std::make_unique<tcp_setup>((uint16_t)lsp_port);

@@ -22,7 +22,6 @@
 
 #include "file.h"
 #include "utils/content_loader.h"
-#include "utils/path.h"
 #include "utils/path_conversions.h"
 #include "utils/platform.h"
 

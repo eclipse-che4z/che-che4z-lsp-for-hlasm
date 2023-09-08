@@ -381,7 +381,7 @@
         "hlasm.serverVariant": {
           "type": "string",
           "default": "native",
-          "description": "Select language server variant - native, wasm, tcp.",
+          "description": "Select language server variant - native, wasm, tcp. Not applicable in Web environment",
           "enum": [
             "native",
             "tcp",

@@ -19,7 +19,6 @@
 #include <utility>
 
 #include "file_manager.h"
-#include "utils/path.h"
 #include "utils/platform.h"
 #include "utils/string_operations.h"
 #include "wildcard.h"

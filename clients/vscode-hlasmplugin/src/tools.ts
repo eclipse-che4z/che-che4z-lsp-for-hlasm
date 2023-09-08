@@ -16,6 +16,8 @@ import * as zlib from 'zlib';
 import * as os from 'os';
 import * as crypto from "crypto";
 
+export const isWeb = false;
+
 export async function deflate(data: Uint8Array): Promise<Uint8Array> {
     return new Promise<Uint8Array>((resolve, reject) => {
         zlib.deflate(data, (e, r) => { e && reject(e) || resolve(r) });

@@ -21,7 +21,6 @@
 #include "empty_configs.h"
 #include "external_configuration_requests_mock.h"
 #include "external_file_reader_mock.h"
-#include "utils/path.h"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
 #include "workspaces/file_manager.h"

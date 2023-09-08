@@ -20,7 +20,6 @@
 #include <string_view>
 
 #include "nlohmann/json_fwd.hpp"
-#include "utils/path.h"
 #include "utils/resource_location.h"
 
 constexpr const std::string_view pgm_conf_name(".hlasmplugin/pgm_conf.json");

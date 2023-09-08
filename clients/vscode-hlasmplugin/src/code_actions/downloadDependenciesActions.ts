@@ -13,27 +13,30 @@
  */
 
 import * as vscode from 'vscode';
+import { isWeb } from '../tools';
 
 export function generateDownloadDependenciesCodeActions(): vscode.CodeAction[] {
     const result: vscode.CodeAction[] = [];
 
-    result.push({
-        title: 'Download missing dependencies',
-        command: {
-            title: 'Download dependencies',
-            command: 'extension.hlasm-plugin.downloadDependencies',
-            arguments: ['newOnly']
-        },
-        kind: vscode.CodeActionKind.QuickFix
-    });
-    result.push({
-        title: 'Download all dependencies',
-        command: {
-            title: 'Download dependencies',
-            command: 'extension.hlasm-plugin.downloadDependencies'
-        },
-        kind: vscode.CodeActionKind.QuickFix
-    });
+    if (!isWeb) {
+        result.push({
+            title: 'Download missing dependencies',
+            command: {
+                title: 'Download dependencies',
+                command: 'extension.hlasm-plugin.downloadDependencies',
+                arguments: ['newOnly']
+            },
+            kind: vscode.CodeActionKind.QuickFix
+        });
+        result.push({
+            title: 'Download all dependencies',
+            command: {
+                title: 'Download dependencies',
+                command: 'extension.hlasm-plugin.downloadDependencies'
+            },
+            kind: vscode.CodeActionKind.QuickFix
+        });
+    }
 
     return result;
 }

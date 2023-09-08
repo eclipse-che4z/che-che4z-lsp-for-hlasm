@@ -14,6 +14,8 @@
 
 import { textEncode, textDecode } from './tools.common';
 
+export const isWeb = true;
+
 function makeReadable(data: Uint8Array) {
     return new ReadableStream({
         start(controller) {
