@@ -20,6 +20,7 @@
 #include "utils/platform.h"
 
 namespace hlasm_plugin::utils::path {
+using utils::platform::is_web;
 using utils::platform::is_windows;
 
 namespace {
@@ -149,7 +150,8 @@ public:
     directory_op_support(std::function<void(const std::filesystem::path&)> h = {})
         : handler(h)
     {
-        static thread_local bool registered = false;
+        static thread_local bool registered = EM_ASM_INT(
+            { return !!Module.directory_op_support_get_buffer && !!Module.directory_op_support_commit_buffer; });
         if (!registered)
         {
             registered = true;
@@ -317,6 +319,9 @@ public:
     std::filesystem::path cwd(std::error_code& ec)
     {
         buffer.clear();
+        if (is_web())
+            return buffer;
+
         int result = EM_ASM_INT(
             {
                 try

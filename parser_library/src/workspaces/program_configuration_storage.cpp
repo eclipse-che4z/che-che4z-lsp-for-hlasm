@@ -52,7 +52,7 @@ void program_configuration_storage::add_exact_conf(
     else
     {
         utils::resource::resource_location pgm_rl = pgm.prog_id;
-        m_exact_match.try_emplace(std::move(std::move(pgm_rl)),
+        m_exact_match.try_emplace(std::move(pgm_rl),
             program_properties {
                 std::move(pgm),
                 affiliation,

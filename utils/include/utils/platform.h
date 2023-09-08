@@ -20,6 +20,8 @@
 
 namespace hlasm_plugin::utils::platform {
 bool is_windows();
+bool is_web();
+void log(std::string_view);
 const std::string& home();
 std::optional<std::string> read_file(const std::string& file);
 

@@ -28,7 +28,7 @@ suite('Configurations Handler Test Suite', () => {
     test('Update wildcards test', async () => {
         const wildcards = await handler.generateWildcards(workspaceUri);
         assert.ok(wildcards);
-        assert.equal(wildcards.length, 26);
+        assert.strictEqual(wildcards.length, 26);
     });
 
     // 2 files matching the wildcards
@@ -51,8 +51,8 @@ suite('Configurations Handler Test Suite', () => {
         fsMock.addResource(pgmUri);
 
         const configNodes = await retrieveConfigurationNodes(workspaceUri, pgmUri, fsMock);
-        assert.equal(configNodes.bridgeJson.exists, true);
-        assert.equal(configNodes.ebgFolder.exists, true);
+        assert.strictEqual(configNodes.bridgeJson.exists, true);
+        assert.strictEqual(configNodes.ebgFolder.exists, true);
         assert.deepStrictEqual(configNodes.bridgeJson.uri, bridgeJsonUri);
         assert.deepStrictEqual(configNodes.ebgFolder.uri, ebgUri);
     });
@@ -64,7 +64,7 @@ suite('Configurations Handler Test Suite', () => {
         fsMock.addResource(pgmUri);
 
         const configNodes = await retrieveConfigurationNodes(workspaceUri, pgmUri, fsMock);
-        assert.equal(configNodes.bridgeJson.exists, false);
-        assert.equal(configNodes.ebgFolder.exists, false);
+        assert.strictEqual(configNodes.bridgeJson.exists, false);
+        assert.strictEqual(configNodes.ebgFolder.exists, false);
     });
 });

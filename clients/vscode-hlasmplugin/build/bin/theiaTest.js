@@ -25,8 +25,8 @@ async function main() {
     // run integration tests as plugin for theia
     const child = spawn('node', [
         theiaDir+'/src-gen/backend/main.js',
-        './lib/test/workspace/',
-        '--extensionTestsPath='+process.cwd()+'/lib/test/suite', 
+        './dist_test/workspace/',
+        '--extensionTestsPath='+process.cwd()+'/dist_test/test/suite', 
         '--hostname', '0.0.0.0',
         '--port','3000' 
     ]);

@@ -18,7 +18,7 @@ import { TextEncoder } from 'util';
 
 suite('Conversions', () => {
     test('Buffer conversion', () => {
-        assert.deepEqual(convertBuffer(Uint8Array.from([0x40, 0xC1, 0x40]), 80), new TextEncoder().encode(' A '));
+        assert.deepStrictEqual(convertBuffer(Uint8Array.from([0x40, 0xC1, 0x40]), 80), new TextEncoder().encode(' A '));
     });
 
     test('URI friendly Base16 encode', () => {

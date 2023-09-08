@@ -13,9 +13,8 @@
  */
 
 import * as vscode from 'vscode';
-import { relative } from 'path';
 import { ConfigurationNodeDetails, ConfigurationNodes, anyConfigurationNodeExists } from '../configurationNodes';
-import { proc_grps_file, pgm_conf_file } from '../constants'
+import { proc_grps_file, pgm_conf_file } from '../constants';
 
 function codeActionFactory(create: boolean, filename: string | undefined, args: any[] | undefined): vscode.CodeAction {
     const filesDescription: string = filename ? filename + ' configuration file' : 'configuration files';
@@ -35,23 +34,23 @@ function generateProcGrpsCodeAction(procGrps: ConfigurationNodeDetails, wsUri: v
     return procGrps.exists ? codeActionFactory(false, proc_grps_file, [procGrps.uri]) : codeActionFactory(true, proc_grps_file, [wsUri, null, '']);
 }
 
-function generatePgmConfCodeAction(configNodes: ConfigurationNodes, wsUri: vscode.Uri, document: vscode.TextDocument): vscode.CodeAction {
+function generatePgmConfCodeAction(configNodes: ConfigurationNodes, wsUri: vscode.Uri, documentRelativeUri: string): vscode.CodeAction {
     if (configNodes.pgmConf.exists)
         return codeActionFactory(false, pgm_conf_file, [configNodes.pgmConf.uri]);
     else {
         if (configNodes.bridgeJson.exists || configNodes.ebgFolder.exists) {
             // TODO: could we trigger B4G sync?
         }
-        return codeActionFactory(true, pgm_conf_file, [wsUri, relative(wsUri.path, document.uri.path), null]);
+        return codeActionFactory(true, pgm_conf_file, [wsUri, documentRelativeUri, null]);
     }
 }
 
-export function generateConfigurationFilesCodeActions(suggestProcGrpsChange: boolean, suggestPgmConfChange: boolean, configNodes: ConfigurationNodes, wsUri: vscode.Uri, document: vscode.TextDocument): vscode.CodeAction[] {
+export function generateConfigurationFilesCodeActions(suggestProcGrpsChange: boolean, suggestPgmConfChange: boolean, configNodes: ConfigurationNodes, wsUri: vscode.Uri, documentRelativeUri: string): vscode.CodeAction[] {
     if (!suggestProcGrpsChange && !suggestPgmConfChange)
         return [];
 
     if (!anyConfigurationNodeExists(configNodes))
-        return [codeActionFactory(true, undefined, [wsUri, relative(wsUri.path, document.uri.path), 'GRP1'])];
+        return [codeActionFactory(true, undefined, [wsUri, documentRelativeUri, 'GRP1'])];
 
     const result: vscode.CodeAction[] = [];
 
@@ -59,7 +58,7 @@ export function generateConfigurationFilesCodeActions(suggestProcGrpsChange: boo
         result.push(generateProcGrpsCodeAction(configNodes.procGrps, wsUri));
 
     if (suggestPgmConfChange)
-        result.push(generatePgmConfCodeAction(configNodes, wsUri, document));
+        result.push(generatePgmConfCodeAction(configNodes, wsUri, documentRelativeUri));
 
     return result;
 }

@@ -311,6 +311,16 @@ public:
     }
 
 
+    hlasm_plugin::utils::value_task<list_directory_result> list_directory_subdirs_and_symlinks(
+        const hlasm_plugin::utils::resource::resource_location& directory) const
+    {
+        return hlasm_plugin::utils::value_task<list_directory_result>::from_value({
+            {},
+            hlasm_plugin::utils::path::list_directory_rc::other_failure,
+        });
+    }
+
+
     hlasm_plugin::utils::value_task<std::optional<std::string>> load_text(
         const resource_location& document_loc) const override
     {

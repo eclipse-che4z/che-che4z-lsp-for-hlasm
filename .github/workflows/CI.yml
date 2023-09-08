@@ -125,31 +125,21 @@ jobs:
           - os: ubuntu-22.04
             native: linux
             container: alpine:3.16
-            prereq: apk update && apk add --no-cache linux-headers git g++ cmake ninja
-            config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-static" -DBUILD_VSIX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
             dbg-strip: objcopy --only-keep-debug language_server language_server.dbg && objcopy --strip-unneeded language_server && objcopy --add-gnu-debuglink=language_server.dbg language_server
             dbg-pattern: build/bin/language_server.dbg
           - os: ubuntu-22.04
             native: wasm
             container: emscripten/emsdk:3.1.33
-            prereq: sudo apt-get update && sudo apt-get install -y ninja-build
-            config: >
-              emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DDISCOVER_TESTS=Off
-              -DWITH_LIBCXX=Off -DWITH_STATIC_CRT=Off -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -fexceptions" -DUSE_PRE_GENERATED_GRAMMAR="generated_parser"
-              -DCMAKE_EXE_LINKER_FLAGS="-s PTHREAD_POOL_SIZE=8 -s TOTAL_MEMORY=268435456 -s PROXY_TO_PTHREAD=1 -s NODERAWFS=1 -s EXIT_RUNTIME=1 --bind"
-              -DCMAKE_CROSSCOMPILING_EMULATOR="node;--experimental-wasm-threads;--experimental-wasm-bulk-memory"
-              -Dgtest_disable_pthreads=On -DBUILD_VSIX=Off ../
-            test-runner: node --experimental-wasm-threads --experimental-wasm-bulk-memory
             artifacts-ext: .*
           - os: windows-2022
             native: win32
-            config: cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_VSIX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
-            build-extra: --parallel --config Release
             artifacts-ext: .exe
           - os: macos-12
             native: darwin
-            prereq: brew install ninja
-            config: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=$(brew --prefix llvm@15)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@15)/bin/clang++ -DLLVM_PATH=$(brew --prefix llvm@15) -DBUILD_VSIX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
+          - os: ubuntu-22.04
+            native: web
+            container: emscripten/emsdk:3.1.33
+            artifacts-ext: .*
     container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v3
@@ -159,19 +149,24 @@ jobs:
           name: grammar
           path: build/generated_parser
       - name: Requirements install
-        if: ${{ matrix.prereq }}
-        run: ${{ matrix.prereq }}
+        run: if [ -f ./scripts/prereq.${{ matrix.native }}.sh ]; then ./scripts/prereq.${{ matrix.native }}.sh; fi
       - name: Configure
-        run: ${{ matrix.config }}
+        run: ../scripts/config.${{ matrix.native }}.sh
         working-directory: build
       - name: Build
-        run: cmake --build . ${{ matrix.build-extra }}
+        run: cmake --build . $([ -f ../scripts/build-extra.${{ matrix.native }}.conf ] && cat ../scripts/build-extra.${{ matrix.native }}.conf || true)
         working-directory: build
       - name: Server Test
         run: |
-          ${{ matrix.test-runner }} ./library_test
-          ${{ matrix.test-runner }} ./server_test
-          ${{ matrix.test-runner }} ./hlasm_utils_test
+          if [ -f ../../scripts/test-runner.${{ matrix.native }}.sh ]; then
+            ../../scripts/test-runner.${{ matrix.native }}.sh ./library_test
+            ../../scripts/test-runner.${{ matrix.native }}.sh ./server_test
+            ../../scripts/test-runner.${{ matrix.native }}.sh ./hlasm_utils_test
+          else
+            ./library_test
+            ./server_test
+            ./hlasm_utils_test
+          fi
         working-directory: build/bin
       - name: Strip debug info
         if: ${{ matrix.dbg-strip }}
@@ -244,6 +239,46 @@ jobs:
         run: ${{ env.XVFB }} npm run test:wasm
       - name: Extension Test Insiders
         run: ${{ env.XVFB }} npm run test:insiders
+
+  VSIX-web:
+    name: Test and VSIX (Web)
+    needs: [build-matrix]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download web language server
+        uses: actions/download-artifact@v3
+        with:
+          name: language_server_web
+          path: ${{ env.CLIENT_DIR }}/bin/wasm/
+      - name: NPM CI
+        run: npm ci
+        working-directory: ${{ env.CLIENT_DIR }}
+      - name: Inject telemetry key
+        run: |
+          export TEL_KEY=`node -e "console.log(Buffer.from('${{ secrets.TELEMETRY_KEY }}').toString('base64'))"`
+          sed -i "s/const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY/const TELEMETRY_KEY_ENCODED = '$TEL_KEY'/" src/telemetry.ts
+        working-directory: ${{ env.CLIENT_DIR }}
+      - name: NPM Compile
+        run: npm run compile:web
+        working-directory: ${{ env.CLIENT_DIR }}
+      - name: NPM Test
+        run: npm run test:web
+        working-directory: ${{ env.CLIENT_DIR }}
+      - name: Update version
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release-next'
+        run: npx semantic-release --dry-run
+        working-directory: ${{ env.CLIENT_DIR }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Package VSIX
+        run: npx vsce package --no-dependencies --target web -o hlasm-language-support-web.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
+        working-directory: ${{ env.CLIENT_DIR }}
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v3
+        with:
+          name: hlasm-language-support-web.vsix
+          path: ${{ env.CLIENT_DIR }}/hlasm-language-support-web.vsix
 
   VSIX:
     runs-on: ubuntu-22.04
@@ -321,7 +356,7 @@ jobs:
       issues: write
       pull-requests: write
     if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'push' && github.ref == 'refs/heads/release-next')
-    needs: [VSIX, test-matrix, sanitizer-builds, theia-test]
+    needs: [VSIX, VSIX-web, test-matrix, sanitizer-builds, theia-test]
 
     steps:
       - uses: actions/checkout@v3
@@ -329,6 +364,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: hlasm-language-support.vsix
+          path: ${{ env.CLIENT_DIR }}
+      - name: Download Web VSIX
+        uses: actions/download-artifact@v3
+        with:
+          name: hlasm-language-support-web.vsix
           path: ${{ env.CLIENT_DIR }}
       - name: Download Release Info
         uses: actions/download-artifact@v3

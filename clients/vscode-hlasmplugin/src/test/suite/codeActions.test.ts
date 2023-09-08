@@ -16,8 +16,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as helper from './testHelper';
 import { isCancellationError } from '../../helpers';
-import { hlasmplugin_folder, pgm_conf_file, bridge_json_file } from '../../constants'
-import * as path from 'path'
+import { hlasmplugin_folder, pgm_conf_file, bridge_json_file } from '../../constants';
 
 async function queryCodeActions(uri: vscode.Uri, range: vscode.Range, sleep: number, attempts: number = 10) {
     for (let i = 0; i < attempts; ++i) {
@@ -62,7 +61,7 @@ suite('Code actions', () => {
 
         const codeActionsList = await queryCodeActions(document.uri, new vscode.Range(0, 10, 0, 15), 500);
 
-        assert.equal(codeActionsList.length, 4 + 3);
+        assert.strictEqual(codeActionsList.length, 4 + 3);
 
         await helper.closeAllEditors();
     }).timeout(10000).slow(5000);
@@ -77,13 +76,13 @@ suite('Code actions', () => {
 
         const codeActionsList = await queryCodeActions(document.uri, new vscode.Range(0, 10, 0, 15), 500);
 
-        assert.equal(codeActionsList.length, 1);
+        assert.strictEqual(codeActionsList.length, 1);
 
         await helper.closeAllEditors();
     }).timeout(10000).slow(5000);
 
     async function configurationDiagnosticsHelper(file: string, configFileUri: vscode.Uri, errorDiags: (string)[], allDiags: (string)[], diagSource: string) {
-        const configRelPath = path.relative(helper.getWorkspacePath(), configFileUri.fsPath);
+        const configRelPath = vscode.workspace.asRelativePath(configFileUri);
         let diags = await helper.waitForDiagnosticsChange(configRelPath, async () => { await helper.showDocument(file, 'hlasm'); }, diagSource);
 
         helper.assertMatchingMessageCodes(diags, errorDiags, diagSource);
@@ -91,7 +90,7 @@ suite('Code actions', () => {
         let codeActionsList = await queryCodeActions(configFileUri, new vscode.Range(0, 0, 0, 0), 500)
             .then(codeActionList => codeActionList.filter(x => x.command?.command === 'extension.hlasm-plugin.toggleAdvisoryConfigurationDiagnostics'));
 
-        assert.equal(codeActionsList.length, 1);
+        assert.strictEqual(codeActionsList.length, 1);
         assert.strictEqual(codeActionsList[0].command!.title, 'Show all configuration diagnostics');
 
         diags = await helper.waitForDiagnosticsChange(configRelPath, () => { vscode.commands.executeCommand(codeActionsList[0].command!.command, configFileUri, new vscode.Range(0, 0, 0, 0)); }, diagSource);
@@ -100,7 +99,7 @@ suite('Code actions', () => {
 
         codeActionsList = await queryCodeActions(configFileUri, new vscode.Range(0, 0, 0, 0), 500).then(codeActionList => codeActionList.filter(x => x.command?.command === 'extension.hlasm-plugin.toggleAdvisoryConfigurationDiagnostics'));
 
-        assert.equal(codeActionsList.length, 1);
+        assert.strictEqual(codeActionsList.length, 1);
         assert.strictEqual(codeActionsList[0].command!.title, 'Don\'t show advisory configuration diagnostics');
 
         diags = await helper.waitForDiagnosticsChange(configRelPath, () => { vscode.commands.executeCommand(codeActionsList[0].command!.command, configFileUri, new vscode.Range(0, 0, 0, 0)); }, diagSource);
@@ -109,7 +108,7 @@ suite('Code actions', () => {
     }
 
     test('Missing processor groups - pgm_conf.json', async () => {
-        const pgmConf = await helper.showDocument(path.join(hlasmplugin_folder, pgm_conf_file));
+        const pgmConf = await helper.showDocument(`${hlasmplugin_folder}/${pgm_conf_file}`);
 
         await configurationDiagnosticsHelper('missing_pgroup/A.hlasm', pgmConf.document.uri, ['W0004'], ['W0004', 'W0008'], 'HLASM Plugin');
 
@@ -117,9 +116,9 @@ suite('Code actions', () => {
     }).timeout(15000).slow(10000);
 
     test('Missing processor groups - .bridge.json', async () => {
-        const bridgeJson = await helper.showDocument(path.join("missing_pgroup", "b4g", bridge_json_file));
+        const bridgeJson = await helper.showDocument(`missing_pgroup/b4g/${bridge_json_file}`);
 
-        await configurationDiagnosticsHelper(path.join("missing_pgroup", "b4g", "A"), bridgeJson.document.uri, ['B4G002'], ['B4G002', 'B4G003'], 'HLASM Plugin');
+        await configurationDiagnosticsHelper(`missing_pgroup/b4g/A`, bridgeJson.document.uri, ['B4G002'], ['B4G002', 'B4G003'], 'HLASM Plugin');
 
         await helper.closeAllEditors();
     }).timeout(15000).slow(10000);

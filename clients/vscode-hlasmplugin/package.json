@@ -48,6 +48,7 @@
     "@types/node": "^16.4.13",
     "@types/vscode": "1.67.0",
     "@vscode/test-electron": "^2.3.0",
+    "@vscode/test-web": "^0.0.45",
     "@vscode/vsce": "^2.19.0",
     "c8": "^7.12.0",
     "conventional-changelog-conventionalcommits": "^4.5.0",
@@ -69,14 +70,19 @@
   },
   "scripts": {
     "postinstall": "node ./build/bin/postinstall.js",
-    "compile": "dts-bundle-generator --no-banner --respect-preserve-const-enum=true --export-referenced-types=false -o typings/extension.d.ts src/extension.interface.ts && esbuild --bundle src/extension.ts --outdir=dist --sourcemap --external:vscode --platform=node --minify",
+    "compile": "node ./build/bin/bundle.mjs extension node",
     "compile:test": "npm run compile && tsc -p ./tsconfig.json",
+    "compile:web": "node ./build/bin/bundle.mjs extension web",
+    "compile:webtest": "node ./build/bin/bundle.mjs both web",
     "clean": "node ./build/bin/clean.js",
-    "test": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js",
-    "test:wasm": "npm run compile:test && node ./build/bin/prepareWorkspace.js wasm && node ./lib/test/runTest.js",
-    "test:insiders": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js insiders",
-    "test:theia": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./build/bin/theiaTest.js"
+    "test": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./dist_test/test/runTest.js",
+    "test:web": "npm run compile:webtest && node ./build/bin/prepareWorkspace.js && npx vscode-test-web --browserType=chromium --coi --extensionDevelopmentPath=. --headless --verbose --extensionTestsPath=dist_test/index.web.js dist_test/workspace/",
+    "test:wasm": "npm run compile:test && node ./build/bin/prepareWorkspace.js wasm && node ./dist_test/test/runTest.js",
+    "test:insiders": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./dist_test/test/runTest.js insiders",
+    "test:theia": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./build/bin/theiaTest.js",
+    "run:web": "npx vscode-test-web --browserType=chromium --coi --extensionDevelopmentPath=. --open-devtools --verbose ../../example_workspace/"
   },
+  "browser": "./dist/extension.js",
   "contributes": {
     "jsonValidation": [
       {
@@ -256,7 +262,8 @@
       {
         "command": "extension.hlasm-plugin.downloadDependencies",
         "category": "HLASM",
-        "title": "Download Dependencies"
+        "title": "Download Dependencies",
+        "enablement": "!isWeb"
       },
       {
         "command": "extension.hlasm-plugin.toggleCommentEditorCommands",

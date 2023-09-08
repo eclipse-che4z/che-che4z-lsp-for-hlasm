@@ -20,6 +20,7 @@
 #    include <emscripten/bind.h>
 #else
 #    include <fstream>
+#    include <iostream>
 #endif
 
 namespace hlasm_plugin::utils::platform {
@@ -30,11 +31,32 @@ bool is_windows()
     return true;
 #elif __EMSCRIPTEN__
     // clang-format off
-    static const bool windows_flag = []() { return EM_ASM_INT({ return process.platform === "win32" ? 1 : 0; }); }();
+    static const bool windows_flag = !is_web() && []() { return EM_ASM_INT({ return process.platform === "win32" ? 1 : 0; }); }();
     // clang-format on
     return windows_flag;
 #else
     return false;
+#endif
+}
+
+bool is_web()
+{
+#ifdef __EMSCRIPTEN__
+    // clang-format off
+    static const bool web_flag = []() { return MAIN_THREAD_EM_ASM_INT({ return Module["web"] ?? typeof process === "undefined" ? 1 : 0; }); }();
+    // clang-format on
+    return web_flag;
+#else
+    return false;
+#endif
+}
+
+void log(std::string_view s)
+{
+#ifdef __EMSCRIPTEN__
+    EM_ASM({ console.log(new TextDecoder().decode(HEAPU8.slice($0, $1))); }, s.data(), s.data() + s.size());
+#else
+    std::clog << s << '\n';
 #endif
 }
 
@@ -68,6 +90,8 @@ const std::string& home()
 #elif __EMSCRIPTEN__
     static const std::string home_dir = []() {
         std::string s;
+        if (is_web())
+            return s;
 
         auto resize = +[](intptr_t ptr, ssize_t size) {
             auto str = (std::string*)ptr;
@@ -110,6 +134,8 @@ std::optional<std::string> read_file(const std::string& file)
 {
 #if __EMSCRIPTEN__
     std::optional<std::string> s;
+    if (is_web())
+        return s;
 
     [[maybe_unused]] thread_local const bool prepare_buffer_registered = []() {
         auto prepare_buffer = +[](intptr_t ptr, ssize_t size) {
@@ -127,7 +153,7 @@ std::optional<std::string> read_file(const std::string& file)
                 {
                     const content = require('fs').readFileSync(UTF8ToString($1));
                     const ptr = Module.read_file_prepare_buffer($0, content.length);
-                    content.copy(new Uint8Array(Module.HEAPU8.buffer, ptr, content.length));
+                    HEAPU8.set(content, ptr);
                 }
                 catch (e) {}
             },

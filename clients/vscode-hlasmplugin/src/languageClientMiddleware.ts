@@ -64,7 +64,7 @@ export function getLanguageClientMiddleware(): Middleware {
         },
         didClose: (data, next) => {
             return pendingOpens.get(data.uri.toString())?.forget()
-                ? new Promise<void>((resolve) => setImmediate(resolve))
+                ? Promise.resolve()
                 : next(data);
         },
         provideDefinition: (document, position, token, next) => {

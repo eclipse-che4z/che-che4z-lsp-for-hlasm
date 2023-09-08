@@ -14,9 +14,9 @@
 
 import * as vscode from 'vscode';
 import { hlasmplugin_folder, proc_grps_file, pgm_conf_file } from './constants';
-import { TextDecoder, TextEncoder } from 'util';
 import { retrieveConfigurationNodes } from './configurationNodes';
 import { generateConfigurationFilesCodeActions } from './code_actions/configurationFilesActions';
+import { textDecode } from './tools.common';
 
 /**
  * Handles changes in configurations files.
@@ -58,12 +58,10 @@ export class ConfigurationsHandler {
         if (!await ConfigurationsHandler.configFilesExist(workspaceUri))
             return [];
 
-        const decoder = new TextDecoder();
-
         //clear expressions
         const definedExpressions: RegExp[] = [];
         // get user-defined wildcards
-        let content = JSON.parse(decoder.decode(await vscode.workspace.fs.readFile(pgmConf)));
+        let content = JSON.parse(textDecode(await vscode.workspace.fs.readFile(pgmConf)));
 
         // convert each pgm to regex
         if (content.pgms) {
@@ -83,7 +81,7 @@ export class ConfigurationsHandler {
             });
         }
 
-        content = JSON.parse(decoder.decode(await vscode.workspace.fs.readFile(procGrps)));
+        content = JSON.parse(textDecode(await vscode.workspace.fs.readFile(procGrps)));
         // convert each pgroup library path to regex
         if (content.pgroups) {
             (content.pgroups as any[]).forEach(pgroup => {
@@ -161,6 +159,7 @@ export class ConfigurationsHandler {
         if (document.isClosed) return [];
         const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
         if (!workspace) return [];
+        const documentRelativeUri = vscode.workspace.asRelativePath(document.uri);
 
         const configNodes = await retrieveConfigurationNodes(workspace.uri, document.uri);
 
@@ -169,7 +168,7 @@ export class ConfigurationsHandler {
             !(configNodes.pgmConf.exists || configNodes.bridgeJson.exists || configNodes.ebgFolder.exists),
             configNodes,
             workspace.uri,
-            document)
+            documentRelativeUri)
             .map(x => new vscode.CodeLens(document.lineAt(0).range, x.command));
     }
 }

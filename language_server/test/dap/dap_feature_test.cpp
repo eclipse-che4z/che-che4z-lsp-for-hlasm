@@ -24,6 +24,7 @@
 #include "nlohmann/json.hpp"
 #include "utils/path.h"
 #include "utils/path_conversions.h"
+#include "utils/platform.h"
 #include "workspace_manager.h"
 
 using namespace hlasm_plugin;
@@ -102,8 +103,15 @@ struct feature_launch_test : public testing::Test
             request_id(0), R"({"linesStartAt1":false, "columnsStartAt1":false, "pathFormat":"path"})"_json);
         resp_provider.reset();
 
-        file_path = hlasm_plugin::utils::path::absolute("to_trace").string();
-        file_path[0] = (char)std::tolower((unsigned char)file_path[0]);
+        if (utils::platform::is_web())
+        {
+            file_path = "file://to_trace";
+        }
+        else
+        {
+            file_path = hlasm_plugin::utils::path::absolute("to_trace").string();
+            file_path[0] = (char)std::tolower((unsigned char)file_path[0]);
+        }
     }
 
     void check_simple_stack_trace(nlohmann::json, size_t expected_line)

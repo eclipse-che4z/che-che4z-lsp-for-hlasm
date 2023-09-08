@@ -32,8 +32,9 @@ protected:
 
 public:
     virtual void read_external_file(const char* url, workspace_manager_response<sequence<char>> content) = 0;
-    virtual void read_external_directory(
-        const char* url, workspace_manager_response<workspace_manager_external_directory_result> members) = 0;
+    virtual void read_external_directory(const char* url,
+        workspace_manager_response<workspace_manager_external_directory_result> members,
+        bool subdir = false) = 0;
 };
 
 } // namespace hlasm_plugin::parser_library

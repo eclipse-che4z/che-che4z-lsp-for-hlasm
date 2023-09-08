@@ -15,7 +15,7 @@
 
 import * as assert from 'assert';
 import * as crypto from "crypto";
-import { ClientInterface, ClientUriDetails, ExternalFilesInvalidationdata, ExternalRequestType, HLASMExternalFiles } from '../../hlasmExternalFiles';
+import { ClientUriDetails, ExternalFilesInvalidationdata, ExternalRequestType, HLASMExternalFiles } from '../../hlasmExternalFiles';
 import { EventEmitter, FileSystem, Uri } from 'vscode';
 import { FileType } from 'vscode';
 import { TextEncoder } from 'util';
@@ -27,7 +27,9 @@ suite('External files', () => {
         const ext = new HLASMExternalFiles('test', {
             onNotification: (_, __) => { return { dispose: () => { } }; },
             sendNotification: (_: any, __: any) => Promise.resolve(),
-        });
+        }, {
+            readFile: async (_: Uri) => { throw Error('not found'); }
+        } as any as FileSystem);
 
         assert.strictEqual(await ext.handleRawMessage(null), null);
         assert.strictEqual(await ext.handleRawMessage(undefined), null);
@@ -36,13 +38,13 @@ suite('External files', () => {
         assert.strictEqual(await ext.handleRawMessage({ id: 'id', op: '' }), null);
         assert.strictEqual(await ext.handleRawMessage({ id: 5, op: 5 }), null);
 
-        assert.deepEqual(await ext.handleRawMessage({ id: 5, op: '' }), { id: 5, error: { code: -5, msg: 'Invalid request' } });
-        assert.deepEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: 5 }), { id: 5, error: { code: -5, msg: 'Invalid request' } });
-        assert.deepEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: {} }), { id: 5, error: { code: -5, msg: 'Invalid request' } });
+        assert.deepStrictEqual(await ext.handleRawMessage({ id: 5, op: '' }), { id: 5, error: { code: -5, msg: 'Invalid request' } });
+        assert.deepStrictEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: 5 }), { id: 5, error: { code: -5, msg: 'Invalid request' } });
+        assert.deepStrictEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: {} }), { id: 5, error: { code: -5, msg: 'Invalid request' } });
 
-        assert.deepEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: 'unknown:scheme' }), { id: 5, error: { code: -5, msg: 'Invalid request' } });
+        assert.deepStrictEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: 'unknown:scheme' }), { id: 5, error: { code: -1000, msg: 'not found' } });
 
-        assert.deepEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: 'test:/SERVICE' }), { id: 5, error: { code: -1000, msg: 'No client' } });
+        assert.deepStrictEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: 'test:/SERVICE' }), { id: 5, error: { code: -1000, msg: 'No client' } });
     });
 
     test('Clear cache', async () => {
@@ -55,18 +57,18 @@ suite('External files', () => {
             onNotification: (_, __) => { return { dispose: () => { } }; },
             sendNotification: (_: any, __: any) => Promise.resolve(),
         }, {
+            readDirectory: async (uri: Uri) => {
+                ++readCounter;
+                assert.strictEqual(cacheUri.toString(), uri.toString());
+                return [['A', FileType.File]];
+            },
+            delete: async (uri: Uri, options?: { recursive?: boolean; useTrash?: boolean }) => {
+                ++deleteCounter;
+                assert.strictEqual(uri.toString(), Uri.joinPath(cacheUri, 'A').toString())
+            },
+        } as any as FileSystem, {
             uri: cacheUri,
-            fs: {
-                readDirectory: async (uri: Uri) => {
-                    ++readCounter;
-                    assert.strictEqual(cacheUri.toString(), uri.toString());
-                    return [['A', FileType.File]];
-                },
-                delete: async (uri: Uri, options?: { recursive?: boolean; useTrash?: boolean }) => {
-                    ++deleteCounter;
-                    assert.strictEqual(uri.toString(), Uri.joinPath(cacheUri, 'A').toString())
-                },
-            } as any as FileSystem
+
         });
 
         await ext.clearCache();
@@ -94,38 +96,38 @@ suite('External files', () => {
             onNotification: (_, __) => { return { dispose: () => { } }; },
             sendNotification: (_: any, __: any) => Promise.resolve(),
         }, {
+            readFile: async (uri: Uri) => {
+                const filename = uri.path.split('/').pop();
+                if (filename === nameGenerator(['SERVER', '/DIR']))
+                    return dirResponse;
+                if (filename === nameGenerator(['SERVER', '/DIR2']))
+                    return dir2Response;
+                if (filename === nameGenerator(['SERVER', '/DIR2/FILE']))
+                    return fileResponse;
+                assert.ok(false);
+            },
+            writeFile: async (uri: Uri, content: Uint8Array) => {
+                const filename = uri.path.split('/').pop();
+                if (filename === nameGenerator(['SERVER', '/DIR'])) {
+                    dirWritten = true;
+                    assert.deepStrictEqual(content, dirResponse);
+                    return;
+                }
+                if (filename === nameGenerator(['SERVER', '/DIR2'])) {
+                    dir2Written = true;
+                    assert.deepStrictEqual(content, dir2Response);
+                    return;
+                }
+                if (filename === nameGenerator(['SERVER', '/DIR2/FILE'])) {
+                    fileWritten = true;
+                    assert.deepStrictEqual(content, fileResponse);
+                    return;
+                }
+                assert.ok(false);
+            },
+        } as any as FileSystem, {
             uri: cacheUri,
-            fs: {
-                readFile: async (uri: Uri) => {
-                    const filename = uri.path.split('/').pop();
-                    if (filename === nameGenerator(['SERVER', '/DIR']))
-                        return dirResponse;
-                    if (filename === nameGenerator(['SERVER', '/DIR2']))
-                        return dir2Response;
-                    if (filename === nameGenerator(['SERVER', '/DIR2/FILE']))
-                        return fileResponse;
-                    assert.ok(false);
-                },
-                writeFile: async (uri: Uri, content: Uint8Array) => {
-                    const filename = uri.path.split('/').pop();
-                    if (filename === nameGenerator(['SERVER', '/DIR'])) {
-                        dirWritten = true;
-                        assert.deepStrictEqual(content, dirResponse);
-                        return;
-                    }
-                    if (filename === nameGenerator(['SERVER', '/DIR2'])) {
-                        dir2Written = true;
-                        assert.deepStrictEqual(content, dir2Response);
-                        return;
-                    }
-                    if (filename === nameGenerator(['SERVER', '/DIR2/FILE'])) {
-                        fileWritten = true;
-                        assert.deepStrictEqual(content, fileResponse);
-                        return;
-                    }
-                    assert.ok(false);
-                },
-            } as any as FileSystem
+
         });
 
         ext.setClient('TEST', {
@@ -197,11 +199,10 @@ suite('External files', () => {
             onNotification: (_, __) => { return { dispose: () => { } }; },
             sendNotification: (_: any, __: any) => Promise.resolve(),
         }, {
-            uri: Uri.parse('test:cache/'),
-            fs: {
-                readFile: async (_: Uri) => Uint8Array.from([0]),
-                writeFile: async (_uri: Uri, _content: Uint8Array) => { },
-            } as any as FileSystem
+            readFile: async (_: Uri) => Uint8Array.from([0]),
+            writeFile: async (_uri: Uri, _content: Uint8Array) => { },
+        } as any as FileSystem, {
+            uri: Uri.parse('test:cache/')
         });
 
         ext.setClient('TEST', {
@@ -235,17 +236,16 @@ suite('External files', () => {
             onNotification: (_, __) => { return { dispose: () => { } }; },
             sendNotification: (_: any, __: any) => Promise.resolve(),
         }, {
+            readDirectory: async (uri: Uri) => {
+                assert.strictEqual(cacheUri.toString(), uri.toString());
+                return [[nameGenerator(['SERVER', 'B'], 'TEST2'), FileType.File], [nameGenerator(['SERVER', 'A']), FileType.File]];
+            },
+            delete: async (uri: Uri, options?: { recursive?: boolean; useTrash?: boolean }) => {
+                assert.strictEqual(uri.toString(), Uri.joinPath(cacheUri, nameGenerator(['SERVER', 'A'])).toString())
+                resolve();
+            },
+        } as any as FileSystem, {
             uri: cacheUri,
-            fs: {
-                readDirectory: async (uri: Uri) => {
-                    assert.strictEqual(cacheUri.toString(), uri.toString());
-                    return [[nameGenerator(['SERVER', 'B'], 'TEST2'), FileType.File], [nameGenerator(['SERVER', 'A']), FileType.File]];
-                },
-                delete: async (uri: Uri, options?: { recursive?: boolean; useTrash?: boolean }) => {
-                    assert.strictEqual(uri.toString(), Uri.joinPath(cacheUri, nameGenerator(['SERVER', 'A'])).toString())
-                    resolve();
-                },
-            } as any as FileSystem
         });
 
         const emmiter = new EventEmitter<ExternalFilesInvalidationdata | undefined>();

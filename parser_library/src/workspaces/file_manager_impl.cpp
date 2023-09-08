@@ -115,13 +115,33 @@ class : public external_file_reader
     utils::value_task<std::optional<std::string>> load_text(
         const utils::resource::resource_location& document_loc) const final
     {
+        if (utils::platform::is_web())
+            return utils::value_task<std::optional<std::string>>::from_value(std::nullopt);
+
         return utils::value_task<std::optional<std::string>>::from_value(utils::resource::load_text(document_loc));
     }
     utils::value_task<list_directory_result> list_directory_files(
         const utils::resource::resource_location& directory) const final
     {
+        if (utils::platform::is_web())
+            return utils::value_task<list_directory_result>::from_value(
+                list_directory_result({}, utils::path::list_directory_rc::other_failure));
+
         return utils::value_task<list_directory_result>::from_value(utils::resource::list_directory_files(directory));
     }
+
+
+    utils::value_task<list_directory_result> list_directory_subdirs_and_symlinks(
+        const utils::resource::resource_location& directory) const final
+    {
+        if (utils::platform::is_web())
+            return utils::value_task<list_directory_result>::from_value(
+                list_directory_result({}, utils::path::list_directory_rc::other_failure));
+
+        return utils::value_task<list_directory_result>::from_value(
+            utils::resource::list_directory_subdirs_and_symlinks(directory));
+    }
+
 } constexpr default_reader;
 
 file_manager_impl::file_manager_impl()
@@ -251,14 +271,17 @@ utils::value_task<list_directory_result> file_manager_impl::list_directory_files
     return m_file_reader->list_directory_files(directory);
 }
 
-list_directory_result file_manager_impl::list_directory_subdirs_and_symlinks(
+utils::value_task<list_directory_result> file_manager_impl::list_directory_subdirs_and_symlinks(
     const utils::resource::resource_location& directory) const
 {
-    return utils::resource::list_directory_subdirs_and_symlinks(directory);
+    return m_file_reader->list_directory_subdirs_and_symlinks(directory);
 }
 
 std::string file_manager_impl::canonical(const utils::resource::resource_location& res_loc, std::error_code& ec) const
 {
+    // TODO: this should probably return resource_location
+    if (utils::platform::is_web() || !res_loc.is_local()) // TODO: not supported yet
+        return res_loc.lexically_normal().get_uri();
     return utils::resource::canonical(res_loc, ec);
 }
 
@@ -382,11 +405,6 @@ void file_manager_impl::did_close_file(const utils::resource::resource_location&
         it->second.file->m_it = m_files.end();
         m_files.erase(it);
     }
-}
-
-bool file_manager_impl::dir_exists(const utils::resource::resource_location& dir_loc) const
-{
-    return utils::resource::dir_exists(dir_loc);
 }
 
 std::string_view file_manager_impl::put_virtual_file(

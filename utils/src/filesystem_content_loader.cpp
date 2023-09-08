@@ -67,17 +67,6 @@ std::string filesystem_content_loader::filename(const utils::resource::resource_
     return utils::path::filename(std::filesystem::path(res_loc.get_path())).string();
 }
 
-bool filesystem_content_loader::file_exists(const utils::resource::resource_location& res_loc) const
-{
-    std::error_code ec;
-    return std::filesystem::exists(res_loc.get_path(), ec) && !ec && !dir_exists(res_loc);
-}
-
-bool filesystem_content_loader::dir_exists(const utils::resource::resource_location& res_loc) const
-{
-    return utils::path::is_directory(res_loc.get_path());
-}
-
 std::string filesystem_content_loader::canonical(
     const utils::resource::resource_location& res_loc, std::error_code& ec) const
 {

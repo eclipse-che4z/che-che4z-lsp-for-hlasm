@@ -60,12 +60,10 @@ public:
     // Returns list of all sub directories and symbolic links. Returns associative array with pairs {canonical path -
     // file location}.
     // TODO Used as a shortcut for easier testing with mocks - refactor it out of this class together with canonical()
-    virtual list_directory_result list_directory_subdirs_and_symlinks(
+    [[nodiscard]] virtual utils::value_task<list_directory_result> list_directory_subdirs_and_symlinks(
         const utils::resource::resource_location& directory) const = 0;
 
     virtual std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec) const = 0;
-
-    virtual bool dir_exists(const utils::resource::resource_location& dir_loc) const = 0;
 
     virtual file_content_state did_open_file(
         const utils::resource::resource_location& document_loc, version_t version, std::string text) = 0;

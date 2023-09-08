@@ -24,7 +24,7 @@ import { askUser } from './uiUtils';
 import { connectionSecurityLevel, gatherConnectionInfo, getLastRunConfig, translateConnectionInfo, updateLastRunConfig } from './ftpCreds';
 import { isCancellationError } from './helpers';
 import { unterseFile } from "terse.js";
-import { FBStreamingConvertor } from './FBWritable';
+import { FBStreamingConvertor } from './FBStreamingConvertor';
 
 export type JobId = string;
 export interface JobDescription {

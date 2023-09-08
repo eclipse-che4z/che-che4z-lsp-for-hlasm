@@ -411,40 +411,45 @@ public:
         return res_loc.get_path();
     }
 
-    list_directory_result list_directory_subdirs_and_symlinks(
+    hlasm_plugin::utils::value_task<list_directory_result> list_directory_subdirs_and_symlinks(
         const hlasm_plugin::utils::resource::resource_location& location) const override
     {
         if (location == user_dir_loc)
-            return { { { "ws", ws_loc } }, hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { "ws", ws_loc } }, hlasm_plugin::utils::path::list_directory_rc::done });
 
         if (location == ws_loc)
-            return { { { "product_loc", product_loc } }, hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { "product_loc", product_loc } }, hlasm_plugin::utils::path::list_directory_rc::done });
 
         if (location == product_loc)
-            return { { { "pattern_est", pattern_est_dir_loc },
-                         { "pattern_test", pattern_test_dir_loc },
-                         { "patter_test", patter_test_dir_loc } },
-                hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { "pattern_est", pattern_est_dir_loc },
+                      { "pattern_test", pattern_test_dir_loc },
+                      { "patter_test", patter_test_dir_loc } },
+                    hlasm_plugin::utils::path::list_directory_rc::done });
 
         if (location == pattern_test_dir_loc)
-            return { { { "libs", pattern_test_lib_loc } }, hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { "libs", pattern_test_lib_loc } }, hlasm_plugin::utils::path::list_directory_rc::done });
 
         if (location == pattern_test_lib_loc)
-            return { { { pattern_lib_sublib1_abs_path, pattern_test_lib_sublib1_loc },
-                         { pattern_lib_sublib2_abs_path, pattern_test_lib_sublib2_loc } },
-                hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { pattern_lib_sublib1_abs_path, pattern_test_lib_sublib1_loc },
+                      { pattern_lib_sublib2_abs_path, pattern_test_lib_sublib2_loc } },
+                    hlasm_plugin::utils::path::list_directory_rc::done });
 
         if (location == different_libs2_libs_loc)
-            return { { { "subdir", different_libs2_libs_subdir } },
-                hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { "subdir", different_libs2_libs_subdir } }, hlasm_plugin::utils::path::list_directory_rc::done });
 
         if (location == temp_lib2_libs_loc)
-            return { { { "subdir", temp_lib2_libs_subdir } }, hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { "subdir", temp_lib2_libs_subdir } }, hlasm_plugin::utils::path::list_directory_rc::done });
 
-        return { {}, hlasm_plugin::utils::path::list_directory_rc::done };
+        return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+            { {}, hlasm_plugin::utils::path::list_directory_rc::done });
     }
-
-    bool dir_exists(const hlasm_plugin::utils::resource::resource_location&) const override { return true; }
 };
 
 struct test_variables_lib_pattern
@@ -862,14 +867,15 @@ public:
         return "canonical";
     }
 
-    list_directory_result list_directory_subdirs_and_symlinks(
+    hlasm_plugin::utils::value_task<list_directory_result> list_directory_subdirs_and_symlinks(
         const hlasm_plugin::utils::resource::resource_location& location) const override
     {
         if (location.get_uri().ends_with("/inf") || location.get_uri().ends_with("/inf/"))
         {
             // Just append a dir and return
             auto new_loc = resource_location::join(location, "inf");
-            return { { { new_loc.get_uri(), new_loc } }, hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { new_loc.get_uri(), new_loc } }, hlasm_plugin::utils::path::list_directory_rc::done });
         }
 
         if (location.get_uri().ends_with("/inf0/") || location.get_uri().ends_with("/inf1")
@@ -882,40 +888,49 @@ public:
             auto inf3 = resource_location::join(location, "inf3");
             auto inf4 = resource_location::join(location, "inf4");
             auto inf5 = resource_location::join(location, "inf5");
-            return { { { inf1.get_uri(), inf1 },
-                         { inf2.get_uri(), inf2 },
-                         { inf3.get_uri(), inf3 },
-                         { inf4.get_uri(), inf4 },
-                         { inf5.get_uri(), inf5 } },
-                hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value({
+                {
+                    { inf1.get_uri(), inf1 },
+                    { inf2.get_uri(), inf2 },
+                    { inf3.get_uri(), inf3 },
+                    { inf4.get_uri(), inf4 },
+                    { inf5.get_uri(), inf5 },
+                },
+                hlasm_plugin::utils::path::list_directory_rc::done,
+            });
         }
 
         if (location.get_uri().ends_with("/canonical/") || location.get_uri().ends_with("/canonical"))
         {
             auto can = resource_location::join(location, "can1");
-            return { { { "can1", can } }, hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { "can1", can } }, hlasm_plugin::utils::path::list_directory_rc::done });
         }
 
         if (location.get_uri().ends_with("/can1"))
         {
             auto can = resource_location::join(location, "can2");
-            return { { { "can2", can } }, hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { "can2", can } }, hlasm_plugin::utils::path::list_directory_rc::done });
         }
 
         if (location.get_uri().ends_with("/can2"))
         {
             auto can = resource_location::join(location, "can3");
-            return { { { "can3", can } }, hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { "can3", can } }, hlasm_plugin::utils::path::list_directory_rc::done });
         }
 
         if (location.get_uri().ends_with("/can3"))
         {
             auto can = resource_location::join(location, "canonical");
-            return { { { "canonical", can } }, hlasm_plugin::utils::path::list_directory_rc::done };
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+                { { { "canonical", can } }, hlasm_plugin::utils::path::list_directory_rc::done });
         }
 
 
-        return { {}, hlasm_plugin::utils::path::list_directory_rc::done };
+        return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
+            { {}, hlasm_plugin::utils::path::list_directory_rc::done });
     }
 };
 

@@ -29,3 +29,18 @@ const basic_ftp_ftpcontext_js = path.join(base, "node_modules", "basic-ftp", "di
 const basic_ftp_ftpcontext = fs.readFileSync(basic_ftp_ftpcontext_js, "utf8");
 fs.writeFileSync(basic_ftp_ftpcontext_js, basic_ftp_ftpcontext.replace('socket.once("error", error => {', `socket.once("error", error => {
             if(socket.bytesRead === 0 && error.code === 'ECONNRESET') return;`));
+
+// vscode-test-web patch
+const vscode_test_web_js = path.join(base, "node_modules", "@vscode", "test-web", "fs-provider", "dist", "fsExtensionMain.js");
+const vscode_test_web = fs.readFileSync(vscode_test_web_js, "utf8");
+fs.writeFileSync(vscode_test_web_js, vscode_test_web
+    .replace("const url = serverUri.with({ query: 'readdir' }).toString(/*skipEncoding*/ true);", "const url = serverUri.with({ query: 'readdir' }).toString(/*skipEncoding*/ false);")
+    .replace("const url = serverUri.with({ query: 'stat' }).toString(/*skipEncoding*/ true);", "const url = serverUri.with({ query: 'stat' }).toString(/*skipEncoding*/ false);")
+    .replace("const response = await (0, request_light_1.xhr)({ url: serverUri.toString(/*skipEncoding*/ true) });", "const response = await (0, request_light_1.xhr)({ url: serverUri.toString(/*skipEncoding*/ false) });")
+);
+
+const vscode_test_web_mounts_js = path.join(base, "node_modules", "@vscode", "test-web", "out", "server", "mounts.js");
+const vscode_test_web_mounts = fs.readFileSync(vscode_test_web_mounts_js, "utf8");
+fs.writeFileSync(vscode_test_web_mounts_js, vscode_test_web_mounts
+    .replaceAll("const p = path.join(folderMountPath, ctx.path.substring(mountPrefix.length));", "const p = path.join(folderMountPath, decodeURIComponent(ctx.path.substring(mountPrefix.length)));")
+);

@@ -9,6 +9,7 @@ CMakeLists.txt
 hlasmplugin.log
 build/bin/**
 lib/**
+dist_test/**
 terse/**
 prepare_release.sh
 start_release.sh

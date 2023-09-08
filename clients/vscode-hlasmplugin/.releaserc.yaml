@@ -44,4 +44,7 @@ plugins:
       - path: "hlasm-language-support.vsix"
         label: "hlasm-language-support-${nextRelease.version}.vsix"
         name: "hlasm-language-support-${nextRelease.version}.vsix"
+      - path: "hlasm-language-support-web.vsix"
+        label: "hlasm-language-support-web-${nextRelease.version}.vsix"
+        name: "hlasm-language-support-web-${nextRelease.version}.vsix"
   

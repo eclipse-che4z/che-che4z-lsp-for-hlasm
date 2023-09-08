@@ -12,13 +12,13 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient/node';
 import * as net from 'net';
-import * as cp from 'child_process'
-import * as path from 'path'
-import { getConfig } from './eventsHandler'
-
-export type ServerVariant = "tcp" | "native" | "wasm";
+import * as cp from 'child_process';
+import * as path from 'path';
+import { getConfig } from './eventsHandler';
+import { decorateArgs, ServerVariant } from './serverFactory.common';
 
 const supportedNativePlatforms: Readonly<{ [key: string]: string }> = Object.freeze({
     'win32.x64': 'win32',
@@ -27,100 +27,86 @@ const supportedNativePlatforms: Readonly<{ [key: string]: string }> = Object.fre
     'darwin.arm64': 'darwin',
 });
 
-/**
- * factory to create server options
- * also stores port used for DAP
- */
-export class ServerFactory {
-    private usedPorts: Set<number>;
+export async function createLanguageServer(serverVariant: ServerVariant, clientOptions: vscodelc.LanguageClientOptions, extUri: vscode.Uri): Promise<vscodelc.BaseLanguageClient> {
+    const serverOptions = await generateServerOption(serverVariant);
 
-    constructor() {
-        this.usedPorts = new Set();
+    return new vscodelc.LanguageClient('HLASM extension Language Server', serverOptions, clientOptions);
+}
+
+async function generateServerOption(method: ServerVariant): Promise<vscodelc.ServerOptions> {
+    const langServerFolder = supportedNativePlatforms[process.platform + '.' + process.arch];
+    if (!langServerFolder) {
+        if (method !== 'wasm')
+            console.log('Unsupported platform detected, switching to wasm');
+        method = 'wasm';
     }
+    if (method === 'tcp') {
+        const lspPort = await getPort();
 
-    async create(method: ServerVariant): Promise<vscodelc.ServerOptions> {
-        const langServerFolder = supportedNativePlatforms[process.platform + '.' + process.arch];
-        if (!langServerFolder) {
-            if (method !== 'wasm')
-                console.log('Unsupported platform detected, switching to wasm');
-            method = 'wasm';
-        }
-        if (method === 'tcp') {
-            const lspPort = await this.getPort();
+        //spawn the server
+        cp.execFile(
+            path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
+            decorateArgs([lspPort.toString()]));
 
-            //spawn the server
-            cp.execFile(
-                path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
-                ServerFactory.decorateArgs([lspPort.toString()]));
-
-            return () => {
-                let socket = net.connect(lspPort, 'localhost');
-                let result: vscodelc.StreamInfo = {
-                    writer: socket,
-                    reader: socket
-                };
-                return Promise.resolve(result);
+        return () => {
+            let socket = net.connect(lspPort, 'localhost');
+            let result: vscodelc.StreamInfo = {
+                writer: socket,
+                reader: socket
             };
-        }
-        else if (method === 'native') {
-            const server: vscodelc.Executable = {
-                command: path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
-                args: ServerFactory.decorateArgs(getConfig<string[]>('arguments', []))
-            };
-            return server;
-        }
-        else if (method === 'wasm') {
-            const server: vscodelc.NodeModule = {
-                module: path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
-                args: ServerFactory.decorateArgs(getConfig<string[]>('arguments', [])),
-                options: { execArgv: ServerFactory.getWasmRuntimeArgs() }
-            };
-            return server;
-        }
-        else {
-            throw Error("Invalid method");
-        }
+            return Promise.resolve(result);
+        };
     }
+    else if (method === 'native') {
+        const server: vscodelc.Executable = {
+            command: path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
+            args: decorateArgs(getConfig<string[]>('arguments', []))
+        };
+        return server;
+    }
+    else if (method === 'wasm') {
+        const server: vscodelc.NodeModule = {
+            module: path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
+            args: decorateArgs(getConfig<string[]>('arguments', [])),
+            options: { execArgv: getWasmRuntimeArgs() }
+        };
+        return server;
+    }
+    else {
+        throw Error("Invalid method");
+    }
+}
 
-    private static decorateArgs(args: Array<string>): Array<string> {
+function getWasmRuntimeArgs(): Array<string> {
+    const v8Version = process?.versions?.v8 ?? "1.0";
+    const v8Major = +v8Version.split(".")[0];
+    if (v8Major >= 9)
+        return [];
+    else
         return [
-            '--hlasm-start',
-            '--vscode-extensions',
-            ...args,
-            '--hlasm-end'
+            '--experimental-wasm-threads',
+            '--experimental-wasm-bulk-memory'
         ];
-    }
+}
 
-    public static getWasmRuntimeArgs(): Array<string> {
-        const v8Version = process?.versions?.v8 ?? "1.0";
-        const v8Major = +v8Version.split(".")[0];
-        if (v8Major >= 9)
-            return [];
-        else
-            return [
-                '--experimental-wasm-threads',
-                '--experimental-wasm-bulk-memory'
-            ];
-    }
-
-    private async getPort(): Promise<number> {
-        while (true) {
-            const port = await this.getRandomPort();
-            if (!this.usedPorts.has(port)) {
-                this.usedPorts.add(port);
-                return port;
-            }
+async function getPort(): Promise<number> {
+    const usedPorts = new Set<number>;
+    while (true) {
+        const port = await getRandomPort();
+        if (!usedPorts.has(port)) {
+            usedPorts.add(port);
+            return port;
         }
     }
-    // returns random free port
-    private getRandomPort = () => new Promise<number>((resolve, reject) => {
-        const srv = net.createServer();
-        srv.unref();
-        srv.listen(0, "127.0.0.1", () => {
-            const address = srv.address();
-            srv.close(() => {
-                resolve((address as net.AddressInfo).port);
-            });
+}
+// returns random free port
+const getRandomPort = () => new Promise<number>((resolve, reject) => {
+    const srv = net.createServer();
+    srv.unref();
+    srv.listen(0, "127.0.0.1", () => {
+        const address = srv.address();
+        srv.close(() => {
+            resolve((address as net.AddressInfo).port);
         });
     });
-}
+});

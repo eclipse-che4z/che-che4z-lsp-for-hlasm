@@ -6,6 +6,7 @@
 - Support floating point special values
 - Show active USINGs in the instruction hover text
 - Add reachable ordinary symbols into the completion list
+- Support Web extension environment
 
 #### Fixed
 - Program to processor group mapping precedence

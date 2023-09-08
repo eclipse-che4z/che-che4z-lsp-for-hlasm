@@ -211,23 +211,24 @@ class workspace_configuration
     std::shared_ptr<library> get_local_library(
         const utils::resource::resource_location& url, const library_local_options& opts);
 
-    void process_processor_group(const config::processor_group& pg,
+    [[nodiscard]] utils::task process_processor_group(const config::processor_group& pg,
         std::span<const std::string> fallback_macro_extensions,
         const utils::resource::resource_location& alternative_root,
         std::vector<diagnostic_s>& diags);
 
-    void process_processor_group_library(const config::library& lib,
+    [[nodiscard]] utils::task process_processor_group_library(const config::library& lib,
         const utils::resource::resource_location& alternative_root,
         std::vector<diagnostic_s>& diags,
         std::span<const std::string> fallback_macro_extensions,
         processor_group& prc_grp);
-    void process_processor_group_library(const config::dataset& dsn,
+    [[nodiscard]] utils::task process_processor_group_library(const config::dataset& dsn,
         const utils::resource::resource_location& alternative_root,
         std::vector<diagnostic_s>& diags,
         std::span<const std::string> fallback_macro_extensions,
         processor_group& prc_grp);
 
-    void process_processor_group_and_cleanup_libraries(std::span<const config::processor_group> pgs,
+    [[nodiscard]] utils::task process_processor_group_and_cleanup_libraries(
+        std::span<const config::processor_group> pgs,
         std::span<const std::string> fallback_macro_extensions,
         const utils::resource::resource_location& alternative_root,
         std::vector<diagnostic_s>& diags);
@@ -248,7 +249,7 @@ class workspace_configuration
     [[nodiscard]] utils::value_task<parse_config_file_result> load_pgm_config(
         config::pgm_conf& pgm_config, global_settings_map& utilized_settings_values, std::vector<diagnostic_s>& diags);
 
-    void find_and_add_libs(const utils::resource::resource_location& root,
+    [[nodiscard]] utils::task find_and_add_libs(const utils::resource::resource_location& root,
         const utils::resource::resource_location& path_pattern,
         processor_group& prc_grp,
         const library_local_options& opts,
@@ -292,9 +293,9 @@ public:
 
     const processor_group& get_proc_grp(const proc_grp_id& p) const; // test only
 
-    void update_external_configuration(
+    [[nodiscard]] utils::task update_external_configuration(
         const utils::resource::resource_location& normalized_location, std::string group_json);
-    decltype(m_proc_grps)::iterator make_external_proc_group(
+    [[nodiscard]] utils::value_task<decltype(m_proc_grps)::iterator> make_external_proc_group(
         const utils::resource::resource_location& normalized_location, std::string group_json);
 
     void prune_external_processor_groups(const utils::resource::resource_location& location);

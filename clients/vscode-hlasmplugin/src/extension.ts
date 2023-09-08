@@ -13,16 +13,17 @@
  */
 
 import * as vscode from 'vscode';
-import * as vscodelc from 'vscode-languageclient/node';
+import * as vscodelc from 'vscode-languageclient';
 
 
 import { HLASMConfigurationProvider, getCurrentProgramName, getProgramName } from './debugProvider';
 import { insertContinuation, removeContinuation, rearrangeSequenceNumbers } from './continuationHandler';
 import { CustomEditorCommands } from './customEditorCommands';
 import { EventsHandler, getConfig } from './eventsHandler';
-import { ServerFactory, ServerVariant } from './serverFactory';
+import { ServerVariant } from './serverFactory.common';
+import { createLanguageServer } from './serverFactory';
 import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
-import { Telemetry } from './telemetry';
+import { Telemetry, createTelemetry } from './telemetry';
 import { LanguageClientErrorHandler } from './languageClientErrorHandler';
 import { HLASMVirtualFileContentProvider } from './hlasmVirtualFileContentProvider';
 import { downloadDependencies } from './hlasmDownloadCommands';
@@ -77,10 +78,12 @@ const getCacheInfo = async (uri: vscode.Uri, fs: vscode.FileSystem) => {
 export async function activate(context: vscode.ExtensionContext): Promise<HlasmExtension> {
     const serverVariant = getConfig<ServerVariant>('serverVariant', 'native');
 
-    const telemetry = new Telemetry();
+    const telemetry = createTelemetry();
     context.subscriptions.push(telemetry);
 
     telemetry.reportEvent("hlasm.activated", { server_variant: serverVariant.toString() });
+
+    await registerEditHelpers(context);
 
     // patterns for files and configs
     const filePattern: string = '**/*';
@@ -101,24 +104,27 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
         middleware: getLanguageClientMiddleware(),
     };
 
-
-    // create server options
-    const factory = new ServerFactory();
-
-    const serverOptions = await factory.create(serverVariant);
-
     //client init
-    const hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
+    const hlasmpluginClient = await createLanguageServer(serverVariant, clientOptions, context.extensionUri);
+
     context.subscriptions.push(hlasmpluginClient);
 
     clientErrorHandler.defaultHandler = hlasmpluginClient.createDefaultErrorHandler();
 
-    const extConfProvider = new HLASMExternalConfigurationProvider(hlasmpluginClient)
+    const extConfProvider = new HLASMExternalConfigurationProvider(hlasmpluginClient);
     context.subscriptions.push(extConfProvider);
 
     // The objectToString is necessary, because telemetry reporter only takes objects with
     // string properties and there are some boolean that we receive from the language server
     hlasmpluginClient.onTelemetry((object) => { telemetry.reportEvent(object.method_name, objectToString(object.properties), object.measurements) });
+
+    const extFiles = new HLASMExternalFiles(
+        externalFilesScheme,
+        hlasmpluginClient,
+        vscode.workspace.fs,
+        await getCacheInfo(vscode.Uri.joinPath(context.globalStorageUri, 'external.files.cache'), vscode.workspace.fs)
+    );
+    context.subscriptions.push(extFiles);
 
     //give the server some time to start listening when using TCP
     if (serverVariant === 'tcp')
@@ -134,15 +140,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
         throw e;
     }
 
-    const extFiles = new HLASMExternalFiles(
-        externalFilesScheme,
-        hlasmpluginClient,
-        await getCacheInfo(vscode.Uri.joinPath(context.globalStorageUri, 'external.files.cache'), vscode.workspace.fs)
-    );
-    context.subscriptions.push(extFiles);
-
     // register all commands and objects to context
-    await registerToContext(context, hlasmpluginClient, telemetry, extFiles);
+    await registerDebugSupport(context, hlasmpluginClient);
+    await registerExternalFileSupport(context, hlasmpluginClient, extFiles);
+    await registerToContextWithClient(context, hlasmpluginClient, telemetry);
 
     let api: HlasmExtension = {
         registerExternalFileClient(service, client) {
@@ -175,7 +176,7 @@ function offerSwitchToWasmClient() {
     });
 }
 
-async function registerToContext(context: vscode.ExtensionContext, client: vscodelc.LanguageClient, telemetry: Telemetry, extFiles: HLASMExternalFiles) {
+async function registerEditHelpers(context: vscode.ExtensionContext) {
     const completeCommand = "editor.action.triggerSuggest";
 
     // initialize helpers
@@ -185,23 +186,6 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
     // register them
     context.subscriptions.push(commands);
     context.subscriptions.push(handler);
-
-    // register provider for all hlasm debug configurations
-    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('hlasm', new HLASMConfigurationProvider()));
-    context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('hlasm', new HLASMDebugAdapterFactory(client)));
-    context.subscriptions.push(vscode.languages.registerCodeActionsProvider(['hlasm', hlasmplugin_folder_filter, bridge_json_filter], new HLASMCodeActionsProvider(client)));
-
-    context.subscriptions.push(client.onDidChangeState(e => e.newState === vscodelc.State.Starting && extFiles.reset()));
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(externalFilesScheme, extFiles.getTextDocumentContentProvider()));
-    extFiles.setClient('DATASET', HLASMExternalFilesFtp(context));
-
-    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.resumeRemoteActivity', () => extFiles.resumeAll()));
-    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.suspendRemoteActivity', () => extFiles.suspendAll()));
-    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.clearRemoteActivityCache', () => extFiles.clearCache()));
-    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.clearRemoteActivityCacheForService', () =>
-        pickUser('Select service', extFiles.currentlyAvailableServices().map(x => { return { label: x, value: x }; })).then(x => extFiles.clearCache(x), () => { })
-    ));
-    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.toggleAdvisoryConfigurationDiagnostics', () => toggleAdvisoryConfigurationDiagnostics(client)));
 
     // overrides should happen only if the user wishes
     if (getConfig<boolean>('continuationHandling', false)) {
@@ -226,14 +210,6 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(e => handler.onDidChangeActiveTextEditor(e)));
     context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(e => handler.onDidChangeWorkspaceFolders(e)));
 
-    // register filename retrieve functions for debug sessions
-    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', () => getProgramName()));
-    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getCurrentProgramName', () => getCurrentProgramName()));
-
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("hlasm", new HLASMVirtualFileContentProvider(client)));
-
-    context.subscriptions.push(vscode.commands.registerCommand("extension.hlasm-plugin.downloadDependencies", (...args: any[]) => downloadDependencies(context, telemetry, client.outputChannel, ...args)));
-
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.createCompleteConfig', ConfigurationsHandler.createCompleteConfig));
 
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: 'hlasm' }, { provideCodeLenses: ConfigurationsHandler.provideCodeLenses }));
@@ -256,6 +232,38 @@ async function registerToContext(context: vscode.ExtensionContext, client: vscod
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("extension.hlasm-plugin.blockCommentEditorCommands",
             (editor, edit) => blockCommentCommand(editor, edit)));
     }
+}
+async function registerDebugSupport(context: vscode.ExtensionContext, client: vscodelc.BaseLanguageClient) {
+    // register filename retrieve functions for debug sessions
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', () => getProgramName()));
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getCurrentProgramName', () => getCurrentProgramName()));
 
-    return handler;
+    // register provider for all hlasm debug configurations
+    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('hlasm', new HLASMConfigurationProvider()));
+    context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('hlasm', new HLASMDebugAdapterFactory(client)));
+}
+
+async function registerExternalFileSupport(context: vscode.ExtensionContext, client: vscodelc.BaseLanguageClient, extFiles: HLASMExternalFiles) {
+    context.subscriptions.push(client.onDidChangeState(e => e.newState === vscodelc.State.Starting && extFiles.reset()));
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(externalFilesScheme, extFiles.getTextDocumentContentProvider()));
+    const datasetClient = HLASMExternalFilesFtp(context);
+    if (datasetClient)
+        extFiles.setClient('DATASET', datasetClient);
+
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.resumeRemoteActivity', () => extFiles.resumeAll()));
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.suspendRemoteActivity', () => extFiles.suspendAll()));
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.clearRemoteActivityCache', () => extFiles.clearCache()));
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.clearRemoteActivityCacheForService', () =>
+        pickUser('Select service', extFiles.currentlyAvailableServices().map(x => { return { label: x, value: x }; })).then(x => extFiles.clearCache(x), () => { })
+    ));
+}
+
+async function registerToContextWithClient(context: vscode.ExtensionContext, client: vscodelc.BaseLanguageClient, telemetry: Telemetry) {
+    context.subscriptions.push(vscode.languages.registerCodeActionsProvider(['hlasm', hlasmplugin_folder_filter, bridge_json_filter], new HLASMCodeActionsProvider(client)));
+
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.toggleAdvisoryConfigurationDiagnostics', () => toggleAdvisoryConfigurationDiagnostics(client)));
+
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("hlasm", new HLASMVirtualFileContentProvider(client)));
+
+    context.subscriptions.push(vscode.commands.registerCommand("extension.hlasm-plugin.downloadDependencies", (...args: any[]) => downloadDependencies(context, telemetry, client.outputChannel, ...args)));
 }

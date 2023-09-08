@@ -76,10 +76,8 @@ utils::resource::resource_location transform_to_resource_location(
         rl = resource_location(path);
     else if (auto fs_path = get_fs_abs_path(path); fs_path.has_value())
         rl = resource_location(utils::path::path_to_uri(utils::path::lexically_normal(*fs_path).string()));
-    else if (base_resource_location.is_local())
-        rl = resource_location::join(base_resource_location, utils::encoding::percent_encode(path));
     else
-        rl = resource_location::join(base_resource_location, path);
+        rl = resource_location::join(base_resource_location, utils::encoding::percent_encode(path));
 
     return rl.lexically_normal();
 }
@@ -211,7 +209,11 @@ struct json_settings_replacer
                 utilized_settings_values.emplace(reduced_key, v);
             }
             else if (key == "workspaceFolder")
-                r.append(location.get_path()); // TODO: change to get_uri as soon as possible
+            {
+                // This seems broken in VSCode.
+                // Our version attempts to do the right thing, while maintaining compatibility
+                r.append(!location.is_local() ? location.get_uri() : location.get_path());
+            }
             else
                 unavailable.emplace(key);
 
@@ -278,7 +280,7 @@ std::shared_ptr<library> workspace_configuration::get_local_library(
     return result;
 }
 
-void workspace_configuration::process_processor_group(const config::processor_group& pg,
+utils::task workspace_configuration::process_processor_group(const config::processor_group& pg,
     std::span<const std::string> fallback_macro_extensions,
     const utils::resource::resource_location& alternative_root,
     std::vector<diagnostic_s>& diags)
@@ -287,9 +289,10 @@ void workspace_configuration::process_processor_group(const config::processor_gr
 
     for (auto& lib_or_dataset : pg.libs)
     {
-        std::visit(
+        co_await std::visit(
             [this, &alternative_root, &diags, &fallback_macro_extensions, &prc_grp](const auto& lib) {
-                process_processor_group_library(lib, alternative_root, diags, fallback_macro_extensions, prc_grp);
+                return process_processor_group_library(
+                    lib, alternative_root, diags, fallback_macro_extensions, prc_grp);
             },
             lib_or_dataset);
     }
@@ -297,11 +300,13 @@ void workspace_configuration::process_processor_group(const config::processor_gr
         m_proc_grps.try_emplace(basic_conf { prc_grp.name() }, std::move(prc_grp));
     else
         m_proc_grps.try_emplace(b4g_conf { prc_grp.name(), alternative_root }, std::move(prc_grp));
+
+    co_return;
 }
 
 constexpr std::string_view external_uri_scheme = "hlasm-external";
 
-void workspace_configuration::process_processor_group_library(const config::dataset& dsn,
+utils::task workspace_configuration::process_processor_group_library(const config::dataset& dsn,
     const utils::resource::resource_location&,
     std::vector<diagnostic_s>&,
     std::span<const std::string>,
@@ -315,6 +320,8 @@ void workspace_configuration::process_processor_group_library(const config::data
     utils::resource::resource_location new_uri(utils::path::reconstruct_uri(new_uri_components));
 
     prc_grp.add_library(get_local_library(new_uri, { .optional_library = dsn.optional }));
+
+    co_return;
 }
 
 namespace {
@@ -337,7 +344,7 @@ void modify_hlasm_external_uri(
 }
 } // namespace
 
-void workspace_configuration::process_processor_group_library(const config::library& lib,
+utils::task workspace_configuration::process_processor_group_library(const config::library& lib,
     const utils::resource::resource_location& alternative_root,
     std::vector<diagnostic_s>& diags,
     std::span<const std::string> fallback_macro_extensions,
@@ -352,7 +359,7 @@ void workspace_configuration::process_processor_group_library(const config::libr
     if (!lib_path.has_value())
     {
         diags.push_back(diagnostic_s::warning_L0006(m_proc_grps_loc, lib.path));
-        return;
+        co_return;
     }
 
     auto lib_local_opts = get_library_local_options(lib, fallback_macro_extensions);
@@ -365,15 +372,15 @@ void workspace_configuration::process_processor_group_library(const config::libr
         prc_grp.add_library(get_local_library(rl, lib_local_opts));
     }
     else
-        find_and_add_libs(utils::resource::resource_location(
-                              rl.get_uri().substr(0, rl.get_uri().find_last_of("/", first_wild_card) + 1)),
+        co_await find_and_add_libs(utils::resource::resource_location(
+                                       rl.get_uri().substr(0, rl.get_uri().find_last_of("/", first_wild_card) + 1)),
             rl,
             prc_grp,
             lib_local_opts,
             diags);
 }
 
-void workspace_configuration::process_processor_group_and_cleanup_libraries(
+utils::task workspace_configuration::process_processor_group_and_cleanup_libraries(
     std::span<const config::processor_group> pgs,
     std::span<const std::string> fallback_macro_extensions,
     const utils::resource::resource_location& alternative_root,
@@ -383,7 +390,7 @@ void workspace_configuration::process_processor_group_and_cleanup_libraries(
         l.second = false; // mark
 
     for (const auto& pg : pgs)
-        process_processor_group(pg, fallback_macro_extensions, alternative_root, diags);
+        co_await process_processor_group(pg, fallback_macro_extensions, alternative_root, diags);
 
     std::erase_if(m_libraries, [](const auto& kv) { return !kv.second.second; }); // sweep
 }
@@ -442,7 +449,7 @@ utils::value_task<parse_config_file_result> workspace_configuration::load_and_pr
     config::pgm_conf pgm_config;
     const auto pgm_conf_loaded = co_await load_pgm_config(pgm_config, utilized_settings_values, diags);
 
-    process_processor_group_and_cleanup_libraries(
+    co_await process_processor_group_and_cleanup_libraries(
         proc_groups.pgroups, proc_groups.macro_extensions, empty_alternative_cfg_root, diags);
 
     if (pgm_conf_loaded != parse_config_file_result::parsed)
@@ -587,7 +594,7 @@ utils::value_task<parse_config_file_result> workspace_configuration::parse_b4g_c
         co_return parse_config_file_result::error;
     }
 
-    process_processor_group_and_cleanup_libraries(
+    co_await process_processor_group_and_cleanup_libraries(
         m_proc_grps_source.pgroups, m_proc_grps_source.macro_extensions, alternative_root, conf.diags);
 
     const auto cfg_file_root = cfg_file_rl.parent();
@@ -621,19 +628,12 @@ utils::value_task<parse_config_file_result> workspace_configuration::parse_b4g_c
     co_return parse_config_file_result::parsed;
 }
 
-void workspace_configuration::find_and_add_libs(const utils::resource::resource_location& root,
+utils::task workspace_configuration::find_and_add_libs(const utils::resource::resource_location& root,
     const utils::resource::resource_location& path_pattern,
     processor_group& prc_grp,
     const library_local_options& opts,
     std::vector<diagnostic_s>& diags)
 {
-    if (!m_file_manager.dir_exists(root))
-    {
-        if (!opts.optional_library)
-            diags.push_back(diagnostic_s::error_L0001(m_proc_grps_loc, root));
-        return;
-    }
-
     std::regex path_validator = percent_encoded_pathmask_to_regex(path_pattern.get_uri());
 
     std::unordered_set<std::string> processed_canonical_paths;
@@ -643,12 +643,13 @@ void workspace_configuration::find_and_add_libs(const utils::resource::resource_
     {
         if (!opts.optional_library)
             diags.push_back(diagnostic_s::error_L0001(m_proc_grps_loc, root));
-        return;
+        co_return;
     }
 
     constexpr size_t limit = 1000;
-    while (!dirs_to_search.empty())
+    for (bool first_ = true; !dirs_to_search.empty();)
     {
+        const auto first = std::exchange(first_, false);
         if (processed_canonical_paths.size() > limit)
         {
             diags.push_back(diagnostic_s::warning_L0005(m_proc_grps_loc, path_pattern.to_presentable(), limit));
@@ -664,10 +665,11 @@ void workspace_configuration::find_and_add_libs(const utils::resource::resource_
         if (std::regex_match(dir.get_uri(), path_validator))
             prc_grp.add_library(get_local_library(dir, opts));
 
-        auto [subdir_list, return_code] = m_file_manager.list_directory_subdirs_and_symlinks(dir);
+        auto [subdir_list, return_code] = co_await m_file_manager.list_directory_subdirs_and_symlinks(dir);
         if (return_code != utils::path::list_directory_rc::done)
         {
-            diags.push_back(diagnostic_s::error_L0001(m_proc_grps_loc, dir));
+            if (!first || !opts.optional_library || return_code != utils::path::list_directory_rc::not_exists)
+                diags.push_back(diagnostic_s::error_L0001(m_proc_grps_loc, dir));
             break;
         }
 
@@ -831,7 +833,8 @@ const program* workspace_configuration::get_program(const utils::resource::resou
     return m_pgm_conf_store->get_program(file_location.lexically_normal()).pgm;
 }
 
-decltype(workspace_configuration::m_proc_grps)::iterator workspace_configuration::make_external_proc_group(
+utils::value_task<decltype(workspace_configuration::m_proc_grps)::iterator>
+workspace_configuration::make_external_proc_group(
     const utils::resource::resource_location& normalized_location, std::string group_json)
 {
     config::processor_group pg;
@@ -858,9 +861,9 @@ decltype(workspace_configuration::m_proc_grps)::iterator workspace_configuration
 
     for (auto& lib_or_dataset : pg.libs)
     {
-        std::visit(
+        co_await std::visit(
             [this, &diags, &prc_grp](const auto& lib) {
-                process_processor_group_library(lib, empty_alternative_cfg_root, diags, {}, prc_grp);
+                return process_processor_group_library(lib, empty_alternative_cfg_root, diags, {}, prc_grp);
             },
             lib_or_dataset);
     }
@@ -869,12 +872,12 @@ decltype(workspace_configuration::m_proc_grps)::iterator workspace_configuration
     for (auto&& d : diags)
         prc_grp.add_diagnostic(std::move(d));
 
-    return m_proc_grps
+    co_return m_proc_grps
         .try_emplace(external_conf { std::make_shared<std::string>(std::move(group_json)) }, std::move(prc_grp))
         .first;
 }
 
-void workspace_configuration::update_external_configuration(
+utils::task workspace_configuration::update_external_configuration(
     const utils::resource::resource_location& normalized_location, std::string group_json)
 {
     if (std::string_view group_name(group_json); utils::trim_left(group_name, " \t\n\r"), group_name.starts_with("\""))
@@ -888,12 +891,12 @@ void workspace_configuration::update_external_configuration(
             },
             nullptr,
             empty_alternative_cfg_root);
-        return;
+        co_return;
     }
 
     auto pg = m_proc_grps.find(tagged_string_view<external_conf> { group_json });
     if (pg == m_proc_grps.end())
-        pg = make_external_proc_group(normalized_location, std::move(group_json));
+        pg = co_await make_external_proc_group(normalized_location, std::move(group_json));
 
     m_pgm_conf_store->update_exact_conf(
         program {
@@ -943,7 +946,7 @@ utils::value_task<utils::resource::resource_location> workspace_configuration::l
         {
             try
             {
-                update_external_configuration(rl, std::move(std::get<std::string>(json_data)));
+                co_await update_external_configuration(rl, std::move(std::get<std::string>(json_data)));
                 co_return empty_alternative_cfg_root;
             }
             catch (const nlohmann::json&)

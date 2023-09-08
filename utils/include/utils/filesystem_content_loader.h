@@ -33,8 +33,6 @@ public:
     list_directory_result list_directory_subdirs_and_symlinks(
         const utils::resource::resource_location& directory_loc) const override;
     std::string filename(const utils::resource::resource_location& res_loc) const override;
-    bool file_exists(const utils::resource::resource_location& res_loc) const override;
-    bool dir_exists(const utils::resource::resource_location& res_loc) const override;
     std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec) const override;
 };
 

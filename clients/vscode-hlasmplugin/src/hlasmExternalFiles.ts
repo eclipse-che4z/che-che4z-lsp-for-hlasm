@@ -16,10 +16,8 @@ import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
 import { asError, isCancellationError } from "./helpers";
 import { uriFriendlyBase16Encode } from "./conversions";
-
-import * as crypto from "crypto";
-import { TextDecoder, TextEncoder, promisify } from "util";
-import { deflate, inflate } from "zlib";
+import { deflate, inflate, sha256 } from './tools';
+import { textDecode } from './tools.common';
 
 export const enum ExternalRequestType {
     read_file = 'read_file',
@@ -30,6 +28,8 @@ interface ExternalRequest {
     id: number,
     op: ExternalRequestType,
     url: string,
+    // temporary solution - replace with VFS once available
+    subdir?: boolean,
 }
 
 interface ExternalReadFileResponse {
@@ -155,7 +155,8 @@ export class HLASMExternalFiles {
             sendNotification<P>(type: vscodelc.NotificationType<P>, params?: P): Promise<void>;
             sendNotification(method: string, params: any): Promise<void>;
         },
-        private cache?: { uri: vscode.Uri, fs: vscode.FileSystem }) {
+        private fs: vscode.FileSystem,
+        private cache?: { uri: vscode.Uri }) {
         this.toDispose.push(this.channel.onNotification('external_file_request', params => this.handleRawMessage(params).then(
             msg => { if (msg) this.channel.sendNotification('external_file_response', msg); }
         )));
@@ -207,7 +208,7 @@ export class HLASMExternalFiles {
         associatedWorkspaceFragment: null,
     });
 
-    private async extractUriDetails<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails>(uri: string | vscode.Uri, purpose: ExternalRequestType): Promise<{
+    private async extractUriDetails<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails>(uri: vscode.Uri, purpose: ExternalRequestType): Promise<{
         cacheKey: null;
         service: null;
         instance: null;
@@ -229,9 +230,6 @@ export class HLASMExternalFiles {
         server: null;
         associatedWorkspaceFragment: string;
     }> {
-        if (typeof uri === 'string')
-            uri = vscode.Uri.parse(uri, true);
-
         const pathParser = /^\/([A-Z]+)(\/.*)?/;
 
         const matches = pathParser.exec(uri.path);
@@ -364,7 +362,7 @@ export class HLASMExternalFiles {
         const me = this;
         return {
             async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string | null> {
-                const result = await me.handleFileMessage({ url: uri.toString(), id: -1, op: ExternalRequestType.read_file });
+                const result = await me.handleFileMessage(uri, { url: uri.toString(), id: -1, op: ExternalRequestType.read_file });
                 if (result && 'data' in result && typeof result.data === 'string')
                     return result.data;
                 else
@@ -403,11 +401,11 @@ export class HLASMExternalFiles {
         }
     }
 
-    private deriveCacheEntryName(serverId: string, service: string, normalizedPath: string) {
-        return cacheVersion + '.' + service + '.' + crypto.createHash('sha256').update(JSON.stringify([
+    private async deriveCacheEntryName(serverId: string, service: string, normalizedPath: string) {
+        return cacheVersion + '.' + service + '.' + await sha256(JSON.stringify([
             serverId,
             normalizedPath
-        ])).digest().toString('hex');
+        ]));
     }
 
     private async getCachedResult(serverId: string | undefined, service: string, normalizedPath: string, expect: CachedResultType.string): Promise<string | InError | typeof not_exists | undefined>
@@ -415,10 +413,10 @@ export class HLASMExternalFiles {
     private async getCachedResult(serverId: string | undefined, service: string, normalizedPath: string, expect: CachedResultType): Promise<unknown> {
         if (serverId === undefined || !this.cache) return undefined;
 
-        const cacheEntryName = vscode.Uri.joinPath(this.cache.uri, this.deriveCacheEntryName(serverId, service, normalizedPath));
+        const cacheEntryName = vscode.Uri.joinPath(this.cache.uri, await this.deriveCacheEntryName(serverId, service, normalizedPath));
 
         try {
-            const cachedResult = JSON.parse(new TextDecoder().decode(await promisify(inflate)(await this.cache.fs.readFile(cacheEntryName))));
+            const cachedResult = JSON.parse(textDecode(await inflate(await this.fs.readFile(cacheEntryName))));
 
             if (cachedResult === 'not_exists') return not_exists;
             if (cachedResult instanceof Object && 'data' in cachedResult) {
@@ -436,14 +434,14 @@ export class HLASMExternalFiles {
     private async storeCachedResult<T>(serverId: string | undefined, service: string, normalizedPath: string, value: T | typeof not_exists) {
         if (serverId === undefined || !this.cache) return false;
 
-        const cacheEntryName = vscode.Uri.joinPath(this.cache.uri, this.deriveCacheEntryName(serverId, service, normalizedPath));
+        const cacheEntryName = vscode.Uri.joinPath(this.cache.uri, await this.deriveCacheEntryName(serverId, service, normalizedPath));
 
         try {
             const data = value === not_exists
                 ? not_exists_json
                 : new TextEncoder().encode(JSON.stringify({ data: value }));
 
-            await this.cache.fs.writeFile(cacheEntryName, await promisify(deflate)(data));
+            await this.fs.writeFile(cacheEntryName, await deflate(data));
             return true;
         }
         catch (e) { }
@@ -489,13 +487,14 @@ export class HLASMExternalFiles {
     }
 
     private async handleMessage<T, ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails>(
+        uri: vscode.Uri,
         msg: ExternalRequest,
         getData: (client: ClientInstance<ConnectArgs, ReadArgs, ListArgs>, service: string, details: [ExternalRequestDetails<ReadArgs, ListArgs>[typeof msg.op], ConnectArgs]) => Promise<CacheEntry<T>['result'] | null>,
         inMemoryCache: Map<string, CacheEntry<T>>,
         responseTransform: (result: T, pathTransform: (p: string) => string) => (T extends string[] ? ExternalListDirectoryResponse : ExternalReadFileResponse)['data']):
         Promise<(T extends string[] ? ExternalListDirectoryResponse : ExternalReadFileResponse) | ExternalErrorResponse | null> {
         if (msg.op !== ExternalRequestType.read_file && msg.op !== ExternalRequestType.list_directory) throw Error("");
-        const { cacheKey, service, instance, details, server, associatedWorkspaceFragment } = await this.extractUriDetails<ConnectArgs, ReadArgs, ListArgs>(msg.url, msg.op);
+        const { cacheKey, service, instance, details, server, associatedWorkspaceFragment } = await this.extractUriDetails<ConnectArgs, ReadArgs, ListArgs>(uri, msg.op);
         if (!cacheKey || instance && !details)
             return this.generateError(msg.id, -5, 'Invalid request');
 
@@ -551,11 +550,47 @@ export class HLASMExternalFiles {
             });
     }
 
-    private handleFileMessage(msg: ExternalRequest) {
-        return this.handleMessage(msg, this.getFile.bind(this), this.memberContent, x => x);
+    private handleVFSFileMessage(uri: vscode.Uri, msg: ExternalRequest) {
+        return new Promise<Uint8Array>((resolve, reject) => this.fs.readFile(uri).then(resolve, reject))
+            .then(x => textDecode(x))
+            .then(x => { return { id: msg.id, data: x }; })
+            .catch(x => this.generateError(msg.id, -1000, asError(x).message));
     }
-    private handleDirMessage(msg: ExternalRequest) {
-        return this.handleMessage(msg, this.getDir.bind(this), this.memberLists, (result, urlTransform) => {
+
+    private handleVFSDirMessage(uri: vscode.Uri, msg: ExternalRequest) {
+        const filter = msg.subdir
+            ? (type: vscode.FileType) => (type & vscode.FileType.Directory) === vscode.FileType.Directory
+            : (type: vscode.FileType) => (type & vscode.FileType.File) === vscode.FileType.File;
+        return new Promise<[string, vscode.FileType][]>((resolve, reject) => this.fs.readDirectory(uri).then(resolve, reject))
+            .then(x => {
+                return {
+                    id: msg.id,
+                    data: {
+                        member_urls: x
+                            .map(u => [vscode.Uri.joinPath(uri, u[0]), u[1]] as [vscode.Uri, vscode.FileType])
+                            .filter(u => filter(u[1]))
+                            .map(u => u[0].toString())
+                    }
+                };
+            })
+            .catch(x => this.generateError(msg.id, -1000, asError(x).message));
+    }
+
+    private handleFileMessage(uri: vscode.Uri, msg: ExternalRequest) {
+        if (uri.scheme !== this.magicScheme)
+            return this.handleVFSFileMessage(uri, msg);
+
+        return this.handleMessage(uri, msg, this.getFile.bind(this), this.memberContent, x => x);
+    }
+
+    private handleDirMessage(uri: vscode.Uri, msg: ExternalRequest) {
+        if (uri.scheme !== this.magicScheme)
+            return this.handleVFSDirMessage(uri, msg);
+
+        if (msg.subdir === true)
+            return Promise.resolve(this.generateError(msg.id, -5, 'Invalid request'));
+
+        return this.handleMessage(uri, msg, this.getDir.bind(this), this.memberLists, (result, urlTransform) => {
             return {
                 member_urls: result.map(x => urlTransform(x)),
             };
@@ -566,10 +601,18 @@ export class HLASMExternalFiles {
         if (!msg || typeof msg.id !== 'number' || typeof msg.op !== 'string')
             return Promise.resolve(null);
 
-        if (msg.op === ExternalRequestType.read_file && typeof msg.url === 'string')
-            return this.handleFileMessage(msg);
-        if (msg.op === ExternalRequestType.list_directory && typeof msg.url === 'string')
-            return this.handleDirMessage(msg);
+        if (typeof msg.url !== 'string')
+            return Promise.resolve(this.generateError(msg.id, -5, 'Invalid request'));
+
+        try {
+            const uri = vscode.Uri.parse(msg.url, true)
+
+            if (msg.op === ExternalRequestType.read_file)
+                return this.handleFileMessage(uri, msg);
+            if (msg.op === ExternalRequestType.list_directory)
+                return this.handleDirMessage(uri, msg);
+        }
+        catch (e) { }
 
         return Promise.resolve(this.generateError(msg.id, -5, 'Invalid request'));
     }
@@ -578,10 +621,10 @@ export class HLASMExternalFiles {
         if (this.cache) {
             const prefix = service && cacheVersion + '.' + service + '.';
             const useServerId = serverId ?? (service && await this.clients.get(service)?.client.serverId?.());
-            const cacheKeys = paths && service && useServerId && new Set(paths.map(x => this.deriveCacheEntryName(useServerId, service, x)));
-            const { uri, fs } = this.cache;
+            const cacheKeys = paths && service && useServerId && new Set(await Promise.all(paths.map(x => this.deriveCacheEntryName(useServerId, service, x))));
+            const { uri } = this.cache;
 
-            const files = await fs.readDirectory(uri);
+            const files = await this.fs.readDirectory(uri);
 
             let errors = 0;
             const pending = new Set<Promise<void>>();
@@ -592,7 +635,7 @@ export class HLASMExternalFiles {
                 if (cacheKeys && !cacheKeys.has(filename))
                     continue;
 
-                const p = Promise.resolve(fs.delete(vscode.Uri.joinPath(uri, filename)));
+                const p = Promise.resolve(this.fs.delete(vscode.Uri.joinPath(uri, filename)));
                 pending.add(p);
                 p.catch(() => ++errors).finally(() => pending.delete(p));
 

@@ -8,15 +8,15 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceFolder}/lib/test/workspace/",
+                "${workspaceFolder}/dist_test/workspace/",
                 "--disable-extensions",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/lib/test/suite/index"
+                "--extensionTestsPath=${workspaceFolder}/dist_test/index"
             ],
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js",
-                "${workspaceFolder}/lib/**/*.js"
+                "${workspaceFolder}/dist_test/**/*.js"
             ],
             "preLaunchTask": "prepareTest"
         },
@@ -31,7 +31,7 @@
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js",
-                "${workspaceFolder}/lib/**/*.js"
+                "${workspaceFolder}/dist_test/**/*.js"
             ],
             "preLaunchTask": "npm"
         },
@@ -46,7 +46,7 @@
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js",
-                "${workspaceFolder}/lib/**/*.js"
+                "${workspaceFolder}/dist_test/**/*.js"
             ]
         }
     ]

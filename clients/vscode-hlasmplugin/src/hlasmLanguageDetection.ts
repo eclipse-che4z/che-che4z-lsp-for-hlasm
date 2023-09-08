@@ -13,7 +13,6 @@
  */
 
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { ConfigurationsHandler } from './configurationsHandler'
 import { getConfig } from './eventsHandler';
 
@@ -38,7 +37,7 @@ export class HLASMLanguageDetection {
     //automatic detection function
     setHlasmLanguage(document: vscode.TextDocument): boolean {
         // check only plain text files
-        if (document.languageId == 'plaintext' && !this.EndsWithExtension(document)) {
+        if (document.languageId == 'plaintext' && this.withoutExtension(document.uri)) {
             if (this.checkHlasmLanguage(document)) {
                 vscode.languages.setTextDocumentLanguage(document, 'hlasm');
                 return true;
@@ -46,9 +45,10 @@ export class HLASMLanguageDetection {
         }
         return document.languageId == 'hlasm';
     }
+
     //Checks for extension for plaintext files
-    EndsWithExtension(document: vscode.TextDocument): boolean {
-        return /^\.\w+$/.test(path.extname(document.fileName));
+    withoutExtension(uri: vscode.Uri): boolean {
+        return /(?<!^|\/)\.\w+$/.test(uri.path) === false;
     }
 
     private checkHlasmLanguage(document: vscode.TextDocument) {

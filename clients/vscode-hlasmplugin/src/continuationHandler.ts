@@ -122,7 +122,7 @@ export function insertContinuation(editor: vscode.TextEditor, edit: vscode.TextE
         new_selection.push(new vscode.Selection(new vscode.Position(line + idx, trimmed_reinsert.length), new vscode.Position(line + idx, trimmed_reinsert.length)));
         idx--;
     }
-    setImmediate(() => { editor.selections = new_selection; });
+    Promise.resolve().then(() => { editor.selections = new_selection; });
 }
 
 function extractLineRangesForRemoval(editor: vscode.TextEditor, continuationOffset: number): { start: number, end: number }[] {

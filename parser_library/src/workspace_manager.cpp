@@ -42,6 +42,7 @@
 #include "utils/encoding.h"
 #include "utils/error_codes.h"
 #include "utils/path_conversions.h"
+#include "utils/platform.h"
 #include "utils/resource_location.h"
 #include "utils/scope_exit.h"
 #include "utils/task.h"
@@ -101,6 +102,17 @@ public:
     workspace_manager_impl(workspace_manager_impl&&) = delete;
     workspace_manager_impl& operator=(workspace_manager_impl&&) = delete;
 
+
+    static constexpr std::string_view hlasm_external_scheme = "hlasm-external:";
+    static constexpr std::string_view allowed_scheme_list[] = {
+        "file:", "untitled:", hlasm_external_scheme, "vscode-vfs:", "vscode-test-web:"
+    };
+    static bool allowed_scheme(const resource_location& uri)
+    {
+        const auto matches_scheme = [u = uri.get_uri()](const auto& p) { return u.starts_with(p); };
+        return std::any_of(std::begin(allowed_scheme_list), std::end(allowed_scheme_list), matches_scheme);
+    }
+
     static auto ws_path_match(auto& self, std::string_view unnormalized_uri)
     {
         auto uri = resource_location(unnormalized_uri).lexically_normal();
@@ -134,13 +146,9 @@ public:
             }
         }
 
-        static constexpr std::string_view schema_list[] = { "file:", "untitled:", hlasm_external_scheme };
-
         if (max_ows != nullptr)
             return std::pair(max_ows, std::move(uri));
-        else if (std::any_of(std::begin(schema_list), std::end(schema_list), [u = uri.get_uri()](const auto& p) {
-                     return u.starts_with(p);
-                 }))
+        else if (allowed_scheme(uri))
             return std::pair(&self.m_implicit_workspace, std::move(uri));
         else
             return std::pair(&self.m_quiet_implicit_workspace, std::move(uri));
@@ -848,8 +856,6 @@ private:
 
     unsigned long long next_unique_id() { return ++m_unique_id_sequence; }
 
-    static constexpr std::string_view hlasm_external_scheme = "hlasm-external:";
-
     [[nodiscard]] utils::value_task<std::optional<std::string>> load_text_external(
         const utils::resource::resource_location& document_loc) const
     {
@@ -869,10 +875,10 @@ private:
     [[nodiscard]] utils::value_task<std::optional<std::string>> load_text(
         const utils::resource::resource_location& document_loc) const override
     {
-        if (!document_loc.get_uri().starts_with(hlasm_external_scheme))
+        if (document_loc.is_local() && !utils::platform::is_web())
             return utils::value_task<std::optional<std::string>>::from_value(utils::resource::load_text(document_loc));
 
-        if (!m_external_file_requests || !m_vscode_extensions)
+        if (!m_external_file_requests || !m_vscode_extensions || !allowed_scheme(document_loc))
             return utils::value_task<std::optional<std::string>>::from_value(std::nullopt);
 
         return load_text_external(document_loc);
@@ -880,15 +886,17 @@ private:
 
     [[nodiscard]] utils::value_task<std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
         utils::path::list_directory_rc>>
-    list_directory_files_external(const utils::resource::resource_location& directory) const
+    list_directory_files_external(const utils::resource::resource_location& directory, bool subdir) const
     {
         using enum utils::path::list_directory_rc;
         struct content_t
         {
-            explicit content_t(utils::resource::resource_location dir)
+            explicit content_t(utils::resource::resource_location dir, bool subdir)
                 : dir(std::move(dir))
+                , subdir(subdir)
             {}
             utils::resource::resource_location dir;
+            bool subdir;
             std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
                 utils::path::list_directory_rc>
                 result;
@@ -902,9 +910,9 @@ private:
                     {
                         auto url = utils::resource::resource_location(std::string_view(s));
                         auto filename = url.filename();
+                        if (subdir)
+                            url.join("");
                         filename = utils::encoding::percent_decode(filename);
-                        if (auto dot = filename.find('.', !filename.empty()); dot != std::string::npos)
-                            filename.erase(dot);
                         if (filename.empty())
                         {
                             result = { {}, other_failure };
@@ -928,8 +936,8 @@ private:
                     result.second = other_failure;
             }
         };
-        auto [channel, data] = make_workspace_manager_response(std::in_place_type<content_t>, directory);
-        m_external_file_requests->read_external_directory(data->dir.get_uri().c_str(), channel);
+        auto [channel, data] = make_workspace_manager_response(std::in_place_type<content_t>, directory, subdir);
+        m_external_file_requests->read_external_directory(data->dir.get_uri().c_str(), channel, subdir);
 
         return utils::async_busy_wait(std::move(channel), &data->result);
     }
@@ -938,15 +946,31 @@ private:
         utils::path::list_directory_rc>>
     list_directory_files(const utils::resource::resource_location& directory) const override
     {
-        if (!directory.get_uri().starts_with(hlasm_external_scheme))
+        if (directory.is_local() && !utils::platform::is_web())
             return utils::value_task<std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
                 utils::path::list_directory_rc>>::from_value(utils::resource::list_directory_files(directory));
 
-        if (!m_external_file_requests || !m_vscode_extensions)
+        if (!m_external_file_requests || !m_vscode_extensions || !allowed_scheme(directory))
             return utils::value_task<std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
                 utils::path::list_directory_rc>>::from_value({ {}, utils::path::list_directory_rc::not_exists });
 
-        return list_directory_files_external(directory);
+        return list_directory_files_external(directory, false);
+    }
+
+    [[nodiscard]] utils::value_task<std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
+        utils::path::list_directory_rc>>
+    list_directory_subdirs_and_symlinks(const utils::resource::resource_location& directory) const override
+    {
+        if (directory.is_local() && !utils::platform::is_web())
+            return utils::value_task<std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
+                utils::path::list_directory_rc>>::
+                from_value(utils::resource::list_directory_subdirs_and_symlinks(directory));
+
+        if (!m_external_file_requests || !m_vscode_extensions || !allowed_scheme(directory))
+            return utils::value_task<std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
+                utils::path::list_directory_rc>>::from_value({ {}, utils::path::list_directory_rc::not_exists });
+
+        return list_directory_files_external(directory, true);
     }
 
     std::deque<work_item> m_work_queue;

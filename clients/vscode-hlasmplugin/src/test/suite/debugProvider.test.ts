@@ -34,8 +34,8 @@ suite('Debug Provider Test Suite', () => {
             type: ''
         }));
         assert.ok(result);
-        assert.equal(result.type, 'hlasm');
-        assert.equal(result.name, 'Macro tracer: current program');
+        assert.strictEqual(result.type, 'hlasm');
+        assert.strictEqual(result.name, 'Macro tracer: current program');
 
         // resolve defined configuration
         result = await Promise.resolve(debugProvider.resolveDebugConfiguration(vscode.workspace.workspaceFolders![0], {
@@ -44,20 +44,20 @@ suite('Debug Provider Test Suite', () => {
             type: 'hlasm'
         }));
         assert.ok(result);
-        assert.equal(result.type, 'hlasm');
-        assert.equal(result.name, 'Macro tracer: Ask for file name');
+        assert.strictEqual(result.type, 'hlasm');
+        assert.strictEqual(result.name, 'Macro tracer: Ask for file name');
     });
 
     test('Get current program name test', async () => {
         // no editor
-        assert.equal(getCurrentProgramName(), undefined);
+        assert.strictEqual(getCurrentProgramName(), undefined);
 
         // non HLASM file active
         await helper.showDocument('plain.txt');
-        assert.equal(getCurrentProgramName(), undefined);
+        assert.strictEqual(getCurrentProgramName(), undefined);
 
         // HLASM file active
         await helper.showDocument('test', 'hlasm');
-        assert.equal(getCurrentProgramName(), path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, 'test'));
+        assert.strictEqual(getCurrentProgramName(), path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, 'test'));
     }).slow(1000);
 });

@@ -16,6 +16,7 @@
 #include "gtest/gtest.h"
 
 #include "external_file_reader_mock.h"
+#include "utils/platform.h"
 #include "utils/resource_location.h"
 #include "workspaces/file.h"
 #include "workspaces/file_manager_impl.h"
@@ -95,6 +96,9 @@ TEST(file_manger, keep_content_on_close)
 
 TEST(file_manager, get_file_content)
 {
+    if (hlasm_plugin::utils::platform::is_web())
+        GTEST_SKIP() << "Direct I/O not available in Web mode";
+
     const resource_location file("test/library/test_wks/correct");
     file_manager_impl fm;
 

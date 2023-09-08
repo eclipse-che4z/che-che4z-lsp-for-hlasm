@@ -46,11 +46,14 @@ export function getWorkspacePath(): string {
 }
 
 export async function getWorkspaceFile(workspace_file: string) {
-    const files = await vscode.workspace.findFiles(workspace_file);
+    assert.ok(vscode.workspace.workspaceFolders);
+    assert.strictEqual(vscode.workspace.workspaceFolders.length, 1);
 
-    assert.ok(files && files[0], workspace_file);
+    const file = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, workspace_file);
 
-    return files[0];
+    await vscode.workspace.fs.stat(file).then(x => assert.strictEqual(x.type, vscode.FileType.File, workspace_file));
+
+    return file;
 }
 
 export async function showDocument(workspace_file: string, language_id: string | undefined = undefined) {

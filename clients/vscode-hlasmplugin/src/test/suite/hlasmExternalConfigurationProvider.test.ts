@@ -109,7 +109,7 @@ suite('External configuration provider', () => {
                 return { dispose: () => { } };
             },
             sendNotification: async (method: string, params: any): Promise<void> => {
-                assert.deepEqual(method, 'invalidate_external_configuration');
+                assert.deepStrictEqual(method, 'invalidate_external_configuration');
                 notificationParam = params;
             }
         });

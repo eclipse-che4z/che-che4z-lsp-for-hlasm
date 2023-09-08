@@ -50,5 +50,5 @@ export function getCurrentProgramName() {
         vscode.window.showErrorMessage(editor.document.fileName + ' is not a HLASM file.');
         return undefined;
     }
-    return editor.document.fileName;
+    return editor.document.uri.scheme === 'file' ? editor.document.fileName : editor.document.uri.toString();
 }

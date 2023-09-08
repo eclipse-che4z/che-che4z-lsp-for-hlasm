@@ -7,9 +7,10 @@
     "declaration": true,
     "stripInternal": true,
     "lib": [
-      "es2016"
+      "es2016",
+      "WebWorker"
     ],
-    "outDir": "lib",
+    "outDir": "dist_test",
     "rootDir": "src",
     "alwaysStrict": true,
     "noEmitOnError": true,
@@ -18,5 +19,9 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "strict": true
-  }
+  },
+  "exclude": [
+    "src/**/*.web.ts",
+    "dist_test/**"
+  ]
 }

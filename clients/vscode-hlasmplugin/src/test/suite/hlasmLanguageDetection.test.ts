@@ -41,59 +41,23 @@ suite('Language Detection Test Suite', () => {
 	});
 	// if file has no extension  return false
 	test('non HLASM file extension test false_one', async () => {
-		const document = new TextDocumentMock();
-		// set plain text file to HLASM
-		document.languageId = 'plaintext';
-		document.text = nonHlasmContents;
-		document.fileName = "file";
-		document.uri = vscode.Uri.file('file');
-		assert.ok(!detector.EndsWithExtension(document));
+		assert.ok(detector.withoutExtension(vscode.Uri.file('file')));
 	});
 	test('non HLASM file extension test false_two', async () => {
-		const document = new TextDocumentMock();
-		// set plain text file to HLASM
-		document.languageId = 'plaintext';
-		document.text = nonHlasmContents;
-		document.fileName = ".hidden";
-		document.uri = vscode.Uri.file('.hidden');
-		assert.ok(!detector.EndsWithExtension(document));
+		assert.ok(detector.withoutExtension(vscode.Uri.file('.hidden')));
 	});
 	test('non HLASM file extension test false_three', async () => {
-		const document = new TextDocumentMock();
-		// set plain text file to HLASM
-		document.languageId = 'plaintext';
-		document.text = nonHlasmContents;
-		document.fileName = "file.";
-		document.uri = vscode.Uri.file('file.');
-		assert.ok(!detector.EndsWithExtension(document));
+		assert.ok(detector.withoutExtension(vscode.Uri.file('file.')));
 	});
-	test('Cobol file  containing several dots but not extension returns false', async () => {
-		const document = new TextDocumentMock();
-		// set plain text file to HLASM
-		document.languageId = 'plaintext';
-		document.text = nonHlasmContents;
-		document.fileName = "USER.FTP.COBOL(BIGFILE)";
-		document.uri = vscode.Uri.file('USER.FTP.COBOL(BIGFILE)');
-		assert.ok(!detector.EndsWithExtension(document));
+	test('Cobol file containing several dots but not extension returns false', async () => {
+		assert.ok(detector.withoutExtension(vscode.Uri.file('USER.FTP.COBOL(BIGFILE)')));
 	});
 	test('Cobol file ending with extension', async () => {
-		const document = new TextDocumentMock();
-		// set plain text file to HLASM
-		document.languageId = 'plaintext';
-		document.text = nonHlasmContents;
-		document.fileName = "USER.FTP.COBOL(BIGFILE).cbl";
-		document.uri = vscode.Uri.file('USER.FTP.COBOL(BIGFILE).cbl');
-		assert.ok(detector.EndsWithExtension(document));
+		assert.ok(!detector.withoutExtension(vscode.Uri.file('USER.FTP.COBOL(BIGFILE).cbl')));
 	});
 	// if file has extension  return true
 	test('non HLASM file extension test true', async () => {
-		const document = new TextDocumentMock();
-		// set plain text file to HLASM
-		document.languageId = 'plaintext';
-		document.text = nonHlasmContents;
-		document.fileName = "file.cbl";
-		document.uri = vscode.Uri.file('file.cbl');
-		assert.ok(detector.EndsWithExtension(document));
+		assert.ok(!detector.withoutExtension(vscode.Uri.file('file.cbl')));
 
 	});
 	//Dont set to Hlasm if file extension exist other than .hlasm or file assosciations irrespective of content

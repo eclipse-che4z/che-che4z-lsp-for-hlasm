@@ -1,8 +1,10 @@
 node_modules/
 dist/
+dist_test/
 lib/
 hlasmplugin.log
 .vscode-test/
+.vscode-test-web/
 .nyc_output/
 coverage/
 /bin

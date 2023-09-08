@@ -39,6 +39,7 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
         const wsUri = vscode.workspace.getWorkspaceFolder(document.uri)?.uri;
         if (!wsUri)
             return result;
+        const documentRelativeUri = vscode.workspace.asRelativePath(document.uri);
 
         const configNodes = await retrieveConfigurationNodes(wsUri, document.uri);
 
@@ -47,7 +48,7 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
 
         const suggestProcGrpsChange = E049.length > 0;
         const suggestPgmConfChange = E049.length > 0 || context.diagnostics.some(x => x.code === 'SUP');
-        result.push(...generateConfigurationFilesCodeActions(suggestProcGrpsChange, suggestPgmConfChange, configNodes, wsUri, document));
+        result.push(...generateConfigurationFilesCodeActions(suggestProcGrpsChange, suggestPgmConfChange, configNodes, wsUri, documentRelativeUri));
 
         return result;
     }

@@ -21,10 +21,10 @@ import * as fs from 'fs'
 async function main() {
 	try {
 		// prepare development and tests paths
-		const extensionDevelopmentPath = path.join(__dirname, '../../');
+		const extensionDevelopmentPath = path.join(__dirname, '../../../');
 		const extensionTestsPath = path.join(__dirname, './suite/index');
 		const launchArgs = [
-			path.join(__dirname, './workspace/'),
+			path.join(__dirname, '../workspace/'),
 			'--disable-extensions',
 			'--disable-workspace-trust',
 			'--user-data-dir',

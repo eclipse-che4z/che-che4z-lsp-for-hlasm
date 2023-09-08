@@ -36,12 +36,12 @@ suite('Continuation Handler Test Suite', () => {
         // insert new continuation
         insertContinuation(editor, edit, 15, 5);
         document.text = edit.text;
-        assert.equal(document.text, 'this           X\r\n     ');
+        assert.strictEqual(document.text, 'this           X\r\n     ');
 
         // insert continuation on continued line
         insertContinuation(editor, edit, 15, 5);
         document.text = edit.text;
-        assert.equal(document.text, 'this           X\r\n               X\r\n     ');
+        assert.strictEqual(document.text, 'this           X\r\n               X\r\n     ');
     });
 
     test('Insert Continuation Test - Multiple cursors', () => {
@@ -61,7 +61,7 @@ suite('Continuation Handler Test Suite', () => {
         // insert new continuation
         insertContinuation(editor, edit, 50, 5);
         document.text = edit.text;
-        assert.equal(document.text, 'label instr arg1,arg3,  comment                   X\r\n     arg2,arg4');
+        assert.strictEqual(document.text, 'label instr arg1,arg3,  comment                   X\r\n     arg2,arg4');
     });
 
     test('Insert Continuation Test - detect continuation', () => {
@@ -80,7 +80,7 @@ suite('Continuation Handler Test Suite', () => {
         // insert new continuation
         insertContinuation(editor, edit, 10, 5);
         document.text = edit.text;
-        assert.equal(document.text, '    aaa   +\r\n\r\n    bbb   +\r\n     ');
+        assert.strictEqual(document.text, '    aaa   +\r\n\r\n    bbb   +\r\n     ');
     });
 
     test('Remove Continuation Test', () => {
@@ -98,7 +98,7 @@ suite('Continuation Handler Test Suite', () => {
         // delete existing continuation
         removeContinuation(editor, edit, 15);
         document.text = edit.text;
-        assert.equal(document.text, 'continuation    ');
+        assert.strictEqual(document.text, 'continuation    ');
 
         // prepare document
         cursorPosition = new vscode.Position(0, 0);
@@ -107,7 +107,7 @@ suite('Continuation Handler Test Suite', () => {
         // delete non existing continuation - nothing happens
         removeContinuation(editor, edit, 15);
         document.text = edit.text;
-        assert.equal(document.text, 'continuation    ');
+        assert.strictEqual(document.text, 'continuation    ');
     });
 
     test('Rearrange sequence numbers', () => {
@@ -126,7 +126,7 @@ suite('Continuation Handler Test Suite', () => {
         // insert new continuation
         rearrangeSequenceNumbers(editor, edit, 50);
         document.text = edit.text;
-        assert.equal(document.text, 'label instr arg1,arg2,arg3,arg4   comment          12345678');
+        assert.strictEqual(document.text, 'label instr arg1,arg2,arg3,arg4   comment          12345678');
     });
 
     test('Rearrange sequence numbers - deletion', () => {
@@ -145,7 +145,7 @@ suite('Continuation Handler Test Suite', () => {
         // insert new continuation
         rearrangeSequenceNumbers(editor, edit, 50);
         document.text = edit.text;
-        assert.equal(document.text, 'label instr arg1,arg2,arg3   comment               12345678');
+        assert.strictEqual(document.text, 'label instr arg1,arg2,arg3   comment               12345678');
     });
 
 });

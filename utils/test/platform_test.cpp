@@ -22,5 +22,8 @@ TEST(platform, home)
 {
     auto homedir = home();
 
-    EXPECT_NE(homedir.size(), 0);
+    if (is_web())
+        EXPECT_EQ(homedir.size(), 0);
+    else
+        EXPECT_GT(homedir.size(), 0);
 }

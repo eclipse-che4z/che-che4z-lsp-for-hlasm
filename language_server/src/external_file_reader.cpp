@@ -86,7 +86,7 @@ void external_file_reader::read_external_file(const char* url, workspace_manager
 }
 
 void external_file_reader::read_external_directory(
-    const char* url, workspace_manager_response<workspace_manager_external_directory_result> members)
+    const char* url, workspace_manager_response<workspace_manager_external_directory_result> members, bool subdir)
 {
     auto next_id = m_next_id.fetch_add(1, std::memory_order_relaxed);
     nlohmann::json msg = {
@@ -94,6 +94,8 @@ void external_file_reader::read_external_directory(
         { "op", "list_directory" },
         { "url", url },
     };
+    if (subdir)
+        msg["subdir"] = true;
 
     std::function handler = [members](bool error, const nlohmann::json& result) noexcept {
         if (error)
