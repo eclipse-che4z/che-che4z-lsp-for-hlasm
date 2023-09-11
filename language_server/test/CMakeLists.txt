@@ -11,6 +11,7 @@
 #   Broadcom, Inc. - initial API and implementation
 
 add_executable(server_test)
+generate_emscripten_node_runner(server_test)
 
 target_sources(server_test PRIVATE
 	blocking_queue_test.cpp

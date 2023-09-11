@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Broadcom.
+# Copyright (c) 2023 Broadcom.
 # The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 #
 # This program and the accompanying materials are made
@@ -10,15 +10,5 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-project(benchmark)
-
-add_executable(benchmark
-    benchmark.cpp
-    diagnostic_counter.h)
-generate_emscripten_node_runner(benchmark)
-
-target_link_libraries(benchmark nlohmann_json::nlohmann_json)
-
-target_link_libraries(benchmark parser_library hlasm_utils)
-
-target_link_libraries(benchmark Threads::Threads)
+message(STATUS "Generating Node runner for ${INPUT_FILE} into ${OUTPUT_FILE}...")
+configure_file("${CMAKE_CURRENT_LIST_DIR}/node_runner.js.template" ${OUTPUT_FILE})

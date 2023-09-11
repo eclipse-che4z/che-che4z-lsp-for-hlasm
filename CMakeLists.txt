@@ -109,6 +109,8 @@ if(BUILD_TESTING)
     include(external_gtest)
 endif()
 
+include(emscripten_node_runner)
+
 # Libraries (+ their includes)
 add_subdirectory(parser_library)
 

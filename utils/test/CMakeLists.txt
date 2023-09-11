@@ -11,6 +11,7 @@
 #   Broadcom, Inc. - initial API and implementation
 
 add_executable(hlasm_utils_test)
+generate_emscripten_node_runner(hlasm_utils_test)
 
 target_sources(hlasm_utils_test PRIVATE
 	bk_tree_test.cpp

@@ -136,10 +136,6 @@ jobs:
             artifacts-ext: .exe
           - os: macos-12
             native: darwin
-          - os: ubuntu-22.04
-            native: web
-            container: emscripten/emsdk:3.1.33
-            artifacts-ext: .*
     container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v3
@@ -246,10 +242,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-      - name: Download web language server
+      - name: Download wasm language server
         uses: actions/download-artifact@v3
         with:
-          name: language_server_web
+          name: language_server_wasm
           path: ${{ env.CLIENT_DIR }}/bin/wasm/
       - name: NPM CI
         run: npm ci

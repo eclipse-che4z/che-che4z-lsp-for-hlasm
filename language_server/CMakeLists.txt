@@ -20,6 +20,7 @@ add_library(language_server_base OBJECT)
 target_include_directories(language_server_base PUBLIC src)
 
 add_executable(language_server)
+generate_emscripten_node_runner(language_server)
 
 add_subdirectory(src)
 
