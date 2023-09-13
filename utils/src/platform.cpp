@@ -59,7 +59,9 @@ void log(std::span<const std::string_view> list)
     s.reserve(std::transform_reduce(list.begin(), list.end(), (size_t)0, std::plus(), [](auto e) { return e.size(); }));
     for (auto e : list)
         s.append(e);
-    EM_ASM({ console.error(new TextDecoder().decode(HEAPU8.slice($0, $1))); }, s.data(), s.data() + s.size());
+    EM_ASM({ console.error(new TextDecoder('utf8', { fatal : false }).decode(HEAPU8.slice($0, $1))); },
+        s.data(),
+        s.data() + s.size());
 #else
     for (auto e : list)
         std::clog << e;

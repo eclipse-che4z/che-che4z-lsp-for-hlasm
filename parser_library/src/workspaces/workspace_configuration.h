@@ -249,10 +249,10 @@ class workspace_configuration
     [[nodiscard]] utils::value_task<parse_config_file_result> load_pgm_config(
         config::pgm_conf& pgm_config, global_settings_map& utilized_settings_values, std::vector<diagnostic_s>& diags);
 
-    [[nodiscard]] utils::task find_and_add_libs(const utils::resource::resource_location& root,
-        const utils::resource::resource_location& path_pattern,
+    [[nodiscard]] utils::task find_and_add_libs(utils::resource::resource_location root,
+        utils::resource::resource_location path_pattern,
         processor_group& prc_grp,
-        const library_local_options& opts,
+        library_local_options opts,
         std::vector<diagnostic_s>& diags);
 
     void add_missing_diags(const diagnosable& target,
