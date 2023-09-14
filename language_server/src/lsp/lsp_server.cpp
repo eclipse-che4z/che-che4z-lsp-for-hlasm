@@ -255,7 +255,7 @@ void server::on_initialize(const request_id& id, const nlohmann::json& param)
                 { "documentFormattingProvider", false },
                 { "documentRangeFormattingProvider", false },
                 { "codeActionProvider", false },
-                { "signatureHelpProvider", false },
+                // { "signatureHelpProvider", false },
                 { "documentHighlightProvider", false },
                 { "renameProvider", false },
                 { "workspaceSymbolProvider", false },
