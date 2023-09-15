@@ -38,7 +38,7 @@ plugins:
         - type: chore
           hidden: true
   - - "@semantic-release/exec"
-    - generateNotesCmd: sh prepare_release.sh ${nextRelease.version} ${branch.name} "${nextRelease.notes}" ${lastRelease.version} ${Date.now()}
+    - generateNotesCmd: sh prepare_release.sh ${nextRelease.version} ${branch.name} "${nextRelease.notes.replaceAll('"','\\"')}" ${lastRelease.version} ${Date.now()}
   - - "@semantic-release/github"
     - assets:
       - path: "hlasm-language-support.vsix"
