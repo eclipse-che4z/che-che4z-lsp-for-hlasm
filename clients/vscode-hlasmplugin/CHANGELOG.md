@@ -9,13 +9,16 @@
 - Support Web extension environment
 
 #### Fixed
-- Program to processor group mapping precedence
-- The language server may crash while accessing content of virtual files
-- "Diagnostics suppressed" informational message may be incorrectly generated
+- Language server crashing while accessing content of virtual files
+- "Diagnostics suppressed" informational message incorrectly generated
 - Auto-select WebAssembly image on platforms without native support
 - Querying current directory fails on Windows (WASM)
-- Implicit workspaces should not attempt reading configuration files
+- Implicit workspaces should not attempt to read configuration files
+
+#### Changed
+- Program to processor group mapping precedence
 - Enhanced multiline support in TextMate grammar for listings
+- Readme update
 
 ## [1.9.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.8.0...1.9.0) (2023-08-03)
 
