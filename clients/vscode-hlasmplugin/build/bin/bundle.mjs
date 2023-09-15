@@ -69,7 +69,7 @@ for (const bd of buildDetails) {
         sourcemap: true,
         tsconfig: tsconfig,
         external: ['vscode'],
-        minify: false,
+        minify: true,
         platform: target === 0 ? 'node' : 'browser',
         format: 'cjs',
         plugins: target === 0 ? undefined : [getWebPlugin(bd.isTest)],
