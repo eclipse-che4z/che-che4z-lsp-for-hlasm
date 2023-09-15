@@ -1,0 +1,22 @@
+* dadsa                                                                - 
+               asd as d
+LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED
+.* REMARK                                                              -
+               dafaf
+LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED
+.* REMARK                                                              -
+               dafaf                                                   -
+
+.* REMARK                                                              -
+               dafaf                                                   -
+
+LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED
+
+*        Multiline remarks                                             -        
+               remarks                                                 -12345678
+               remarks                                                 -        
+               remarks                                                 -        
+               remarks                                                 -        
+               remarks                                                 -        
+               remarks                                                          
+LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED

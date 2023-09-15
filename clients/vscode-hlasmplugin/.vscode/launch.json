@@ -11,7 +11,7 @@
                 "${workspaceFolder}/dist_test/workspace/",
                 "--disable-extensions",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/dist_test/index"
+                "--extensionTestsPath=${workspaceFolder}/dist_test/test/suite/index"
             ],
             "sourceMaps": true,
             "outFiles": [

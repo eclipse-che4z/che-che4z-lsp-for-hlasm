@@ -7,11 +7,10 @@
     "declaration": true,
     "stripInternal": true,
     "lib": [
-      "es2016",
-      "WebWorker"
+      "es2021"
     ],
-    "outDir": "dist_test",
-    "rootDir": "src",
+    "outDir": "../../lib_syntaxes",
+    "rootDir": ".",
     "alwaysStrict": true,
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
@@ -19,11 +18,5 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "strict": true
-  },
-  "exclude": [
-    "src/**/*.web.ts",
-    "dist_test/**",
-    "scripts/syntaxes/**",
-    "lib_syntaxes/**"
-  ]
+  }
 }

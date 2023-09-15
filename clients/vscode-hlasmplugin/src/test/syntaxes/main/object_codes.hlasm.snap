@@ -1,0 +1,65 @@
+>         CSECT
+#^^^^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+>
+>         MACRO
+#^^^^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+>         MAC   &A,&LBLNAME
+#^^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#            ^^^ source.hlasm
+#               ^^ source.hlasm punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
+#                 ^ source.hlasm
+#                  ^^^^^^^^ source.hlasm punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
+>         PR
+#^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+>&LBLNAME LA 0,&A
+#^^^^^^^^ source.hlasm variable.other.readwrite.hlasm
+#        ^^^ source.hlasm entity.name.function.hlasm
+#           ^ source.hlasm
+#            ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#             ^ source.hlasm
+#              ^^ source.hlasm punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
+>         BPRP  0,&LBLNAME,&LBLNAME
+#^^^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#             ^^ source.hlasm
+#               ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#                ^ source.hlasm
+#                 ^^^^^^^^ source.hlasm punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
+#                         ^ source.hlasm
+#                          ^^^^^^^^ source.hlasm punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
+>         MEND
+#^^^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+>
+>         MAC 1,LBL1
+#^^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#            ^ source.hlasm
+#             ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#              ^ source.hlasm
+#               ^^^^ source.hlasm punctuation.definition.tag.hlasm
+>         MAC 2,LBL2
+#^^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#            ^ source.hlasm
+#             ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#              ^ source.hlasm
+#               ^^^^ source.hlasm punctuation.definition.tag.hlasm
+>         MAC 3,LBL3
+#^^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#            ^ source.hlasm
+#             ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#              ^ source.hlasm
+#               ^^^^ source.hlasm punctuation.definition.tag.hlasm
+>         MAC 4,LBL4
+#^^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#            ^ source.hlasm
+#             ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#              ^ source.hlasm
+#               ^^^^ source.hlasm punctuation.definition.tag.hlasm
+>         MAC 5,LBL5
+#^^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#            ^ source.hlasm
+#             ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#              ^ source.hlasm
+#               ^^^^ source.hlasm punctuation.definition.tag.hlasm
+>
+>         END
+#^^^^^^^^^^^^ source.hlasm entity.name.function.hlasm
+>

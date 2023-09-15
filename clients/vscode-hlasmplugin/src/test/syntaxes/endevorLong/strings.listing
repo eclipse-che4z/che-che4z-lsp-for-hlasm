@@ -1,0 +1,162 @@
+»                                                                                                                                    
+                                         High Level Assembler Option Summary                   (PTF AB12345)   Page    1            
+                                                                                            HLASM R1.0  2000/01/01 00.00            
+  No Overriding ASMAOPT Parameters                                                                                                  
+  Overriding Parameters-  ADATA,TERM,LIST(133),FLAG(17)                                                                             
+  No Process Statements                                                                                                             
+                                                                                                                                    
+                                                                                                                                    
+  Options for this Assembly                                                                                                         
+3 PARM/OPTION         ADATA                                                                                                         
+                      ALIGN                                                                                                         
+                    NOASA                                                                                                           
+                      ASCII(00819)                                                                                                  
+                      BATCH                                                                                                         
+                      CA(LOCAL)                                                                                                     
+                      CE(LOCAL)                                                                                                     
+                      CODEPAGE(01148)                                                                                               
+                    NOCOMPAT                                                                                                        
+                      CU(LOCAL)                                                                                                     
+                    NODATAMAP                                                                                                       
+                    NODBCS                                                                                                          
+                    NODECK                                                                                                          
+                      DXREF                                                                                                         
+                      EBCDIC(00037)                                                                                                 
+                      ESD                                                                                                           
+                    NOEXIT                                                                                                          
+                      FAIL(NOMSG,NOMNOTE,MAXERRS(500))                                                                              
+3 PARM/OPTION         FLAG(17,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,RENT,NOSIGNED,NOSUBSTR,NOTRUNC,USING0)        
+                    NOFOLD                                                                                                          
+                    NOGOFF                                                                                                          
+                      ILMA                                                                                                          
+                    NOINFO                                                                                                          
+                      LANGUAGE(EN)                                                                                                  
+                    NOLIBMAC                                                                                                        
+                      LINECOUNT(60)                                                                                                 
+3 PARM/OPTION         LIST(133)                                                                                                     
+                      MACHINE(,NOLIST)                                                                                              
+                      MXREF(SOURCE)                                                                                                 
+                      OBJECT                                                                                                        
+                      OPTABLE(UNI,NOLIST)                                                                                           
+                    NOPCONTROL                                                                                                      
+                    NOPESTOP                                                                                                        
+                    NOPROFILE                                                                                                       
+                    NORA2                                                                                                           
+                    NORENT                                                                                                          
+                      RLD                                                                                                           
+                      RXREF                                                                                                         
+                      SECTALGN(8)                                                                                                   
+                      SIZE(MAX)                                                                                                     
+                    NOSUPRWARN                                                                                                      
+                      SYSPARM()                                                                                                     
+3 PARM/OPTION         TERM(WIDE)                                                                                                    
+                    NOTEST                                                                                                          
+                      THREAD                                                                                                        
+                    NOTRANSLATE                                                                                                     
+                      TYPECHECK(MAGNITUDE,REGISTER,SIGNED)                                                                          
+                      UNICODE(01200)                                                                                                
+                      USING(NOLIMIT,MAP,WARN(15))                                                                                   
+»                                                                                                                                    
+                                         High Level Assembler Option Summary                   (PTF AB12345)   Page    2            
+                                                                                            HLASM R1.0  2000/01/01 00.00            
+                    NOWORKFILE                                                                                                      
+                      XREF(SHORT,UNREFS)                                                                                            
+                                                                                                                                    
+  No Overriding DD Names                                                                                                            
+»                                                                                                                                    
+                                                                                                               Page    3            
+  Active Usings: None                                                                                                               
+  Loc    Object Code      Addr1    Addr2    Stmt  Source Statement                          HLASM R1.0  2000/01/01 00.00            
+                                               1 &VAR1    INSTR 'A'                                                                 
+                                               2 &VAR2    INSTR '1'                                                                 
+                                               3 LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED                                 
+                                               5          INSTR  'A'.'AT'&VAR                                 XXXXXXXXXX-xxxxxxx    
+                                                                                                                                    
+                                               6          INSTR  T'&VAR                                    XXXXXXXXXXXXX-xxxxxxx    
+                                                 INVALID LINE                                                                       
+                                               7          INSTR  T'&VAR                                    XXXXXXXXXXXXX-xxxxxxx    
+                                                                REMARK                                                              
+                                               8          INSTR  T'&VAR                                                 -xxxxxxx    
+                                                                REMARK                                                              
+                                               9          INSTR  T'&VAR                                                             
+                                              10          INSTR SYMBOL1=12+L'SYMBOL2                                                
+                                              11 LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED                                 
+                                              14 LABEL    INSTR ,,'STRING'                                                          
+                                              15 LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED                                 
+                                              17 LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-           
+                                                                ARIABLE word true false YES NO       '                              
+                                              18 LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-1234567    
+                                                                ARIABLE word true false YES NO        ,STRING            1234567    
+                                              19 LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-1234567    
+                                                                ARIABLE word true false YES NO       ' REMARK            1234567    
+                                              20 LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-1234567    
+                                                                ARIABLE word true false YES NO       ',OPERAND           1234567    
+                                              21 LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-1234567    
+                                                                ARIABLE word true false YES NO       ',OPERAND_OPERAND_O-1234567    
+                                                                PERAND,OPERAND                                                      
+                                              22 LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-1234567    
+                                                                ARIABLE word true false YES NO       ',OPERAND_OPERAND_ -1234567    
+                                                                REMARK,REMARK REMARK                                                
+                                              23 LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-1234567    
+                                                                ARIABLE word true false YES NO       ',OPERAND_OPERAND_  1234567    
+                                              24     INSTR,INSTR'                                                                   
+                                              25 LABEL    INSTR                                                         -           
+                                                                4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-1234567    
+                                                              ARIABLE word true false YES NO       ',OPERAND_OPERAND_ RR-123456     
+                                                                REMARK REMARK                                                       
+                                              26 LABEL    INSTR 4,                                                      -1234567    
+                                                                '  Just  a  random  string:   word 256 (&LBL DSECT), &&V-1234567    
+                                                             ARIABLE word true false YES NO       ',OPERAND_OPERAND_,   -1234567    
+                                                                OPERAND REMARK                                                      
+                                              27 LABEL    INSTR 4,                                                      -1234567    
+                                                                '  Just  a  random  string:   word 256 (&LBL DSECT), &&V-1234567    
+                                                           IVLD  a  random  string:   word 256 (&LBL DSECT), &&V        -1234567    
+                                                                ARIABLE word true false YES NO       ',OPERAND_OPERAND_,-1234567    
+                                                                OPERAND REMARK                                                      
+                                              28 LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED                                 
+                                              31          AINSERT '&&__V@R SETA &VAR',BACK                                          
+i                                                +         AINSERT '&&__V@R SETA ',BACK                                              
+                                                                                                               Page    4            
+  Active Usings: None                                                                                                               
+  Loc    Object Code      Addr1    Addr2    Stmt  Source Statement                          HLASM R1.0  2000/01/01 00.00            
+                                              32>&__V@R SETA                                                                        
+»                                                                                                                                    
+                                   General Purpose Register Cross Reference                                    Page    5            
+ Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R1.0  2000/01/01 00.00            
+    0(0)    (no references identified)                                                                                              
+    1(1)    (no references identified)                                                                                              
+    2(2)    (no references identified)                                                                                              
+    3(3)    (no references identified)                                                                                              
+    4(4)    (no references identified)                                                                                              
+    5(5)    (no references identified)                                                                                              
+    6(6)    (no references identified)                                                                                              
+    7(7)    (no references identified)                                                                                              
+    8(8)    (no references identified)                                                                                              
+    9(9)    (no references identified)                                                                                              
+   10(A)    (no references identified)                                                                                              
+   11(B)    (no references identified)                                                                                              
+   12(C)    (no references identified)                                                                                              
+   13(D)    (no references identified)                                                                                              
+   14(E)    (no references identified)                                                                                              
+   15(F)    (no references identified)                                                                                              
+»                                                                                                                                    
+                                  Diagnostic Cross Reference and Assembler Summary                             Page    6            
+                                                                                            HLASM R1.0  2000/01/01 00.00            
+     No Statements Flagged in this Assembly                                                                                         
+HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 1.0, PTF AB12345                                                                            
+SYSTEM: z/OS 01.00.00              JOBNAME: JOB         STEPNAME: STEP1      PROCSTEP: (NOPROC)                                     
+Unicode Module:   ASMA047C   From Page     1148   To Page    17584           ECECP: International 1                                 
+Data Sets Allocated for this Assembly                                                                                               
+ Con DDname   Data Set Name                                Volume  Member                                                           
+  P1 SYSIN    DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
+     SYSADATA DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
+     SYSLIN   /my/path/to/strings.o                                                                                                 
+     SYSPRINT /my/path/to/strings.o.lst                                                                                             
+     SYSTERM  DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
+                                                                                                                                    
+1234567B allocated to Buffer Pool       Storage required     200K                                                                   
+     54 Primary Input Records Read            0 Library Records Read                  0 Work File Reads                             
+      0 ASMAOPT Records Read                162 Primary Print Records Written         0 Work File Writes                            
+      0 Object Records Written               63 ADATA Records Written                                                               
+Assembly Start Time: 00.11.22 Stop Time: 00.11.22 Processor Time: 00.11.22.3333                                                     
+Return Code 000                                                                                                                     

@@ -21,7 +21,7 @@
             "type": "shell",
 
             // show the output window only if unrecognized errors occur.
-            
+
             "presentation": {
                 "reveal": "always",
                 "panel": "shared",
@@ -43,9 +43,37 @@
             "label": "prepareTest",
             "command": "node",
             "type": "shell",
-            "args" : ["'${workspaceFolder}/build/bin/prepareWorkspace.js'"],
-            "dependsOn":[
+            "args": ["'${workspaceFolder}/build/bin/prepareWorkspace.js'"],
+            "dependsOn": [
                 "npm"
+            ]
+        },
+        {
+            "label": "generateTMGrammar",
+            "command": "npm",
+            "type": "shell",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "group": "tmgrammar"
+            },
+            "group": "build",
+            "args": ["run", "generate:tmgrammar"],
+            "problemMatcher": "$tsc-watch"
+        },
+        {
+            "label": "textmateTests",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "test:tmgrammar"],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "group": "tmgrammar"
+            },
+            "dependsOn": [
+                "generateTMGrammar"
             ]
         }
     ]

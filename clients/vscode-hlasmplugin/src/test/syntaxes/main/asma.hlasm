@@ -1,0 +1,4 @@
+LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
+** ASMA123I - This is just a remark in general hlasm grammar
+** ASMA123E - This is just a remark in general hlasm grammar
+LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED

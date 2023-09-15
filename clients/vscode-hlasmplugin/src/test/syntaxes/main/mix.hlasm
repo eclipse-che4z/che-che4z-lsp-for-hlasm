@@ -1,0 +1,46 @@
+         AIF   ( NOT ( (('A' LE '&VAR') AND ('&VAR' LE 'B'))  OR       -        
+                       (('C' LE '&VAR') AND ('&VAR' LE 'D'))  OR       -        
+                       (('E' LE '&VAR') AND ('&VAR' LE 'F'))  OR       -        
+                       ('&VAR' EQ '$') OR ('&VAR' EQ '_')     OR       -        
+                       ('&VAR' EQ '#') OR ('&VAR' EQ '@')              -        
+                     )                                                 -        
+               ).NAMERR                                                         
+         AIF   ( NOT ( (('A' LE '&VAR') AND ('&VAR' LE 'B')).AAAA OR   -        
+                       (('C' LE '&VAR') AND ('&VAR' LE 'D'))  OR       -        
+                       (('E' LE '&VAR') AND ('&VAR' LE 'F'))  OR       -        
+                                                                       -
+                       ('&VAR' EQ '$') OR ('&VAR' EQ '_')     OR       -        
+                       ('&VAR' EQ '#') OR ('&VAR' EQ '@')              -        
+                     )                                                 -        
+               ).NAMERR         
+
+         INSTR  SYMBOL+1/12/,'&SECT ',                                 -        
+               &ARRAY(1),&ARRAY(2),&ARRAY(3),                          -        
+               &ARRAY(4),&ARRAY(5),&ARRAY(6),                          -        
+               &ARRAY(7),&ARRAY(8),&ARRAY(9),                          -        
+               &ARRAY(10),&ARRAY(11),                                  -        
+               &ARRAY(12),&ARRAY(13),                                  -        
+               &ARRAY(14),&ARRAY(15),.                                          
+
+LABEL    INSTR   OP1,                                                  -
+               OP2                         REMMARK(REMMARK)            -
+               REMARKS,                                                -12345678
+                                                
+
+INCMPLT
+LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
+
+B&VAR1.&VAR2.INCMPLT
+LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
+
+&VAR.C   INSTR   *-&P                    REMARK                                 
+LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
+
+B&VAR    INSTR OP
+LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
+
+LABEL    AIF    ( NOT                                                  -12345678invalid
+                'AAA'...T'A ),,REMARK                                        67
+LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
+
+         INSTR  &__V@R_GEN#                                                     

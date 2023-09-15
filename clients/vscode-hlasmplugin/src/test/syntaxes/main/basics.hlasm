@@ -1,0 +1,73 @@
+LABEL INSTR OP1
+LABEL INSTR OP1,OP2                                                             
+LABEL INSTR OP1,OP2
+
+LABEL INSTR OP1,OP2                                                    -12345678
+               REMARKS                                                  12345678
+LABEL INSTR OP1,OP2,                                                   -
+               OP3,                                                    -
+               OP4                                                      12345678
+LABEL INSTR OP1,OP2,                                                   -12345678
+               OP3,                                                    -12345678
+               OP4                                                      12345678
+
+LABEL INSTR OP1,OP2,                                                   -12346578
+               OP3
+
+LABEL INSTR OP1,OP2                                                    -
+               REMARKS,                                                -
+               REMARKS                                                  12345678
+
+LABEL INSTR OP1,OP2    REMARKS                                         -12345678
+               REMARKS,                                                -12346578
+               REMARKS                                                  12345678
+
+LABEL INSTR OP1,OP2,      REMARKS  REMARKS                             -
+               OP3, REMARKS                                            -12345678
+               OP4                                                     -12345678
+               REMARKS
+
+LABEL INSTR OP1,OP2,   REMARKS,                                        -12345678
+               OP3,OP4,       RERMARKS                                 -12346578
+               OP5,OP6        RERMARKS                                 -12346578
+               REMARKS,                                                -12346578
+               REMARKS                                                 -12346578
+               REMARKS                                          REMARKS-12346578
+               REMARKS                                                  12345678
+
+LABEL INSTR OP1,OP2,   REMARKS                                         -12345678
+               OP3,OP4,       REMARKS                                  -12346578
+               OP5,OP6                                                 -12346578
+               REMARKS                                                 -12346578
+               REMARKS                                                  12345678
+               
+
+
+LABEL INSTR OP1,OP2    REMARKS,                                        -12345678
+               REMARKS,REMARKS,       REMARKS                          -12346578
+               REMARKS,REMARKS                                         -12346578
+               REMARKS            REMARKS                              -12346578
+               REMARKS                                                  12345678
+
+LABEL INSTR      OP1                                                   -
+                                                                       -
+               REMARKS,                                                -
+                                                                       -
+               REMARKS REMARKS                                         -
+               REMARKS REMARKS                                         -
+               REMARKS REMARKS                                          12345678
+
+LABEL INSTR OP1,OP2    REMARKS                                         -        
+INVALID,                                                               -12346578 
+               REMARKS                                                  12345678
+
+
+LABEL INSTR                                                            -12345678
+               OP1,OP2,   REMARKS                                      -12345678
+               OP3,    REMARKS                                         -12346578
+               OP4                                                      12345678
+
+LABEL INSTR                                                            -12345678
+               OP1 REMARKS,   REMARKS                                  -12345678
+               REMARKS,    REMARKS                                     -12346578
+               REMARKS                                                  12345678

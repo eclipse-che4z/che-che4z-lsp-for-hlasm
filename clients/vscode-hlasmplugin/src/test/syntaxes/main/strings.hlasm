@@ -1,0 +1,54 @@
+&VAR1    INSTR 'A'
+&VAR2    INSTR '1'
+LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
+
+         INSTR  'A'.'AT'&VAR                                 XXXXXXXXXX-xxxxxxxxA
+
+         INSTR  T'&VAR                                    XXXXXXXXXXXXX-xxxxxxxxAA
+INVALID LINE
+         INSTR  T'&VAR                                    XXXXXXXXXXXXX-xxxxxxxxAA
+               REMARK
+         INSTR  T'&VAR                                                 -xxxxxxxxAA
+               REMARK
+         INSTR  T'&VAR                                                  
+         INSTR SYMBOL1=12+L'SYMBOL2                                             
+LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
+
+
+LABEL    INSTR ,,'STRING'
+LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
+
+LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-        
+               ARIABLE word true false YES NO       '                           
+LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
+               ARIABLE word true false YES NO        ,STRING            12345678
+LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
+               ARIABLE word true false YES NO       ' REMARK            12345678
+LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
+               ARIABLE word true false YES NO       ',OPERAND           12345678
+LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
+               ARIABLE word true false YES NO       ',OPERAND_OPERAND_O-12345678
+               PERAND,OPERAND
+LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
+               ARIABLE word true false YES NO       ',OPERAND_OPERAND_ -12345678
+               REMARK,REMARK REMARK
+LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
+               ARIABLE word true false YES NO       ',OPERAND_OPERAND_  12345678
+    INSTR,INSTR'
+LABEL    INSTR                                                         -
+               4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
+             ARIABLE word true false YES NO       ',OPERAND_OPERAND_ RR-123456
+               REMARK REMARK
+LABEL    INSTR 4,                                                      -12345678
+               '  Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
+            ARIABLE word true false YES NO       ',OPERAND_OPERAND_,   -12345678
+               OPERAND REMARK
+LABEL    INSTR 4,                                                      -12345678
+               '  Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
+          IVLD  a  random  string:   word 256 (&LBL DSECT), &&V        -12345678
+               ARIABLE word true false YES NO       ',OPERAND_OPERAND_,-12345678
+               OPERAND REMARK
+LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
+
+
+         AINSERT '&&__V@R SETA &VAR',BACK                                    

@@ -1,0 +1,29 @@
+>&LABEL   INSTR ('AA'.((2 EQ 2)) SLA 'AAA').SEQ
+#^^^^^^ source.hlasm variable.other.readwrite.hlasm
+#      ^^^^^^^^ source.hlasm entity.name.function.hlasm
+#              ^ source.hlasm
+#               ^ source.hlasm
+#                ^ source.hlasm string.hlasm
+#                 ^^^ source.hlasm string.hlasm
+#                    ^ source.hlasm punctuation.definition.tag.hlasm keyword.operator.hlasm
+#                     ^ source.hlasm
+#                      ^ source.hlasm
+#                       ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#                        ^ source.hlasm
+#                         ^^ source.hlasm punctuation.definition.tag.hlasm
+#                           ^ source.hlasm
+#                            ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#                             ^ source.hlasm
+#                              ^ source.hlasm
+#                               ^ source.hlasm
+#                                ^^^ source.hlasm punctuation.definition.tag.hlasm
+#                                   ^ source.hlasm
+#                                    ^ source.hlasm string.hlasm
+#                                     ^^^^ source.hlasm string.hlasm
+#                                         ^ source.hlasm
+#                                          ^^^^ source.hlasm keyword.control.hlasm
+>
+>.SEQ     END
+#^^^^ source.hlasm keyword.control.hlasm
+#    ^^^^^^^^ source.hlasm entity.name.function.hlasm
+>

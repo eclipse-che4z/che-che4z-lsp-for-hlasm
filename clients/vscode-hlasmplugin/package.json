@@ -20,7 +20,7 @@
     "z/OS",
     "zos",
     "zowe",
-    "ibm assembler",
+    "High Level Assembler",
     "endevor",
     "multi-root ready"
   ],
@@ -60,7 +60,8 @@
     "semantic-release": "^21.0.5",
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "vscode-tmgrammar-test": "^0.1.1"
   },
   "dependencies": {
     "@vscode/extension-telemetry": "^0.7.5",
@@ -70,16 +71,18 @@
   },
   "scripts": {
     "postinstall": "node ./build/bin/postinstall.js",
-    "compile": "node ./build/bin/bundle.mjs extension node",
+    "compile": "node ./build/bin/bundle.mjs extension node && npm run generate:tmgrammar",
     "compile:test": "npm run compile && tsc -p ./tsconfig.json",
-    "compile:web": "node ./build/bin/bundle.mjs extension web",
-    "compile:webtest": "node ./build/bin/bundle.mjs both web",
+    "compile:web": "node ./build/bin/bundle.mjs extension web && npm run generate:tmgrammar",
+    "compile:webtest": "node ./build/bin/bundle.mjs both web && npm run generate:tmgrammar",
+    "generate:tmgrammar": "tsc -p ./scripts/syntaxes/tsconfig.json && node ./lib_syntaxes/tmgrammarGenerator.js",
     "clean": "node ./build/bin/clean.js",
-    "test": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./dist_test/test/runTest.js",
-    "test:web": "npm run compile:webtest && node ./build/bin/prepareWorkspace.js && npx vscode-test-web --browserType=chromium --coi --extensionDevelopmentPath=. --headless --verbose --extensionTestsPath=dist_test/index.web.js dist_test/workspace/",
-    "test:wasm": "npm run compile:test && node ./build/bin/prepareWorkspace.js wasm && node ./dist_test/test/runTest.js",
-    "test:insiders": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./dist_test/test/runTest.js insiders",
-    "test:theia": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./build/bin/theiaTest.js",
+    "test": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./dist_test/test/runTest.js && npm run test:tmgrammar",
+    "test:web": "npm run compile:webtest && node ./build/bin/prepareWorkspace.js && npx vscode-test-web --browserType=chromium --coi --extensionDevelopmentPath=. --headless --verbose --extensionTestsPath=dist_test/index.web.js dist_test/workspace/ && npm run test:tmgrammar",
+    "test:wasm": "npm run compile:test && node ./build/bin/prepareWorkspace.js wasm && node ./dist_test/test/runTest.js && npm run test:tmgrammar",
+    "test:insiders": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./dist_test/test/runTest.js insiders && npm run test:tmgrammar",
+    "test:theia": "npm run compile:test && node ./build/bin/prepareWorkspace.js && npm run test:tmgrammar && node ./build/bin/theiaTest.js",
+    "test:tmgrammar": "vscode-tmgrammar-snap -g syntaxes/hlasm.tmLanguage.json src/test/syntaxes/**/*.hlasm && vscode-tmgrammar-snap -g syntaxes/hlasmListing.tmLanguage.json src/test/syntaxes/**/*.listing",
     "run:web": "npx vscode-test-web --browserType=chromium --coi --extensionDevelopmentPath=. --open-devtools --verbose ../../example_workspace/"
   },
   "browser": "./dist/extension.js",
@@ -203,9 +206,29 @@
         "path": "./syntaxes/hlasm.tmLanguage.json"
       },
       {
+        "scopeName": "source.hlasmGeneral",
+        "path": "./syntaxes/hlasmGeneral.tmLanguage.json"
+      },
+      {
         "language": "hlasmListing",
         "scopeName": "source.hlasmListing",
         "path": "./syntaxes/hlasmListing.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.hlasmListingGeneral",
+        "path": "./syntaxes/hlasmListingGeneral.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.hlasmListingGeneralLong",
+        "path": "./syntaxes/hlasmListingGeneralLong.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.hlasmListingEndevor",
+        "path": "./syntaxes/hlasmListingEndevor.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.hlasmListingEndevorLong",
+        "path": "./syntaxes/hlasmListingEndevorLong.tmLanguage.json"
       }
     ],
     "semanticTokenTypes": [

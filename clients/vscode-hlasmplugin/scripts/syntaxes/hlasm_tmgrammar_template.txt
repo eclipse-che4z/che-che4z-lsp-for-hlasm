@@ -1,15 +1,30 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "IBM HLASM",
-  "scopeName": "source.hlasm",
+  "name": "${grammarName}$",
+  "scopeName": "source.${scope}$",
   "patterns": [
     {
-      "include": "#hlasm_syntax"
+      "include": "#${entryPattern}$"
     }
   ],
   "repository": {
+    "code_block": {
+      "begin": "^${listingOffset}$${codeBlockBegin}$",
+      "end": "^${listingOffset}$.*(?:Relocation Dictionary|Ordinary Symbol and Literal Cross Reference|Macro and Copy Code Source Summary|Dsect Cross Reference|Using Map|General Purpose Register Cross Reference|Diagnostic Cross Reference and Assembler Summary).*Page....\\d(?<=^${listingOffset}$.{120}).*",
+      "patterns": [
+        {
+          "include": "#hlasm_syntax"
+        }
+      ]
+    },
     "hlasm_syntax": {
       "patterns": [
+        {
+          "include": "#${pageAnnotation}$"
+        },
+        {
+          "include": "#${asma}$"
+        },
         {
           "include": "#lineComment"
         },
@@ -21,11 +36,23 @@
         }
       ]
     },
+    "asma": {
+      "patterns": [
+        {
+          "match": "^${listingOffset}$\\*\\* ASMA...[I|N|W].*",
+          "name": "string.hlasm markup.italic"
+        },
+        {
+          "match": "^${listingOffset}$\\*\\* ASMA(?:(?:...[E|S|C|U])|(?:CMS...E)).*",
+          "name": "invalid.illegal markup.italic"
+        }
+      ]
+    },
     "lineComment": {
       "patterns": [
         {
-          "begin": "(?=^)(\\*|\\.\\*)",
-          "end": "((?<=^.{71}\\s.*)|(?<=^.{0,71}))$",
+          "begin": "^${listingDetails}$(\\*|\\.\\*)",
+          "end": "((?<=^${listingDetails}$(.{71}\\s.*|.{0,71}))${noPrecedingCodeBlock}$)$",
           "applyEndPatternLast": 1,
           "beginCaptures": {
             "1": {
@@ -38,6 +65,9 @@
           },
           "patterns": [
             {
+              "include": "#${pageAnnotation}$"
+            },
+            {
               "include": "#remarksLine"
             }
           ]
@@ -47,10 +77,22 @@
     "parseLine": {
       "patterns": [
         {
-          "begin": "^(?=.{1,71})",
-          "end": "((?<=^.{71}\\s.*)|(?<=^.{0,71}))$",
+          "begin": "(^${listingDetails}$)(?=.{1,71})",
+          "end": "((?<=^${listingDetails}$(.{71}\\s.*|.{0,71}))${noPrecedingCodeBlock}$)$",
           "applyEndPatternLast": 1,
+          "beginCaptures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#listingSyntax"
+                }
+              ]
+            }
+          },
           "patterns": [
+            {
+              "include": "#${pageAnnotation}$"
+            },
             {
               "include": "#nameField"
             },
@@ -68,15 +110,18 @@
       ]
     },
     "operandsAndRemarks": {
-      "begin": "\\s*(?=\\S)(?<=^.{4,71})",
-      "end": "((?<=^.{71}\\s.*)|(?<=^.{0,71}))$",
+      "begin": "\\s*(?=\\S)(?<=^${listingDetails}$.{4,71})",
+      "end": "((?<=^${listingDetails}$(.{71}\\s.*|.{0,71}))${noPrecedingCodeBlock}$)$",
       "applyEndPatternLast": 0,
       "patterns": [
+        {
+          "include": "#${pageAnnotation}$"
+        },
         {
           "include": "#illegalMultilineColumns"
         },
         {
-          "match": "(^\\s{15})",
+          "match": "(^${listingDetails}$\\s{15})",
           "comment": "Just to get rid of the spaces"
         },
         {
@@ -86,7 +131,7 @@
           "include": "#asmArguments"
         },
         {
-          "match": "(?<=,)\\s(.*)(?<=^.{0,71})",
+          "match": "(?<=,)\\s(.*)(?<=^${listingDetails}$.{0,71})",
           "comment": "Operands will continue on next line",
           "captures": {
             "1": {
@@ -99,11 +144,14 @@
           }
         },
         {
-          "begin": "(?<!,)(?=\\s(?<=^.{0,71}))",
-          "end": "((?<=^.{71}\\s.*)|(?<=^.{0,71}))$",
+          "begin": "(?<!,)(?=\\s(?<=^${listingDetails}$.{0,71}))",
+          "end": "((?<=^${listingDetails}$(.{71}\\s.*|.{0,71}))${noPrecedingCodeBlock}$)$",
           "applyEndPatternLast": 1,
           "comment": "Operands ended on this line",
           "patterns": [
+            {
+              "include": "#${pageAnnotation}$"
+            },
             {
               "include": "#remarksLine"
             }
@@ -128,7 +176,7 @@
       ]
     },
     "illegalMultilineColumns": {
-      "match": "(^\\s*\\S.*)(?<=^.{0,15})",
+      "match": "(^${listingDetails}$\\s*\\S.*)(?<=^${listingDetails}$.{0,15})",
       "name": "invalid.illegal"
     },
     "asmArguments": {
@@ -140,7 +188,7 @@
           "include": "#openEndedArgs"
         },
         {
-          "match": "([^\\s=(),'*/+-]+)(?<=^.{0,71})",
+          "match": "([^\\s=(),'*/+-]+)(?<=^${listingDetails}$.{0,71})",
           "captures": {
             "1": {
               "name": "punctuation.definition.tag.hlasm",
@@ -157,7 +205,7 @@
     "quoteType": {
       "patterns": [
         {
-          "match": "([^a-zA-Z@$#_0-9()']*?)([LKNTlknt])'(?<=^.{0,71})",
+          "match": "([^a-zA-Z@$#_0-9()']*?)([LKNTlknt])'(?<=^${listingDetails}$.{0,71})",
           "captures": {
             "1": {
               "name": "keyword.control.hlasm",
@@ -175,7 +223,7 @@
       ]
     },
     "openEndedArgs": {
-      "begin": "\\s*(?=(?:[('])(?<=^.{0,71}))",
+      "begin": "\\s*(?=(?:[('])(?<=^${listingDetails}$.{0,71}))",
       "end": "(?=.*)",
       "applyEndPatternLast": 1,
       "beginCaptures": {
@@ -190,6 +238,9 @@
       },
       "patterns": [
         {
+          "include": "#${pageAnnotation}$"
+        },
+        {
           "include": "#parenthesis"
         },
         {
@@ -200,10 +251,13 @@
     "parenthesis": {
       "patterns": [
         {
-          "begin": "(?<!^)[(]\\s*(?<=^.{0,71})",
-          "end": "([)](?<=^.{0,71}))|(((?<=^.{71}\\s.*)|(?<=^.{0,71}))$)",
+          "begin": "(?<!^${listingDetails}$)[(]\\s*(?<=^${listingDetails}$.{0,71})",
+          "end": "([)](?<=^${listingDetails}$.{0,71}))|(((?<=^${listingDetails}$(.{71}\\s.*|.{0,71}))${noPrecedingCodeBlock}$)$)",
           "applyEndPatternLast": 0,
           "patterns": [
+            {
+              "include": "#${pageAnnotation}$"
+            },
             {
               "include": "#illegalMultilineColumns"
             },
@@ -220,8 +274,8 @@
     "stringType": {
       "patterns": [
         {
-          "begin": "(?<!^)(')(?<=^.{0,71})",
-          "end": "((.*?')(?<=^.{0,71})|([^']*)(?<=^.{71})(?=\\s)|(^.{0,71}$))",
+          "begin": "(?<!^${listingDetails}$)(')(?<=^${listingDetails}$.{0,71})",
+          "end": "(?<=^${listingDetails}$.*?)((.*?')(?<=^${listingDetails}$.{0,71})|([^']*)(?<=^${listingDetails}$.{71})(?=\\s)|(^${listingDetails}$.{0,71}$))|(((?<=^${listingDetails}$(.{71}\\s.*|.{0,71}))${noPrecedingCodeBlock}$)$)",
           "applyEndPatternLast": 0,
           "beginCaptures": {
             "1": {
@@ -239,6 +293,9 @@
           },
           "patterns": [
             {
+              "include": "#${pageAnnotation}$"
+            },
+            {
               "include": "#stringContents"
             }
           ]
@@ -251,7 +308,7 @@
           "include": "#illegalMultilineColumns"
         },
         {
-          "match": "(&{2,}|[^&]+)(?<=^.{0,71})",
+          "match": "(?<=^${listingDetails}$.*?)(&{2,}|[^&]+)(?<=^${listingDetails}$.{0,71})",
           "name": "string.hlasm"
         },
         {
@@ -305,48 +362,82 @@
       ]
     },
     "sequenceSymbolNameField": {
-      "match": "^\\.[A-Za-z@#$_][A-Za-z@#$_0-9]*(?<=^.{0,71})",
+      "match": "(?<=^${listingDetails}$)\\.[A-Za-z@#$_][A-Za-z@#$_0-9]*(?<=^${listingDetails}$.{0,71})",
       "name": "keyword.control.hlasm"
     },
     "sequenceSymbolOperandField": {
-      "match": "\\.[A-Za-z@#$_][A-Za-z@#$_0-9]*(?=,|\\s|$|(?<=^.{71}))(?<=^.{0,71})",
+      "match": "\\.[A-Za-z@#$_][A-Za-z@#$_0-9]*(?=,|\\s|$|(?<=^${listingDetails}$.{71}))(?<=^${listingDetails}$.{0,71})",
       "name": "keyword.control.hlasm"
     },
     "instruction": {
-      "match": "(?<=^\\S*)\\s+\\S+(?<=^.{0,71})",
+      "match": "(?<=^${listingDetails}$\\S*)\\s+\\S+(?<=^${listingDetails}$.{0,71})",
       "name": "entity.name.function.hlasm"
     },
     "remark": {
-      "match": "(\\S+)(?<=^.{0,71})",
+      "match": "(\\S+)(?<=^${listingDetails}$.{0,71})",
       "name": "comment.hlasm"
     },
     "operators": {
-      "match": "[=(),*/+-\\.](?<=^.{0,71})",
+      "match": "[=(),*/+-\\.](?<=^${listingDetails}$.{0,71})",
       "name": "keyword.operator.hlasm"
     },
     "numbers": {
-      "match": "(?<=[=(),*\\s+])-?\\d*((?=[=(),*+\\s]|$)(?<=^.{0,71}))",
+      "match": "(?<=[=(),*\\s+])-?\\d*((?=[=(),*+\\s]|$)(?<=^${listingDetails}$.{0,71}))",
       "name": "constant.numeric.hlasm"
     },
     "variable": {
-      "match": "&(([A-Za-z@#$_][A-Za-z@#$_0-9]*)|([(].*?[)]))(?<=^.{0,71})",
+      "match": "&(([A-Za-z@#$_][A-Za-z@#$_0-9]*)|([(].*?[)]))(?<=^${listingDetails}$.{0,71})",
       "name": "variable.other.readwrite.hlasm"
     },
     "ordinarySymbol": {
-      "match": "[A-Za-z@#$_][A-Za-z@#$_0-9]*(?<=^.{0,71})",
+      "match": "[A-Za-z@#$_][A-Za-z@#$_0-9]*(?<=^${listingDetails}$.{0,71})",
       "name": "support.class.hlasm"
     },
     "asmSpecialStatements": {
-      "match": "(?<=[=(),*+\\s])=?\\d*(A|B|C|D|E|F|G|H|P|V|X|Z)(L\\d*)?((?=[=(),*\\s+]|$)(?<=^.{0,71}))",
+      "match": "(?<=[=(),*+\\s])=?\\d*(A|B|C|D|E|F|G|H|P|V|X|Z)(L\\d*)?((?=[=(),*\\s+]|$)(?<=^${listingDetails}$.{0,71}))",
       "name": "punctuation.definition.tag.hlasm"
     },
     "continuationSymbol": {
-      "match": "\\s*(?<=^.{71})\\S",
+      "match": "\\s*(?<=^${listingDetails}$.{71})\\S",
       "name": "keyword.other.hlasm"
     },
     "sequenceNumbers": {
-      "match": "\\s*.?(?<=^.{72}).+$",
+      "match": "\\s*.?(?<=^${listingDetails}$.{72}).+$",
       "name": "invalid.ignored"
+    },
+    "listingSyntax": {
+      "match": "^${listingOffset}$\\S+\\s([0-3][0-9A-F]{3}|[4-9AB][0-9A-F]{3} [0-9A-F]{4}|[CDEF][0-9A-F]{3} [0-9A-F]{4} [0-9A-F]{4}) ",
+      "captures": {
+        "1": {
+          "patterns": [
+            {
+              "include": "#objectCode"
+            }
+          ]
+        }
+      }
+    },
+    "objectCode": {
+      "patterns": [
+        {
+          "match": "(.{2})(.*)",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.hlasm"
+            },
+            "2": {
+              "name": "constant.numeric.hlasm"
+            }
+          }
+        }
+      ]
+    },
+    "pageAnnotation": {
+      "begin": "(?=^${listingOffset}$.{111}Page....\\d.*)",
+      "end": "^${listingOffset}$${codeBlockBegin}$"
+    },
+    "emptyRule": {
+      "comment": "Just an empty rule"
     }
   }
 }

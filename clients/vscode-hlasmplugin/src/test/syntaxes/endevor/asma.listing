@@ -1,0 +1,123 @@
+»                                                                                                                                    
+                                         High Level Assembler Option Summary                   (PTF AB12345)   Page    1            
+                                                                                            HLASM R1.0  2000/01/01 00.00            
+  No Overriding ASMAOPT Parameters                                                                                                  
+  Overriding Parameters-  ADATA,TERM,LIST(121)                                                                                      
+  No Process Statements                                                                                                             
+                                                                                                                                    
+                                                                                                                                    
+  Options for this Assembly                                                                                                         
+3 PARM/OPTION         ADATA                                                                                                         
+                      ALIGN                                                                                                         
+                    NOASA                                                                                                           
+                      ASCII(00819)                                                                                                  
+                      BATCH                                                                                                         
+                      CA(LOCAL)                                                                                                     
+                      CE(LOCAL)                                                                                                     
+                      CODEPAGE(01148)                                                                                               
+                    NOCOMPAT                                                                                                        
+                      CU(LOCAL)                                                                                                     
+                    NODATAMAP                                                                                                       
+                    NODBCS                                                                                                          
+                    NODECK                                                                                                          
+                      DXREF                                                                                                         
+                      EBCDIC(00037)                                                                                                 
+                      ESD                                                                                                           
+                    NOEXIT                                                                                                          
+                      FAIL(NOMSG,NOMNOTE,MAXERRS(500))                                                                              
+                      FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,RENT,NOSIGNED,NOSUBSTR,NOTRUNC,                
+                           USING0)                                                                                                  
+                    NOFOLD                                                                                                          
+                    NOGOFF                                                                                                          
+                      ILMA                                                                                                          
+                    NOINFO                                                                                                          
+                      LANGUAGE(EN)                                                                                                  
+                    NOLIBMAC                                                                                                        
+                      LINECOUNT(60)                                                                                                 
+3 PARM/OPTION         LIST(121)                                                                                                     
+                      MACHINE(,NOLIST)                                                                                              
+                      MXREF(SOURCE)                                                                                                 
+                      OBJECT                                                                                                        
+                      OPTABLE(UNI,NOLIST)                                                                                           
+                    NOPCONTROL                                                                                                      
+                    NOPESTOP                                                                                                        
+                    NOPROFILE                                                                                                       
+                    NORA2                                                                                                           
+                    NORENT                                                                                                          
+                      RLD                                                                                                           
+                      RXREF                                                                                                         
+                      SECTALGN(8)                                                                                                   
+                      SIZE(MAX)                                                                                                     
+                    NOSUPRWARN                                                                                                      
+                      SYSPARM()                                                                                                     
+3 PARM/OPTION         TERM(WIDE)                                                                                                    
+                    NOTEST                                                                                                          
+                      THREAD                                                                                                        
+                    NOTRANSLATE                                                                                                     
+                      TYPECHECK(MAGNITUDE,REGISTER,SIGNED)                                                                          
+                      UNICODE(01200)                                                                                                
+»                                                                                                                                    
+                                         High Level Assembler Option Summary                   (PTF AB12345)   Page    2            
+                                                                                            HLASM R1.0  2000/01/01 00.00            
+                      USING(NOLIMIT,MAP,WARN(15))                                                                                   
+                    NOWORKFILE                                                                                                      
+                      XREF(SHORT,UNREFS)                                                                                            
+                                                                                                                                    
+  No Overriding DD Names                                                                                                            
+»                                                                                                                                    
+                                                                                                               Page    3            
+  Active Usings: None                                                                                                               
+  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R1.0  2000/01/01 00.00            
+                                      1 LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED                                          
+** ASMA057E Undefined operation code - INSTR                                                                                        
+** ASMA435I Record 1 in $DATASET.$DATASE.$DATA.$DATASET.$DATASET on volume: VOL123                                                  
+                                      2 ** ASMA123I - This is just a remark in general hlasm grammar                                
+                                      3 ** ASMA123E - This is just a remark in general hlasm grammar                                
+                                      4 LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED                                          
+** ASMA057E Undefined operation code - INSTR                                                                                        
+** ASMA435I Record 4 in $DATASET.$DATASE.$DATA.$DATASET.$DATASET on volume: VOL123                                                  
+** ASMA140W END record missing                                                                                                      
+** ASMA435I Record 4 in $DATASET.$DATASE.$DATA.$DATASET.$DATASET on volume: VOL123                                                  
+»                                                                                                                                    
+                                   General Purpose Register Cross Reference                                    Page    4            
+ Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R1.0  2000/01/01 00.00            
+    0(0)    (no references identified)                                                                                              
+    1(1)    (no references identified)                                                                                              
+    2(2)    (no references identified)                                                                                              
+    3(3)    (no references identified)                                                                                              
+    4(4)    (no references identified)                                                                                              
+    5(5)    (no references identified)                                                                                              
+    6(6)    (no references identified)                                                                                              
+    7(7)    (no references identified)                                                                                              
+    8(8)    (no references identified)                                                                                              
+    9(9)    (no references identified)                                                                                              
+   10(A)    (no references identified)                                                                                              
+   11(B)    (no references identified)                                                                                              
+   12(C)    (no references identified)                                                                                              
+   13(D)    (no references identified)                                                                                              
+   14(E)    (no references identified)                                                                                              
+   15(F)    (no references identified)                                                                                              
+»                                                                                                                                    
+                                  Diagnostic Cross Reference and Assembler Summary                             Page    5            
+                                                                                            HLASM R1.0  2000/01/01 00.00            
+Statements Flagged                                                                                                                  
+    1(P1,1), 4(P1,4), 5(P1,4)                                                                                                       
+                                                                                                                                    
+      3 Statements Flagged in this Assembly        8 was Highest Severity Code                                                      
+HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 1.0, PTF AB12345                                                                            
+SYSTEM: z/OS 01.00.00              JOBNAME: JOB         STEPNAME: STEP1      PROCSTEP: (NOPROC)                                     
+Unicode Module:   ASMA047C   From Page     1148   To Page    17584           ECECP: International 1                                 
+Data Sets Allocated for this Assembly                                                                                               
+ Con DDname   Data Set Name                                Volume  Member                                                           
+  P1 SYSIN    DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
+     SYSADATA DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
+     SYSLIN   /my/path/to/asma.o                                                                                                    
+     SYSPRINT /my/path/to/asma.o.lst                                                                                                
+     SYSTERM  DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
+                                                                                                                                    
+1234567B allocated to Buffer Pool       Storage required     200K                                                                   
+      4 Primary Input Records Read            0 Library Records Read                  0 Work File Reads                             
+      0 ASMAOPT Records Read                123 Primary Print Records Written         0 Work File Writes                            
+      0 Object Records Written               17 ADATA Records Written                                                               
+Assembly Start Time: 00.11.22 Stop Time: 00.11.22 Processor Time: 00.11.22.3333                                                     
+Return Code 008                                                                                                                     

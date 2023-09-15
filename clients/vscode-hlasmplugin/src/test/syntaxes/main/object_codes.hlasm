@@ -1,0 +1,16 @@
+         CSECT
+
+         MACRO
+         MAC   &A,&LBLNAME
+         PR
+&LBLNAME LA 0,&A
+         BPRP  0,&LBLNAME,&LBLNAME
+         MEND
+
+         MAC 1,LBL1
+         MAC 2,LBL2
+         MAC 3,LBL3
+         MAC 4,LBL4
+         MAC 5,LBL5
+
+         END

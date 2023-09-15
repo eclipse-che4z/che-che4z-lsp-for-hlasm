@@ -1,0 +1,23 @@
+         INSTR OP1,OP2              REMARK(REM)                                 
+         INSTR OP1,12,OP2-ARR(R15)  REMARK(REM)                                 
+
+         INSTR ARR(12),=SYM'F12345678'                           
+         INSTR OP1,=ARR(1234-2)
+         INSTR OP1,=ARR(1234-2)(something                              X
+               something) REMARK
+         INSTR SYMBOL+12(34),=C'&&&&'
+
+
+         AIF   (&@VAR1 EQ 1).seq                                          
+         AIF   ('&VAR' EQ 'N').seq                                              
+         AIF   ('&VAR1' EQ 'YES    '(1,K'&VAR2)).seq                           
+         AIF   ('&VAR'(1,1) EQ '&&').seq                                12345678
+         AIF   ( NOT ( (('A' LE '&VAR') AND ('&VAR' LE 'B'))  OR       X        
+(('C' LE '&VAR') AND ('&VAR' LE 'D'))  REMARK                          X12345678
+
+&(__V@R_V&R.#) SETA &VAR
+&(__V@R_V&R.#)(&VAR) SETC '&VAR'
+LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED
+
+&(__V@R_V&R.#)(&VAR) SETC '&VAR
+LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED
