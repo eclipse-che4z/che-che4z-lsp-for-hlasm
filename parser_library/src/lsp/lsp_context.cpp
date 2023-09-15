@@ -16,7 +16,6 @@
 
 #include <cassert>
 #include <limits>
-#include <regex>
 #include <sstream>
 #include <string_view>
 #include <type_traits>
@@ -29,6 +28,7 @@
 #include "item_convertors.h"
 #include "lsp/macro_info.h"
 #include "utils/similar.h"
+#include "utils/string_operations.h"
 #include "utils/unicode_text.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -640,12 +640,23 @@ std::string lsp_context::hover(const utils::resource::resource_location& documen
 
 bool lsp_context::should_complete_instr(const text_data_view& text, position pos) const
 {
-    bool line_before_continued = pos.line > 0 ? is_continued_line(text.get_line(pos.line - 1)) : false;
+    if (pos.line > 0 && is_continued_line(text.get_line(pos.line - 1)))
+        return false;
 
     std::string_view line_so_far = text.get_line_beginning_at(pos);
 
-    static const std::regex instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)");
-    return !line_before_continued && std::regex_match(line_so_far.begin(), line_so_far.end(), instruction_regex);
+    if (line_so_far.empty() || line_so_far.starts_with("*") || line_so_far.starts_with(".*"))
+        return false;
+
+    if (line_so_far.front() != ' ')
+    {
+        auto next_space = line_so_far.find(' ');
+        if (next_space == std::string_view::npos)
+            return false;
+        line_so_far.remove_prefix(next_space);
+    }
+    utils::trim_left(line_so_far);
+    return line_so_far.find(' ') == std::string_view::npos;
 }
 
 std::vector<std::pair<const context::section*, context::id_index>> gather_reachable_sections(
