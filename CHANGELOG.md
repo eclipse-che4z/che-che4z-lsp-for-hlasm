@@ -1,3 +1,41 @@
+## [1.10.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.9.0...1.10.0) (2023-09-22)
+
+
+### Features
+
+* Add reachable ordinary symbols into the completion list ([41ba219](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/41ba219bb59b6eebb942c532ba4f2db5e7803055))
+* Show active USINGs in the instruction hover text ([bbe0c8b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/bbe0c8b63111757406e987af7a3c98db4102081a))
+* Support floating point special values ([de15a8c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/de15a8cf8be8232c0725e8e2e47fda930a9249d3))
+* Support Web extension environment ([30c2fb2](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/30c2fb2c49972a624b9f59a51cfc00505421af13))
+
+
+### Other changes
+
+* Cheaper address copies ([0d4d8ec](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0d4d8ec082abf2cb2353b9c9928f0c3334baba50))
+* Cleanup headers ([c9af94a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c9af94a34efb0480731388991b8d6f2083d65918))
+* Enhance LSP implementation compatibility ([866fc6d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/866fc6df2545dcf17d1849b14af1459209ebe232))
+* External files upgrade ([a7b2fd3](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a7b2fd3f0eb772036986ddcd37b688c48805bf69))
+* Remove Theia compatibility layer ([c3a888e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c3a888e2dfe96d90b8b0ea83c17afc055fe1b713))
+* Resolve deprecated sonar.login and java version ([fb1b54f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/fb1b54f65a4dec3ce651f249b3ed9857363165e2))
+* Simpler opcodes structures ([5196287](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5196287cfb56963067cad1e41ad6fa0392f302ab))
+* Simpler structure for lookahead set ([9d50f09](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9d50f092425d5708782faa03b126c2831f381609))
+* Sonar scanner update ([1c35006](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1c35006750dd85e63c8cf91964f026d4352bc19e))
+
+
+### Fixes
+
+* "Diagnostics suppressed" informational message may be incorrectly generated ([1c94cc6](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1c94cc6bda75677fc3050cc280f1a7543119bd7a))
+* Auto-select WebAssembly image on platforms without native support (fixes eclipse-che4z/che-che4z-lsp-for-hlasm[#283](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/issues/283)) ([bcf91c9](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/bcf91c9e90318b760224cbe0ab0678abf89049c2))
+* **ci:** Minify client code ([807ee77](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/807ee77e93c8d71557714afcfc8bf4e197fd5563))
+* Enhanced multiline support in TextMate grammar for listings ([ebed0f3](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ebed0f3795ee8c144587f86762bc218e02580312))
+* Implicit workspaces should not attempt reading configuration files ([239bf21](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/239bf2166d18a476f7386a1ca36ddddb5ce2fbd3))
+* Incorrect items in the completion list ([fed9950](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/fed995048d81cd8d1c851b8e18ea0ce647d378d8))
+* Make address operations less expensive ([5bcdc67](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5bcdc6757fb2aac42d8d19672350000e1dd33498))
+* Program to processor group mapping precedence ([ad1c27c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ad1c27ccf3d6f029062a6efba715ae301d5bed27))
+* Querying current directory fails on Windows (WASM) ([75e077b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/75e077b3c7bb2e8404a09c721d9dff9604f93651))
+* Rework symbol dependency structures ([5ce2c92](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5ce2c929b583f88764c26db2d2b1ba9cf12047ee))
+* The language server may crash while accessing content of virtual files ([a7fc721](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a7fc721cdd3e2e61bccbafc88e0991eb02b7ae60))
+
 ## [1.9.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.8.0...1.9.0) (2023-08-03)
 
 

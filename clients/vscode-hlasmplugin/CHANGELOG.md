@@ -1,6 +1,6 @@
 # Changelog
 
-## ****Unreleased****
+## [1.10.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.9.0...1.10.0) (2023-09-22)
 
 #### Added
 - Support floating point special values
