@@ -1,7 +1,7 @@
 <div id="header" align="center">
 
 [![GitHub issues](https://img.shields.io/github/issues-raw/eclipse-che4z/che-che4z-lsp-for-hlasm)](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/issues)
-[![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://communityinviter.com/apps/che4z/code4z)
+[![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://che4z.slack.com)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=eclipse-che4z_che-che4z-lsp-for-hlasm&metric=alert_status)](https://sonarcloud.io/dashboard?id=eclipse-che4z_che-che4z-lsp-for-hlasm)
 
 </div>
