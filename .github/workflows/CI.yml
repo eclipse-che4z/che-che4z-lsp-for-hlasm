@@ -229,6 +229,8 @@ jobs:
         run: chmod +x bin/${{ matrix.native }}/language_server
       - name: NPM CI
         run: npm ci
+      - name: Workaround for broken Node 18.18.0
+        run: mkdir dist_test && cp -r src/test/workspace/ dist_test/workspace/
       - name: Extension Test
         run: ${{ env.XVFB }} npm run test
       - name: Extension Test WASM
