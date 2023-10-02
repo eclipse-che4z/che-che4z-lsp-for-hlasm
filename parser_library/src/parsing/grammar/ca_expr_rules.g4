@@ -314,30 +314,6 @@ data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr,
 		$value = $id.name;
 	};
 
-vs_id returns [id_index name]
-	: ORDSYMBOL
-	{
-		std::string text = $ORDSYMBOL->getText();
-		auto first = $ORDSYMBOL;
-		auto last = first;
-	}
-	(
-		NUM
-		{
-			text += $NUM->getText();
-			last = $NUM;
-		}
-		|
-		ORDSYMBOL
-		{
-			text += $ORDSYMBOL->getText();
-			last = $ORDSYMBOL;
-		}
-	)*
-	{
-		$name = parse_identifier(std::move(text), provider.get_range(first, last));
-	};
-
 var_def returns [vs_ptr vs]
 	: var_def_name var_def_substr
 	{

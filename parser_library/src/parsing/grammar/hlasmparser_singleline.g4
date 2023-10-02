@@ -211,24 +211,27 @@ lab_instr returns [std::optional<std::string> op_text, range op_range, size_t op
 		_errHandler->recover(this, _localctx->exception);
 	}
 
-num_ch
-	: NUM+;
-
 num returns [self_def_t value]
-	: num_ch									{$value = parse_self_def_term("D",get_context_text($num_ch.ctx),provider.get_range($num_ch.ctx));};
+	: NUM									{$value = parse_self_def_term("D",$NUM->getText(),provider.get_range($NUM));};
 
 signed_num_ch
-	: MINUS? NUM+;
+	: MINUS? NUM;
 
 id returns [id_index name, id_index using_qualifier]
 	: f=id_no_dot {$name = $f.name;} (dot s=id_no_dot {$name = $s.name; $using_qualifier = $f.name;})?;
 
-id_no_dot returns [id_index name] locals [std::string buffer]
-	: ORDSYMBOL { $buffer = $ORDSYMBOL->getText(); } (l=(IDENTIFIER|NUM|ORDSYMBOL) {$buffer.append($l->getText());})*
+id_no_dot returns [id_index name]
+	: ORDSYMBOL
 	{
-		$name = parse_identifier(std::move($buffer),provider.get_range($ORDSYMBOL,$l?$l:$ORDSYMBOL));
+		$name = parse_identifier($ORDSYMBOL->getText(),provider.get_range($ORDSYMBOL));
 	}
 	;
+
+vs_id returns [id_index name]
+	: ORDSYMBOL
+	{
+		$name = parse_identifier($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL));
+	};
 
 remark
 	: (DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|NUM|VERTICAL|ORDSYMBOL|SPACE|ATTR)*;

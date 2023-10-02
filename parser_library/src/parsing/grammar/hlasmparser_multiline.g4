@@ -230,6 +230,30 @@ id_no_dot returns [id_index name] locals [std::string buffer]
 	}
 	;
 
+vs_id returns [id_index name]
+	: ORDSYMBOL
+	{
+		std::string text = $ORDSYMBOL->getText();
+		auto first = $ORDSYMBOL;
+		auto last = first;
+	}
+	(
+		NUM
+		{
+			text += $NUM->getText();
+			last = $NUM;
+		}
+		|
+		ORDSYMBOL
+		{
+			text += $ORDSYMBOL->getText();
+			last = $ORDSYMBOL;
+		}
+	)*
+	{
+		$name = parse_identifier(std::move(text), provider.get_range(first, last));
+	};
+
 remark
 	: (DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|NUM|VERTICAL|ORDSYMBOL|SPACE|ATTR)*;
 
