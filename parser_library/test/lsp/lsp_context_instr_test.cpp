@@ -93,3 +93,25 @@ TEST_F(lsp_context_instr, ADDFRR_loaded_changed_instr_set)
     EXPECT_TRUE(result_z15);
     EXPECT_TRUE(result_xa);
 }
+
+TEST(lsp_completion_instr, consistency)
+{
+    hlasm_plugin::utils::resource::resource_location empty_loc;
+    std::string input = R"(
+ LA   
+  LA  
+   LA 
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    for (size_t l = 1; l <= 3; ++l)
+    {
+        for (size_t c = 0; c < 3; ++c)
+        {
+            EXPECT_TRUE(std::holds_alternative<completion_list_instructions>(
+                a.context().lsp_ctx->completion(empty_loc, { l, l + c }, 0, completion_trigger_kind::invoked)));
+        }
+    }
+}
