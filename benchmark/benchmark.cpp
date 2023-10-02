@@ -27,7 +27,9 @@
 #include "diagnostic_counter.h"
 #include "nlohmann/json.hpp"
 #include "utils/path.h"
+#include "utils/path_conversions.h"
 #include "utils/platform.h"
+#include "utils/resource_location.h"
 #include "utils/unicode_text.h"
 #include "workspace_manager.h"
 
@@ -190,6 +192,7 @@ private:
             {
                 if (!advance_and_retrieve(arg, i, ws_folder))
                     return false;
+                ws_folder = utils::path::absolute(ws_folder).string();
             }
             else if (arg == "-c") // Cycle parameter, loop infinitely single file
             {
@@ -397,7 +400,7 @@ private:
             annotation = get_file_message(current_iteration, bc);
             ws->register_diagnostics_consumer(&diag_counter);
             ws->register_parsing_metadata_consumer(&collector);
-            ws->add_workspace(bc.ws_folder.c_str(), bc.ws_folder.c_str());
+            ws->add_workspace(bc.ws_folder.c_str(), utils::path::path_to_uri(bc.ws_folder).c_str());
             ws->idle_handler();
         }
 
@@ -586,7 +589,7 @@ private:
         std::string annotation;
         annotation.append(parse_params.annotation).append(reparse ? "Reparsing " : "Parsing ");
         auto& ws = parse_params.ws;
-        const auto& source_path_c_str = parse_params.source_path.c_str();
+        const auto source_uri = utils::path::path_to_uri(parse_params.source_path);
         static const parser_library::document_change dummy_change({}, "", 0);
 
         // Log a message before starting the clock
@@ -599,8 +602,8 @@ private:
         // open file/parse
         try
         {
-            reparse ? ws->did_change_file(source_path_c_str, 1, &dummy_change, 1)
-                    : ws->did_open_file(source_path_c_str, 1, content.c_str(), content.length());
+            reparse ? ws->did_change_file(source_uri.c_str(), 1, &dummy_change, 1)
+                    : ws->did_open_file(source_uri.c_str(), 1, content.c_str(), content.length());
 
             ws->idle_handler();
         }

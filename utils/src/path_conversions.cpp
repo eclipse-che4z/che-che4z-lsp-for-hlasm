@@ -93,7 +93,11 @@ std::string path_to_uri(std::string_view path)
         if (uri.size() >= 2 && uri[0] == '/' && uri[1] == '/')
             uri.insert(0, "file:");
         else
+        {
+            if (!uri.empty())
+                uri.front() = tolower((unsigned char)uri.front());
             uri.insert(0, "file:///");
+        }
     }
     else
     {
