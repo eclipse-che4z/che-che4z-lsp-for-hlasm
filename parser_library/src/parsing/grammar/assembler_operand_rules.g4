@@ -77,12 +77,23 @@ asm_op_inner returns [std::unique_ptr<complex_assembler_operand::component_value
 			provider.get_range($string.ctx));
 	}
 	| id
-	{
-		$op = std::make_unique<complex_assembler_operand::string_value_t>(
-			$id.name.to_string(),
-			provider.get_range($id.ctx));
-		collector.add_hl_symbol(token_info(provider.get_range($id.ctx),hl_scopes::operand));
-	}
+	(
+		{
+			$op = std::make_unique<complex_assembler_operand::string_value_t>(
+				$id.name.to_string(),
+				provider.get_range($id.ctx));
+			collector.add_hl_symbol(token_info(provider.get_range($id.ctx),hl_scopes::operand));
+		}
+		|
+		lpar asm_op_comma_c rpar
+		{
+			$op = std::make_unique<complex_assembler_operand::composite_value_t>(
+				$id.name.to_string(),
+				std::move($asm_op_comma_c.asm_ops),
+				provider.get_range($id.ctx->getStart(),$rpar.ctx->getStop()));
+			collector.add_hl_symbol(token_info(provider.get_range($id.ctx),hl_scopes::operand));
+		}
+	)
 	| num
 	{
 		$op = std::make_unique<complex_assembler_operand::int_value_t>($num.value, provider.get_range($num.ctx));
@@ -92,18 +103,13 @@ asm_op_inner returns [std::unique_ptr<complex_assembler_operand::component_value
 	{
 		$op = std::make_unique<complex_assembler_operand::string_value_t>("", provider.get_range(_localctx));
 	}
-	| id lpar asm_op_comma_c rpar									
-	{ 
-		$op = std::make_unique<complex_assembler_operand::composite_value_t>(
-			$id.name.to_string(),
-			std::move($asm_op_comma_c.asm_ops),
-			provider.get_range($id.ctx->getStart(),$rpar.ctx->getStop()));
-		collector.add_hl_symbol(token_info(provider.get_range($id.ctx),hl_scopes::operand));
-	};
+	;
 
 asm_op_comma_c returns [std::vector<std::unique_ptr<complex_assembler_operand::component_value_t>> asm_ops]
 	: asm_op_inner														{$asm_ops.push_back(std::move($asm_op_inner.op));}
-	| tmp=asm_op_comma_c comma asm_op_inner								{$tmp.asm_ops.push_back(std::move($asm_op_inner.op)); $asm_ops = std::move($tmp.asm_ops);};	
+	(
+		comma asm_op_inner												{$asm_ops.push_back(std::move($asm_op_inner.op));}
+	)*;
 
 end_instr_word returns [std::string value]
 	: (t=~(COMMA|CONTINUATION){$value.append($t.text);})+;

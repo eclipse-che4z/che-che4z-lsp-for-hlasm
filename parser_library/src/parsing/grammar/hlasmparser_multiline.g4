@@ -376,7 +376,7 @@ op_rem_body_ca_branch locals [bool pending_empty_op = false, std::vector<range> 
 				{
 					$remarks.push_back(provider.get_range($remark.ctx));
 				}
-				CONTINUATION?
+				(CONTINUATION|EOF)
 				|
 				CONTINUATION
 			)
@@ -464,7 +464,7 @@ op_rem_body_ca_expr locals [bool pending_empty_op = false, std::vector<range> re
 				{
 					$remarks.push_back(provider.get_range($remark.ctx));
 				}
-				CONTINUATION?
+				(CONTINUATION|EOF)
 				|
 				CONTINUATION
 			)
@@ -552,7 +552,7 @@ op_rem_body_ca_var_def locals [bool pending_empty_op = false, std::vector<range>
 				{
 					$remarks.push_back(provider.get_range($remark.ctx));
 				}
-				CONTINUATION?
+				(CONTINUATION|EOF)
 				|
 				CONTINUATION
 			)

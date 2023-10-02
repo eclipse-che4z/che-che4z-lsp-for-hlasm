@@ -22,10 +22,11 @@
 #include "lexer.h"
 
 namespace hlasm_plugin::parser_library::lexing {
+class token;
 
 // custom implementation of antlr token stream
 // helps to control the filtering of the token stream
-class token_stream : public antlr4::BufferedTokenStream
+class token_stream final : public antlr4::BufferedTokenStream
 {
     bool enabled_cont_;
     bool needSetup_;
@@ -49,20 +50,21 @@ public:
 
     auto get_line_limits() const { return token_source->get_line_limits(); }
 
-protected:
+private:
     ssize_t adjustSeekIndex(size_t i) override;
 
     antlr4::Token* LB(size_t k) override;
 
     void setup() override;
 
-    bool is_on_channel(antlr4::Token* token);
+    bool is_on_channel(token* t);
 
     size_t next_token_on_channel(size_t i);
 
     size_t previous_token_on_channel(size_t i);
 
-private:
+    token* get_internal(size_t i);
+
     std::vector<decltype(_tokens)> tokens_;
 };
 

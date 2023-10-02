@@ -68,7 +68,7 @@ antlr4::Token* token_stream::LT(ssize_t k)
             i = next_token_on_channel(i + 1);
     }
 
-    return get(next_token_on_channel(i));
+    return get_internal(next_token_on_channel(i));
 }
 
 std::string token_stream::getText(const antlr4::misc::Interval& interval)
@@ -110,13 +110,13 @@ ssize_t token_stream::adjustSeekIndex(size_t i)
         if (i >= size())
             return size() - 1;
 
-        auto token = get(i);
+        auto* t = get_internal(i);
 
-        while (!is_on_channel(token))
+        while (!is_on_channel(t))
         {
             ++i;
             sync(i);
-            token = get(i);
+            t = get_internal(i);
         }
         return i;
     }
@@ -148,13 +148,13 @@ antlr4::Token* token_stream::LB(size_t k)
         else
             --i;
 
-        antlr4::Token* token = get(i);
+        auto* t = get_internal(i);
 
-        if (is_on_channel(token))
+        if (is_on_channel(t))
             ++n;
     }
 
-    return get(i);
+    return get_internal(i);
 }
 
 size_t token_stream::next_token_on_channel(size_t i)
@@ -164,17 +164,17 @@ size_t token_stream::next_token_on_channel(size_t i)
     if (i >= size())
         return size() - 1;
 
-    auto token = get(_p);
+    auto* t = get_internal(_p);
 
     size_t to_consume = i - _p;
     i = _p;
 
-    while (!is_on_channel(token) || to_consume != 0)
+    while (!is_on_channel(t) || to_consume != 0)
     {
-        to_consume -= is_on_channel(token) ? 1 : 0;
+        to_consume -= is_on_channel(t) ? 1 : 0;
         ++i;
         sync(i);
-        token = get(i);
+        t = get_internal(i);
     }
 
     return i;
@@ -197,9 +197,9 @@ size_t token_stream::previous_token_on_channel(size_t i)
 
     while (true)
     {
-        antlr4::Token* token = get(i);
+        auto* t = get_internal(i);
 
-        if (is_on_channel(token))
+        if (is_on_channel(t))
         {
             if (--to_skip == 0)
                 return i;
@@ -212,8 +212,10 @@ size_t token_stream::previous_token_on_channel(size_t i)
     }
 }
 
-bool token_stream::is_on_channel(antlr4::Token* token)
+token* token_stream::get_internal(size_t i) { return static_cast<token*>(get(i)); }
+
+bool token_stream::is_on_channel(token* t)
 {
-    return token->getChannel() == lexer::Channels::DEFAULT_CHANNEL
-        || (enabled_cont_ && token->getType() == lexer::CONTINUATION) || token->getType() == antlr4::Token::EOF;
+    return t->getChannel() == lexer::Channels::DEFAULT_CHANNEL || (enabled_cont_ && t->getType() == lexer::CONTINUATION)
+        || t->getType() == antlr4::Token::EOF;
 }
