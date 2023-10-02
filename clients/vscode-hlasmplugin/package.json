@@ -48,7 +48,7 @@
     "@types/node": "^16.4.13",
     "@types/vscode": "1.67.0",
     "@vscode/test-electron": "^2.3.0",
-    "@vscode/test-web": "^0.0.45",
+    "@vscode/test-web": "^0.0.46",
     "@vscode/vsce": "^2.19.0",
     "c8": "^7.12.0",
     "conventional-changelog-conventionalcommits": "^4.5.0",
