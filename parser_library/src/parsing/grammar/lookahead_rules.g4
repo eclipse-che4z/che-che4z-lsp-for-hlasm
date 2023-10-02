@@ -127,7 +127,11 @@ lookahead_operands_and_remarks_dat
 	};
 
 lookahead_operand_list_asm returns [operand_list operands] locals [bool failed = false]
-	: f=lookahead_operand_asm[&$failed]
+	:
+	{
+		enable_lookahead_recovery();
+	}
+	f=lookahead_operand_asm[&$failed]
 	{
 		{$operands.push_back(std::move($f.op));}
 	}
@@ -140,6 +144,10 @@ lookahead_operand_list_asm returns [operand_list operands] locals [bool failed =
 				$operands.push_back(std::move($n.op));
 		}
 	)*;
+	finally
+	{
+		disable_lookahead_recovery();
+	}
 
 lookahead_operand_asm[bool* failed] returns [operand_ptr op]
 	:
@@ -151,11 +159,20 @@ lookahead_operand_asm[bool* failed] returns [operand_ptr op]
 		|
 		{$op = std::make_unique<semantics::empty_operand>(provider.get_empty_range( _localctx->getStart()));}
 	)
-	(
-		(~(COMMA|SPACE|EOF))+
-		{
-			*$failed = true;
-			$op = std::make_unique<semantics::empty_operand>(provider.get_empty_range( _localctx->getStart()));
-		}
-	)?
 	;
+	catch[RecognitionException &e]
+	{
+		_errHandler->reportError(this, e);
+		_localctx->exception = std::current_exception();
+
+		if (auto t = _input->LA(1); t != COMMA && t != SPACE && t != EOF)
+		{
+			*_localctx->failed = true;
+			_localctx->op = std::make_unique<semantics::empty_operand>(provider.get_empty_range(_localctx->getStart()));
+
+			do {
+				_input->consume();
+				t = _input->LA(1);
+			} while (t != COMMA && t != SPACE && t != EOF);
+		}
+	}

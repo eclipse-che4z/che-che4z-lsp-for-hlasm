@@ -106,6 +106,8 @@ protected:
         }
     };
 
+    void enable_lookahead_recovery();
+    void disable_lookahead_recovery();
     void enable_continuation();
     void disable_continuation();
     bool is_self_def();

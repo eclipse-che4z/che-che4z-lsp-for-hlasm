@@ -25,14 +25,21 @@ namespace hlasm_plugin::parser_library::parsing {
 class error_strategy final : public antlr4::DefaultErrorStrategy
 {
     bool m_error_reported = false;
+    bool m_lookahead_recovery = false;
+
     void reset(antlr4::Parser* recognizer) override;
     void reportError(antlr4::Parser* recognizer, const antlr4::RecognitionException& e) override;
     antlr4::Token* getMissingSymbol(antlr4::Parser*) override;
     antlr4::Token* singleTokenDeletion(antlr4::Parser*) override { return nullptr; }
     bool singleTokenInsertion(antlr4::Parser*) override { return false; }
+    void recover(antlr4::Parser* recognizer, std::exception_ptr e) override;
+    antlr4::Token* recoverInline(antlr4::Parser* recognizer) override;
 
 public:
     bool error_reported() const { return m_error_reported; }
+
+    void enable_lookahead_recovery();
+    void disable_lookahead_recovery();
 };
 
 } // namespace hlasm_plugin::parser_library::parsing

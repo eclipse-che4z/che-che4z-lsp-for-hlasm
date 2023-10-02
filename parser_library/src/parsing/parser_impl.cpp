@@ -132,6 +132,16 @@ std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_proc
         return std::make_unique<parser_holder_impl<false>>(lsp_proc, hl_ctx, d);
 }
 
+void parser_impl::enable_lookahead_recovery()
+{
+    static_cast<error_strategy*>(_errHandler.get())->enable_lookahead_recovery();
+}
+
+void parser_impl::disable_lookahead_recovery()
+{
+    static_cast<error_strategy*>(_errHandler.get())->disable_lookahead_recovery();
+}
+
 void parser_impl::enable_continuation() { input.enable_continuation(); }
 
 void parser_impl::disable_continuation() { input.disable_continuation(); }
