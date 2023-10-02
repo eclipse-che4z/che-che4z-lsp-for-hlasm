@@ -111,10 +111,10 @@ term_c returns [ca_expr_ptr ca_expr]
 	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
 term returns [ca_expr_ptr ca_expr]
-	: var_symbol
+	: AMPERSAND var_symbol_base[$AMPERSAND]
 	{
-		auto r = provider.get_range($var_symbol.ctx);
-		$ca_expr = std::make_unique<ca_var_sym>(std::move($var_symbol.vs), r);
+		auto r = provider.get_range($AMPERSAND, $var_symbol_base.ctx->getStop());
+		$ca_expr = std::make_unique<ca_var_sym>(std::move($var_symbol_base.vs), r);
 	}
 	| {allow_ca_string()}? ca_string
 	{ 
@@ -254,9 +254,9 @@ created_set_body returns [concat_chain concat_list]
 			$concat_list.emplace_back(char_str_conc($NUM->getText(), provider.get_range($NUM)));
 		}
 		|
-		var_symbol
+		AMPERSAND var_symbol_base[$AMPERSAND]
 		{
-			$concat_list.emplace_back(var_sym_conc(std::move($var_symbol.vs)));
+			$concat_list.emplace_back(var_sym_conc(std::move($var_symbol_base.vs)));
 		}
 		|
 		dot
@@ -268,24 +268,22 @@ created_set_body returns [concat_chain concat_list]
 	finally
 	{concatenation_point::clear_concat_chain($concat_list);}
 
-var_symbol returns [vs_ptr vs]
+var_symbol_base [antlr4::Token* amp] returns [vs_ptr vs]
 	:
-	AMPERSAND
-	(
-		vs_id tmp=subscript
-		{
-			auto id = $vs_id.name;
-			auto r = provider.get_range( $AMPERSAND,$tmp.ctx->getStop());
-			$vs = std::make_unique<basic_variable_symbol>(id, std::move($tmp.value), r);
-			collector.add_hl_symbol(token_info(provider.get_range( $AMPERSAND, $vs_id.ctx->getStop()),hl_scopes::var_symbol));
-		}
-		|
-		lpar (clc=created_set_body)? rpar subscript
-		{
-			collector.add_hl_symbol(token_info(provider.get_range( $AMPERSAND),hl_scopes::var_symbol));
-			$vs = std::make_unique<created_variable_symbol>($clc.ctx ? std::move($clc.concat_list) : concat_chain{},std::move($subscript.value),provider.get_range($AMPERSAND,$subscript.ctx->getStop()));
-		}
-	);
+	vs_id tmp=subscript
+	{
+		auto id = $vs_id.name;
+		auto r = provider.get_range( $amp,$tmp.ctx->getStop());
+		$vs = std::make_unique<basic_variable_symbol>(id, std::move($tmp.value), r);
+		collector.add_hl_symbol(token_info(provider.get_range( $amp, $vs_id.ctx->getStop()),hl_scopes::var_symbol));
+	}
+	|
+	lpar (clc=created_set_body)? rpar subscript
+	{
+		collector.add_hl_symbol(token_info(provider.get_range( $amp),hl_scopes::var_symbol));
+		$vs = std::make_unique<created_variable_symbol>($clc.ctx ? std::move($clc.concat_list) : concat_chain{},std::move($subscript.value),provider.get_range($amp,$subscript.ctx->getStop()));
+	}
+	;
 	finally
 	{if (!$vs) $vs = std::make_unique<basic_variable_symbol>(parse_identifier("", {}), std::vector<expressions::ca_expr_ptr>{}, provider.get_range($ctx));}
 
@@ -304,9 +302,9 @@ data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr,
 		if (auto& lv = $literal.value; lv)
 			$value = std::move(lv);
 	}
-	| var_symbol DOT? // in reality, this seems to be much more complicated (arbitrary many dots are consumed for *some* attributes)
+	| AMPERSAND var_symbol_base[$AMPERSAND] DOT? // in reality, this seems to be much more complicated (arbitrary many dots are consumed for *some* attributes)
 	{
-		$value = std::move($var_symbol.vs);
+		$value = std::move($var_symbol_base.vs);
 	}
 	| id
 	{
@@ -381,7 +379,30 @@ ca_string returns [ca_expr_ptr ca_expr]
 	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
 string_ch_v [concat_chain* chain]
-	: l_sp_ch_v[$chain]
+	:
+	( ASTERISK									{$chain->emplace_back(char_str_conc("*", provider.get_range($ASTERISK)));}
+	| MINUS										{$chain->emplace_back(char_str_conc("-", provider.get_range($MINUS)));}
+	| PLUS										{$chain->emplace_back(char_str_conc("+", provider.get_range($PLUS)));}
+	| LT										{$chain->emplace_back(char_str_conc("<", provider.get_range($LT)));}
+	| GT										{$chain->emplace_back(char_str_conc(">", provider.get_range($GT)));}
+	| SLASH										{$chain->emplace_back(char_str_conc("/", provider.get_range($SLASH)));}
+	| EQUALS									{$chain->emplace_back(equals_conc(provider.get_range($EQUALS)));}
+	| VERTICAL									{$chain->emplace_back(char_str_conc("|", provider.get_range($VERTICAL)));}
+	| IDENTIFIER								{$chain->emplace_back(char_str_conc($IDENTIFIER->getText(), provider.get_range($IDENTIFIER)));}
+	| NUM										{$chain->emplace_back(char_str_conc($NUM->getText(), provider.get_range($NUM)));}
+	| ORDSYMBOL									{$chain->emplace_back(char_str_conc($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL)));}
+	| DOT										{$chain->emplace_back(dot_conc(provider.get_range($DOT)));}
+	| l=AMPERSAND
+	(
+		r=AMPERSAND								{$chain->emplace_back(char_str_conc("&&", provider.get_range($l,$r)));}
+		|
+		var_symbol_base[$l]						{$chain->emplace_back(var_sym_conc(std::move($var_symbol_base.vs)));}
+	)
+	| COMMA										{$chain->emplace_back(char_str_conc(",", provider.get_range($COMMA)));}
+	| LPAR										{$chain->emplace_back(char_str_conc("(", provider.get_range($LPAR)));}
+	| RPAR										{$chain->emplace_back(char_str_conc(")", provider.get_range($RPAR)));}
+	| SPACE										{$chain->emplace_back(char_str_conc($SPACE->getText(), provider.get_range($SPACE)));}
+	)
 	| l=(APOSTROPHE|ATTR) r=(APOSTROPHE|ATTR)	{$chain->emplace_back(char_str_conc("'", provider.get_range($l, $r)));};
 
 string_ch_v_c returns [concat_chain chain]

@@ -552,5 +552,5 @@ TEST(SET, missing_var_name)
     a.analyze();
     a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0003", "E010" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0008", "E010" }));
 }

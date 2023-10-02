@@ -233,8 +233,17 @@ void parser_error_listener_base::syntaxError(
     catch (antlr4::InputMismatchException& excp)
     {
         auto offender = excp.getOffendingToken();
+        auto expected = excp.getExpectedTokens();
+        auto input_stream = dynamic_cast<token_stream*>(excp.getInputStream());
+        auto m = input_stream->index();
+        input_stream->seek(offender->getTokenIndex());
+        auto previous_token = input_stream->LT(-1);
+        input_stream->seek(m);
 
-        if (offender->getType() == antlr4::Token::EOF)
+        if (previous_token && previous_token->getType() == AMPERSAND
+            && (expected.contains(static_cast<size_t>(ORDSYMBOL)) || expected.contains(static_cast<size_t>(LPAR))))
+            add_parser_diagnostic(diagnostic_op::error_S0008, range(position(line, char_pos_in_line)));
+        else if (offender->getType() == antlr4::Token::EOF)
             add_parser_diagnostic(diagnostic_op::error_S0003, range(position(line, char_pos_in_line)));
         else
             add_parser_diagnostic(diagnostic_op::error_S0002, range(position(line, char_pos_in_line)));

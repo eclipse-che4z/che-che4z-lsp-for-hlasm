@@ -38,11 +38,11 @@ instruction returns [id_index instr] locals [concat_chain chain, std::string ins
 		| NUM													{$instr_text += $NUM->getText();$chain.emplace_back(char_str_conc($NUM->getText(), provider.get_range($NUM)));}
 		| ORDSYMBOL												{$instr_text += $ORDSYMBOL->getText();$chain.emplace_back(char_str_conc($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL)));}
 		| DOT													{$instr_text += ".";$chain.emplace_back(dot_conc(provider.get_range($DOT)));}
-		|
+		| l=AMPERSAND
 		(
-			l=AMPERSAND r=AMPERSAND								{$instr_text += "&&";$chain.emplace_back(char_str_conc("&&", provider.get_range($l,$r)));}
+			r=AMPERSAND											{$instr_text += "&&";$chain.emplace_back(char_str_conc("&&", provider.get_range($l,$r)));}
 			|
-			var_symbol											{$has_vars = true; $chain.emplace_back(var_sym_conc(std::move($var_symbol.vs)));}
+			var_symbol_base[$l]									{$has_vars = true; $chain.emplace_back(var_sym_conc(std::move($var_symbol_base.vs)));}
 		)
 		| COMMA													{$instr_text += ",";$chain.emplace_back(char_str_conc(",", provider.get_range($COMMA)));}
 		| LPAR													{$instr_text += "(";$chain.emplace_back(char_str_conc("(", provider.get_range($LPAR)));}
@@ -66,7 +66,7 @@ instruction returns [id_index instr] locals [concat_chain chain, std::string ins
 			}
 		}
 	)
-	| v=var_symbol												{$chain.emplace_back(var_sym_conc(std::move($var_symbol.vs)));}
+	| v=AMPERSAND var_symbol_base[$v]							{$chain.emplace_back(var_sym_conc(std::move($var_symbol_base.vs)));}
 	(
 		( ASTERISK												{$chain.emplace_back(char_str_conc("*", provider.get_range($ASTERISK)));}
 		| MINUS													{$chain.emplace_back(char_str_conc("-", provider.get_range($MINUS)));}
@@ -80,18 +80,18 @@ instruction returns [id_index instr] locals [concat_chain chain, std::string ins
 		| NUM													{$chain.emplace_back(char_str_conc($NUM->getText(), provider.get_range($NUM)));}
 		| ORDSYMBOL												{$chain.emplace_back(char_str_conc($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL)));}
 		| DOT													{$chain.emplace_back(dot_conc(provider.get_range($DOT)));}
-		|
+		| l=AMPERSAND
 		(
-			l=AMPERSAND r=AMPERSAND								{$chain.emplace_back(char_str_conc("&&", provider.get_range($l,$r)));}
+			r=AMPERSAND											{$chain.emplace_back(char_str_conc("&&", provider.get_range($l,$r)));}
 			|
-			var_symbol											{$chain.emplace_back(var_sym_conc(std::move($var_symbol.vs)));}
+			var_symbol_base[$l]									{$chain.emplace_back(var_sym_conc(std::move($var_symbol_base.vs)));}
 		)
 		| COMMA													{$instr_text += ",";$chain.emplace_back(char_str_conc(",", provider.get_range($COMMA)));}
 		| LPAR													{$instr_text += "(";$chain.emplace_back(char_str_conc("(", provider.get_range($LPAR)));}
 		| RPAR													{$instr_text += ")";$chain.emplace_back(char_str_conc(")", provider.get_range($RPAR)));}
 		)*
 		{
-			auto r = provider.get_range($v.start,_input->LT(-1));
+			auto r = provider.get_range($v,_input->LT(-1));
 			for(const auto& point : $chain)
 			{
 				if(!std::holds_alternative<semantics::char_str_conc>(point.value))

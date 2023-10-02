@@ -16,7 +16,8 @@
 parser grammar deferred_operand_rules;
 
 deferred_entry returns [std::vector<vs_ptr> vs]
-	: asterisk
+	:
+	( asterisk
 	| minus
 	| plus
 	| LT
@@ -30,6 +31,8 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 	| dot
 	| lpar
 	| rpar
+	| comma
+	)
 	| ap1=ATTR
 	(
 		{!is_attribute_consuming(_input->LT(-2))}?
@@ -37,10 +40,11 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 		(
 			(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)
 			|
+			( AMPERSAND
 			(
-				AMPERSAND AMPERSAND
+				AMPERSAND
 				|
-				var_symbol											{$vs.push_back(std::move($var_symbol.vs));}
+				var_symbol_base[$AMPERSAND]							{$vs.push_back(std::move($var_symbol_base.vs));}
 			)
 			| ASTERISK
 			| MINUS
@@ -58,6 +62,7 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 			| LPAR
 			| RPAR
 			| SPACE
+			)
 		)*
 		ap2=(APOSTROPHE|ATTR)
 		{
@@ -73,10 +78,11 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 	(
 		(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)
 		|
+		( AMPERSAND
 		(
-			AMPERSAND AMPERSAND
+			AMPERSAND
 			|
-			var_symbol											{$vs.push_back(std::move($var_symbol.vs));}
+			var_symbol_base[$AMPERSAND]							{$vs.push_back(std::move($var_symbol_base.vs));}
 		)
 		| ASTERISK
 		| MINUS
@@ -94,13 +100,13 @@ deferred_entry returns [std::vector<vs_ptr> vs]
 		| LPAR
 		| RPAR
 		| SPACE
+		)
 	)*
 	{enable_ca_string();}
 	ap2=(APOSTROPHE|ATTR)
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string));
 	}
-	| comma
 	| AMPERSAND
 	(
 		ORDSYMBOL

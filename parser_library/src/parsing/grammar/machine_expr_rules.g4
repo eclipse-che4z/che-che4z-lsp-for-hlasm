@@ -189,14 +189,25 @@ mach_data_attribute_value returns [std::variant<std::monostate, std::pair<id_ind
 	};
 
 string_ch returns [std::string value]
-	: l_sp_ch
-	{
-		if ($l_sp_ch.value == "&&")
-			$value = "&";
-		else
-			$value = std::move($l_sp_ch.value);
-
-	}
+	:
+	( ASTERISK												{$value = "*";}
+	| MINUS													{$value = "-";}
+	| PLUS													{$value = "+";}
+	| LT													{$value = "<";}
+	| GT													{$value = ">";}
+	| SLASH													{$value = "/";}
+	| EQUALS												{$value = "=";}
+	| AMPERSAND AMPERSAND									{$value = "&";}
+	| VERTICAL												{$value = "|";}
+	| IDENTIFIER											{$value = $IDENTIFIER->getText();}
+	| NUM													{$value = $NUM->getText();}
+	| ORDSYMBOL												{$value = $ORDSYMBOL->getText();}
+	| DOT													{$value = ".";}
+	| COMMA													{$value = ",";}
+	| LPAR													{$value = "(";}
+	| RPAR													{$value = ")";}
+	| SPACE													{$value = $SPACE->getText();}
+	)
 	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$value = "'";};
 
 string_ch_c returns [std::string value]

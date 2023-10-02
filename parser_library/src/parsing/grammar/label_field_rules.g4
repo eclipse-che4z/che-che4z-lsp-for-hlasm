@@ -36,10 +36,11 @@ label locals [concat_chain chain, std::string buffer, bool has_variables = false
 			ORDSYMBOL
 		) {add_label_component($t, $chain, $buffer, $has_variables);}
 		|
+		AMPERSAND
 		(
-			var_symbol {add_label_component(std::move($var_symbol.vs), $chain, $buffer, $has_variables);}
+			var_symbol_base[$AMPERSAND] {add_label_component(std::move($var_symbol_base.vs), $chain, $buffer, $has_variables);}
 			|
-			AMPERSAND {add_label_component($AMPERSAND, $chain, $buffer, $has_variables);} AMPERSAND {add_label_component($AMPERSAND, $chain, $buffer, $has_variables);}
+			{add_label_component($AMPERSAND, $chain, $buffer, $has_variables);} AMPERSAND {add_label_component($AMPERSAND, $chain, $buffer, $has_variables);}
 		)
 		|
 		label_string[&$chain, &$buffer, &$has_variables, [](const auto*t){if(!t)return true;auto text = t->getText(); return text == "C" || text == "c";}(_input->LT(-1))]
@@ -104,10 +105,11 @@ label_string [concat_chain* chain, std::string* buffer, bool* has_variables, boo
 				NUM
 			) {add_label_component($t, *$chain, *$buffer, *$has_variables);}
 			|
+			AMPERSAND
 			(
-				var_symbol {add_label_component(std::move($var_symbol.vs), *$chain, *$buffer, *$has_variables);}
+				var_symbol_base[$AMPERSAND] {add_label_component(std::move($var_symbol_base.vs), *$chain, *$buffer, *$has_variables);}
 				|
-				AMPERSAND {add_label_component($AMPERSAND, *$chain, *$buffer, *$has_variables);} AMPERSAND {add_label_component($AMPERSAND, *$chain, *$buffer, *$has_variables);}
+				{add_label_component($AMPERSAND, *$chain, *$buffer, *$has_variables);} AMPERSAND {add_label_component($AMPERSAND, *$chain, *$buffer, *$has_variables);}
 			)
 		)*
 		ap2=(APOSTROPHE | ATTR) {add_label_component($ap2, *$chain, *$buffer, *$has_variables);}
@@ -117,49 +119,4 @@ label_string [concat_chain* chain, std::string* buffer, bool* has_variables, boo
 			{_input->LA(1)!=APOSTROPHE && _input->LA(1)!=ATTR}?
 		)
 	)
-	;
-
-l_sp_ch returns [std::string value]
-	: ASTERISK												{$value = "*";}
-	| MINUS													{$value = "-";}
-	| PLUS													{$value = "+";}
-	| LT													{$value = "<";}
-	| GT													{$value = ">";}
-	| SLASH													{$value = "/";}
-	| EQUALS												{$value = "=";}
-	| AMPERSAND AMPERSAND									{$value = "&&";}
-	| VERTICAL												{$value = "|";}
-	| IDENTIFIER											{$value = $IDENTIFIER->getText();}
-	| NUM													{$value = $NUM->getText();}
-	| ORDSYMBOL												{$value = $ORDSYMBOL->getText();}
-	| DOT													{$value = ".";}
-	| COMMA													{$value = ",";}
-	| LPAR													{$value = "(";}
-	| RPAR													{$value = ")";}
-	| SPACE													{$value = $SPACE->getText();}
-	;
-
-l_sp_ch_v [concat_chain* chain]
-	: ASTERISK														{$chain->emplace_back(char_str_conc("*", provider.get_range($ASTERISK)));}
-	| MINUS															{$chain->emplace_back(char_str_conc("-", provider.get_range($MINUS)));}
-	| PLUS															{$chain->emplace_back(char_str_conc("+", provider.get_range($PLUS)));}
-	| LT															{$chain->emplace_back(char_str_conc("<", provider.get_range($LT)));}
-	| GT															{$chain->emplace_back(char_str_conc(">", provider.get_range($GT)));}
-	| SLASH															{$chain->emplace_back(char_str_conc("/", provider.get_range($SLASH)));}
-	| EQUALS														{$chain->emplace_back(equals_conc(provider.get_range($EQUALS)));}
-	| VERTICAL														{$chain->emplace_back(char_str_conc("|", provider.get_range($VERTICAL)));}
-	| IDENTIFIER													{$chain->emplace_back(char_str_conc($IDENTIFIER->getText(), provider.get_range($IDENTIFIER)));}
-	| NUM															{$chain->emplace_back(char_str_conc($NUM->getText(), provider.get_range($NUM)));}
-	| ORDSYMBOL														{$chain->emplace_back(char_str_conc($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL)));}
-	| DOT															{$chain->emplace_back(dot_conc(provider.get_range($DOT)));}
-	|
-	(
-		l=AMPERSAND r=AMPERSAND										{$chain->emplace_back(char_str_conc("&&", provider.get_range($l,$r)));}
-		|
-		var_symbol													{$chain->emplace_back(var_sym_conc(std::move($var_symbol.vs)));}
-	)
-	| COMMA															{$chain->emplace_back(char_str_conc(",", provider.get_range($COMMA)));}
-	| LPAR															{$chain->emplace_back(char_str_conc("(", provider.get_range($LPAR)));}
-	| RPAR															{$chain->emplace_back(char_str_conc(")", provider.get_range($RPAR)));}
-	| SPACE															{$chain->emplace_back(char_str_conc($SPACE->getText(), provider.get_range($SPACE)));}
 	;
