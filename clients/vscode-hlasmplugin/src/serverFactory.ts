@@ -80,12 +80,17 @@ async function generateServerOption(method: ServerVariant): Promise<vscodelc.Ser
 function getWasmRuntimeArgs(): Array<string> {
     const v8Version = process?.versions?.v8 ?? "1.0";
     const v8Major = +v8Version.split(".")[0];
-    if (v8Major >= 9)
+    if (v8Major >= 10)
         return [];
+    else if (v8Major >= 9)
+        return [
+            '--experimental-wasm-eh',
+        ];
     else
         return [
             '--experimental-wasm-threads',
-            '--experimental-wasm-bulk-memory'
+            '--experimental-wasm-bulk-memory',
+            '--experimental-wasm-eh',
         ];
 }
 

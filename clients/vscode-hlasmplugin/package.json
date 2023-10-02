@@ -31,7 +31,7 @@
   "main": "./dist/extension.js",
   "typings": "./typings/extension.d.ts",
   "engines": {
-    "vscode": "^1.67.0"
+    "vscode": "^1.75.0"
   },
   "repository": {
     "type": "git",
