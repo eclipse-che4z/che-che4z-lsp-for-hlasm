@@ -150,6 +150,17 @@ bool is_continued_line(std::string_view line)
 
 namespace {
 bool is_comment(std::string_view line) { return line.substr(0, 1) == "*" || line.substr(0, 2) == ".*"; }
+
+constexpr const std::string_view prolog("```hlasm");
+constexpr const std::string_view epilog("\n```\n");
+
+void add_line(std::string& str, std::string_view line)
+{
+    auto append = utils::utf8_substr(line, 0, 72).str;
+    str.push_back('\n');
+    size_t trim_pos = append.find_last_not_of(" \n\r") + 1;
+    str.append(append.substr(0, trim_pos - (trim_pos == 0)));
+}
 } // namespace
 
 
@@ -208,16 +219,6 @@ std::string get_macro_documentation(const text_data_view& text, size_t definitio
     while (doc_after_end_line < text.get_number_of_lines() && is_comment(text.get_line(doc_after_end_line)))
         ++doc_after_end_line;
 
-    constexpr static std::string_view prolog("```hlasm");
-    constexpr static std::string_view epilog("\n```\n");
-
-    constexpr static auto add_line = [](std::string& str, std::string_view line) {
-        auto append = utils::utf8_substr(line, 0, 72).str;
-        str.push_back('\n');
-        size_t trim_pos = append.find_last_not_of(" \n\r") + 1;
-        str.append(append.substr(0, trim_pos - (trim_pos == 0)));
-    };
-
     // There is a limit editor.maxTokenizationLineLength which seems to be applied a bit strangely...
     // Breaking the content into two blocks ensures that at least the first one is likely highlighted correctly
 
@@ -245,6 +246,31 @@ std::string get_macro_documentation(const text_data_view& text, size_t definitio
         if (doc_lines >= doc_limit)
             result.append("Documentation truncated...");
     }
+
+    return result;
+}
+
+std::string get_logical_line(const text_data_view& text, size_t definition_line)
+{
+    size_t end_line = definition_line;
+    for (size_t doc_limit = 20; doc_limit && end_line < text.get_number_of_lines(); --doc_limit)
+    {
+        if (!is_continued_line(text.get_line(end_line)))
+            break;
+        ++end_line;
+    }
+    ++end_line;
+
+    std::string result;
+    /* (prolog + epilog) + line count * (72 columns, newline, reserve 1 byte per line for weird chars) */
+    result.reserve((prolog.size() + epilog.size()) + (72 + 1 + 1) * (end_line - definition_line));
+
+    result.append(prolog);
+    for (auto i = definition_line; i < end_line; ++i)
+    {
+        add_line(result, text.get_line(i));
+    }
+    result.append(epilog);
 
     return result;
 }

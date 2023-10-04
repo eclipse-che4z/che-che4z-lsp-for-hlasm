@@ -108,8 +108,10 @@ private:
         position pos) const;
     location find_symbol_definition_location(
         const context::symbol& sym, const utils::resource::resource_location& document_loc, position pos) const;
-    std::string find_hover(
-        const symbol_occurrence& occ, macro_info_ptr macro_i, const line_occurence_details* ld) const;
+    std::string find_hover(const symbol_occurrence& occ,
+        macro_info_ptr macro_i,
+        const line_occurence_details* ld,
+        std::optional<location> definition) const;
 
     completion_list_source complete_var(const file_info& file, position pos) const;
     completion_list_source complete_seq(const file_info& file, position pos) const;

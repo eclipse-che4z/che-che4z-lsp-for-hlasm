@@ -68,7 +68,8 @@ TEST(hover, abs_symbol)
 {
     std::string input = R"(
  LR R1,1
-R1 EQU 1
+R1 EQU 1 R1 comment                                                    X
+               comment 2
 )";
     analyzer a(input);
     a.analyze();
@@ -87,6 +88,11 @@ Absolute Symbol
 
 L: X'1' (1)  
 T: U  
+
+```hlasm
+R1 EQU 1 R1 comment                                                    X
+               comment 2
+```
 )");
 }
 
@@ -95,7 +101,7 @@ TEST(hover, reloc_symbol)
     std::string input = R"(
 C  CSECT
    DS  C
-R  DS  H
+R  DS  H comment
 )";
     analyzer a(input);
     a.analyze();
@@ -115,6 +121,10 @@ Relocatable Symbol
 
 L: X'2' (2)  
 T: H  
+
+```hlasm
+R  DS  H comment
+```
 )");
 }
 

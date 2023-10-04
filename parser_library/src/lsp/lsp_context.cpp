@@ -635,7 +635,10 @@ std::string lsp_context::hover(const utils::resource::resource_location& documen
     if (!occ)
         return {};
 
-    return find_hover(*occ, macro_scope, find_line_details(document_loc, occ->occurrence_range.start.line));
+    return find_hover(*occ,
+        macro_scope,
+        find_line_details(document_loc, occ->occurrence_range.start.line),
+        find_definition_location(*occ, macro_scope, document_loc, pos));
 }
 
 bool lsp_context::should_complete_instr(const text_data_view& text, position pos) const
@@ -981,8 +984,10 @@ bool lsp_context::have_suggestions_for_instr_like(context::id_index name) const
     return m_hlasm_ctx->find_any_valid_opcode(name);
 }
 
-std::string lsp_context::find_hover(
-    const symbol_occurrence& occ, macro_info_ptr macro_scope_i, const line_occurence_details* ld) const
+std::string lsp_context::find_hover(const symbol_occurrence& occ,
+    macro_info_ptr macro_scope_i,
+    const line_occurence_details* ld,
+    std::optional<location> definition) const
 {
     const auto prefix_using = [this, ld](std::string s) {
         auto u = ld ? hover_text(m_hlasm_ctx->usings().describe(ld->active_using)) : "";
@@ -998,10 +1003,22 @@ std::string lsp_context::find_hover(
     switch (occ.kind)
     {
         case lsp::occurrence_kind::ORD: {
+            std::string result;
             auto sym = m_hlasm_ctx->ord_ctx.get_symbol(occ.name);
             if (sym)
-                return hover_text(*sym);
-            break;
+            {
+                result = hover_text(*sym);
+            }
+            if (const file_info * fi; definition && (fi = get_file_info(definition->resource_loc)) != nullptr)
+            {
+                if (auto text = get_logical_line(fi->data, definition->pos.line); !text.empty())
+                {
+                    if (!result.empty())
+                        result.push_back('\n');
+                    result.append(text);
+                }
+            }
+            return result;
         }
         case lsp::occurrence_kind::SEQ:
             return "Sequence symbol";
