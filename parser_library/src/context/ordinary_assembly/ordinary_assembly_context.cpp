@@ -85,6 +85,13 @@ symbol* ordinary_assembly_context::get_symbol(id_index name)
     return tmp == symbols_.end() ? nullptr : std::get_if<symbol>(&tmp->second);
 }
 
+const symbol* ordinary_assembly_context::get_symbol(id_index name) const
+{
+    auto tmp = symbols_.find(name);
+
+    return tmp == symbols_.end() ? nullptr : std::get_if<symbol>(&tmp->second);
+}
+
 section* ordinary_assembly_context::get_section(id_index name)
 {
     for (auto& tmp : sections_)

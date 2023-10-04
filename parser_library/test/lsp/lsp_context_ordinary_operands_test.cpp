@@ -116,3 +116,14 @@ TEST_F(lsp_context_ordinary_operands, second_continued_line_edge)
 
     EXPECT_THAT(md_sec_p->second, UnorderedElementsAre(std::pair(c, empty), std::pair(dl, empty)));
 }
+
+TEST_F(lsp_context_ordinary_operands, offer_all_sections_on_using)
+{
+    auto res = a.context().lsp_ctx->completion(opencode_loc, { 9, 15 }, 0, completion_trigger_kind::invoked);
+    auto md_sec_p = std::get_if<
+        std::pair<const context::macro_definition*, std::vector<std::pair<const context::symbol*, context::id_index>>>>(
+        &res);
+    ASSERT_TRUE(md_sec_p);
+
+    EXPECT_THAT(md_sec_p->second, UnorderedElementsAre(std::pair(c, empty), std::pair(d, empty), std::pair(dl, empty)));
+}

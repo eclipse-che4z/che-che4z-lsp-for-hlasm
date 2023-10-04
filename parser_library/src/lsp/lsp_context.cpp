@@ -686,7 +686,8 @@ std::vector<std::pair<const context::section*, context::id_index>> gather_reacha
 
 std::vector<std::pair<const context::symbol*, context::id_index>> compute_reachable_symbol_set(
     const std::vector<std::pair<const context::section*, context::id_index>>& reachable_sections,
-    const context::ordinary_assembly_context& ord_ctx)
+    const context::ordinary_assembly_context& ord_ctx,
+    bool include_all_sections)
 {
     std::vector<std::pair<const context::symbol*, context::id_index>> reachable_symbols;
 
@@ -714,6 +715,19 @@ std::vector<std::pair<const context::symbol*, context::id_index>> compute_reacha
             if (sect != reloc.bases().front().first.owner)
                 continue;
             reachable_symbols.emplace_back(sym, label);
+        }
+    }
+
+    if (include_all_sections)
+    {
+        for (const auto& sp : ord_ctx.sections())
+        {
+            using enum context::section_kind;
+            if (sp->kind != DUMMY && sp->kind != READONLY && sp->kind != EXECUTABLE)
+                continue;
+
+            if (const auto* sym = ord_ctx.get_symbol(sp->name))
+                reachable_symbols.emplace_back(sym, context::id_index());
         }
     }
 
@@ -745,10 +759,11 @@ completion_list_source lsp_context::completion(const utils::resource::resource_l
     else
     {
         auto instr = file_info->find_closest_instruction(pos);
+        const auto is_using = instr && instr->name == context::id_index("USING");
 
         auto reachable_sections = gather_reachable_sections(*m_hlasm_ctx, file_info->find_reachable_sections(pos));
 
-        auto reachable_symbols = compute_reachable_symbol_set(reachable_sections, m_hlasm_ctx->ord_ctx);
+        auto reachable_symbols = compute_reachable_symbol_set(reachable_sections, m_hlasm_ctx->ord_ctx, is_using);
 
         return std::pair(instr ? instr->opcode.get() : nullptr, std::move(reachable_symbols));
     }

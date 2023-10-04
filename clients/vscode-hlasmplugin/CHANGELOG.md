@@ -2,6 +2,9 @@
 
 ## ****Unreleased****
 
+#### Added
+- Include all available sections in the USING completion list
+
 ## [1.10.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.9.0...1.10.0) (2023-09-22)
 
 #### Added
