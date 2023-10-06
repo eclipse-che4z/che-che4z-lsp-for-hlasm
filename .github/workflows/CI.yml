@@ -52,6 +52,48 @@ jobs:
         if: github.event_name == 'pull_request' && github.base_ref == 'master' && github.head_ref != 'release-next'
         run: exit 1
 
+  release-info:
+    name: Update version and changelogs
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    needs: [formal-checks]
+    steps:
+      - uses: actions/checkout@v3
+      - name: NPM CI
+        run: npm ci
+        working-directory: ${{ env.CLIENT_DIR }}
+      - name: Get release context
+        if: ${{ !(github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release-next') }}
+        run: |
+          git fetch --filter=tree:0 --unshallow origin HEAD
+          git fetch --tags --filter=tree:0 `node -e 'console.log(require("./clients/vscode-hlasmplugin/package.json").repository.url)'` master:master
+      - name: Name PR merge commit
+        if: github.event.pull_request
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "github-actions"
+          [ -z "$TITLE" ] || git commit --amend -m "$TITLE"
+          git checkout -b $GITHUB_REF
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+      - name: Update version
+        run: npx semantic-release --dry-run
+        working-directory: ${{ env.CLIENT_DIR }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HLASM_ALPHA_BUILD: ${{ (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release-next') && '0' || '1' }}
+      - name: Upload Release Info
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-info
+          path: |
+            CHANGELOG.md
+            ${{ env.CLIENT_DIR }}/package.json
+            ${{ env.CLIENT_DIR }}/CHANGELOG.md
+
   generate_grammar:
     name: Generate grammar
     runs-on: ubuntu-22.04
@@ -242,11 +284,7 @@ jobs:
   VSIX-web:
     name: Test and VSIX (Web)
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-    needs: [build-matrix]
+    needs: [build-matrix, release-info]
     steps:
       - uses: actions/checkout@v3
       - name: Download wasm language server
@@ -254,6 +292,10 @@ jobs:
         with:
           name: language_server_wasm
           path: ${{ env.CLIENT_DIR }}/bin/wasm/
+      - name: Download Release Info
+        uses: actions/download-artifact@v3
+        with:
+          name: release-info
       - name: NPM CI
         run: npm ci
         working-directory: ${{ env.CLIENT_DIR }}
@@ -268,14 +310,8 @@ jobs:
       - name: NPM Test
         run: npm run test:web
         working-directory: ${{ env.CLIENT_DIR }}
-      - name: Update version
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release-next'
-        run: npx semantic-release --dry-run
-        working-directory: ${{ env.CLIENT_DIR }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package VSIX
-        run: npx vsce package --no-dependencies --target web -o hlasm-language-support-web.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
+        run: npx vsce package ${{ github.ref == 'refs/heads/master' && '' || '--pre-release' }}  --no-dependencies --target web -o hlasm-language-support-web.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Upload VSIX
         uses: actions/upload-artifact@v3
@@ -285,12 +321,7 @@ jobs:
 
   VSIX:
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-    needs: [build-matrix]
-
+    needs: [build-matrix, release-info]
     steps:
       - uses: actions/checkout@v3
       - name: Download windows language server
@@ -313,6 +344,10 @@ jobs:
         with:
           name: language_server_darwin
           path: ${{ env.CLIENT_DIR }}/bin/darwin/
+      - name: Download Release Info
+        uses: actions/download-artifact@v3
+        with:
+          name: release-info
       - name: Set executable flag
         run: |
           chmod +x ${{ env.CLIENT_DIR }}/bin/darwin/language_server
@@ -328,28 +363,14 @@ jobs:
       - name: NPM Compile
         run: npm run compile
         working-directory: ${{ env.CLIENT_DIR }}
-      - name: Update version
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release-next'
-        run: npx semantic-release --dry-run
-        working-directory: ${{ env.CLIENT_DIR }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package VSIX
-        run: npx vsce package --no-dependencies -o hlasm-language-support.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
+        run: npx vsce package ${{ github.ref == 'refs/heads/master' && '' || '--pre-release' }} --no-dependencies -o hlasm-language-support.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Upload VSIX
         uses: actions/upload-artifact@v3
         with:
           name: hlasm-language-support.vsix
           path: ${{ env.CLIENT_DIR }}/hlasm-language-support.vsix
-      - name: Upload Release Info
-        uses: actions/upload-artifact@v3
-        with:
-          name: release-info
-          path: |
-            CHANGELOG.md
-            ${{ env.CLIENT_DIR }}/package.json
-            ${{ env.CLIENT_DIR }}/CHANGELOG.md
 
   release:
     name: Release VSIXs
@@ -406,7 +427,6 @@ jobs:
           git merge origin/master
 
           cd ${{ env.CLIENT_DIR }}
-          sed -i 's/"version": "\(.*\)"/"version": "\1-NEXT"/g' package.json
           sed -i '2s/^/\n## ****Unreleased****\n/' CHANGELOG.md
           git add package.json CHANGELOG.md
           git commit -m "chore: Prepare for next development cycle [skip ci]"
@@ -430,7 +450,7 @@ jobs:
     strategy:
       matrix:
         theia: ["ghcr.io/eclipse-theia/theia-blueprint/blueprint:1.35.0"]
-# theiaide images not supported anymore, replaced with a quay mirror until there is something official again. See also https://github.com/theia-ide/theia-apps/issues/496
+# theiaide images not supported anymore
     container:
       image: ${{ matrix.theia }}
       options: --user root
