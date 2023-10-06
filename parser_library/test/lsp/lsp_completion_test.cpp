@@ -45,6 +45,28 @@ TEST(lsp_completion, completion_list_instr)
         result.begin(), result.end(), [](const auto& e) { return e.label == "AAAA" && e.suggestion_for == "AAAAA"; }));
 }
 
+TEST(lsp_completion, completion_list_instr_exact)
+{
+    const std::string input = R"(
+    MACRO
+    AAAA
+    MEND
+)";
+    analyzer a(input);
+    a.analyze();
+
+    auto aaaa = a.context().lsp_ctx->get_macro_info(context::id_index("AAAA"));
+    ASSERT_TRUE(aaaa);
+    std::unordered_map<context::macro_def_ptr, lsp::macro_info_ptr> m;
+    m.try_emplace(aaaa->macro_definition, aaaa);
+
+    auto result = lsp::generate_completion(lsp::completion_list_source(
+        lsp::completion_list_instructions { "AAA", 1, &m, a.context().lsp_ctx.get(), { "AAAA", "ADATA" } }));
+
+    EXPECT_TRUE(std::any_of(
+        result.begin(), result.end(), [](const auto& e) { return e.label == "AAAA" && e.suggestion_for.empty(); }));
+}
+
 TEST(lsp_completion, completion_list_vars)
 {
     lsp::vardef_storage vars(1, lsp::variable_symbol_definition(context::id_index("VARNAME"), 0, {}));

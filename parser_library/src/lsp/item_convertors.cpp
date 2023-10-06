@@ -362,7 +362,8 @@ completion_list_s generate_completion(const completion_list_instructions& cli)
                 if (auto col_pos = cli.completed_text_start_column + space; col_pos < 15)
                     i.insert_text.insert(i.insert_text.begin() + space, 15 - col_pos, ' ');
             }
-            if (auto* suggestion = locate_suggestion(i.label))
+            if (auto* suggestion = locate_suggestion(i.label);
+                suggestion && !suggestion->first.starts_with(cli.completed_text))
             {
                 i.suggestion_for = cli.completed_text;
                 suggestion->second = true;
@@ -374,7 +375,8 @@ completion_list_s generate_completion(const completion_list_instructions& cli)
     {
         auto& i = result.emplace_back(
             generate_completion_item(*macro_i, cli.lsp_ctx->get_file_info(macro_i->definition_location.resource_loc)));
-        if (auto* suggestion = locate_suggestion(i.label))
+        if (auto* suggestion = locate_suggestion(i.label);
+            suggestion && !suggestion->first.starts_with(cli.completed_text))
         {
             i.suggestion_for = cli.completed_text;
             suggestion->second = true;
