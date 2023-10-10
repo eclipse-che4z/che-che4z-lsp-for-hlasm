@@ -27,6 +27,7 @@ namespace hlasm_plugin::parser_library {
 
 struct PARSER_LIBRARY_EXPORT position
 {
+    static constexpr const size_t max_value = (size_t)2147483647;
     constexpr position() = default;
     constexpr position(size_t line, size_t column)
         : line(line)

@@ -236,10 +236,10 @@ void file_info::process_occurrences()
 
     occurrences_start_limit.resize(occurrences.size());
 
-    std::transform(occurrences.rbegin(),
-        occurrences.rend(),
-        occurrences_start_limit.rbegin(),
-        [min = (size_t)-1](const auto& occ) mutable { return min = std::min(min, occ.occurrence_range.start.line); });
+    auto m = (size_t)-1;
+    std::transform(occurrences.rbegin(), occurrences.rend(), occurrences_start_limit.rbegin(), [&m](const auto& occ) {
+        return m = std::min(m, occ.occurrence_range.start.line);
+    });
 }
 
 void file_info::collect_instruction_like_references(

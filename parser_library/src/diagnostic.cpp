@@ -2692,7 +2692,7 @@ diagnostic_s diagnostic_s::warn_B4G003(const utils::resource::resource_location&
 diagnostic_s diagnostic_s::info_SUP(const utils::resource::resource_location& file_name)
 {
     return diagnostic_s(file_name.get_uri(),
-        range(position(), position((size_t)-1, (size_t)-1)),
+        range(position(), position(0, position::max_value)),
         diagnostic_severity::hint,
         "SUP",
         concat("Diagnostics suppressed, no configuration available."),
