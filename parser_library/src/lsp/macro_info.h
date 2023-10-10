@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "context/macro.h"
+#include "context/statement_id.h"
 #include "symbol_occurrence.h"
 #include "tagged_index.h"
 
@@ -43,14 +44,14 @@ struct variable_symbol_definition
     bool global = false;
 
     // statement number in macro
-    size_t def_location = 0;
+    context::statement_id def_location;
     // file in opencode
     utils::resource::resource_location file;
 
     position def_position;
 
     // macro parm constructor
-    variable_symbol_definition(context::id_index name, size_t def_location, position def_position)
+    variable_symbol_definition(context::id_index name, context::statement_id def_location, position def_position)
         : name(name)
         , macro_param(true)
         , def_location(def_location)
@@ -58,8 +59,11 @@ struct variable_symbol_definition
     {}
 
     // in-macro SET symbol constructor
-    variable_symbol_definition(
-        context::id_index name, context::SET_t_enum type, bool global, size_t def_location, position def_position)
+    variable_symbol_definition(context::id_index name,
+        context::SET_t_enum type,
+        bool global,
+        context::statement_id def_location,
+        position def_position)
         : name(name)
         , macro_param(false)
         , type(type)
@@ -87,16 +91,16 @@ using vardef_storage = std::vector<variable_symbol_definition>;
 
 struct macro_slice_t
 {
-    size_t begin_statement, end_statement;
+    context::statement_id begin_statement, end_statement;
     bool inner_macro;
 
-    macro_slice_t(size_t begin_statement, bool inner_macro)
+    macro_slice_t(context::statement_id begin_statement, bool inner_macro)
         : begin_statement(begin_statement)
         , end_statement(begin_statement)
         , inner_macro(inner_macro)
     {}
 
-    macro_slice_t(size_t begin_statement, size_t end_statement, bool inner_macro)
+    macro_slice_t(context::statement_id begin_statement, context::statement_id end_statement, bool inner_macro)
         : begin_statement(begin_statement)
         , end_statement(end_statement)
         , inner_macro(inner_macro)

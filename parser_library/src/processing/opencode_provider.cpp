@@ -600,7 +600,7 @@ bool opencode_provider::suspend_copy_processing(remove_empty re) const
 
         // remove line being processed
         lexing::logical_line<std::string_view::iterator> ll = {};
-        if (const bool before_first_read = copy.current_statement == (size_t)-1; !before_first_read)
+        if (copy.current_statement != context::statement_id())
             lexing::extract_logical_line(ll, remaining_text_it, remaining_text.end(), lexing::default_ictl_copy);
 
         copy.suspend(line_no + ll.segments.size());
@@ -608,7 +608,7 @@ bool opencode_provider::suspend_copy_processing(remove_empty re) const
         {
             if (re == remove_empty::yes)
                 copy.resume();
-            copy.current_statement = copy.cached_definition()->size() - 1;
+            copy.current_statement = context::statement_id { copy.cached_definition()->size() - 1 };
         }
     }
     if (re == remove_empty::yes)
@@ -821,7 +821,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
             return extract_next_logical_line_result::failed; // copy processing resumed
         const auto line = copy_file.suspended_at;
 
-        size_t resync = (size_t)-1;
+        context::statement_id resync;
         for (const auto& stmt : *copy_file.cached_definition())
         {
             auto stmt_line = stmt.get_base()->statement_position().line;
@@ -833,7 +833,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
             }
             if (stmt_line > line)
                 break;
-            ++resync;
+            ++resync.value;
         }
         copy_file.current_statement = resync;
 

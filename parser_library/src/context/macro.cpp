@@ -15,6 +15,7 @@
 #include "macro.h"
 
 #include <cassert>
+#include <numeric>
 #include <stdexcept>
 
 #include "copy_member.h"
@@ -45,8 +46,19 @@ macro_definition::macro_definition(id_index name,
     , definition_location(std::move(definition_location))
     , used_copy_members(std::move(used_copy_members))
 {
+    cached_definition.reserve(definition.size());
     for (auto&& stmt : definition)
         cached_definition.emplace_back(std::move(stmt));
+
+    auto r = std::accumulate(params.begin(), params.end(), std::pair<size_t, size_t>(1, 0), [](auto a, const auto& e) {
+        if (e.data)
+            ++a.second;
+        else
+            ++a.first;
+        return a;
+    });
+    positional_params_.reserve(r.first);
+    keyword_params_.reserve(r.second);
 
     named_params_.emplace(label_param_name,
         positional_params_
@@ -173,5 +185,4 @@ macro_invocation::macro_invocation(id_index name,
     , copy_nests(copy_nests)
     , labels(labels)
     , definition_location(definition_location)
-    , current_statement((size_t)-1)
 {}

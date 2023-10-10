@@ -21,6 +21,8 @@
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"
 
+constexpr auto zero_stmt_id = context::statement_id { 0 };
+
 TEST(lsp_completion, completion_list_instr)
 {
     const std::string input = R"(
@@ -69,7 +71,7 @@ TEST(lsp_completion, completion_list_instr_exact)
 
 TEST(lsp_completion, completion_list_vars)
 {
-    lsp::vardef_storage vars(1, lsp::variable_symbol_definition(context::id_index("VARNAME"), 0, {}));
+    lsp::vardef_storage vars(1, lsp::variable_symbol_definition(context::id_index("VARNAME"), zero_stmt_id, {}));
 
     auto result = lsp::generate_completion(&vars);
 
@@ -81,7 +83,7 @@ TEST(lsp_completion, completion_list_labels)
 {
     context::label_storage labels;
     labels.try_emplace(context::id_index("LABEL"),
-        std::make_unique<context::macro_sequence_symbol>(context::id_index("LABEL"), location(), 0));
+        std::make_unique<context::macro_sequence_symbol>(context::id_index("LABEL"), location(), zero_stmt_id));
 
     auto result = lsp::generate_completion(&labels);
 

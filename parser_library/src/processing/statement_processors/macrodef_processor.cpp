@@ -30,10 +30,8 @@ macrodef_processor::macrodef_processor(analyzing_context ctx,
     , start_(std::move(start))
     , initial_copy_nest_(hlasm_ctx.current_copy_stack().size())
     , macro_nest_(1)
-    , curr_line_(0)
     , expecting_prototype_(true)
     , expecting_MACRO_(start_.is_external)
-    , omit_next_(false)
     , finished_flag_(false)
     , table_(create_table())
 {
@@ -83,9 +81,9 @@ void macrodef_processor::process_statement(context::shared_stmt_ptr statement)
 {
     bool expecting_tmp = expecting_prototype_ || expecting_MACRO_;
 
-    process_statement(*statement);
+    bool handled = process_statement(*statement);
 
-    if (!expecting_tmp && !omit_next_)
+    if (!expecting_tmp && !handled)
     {
         result_.definition.push_back(statement);
         add_correct_copy_nest();
@@ -156,12 +154,10 @@ processing_status macrodef_processor::get_macro_processing_status(
 
 void macrodef_processor::collect_diags() const {}
 
-void macrodef_processor::process_statement(const context::hlasm_statement& statement)
+bool macrodef_processor::process_statement(const context::hlasm_statement& statement)
 {
     if (finished_flag_)
         throw std::runtime_error("bad operation");
-
-    omit_next_ = false;
 
     auto res_stmt = statement.access_resolved();
 
@@ -175,7 +171,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
             add_diagnostic(diagnostic_op::error_E059(start_.external_name.to_string_view(), r));
             result_.invalid = true;
             finished_flag_ = true;
-            return;
+            return false;
         }
         else
             expecting_MACRO_ = false;
@@ -187,7 +183,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
             range r = res_stmt ? res_stmt->stmt_range_ref() : range(statement.statement_position());
             add_diagnostic(diagnostic_op::error_E071(r));
             result_.invalid = true;
-            return;
+            return false;
         }
         result_.invalid = false;
         process_prototype(*res_stmt);
@@ -205,16 +201,15 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
             if (auto found = table_.find(res_stmt->opcode_ref().value); found != table_.end())
             {
                 auto& [key, func] = *found;
-                func(*res_stmt);
+                return func(*res_stmt);
             }
         }
         else if (auto def_stmt = statement.access_deferred())
         {
             process_sequence_symbol(def_stmt->label_ref());
         }
-
-        ++curr_line_; // TODO: What are we doing here???
     }
+    return false;
 }
 
 void macrodef_processor::process_prototype(const resolved_statement& statement)
@@ -239,7 +234,9 @@ void macrodef_processor::process_prototype_label(
         else
         {
             result_.prototype.name_param = var->access_basic()->name;
-            result_.variable_symbols.emplace_back(var->access_basic()->name, curr_line_, var->symbol_range.start);
+            result_.variable_symbols.emplace_back(var->access_basic()->name,
+                context::statement_id { result_.definition.size() },
+                var->symbol_range.start);
             param_names.push_back(result_.prototype.name_param);
         }
     }
@@ -288,7 +285,9 @@ void macrodef_processor::process_prototype_operand(
                 auto var_id = var->access_basic()->name;
                 param_names.push_back(var_id);
                 result_.prototype.symbolic_params.emplace_back(nullptr, var_id);
-                result_.variable_symbols.emplace_back(var->access_basic()->name, curr_line_, var->symbol_range.start);
+                result_.variable_symbols.emplace_back(var->access_basic()->name,
+                    context::statement_id { result_.definition.size() },
+                    var->symbol_range.start);
             }
         }
         else if (tmp_chain.size() > 1)
@@ -307,8 +306,9 @@ void macrodef_processor::process_prototype_operand(
 
                     result_.prototype.symbolic_params.emplace_back(
                         macro_processor::create_macro_data(tmp_chain.begin() + 2, tmp_chain.end(), add_diags), var_id);
-                    result_.variable_symbols.emplace_back(
-                        var->access_basic()->name, curr_line_, var->symbol_range.start);
+                    result_.variable_symbols.emplace_back(var->access_basic()->name,
+                        context::statement_id { result_.definition.size() },
+                        var->symbol_range.start);
                 }
             }
             else
@@ -347,42 +347,49 @@ macrodef_processor::process_table_t macrodef_processor::create_table()
 {
     process_table_t table;
     table.emplace(context::id_storage::well_known::SETA,
-        [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::A_TYPE); });
+        [this](const resolved_statement& stmt) { return process_SET(stmt, context::SET_t_enum::A_TYPE); });
     table.emplace(context::id_storage::well_known::SETB,
-        [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::B_TYPE); });
+        [this](const resolved_statement& stmt) { return process_SET(stmt, context::SET_t_enum::B_TYPE); });
     table.emplace(context::id_storage::well_known::SETC,
-        [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::C_TYPE); });
+        [this](const resolved_statement& stmt) { return process_SET(stmt, context::SET_t_enum::C_TYPE); });
     table.emplace(context::id_storage::well_known::LCLA,
-        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, false); });
+        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, false); });
     table.emplace(context::id_storage::well_known::LCLB,
-        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, false); });
+        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, false); });
     table.emplace(context::id_storage::well_known::LCLC,
-        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, false); });
+        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, false); });
     table.emplace(context::id_storage::well_known::GBLA,
-        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, true); });
+        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, true); });
     table.emplace(context::id_storage::well_known::GBLB,
-        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, true); });
+        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, true); });
     table.emplace(context::id_storage::well_known::GBLC,
-        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, true); });
-    table.emplace(context::id_storage::well_known::MACRO, [this](const resolved_statement&) { process_MACRO(); });
-    table.emplace(context::id_storage::well_known::MEND, [this](const resolved_statement&) { process_MEND(); });
+        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, true); });
     table.emplace(
-        context::id_storage::well_known::COPY, [this](const resolved_statement& stmt) { process_COPY(stmt); });
+        context::id_storage::well_known::MACRO, [this](const resolved_statement&) { return process_MACRO(); });
+    table.emplace(context::id_storage::well_known::MEND, [this](const resolved_statement&) { return process_MEND(); });
+    table.emplace(
+        context::id_storage::well_known::COPY, [this](const resolved_statement& stmt) { return process_COPY(stmt); });
     return table;
 }
 
-void macrodef_processor::process_MACRO() { ++macro_nest_; }
+bool macrodef_processor::process_MACRO()
+{
+    ++macro_nest_;
+    return false;
+}
 
-void macrodef_processor::process_MEND()
+bool macrodef_processor::process_MEND()
 {
     assert(macro_nest_ != 0);
     --macro_nest_;
 
     if (macro_nest_ == 0)
         finished_flag_ = true;
+
+    return false;
 }
 
-void macrodef_processor::process_COPY(const resolved_statement& statement)
+bool macrodef_processor::process_COPY(const resolved_statement& statement)
 {
     // substitute copy for anop to not be processed again
 
@@ -418,10 +425,10 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
         }
     }
 
-    omit_next_ = true;
+    return true;
 }
 
-void macrodef_processor::process_LCL_GBL(const resolved_statement& statement, context::SET_t_enum set_type, bool global)
+bool macrodef_processor::process_LCL_GBL(const resolved_statement& statement, context::SET_t_enum set_type, bool global)
 {
     for (auto& op : statement.operands_ref().value)
     {
@@ -438,16 +445,19 @@ void macrodef_processor::process_LCL_GBL(const resolved_statement& statement, co
             add_SET_sym_to_res(var, set_type, global);
         }
     }
+    return false;
 }
 
-void macrodef_processor::process_SET(const resolved_statement& statement, context::SET_t_enum set_type)
+bool macrodef_processor::process_SET(const resolved_statement& statement, context::SET_t_enum set_type)
 {
     if (statement.label_ref().type != semantics::label_si_type::VAR)
-        return;
+        return false;
 
     auto var = std::get<semantics::vs_ptr>(statement.label_ref().value).get();
 
     add_SET_sym_to_res(var, set_type, false);
+
+    return false;
 }
 
 void macrodef_processor::add_SET_sym_to_res(
@@ -464,8 +474,11 @@ void macrodef_processor::add_SET_sym_to_res(
         != result_.variable_symbols.end())
         return;
 
-    result_.variable_symbols.emplace_back(
-        var->access_basic()->name, set_type, global, curr_line_, var->symbol_range.start);
+    result_.variable_symbols.emplace_back(var->access_basic()->name,
+        set_type,
+        global,
+        context::statement_id { result_.definition.size() },
+        var->symbol_range.start);
 }
 
 void macrodef_processor::process_sequence_symbol(const semantics::label_si& label)
@@ -482,8 +495,9 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
         {
             auto& sym = result_.sequence_symbols[seq.name];
             if (!sym)
-                sym = std::make_unique<context::macro_sequence_symbol>(
-                    seq.name, location(label.field_range.start, hlasm_ctx.current_statement_source()), curr_line_);
+                sym = std::make_unique<context::macro_sequence_symbol>(seq.name,
+                    location(label.field_range.start, hlasm_ctx.current_statement_source()),
+                    context::statement_id { result_.definition.size() });
         }
     }
 }
@@ -507,25 +521,27 @@ void macrodef_processor::add_correct_copy_nest()
     bool in_inner_macro = macro_nest_ > 1;
 
 
+    context::statement_id current_statement_id = { result_.definition.size() };
     if (result_.file_scopes[current_file].empty())
     {
-        if (curr_line_ == 1)
-            result_.file_scopes[current_file].emplace_back(0, curr_line_, in_inner_macro);
+        if (current_statement_id.value == 1)
+            result_.file_scopes[current_file].emplace_back(
+                context::statement_id { 0 }, current_statement_id, in_inner_macro);
         else
-            result_.file_scopes[current_file].emplace_back(curr_line_, in_inner_macro);
+            result_.file_scopes[current_file].emplace_back(current_statement_id, in_inner_macro);
     }
     else
     {
         bool inner_macro_ended = last_in_inner_macro_ && !in_inner_macro;
         bool inner_macro_started = !last_in_inner_macro_ && in_inner_macro;
         if (inner_macro_ended) // add new scope when inner macro ended
-            result_.file_scopes[current_file].emplace_back(curr_line_, in_inner_macro);
+            result_.file_scopes[current_file].emplace_back(current_statement_id, in_inner_macro);
         else if (!in_inner_macro
             || inner_macro_started) // if we are not in inner macro, update the end of old scope. Update also when inner
                                     // macro just started, since we use half-open intervals.
         {
             auto& last_scope = result_.file_scopes[current_file].back();
-            last_scope.end_statement = curr_line_;
+            last_scope.end_statement = current_statement_id;
         }
     }
 

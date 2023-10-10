@@ -291,7 +291,7 @@ void processing_manager::finish_lookahead(lookahead_processing_result result)
     else
     {
         if (hlasm_ctx_.current_scope().this_macro)
-            --hlasm_ctx_.current_scope().this_macro->current_statement;
+            --hlasm_ctx_.current_scope().this_macro->current_statement.value;
 
         perform_opencode_jump(result.statement_position, std::move(result.snapshot));
     }
@@ -385,7 +385,7 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
         {
             assert(hlasm_ctx_.is_in_macro());
             hlasm_ctx_.scope_stack().back().this_macro->current_statement =
-                (int)symbol->access_macro_symbol()->statement_offset - 1;
+                context::statement_id { symbol->access_macro_symbol()->statement_offset.value - 1 };
         }
         else
         {

@@ -45,7 +45,7 @@ bool opencode_sequence_symbol::operator==(const opencode_sequence_symbol& oth) c
     return snapshot == oth.snapshot;
 }
 
-macro_sequence_symbol::macro_sequence_symbol(id_index name, location loc, size_t statement_offset)
+macro_sequence_symbol::macro_sequence_symbol(id_index name, location loc, statement_id statement_offset)
     : sequence_symbol(name, sequence_symbol_kind::MACRO, std::move(loc))
     , statement_offset(statement_offset)
 {}

@@ -30,10 +30,10 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::lsp;
 
-
+constexpr auto zero_stmt_id = context::statement_id { 0 };
 TEST(item_convertors, macro_sequence_symbol)
 {
-    const macro_sequence_symbol seq(id_index("INMAC"), location(), 0);
+    const macro_sequence_symbol seq(id_index("INMAC"), location(), zero_stmt_id);
     const lsp::completion_item_s expected(".INMAC", "Sequence symbol", ".INMAC", "", completion_item_kind::seq_sym);
 
     EXPECT_EQ(generate_completion_item(seq), expected);
@@ -49,7 +49,7 @@ TEST(item_convertors, opencode_sequence_symbol)
 
 TEST(item_convertors, macro_param)
 {
-    const variable_symbol_definition var(id_index("LABEL"), 0, position());
+    const variable_symbol_definition var(id_index("LABEL"), zero_stmt_id, position());
     const lsp::completion_item_s expected("&LABEL", "MACRO parameter", "&LABEL", "", completion_item_kind::var_sym);
 
 
@@ -58,7 +58,7 @@ TEST(item_convertors, macro_param)
 
 TEST(item_convertors, set_symbol_a)
 {
-    const variable_symbol_definition var(id_index("KEY_PAR"), SET_t_enum::A_TYPE, false, 0, position());
+    const variable_symbol_definition var(id_index("KEY_PAR"), SET_t_enum::A_TYPE, false, zero_stmt_id, position());
     const lsp::completion_item_s expected("&KEY_PAR", "SETA variable", "&KEY_PAR", "", completion_item_kind::var_sym);
 
 
@@ -67,7 +67,7 @@ TEST(item_convertors, set_symbol_a)
 
 TEST(item_convertors, set_symbol_b)
 {
-    const variable_symbol_definition var(id_index("KEY_PAR"), SET_t_enum::B_TYPE, false, 0, position());
+    const variable_symbol_definition var(id_index("KEY_PAR"), SET_t_enum::B_TYPE, false, zero_stmt_id, position());
     const lsp::completion_item_s expected("&KEY_PAR", "SETB variable", "&KEY_PAR", "", completion_item_kind::var_sym);
 
 
@@ -76,7 +76,7 @@ TEST(item_convertors, set_symbol_b)
 
 TEST(item_convertors, set_symbol_c)
 {
-    const variable_symbol_definition var(id_index("KEY_PAR"), SET_t_enum::C_TYPE, false, 0, position());
+    const variable_symbol_definition var(id_index("KEY_PAR"), SET_t_enum::C_TYPE, false, zero_stmt_id, position());
     const lsp::completion_item_s expected("&KEY_PAR", "SETC variable", "&KEY_PAR", "", completion_item_kind::var_sym);
 
 

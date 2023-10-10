@@ -15,6 +15,7 @@
 #ifndef CONTEXT_MACRO_H
 #define CONTEXT_MACRO_H
 
+#include <cassert>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -22,6 +23,7 @@
 #include "common_types.h"
 #include "sequence_symbol.h"
 #include "statement_cache.h"
+#include "statement_id.h"
 #include "variables/macro_param.h"
 
 namespace hlasm_plugin::parser_library::context {
@@ -99,6 +101,12 @@ public:
     const std::vector<std::unique_ptr<positional_param>>& get_positional_params() const;
     const std::vector<std::unique_ptr<keyword_param>>& get_keyword_params() const;
     const id_index& get_label_param_name() const;
+
+    const auto& get_copy_nest(statement_id stmt_id) const noexcept
+    {
+        assert(stmt_id.value < copy_nests.size());
+        return copy_nests[stmt_id.value];
+    }
 };
 
 // represent macro instruction call
@@ -119,7 +127,7 @@ public:
     // location of the macro definition in code
     const location& definition_location;
     // index to definition vector
-    size_t current_statement;
+    statement_id current_statement;
 
     macro_invocation(id_index name,
         cached_block& cached_definition,
@@ -127,6 +135,14 @@ public:
         const label_storage& labels,
         std::unordered_map<id_index, macro_param_ptr> named_params,
         const location& definition_location);
+
+    const auto& get_copy_nest(statement_id stmt_id) const noexcept
+    {
+        assert(stmt_id.value < copy_nests.size());
+        return copy_nests[stmt_id.value];
+    }
+
+    const auto& get_current_copy_nest() const noexcept { return get_copy_nest(current_statement); }
 };
 
 } // namespace hlasm_plugin::parser_library::context

@@ -18,6 +18,7 @@
 #include <memory>
 
 #include "source_snapshot.h"
+#include "statement_id.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -68,9 +69,9 @@ struct opencode_sequence_symbol : public sequence_symbol
 struct macro_sequence_symbol : public sequence_symbol
 {
     // offset from start of the macro
-    size_t statement_offset;
+    statement_id statement_offset;
 
-    macro_sequence_symbol(id_index name, location symbol_location, size_t statement_offset);
+    macro_sequence_symbol(id_index name, location symbol_location, statement_id statement_offset);
 };
 
 } // namespace hlasm_plugin::parser_library::context

@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "context/copy_member.h"
+#include "context/statement_id.h"
 #include "macro_info.h"
 #include "symbol_occurrence.h"
 #include "text_data_view.h"
@@ -44,6 +45,12 @@ struct line_range
     size_t end;
 };
 
+struct macro_range
+{
+    context::statement_id begin;
+    context::statement_id end;
+};
+
 bool operator==(const line_range& lhs, const line_range& rhs);
 bool operator<(const line_range& lhs, const line_range& rhs);
 
@@ -54,7 +61,7 @@ struct file_slice_t
     macro_info_ptr macro_context;
 
     // range of slice within macro definition
-    line_range macro_lines;
+    macro_range macro_lines;
     // range of slice within file
     line_range file_lines;
 

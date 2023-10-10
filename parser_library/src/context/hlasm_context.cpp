@@ -403,8 +403,8 @@ std::pair<source_position, source_snapshot> hlasm_context::get_begin_snapshot(bo
 
     context::source_snapshot snapshot = current_source().create_snapshot();
 
-    if (snapshot.copy_frames.size() && is_in_macros)
-        ++snapshot.copy_frames.back().statement_offset;
+    if (!snapshot.copy_frames.empty() && is_in_macros)
+        ++snapshot.copy_frames.back().statement_offset.value;
 
     return std::make_pair(std::move(statement_position), std::move(snapshot));
 }
@@ -416,8 +416,8 @@ std::pair<source_position, source_snapshot> hlasm_context::get_end_snapshot() co
 
     context::source_snapshot snapshot = current_source().create_snapshot();
 
-    if (snapshot.copy_frames.size())
-        ++snapshot.copy_frames.back().statement_offset;
+    if (!snapshot.copy_frames.empty())
+        ++snapshot.copy_frames.back().statement_offset.value;
 
     return std::make_pair(std::move(statement_position), std::move(snapshot));
 }
@@ -485,9 +485,7 @@ processing_stack_t hlasm_context::processing_stack()
             first = false;
             for (size_t j = 1; j < scope_stack_.size(); ++j)
             {
-                auto offs = scope_stack_[j].this_macro->current_statement;
-
-                for (const auto& nest : scope_stack_[j].this_macro->copy_nests[offs])
+                for (const auto& nest : scope_stack_[j].this_macro->get_current_copy_nest())
                     result = m_stack_tree.step(
                         processing_frame(
                             nest.loc.pos, shared_resource_location(nest.loc.resource_loc), nest.member_name),
@@ -508,9 +506,7 @@ processing_frame hlasm_context::processing_stack_top(bool consider_macros)
 
     if (consider_macros && source_stack_.size() == 1 && scope_stack_.size() > 1)
     {
-        const auto& last_macro = scope_stack_.back().this_macro;
-
-        if (const auto& nest = last_macro->copy_nests[last_macro->current_statement]; !nest.empty())
+        if (const auto& nest = scope_stack_.back().this_macro->get_current_copy_nest(); !nest.empty())
         {
             const auto& last_copy = nest.back();
             return processing_frame(
@@ -557,10 +553,8 @@ processing_stack_details_t hlasm_context::processing_stack_details()
             first = false;
             for (size_t j = 1; j < scope_stack_.size(); ++j)
             {
-                auto offs = scope_stack_[j].this_macro->current_statement;
-
                 for (auto type = file_processing_type::MACRO;
-                     const auto& nest : scope_stack_[j].this_macro->copy_nests[offs])
+                     const auto& nest : scope_stack_[j].this_macro->get_current_copy_nest())
                 {
                     res.emplace_back(nest.loc.pos,
                         shared_resource_location(nest.loc.resource_loc),
@@ -591,9 +585,7 @@ location hlasm_context::current_statement_location(bool consider_macros) const
     }
     else
     {
-        const auto& mac_invo = scope_stack_.back().this_macro;
-
-        return mac_invo->copy_nests[mac_invo->current_statement].back().loc;
+        return scope_stack_.back().this_macro->get_current_copy_nest().back().loc;
     }
 }
 
@@ -608,9 +600,7 @@ const utils::resource::resource_location& hlasm_context::current_statement_sourc
     }
     else
     {
-        const auto& mac_invo = scope_stack_.back().this_macro;
-
-        return mac_invo->copy_nests[mac_invo->current_statement].back().loc.resource_loc;
+        return scope_stack_.back().this_macro->get_current_copy_nest().back().loc.resource_loc;
     }
 }
 

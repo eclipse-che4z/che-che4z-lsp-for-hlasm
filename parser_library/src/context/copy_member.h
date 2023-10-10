@@ -15,9 +15,10 @@
 #ifndef CONTEXT_COPY_MEMBER_H
 #define CONTEXT_COPY_MEMBER_H
 
-#include "id_storage.h"
+#include "id_index.h"
 #include "location.h"
 #include "statement_cache.h"
+#include "statement_id.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -46,7 +47,7 @@ using copy_member_ptr = std::shared_ptr<copy_member>;
 struct copy_member_invocation
 {
     copy_member_ptr copy_member_definition;
-    size_t current_statement = (size_t)-1;
+    statement_id current_statement;
 
     static constexpr size_t not_suspended = (size_t)-1;
     size_t suspended_at = not_suspended;
@@ -61,8 +62,8 @@ struct copy_member_invocation
 
     position current_statement_position() const
     {
-        if (current_statement != (size_t)-1)
-            return cached_definition()->at(current_statement).get_base()->statement_position();
+        if (current_statement != statement_id())
+            return cached_definition()->at(current_statement.value).get_base()->statement_position();
         else
             return {};
     }

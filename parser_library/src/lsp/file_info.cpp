@@ -199,15 +199,16 @@ file_slice_t file_slice_t::transform_slice(const macro_slice_t& slice, macro_inf
     fslice.macro_lines.begin = slice.begin_statement;
     fslice.macro_lines.end = slice.end_statement;
 
-    if (slice.begin_statement == 0)
+    if (slice.begin_statement.value == 0)
         fslice.file_lines.begin = macro_i->definition_location.pos.line;
     else
-        fslice.file_lines.begin = macro_i->macro_definition->copy_nests[fslice.macro_lines.begin].back().loc.pos.line;
+        fslice.file_lines.begin =
+            macro_i->macro_definition->get_copy_nest(fslice.macro_lines.begin).back().loc.pos.line;
 
-    if (slice.end_statement == macro_i->macro_definition->copy_nests.size())
+    if (slice.end_statement.value == macro_i->macro_definition->copy_nests.size())
         fslice.file_lines.end = macro_i->macro_definition->copy_nests.back().back().loc.pos.line + 1;
     else
-        fslice.file_lines.end = macro_i->macro_definition->copy_nests[fslice.macro_lines.end].back().loc.pos.line;
+        fslice.file_lines.end = macro_i->macro_definition->get_copy_nest(fslice.macro_lines.end).back().loc.pos.line;
 
     fslice.type = slice.inner_macro ? scope_type::INNER_MACRO : scope_type::MACRO;
     fslice.macro_context = macro_i;

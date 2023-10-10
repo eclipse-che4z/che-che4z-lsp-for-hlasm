@@ -38,15 +38,15 @@ copy_statement_provider::get_next()
     // due to std::vector iterator invalidation rules for move
     auto& invo = m_ctx.hlasm_ctx->current_copy_stack().back();
 
-    invo.current_statement += !m_resolved_instruction.has_value();
-    if (invo.current_statement == invo.cached_definition()->size())
+    invo.current_statement.value += !m_resolved_instruction.has_value();
+    if (invo.current_statement.value == invo.cached_definition()->size())
     {
         m_resolved_instruction.reset();
         m_ctx.hlasm_ctx->leave_copy_member();
         return {};
     }
 
-    return { &invo.cached_definition()->at(invo.current_statement), std::exchange(m_resolved_instruction, {}) };
+    return { &invo.cached_definition()->at(invo.current_statement.value), std::exchange(m_resolved_instruction, {}) };
 }
 
 std::vector<diagnostic_op> copy_statement_provider::filter_cached_diagnostics(

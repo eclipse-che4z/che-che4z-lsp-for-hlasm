@@ -914,7 +914,7 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
             {
                 if (macro_scope_i)
                     return location(sym->def_position,
-                        macro_scope_i->macro_definition->copy_nests[sym->def_location].back().loc.resource_loc);
+                        macro_scope_i->macro_definition->get_copy_nest(sym->def_location).back().loc.resource_loc);
                 return location(sym->def_position, sym->file);
             }
             break;

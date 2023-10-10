@@ -19,6 +19,7 @@
 
 #include "id_storage.h"
 #include "location.h"
+#include "statement_id.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -40,9 +41,9 @@ struct source_position
 struct copy_frame
 {
     id_index copy_member;
-    size_t statement_offset;
+    statement_id statement_offset;
 
-    copy_frame(id_index copy_member, size_t statement_offset)
+    copy_frame(id_index copy_member, statement_id statement_offset)
         : copy_member(copy_member)
         , statement_offset(statement_offset)
     {}

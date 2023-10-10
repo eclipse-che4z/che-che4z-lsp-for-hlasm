@@ -35,15 +35,15 @@ macro_statement_provider::get_next()
     auto& invo = m_ctx.hlasm_ctx->scope_stack().back().this_macro;
     assert(invo);
 
-    invo->current_statement += !m_resolved_instruction.has_value();
-    if (invo->current_statement == invo->cached_definition.size())
+    invo->current_statement.value += !m_resolved_instruction.has_value();
+    if (invo->current_statement.value == invo->cached_definition.size())
     {
         m_resolved_instruction.reset();
         m_ctx.hlasm_ctx->leave_macro();
         return {};
     }
 
-    return { &invo->cached_definition[invo->current_statement], std::exchange(m_resolved_instruction, {}) };
+    return { &invo->cached_definition[invo->current_statement.value], std::exchange(m_resolved_instruction, {}) };
 }
 
 std::vector<diagnostic_op> macro_statement_provider::filter_cached_diagnostics(

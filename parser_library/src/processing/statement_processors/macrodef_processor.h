@@ -33,17 +33,15 @@ class macrodef_processor final : public statement_processor
 
     size_t initial_copy_nest_;
     size_t macro_nest_;
-    size_t curr_line_;
     position curr_outer_position_;
     bool expecting_prototype_;
     bool expecting_MACRO_;
-    bool omit_next_;
 
     macrodef_processing_result result_;
     bool last_in_inner_macro_ = false;
     bool finished_flag_;
 
-    using process_table_t = std::unordered_map<context::id_index, std::function<void(const resolved_statement&)>>;
+    using process_table_t = std::unordered_map<context::id_index, std::function<bool(const resolved_statement&)>>;
 
     const process_table_t table_;
 
@@ -66,7 +64,7 @@ public:
     void collect_diags() const override;
 
 private:
-    void process_statement(const context::hlasm_statement& statement);
+    bool process_statement(const context::hlasm_statement& statement);
 
     void process_prototype(const resolved_statement& statement);
     void process_prototype_label(const resolved_statement& statement, std::vector<context::id_index>& param_names);
@@ -80,11 +78,11 @@ private:
 
     process_table_t create_table();
 
-    void process_MACRO();
-    void process_MEND();
-    void process_COPY(const resolved_statement& statement);
-    void process_LCL_GBL(const resolved_statement& statement, context::SET_t_enum set_type, bool global);
-    void process_SET(const resolved_statement& statement, context::SET_t_enum set_type);
+    bool process_MACRO();
+    bool process_MEND();
+    bool process_COPY(const resolved_statement& statement);
+    bool process_LCL_GBL(const resolved_statement& statement, context::SET_t_enum set_type, bool global);
+    bool process_SET(const resolved_statement& statement, context::SET_t_enum set_type);
 
     void add_SET_sym_to_res(const semantics::variable_symbol* sym, context::SET_t_enum set_type, bool global);
 
