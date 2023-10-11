@@ -164,13 +164,6 @@ fade_message fade_message_list::message(size_t index) { return static_cast<fade_
 
 size_t fade_message_list::size() const { return size_; }
 
-token_info::token_info(const range& token_range, semantics::hl_scopes scope)
-    : token_range(token_range)
-    , scope(scope) {};
-token_info::token_info(
-    size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::hl_scopes scope)
-    : token_range({ { line_start, column_start }, { line_end, column_end } })
-    , scope(scope) {};
 //*********************** stack_frame *************************
 stack_frame::stack_frame(const debugging::stack_frame& frame)
     : name(frame.name)

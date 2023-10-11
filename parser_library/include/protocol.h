@@ -327,19 +327,22 @@ private:
 
 struct PARSER_LIBRARY_EXPORT token_info
 {
-    token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::hl_scopes scope);
-    token_info(const range& token_range, semantics::hl_scopes scope);
+    token_info(const range& token_range, semantics::hl_scopes scope)
+        : token_range(token_range)
+        , scope(scope)
+    {}
+    token_info(position start, position end, semantics::hl_scopes scope)
+        : token_range(start, end)
+        , scope(scope)
+    {}
+    token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::hl_scopes scope)
+        : token_range({ line_start, column_start }, { line_end, column_end })
+        , scope(scope)
+    {}
     range token_range;
     semantics::hl_scopes scope;
 
-    bool operator<(const token_info& rhs) const
-    {
-        return token_range.start.line < rhs.token_range.start.line
-            || (token_range.start.line == rhs.token_range.start.line
-                && token_range.start.column < rhs.token_range.start.column);
-    }
-
-    bool operator==(const token_info& rhs) const { return token_range == rhs.token_range && scope == rhs.scope; }
+    bool operator==(const token_info& rhs) const noexcept = default;
 };
 
 struct PARSER_LIBRARY_EXPORT source

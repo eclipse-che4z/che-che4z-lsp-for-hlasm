@@ -15,7 +15,7 @@
 #ifndef SOURCE_INFO_PROC_INFO
 #define SOURCE_INFO_PROC_INFO
 
-#include <vector>
+#include <span>
 
 #include "highlighting_info.h"
 #include "protocol.h"
@@ -29,12 +29,12 @@ public:
     explicit source_info_processor(bool collect_hl_info);
 
     // takes vector of highlighting symbols and processes them into highlighting info for further propagation
-    void process_hl_symbols(std::vector<token_info> symbols);
-    void process_hl_symbols(std::vector<token_info> symbols, size_t continue_column);
+    void process_hl_symbols(std::span<const token_info> symbols);
+    void process_hl_symbols(std::span<const token_info> symbols, size_t continue_column);
 
     // add one hl symbol to the highlighting info
-    void add_hl_symbol(token_info symbol);
-    void add_hl_symbol(token_info symbol, size_t continue_column);
+    void add_hl_symbol(const token_info& symbol);
+    void add_hl_symbol(const token_info& symbol, size_t continue_column);
 
     lines_info take_semantic_tokens();
 

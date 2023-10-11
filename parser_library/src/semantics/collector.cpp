@@ -235,16 +235,16 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
     }
 }
 
-std::vector<token_info> collector::extract_hl_symbols()
+std::span<const token_info> collector::extract_hl_symbols()
 {
     if (hl_symbols_extracted_)
         throw std::runtime_error("data already extracted");
 
     hl_symbols_extracted_ = true;
-    return std::move(hl_symbols_);
+    return hl_symbols_;
 }
 
-void collector::set_hl_symbols(std::vector<token_info> m) { hl_symbols_ = std::move(m); }
+void collector::set_hl_symbols(std::span<const token_info> m) { hl_symbols_.assign(m.begin(), m.end()); }
 
 void collector::prepare_for_next_statement()
 {
