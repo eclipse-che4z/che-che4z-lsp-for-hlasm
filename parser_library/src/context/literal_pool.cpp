@@ -111,7 +111,7 @@ public:
         , op(details.r, {})
         , op_code(context::id_index("DC"), instruction_type::ASM)
     {
-        op.value.push_back(std::make_unique<semantics::data_def_operand>(dd, details.r));
+        op.value.push_back(std::make_unique<semantics::data_def_operand_shared>(dd, details.r));
     }
     const processing_stack_t& location_stack() const override { return details->stack; }
     const processing::resolved_statement* resolved_stmt() const override { return this; }

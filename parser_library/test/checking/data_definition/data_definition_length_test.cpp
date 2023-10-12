@@ -28,7 +28,7 @@ using namespace hlasm_plugin::parser_library;
 std::unique_ptr<semantics::operand> data_def_op_from_string(std::string input)
 {
     analyzer a(input);
-    return std::make_unique<semantics::data_def_operand>(parse_data_definition(a), range());
+    return std::make_unique<semantics::data_def_operand_inline>(parse_data_definition(a), range());
 }
 
 TEST(data_def_operands_length, all_bit_len)

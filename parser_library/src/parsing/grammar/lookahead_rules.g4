@@ -109,7 +109,7 @@ lookahead_operands_and_remarks_dat
 		data_def
 		{
 			operand_list operands;
-			operands.push_back(std::make_unique<data_def_operand>(std::move($data_def.value),provider.get_range($data_def.ctx)));
+			operands.push_back(std::make_unique<data_def_operand_inline>(std::move($data_def.value),provider.get_range($data_def.ctx)));
 			range r = provider.get_range($data_def.ctx);
 			collector.set_operand_remark_field(std::move(operands), std::vector<range>(), r);
 		}

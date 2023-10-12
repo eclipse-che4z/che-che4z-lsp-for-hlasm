@@ -353,11 +353,8 @@ struct string_assembler_operand final : assembler_operand
 };
 
 // data definition operand
-struct data_def_operand final : evaluable_operand
+struct data_def_operand : evaluable_operand
 {
-    data_def_operand(expressions::data_definition data_def, const range operand_range);
-    data_def_operand(std::shared_ptr<const expressions::data_definition> dd_ptr, const range operand_range);
-
     std::shared_ptr<const expressions::data_definition> value;
 
     context::dependency_collector get_length_dependencies(context::dependency_solver& info) const;
@@ -365,24 +362,38 @@ struct data_def_operand final : evaluable_operand
     context::dependency_collector get_dependencies(context::dependency_solver& info) const;
 
     bool has_dependencies(
-        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const override;
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const final;
 
-    bool has_error(context::dependency_solver& info) const override;
+    bool has_error(context::dependency_solver& info) const final;
 
     std::unique_ptr<checking::operand> get_operand_value(
-        context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
+        context::dependency_solver& info, diagnostic_op_consumer& diags) const final;
     static checking::data_definition_operand get_operand_value(
         const expressions::data_definition& dd, context::dependency_solver& info, diagnostic_op_consumer& diags);
 
-    void apply(operand_visitor& visitor) const override;
+    void apply(operand_visitor& visitor) const final;
 
-    void apply_mach_visitor(expressions::mach_expr_visitor&) const override;
+    void apply_mach_visitor(expressions::mach_expr_visitor&) const final;
 
     long long evaluate_total_length(context::dependency_solver& info,
         checking::data_instr_type checking_rules,
         diagnostic_op_consumer& diags) const;
+
+protected:
+    data_def_operand(std::shared_ptr<const expressions::data_definition> dd_ptr, const range operand_range);
 };
 
+struct data_def_operand_shared final : data_def_operand
+{
+    data_def_operand_shared(std::shared_ptr<const expressions::data_definition> dd_ptr, const range operand_range);
+};
+
+struct data_def_operand_inline final : data_def_operand
+{
+    expressions::data_definition data_def;
+
+    data_def_operand_inline(expressions::data_definition data_def, const range operand_range);
+};
 
 enum class ca_kind
 {

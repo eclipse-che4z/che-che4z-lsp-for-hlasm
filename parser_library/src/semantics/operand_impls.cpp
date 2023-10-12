@@ -615,18 +615,21 @@ macro_operand_chain::macro_operand_chain(concat_chain chain, range operand_range
 
 void macro_operand_chain::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
-
-
-data_def_operand::data_def_operand(expressions::data_definition val, range operand_range)
-    : evaluable_operand(operand_type::DAT, std::move(operand_range))
-    , value(std::make_shared<expressions::data_definition>(std::move(val)))
-{}
-
 data_def_operand::data_def_operand(std::shared_ptr<const expressions::data_definition> dd_ptr, range operand_range)
     : evaluable_operand(operand_type::DAT, std::move(operand_range))
     , value(std::move(dd_ptr))
 {}
 
+data_def_operand_inline::data_def_operand_inline(expressions::data_definition val, range operand_range)
+    : data_def_operand(
+        std::shared_ptr<const expressions::data_definition>(std::shared_ptr<const void>(), &data_def), operand_range)
+    , data_def(std::move(val))
+{}
+
+data_def_operand_shared::data_def_operand_shared(
+    std::shared_ptr<const expressions::data_definition> dd_ptr, range operand_range)
+    : data_def_operand(std::move(dd_ptr), operand_range)
+{}
 
 context::dependency_collector data_def_operand::get_length_dependencies(context::dependency_solver& info) const
 {

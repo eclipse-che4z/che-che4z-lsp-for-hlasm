@@ -50,19 +50,20 @@ struct data_definition final : public context::dependable
     };
     // Stores type, extension, all the modifiers and nominal value.
     // When pointer is null, it means the user omitted it.
-    mach_expr_ptr dupl_factor = nullptr;
+    length_type length_type = length_type::BYTE;
     char type;
-    range type_range;
     char extension = 0;
-    range extension_range;
+    bool references_loctr = false;
+
+    mach_expr_ptr dupl_factor = nullptr;
     mach_expr_ptr program_type = nullptr;
     mach_expr_ptr length = nullptr;
     mach_expr_ptr scale = nullptr;
     mach_expr_ptr exponent = nullptr;
     nominal_value_ptr nominal_value = nullptr;
 
-    length_type length_type = length_type::BYTE;
-    bool references_loctr = false;
+    range type_range;
+    range extension_range;
 
     // Returns conjunction of all dependencies of all expression in data_definition.
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
