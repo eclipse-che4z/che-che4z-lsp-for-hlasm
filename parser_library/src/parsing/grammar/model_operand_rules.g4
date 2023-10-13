@@ -109,6 +109,12 @@ model_op returns [std::optional<concat_chain> chain_opt = concat_chain()]
 		}
 	}
 	;
+	finally
+	{
+		// rest of the code assumes non-empty chain_opt
+		if (_localctx->chain_opt && _localctx->chain_opt->empty())
+			_localctx->chain_opt.reset();
+	}
 
 model_string_ch returns [std::string value]
 	:

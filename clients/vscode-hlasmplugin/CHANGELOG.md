@@ -9,6 +9,7 @@
 #### Fixed
 - Exact match may be deprioritized in the completion list
 - Diagnostic with out-of-spec range generated
+- The language server sometimes crashes while parsing an invalid model operand
 
 ## [1.10.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.9.0...1.10.0) (2023-09-22)
 
