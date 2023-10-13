@@ -15,23 +15,19 @@
 #ifndef HLASMPLUGIN_PARSER_HLASMLEX_H
 #define HLASMPLUGIN_PARSER_HLASMLEX_H
 
-#include <memory>
-#include <queue>
 #include <string>
+#include <vector>
 
-#include "TokenFactory.h"
-#include "TokenSource.h"
 #include "parser_library_export.h"
 #include "range.h"
 #include "semantics/source_info_processor.h"
-
+#include "token.h"
 
 namespace hlasm_plugin::parser_library::lexing {
 class input_source;
-using token_ptr = std::unique_ptr<antlr4::Token>;
 using char_t = char32_t;
 
-class lexer final : public antlr4::TokenSource
+class lexer final
 {
 public:
     struct stream_position
@@ -42,27 +38,17 @@ public:
     lexer(input_source*, semantics::source_info_processor* lsp_proc);
 
     lexer(const lexer&) = delete;
+    lexer(lexer&&) = delete;
     lexer& operator=(const lexer&) = delete;
     lexer& operator=(lexer&&) = delete;
-    lexer(lexer&&) = delete;
 
     // resets lexer's state, goes to the source beginning
     void reset();
 
-    virtual ~lexer() = default;
-
-    // generates next token, main lexer logic
-    token_ptr nextToken() override;
-
-    size_t getLine() const override;
-
-    size_t getCharPositionInLine() override;
-
-    antlr4::CharStream* getInputStream() override;
-
-    std::string getSourceName() override;
-
-    antlr4::TokenFactory<antlr4::CommonToken>* getTokenFactory() override;
+    // generates more tokens, main lexer logic
+    bool more_tokens();
+    size_t token_count() const noexcept { return tokens.size(); }
+    token* get_token(size_t i) noexcept { return &tokens[i]; }
 
     enum Tokens
     {
@@ -108,7 +94,8 @@ private:
 
     size_t last_token_id_ = 0;
 
-    std::queue<token_ptr> token_queue_;
+    std::vector<token> tokens;
+    std::vector<std::vector<token>> retired_tokens;
     std::vector<size_t> line_limits;
 
     bool double_byte_enabled_ = false;

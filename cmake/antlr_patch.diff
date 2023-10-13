@@ -211,3 +211,26 @@ index efbeb10..88c0fc8 100644
                                           PredictionContextHasher, PredictionContextComparer>;
  
      const PredictionContextMergeCacheOptions _options;
+diff --git a/runtime/Cpp/runtime/src/Token.cpp b/runtime/Cpp/runtime/src/Token.cpp
+index 31266b4..54a1a9b 100644
+--- a/runtime/Cpp/runtime/src/Token.cpp
++++ b/runtime/Cpp/runtime/src/Token.cpp
+@@ -5,5 +5,3 @@
+ 
+ #include "Token.h"
+ 
+-antlr4::Token::~Token() {
+-}
+diff --git a/runtime/Cpp/runtime/src/Token.h b/runtime/Cpp/runtime/src/Token.h
+index 6f3fa76..782cdd2 100755
+--- a/runtime/Cpp/runtime/src/Token.h
++++ b/runtime/Cpp/runtime/src/Token.h
+@@ -22,7 +22,7 @@ namespace antlr4 {
+     static constexpr size_t MIN_USER_TOKEN_TYPE = 1;
+     static constexpr size_t EOF = IntStream::EOF;
+ 
+-    virtual ~Token();
++    virtual ~Token() = default;
+ 
+     /// All tokens go to the parser (unless skip() is called in that rule)
+     /// on a particular "channel".  The parser tunes to a particular channel

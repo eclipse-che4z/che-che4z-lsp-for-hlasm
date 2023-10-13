@@ -51,25 +51,12 @@ void lexer::set_file_offset(position file_offset, size_t logical_column, bool pr
 
 void lexer::reset()
 {
-    token_queue_ = {};
+    tokens.clear();
+    retired_tokens.clear();
     last_token_id_ = 0;
     input_state_->char_position = 0;
     line_limits.clear();
     file_input_state_.c = static_cast<char_t>(input_->LA(1));
-}
-
-
-size_t lexer::getLine() const { return input_state_->line; }
-
-size_t lexer::getCharPositionInLine() { return input_state_->char_position_in_line; }
-
-antlr4::CharStream* lexer::getInputStream() { return input_; }
-
-std::string lexer::getSourceName() { return input_->getSourceName(); }
-
-antlr4::TokenFactory<antlr4::CommonToken>* lexer::getTokenFactory()
-{
-    return antlr4::CommonTokenFactory::DEFAULT.get();
 }
 
 void lexer::create_token(size_t ttype, size_t channel)
@@ -84,8 +71,24 @@ void lexer::create_token(size_t ttype, size_t channel)
 
     const auto& end = token_start_state_.line == input_state_->line ? *input_state_ : last_line;
 
-    token_queue_.push(std::make_unique<token>(this,
-        token_start_state_.input,
+    if (tokens.size() == tokens.capacity())
+    {
+        if (tokens.empty())
+            tokens.reserve(4096 / sizeof(token));
+        else
+        {
+            // The parser definitely stores addresses of tokens, so we need to preserve them until reset.
+            // However, we no longer rely on address alone to identify identical tokens,
+            // Therefore, we just need to copy the values from the old vector to the new one to preserve
+            // value accessible via index.
+            const auto& old_tokens = retired_tokens.emplace_back(std::move(tokens));
+            tokens.reserve(old_tokens.capacity() * 2);
+            for (const auto& t : old_tokens)
+                tokens.emplace_back(t);
+        }
+    }
+
+    tokens.emplace_back(token_start_state_.input,
         ttype,
         channel,
         token_start_state_.char_position,
@@ -94,7 +97,7 @@ void lexer::create_token(size_t ttype, size_t channel)
         token_start_state_.char_position_in_line,
         last_token_id_,
         token_start_state_.char_position_in_line_utf16,
-        end.char_position_in_line_utf16));
+        end.char_position_in_line_utf16);
 
     ++last_token_id_;
 
@@ -153,44 +156,37 @@ main logic
 returns already lexed token from token queue
 or if empty, tries to lex next token from input
 */
-token_ptr lexer::nextToken()
+bool lexer::more_tokens()
 {
-    while (true)
+    // capture lexer state before the start of token lexing
+    // so that we know where the currently lexed token begins
+    start_token();
+
+    if (eof())
     {
-        if (!token_queue_.empty())
-        {
-            auto t = std::move(token_queue_.front());
-            token_queue_.pop();
-            return t;
-        }
-
-        // capture lexer state before the start of token lexing
-        // so that we know where the currently lexed token begins
-        start_token();
-
-        if (eof())
-        {
-            create_token(antlr4::Token::EOF);
-        }
-
-        else if (double_byte_enabled_)
-            check_continuation();
-
-        else if (!unlimited_line_ && input_state_->char_position_in_line == end_ && input_state_->c != ' '
-            && continuation_enabled_)
-            lex_continuation();
-
-        else if ((unlimited_line_ && (input_state_->c == '\r' || input_state_->c == '\n'))
-            || (!unlimited_line_ && input_state_->char_position_in_line >= end_))
-            lex_end();
-
-        else if (input_state_->char_position_in_line < begin_)
-            lex_begin();
-
-        else
-            // lex non-special tokens
-            lex_tokens();
+        create_token(antlr4::Token::EOF);
+        return false;
     }
+
+    else if (double_byte_enabled_)
+        check_continuation();
+
+    else if (!unlimited_line_ && input_state_->char_position_in_line == end_ && input_state_->c != ' '
+        && continuation_enabled_)
+        lex_continuation();
+
+    else if ((unlimited_line_ && (input_state_->c == '\r' || input_state_->c == '\n'))
+        || (!unlimited_line_ && input_state_->char_position_in_line >= end_))
+        lex_end();
+
+    else if (input_state_->char_position_in_line < begin_)
+        lex_begin();
+
+    else
+        // lex non-special tokens
+        lex_tokens();
+
+    return true;
 }
 
 void lexer::lex_tokens()

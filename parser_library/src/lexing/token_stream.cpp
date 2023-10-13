@@ -14,6 +14,7 @@
 
 #include "token_stream.h"
 
+#include "RuleContext.h"
 #include "misc/Interval.h"
 #include "token.h"
 
@@ -21,59 +22,64 @@ using namespace hlasm_plugin::parser_library::lexing;
 using namespace antlr4;
 
 token_stream::token_stream(lexer* token_source)
-    : antlr4::BufferedTokenStream(token_source)
-    , enabled_cont_(false)
-    , needSetup_(true)
-    , token_source(token_source)
+    : token_source(token_source)
 {}
 
-void token_stream::enable_continuation() { enabled_cont_ = true; }
+void token_stream::enable_continuation() { enabled_cont = true; }
 
-void token_stream::disable_continuation() { enabled_cont_ = false; }
-
-void token_stream::reset()
-{
-    _tokens.clear();
-    _fetchedEOF = false;
-    _p = 0;
-    sync(0);
-}
-
-void token_stream::append()
-{
-    if (needSetup_)
-        setup();
-    else
-    {
-        _fetchedEOF = false;
-        ++_p;
-        sync(_p);
-    }
-}
+void token_stream::disable_continuation() { enabled_cont = false; }
 
 antlr4::Token* token_stream::LT(ssize_t k)
 {
-    lazyInit();
     if (k == 0)
         return nullptr;
 
-    if (k < 0)
-        return LB(-k);
-
-    size_t i = _p;
-
-    for (ssize_t n = 1; n < k; ++n)
+    auto p = pos;
+    if (k > 0)
     {
-        if (sync(i + 1))
-            i = next_token_on_channel(i + 1);
+        size_t token_count = token_source->token_count();
+        while (true)
+        {
+            if (p >= token_count)
+            {
+                if (fetched_eof)
+                    return token_source->get_token(token_count - 1);
+                fetched_eof |= !token_source->more_tokens();
+                token_count = token_source->token_count();
+                continue;
+            }
+            auto t = token_source->get_token(p);
+            k -= is_on_channel(t);
+            if (k == 0)
+                return t;
+            ++p;
+        }
     }
-
-    return get_internal(next_token_on_channel(i));
+    else
+    {
+        while (true)
+        {
+            if (p-- == 0)
+                return nullptr;
+            auto t = token_source->get_token(p);
+            k += is_on_channel(t);
+            if (k == 0)
+                return t;
+        }
+    }
 }
+
+antlr4::Token* token_stream::get(size_t index) const
+{
+    if (index >= token_source->token_count())
+        throw std::logic_error("token_stream::get");
+    return token_source->get_token(index);
+}
+
+antlr4::TokenSource* token_stream::getTokenSource() const { return nullptr; }
 
 std::string token_stream::getText(const antlr4::misc::Interval& interval)
 {
-    lazyInit();
     size_t start = interval.a;
     size_t stop = interval.b;
     if (start == INVALID_INDEX || stop == INVALID_INDEX)
@@ -81,17 +87,15 @@ std::string token_stream::getText(const antlr4::misc::Interval& interval)
         return "";
     }
 
-    if (stop >= _tokens.size())
+    if (const auto limit = token_source->token_count(); stop >= limit)
     {
-        stop = _tokens.size() - 1;
+        stop = limit - 1;
     }
-
-    sync(stop);
 
     std::string ss;
     for (size_t i = start; i <= stop; i++)
     {
-        Token* t = _tokens[i].get();
+        const auto* t = token_source->get_token(i);
         if (t->getType() == Token::EOF)
         {
             break;
@@ -101,121 +105,102 @@ std::string token_stream::getText(const antlr4::misc::Interval& interval)
     return ss;
 }
 
-ssize_t token_stream::adjustSeekIndex(size_t i)
+std::string token_stream::getText() { return getText(antlr4::misc::Interval(0, token_source->token_count() - 1)); }
+
+std::string token_stream::getText(antlr4::RuleContext* ctx) { return getText(ctx->getSourceInterval()); }
+
+std::string token_stream::getText(antlr4::Token* start, antlr4::Token* stop)
 {
-    if (needSetup_)
+    if (start != nullptr && stop != nullptr)
     {
-        sync(i);
+        return getText(misc::Interval(start->getTokenIndex(), stop->getTokenIndex()));
+    }
+    return "";
+}
 
-        if (i >= size())
-            return size() - 1;
-
-        auto* t = get_internal(i);
-
-        while (!is_on_channel(t))
+void token_stream::consume()
+{
+    size_t token_count = token_source->token_count();
+    do
+    {
+        if (pos + 1 >= token_count)
         {
-            ++i;
-            sync(i);
-            t = get_internal(i);
+            if (fetched_eof)
+                break;
+            fetched_eof |= !token_source->more_tokens();
+            token_count = token_source->token_count();
+            continue;
         }
-        return i;
-    }
-
-    if (i == _p + 1)
-        return next_token_on_channel(i);
-    else
-        return i;
+    } while (!is_on_channel(token_source->get_token(++pos)));
 }
 
-void token_stream::setup()
+size_t token_stream::LA(ssize_t i) { return LT(i)->getType(); }
+
+ssize_t token_stream::mark() { return 0; }
+
+void token_stream::release(ssize_t)
 {
-    BufferedTokenStream::setup();
-    needSetup_ = false;
+    // nothing to do
 }
 
-antlr4::Token* token_stream::LB(size_t k)
+size_t token_stream::index() { return pos; }
+
+void token_stream::seek(size_t index)
 {
-    if (k == 0 || _p < k || size() == 0)
-        return nullptr;
-
-    size_t i = _p;
-    size_t n = 0;
-
-    while (n < k)
-    {
-        if (i == 0)
-            return nullptr;
-        else
-            --i;
-
-        auto* t = get_internal(i);
-
-        if (is_on_channel(t))
-            ++n;
-    }
-
-    return get_internal(i);
-}
-
-size_t token_stream::next_token_on_channel(size_t i)
-{
-    sync(i);
-
-    if (i >= size())
-        return size() - 1;
-
-    auto* t = get_internal(_p);
-
-    size_t to_consume = i - _p;
-    i = _p;
-
-    while (!is_on_channel(t) || to_consume != 0)
-    {
-        to_consume -= is_on_channel(t) ? 1 : 0;
-        ++i;
-        sync(i);
-        t = get_internal(i);
-    }
-
-    return i;
-}
-
-size_t token_stream::previous_token_on_channel(size_t i)
-{
-    sync(i);
-
-    if (i >= size())
-    {
-        if (size() == 0)
-            return 0;
-        else
-            return size() - 1;
-    }
-
-    auto to_skip = _p - i;
-    i = _p - 1;
-
+    pos = index;
+    size_t token_count = token_source->token_count();
     while (true)
     {
-        auto* t = get_internal(i);
-
-        if (is_on_channel(t))
+        if (pos >= token_count)
         {
-            if (--to_skip == 0)
-                return i;
+            if (fetched_eof)
+            {
+                pos = token_count - 1;
+                break;
+            }
+            fetched_eof |= !token_source->more_tokens();
+            token_count = token_source->token_count();
+            continue;
         }
-
-        if (i == 0)
-            return 0;
-        else
-            --i;
+        if (is_on_channel(token_source->get_token(pos)))
+            break;
+        ++pos;
     }
 }
 
-token* token_stream::get_internal(size_t i) { return static_cast<token*>(get(i)); }
+size_t token_stream::size() { return token_source->token_count(); }
 
-bool token_stream::is_on_channel(token* t)
+std::string token_stream::getSourceName() const { return "token_stream"; }
+
+void token_stream::reset()
 {
-    return t->getChannel() == lexer::Channels::DEFAULT_CHANNEL || (enabled_cont_ && t->getType() == lexer::CONTINUATION)
+    enabled_cont = false;
+    fetched_eof = false;
+    pos = 0;
+}
+
+bool token_stream::is_on_channel(const token* t) const
+{
+    return t->getChannel() == lexer::Channels::DEFAULT_CHANNEL || (enabled_cont && t->getType() == lexer::CONTINUATION)
         || t->getType() == antlr4::Token::EOF;
+}
+
+void token_stream::fill()
+{
+    if (fetched_eof)
+        return;
+    while (token_source->more_tokens())
+        ;
+    fetched_eof = true;
+}
+
+std::vector<antlr4::Token*> token_stream::get_tokens() const
+{
+    std::vector<antlr4::Token*> result;
+
+    const auto count = token_source->token_count();
+    result.reserve(count);
+    for (size_t i = 0; i < count; ++i)
+        result.push_back(token_source->get_token(i));
+    return result;
 }

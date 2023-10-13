@@ -53,7 +53,7 @@ EOF
     tokens.fill();
 
     std::stringstream token_stream;
-    for (auto token : tokens.getTokens())
+    for (auto token : tokens.get_tokens())
         token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
     auto token_string = token_stream.str();
 
@@ -118,7 +118,7 @@ EOF
     tokens.fill();
 
     std::stringstream token_stream;
-    for (auto token : tokens.getTokens())
+    for (auto token : tokens.get_tokens())
         token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
     auto token_string = token_stream.str();
 
@@ -132,9 +132,15 @@ TEST(lexer_test, special_spaces)
     semantics::source_info_processor src_proc(false);
     lexing::lexer l(&input, &src_proc);
 
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::IDENTIFIER);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::SPACE);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::ORDSYMBOL);
+    while (l.more_tokens())
+        ;
+    ASSERT_GE(l.token_count(), 3);
+
+    size_t i = 0;
+
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::IDENTIFIER);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::SPACE);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::ORDSYMBOL);
 }
 
 TEST(lexer_test, attribute_in_continuation)
@@ -148,17 +154,23 @@ TEST(lexer_test, attribute_in_continuation)
     lexing::input_source input(in);
     lexing::lexer l(&input, &src_proc);
 
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::SPACE);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::ORDSYMBOL);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::SPACE);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::NUM);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::COMMA);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::ORDSYMBOL);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::CONTINUATION);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::IGNORED);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::IGNORED);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::ATTR);
-    ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::ORDSYMBOL);
+    while (l.more_tokens())
+        ;
+    ASSERT_GE(l.token_count(), 11);
+
+    size_t i = 0;
+
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::SPACE);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::ORDSYMBOL);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::SPACE);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::NUM);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::COMMA);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::ORDSYMBOL);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::CONTINUATION);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::IGNORED);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::IGNORED);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::ATTR);
+    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::ORDSYMBOL);
 }
 
 TEST(lexer_test, bad_continuation)
