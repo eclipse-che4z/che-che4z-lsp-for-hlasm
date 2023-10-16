@@ -23,9 +23,9 @@ using namespace hlasm_plugin::parser_library::context;
 
 id_index id_storage::small_id(std::string_view value)
 {
-    char buffer[id_index::buffer_size];
-    char* end = std::transform(value.begin(), value.end(), buffer, [](unsigned char c) { return (char)toupper(c); });
-    return id_index(std::string_view(buffer, end - buffer));
+    char buf[id_index::buffer_size];
+    char* end = std::transform(value.begin(), value.end(), buf, [](unsigned char c) { return utils::upper_cased[c]; });
+    return id_index(std::string_view(buf, end - buf));
 }
 
 size_t id_storage::size() const { return lit_.size(); }
@@ -48,7 +48,7 @@ id_index id_storage::add(std::string_view value)
     if (value.size() < id_index::buffer_size)
         return small_id(value);
 
-    return id_index(std::to_address(lit_.insert(utils::to_upper_copy(std::string(value))).first));
+    return add(std::string(value));
 }
 
 id_index id_storage::add(std::string&& value)

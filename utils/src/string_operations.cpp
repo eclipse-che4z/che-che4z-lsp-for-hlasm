@@ -14,6 +14,8 @@
 
 #include "utils/string_operations.h"
 
+#include <algorithm>
+
 namespace hlasm_plugin::utils {
 
 size_t trim_left(std::string_view& s)
@@ -95,15 +97,13 @@ std::string_view next_nonblank_sequence(std::string_view s)
 
 std::string& to_upper(std::string& s)
 {
-    for (auto& c : s)
-        c = static_cast<char>(std::toupper((unsigned char)c));
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return upper_cased[c]; });
     return s;
 }
 
 std::string to_upper_copy(std::string s)
 {
-    for (auto& c : s)
-        c = static_cast<char>(std::toupper((unsigned char)c));
+    to_upper(s);
     return s;
 }
 

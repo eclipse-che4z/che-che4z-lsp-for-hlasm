@@ -15,7 +15,8 @@
 #ifndef HLASMPLUGIN_UTILS_STRING_OPERATIONS_H
 #define HLASMPLUGIN_UTILS_STRING_OPERATIONS_H
 
-#include <cctype>
+#include <array>
+#include <limits>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -30,7 +31,7 @@ size_t trim_right(std::string_view& s, std::string_view to_trim);
 size_t consume(std::string_view& s, std::string_view lit);
 std::string_view next_nonblank_sequence(std::string_view s);
 
-inline bool isblank32(char32_t c) { return c <= 255 && std::isblank(static_cast<unsigned char>(c)); }
+constexpr bool isblank32(char32_t c) { return c == U' '; }
 
 template<typename T>
 bool consume(T& b, const T& e, std::string_view lit)
@@ -69,6 +70,19 @@ size_t trim_left(T& b, const T& e, std::initializer_list<std::string_view> to_tr
     }
     return result;
 }
+
+constexpr const auto upper_cased = []() {
+    std::array<char, std::numeric_limits<unsigned char>::max() + 1> result {};
+    for (size_t i = 0; i < result.size(); ++i)
+        result[i] = (char)i;
+    const auto l = std::string_view("abcdefghijklmnopqrstuvwxyz");
+    const auto u = std::string_view("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+    for (size_t i = 0; i < l.size(); ++i)
+        result[(unsigned char)l[i]] = u[i];
+
+    return result;
+}();
 
 std::string& to_upper(std::string& s);
 std::string to_upper_copy(std::string s);
