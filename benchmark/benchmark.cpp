@@ -395,7 +395,7 @@ private:
 
         parse_parameters(const std::string& source_file, size_t current_iteration, const bench_configuration& bc)
             : source_file(source_file)
-            , source_path(bc.ws_folder + "/" + source_file)
+            , source_path(utils::path::join(bc.ws_folder, source_file).string())
         {
             annotation = get_file_message(current_iteration, bc);
             ws->register_diagnostics_consumer(&diag_counter);
