@@ -145,7 +145,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install ninja-build
       - name: Configure
-        run: cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
+        run: cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
         working-directory: build
       - name: Build
         run: cmake --build .

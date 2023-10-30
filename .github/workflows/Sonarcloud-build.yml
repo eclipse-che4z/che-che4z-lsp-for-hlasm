@@ -46,8 +46,8 @@ jobs:
         run: >
           mkdir build && cd build &&
           cmake -DCMAKE_BUILD_TYPE=Debug
-          -DCMAKE_C_COMPILER=clang-14
-          -DCMAKE_CXX_COMPILER=clang++-14
+          -DCMAKE_C_COMPILER=clang-15
+          -DCMAKE_CXX_COMPILER=clang++-15
           -DCMAKE_CXX_FLAGS="-fprofile-instr-generate -fcoverage-mapping -mllvm -runtime-counter-relocation"
           -DWITH_LIBCXX=Off
           ../
