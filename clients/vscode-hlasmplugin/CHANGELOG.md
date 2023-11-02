@@ -5,6 +5,7 @@
 #### Added
 - Include all available sections in the USING completion list
 - Source code preview in the hover text for ordinary symbols
+- Show branch direction indicators
 
 #### Fixed
 - Exact match may be deprioritized in the completion list

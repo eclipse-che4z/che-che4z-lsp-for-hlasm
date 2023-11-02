@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "branch_info.h"
 #include "completion_list_source.h"
 #include "context/id_index.h"
 #include "context/macro.h"
@@ -91,6 +92,8 @@ public:
     const context::hlasm_context& get_related_hlasm_context() const { return *m_hlasm_ctx; }
 
     const std::unordered_map<context::macro_def_ptr, macro_info_ptr>& macros() const { return m_macros; };
+
+    std::vector<branch_info> get_opencode_branch_info() const;
 
 private:
     void add_file(file_info file_i);

@@ -26,7 +26,9 @@
 #include "context/ordinary_assembly/symbol_dependency_tables.h"
 #include "diagnostic_consumer.h"
 #include "ebcdic_encoding.h"
+#include "lsp/lsp_context.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
+#include "processing/processing_manager.h"
 #include "semantics/operand_impls.h"
 #include "utils/truth_table.h"
 
@@ -38,7 +40,7 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
     processing_state_listener& state_listener,
     statement_fields_parser& parser,
     opencode_provider& open_code,
-    const processing_manager& proc_mgr)
+    processing_manager& proc_mgr)
     : statement_processor(processing_kind::ORDINARY, ctx)
     , branch_provider_(branch_provider)
     , lib_info(lib_provider)
@@ -49,6 +51,7 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
     , mach_proc_(ctx, branch_provider, lib_provider, parser, proc_mgr)
     , finished_flag_(false)
     , listener_(state_listener)
+    , proc_mgr(proc_mgr)
 {}
 
 
@@ -135,6 +138,13 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
     }
 }
 
+void ordinary_processor::process_postponed_statements(
+    const std::vector<std::pair<context::post_stmt_ptr, context::dependency_evaluation_context>>& stmts)
+{
+    proc_mgr.process_postponed_statements(stmts);
+    check_postponed_statements(stmts);
+}
+
 void ordinary_processor::end_processing()
 {
     if (hlasm_ctx.ord_ctx.literals().get_pending_count())
@@ -162,7 +172,7 @@ void ordinary_processor::end_processing()
         [this](diagnostic_s d) { diagnosable_impl::add_diagnostic(std::move(d)); });
     hlasm_ctx.using_resolve(using_diags, lib_info);
 
-    check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies().collect_postponed());
+    process_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies().collect_postponed());
 
     hlasm_ctx.pop_statement_processing();
 
@@ -495,6 +505,7 @@ bool statement_check(const resolved_statement& stmt,
 
     return checker.check(instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
 }
+
 } // namespace
 
 void ordinary_processor::check_postponed_statements(
@@ -511,7 +522,7 @@ void ordinary_processor::check_postponed_statements(
         context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, dep_ctx, lib_info);
 
         const auto* rs = stmt->resolved_stmt();
-        switch (rs->opcode_ref().type)
+        switch (const auto& opcode = rs->opcode_ref(); opcode.type)
         {
             case hlasm_plugin::parser_library::context::instruction_type::MACH:
                 statement_check(*rs, stmt->location_stack(), dep_solver, mach_checker, *this);

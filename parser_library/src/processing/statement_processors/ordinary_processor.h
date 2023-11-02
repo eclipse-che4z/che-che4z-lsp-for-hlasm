@@ -48,6 +48,7 @@ class ordinary_processor final : public statement_processor
     bool finished_flag_;
 
     processing_state_listener& listener_;
+    processing_manager& proc_mgr;
 
 public:
     ordinary_processor(analyzing_context ctx,
@@ -56,7 +57,7 @@ public:
         processing_state_listener& state_listener,
         statement_fields_parser& parser,
         opencode_provider& open_code,
-        const processing_manager& proc_mgr);
+        processing_manager& proc_mgr);
 
     std::optional<processing_status> get_processing_status(
         const std::optional<context::id_index>& instruction, const range& r) const override;
@@ -72,6 +73,8 @@ public:
     void collect_diags() const override;
 
 private:
+    void process_postponed_statements(const std::vector<
+        std::pair<std::unique_ptr<context::postponed_statement>, context::dependency_evaluation_context>>& stmts);
     void check_postponed_statements(const std::vector<
         std::pair<std::unique_ptr<context::postponed_statement>, context::dependency_evaluation_context>>& stmts);
     bool check_fatals(range line_range);

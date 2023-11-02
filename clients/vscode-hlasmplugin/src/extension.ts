@@ -38,6 +38,7 @@ import { HLASMExternalConfigurationProvider, HLASMExternalConfigurationProviderH
 import { HlasmExtension } from './extension.interface';
 import { toggleAdvisoryConfigurationDiagnostics } from './hlasmConfigurationDiagnosticsProvider'
 import { pickUser } from './uiUtils';
+import { activateBranchDecorator } from './branchDecorator';
 
 export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
 
@@ -81,7 +82,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
     const telemetry = createTelemetry();
     context.subscriptions.push(telemetry);
 
-    telemetry.reportEvent("hlasm.activated", { server_variant: serverVariant.toString() });
+    telemetry.reportEvent("hlasm.activated", {
+        server_variant: serverVariant.toString(),
+        showBranchInformation: getConfig<boolean>('showBranchInformation', true).toString(),
+    });
 
     await registerEditHelpers(context);
 
@@ -89,7 +93,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
     const filePattern: string = '**/*';
 
     const clientErrorHandler = new LanguageClientErrorHandler(telemetry);
-
+    const middleware = getLanguageClientMiddleware();
     // create client options
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
     const clientOptions: vscodelc.LanguageClientOptions = {
@@ -101,13 +105,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
             ]
         },
         errorHandler: clientErrorHandler,
-        middleware: getLanguageClientMiddleware(),
+        middleware: middleware,
     };
 
     //client init
     const hlasmpluginClient = await createLanguageServer(serverVariant, clientOptions, context.extensionUri);
 
     context.subscriptions.push(hlasmpluginClient);
+    context.subscriptions.push(hlasmpluginClient.onDidChangeState(e => e.newState === vscodelc.State.Starting && middleware.resetFirstOpen()));
 
     clientErrorHandler.defaultHandler = hlasmpluginClient.createDefaultErrorHandler();
 
@@ -266,4 +271,6 @@ async function registerToContextWithClient(context: vscode.ExtensionContext, cli
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("hlasm", new HLASMVirtualFileContentProvider(client)));
 
     context.subscriptions.push(vscode.commands.registerCommand("extension.hlasm-plugin.downloadDependencies", (...args: any[]) => downloadDependencies(context, telemetry, client.outputChannel, ...args)));
+
+    activateBranchDecorator(context, client);
 }

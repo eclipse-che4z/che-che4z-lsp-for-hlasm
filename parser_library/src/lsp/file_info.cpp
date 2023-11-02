@@ -173,6 +173,10 @@ void file_info::update_occurrences(const std::vector<symbol_occurrence>& occurre
                 o.active_section ? o.active_section : n.active_section,
                 o.active_using && n.active_using && o.active_using != n.active_using,
                 o.active_section && n.active_section && o.active_section != n.active_section,
+                o.branches_up || n.branches_up,
+                o.branches_down || n.branches_down,
+                o.branches_somewhere || n.branches_somewhere,
+                std::max(o.offset_to_jump_opcode, n.offset_to_jump_opcode),
             };
         });
 

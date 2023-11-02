@@ -417,3 +417,53 @@ TEST(language_features, opcode_suggestion)
 
     notifs["textDocument/$/opcode_suggestion"].as_request_handler()(request_id(0), params1);
 }
+
+TEST(language_features, branch_information)
+{
+    test::ws_mngr_mock ws_mngr;
+    NiceMock<response_provider_mock> response_mock;
+    lsp::feature_language_features f(ws_mngr, response_mock);
+    std::map<std::string, method> notifs;
+    f.register_methods(notifs);
+
+    auto params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + R"("}})");
+
+    using namespace hlasm_plugin::parser_library;
+
+    EXPECT_CALL(ws_mngr, branch_information(StrEq(uri), _)).WillOnce(WithArg<1>(Invoke([](auto channel) {
+        channel.provide(make_continuous_sequence(std::vector<branch_info> {
+            branch_info(1, 2, branch_direction::up),
+            branch_info(3, 4, branch_direction::down),
+            branch_info(5, 6, branch_direction::somewhere),
+        }));
+    })));
+
+    auto expected_json = nlohmann::json::parse(R"(
+[
+  {
+    "line": 1,
+    "col": 2,
+    "up": true,
+    "down": false,
+    "somewhere": false
+  },
+  {
+    "line": 3,
+    "col": 4,
+    "up": false,
+    "down": true,
+    "somewhere": false
+  },
+  {
+    "line": 5,
+    "col": 6,
+    "up": false,
+    "down": false,
+    "somewhere": true
+  }
+]
+)");
+    EXPECT_CALL(response_mock, respond(_, _, expected_json));
+
+    notifs["textDocument/$/branch_information"].as_request_handler()(request_id(0), params1);
+}

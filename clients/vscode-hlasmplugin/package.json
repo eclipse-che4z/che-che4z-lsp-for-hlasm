@@ -97,6 +97,38 @@
         "url": "./schema/proc_grps.schema.json"
       }
     ],
+    "colors": [
+      {
+        "id": "hlasmplugin.branchUpColor",
+        "description": "Color for branch up indicator.",
+        "defaults": {
+          "dark": "#3794ff",
+          "light": "#3794ff",
+          "highContrast": "#3794ff",
+          "highContrastLight": "#3794ff"
+        }
+      },
+      {
+        "id": "hlasmplugin.branchDownColor",
+        "description": "Color for branch down indicator.",
+        "defaults": {
+          "dark": "#89d185",
+          "light": "#89d185",
+          "highContrast": "#89d185",
+          "highContrastLight": "#89d185"
+        }
+      },
+      {
+        "id": "hlasmplugin.branchUnknownColor",
+        "description": "Color for branch indicator in unknown direction.",
+        "defaults": {
+          "dark": "#d18616",
+          "light": "#d18616",
+          "highContrast": "#d18616",
+          "highContrastLight": "#d18616"
+        }
+      }
+    ],
     "breakpoints": [
       {
         "language": "hlasm"
@@ -415,6 +447,11 @@
           "type": "boolean",
           "default": false,
           "description": "Enables autodetection of HLASM source code for automatic setting of Language Mode."
+        },
+        "hlasm.showBranchInformation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Decorate instructions with an indicator of branch direction"
         }
       }
     }

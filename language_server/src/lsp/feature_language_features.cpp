@@ -221,6 +221,7 @@ void feature_language_features::register_methods(std::map<std::string, method>& 
     add_method("textDocument/semanticTokens/full", &feature_language_features::semantic_tokens);
     add_method("textDocument/documentSymbol", &feature_language_features::document_symbol);
     add_method("textDocument/$/opcode_suggestion", &feature_language_features::opcode_suggestion);
+    add_method("textDocument/$/branch_information", &feature_language_features::branch_information);
 }
 
 nlohmann::json feature_language_features::register_capabilities()
@@ -746,6 +747,32 @@ void feature_language_features::opcode_suggestion(const request_id& id, const nl
     {
         composite->error(utils::error::lsp::internal_error, e.what());
     }
+}
+
+void feature_language_features::branch_information(const request_id& id, const nlohmann::json& params)
+{
+    auto document_uri = extract_document_uri(params);
+
+    auto resp = make_response(id, response_, [](continuous_sequence<branch_info> branch_info_list) {
+        auto r = nlohmann::json::array();
+        for (const auto& bi : branch_info_list)
+        {
+            using enum branch_direction;
+            r.push_back({
+                { "line", bi.line },
+                { "col", bi.col },
+                { "up", (bi.dir & up) != none },
+                { "down", (bi.dir & down) != none },
+                { "somewhere", (bi.dir & somewhere) != none },
+            });
+        }
+
+        return r;
+    });
+
+    ws_mngr_.branch_information(document_uri.c_str(), resp);
+
+    response_->register_cancellable_request(id, std::move(resp));
 }
 
 } // namespace hlasm_plugin::language_server::lsp

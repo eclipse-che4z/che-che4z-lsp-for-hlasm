@@ -94,6 +94,11 @@ public:
     MOCK_METHOD(debugger_configuration_provider&, get_debugger_configuration_provider, (), (override));
 
     MOCK_METHOD(void, invalidate_external_configuration, (sequence<char> uri), (override));
+
+    MOCK_METHOD(void,
+        branch_information,
+        (const char* document_uri, workspace_manager_response<continuous_sequence<branch_info>> resp),
+        (override));
 };
 
 } // namespace hlasm_plugin::language_server::test

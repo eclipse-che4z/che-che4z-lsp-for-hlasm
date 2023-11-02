@@ -117,6 +117,7 @@ public:
     std::pair<const context::section*, index_t<context::using_collection>> find_reachable_sections(position pos) const;
 
     const line_occurence_details* get_line_details(size_t l) const noexcept;
+    const std::vector<line_occurence_details>& get_line_details() const noexcept { return line_details; }
 
 private:
     std::map<line_range, file_slice_t> slices;

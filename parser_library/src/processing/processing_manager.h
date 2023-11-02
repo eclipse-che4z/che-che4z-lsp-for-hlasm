@@ -69,6 +69,9 @@ public:
 
     void collect_diags() const override;
 
+    void process_postponed_statements(const std::vector<
+        std::pair<std::unique_ptr<context::postponed_statement>, context::dependency_evaluation_context>>& stmts);
+
     parsing::hlasmparser_multiline& opencode_parser(); // for testing only
 
 private:

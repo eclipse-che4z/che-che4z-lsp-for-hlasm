@@ -770,6 +770,24 @@ public:
         });
     }
 
+    void branch_information(
+        const char* document_uri, workspace_manager_response<continuous_sequence<branch_info>> r) override
+    {
+        auto [ows, uri] = ws_path_match(document_uri);
+
+        m_work_queue.emplace_back(work_item {
+            next_unique_id(),
+            ows,
+            response_handle(r,
+                [&ws = ows->ws, doc_loc = std::move(uri)](
+                    const workspace_manager_response<continuous_sequence<branch_info>>& resp) {
+                    resp.provide(make_continuous_sequence(ws.branch_information(doc_loc)));
+                }),
+            [r]() { return r.valid(); },
+            work_item_type::query,
+        });
+    }
+
     continuous_sequence<char> get_virtual_file_content(unsigned long long id) const override
     {
         return make_continuous_sequence(m_file_manager.get_virtual_file(id));

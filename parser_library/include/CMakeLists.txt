@@ -12,6 +12,7 @@
 #
 
 target_sources(parser_library PUBLIC
+	branch_info.h
 	debugger.h
 	external_configuration_requests.h
 	lib_config.h

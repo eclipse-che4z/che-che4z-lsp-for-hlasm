@@ -23,6 +23,7 @@
 #include <memory>
 #include <utility>
 
+#include "branch_info.h"
 #include "lib_config.h"
 #include "message_consumer.h"
 #include "parser_library_export.h"
@@ -145,6 +146,9 @@ public:
     virtual debugger_configuration_provider& get_debugger_configuration_provider() = 0;
 
     virtual void invalidate_external_configuration(sequence<char> uri) = 0;
+
+    virtual void branch_information(
+        const char* document_uri, workspace_manager_response<continuous_sequence<branch_info>> resp) = 0;
 };
 
 workspace_manager* create_workspace_manager_impl(

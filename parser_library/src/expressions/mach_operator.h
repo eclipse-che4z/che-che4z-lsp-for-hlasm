@@ -60,6 +60,9 @@ public:
     {
         return std::make_unique<mach_expr_binary<T>>(left_->clone(), right_->clone(), get_range());
     }
+
+    const mach_expression* left_expression() const { return left_.get(); }
+    const mach_expression* right_expression() const { return right_.get(); }
 };
 
 // Represents a unart operator in machine expression. Holds its

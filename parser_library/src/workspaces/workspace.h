@@ -28,6 +28,7 @@
 #include <variant>
 #include <vector>
 
+#include "branch_info.h"
 #include "debugging/debugger_configuration.h"
 #include "diagnosable_impl.h"
 #include "file_manager_vfm.h"
@@ -112,6 +113,9 @@ public:
         const resource_location& document_loc, long long limit) const;
 
     std::vector<token_info> semantic_tokens(const resource_location& document_loc) const;
+
+    std::vector<branch_info> branch_information(const resource_location& document_loc) const;
+
     std::optional<performance_metrics> last_metrics(const resource_location& document_loc) const;
 
     virtual std::vector<std::shared_ptr<library>> get_libraries(const resource_location& file_location) const;

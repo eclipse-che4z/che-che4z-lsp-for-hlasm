@@ -20,7 +20,13 @@
 
 #include "context/hlasm_context.h"
 #include "context/id_storage.h"
+#include "context/instruction.h"
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
+#include "context/ordinary_assembly/postponed_statement.h"
+#include "context/ordinary_assembly/symbol_dependency_tables.h"
+#include "context/source_context.h"
 #include "context/special_instructions.h"
+#include "library_info_transitional.h"
 #include "lsp/lsp_context.h"
 #include "lsp/text_data_view.h"
 #include "occurrence_collector.h"
@@ -456,6 +462,183 @@ lsp_analyzer::collection_info_t lsp_analyzer::get_active_collection(
 {
     auto& [stmt_occurrences, stmt_ranges] = in_macro_ ? macro_occurrences_[loc] : opencode_occurrences_[loc];
     return { &stmt_occurrences, stmt_occurrences.size(), &stmt_ranges, evaluated_model };
+}
+
+namespace {
+std::optional<std::pair<int, int>> get_branch_operand(const context::machine_instruction* m) noexcept
+{
+    auto ba = m->branch_argument();
+    if (!ba.valid())
+        return std::nullopt;
+
+    return std::make_pair(ba.unknown_target() ? -1 : ba.target(), ba.branches_if_nonzero() ? ba.nonzero_arg() : -1);
+}
+std::optional<std::pair<int, int>> get_branch_operand(const context::mnemonic_code* m) noexcept
+{
+    auto ba = get_branch_operand(m->instruction());
+    if (!ba)
+        return ba;
+
+    auto& [target, nonzero] = *ba;
+    if (nonzero >= 0)
+    {
+        for (auto pos = nonzero; const auto& t : m->operand_transformations())
+        {
+            if (pos < t.skip)
+                break;
+            pos -= t.skip;
+            if (pos == 0 && t.insert && t.type == context::mnemonic_transformation_kind::value)
+            {
+                if (t.value)
+                {
+                    nonzero = -1;
+                    break;
+                }
+                return std::nullopt; // NOP, NOPR, etc.
+            }
+            pos -= t.insert;
+            nonzero -= t.insert;
+        }
+    }
+    if (target >= 0)
+    {
+        for (auto pos = target; const auto& t : m->operand_transformations())
+        {
+            if (pos < t.skip)
+                break;
+            pos -= t.skip + t.insert;
+            target -= t.insert;
+        }
+    }
+
+    return ba;
+}
+std::optional<std::pair<int, int>> get_branch_operand(context::id_index id) noexcept
+{
+    if (const auto* mnemo = context::instruction::find_mnemonic_codes(id.to_string_view()))
+        return get_branch_operand(mnemo);
+    else
+        return get_branch_operand(context::instruction::find_machine_instructions(id.to_string_view()));
+}
+
+context::processing_stack_t get_opencode_stackframe(context::processing_stack_t sf)
+{
+    if (sf.empty())
+        return sf;
+    while (!sf.parent().empty())
+        sf = sf.parent();
+    return sf;
+}
+
+std::optional<position> extract_symbol_position(semantics::operand& op, context::ordinary_assembly_context& ord_ctx)
+{
+    if (op.type != semantics::operand_type::MACH)
+        return std::nullopt;
+    auto* mach = op.access_mach();
+    if (!mach)
+        return std::nullopt;
+    const auto* expr = mach->access_expr();
+    if (!expr)
+        return std::nullopt;
+    const auto* rel_symbol =
+        dynamic_cast<const expressions::mach_expr_binary<expressions::rel_addr>*>(expr->expression.get());
+
+    const auto* symbol_name = rel_symbol
+        ? dynamic_cast<const expressions::mach_expr_symbol*>(rel_symbol->right_expression())
+        : dynamic_cast<const expressions::mach_expr_symbol*>(expr->expression.get());
+
+    if (!symbol_name)
+        return std::nullopt;
+
+    const auto* symbol = ord_ctx.get_symbol(symbol_name->value);
+    if (!symbol)
+        return std::nullopt;
+
+    const auto symbol_oc_loc = get_opencode_stackframe(symbol->proc_stack());
+
+    if (symbol_oc_loc.empty())
+        return std::nullopt;
+
+    return symbol_oc_loc.frame().pos;
+}
+
+bool symbol_value_zerolike(semantics::operand& op,
+    context::ordinary_assembly_context& ord_ctx,
+    const context::dependency_evaluation_context& dep_ctx,
+    const library_info& li)
+{
+    if (op.type != semantics::operand_type::MACH)
+        return false;
+    auto* mach = op.access_mach();
+    if (!mach)
+        return false;
+    const auto* expr = mach->access_expr();
+    if (!expr)
+        return false;
+    context::ordinary_assembly_dependency_solver solver(ord_ctx, dep_ctx, li);
+    auto value = expr->expression->evaluate(solver, drop_diagnostic_op);
+    if (value.value_kind() != context::symbol_value_kind::ABS)
+        return false;
+    return value.get_abs() == 0;
+}
+
+} // namespace
+
+void lsp_analyzer::collect_transfer_info(
+    const std::vector<std::pair<std::unique_ptr<context::postponed_statement>, context::dependency_evaluation_context>>&
+        stmts,
+    const library_info& li)
+{
+    const auto& opencode_loc = hlasm_ctx_.opencode_location();
+    auto& [stmt_occurrences, stmt_ranges] = opencode_occurrences_[opencode_loc];
+    const collection_info_t ci { &stmt_occurrences, stmt_occurrences.size(), &stmt_ranges, true };
+
+    for (const auto& [stmt, dep_ctx] : stmts)
+    {
+        if (!stmt)
+            continue;
+
+        const auto* rs = stmt->resolved_stmt();
+        const auto& opcode = rs->opcode_ref();
+        if (opcode.type != context::instruction_type::MACH)
+            continue;
+
+        const auto transfer = get_branch_operand(opcode.value);
+
+        if (!transfer.has_value())
+            continue;
+
+        const auto loc = get_opencode_stackframe(stmt->location_stack());
+        if (loc.empty() && *loc.frame().resource_loc != opencode_loc)
+            continue;
+
+        const auto& [target, condition] = *transfer;
+        const auto& ops = rs->operands_ref().value;
+
+        if (condition >= 0 && condition < ops.size()
+            && symbol_value_zerolike(*ops[condition], hlasm_ctx_.ord_ctx, dep_ctx, li))
+            continue;
+
+        const auto pos = loc.frame().pos;
+
+        auto& ld = line_details(range(pos), ci);
+        bool branch_somewhere = true;
+        if (target >= 0 && target < ops.size())
+        {
+            const auto symbol_pos = extract_symbol_position(*ops[target], hlasm_ctx_.ord_ctx);
+            if (symbol_pos.has_value())
+            {
+                branch_somewhere = false;
+                if (const auto rel = pos.line <=> symbol_pos->line; rel < 0)
+                    ld.branches_down = true;
+                else if (rel > 0)
+                    ld.branches_up = true;
+            }
+        }
+        if (branch_somewhere)
+            ld.branches_somewhere = true;
+        ld.offset_to_jump_opcode = (unsigned char)std::min(pos.column, (size_t)80);
+    }
 }
 
 } // namespace hlasm_plugin::parser_library::processing

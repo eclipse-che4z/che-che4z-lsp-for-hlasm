@@ -14,7 +14,12 @@
 
 import { Middleware } from 'vscode-languageclient';
 
-export function getLanguageClientMiddleware(): Middleware {
+export type HlasmPluginMiddleware = Middleware & {
+    getFirstOpen: () => Promise<void>,
+    resetFirstOpen: () => void,
+};
+
+export function getLanguageClientMiddleware(): HlasmPluginMiddleware {
     // VSCode generates flood of didOpen/didClose event when trying to go to a symbol definition using mouse (CTRL+point).
     // This behavior is documented (and apprently work on) but it causes meaningless activity in the language server.
 
@@ -30,23 +35,38 @@ export function getLanguageClientMiddleware(): Middleware {
 
     const sendOpenNotification = (uri: string) => pendingOpens.get(uri)?.send() || false;
 
+    let resolveFirstOpen: undefined | (() => void);
+    let firstOpen = new Promise<void>((res, _) => { resolveFirstOpen = res });
+
     return {
+        getFirstOpen: () => {
+            return firstOpen;
+        },
+        resetFirstOpen: () => {
+            if (!resolveFirstOpen)
+                firstOpen = new Promise<void>((res, _) => { resolveFirstOpen = res });
+        },
         didOpen: (data, next) => {
             return new Promise<void>((resolve, reject) => {
                 const uri = data.uri.toString();
 
                 sendOpenNotification(uri) && console.error('Double open detected for', uri);
 
-                const timerId = setTimeout(() => {
+                const deleteAndSend = () => {
                     pendingOpens.delete(uri);
                     next(data).then(resolve, reject);
-                }, timeout);
+                    if (resolveFirstOpen) {
+                        resolveFirstOpen();
+                        resolveFirstOpen = undefined;
+                    }
+                };
+
+                const timerId = setTimeout(deleteAndSend, timeout);
 
                 pendingOpens.set(uri, {
                     send: () => {
                         clearTimeout(timerId);
-                        pendingOpens.delete(uri);
-                        next(data).then(resolve, reject);
+                        deleteAndSend();
                         return true;
                     },
                     forget: () => {

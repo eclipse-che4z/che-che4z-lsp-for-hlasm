@@ -393,6 +393,18 @@ public:
 
 extern constinit const condition_code_explanation condition_code_explanations[];
 
+struct branch_info_argument
+{
+    signed char op : 4 = 0;
+    unsigned char nonzero : 3 = 0;
+
+    bool valid() const noexcept { return op != 0; }
+    bool unknown_target() const noexcept { return op < 0; }
+    int target() const noexcept { return op - 1; }
+    bool branches_if_nonzero() const noexcept { return nonzero != 0; }
+    int nonzero_arg() const noexcept { return nonzero - 1; }
+};
+
 struct machine_instruction_details
 {
     const char* fullname;
@@ -401,6 +413,7 @@ struct machine_instruction_details
     bool privileged : 1;
     bool privileged_conditionally : 1;
     bool has_parameter_list : 1;
+    branch_info_argument branch_argument;
 };
 
 struct instruction_format_definition
@@ -557,6 +570,8 @@ public:
     {
         return static_cast<privilege_status>(m_details.privileged + m_details.privileged_conditionally * 2);
     }
+
+    constexpr branch_info_argument branch_argument() const noexcept { return m_details.branch_argument; }
 };
 
 class ca_instruction

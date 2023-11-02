@@ -92,6 +92,7 @@ struct file_manager_impl::mapped_file final : file
     const std::string& get_text() const override { return m_text; }
     bool get_lsp_editing() const override { return m_editing_self_reference != nullptr; }
     version_t get_version() const override { return m_version; }
+    version_t get_lsp_version() const override { return m_lsp_version; }
     bool error() const override { return m_error.has_value(); }
 
     bool up_to_date() const override
@@ -322,7 +323,7 @@ file_content_state file_manager_impl::did_open_file(
 }
 
 void file_manager_impl::did_change_file(const utils::resource::resource_location& document_loc,
-    version_t,
+    version_t lsp_version,
     const document_change* changes_start,
     size_t ch_size)
 {
@@ -379,7 +380,7 @@ void file_manager_impl::did_change_file(const utils::resource::resource_location
         apply_text_diff(file->m_text, file->m_lines, change.change_range, text_s);
     }
 
-    file->m_lsp_version += ch_size;
+    file->m_lsp_version = lsp_version;
     file->m_version = next_global_version();
 }
 
