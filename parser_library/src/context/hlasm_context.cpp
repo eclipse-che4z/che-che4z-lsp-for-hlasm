@@ -672,8 +672,7 @@ var_sym_ptr hlasm_context::get_var_sym(id_index name) const
 
 void hlasm_context::add_opencode_sequence_symbol(std::unique_ptr<opencode_sequence_symbol> seq_sym)
 {
-    auto& opencode = scope_stack_.front();
-    opencode.sequence_symbols.try_emplace(seq_sym->name, std::move(seq_sym));
+    opencode_sequence_symbols.try_emplace(seq_sym->name, std::move(seq_sym));
 }
 
 const sequence_symbol* hlasm_context::get_sequence_symbol(id_index name) const
@@ -688,8 +687,8 @@ const sequence_symbol* hlasm_context::get_sequence_symbol(id_index name) const
     }
     else
     {
-        found = scope->sequence_symbols.find(name);
-        end = scope->sequence_symbols.end();
+        found = opencode_sequence_symbols.find(name);
+        end = opencode_sequence_symbols.end();
     }
 
     if (found != end)
@@ -700,8 +699,7 @@ const sequence_symbol* hlasm_context::get_sequence_symbol(id_index name) const
 
 const sequence_symbol* hlasm_context::get_opencode_sequence_symbol(id_index name) const
 {
-    if (const auto& sym = scope_stack_.front().sequence_symbols.find(name);
-        sym != scope_stack_.front().sequence_symbols.end())
+    if (const auto& sym = opencode_sequence_symbols.find(name); sym != opencode_sequence_symbols.end())
         return sym->second.get();
     return nullptr;
 }

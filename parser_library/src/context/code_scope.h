@@ -32,8 +32,6 @@ struct code_scope
     set_sym_storage variables;
     // local system variables of scope
     sys_sym_storage system_variables;
-    // local sequence symbols of scope
-    label_storage sequence_symbols;
     // gets macro to which this scope belong (nullptr if in open code)
     macro_invo_ptr this_macro;
     // the ACTR branch counter

@@ -121,6 +121,8 @@ class hlasm_context
     unsigned mnote_max = 0;
     unsigned mnote_last_max = 0;
 
+    label_storage opencode_sequence_symbols;
+
 public:
     hlasm_context(utils::resource::resource_location file_loc = utils::resource::resource_location(""),
         asm_option asm_opts = {},
@@ -342,6 +344,8 @@ public:
     void set_title_name(std::string name) { m_title_name = std::move(name); }
 
     void update_mnote_max(unsigned mnote_level);
+
+    const auto& get_opencode_sequence_symbols() const noexcept { return opencode_sequence_symbols; }
 };
 
 bool test_symbol_for_read(const var_sym_ptr& var,

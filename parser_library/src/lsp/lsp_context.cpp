@@ -783,7 +783,7 @@ completion_list_source lsp_context::complete_seq(const file_info& file, position
 {
     auto macro_i = file.find_scope(pos);
 
-    return macro_i ? &macro_i->macro_definition->labels : &m_hlasm_ctx->current_scope().sequence_symbols;
+    return macro_i ? &macro_i->macro_definition->labels : &m_hlasm_ctx->get_opencode_sequence_symbols();
 }
 
 completion_list_source lsp_context::complete_instr(const file_info& fi, position pos) const
@@ -898,7 +898,7 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
         }
         case lsp::occurrence_kind::SEQ: {
             const context::label_storage& seq_syms =
-                macro_scope_i ? macro_scope_i->macro_definition->labels : m_hlasm_ctx->current_scope().sequence_symbols;
+                macro_scope_i ? macro_scope_i->macro_definition->labels : m_hlasm_ctx->get_opencode_sequence_symbols();
             if (auto sym = seq_syms.find(occ.name); sym != seq_syms.end())
                 return sym->second->symbol_location;
             break;
