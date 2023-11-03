@@ -18,45 +18,47 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-inline unsigned char get_reladdr_bitmask(context::id_index id)
-{
-    if (id.empty())
-        return 0;
+constexpr const auto common_processing_status_cache_key_details = std::pair((unsigned char)1, (unsigned char)0);
 
-    if (auto p_instr = context::instruction::find_machine_instructions(id.to_string_view()))
-        return p_instr->reladdr_mask().mask();
-
-    if (auto p_mnemo = context::instruction::find_mnemonic_codes(id.to_string_view()))
-        return p_mnemo->reladdr_mask().mask();
-
-    return 0;
-}
-
-// Generates value of L'* expression
-unsigned char processing_status_cache_key::generate_loctr_len(std::string_view id)
+// (value of L'* expression, reladdr mask)
+inline std::pair<unsigned char, unsigned char> get_processing_status_cache_key_details(std::string_view id) noexcept
 {
     if (!id.empty())
     {
-        if (auto p_instr = context::instruction::find_machine_instructions(id))
-            return static_cast<unsigned char>(p_instr->size_in_bits() / 8);
+        const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(id);
 
-        if (auto p_mnemo = context::instruction::find_mnemonic_codes(id))
-            return static_cast<unsigned char>(p_mnemo->instruction()->size_in_bits() / 8);
+        if (mn)
+            return std::pair(static_cast<unsigned char>(mi->size_in_bits() / 8), mn->reladdr_mask().mask());
+        if (mi)
+            return std::pair(static_cast<unsigned char>(mi->size_in_bits() / 8), mi->reladdr_mask().mask());
+    }
+    return common_processing_status_cache_key_details;
+}
+
+// Generates value of L'* expression
+unsigned char processing_status_cache_key::generate_loctr_len(std::string_view id) noexcept
+{
+    if (!id.empty())
+    {
+        if (const auto [mi, _] = context::instruction::find_machine_instruction_or_mnemonic(id); mi)
+            return static_cast<unsigned char>(mi->size_in_bits() / 8);
     }
     return 1;
 }
 
-unsigned char processing_status_cache_key::generate_loctr_len(context::id_index id)
-{
-    return generate_loctr_len(id.empty() ? std::string_view() : id.to_string_view());
-}
-
-processing_status_cache_key::processing_status_cache_key(const processing_status& s)
+processing_status_cache_key::processing_status_cache_key(
+    const processing_status& s, std::pair<unsigned char, unsigned char> details) noexcept
     : form(s.first.form)
     , occurrence(s.first.occurrence)
     , is_alias(s.second.type == context::instruction_type::ASM && s.second.value.to_string_view() == "ALIAS")
-    , loctr_len(
-          s.second.type != context::instruction_type::MACH ? 1 : generate_loctr_len(s.second.value.to_string_view()))
-    , rel_addr(s.second.type != context::instruction_type::MACH ? 0 : get_reladdr_bitmask(s.second.value))
+    , loctr_len(details.first)
+    , rel_addr(details.second)
+{}
+
+processing_status_cache_key::processing_status_cache_key(const processing_status& s) noexcept
+    : processing_status_cache_key(s,
+        s.second.type != context::instruction_type::MACH
+            ? common_processing_status_cache_key_details
+            : get_processing_status_cache_key_details(s.second.value.to_string_view()))
 {}
 } // namespace hlasm_plugin::parser_library::processing

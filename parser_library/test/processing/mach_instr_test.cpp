@@ -381,3 +381,22 @@ A   LARL 0,A+-00000000000
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE007" }));
 }
+
+TEST(mach_instr_processing, check_combined_lookup)
+{
+    for (const auto& orig_mi : context::instruction::all_machine_instructions())
+    {
+        const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(orig_mi.name());
+
+        EXPECT_EQ(mi, &orig_mi);
+        EXPECT_FALSE(mn);
+    }
+
+    for (const auto& orig_mn : context::instruction::all_mnemonic_codes())
+    {
+        const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(orig_mn.name());
+
+        EXPECT_EQ(mi, orig_mn.instruction());
+        EXPECT_EQ(mn, &orig_mn);
+    }
+}

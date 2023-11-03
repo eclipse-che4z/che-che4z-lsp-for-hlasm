@@ -90,7 +90,7 @@ constexpr auto UNI_SINCE_ZOP                = UNI | z_arch_affiliation::SINCE_ZO
 // clang-format on
 } // namespace
 
-std::string_view instruction::mach_format_to_string(mach_format f)
+std::string_view instruction::mach_format_to_string(mach_format f) noexcept
 {
     switch (f)
     {
@@ -287,7 +287,7 @@ constexpr ca_instruction ca_instructions[] = {
 #if __cpp_lib_ranges
 static_assert(std::ranges::is_sorted(ca_instructions, {}, &ca_instruction::name));
 
-const ca_instruction* instruction::find_ca_instructions(std::string_view name)
+const ca_instruction* instruction::find_ca_instructions(std::string_view name) noexcept
 {
     auto it = std::ranges::lower_bound(ca_instructions, name, {}, &ca_instruction::name);
 
@@ -300,7 +300,7 @@ static_assert(std::is_sorted(std::begin(ca_instructions), std::end(ca_instructio
     return l.name() < r.name();
 }));
 
-const ca_instruction* instruction::find_ca_instructions(std::string_view name)
+const ca_instruction* instruction::find_ca_instructions(std::string_view name) noexcept
 {
     auto it = std::lower_bound(
         std::begin(ca_instructions), std::end(ca_instructions), name, [](const auto& l, const auto& r) {
@@ -313,14 +313,14 @@ const ca_instruction* instruction::find_ca_instructions(std::string_view name)
 }
 #endif
 
-const ca_instruction& instruction::get_ca_instructions(std::string_view name)
+const ca_instruction& instruction::get_ca_instructions(std::string_view name) noexcept
 {
     auto result = find_ca_instructions(name);
     assert(result);
     return *result;
 }
 
-std::span<const ca_instruction> instruction::all_ca_instructions() { return ca_instructions; }
+std::span<const ca_instruction> instruction::all_ca_instructions() noexcept { return ca_instructions; }
 
 constexpr assembler_instruction assembler_instructions[] = {
     { "*PROCESS", 1, -1, false, "" }, // TO DO
@@ -379,7 +379,7 @@ constexpr assembler_instruction assembler_instructions[] = {
 #ifdef __cpp_lib_ranges
 static_assert(std::ranges::is_sorted(assembler_instructions, {}, &assembler_instruction::name));
 
-const assembler_instruction* instruction::find_assembler_instructions(std::string_view instr)
+const assembler_instruction* instruction::find_assembler_instructions(std::string_view instr) noexcept
 {
     auto it = std::ranges::lower_bound(assembler_instructions, instr, {}, &assembler_instruction::name);
     if (it == std::ranges::end(assembler_instructions) || it->name() != instr)
@@ -391,7 +391,7 @@ static_assert(std::is_sorted(std::begin(assembler_instructions),
     std::end(assembler_instructions),
     [](const auto& l, const auto& r) { return l.name() < r.name(); }));
 
-const assembler_instruction* instruction::find_assembler_instructions(std::string_view instr)
+const assembler_instruction* instruction::find_assembler_instructions(std::string_view instr) noexcept
 {
     auto it = std::lower_bound(
         std::begin(assembler_instructions), std::end(assembler_instructions), instr, [](const auto& l, const auto& r) {
@@ -403,14 +403,17 @@ const assembler_instruction* instruction::find_assembler_instructions(std::strin
 }
 #endif
 
-const assembler_instruction& instruction::get_assembler_instructions(std::string_view instr)
+const assembler_instruction& instruction::get_assembler_instructions(std::string_view instr) noexcept
 {
     auto result = find_assembler_instructions(instr);
     assert(result);
     return *result;
 }
 
-std::span<const assembler_instruction> instruction::all_assembler_instructions() { return assembler_instructions; }
+std::span<const assembler_instruction> instruction::all_assembler_instructions() noexcept
+{
+    return assembler_instructions;
+}
 
 bool hlasm_plugin::parser_library::context::machine_instruction::check(std::string_view name_of_instruction,
     const std::vector<const checking::machine_operand*> to_check,
@@ -566,7 +569,7 @@ constexpr machine_instruction machine_instructions[] = {
 #ifdef __cpp_lib_ranges
 static_assert(std::ranges::is_sorted(machine_instructions, {}, &machine_instruction::name));
 
-const machine_instruction* instruction::find_machine_instructions(std::string_view name)
+const machine_instruction* instruction::find_machine_instructions(std::string_view name) noexcept
 {
     auto it = std::ranges::lower_bound(machine_instructions, name, {}, &machine_instruction::name);
     if (it == std::ranges::end(machine_instructions) || it->name() != name)
@@ -585,7 +588,7 @@ static_assert(std::is_sorted(std::begin(machine_instructions),
     std::end(machine_instructions),
     [](const auto& l, const auto& r) { return l.name() < r.name(); }));
 
-const machine_instruction* instruction::find_machine_instructions(std::string_view name)
+const machine_instruction* instruction::find_machine_instructions(std::string_view name) noexcept
 {
     auto it = std::lower_bound(
         std::begin(machine_instructions), std::end(machine_instructions), name, [](const auto& l, const auto& r) {
@@ -607,14 +610,14 @@ constexpr const machine_instruction* find_mi(std::string_view name)
 }
 #endif
 
-const machine_instruction& instruction::get_machine_instructions(std::string_view name)
+const machine_instruction& instruction::get_machine_instructions(std::string_view name) noexcept
 {
     auto mi = find_machine_instructions(name);
     assert(mi);
     return *mi;
 }
 
-std::span<const machine_instruction> instruction::all_machine_instructions() { return machine_instructions; }
+std::span<const machine_instruction> instruction::all_machine_instructions() noexcept { return machine_instructions; }
 
 constexpr auto mi_BC = find_mi("BC");
 constexpr auto mi_BCR = find_mi("BCR");
@@ -2012,7 +2015,7 @@ constexpr mnemonic_code mnemonic_codes[] = {
 #ifdef __cpp_lib_ranges
 static_assert(std::ranges::is_sorted(mnemonic_codes, {}, &mnemonic_code::name));
 
-const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name)
+const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name) noexcept
 {
     auto it = std::ranges::lower_bound(mnemonic_codes, name, {}, &mnemonic_code::name);
     if (it == std::ranges::end(mnemonic_codes) || it->name() != name)
@@ -2024,7 +2027,7 @@ static_assert(std::is_sorted(std::begin(mnemonic_codes), std::end(mnemonic_codes
     return l.name() < r.name();
 }));
 
-const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name)
+const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name) noexcept
 {
     auto it =
         std::lower_bound(std::begin(mnemonic_codes), std::end(mnemonic_codes), name, [](const auto& l, const auto& r) {
@@ -2036,14 +2039,83 @@ const mnemonic_code* instruction::find_mnemonic_codes(std::string_view name)
 }
 #endif
 
-const mnemonic_code& instruction::get_mnemonic_codes(std::string_view name)
+const mnemonic_code& instruction::get_mnemonic_codes(std::string_view name) noexcept
 {
     auto result = find_mnemonic_codes(name);
     assert(result);
     return *result;
 }
 
-std::span<const mnemonic_code> instruction::all_mnemonic_codes() { return mnemonic_codes; }
+std::span<const mnemonic_code> instruction::all_mnemonic_codes() noexcept { return mnemonic_codes; }
+
+namespace {
+constexpr std::size_t combined_machine_instruction_name_limit = 8;
+constexpr const auto combined_machine_instruction_table = []() {
+    constexpr const auto limit = combined_machine_instruction_name_limit;
+    std::array<std::array<char, limit>, std::size(machine_instructions) + std::size(mnemonic_codes)> names {};
+    std::array<short, std::size(machine_instructions) + std::size(mnemonic_codes)> offsets {};
+
+    const auto m1 = (std::size_t)-1;
+    std::size_t out_i = 0;
+    std::size_t mach_i = 0;
+    std::size_t mnemo_i = 0;
+
+    for (; mach_i < std::size(machine_instructions) && mnemo_i < std::size(mnemonic_codes); ++out_i)
+    {
+        const auto ma = machine_instructions[mach_i].name();
+        const auto mn = mnemonic_codes[mnemo_i].name();
+        const auto [name, idx] = ma <= mn ? std::pair(ma, mach_i++) : std::pair(mn, m1 - mnemo_i++);
+        assert(name.size() <= limit);
+        std::copy(name.begin(), name.end(), names[out_i].begin());
+        offsets[out_i] = (short)idx;
+    }
+
+    for (; mach_i < std::size(machine_instructions); ++mach_i, ++out_i)
+    {
+        const auto& m = machine_instructions[mach_i];
+        const auto name = m.name();
+        assert(name.size() <= limit);
+        std::copy(name.begin(), name.end(), names[out_i].begin());
+        offsets[out_i] = (short)mach_i;
+    }
+
+    for (; mnemo_i < std::size(mnemonic_codes); ++mnemo_i, ++out_i)
+    {
+        const auto& mn = mnemonic_codes[mnemo_i];
+        const auto name = mn.name();
+        assert(name.size() <= limit);
+        std::copy(name.begin(), name.end(), names[out_i].begin());
+        offsets[out_i] = (short)(m1 - mnemo_i);
+    }
+
+    return std::pair(names, offsets);
+}();
+} // namespace
+
+std::pair<const machine_instruction*, const mnemonic_code*> instruction::find_machine_instruction_or_mnemonic(
+    std::string_view name) noexcept
+{
+    if (name.size() > combined_machine_instruction_name_limit)
+        return {};
+
+    const auto& [mach_instr_names, mach_instr_offsets] = combined_machine_instruction_table;
+
+    std::array<char, combined_machine_instruction_name_limit> padded_name {};
+    std::copy(name.begin(), name.end(), padded_name.begin());
+
+    auto it = std::lower_bound(std::begin(mach_instr_names), std::end(mach_instr_names), padded_name);
+    if (it == std::end(mach_instr_names) || *it != padded_name)
+        return {};
+
+    const auto idx = mach_instr_offsets[it - std::begin(mach_instr_names)];
+
+    if (idx >= 0)
+        return { &machine_instructions[idx], nullptr };
+
+    const auto& mn = mnemonic_codes[-idx - 1];
+
+    return { mn.instruction(), &mn };
+}
 
 namespace {
 constexpr instruction_set_size compute_instruction_set_size(instruction_set_version v)
@@ -2085,7 +2157,8 @@ constexpr const instruction_set_size instruction_set_sizes[] = {
 
 } // namespace
 
-const instruction_set_size& hlasm_plugin::parser_library::context::get_instruction_sizes(instruction_set_version v)
+const instruction_set_size& hlasm_plugin::parser_library::context::get_instruction_sizes(
+    instruction_set_version v) noexcept
 {
     auto idx = static_cast<int>(v);
     assert(0 < idx && idx < std::size(instruction_set_sizes));

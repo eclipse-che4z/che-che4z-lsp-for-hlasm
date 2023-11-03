@@ -798,13 +798,10 @@ void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_
     if (instruction.empty())
         return;
 
-    unsigned char mask = 0;
-    decltype(mask) top_bit = 1 << (std::numeric_limits<decltype(mask)>::digits - 1);
+    const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(instruction.to_string_view());
 
-    if (auto mnem_tmp = context::instruction::find_mnemonic_codes(instruction.to_string_view()))
-        mask = mnem_tmp->reladdr_mask().mask();
-    else
-        mask = context::instruction::get_machine_instructions(instruction.to_string_view()).reladdr_mask().mask();
+    unsigned char mask = mn ? mn->reladdr_mask().mask() : mi->reladdr_mask().mask();
+    decltype(mask) top_bit = 1 << (std::numeric_limits<decltype(mask)>::digits - 1);
 
     for (const auto& operand : op_list)
     {

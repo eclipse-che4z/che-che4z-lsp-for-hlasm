@@ -142,14 +142,11 @@ bool machine_checker::check(std::string_view instruction_name,
 
     // instruction name is the mnemonic name in case of a mnemonic instruction
 
-    auto mach_name = instruction_name;
+    auto [mi, _] = context::instruction::find_machine_instruction_or_mnemonic(instruction_name);
 
-    // instruction is a mnemonic instruction
-    if (auto m = context::instruction::find_mnemonic_codes(instruction_name))
-        mach_name = m->instruction()->name();
+    assert(mi);
 
-    return context::instruction::get_machine_instructions(mach_name).check(
-        instruction_name, ops, stmt_range, add_diagnostic);
+    return mi->check(instruction_name, ops, stmt_range, add_diagnostic);
 }
 
 } // namespace hlasm_plugin::parser_library::checking

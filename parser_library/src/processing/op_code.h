@@ -47,18 +47,15 @@ class processing_status_cache_key
     unsigned char is_alias : 1, loctr_len : 7;
     unsigned char rel_addr;
 
+    explicit processing_status_cache_key(
+        const processing_status& s, std::pair<unsigned char, unsigned char> details) noexcept;
+
 public:
-    friend bool operator==(processing_status_cache_key l, processing_status_cache_key r)
-    {
-        return l.form == r.form && l.occurrence == r.occurrence && l.is_alias == r.is_alias
-            && l.loctr_len == r.loctr_len && l.rel_addr == r.rel_addr;
-    }
-    friend bool operator!=(processing_status_cache_key l, processing_status_cache_key r) { return !(l == r); }
+    friend bool operator==(processing_status_cache_key l, processing_status_cache_key r) = default;
 
-    explicit processing_status_cache_key(const processing_status& s);
+    explicit processing_status_cache_key(const processing_status& s) noexcept;
 
-    static unsigned char generate_loctr_len(std::string_view id);
-    static unsigned char generate_loctr_len(context::id_index id);
+    static unsigned char generate_loctr_len(std::string_view id) noexcept;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

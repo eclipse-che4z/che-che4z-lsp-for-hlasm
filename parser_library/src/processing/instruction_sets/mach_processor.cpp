@@ -41,12 +41,9 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
 
     auto loctr = hlasm_ctx.ord_ctx.align(context::halfword, lib_info);
 
-    const auto& mach_instr = [](std::string_view name) {
-        if (auto mnemonic = context::instruction::find_mnemonic_codes(name))
-            return *mnemonic->instruction();
-        else
-            return context::instruction::get_machine_instructions(name);
-    }(stmt->opcode_ref().value.to_string_view());
+    const auto [mach_instr, _] =
+        context::instruction::find_machine_instruction_or_mnemonic(stmt->opcode_ref().value.to_string_view());
+    assert(mach_instr);
 
     auto label_name = find_label_symbol(rebuilt_stmt);
 
@@ -62,7 +59,7 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
                 label_name,
                 loctr,
                 context::symbol_attributes::make_machine_attrs(
-                    (context::symbol_attributes::len_attr)mach_instr.size_in_bits() / 8));
+                    (context::symbol_attributes::len_attr)mach_instr->size_in_bits() / 8));
         }
     }
 
@@ -73,7 +70,7 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
         std::move(dep_solver).derive_current_dependency_evaluation_context(),
         lib_info);
 
-    (void)hlasm_ctx.ord_ctx.reserve_storage_area(mach_instr.size_in_bits() / 8, context::halfword, lib_info);
+    (void)hlasm_ctx.ord_ctx.reserve_storage_area(mach_instr->size_in_bits() / 8, context::halfword, lib_info);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

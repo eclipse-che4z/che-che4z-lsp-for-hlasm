@@ -272,7 +272,7 @@ checking::check_op_ptr get_check_op(const semantics::operand* op,
     const diagnostic_collector& add_diagnostic,
     const resolved_statement& stmt,
     size_t op_position,
-    const context::mnemonic_code* mnemonic = nullptr)
+    const context::machine_instruction* mi)
 {
     diagnostic_consumer_transform diags([&add_diagnostic](diagnostic_op d) { add_diagnostic(std::move(d)); });
 
@@ -302,12 +302,9 @@ checking::check_op_ptr get_check_op(const semantics::operand* op,
         // TODO: this is less than ideal, we should probably create operand structures
         // with the correct "type" while parsing and reject incompatible arguments
         // early when the syntax is incompatible
-        const auto* instr = mnemonic
-            ? mnemonic->instruction()
-            : &context::instruction::get_machine_instructions(stmt.opcode_ref().value.to_string_view());
-        if (op_position < instr->operands().size())
+        if (op_position < mi->operands().size())
         {
-            uniq = mach_op->get_operand_value(dep_solver, instr->operands()[op_position], diags);
+            uniq = mach_op->get_operand_value(dep_solver, mi->operands()[op_position], diags);
         }
         else
             uniq = ev_op.get_operand_value(dep_solver, diags);
@@ -373,7 +370,7 @@ std::optional<std::vector<checking::check_op_ptr>> transform_mnemonic(const reso
         }
         else // if operand is not empty
         {
-            t = get_check_op(operand.get(), dep_solver, add_diagnostic, stmt, op_id, &mnemonic);
+            t = get_check_op(operand.get(), dep_solver, add_diagnostic, stmt, op_id, mnemonic.instruction());
             if (!t)
                 return std::nullopt; // contains dependencies
             t->operand_range = operand->operand_range;
@@ -448,8 +445,10 @@ std::optional<std::vector<checking::check_op_ptr>> transform_mnemonic(const reso
     return result;
 }
 
-std::optional<std::vector<checking::check_op_ptr>> transform_default(
-    const resolved_statement& stmt, context::dependency_solver& dep_solver, const diagnostic_collector& add_diagnostic)
+std::optional<std::vector<checking::check_op_ptr>> transform_default(const resolved_statement& stmt,
+    context::dependency_solver& dep_solver,
+    const diagnostic_collector& add_diagnostic,
+    const context::machine_instruction* mi)
 {
     std::vector<checking::check_op_ptr> operand_vector;
     const auto& ops = stmt.operands_ref().value;
@@ -463,7 +462,7 @@ std::optional<std::vector<checking::check_op_ptr>> transform_default(
             continue;
         }
 
-        auto uniq = get_check_op(op.get(), dep_solver, add_diagnostic, stmt, operand_vector.size());
+        auto uniq = get_check_op(op.get(), dep_solver, add_diagnostic, stmt, operand_vector.size(), mi);
 
         if (!uniq)
             return std::nullopt; // contains dependencies
@@ -487,13 +486,13 @@ bool statement_check(const resolved_statement& stmt,
 
     std::string_view instruction_name = stmt.opcode_ref().value.to_string_view();
 
-    if (auto mnem_tmp = context::instruction::find_mnemonic_codes(instruction_name))
+    if (const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(instruction_name); mn)
     {
-        operand_vector = transform_mnemonic(stmt, dep_solver, *mnem_tmp, collector);
+        operand_vector = transform_mnemonic(stmt, dep_solver, *mn, collector);
     }
     else
     {
-        operand_vector = transform_default(stmt, dep_solver, collector);
+        operand_vector = transform_default(stmt, dep_solver, collector, mi);
     }
 
     if (!operand_vector)

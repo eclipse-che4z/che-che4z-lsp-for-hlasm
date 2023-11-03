@@ -62,13 +62,13 @@ struct instruction_set_affiliation
     uint16_t uni : 1;
 };
 
-constexpr bool operator<=(z_arch_affiliation z_affil, instruction_set_version instr_set)
+constexpr bool operator<=(z_arch_affiliation z_affil, instruction_set_version instr_set) noexcept
 {
     return static_cast<uint16_t>(z_affil) <= static_cast<uint16_t>(instr_set);
 }
 
 constexpr bool instruction_available(
-    instruction_set_affiliation instr_set_affiliation, instruction_set_version active_instr_set)
+    instruction_set_affiliation instr_set_affiliation, instruction_set_version active_instr_set) noexcept
 {
     switch (active_instr_set)
     {
@@ -110,7 +110,7 @@ struct instruction_set_size
     constexpr size_t total() const { return mnemonic + machine + ca + assembler; }
 };
 
-const instruction_set_size& get_instruction_sizes(instruction_set_version v);
+const instruction_set_size& get_instruction_sizes(instruction_set_version v) noexcept;
 
 // all mach_format types for operands of machine instructions:
 // formats with length 16 are arranged in range (0,2),formats with length 32 are arranged in range(3,20),formats with
@@ -300,11 +300,11 @@ public:
     {}
     constexpr unsigned char mask() const { return m_mask; }
 
-    constexpr friend bool operator==(const reladdr_transform_mask& l, const reladdr_transform_mask& r)
+    constexpr friend bool operator==(const reladdr_transform_mask& l, const reladdr_transform_mask& r) noexcept
     {
         return l.m_mask == r.m_mask;
     }
-    constexpr friend bool operator!=(const reladdr_transform_mask& l, const reladdr_transform_mask& r)
+    constexpr friend bool operator!=(const reladdr_transform_mask& l, const reladdr_transform_mask& r) noexcept
     {
         return !(l == r);
     }
@@ -327,9 +327,9 @@ public:
             data[i++] = c;
     }
 
-    constexpr std::string_view to_string_view() const { return std::string_view(data.data(), len); }
+    constexpr std::string_view to_string_view() const noexcept { return std::string_view(data.data(), len); }
 
-    friend std::strong_ordering operator<=>(const inline_string& l, const inline_string& r)
+    friend std::strong_ordering operator<=>(const inline_string& l, const inline_string& r) noexcept
     {
         return l.to_string_view() <=> r.to_string_view();
     }
@@ -774,23 +774,26 @@ public:
     max_operands - if not defined (can be infinite), value is -1, otherwise a non-negative integer
     */
 
-    static const ca_instruction& get_ca_instructions(std::string_view name);
-    static const ca_instruction* find_ca_instructions(std::string_view name);
-    static std::span<const ca_instruction> all_ca_instructions();
+    static const ca_instruction& get_ca_instructions(std::string_view name) noexcept;
+    static const ca_instruction* find_ca_instructions(std::string_view name) noexcept;
+    static std::span<const ca_instruction> all_ca_instructions() noexcept;
 
-    static const assembler_instruction& get_assembler_instructions(std::string_view name);
-    static const assembler_instruction* find_assembler_instructions(std::string_view name);
-    static std::span<const assembler_instruction> all_assembler_instructions();
+    static const assembler_instruction& get_assembler_instructions(std::string_view name) noexcept;
+    static const assembler_instruction* find_assembler_instructions(std::string_view name) noexcept;
+    static std::span<const assembler_instruction> all_assembler_instructions() noexcept;
 
-    static const machine_instruction& get_machine_instructions(std::string_view name);
-    static const machine_instruction* find_machine_instructions(std::string_view name);
-    static std::span<const machine_instruction> all_machine_instructions();
+    static const machine_instruction& get_machine_instructions(std::string_view name) noexcept;
+    static const machine_instruction* find_machine_instructions(std::string_view name) noexcept;
+    static std::span<const machine_instruction> all_machine_instructions() noexcept;
 
-    static const mnemonic_code& get_mnemonic_codes(std::string_view name);
-    static const mnemonic_code* find_mnemonic_codes(std::string_view name);
-    static std::span<const mnemonic_code> all_mnemonic_codes();
+    static const mnemonic_code& get_mnemonic_codes(std::string_view name) noexcept;
+    static const mnemonic_code* find_mnemonic_codes(std::string_view name) noexcept;
+    static std::span<const mnemonic_code> all_mnemonic_codes() noexcept;
 
-    static std::string_view mach_format_to_string(mach_format);
+    static std::pair<const machine_instruction*, const mnemonic_code*> find_machine_instruction_or_mnemonic(
+        std::string_view name) noexcept;
+
+    static std::string_view mach_format_to_string(mach_format) noexcept;
 };
 
 } // namespace hlasm_plugin::parser_library::context

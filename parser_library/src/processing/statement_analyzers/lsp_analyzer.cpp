@@ -515,10 +515,10 @@ std::optional<std::pair<int, int>> get_branch_operand(const context::mnemonic_co
 }
 std::optional<std::pair<int, int>> get_branch_operand(context::id_index id) noexcept
 {
-    if (const auto* mnemo = context::instruction::find_mnemonic_codes(id.to_string_view()))
-        return get_branch_operand(mnemo);
+    if (const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(id.to_string_view()); mn)
+        return get_branch_operand(mn);
     else
-        return get_branch_operand(context::instruction::find_machine_instructions(id.to_string_view()));
+        return get_branch_operand(mi);
 }
 
 context::processing_stack_t get_opencode_stackframe(context::processing_stack_t sf)
