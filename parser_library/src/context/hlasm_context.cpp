@@ -118,21 +118,12 @@ macro_data_ptr create_macro_data(std::string value)
     return std::make_unique<macro_param_data_single>(std::move(value));
 }
 
-macro_data_ptr create_macro_data(std::vector<std::string> value)
-{
-    std::vector<macro_data_ptr> data;
-    for (auto& single_data : value)
-    {
-        data.push_back(std::make_unique<macro_param_data_single>(std::move(single_data)));
-    }
-
-    return std::make_unique<macro_param_data_composite>(std::move(data));
-}
-
 macro_data_ptr create_macro_data(std::unique_ptr<macro_param_data_single_dynamic> value) { return value; }
 
+macro_data_ptr create_macro_data(std::unique_ptr<macro_param_data_zero_based> value) { return value; }
+
 template<typename SYSTEM_VARIABLE_TYPE = system_variable, typename DATA>
-std::pair<id_index, sys_sym_ptr> create_system_variable(id_index id, DATA mac_data, bool is_global)
+std::pair<id_index, std::shared_ptr<system_variable>> create_system_variable(id_index id, DATA mac_data, bool is_global)
 {
     return { id, std::make_shared<SYSTEM_VARIABLE_TYPE>(id, create_macro_data(std::move(mac_data)), is_global) };
 }
@@ -200,18 +191,19 @@ void hlasm_context::add_system_vars_to_scope(code_scope& scope)
         }
 
         {
-            std::vector<std::string> data;
+            std::vector<macro_data_ptr> data;
 
+            data.reserve(scope_stack_.size());
             for (auto it = scope_stack_.rbegin(); it != scope_stack_.rend(); ++it)
             {
                 if (it->is_in_macro())
-                    data.push_back(it->this_macro->id.to_string());
+                    data.push_back(std::make_unique<macro_param_data_single>(it->this_macro->id.to_string()));
                 else
-                    data.push_back("OPEN CODE");
+                    data.push_back(std::make_unique<macro_param_data_single>("OPEN CODE"));
             }
 
-            scope.system_variables.insert(
-                create_system_variable<system_variable_sysmac>(id_index("SYSMAC"), std::move(data), false));
+            scope.system_variables.insert(create_system_variable<system_variable_sysmac>(
+                id_index("SYSMAC"), std::make_unique<macro_param_data_zero_based>(std::move(data)), false));
         }
 
         {
@@ -235,9 +227,7 @@ void hlasm_context::add_global_system_var_to_scope(id_index id, code_scope& scop
 {
     auto glob = globals_.find(id);
 
-    sys_sym_ptr temp = std::dynamic_pointer_cast<system_variable>(glob->second);
-
-    scope.system_variables.try_emplace(glob->second->id, temp);
+    scope.system_variables.try_emplace(glob->second->id, std::dynamic_pointer_cast<system_variable>(glob->second));
 }
 
 void hlasm_context::add_global_system_vars(code_scope& scope)
@@ -651,23 +641,23 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
 
 const hlasm_context::global_variable_storage& hlasm_context::globals() const { return globals_; }
 
-var_sym_ptr hlasm_context::get_var_sym(id_index name) const
+variable_symbol* hlasm_context::get_var_sym(id_index name) const
 {
     const auto* scope = curr_scope();
     if (auto tmp = scope->variables.find(name); tmp != scope->variables.end())
-        return tmp->second;
+        return tmp->second.get();
 
     if (auto s_tmp = scope->system_variables.find(name); s_tmp != scope->system_variables.end())
-        return s_tmp->second;
+        return s_tmp->second.get();
 
     if (scope->is_in_macro())
     {
         auto m_tmp = scope->this_macro->named_params.find(name);
         if (m_tmp != scope->this_macro->named_params.end())
-            return m_tmp->second;
+            return m_tmp->second.get();
     }
 
-    return var_sym_ptr();
+    return nullptr;
 }
 
 void hlasm_context::add_opencode_sequence_symbol(std::unique_ptr<opencode_sequence_symbol> seq_sym)
@@ -873,7 +863,8 @@ macro_def_ptr hlasm_context::get_macro_definition(id_index name, context::opcode
 
 bool hlasm_context::is_in_macro() const { return scope_stack_.back().is_in_macro(); }
 
-macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params)
+std::pair<const macro_invocation*, bool> hlasm_context::enter_macro(
+    id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params)
 {
     assert(SYSNDX_ <= SYSNDX_limit);
 
@@ -886,15 +877,18 @@ macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_pa
             ord_ctx.symbol_mentioned_on_macro(ids().add(std::move(label)));
     }
 
-    auto invo = macro_def->call(std::move(label_param_data), std::move(params), id_storage::well_known::SYSLIST);
-    auto& new_scope = scope_stack_.emplace_back(invo, macro_def);
+    auto [invo, truncated] =
+        macro_def->call(std::move(label_param_data), std::move(params), id_storage::well_known::SYSLIST);
+    auto* const result = invo.get();
+
+    auto& new_scope = scope_stack_.emplace_back(std::move(invo), macro_def);
     add_system_vars_to_scope(new_scope);
     add_global_system_vars(new_scope);
 
     ++SYSNDX_;
     mnote_last_max = 0;
 
-    return invo;
+    return { result, truncated };
 }
 
 void hlasm_context::leave_macro()
@@ -903,11 +897,11 @@ void hlasm_context::leave_macro()
     scope_stack_.pop_back();
 }
 
-macro_invo_ptr hlasm_context::current_macro() const
+const macro_invocation* hlasm_context::current_macro() const
 {
     if (is_in_macro())
-        return curr_scope()->this_macro;
-    return macro_invo_ptr();
+        return curr_scope()->this_macro.get();
+    return nullptr;
 }
 
 const location* hlasm_context::current_macro_definition_location() const
@@ -1058,8 +1052,6 @@ SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
 
     if (auto set_sym = var->access_set_symbol_base())
     {
-        size_t idx = 0;
-
         if (subscript.empty())
         {
             switch (set_sym->type)
@@ -1076,7 +1068,7 @@ SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
         }
         else
         {
-            idx = (size_t)(subscript.front() - 1);
+            const auto idx = subscript.front();
 
             switch (set_sym->type)
             {
@@ -1093,18 +1085,12 @@ SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
     }
     else if (auto mac_par = var->access_macro_param_base())
     {
-        std::vector<size_t> tmp;
-        tmp.reserve(subscript.size()); // TODO: This is ridiculous
-        for (auto& v : subscript)
-        {
-            tmp.push_back((size_t)v);
-        }
-        return mac_par->get_value(tmp);
+        return mac_par->get_value(subscript);
     }
     return SET_t();
 }
 
-bool test_symbol_for_read(const var_sym_ptr& var,
+bool test_symbol_for_read(const variable_symbol* var,
     std::span<const context::A_t> subscript,
     range symbol_range,
     diagnostic_op_consumer& diags,

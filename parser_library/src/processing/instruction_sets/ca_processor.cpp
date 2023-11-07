@@ -98,7 +98,7 @@ ca_processor::SET_info ca_processor::get_SET_symbol(const semantics::complete_st
     auto symbol = std::get<semantics::vs_ptr>(stmt.label_ref().value).get();
     bool is_scalar_expression = symbol->subscript.empty();
 
-    int index = -1;
+    context::A_t index = -1;
 
     auto name = symbol->evaluate_name(eval_ctx);
 
@@ -173,6 +173,7 @@ bool ca_processor::prepare_SET_operands(
         return false;
     }
 
+    expr_values.reserve(ops.size());
     for (const auto& op : ops)
     {
         if (op->type == semantics::operand_type::EMPTY)
@@ -198,7 +199,9 @@ bool ca_processor::prepare_SET_operands(
 bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, std::vector<GLB_LCL_info>& info) const
 {
     bool has_operand = false;
-    for (auto& op : stmt.operands_ref().value)
+    const auto& ops = stmt.operands_ref().value;
+    info.reserve(ops.size());
+    for (const auto& op : ops)
     {
         if (op->type == semantics::operand_type::EMPTY)
             continue;
@@ -295,14 +298,15 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt,
     context::A_t& branch,
     std::vector<std::pair<context::id_index, range>>& targets)
 {
-    if (stmt.operands_ref().value.empty())
+    const auto& ops = stmt.operands_ref().value;
+    if (ops.empty())
     {
         add_diagnostic(diagnostic_op::error_E022("AGO", stmt.instruction_ref().field_range));
         return false;
     }
 
     static constexpr std::string_view expected[] = { "sequence symbol" };
-    for (const auto& op : stmt.operands_ref().value)
+    for (const auto& op : ops)
     {
         if (op->type == semantics::operand_type::EMPTY)
         {
@@ -311,12 +315,12 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt,
         }
     }
 
-    auto ca_op = stmt.operands_ref().value[0]->access_ca();
+    auto ca_op = ops[0]->access_ca();
     assert(ca_op);
 
     if (ca_op->kind == semantics::ca_kind::SEQ)
     {
-        if (stmt.operands_ref().value.size() != 1)
+        if (ops.size() != 1)
         {
             add_diagnostic(diagnostic_op::error_E015(expected, ca_op->operand_range));
             return false;
@@ -330,13 +334,14 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt,
 
     if (ca_op->kind == semantics::ca_kind::BRANCH)
     {
+        targets.reserve(ops.size());
         auto br_op = ca_op->access_branch();
         branch = br_op->expression->evaluate<context::A_t>(eval_ctx);
         targets.emplace_back(br_op->sequence_symbol.name, br_op->sequence_symbol.symbol_range);
 
-        for (size_t i = 1; i < stmt.operands_ref().value.size(); ++i)
+        for (size_t i = 1; i < ops.size(); ++i)
         {
-            auto tmp = stmt.operands_ref().value[i]->access_ca();
+            auto tmp = ops[i]->access_ca();
             assert(tmp);
 
             if (tmp->kind == semantics::ca_kind::SEQ)
@@ -374,7 +379,8 @@ bool ca_processor::prepare_AIF(
 {
     condition = false;
 
-    if (stmt.operands_ref().value.empty())
+    const auto& ops = stmt.operands_ref().value;
+    if (ops.empty())
     {
         add_diagnostic(diagnostic_op::error_E022("AIF", stmt.instruction_ref().field_range));
         return false;
@@ -382,13 +388,13 @@ bool ca_processor::prepare_AIF(
 
     static constexpr std::string_view expected[] = { "conditional branch" };
     bool has_operand = false;
-    for (auto it = stmt.operands_ref().value.begin(); it != stmt.operands_ref().value.end(); ++it)
+    for (auto it = ops.begin(); it != ops.end(); ++it)
     {
         const auto& op = *it;
 
         if (op->type == semantics::operand_type::EMPTY)
         {
-            if (it == stmt.operands_ref().value.end() - 1)
+            if (it == ops.end() - 1)
                 continue;
 
             add_diagnostic(diagnostic_op::error_E015(expected, op->operand_range));
@@ -579,11 +585,12 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
                 value_to_set = std::move(std::get<std::string>(aread_result));
             else
             {
-                listener_.schedule_helper_task(
-                    [](utils::value_task<std::string> t, context::set_symbol_base* set_sym, int idx) -> utils::task {
-                        auto value = co_await std::move(t);
-                        set_sym->access_set_symbol<context::C_t>()->set_value(std::move(value), idx - 1);
-                    }(std::move(std::get<utils::value_task<std::string>>(aread_result)), set_symbol, index));
+                listener_.schedule_helper_task([](utils::value_task<std::string> t,
+                                                   context::set_symbol_base* set_sym,
+                                                   context::A_t idx) -> utils::task {
+                    auto value = co_await std::move(t);
+                    set_sym->access_set_symbol<context::C_t>()->set_value(std::move(value), idx);
+                }(std::move(std::get<utils::value_task<std::string>>(aread_result)), set_symbol, index));
                 return;
             }
             break;
@@ -596,7 +603,7 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
             value_to_set = time_to_clockd(since_midnight());
             break;
     }
-    set_symbol->access_set_symbol<context::C_t>()->set_value(std::move(value_to_set), index - 1);
+    set_symbol->access_set_symbol<context::C_t>()->set_value(std::move(value_to_set), index);
 }
 
 void ca_processor::process_empty(const semantics::complete_statement&) {}
@@ -613,10 +620,17 @@ void ca_processor::process_SET(const semantics::complete_statement& stmt)
     if (!prepare_SET_operands(stmt, expr_values))
         return;
 
-    for (size_t i = 0; i < expr_values.size(); i++)
+    if (expr_values.size() > std::numeric_limits<context::A_t>::max()
+        || std::numeric_limits<context::A_t>::max() - (context::A_t)expr_values.size() < index)
+    {
+        eval_ctx.diags.add_diagnostic(diagnostic_op::error_E080(stmt.operands_ref().field_range));
+        return;
+    }
+
+    for (context::A_t i = 0; i < expr_values.size(); ++i)
     {
         // first obtain a place to put the result in
-        auto& val = set_symbol->template access_set_symbol<T>()->reserve_value(index - 1 + i);
+        auto& val = set_symbol->template access_set_symbol<T>()->reserve_value(index + i);
         // then evaluate the new value and save it unless the operand is empty
         if (expr_values[i])
             val = expr_values[i]->template evaluate<T>(eval_ctx);

@@ -25,15 +25,15 @@ namespace hlasm_plugin::parser_library::context {
 // contains locally valid set symbols, sequence symbols and pointer to macro class (if code is in any)
 struct code_scope
 {
-    using set_sym_storage = std::unordered_map<id_index, set_sym_ptr>;
-    using sys_sym_storage = std::unordered_map<id_index, sys_sym_ptr>;
+    using set_sym_storage = std::unordered_map<id_index, std::shared_ptr<set_symbol_base>>;
+    using sys_sym_storage = std::unordered_map<id_index, std::shared_ptr<system_variable>>;
 
     // local variables of scope
     set_sym_storage variables;
     // local system variables of scope
     sys_sym_storage system_variables;
     // gets macro to which this scope belong (nullptr if in open code)
-    macro_invo_ptr this_macro;
+    std::unique_ptr<macro_invocation> this_macro;
     // the ACTR branch counter
     A_t branch_counter = 4096;
     // number of changed branch counters
@@ -43,7 +43,7 @@ struct code_scope
 
     bool is_in_macro() const { return !!this_macro; }
 
-    code_scope(macro_invo_ptr macro_invo, macro_def_ptr macro_def)
+    code_scope(std::unique_ptr<macro_invocation> macro_invo, macro_def_ptr macro_def)
         : this_macro(std::move(macro_invo))
         , this_macro_def_(std::move(macro_def))
     {}

@@ -2111,6 +2111,21 @@ diagnostic_op diagnostic_op::error_E078(std::string_view message, const range& r
         range);
 }
 
+diagnostic_op diagnostic_op::error_E079(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E079", "Argument limit (2GB) reached", range);
+}
+
+diagnostic_op diagnostic_op::error_E080(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E080", "Array size limit reached", range);
+}
+
+diagnostic_op diagnostic_op::error_E081(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E081", "SYSLIST limit (2G) reached", range);
+}
+
 diagnostic_op diagnostic_op::warning_W010(std::string_view message, const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning, "W010", concat(message, " not expected"), range);

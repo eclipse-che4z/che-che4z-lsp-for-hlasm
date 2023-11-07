@@ -36,7 +36,7 @@ public:
 
     void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 
-    static context::macro_data_ptr string_to_macrodata(std::string data);
+    static context::macro_data_ptr string_to_macrodata(std::string data, diagnostic_adder& add_diagnostic);
 
     static context::macro_data_ptr create_macro_data(semantics::concat_chain::const_iterator begin,
         semantics::concat_chain::const_iterator end,

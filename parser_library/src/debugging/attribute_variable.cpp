@@ -34,5 +34,3 @@ set_type attribute_variable::type() const { return set_type::UNDEF_TYPE; }
 bool attribute_variable::is_scalar() const { return true; }
 
 std::vector<variable_ptr> attribute_variable::values() const { return std::vector<variable_ptr>(); }
-
-size_t attribute_variable::size() const { return 0; }

@@ -14,6 +14,8 @@
 
 #include "ca_symbol_attribute.h"
 
+#include <span>
+
 #include "ca_constant.h"
 #include "ca_var_sym.h"
 #include "context/hlasm_context.h"
@@ -228,7 +230,7 @@ context::C_t get_current_macro_name_field(const context::hlasm_context& ctx)
     if (!scope.is_in_macro())
         return {};
     return scope.this_macro->named_params.at(context::id_storage::well_known::SYSLIST)
-        ->get_data(std::array<size_t, 1> { 0 })
+        ->get_data(std::array<context::A_t, 1> { 0 })
         ->get_value();
 }
 
@@ -308,9 +310,8 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
     }
 }
 
-std::vector<size_t> transform(const std::vector<context::A_t>& v) { return std::vector<size_t>(v.begin(), v.end()); }
-
-std::optional<context::C_t> read_string_var_sym(const context::variable_symbol& vs, std::vector<size_t> indices)
+std::optional<context::C_t> read_string_var_sym(
+    const context::variable_symbol& vs, std::span<const context::A_t> indices)
 {
     context::C_t var_value;
     if (auto set_sym = vs.access_set_symbol_base())
@@ -322,14 +323,14 @@ std::optional<context::C_t> read_string_var_sym(const context::variable_symbol& 
         if (indices.empty())
             var_value = setc_sym->get_value();
         else
-            var_value = setc_sym->get_value(indices.front() - 1);
+            var_value = setc_sym->get_value(indices.front());
     }
     else if (auto mac_par = vs.access_macro_param_base())
     {
         auto data = mac_par->get_data(indices);
 
         while (dynamic_cast<const context::macro_param_data_composite*>(data))
-            data = data->get_ith(0);
+            data = data->get_ith(1);
 
         var_value = data->get_value();
     }
@@ -369,7 +370,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
                     var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, var_name.to_string_view()))
                 return "U";
 
-            auto var_value_o = read_string_var_sym(*var_symbol, transform(expr_subscript));
+            auto var_value_o = read_string_var_sym(*var_symbol, expr_subscript);
             if (!var_value_o.has_value())
                 return "N";
 
@@ -396,10 +397,10 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
                     var_symbol, expr_subscript, vs->symbol_range, eval_ctx.diags, var_name.to_string_view()))
                 return context::symbol_attributes::default_ca_value(attribute);
 
-            return var_symbol ? var_symbol->count(transform(expr_subscript)) : 0;
+            return var_symbol ? var_symbol->count(expr_subscript) : 0;
 
         case context::data_attr_kind::N:
-            return var_symbol ? var_symbol->number(transform(expr_subscript)) : 0;
+            return var_symbol ? var_symbol->number(expr_subscript) : 0;
 
         default:
             return context::SET_t();

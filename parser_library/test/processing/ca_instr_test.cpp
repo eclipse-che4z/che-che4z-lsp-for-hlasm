@@ -91,7 +91,7 @@ TEST(var_subs, set_to_var_idx)
     analyzer a(input);
     a.analyze();
 
-    std::unordered_map<size_t, A_t> expected = { { 1, 3 } };
+    std::unordered_map<size_t, A_t> expected = { { 2, 3 } };
     EXPECT_EQ(get_var_vector_map<A_t>(a.hlasm_ctx(), "var"), expected);
 }
 
@@ -101,7 +101,7 @@ TEST(var_subs, set_to_var_idx_many)
     analyzer a(input);
     a.analyze();
 
-    std::unordered_map<size_t, A_t> expected = { { 1, 3 }, { 2, 4 }, { 3, 5 } };
+    std::unordered_map<size_t, A_t> expected = { { 2, 3 }, { 3, 4 }, { 4, 5 } };
     EXPECT_EQ(get_var_vector_map<A_t>(a.hlasm_ctx(), "var"), expected);
 }
 

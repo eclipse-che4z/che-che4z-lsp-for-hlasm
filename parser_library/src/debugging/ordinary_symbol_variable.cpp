@@ -86,11 +86,3 @@ std::vector<variable_ptr> ordinary_symbol_variable::values() const
 
     return vars;
 }
-
-size_t ordinary_symbol_variable::size() const
-{
-    return (symbol_.attributes().is_defined(context::data_attr_kind::L) ? 1 : 0)
-        + (symbol_.attributes().is_defined(context::data_attr_kind::I) ? 1 : 0)
-        + (symbol_.attributes().is_defined(context::data_attr_kind::S) ? 1 : 0)
-        + (symbol_.attributes().is_defined(context::data_attr_kind::T) ? 1 : 0);
-}

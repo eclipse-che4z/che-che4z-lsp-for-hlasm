@@ -23,7 +23,7 @@ using namespace hlasm_plugin::parser_library::debugging;
 set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym, int index)
     : set_symbol_(set_sym)
     , index_(index)
-    , name_(std::to_string(index + 1))
+    , name_(std::to_string(index))
 {
     value_ = get_string_value(index_);
 }
@@ -56,12 +56,10 @@ std::vector<variable_ptr> set_symbol_variable::values() const
     std::vector<std::unique_ptr<debugging::variable>> vals;
 
     for (auto keys = set_symbol_.keys(); const auto& key : keys)
-        vals.push_back(std::make_unique<set_symbol_variable>(set_symbol_, static_cast<int>(key)));
+        vals.push_back(std::make_unique<set_symbol_variable>(set_symbol_, key));
 
     return vals;
 }
-
-size_t set_symbol_variable::size() const { return set_symbol_.size(); }
 
 std::string set_symbol_variable::get_string_value(const std::optional<int>& index) const
 {
@@ -90,7 +88,7 @@ std::string set_symbol_variable::get_string_array_value() const
 
     for (const auto& key : keys)
     {
-        array_value.append(get_string_value(static_cast<int>(key)));
+        array_value.append(get_string_value(key));
         array_value.append(",");
     }
     array_value.back() = ')';

@@ -36,7 +36,7 @@ SET_t::SET_t(context::B_t value)
 SET_t::SET_t(context::C_t value)
     : a_value(object_traits<A_t>::default_v())
     , b_value(object_traits<B_t>::default_v())
-    , c_value(value)
+    , c_value(std::move(value))
     , type(SET_t_enum::C_TYPE)
 {}
 

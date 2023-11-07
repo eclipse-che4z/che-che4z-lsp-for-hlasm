@@ -43,7 +43,6 @@ struct macro_arg
 class macro_definition;
 struct macro_invocation;
 struct copy_member;
-using macro_invo_ptr = std::shared_ptr<macro_invocation>;
 using macro_def_ptr = std::shared_ptr<macro_definition>;
 using label_storage = std::unordered_map<id_index, sequence_symbol_ptr>;
 
@@ -93,10 +92,8 @@ public:
         std::unordered_set<std::shared_ptr<copy_member>> used_copy_members);
 
     // returns object with parameters' data set to actual parameters in macro call
-    macro_invo_ptr call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params, id_index syslist_name);
-
-    // satifying unordered_map needs
-    bool operator=(const macro_definition& m);
+    std::pair<std::unique_ptr<macro_invocation>, bool> call(
+        macro_data_ptr label_param_data, std::vector<macro_arg> actual_params, id_index syslist_name);
 
     const std::vector<std::unique_ptr<positional_param>>& get_positional_params() const;
     const std::vector<std::unique_ptr<keyword_param>>& get_keyword_params() const;
@@ -115,9 +112,9 @@ struct macro_invocation
 {
 public:
     // identifier of macro
-    const id_index id;
+    id_index id;
     // params of macro
-    const std::unordered_map<id_index, macro_param_ptr> named_params;
+    std::unordered_map<id_index, macro_param_ptr> named_params;
     // vector of statements representing macro definition
     cached_block& cached_definition;
     // vector assigning each statement its copy nest

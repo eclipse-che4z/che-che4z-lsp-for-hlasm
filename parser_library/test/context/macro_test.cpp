@@ -367,10 +367,11 @@ TEST(macro, macro_name_param_repetition)
         std::vector<macro_arg> args;
         args.emplace_back(std::make_unique<macro_param_data_single>("2"));
         args.emplace_back(std::make_unique<macro_param_data_single>("3"));
-        auto invo =
+        auto [invo, t] =
             m1->call(std::make_unique<macro_param_data_single>("1"), std::move(args), id_storage::well_known::SYSLIST);
         auto n = id_index("N");
         auto b = id_index("B");
+        EXPECT_FALSE(t);
         EXPECT_EQ(invo->named_params.find(n)->second->get_value(), "1");
         EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "3");
     }
@@ -379,9 +380,10 @@ TEST(macro, macro_name_param_repetition)
         std::vector<macro_arg> args;
         args.emplace_back(std::make_unique<macro_param_data_single>("1"));
         args.emplace_back(std::make_unique<macro_param_data_single>("2"));
-        auto invo = m2->call(nullptr, std::move(args), id_storage::well_known::SYSLIST);
+        auto [invo, t] = m2->call(nullptr, std::move(args), id_storage::well_known::SYSLIST);
         auto n = id_index("A");
         auto b = id_index("B");
+        EXPECT_FALSE(t);
         EXPECT_EQ(invo->named_params.find(n)->second->get_value(), "1");
         EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "2");
         EXPECT_EQ(invo->named_params.find(id_storage::well_known::SYSLIST)->second->get_value(1), "1");
@@ -392,9 +394,10 @@ TEST(macro, macro_name_param_repetition)
         args.emplace_back(std::make_unique<macro_param_data_single>("1"));
         args.emplace_back(std::make_unique<macro_param_data_single>("2"));
         args.emplace_back(std::make_unique<macro_param_data_single>("3"));
-        auto invo = m3->call(nullptr, std::move(args), id_storage::well_known::SYSLIST);
+        auto [invo, t] = m3->call(nullptr, std::move(args), id_storage::well_known::SYSLIST);
         auto n = id_index("A");
         auto b = id_index("B");
+        EXPECT_FALSE(t);
         EXPECT_EQ(invo->named_params.find(n)->second->access_keyword_param()->get_value(), "5");
         EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "2");
     }
@@ -635,100 +638,102 @@ TEST(external_macro, deferred_macro_restart)
 
 TEST(variable_argument_passing, positive_sublist)
 {
-    auto data = macro_processor::string_to_macrodata("(a,b,c)");
+    diagnostic_adder diags;
+    auto data = macro_processor::string_to_macrodata("(a,b,c)", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
     ASSERT_EQ(data->number, (size_t)3);
-    EXPECT_EQ(data->get_ith(0)->get_value(), "a");
-    EXPECT_EQ(data->get_ith(1)->get_value(), "b");
-    EXPECT_EQ(data->get_ith(2)->get_value(), "c");
+    EXPECT_EQ(data->get_ith(1)->get_value(), "a");
+    EXPECT_EQ(data->get_ith(2)->get_value(), "b");
+    EXPECT_EQ(data->get_ith(3)->get_value(), "c");
 
-    data = macro_processor::string_to_macrodata("(a,(b,1),((c),1))");
+    data = macro_processor::string_to_macrodata("(a,(b,1),((c),1))", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
     ASSERT_EQ(data->get_value(), "(a,(b,1),((c),1))");
     ASSERT_EQ(data->number, (size_t)3);
-    EXPECT_EQ(data->get_ith(0)->get_value(), "a");
-    EXPECT_EQ(data->get_ith(1)->get_value(), "(b,1)");
-    EXPECT_EQ(data->get_ith(1)->get_value(), "(b,1)");
-    EXPECT_EQ(data->get_ith(2)->get_value(), "((c),1)");
-    EXPECT_EQ(data->get_ith(2)->get_ith(0)->get_value(), "(c)");
+    EXPECT_EQ(data->get_ith(1)->get_value(), "a");
+    EXPECT_EQ(data->get_ith(2)->get_value(), "(b,1)");
+    EXPECT_EQ(data->get_ith(2)->get_value(), "(b,1)");
+    EXPECT_EQ(data->get_ith(3)->get_value(), "((c),1)");
+    EXPECT_EQ(data->get_ith(3)->get_ith(1)->get_value(), "(c)");
 
-    data = macro_processor::string_to_macrodata("(a(1),(1,(1))b,()c())");
+    data = macro_processor::string_to_macrodata("(a(1),(1,(1))b,()c())", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
     ASSERT_EQ(data->number, (size_t)3);
-    EXPECT_EQ(data->get_ith(0)->get_value(), "a(1)");
-    EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(0)));
-    EXPECT_EQ(data->get_ith(1)->get_value(), "(1,(1))b");
+    EXPECT_EQ(data->get_ith(1)->get_value(), "a(1)");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
-    EXPECT_EQ(data->get_ith(2)->get_value(), "()c()");
+    EXPECT_EQ(data->get_ith(2)->get_value(), "(1,(1))b");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(2)));
+    EXPECT_EQ(data->get_ith(3)->get_value(), "()c()");
+    EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(3)));
 
-    data = macro_processor::string_to_macrodata("(0(R2),E,C')',CLI)");
+    data = macro_processor::string_to_macrodata("(0(R2),E,C')',CLI)", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
     ASSERT_EQ(data->number, (size_t)4);
-    EXPECT_EQ(data->get_ith(0)->get_value(), "0(R2)");
-    EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(0)));
-    EXPECT_EQ(data->get_ith(1)->get_value(), "E");
+    EXPECT_EQ(data->get_ith(1)->get_value(), "0(R2)");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
-    EXPECT_EQ(data->get_ith(2)->get_value(), "C')'");
+    EXPECT_EQ(data->get_ith(2)->get_value(), "E");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(2)));
-    EXPECT_EQ(data->get_ith(3)->get_value(), "CLI");
+    EXPECT_EQ(data->get_ith(3)->get_value(), "C')'");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(3)));
+    EXPECT_EQ(data->get_ith(4)->get_value(), "CLI");
+    EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(4)));
 
-    data = macro_processor::string_to_macrodata("(DATA1,DATA2,I'DATA3,DATA4,L'DATA5,O'DATA6,S'DATA7,T'DATA8)");
+    data = macro_processor::string_to_macrodata("(DATA1,DATA2,I'DATA3,DATA4,L'DATA5,O'DATA6,S'DATA7,T'DATA8)", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
     ASSERT_EQ(data->number, (size_t)8);
-    EXPECT_EQ(data->get_ith(0)->get_value(), "DATA1");
-    EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(0)));
-    EXPECT_EQ(data->get_ith(1)->get_value(), "DATA2");
+    EXPECT_EQ(data->get_ith(1)->get_value(), "DATA1");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
-    EXPECT_EQ(data->get_ith(2)->get_value(), "I'DATA3");
+    EXPECT_EQ(data->get_ith(2)->get_value(), "DATA2");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(2)));
-    EXPECT_EQ(data->get_ith(3)->get_value(), "DATA4");
+    EXPECT_EQ(data->get_ith(3)->get_value(), "I'DATA3");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(3)));
-    EXPECT_EQ(data->get_ith(4)->get_value(), "L'DATA5");
+    EXPECT_EQ(data->get_ith(4)->get_value(), "DATA4");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(4)));
-    EXPECT_EQ(data->get_ith(5)->get_value(), "O'DATA6");
+    EXPECT_EQ(data->get_ith(5)->get_value(), "L'DATA5");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(5)));
-    EXPECT_EQ(data->get_ith(6)->get_value(), "S'DATA7");
+    EXPECT_EQ(data->get_ith(6)->get_value(), "O'DATA6");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(6)));
-    EXPECT_EQ(data->get_ith(7)->get_value(), "T'DATA8");
+    EXPECT_EQ(data->get_ith(7)->get_value(), "S'DATA7");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(7)));
+    EXPECT_EQ(data->get_ith(8)->get_value(), "T'DATA8");
+    EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(8)));
 }
 
 TEST(variable_argument_passing, negative_sublist)
 {
-    auto data = macro_processor::string_to_macrodata("a,b,c");
+    diagnostic_adder diags;
+    auto data = macro_processor::string_to_macrodata("a,b,c", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
     ASSERT_EQ(data->number, (size_t)1);
     EXPECT_EQ(data->get_value(), "a,b,c");
 
-    data = macro_processor::string_to_macrodata("(a,(b,1),((c),1)))");
+    data = macro_processor::string_to_macrodata("(a,(b,1),((c),1)))", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
     ASSERT_EQ(data->get_value(), "(a,(b,1),((c),1)))");
 
-    data = macro_processor::string_to_macrodata("(a,(b,1),((c),1)()");
+    data = macro_processor::string_to_macrodata("(a,(b,1),((c),1)()", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
     ASSERT_EQ(data->get_value(), "(a,(b,1),((c),1)()");
 
-    data = macro_processor::string_to_macrodata("=A(((TXXXXXXL+TXXXXXXXXXXXXXn+7)/8)*8)");
+    data = macro_processor::string_to_macrodata("=A(((TXXXXXXL+TXXXXXXXXXXXXXn+7)/8)*8)", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
     ASSERT_EQ(data->get_value(), "=A(((TXXXXXXL+TXXXXXXXXXXXXXn+7)/8)*8)");
 
-    data = macro_processor::string_to_macrodata("(a(1)");
+    data = macro_processor::string_to_macrodata("(a(1)", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
     ASSERT_EQ(data->get_value(), "(a(1)");
 
-    data = macro_processor::string_to_macrodata("(a(1)))");
+    data = macro_processor::string_to_macrodata("(a(1)))", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
     ASSERT_EQ(data->get_value(), "(a(1)))");

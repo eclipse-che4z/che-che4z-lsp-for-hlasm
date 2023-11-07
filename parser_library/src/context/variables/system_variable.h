@@ -19,9 +19,6 @@
 
 namespace hlasm_plugin::parser_library::context {
 
-class system_variable;
-using sys_sym_ptr = std::shared_ptr<system_variable>;
-
 // base for variable symbols
 class system_variable : public macro_param_base
 {
@@ -31,21 +28,21 @@ public:
     system_variable(id_index name, macro_data_ptr value, bool is_global);
 
     // gets value of data where parameter is list of nested data offsets
-    C_t get_value(std::span<const size_t> offset) const override;
+    C_t get_value(std::span<const A_t> offset) const override;
     // gets value of data where parameter is offset to data field
-    C_t get_value(size_t idx) const override;
+    C_t get_value(A_t idx) const override;
     // gets value of whole macro parameter
     C_t get_value() const override;
 
     // gets param struct
-    const macro_param_data_component* get_data(std::span<const size_t> offset) const override;
+    const macro_param_data_component* get_data(std::span<const A_t> offset) const override;
 
     // N' attribute of the symbol
-    A_t number(std::span<const size_t> offset) const override;
+    A_t number(std::span<const A_t> offset) const override;
     // K' attribute of the symbol
-    A_t count(std::span<const size_t> offset) const override;
+    A_t count(std::span<const A_t> offset) const override;
 
-    size_t size(std::span<const size_t> offset) const override;
+    std::optional<std::pair<A_t, A_t>> index_range(std::span<const A_t> offset) const override;
 
 protected:
     const macro_param_data_component* real_data() const override;
@@ -58,10 +55,10 @@ public:
     using system_variable::system_variable;
 
     // SYSMAC special behavior
-    C_t get_value(std::span<const size_t> offset) const override;
-    C_t get_value(size_t idx) const override;
+    C_t get_value(std::span<const A_t> offset) const override;
+    C_t get_value(A_t idx) const override;
     C_t get_value() const override;
-    const macro_param_data_component* get_data(std::span<const size_t> offset) const override;
+    const macro_param_data_component* get_data(std::span<const A_t> offset) const override;
     bool can_read(
         std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const override;
 };
@@ -73,7 +70,7 @@ public:
     using system_variable::system_variable;
 
     // SYSLIST special behavior
-    const macro_param_data_component* get_data(std::span<const size_t> offset) const override;
+    const macro_param_data_component* get_data(std::span<const A_t> offset) const override;
     bool can_read(
         std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const override;
 };

@@ -76,9 +76,9 @@ TEST(context, create_global_var)
     EXPECT_TRUE(glob == found);
 
     EXPECT_TRUE(ctx.globals().find(idx) != ctx.globals().end());
-    EXPECT_TRUE(glob.get() == ctx.globals().find(idx)->second->access_set_symbol_base());
-    EXPECT_TRUE(std::dynamic_pointer_cast<set_symbol<C_t>>(glob));
-    EXPECT_TRUE(glob == ctx.globals().find(idx)->second);
+    EXPECT_TRUE(glob == ctx.globals().find(idx)->second->access_set_symbol_base());
+    EXPECT_TRUE(dynamic_cast<set_symbol<C_t>*>(glob));
+    EXPECT_TRUE(glob == ctx.globals().find(idx)->second.get());
 }
 
 TEST(context, create_global_var_different_types)
@@ -95,10 +95,10 @@ TEST(context, create_global_var_different_types)
     EXPECT_TRUE(glob_a == found);
     EXPECT_FALSE(glob_b);
 
-    EXPECT_TRUE(ctx.globals().find(idx) != ctx.globals().end());
-    EXPECT_TRUE(glob_a.get() == ctx.globals().find(idx)->second->access_set_symbol_base());
-    EXPECT_TRUE(std::dynamic_pointer_cast<set_symbol<A_t>>(glob_a));
-    EXPECT_TRUE(glob_a == ctx.globals().find(idx)->second);
+    EXPECT_NE(ctx.globals().find(idx), ctx.globals().end());
+    EXPECT_EQ(glob_a, ctx.globals().find(idx)->second->access_set_symbol_base());
+    EXPECT_TRUE(dynamic_cast<set_symbol<A_t>*>(glob_a));
+    EXPECT_EQ(glob_a, ctx.globals().find(idx)->second.get());
 }
 
 TEST(context, find_global_system_var)
@@ -114,7 +114,7 @@ TEST(context, find_global_system_var)
 
 
     EXPECT_TRUE(scope_var_ptr);
-    EXPECT_TRUE(ctx.globals().find(idx.value()) != ctx.globals().end());
+    EXPECT_NE(ctx.globals().find(idx.value()), ctx.globals().end());
 }
 
 TEST(context, create_local_var)
@@ -129,8 +129,8 @@ TEST(context, create_local_var)
     auto found = ctx.get_var_sym(idx);
 
 
-    ASSERT_TRUE(loc == found);
-    ASSERT_TRUE(ctx.globals().find(idx) == ctx.globals().end());
+    EXPECT_EQ(loc, found);
+    EXPECT_EQ(ctx.globals().find(idx), ctx.globals().end());
 }
 
 
@@ -225,10 +225,10 @@ TEST(context_macro_param, param_data)
 
     // asserting behaviour of data classes
     ASSERT_TRUE(s0->get_value() == "first");
-    EXPECT_EQ(s1->get_ith(0)->get_value(), s1->get_value());
-    EXPECT_EQ(s1->get_ith(0)->get_ith(0)->get_value(), s1->get_value());
-    EXPECT_EQ(s1->get_ith(1)->get_value(), "");
-    EXPECT_EQ(s1->get_ith(5)->get_ith(3)->get_value(), "");
+    EXPECT_EQ(s1->get_ith(1)->get_value(), s1->get_value());
+    EXPECT_EQ(s1->get_ith(1)->get_ith(1)->get_value(), s1->get_value());
+    EXPECT_EQ(s1->get_ith(2)->get_value(), "");
+    EXPECT_EQ(s1->get_ith(6)->get_ith(4)->get_value(), "");
 
     // creating composite data
     std::vector<macro_data_ptr> v;
@@ -275,10 +275,10 @@ TEST(context_macro_param, param_data_composite)
     macro_param_data_composite c(std::move(v4));
 
     EXPECT_EQ(c.get_value(), "((first,second),(second,third),(third))");
-    EXPECT_EQ(c.get_ith(0)->get_value(), "(first,second)");
-    EXPECT_EQ(c.get_ith(3)->get_value(), "");
-    EXPECT_EQ(c.get_ith(2)->get_value(), "(third)");
-    EXPECT_EQ(c.get_ith(2)->get_ith(0)->get_value(), "third");
+    EXPECT_EQ(c.get_ith(1)->get_value(), "(first,second)");
+    EXPECT_EQ(c.get_ith(4)->get_value(), "");
+    EXPECT_EQ(c.get_ith(3)->get_value(), "(third)");
+    EXPECT_EQ(c.get_ith(3)->get_ith(1)->get_value(), "third");
 }
 
 // test of adding macro to context class
@@ -352,8 +352,9 @@ TEST(context_macro, call_and_leave_macro)
     params.emplace_back(std::move(p4));
 
     // call->|		MAC		ada,mko,
-    auto m2 = ctx.enter_macro(idx, nullptr, std::move(params));
+    auto [m2, t2] = ctx.enter_macro(idx, nullptr, std::move(params));
 
+    EXPECT_FALSE(t2);
     ASSERT_TRUE(m.id == m2->id);
     ASSERT_TRUE(ctx.is_in_macro());
     ASSERT_TRUE(ctx.current_macro() == m2);
@@ -416,8 +417,9 @@ TEST(context_macro, repeat_call_same_macro)
 
     // calling macro
     // call->|lbl		MAC		ada,mko,
-    auto m2 = ctx.enter_macro(idx, std::move(lb), std::move(params));
+    auto [m2, t2] = ctx.enter_macro(idx, std::move(lb), std::move(params));
 
+    EXPECT_FALSE(t2);
     EXPECT_EQ(m2->named_params.find(lbl)->second->get_value(), "lbl");
 
     // leaving macro
@@ -443,14 +445,14 @@ TEST(context_macro, repeat_call_same_macro)
     params.emplace_back(std::move(dat));
 
     // call->|		MAC		,KEY=cas,,(first,second,third)
-    auto m3 = ctx.enter_macro(idx, nullptr, std::move(params));
+    auto [m3, t3] = ctx.enter_macro(idx, nullptr, std::move(params));
 
-    ASSERT_TRUE(m2 != m3);
+    EXPECT_FALSE(t3);
 
     auto SYSLIST = m3->named_params.find(id_storage::well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST);
 
-    for (size_t i = 0; i < 3; i++)
+    for (auto i = 0; i < 3; i++)
     {
         EXPECT_EQ(SYSLIST->get_value(i), "");
     }
@@ -460,11 +462,11 @@ TEST(context_macro, repeat_call_same_macro)
     EXPECT_EQ(m3->named_params.find(op3)->second->get_value(), "(first,second,third)");
     EXPECT_EQ(m3->named_params.find(key)->second->get_value(), "cas");
 
-    EXPECT_EQ(SYSLIST->get_value(std::array<size_t, 2> { 2, 3 }), "");
+    EXPECT_EQ(SYSLIST->get_value(std::array<context::A_t, 2> { 2, 3 }), "");
     EXPECT_EQ(SYSLIST->get_value(3), "(first,second,third)");
-    EXPECT_EQ(SYSLIST->get_value(std::array<size_t, 2> { 3, 2 }), "second");
-    EXPECT_EQ(SYSLIST->get_value(std::array<size_t, 4> { 3, 2, 1, 1 }), "second");
-    EXPECT_EQ(SYSLIST->get_value(std::array<size_t, 5> { 3, 2, 1, 1, 2 }), "");
+    EXPECT_EQ(SYSLIST->get_value(std::array<context::A_t, 2> { 3, 2 }), "second");
+    EXPECT_EQ(SYSLIST->get_value(std::array<context::A_t, 4> { 3, 2, 1, 1 }), "second");
+    EXPECT_EQ(SYSLIST->get_value(std::array<context::A_t, 5> { 3, 2, 1, 1, 2 }), "");
 }
 
 TEST(context_macro, recurr_call)
@@ -508,10 +510,11 @@ TEST(context_macro, recurr_call)
 
     // calling macro
     // call->|lbl		MAC		ada,mko,
-    auto m2 = ctx.enter_macro(idx, std::move(lb), std::move(params));
+    auto [m2, t2] = ctx.enter_macro(idx, std::move(lb), std::move(params));
 
     //*****created first macro call
 
+    EXPECT_FALSE(t2);
     ASSERT_TRUE(ctx.current_macro() == m2);
     ASSERT_TRUE(ctx.is_in_macro());
 
@@ -536,9 +539,10 @@ TEST(context_macro, recurr_call)
     params.emplace_back(std::move(dat));
 
     // call->|		MAC		,KEY=cas,,(first,second,third)
-    auto m3 = ctx.enter_macro(idx, nullptr, std::move(params));
+    auto [m3, t3] = ctx.enter_macro(idx, nullptr, std::move(params));
 
     //********called again the same macro without calling leave
+    EXPECT_FALSE(t3);
     ASSERT_TRUE(ctx.current_macro() == m3);
     ASSERT_TRUE(ctx.is_in_macro());
     ASSERT_FALSE(m2 == m3);
@@ -548,7 +552,7 @@ TEST(context_macro, recurr_call)
     auto SYSLIST3 = m3->named_params.find(id_storage::well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST3);
 
-    for (size_t i = 0; i < 2; i++)
+    for (context::A_t i = 0; i < 2; i++)
     {
         EXPECT_EQ(SYSLIST3->get_value(i), "");
     }
@@ -560,17 +564,17 @@ TEST(context_macro, recurr_call)
     EXPECT_EQ(m3->named_params.find(key)->second->get_value(), "cas");
 
     EXPECT_EQ(SYSLIST3->get_value(0), "");
-    EXPECT_EQ(SYSLIST3->get_value(std::array<size_t, 2> { 2, 3 }), "");
+    EXPECT_EQ(SYSLIST3->get_value(std::array<context::A_t, 2> { 2, 3 }), "");
     EXPECT_EQ(SYSLIST3->get_value(3), "(first,second,third)");
-    EXPECT_EQ(SYSLIST3->get_value(std::array<size_t, 2> { 3, 2 }), "second");
-    EXPECT_EQ(SYSLIST3->get_value(std::array<size_t, 4> { 3, 2, 1, 1 }), "second");
-    EXPECT_EQ(SYSLIST3->get_value(std::array<size_t, 5> { 3, 2, 1, 1, 2 }), "");
+    EXPECT_EQ(SYSLIST3->get_value(std::array<context::A_t, 2> { 3, 2 }), "second");
+    EXPECT_EQ(SYSLIST3->get_value(std::array<context::A_t, 4> { 3, 2, 1, 1 }), "second");
+    EXPECT_EQ(SYSLIST3->get_value(std::array<context::A_t, 5> { 3, 2, 1, 1, 2 }), "");
 
     // testing outer macro
-    EXPECT_EQ(SYSLIST2->get_value((size_t)0), "lbl");
-    EXPECT_EQ(SYSLIST2->get_value((size_t)1), "ada");
-    EXPECT_EQ(SYSLIST2->get_value((size_t)2), "mko");
-    EXPECT_EQ(SYSLIST2->get_value((size_t)3), "");
+    EXPECT_EQ(SYSLIST2->get_value(0), "lbl");
+    EXPECT_EQ(SYSLIST2->get_value(1), "ada");
+    EXPECT_EQ(SYSLIST2->get_value(2), "mko");
+    EXPECT_EQ(SYSLIST2->get_value(3), "");
 
     EXPECT_EQ(m2->named_params.find(op1)->second->get_value(), "ada");
     EXPECT_EQ(m2->named_params.find(op3)->second->get_value(), "");

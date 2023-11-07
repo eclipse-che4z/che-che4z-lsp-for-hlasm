@@ -379,7 +379,7 @@ public:
             {
                 if (it.first.empty())
                     continue;
-                scope_vars.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<size_t> {}));
+                scope_vars.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<context::A_t> {}));
             }
 
         for (auto it : proc_stack_[frame_id].scope.variables)
@@ -393,9 +393,9 @@ public:
         for (auto it : proc_stack_[frame_id].scope.system_variables)
         {
             if (it.second->is_global)
-                globals.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<size_t> {}));
+                globals.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<context::A_t> {}));
             else
-                scope_vars.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<size_t> {}));
+                scope_vars.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<context::A_t> {}));
             // fetch all vars
         }
 

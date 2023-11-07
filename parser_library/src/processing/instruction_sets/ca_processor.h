@@ -52,7 +52,7 @@ private:
     {
         context::set_symbol_base* symbol = nullptr;
         context::id_index name;
-        int index = 0;
+        context::A_t index = 0;
     };
 
     struct GLB_LCL_info

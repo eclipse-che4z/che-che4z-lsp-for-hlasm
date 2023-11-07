@@ -90,7 +90,7 @@ macro_definition::macro_definition(id_index name,
     }
 }
 
-macro_invo_ptr macro_definition::call(
+std::pair<std::unique_ptr<macro_invocation>, bool> macro_definition::call(
     macro_data_ptr label_param_data, std::vector<macro_arg> actual_params, id_index syslist_name)
 {
     std::vector<macro_data_ptr> syslist;
@@ -151,15 +151,18 @@ macro_invo_ptr macro_definition::call(
         }
     }
 
+    bool truncated_syslist = syslist.size() - 1 > std::numeric_limits<A_t>::max();
+    if (truncated_syslist)
+        syslist.erase(syslist.begin() + std::numeric_limits<A_t>::max() + 1, syslist.end());
+
     named_cpy.emplace(syslist_name,
         std::make_unique<system_variable_syslist>(
-            syslist_name, std::make_unique<macro_param_data_composite>(std::move(syslist)), false));
+            syslist_name, std::make_unique<macro_param_data_zero_based>(std::move(syslist)), false));
 
-    return std::make_shared<macro_invocation>(
-        id, cached_definition, copy_nests, labels, std::move(named_cpy), definition_location);
+    return { std::make_unique<macro_invocation>(
+                 id, cached_definition, copy_nests, labels, std::move(named_cpy), definition_location),
+        truncated_syslist };
 }
-
-bool macro_definition::operator=(const macro_definition& m) { return id == m.id; }
 
 const std::vector<std::unique_ptr<positional_param>>& macro_definition::get_positional_params() const
 {

@@ -25,7 +25,7 @@ namespace hlasm_plugin::parser_library::debugging {
 class macro_param_variable final : public variable
 {
 public:
-    macro_param_variable(const context::macro_param_base& param, std::vector<size_t> index);
+    macro_param_variable(const context::macro_param_base& param, std::vector<context::A_t> index);
 
     const std::string& get_name() const override;
     const std::string& get_value() const override;
@@ -35,11 +35,10 @@ public:
     bool is_scalar() const override;
 
     std::vector<variable_ptr> values() const override;
-    size_t size() const override;
 
 private:
     const context::macro_param_base& macro_param_;
-    std::vector<size_t> index_;
+    std::vector<context::A_t> index_;
     std::string name_;
     std::string value_;
 };

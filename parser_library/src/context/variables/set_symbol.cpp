@@ -54,20 +54,20 @@ set_symbol_base::set_symbol_base(id_index name, bool is_scalar, bool is_global, 
 {}
 
 template<>
-A_t set_symbol<A_t>::count(std::span<const size_t> offset) const
+A_t set_symbol<A_t>::count(std::span<const A_t> offset) const
 {
     auto tmp = get_data(offset);
     return tmp ? (A_t)utils::length_utf32_no_validation(std::to_string(*tmp)) : (A_t)1;
 }
 
 template<>
-A_t set_symbol<B_t>::count(std::span<const size_t>) const
+A_t set_symbol<B_t>::count(std::span<const A_t>) const
 {
     return (A_t)1;
 }
 
 template<>
-A_t set_symbol<C_t>::count(std::span<const size_t> offset) const
+A_t set_symbol<C_t>::count(std::span<const A_t> offset) const
 {
     auto tmp = get_data(offset);
     return tmp ? (A_t)utils::length_utf32_no_validation(*tmp) : (A_t)0;

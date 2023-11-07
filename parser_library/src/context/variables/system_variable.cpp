@@ -29,13 +29,13 @@ system_variable::system_variable(id_index name, macro_data_ptr value, bool is_gl
     , data_(std::move(value))
 {}
 
-C_t system_variable::get_value(std::span<const size_t> offset) const { return get_data(offset)->get_value(); }
+C_t system_variable::get_value(std::span<const A_t> offset) const { return get_data(offset)->get_value(); }
 
-C_t system_variable::get_value(size_t idx) const { return macro_param_base::get_value(idx); }
+C_t system_variable::get_value(A_t idx) const { return macro_param_base::get_value(idx); }
 
 C_t system_variable::get_value() const { return macro_param_base::get_value(0); }
 
-const macro_param_data_component* system_variable::get_data(std::span<const size_t> offset) const
+const macro_param_data_component* system_variable::get_data(std::span<const A_t> offset) const
 {
     for (auto subscript : offset)
     {
@@ -45,69 +45,57 @@ const macro_param_data_component* system_variable::get_data(std::span<const size
         }
     }
 
-    return data_->get_ith(0);
+    return data_->get_ith(1);
 }
 
-A_t system_variable::number(std::span<const size_t> offset) const
+A_t system_variable::number(std::span<const A_t> offset) const
 {
-    static constexpr const size_t inline_limit = 16;
     if (offset.empty())
-        return (A_t)data_->number - 1;
-    else if (offset.size() <= inline_limit)
-    {
-        std::array<size_t, inline_limit> copy_offset;
-        std::copy(offset.begin(), offset.end(), copy_offset.begin());
-        ++copy_offset.front();
-        return (A_t)macro_param_base::number(std::span<const size_t>(copy_offset.data(), offset.size()));
-    }
+        return data_->number - 1;
     else
-    {
-        std::vector<size_t> copy_offset(offset.begin(), offset.end());
-        ++copy_offset.front();
-        return (A_t)macro_param_base::number(copy_offset);
-    }
+        return macro_param_base::number(offset);
 }
 
-A_t system_variable::count(std::span<const size_t> offset) const
+A_t system_variable::count(std::span<const A_t> offset) const
 {
     if (offset.empty())
-        return (A_t)utils::length_utf32_no_validation(data_->get_ith(0)->get_value());
+        return (A_t)utils::length_utf32_no_validation(data_->get_ith(1)->get_value());
 
     const macro_param_data_component* tmp = real_data();
-    for (size_t i = 0; i < offset.size(); ++i)
+    for (auto idx : offset)
     {
-        tmp = tmp->get_ith(offset[i] - (i == 0 ? 0 : 1));
+        tmp = tmp->get_ith(idx);
     }
     return (A_t)utils::length_utf32_no_validation(tmp->get_value());
 }
 
-size_t system_variable::size(std::span<const size_t> offset) const
+std::optional<std::pair<A_t, A_t>> system_variable::index_range(std::span<const A_t> offset) const
 {
     const macro_param_data_component* tmp = real_data();
 
-    for (size_t i = 0; i < offset.size(); ++i)
+    for (auto idx : offset)
     {
-        tmp = tmp->get_ith(offset[i] - (i == 0 ? 0 : 1));
+        tmp = tmp->get_ith(idx);
     }
 
-    return tmp->size();
+    return tmp->index_range();
 }
 
 const macro_param_data_component* system_variable::real_data() const { return std::to_address(data_); }
 
-C_t system_variable_sysmac::get_value(std::span<const size_t> offset) const
+C_t system_variable_sysmac::get_value(std::span<const A_t> offset) const
 {
     if (!offset.empty())
         return get_data(offset)->get_value();
     else
-        return get_data(std::array<size_t, 1> { 0 })->get_value();
+        return get_data(std::array<A_t, 1> { 0 })->get_value();
 }
 
-C_t system_variable_sysmac::get_value(size_t idx) const { return system_variable::get_value(idx); }
+C_t system_variable_sysmac::get_value(A_t idx) const { return system_variable::get_value(idx); }
 
 C_t system_variable_sysmac::get_value() const { return system_variable::get_value(); }
 
-const macro_param_data_component* system_variable_sysmac::get_data(std::span<const size_t> offset) const
+const macro_param_data_component* system_variable_sysmac::get_data(std::span<const A_t> offset) const
 {
     const macro_param_data_component* tmp = real_data();
 
@@ -122,7 +110,7 @@ bool system_variable_sysmac::can_read(std::span<const A_t>, range, diagnostic_co
     return true;
 }
 
-const macro_param_data_component* system_variable_syslist::get_data(std::span<const size_t> offset) const
+const macro_param_data_component* system_variable_syslist::get_data(std::span<const A_t> offset) const
 {
     const macro_param_data_component* tmp = real_data();
 
@@ -132,9 +120,9 @@ const macro_param_data_component* system_variable_syslist::get_data(std::span<co
     }
     else
     {
-        for (size_t i = 0; i < offset.size(); ++i)
+        for (auto idx : offset)
         {
-            tmp = tmp->get_ith(offset[i] - (i == 0 ? 0 : 1));
+            tmp = tmp->get_ith(idx);
         }
     }
 

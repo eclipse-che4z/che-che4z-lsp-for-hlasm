@@ -34,8 +34,6 @@ class set_symbol_base;
 class macro_param_base;
 class variable_symbol;
 
-using var_sym_ptr = std::shared_ptr<variable_symbol>;
-
 // base for variable symbols
 class variable_symbol
 {
@@ -56,9 +54,9 @@ public:
     const macro_param_base* access_macro_param_base() const;
 
     // N' attribute of the symbol
-    virtual A_t number(std::span<const size_t> offset) const = 0;
+    virtual A_t number(std::span<const A_t> offset) const = 0;
     // K' attribute of the symbol
-    virtual A_t count(std::span<const size_t> offset) const = 0;
+    virtual A_t count(std::span<const A_t> offset) const = 0;
 
     virtual bool can_read(
         std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const = 0;

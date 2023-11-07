@@ -158,9 +158,9 @@ std::optional<std::unordered_map<size_t, T>> get_var_vector_map(hlasm_context& c
 
     std::unordered_map<size_t, T> result;
     result.reserve(keys.size());
-    for (size_t i = 0; i < keys.size(); ++i)
+    for (auto key : keys)
     {
-        result.emplace(keys[i], symbol->get_value(keys[i]));
+        result.emplace(key, symbol->get_value(key));
     }
 
     return result;
@@ -195,12 +195,14 @@ std::optional<std::vector<T>> get_var_vector(hlasm_context& ctx, std::string nam
         return std::nullopt;
 
     auto keys = symbol->keys();
+    if (keys.size() > std::numeric_limits<context::A_t>::max())
+        return std::nullopt;
 
     std::vector<T> result;
     result.reserve(keys.size());
-    for (size_t i = 0; i < keys.size(); ++i)
+    for (context::A_t i = 1; i <= keys.size(); ++i)
     {
-        if (i != keys[i])
+        if (i != keys[i - 1])
             return std::nullopt;
         result.push_back(symbol->get_value(i));
     }

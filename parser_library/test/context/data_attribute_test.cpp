@@ -45,30 +45,30 @@ TEST(data_attributes, N)
     data = std::make_unique<macro_param_data_composite>(std::move(v));
     auto kp = keyword_param(id, std::make_unique<macro_param_data_dummy>(), std::move(data));
     EXPECT_EQ(kp.number({}), 3);
-    EXPECT_EQ(kp.number(std::array<size_t, 1> { 1 }), 1);
-    EXPECT_EQ(kp.number(std::array<size_t, 1> { 4 }), 0);
+    EXPECT_EQ(kp.number(std::array<context::A_t, 1> { 1 }), 1);
+    EXPECT_EQ(kp.number(std::array<context::A_t, 1> { 4 }), 0);
 
     auto var = ctx.create_local_variable<A_t>(id, true)->access_set_symbol<A_t>();
 
     EXPECT_EQ(var->number({}), 0);
-    EXPECT_EQ(var->number(std::array<size_t, 1> { 1 }), 0);
+    EXPECT_EQ(var->number(std::array<context::A_t, 1> { 1 }), 0);
 
     var->set_value(1);
     EXPECT_EQ(var->number({}), 0);
-    EXPECT_EQ(var->number(std::array<size_t, 1> { 1 }), 0);
+    EXPECT_EQ(var->number(std::array<context::A_t, 1> { 1 }), 0);
 
     auto var_ns = ctx.create_local_variable<A_t>(id2, false)->access_set_symbol<A_t>();
 
     EXPECT_EQ(var_ns->number({}), 0);
-    EXPECT_EQ(var_ns->number(std::array<size_t, 1> { 1 }), 0);
+    EXPECT_EQ(var_ns->number(std::array<context::A_t, 1> { 1 }), 0);
 
-    var_ns->set_value(1, 0);
+    var_ns->set_value(1, 1);
     EXPECT_EQ(var_ns->number({}), 1);
-    EXPECT_EQ(var_ns->number(std::array<size_t, 1> { 1 }), 1);
+    EXPECT_EQ(var_ns->number(std::array<context::A_t, 1> { 1 }), 1);
 
-    var_ns->set_value(1, 14);
+    var_ns->set_value(1, 15);
     EXPECT_EQ(var_ns->number({}), 15);
-    EXPECT_EQ(var_ns->number(std::array<size_t, 1> { 1 }), 15);
+    EXPECT_EQ(var_ns->number(std::array<context::A_t, 1> { 1 }), 15);
 }
 
 TEST(data_attributes, K)
@@ -94,19 +94,19 @@ TEST(data_attributes, K)
     auto kp = keyword_param(
         idA, std::make_unique<macro_param_data_dummy>(), std::make_unique<macro_param_data_composite>(std::move(v)));
     EXPECT_EQ(kp.count({}), 20);
-    EXPECT_EQ(kp.count(std::array<size_t, 1> { 2 }), 6);
-    EXPECT_EQ(kp.count(std::array<size_t, 1> { 4 }), 0);
+    EXPECT_EQ(kp.count(std::array<context::A_t, 1> { 2 }), 6);
+    EXPECT_EQ(kp.count(std::array<context::A_t, 1> { 4 }), 0);
 
     auto varA = ctx.create_local_variable<A_t>(idA, true)->access_set_symbol<A_t>();
     auto varB = ctx.create_local_variable<B_t>(idB, true)->access_set_symbol<B_t>();
     auto varC = ctx.create_local_variable<C_t>(idC, true)->access_set_symbol<C_t>();
 
     EXPECT_EQ(varA->count({}), 1);
-    EXPECT_EQ(varA->count(std::array<size_t, 1> { 1 }), 1);
+    EXPECT_EQ(varA->count(std::array<context::A_t, 1> { 1 }), 1);
     EXPECT_EQ(varB->count({}), 1);
-    EXPECT_EQ(varB->count(std::array<size_t, 1> { 1 }), 1);
+    EXPECT_EQ(varB->count(std::array<context::A_t, 1> { 1 }), 1);
     EXPECT_EQ(varC->count({}), 0);
-    EXPECT_EQ(varC->count(std::array<size_t, 1> { 1 }), 0);
+    EXPECT_EQ(varC->count(std::array<context::A_t, 1> { 1 }), 0);
 
     varA->set_value(1);
     EXPECT_EQ(varA->count({}), 1);
@@ -235,6 +235,33 @@ TEST(data_attributes, K_var_syms_unicode)
 &C       SETC  '%'
 &K1      SETA  K'&C
          MAC   %
+)";
+    input.replace(input.find('%'), 1, (const char*)u8"\u00A6\u00A7");
+    input.replace(input.find('%'), 1, (const char*)u8"\u00A6\u00A7");
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "K1"), 2);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "K2"), 2);
+}
+
+TEST(data_attributes, K_var_syms_unicode_array)
+{
+    std::string input = R"(
+         GBLA  K1,K2
+         MACRO
+         MAC   &C
+         GBLA  K2
+&K2      SETA  K'&C(1)
+         MEND
+
+&C(1)    SETC  '%'
+&K1      SETA  K'&C(1)
+         MAC   (%)
 )";
     input.replace(input.find('%'), 1, (const char*)u8"\u00A6\u00A7");
     input.replace(input.find('%'), 1, (const char*)u8"\u00A6\u00A7");

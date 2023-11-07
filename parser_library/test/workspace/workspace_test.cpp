@@ -311,7 +311,7 @@ public:
 
 
     hlasm_plugin::utils::value_task<list_directory_result> list_directory_subdirs_and_symlinks(
-        const hlasm_plugin::utils::resource::resource_location& directory) const
+        const hlasm_plugin::utils::resource::resource_location&) const
     {
         return hlasm_plugin::utils::value_task<list_directory_result>::from_value({
             {},

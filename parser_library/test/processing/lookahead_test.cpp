@@ -236,7 +236,7 @@ TEST(attribute_lookahead, nested_lookup_triggered)
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
     auto v1 = a.hlasm_ctx().create_local_variable<context::C_t>(id_index("V1"), false);
-    v1->access_set_symbol<context::C_t>()->set_value("A", 0);
+    v1->access_set_symbol<context::C_t>()->set_value("A", 1);
     auto v2 = a.hlasm_ctx().create_local_variable<context::C_t>(id_index("V2"), true);
     v2->access_set_symbol<context::C_t>()->set_value("B");
 
@@ -801,7 +801,7 @@ C DC C'STH'
     auto var = a.context().hlasm_ctx->get_var_sym(id_index("VAR"));
     ASSERT_NE(var, nullptr);
     ASSERT_EQ(var->var_kind, variable_kind::SET_VAR_KIND);
-    auto value = var->access_set_symbol_base()->access_set_symbol<int>()->get_value(2);
+    auto value = var->access_set_symbol_base()->access_set_symbol<int>()->get_value(3);
 
     EXPECT_EQ(value, 47);
 }

@@ -16,6 +16,7 @@
 #define CONTEXT_MACRO_PARAM_DATA_H
 
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "common_types.h"
@@ -34,20 +35,20 @@ public:
     // gets value of current data, composite or simple
     virtual C_t get_value() const = 0;
     // gets value of the idx-th value, when exceeds size of data, returns default value
-    virtual const macro_param_data_component* get_ith(size_t idx) const = 0;
+    virtual const macro_param_data_component* get_ith(A_t idx) const = 0;
 
     // dummy data returning default value everytime
     static const macro_data_shared_ptr dummy;
 
     // number of components in the object
-    const size_t number;
+    const A_t number;
 
-    virtual size_t size() const = 0;
+    virtual std::optional<std::pair<A_t, A_t>> index_range() const = 0;
 
     virtual ~macro_param_data_component();
 
 protected:
-    macro_param_data_component(size_t number);
+    explicit macro_param_data_component(A_t number);
 };
 
 // dummy macro data class returning default value everytime
@@ -60,9 +61,9 @@ public:
     C_t get_value() const override;
 
     // gets this dummy
-    const macro_param_data_component* get_ith(size_t idx) const override;
+    const macro_param_data_component* get_ith(A_t idx) const override;
 
-    size_t size() const override;
+    std::optional<std::pair<A_t, A_t>> index_range() const override;
 };
 
 // class representing data of macro parameters holding only single string (=C_t)
@@ -76,15 +77,15 @@ public:
 
     // gets value of the idx-th value, when exceeds size of data, returns default value
     // get_ith(0) returns this to mimic HLASM
-    const macro_param_data_component* get_ith(size_t idx) const override;
+    const macro_param_data_component* get_ith(A_t idx) const override;
 
-    size_t size() const override;
+    std::optional<std::pair<A_t, A_t>> index_range() const override;
 
-    macro_param_data_single(C_t value);
+    explicit macro_param_data_single(C_t value);
 };
 
 // class representing data of macro parameters holding more nested data
-class macro_param_data_composite : public macro_param_data_component
+class macro_param_data_composite final : public macro_param_data_component
 {
     const std::vector<macro_data_ptr> data_;
     C_t value_;
@@ -94,11 +95,29 @@ public:
     C_t get_value() const override;
 
     // gets value of the idx-th value, when exceeds size of data, returns default value
-    const macro_param_data_component* get_ith(size_t idx) const override;
+    const macro_param_data_component* get_ith(A_t idx) const override;
 
-    size_t size() const override;
+    std::optional<std::pair<A_t, A_t>> index_range() const override;
 
-    macro_param_data_composite(std::vector<macro_data_ptr> value);
+    explicit macro_param_data_composite(std::vector<macro_data_ptr> value);
+};
+
+// class representing data of macro parameters holding SYSLIST data
+class macro_param_data_zero_based final : public macro_param_data_component
+{
+    const std::vector<macro_data_ptr> data_;
+    C_t value_;
+
+public:
+    // returns data of all nested classes in brackets separated by comma
+    C_t get_value() const override;
+
+    // gets value of the idx-th value, when exceeds size of data, returns default value
+    const macro_param_data_component* get_ith(A_t idx) const override;
+
+    std::optional<std::pair<A_t, A_t>> index_range() const override;
+
+    explicit macro_param_data_zero_based(std::vector<macro_data_ptr> value);
 };
 
 // class representing data of macro parameters holding only single dynamic string (=C_t)
