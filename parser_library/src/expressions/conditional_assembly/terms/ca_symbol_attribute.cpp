@@ -67,7 +67,9 @@ ca_symbol_attribute::ca_symbol_attribute(
     , attribute(attribute)
     , symbol(std::move(symbol))
     , symbol_range(symbol_rng)
-{}
+{
+    is_t_attr_var = attribute == context::data_attr_kind::T;
+}
 
 ca_symbol_attribute::ca_symbol_attribute(
     semantics::literal_si lit, context::data_attr_kind attribute, range expr_range, range symbol_rng)

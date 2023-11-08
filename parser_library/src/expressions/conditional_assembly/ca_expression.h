@@ -54,7 +54,9 @@ class ca_expression
 {
 public:
     range expr_range;
-    context::SET_t_enum expr_kind;
+    context::SET_t_enum expr_kind : 2;
+    bool is_ca_string : 1 = false;
+    bool is_t_attr_var : 1 = false;
 
     ca_expression(context::SET_t_enum expr_kind, range expr_range);
 

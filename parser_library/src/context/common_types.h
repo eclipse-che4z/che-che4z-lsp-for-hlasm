@@ -27,7 +27,7 @@ using B_t = bool;
 using C_t = std::string;
 
 // enum of SET symbols
-enum class SET_t_enum
+enum class SET_t_enum : unsigned char
 {
     A_TYPE,
     B_TYPE,
@@ -36,14 +36,14 @@ enum class SET_t_enum
 };
 
 // enum of variable symbols
-enum class variable_kind
+enum class variable_kind : unsigned char
 {
     SET_VAR_KIND,
     MACRO_VAR_KIND
 };
 
 // enum of macro symbolic parameters
-enum class macro_param_type
+enum class macro_param_type : unsigned char
 {
     POS_PAR_TYPE,
     KEY_PAR_TYPE,

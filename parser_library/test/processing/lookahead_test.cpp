@@ -1126,6 +1126,34 @@ TEST     DS    CL(X)
     EXPECT_TRUE(a.diags().empty());
 }
 
+TEST(lookahead, t_attr_special_case_skip_lookahead_inverted)
+{
+    std::string input = R"(
+         MACRO
+         MAC   &P
+&X       SETB  ('O' EQ T'&P)
+         MEND
+.*
+         MACRO
+         MAC2
+         AIF   (L'TEST EQ 5).SKIP
+.SKIP    ANOP
+         MEND
+.*
+         MAC   TEST
+X        EQU   5
+         MAC2
+TEST     DS    CL(X)
+         END
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
 TEST(lookahead, t_attr_special_case_skip_lookahead2)
 {
     std::string input = R"(

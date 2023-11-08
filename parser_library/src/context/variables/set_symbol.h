@@ -60,7 +60,7 @@ protected:
 
 // specialized set symbol holding data T (int = A_t, bool = B_t, std::string=C_t)
 template<typename T>
-class set_symbol : public set_symbol_base
+class set_symbol final : public set_symbol_base
 {
     static_assert(object_traits<T>::type_enum != SET_t_enum::UNDEF_TYPE, "Not a SET variable type.");
 

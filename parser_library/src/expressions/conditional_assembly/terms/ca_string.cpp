@@ -36,7 +36,9 @@ ca_string::ca_string(
     , value(std::move(value))
     , duplication_factor(std::move(duplication_factor))
     , substring(std::move(substring))
-{}
+{
+    is_ca_string = true;
+}
 
 bool ca_string::get_undefined_attributed_symbols(
     std::vector<context::id_index>& symbols, const evaluation_context& eval_ctx) const

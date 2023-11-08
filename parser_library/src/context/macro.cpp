@@ -116,7 +116,7 @@ std::pair<std::unique_ptr<macro_invocation>, bool> macro_definition::call(
             if (tmp == named_params_.end() || tmp->second->param_type == macro_param_type::POS_PAR_TYPE)
                 throw std::invalid_argument("use of undefined keyword parameter");
 
-            const auto& key_par = dynamic_cast<const keyword_param&>(*tmp->second);
+            const auto& key_par = *tmp->second->access_keyword_param();
             named_cpy.emplace(
                 param.id, std::make_unique<keyword_param>(param.id, key_par.default_data, std::move(param.data)));
         }

@@ -87,16 +87,19 @@ std::optional<bool> t_attr_special_case(std::vector<context::id_index>& symbols,
     const expressions::ca_symbol_attribute* t_attr = nullptr;
     const expressions::ca_string* o_string = nullptr;
 
-    if ((t_attr = dynamic_cast<const expressions::ca_symbol_attribute*>(left)) != nullptr)
-        o_string = dynamic_cast<const expressions::ca_string*>(right);
-    else if ((t_attr = dynamic_cast<const expressions::ca_symbol_attribute*>(right)) != nullptr)
-        o_string = dynamic_cast<const expressions::ca_string*>(left);
-
-    if (t_attr == nullptr || o_string == nullptr)
+    if (left->is_t_attr_var && right->is_ca_string)
+    {
+        t_attr = static_cast<const expressions::ca_symbol_attribute*>(left);
+        o_string = static_cast<const expressions::ca_string*>(right);
+    }
+    else if (right->is_t_attr_var && left->is_ca_string)
+    {
+        t_attr = static_cast<const expressions::ca_symbol_attribute*>(right);
+        o_string = static_cast<const expressions::ca_string*>(left);
+    }
+    else
         return std::nullopt;
 
-    if (t_attr->attribute != context::data_attr_kind::T || !std::holds_alternative<semantics::vs_ptr>(t_attr->symbol))
-        return std::nullopt;
     auto basic = std::get<semantics::vs_ptr>(t_attr->symbol)->access_basic();
     if (!basic)
         return std::nullopt;
