@@ -2,7 +2,8 @@
 #^ source.hlasm comment.hlasm
 # ^ source.hlasm
 #  ^^^^^ source.hlasm comment.hlasm
-#       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^ source.hlasm invalid.ignored
 >               asd as d
 #^^^^^^^^^^^^^^^ source.hlasm
@@ -13,7 +14,8 @@
 #                      ^ source.hlasm comment.hlasm
 >LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED
 #^^^^^ source.hlasm support.class.hlasm
-#     ^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#     ^^^^ source.hlasm
+#         ^^^^^ source.hlasm entity.name.function.hlasm
 #              ^^^ source.hlasm
 #                 ^^ source.hlasm punctuation.definition.tag.hlasm
 #                   ^ source.hlasm
@@ -32,13 +34,15 @@
 #^^ source.hlasm comment.hlasm
 #  ^ source.hlasm
 #   ^^^^^^ source.hlasm comment.hlasm
-#         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 >               dafaf
 #^^^^^^^^^^^^^^^ source.hlasm
 #               ^^^^^ source.hlasm comment.hlasm
 >LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED
 #^^^^^ source.hlasm support.class.hlasm
-#     ^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#     ^^^^ source.hlasm
+#         ^^^^^ source.hlasm entity.name.function.hlasm
 #              ^^^ source.hlasm
 #                 ^^ source.hlasm punctuation.definition.tag.hlasm
 #                   ^ source.hlasm
@@ -57,25 +61,30 @@
 #^^ source.hlasm comment.hlasm
 #  ^ source.hlasm
 #   ^^^^^^ source.hlasm comment.hlasm
-#         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 >               dafaf                                                   -
 #^^^^^^^^^^^^^^^ source.hlasm
 #               ^^^^^ source.hlasm comment.hlasm
-#                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 >
 >.* REMARK                                                              -
 #^^ source.hlasm comment.hlasm
 #  ^ source.hlasm
 #   ^^^^^^ source.hlasm comment.hlasm
-#         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 >               dafaf                                                   -
 #^^^^^^^^^^^^^^^ source.hlasm
 #               ^^^^^ source.hlasm comment.hlasm
-#                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 >
 >LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED
 #^^^^^ source.hlasm support.class.hlasm
-#     ^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#     ^^^^ source.hlasm
+#         ^^^^^ source.hlasm entity.name.function.hlasm
 #              ^^^ source.hlasm
 #                 ^^ source.hlasm punctuation.definition.tag.hlasm
 #                   ^ source.hlasm
@@ -97,40 +106,48 @@
 #         ^^^^^^^^^ source.hlasm comment.hlasm
 #                  ^ source.hlasm
 #                   ^^^^^^^ source.hlasm comment.hlasm
-#                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >               remarks                                                 -12345678
 #^^^^^^^^^^^^^^^ source.hlasm
 #               ^^^^^^^ source.hlasm comment.hlasm
-#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >               remarks                                                 -        
 #^^^^^^^^^^^^^^^ source.hlasm
 #               ^^^^^^^ source.hlasm comment.hlasm
-#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >               remarks                                                 -        
 #^^^^^^^^^^^^^^^ source.hlasm
 #               ^^^^^^^ source.hlasm comment.hlasm
-#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >               remarks                                                 -        
 #^^^^^^^^^^^^^^^ source.hlasm
 #               ^^^^^^^ source.hlasm comment.hlasm
-#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >               remarks                                                 -        
 #^^^^^^^^^^^^^^^ source.hlasm
 #               ^^^^^^^ source.hlasm comment.hlasm
-#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm keyword.other.hlasm
+#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >               remarks                                                          
 #^^^^^^^^^^^^^^^ source.hlasm
 #               ^^^^^^^ source.hlasm comment.hlasm
-#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm invalid.ignored
+#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED
 #^^^^^ source.hlasm support.class.hlasm
-#     ^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#     ^^^^ source.hlasm
+#         ^^^^^ source.hlasm entity.name.function.hlasm
 #              ^^^ source.hlasm
 #                 ^^ source.hlasm punctuation.definition.tag.hlasm
 #                   ^ source.hlasm

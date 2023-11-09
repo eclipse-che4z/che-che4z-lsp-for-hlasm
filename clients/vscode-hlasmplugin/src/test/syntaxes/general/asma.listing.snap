@@ -135,7 +135,8 @@
 >                                      1 LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED                                          
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 #                                        ^^^^^ source.hlasmListing support.class.hlasm
-#                                             ^^^^^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                             ^^^^ source.hlasmListing
+#                                                 ^^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                      ^ source.hlasmListing
 #                                                       ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                         ^ source.hlasmListing
@@ -150,7 +151,8 @@
 #                                                                               ^^ source.hlasmListing comment.hlasm
 #                                                                                 ^ source.hlasmListing
 #                                                                                  ^^^^^^^^ source.hlasmListing comment.hlasm
-#                                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+#                                                                                          ^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >** ASMA057E Undefined operation code - INSTR                                                                                        
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.illegal markup.italic
 >** ASMA435I Record 1 in $DATASET.$DATASE.$DATA.$DATASET.$DATASET on volume: VOL123                                                  
@@ -181,7 +183,8 @@
 #                                                                                       ^^^^^ source.hlasmListing comment.hlasm
 #                                                                                            ^ source.hlasmListing
 #                                                                                             ^^^^^^^ source.hlasmListing comment.hlasm
-#                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+#                                                                                                    ^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                      3 ** ASMA123E - This is just a remark in general hlasm grammar                                
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 #                                        ^ source.hlasmListing comment.hlasm
@@ -208,11 +211,13 @@
 #                                                                                       ^^^^^ source.hlasmListing comment.hlasm
 #                                                                                            ^ source.hlasmListing
 #                                                                                             ^^^^^^^ source.hlasmListing comment.hlasm
-#                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+#                                                                                                    ^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                      4 LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED                                          
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 #                                        ^^^^^ source.hlasmListing support.class.hlasm
-#                                             ^^^^^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                             ^^^^ source.hlasmListing
+#                                                 ^^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                      ^ source.hlasmListing
 #                                                       ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                         ^ source.hlasmListing
@@ -227,7 +232,8 @@
 #                                                                               ^^ source.hlasmListing comment.hlasm
 #                                                                                 ^ source.hlasmListing
 #                                                                                  ^^^^^^^^ source.hlasmListing comment.hlasm
-#                                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+#                                                                                          ^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >** ASMA057E Undefined operation code - INSTR                                                                                        
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.illegal markup.italic
 >** ASMA435I Record 4 in $DATASET.$DATASE.$DATA.$DATASET.$DATASET on volume: VOL123                                                  

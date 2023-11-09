@@ -94,10 +94,7 @@
               "include": "#${pageAnnotation}$"
             },
             {
-              "include": "#nameField"
-            },
-            {
-              "include": "#instruction"
+              "include": "#nameFieldInstruction"
             },
             {
               "include": "#operandsAndRemarks"
@@ -176,8 +173,12 @@
       ]
     },
     "illegalMultilineColumns": {
-      "match": "(^${listingDetails}$\\s*\\S.*)(?<=^${listingDetails}$.{0,15})",
-      "name": "invalid.illegal"
+      "match": "^${listingDetails}$\\s*(\\S(?:.*\\S)?)\\s*(?<=^${listingDetails}$.{0,15})",
+      "captures": {
+        "1": {
+          "name": "invalid.illegal"
+        }
+      }
     },
     "asmArguments": {
       "patterns": [
@@ -308,6 +309,10 @@
           "include": "#illegalMultilineColumns"
         },
         {
+          "match": "^${listingDetails}$.*(?<=^${listingDetails}$.{15})",
+          "comment": "Just to skip the spaces"
+        },
+        {
           "match": "(?<=^${listingDetails}$.*?)(&{2,}|[^&]+)(?<=^${listingDetails}$.{0,71})",
           "name": "string.hlasm"
         },
@@ -345,33 +350,54 @@
         }
       ]
     },
-    "nameField": {
+    "nameFieldInstruction": {
       "patterns": [
         {
-          "include": "#sequenceSymbolNameField"
+          "include": "#sequenceSymbolNameFieldInstruction"
         },
         {
-          "include": "#ordinarySymbol"
+          "match": "(?<=^${listingDetails}$)((?:'[^']*'|\\S)+'?)(?:\\s+(\\S+))?(?<=^${listingDetails}$.{0,71})",
+          "captures": {
+            "1": {
+              "name": "support.class.hlasm",
+              "patterns": [
+                {
+                  "include": "#variable"
+                }
+              ]
+            },
+            "2": {
+              "name": "entity.name.function.hlasm"
+            }
+          }
         },
         {
-          "include": "#variable"
-        },
-        {
-          "include": "#operators"
+          "include": "#noNameFieldInstruction"
         }
       ]
     },
-    "sequenceSymbolNameField": {
-      "match": "(?<=^${listingDetails}$)\\.[A-Za-z@#$_][A-Za-z@#$_0-9]*(?<=^${listingDetails}$.{0,71})",
-      "name": "keyword.control.hlasm"
+    "sequenceSymbolNameFieldInstruction": {
+      "match": "(?<=^${listingDetails}$)(\\.[A-Za-z@#$_][A-Za-z@#$_0-9]*)(?:\\s+(\\S+))?(?<=^${listingDetails}$.{0,71})",
+      "captures": {
+        "1": {
+          "name": "keyword.control.hlasm"
+        },
+        "2": {
+          "name": "entity.name.function.hlasm"
+        }
+      }
     },
     "sequenceSymbolOperandField": {
       "match": "\\.[A-Za-z@#$_][A-Za-z@#$_0-9]*(?=,|\\s|$|(?<=^${listingDetails}$.{71}))(?<=^${listingDetails}$.{0,71})",
       "name": "keyword.control.hlasm"
     },
-    "instruction": {
-      "match": "(?<=^${listingDetails}$\\S*)\\s+\\S+(?<=^${listingDetails}$.{0,71})",
-      "name": "entity.name.function.hlasm"
+    "noNameFieldInstruction": {
+      "match": "(?<=^${listingDetails}$)\\s+(\\S+)(?<=^${listingDetails}$.{0,71})",
+      "captures": {
+        "1": {
+          "name": "entity.name.function.hlasm"
+        }
+      }
     },
     "remark": {
       "match": "(\\S+)(?<=^${listingDetails}$.{0,71})",
@@ -386,24 +412,51 @@
       "name": "constant.numeric.hlasm"
     },
     "variable": {
-      "match": "&(([A-Za-z@#$_][A-Za-z@#$_0-9]*)|([(].*?[)]))(?<=^${listingDetails}$.{0,71})",
-      "name": "variable.other.readwrite.hlasm"
+      "match": "&(?:[A-Za-z@#$_][A-Za-z@#$_0-9]*|([(].*?[)])([(].*?[)])?)(?<=^${listingDetails}$.{0,71})",
+      "name": "variable.other.readwrite.hlasm",
+      "captures": {
+        "1": {
+          "patterns": [
+            {
+              "include": "#variableSpecialChars"
+            }
+          ]
+        },
+        "2": {
+          "patterns": [
+            {
+              "include": "#variableSpecialChars"
+            },
+            {
+              "include": "#asmArguments"
+            }
+          ]
+        }
+      }
     },
-    "ordinarySymbol": {
-      "match": "[A-Za-z@#$_][A-Za-z@#$_0-9]*(?<=^${listingDetails}$.{0,71})",
-      "name": "support.class.hlasm"
+    "variableSpecialChars": {
+      "match": "[().]",
+      "name": "keyword.operator.hlasm"
     },
     "asmSpecialStatements": {
       "match": "(?<=[=(),*+\\s])=?\\d*(A|B|C|D|E|F|G|H|P|V|X|Z)(L\\d*)?((?=[=(),*\\s+]|$)(?<=^${listingDetails}$.{0,71}))",
       "name": "punctuation.definition.tag.hlasm"
     },
     "continuationSymbol": {
-      "match": "\\s*(?<=^${listingDetails}$.{71})\\S",
-      "name": "keyword.other.hlasm"
+      "match": "\\s*(?<=^${listingDetails}$.{71})(\\S)",
+      "captures": {
+        "1": {
+          "name": "keyword.other.hlasm"
+        }
+      }
     },
     "sequenceNumbers": {
-      "match": "\\s*.?(?<=^${listingDetails}$.{72}).+$",
-      "name": "invalid.ignored"
+      "match": "\\s*.?(?<=^${listingDetails}$.{72})(.+)$",
+      "captures": {
+        "1": {
+          "name": "invalid.ignored"
+        }
+      }
     },
     "listingSyntax": {
       "match": "^${listingOffset}$\\S+\\s([0-3][0-9A-F]{3}|[4-9AB][0-9A-F]{3} [0-9A-F]{4}|[CDEF][0-9A-F]{3} [0-9A-F]{4} [0-9A-F]{4}) ",

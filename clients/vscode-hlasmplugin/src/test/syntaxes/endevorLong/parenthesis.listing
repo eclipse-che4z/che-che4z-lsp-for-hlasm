@@ -85,7 +85,8 @@
                                               16 &(__V@R_V&R.#)(&VAR) SETC '&VAR'                                                   
                                               17 LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED                               
                                               19 &(__V@R_V&R.#)(&VAR) SETC '&VAR                                                    
-                                              20 LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED                               
+                                              20 LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED                               
+                                              22 &(__V@R_V&R.#)(OP.OP) SETC '&VAR'                                                  
 »                                                                                                                                    
                                    General Purpose Register Cross Reference                                    Page    4            
  Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R1.0  2000/01/01 00.00            
@@ -121,8 +122,8 @@
      SYSTERM  DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
                                                                                                                                     
 1234567B allocated to Buffer Pool       Storage required     200K                                                                   
-     23 Primary Input Records Read            0 Library Records Read                  0 Work File Reads                             
-      0 ASMAOPT Records Read                128 Primary Print Records Written         0 Work File Writes                            
-      0 Object Records Written               30 ADATA Records Written                                                               
+     25 Primary Input Records Read            0 Library Records Read                  0 Work File Reads                             
+      0 ASMAOPT Records Read                129 Primary Print Records Written         0 Work File Writes                            
+      0 Object Records Written               32 ADATA Records Written                                                               
 Assembly Start Time: 00.11.22 Stop Time: 00.11.22 Processor Time: 00.11.22.3333                                                     
 Return Code 000                                                                                                                     

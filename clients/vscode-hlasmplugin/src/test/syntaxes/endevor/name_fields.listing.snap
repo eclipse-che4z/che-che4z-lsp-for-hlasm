@@ -6,7 +6,7 @@
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >  No Overriding ASMAOPT Parameters                                                                                                  
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->  Overriding Parameters-  ADATA,TERM,LIST(121)                                                                                      
+>  Overriding Parameters-  ADATA,TERM,LIST(121),FLAG(17)                                                                             
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >  No Process Statements                                                                                                             
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -50,7 +50,7 @@
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >                      FAIL(NOMSG,NOMNOTE,MAXERRS(500))                                                                              
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->                      FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,RENT,NOSIGNED,NOSUBSTR,NOTRUNC,                
+>3 PARM/OPTION         FLAG(17,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,RENT,NOSIGNED,NOSUBSTR,NOTRUNC,               
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >                           USING0)                                                                                                  
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -135,116 +135,184 @@
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R1.0  2000/01/01 00.00            
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->                                      1 LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED                                          
+>                                      1 ORDSYM         INSTR OP                                                                     
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^^^ source.hlasmListing support.class.hlasm
+#                                               ^^^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^ source.hlasmListing
+#                                                              ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                      2 ORD&VARSYM     INSTR OP                                                                     
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^ source.hlasmListing support.class.hlasm
+#                                            ^^^^^^^ source.hlasmListing support.class.hlasm variable.other.readwrite.hlasm
+#                                                   ^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^ source.hlasmListing
+#                                                              ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                      4 =LBL.LBL       INSTR OP                                                                     
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^^^^^ source.hlasmListing support.class.hlasm
+#                                                 ^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^ source.hlasmListing
+#                                                              ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                      5 !@#$%^*()"     INSTR OP                                                                     
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^^^^^^^ source.hlasmListing support.class.hlasm
+#                                                   ^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^ source.hlasmListing
+#                                                              ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                      6 123456789      INSTR OP                                                                     
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^^^^^^ source.hlasmListing support.class.hlasm
+#                                                  ^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^ source.hlasmListing
+#                                                              ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                      8 ''             INSTR  OP REM                                                                
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^ source.hlasmListing support.class.hlasm
+#                                           ^^^^^^^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^^ source.hlasmListing
+#                                                               ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^ source.hlasmListing comment.hlasm
+#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                      9 'LBL           INSTR  OP REM                                                                
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^ source.hlasmListing support.class.hlasm
+#                                             ^^^^^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^^ source.hlasmListing
+#                                                               ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^ source.hlasmListing comment.hlasm
+#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                     10 LBL'           INSTR  OP REM                                                                
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^ source.hlasmListing support.class.hlasm
+#                                             ^^^^^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^^ source.hlasmListing
+#                                                               ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^ source.hlasmListing comment.hlasm
+#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                     11 'LBL'          INSTR  OP REM                                                                
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 #                                         ^^^^^ source.hlasmListing support.class.hlasm
-#                                              ^^^^ source.hlasmListing
-#                                                  ^^^^^ source.hlasmListing entity.name.function.hlasm
-#                                                       ^ source.hlasmListing
-#                                                        ^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                          ^ source.hlasmListing
-#                                                           ^^^^ source.hlasmListing comment.hlasm
-#                                                               ^ source.hlasmListing
-#                                                                ^^^^ source.hlasmListing comment.hlasm
-#                                                                    ^ source.hlasmListing
-#                                                                     ^^^^^^ source.hlasmListing comment.hlasm
-#                                                                           ^ source.hlasmListing
-#                                                                            ^^^ source.hlasmListing comment.hlasm
-#                                                                               ^ source.hlasmListing
-#                                                                                ^^ source.hlasmListing comment.hlasm
-#                                                                                  ^ source.hlasmListing
-#                                                                                   ^^^^^^^^ source.hlasmListing comment.hlasm
-#                                                                                           ^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                              ^^^^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^^ source.hlasmListing
+#                                                               ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^ source.hlasmListing comment.hlasm
+#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 #                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
->** ASMA057E Undefined operation code - INSTR                                                                                        
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.illegal markup.italic
->** ASMA435I Record 1 in $DATASET.$DATASE.$DATA.$DATASET.$DATASET on volume: VOL123                                                  
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing string.hlasm markup.italic
->                                      2 ** ASMA123I - This is just a remark in general hlasm grammar                                
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
-#                                         ^ source.hlasmListing comment.hlasm
-#                                          ^ source.hlasmListing comment.hlasm
-#                                           ^ source.hlasmListing
-#                                            ^^^^^^^^ source.hlasmListing comment.hlasm
-#                                                    ^ source.hlasmListing
-#                                                     ^ source.hlasmListing comment.hlasm
-#                                                      ^ source.hlasmListing
-#                                                       ^^^^ source.hlasmListing comment.hlasm
-#                                                           ^ source.hlasmListing
-#                                                            ^^ source.hlasmListing comment.hlasm
-#                                                              ^ source.hlasmListing
-#                                                               ^^^^ source.hlasmListing comment.hlasm
-#                                                                   ^ source.hlasmListing
-#                                                                    ^ source.hlasmListing comment.hlasm
-#                                                                     ^ source.hlasmListing
-#                                                                      ^^^^^^ source.hlasmListing comment.hlasm
-#                                                                            ^ source.hlasmListing
-#                                                                             ^^ source.hlasmListing comment.hlasm
-#                                                                               ^ source.hlasmListing
-#                                                                                ^^^^^^^ source.hlasmListing comment.hlasm
-#                                                                                       ^ source.hlasmListing
-#                                                                                        ^^^^^ source.hlasmListing comment.hlasm
-#                                                                                             ^ source.hlasmListing
-#                                                                                              ^^^^^^^ source.hlasmListing comment.hlasm
-#                                                                                                     ^^^^^^^^^^^^ source.hlasmListing
-#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
->                                      3 ** ASMA123E - This is just a remark in general hlasm grammar                                
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
-#                                         ^ source.hlasmListing comment.hlasm
-#                                          ^ source.hlasmListing comment.hlasm
-#                                           ^ source.hlasmListing
-#                                            ^^^^^^^^ source.hlasmListing comment.hlasm
-#                                                    ^ source.hlasmListing
-#                                                     ^ source.hlasmListing comment.hlasm
-#                                                      ^ source.hlasmListing
-#                                                       ^^^^ source.hlasmListing comment.hlasm
-#                                                           ^ source.hlasmListing
-#                                                            ^^ source.hlasmListing comment.hlasm
-#                                                              ^ source.hlasmListing
-#                                                               ^^^^ source.hlasmListing comment.hlasm
-#                                                                   ^ source.hlasmListing
-#                                                                    ^ source.hlasmListing comment.hlasm
-#                                                                     ^ source.hlasmListing
-#                                                                      ^^^^^^ source.hlasmListing comment.hlasm
-#                                                                            ^ source.hlasmListing
-#                                                                             ^^ source.hlasmListing comment.hlasm
-#                                                                               ^ source.hlasmListing
-#                                                                                ^^^^^^^ source.hlasmListing comment.hlasm
-#                                                                                       ^ source.hlasmListing
-#                                                                                        ^^^^^ source.hlasmListing comment.hlasm
-#                                                                                             ^ source.hlasmListing
-#                                                                                              ^^^^^^^ source.hlasmListing comment.hlasm
-#                                                                                                     ^^^^^^^^^^^^ source.hlasmListing
-#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
->                                      4 LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED                                          
+>                                     12 'LBL'          INSTR  OP REM'                                                               
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 #                                         ^^^^^ source.hlasmListing support.class.hlasm
-#                                              ^^^^ source.hlasmListing
-#                                                  ^^^^^ source.hlasmListing entity.name.function.hlasm
-#                                                       ^ source.hlasmListing
-#                                                        ^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                          ^ source.hlasmListing
-#                                                           ^^^^ source.hlasmListing comment.hlasm
-#                                                               ^ source.hlasmListing
-#                                                                ^^^^ source.hlasmListing comment.hlasm
-#                                                                    ^ source.hlasmListing
-#                                                                     ^^^^^^ source.hlasmListing comment.hlasm
-#                                                                           ^ source.hlasmListing
-#                                                                            ^^^ source.hlasmListing comment.hlasm
-#                                                                               ^ source.hlasmListing
-#                                                                                ^^ source.hlasmListing comment.hlasm
-#                                                                                  ^ source.hlasmListing
-#                                                                                   ^^^^^^^^ source.hlasmListing comment.hlasm
-#                                                                                           ^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                              ^^^^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^^ source.hlasmListing
+#                                                               ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^^ source.hlasmListing comment.hlasm
+#                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 #                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
->** ASMA057E Undefined operation code - INSTR                                                                                        
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.illegal markup.italic
->** ASMA435I Record 4 in $DATASET.$DATASE.$DATA.$DATASET.$DATASET on volume: VOL123                                                  
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing string.hlasm markup.italic
->** ASMA140W END record missing                                                                                                      
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing string.hlasm markup.italic
->** ASMA435I Record 4 in $DATASET.$DATASE.$DATA.$DATASET.$DATASET on volume: VOL123                                                  
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing string.hlasm markup.italic
+>                                     13 'LB L'         INSTR  OP REM                                                                
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^^^ source.hlasmListing support.class.hlasm
+#                                               ^^^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^^ source.hlasmListing
+#                                                               ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^ source.hlasmListing comment.hlasm
+#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                     14 'LB L'         INSTR  OP REM'                                                               
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^^^ source.hlasmListing support.class.hlasm
+#                                               ^^^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^^ source.hlasmListing
+#                                                               ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^^ source.hlasmListing comment.hlasm
+#                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                     15 'L''B'         INSTR  OP REM                                                                
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^^^ source.hlasmListing support.class.hlasm
+#                                               ^^^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^^ source.hlasmListing
+#                                                               ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^ source.hlasmListing comment.hlasm
+#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                     16 'L'' B'        INSTR  OP REM                                                                
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^^^^ source.hlasmListing support.class.hlasm
+#                                                ^^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^^ source.hlasmListing
+#                                                               ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^ source.hlasmListing comment.hlasm
+#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                     18 LA' BE'L       INSTR OP REM                                                                 
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^^^^^ source.hlasmListing support.class.hlasm
+#                                                 ^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^ source.hlasmListing
+#                                                              ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                ^ source.hlasmListing
+#                                                                 ^^^ source.hlasmListing comment.hlasm
+#                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                     19 LA' BE''       INSTR OP REM                                                                 
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^^^^^ source.hlasmListing support.class.hlasm
+#                                                 ^^^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^ source.hlasmListing
+#                                                              ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                ^ source.hlasmListing
+#                                                                 ^^^ source.hlasmListing comment.hlasm
+#                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+>                                     20 LA' BEL''L     INSTR OP REM                                                                 
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                         ^^^^^^^^^^ source.hlasmListing support.class.hlasm
+#                                                   ^^^^^ source.hlasmListing
+#                                                        ^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                                             ^ source.hlasmListing
+#                                                              ^^ source.hlasmListing punctuation.definition.tag.hlasm
+#                                                                ^ source.hlasmListing
+#                                                                 ^^^ source.hlasmListing comment.hlasm
+#                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >»                                                                                                                                    
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 #                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -291,12 +359,7 @@
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >                                                                                            HLASM R1.0  2000/01/01 00.00            
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->Statements Flagged                                                                                                                  
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->    1(P1,1), 4(P1,4), 5(P1,4)                                                                                                       
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->                                                                                                                                    
->      3 Statements Flagged in this Assembly        8 was Highest Severity Code                                                      
+>     No Statements Flagged in this Assembly                                                                                         
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 1.0, PTF AB12345                                                                            
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -312,9 +375,9 @@
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >     SYSADATA DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->     SYSLIN   /my/path/to/asma.o                                                                                                    
+>     SYSLIN   /my/path/to/name_fields.o                                                                                             
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->     SYSPRINT /my/path/to/asma.o.lst                                                                                                
+>     SYSPRINT /my/path/to/name_fields.o.lst                                                                                         
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >     SYSTERM  DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -322,14 +385,14 @@
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >1234567B allocated to Buffer Pool       Storage required     200K                                                                   
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->      4 Primary Input Records Read            0 Library Records Read                  0 Work File Reads                             
+>     20 Primary Input Records Read            0 Library Records Read                  0 Work File Reads                             
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->      0 ASMAOPT Records Read                123 Primary Print Records Written         0 Work File Writes                            
+>      0 ASMAOPT Records Read                127 Primary Print Records Written         0 Work File Writes                            
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->      0 Object Records Written               17 ADATA Records Written                                                               
+>      0 Object Records Written               27 ADATA Records Written                                                               
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >Assembly Start Time: 00.11.22 Stop Time: 00.11.22 Processor Time: 00.11.22.3333                                                     
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
->Return Code 008                                                                                                                     
+>Return Code 000                                                                                                                     
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >

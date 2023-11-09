@@ -1,6 +1,7 @@
 >&LABEL   INSTR ('AA'.((2 EQ 2)) SLA 'AAA').SEQ
-#^^^^^^ source.hlasm variable.other.readwrite.hlasm
-#      ^^^^^^^^ source.hlasm entity.name.function.hlasm
+#^^^^^^ source.hlasm support.class.hlasm variable.other.readwrite.hlasm
+#      ^^^ source.hlasm
+#         ^^^^^ source.hlasm entity.name.function.hlasm
 #              ^ source.hlasm
 #               ^ source.hlasm
 #                ^ source.hlasm string.hlasm
@@ -25,5 +26,6 @@
 >
 >.SEQ     END
 #^^^^ source.hlasm keyword.control.hlasm
-#    ^^^^^^^^ source.hlasm entity.name.function.hlasm
+#    ^^^^^ source.hlasm
+#         ^^^ source.hlasm entity.name.function.hlasm
 >

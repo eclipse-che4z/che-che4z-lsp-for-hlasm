@@ -1,0 +1,132 @@
+>ORDSYM         INSTR OP
+#^^^^^^ source.hlasm support.class.hlasm
+#      ^^^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^ source.hlasm
+#                     ^^ source.hlasm punctuation.definition.tag.hlasm
+>ORD&VARSYM     INSTR OP
+#^^^ source.hlasm support.class.hlasm
+#   ^^^^^^^ source.hlasm support.class.hlasm variable.other.readwrite.hlasm
+#          ^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^ source.hlasm
+#                     ^^ source.hlasm punctuation.definition.tag.hlasm
+>
+>=LBL.LBL       INSTR OP
+#^^^^^^^^ source.hlasm support.class.hlasm
+#        ^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^ source.hlasm
+#                     ^^ source.hlasm punctuation.definition.tag.hlasm
+>!@#$%^*()"     INSTR OP    
+#^^^^^^^^^^ source.hlasm support.class.hlasm
+#          ^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^ source.hlasm
+#                     ^^ source.hlasm punctuation.definition.tag.hlasm
+#                       ^^^^ source.hlasm
+>123456789      INSTR OP
+#^^^^^^^^^ source.hlasm support.class.hlasm
+#         ^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^ source.hlasm
+#                     ^^ source.hlasm punctuation.definition.tag.hlasm
+>
+>''             INSTR  OP REM
+#^^ source.hlasm support.class.hlasm
+#  ^^^^^^^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^^ source.hlasm
+#                      ^^ source.hlasm punctuation.definition.tag.hlasm
+#                        ^ source.hlasm
+#                         ^^^ source.hlasm comment.hlasm
+>'LBL           INSTR  OP REM
+#^^^^ source.hlasm support.class.hlasm
+#    ^^^^^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^^ source.hlasm
+#                      ^^ source.hlasm punctuation.definition.tag.hlasm
+#                        ^ source.hlasm
+#                         ^^^ source.hlasm comment.hlasm
+>LBL'           INSTR  OP REM
+#^^^^ source.hlasm support.class.hlasm
+#    ^^^^^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^^ source.hlasm
+#                      ^^ source.hlasm punctuation.definition.tag.hlasm
+#                        ^ source.hlasm
+#                         ^^^ source.hlasm comment.hlasm
+>'LBL'          INSTR  OP REM
+#^^^^^ source.hlasm support.class.hlasm
+#     ^^^^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^^ source.hlasm
+#                      ^^ source.hlasm punctuation.definition.tag.hlasm
+#                        ^ source.hlasm
+#                         ^^^ source.hlasm comment.hlasm
+>'LBL'          INSTR  OP REM'
+#^^^^^ source.hlasm support.class.hlasm
+#     ^^^^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^^ source.hlasm
+#                      ^^ source.hlasm punctuation.definition.tag.hlasm
+#                        ^ source.hlasm
+#                         ^^^^ source.hlasm comment.hlasm
+>'LB L'         INSTR  OP REM
+#^^^^^^ source.hlasm support.class.hlasm
+#      ^^^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^^ source.hlasm
+#                      ^^ source.hlasm punctuation.definition.tag.hlasm
+#                        ^ source.hlasm
+#                         ^^^ source.hlasm comment.hlasm
+>'LB L'         INSTR  OP REM'
+#^^^^^^ source.hlasm support.class.hlasm
+#      ^^^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^^ source.hlasm
+#                      ^^ source.hlasm punctuation.definition.tag.hlasm
+#                        ^ source.hlasm
+#                         ^^^^ source.hlasm comment.hlasm
+>'L''B'         INSTR  OP REM
+#^^^^^^ source.hlasm support.class.hlasm
+#      ^^^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^^ source.hlasm
+#                      ^^ source.hlasm punctuation.definition.tag.hlasm
+#                        ^ source.hlasm
+#                         ^^^ source.hlasm comment.hlasm
+>'L'' B'        INSTR  OP REM
+#^^^^^^^ source.hlasm support.class.hlasm
+#       ^^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^^ source.hlasm
+#                      ^^ source.hlasm punctuation.definition.tag.hlasm
+#                        ^ source.hlasm
+#                         ^^^ source.hlasm comment.hlasm
+>
+>LA' BE'L       INSTR OP REM
+#^^^^^^^^ source.hlasm support.class.hlasm
+#        ^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^ source.hlasm
+#                     ^^ source.hlasm punctuation.definition.tag.hlasm
+#                       ^ source.hlasm
+#                        ^^^ source.hlasm comment.hlasm
+>LA' BE''       INSTR OP REM
+#^^^^^^^^ source.hlasm support.class.hlasm
+#        ^^^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^ source.hlasm
+#                     ^^ source.hlasm punctuation.definition.tag.hlasm
+#                       ^ source.hlasm
+#                        ^^^ source.hlasm comment.hlasm
+>LA' BEL''L     INSTR OP REM
+#^^^^^^^^^^ source.hlasm support.class.hlasm
+#          ^^^^^ source.hlasm
+#               ^^^^^ source.hlasm entity.name.function.hlasm
+#                    ^ source.hlasm
+#                     ^^ source.hlasm punctuation.definition.tag.hlasm
+#                       ^ source.hlasm
+#                        ^^^ source.hlasm comment.hlasm
+>

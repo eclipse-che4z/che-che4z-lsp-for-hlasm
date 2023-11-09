@@ -1,6 +1,7 @@
 >LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
 #^^^^^ source.hlasm support.class.hlasm
-#     ^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#     ^^^^ source.hlasm
+#         ^^^^^ source.hlasm entity.name.function.hlasm
 #              ^ source.hlasm
 #               ^^ source.hlasm punctuation.definition.tag.hlasm
 #                 ^ source.hlasm
@@ -67,7 +68,8 @@
 #                                                     ^^^^^^^ source.hlasm comment.hlasm
 >LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
 #^^^^^ source.hlasm support.class.hlasm
-#     ^^^^^^^^^ source.hlasm entity.name.function.hlasm
+#     ^^^^ source.hlasm
+#         ^^^^^ source.hlasm entity.name.function.hlasm
 #              ^ source.hlasm
 #               ^^ source.hlasm punctuation.definition.tag.hlasm
 #                 ^ source.hlasm

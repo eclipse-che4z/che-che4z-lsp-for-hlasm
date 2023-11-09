@@ -2,7 +2,7 @@
                                          High Level Assembler Option Summary                   (PTF AB12345)   Page    1            
                                                                                             HLASM R1.0  2000/01/01 00.00            
   No Overriding ASMAOPT Parameters                                                                                                  
-  Overriding Parameters-  ADATA,TERM,LIST(121),FLAG(17)                                                                             
+  Overriding Parameters-  ADATA,TERM,LIST(133),FLAG(17)                                                                             
   No Process Statements                                                                                                             
                                                                                                                                     
                                                                                                                                     
@@ -25,8 +25,7 @@
                       ESD                                                                                                           
                     NOEXIT                                                                                                          
                       FAIL(NOMSG,NOMNOTE,MAXERRS(500))                                                                              
-3 PARM/OPTION         FLAG(17,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,RENT,NOSIGNED,NOSUBSTR,NOTRUNC,               
-                           USING0)                                                                                                  
+3 PARM/OPTION         FLAG(17,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,RENT,NOSIGNED,NOSUBSTR,NOTRUNC,USING0)        
                     NOFOLD                                                                                                          
                     NOGOFF                                                                                                          
                       ILMA                                                                                                          
@@ -34,7 +33,7 @@
                       LANGUAGE(EN)                                                                                                  
                     NOLIBMAC                                                                                                        
                       LINECOUNT(60)                                                                                                 
-3 PARM/OPTION         LIST(121)                                                                                                     
+3 PARM/OPTION         LIST(133)                                                                                                     
                       MACHINE(,NOLIST)                                                                                              
                       MXREF(SOURCE)                                                                                                 
                       OBJECT                                                                                                        
@@ -56,10 +55,10 @@
                     NOTRANSLATE                                                                                                     
                       TYPECHECK(MAGNITUDE,REGISTER,SIGNED)                                                                          
                       UNICODE(01200)                                                                                                
+                      USING(NOLIMIT,MAP,WARN(15))                                                                                   
                                                                                                                                     
                                          High Level Assembler Option Summary                   (PTF AB12345)   Page    2            
                                                                                             HLASM R1.0  2000/01/01 00.00            
-                      USING(NOLIMIT,MAP,WARN(15))                                                                                   
                     NOWORKFILE                                                                                                      
                       XREF(SHORT,UNREFS)                                                                                            
                                                                                                                                     
@@ -67,27 +66,24 @@
                                                                                                                                     
                                                                                                                Page    3            
   Active Usings: None                                                                                                               
-  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R1.0  2000/01/01 00.00            
-                                      1          INSTR OP1,OP2              REMARK(REM)                                             
-                                      2          INSTR OP1,12,OP2-ARR(R15)  REMARK(REM)                                             
-                                      4          INSTR ARR(12),=SYM'F12345678'                                                      
-                                      5          INSTR OP1,=ARR(1234-2)                                                             
-                                      6          INSTR OP1,=ARR(1234-2)(something                              X                    
-                                                       something) REMARK                                                            
-                                      7          INSTR SYMBOL+12(34),=C'&&&&'                                                       
-                                     10          AIF   (&@VAR1 EQ 1).seq                                                            
-                                     11          AIF   ('&VAR' EQ 'N').seq                                                          
-                                     12          AIF   ('&VAR1' EQ 'YES    '(1,K'&VAR2)).seq                                        
-                                     13          AIF   ('&VAR'(1,1) EQ '&&').seq                                1234567             
-                                     14          AIF   ( NOT ( (('A' LE '&VAR') AND ('&VAR' LE 'B'))  OR       X                    
-                                        (('C' LE '&VAR') AND ('&VAR' LE 'D'))  REMARK                          X1234567             
-                                                                                                                                    
-                                     15 &(__V@R_V&R.#) SETA &VAR                                                                    
-                                     16 &(__V@R_V&R.#)(&VAR) SETC '&VAR'                                                            
-                                     17 LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED                                        
-                                     19 &(__V@R_V&R.#)(&VAR) SETC '&VAR                                                             
-                                     20 LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED                                        
-                                     22 &(__V@R_V&R.#)(OP.OP) SETC '&VAR'                                                           
+  Loc    Object Code      Addr1    Addr2    Stmt  Source Statement                          HLASM R1.0  2000/01/01 00.00            
+                                               1 ORDSYM         INSTR OP                                                            
+                                               2 ORD&VARSYM     INSTR OP                                                            
+                                               4 =LBL.LBL       INSTR OP                                                            
+                                               5 !@#$%^*()"     INSTR OP                                                            
+                                               6 123456789      INSTR OP                                                            
+                                               8 ''             INSTR  OP REM                                                       
+                                               9 'LBL           INSTR  OP REM                                                       
+                                              10 LBL'           INSTR  OP REM                                                       
+                                              11 'LBL'          INSTR  OP REM                                                       
+                                              12 'LBL'          INSTR  OP REM'                                                      
+                                              13 'LB L'         INSTR  OP REM                                                       
+                                              14 'LB L'         INSTR  OP REM'                                                      
+                                              15 'L''B'         INSTR  OP REM                                                       
+                                              16 'L'' B'        INSTR  OP REM                                                       
+                                              18 LA' BE'L       INSTR OP REM                                                        
+                                              19 LA' BE''       INSTR OP REM                                                        
+                                              20 LA' BEL''L     INSTR OP REM                                                        
                                                                                                                                     
                                    General Purpose Register Cross Reference                                    Page    4            
  Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R1.0  2000/01/01 00.00            
@@ -118,13 +114,13 @@ Data Sets Allocated for this Assembly
  Con DDname   Data Set Name                                Volume  Member                                                           
   P1 SYSIN    DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
      SYSADATA DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
-     SYSLIN   /my/path/to/parenthesis.o                                                                                             
-     SYSPRINT /my/path/to/parenthesis.o.lst                                                                                         
+     SYSLIN   /my/path/to/name_fields.o                                                                                             
+     SYSPRINT /my/path/to/name_fields.o.lst                                                                                         
      SYSTERM  DATASET1.DATASET2.DATASET3.DATASET4          VOL123                                                                   
                                                                                                                                     
 1234567B allocated to Buffer Pool       Storage required     200K                                                                   
-     25 Primary Input Records Read            0 Library Records Read                  0 Work File Reads                             
-      0 ASMAOPT Records Read                130 Primary Print Records Written         0 Work File Writes                            
-      0 Object Records Written               32 ADATA Records Written                                                               
+     20 Primary Input Records Read            0 Library Records Read                  0 Work File Reads                             
+      0 ASMAOPT Records Read                126 Primary Print Records Written         0 Work File Writes                            
+      0 Object Records Written               27 ADATA Records Written                                                               
 Assembly Start Time: 00.11.22 Stop Time: 00.11.22 Processor Time: 00.11.22.3333                                                     
 Return Code 000                                                                                                                     

@@ -1,0 +1,20 @@
+ORDSYM         INSTR OP
+ORD&VARSYM     INSTR OP
+
+=LBL.LBL       INSTR OP
+!@#$%^*()"     INSTR OP    
+123456789      INSTR OP
+
+''             INSTR  OP REM
+'LBL           INSTR  OP REM
+LBL'           INSTR  OP REM
+'LBL'          INSTR  OP REM
+'LBL'          INSTR  OP REM'
+'LB L'         INSTR  OP REM
+'LB L'         INSTR  OP REM'
+'L''B'         INSTR  OP REM
+'L'' B'        INSTR  OP REM
+
+LA' BE'L       INSTR OP REM
+LA' BE''       INSTR OP REM
+LA' BEL''L     INSTR OP REM

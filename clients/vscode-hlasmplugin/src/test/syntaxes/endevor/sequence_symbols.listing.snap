@@ -137,8 +137,9 @@
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 >                                      1 &LABEL   INSTR ('AA'.((2 EQ 2)) SLA 'AAA').SEQ                                              
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
-#                                         ^^^^^^ source.hlasmListing variable.other.readwrite.hlasm
-#                                               ^^^^^^^^ source.hlasmListing entity.name.function.hlasm
+#                                         ^^^^^^ source.hlasmListing support.class.hlasm variable.other.readwrite.hlasm
+#                                               ^^^ source.hlasmListing
+#                                                  ^^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                       ^ source.hlasmListing
 #                                                        ^ source.hlasmListing
 #                                                         ^ source.hlasmListing string.hlasm
@@ -160,15 +161,19 @@
 #                                                                              ^^^^ source.hlasmListing string.hlasm
 #                                                                                  ^ source.hlasmListing
 #                                                                                   ^^^^ source.hlasmListing keyword.control.hlasm
-#                                                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+#                                                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                      3 .SEQ     END                                                                                
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 #                                         ^^^^ source.hlasmListing keyword.control.hlasm
-#                                             ^^^^^^^^ source.hlasmListing entity.name.function.hlasm
-#                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+#                                             ^^^^^ source.hlasmListing
+#                                                  ^^^ source.hlasmListing entity.name.function.hlasm
+#                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >»                                                                                                                                    
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
-#                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
+#                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                                                 ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                   General Purpose Register Cross Reference                                    Page    4            
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
 > Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R1.0  2000/01/01 00.00            

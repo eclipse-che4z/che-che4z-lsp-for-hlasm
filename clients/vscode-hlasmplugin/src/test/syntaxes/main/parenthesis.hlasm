@@ -16,8 +16,10 @@
 (('C' LE '&VAR') AND ('&VAR' LE 'D'))  REMARK                          X12345678
 
 &(__V@R_V&R.#) SETA &VAR
-&(__V@R_V&R.#)(&VAR) SETC '&VAR'
+&(__V@R_V&R.#)(&VAR) SETC '&VAR
 LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED
 
 &(__V@R_V&R.#)(&VAR) SETC '&VAR
 LABEL    INSTR   OP THIS LINE SHOULD NOT BE AFFECTED
+
+&(__V@R_V&R.#)(OP.OP) SETC '&VAR'
