@@ -113,7 +113,7 @@ public:
 
     void opencode_finished(workspaces::parse_lib_provider& libs);
 
-    void collect_transfer_info(
+    void collect_branch_info(
         const std::vector<
             std::pair<std::unique_ptr<context::postponed_statement>, context::dependency_evaluation_context>>& stmts,
         const library_info& li);

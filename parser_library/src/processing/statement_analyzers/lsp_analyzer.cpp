@@ -584,7 +584,7 @@ bool symbol_value_zerolike(semantics::operand& op,
 
 } // namespace
 
-void lsp_analyzer::collect_transfer_info(
+void lsp_analyzer::collect_branch_info(
     const std::vector<std::pair<std::unique_ptr<context::postponed_statement>, context::dependency_evaluation_context>>&
         stmts,
     const library_info& li)
@@ -617,6 +617,11 @@ void lsp_analyzer::collect_transfer_info(
 
         if (condition >= 0 && condition < ops.size()
             && symbol_value_zerolike(*ops[condition], hlasm_ctx_.ord_ctx, dep_ctx, li))
+            continue;
+
+        if (!dep_ctx.loctr_address || !dep_ctx.loctr_address->is_simple())
+            continue;
+        if (dep_ctx.loctr_address->bases().front().first.owner->kind == context::section_kind::DUMMY)
             continue;
 
         const auto pos = loc.frame().pos;

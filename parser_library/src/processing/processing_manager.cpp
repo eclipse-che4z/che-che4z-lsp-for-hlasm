@@ -475,7 +475,7 @@ void processing_manager::process_postponed_statements(
     const std::vector<std::pair<std::unique_ptr<context::postponed_statement>, context::dependency_evaluation_context>>&
         stmts)
 {
-    lsp_analyzer_.collect_transfer_info(stmts, library_info_transitional(lib_provider_));
+    lsp_analyzer_.collect_branch_info(stmts, library_info_transitional(lib_provider_));
 }
 
 } // namespace hlasm_plugin::parser_library::processing

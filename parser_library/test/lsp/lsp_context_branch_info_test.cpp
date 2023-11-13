@@ -103,3 +103,65 @@ ONE      EQU   1
 
     EXPECT_THAT(bi, UnorderedElementsAreArray(expect_bi));
 }
+
+TEST(lsp_context, branch_info_ignore_dsects)
+{
+    analyzer a(R"(
+D        DSECT
+         USING *,12
+         J     X
+         NOP   X
+         BRC   0,X
+         BRC   15,X
+         BE    X
+         JE    X
+         BASR  0,1
+         BASR  1,0
+         BASR  1,ZERO
+         BASR  1,ONE
+         BCT   0,X
+         JCT   0,X
+         BCTR  2,1
+         BCTR  2,0
+X        DS    0H
+         SVC   0
+         BRASL 0,X
+         PC    0
+         PR
+         CIJ   0,0,0,X
+         CIJ   0,0,8,X
+         CIJE  0,0,X
+         LPSW  0
+
+         MACRO
+         MAC
+         J     X
+         MEND
+         MACRO
+         MAC2
+         J     Y
+Y        DS    0H
+         MEND
+
+         MAC
+         MAC2
+
+         MACRO
+         MAC3
+         J     X
+         J     Z
+         MEND
+          MAC3
+Z        DS    0H
+
+ZERO     EQU   0
+ONE      EQU   1
+)");
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto bi = a.context().lsp_ctx->get_opencode_branch_info();
+
+    EXPECT_TRUE(bi.empty());
+}
