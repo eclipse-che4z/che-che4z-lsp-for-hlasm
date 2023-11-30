@@ -79,6 +79,9 @@ The extension adds the 'go to definition' and 'find all references' functionalit
 
 ![](/clients/vscode-hlasmplugin/readme_res/go_to_def.gif)
 
+### Branch Indicators
+In the HLASM Language Support extension settings, enable the **Hlasm: Show Branch Indicators** option to add branch indicators to the source code view. Branch indicators display as arrows to the left of instructions and indicate whether the instructions branch up or down. If the branching direction cannot be determined, a right arrow displays.
+
 ## Macro Tracer
 
 The macro tracer functionality allows you to track the process of assembling HLASM code. It lets you see step-by-step how macros are expanded and displays values of variable symbols at different points during the assembly process. You can also set breakpoints in problematic sections of your conditional assembly code. 

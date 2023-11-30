@@ -8,7 +8,7 @@
 - Show branch direction indicators
 
 #### Fixed
-- Exact match may be deprioritized in the completion list
+- Exact match might be deprioritized in the completion list
 - Diagnostic with out-of-spec range generated
 - The language server sometimes crashes while parsing an invalid model operand
 - Performance enhacements
