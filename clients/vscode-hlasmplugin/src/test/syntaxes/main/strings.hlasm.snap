@@ -19,17 +19,7 @@
 #              ^ source.hlasm
 #               ^^ source.hlasm punctuation.definition.tag.hlasm
 #                 ^ source.hlasm
-#                  ^^^^ source.hlasm comment.hlasm
-#                      ^ source.hlasm
-#                       ^^^^ source.hlasm comment.hlasm
-#                           ^ source.hlasm
-#                            ^^^^^^ source.hlasm comment.hlasm
-#                                  ^ source.hlasm
-#                                   ^^^ source.hlasm comment.hlasm
-#                                      ^ source.hlasm
-#                                       ^^ source.hlasm comment.hlasm
-#                                         ^ source.hlasm
-#                                          ^^^^^^^^ source.hlasm comment.hlasm
+#                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
 >
 >         INSTR  'A'.'AT'&VAR                                 XXXXXXXXXX-xxxxxxxxA
 #^^^^^^^^^ source.hlasm
@@ -41,8 +31,8 @@
 #                    ^ source.hlasm string.hlasm
 #                     ^^^ source.hlasm string.hlasm
 #                        ^^^^ source.hlasm punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
-#                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
-#                                                             ^^^^^^^^^^ source.hlasm comment.hlasm
+#                            ^ source.hlasm
+#                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
 #                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^^ source.hlasm invalid.ignored
 >
@@ -53,8 +43,8 @@
 #                ^ source.hlasm entity.name.function.preprocessor.hlasm
 #                 ^ source.hlasm
 #                  ^^^^ source.hlasm punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
-#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
-#                                                          ^^^^^^^^^^^^^ source.hlasm comment.hlasm
+#                      ^ source.hlasm
+#                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
 #                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^^^ source.hlasm invalid.ignored
 >INVALID LINE
@@ -66,8 +56,8 @@
 #                ^ source.hlasm entity.name.function.preprocessor.hlasm
 #                 ^ source.hlasm
 #                  ^^^^ source.hlasm punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
-#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
-#                                                          ^^^^^^^^^^^^^ source.hlasm comment.hlasm
+#                      ^ source.hlasm
+#                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
 #                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^^^ source.hlasm invalid.ignored
 >               REMARK
@@ -80,7 +70,8 @@
 #                ^ source.hlasm entity.name.function.preprocessor.hlasm
 #                 ^ source.hlasm
 #                  ^^^^ source.hlasm punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
-#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                      ^ source.hlasm
+#                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
 #                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^^^ source.hlasm invalid.ignored
 >               REMARK
@@ -93,7 +84,9 @@
 #                ^ source.hlasm entity.name.function.preprocessor.hlasm
 #                 ^ source.hlasm
 #                  ^^^^ source.hlasm punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
-#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                      ^ source.hlasm
+#                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
+#                                                                       ^ source.hlasm
 >         INSTR SYMBOL1=12+L'SYMBOL2                                             
 #^^^^^^^^^ source.hlasm
 #         ^^^^^ source.hlasm entity.name.function.hlasm
@@ -105,7 +98,9 @@
 #                          ^ source.hlasm entity.name.function.preprocessor.hlasm
 #                           ^ source.hlasm
 #                            ^^^^^^^ source.hlasm punctuation.definition.tag.hlasm
-#                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                   ^ source.hlasm
+#                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
+#                                                                       ^ source.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >LABEL    INSTR OP THIS LINE SHOULD NOT BE AFFECTED
 #^^^^^ source.hlasm support.class.hlasm
@@ -114,17 +109,7 @@
 #              ^ source.hlasm
 #               ^^ source.hlasm punctuation.definition.tag.hlasm
 #                 ^ source.hlasm
-#                  ^^^^ source.hlasm comment.hlasm
-#                      ^ source.hlasm
-#                       ^^^^ source.hlasm comment.hlasm
-#                           ^ source.hlasm
-#                            ^^^^^^ source.hlasm comment.hlasm
-#                                  ^ source.hlasm
-#                                   ^^^ source.hlasm comment.hlasm
-#                                      ^ source.hlasm
-#                                       ^^ source.hlasm comment.hlasm
-#                                         ^ source.hlasm
-#                                          ^^^^^^^^ source.hlasm comment.hlasm
+#                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
 >
 >
 >LABEL    INSTR ,,'STRING'
@@ -142,17 +127,7 @@
 #              ^ source.hlasm
 #               ^^ source.hlasm punctuation.definition.tag.hlasm
 #                 ^ source.hlasm
-#                  ^^^^ source.hlasm comment.hlasm
-#                      ^ source.hlasm
-#                       ^^^^ source.hlasm comment.hlasm
-#                           ^ source.hlasm
-#                            ^^^^^^ source.hlasm comment.hlasm
-#                                  ^ source.hlasm
-#                                   ^^^ source.hlasm comment.hlasm
-#                                      ^ source.hlasm
-#                                       ^^ source.hlasm comment.hlasm
-#                                         ^ source.hlasm
-#                                          ^^^^^^^^ source.hlasm comment.hlasm
+#                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
 >
 >LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-        
 #^^^^^ source.hlasm support.class.hlasm
@@ -172,7 +147,9 @@
 >               ARIABLE word true false YES NO       '                           
 #^^^^^^^^^^^^^^^ source.hlasm
 #               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm string.hlasm
-#                                                     ^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                                     ^ source.hlasm
+#                                                      ^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
+#                                                                       ^ source.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
 #^^^^^ source.hlasm support.class.hlasm
@@ -213,8 +190,8 @@
 #^^^^^^^^^^^^^^^ source.hlasm
 #               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm string.hlasm
 #                                                     ^ source.hlasm
-#                                                      ^^^^^^ source.hlasm comment.hlasm
-#                                                            ^^^^^^^^^^^^ source.hlasm
+#                                                      ^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
+#                                                                       ^ source.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
 #^^^^^ source.hlasm support.class.hlasm
@@ -236,7 +213,9 @@
 #               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm string.hlasm
 #                                                     ^ source.hlasm
 #                                                      ^^^^^^^ source.hlasm punctuation.definition.tag.hlasm
-#                                                             ^^^^^^^^^^^ source.hlasm
+#                                                             ^ source.hlasm
+#                                                              ^^^^^^^^^ source.hlasm comment.hlasm
+#                                                                       ^ source.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
 #^^^^^ source.hlasm support.class.hlasm
@@ -290,9 +269,7 @@
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >               REMARK,REMARK REMARK
 #^^^^^^^^^^^^^^^ source.hlasm
-#               ^^^^^^^^^^^^^ source.hlasm comment.hlasm
-#                            ^ source.hlasm
-#                             ^^^^^^ source.hlasm comment.hlasm
+#               ^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
 >LABEL    INSTR 4,'Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
 #^^^^^ source.hlasm support.class.hlasm
 #     ^^^^ source.hlasm
@@ -313,7 +290,8 @@
 #               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm string.hlasm
 #                                                     ^ source.hlasm
 #                                                      ^^^^^^^^^^^^^^^^ source.hlasm punctuation.definition.tag.hlasm
-#                                                                      ^^ source.hlasm
+#                                                                      ^ source.hlasm
+#                                                                       ^ source.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >    INSTR,INSTR'
 #^^^^ source.hlasm
@@ -348,9 +326,7 @@
 #                                                                        ^^^^^^ source.hlasm invalid.ignored
 >               REMARK REMARK
 #^^^^^^^^^^^^^^^ source.hlasm
-#               ^^^^^^ source.hlasm comment.hlasm
-#                     ^ source.hlasm
-#                      ^^^^^^ source.hlasm comment.hlasm
+#               ^^^^^^^^^^^^^ source.hlasm comment.hlasm
 >LABEL    INSTR 4,                                                      -12345678
 #^^^^^ source.hlasm support.class.hlasm
 #     ^^^^ source.hlasm
@@ -359,7 +335,7 @@
 #               ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                ^ source.hlasm
 #                 ^ source.hlasm
-#                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
 #                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >               '  Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
@@ -380,7 +356,7 @@
 #                                                   ^^^^^^^^^^^^^^^^ source.hlasm punctuation.definition.tag.hlasm
 #                                                                   ^ source.hlasm
 #                                                                    ^ source.hlasm
-#                                                                     ^^ source.hlasm
+#                                                                     ^^ source.hlasm comment.hlasm
 #                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >               OPERAND REMARK
@@ -396,7 +372,7 @@
 #               ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                ^ source.hlasm
 #                 ^ source.hlasm
-#                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
 #                                                                       ^ source.hlasm keyword.other.hlasm
 #                                                                        ^^^^^^^^ source.hlasm invalid.ignored
 >               '  Just  a  random  string:   word 256 (&LBL DSECT), &&V-12345678
@@ -440,17 +416,7 @@
 #              ^ source.hlasm
 #               ^^ source.hlasm punctuation.definition.tag.hlasm
 #                 ^ source.hlasm
-#                  ^^^^ source.hlasm comment.hlasm
-#                      ^ source.hlasm
-#                       ^^^^ source.hlasm comment.hlasm
-#                           ^ source.hlasm
-#                            ^^^^^^ source.hlasm comment.hlasm
-#                                  ^ source.hlasm
-#                                   ^^^ source.hlasm comment.hlasm
-#                                      ^ source.hlasm
-#                                       ^^ source.hlasm comment.hlasm
-#                                         ^ source.hlasm
-#                                          ^^^^^^^^ source.hlasm comment.hlasm
+#                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
 >
 >
 >         AINSERT '&&__V@R SETA &VAR',BACK                                    
@@ -464,6 +430,8 @@
 #                                   ^ source.hlasm string.hlasm
 #                                    ^ source.hlasm
 #                                     ^^^^ source.hlasm punctuation.definition.tag.hlasm
-#                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm
+#                                         ^ source.hlasm
+#                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
+#                                                                       ^ source.hlasm
 #                                                                        ^^^^^ source.hlasm invalid.ignored
 >

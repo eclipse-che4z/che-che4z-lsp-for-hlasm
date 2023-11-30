@@ -140,7 +140,9 @@
 #                                                                 ^^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                                      ^ source.hlasmListing
 #                                                                       ^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                         ^ source.hlasmListing
+#                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                               2 ORD&VARSYM     INSTR OP                                                            
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -150,7 +152,9 @@
 #                                                                 ^^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                                      ^ source.hlasmListing
 #                                                                       ^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                         ^ source.hlasmListing
+#                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                               4 =LBL.LBL       INSTR OP                                                            
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -159,7 +163,9 @@
 #                                                                 ^^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                                      ^ source.hlasmListing
 #                                                                       ^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                         ^ source.hlasmListing
+#                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                               5 !@#$%^*()"     INSTR OP                                                            
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -168,7 +174,9 @@
 #                                                                 ^^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                                      ^ source.hlasmListing
 #                                                                       ^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                         ^ source.hlasmListing
+#                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                               6 123456789      INSTR OP                                                            
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -177,7 +185,9 @@
 #                                                                 ^^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                                      ^ source.hlasmListing
 #                                                                       ^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                         ^ source.hlasmListing
+#                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                               8 ''             INSTR  OP REM                                                       
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -187,8 +197,8 @@
 #                                                                      ^^ source.hlasmListing
 #                                                                        ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                          ^ source.hlasmListing
-#                                                                           ^^^ source.hlasmListing comment.hlasm
-#                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                               9 'LBL           INSTR  OP REM                                                       
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -198,8 +208,8 @@
 #                                                                      ^^ source.hlasmListing
 #                                                                        ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                          ^ source.hlasmListing
-#                                                                           ^^^ source.hlasmListing comment.hlasm
-#                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              10 LBL'           INSTR  OP REM                                                       
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -209,8 +219,8 @@
 #                                                                      ^^ source.hlasmListing
 #                                                                        ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                          ^ source.hlasmListing
-#                                                                           ^^^ source.hlasmListing comment.hlasm
-#                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              11 'LBL'          INSTR  OP REM                                                       
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -220,8 +230,8 @@
 #                                                                      ^^ source.hlasmListing
 #                                                                        ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                          ^ source.hlasmListing
-#                                                                           ^^^ source.hlasmListing comment.hlasm
-#                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              12 'LBL'          INSTR  OP REM'                                                      
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -231,8 +241,8 @@
 #                                                                      ^^ source.hlasmListing
 #                                                                        ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                          ^ source.hlasmListing
-#                                                                           ^^^^ source.hlasmListing comment.hlasm
-#                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              13 'LB L'         INSTR  OP REM                                                       
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -242,8 +252,8 @@
 #                                                                      ^^ source.hlasmListing
 #                                                                        ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                          ^ source.hlasmListing
-#                                                                           ^^^ source.hlasmListing comment.hlasm
-#                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              14 'LB L'         INSTR  OP REM'                                                      
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -253,8 +263,8 @@
 #                                                                      ^^ source.hlasmListing
 #                                                                        ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                          ^ source.hlasmListing
-#                                                                           ^^^^ source.hlasmListing comment.hlasm
-#                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              15 'L''B'         INSTR  OP REM                                                       
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -264,8 +274,8 @@
 #                                                                      ^^ source.hlasmListing
 #                                                                        ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                          ^ source.hlasmListing
-#                                                                           ^^^ source.hlasmListing comment.hlasm
-#                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              16 'L'' B'        INSTR  OP REM                                                       
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -275,8 +285,8 @@
 #                                                                      ^^ source.hlasmListing
 #                                                                        ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                          ^ source.hlasmListing
-#                                                                           ^^^ source.hlasmListing comment.hlasm
-#                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              18 LA' BE'L       INSTR OP REM                                                        
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -286,8 +296,8 @@
 #                                                                      ^ source.hlasmListing
 #                                                                       ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                         ^ source.hlasmListing
-#                                                                          ^^^ source.hlasmListing comment.hlasm
-#                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              19 LA' BE''       INSTR OP REM                                                        
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -297,8 +307,8 @@
 #                                                                      ^ source.hlasmListing
 #                                                                       ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                         ^ source.hlasmListing
-#                                                                          ^^^ source.hlasmListing comment.hlasm
-#                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              20 LA' BEL''L     INSTR OP REM                                                        
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -308,8 +318,8 @@
 #                                                                      ^ source.hlasmListing
 #                                                                       ^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                         ^ source.hlasmListing
-#                                                                          ^^^ source.hlasmListing comment.hlasm
-#                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >»                                                                                                                                    
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing

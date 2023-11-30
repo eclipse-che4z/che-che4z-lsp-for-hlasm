@@ -161,7 +161,9 @@
 #                                                                 ^^ source.hlasmListing punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
 #                                                                   ^ source.hlasmListing
 #                                                                    ^^^^^^^^ source.hlasmListing punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
-#                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                            ^ source.hlasmListing
+#                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                               5          PR                                                                        
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -178,7 +180,9 @@
 #                                                              ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                                                               ^ source.hlasmListing
 #                                                                ^^ source.hlasmListing punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
-#                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                  ^ source.hlasmListing
+#                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                               7          BPRP  0,&LBLNAME,&LBLNAME                                                 
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -190,7 +194,9 @@
 #                                                                   ^^^^^^^^ source.hlasmListing punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
 #                                                                           ^ source.hlasmListing
 #                                                                            ^^^^^^^^ source.hlasmListing punctuation.definition.tag.hlasm variable.other.readwrite.hlasm
-#                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                    ^ source.hlasmListing
+#                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                               8          MEND                                                                      
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -206,7 +212,9 @@
 #                                                               ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                                                                ^ source.hlasmListing
 #                                                                 ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                     ^ source.hlasmListing
+#                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >00000000 0101                                 11+         PR                                                             01-00000005
 #^^^^^^^^^^ source.hlasmListing
@@ -231,7 +239,9 @@
 #                                                              ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                                                               ^ source.hlasmListing
 #                                                                ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
-#                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >00000006 C50F FEFF FFFE 00000002 00000002     13+         BPRP  0,LBL1,LBL1                                              01-00000007
 #^^^^^^^^^^ source.hlasmListing
@@ -247,7 +257,9 @@
 #                                                                   ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                       ^ source.hlasmListing
 #                                                                        ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                            ^ source.hlasmListing
+#                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              14          MAC 2,LBL2                                                                
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -257,7 +269,9 @@
 #                                                               ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                                                                ^ source.hlasmListing
 #                                                                 ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                     ^ source.hlasmListing
+#                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >0000000C 0101                                 15+         PR                                                             01-00000005
 #^^^^^^^^^^ source.hlasmListing
@@ -282,7 +296,9 @@
 #                                                              ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                                                               ^ source.hlasmListing
 #                                                                ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
-#                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >00000012 C50F FEFF FFFE 0000000E 0000000E     17+         BPRP  0,LBL2,LBL2                                              01-00000007
 #^^^^^^^^^^ source.hlasmListing
@@ -298,7 +314,9 @@
 #                                                                   ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                       ^ source.hlasmListing
 #                                                                        ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                            ^ source.hlasmListing
+#                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              18          MAC 3,LBL3                                                                
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -308,7 +326,9 @@
 #                                                               ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                                                                ^ source.hlasmListing
 #                                                                 ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                     ^ source.hlasmListing
+#                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >00000018 0101                                 19+         PR                                                             01-00000005
 #^^^^^^^^^^ source.hlasmListing
@@ -333,7 +353,9 @@
 #                                                              ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                                                               ^ source.hlasmListing
 #                                                                ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
-#                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >0000001E C50F FEFF FFFE 0000001A 0000001A     21+         BPRP  0,LBL3,LBL3                                              01-00000007
 #^^^^^^^^^^ source.hlasmListing
@@ -349,7 +371,9 @@
 #                                                                   ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                       ^ source.hlasmListing
 #                                                                        ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                            ^ source.hlasmListing
+#                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              22          MAC 4,LBL4                                                                
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -359,7 +383,9 @@
 #                                                               ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                                                                ^ source.hlasmListing
 #                                                                 ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                     ^ source.hlasmListing
+#                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >00000024 0101                                 23+         PR                                                             01-00000005
 #^^^^^^^^^^ source.hlasmListing
@@ -384,7 +410,9 @@
 #                                                              ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                                                               ^ source.hlasmListing
 #                                                                ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
-#                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >0000002A C50F FEFF FFFE 00000026 00000026     25+         BPRP  0,LBL4,LBL4                                              01-00000007
 #^^^^^^^^^^ source.hlasmListing
@@ -400,7 +428,9 @@
 #                                                                   ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                       ^ source.hlasmListing
 #                                                                        ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                            ^ source.hlasmListing
+#                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              26          MAC 5,LBL5                                                                
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -410,7 +440,9 @@
 #                                                               ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                                                                ^ source.hlasmListing
 #                                                                 ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                     ^ source.hlasmListing
+#                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >00000030 0101                                 27+         PR                                                             01-00000005
 #^^^^^^^^^^ source.hlasmListing
@@ -435,7 +467,9 @@
 #                                                              ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
 #                                                               ^ source.hlasmListing
 #                                                                ^ source.hlasmListing punctuation.definition.tag.hlasm constant.numeric.hlasm
-#                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                 ^ source.hlasmListing
+#                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >00000036 C50F FEFF FFFE 00000032 00000032     29+         BPRP  0,LBL5,LBL5                                              01-00000007
 #^^^^^^^^^^ source.hlasmListing
@@ -451,7 +485,9 @@
 #                                                                   ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
 #                                                                       ^ source.hlasmListing
 #                                                                        ^^^^ source.hlasmListing punctuation.definition.tag.hlasm
-#                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                            ^ source.hlasmListing
+#                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                              31          END                                                                       
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing

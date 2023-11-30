@@ -158,7 +158,9 @@
 #                                                                             ^^^^ source.hlasmListing string.hlasm
 #                                                                                 ^ source.hlasmListing
 #                                                                                  ^^^^ source.hlasmListing keyword.control.hlasm
-#                                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                                                      ^ source.hlasmListing
+#                                                                                       ^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing comment.hlasm
+#                                                                                                               ^ source.hlasmListing
 #                                                                                                                ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >                                      3 .SEQ     END                                                                                
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
