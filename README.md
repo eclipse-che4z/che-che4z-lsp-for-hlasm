@@ -80,7 +80,7 @@ The extension adds the 'go to definition' and 'find all references' functionalit
 ![](/clients/vscode-hlasmplugin/readme_res/go_to_def.gif)
 
 ### Branch Indicators
-In the HLASM Language Support extension settings, enable the **Hlasm: Show Branch Indicators** option to show branch indicators in the source code view. Branch indicators display as arrows to the left of instructions and indicate whether the instructions branch up or down. If the branching direction cannot be determined, a right arrow displays.
+In the HLASM Language Support extension settings, enable the **Hlasm: Show Branch Indicators** option to add branch indicators to the source code view. Branch indicators display as arrows to the left of instructions and indicate whether the instructions branch up or down. If the branching direction cannot be determined, a right arrow displays.
 
 ## Macro Tracer
 
