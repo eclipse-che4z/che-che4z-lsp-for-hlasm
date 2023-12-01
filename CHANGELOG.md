@@ -1,3 +1,45 @@
+## [1.11.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.10.0...1.11.0) (2023-12-01)
+
+
+### Features
+
+* Include all available sections in the USING completion list ([5da50a9](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5da50a9fb521d135f470681f95bff203a33ad390))
+* Show branch direction indicators ([db848fe](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/db848fecf9be8d90ea63f77236e28bacd54571f8))
+* Source code preview in the hover text for ordinary symbols ([a0536ce](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a0536ceffa726a08aa78679c15dd141383ed7401))
+
+
+### Fixes
+
+* Benchmark URI issues ([4f77074](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/4f770748ebbd2d8433ce28afd7a6e23e704975ea))
+* Diagnostic with out-of-spec range generated ([8298546](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/829854600ab8858f852bd81d13e2f90616992e8a))
+* Exact match may be deprioritized in the completion list ([11f437a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/11f437a9fabaf2af21a2cad545779c235f5d1614))
+* Improve remark parsing ([ffd6d7a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ffd6d7a58f69a4ea38ee4e19d814fb29d578cc41))
+* Improved TextMate grammar tokenization ([1223bc5](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1223bc56b59ebe6adacfa8df16c7ddfc5fe64c78))
+* Provide specialized parser recovery for lookahead mode ([cace56e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/cace56ed2f190ec7699d6282d9013b79d1728862))
+* Remarks grouping in TextMate ([49eb035](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/49eb0353e6acf60d1a33dd91c429176dbc100356))
+* Simplify single-line grammar parsing ([625a8b0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/625a8b02617a60f9db8f65ce8c18e3206485fa32))
+* Streamline ca expression evaluation ([484d6b1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/484d6b12fce648715771e1a63fdc1a3e89d7ecac))
+* The language server sometimes crashes while parsing an invalid model operand ([d76e2db](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/d76e2db0a9d0d7cb5dcfc05580e30dfe425b954a))
+* **windows:** Poor toupper performance ([e6dfff1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/e6dfff19ce59ec9ed1055d0f3b6f88d79b2a087b))
+
+
+### Other changes
+
+* Add completion list consistency test ([45a8f02](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/45a8f02e72ef98e6af4839f6b8fb3fbee22432e9))
+* Broken vscode test package ([a5e2dfe](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a5e2dfe34bf8f5d1553eb7c8bfa04097668eb23f))
+* Bump clang version ([a34a339](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a34a3395ea6ce9ff217a73f5d0e71aba8fee9c24))
+* Mark non-production packages as pre-releases ([9aa8b08](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9aa8b08e24dfeb649f3bf106f0465d13c0bbafe7))
+* Reduce data definition operand allocations ([8712149](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/871214974002a2d72cb8655aa4d35f6b59641875))
+* Remove sequence symbol map from the code stack ([dd5fca9](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/dd5fca9082eef58fce47403b8adeb6261e360316))
+* Reuse token_info buffers ([44cdcad](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/44cdcadb09ce52b7e4a37d030d433f44d07af798))
+* Rework token stream ([6079dd4](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/6079dd43fd54263eefcde727a12012cf9edc1735))
+* Streamline grammar ([9e0dddc](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9e0dddcdb8f08ed36d79445cd7471f4d49c0b8af))
+* Strong type for statement index ([9df8c37](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9df8c37d4a1b347ae42e87efb65c77b0d7f2cbb6))
+* Unify machine instruction and mnemonic lookup ([32e986c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/32e986c11b6bb4067dbe9d6b5a379a08338448ae))
+* Upgrade image versions ([98c351d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/98c351d36fe800c9d23223e5b90cfcc2545a9bad))
+* Variable indexing ([4d3aa76](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/4d3aa76030086d9a0c8c0241cc85b5cbbb142b0d))
+* Workaround for broken node 18.18.0 ([cfdb538](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/cfdb5383c4937f0bce51b2c9bea79bc1f9a1c4d4))
+
 ## [1.10.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.9.0...1.10.0) (2023-09-22)
 
 
