@@ -311,7 +311,7 @@ jobs:
         run: npm run test:web
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Package VSIX
-        run: npx vsce package ${{ github.ref == 'refs/heads/master' && '' || '--pre-release' }}  --no-dependencies --target web -o hlasm-language-support-web.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
+        run: npx vsce package ${{ github.ref == 'refs/heads/master' && ' ' || '--pre-release' }}  --no-dependencies --target web -o hlasm-language-support-web.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Upload VSIX
         uses: actions/upload-artifact@v3
@@ -364,7 +364,7 @@ jobs:
         run: npm run compile
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Package VSIX
-        run: npx vsce package ${{ github.ref == 'refs/heads/master' && '' || '--pre-release' }} --no-dependencies -o hlasm-language-support.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
+        run: npx vsce package ${{ github.ref == 'refs/heads/master' && ' ' || '--pre-release' }} --no-dependencies -o hlasm-language-support.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Upload VSIX
         uses: actions/upload-artifact@v3
