@@ -1,3 +1,15 @@
+### [1.11.1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.11.0...1.11.1) (2023-12-04)
+
+
+### Other changes
+
+* Incorrect parameter passed to vsce package ([14dbd5c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/14dbd5c2a6d496a201f1a147bfc280048e3e8215))
+
+
+### Fixes
+
+* Release without pre-release flag ([024afdc](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/024afdc258a7cad691c316336cc908ca1e77dfa4))
+
 ## [1.11.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.10.0...1.11.0) (2023-12-01)
 
 
