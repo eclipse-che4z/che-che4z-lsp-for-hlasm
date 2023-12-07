@@ -248,6 +248,9 @@ jobs:
           - os: macos-12
             native: darwin
             chmod: true
+          - os: macos-13
+            native: darwin
+            chmod: true
 
     env:
       XVFB: ${{ matrix.native == 'linux' && 'xvfb-run -a' || '' }}
