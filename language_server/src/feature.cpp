@@ -33,7 +33,7 @@ nlohmann::adl_serializer<hlasm_plugin::language_server::request_id>::from_json(c
     else if (j.is_string())
         return hlasm_plugin::language_server::request_id(j.get<std::string>());
     else
-        throw nlohmann::json::other_error::create(501, "Request id must be either integer or string", j);
+        throw nlohmann::json::other_error::create(501, "Request id must be either integer or string", &j);
 }
 
 namespace hlasm_plugin::language_server {
@@ -50,14 +50,14 @@ void from_json(const nlohmann::json& j, std::optional<request_id>& rid)
 
 parser_library::range feature::parse_range(const nlohmann::json& range_json)
 {
-    return { parse_position(range_json["start"]), parse_position(range_json["end"]) };
+    return { parse_position(range_json.at("start")), parse_position(range_json.at("end")) };
 }
 
 parser_library::position feature::parse_position(const nlohmann::json& position_json)
 {
     // TODO: rewrite message parsing
-    return { (size_t)position_json["line"].get<nlohmann::json::number_unsigned_t>(),
-        (size_t)position_json["character"].get<nlohmann::json::number_unsigned_t>() };
+    return { (size_t)position_json.at("line").get<nlohmann::json::number_unsigned_t>(),
+        (size_t)position_json.at("character").get<nlohmann::json::number_unsigned_t>() };
 }
 
 nlohmann::json feature::range_to_json(const parser_library::range& range)

@@ -61,48 +61,45 @@ void feature_text_synchronization::initialize_feature(const nlohmann::json&)
 
 void feature_text_synchronization::on_did_open(const nlohmann::json& params)
 {
-    nlohmann::json text_doc = params["textDocument"];
-    std::string doc_uri = text_doc["uri"].get<std::string>();
-    auto version = text_doc["version"].get<nlohmann::json::number_unsigned_t>();
-    std::string text = text_doc["text"].get<std::string>();
+    const auto& text_doc = params.at("textDocument");
+    const auto& doc_uri = text_doc.at("uri").get_ref<const std::string&>();
+    const auto version = text_doc.at("version").get<nlohmann::json::number_unsigned_t>();
+    const auto text = text_doc.at("text").get<std::string_view>();
 
-    ws_mngr_.did_open_file(doc_uri.c_str(), version, text.c_str(), text.size());
+    ws_mngr_.did_open_file(doc_uri.c_str(), version, text.data(), text.size());
 }
 
 void feature_text_synchronization::on_did_change(const nlohmann::json& params)
 {
-    nlohmann::json text_doc = params["textDocument"];
-    std::string doc_uri = text_doc["uri"].get<std::string>();
+    const auto& text_doc = params.at("textDocument");
+    const auto& doc_uri = text_doc.at("uri").get_ref<const std::string&>();
 
-    auto version = text_doc["version"].get<nlohmann::json::number_unsigned_t>();
+    auto version = text_doc.at("version").get<nlohmann::json::number_unsigned_t>();
 
-    nlohmann::json content_changes = params["contentChanges"];
+    const auto& content_changes = params.at("contentChanges");
 
     std::vector<parser_library::document_change> changes;
-    std::vector<std::string> texts(content_changes.size());
-    size_t i = 0;
-    for (auto& ch : content_changes)
+    changes.reserve(content_changes.size());
+    for (const auto& ch : content_changes)
     {
-        texts[i] = ch["text"].get<std::string>();
+        const auto text = ch.at("text").get<std::string_view>();
 
         auto range_it = ch.find("range");
         if (range_it == ch.end())
         {
-            changes.emplace_back(texts[i].c_str(), texts[i].size());
+            changes.emplace_back(text.data(), text.size());
         }
         else
         {
-            changes.emplace_back(parse_range(ch["range"]), texts[i].c_str(), texts[i].size());
+            changes.emplace_back(parse_range(*range_it), text.data(), text.size());
         }
-
-        ++i;
     }
     ws_mngr_.did_change_file(doc_uri.c_str(), version, changes.data(), changes.size());
 }
 
 void feature_text_synchronization::on_did_close(const nlohmann::json& params)
 {
-    std::string doc_uri = params["textDocument"]["uri"].get<std::string>();
+    const std::string& doc_uri = params.at("textDocument").at("uri").get_ref<const std::string&>();
 
     ws_mngr_.did_close_file(doc_uri.c_str());
 }

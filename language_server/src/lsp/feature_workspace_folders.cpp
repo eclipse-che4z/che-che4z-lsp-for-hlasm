@@ -61,9 +61,9 @@ nlohmann::json feature_workspace_folders::register_capabilities()
 void feature_workspace_folders::initialize_feature(const nlohmann::json& initialize_params)
 {
     bool ws_folders_support = false;
-    auto capabs = initialize_params["capabilities"];
-    auto ws = capabs.find("workspace");
-    if (ws != capabs.end())
+    const auto& capabs = initialize_params.at("capabilities");
+
+    if (auto ws = capabs.find("workspace"); ws != capabs.end())
     {
         auto ws_folders = ws->find("workspaceFolders");
         if (ws_folders != ws->end())
@@ -72,11 +72,10 @@ void feature_workspace_folders::initialize_feature(const nlohmann::json& initial
 
     if (ws_folders_support)
     {
-        for (auto& it : initialize_params.at("workspaceFolders"))
-            m_initial_workspaces.emplace_back(it.at("name").get<std::string>(), it.at("uri").get<std::string>());
+        for (const auto& ws : initialize_params.at("workspaceFolders"))
+            m_initial_workspaces.emplace_back(ws.at("name").get<std::string>(), ws.at("uri").get<std::string>());
         return;
     }
-
 
     auto root_uri = initialize_params.find("rootUri");
     if (root_uri != initialize_params.end() && !root_uri->is_null())
@@ -102,8 +101,8 @@ void feature_workspace_folders::initialized()
 
 void feature_workspace_folders::on_did_change_workspace_folders(const nlohmann::json& params)
 {
-    const auto& added = params["event"]["added"];
-    const auto& removed = params["event"]["removed"];
+    const auto& added = params.at("event").at("added");
+    const auto& removed = params.at("event").at("removed");
 
     remove_workspaces(removed);
     add_workspaces(added);
@@ -111,19 +110,19 @@ void feature_workspace_folders::on_did_change_workspace_folders(const nlohmann::
 
 void feature_workspace_folders::add_workspaces(const nlohmann::json& added)
 {
-    for (auto& it : added)
+    for (const auto& ws : added)
     {
-        const std::string& name = it["name"].get<std::string>();
-        std::string uri = it["uri"].get<std::string>();
+        const auto& name = ws.at("name").get_ref<const std::string&>();
+        const auto& uri = ws.at("uri").get_ref<const std::string&>();
 
         add_workspace(name, uri);
     }
 }
 void feature_workspace_folders::remove_workspaces(const nlohmann::json& removed)
 {
-    for (auto ws : removed)
+    for (const auto& ws : removed)
     {
-        std::string uri = ws["uri"].get<std::string>();
+        const auto& uri = ws.at("uri").get_ref<const std::string&>();
 
         ws_mngr_.remove_workspace(uri.c_str());
     }

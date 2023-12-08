@@ -26,10 +26,12 @@ class library_test : public testing::TestWithParam<std::string>
 public:
     void SetUp() override
     {
-        if (hlasm_plugin::utils::platform::is_web())
+        using namespace hlasm_plugin::utils::platform;
+        using namespace ::testing;
+        if (is_web())
             GTEST_SKIP() << "Direct I/O not available in Web mode";
 
-        input = hlasm_plugin::utils::platform::read_file("test/library/input/" + GetParam() + ".in").value();
+        input = read_file(SrcDir() + "test/library/input/" + GetParam() + ".in").value();
         holder = std::make_unique<analyzer>(input);
     }
 

@@ -99,10 +99,11 @@ TEST(file_manager, get_file_content)
     if (hlasm_plugin::utils::platform::is_web())
         GTEST_SKIP() << "Direct I/O not available in Web mode";
 
-    const resource_location file("test/library/test_wks/correct");
+    const resource_location correct(SrcDir() + "test/library/test_wks/correct");
+    const resource_location notexists(SrcDir() + "test/library/test_wks/notexists");
     file_manager_impl fm;
 
     // nobody is working with the file, so assume it has not changed
-    EXPECT_TRUE(fm.get_file_content(resource_location("test/library/test_wks/correct")).run().value().has_value());
-    EXPECT_FALSE(fm.get_file_content(resource_location("test/library/test_wks/notexists")).run().value().has_value());
+    EXPECT_TRUE(fm.get_file_content(correct).run().value().has_value());
+    EXPECT_FALSE(fm.get_file_content(notexists).run().value().has_value());
 }

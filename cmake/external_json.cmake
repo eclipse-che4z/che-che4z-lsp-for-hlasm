@@ -14,24 +14,8 @@ PROJECT(JSON_fetcher)
 
 INCLUDE(FetchContent)
 
-FetchContent_Declare(
-  json
-  GIT_REPOSITORY https://github.com/nlohmann/json.git
-  GIT_TAG        v3.10.5
-  GIT_SHALLOW    ON
-  LOG_DOWNLOAD   ON
-  GIT_PROGRESS   1
-)
-
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 set(JSON_BuildTests Off)
-
-FetchContent_GetProperties(json)
-if(NOT json_POPULATED)
-  message("Populating nlohmann json")
-  set(JSON_MultipleHeaders On)
-  set(JSON_ImplicitConversions Off)
-  FetchContent_Populate(json)
-  add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
-
-
+set(JSON_MultipleHeaders On)
+set(JSON_ImplicitConversions Off)
+FetchContent_MakeAvailable(json)

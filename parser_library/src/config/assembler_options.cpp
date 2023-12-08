@@ -228,7 +228,7 @@ void optional_from_json(const nlohmann::json& j, std::string_view name, std::opt
     {
         if (o.has_value())
             throw nlohmann::json::other_error::create(
-                501, std::string("Parameter ").append(name).append(" redefined"), j);
+                501, std::string("Parameter ").append(name).append(" redefined"), &j);
 
         o = it->get<T>();
     }
@@ -249,7 +249,7 @@ void to_json(nlohmann::json& j, const assembler_options& p)
 void from_json(const nlohmann::json& j, assembler_options& p)
 {
     if (!j.is_object())
-        throw nlohmann::json::other_error::create(501, "asm_options must be an object.", j);
+        throw nlohmann::json::other_error::create(501, "asm_options must be an object.", &j);
 
     optional_from_json(j, "GOFF", p.goff);
     optional_from_json(j, "MACHINE", p.machine);

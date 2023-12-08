@@ -66,7 +66,7 @@ void from_json(const nlohmann::json& j, library& p)
             it->get_to(p.root_folder);
     }
     else
-        throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", j);
+        throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", &j);
 }
 
 void to_json(nlohmann::json& j, const dataset& p)
@@ -83,7 +83,7 @@ void from_json(const nlohmann::json& j, dataset& p)
             p.optional = it->get_to(p.optional);
     }
     else
-        throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", j);
+        throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", &j);
 }
 
 template<typename T>
@@ -120,17 +120,17 @@ void from_json(const nlohmann::json& j, db2_preprocessor& v)
     if (auto it = j.find("options"); it != j.end())
     {
         if (!it->is_object())
-            throw nlohmann::json::other_error::create(501, "Object with DB2 options expected.", j);
+            throw nlohmann::json::other_error::create(501, "Object with DB2 options expected.", &j);
         if (auto ver = it->find("version"); ver != it->end())
         {
             if (!ver->is_string())
-                throw nlohmann::json::other_error::create(501, "Version string expected.", j);
+                throw nlohmann::json::other_error::create(501, "Version string expected.", &j);
             v.version = ver->get<std::string>();
         }
         if (auto cond = it->find("conditional"); cond != it->end())
         {
             if (!cond->is_boolean())
-                throw nlohmann::json::other_error::create(501, "Boolean expected.", j);
+                throw nlohmann::json::other_error::create(501, "Boolean expected.", &j);
             v.conditional = cond->get<bool>();
         }
     }
@@ -167,11 +167,11 @@ void from_json(const nlohmann::json& j, cics_preprocessor& v)
     if (auto it = j.find("options"); it != j.end())
     {
         if (!it->is_array())
-            throw nlohmann::json::other_error::create(501, "Array of CICS options expected.", j);
+            throw nlohmann::json::other_error::create(501, "Array of CICS options expected.", &j);
         for (const auto& e : *it)
         {
             if (!e.is_string())
-                throw nlohmann::json::other_error::create(501, "CICS option expected.", j);
+                throw nlohmann::json::other_error::create(501, "CICS option expected.", &j);
             if (auto cpo = cics_preprocessor_options.find(e.get<std::string_view>());
                 cpo != cics_preprocessor_options.end())
             {
@@ -282,7 +282,7 @@ void add_single_preprocessor(std::vector<preprocessor_options>& preprocessors, c
     if (auto deserializer = find_preprocessor_deserializer(p_name); deserializer)
         deserializer(preprocessors, j);
     else
-        throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.", j);
+        throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.", &j);
 }
 
 } // namespace

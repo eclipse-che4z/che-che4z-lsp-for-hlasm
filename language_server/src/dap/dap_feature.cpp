@@ -123,9 +123,10 @@ void dap_feature::on_initialize(const request_id& requested_seq, const nlohmann:
 {
     response_->respond(requested_seq, "initialize", nlohmann::json { { "supportsConfigurationDoneRequest", true } });
 
-    line_1_based_ = args["linesStartAt1"].get<bool>() ? 1 : 0;
-    column_1_based_ = args["columnsStartAt1"].get<bool>() ? 1 : 0;
-    client_path_format_ = args["pathFormat"].get<std::string>() == "path" ? path_format::PATH : path_format::URI;
+    line_1_based_ = args.at("linesStartAt1").get<bool>() ? 1 : 0;
+    column_1_based_ = args.at("columnsStartAt1").get<bool>() ? 1 : 0;
+    client_path_format_ =
+        args.at("pathFormat").get<std::string_view>() == "path" ? path_format::PATH : path_format::URI;
 
     debugger.emplace();
 
@@ -148,8 +149,8 @@ void dap_feature::on_launch(const request_id& request_seq, const nlohmann::json&
         return;
 
     // wait for configurationDone?
-    std::string program_path = server_conformant_path(args["program"].get<std::string_view>(), client_path_format_);
-    bool stop_on_entry = args["stopOnEntry"].get<bool>();
+    auto program_path = server_conformant_path(args.at("program").get<std::string_view>(), client_path_format_);
+    bool stop_on_entry = args.at("stopOnEntry").get<bool>();
     debugger->set_event_consumer(this);
 
     struct launch_handler
@@ -172,7 +173,7 @@ void dap_feature::on_launch(const request_id& request_seq, const nlohmann::json&
         }
     };
 
-    debugger->launch(program_path.c_str(),
+    debugger->launch(program_path,
         dc_provider,
         stop_on_entry,
         parser_library::make_workspace_manager_response(launch_handler { request_seq, response_ }).first);
@@ -185,14 +186,14 @@ void dap_feature::on_set_breakpoints(const request_id& request_seq, const nlohma
 
     nlohmann::json breakpoints_verified = nlohmann::json::array();
 
-    std::string source = server_conformant_path(args["source"]["path"].get<std::string_view>(), client_path_format_);
+    auto source = server_conformant_path(args.at("source").at("path").get<std::string_view>(), client_path_format_);
     std::vector<parser_library::breakpoint> breakpoints;
 
     if (auto bpoints_found = args.find("breakpoints"); bpoints_found != args.end())
     {
         for (auto& bp_json : bpoints_found.value())
         {
-            breakpoints.emplace_back(bp_json["line"].get<nlohmann::json::number_unsigned_t>() - line_1_based_);
+            breakpoints.emplace_back(bp_json.at("line").get<nlohmann::json::number_unsigned_t>() - line_1_based_);
             breakpoints_verified.push_back(nlohmann::json { { "verified", true } });
         }
     }
@@ -267,7 +268,7 @@ void dap_feature::on_scopes(const request_id& request_seq, const nlohmann::json&
 
     nlohmann::json scopes_json = nlohmann::json::array();
 
-    for (const auto& s : debugger->scopes(args["frameId"].get<nlohmann::json::number_unsigned_t>()))
+    for (const auto& s : debugger->scopes(args.at("frameId").get<nlohmann::json::number_unsigned_t>()))
     {
         auto scope = parser_library::scope(s);
         auto scope_json = nlohmann::json {
@@ -318,7 +319,7 @@ void dap_feature::on_variables(const request_id& request_seq, const nlohmann::js
 
     nlohmann::json variables_json = nlohmann::json::array();
 
-    for (auto var : debugger->variables(parser_library::var_reference_t(args["variablesReference"])))
+    for (auto var : debugger->variables(parser_library::var_reference_t(args.at("variablesReference"))))
     {
         std::string type;
         switch (var.type)
