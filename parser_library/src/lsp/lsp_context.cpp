@@ -763,8 +763,12 @@ completion_list_source lsp_context::completion(const utils::resource::resource_l
     {
         auto instr = file_info->find_closest_instruction(pos);
         const auto is_using = instr && instr->name == context::id_index("USING");
+        auto [section, usings] = file_info->find_reachable_sections(pos);
 
-        auto reachable_sections = gather_reachable_sections(*m_hlasm_ctx, file_info->find_reachable_sections(pos));
+        if (!section) // use private section if exists
+            section = m_hlasm_ctx->ord_ctx.get_section(context::id_index());
+
+        auto reachable_sections = gather_reachable_sections(*m_hlasm_ctx, { section, usings });
 
         auto reachable_symbols = compute_reachable_symbol_set(reachable_sections, m_hlasm_ctx->ord_ctx, is_using);
 

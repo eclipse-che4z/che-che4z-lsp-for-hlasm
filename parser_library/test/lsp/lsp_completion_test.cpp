@@ -210,3 +210,30 @@ C   CSECT
     EXPECT_THAT(item.documentation, HasSubstr("Absolute Symbol"));
     EXPECT_EQ(item.insert_text, "DL");
 }
+
+TEST(lsp_completion, private_csect)
+{
+    using namespace ::testing;
+
+    const std::string input = R"(
+LLLLL  DS A
+LABEL  DS A
+)";
+    analyzer a(input);
+    a.analyze();
+    auto loc = a.context().hlasm_ctx->opencode_location();
+
+    auto l1 = a.context().lsp_ctx->completion(loc, position(1, 0), 0, completion_trigger_kind::invoked);
+    auto l2 = a.context().lsp_ctx->completion(loc, position(2, 0), 0, completion_trigger_kind::invoked);
+
+    ASSERT_EQ(l1.index(), l2.index());
+
+    using T = std::pair<const macro_definition*, std::vector<std::pair<const symbol*, id_index>>>;
+    ASSERT_TRUE(std::holds_alternative<T>(l1));
+
+    const auto& t1 = std::get<T>(l1);
+    const auto& t2 = std::get<T>(l2);
+
+    EXPECT_EQ(t1.first, t2.first);
+    EXPECT_THAT(t1.second, UnorderedElementsAreArray(t2.second));
+}
