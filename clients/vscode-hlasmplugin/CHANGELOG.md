@@ -2,6 +2,9 @@
 
 ## ****Unreleased****
 
+#### Added
+- Highlight lines in listings that originate from macros and copybooks
+
 #### Fixed
 - Inconsistent completion list with implicitly defined private CSECT
 

@@ -51,11 +51,18 @@
     "lineComment": {
       "patterns": [
         {
-          "begin": "^${listingDetails}$((?:\\*|\\.\\*).*)(?<=^${listingDetails}$.{1,71})",
+          "begin": "^(${listingDetails}$)((?:\\*|\\.\\*).*)(?<=^${listingDetails}$.{1,71})",
           "end": "((?<=^${listingDetails}$(.{71}\\s.*|.{0,71}))${noPrecedingCodeBlock}$)$",
           "applyEndPatternLast": 1,
           "beginCaptures": {
             "1": {
+              "patterns": [
+                {
+                  "include": "#listingSyntaxExpansion"
+                }
+              ]
+            },
+            "2": {
               "name": "comment.hlasm"
             }
           },
@@ -114,8 +121,17 @@
           "include": "#illegalMultilineColumns"
         },
         {
-          "match": "(^${listingDetails}$\\s{15})",
-          "comment": "Just to get rid of the spaces"
+          "match": "^(${listingDetails}$\\s{15})",
+          "comment": "Just to get rid of the spaces",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#listingSyntaxExpansion"
+                }
+              ]
+            }
+          }
         },
         {
           "include": "#sequenceSymbolOperandField"
@@ -398,9 +414,16 @@
     "remark": {
       "patterns": [
         {
-          "match": "^${listingDetails}$\\s{15}(.*)(?<=^${listingDetails}$.{0,71})",
+          "match": "^(${listingDetails}$\\s{15})(.*)(?<=^${listingDetails}$.{0,71})",
           "captures": {
             "1": {
+              "patterns": [
+                {
+                  "include": "#listingSyntaxExpansion"
+                }
+              ]
+            },
+            "2": {
               "name": "comment.hlasm"
             }
           }
@@ -466,11 +489,36 @@
       "match": "\\s*.?(?<=^${listingDetails}$.{72})(.+)$",
       "captures": {
         "1": {
-          "name": "invalid.ignored"
+          "patterns": [
+            {
+              "include": "#${ignoredHandling}$"
+            },
+            {
+              "include": "#ignoredSequenceNumbers"
+            }
+          ]
         }
       }
     },
+    "listingSequenceNumbers": {
+      "match": "\\d\\d-[$#@A-Z][$#@A-Z0-9]*",
+      "name": "invalid.ignored emphasis"
+    },
+    "ignoredSequenceNumbers": {
+      "match": ".*",
+      "name": "invalid.ignored"
+    },
     "listingSyntax": {
+      "patterns": [
+        {
+          "include": "#listingSyntaxInstructions"
+        },
+        {
+          "include": "#listingSyntaxExpansion"
+        }
+      ]
+    },
+    "listingSyntaxInstructions": {
       "match": "^${listingOffset}$\\S+\\s([0-3][0-9A-F]{3}|[4-9AB][0-9A-F]{3} [0-9A-F]{4}|[CDEF][0-9A-F]{3} [0-9A-F]{4} [0-9A-F]{4}) ",
       "captures": {
         "1": {
@@ -481,6 +529,10 @@
           ]
         }
       }
+    },
+    "listingSyntaxExpansion": {
+      "match": "\\d*[=+-](?<=^${listingDetails}$)",
+      "name": "entity.other.attribute-name emphasis"
     },
     "objectCode": {
       "patterns": [

@@ -223,7 +223,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^ source.hlasmListing constant.numeric.hlasm
 #            ^ source.hlasmListing
-#             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#             ^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^^^^^^ source.hlasmListing
 #                                                  ^^ source.hlasmListing entity.name.function.hlasm
 #                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -233,7 +234,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^^^^^^ source.hlasmListing constant.numeric.hlasm
 #                 ^ source.hlasmListing
-#                  ^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                  ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^ source.hlasmListing support.class.hlasm
 #                                             ^^^^^ source.hlasmListing
 #                                                  ^^ source.hlasmListing entity.name.function.hlasm
@@ -250,7 +252,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^^^^^^^^^^^ source.hlasmListing constant.numeric.hlasm
 #                      ^ source.hlasmListing
-#                       ^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                       ^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^^^^^^ source.hlasmListing
 #                                                  ^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                      ^^ source.hlasmListing
@@ -280,7 +283,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^ source.hlasmListing constant.numeric.hlasm
 #            ^ source.hlasmListing
-#             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#             ^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^^^^^^ source.hlasmListing
 #                                                  ^^ source.hlasmListing entity.name.function.hlasm
 #                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -290,7 +294,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^^^^^^ source.hlasmListing constant.numeric.hlasm
 #                 ^ source.hlasmListing
-#                  ^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                  ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^ source.hlasmListing support.class.hlasm
 #                                             ^^^^^ source.hlasmListing
 #                                                  ^^ source.hlasmListing entity.name.function.hlasm
@@ -307,7 +312,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^^^^^^^^^^^ source.hlasmListing constant.numeric.hlasm
 #                      ^ source.hlasmListing
-#                       ^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                       ^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^^^^^^ source.hlasmListing
 #                                                  ^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                      ^^ source.hlasmListing
@@ -337,7 +343,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^ source.hlasmListing constant.numeric.hlasm
 #            ^ source.hlasmListing
-#             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#             ^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^^^^^^ source.hlasmListing
 #                                                  ^^ source.hlasmListing entity.name.function.hlasm
 #                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -347,7 +354,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^^^^^^ source.hlasmListing constant.numeric.hlasm
 #                 ^ source.hlasmListing
-#                  ^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                  ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^ source.hlasmListing support.class.hlasm
 #                                             ^^^^^ source.hlasmListing
 #                                                  ^^ source.hlasmListing entity.name.function.hlasm
@@ -364,7 +372,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^^^^^^^^^^^ source.hlasmListing constant.numeric.hlasm
 #                      ^ source.hlasmListing
-#                       ^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                       ^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^^^^^^ source.hlasmListing
 #                                                  ^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                      ^^ source.hlasmListing
@@ -394,7 +403,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^ source.hlasmListing constant.numeric.hlasm
 #            ^ source.hlasmListing
-#             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#             ^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^^^^^^ source.hlasmListing
 #                                                  ^^ source.hlasmListing entity.name.function.hlasm
 #                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -404,7 +414,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^^^^^^ source.hlasmListing constant.numeric.hlasm
 #                 ^ source.hlasmListing
-#                  ^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                  ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^ source.hlasmListing support.class.hlasm
 #                                             ^^^^^ source.hlasmListing
 #                                                  ^^ source.hlasmListing entity.name.function.hlasm
@@ -421,7 +432,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^^^^^^^^^^^ source.hlasmListing constant.numeric.hlasm
 #                      ^ source.hlasmListing
-#                       ^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                       ^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^^^^^^ source.hlasmListing
 #                                                  ^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                      ^^ source.hlasmListing
@@ -451,7 +463,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^ source.hlasmListing constant.numeric.hlasm
 #            ^ source.hlasmListing
-#             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#             ^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^^^^^^ source.hlasmListing
 #                                                  ^^ source.hlasmListing entity.name.function.hlasm
 #                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
@@ -461,7 +474,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^^^^^^ source.hlasmListing constant.numeric.hlasm
 #                 ^ source.hlasmListing
-#                  ^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                  ^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^ source.hlasmListing support.class.hlasm
 #                                             ^^^^^ source.hlasmListing
 #                                                  ^^ source.hlasmListing entity.name.function.hlasm
@@ -478,7 +492,8 @@
 #        ^^ source.hlasmListing entity.name.function.hlasm
 #          ^^^^^^^^^^^^ source.hlasmListing constant.numeric.hlasm
 #                      ^ source.hlasmListing
-#                       ^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                       ^^^^^^^^^^^^^^^ source.hlasmListing
+#                                      ^^^ source.hlasmListing entity.other.attribute-name emphasis
 #                                         ^^^^^^^^^ source.hlasmListing
 #                                                  ^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                      ^^ source.hlasmListing

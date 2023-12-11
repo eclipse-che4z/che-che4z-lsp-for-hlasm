@@ -639,7 +639,8 @@
 #                                                                                                                         ^ source.hlasmListing
 #                                                                                                                          ^^^^^^^^^^^ source.hlasmListing invalid.ignored
 >i                                                +         AINSERT '&&__V@R SETA ',BACK                                              
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasmListing
+#                                                 ^ source.hlasmListing entity.other.attribute-name emphasis
 #                                                  ^^^^^^^^^ source.hlasmListing
 #                                                           ^^^^^^^ source.hlasmListing entity.name.function.hlasm
 #                                                                  ^ source.hlasmListing

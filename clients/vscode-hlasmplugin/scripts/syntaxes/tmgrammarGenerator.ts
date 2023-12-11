@@ -27,6 +27,8 @@ const code_block_listing_long_annotation_length = '.{49}';
 const emptyRule = 'emptyRule'
 const asmaRule = 'asma'
 const pageAnnotationRule = 'pageAnnotation'
+const ignoredSequenceNumbers = 'ignoredSequenceNumbers'
+const listingSequenceNumbers = 'listingSequenceNumbers'
 
 interface GrammarFile {
   file: string;
@@ -41,6 +43,7 @@ interface GrammarDetails extends GrammarFile {
   listingOffset: string;
   asmaRule: string;
   pageAnnotationRule: string;
+  ignoredHandling: string;
 }
 
 const hlasmGeneralGrammar: GrammarDetails = {
@@ -52,7 +55,8 @@ const hlasmGeneralGrammar: GrammarDetails = {
   beginLineSkipRule: '',
   listingOffset: '',
   asmaRule: emptyRule,
-  pageAnnotationRule: emptyRule
+  pageAnnotationRule: emptyRule,
+  ignoredHandling: ignoredSequenceNumbers,
 }
 
 const hlasmListingGeneralGrammar: GrammarDetails = {
@@ -64,7 +68,8 @@ const hlasmListingGeneralGrammar: GrammarDetails = {
   beginLineSkipRule: code_block_listing_annotation_length,
   listingOffset: '',
   asmaRule: asmaRule,
-  pageAnnotationRule: pageAnnotationRule
+  pageAnnotationRule: pageAnnotationRule,
+  ignoredHandling: listingSequenceNumbers,
 }
 
 const hlasmListingGeneralLongGrammar: GrammarDetails = {
@@ -76,7 +81,8 @@ const hlasmListingGeneralLongGrammar: GrammarDetails = {
   beginLineSkipRule: code_block_listing_long_annotation_length,
   listingOffset: '',
   asmaRule: asmaRule,
-  pageAnnotationRule: pageAnnotationRule
+  pageAnnotationRule: pageAnnotationRule,
+  ignoredHandling: listingSequenceNumbers,
 }
 
 const hlasmListingEndevorGrammar: GrammarDetails = {
@@ -88,7 +94,8 @@ const hlasmListingEndevorGrammar: GrammarDetails = {
   beginLineSkipRule: code_block_listing_annotation_length,
   listingOffset: '.',
   asmaRule: asmaRule,
-  pageAnnotationRule: pageAnnotationRule
+  pageAnnotationRule: pageAnnotationRule,
+  ignoredHandling: listingSequenceNumbers,
 }
 
 const hlasmListingEndevorLongGrammar: GrammarDetails = {
@@ -100,7 +107,8 @@ const hlasmListingEndevorLongGrammar: GrammarDetails = {
   beginLineSkipRule: code_block_listing_long_annotation_length,
   listingOffset: '.',
   asmaRule: asmaRule,
-  pageAnnotationRule: pageAnnotationRule
+  pageAnnotationRule: pageAnnotationRule,
+  ignoredHandling: listingSequenceNumbers,
 }
 
 interface GrammarBase extends GrammarFile {
@@ -141,6 +149,7 @@ function generateGrammarsDetails(props: GrammarDetails) {
     result = result.replaceAll('${pageAnnotation}$', props.pageAnnotationRule);
     result = result.replaceAll('${codeBlockBegin}$', props.codeBlockBegin);
     result = result.replaceAll('${listingOffset}$', props.listingOffset);
+    result = result.replaceAll('${ignoredHandling}$', props.ignoredHandling);
     result = result.replaceAll('${listingDetails}$', listingDetails);
 
     if (props.codeBlockBegin.length === 0)
