@@ -41,7 +41,7 @@ struct completion_list_instructions
 {
     std::string_view completed_text;
     size_t completed_text_start_column;
-    const std::unordered_map<std::shared_ptr<context::macro_definition>, std::shared_ptr<macro_info>>* macros;
+    const std::unordered_map<const context::macro_definition*, std::shared_ptr<macro_info>>* macros;
     const lsp_context* lsp_ctx;
 
     std::vector<std::string> additional_instructions;

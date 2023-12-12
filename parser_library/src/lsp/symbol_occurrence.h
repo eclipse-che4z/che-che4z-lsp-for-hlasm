@@ -41,7 +41,7 @@ struct symbol_occurrence
     range occurrence_range;
 
     // in case of INSTR kind, holds potential macro opcode
-    context::macro_def_ptr opcode = nullptr;
+    const context::macro_definition* opcode = nullptr;
 
     symbol_occurrence(occurrence_kind kind, context::id_index name, const range& occurrence_range, bool evaluated_model)
         : kind(kind)
@@ -50,11 +50,11 @@ struct symbol_occurrence
         , occurrence_range(occurrence_range)
     {}
 
-    symbol_occurrence(context::id_index name, context::macro_def_ptr opcode, const range& occurrence_range)
+    symbol_occurrence(context::id_index name, const context::macro_definition* opcode, const range& occurrence_range)
         : kind(occurrence_kind::INSTR)
         , name(name)
         , occurrence_range(occurrence_range)
-        , opcode(std::move(opcode))
+        , opcode(opcode)
     {}
 
     // returns true, if this occurrence kind depends on a scope

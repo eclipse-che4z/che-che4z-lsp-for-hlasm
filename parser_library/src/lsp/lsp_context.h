@@ -44,7 +44,7 @@ class lsp_context final
     opencode_info_ptr m_opencode;
     std::unordered_map<utils::resource::resource_location, file_info_ptr, utils::resource::resource_location_hasher>
         m_files;
-    std::unordered_map<context::macro_def_ptr, macro_info_ptr> m_macros;
+    std::unordered_map<const context::macro_definition*, macro_info_ptr> m_macros;
 
     std::shared_ptr<context::hlasm_context> m_hlasm_ctx;
 
@@ -91,7 +91,7 @@ public:
 
     const context::hlasm_context& get_related_hlasm_context() const { return *m_hlasm_ctx; }
 
-    const std::unordered_map<context::macro_def_ptr, macro_info_ptr>& macros() const { return m_macros; };
+    const std::unordered_map<const context::macro_definition*, macro_info_ptr>& macros() const { return m_macros; };
 
     std::vector<branch_info> get_opencode_branch_info() const;
 

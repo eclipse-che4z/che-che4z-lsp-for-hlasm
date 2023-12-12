@@ -198,9 +198,9 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
 {
     if (!result.invalid)
     {
+        const auto* md = macrodef.get();
         // add instruction occurrence of macro name
-        const auto& macro_file = macrodef->definition_location.resource_loc;
-        macro_occurrences_[macro_file].first.emplace_back(macrodef->id, macrodef, result.prototype.macro_name_range);
+        const auto& macro_file = md->definition_location.resource_loc;
 
         auto m_i = std::make_shared<lsp::macro_info>(result.external,
             location(result.prototype.macro_name_range.start, macro_file),
@@ -208,6 +208,7 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
             std::move(result.variable_symbols),
             std::move(result.file_scopes),
             std::move(macro_occurrences_));
+        m_i->file_occurrences_[macro_file].first.emplace_back(md->id, md, result.prototype.macro_name_range);
 
         if (result.external)
             lsp_ctx_.add_macro(std::move(m_i), lsp::text_data_view(file_text_));
@@ -319,7 +320,7 @@ void lsp_analyzer::collect_occurrence(const semantics::instruction_si& instructi
         auto* macro_def = std::get_if<context::macro_def_ptr>(&opcode.opcode_detail);
         if (!opcode.opcode.empty() || macro_def)
             collector.occurrences.emplace_back(
-                opcode.opcode, macro_def ? std::move(*macro_def) : context::macro_def_ptr {}, instruction.field_range);
+                opcode.opcode, macro_def ? macro_def->get() : nullptr, instruction.field_range);
     }
     else if (instruction.type == semantics::instruction_si_type::ORD
         && collector.collector_kind == lsp::occurrence_kind::INSTR_LIKE)

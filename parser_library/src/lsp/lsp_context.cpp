@@ -534,7 +534,8 @@ void lsp_context::add_macro(macro_info_ptr macro_i, text_data_view text_data)
     if (macro_i->external)
         add_file(file_info(macro_i->macro_definition, std::move(text_data)));
 
-    m_macros[macro_i->macro_definition] = macro_i;
+    auto [_, inserted] = m_macros.try_emplace(macro_i->macro_definition.get(), std::move(macro_i));
+    assert(inserted);
 }
 
 void lsp_context::add_opencode(
@@ -569,7 +570,7 @@ macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name, context
     if (auto it = m_hlasm_ctx->find_macro(macro_name, gen); !it)
         return nullptr;
     else
-        return m_macros.at(*it);
+        return m_macros.at(it->get());
 }
 
 const file_info* lsp_context::get_file_info(const utils::resource::resource_location& file_loc) const
@@ -772,7 +773,7 @@ completion_list_source lsp_context::completion(const utils::resource::resource_l
 
         auto reachable_symbols = compute_reachable_symbol_set(reachable_sections, m_hlasm_ctx->ord_ctx, is_using);
 
-        return std::pair(instr ? instr->opcode.get() : nullptr, std::move(reachable_symbols));
+        return std::pair(instr ? instr->opcode : nullptr, std::move(reachable_symbols));
     }
 }
 
@@ -1057,7 +1058,7 @@ std::string lsp_context::find_hover(const symbol_occurrence& occ,
             {
                 if (std::holds_alternative<context::macro_def_ptr>(op->opcode_detail))
                     return prefix_using(
-                        hover_for_macro(*m_macros.at(std::get<context::macro_def_ptr>(op->opcode_detail))));
+                        hover_for_macro(*m_macros.at(std::get<context::macro_def_ptr>(op->opcode_detail).get())));
                 else
                     return prefix_using(hover_for_instruction(op->opcode));
             }
