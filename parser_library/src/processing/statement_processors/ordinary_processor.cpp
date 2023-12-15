@@ -238,7 +238,7 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
 {
     auto code = hlasm_ctx.get_operation_code(instruction);
 
-    if (std::holds_alternative<context::macro_def_ptr>(code.opcode_detail))
+    if (code.is_macro())
     {
         return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MAC),
             op_code(instruction, context::instruction_type::MAC));

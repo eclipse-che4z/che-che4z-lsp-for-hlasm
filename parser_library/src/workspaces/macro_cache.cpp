@@ -43,8 +43,7 @@ std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_
         // If there is an opsyn, that aliases an instruction to be CA instruction, add it to result
         if (context::instruction_resolved_during_macro_parsing(opcode.opcode)
             || context::instruction_resolved_during_macro_parsing(from))
-            result.push_back(
-                { from, opcode.opcode, std::holds_alternative<context::macro_def_ptr>(opcode.opcode_detail) });
+            result.push_back({ from, opcode.opcode, opcode.is_macro() });
     }
 
     sort_opsyn_state(result);
@@ -118,11 +117,11 @@ std::optional<std::vector<std::shared_ptr<file>>> macro_cache::load_from_cache(
     return result;
 }
 
-version_stamp macro_cache::get_copy_member_versions(context::macro_def_ptr macro) const
+version_stamp macro_cache::get_copy_member_versions(context::macro_definition& macro) const
 {
     version_stamp result;
 
-    for (const auto& copy_ptr : macro->used_copy_members)
+    for (const auto& copy_ptr : macro.used_copy_members)
     {
         auto file = file_mngr_->find(copy_ptr->definition_location.resource_loc);
         if (!file)
@@ -140,7 +139,7 @@ void macro_cache::save_macro(const macro_cache_key& key, const analyzer& analyze
         // Add stamps for all macro dependencies
         auto parsed_macro = analyzer.context().hlasm_ctx->get_macro_definition(key.data.library_member);
         if (parsed_macro)
-            cache_data.stamps = get_copy_member_versions(std::move(parsed_macro));
+            cache_data.stamps = get_copy_member_versions(*parsed_macro);
         else
             cache_data.stamps.clear();
     }

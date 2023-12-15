@@ -17,14 +17,15 @@
 
 #include <variant>
 
-#include "id_storage.h"
-#include "macro.h"
+#include "id_index.h"
 
 namespace hlasm_plugin::parser_library::context {
 class ca_instruction;
 class assembler_instruction;
 class machine_instruction;
 class mnemonic_code;
+class macro_definition;
+
 
 // structure that represents operation code of an instruction
 struct opcode_t
@@ -34,12 +35,21 @@ struct opcode_t
         const assembler_instruction*,
         const machine_instruction*,
         const mnemonic_code*,
-        macro_def_ptr>;
+        macro_definition*>;
 
     id_index opcode;
     opcode_variant opcode_detail;
 
     explicit operator bool() const { return !std::holds_alternative<std::monostate>(opcode_detail); }
+
+    bool is_macro() const noexcept { return std::holds_alternative<macro_definition*>(opcode_detail); }
+    macro_definition* get_macro_details() const noexcept
+    {
+        if (std::holds_alternative<macro_definition*>(opcode_detail))
+            return std::get<macro_definition*>(opcode_detail);
+        else
+            return nullptr;
+    }
 };
 
 } // namespace hlasm_plugin::parser_library::context

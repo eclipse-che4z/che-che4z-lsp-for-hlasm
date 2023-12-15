@@ -317,10 +317,8 @@ void lsp_analyzer::collect_occurrence(const semantics::instruction_si& instructi
     {
         auto opcode = hlasm_ctx_.get_operation_code(
             std::get<context::id_index>(instruction.value)); // TODO: collect the instruction at the right time
-        auto* macro_def = std::get_if<context::macro_def_ptr>(&opcode.opcode_detail);
-        if (!opcode.opcode.empty() || macro_def)
-            collector.occurrences.emplace_back(
-                opcode.opcode, macro_def ? macro_def->get() : nullptr, instruction.field_range);
+        if (!opcode.opcode.empty() || opcode.is_macro())
+            collector.occurrences.emplace_back(opcode.opcode, opcode.get_macro_details(), instruction.field_range);
     }
     else if (instruction.type == semantics::instruction_si_type::ORD
         && collector.collector_kind == lsp::occurrence_kind::INSTR_LIKE)

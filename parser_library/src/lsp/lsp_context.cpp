@@ -935,10 +935,9 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
         case lsp::occurrence_kind::INSTR_LIKE: {
             if (auto it = m_macros.find(occ.opcode); it != m_macros.end())
                 return it->second->definition_location;
-            if (auto op = m_hlasm_ctx->find_any_valid_opcode(occ.name);
-                op && std::holds_alternative<context::macro_def_ptr>(op->opcode_detail))
+            if (auto op = m_hlasm_ctx->find_any_valid_opcode(occ.name); op && op->is_macro())
             {
-                return std::get<context::macro_def_ptr>(op->opcode_detail)->definition_location;
+                return op->get_macro_details()->definition_location;
             }
             if (auto it = m_instr_like.find(occ.name); it != m_instr_like.end())
                 return location(position(), it->second);
@@ -1056,9 +1055,8 @@ std::string lsp_context::find_hover(const symbol_occurrence& occ,
                 return hover_for_macro(*it->second);
             if (auto op = m_hlasm_ctx->find_any_valid_opcode(occ.name))
             {
-                if (std::holds_alternative<context::macro_def_ptr>(op->opcode_detail))
-                    return prefix_using(
-                        hover_for_macro(*m_macros.at(std::get<context::macro_def_ptr>(op->opcode_detail).get())));
+                if (op->is_macro())
+                    return prefix_using(hover_for_macro(*m_macros.at(op->get_macro_details())));
                 else
                     return prefix_using(hover_for_instruction(op->opcode));
             }

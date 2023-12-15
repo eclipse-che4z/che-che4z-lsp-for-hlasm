@@ -739,7 +739,7 @@ void hlasm_context::remove_mnemonic(id_index mnemo)
     if (auto it = external_macros_.find(mnemo); it == external_macros_.end())
         opcode_mnemo_[mnemo].emplace_back(opcode_t(), ++m_current_opcode_generation);
     else // restore external macro when available
-        opcode_mnemo_[mnemo].emplace_back(opcode_t { it->first, it->second }, ++m_current_opcode_generation);
+        opcode_mnemo_[mnemo].emplace_back(opcode_t { it->first, it->second.get() }, ++m_current_opcode_generation);
 }
 
 opcode_t hlasm_context::get_operation_code(id_index symbol, opcode_generation gen) const
@@ -789,12 +789,8 @@ struct opcode_attr_visitor
     std::string operator()(const ca_instruction*) const { return "A"; }
     std::string operator()(const mnemonic_code*) const { return "E"; }
     std::string operator()(const machine_instruction*) const { return "O"; }
-    std::string operator()(const macro_def_ptr&) const { return "M"; }
-    template<typename T>
-    std::string operator()(const T&) const
-    {
-        return "U";
-    }
+    std::string operator()(macro_definition*) const { return "M"; }
+    std::string operator()(std::monostate) const { return "U"; }
 };
 
 C_t hlasm_context::get_opcode_attr(id_index symbol, opcode_generation gen) const
@@ -832,7 +828,7 @@ void hlasm_context::add_macro(macro_def_ptr macro, bool external)
 {
     auto next_gen = ++m_current_opcode_generation;
     const auto& m = macros_[macro->id].emplace_back(std::move(macro), next_gen).first;
-    opcode_mnemo_[m->id].emplace_back(opcode_t { m->id, m }, next_gen);
+    opcode_mnemo_[m->id].emplace_back(opcode_t { m->id, m.get() }, next_gen);
     if (external)
         external_macros_.try_emplace(m->id, m);
 };
@@ -852,13 +848,12 @@ const macro_def_ptr* hlasm_context::find_macro(id_index name, opcode_generation 
 
 const hlasm_context::opcode_map& hlasm_context::opcode_mnemo_storage() const { return opcode_mnemo_; }
 
-macro_def_ptr hlasm_context::get_macro_definition(id_index name, context::opcode_generation gen) const
+context::macro_definition* hlasm_context::get_macro_definition(id_index name, context::opcode_generation gen) const
 {
-    if (auto mnem = find_opcode_mnemo(name, gen);
-        mnem && std::holds_alternative<context::macro_def_ptr>(mnem->opcode_detail))
-        return std::get<context::macro_def_ptr>(mnem->opcode_detail);
+    if (auto mnem = find_opcode_mnemo(name, gen); mnem && mnem->is_macro())
+        return mnem->get_macro_details();
 
-    return macro_def_ptr();
+    return nullptr;
 }
 
 bool hlasm_context::is_in_macro() const { return scope_stack_.back().is_in_macro(); }
@@ -868,7 +863,7 @@ std::pair<const macro_invocation*, bool> hlasm_context::enter_macro(
 {
     assert(SYSNDX_ <= SYSNDX_limit);
 
-    macro_def_ptr macro_def = get_macro_definition(name);
+    auto* macro_def = get_macro_definition(name);
     assert(macro_def);
 
     if (label_param_data)
@@ -881,7 +876,7 @@ std::pair<const macro_invocation*, bool> hlasm_context::enter_macro(
         macro_def->call(std::move(label_param_data), std::move(params), id_storage::well_known::SYSLIST);
     auto* const result = invo.get();
 
-    auto& new_scope = scope_stack_.emplace_back(std::move(invo), macro_def);
+    auto& new_scope = scope_stack_.emplace_back(std::move(invo));
     add_system_vars_to_scope(new_scope);
     add_global_system_vars(new_scope);
 

@@ -43,14 +43,10 @@ struct code_scope
 
     bool is_in_macro() const { return !!this_macro; }
 
-    code_scope(std::unique_ptr<macro_invocation> macro_invo, macro_def_ptr macro_def)
+    explicit code_scope(std::unique_ptr<macro_invocation> macro_invo)
         : this_macro(std::move(macro_invo))
-        , this_macro_def_(std::move(macro_def))
     {}
-    code_scope() = default;
-
-private:
-    macro_def_ptr this_macro_def_;
+    explicit code_scope() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::context

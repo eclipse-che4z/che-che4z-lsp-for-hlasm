@@ -103,7 +103,7 @@ public:
 
 private:
     [[nodiscard]] const macro_cache_data* find_cached_data(const macro_cache_key& key) const;
-    [[nodiscard]] version_stamp get_copy_member_versions(context::macro_def_ptr ctx) const;
+    [[nodiscard]] version_stamp get_copy_member_versions(context::macro_definition& ctx) const;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces
