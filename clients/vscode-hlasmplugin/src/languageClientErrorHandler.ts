@@ -25,13 +25,13 @@ export class LanguageClientErrorHandler implements vscodelc.ErrorHandler {
     }
 
     error(error: Error, message: vscodelc.Message | undefined, count: number | undefined): vscodelc.ErrorHandlerResult | Promise<vscodelc.ErrorHandlerResult> {
-        this.telemetry.reportEvent("hlasm.connectionError", { ...error });
+        this.telemetry.reportException(error, { message: message?.jsonrpc ?? '', count: '' + count });
 
         return this.defaultHandler!.error(error, message, count);
     }
 
     closed(): vscodelc.CloseHandlerResult | Promise<vscodelc.CloseHandlerResult> {
-        this.telemetry.reportEvent("hlasm.connectionClosed");
+        this.telemetry.reportErrorEvent("hlasm.connectionClosed");
         return this.defaultHandler!.closed();
     }
 

@@ -22,6 +22,8 @@ const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY;
 
 export interface Telemetry {
     reportEvent: (eventName: string, properties?: TelemetryEventProperties, measurements?: TelemetryEventMeasurements) => void,
+    reportErrorEvent: (eventName: string, properties?: TelemetryEventProperties, measurements?: TelemetryEventMeasurements) => void,
+    reportException: (error: Error, properties?: TelemetryEventProperties, measurements?: TelemetryEventMeasurements) => void,
     dispose: () => void,
 }
 
@@ -30,8 +32,10 @@ export function createTelemetry(): Telemetry {
         if (TELEMETRY_KEY_ENCODED !== TELEMETRY_DEFAULT_KEY) {
             const reporter = new TelemetryReporter(decodeBase64(TELEMETRY_KEY_ENCODED).trim());
             return {
-                reportEvent: (eventName, properties, measurements) => { reporter.sendTelemetryEvent(eventName, properties, measurements); },
-                dispose: () => { reporter.dispose(); },
+                reportEvent: reporter.sendTelemetryEvent.bind(reporter),
+                reportErrorEvent: reporter.sendTelemetryErrorEvent.bind(reporter),
+                reportException: reporter.sendTelemetryException.bind(reporter),
+                dispose: reporter.dispose.bind(reporter),
             };
         }
     }
@@ -40,7 +44,9 @@ export function createTelemetry(): Telemetry {
     }
 
     return {
-        reportEvent: (_eventName: string, _properties?: TelemetryEventProperties, _measurements?: TelemetryEventMeasurements) => { },
+        reportEvent: () => { },
+        reportErrorEvent: () => { },
+        reportException: () => { },
         dispose: () => { }
     };
 }

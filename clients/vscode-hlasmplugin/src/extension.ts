@@ -39,6 +39,7 @@ import { HlasmExtension } from './extension.interface';
 import { toggleAdvisoryConfigurationDiagnostics } from './hlasmConfigurationDiagnosticsProvider'
 import { pickUser } from './uiUtils';
 import { activateBranchDecorator } from './branchDecorator';
+import { asError } from './helpers';
 
 export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
 
@@ -142,6 +143,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
         if (serverVariant === 'native')
             offerSwitchToWasmClient();
 
+        telemetry.reportException(asError(e));
         throw e;
     }
 
