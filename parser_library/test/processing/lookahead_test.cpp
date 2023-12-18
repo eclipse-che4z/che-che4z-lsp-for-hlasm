@@ -16,6 +16,7 @@
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
+#include "context/variables/set_symbol.h"
 #include "expressions/conditional_assembly/ca_expression.h"
 #include "expressions/evaluation_context.h"
 #include "library_info_transitional.h"

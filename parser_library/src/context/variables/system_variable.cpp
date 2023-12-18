@@ -24,8 +24,8 @@
 using namespace hlasm_plugin::parser_library::context;
 
 
-system_variable::system_variable(id_index name, macro_data_ptr value, bool is_global)
-    : macro_param_base(macro_param_type::SYSTEM_TYPE, name, is_global)
+system_variable::system_variable(id_index name, macro_data_ptr value)
+    : macro_param_base(macro_param_type::SYSTEM_TYPE, name)
     , data_(std::move(value))
 {}
 
@@ -51,7 +51,7 @@ const macro_param_data_component* system_variable::get_data(std::span<const A_t>
 A_t system_variable::number(std::span<const A_t> offset) const
 {
     if (offset.empty())
-        return data_->number - 1;
+        return data_->number() - 1;
     else
         return macro_param_base::number(offset);
 }

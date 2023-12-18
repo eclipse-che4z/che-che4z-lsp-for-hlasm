@@ -40,8 +40,6 @@ class variable_symbol
 public:
     // name of the symbol
     const id_index id;
-    // flag if symbol has global scope
-    const bool is_global;
 
     // returns kind of variable symbol
     const variable_kind var_kind;
@@ -64,7 +62,7 @@ public:
     virtual ~variable_symbol() = default;
 
 protected:
-    variable_symbol(variable_kind var_kind, id_index name, bool is_global);
+    variable_symbol(variable_kind var_kind, id_index name);
 };
 
 } // namespace hlasm_plugin::parser_library::context

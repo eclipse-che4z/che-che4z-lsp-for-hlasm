@@ -15,6 +15,7 @@
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
 #include "context/hlasm_context.h"
+#include "context/variables/set_symbol.h"
 
 using namespace hlasm_plugin::utils::resource;
 

@@ -22,7 +22,7 @@ namespace hlasm_plugin::parser_library::context {
 macro_param_data_component::~macro_param_data_component() = default;
 
 macro_param_data_component::macro_param_data_component(A_t number)
-    : number(number)
+    : number_of_components(number)
 {}
 
 C_t macro_param_data_single::get_value() const { return data_; }
@@ -110,7 +110,7 @@ macro_param_data_zero_based::macro_param_data_zero_based(std::vector<macro_data_
         return vec;
     }())
 {
-    assert(data_.size() - 1 <= std::numeric_limits<A_t>::max());
+    assert(data_.size() <= std::numeric_limits<A_t>::max());
     value_.append("(");
     for (size_t i = 0; i < data_.size(); ++i)
     {

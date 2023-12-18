@@ -39,9 +39,8 @@ const macro_param_base* variable_symbol::access_macro_param_base() const
     return var_kind == variable_kind::MACRO_VAR_KIND ? static_cast<const macro_param_base*>(this) : nullptr;
 }
 
-variable_symbol::variable_symbol(variable_kind var_kind, id_index name, bool is_global)
+variable_symbol::variable_symbol(variable_kind var_kind, id_index name)
     : id(name)
-    , is_global(is_global)
     , var_kind(var_kind)
 {}
 

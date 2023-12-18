@@ -15,6 +15,7 @@
 #include "common_testing.h"
 
 #include "context/hlasm_context.h"
+#include "context/variables/set_symbol.h"
 #include "fade_messages.h"
 #include "hlasmparser_multiline.h"
 #include "utils/resource_location.h"

@@ -21,6 +21,7 @@
 #include "context/hlasm_context.h"
 #include "context/literal_pool.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
+#include "context/variables/set_symbol.h"
 #include "diagnostic_consumer.h"
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"

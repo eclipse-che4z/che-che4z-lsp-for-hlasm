@@ -157,7 +157,7 @@ std::pair<std::unique_ptr<macro_invocation>, bool> macro_definition::call(
 
     named_cpy.emplace(syslist_name,
         std::make_unique<system_variable_syslist>(
-            syslist_name, std::make_unique<macro_param_data_zero_based>(std::move(syslist)), false));
+            syslist_name, std::make_unique<macro_param_data_zero_based>(std::move(syslist))));
 
     return { std::make_unique<macro_invocation>(
                  id, cached_definition, copy_nests, labels, std::move(named_cpy), definition_location),

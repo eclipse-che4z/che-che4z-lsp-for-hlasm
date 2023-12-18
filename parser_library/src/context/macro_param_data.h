@@ -27,6 +27,8 @@ class macro_param_data_component;
 using macro_data_ptr = std::unique_ptr<macro_param_data_component>;
 using macro_data_shared_ptr = std::shared_ptr<macro_param_data_component>;
 
+// TODO: THIS MUST BE RE-WORKED
+
 // base class for data of macro parameters
 // data in macro parameters are immutable
 class macro_param_data_component
@@ -40,15 +42,17 @@ public:
     // dummy data returning default value everytime
     static const macro_data_shared_ptr dummy;
 
-    // number of components in the object
-    const A_t number;
-
     virtual std::optional<std::pair<A_t, A_t>> index_range() const = 0;
 
     virtual ~macro_param_data_component();
 
+    virtual A_t number() const { return number_of_components; }
+
 protected:
     explicit macro_param_data_component(A_t number);
+
+    // number of components in the object
+    const A_t number_of_components;
 };
 
 // dummy macro data class returning default value everytime

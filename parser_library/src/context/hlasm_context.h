@@ -51,6 +51,10 @@ namespace hlasm_plugin::parser_library::context {
 // code
 class hlasm_context
 {
+public:
+    using sysvar_map = std::unordered_map<id_index, std::pair<std::shared_ptr<system_variable>, bool>>;
+
+private:
     using macro_storage = std::unordered_map<id_index, std::vector<std::pair<macro_def_ptr, opcode_generation>>>;
     using copy_member_storage = std::unordered_map<id_index, copy_member_ptr>;
     using instruction_storage = std::unordered_map<id_index, opcode_t::opcode_variant>;
@@ -59,6 +63,7 @@ class hlasm_context
 
     // storage of global variables
     global_variable_storage globals_;
+    sysvar_map system_variables;
 
     // storage of defined macros
     macro_storage macros_;
@@ -88,6 +93,11 @@ class hlasm_context
 
     // map of active instructions in HLASM
     static void init_instruction_map(opcode_map& opcodes, id_storage& ids, instruction_set_version active_instr_set);
+    void add_global_system_variables(sysvar_map& sysvars);
+    void add_local_system_variables(sysvar_map& sysvars, size_t skip_last);
+
+    std::vector<macro_data_ptr>& ensure_dynamic_ptrs_count();
+    std::vector<macro_data_ptr> dynamic_ptrs_vector;
 
     // value of system variable SYSNDX
     unsigned long SYSNDX_ = 1;
@@ -97,11 +107,6 @@ class hlasm_context
     // last AINSERT virtual file id
     size_t m_ainsert_id = 0;
     bool m_end_reached = false;
-
-    void add_global_system_var_to_scope(id_index id, code_scope& scope) const;
-
-    void add_system_vars_to_scope(code_scope& scope);
-    void add_global_system_vars(code_scope& scope);
 
     std::unique_ptr<using_collection> m_usings;
     std::vector<index_t<using_collection>> m_active_usings;
@@ -260,49 +265,11 @@ public:
 
     // creates specified global set symbol
     template<typename T>
-    set_symbol_base* create_global_variable(id_index id, bool is_scalar)
-    {
-        auto* scope = curr_scope();
-
-        if (auto var = scope->variables.find(id); var != scope->variables.end())
-            return dynamic_cast<set_symbol<T>*>(var->second.get());
-
-        if (auto glob = globals_.find(id); glob != globals_.end())
-        {
-            auto var = std::dynamic_pointer_cast<set_symbol<T>>(glob->second);
-            auto* result = var.get();
-            if (var)
-                scope->variables.try_emplace(id, std::move(var));
-
-            return result;
-        }
-
-        auto var = std::make_shared<set_symbol<T>>(id, is_scalar, true);
-        auto* result = var.get();
-
-        globals_.try_emplace(id, var);
-        scope->variables.try_emplace(id, std::move(var));
-
-        return result;
-    }
+    set_symbol_base* create_global_variable(id_index id, bool is_scalar);
 
     // creates specified local set symbol
     template<typename T>
-    set_symbol_base* create_local_variable(id_index id, bool is_scalar)
-    {
-        auto* scope = curr_scope();
-
-        if (auto var = scope->variables.find(id); var != scope->variables.end())
-            return dynamic_cast<set_symbol<T>*>(var->second.get());
-
-        auto var = std::make_shared<set_symbol<T>>(id, is_scalar, false);
-
-        auto* result = var.get();
-
-        scope->variables.try_emplace(id, std::move(var));
-
-        return result;
-    }
+    set_symbol_base* create_local_variable(id_index id, bool is_scalar);
 
     unsigned long next_sysndx() const { return SYSNDX_; }
     void sysndx_limit(unsigned long limit)
@@ -351,6 +318,8 @@ public:
     void update_mnote_max(unsigned mnote_level);
 
     const auto& get_opencode_sequence_symbols() const noexcept { return opencode_sequence_symbols; }
+
+    sysvar_map get_system_variables(const code_scope&);
 };
 
 bool test_symbol_for_read(const variable_symbol* var,

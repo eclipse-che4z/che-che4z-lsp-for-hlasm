@@ -19,6 +19,7 @@
 #include "context/hlasm_context.h"
 #include "context/ordinary_assembly/location_counter.h"
 #include "context/ordinary_assembly/section.h"
+#include "context/variables/set_symbol.h"
 
 // test for
 // symbol data attributes

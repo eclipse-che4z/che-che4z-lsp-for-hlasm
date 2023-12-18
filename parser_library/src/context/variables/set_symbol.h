@@ -55,7 +55,7 @@ public:
         std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const override;
 
 protected:
-    set_symbol_base(id_index name, bool is_scalar, bool is_global, SET_t_enum type);
+    set_symbol_base(id_index name, bool is_scalar, SET_t_enum type);
 };
 
 // specialized set symbol holding data T (int = A_t, bool = B_t, std::string=C_t)
@@ -69,8 +69,8 @@ class set_symbol final : public set_symbol_base
     std::map<A_t, T> data;
 
 public:
-    set_symbol(id_index name, bool is_scalar, bool is_global)
-        : set_symbol_base(name, is_scalar, is_global, object_traits<T>::type_enum)
+    set_symbol(id_index name, bool is_scalar)
+        : set_symbol_base(name, is_scalar, object_traits<T>::type_enum)
     {}
 
     // gets value from non scalar set symbol

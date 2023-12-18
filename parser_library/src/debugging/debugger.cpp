@@ -30,6 +30,7 @@
 
 #include "analyzer.h"
 #include "context/hlasm_context.h"
+#include "context/variables/system_variable.h"
 #include "debug_lib_provider.h"
 #include "debug_types.h"
 #include "debugger_configuration.h"
@@ -105,6 +106,7 @@ class debugger::impl final : public processing::statement_analyzer
     std::string opencode_source_uri_;
     std::vector<stack_frame> stack_frames_;
     std::vector<scope> scopes_;
+    context::hlasm_context::sysvar_map last_system_variables_;
 
     std::unordered_map<size_t, variable_store> variables_;
     size_t next_var_ref_ = 1;
@@ -265,6 +267,7 @@ public:
             stack_frames_.clear();
             scopes_.clear();
             proc_stack_ = std::move(stack);
+            last_system_variables_.clear();
 
             if (disconnected_)
                 return false;
@@ -372,30 +375,33 @@ public:
         // we show only global variables that are valid for current scope,
         // moreover if we show variable in globals, we do not show it in locals
 
-
-
         if (proc_stack_[frame_id].scope.is_in_macro())
-            for (auto it : proc_stack_[frame_id].scope.this_macro->named_params)
-            {
-                if (it.first.empty())
-                    continue;
-                scope_vars.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<context::A_t> {}));
-            }
-
-        for (auto it : proc_stack_[frame_id].scope.variables)
         {
-            if (it.second->is_global)
-                globals.push_back(std::make_unique<set_symbol_variable>(*it.second));
-            else
-                scope_vars.push_back(std::make_unique<set_symbol_variable>(*it.second));
+            for (const auto& [name, value] : proc_stack_[frame_id].scope.this_macro->named_params)
+            {
+                if (name.empty())
+                    continue;
+                scope_vars.push_back(std::make_unique<macro_param_variable>(*value, std::vector<context::A_t> {}));
+            }
         }
 
-        for (auto it : proc_stack_[frame_id].scope.system_variables)
+        for (const auto& [_, value_type] : proc_stack_[frame_id].scope.variables)
         {
-            if (it.second->is_global)
-                globals.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<context::A_t> {}));
+            const auto& [value, global] = value_type;
+            if (global)
+                globals.push_back(std::make_unique<set_symbol_variable>(*value));
             else
-                scope_vars.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<context::A_t> {}));
+                scope_vars.push_back(std::make_unique<set_symbol_variable>(*value));
+        }
+
+        last_system_variables_ = ctx_->get_system_variables(proc_stack_[frame_id].scope);
+        for (const auto& [_, value_type] : last_system_variables_)
+        {
+            const auto& [value, global] = value_type;
+            if (global)
+                globals.push_back(std::make_unique<macro_param_variable>(*value, std::vector<context::A_t> {}));
+            else
+                scope_vars.push_back(std::make_unique<macro_param_variable>(*value, std::vector<context::A_t> {}));
             // fetch all vars
         }
 

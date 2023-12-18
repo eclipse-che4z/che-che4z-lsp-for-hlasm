@@ -37,8 +37,8 @@ const system_variable* macro_param_base::access_system_variable() const
     return (param_type == macro_param_type::SYSTEM_TYPE) ? static_cast<const system_variable*>(this) : nullptr;
 }
 
-macro_param_base::macro_param_base(macro_param_type param_type, id_index name, bool is_global)
-    : variable_symbol(variable_kind::MACRO_VAR_KIND, name, is_global)
+macro_param_base::macro_param_base(macro_param_type param_type, id_index name)
+    : variable_symbol(variable_kind::MACRO_VAR_KIND, name)
     , param_type(param_type)
 {}
 
@@ -75,7 +75,7 @@ A_t macro_param_base::number(std::span<const A_t> offset) const
     {
         tmp = tmp->get_ith(idx);
     }
-    return tmp->number;
+    return tmp->number();
 }
 
 A_t macro_param_base::count(std::span<const A_t> offset) const
@@ -131,7 +131,7 @@ std::optional<std::pair<A_t, A_t>> macro_param_base::index_range(std::span<const
 }
 
 keyword_param::keyword_param(id_index name, macro_data_shared_ptr default_value, macro_data_ptr assigned_value)
-    : macro_param_base(macro_param_type::KEY_PAR_TYPE, name, false)
+    : macro_param_base(macro_param_type::KEY_PAR_TYPE, name)
     , assigned_data_(std::move(assigned_value))
     , default_data(std::move(default_value))
 {}
@@ -142,7 +142,7 @@ const macro_param_data_component* keyword_param::real_data() const
 }
 
 positional_param::positional_param(id_index name, size_t position, const macro_param_data_component& assigned_value)
-    : macro_param_base(macro_param_type::POS_PAR_TYPE, name, false)
+    : macro_param_base(macro_param_type::POS_PAR_TYPE, name)
     , data_(assigned_value)
     , position(position)
 {}

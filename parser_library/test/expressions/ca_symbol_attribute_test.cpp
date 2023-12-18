@@ -16,6 +16,7 @@
 
 #include "../common_testing.h"
 #include "context/hlasm_context.h"
+#include "context/variables/set_symbol.h"
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"

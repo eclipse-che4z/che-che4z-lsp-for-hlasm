@@ -15,6 +15,7 @@
 #include "ca_processor.h"
 
 #include "context/hlasm_context.h"
+#include "context/variables/set_symbol.h"
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
 #include "semantics/operand_impls.h"
 #include "semantics/range_provider.h"

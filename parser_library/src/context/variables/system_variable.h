@@ -25,7 +25,7 @@ class system_variable : public macro_param_base
     const macro_data_ptr data_;
 
 public:
-    system_variable(id_index name, macro_data_ptr value, bool is_global);
+    system_variable(id_index name, macro_data_ptr value);
 
     // gets value of data where parameter is list of nested data offsets
     C_t get_value(std::span<const A_t> offset) const override;

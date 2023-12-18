@@ -47,8 +47,8 @@ bool set_symbol_base::can_read(
     return true;
 }
 
-set_symbol_base::set_symbol_base(id_index name, bool is_scalar, bool is_global, SET_t_enum type)
-    : variable_symbol(variable_kind::SET_VAR_KIND, name, is_global)
+set_symbol_base::set_symbol_base(id_index name, bool is_scalar, SET_t_enum type)
+    : variable_symbol(variable_kind::SET_VAR_KIND, name)
     , is_scalar(is_scalar)
     , type(type)
 {}

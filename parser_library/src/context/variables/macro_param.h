@@ -56,7 +56,7 @@ public:
     virtual std::optional<std::pair<A_t, A_t>> index_range(std::span<const A_t> offset) const;
 
 protected:
-    macro_param_base(macro_param_type param_type, id_index name, bool is_global);
+    macro_param_base(macro_param_type param_type, id_index name);
     virtual const macro_param_data_component* real_data() const = 0;
 };
 

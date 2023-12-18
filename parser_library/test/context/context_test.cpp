@@ -19,6 +19,7 @@
 #include "../common_testing.h"
 #include "analyzer.h"
 #include "context/hlasm_context.h"
+#include "context/variables/set_symbol.h"
 #include "context/variables/system_variable.h"
 
 // tests for hlasm_ctx class:
@@ -101,7 +102,7 @@ TEST(context, create_global_var_different_types)
     EXPECT_EQ(glob_a, ctx.globals().find(idx)->second.get());
 }
 
-TEST(context, find_global_system_var)
+TEST(context, find_system_var)
 {
     hlasm_context ctx;
 
@@ -114,7 +115,7 @@ TEST(context, find_global_system_var)
 
 
     EXPECT_TRUE(scope_var_ptr);
-    EXPECT_NE(ctx.globals().find(idx.value()), ctx.globals().end());
+    EXPECT_EQ(ctx.globals().find(idx.value()), ctx.globals().end());
 }
 
 TEST(context, create_local_var)
@@ -163,7 +164,7 @@ TEST(context_set_vars, set_scalar)
 
     auto idx = ctx.ids().add(std::string_view("var"));
 
-    set_symbol<int> var(idx, true, false);
+    set_symbol<int> var(idx, true);
 
     EXPECT_EQ(var.get_value(1), 0);
 
@@ -176,7 +177,7 @@ TEST(context_set_vars, set_scalar)
     EXPECT_EQ(var.get_value(1), 0);
 
 
-    set_symbol<std::string> str_var(idx, true, false);
+    set_symbol<std::string> str_var(idx, true);
 
     EXPECT_EQ(str_var.get_value(), "");
     EXPECT_EQ(str_var.get_value(1), "");
@@ -189,7 +190,7 @@ TEST(context_set_vars, set_non_scalar)
 
     auto idx = ctx.ids().add(std::string_view("var"));
 
-    set_symbol<std::string> var(idx, false, false);
+    set_symbol<std::string> var(idx, false);
 
     EXPECT_EQ(var.get_value(), "");
 

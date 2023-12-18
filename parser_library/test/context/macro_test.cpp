@@ -17,6 +17,7 @@
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
 #include "context/hlasm_context.h"
+#include "context/variables/set_symbol.h"
 #include "processing/instruction_sets/macro_processor.h"
 
 // tests for macro feature:
@@ -642,7 +643,7 @@ TEST(variable_argument_passing, positive_sublist)
     auto data = macro_processor::string_to_macrodata("(a,b,c)", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
-    ASSERT_EQ(data->number, (size_t)3);
+    ASSERT_EQ(data->number(), (size_t)3);
     EXPECT_EQ(data->get_ith(1)->get_value(), "a");
     EXPECT_EQ(data->get_ith(2)->get_value(), "b");
     EXPECT_EQ(data->get_ith(3)->get_value(), "c");
@@ -651,7 +652,7 @@ TEST(variable_argument_passing, positive_sublist)
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
     ASSERT_EQ(data->get_value(), "(a,(b,1),((c),1))");
-    ASSERT_EQ(data->number, (size_t)3);
+    ASSERT_EQ(data->number(), (size_t)3);
     EXPECT_EQ(data->get_ith(1)->get_value(), "a");
     EXPECT_EQ(data->get_ith(2)->get_value(), "(b,1)");
     EXPECT_EQ(data->get_ith(2)->get_value(), "(b,1)");
@@ -661,7 +662,7 @@ TEST(variable_argument_passing, positive_sublist)
     data = macro_processor::string_to_macrodata("(a(1),(1,(1))b,()c())", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
-    ASSERT_EQ(data->number, (size_t)3);
+    ASSERT_EQ(data->number(), (size_t)3);
     EXPECT_EQ(data->get_ith(1)->get_value(), "a(1)");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
     EXPECT_EQ(data->get_ith(2)->get_value(), "(1,(1))b");
@@ -672,7 +673,7 @@ TEST(variable_argument_passing, positive_sublist)
     data = macro_processor::string_to_macrodata("(0(R2),E,C')',CLI)", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
-    ASSERT_EQ(data->number, (size_t)4);
+    ASSERT_EQ(data->number(), (size_t)4);
     EXPECT_EQ(data->get_ith(1)->get_value(), "0(R2)");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
     EXPECT_EQ(data->get_ith(2)->get_value(), "E");
@@ -685,7 +686,7 @@ TEST(variable_argument_passing, positive_sublist)
     data = macro_processor::string_to_macrodata("(DATA1,DATA2,I'DATA3,DATA4,L'DATA5,O'DATA6,S'DATA7,T'DATA8)", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
-    ASSERT_EQ(data->number, (size_t)8);
+    ASSERT_EQ(data->number(), (size_t)8);
     EXPECT_EQ(data->get_ith(1)->get_value(), "DATA1");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
     EXPECT_EQ(data->get_ith(2)->get_value(), "DATA2");
@@ -710,7 +711,7 @@ TEST(variable_argument_passing, negative_sublist)
     auto data = macro_processor::string_to_macrodata("a,b,c", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
-    ASSERT_EQ(data->number, (size_t)1);
+    ASSERT_EQ(data->number(), (size_t)1);
     EXPECT_EQ(data->get_value(), "a,b,c");
 
     data = macro_processor::string_to_macrodata("(a,(b,1),((c),1)))", diags);
