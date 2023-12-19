@@ -417,13 +417,7 @@ TEST(copy, nested_macro_copy_call)
 
     EXPECT_TRUE(mac->labels.find(id_index("A")) != mac->labels.end());
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .globals()
-                  .find(id_index("X"))
-                  ->second->access_set_symbol_base()
-                  ->access_set_symbol<context::A_t>()
-                  ->get_value(),
-        4);
+    EXPECT_EQ(get_global_var_value<context::A_t>(a.hlasm_ctx(), "X"), 4);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }

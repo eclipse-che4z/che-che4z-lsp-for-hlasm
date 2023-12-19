@@ -483,11 +483,7 @@ TEST(macro, arguments_concatenation)
     a.analyze();
     a.collect_diags();
 
-    auto it = a.hlasm_ctx().globals().find(id_index("V"));
-
-    ASSERT_NE(it, a.hlasm_ctx().globals().end());
-
-    EXPECT_EQ(it->second->access_set_symbol_base()->access_set_symbol<C_t>()->get_value(), "(B-C)+(A-D)");
+    EXPECT_EQ(get_global_var_value<C_t>(a.hlasm_ctx(), "V"), "(B-C)+(A-D)");
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
@@ -512,14 +508,8 @@ TEST(macro, arguments_continuation)
     a.analyze();
     a.collect_diags();
 
-    auto Q = a.hlasm_ctx().globals().find(id_index("Q"));
-    auto W = a.hlasm_ctx().globals().find(id_index("W"));
-
-    ASSERT_NE(Q, a.hlasm_ctx().globals().end());
-    ASSERT_NE(W, a.hlasm_ctx().globals().end());
-
-    EXPECT_EQ(Q->second->access_set_symbol_base()->access_set_symbol<C_t>()->get_value(), "X");
-    EXPECT_EQ(W->second->access_set_symbol_base()->access_set_symbol<C_t>()->get_value(), "Y");
+    EXPECT_EQ(get_global_var_value<C_t>(a.hlasm_ctx(), "Q"), "X");
+    EXPECT_EQ(get_global_var_value<C_t>(a.hlasm_ctx(), "W"), "Y");
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);

@@ -243,6 +243,26 @@ template std::optional<context::A_t> get_var_value(hlasm_context& ctx, std::stri
 template std::optional<context::B_t> get_var_value(hlasm_context& ctx, std::string name);
 template std::optional<context::C_t> get_var_value(hlasm_context& ctx, std::string name);
 
+template<typename T>
+std::optional<T> get_global_var_value(hlasm_context& ctx, std::string name)
+{
+    auto id = ctx.ids().find(name);
+    if (!id.has_value())
+        return std::nullopt;
+
+    auto var = ctx.globals().find(id.value());
+    if (var == ctx.globals().end() || !std::holds_alternative<set_symbol<T>>(var->second))
+        return std::nullopt;
+
+    const auto& t_var = std::get<set_symbol<T>>(var->second);
+
+    return t_var.get_value();
+}
+
+template std::optional<context::A_t> get_global_var_value(hlasm_context& ctx, std::string name);
+template std::optional<context::B_t> get_global_var_value(hlasm_context& ctx, std::string name);
+template std::optional<context::C_t> get_global_var_value(hlasm_context& ctx, std::string name);
+
 size_t get_syntax_errors(analyzer& a) { return a.parser().getNumberOfSyntaxErrors(); }
 
 std::unique_ptr<expressions::ca_expression> parse_ca_expression(analyzer& a)

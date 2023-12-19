@@ -94,7 +94,7 @@ std::pair<std::unique_ptr<macro_invocation>, bool> macro_definition::call(
     macro_data_ptr label_param_data, std::vector<macro_arg> actual_params, id_index syslist_name)
 {
     std::vector<macro_data_ptr> syslist;
-    std::unordered_map<id_index, macro_param_ptr> named_cpy;
+    std::unordered_map<id_index, std::unique_ptr<macro_param_base>> named_cpy;
 
     if (label_param_data)
         syslist.push_back(std::move(label_param_data));
@@ -180,7 +180,7 @@ macro_invocation::macro_invocation(id_index name,
     cached_block& cached_definition,
     const copy_nest_storage& copy_nests,
     const label_storage& labels,
-    std::unordered_map<id_index, macro_param_ptr> named_params,
+    std::unordered_map<id_index, std::unique_ptr<macro_param_base>> named_params,
     const location& definition_location)
     : id(name)
     , named_params(std::move(named_params))

@@ -26,7 +26,6 @@
 #include "lexing/tools.h"
 #include "ordinary_assembly/location_counter.h"
 #include "using.h"
-#include "utils/factory.h"
 #include "utils/time.h"
 #include "variables/set_symbol.h"
 #include "variables/system_variable.h"
@@ -670,7 +669,7 @@ variable_symbol* hlasm_context::get_var_sym(id_index name) const
 {
     const auto* scope = curr_scope();
     if (auto tmp = scope->variables.find(name); tmp != scope->variables.end())
-        return tmp->second.first.get();
+        return tmp->second.ref;
 
     if (auto s = system_variables.find(name); s != system_variables.end() && (is_in_macro() || s->second.second))
         return s->second.first.get();
@@ -978,18 +977,16 @@ set_symbol_base* hlasm_context::create_global_variable(id_index id, bool is_scal
     auto* scope = curr_scope();
 
     if (auto var = scope->variables.find(id); var != scope->variables.end())
-        return var->second.first->access_set_symbol<T>();
+        return var->second.ref->template access_set_symbol<T>();
 
-    auto [it, _] = globals_.try_emplace(id, utils::factory([id, is_scalar]() {
-        return std::shared_ptr<variable_symbol>(std::make_shared<set_symbol<T>>(id, is_scalar));
-    }));
+    auto [it, _] = globals_.try_emplace(id, std::in_place_type<set_symbol<T>>, id, is_scalar);
 
-    auto* base = it->second->access_set_symbol_base();
-    auto* var = base ? base->template access_set_symbol<T>() : nullptr;
-    if (var)
-        scope->variables.try_emplace(id, std::shared_ptr<set_symbol_base>(it->second, base), true);
+    if (!std::holds_alternative<set_symbol<T>>(it->second))
+        return nullptr;
 
-    return var;
+    scope->variables.try_emplace(id, &std::get<set_symbol<T>>(it->second), true);
+
+    return &std::get<set_symbol<T>>(it->second);
 }
 
 template set_symbol_base* hlasm_context::create_global_variable<A_t>(id_index id, bool is_scalar);
@@ -999,10 +996,9 @@ template set_symbol_base* hlasm_context::create_global_variable<C_t>(id_index id
 template<typename T>
 set_symbol_base* hlasm_context::create_local_variable(id_index id, bool is_scalar)
 {
-    const utils::factory new_var([id, is_scalar]() -> std::shared_ptr<set_symbol_base> {
-        return std::make_shared<set_symbol<T>>(id, is_scalar);
-    });
-    return curr_scope()->variables.try_emplace(id, new_var, false).first->second.first->template access_set_symbol<T>();
+    return curr_scope()
+        ->variables.try_emplace(id, std::in_place_type<T>, id, is_scalar, false)
+        .first->second.ref->template access_set_symbol<T>();
 }
 
 template set_symbol_base* hlasm_context::create_local_variable<A_t>(id_index id, bool is_scalar);

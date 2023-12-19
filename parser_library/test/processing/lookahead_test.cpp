@@ -534,13 +534,7 @@ X EQU 1,2
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .globals()
-                  .find(id_index("A"))
-                  ->second->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        2);
+    EXPECT_EQ(get_global_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "AFTER_MAC"), true);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);

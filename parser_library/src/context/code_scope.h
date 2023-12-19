@@ -15,18 +15,43 @@
 #ifndef CONTEXT_CODE_SCOPE_H
 #define CONTEXT_CODE_SCOPE_H
 
+#include <variant>
+
 #include "macro.h"
 #include "utils/time.h"
+#include "variables/set_symbol.h"
 
 namespace hlasm_plugin::parser_library::context {
 class location_counter;
 class set_symbol_base;
 
+struct code_scope_variable
+{
+    set_symbol_base* ref = nullptr;
+
+    std::variant<std::monostate, set_symbol<A_t>, set_symbol<B_t>, set_symbol<C_t>> data;
+
+    bool global;
+
+    code_scope_variable(set_symbol_base* ref, bool global)
+        : ref(ref)
+        , global(global)
+    {}
+
+    template<typename T>
+    code_scope_variable(std::in_place_type_t<T>, id_index name, bool is_scalar, bool global)
+        : data(std::in_place_type<set_symbol<T>>, name, is_scalar)
+        , global(global)
+    {
+        ref = &std::get<set_symbol<T>>(data);
+    }
+};
+
 // helper struct for HLASM code scopes
 // contains locally valid set symbols, sequence symbols and pointer to macro class (if code is in any)
 struct code_scope
 {
-    using set_sym_storage = std::unordered_map<id_index, std::pair<std::shared_ptr<set_symbol_base>, bool>>;
+    using set_sym_storage = std::unordered_map<id_index, code_scope_variable>;
 
     // local variables of scope
     set_sym_storage variables;

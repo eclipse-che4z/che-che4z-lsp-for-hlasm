@@ -60,8 +60,6 @@ using copy_nest_storage = std::vector<std::vector<copy_nest_item>>;
 // serves as prototype for creating macro_invocation objects
 class macro_definition
 {
-    using macro_param_ptr = std::shared_ptr<macro_param_base>;
-
     std::vector<std::unique_ptr<positional_param>> positional_params_;
     std::vector<std::unique_ptr<keyword_param>> keyword_params_;
     std::unordered_map<id_index, const macro_param_base*> named_params_;
@@ -114,7 +112,7 @@ public:
     // identifier of macro
     id_index id;
     // params of macro
-    std::unordered_map<id_index, macro_param_ptr> named_params;
+    std::unordered_map<id_index, std::unique_ptr<macro_param_base>> named_params;
     // vector of statements representing macro definition
     cached_block& cached_definition;
     // vector assigning each statement its copy nest
@@ -130,7 +128,7 @@ public:
         cached_block& cached_definition,
         const copy_nest_storage& copy_nests,
         const label_storage& labels,
-        std::unordered_map<id_index, macro_param_ptr> named_params,
+        std::unordered_map<id_index, std::unique_ptr<macro_param_base>> named_params,
         const location& definition_location);
 
     const auto& get_copy_nest(statement_id stmt_id) const noexcept

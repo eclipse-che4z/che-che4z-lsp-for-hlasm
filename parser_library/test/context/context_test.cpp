@@ -77,9 +77,9 @@ TEST(context, create_global_var)
     EXPECT_TRUE(glob == found);
 
     EXPECT_TRUE(ctx.globals().find(idx) != ctx.globals().end());
-    EXPECT_TRUE(glob == ctx.globals().find(idx)->second->access_set_symbol_base());
+    EXPECT_TRUE(glob
+        == std::visit([](const auto& e) -> const set_symbol_base* { return &e; }, ctx.globals().find(idx)->second));
     EXPECT_TRUE(dynamic_cast<set_symbol<C_t>*>(glob));
-    EXPECT_TRUE(glob == ctx.globals().find(idx)->second.get());
 }
 
 TEST(context, create_global_var_different_types)
@@ -97,9 +97,9 @@ TEST(context, create_global_var_different_types)
     EXPECT_FALSE(glob_b);
 
     EXPECT_NE(ctx.globals().find(idx), ctx.globals().end());
-    EXPECT_EQ(glob_a, ctx.globals().find(idx)->second->access_set_symbol_base());
+    EXPECT_TRUE(glob_a
+        == std::visit([](const auto& e) -> const set_symbol_base* { return &e; }, ctx.globals().find(idx)->second));
     EXPECT_TRUE(dynamic_cast<set_symbol<A_t>*>(glob_a));
-    EXPECT_EQ(glob_a, ctx.globals().find(idx)->second.get());
 }
 
 TEST(context, find_system_var)

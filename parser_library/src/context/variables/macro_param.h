@@ -60,8 +60,6 @@ protected:
     virtual const macro_param_data_component* real_data() const = 0;
 };
 
-using macro_param_ptr = std::shared_ptr<macro_param_base>;
-
 // represent macro param with stated position and name, positional param
 class keyword_param : public macro_param_base
 {

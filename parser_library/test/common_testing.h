@@ -73,6 +73,9 @@ template<typename T>
 std::optional<T> get_var_value(hlasm_context& ctx, std::string name);
 
 template<typename T>
+std::optional<T> get_global_var_value(hlasm_context& ctx, std::string name);
+
+template<typename T>
 std::optional<std::vector<T>> get_var_vector(hlasm_context& ctx, std::string name);
 
 template<typename T>

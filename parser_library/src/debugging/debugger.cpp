@@ -387,11 +387,11 @@ public:
 
         for (const auto& [_, value_type] : proc_stack_[frame_id].scope.variables)
         {
-            const auto& [value, global] = value_type;
+            const auto& [ref, _data, global] = value_type;
             if (global)
-                globals.push_back(std::make_unique<set_symbol_variable>(*value));
+                globals.push_back(std::make_unique<set_symbol_variable>(*ref));
             else
-                scope_vars.push_back(std::make_unique<set_symbol_variable>(*value));
+                scope_vars.push_back(std::make_unique<set_symbol_variable>(*ref));
         }
 
         last_system_variables_ = ctx_->get_system_variables(proc_stack_[frame_id].scope);
