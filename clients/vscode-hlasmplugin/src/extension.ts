@@ -40,6 +40,7 @@ import { toggleAdvisoryConfigurationDiagnostics } from './hlasmConfigurationDiag
 import { pickUser } from './uiUtils';
 import { activateBranchDecorator } from './branchDecorator';
 import { asError } from './helpers';
+import { registerListingServices } from './hlasmListingServices';
 
 export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
 
@@ -88,6 +89,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
         showBranchInformation: getConfig<boolean>('showBranchInformation', true).toString(),
     });
 
+    registerListingServices(context);
     await registerEditHelpers(context);
 
     // patterns for files and configs

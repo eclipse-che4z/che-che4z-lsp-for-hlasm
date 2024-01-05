@@ -4,6 +4,7 @@
 
 #### Added
 - Highlight lines in listings that originate from macros and copybooks
+- Navigation actions for listings
 
 #### Fixed
 - Inconsistent completion list with implicitly defined private CSECT

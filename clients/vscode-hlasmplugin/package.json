@@ -223,7 +223,8 @@
       {
         "id": "hlasmListing",
         "extensions": [
-          ".listing"
+          ".listing",
+          ".lst"
         ],
         "aliases": [
           "HLASMListing"
@@ -295,6 +296,9 @@
         "editor.wordBasedSuggestions": false,
         "editor.tabSize": 1,
         "editor.detectIndentation": false,
+        "editor.guides.indentation": false
+      },
+      "[hlasmListing]": {
         "editor.guides.indentation": false
       }
     },
