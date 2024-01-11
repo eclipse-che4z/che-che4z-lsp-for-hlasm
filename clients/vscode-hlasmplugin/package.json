@@ -229,6 +229,7 @@
         "aliases": [
           "HLASMListing"
         ],
+        "configuration": "./language-configuration.json",
         "filenames": []
       }
     ],

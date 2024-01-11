@@ -538,6 +538,7 @@ TEST(resource_location, lexically_normal_diff_schemes)
     EXPECT_EQ(resource_location("aaa:C:/dir/.").lexically_normal().get_uri(), "aaa:C%3A/dir/");
     EXPECT_EQ(resource_location("aaa:C:/dir../.").lexically_normal().get_uri(), "aaa:C%3A/dir../");
     EXPECT_EQ(resource_location("aaa:C:/dir./.").lexically_normal().get_uri(), "aaa:C%3A/dir./");
+    EXPECT_EQ(resource_location("aaa:C:/dir./%2f").lexically_normal().get_uri(), "aaa:C%3A/dir./%2F");
     EXPECT_EQ(resource_location("aaa:C:/dir/..").lexically_normal().get_uri(), "aaa:C%3A/");
     EXPECT_EQ(resource_location("aaa:C:///dir/../").lexically_normal().get_uri(), "aaa:C%3A/");
 }

@@ -19,7 +19,7 @@ interface ExternalConfigurationRequest {
     uri: string;
 };
 
-type AsmOptions = (
+export type AsmOptions = (
     {
         GOFF: boolean;
     } | {
@@ -122,7 +122,7 @@ type AsmOptions = (
         RENT?: boolean;
     };
 
-type Preprocessor = ("DB2" | "CICS" | "ENDEVOR")
+export type Preprocessor = ("DB2" | "CICS" | "ENDEVOR")
     | {
         name: "DB2";
         options?: {
@@ -138,22 +138,32 @@ type Preprocessor = ("DB2" | "CICS" | "ENDEVOR")
         name: "ENDEVOR";
     };
 
-type Library = string
+export type Library = string
     | {
         path: string;
         optional?: boolean;
         macro_extensions?: string[];
         prefer_alternate_root?: boolean;
-    }
-    | {
+    } | {
         dataset: string;
         optional?: boolean;
+        profile?: string;
+    } | {
+
+        environment: string;
+        stage: string;
+        system: string;
+        subsystem: string;
+        type: string;
+        use_map?: boolean;
+        optional?: boolean;
+        profile?: string;
     };
 
 /**
  * Derived from schema/processor_entry.schema.json
  */
-interface ProcGrpsSchemaJson {
+export interface ProcGrpsSchemaJson {
     name: string;
     libs: Library[];
     asm_options?: AsmOptions;

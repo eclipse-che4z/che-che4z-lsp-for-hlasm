@@ -78,15 +78,15 @@ suite('External files', () => {
 
     });
     const nameGenerator = (components: string[], service: string = 'TEST') => {
-        return 'v2.' + service + '.' + crypto.createHash('sha256').update(JSON.stringify(components)).digest().toString('hex');
+        return 'v3.' + service + '.' + crypto.createHash('sha256').update(JSON.stringify(components)).digest().toString('hex');
     };
     test('Access cached content', async () => {
         const cacheUri = Uri.parse('test:cache/');
-        const dirResponse = deflateSync(new TextEncoder().encode(JSON.stringify("not_exists")));
+        const dirResponse = deflateSync(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/DIR', not_exists: true })));
         const dir2Content = ['/DIR2/FILE'];
-        const dir2Response = deflateSync(new TextEncoder().encode(JSON.stringify({ data: dir2Content })));
+        const dir2Response = deflateSync(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/DIR2', data: dir2Content })));
         const fileContent = 'file content';
-        const fileResponse = deflateSync(new TextEncoder().encode(JSON.stringify({ data: fileContent })));
+        const fileResponse = deflateSync(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/DIR2/FILE', data: fileContent })));
 
         let dirWritten = false;
         let dir2Written = false;
@@ -258,6 +258,49 @@ suite('External files', () => {
         });
 
         emmiter.fire({ paths: ['A'], serverId: 'SERVER' });
+
+        await deletePromise;
+
+    });
+
+    test('Selective cache clear with predicate', async () => {
+        const cacheUri = Uri.parse('test:cache/');
+
+        let resolve: () => void;
+        const deletePromise = new Promise<void>((r) => { resolve = r; });
+
+        const ext = new HLASMExternalFiles('test', {
+            onNotification: (_, __) => { return { dispose: () => { } }; },
+            sendNotification: (_: any, __: any) => Promise.resolve(),
+        }, {
+            readDirectory: async (uri: Uri) => {
+                assert.strictEqual(cacheUri.toString(), uri.toString());
+                return [[nameGenerator(['SERVER', 'B'], 'TEST2'), FileType.File], [nameGenerator(['SERVER', 'A']), FileType.File]];
+            },
+            readFile: async (uri: Uri) => {
+                if (uri.path.endsWith(nameGenerator(['SERVER', 'A'])))
+                    return deflateSync(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/SERVER/A' })));
+                else
+                    return deflateSync(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/SERVER/B' })));
+            },
+            delete: async (uri: Uri, options?: { recursive?: boolean; useTrash?: boolean }) => {
+                assert.strictEqual(uri.toString(), Uri.joinPath(cacheUri, nameGenerator(['SERVER', 'A'])).toString())
+                resolve();
+            },
+        } as any as FileSystem, {
+            uri: cacheUri,
+        });
+
+        const emmiter = new EventEmitter<ExternalFilesInvalidationdata | undefined>();
+        ext.setClient('TEST', {
+            parseArgs: async (path: string, purpose: ExternalRequestType) => null,
+            listMembers: (_: ClientUriDetails) => Promise.resolve(null),
+            readMember: (_: ClientUriDetails) => Promise.resolve(null),
+
+            invalidate: emmiter.event,
+        });
+
+        emmiter.fire((p) => { return p.endsWith('/A') });
 
         await deletePromise;
 

@@ -56,6 +56,36 @@ struct dataset
 void to_json(nlohmann::json& j, const dataset& p);
 void from_json(const nlohmann::json& j, dataset& p);
 
+struct endevor_dataset
+{
+    std::string profile;
+
+    std::string dsn;
+    bool optional = false;
+
+    auto operator<=>(const endevor_dataset&) const = default;
+};
+void to_json(nlohmann::json& j, const endevor_dataset& p);
+void from_json(const nlohmann::json& j, endevor_dataset& p);
+
+struct endevor
+{
+    std::string profile;
+
+    std::string environment;
+    std::string stage;
+    std::string system;
+    std::string subsystem;
+    std::string type;
+    bool use_map = false;
+
+    bool optional = false;
+
+    auto operator<=>(const endevor&) const = default;
+};
+void to_json(nlohmann::json& j, const endevor& p);
+void from_json(const nlohmann::json& j, endevor& p);
+
 struct db2_preprocessor
 {
     std::string version;
@@ -113,7 +143,7 @@ struct preprocessor_options
 struct processor_group
 {
     std::string name;
-    std::vector<std::variant<library, dataset>> libs;
+    std::vector<std::variant<library, dataset, endevor, endevor_dataset>> libs;
     assembler_options asm_options;
     std::vector<preprocessor_options> preprocessors;
 };

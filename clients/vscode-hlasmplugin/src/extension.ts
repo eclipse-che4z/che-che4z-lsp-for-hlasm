@@ -37,6 +37,7 @@ import { HLASMExternalFilesFtp } from './hlasmExternalFilesFtp';
 import { HLASMExternalConfigurationProvider, HLASMExternalConfigurationProviderHandler } from './hlasmExternalConfigurationProvider';
 import { HlasmExtension } from './extension.interface';
 import { toggleAdvisoryConfigurationDiagnostics } from './hlasmConfigurationDiagnosticsProvider'
+import { handleE4EIntegration } from './hlasmExternalFilesEndevor';
 import { pickUser } from './uiUtils';
 import { activateBranchDecorator } from './branchDecorator';
 import { asError } from './helpers';
@@ -162,6 +163,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
             return extConfProvider.addHandler(h);
         },
     };
+
+    handleE4EIntegration(api, context.subscriptions, hlasmpluginClient.outputChannel);
 
     return api;
 }

@@ -130,6 +130,20 @@ std::string percent_encode(std::string_view s)
     return uri;
 }
 
+std::string percent_encode_component(std::string_view s)
+{
+    std::string uri;
+    uri.reserve(s.size());
+    auto out = std::back_inserter(uri);
+
+    for (auto c : s)
+    {
+        network::detail::encode_char(c, out);
+    }
+
+    return uri;
+}
+
 std::string percent_decode(std::string_view s)
 {
     std::string result;

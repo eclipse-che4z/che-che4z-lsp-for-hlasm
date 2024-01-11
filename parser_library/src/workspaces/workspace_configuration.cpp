@@ -317,12 +317,54 @@ utils::task workspace_configuration::process_processor_group_library(const confi
 {
     utils::path::dissected_uri new_uri_components;
     new_uri_components.scheme = external_uri_scheme;
-    new_uri_components.path = "/DATASET/" + utils::encoding::percent_encode(dsn.dsn);
+    new_uri_components.path = "/DATASET/" + utils::encoding::percent_encode_component(dsn.dsn);
     if (!m_location.get_uri().empty())
         new_uri_components.fragment = utils::encoding::uri_friendly_base16_encode(m_location.get_uri());
     utils::resource::resource_location new_uri(utils::path::reconstruct_uri(new_uri_components));
 
     prc_grp.add_library(get_local_library(new_uri, { .optional_library = dsn.optional }));
+
+    return {};
+}
+
+utils::task workspace_configuration::process_processor_group_library(const config::endevor& end,
+    const utils::resource::resource_location&,
+    std::vector<diagnostic_s>&,
+    std::span<const std::string>,
+    processor_group& prc_grp)
+{
+    utils::path::dissected_uri new_uri_components;
+    new_uri_components.scheme = external_uri_scheme;
+    new_uri_components.path = "/ENDEVOR/" + utils::encoding::percent_encode_component(end.profile) + "/"
+        + std::string(end.use_map ? "map" : "nomap") + "/" + utils::encoding::percent_encode_component(end.environment)
+        + "/" + utils::encoding::percent_encode_component(end.stage) + "/"
+        + utils::encoding::percent_encode_component(end.system) + "/"
+        + utils::encoding::percent_encode_component(end.subsystem) + "/"
+        + utils::encoding::percent_encode_component(end.type);
+    if (!m_location.get_uri().empty())
+        new_uri_components.fragment = utils::encoding::uri_friendly_base16_encode(m_location.get_uri());
+    utils::resource::resource_location new_uri(utils::path::reconstruct_uri(new_uri_components));
+
+    prc_grp.add_library(get_local_library(new_uri, { .optional_library = end.optional }));
+
+    return {};
+}
+
+utils::task workspace_configuration::process_processor_group_library(const config::endevor_dataset& end,
+    const utils::resource::resource_location&,
+    std::vector<diagnostic_s>&,
+    std::span<const std::string>,
+    processor_group& prc_grp)
+{
+    utils::path::dissected_uri new_uri_components;
+    new_uri_components.scheme = external_uri_scheme;
+    new_uri_components.path = "/ENDEVOR/" + utils::encoding::percent_encode_component(end.profile) + "/"
+        + utils::encoding::percent_encode_component(end.dsn);
+    if (!m_location.get_uri().empty())
+        new_uri_components.fragment = utils::encoding::uri_friendly_base16_encode(m_location.get_uri());
+    utils::resource::resource_location new_uri(utils::path::reconstruct_uri(new_uri_components));
+
+    prc_grp.add_library(get_local_library(new_uri, { .optional_library = end.optional }));
 
     return {};
 }

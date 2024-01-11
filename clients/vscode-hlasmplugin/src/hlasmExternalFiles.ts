@@ -63,10 +63,12 @@ export interface ClientUriDetails {
     toDisplayString?(): string;
 }
 
-export interface ExternalFilesInvalidationdata {
+export type ExternalFilesInvalidationdata = {
     paths: string[];
     serverId?: string;
-}
+} | {
+    (normalizedPath: string): boolean
+};
 
 export interface ClientInterface<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails> {
     parseArgs: (path: string, purpose: ExternalRequestType, query?: string) => Promise<{ details: ExternalRequestDetails<ReadArgs, ListArgs>[typeof purpose], server: ConnectArgs } | null>,
@@ -104,7 +106,22 @@ const not_exists = Object.freeze(new class { __stupid_typescript_workaround: und
 const no_client = Object.freeze(new class { __stupid_typescript_workaround: undefined; });
 interface InError { message: string };
 
-const not_exists_json = new TextEncoder().encode(JSON.stringify("not_exists"));
+function not_exists_json(normalizedPath: string) {
+    return new TextEncoder().encode(JSON.stringify({
+        not_exists: true,
+        normalizedPath
+    }));
+}
+
+function readDeflatedJson(fs: vscode.FileSystem, uri: vscode.Uri) {
+    return new Promise((res, rej) => fs.readFile(uri).then(inflate).then(x => JSON.parse(textDecode(x))).then(res, rej));
+}
+
+function getNormalizedPathFromCachedValue(o: any): string | undefined {
+    if (o instanceof Object && 'normalizedPath' in o && typeof o['normalizedPath'] === 'string')
+        return o['normalizedPath'];
+    return undefined;
+}
 
 const enum CachedResultType {
     string,
@@ -128,7 +145,7 @@ interface CacheEntry<T> {
     cached: boolean;
 };
 
-const cacheVersion = 'v2';
+const cacheVersion = 'v3';
 
 interface ClientInstance<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails> {
     suspended: boolean,
@@ -178,6 +195,8 @@ export class HLASMExternalFiles {
                 const toDispose = client.invalidate?.((list) => {
                     if (!list)
                         this.clearCache(service);
+                    else if (typeof list === 'function')
+                        this.clearCacheByPredicate(service, list);
                     else
                         this.clearCache(service, list.paths, list.serverId);
                 });
@@ -416,9 +435,9 @@ export class HLASMExternalFiles {
         const cacheEntryName = vscode.Uri.joinPath(this.cache.uri, await this.deriveCacheEntryName(serverId, service, normalizedPath));
 
         try {
-            const cachedResult = JSON.parse(textDecode(await inflate(await this.fs.readFile(cacheEntryName))));
+            const cachedResult = await readDeflatedJson(this.fs, cacheEntryName);
 
-            if (cachedResult === 'not_exists') return not_exists;
+            if (cachedResult instanceof Object && 'not_exists' in cachedResult) return not_exists;
             if (cachedResult instanceof Object && 'data' in cachedResult) {
                 const data = cachedResult.data;
 
@@ -438,8 +457,11 @@ export class HLASMExternalFiles {
 
         try {
             const data = value === not_exists
-                ? not_exists_json
-                : new TextEncoder().encode(JSON.stringify({ data: value }));
+                ? not_exists_json(normalizedPath)
+                : new TextEncoder().encode(JSON.stringify({
+                    normalizedPath: normalizedPath,
+                    data: value,
+                }));
 
             await this.fs.writeFile(cacheEntryName, await deflate(data));
             return true;
@@ -647,10 +669,72 @@ export class HLASMExternalFiles {
             if (errors > 0)
                 vscode.window.showErrorMessage(`Errors (${errors}) occurred while clearing out the cache`);
         }
+
         if (service)
             this.notifyAllWorkspaces(service, true);
         else
             this.clients.forEach((_, key) => this.notifyAllWorkspaces(key, true));
+
+        this.clearMemoryCache(service);
+    }
+
+    private clearMemoryCache(service: string | undefined) {
+        if (!service) {
+            this.memberContent.clear();
+            this.memberLists.clear();
+            return;
+        }
+
+        const toDelete = [];
+        for (const [k, v] of this.memberContent.entries())
+            if (v.service === service)
+                toDelete.push(k);
+        toDelete.forEach(k => this.memberContent.delete(k));
+
+        toDelete.length = 0;
+        for (const [k, v] of this.memberLists.entries())
+            if (v.service === service)
+                toDelete.push(k);
+        toDelete.forEach(k => this.memberLists.delete(k));
+    }
+
+    public async clearCacheByPredicate(service: string, pathPredicate: (path: string) => boolean) {
+        if (this.cache) {
+            const prefix = service && cacheVersion + '.' + service + '.';
+            const { uri } = this.cache;
+
+            const files = await this.fs.readDirectory(uri);
+
+            let errors = 0;
+            const pending = new Set<Promise<void>>();
+
+            for (const [filename] of files) {
+                if (prefix && !filename.startsWith(prefix))
+                    continue;
+
+                const file = vscode.Uri.joinPath(uri, filename);
+
+                const p = readDeflatedJson(this.fs, file).then(j => {
+                    const path = getNormalizedPathFromCachedValue(j);
+                    if (!path || pathPredicate(path))
+                        return this.fs.delete(file);
+                    return undefined;
+                });
+                pending.add(p);
+                p.catch(() => ++errors).finally(() => pending.delete(p));
+
+                if (pending.size > 16)
+                    await Promise.race(pending);
+            }
+            await Promise.allSettled(pending);
+
+            if (errors > 0)
+                vscode.window.showErrorMessage(`Errors (${errors}) occurred while clearing out the cache`);
+        }
+
+        this.notifyAllWorkspaces(service, true);
+
+        this.clearMemoryCache(service);
     }
 
     public currentlyAvailableServices() {

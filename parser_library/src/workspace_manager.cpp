@@ -936,7 +936,7 @@ private:
                             result = { {}, other_failure };
                             break;
                         }
-                        dirs.emplace_back(std::move(filename), std::move(url));
+                        dirs.emplace_back(std::move(filename), std::move(url).lexically_normal());
                     }
                 }
                 catch (...)

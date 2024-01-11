@@ -59,11 +59,19 @@ void from_json(const nlohmann::json& j, library& p)
     {
         j.at("path").get_to(p.path);
         if (auto it = j.find("optional"); it != j.end())
-            p.optional = it->get_to(p.optional);
+            it->get_to(p.optional);
+        else
+            p.optional = false;
+
         if (auto it = j.find("macro_extensions"); it != j.end())
             it->get_to(p.macro_extensions);
+        else
+            p.macro_extensions.clear();
+
         if (auto it = j.find("prefer_alternate_root"); it != j.end())
             it->get_to(p.root_folder);
+        else
+            p.root_folder = processor_group_root_folder::workspace;
     }
     else
         throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", &j);
@@ -76,14 +84,80 @@ void to_json(nlohmann::json& j, const dataset& p)
 
 void from_json(const nlohmann::json& j, dataset& p)
 {
-    if (j.is_object())
-    {
-        j.at("dataset").get_to(p.dsn);
-        if (auto it = j.find("optional"); it != j.end())
-            p.optional = it->get_to(p.optional);
-    }
-    else
+    if (!j.is_object())
         throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", &j);
+
+    j.at("dataset").get_to(p.dsn);
+    if (auto it = j.find("optional"); it != j.end())
+        it->get_to(p.optional);
+    else
+        p.optional = false;
+}
+
+void to_json(nlohmann::json& j, const endevor_dataset& p)
+{
+    j = nlohmann::json {
+        { "dataset", p.dsn },
+        { "optional", p.optional },
+        { "profile", p.profile },
+    };
+}
+
+void from_json(const nlohmann::json& j, endevor_dataset& p)
+{
+    if (!j.is_object())
+        throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", &j);
+
+    j.at("dataset").get_to(p.dsn);
+    if (auto it = j.find("optional"); it != j.end())
+        p.optional = it->get_to(p.optional);
+    else
+        p.optional = false;
+
+    if (auto it = j.find("profile"); it != j.end())
+        it->get_to(p.profile);
+    else
+        p.profile.clear();
+}
+
+void to_json(nlohmann::json& j, const endevor& p)
+{
+    j = nlohmann::json {
+        { "environment", p.environment },
+        { "stage", p.stage },
+        { "system", p.system },
+        { "subsystem", p.subsystem },
+        { "type", p.type },
+        { "use_map", p.use_map },
+        { "optional", p.optional },
+        { "profile", p.profile },
+    };
+}
+void from_json(const nlohmann::json& j, endevor& p)
+{
+    if (!j.is_object())
+        throw nlohmann::json::other_error::create(501, "Unexpected JSON type.", &j);
+
+    j.at("environment").get_to(p.environment);
+    j.at("stage").get_to(p.stage);
+    j.at("system").get_to(p.system);
+    j.at("subsystem").get_to(p.subsystem);
+    j.at("type").get_to(p.type);
+
+    if (auto it = j.find("use_map"); it != j.end())
+        it->get_to(p.use_map);
+    else
+        p.use_map = true;
+
+    if (auto it = j.find("optional"); it != j.end())
+        it->get_to(p.optional);
+    else
+        p.optional = false;
+
+    if (auto it = j.find("profile"); it != j.end())
+        it->get_to(p.profile);
+    else
+        p.profile.clear();
 }
 
 template<typename T>
@@ -202,14 +276,21 @@ struct preprocessor_visitor
 };
 } // namespace
 
-void to_json(nlohmann::json& j, const std::variant<library, dataset>& v)
+void to_json(nlohmann::json& j, const std::variant<library, dataset, endevor, endevor_dataset>& v)
 {
     std::visit([&j](const auto& x) { j = x; }, v);
 }
-void from_json(const nlohmann::json& j, std::variant<library, dataset>& v)
+void from_json(const nlohmann::json& j, std::variant<library, dataset, endevor, endevor_dataset>& v)
 {
     if (j.contains("dataset"))
-        v = j.get<dataset>();
+    {
+        if (!j.contains("profile"))
+            v = j.get<dataset>();
+        else
+            v = j.get<endevor_dataset>();
+    }
+    else if (j.contains("subsystem"))
+        v = j.get<endevor>();
     else
         v = j.get<library>();
 }
