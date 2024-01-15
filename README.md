@@ -23,9 +23,9 @@ HLASM Language Support, Zowe Explorer and Explorer for Endevor are all available
 
 ## Prerequisites
 
-- To enable automatic dependency retrieval from Endevor, install the following:
-    - Endevor REST API version 2.16 or higher (PTF LU09053).
-    - Explorer for Endevor version 1.70 or higher.
+To enable automatic dependency retrieval from Endevor, install the following:
+- Endevor REST API version 2.16 or higher (PTF LU09053).
+- Explorer for Endevor version 1.70 or higher.
 
 ## Compatibility
 
@@ -258,6 +258,10 @@ If you use multiple program to processor group mapping files (such as `pgm_conf.
 3. Processor group bound to a specific program name specified in `.bridge.json`
 4. Default processor group specified in `.bridge.json`
 
+### Automatic Dependency Retrieval from Endevor
+
+If you use Explorer for Endevor to edit HLASM source code that is stored on Endevor, HLASM Language Support retrieves dependencies dynamically from the processor group that is defined in the Endevor element. For more information about Explorer for Endevor, see the [Explorer for Endevor documentation](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.explorer-for-endevor).
+
 ### File Extensions
 
 The `alwaysRecognize` option in `pgm_conf.json` has been deprecated in favor of the standard VSCode user and workspace level setting `file.associations`.
@@ -392,7 +396,6 @@ All dependencies are downloaded from the specified data sets to your workspace.
 - If you have a question about how to accomplish something with the extension, or come across a problem, file an issue on [GitHub](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm)
 - Contributions are always welcome! Please see our [GitHub](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm) repository for more information.
 - Any and all feedback is appreciated and welcome!
-
 
 ## Technical Assistance and Support for HLASM Language Support
 
