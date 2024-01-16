@@ -25,7 +25,7 @@ HLASM Language Support, Zowe Explorer and Explorer for Endevor are all available
 
 To enable automatic dependency retrieval from Endevor, install the following:
 - Endevor REST API version 2.16 or higher (PTF LU09053).
-- Explorer for Endevor version 1.70 or higher.
+- Explorer for Endevor version 1.7.0 or higher.
 
 ## Compatibility
 
