@@ -63,7 +63,7 @@ The `pgm_conf.json` file can be provided implicitly by another product that supp
 
 ## Language Features
 
-The HLASM Language Support extension parses and analyzes all parts of a HLASM program. It resolves all ordinary symbols, variable symbols and checks the validity of most instructions. The extension supports conditional and unconditional branching and can define global and local variable symbols. It can also expand macros and COPY instructions.
+The HLASM Language Support extension parses and analyzes all parts of a HLASM program including the listing. It resolves all ordinary symbols, variable symbols and checks the validity of most instructions. The extension supports conditional and unconditional branching and can define global and local variable symbols. It can also expand macros and COPY instructions.
 
 ## LSP Features
 ### Highlighting
