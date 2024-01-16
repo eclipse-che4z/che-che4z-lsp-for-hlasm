@@ -13,11 +13,11 @@ HLASM Language Support is part of the Che4z open-source project. Feel free to co
 
 HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack), an all-round package that offers a modern experience for mainframe application developers, including extensions for language support, data editing, testing, and source code management. For an interactive overview of Code4z, see the [Code4z Developer Cockpit](https://mainframe.broadcom.com/code4z-developer-cockpit).
 
-## Integration with Zowe Explorer and Explorer for Endevor
+## Integration with Explorer for Endevor and Zowe Explorer
 
-We recommend that you use HLASM Language Support with [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe). Zowe Explorer enables you to open your High Level Assembler programs stored on mainframe data sets directly in VS Code. You can also integrate HLASM Language Support with [Explorer for Endevor](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.explorer-for-endevor) to retrieve your HLASM source code from Endevor locations and automatically retrieve dependencies. 
+Integrate HLASM Language Support with [Explorer for Endevor](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.explorer-for-endevor) to retrieve your HLASM source code from Endevor locations and edit it in VS Code. HLASM Language Support automatically retrieve dependencies associated with Endevor elements written in HLASM. We also recommend that you use HLASM Language Support with [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) to open your High Level Assembler programs stored on mainframe data sets.
 
-HLASM Language Support, Zowe Explorer and Explorer for Endevor are all available as part of the [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack) package.
+HLASM Language Support, Explorer for Endevor and Zowe Explorer are all available as part of the [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack) package.
 
 <a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v2 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev2/explorer/color/zowe-conformant-zowev2-explorer-color.png" width=20% height=20% /></a>
 
