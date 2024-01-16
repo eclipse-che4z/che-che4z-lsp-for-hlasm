@@ -7,15 +7,25 @@
 </div>
 
 # HLASM Language Support
-HLASM Language Support is an IDE extension that supports the High Level Assembler language. It provides code completion, highlighting and navigation features, shows mistakes in the source, retrieval of dependencies from mainframe data sets, and enables you to trace how the conditional assembly is evaluated with a modern debugging experience.
+HLASM Language Support is an IDE extension that supports the High Level Assembler language. It provides code completion, highlighting and navigation features, shows mistakes in the source, retrieves  dependencies from mainframe data sets and from Endevor, and enables you to trace how the conditional assembly is evaluated with a modern debugging experience.
 
 HLASM Language Support is part of the Che4z open-source project. Feel free to contribute at our [GitHub repository](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/). For project documentation, see the [wiki](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/). 
 
 HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack), an all-round package that offers a modern experience for mainframe application developers, including extensions for language support, data editing, testing, and source code management. For an interactive overview of Code4z, see the [Code4z Developer Cockpit](https://mainframe.broadcom.com/code4z-developer-cockpit).
 
+## Integration with Explorer for Endevor and Zowe Explorer
+
+Integrate HLASM Language Support with [Explorer for Endevor](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.explorer-for-endevor) to retrieve your HLASM source code from Endevor locations and edit it in VS Code. HLASM Language Support automatically retrieve dependencies associated with Endevor elements written in HLASM. We also recommend that you use HLASM Language Support with [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) to open your High Level Assembler programs stored on mainframe data sets.
+
+HLASM Language Support, Explorer for Endevor and Zowe Explorer are all available as part of the [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack) package.
+
+<a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v2 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev2/explorer/color/zowe-conformant-zowev2-explorer-color.png" width=20% height=20% /></a>
+
 ## Prerequisites
 
-- There are no client or server-side prerequisites for HLASM Language Support.
+To enable automatic dependency retrieval from Endevor, install the following:
+- Endevor REST API version 2.16 or higher (PTF LU09053).
+- Explorer for Endevor version 1.7.0 or higher.
 
 ## Compatibility
 
@@ -24,14 +34,6 @@ HLASM Language Support is supported on Visual Studio Code, GitHub Codespaces and
 #### Restriction
 
 Bulk and on-demand downloading of dependencies via FTP is not available in the Web extension environment.
-
-## Integration with Zowe Explorer
-
-We recommend that you use HLASM Language Support with Zowe Explorer. Zowe Explorer enables you to open your High Level Assembler programs stored on mainframe data sets directly in VS Code.
-
-For more information about the Zowe Explorer extension, see [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) on the VS Code Marketplace.
-
-<a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v2 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev2/explorer/color/zowe-conformant-zowev2-explorer-color.png" width=20% height=20% /></a>
 
 ## Getting Started
 
@@ -386,11 +388,14 @@ You can use the HLASM Language Support extension to download dependencies from m
 
 All dependencies are downloaded from the specified data sets to your workspace.
 
+### Automatic Dependency Retrieval from Endevor
+
+If you open HLASM source files using Explorer for Endevor, HLASM Language Support retrieves dependencies dynamically from the processor group that is defined in the Endevor element. For more information about Explorer for Endevor, see the [Explorer for Endevor documentation](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.explorer-for-endevor).
+
 ## Questions, issues, feature requests, and contributions
 - If you have a question about how to accomplish something with the extension, or come across a problem, file an issue on [GitHub](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm)
 - Contributions are always welcome! Please see our [GitHub](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm) repository for more information.
 - Any and all feedback is appreciated and welcome!
-
 
 ## Technical Assistance and Support for HLASM Language Support
 
