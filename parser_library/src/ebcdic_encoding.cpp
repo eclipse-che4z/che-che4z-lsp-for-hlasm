@@ -14,84 +14,74 @@
 
 #include "ebcdic_encoding.h"
 
-unsigned char hlasm_plugin::parser_library::ebcdic_encoding::to_pseudoascii(const char*& c)
+namespace hlasm_plugin::parser_library {
+
+std::pair<unsigned char, const char*> ebcdic_encoding::to_ebcdic_multibyte(const char* c) noexcept
 {
-    if ((unsigned char)*c < 0x80)
+    const unsigned char first_byte = *(c + 0);
+    const unsigned char second_byte = *(c + 1);
+    if (second_byte == 0)
     {
-        return *c;
+        return { EBCDIC_SUB, c + 1 };
     }
-    else if (*(c + 1) == 0)
+
+    if ((first_byte & 0xE0) == 0xC0) // 110xxxxx 10xxxxxx
     {
-        return SUB;
+        const auto value = ((first_byte & 0x1F) << 6) | (second_byte & 0x3F);
+        return { value < std::ssize(a2e) ? a2e[value] : EBCDIC_SUB, c + 2 };
     }
-    else
+
+    const unsigned char third_byte = *(c + 2);
+    if (third_byte == 0)
     {
-        if ((*c & 0xE0) == 0xC0) // 110xxxxx 10xxxxxx
-        {
-            if ((*c & 0x1C) != 0)
-            {
-                ++c;
-                return SUB;
-            }
-            else
-            {
-                unsigned char tmp = ((*c & 3) << 6) | (*(c + 1) & 0x3F);
-                ++c;
-                return tmp;
-            }
-        }
-        else if ((*c & 0xF0) == 0xE0) // 1110xxxx 10xxxxxx 10xxxxxx
-        {
-            ++c;
-            c += !!*c;
-            return SUB;
-        }
-        else if ((*c & 0xF8) == 0xF0) // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-        {
-            ++c;
-            c += !!*c;
-            c += !!*c;
-            return SUB;
-        }
-        else
-        {
-            return SUB;
-        }
+        return { EBCDIC_SUB, c + 2 };
     }
+
+    if (first_byte == (0b11100000 | ebcdic_encoding::unicode_private >> 4)
+        && (second_byte & 0b11111100) == (0x80 | (ebcdic_encoding::unicode_private & 0xF) << 2)
+        && (third_byte & 0xC0) == 0x80) // our private plane
+    {
+        const unsigned char ebcdic_value = (second_byte & 3) << 6 | third_byte & 0x3f;
+        return { ebcdic_value, c + 3 };
+    }
+
+    if ((first_byte & 0xF0) == 0xE0) // 1110xxxx 10xxxxxx 10xxxxxx
+    {
+        return { EBCDIC_SUB, c + 3 };
+    }
+
+    if (const unsigned char fourth_byte = *(c + 2); fourth_byte == 0)
+    {
+        return { EBCDIC_SUB, c + 3 };
+    }
+
+    if ((first_byte & 0xF8) == 0xF0) // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+    {
+        return { EBCDIC_SUB, c + 4 };
+    }
+
+    return { EBCDIC_SUB, c + 1 };
 }
 
-
-unsigned char hlasm_plugin::parser_library::ebcdic_encoding::to_ebcdic(unsigned char c) { return a2e[c]; }
-
-std::string hlasm_plugin::parser_library::ebcdic_encoding::to_ascii(unsigned char c)
-{
-    if (c == 0x0D || c == 0x25) // CR LF
-        return std::string {
-            static_cast<char>(0b11100000 | ebcdic_encoding::unicode_private >> 4),
-            static_cast<char>(0x80 | ebcdic_encoding::unicode_private & 0xf | c >> 6),
-            static_cast<char>(0x80 | c & 0x3f),
-        };
-    auto val = e2a[c];
-    if (0x80 > val)
-        return std::string({ static_cast<char>(val) });
-    else
-        return std::string({ static_cast<char>((val >> 6) | (3 << 6)), static_cast<char>((val & 63) | (1 << 7)) });
-}
-
-std::string hlasm_plugin::parser_library::ebcdic_encoding::to_ascii(const std::string& s)
+std::string ebcdic_encoding::to_ascii(const std::string& s)
 {
     std::string a;
     a.reserve(s.length());
     for (unsigned char c : s)
-        a.push_back(e2a[c]);
+        a.append(to_ascii(c));
     return a;
 }
 
-std::string hlasm_plugin::parser_library::ebcdic_encoding::to_ebcdic(const std::string& s)
+std::string ebcdic_encoding::to_ebcdic(const std::string& s)
 {
     std::string a;
     a.reserve(s.length());
-    for (const char* i = s.c_str(); *i != 0; ++i)
-        a.push_back(to_ebcdic(to_pseudoascii(i)));
+    for (const char* i = s.c_str(); *i != 0;)
+    {
+        const auto [ch, newi] = to_ebcdic(i);
+        a.push_back(ch);
+        i = newi;
+    }
     return a;
 }
+} // namespace hlasm_plugin::parser_library

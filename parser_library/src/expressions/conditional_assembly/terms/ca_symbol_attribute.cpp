@@ -390,7 +390,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
             auto symbol_name = eval_ctx.hlasm_ctx.ids().add(var_value);
 
             if (auto tmp_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(symbol_name))
-                return std::string { (char)ebcdic_encoding::e2a[tmp_symbol->attributes().type()] };
+                return ebcdic_encoding::to_ascii((unsigned char)tmp_symbol->attributes().type());
 
             return evaluate_substituted(
                 var_name, expr_subscript, vs->symbol_range, eval_ctx); // is type U, must substitute var sym

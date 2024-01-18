@@ -793,7 +793,7 @@ SET_t hlasm_context::get_attribute_value_ord(data_attr_kind attribute, const sym
             if (symbol)
             {
                 auto attr_val = symbol->attributes().get_attribute_value(attribute);
-                return std::string { (char)ebcdic_encoding::e2a[attr_val] };
+                return ebcdic_encoding::to_ascii((unsigned char)attr_val);
             }
             return "U";
         case data_attr_kind::O:

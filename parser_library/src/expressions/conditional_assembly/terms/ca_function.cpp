@@ -230,14 +230,20 @@ context::SET_t ca_function::C2A(std::string_view param, diagnostic_adder& add_di
     if (param.empty())
         return 0;
 
-    if (param.size() > 4)
+    static constexpr const size_t limit = 4;
+    if (param.size() > limit)
         RET_ERRPARM;
 
+    char buffer[limit + 1] = {};
+    std::memcpy(buffer, param.data(), param.size());
+
     context::A_t ret = 0;
-    for (const char* c = param.data(); c < param.data() + param.size(); ++c)
+    for (const char* c = buffer; c != buffer + param.size();)
     {
         ret <<= 8;
-        ret += ebcdic_encoding::to_ebcdic(ebcdic_encoding::to_pseudoascii(c));
+        const auto [ch, newc] = ebcdic_encoding::to_ebcdic(c);
+        ret += ch;
+        c = newc;
     }
 
     return ret;
@@ -369,25 +375,14 @@ context::SET_t ca_function::A2B(context::A_t param) { return std::bitset<32>(par
 
 context::SET_t ca_function::A2C(context::A_t param)
 {
-    std::uint32_t sign_mask = 1U << 31;
-    std::uint32_t char_mask = 0xffU << 3 * 8;
+    std::uint32_t uparam = param;
 
-    std::string ret;
-    ret.reserve(4);
-
-    for (size_t i = 0; i < 4; ++i)
-    {
-        auto sign = param & sign_mask;
-        auto rest = param & char_mask;
-        auto c = (unsigned char)(rest >> (3 - i) * 8);
-        c |= sign >> (3 - i) * 8;
-
-        ret.append(ebcdic_encoding::to_ascii(c));
-
-        sign_mask >>= 8;
-        char_mask >>= 8;
-    }
-    return ret;
+    return ebcdic_encoding::to_ascii(std::string {
+        static_cast<char>(uparam >> 24 & 0xff),
+        static_cast<char>(uparam >> 16 & 0xff),
+        static_cast<char>(uparam >> 8 & 0xff),
+        static_cast<char>(uparam >> 0 & 0xff),
+    });
 }
 
 context::SET_t ca_function::A2D(context::A_t param)
@@ -506,10 +501,11 @@ context::SET_t ca_function::C2B(const context::C_t& param, diagnostic_adder& add
 
     std::string ret;
     ret.reserve(param.size() * 8);
-    for (const char* c = param.c_str(); c != param.c_str() + param.size(); ++c)
+    for (const char* c = param.c_str(); c != param.c_str() + param.size();)
     {
-        auto value = ebcdic_encoding::to_ebcdic(ebcdic_encoding::to_pseudoascii(c));
+        const auto [value, newc] = ebcdic_encoding::to_ebcdic(c);
         ret.append(std::bitset<8>(value).to_string());
+        c = newc;
     }
     return ret;
 }
@@ -532,12 +528,14 @@ context::SET_t ca_function::C2X(const context::C_t& param, diagnostic_adder& add
 
     std::string ret;
     ret.reserve(param.size() * 2);
-    for (const char* c = param.c_str(); c != param.c_str() + param.size(); ++c)
+    for (const char* c = param.c_str(); c != param.c_str() + param.size();)
     {
-        auto value = ebcdic_encoding::to_ebcdic(ebcdic_encoding::to_pseudoascii(c));
+        const auto [value, newc] = ebcdic_encoding::to_ebcdic(c);
 
         ret.push_back("0123456789ABCDEF"[value >> 4]);
         ret.push_back("0123456789ABCDEF"[value & 0xf]);
+
+        c = newc;
     }
     return ret;
 }

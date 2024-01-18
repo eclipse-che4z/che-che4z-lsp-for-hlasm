@@ -292,7 +292,7 @@ mach_expression::value_t mach_expr_data_attr::evaluate(
         std::holds_alternative<context::symbol_candidate>(symbol_ext))
     {
         if (attribute == context::data_attr_kind::T)
-            return ebcdic_encoding::to_ebcdic(std::get<context::symbol_candidate>(symbol_ext).mentioned ? 'M' : 'U');
+            return std::get<context::symbol_candidate>(symbol_ext).mentioned ? 'M'_ebcdic : 'U'_ebcdic;
     }
     else
         symbol = std::get<const context::symbol*>(symbol_ext);

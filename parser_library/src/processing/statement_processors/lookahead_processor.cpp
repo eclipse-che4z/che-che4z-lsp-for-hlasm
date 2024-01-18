@@ -234,14 +234,14 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
     {
         register_attr_ref(symbol_name,
             context::symbol_attributes(context::symbol_origin::DAT,
-                ebcdic_encoding::a2e[(unsigned char)'U'],
+                'U'_ebcdic,
                 context::symbol_attributes::undef_length,
                 context::symbol_attributes::undef_scale));
         return;
     }
 
     context::symbol_attributes::type_attr type =
-        ebcdic_encoding::a2e[(unsigned char)data_op->value->get_type_attribute()];
+        ebcdic_encoding::to_ebcdic((unsigned char)data_op->value->get_type_attribute());
 
     context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
     context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;

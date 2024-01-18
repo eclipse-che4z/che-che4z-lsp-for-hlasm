@@ -321,7 +321,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
             auto data_op = stmt.operands_ref().value.front()->access_data_def();
 
             context::symbol_attributes::type_attr type =
-                ebcdic_encoding::a2e[(unsigned char)data_op->value->get_type_attribute()];
+                ebcdic_encoding::to_ebcdic((unsigned char)data_op->value->get_type_attribute());
 
             context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
             context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
@@ -1124,7 +1124,7 @@ void asm_processor::process_LTORG(rebuilt_statement stmt)
             create_symbol(stmt.stmt_range_ref(),
                 label,
                 loctr,
-                context::symbol_attributes(context::symbol_origin::EQU, ebcdic_encoding::to_ebcdic('U'), 1));
+                context::symbol_attributes(context::symbol_origin::EQU, 'U'_ebcdic, 1));
     }
 
     hlasm_ctx.ord_ctx.generate_pool(*this, hlasm_ctx.using_current(), lib_info);

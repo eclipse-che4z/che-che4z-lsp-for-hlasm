@@ -170,7 +170,7 @@ context::symbol_attributes data_definition::get_symbol_attributes(
     context::dependency_solver& solver, diagnostic_op_consumer& diags) const
 {
     return context::symbol_attributes(context::symbol_origin::DAT,
-        ebcdic_encoding::a2e[(unsigned char)get_type_attribute()],
+        ebcdic_encoding::to_ebcdic((unsigned char)get_type_attribute()),
         get_length_attribute(solver, diags),
         get_scale_attribute(solver, diags),
         get_integer_attribute(solver, diags));

@@ -195,7 +195,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
         bool cycle_ok = ord_ctx.create_symbol(id_index(&lit_val.text),
             ord_ctx.align(lit_val.align_on_halfword ? halfword : no_align, li),
             symbol_attributes(symbol_origin::DAT,
-                ebcdic_encoding::a2e[(unsigned char)lit->get_type_attribute()],
+                ebcdic_encoding::to_ebcdic((unsigned char)lit->get_type_attribute()),
                 lit->get_length_attribute(solver, diags)),
             {},
             li);

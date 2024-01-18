@@ -22,7 +22,7 @@
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library;
 
-const symbol_attributes::type_attr symbol_attributes::undef_type = ebcdic_encoding::to_ebcdic('U');
+const symbol_attributes::type_attr symbol_attributes::undef_type = 'U'_ebcdic;
 
 const symbol_attributes::len_attr symbol_attributes::undef_length = static_cast<len_attr>(-1);
 
@@ -30,33 +30,27 @@ const symbol_attributes::scale_attr symbol_attributes::undef_scale = std::numeri
 
 symbol_attributes symbol_attributes::make_section_attrs()
 {
-    return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('J'), 1);
+    return symbol_attributes(symbol_origin::SECT, 'J'_ebcdic, 1);
 }
 symbol_attributes symbol_attributes::make_machine_attrs(symbol_attributes::len_attr length)
 {
-    return symbol_attributes(symbol_origin::MACH, ebcdic_encoding::to_ebcdic('I'), length);
+    return symbol_attributes(symbol_origin::MACH, 'I'_ebcdic, length);
 }
 symbol_attributes symbol_attributes::make_extrn_attrs()
 {
-    return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('T'), 1);
+    return symbol_attributes(symbol_origin::SECT, 'T'_ebcdic, 1);
 }
 symbol_attributes symbol_attributes::make_wxtrn_attrs()
 {
-    return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('$'), 1);
+    return symbol_attributes(symbol_origin::SECT, '$'_ebcdic, 1);
 }
-symbol_attributes symbol_attributes::make_org_attrs()
-{
-    return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('U'));
-}
+symbol_attributes symbol_attributes::make_org_attrs() { return symbol_attributes(symbol_origin::SECT, 'U'_ebcdic); }
 
-symbol_attributes symbol_attributes::make_ccw_attrs()
-{
-    return symbol_attributes(symbol_origin::ASM, ebcdic_encoding::to_ebcdic('W'), 8);
-}
+symbol_attributes symbol_attributes::make_ccw_attrs() { return symbol_attributes(symbol_origin::ASM, 'W'_ebcdic, 8); }
 
 symbol_attributes hlasm_plugin::parser_library::context::symbol_attributes::make_cnop_attrs()
 {
-    return symbol_attributes(symbol_origin::ASM, ebcdic_encoding::to_ebcdic('I'));
+    return symbol_attributes(symbol_origin::ASM, 'I'_ebcdic);
 }
 
 data_attr_kind symbol_attributes::transform_attr(unsigned char c)
@@ -171,11 +165,9 @@ bool symbol_attributes::is_defined(data_attr_kind attribute) const
 bool symbol_attributes::can_have_SI_attr() const
 {
     return origin_ == symbol_origin::DAT
-        && (type_ == ebcdic_encoding::a2e[U'D'] || type_ == ebcdic_encoding::a2e[U'E']
-            || type_ == ebcdic_encoding::a2e[U'F'] || type_ == ebcdic_encoding::a2e[U'G']
-            || type_ == ebcdic_encoding::a2e[U'H'] || type_ == ebcdic_encoding::a2e[U'K']
-            || type_ == ebcdic_encoding::a2e[U'L'] || type_ == ebcdic_encoding::a2e[U'P']
-            || type_ == ebcdic_encoding::a2e[U'Z']);
+        && (type_ == 'D'_ebcdic || type_ == 'E'_ebcdic || type_ == 'F'_ebcdic || type_ == 'G'_ebcdic
+            || type_ == 'H'_ebcdic || type_ == 'K'_ebcdic || type_ == 'L'_ebcdic || type_ == 'P'_ebcdic
+            || type_ == 'Z'_ebcdic);
 }
 
 symbol_attributes::value_t symbol_attributes::get_attribute_value(data_attr_kind attribute) const

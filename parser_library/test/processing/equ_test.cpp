@@ -272,5 +272,5 @@ B   EQU A,*-A,T'TYPO
     auto b = get_symbol(a.hlasm_ctx(), "B");
     ASSERT_TRUE(b);
 
-    EXPECT_EQ(b->attributes().type(), ebcdic_encoding::a2e['U']);
+    EXPECT_EQ(b->attributes().type(), 'U'_ebcdic);
 }

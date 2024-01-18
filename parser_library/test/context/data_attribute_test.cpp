@@ -302,9 +302,9 @@ C LOCTR
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "A")->attributes().type(), ebcdic_encoding::a2e[U'I']);
-    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "B")->attributes().type(), ebcdic_encoding::a2e[U'J']);
-    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "C")->attributes().type(), ebcdic_encoding::a2e[U'J']);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "A")->attributes().type(), 'I'_ebcdic);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "B")->attributes().type(), 'J'_ebcdic);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "C")->attributes().type(), 'J'_ebcdic);
 
     a.collect_diags();
     EXPECT_TRUE(a.diags().empty());

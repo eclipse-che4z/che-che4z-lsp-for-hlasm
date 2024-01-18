@@ -15,6 +15,7 @@
 #include "ca_operator_binary.h"
 
 #include <limits>
+#include <memory>
 
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
@@ -262,7 +263,9 @@ context::SET_t ca_function_binary_operator::operation(
     }
     else if (expr_kind == context::SET_t_enum::B_TYPE)
     {
-        int comp = 0;
+        auto comp = std::strong_ordering::equal;
+        if (is_string_equality(left_expr->expr_kind))
+            return (function == ca_expr_ops::EQ) == equal_string(lhs.access_c(), rhs.access_c());
         if (is_relational())
             comp = compare_relational(lhs, rhs, left_expr->expr_kind);
 
@@ -287,31 +290,82 @@ context::SET_t ca_function_binary_operator::operation(
     return context::SET_t(expr_kind);
 }
 
-int ca_function_binary_operator::compare_string(const context::C_t& lhs, const context::C_t& rhs)
+std::strong_ordering ca_function_binary_operator::compare_string(
+    const context::C_t& lhs, const context::C_t& rhs) noexcept
 {
-    int diff = (int)lhs.size() - (int)rhs.size();
+    bool left_smaller = false;
+    bool right_smaller = false;
 
-    if (diff != 0)
-        return diff;
+    const auto* l = std::to_address(lhs.cbegin());
+    const auto* r = std::to_address(rhs.cbegin());
+    const auto* const le = std::to_address(lhs.cend());
+    const auto* const re = std::to_address(rhs.cend());
 
-    return ebcdic_encoding::to_ebcdic(lhs).compare(ebcdic_encoding::to_ebcdic(rhs));
+    while (l != le && r != re)
+    {
+        const auto [lc, newl] = ebcdic_encoding::to_ebcdic(l);
+        const auto [rc, newr] = ebcdic_encoding::to_ebcdic(r);
+
+        const auto left_update = !right_smaller && lc < rc;
+        const auto right_update = !left_smaller && lc > rc;
+
+        left_smaller |= left_update;
+        right_smaller |= right_update;
+
+        l = newl;
+        r = newr;
+    }
+
+    const bool lend = l == le;
+    const bool rend = r == re;
+
+    if (lend && rend)
+        return right_smaller <=> left_smaller;
+    else
+        return rend <=> lend;
 }
 
-int ca_function_binary_operator::compare_relational(
-    const context::SET_t& lhs, const context::SET_t& rhs, context::SET_t_enum type)
+
+bool ca_function_binary_operator::equal_string(const context::C_t& lhs, const context::C_t& rhs) noexcept
+{
+    const auto* l = std::to_address(lhs.cbegin());
+    const auto* r = std::to_address(rhs.cbegin());
+    const auto* const le = std::to_address(lhs.cend());
+    const auto* const re = std::to_address(rhs.cend());
+
+    while (l != le && r != re)
+    {
+        const auto [lc, newl] = ebcdic_encoding::to_ebcdic(l);
+        const auto [rc, newr] = ebcdic_encoding::to_ebcdic(r);
+
+        if (lc != rc)
+            return false;
+
+        l = newl;
+        r = newr;
+    }
+
+    const bool lend = l == le;
+    const bool rend = r == re;
+
+    return lend && rend;
+}
+
+std::strong_ordering ca_function_binary_operator::compare_relational(
+    const context::SET_t& lhs, const context::SET_t& rhs, context::SET_t_enum type) noexcept
 {
     switch (type)
     {
         case context::SET_t_enum::A_TYPE:
-            return lhs.access_a() - rhs.access_a();
+            return lhs.access_a() <=> rhs.access_a();
         case context::SET_t_enum::C_TYPE:
             return compare_string(lhs.access_c(), rhs.access_c());
         default:
-            return 0;
+            return std::strong_ordering::equal;
     }
 }
 
-bool ca_function_binary_operator::is_relational() const
+bool ca_function_binary_operator::is_relational() const noexcept
 {
     switch (function)
     {
@@ -322,6 +376,18 @@ bool ca_function_binary_operator::is_relational() const
         case ca_expr_ops::GE:
         case ca_expr_ops::GT:
             return true;
+        default:
+            return false;
+    }
+}
+
+bool ca_function_binary_operator::is_string_equality(context::SET_t_enum type) const noexcept
+{
+    switch (function)
+    {
+        case ca_expr_ops::EQ:
+        case ca_expr_ops::NE:
+            return type == context::SET_t_enum::C_TYPE;
         default:
             return false;
     }
@@ -375,11 +441,9 @@ context::SET_t ca_conc::operation(
     if (lhs.access_c().size() + rhs.access_c().size() > ca_string::MAX_STR_SIZE)
     {
         eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE011(expr_range));
-        return context::object_traits<context::C_t>::default_v();
+        return context::SET_t(context::SET_t_enum::C_TYPE);
     }
-    auto& ret = lhs.access_c();
-    ret.reserve(ret.size() + rhs.access_c().size());
-    ret.append(rhs.access_c().begin(), rhs.access_c().end());
+    lhs.access_c().append(rhs.access_c());
     return lhs;
 }
 
