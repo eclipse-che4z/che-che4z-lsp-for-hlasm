@@ -116,6 +116,10 @@ type ElementInfo = {
     fingerprint?: string;
 };
 
+type ExternalConfigurationOptions = {
+    type: 'HLASM';
+};
+
 export interface E4E {
     isEndevorElement: (uri: string) => boolean;
     getProfileInfo: (
@@ -159,7 +163,8 @@ export interface E4E {
         }
     ) => Promise<Content | Error>;
     getConfiguration: (
-        sourceUri: string
+        sourceUri: string,
+        options: ExternalConfigurationOptions
     ) => Promise<E4EExternalConfigurationResponse | Error>;
     onDidChangeElement: vscode.Event<ElementInfo[]>;
 }
@@ -466,7 +471,7 @@ export function makeEndevorConfigurationProvider(e4e: E4E) {
         const profile = await e4e.getProfileInfo(uriString);
         if (profile instanceof Error) throw profile;
 
-        const result = await e4e.getConfiguration(uriString);
+        const result = await e4e.getConfiguration(uriString, { type: 'HLASM' });
         if (result instanceof Error) throw result;
         const candidate = result.pgroups.find(x => x.name === result.pgms[0].pgroup);
         if (!candidate) throw Error('Invalid configuration');
