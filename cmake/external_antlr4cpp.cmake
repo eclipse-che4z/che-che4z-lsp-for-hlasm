@@ -22,7 +22,7 @@ endif()
 # external repository
 # GIT_REPOSITORY     https://github.com/antlr/antlr4.git
 set(ANTLR4CPP_EXTERNAL_REPO "https://github.com/antlr/antlr4.git")
-set(ANTLR4CPP_EXTERNAL_TAG  "4.10.1")
+set(ANTLR4CPP_EXTERNAL_TAG  "4.13.1")
 set(ANTLR_VERSION ${ANTLR4CPP_EXTERNAL_TAG})
 
 FetchContent_Declare(
@@ -41,9 +41,14 @@ function(add_antlr4)
     set(PROJECT_SOURCE_DIR ${antlr4cpp_SOURCE_DIR}/runtime/Cpp)
     set(LIB_OUTPUT_DIR ${CMAKE_BINARY_DIR}/bin)
     set(ANTLR_BUILD_CPP_TESTS Off)
+    if (EMSCRIPTEN)
+        set(ANTLR_BUILD_SHARED Off)
+    endif()
     add_subdirectory(${antlr4cpp_SOURCE_DIR}/runtime/Cpp/runtime ${antlr4cpp_BINARY_DIR} EXCLUDE_FROM_ALL)
 
-    target_include_directories(antlr4_shared INTERFACE ${antlr4cpp_SOURCE_DIR}/runtime/Cpp/runtime/src)
+    if (NOT EMSCRIPTEN)
+        target_include_directories(antlr4_shared INTERFACE ${antlr4cpp_SOURCE_DIR}/runtime/Cpp/runtime/src)
+    endif()
     target_include_directories(antlr4_static INTERFACE ${antlr4cpp_SOURCE_DIR}/runtime/Cpp/runtime/src)
     target_compile_definitions(antlr4_static INTERFACE ANTLR4CPP_STATIC=1)
 endfunction()
@@ -84,7 +89,7 @@ if(NOT antlr4cpp_POPULATED)
     endif()
 endif()
 
-if(BUILD_SHARED_LIBS)
+if(BUILD_SHARED_LIBS AND NOT EMSCRIPTEN)
     set(ANTLR4_RUNTIME antlr4_shared)
 else()
     set(ANTLR4_RUNTIME antlr4_static)

@@ -24,6 +24,7 @@ on:
     branches:
       - master
       - development
+  workflow_dispatch:
 
 env:
   CLIENT_DIR: clients/vscode-hlasmplugin
