@@ -7,7 +7,7 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
-      "cmakeCommandArgs": "",
+      "cmakeCommandArgs": "-DCMAKE_EXPORT_COMPILE_COMMANDS=1",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
       "variables": [
@@ -37,7 +37,7 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
-      "cmakeCommandArgs": "-DCMAKE_EXE_LINKER_FLAGS=\"/PROFILE\"",
+      "cmakeCommandArgs": "-DCMAKE_EXE_LINKER_FLAGS=\"/PROFILE\" -DCMAKE_EXPORT_COMPILE_COMMANDS=1",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
       "variables": []

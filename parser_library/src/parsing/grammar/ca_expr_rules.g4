@@ -70,6 +70,7 @@ expr returns [ca_expr_ptr ca_expr]
 			}
 		)+
 		|
+		{[](auto t){ return t!=PLUS && t!=MINUS && t!=DOT;}(_input->LA(1))}?
 	);
 	finally
 	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
@@ -189,11 +190,13 @@ expr_space_c returns [std::vector<ca_expr_ptr> ca_exprs]
 	{
 		$ca_exprs.push_back(std::move($expr.ca_expr)); 
 	}
-	| tmp=expr_space_c SPACE* expr
-	{
-		$tmp.ca_exprs.push_back(std::move($expr.ca_expr)); 
-		$ca_exprs = std::move($tmp.ca_exprs);
-	};
+	(
+		SPACE* expr
+		{
+			$ca_exprs.push_back(std::move($expr.ca_expr));
+		}
+	)*
+	;
 
 seq_symbol returns [seq_sym ss = seq_sym{}]
 	: DOT id_no_dot
@@ -227,11 +230,12 @@ expr_comma_c returns [std::vector<ca_expr_ptr> ca_exprs]
 	{
 		$ca_exprs.push_back(std::move($expr.ca_expr));
 	}
-	| tmp=expr_comma_c comma expr
-	{
-		$tmp.ca_exprs.push_back(std::move($expr.ca_expr));
-		$ca_exprs = std::move($tmp.ca_exprs);
-	};
+	(
+		comma expr
+		{
+			$ca_exprs.push_back(std::move($expr.ca_expr));
+		}
+	)*;
 
 created_set_body returns [concat_chain concat_list]
 	:
