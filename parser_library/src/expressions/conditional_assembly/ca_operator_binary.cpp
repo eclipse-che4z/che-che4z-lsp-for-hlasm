@@ -303,8 +303,8 @@ std::strong_ordering ca_function_binary_operator::compare_string(
 
     while (l != le && r != re)
     {
-        const auto [lc, newl] = ebcdic_encoding::to_ebcdic(l);
-        const auto [rc, newr] = ebcdic_encoding::to_ebcdic(r);
+        const auto [lc, newl] = ebcdic_encoding::to_ebcdic(l, le);
+        const auto [rc, newr] = ebcdic_encoding::to_ebcdic(r, re);
 
         const auto left_update = !right_smaller && lc < rc;
         const auto right_update = !left_smaller && lc > rc;
@@ -335,8 +335,8 @@ bool ca_function_binary_operator::equal_string(const context::C_t& lhs, const co
 
     while (l != le && r != re)
     {
-        const auto [lc, newl] = ebcdic_encoding::to_ebcdic(l);
-        const auto [rc, newr] = ebcdic_encoding::to_ebcdic(r);
+        const auto [lc, newl] = ebcdic_encoding::to_ebcdic(l, le);
+        const auto [rc, newr] = ebcdic_encoding::to_ebcdic(r, re);
 
         if (lc != rc)
             return false;

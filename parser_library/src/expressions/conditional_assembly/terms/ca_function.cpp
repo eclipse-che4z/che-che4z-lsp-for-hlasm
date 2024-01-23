@@ -230,21 +230,20 @@ context::SET_t ca_function::C2A(std::string_view param, diagnostic_adder& add_di
     if (param.empty())
         return 0;
 
-    static constexpr const size_t limit = 4;
-    if (param.size() > limit)
-        RET_ERRPARM;
-
-    char buffer[limit + 1] = {};
-    std::memcpy(buffer, param.data(), param.size());
+    const char* c = std::to_address(param.cbegin());
+    const auto ce = std::to_address(param.cend());
 
     context::A_t ret = 0;
-    for (const char* c = buffer; c != buffer + param.size();)
+    for (auto n = 0; n < 4 && c != ce; ++n)
     {
         ret <<= 8;
-        const auto [ch, newc] = ebcdic_encoding::to_ebcdic(c);
+        const auto [ch, newc] = ebcdic_encoding::to_ebcdic(c, ce);
         ret += ch;
         c = newc;
     }
+
+    if (c != ce)
+        RET_ERRPARM;
 
     return ret;
 }
@@ -496,17 +495,21 @@ context::SET_t ca_function::C2B(const context::C_t& param, diagnostic_adder& add
     if (param.empty())
         return "";
 
-    if (param.size() * 8 > ca_string::MAX_STR_SIZE)
-        RET_ERRPARM;
+    const char* c = std::to_address(param.cbegin());
+    const auto ce = std::to_address(param.cend());
 
     std::string ret;
-    ret.reserve(param.size() * 8);
-    for (const char* c = param.c_str(); c != param.c_str() + param.size();)
+    ret.reserve(std::min(param.size() * 8, ca_string::MAX_STR_SIZE));
+    while (c != ce && ret.size() + 8 <= ca_string::MAX_STR_SIZE)
     {
-        const auto [value, newc] = ebcdic_encoding::to_ebcdic(c);
+        const auto [value, newc] = ebcdic_encoding::to_ebcdic(c, ce);
         ret.append(std::bitset<8>(value).to_string());
         c = newc;
     }
+
+    if (c != ce)
+        RET_ERRPARM;
+
     return ret;
 }
 
@@ -523,20 +526,24 @@ context::SET_t ca_function::C2X(const context::C_t& param, diagnostic_adder& add
     if (param.empty())
         return "";
 
-    if (param.size() * 2 > ca_string::MAX_STR_SIZE)
-        RET_ERRPARM;
+    const char* c = std::to_address(param.cbegin());
+    const auto ce = std::to_address(param.cend());
 
     std::string ret;
-    ret.reserve(param.size() * 2);
-    for (const char* c = param.c_str(); c != param.c_str() + param.size();)
+    ret.reserve(std::min(param.size() * 2, ca_string::MAX_STR_SIZE));
+    while (c != ce && ret.size() + 2 <= ca_string::MAX_STR_SIZE)
     {
-        const auto [value, newc] = ebcdic_encoding::to_ebcdic(c);
+        const auto [value, newc] = ebcdic_encoding::to_ebcdic(c, ce);
 
         ret.push_back("0123456789ABCDEF"[value >> 4]);
         ret.push_back("0123456789ABCDEF"[value & 0xf]);
 
         c = newc;
     }
+
+    if (c != ce)
+        RET_ERRPARM;
+
     return ret;
 }
 

@@ -108,6 +108,13 @@ INSTANTIATE_TEST_SUITE_P(func_parameters_suite,
         func_test_param { ca_expr_funcs::C2A, { "+" }, 78, false, "C2A_padding" },
         func_test_param { ca_expr_funcs::C2A, { "0000" }, -252645136, false, "C2A_whole" },
         func_test_param { ca_expr_funcs::C2A, { "00001" }, {}, true, "C2A_exceeds" },
+        func_test_param {
+            ca_expr_funcs::C2A,
+            { (const char*)u8"\U0001F600\U0001F600\U0001F600\U0001F600" },
+            0x3F3F3F3F,
+            false,
+            "C2A_multibyte",
+        },
 
         func_test_param { ca_expr_funcs::D2A, { "" }, 0, false, "D2A_empty" },
         func_test_param { ca_expr_funcs::D2A, { "000" }, 0, false, "D2A_zeros" },

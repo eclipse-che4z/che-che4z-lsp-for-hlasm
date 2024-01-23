@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <memory>
 #include <string>
 
 #include "gtest/gtest.h"
@@ -75,25 +76,26 @@ TEST(ebcdic_encoding, unicode)
 
     u8.insert(u8.end(), (unsigned char)0x41);
 
-    //ä
+    // ä
     u8.insert(u8.end(), (unsigned char)0xC3);
     u8.insert(u8.end(), (unsigned char)0xA4);
 
     auto begin = u8.c_str();
+    const auto end = std::to_address(u8.end());
 
-    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin), std::pair(ebcdic_encoding::EBCDIC_SUB, begin + 4));
+    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin, end), std::pair(ebcdic_encoding::EBCDIC_SUB, begin + 4));
     begin += 4;
 
-    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin), std::pair(ebcdic_encoding::EBCDIC_SUB, begin + 3));
+    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin, end), std::pair(ebcdic_encoding::EBCDIC_SUB, begin + 3));
     begin += 3;
 
-    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin), std::pair(ebcdic_encoding::EBCDIC_SUB, begin + 2));
+    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin, end), std::pair(ebcdic_encoding::EBCDIC_SUB, begin + 2));
     begin += 2;
 
-    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin), std::pair((unsigned char)0xC1, begin + 1));
+    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin, end), std::pair((unsigned char)0xC1, begin + 1));
     begin += 1;
 
-    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin), std::pair((unsigned char)0x43, begin + 2));
+    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin, end), std::pair((unsigned char)0x43, begin + 2));
     begin += 2;
 
     EXPECT_EQ(begin, std::to_address(u8.end()));

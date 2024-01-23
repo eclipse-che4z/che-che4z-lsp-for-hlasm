@@ -23,7 +23,7 @@ namespace hlasm_plugin::parser_library {
 // Class that provides support for EBCDIC encoding.
 class ebcdic_encoding
 {
-    static std::pair<unsigned char, const char*> to_ebcdic_multibyte(const char* c) noexcept;
+    static std::pair<unsigned char, const char*> to_ebcdic_multibyte(const char* c, const char* ce) noexcept;
 
     // clang-format off
     // IBM037 - CR,LF need to be handled separately via private plane
@@ -74,14 +74,14 @@ public:
     // Converts an ASCII character to EBCDIC character.
     static constexpr unsigned char to_ebcdic(unsigned char c) noexcept { return a2e[c]; }
     // Converts an UTF-8 character to EBCDIC character.
-    static constexpr std::pair<unsigned char, const char*> to_ebcdic(const char* c) noexcept
+    static constexpr std::pair<unsigned char, const char*> to_ebcdic(const char* c, const char* const ce) noexcept
     {
         if (const unsigned char first = *c; first < 0x80) [[likely]] // 0xxxxxxx
         {
             return { a2e[first], c + 1 };
         }
         else
-            return to_ebcdic_multibyte(c);
+            return to_ebcdic_multibyte(c, ce);
     }
 
     // Converts UTF-8 string to EBCDIC string.
