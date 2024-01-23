@@ -16,13 +16,10 @@
 
 #include <algorithm>
 #include <atomic>
-#include <condition_variable>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <string_view>
-#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -42,7 +39,6 @@
 #include "utils/async_busy_wait.h"
 #include "utils/task.h"
 #include "variable.h"
-#include "virtual_file_monitor.h"
 #include "workspace_manager.h"
 #include "workspace_manager_response.h"
 #include "workspaces/file_manager.h"
@@ -106,7 +102,7 @@ class debugger::impl final : public processing::statement_analyzer
     std::string opencode_source_uri_;
     std::vector<stack_frame> stack_frames_;
     std::vector<scope> scopes_;
-    context::hlasm_context::sysvar_map last_system_variables_;
+    std::unordered_map<frame_id_t, context::hlasm_context::sysvar_map> last_system_variables_;
 
     std::unordered_map<size_t, variable_store> variables_;
     size_t next_var_ref_ = 1;
@@ -375,9 +371,11 @@ public:
         // we show only global variables that are valid for current scope,
         // moreover if we show variable in globals, we do not show it in locals
 
-        if (proc_stack_[frame_id].scope.is_in_macro())
+        const auto& current_scope = proc_stack_[frame_id].scope;
+
+        if (current_scope.is_in_macro())
         {
-            for (const auto& [name, value] : proc_stack_[frame_id].scope.this_macro->named_params)
+            for (const auto& [name, value] : current_scope.this_macro->named_params)
             {
                 if (name.empty())
                     continue;
@@ -385,7 +383,7 @@ public:
             }
         }
 
-        for (const auto& [_, value_type] : proc_stack_[frame_id].scope.variables)
+        for (const auto& [_, value_type] : current_scope.variables)
         {
             const auto& [ref, _data, global] = value_type;
             if (global)
@@ -394,8 +392,8 @@ public:
                 scope_vars.push_back(std::make_unique<set_symbol_variable>(*ref));
         }
 
-        last_system_variables_ = ctx_->get_system_variables(proc_stack_[frame_id].scope);
-        for (const auto& [_, value_type] : last_system_variables_)
+        auto [sysvars, _] = last_system_variables_.try_emplace(frame_id, ctx_->get_system_variables(current_scope));
+        for (const auto& [__, value_type] : sysvars->second)
         {
             const auto& [value, global] = value_type;
             if (global)
