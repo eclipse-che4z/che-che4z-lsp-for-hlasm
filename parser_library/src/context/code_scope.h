@@ -57,18 +57,20 @@ struct code_scope
     set_sym_storage variables;
     // gets macro to which this scope belong (nullptr if in open code)
     std::unique_ptr<macro_invocation> this_macro;
-    // the ACTR branch counter
-    A_t branch_counter = 4096;
-    // number of changed branch counters
-    size_t branch_counter_change = 0;
-    // variable for implementing &SYSM_SEV
-    unsigned mnote_max_in_scope = 0;
-    // scope creation time
-    utils::timestamp time;
     // initial location counter
     location_counter* loctr = nullptr;
+    // scope creation time
+    utils::timestamp time;
+    // variable for implementing &SYSM_SEV
+    unsigned mnote_max_in_scope = 0;
+    // MNOTE scope max
+    unsigned mnote_last_max = 0;
     // scope unique value
     unsigned long sysndx = 0;
+    // number of changed branch counters
+    size_t branch_counter_change = 0;
+    // the ACTR branch counter
+    A_t branch_counter = 4096;
 
     bool is_in_macro() const { return !!this_macro; }
 

@@ -208,12 +208,9 @@ hlasm_context::sysvar_map hlasm_context::get_system_variables(const code_scope& 
 {
     sysvar_map result;
     add_global_system_variables(result);
-    if (&scope != &scope_stack_.front())
-    {
-        auto match = [&scope](const auto& e) { return &scope == &e; };
-        auto it = std::find_if(scope_stack_.rbegin(), scope_stack_.rend(), match);
-        add_local_system_variables(result, it - scope_stack_.rbegin());
-    }
+    auto match = [&scope](const auto& e) { return &scope == &e; };
+    auto it = std::find_if(scope_stack_.rbegin(), scope_stack_.rend(), match);
+    add_scoped_system_variables(result, it - scope_stack_.rbegin(), &scope == &scope_stack_.front());
 
     return result;
 }
@@ -245,15 +242,12 @@ void hlasm_context::add_global_system_variables(sysvar_map& sysvars)
     static constexpr const auto emulated_asm_name = "HIGH LEVEL ASSEMBLER";
     sysvars.insert(create_system_variable(id_index("SYSASM"), emulated_asm_name, true));
 
-    sysvars.insert(create_system_variable(id_index("SYSM_SEV"),
-        create_dynamic_var([this]() { return left_pad(std::to_string(mnote_last_max), 3, '0'); }),
-        true));
-
     sysvars.insert(create_system_variable(id_index("SYSM_HSEV"),
         create_dynamic_var([this]() { return left_pad(std::to_string(mnote_max), 3, '0'); }),
         true));
 }
-void hlasm_context::add_local_system_variables(sysvar_map& sysvars, size_t skip_last)
+
+void hlasm_context::add_scoped_system_variables(sysvar_map& sysvars, size_t skip_last, bool globals_only)
 {
     struct view_t
     {
@@ -266,6 +260,13 @@ void hlasm_context::add_local_system_variables(sysvar_map& sysvars, size_t skip_
         const auto& top() const noexcept { return *rbegin(); }
         const auto& dyn_ptrs() const { return ctx.ensure_dynamic_ptrs_count(); }
     } view { *this, skip_last };
+
+    sysvars.insert(create_system_variable(id_index("SYSM_SEV"),
+        create_dynamic_var([view]() { return left_pad(std::to_string(view.top().mnote_last_max), 3, '0'); }),
+        true));
+
+    if (globals_only)
+        return;
 
     // Requires macro scope
 
@@ -385,7 +386,7 @@ hlasm_context::hlasm_context(
     init_instruction_map(opcode_mnemo_, *ids_, asm_options_.instr_set);
 
     add_global_system_variables(system_variables);
-    add_local_system_variables(system_variables, 0);
+    add_scoped_system_variables(system_variables, 0, false);
 
     push_statement_processing(processing::processing_kind::ORDINARY, std::move(file_loc));
 }
@@ -907,15 +908,15 @@ std::pair<const macro_invocation*, bool> hlasm_context::enter_macro(
         new_scope.loctr = &sect->current_location_counter();
 
     ++SYSNDX_;
-    mnote_last_max = 0;
 
     return { result, truncated };
 }
 
 void hlasm_context::leave_macro()
 {
-    mnote_last_max = scope_stack_.back().mnote_max_in_scope;
+    auto mnote_last_max = scope_stack_.back().mnote_max_in_scope;
     scope_stack_.pop_back();
+    scope_stack_.back().mnote_last_max = mnote_last_max;
 }
 
 const macro_invocation* hlasm_context::current_macro() const
