@@ -429,7 +429,7 @@ export function HLASMExternalFilesEndevor(e4e: E4E, invalidate: vscode.Event<Ext
             if (args.length === 0) return null;
 
             const profile = await e4e.getProfileInfo(asPartialProfile(args[0]));
-            if (profile instanceof Error) throw p;
+            if (profile instanceof Error) return null;
 
             if (purpose === ExternalRequestType.list_directory && args.length === 7)
                 return parseEndevorType(profile, args.slice(1));

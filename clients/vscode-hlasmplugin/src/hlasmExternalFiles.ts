@@ -71,7 +71,7 @@ export type ExternalFilesInvalidationdata = {
 };
 
 export interface ClientInterface<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails> {
-    parseArgs: (path: string, purpose: ExternalRequestType, query?: string) => Promise<{ details: ExternalRequestDetails<ReadArgs, ListArgs>[typeof purpose], server: ConnectArgs } | null>,
+    parseArgs: (rawPath: string, purpose: ExternalRequestType, query?: string) => Promise<{ details: ExternalRequestDetails<ReadArgs, ListArgs>[typeof purpose], server: ConnectArgs } | null>,
 
     listMembers(arg: ListArgs, server: ConnectArgs): Promise<string[] | null>;
     readMember(arg: ReadArgs, server: ConnectArgs): Promise<string | null>;
@@ -227,7 +227,7 @@ export class HLASMExternalFiles {
         associatedWorkspaceFragment: null,
     });
 
-    private async extractUriDetails<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails>(uri: vscode.Uri, purpose: ExternalRequestType): Promise<{
+    private async extractUriDetails<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails>(uri: vscode.Uri, rawUri: string, purpose: ExternalRequestType): Promise<{
         cacheKey: null;
         service: null;
         instance: null;
@@ -249,15 +249,16 @@ export class HLASMExternalFiles {
         server: null;
         associatedWorkspaceFragment: string;
     }> {
-        const pathParser = /^\/([A-Z]+)(\/.*)?/;
+        // skip schema, skip :, skip optional //server, extract service, extract path, end on query or fragment
+        const rawPathParser = /^[^:/?#]+:(?:\/\/[^/?#]*)?\/([A-Z]+)(\/[^#?]*)?(?:[?#]|$)/;
 
-        const matches = pathParser.exec(uri.path);
+        const parsedPath = rawPathParser.exec(rawUri);
 
-        if (uri.scheme !== this.magicScheme || !matches)
+        if (uri.scheme !== this.magicScheme || !parsedPath)
             return HLASMExternalFiles.emptyUriDetails;
 
-        const service = matches[1];
-        const subpath = matches[2] || '';
+        const service = parsedPath[1];
+        const subpath = parsedPath[2] || '';
 
         const instance: ClientInstance<ConnectArgs, ReadArgs, ListArgs> | undefined = this.clients.get(service);
         const details_server = await instance?.client?.parseArgs(subpath, purpose, uri.query) ?? null;
@@ -516,7 +517,7 @@ export class HLASMExternalFiles {
         responseTransform: (result: T, pathTransform: (p: string) => string) => (T extends string[] ? ExternalListDirectoryResponse : ExternalReadFileResponse)['data']):
         Promise<(T extends string[] ? ExternalListDirectoryResponse : ExternalReadFileResponse) | ExternalErrorResponse | null> {
         if (msg.op !== ExternalRequestType.read_file && msg.op !== ExternalRequestType.list_directory) throw Error("");
-        const { cacheKey, service, instance, details, server, associatedWorkspaceFragment } = await this.extractUriDetails<ConnectArgs, ReadArgs, ListArgs>(uri, msg.op);
+        const { cacheKey, service, instance, details, server, associatedWorkspaceFragment } = await this.extractUriDetails<ConnectArgs, ReadArgs, ListArgs>(uri, msg.url, msg.op);
         if (!cacheKey || instance && !details)
             return this.generateError(msg.id, -5, 'Invalid request');
 
@@ -619,24 +620,24 @@ export class HLASMExternalFiles {
         });
     }
 
-    public handleRawMessage(msg: any): Promise<ExternalReadFileResponse | ExternalListDirectoryResponse | ExternalErrorResponse | null> {
+    public async handleRawMessage(msg: any): Promise<ExternalReadFileResponse | ExternalListDirectoryResponse | ExternalErrorResponse | null> {
         if (!msg || typeof msg.id !== 'number' || typeof msg.op !== 'string')
-            return Promise.resolve(null);
+            return null;
 
         if (typeof msg.url !== 'string')
-            return Promise.resolve(this.generateError(msg.id, -5, 'Invalid request'));
+            return this.generateError(msg.id, -5, 'Invalid request');
 
         try {
             const uri = vscode.Uri.parse(msg.url, true)
 
             if (msg.op === ExternalRequestType.read_file)
-                return this.handleFileMessage(uri, msg);
+                return await this.handleFileMessage(uri, msg);
             if (msg.op === ExternalRequestType.list_directory)
-                return this.handleDirMessage(uri, msg);
+                return await this.handleDirMessage(uri, msg);
         }
         catch (e) { }
 
-        return Promise.resolve(this.generateError(msg.id, -5, 'Invalid request'));
+        return this.generateError(msg.id, -5, 'Invalid request');
     }
 
     public async clearCache(service?: string, paths?: string[], serverId?: string) {
