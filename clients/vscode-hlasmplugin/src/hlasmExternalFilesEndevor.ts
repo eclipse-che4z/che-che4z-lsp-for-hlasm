@@ -376,7 +376,7 @@ function listEndevorElements(e4e: E4E, type_spec: EndevorType, profile: Resolved
         subsystem: type_spec.subsystem,
         type: type_spec.type
     }).then(
-        r => r instanceof Error ? Promise.reject(r) : r?.map(([file, fingerprint]) => `/${profileAsString(profile)}${type_spec.normalizedPath()}/${encodeURIComponent(file)}.hlasm?${fingerprint.toString()}`) ?? null
+        r => r instanceof Error ? Promise.reject(r) : r?.map(([file, fingerprint]) => `/${encodeURIComponent(profileAsString(profile))}${type_spec.normalizedPath()}/${encodeURIComponent(file)}.hlasm?${fingerprint.toString()}`) ?? null
     );
 }
 
@@ -397,7 +397,7 @@ function listEndevorMembers(e4e: E4E, type_spec: EndevorDataset, profile: Resolv
     return e4e.listMembers(profile, {
         dataset: type_spec.dataset
     }).then(
-        r => r instanceof Error ? Promise.reject(r) : r?.map((member) => `/${profileAsString(profile)}${type_spec.normalizedPath()}/${encodeURIComponent(member)}.hlasm`) ?? null
+        r => r instanceof Error ? Promise.reject(r) : r?.map((member) => `/${encodeURIComponent(profileAsString(profile))}${type_spec.normalizedPath()}/${encodeURIComponent(member)}.hlasm`) ?? null
     );
 }
 

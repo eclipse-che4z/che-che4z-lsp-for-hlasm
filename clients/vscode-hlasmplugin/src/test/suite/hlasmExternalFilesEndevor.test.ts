@@ -89,7 +89,7 @@ suite('External files (Endevor)', () => {
         const result = [['FILE', '0123456789ABCDEF']];
         const client = HLASMExternalFilesEndevor({ listElements: async (_p: unknown, _t: unknown) => { return result; } } as any as E4E, dummyEvent);
 
-        assert.deepStrictEqual(await client.listMembers({ 'use_map': 'map', normalizedPath: () => '/PATH' } as any, dummyProfile), ['/instance@profile/PATH/FILE.hlasm?0123456789ABCDEF']);
+        assert.deepStrictEqual(await client.listMembers({ 'use_map': 'map', normalizedPath: () => '/PATH' } as any, dummyProfile), ['/instance%40profile/PATH/FILE.hlasm?0123456789ABCDEF']);
     });
 
     test('Read endevor element', async () => {
@@ -103,7 +103,7 @@ suite('External files (Endevor)', () => {
         const result = ['FILE'];
         const client = HLASMExternalFilesEndevor({ listMembers: async (_p: unknown, _t: unknown) => { return result; } } as any as E4E, dummyEvent);
 
-        assert.deepStrictEqual(await client.listMembers({ normalizedPath: () => '/PATH' } as any, dummyProfile), ['/instance@profile/PATH/FILE.hlasm']);
+        assert.deepStrictEqual(await client.listMembers({ normalizedPath: () => '/PATH' } as any, dummyProfile), ['/instance%40profile/PATH/FILE.hlasm']);
     });
 
     test('Read member', async () => {
