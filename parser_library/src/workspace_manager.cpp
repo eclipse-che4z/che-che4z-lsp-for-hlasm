@@ -105,7 +105,20 @@ public:
 
     static constexpr std::string_view hlasm_external_scheme = "hlasm-external:";
     static constexpr std::string_view allowed_scheme_list[] = {
-        "file:", "untitled:", hlasm_external_scheme, "vscode-vfs:", "vscode-test-web:"
+        "file:",
+        "untitled:",
+        hlasm_external_scheme,
+        "vscode-vfs:",
+        "vscode-test-web:",
+        // e4e integration
+        "e4e-element:",
+        "e4e-listing:",
+        "e4e-change-lvl:",
+        "e4e-readonly-file:",
+        "e4e-read-only-cached-element:",
+        "e4e-readonly-report:",
+        "e4e-readonly-generic-report:",
+        "ndvr:",
     };
     static bool allowed_scheme(const resource_location& uri)
     {
