@@ -26,11 +26,11 @@ ca_expression::ca_expression(context::SET_t_enum expr_kind, range expr_range)
 context::SET_t ca_expression::convert_return_types(
     context::SET_t retval, context::SET_t_enum type, const evaluation_context&) const
 {
-    if (type != retval.type)
+    if (type != retval.type())
     {
-        if (retval.type == context::SET_t_enum::A_TYPE && type == context::SET_t_enum::B_TYPE)
+        if (retval.type() == context::SET_t_enum::A_TYPE && type == context::SET_t_enum::B_TYPE)
             return retval.access_a() != 0;
-        if (retval.type == context::SET_t_enum::B_TYPE && type == context::SET_t_enum::A_TYPE)
+        if (retval.type() == context::SET_t_enum::B_TYPE && type == context::SET_t_enum::A_TYPE)
             return (context::A_t)retval.access_b();
 
         return context::SET_t(type);

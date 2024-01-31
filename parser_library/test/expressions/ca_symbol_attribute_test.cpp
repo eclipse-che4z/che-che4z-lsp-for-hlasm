@@ -159,13 +159,13 @@ TEST_P(ca_attr, test)
 
     auto result = create_var_sym_attr(GetParam().attr, name).evaluate(eval_ctx);
 
-    ASSERT_EQ(result.type, GetParam().result.type);
+    ASSERT_EQ(result.type(), GetParam().result.type());
 
-    if (result.type == context::SET_t_enum::A_TYPE)
+    if (result.type() == context::SET_t_enum::A_TYPE)
         EXPECT_EQ(result.access_a(), GetParam().result.access_a());
-    else if (result.type == context::SET_t_enum::B_TYPE)
+    else if (result.type() == context::SET_t_enum::B_TYPE)
         EXPECT_EQ(result.access_b(), GetParam().result.access_b());
-    else if (result.type == context::SET_t_enum::C_TYPE)
+    else if (result.type() == context::SET_t_enum::C_TYPE)
         EXPECT_EQ(result.access_c(), GetParam().result.access_c());
     else
         FAIL();

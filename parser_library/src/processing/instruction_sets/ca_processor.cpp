@@ -704,7 +704,7 @@ void ca_processor::process_MHELP(const semantics::complete_statement& stmt)
     else if (ca_op->kind == semantics::ca_kind::VAR)
     {
         auto val = ca_op->access_var()->variable_symbol->evaluate(eval_ctx);
-        if (val.type == context::SET_t_enum::A_TYPE)
+        if (val.type() == context::SET_t_enum::A_TYPE)
             value = val.access_a();
     }
     else

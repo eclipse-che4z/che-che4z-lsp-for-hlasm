@@ -103,7 +103,7 @@ bool ca_symbol_attribute::get_undefined_attributed_symbols(
         {
             context::SET_t substituted_name = vs->evaluate(eval_ctx);
 
-            if (substituted_name.type != context::SET_t_enum::C_TYPE)
+            if (substituted_name.type() != context::SET_t_enum::C_TYPE)
                 return false;
 
             auto [valid, ord_name] =
@@ -418,7 +418,7 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
     context::SET_t substituted_name =
         get_var_sym_value(eval_ctx.hlasm_ctx, var_name, expr_subscript, var_range, eval_ctx.diags);
 
-    if (substituted_name.type != context::SET_t_enum::C_TYPE)
+    if (substituted_name.type() != context::SET_t_enum::C_TYPE)
     {
         if (attribute != context::data_attr_kind::O && attribute != context::data_attr_kind::T)
             eval_ctx.diags.add_diagnostic(diagnostic_op::error_E066(expr_range));

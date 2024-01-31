@@ -61,60 +61,62 @@ template<>
 struct object_traits<A_t>
 {
     static constexpr SET_t_enum type_enum = SET_t_enum::A_TYPE;
-    static const A_t& default_v()
-    {
-        static A_t def = 0;
-        return def;
-    }
+    static constexpr A_t default_v() noexcept { return 0; }
 };
 
 template<>
 struct object_traits<B_t>
 {
     static constexpr SET_t_enum type_enum = SET_t_enum::B_TYPE;
-    static const B_t& default_v()
-    {
-        static B_t def = false;
-        return def;
-    }
+    static constexpr B_t default_v() noexcept { return false; }
 };
 
 template<>
 struct object_traits<C_t>
 {
     static constexpr SET_t_enum type_enum = SET_t_enum::C_TYPE;
-    static const C_t& default_v()
-    {
-        static C_t def("");
-        return def;
-    }
+    static C_t default_v() noexcept { return C_t(); } // llvm-14 - constexpr
 };
 
 // struct aggregating SET types for easier usage
 struct SET_t
 {
 private:
-    A_t a_value;
-    B_t b_value;
-    C_t c_value;
+    C_t c_value = {};
+    A_t a_value = 0;
+    SET_t_enum value_type;
 
 public:
-    SET_t(A_t value);
-    SET_t(B_t value);
-    SET_t(C_t value);
-    // for string literals (otherwise they prefer conversion to bool rather than to string)
-    SET_t(const char* value);
-    SET_t(SET_t_enum type = SET_t_enum::UNDEF_TYPE);
+    SET_t(A_t value) noexcept
+        : a_value(value)
+        , value_type(SET_t_enum::A_TYPE)
+    {}
 
-    SET_t_enum type;
+    SET_t(B_t value) noexcept
+        : a_value(static_cast<A_t>(value))
+        , value_type(SET_t_enum::B_TYPE)
+    {}
 
-    A_t& access_a();
-    B_t& access_b();
-    C_t& access_c();
+    SET_t(C_t value) noexcept
+        : c_value(std::move(value))
+        , value_type(SET_t_enum::C_TYPE)
+    {}
 
-    const A_t& access_a() const;
-    const B_t& access_b() const;
-    const C_t& access_c() const;
+    SET_t(const char* value)
+        : c_value(value)
+        , value_type(SET_t_enum::C_TYPE)
+    {}
+
+    SET_t(SET_t_enum type = SET_t_enum::UNDEF_TYPE) noexcept
+        : value_type(type)
+    {}
+
+    SET_t_enum type() const noexcept { return value_type; }
+
+    A_t access_a() const noexcept { return a_value; }
+    B_t access_b() const noexcept { return !!a_value; }
+    C_t& access_c() noexcept { return c_value; }
+    const C_t& access_c() const noexcept { return c_value; }
 
     bool operator==(const SET_t& r) const noexcept;
 };

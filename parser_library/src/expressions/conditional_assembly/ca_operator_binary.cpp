@@ -113,7 +113,7 @@ std::optional<bool> t_attr_special_case(std::vector<context::id_index>& symbols,
     if (result)
         return result;
 
-    if (auto v = o_string->evaluate(eval_ctx); v.type != context::SET_t_enum::C_TYPE || v.access_c() != "O")
+    if (auto v = o_string->evaluate(eval_ctx); v.type() != context::SET_t_enum::C_TYPE || v.access_c() != "O")
         return std::nullopt;
 
     return result;

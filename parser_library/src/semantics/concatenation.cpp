@@ -243,7 +243,7 @@ void var_sym_conc::resolve(diagnostic_op_consumer& diag) const { symbol->resolve
 
 std::string var_sym_conc::evaluate(context::SET_t varsym_value)
 {
-    switch (varsym_value.type)
+    switch (varsym_value.type())
     {
         case context::SET_t_enum::A_TYPE:
             return std::to_string(std::abs(varsym_value.access_a()));

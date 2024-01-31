@@ -442,7 +442,7 @@ context::SET_t ca_function::B2C(const context::C_t& param, diagnostic_adder& add
 context::SET_t ca_function::B2D(const context::C_t& param, diagnostic_adder& add_diagnostic)
 {
     auto tmp = B2A(param, add_diagnostic);
-    if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
+    if (tmp.type() == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2D(tmp.access_a());
 }
@@ -516,7 +516,7 @@ context::SET_t ca_function::C2B(const context::C_t& param, diagnostic_adder& add
 context::SET_t ca_function::C2D(const context::C_t& param, diagnostic_adder& add_diagnostic)
 {
     auto tmp = C2A(param, add_diagnostic);
-    if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
+    if (tmp.type() == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2D(tmp.access_a());
 }
@@ -553,7 +553,7 @@ context::SET_t ca_function::D2B(const context::C_t& param, diagnostic_adder& add
         return "";
 
     auto tmp = D2A(param, add_diagnostic);
-    if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
+    if (tmp.type() == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2B(tmp.access_a());
 }
@@ -564,7 +564,7 @@ context::SET_t ca_function::D2C(const context::C_t& param, diagnostic_adder& add
         RET_ERRPARM;
 
     auto tmp = D2A(param, add_diagnostic);
-    if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
+    if (tmp.type() == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2C(tmp.access_a());
 }
@@ -575,7 +575,7 @@ context::SET_t ca_function::D2X(const context::C_t& param, diagnostic_adder& add
         RET_ERRPARM;
 
     auto tmp = D2A(param, add_diagnostic);
-    if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
+    if (tmp.type() == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2X(tmp.access_a());
 }
@@ -697,7 +697,7 @@ context::SET_t ca_function::X2C(const context::C_t& param, diagnostic_adder& add
 context::SET_t ca_function::X2D(const context::C_t& param, diagnostic_adder& add_diagnostic)
 {
     auto tmp = X2A(param, add_diagnostic);
-    if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
+    if (tmp.type() == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2D(tmp.access_a());
 }

@@ -71,7 +71,7 @@ context::SET_t ca_var_sym::evaluate(const evaluation_context& eval_ctx) const
 context::SET_t ca_var_sym::convert_return_types(
     context::SET_t retval, context::SET_t_enum type, const evaluation_context& eval_ctx) const
 {
-    if (retval.type == context::SET_t_enum::C_TYPE)
+    if (retval.type() == context::SET_t_enum::C_TYPE)
     {
         diagnostic_adder add_diags(eval_ctx.diags, expr_range);
         switch (type)
@@ -96,11 +96,11 @@ context::SET_t ca_var_sym::convert_return_types(
                 return context::SET_t(expr_kind);
         }
     }
-    else if (retval.type == context::SET_t_enum::B_TYPE && type == context::SET_t_enum::A_TYPE)
+    else if (retval.type() == context::SET_t_enum::B_TYPE && type == context::SET_t_enum::A_TYPE)
     {
         retval = context::SET_t(retval.access_b() ? 1 : 0);
     }
-    else if (retval.type == context::SET_t_enum::A_TYPE && type == context::SET_t_enum::B_TYPE)
+    else if (retval.type() == context::SET_t_enum::A_TYPE && type == context::SET_t_enum::B_TYPE)
     {
         retval = context::SET_t(!!retval.access_a());
     }

@@ -42,11 +42,11 @@ std::ostream& operator<<(std::ostream& os, const op_test_param& param)
 {
     for (auto& p : param.params)
     {
-        if (p.type == context::SET_t_enum::A_TYPE)
+        if (p.type() == context::SET_t_enum::A_TYPE)
             os << p.access_a();
-        else if (p.type == context::SET_t_enum::B_TYPE)
+        else if (p.type() == context::SET_t_enum::B_TYPE)
             os << p.access_b();
-        else if (p.type == context::SET_t_enum::C_TYPE)
+        else if (p.type() == context::SET_t_enum::C_TYPE)
             os << p.access_c();
         os << " ";
     }
@@ -70,21 +70,21 @@ protected:
         if (GetParam().operation == ca_expr_ops::NOT || GetParam().kind == SET_t_enum::C_TYPE)
         {
             ca_function_unary_operator op(
-                nullptr, GetParam().operation, GetParam().kind, range(), GetParam().params[0].type);
+                nullptr, GetParam().operation, GetParam().kind, range(), GetParam().params[0].type());
 
             return op.operation(GetParam().params[0], eval_ctx);
         }
         else
         {
             ca_expr_ptr left;
-            if (GetParam().params[0].type == SET_t_enum::A_TYPE)
+            if (GetParam().params[0].type() == SET_t_enum::A_TYPE)
                 left = std::make_unique<ca_constant>(1, range());
             else
                 left =
                     std::make_unique<ca_string>(semantics::concat_chain {}, nullptr, ca_string::substring_t(), range());
 
             ca_function_binary_operator op(
-                std::move(left), nullptr, GetParam().operation, GetParam().kind, range(), GetParam().params[0].type);
+                std::move(left), nullptr, GetParam().operation, GetParam().kind, range(), GetParam().params[0].type());
 
             return op.operation(GetParam().params[0], GetParam().params[1], eval_ctx);
         }
@@ -159,13 +159,13 @@ TEST_P(ca_op, test)
 {
     auto result = get_result();
 
-    ASSERT_EQ(result.type, GetParam().true_result.type);
+    ASSERT_EQ(result.type(), GetParam().true_result.type());
 
-    if (result.type == SET_t_enum::A_TYPE)
+    if (result.type() == SET_t_enum::A_TYPE)
         EXPECT_EQ(result.access_a(), GetParam().true_result.access_a());
-    else if (result.type == SET_t_enum::B_TYPE)
+    else if (result.type() == SET_t_enum::B_TYPE)
         EXPECT_EQ(result.access_b(), GetParam().true_result.access_b());
-    else if (result.type == SET_t_enum::C_TYPE)
+    else if (result.type() == SET_t_enum::C_TYPE)
         EXPECT_EQ(result.access_c(), GetParam().true_result.access_c());
     else
         FAIL();

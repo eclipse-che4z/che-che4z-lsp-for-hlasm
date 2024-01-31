@@ -36,11 +36,11 @@ std::ostream& operator<<(std::ostream& os, const func_test_param& param)
 {
     for (auto& p : param.params)
     {
-        if (p.type == context::SET_t_enum::A_TYPE)
+        if (p.type() == context::SET_t_enum::A_TYPE)
             os << p.access_a();
-        else if (p.type == context::SET_t_enum::B_TYPE)
+        else if (p.type() == context::SET_t_enum::B_TYPE)
             os << p.access_b();
-        else if (p.type == context::SET_t_enum::C_TYPE)
+        else if (p.type() == context::SET_t_enum::C_TYPE)
             os << p.access_c();
         os << " ";
     }
