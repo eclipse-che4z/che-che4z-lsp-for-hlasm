@@ -344,8 +344,7 @@ void generate_merged_fade_messages(const resource_location& rl,
     const rl_mac_cpy_map& active_rl_mac_cpy_map,
     std::vector<fade_message_s>& fms)
 {
-    const auto& [has_sections, line_hits, encountered_macro_defs] = hc_entry;
-    if (!has_sections)
+    if (!hc_entry.has_sections)
         return;
 
     const mac_cpy_definitions_map* active_mac_cpy_defs_map = nullptr;
@@ -353,13 +352,12 @@ void generate_merged_fade_messages(const resource_location& rl,
         active_rl_mac_cpy_map_it != active_rl_mac_cpy_map.end())
         active_mac_cpy_defs_map = &active_rl_mac_cpy_map_it->second;
 
-    const auto line_details_it_b = line_hits.line_details.begin();
-    const auto line_details_it_e = std::next(line_details_it_b, line_hits.max_lineno + 1);
+    const auto line_details_it_b = hc_entry.hits.line_details.begin();
+    const auto line_details_it_e = std::next(line_details_it_b, hc_entry.hits.max_lineno + 1);
 
     const auto faded_line_predicate = [&active_mac_cpy_defs_map,
                                           line_details_addr = std::to_address(line_details_it_b),
-                                          &encountered_mac_defs = encountered_macro_defs](
-                                          const processing::line_detail& e) {
+                                          &hc_entry](const processing::line_detail& e) {
         if (e.macro_definition)
         {
             if (!active_mac_cpy_defs_map)
@@ -376,7 +374,7 @@ void generate_merged_fade_messages(const resource_location& rl,
                 });
 
             if (active_mac_cpy_it == active_mac_cpy_it_e
-                || (!active_mac_cpy_it->second.cpy_book && !encountered_mac_defs.contains(active_mac_cpy_it->first)))
+                || (!active_mac_cpy_it->second.cpy_book && !hc_entry.contains_line(active_mac_cpy_it->first)))
                 return false;
         }
 
@@ -466,10 +464,9 @@ void fade_unused_mac_names(const processing::hit_count_map& hc_map,
         if (hc_map_it == hc_map.end() || !hc_map_it->second.has_sections)
             continue;
 
-        const auto& encountered_macro_def_lines = hc_map_it->second.macro_definition_lines;
         for (const auto& [mac_cpy_def_start_line, mac_cpy_def_details] : active_mac_cpy_defs)
         {
-            if (!mac_cpy_def_details.cpy_book && !encountered_macro_def_lines.contains(mac_cpy_def_start_line))
+            if (!mac_cpy_def_details.cpy_book && !hc_map_it->second.contains_line(mac_cpy_def_start_line))
                 fms.emplace_back(fade_message_s::unused_macro(active_rl.get_uri(),
                     range(position(mac_cpy_def_details.prototype_line, 0),
                         position(mac_cpy_def_details.prototype_line, 80))));

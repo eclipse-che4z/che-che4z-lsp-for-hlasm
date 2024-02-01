@@ -139,7 +139,7 @@ bool hit_count_analyzer::analyze(
             hc_ref.hits.add(*stmt_lines_range, proc_kind == processing::processing_kind::ORDINARY, false);
 
             if (auto mac_invo_loc = m_ctx.current_macro_definition_location(); mac_invo_loc)
-                hc_ref.macro_definition_lines.emplace(mac_invo_loc->pos.line);
+                hc_ref.emplace_line(mac_invo_loc->pos.line);
 
             break;
         }

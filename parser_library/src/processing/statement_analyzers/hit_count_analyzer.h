@@ -16,9 +16,9 @@
 #define PROCESSING_HIT_COUNT_ANALYZER_H
 
 #include <algorithm>
+#include <functional>
 #include <string_view>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -116,7 +116,7 @@ struct hit_count_entry
 {
     bool has_sections = false;
     line_hits hits;
-    std::unordered_set<size_t> macro_definition_lines;
+    std::vector<bool> macro_definition_lines;
 
     hit_count_entry& merge(const hit_count_entry& other)
     {
@@ -125,9 +125,28 @@ struct hit_count_entry
         hits.merge(other.hits);
 
         const auto& other_mac_def_lines = other.macro_definition_lines;
-        macro_definition_lines.insert(other_mac_def_lines.begin(), other_mac_def_lines.end());
+        const auto common = std::min(macro_definition_lines.size(), other_mac_def_lines.size());
+        const auto middle = other_mac_def_lines.begin() + common;
+        std::transform(other_mac_def_lines.begin(),
+            middle,
+            macro_definition_lines.begin(),
+            macro_definition_lines.begin(),
+            std::logical_or<bool>());
+        macro_definition_lines.insert(macro_definition_lines.end(), middle, other_mac_def_lines.end());
 
         return *this;
+    }
+
+    bool contains_line(size_t i) const noexcept
+    {
+        return i < macro_definition_lines.size() && macro_definition_lines[i];
+    }
+
+    void emplace_line(size_t i)
+    {
+        if (i >= macro_definition_lines.size())
+            macro_definition_lines.resize(i + 1);
+        macro_definition_lines[i] = true;
     }
 };
 
