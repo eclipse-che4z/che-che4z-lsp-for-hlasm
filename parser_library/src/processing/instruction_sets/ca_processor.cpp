@@ -14,6 +14,8 @@
 
 #include "ca_processor.h"
 
+#include <utility>
+
 #include "context/hlasm_context.h"
 #include "context/variables/set_symbol.h"
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
@@ -174,7 +176,6 @@ bool ca_processor::prepare_SET_operands(
         return false;
     }
 
-    expr_values.reserve(ops.size());
     for (const auto& op : ops)
     {
         if (op->type == semantics::operand_type::EMPTY)
@@ -257,53 +258,43 @@ void ca_processor::process_ANOP(const semantics::complete_statement& stmt)
     register_seq_sym(stmt);
 }
 
-bool ca_processor::prepare_ACTR(const semantics::complete_statement& stmt, context::A_t& ctr)
+void ca_processor::process_ACTR(const semantics::complete_statement& stmt)
 {
+    register_seq_sym(stmt);
+
     if (stmt.operands_ref().value.size() != 1)
     {
         add_diagnostic(diagnostic_op::error_E020("operand", stmt.instruction_ref().field_range));
-        return false;
+        return;
     }
 
     const auto* ca_op = stmt.operands_ref().value[0]->access_ca();
     assert(ca_op);
 
-    if (ca_op->kind == semantics::ca_kind::EXPR)
-    {
-        ctr = ca_op->access_expr()->expression->evaluate<context::A_t>(eval_ctx);
-        return true;
-    }
-    else
+    if (ca_op->kind != semantics::ca_kind::EXPR)
     {
         static constexpr std::string_view expected[] = { "arithmetic expression" };
         add_diagnostic(diagnostic_op::error_E015(expected, ca_op->operand_range));
-        return false;
+        return;
     }
-}
 
-void ca_processor::process_ACTR(const semantics::complete_statement& stmt)
-{
-    register_seq_sym(stmt);
+    const auto ctr = ca_op->access_expr()->expression->evaluate<context::A_t>(eval_ctx);
 
-    if (context::A_t ctr; prepare_ACTR(stmt, ctr))
+    static constexpr size_t ACTR_LIMIT = 1000;
+
+    if (hlasm_ctx.set_branch_counter(ctr) == ACTR_LIMIT)
     {
-        static constexpr size_t ACTR_LIMIT = 1000;
-        if (hlasm_ctx.set_branch_counter(ctr) == ACTR_LIMIT)
-        {
-            add_diagnostic(diagnostic_op::error_W063(stmt.stmt_range_ref()));
-        }
+        add_diagnostic(diagnostic_op::error_W063(stmt.stmt_range_ref()));
     }
 }
 
-bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt,
-    context::A_t& branch,
-    std::vector<std::pair<context::id_index, range>>& targets)
+const semantics::seq_sym* ca_processor::prepare_AGO(const semantics::complete_statement& stmt)
 {
     const auto& ops = stmt.operands_ref().value;
     if (ops.empty())
     {
         add_diagnostic(diagnostic_op::error_E022("AGO", stmt.instruction_ref().field_range));
-        return false;
+        return nullptr;
     }
 
     static constexpr std::string_view expected[] = { "sequence symbol" };
@@ -312,7 +303,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt,
         if (op->type == semantics::operand_type::EMPTY)
         {
             add_diagnostic(diagnostic_op::error_E015(expected, op->operand_range));
-            return false;
+            return nullptr;
         }
     }
 
@@ -324,71 +315,60 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt,
         if (ops.size() != 1)
         {
             add_diagnostic(diagnostic_op::error_E015(expected, ca_op->operand_range));
-            return false;
+            return nullptr;
         }
 
-        auto& symbol = ca_op->access_seq()->sequence_symbol;
-        targets.emplace_back(symbol.name, symbol.symbol_range);
-        branch = 1;
-        return true;
+        return &ca_op->access_seq()->sequence_symbol;
     }
 
     if (ca_op->kind == semantics::ca_kind::BRANCH)
     {
-        targets.reserve(ops.size());
+        const semantics::seq_sym* result = nullptr;
+
         auto br_op = ca_op->access_branch();
-        branch = br_op->expression->evaluate<context::A_t>(eval_ctx);
-        targets.emplace_back(br_op->sequence_symbol.name, br_op->sequence_symbol.symbol_range);
+        auto branch = br_op->expression->evaluate<context::A_t>(eval_ctx);
+        if (branch == 1)
+            result = &br_op->sequence_symbol;
 
         for (size_t i = 1; i < ops.size(); ++i)
         {
             auto tmp = ops[i]->access_ca();
             assert(tmp);
 
-            if (tmp->kind == semantics::ca_kind::SEQ)
-            {
-                auto& symbol = tmp->access_seq()->sequence_symbol;
-                targets.emplace_back(symbol.name, symbol.symbol_range);
-            }
-            else
+            if (tmp->kind != semantics::ca_kind::SEQ)
             {
                 add_diagnostic(diagnostic_op::error_E015(expected, tmp->operand_range));
-                return false;
+                return nullptr;
             }
+
+            if (std::cmp_equal(i + 1, branch))
+                result = &tmp->access_seq()->sequence_symbol;
         }
-        return true;
+        return result;
     }
-    return false;
+    return nullptr;
 }
 
 void ca_processor::process_AGO(const semantics::complete_statement& stmt)
 {
     register_seq_sym(stmt);
 
-    context::A_t branch;
-    std::vector<std::pair<context::id_index, range>> targets;
-    bool ok = prepare_AGO(stmt, branch, targets);
-    if (!ok)
-        return;
-
-    if (branch > 0 && branch <= (context::A_t)targets.size())
-        branch_provider.jump_in_statements(targets[branch - 1].first, targets[branch - 1].second);
+    if (const auto target = prepare_AGO(stmt))
+        branch_provider.jump_in_statements(target->name, target->symbol_range);
 }
 
-bool ca_processor::prepare_AIF(
-    const semantics::complete_statement& stmt, context::B_t& condition, context::id_index& target, range& target_range)
+const semantics::seq_sym* ca_processor::prepare_AIF(const semantics::complete_statement& stmt)
 {
-    condition = false;
-
     const auto& ops = stmt.operands_ref().value;
     if (ops.empty())
     {
         add_diagnostic(diagnostic_op::error_E022("AIF", stmt.instruction_ref().field_range));
-        return false;
+        return nullptr;
     }
 
     static constexpr std::string_view expected[] = { "conditional branch" };
     bool has_operand = false;
+    const semantics::seq_sym* result = nullptr;
     for (auto it = ops.begin(); it != ops.end(); ++it)
     {
         const auto& op = *it;
@@ -399,54 +379,41 @@ bool ca_processor::prepare_AIF(
                 continue;
 
             add_diagnostic(diagnostic_op::error_E015(expected, op->operand_range));
-            return false;
+            return nullptr;
         }
         has_operand = true;
 
         auto ca_op = op->access_ca();
         assert(ca_op);
 
-        if (ca_op->kind == semantics::ca_kind::BRANCH)
-        {
-            if (!condition)
-            {
-                auto br = ca_op->access_branch();
-                condition = br->expression->evaluate<context::B_t>(eval_ctx);
-
-                target = br->sequence_symbol.name;
-                target_range = br->sequence_symbol.symbol_range;
-            }
-        }
-        else
+        if (ca_op->kind != semantics::ca_kind::BRANCH)
         {
             add_diagnostic(diagnostic_op::error_E015(expected, ca_op->operand_range));
-            return false;
+            return nullptr;
         }
+
+        if (result)
+            continue;
+
+        if (const auto* br = ca_op->access_branch(); br->expression->evaluate<context::B_t>(eval_ctx))
+            result = &br->sequence_symbol;
     }
 
     if (!has_operand)
     {
         add_diagnostic(diagnostic_op::error_E022("variable symbol definition", stmt.instruction_ref().field_range));
-        return false;
+        return nullptr;
     }
 
-    return true;
+    return result;
 }
 
 void ca_processor::process_AIF(const semantics::complete_statement& stmt)
 {
     register_seq_sym(stmt);
 
-    context::B_t condition;
-    context::id_index target;
-    range target_range;
-    bool ok = prepare_AIF(stmt, condition, target, target_range);
-
-    if (!ok)
-        return;
-
-    if (condition)
-        branch_provider.jump_in_statements(target, target_range);
+    if (const auto target = prepare_AIF(stmt))
+        branch_provider.jump_in_statements(target->name, target->symbol_range);
 }
 
 void ca_processor::process_MACRO(const semantics::complete_statement& stmt)
@@ -612,29 +579,29 @@ void ca_processor::process_empty(const semantics::complete_statement&) {}
 template<typename T>
 void ca_processor::process_SET(const semantics::complete_statement& stmt)
 {
-    std::vector<expressions::ca_expression*> expr_values;
     auto [set_symbol, name, index] = get_SET_symbol<T>(stmt);
 
     if (!set_symbol)
         return;
 
-    if (!prepare_SET_operands(stmt, expr_values))
+    m_set_work.clear();
+    if (!prepare_SET_operands(stmt, m_set_work))
         return;
 
-    if (expr_values.size() > std::numeric_limits<context::A_t>::max()
-        || std::numeric_limits<context::A_t>::max() - (context::A_t)expr_values.size() < index)
+    if (m_set_work.size() > std::numeric_limits<context::A_t>::max()
+        || std::numeric_limits<context::A_t>::max() - (context::A_t)m_set_work.size() < index)
     {
         eval_ctx.diags.add_diagnostic(diagnostic_op::error_E080(stmt.operands_ref().field_range));
         return;
     }
 
-    for (context::A_t i = 0; i < expr_values.size(); ++i)
+    for (context::A_t i = 0; i < m_set_work.size(); ++i)
     {
         // first obtain a place to put the result in
         auto& val = set_symbol->template access_set_symbol<T>()->reserve_value(index + i);
         // then evaluate the new value and save it unless the operand is empty
-        if (expr_values[i])
-            val = expr_values[i]->template evaluate<T>(eval_ctx);
+        if (m_set_work[i])
+            val = m_set_work[i]->template evaluate<T>(eval_ctx);
     }
 }
 
@@ -647,13 +614,11 @@ void ca_processor::process_GBL_LCL(const semantics::complete_statement& stmt)
 {
     register_seq_sym(stmt);
 
-    std::vector<GLB_LCL_info> info;
-    bool ok = prepare_GBL_LCL(stmt, info);
-
-    if (!ok)
+    m_glb_lcl_work.clear();
+    if (!prepare_GBL_LCL(stmt, m_glb_lcl_work))
         return;
 
-    for (const auto& i : info)
+    for (const auto& i : m_glb_lcl_work)
     {
         if constexpr (global)
         {

@@ -67,6 +67,8 @@ private:
             , r(r)
         {}
     };
+    std::vector<GLB_LCL_info> m_glb_lcl_work;
+    std::vector<expressions::ca_expression*> m_set_work;
 
     template<typename T>
     SET_info get_SET_symbol(const semantics::complete_statement& stmt);
@@ -83,18 +85,12 @@ private:
 
     void process_ANOP(const semantics::complete_statement& stmt);
 
-    bool prepare_ACTR(const semantics::complete_statement& stmt, context::A_t& ctr);
     void process_ACTR(const semantics::complete_statement& stmt);
 
-    bool prepare_AGO(const semantics::complete_statement& stmt,
-        context::A_t& branch,
-        std::vector<std::pair<context::id_index, range>>& targets);
+    const semantics::seq_sym* prepare_AGO(const semantics::complete_statement& stmt);
     void process_AGO(const semantics::complete_statement& stmt);
 
-    bool prepare_AIF(const semantics::complete_statement& stmt,
-        context::B_t& condition,
-        context::id_index& target,
-        range& target_range);
+    const semantics::seq_sym* prepare_AIF(const semantics::complete_statement& stmt);
     void process_AIF(const semantics::complete_statement& stmt);
 
     void process_MACRO(const semantics::complete_statement& stmt);

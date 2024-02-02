@@ -230,6 +230,90 @@ TEST(AGO, extended_fail)
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var3"), false);
 }
 
+TEST(AGO, bad_arguments_1)
+{
+    std::string input(R"(
+ AGO
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E022" }));
+}
+
+TEST(AGO, bad_arguments_2)
+{
+    std::string input(R"(
+ AGO ,
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E015" }));
+}
+
+TEST(AGO, bad_arguments_3)
+{
+    std::string input(R"(
+ AGO .SEQ,.SEQ
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E015" }));
+}
+
+TEST(AGO, bad_arguments_4)
+{
+    std::string input(R"(
+ AGO (1).SEQ,(1).SEQ
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E015" }));
+}
+
+TEST(AIF, bad_arguments_1)
+{
+    std::string input(R"(
+ AIF
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E022" }));
+}
+
+TEST(AIF, bad_arguments_2)
+{
+    std::string input(R"(
+ AIF ,
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E015" }));
+}
+
+TEST(AIF, bad_arguments_3)
+{
+    std::string input(R"(
+ AIF .SEQ
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E015" }));
+}
+
 TEST(AIF, extended)
 {
     std::string input(R"(
@@ -325,6 +409,30 @@ TEST(ACTR, negative)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E056" }));
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), std::nullopt);
+}
+
+TEST(ACTR, bad_arguments_1)
+{
+    std::string input(R"(
+   ACTR 1,1
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E020" }));
+}
+
+TEST(ACTR, bad_arguments_2)
+{
+    std::string input(R"(
+   ACTR .LABEL
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E020" }));
 }
 
 TEST(MHELP, SYSNDX_limit)

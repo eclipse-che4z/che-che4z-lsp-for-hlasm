@@ -122,7 +122,7 @@ public:
     };
     static bool allowed_scheme(const resource_location& uri)
     {
-        const auto matches_scheme = [u = uri.get_uri()](const auto& p) { return u.starts_with(p); };
+        const auto matches_scheme = [&u = uri.get_uri()](const auto& p) { return u.starts_with(p); };
         return std::any_of(std::begin(allowed_scheme_list), std::end(allowed_scheme_list), matches_scheme);
     }
 
