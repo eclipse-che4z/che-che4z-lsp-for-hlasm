@@ -129,7 +129,8 @@ private:
     void collect_section(const range& r, const collection_info_t& collection_info);
 
     void collect_occurrence(const semantics::label_si& label, occurrence_collector& collector);
-    void collect_occurrence(const semantics::instruction_si& instruction, occurrence_collector& collector);
+    void collect_occurrence(
+        const semantics::instruction_si& instruction, occurrence_collector& collector, const op_code* op);
     void collect_occurrence(const semantics::operands_si& operands, occurrence_collector& collector);
     void collect_occurrence(const semantics::deferred_operands_si& operands, occurrence_collector& collector);
 

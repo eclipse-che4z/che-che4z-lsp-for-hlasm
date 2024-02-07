@@ -69,7 +69,7 @@ std::optional<processing_status> macrodef_processor::get_processing_status(
         {
             id = *instruction;
         }
-        return std::make_pair(format, op_code(id, context::instruction_type::MAC));
+        return std::make_pair(format, op_code(id, context::instruction_type::MAC, nullptr));
     }
     else
     {
@@ -131,13 +131,13 @@ processing_status macrodef_processor::get_macro_processing_status(
                 processing_form::CA,
                 (*ca_instr)->operandless() ? operand_occurrence::ABSENT : operand_occurrence::PRESENT);
 
-            return std::make_pair(format, op_code(code.opcode, context::instruction_type::CA));
+            return std::make_pair(format, op_code(code.opcode, context::instruction_type::CA, nullptr));
         }
         else if (code.opcode == context::id_storage::well_known::COPY)
         {
             processing_format format(processing_kind::MACRO, processing_form::ASM, operand_occurrence::PRESENT);
 
-            return std::make_pair(format, op_code(code.opcode, context::instruction_type::ASM));
+            return std::make_pair(format, op_code(code.opcode, context::instruction_type::ASM, nullptr));
         }
     }
 
@@ -145,7 +145,7 @@ processing_status macrodef_processor::get_macro_processing_status(
     {
         processing_format format(processing_kind::MACRO, processing_form::CA, operand_occurrence::ABSENT);
 
-        return std::make_pair(format, op_code(context::id_index(), context::instruction_type::CA));
+        return std::make_pair(format, op_code(context::id_index(), context::instruction_type::CA, nullptr));
     }
 
     processing_format format(processing_kind::MACRO, processing_form::DEFERRED);
@@ -402,7 +402,7 @@ bool macrodef_processor::process_COPY(const resolved_statement& statement)
 
     auto empty = std::make_unique<resolved_statement_impl>(std::move(empty_sem),
         processing_status(processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurrence::ABSENT),
-            op_code(context::id_storage::well_known::ANOP, context::instruction_type::CA)));
+            op_code(context::id_storage::well_known::ANOP, context::instruction_type::CA, nullptr)));
 
     result_.definition.push_back(std::move(empty));
     add_correct_copy_nest();

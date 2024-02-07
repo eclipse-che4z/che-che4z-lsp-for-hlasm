@@ -17,9 +17,13 @@
 
 #include <utility>
 
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "context/instruction_type.h"
 #include "processing_format.h"
+
+namespace hlasm_plugin::parser_library::context {
+class macro_definition;
+} // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -29,12 +33,14 @@ struct op_code
     op_code()
         : type(context::instruction_type::UNDEF)
     {}
-    op_code(context::id_index value, context::instruction_type type)
+    op_code(context::id_index value, context::instruction_type type, const context::macro_definition* mac_def)
         : value(value)
+        , mac_def(mac_def)
         , type(type)
     {}
 
     context::id_index value;
+    const context::macro_definition* mac_def = nullptr;
     context::instruction_type type;
 };
 

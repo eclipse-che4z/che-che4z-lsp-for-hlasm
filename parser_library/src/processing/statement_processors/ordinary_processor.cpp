@@ -74,19 +74,19 @@ std::optional<processing_status> ordinary_processor::get_processing_status(
     if (!found.has_value())
         return std::nullopt;
 
-    processing_form f;
-    context::instruction_type t;
+    processing_form f = processing_form::UNKNOWN;
+    context::instruction_type t = context::instruction_type::UNDEF;
+    const context::macro_definition* mac_ptr = nullptr;
     if (found.value())
     {
         f = processing_form::MAC;
-        t = hlasm_ctx.find_macro(id) ? context::instruction_type::MAC : context::instruction_type::UNDEF;
+        if (auto mp = hlasm_ctx.find_macro(id))
+        {
+            t = context::instruction_type::MAC;
+            mac_ptr = mp->get();
+        }
     }
-    else
-    {
-        f = processing_form::UNKNOWN;
-        t = context::instruction_type::UNDEF;
-    }
-    return std::make_pair(processing_format(processing_kind::ORDINARY, f), op_code(id, t));
+    return std::make_pair(processing_format(processing_kind::ORDINARY, f), op_code(id, t, mac_ptr));
 }
 
 void ordinary_processor::process_statement(context::shared_stmt_ptr s)
@@ -196,7 +196,7 @@ struct processing_status_visitor
 
     processing_status return_value(processing_form f, operand_occurrence o, context::instruction_type t) const
     {
-        return std::make_pair(processing_format(processing_kind::ORDINARY, f, o), op_code(id, t));
+        return std::make_pair(processing_format(processing_kind::ORDINARY, f, o), op_code(id, t, nullptr));
     }
 
     processing_status operator()(const context::assembler_instruction* i) const
@@ -241,7 +241,7 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
     if (code.is_macro())
     {
         return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MAC),
-            op_code(instruction, context::instruction_type::MAC));
+            op_code(instruction, context::instruction_type::MAC, code.get_macro_details()));
     }
 
     if (code.opcode.empty())
@@ -249,7 +249,7 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
         if (instruction.empty())
             return std::make_pair(
                 processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurrence::ABSENT),
-                op_code(context::id_index(), context::instruction_type::CA));
+                op_code(context::id_index(), context::instruction_type::CA, nullptr));
         else
             return std::nullopt;
     }

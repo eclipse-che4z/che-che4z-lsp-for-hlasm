@@ -109,7 +109,7 @@ public:
         const std::shared_ptr<const expressions::data_definition>& dd, const literal_pool::literal_details& details)
         : details(&details)
         , op(details.r, {})
-        , op_code(context::id_index("DC"), instruction_type::ASM)
+        , op_code(context::id_index("DC"), instruction_type::ASM, nullptr)
     {
         op.value.push_back(std::make_unique<semantics::data_def_operand_shared>(dd, details.r));
     }

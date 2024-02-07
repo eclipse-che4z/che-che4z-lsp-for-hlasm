@@ -25,13 +25,25 @@ namespace hlasm_plugin::parser_library::lsp {
 
 enum class occurrence_kind : unsigned char
 {
-    ORD,
-    VAR,
-    SEQ,
-    INSTR,
-    INSTR_LIKE,
-    COPY_OP,
+    ORD = 1,
+    VAR = 2,
+    SEQ = 4,
+    INSTR = 8,
+    INSTR_LIKE = 16,
+    COPY_OP = 32,
 };
+
+constexpr occurrence_kind operator|(occurrence_kind l, occurrence_kind r) noexcept
+{
+    return static_cast<occurrence_kind>(static_cast<unsigned char>(l) | static_cast<unsigned char>(r));
+}
+
+constexpr occurrence_kind operator&(occurrence_kind l, occurrence_kind r) noexcept
+{
+    return static_cast<occurrence_kind>(static_cast<unsigned char>(l) & static_cast<unsigned char>(r));
+}
+
+constexpr bool any(occurrence_kind e) { return e != occurrence_kind(); }
 
 struct symbol_occurrence
 {
