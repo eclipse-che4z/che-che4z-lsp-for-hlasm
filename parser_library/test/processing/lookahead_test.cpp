@@ -629,6 +629,23 @@ X CSECT
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
+TEST(attribute_lookahead, concat_string)
+{
+    std::string input(
+        R"(
+&C(1)    SETC 'A','B','C','D'
+&D       SETC '&C(L'X)'
+X        DS   F
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "D"), "D");
+}
+
 TEST(data_def_attribute_lookahead, correct_attribute_reference)
 {
     std::string input(

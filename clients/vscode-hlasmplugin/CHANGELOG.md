@@ -11,6 +11,7 @@
 - Inconsistent completion list with implicitly defined private CSECT
 - Incorrect results of string comparison in CA expressions
 - Incorrect results of CA conversion functions for multibyte UTF-8 codepoints
+- Lookahead not triggered by attribute references in array indices in string concatenations
 
 ## [1.11.1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.11.0...1.11.1) (2023-12-04)
 

@@ -50,6 +50,7 @@ bool ca_string::get_undefined_attributed_symbols(
         result |= substring.start->get_undefined_attributed_symbols(symbols, eval_ctx);
     if (substring.count)
         result |= substring.count->get_undefined_attributed_symbols(symbols, eval_ctx);
+    result |= semantics::concatenation_point::get_undefined_attributed_symbols(symbols, value, eval_ctx);
     return result;
 }
 
