@@ -191,7 +191,7 @@ The following example specifies that GROUP1 is used when working with `source_co
     {
       "program": "second_file",
       "pgroup": "GROUP2"
-    },
+    }
   ]
 }
 ```
