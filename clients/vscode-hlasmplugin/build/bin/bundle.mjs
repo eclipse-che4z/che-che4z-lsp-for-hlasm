@@ -89,7 +89,7 @@ function fileExists(dir, file) {
 }
 
 function getWebPlugin(replaceAssert) {
-    const assertReplacement = [ok, strictEqual, match, deepStrictEqual];
+    const assertReplacement = [ok, strictEqual, notStrictEqual, match, deepStrictEqual];
     const assertReplacementSource = assertReplacement.map(x => 'export ' + x.toString()).join('\n') + deepStrictEqualImpl.toString();
     return {
         name: 'web-substitution',
@@ -112,6 +112,7 @@ function getWebPlugin(replaceAssert) {
 
 function ok(e, msg) { if (!e) throw Error(msg); }
 function strictEqual(l, r, msg) { if (!Object.is(l, r)) throw Error(msg); }
+function notStrictEqual(l, r, msg) { if (Object.is(l, r)) throw Error(msg); }
 function match(s, r, msg) { if (!r.test(s)) throw Error(msg); }
 function deepStrictEqual(l, r, msg) {
     deepStrictEqualImpl(l, r, msg, { id: 0, map: new Map() });

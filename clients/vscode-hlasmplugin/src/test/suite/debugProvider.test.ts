@@ -14,13 +14,12 @@
 
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { HLASMConfigurationProvider, getCurrentProgramName } from '../../debugProvider';
 import * as helper from './testHelper';
 
 suite('Debug Provider Test Suite', () => {
 
-    suiteTeardown(async function () {
+    suiteTeardown(async function() {
         await helper.closeAllEditors();
     });
 
@@ -58,6 +57,7 @@ suite('Debug Provider Test Suite', () => {
 
         // HLASM file active
         await helper.showDocument('test', 'hlasm');
-        assert.strictEqual(getCurrentProgramName(), path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, 'test'));
+        const expectedUri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, 'test');
+        assert.strictEqual(getCurrentProgramName(), expectedUri.scheme == 'file' ? expectedUri.fsPath : expectedUri.toString());
     }).slow(1000);
 });

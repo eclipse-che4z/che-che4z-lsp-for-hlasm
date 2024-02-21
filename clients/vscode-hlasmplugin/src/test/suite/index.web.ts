@@ -76,7 +76,7 @@ async function registerTestImplementations(): Promise<vscode.Disposable[]> {
 	});
 
 	return [vscode.debug.registerDebugAdapterTrackerFactory('hlasm', {
-		createDebugAdapterTracker: function (session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
+		createDebugAdapterTracker: function(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
 			return {
 				onDidSendMessage: (message: any) => {
 					if (message.type !== 'response')
@@ -93,7 +93,29 @@ async function registerTestImplementations(): Promise<vscode.Disposable[]> {
 export async function run(): Promise<void> {
 	const mocha = Mocha.setup({ ui: 'tdd', color: false, reporter: null });
 
+	await import('./asyncMutex.test.js');
+	await import('./codeActions.test.js');
+	await import('./commentEditorCommands.test.js');
+	await import('./completionList.test.js');
+	await import('./configurationsHandler.test.js');
+	await import('./connectionPool.test.js');
+	await import('./continuationHandler.test.js');
+	await import('./conversions.test.js');
+	await import('./customEditorCommands.test.js');
+	await import('./debugProvider.test.js');
+	await import('./debugging.test.js');
+	await import('./eventsHandler.test.js');
+	//await import('./fbUtils.test.js');
+	//await import('./ftpUtils.test.js');
+	//await import('./hlasmDownloadCommands.test.js');
+	await import('./hlasmExternalConfigurationProvider.test.js');
+	await import('./hlasmExternalFiles.test.js');
+	await import('./hlasmExternalFilesEndevor.test.js');
+	//await import('./hlasmExternalFilesFtp.test.js');
+	await import('./hlasmLanguageDetection.test.js');
+	await import('./hlasmListingServices.test.js');
 	await import('./integration.test.js');
+	await import('./utils.test.js');
 
 	const toDispose = await registerTestImplementations();
 

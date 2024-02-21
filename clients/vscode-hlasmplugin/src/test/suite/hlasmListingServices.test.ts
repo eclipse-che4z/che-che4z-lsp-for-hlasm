@@ -169,7 +169,7 @@ suite('Language services for listings', () => {
         services = createListingServices();
         document = await vscode.workspace.openTextDocument({ language: 'hlasmListing', content: sampleListing });
         listings = services.handleListingContent(document);
-        assert(listings);
+        assert.ok(listings);
     })
 
     suiteTeardown(async () => {

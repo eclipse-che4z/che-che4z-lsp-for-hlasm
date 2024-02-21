@@ -14,7 +14,6 @@
 
 import * as assert from 'assert';
 import { convertBuffer, uriFriendlyBase16Decode, uriFriendlyBase16Encode } from '../../conversions';
-import { TextEncoder } from 'util';
 
 suite('Conversions', () => {
     test('Buffer conversion', () => {

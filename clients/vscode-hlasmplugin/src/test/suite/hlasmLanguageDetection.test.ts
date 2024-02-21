@@ -13,7 +13,6 @@
  */
 
 import * as assert from 'assert';
-import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { HLASMLanguageDetection } from '../../hlasmLanguageDetection';
@@ -26,7 +25,7 @@ suite('Language Detection Test Suite', () => {
 
 	// set HLASM file as HLASM
 	test('HLASM files test', async () => {
-		const existingDocument = await vscode.workspace.openTextDocument(path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, 'open'));
+		const existingDocument = await vscode.workspace.openTextDocument(vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, 'open'));
 		const document = new TextDocumentMock();
 		document.fileName = "file";
 		// set plain text file to HLASM
@@ -97,7 +96,7 @@ suite('Language Detection Test Suite', () => {
 
 const hlasmContents = `
  LR 1,1 remarks                                                        X
-			   that continue here
+                          that continue here
 * comments that do not count
  UNK unknown operand`
 

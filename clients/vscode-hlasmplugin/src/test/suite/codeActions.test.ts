@@ -17,6 +17,7 @@ import * as vscode from 'vscode';
 import * as helper from './testHelper';
 import { isCancellationError } from '../../helpers';
 import { hlasmplugin_folder, pgm_conf_file, bridge_json_file } from '../../constants';
+import { isWeb } from '../../tools';
 
 async function queryCodeActions(uri: vscode.Uri, range: vscode.Range, sleep: number, attempts: number = 10) {
     for (let i = 0; i < attempts; ++i) {
@@ -42,11 +43,11 @@ async function queryCodeActions(uri: vscode.Uri, range: vscode.Range, sleep: num
 }
 
 suite('Code actions', () => {
-    suiteSetup(async function () {
+    suiteSetup(async function() {
         this.timeout(20000);
     });
 
-    suiteTeardown(async function () {
+    suiteTeardown(async function() {
         await helper.closeAllEditors();
     });
 
@@ -61,7 +62,7 @@ suite('Code actions', () => {
 
         const codeActionsList = await queryCodeActions(document.uri, new vscode.Range(0, 10, 0, 15), 500);
 
-        assert.strictEqual(codeActionsList.length, 4 + 3);
+        assert.strictEqual(codeActionsList.length, 2 + 3 + (isWeb ? 0 /* downloads not available */ : 2));
 
         await helper.closeAllEditors();
     }).timeout(10000).slow(5000);

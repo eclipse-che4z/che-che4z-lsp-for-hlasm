@@ -14,12 +14,10 @@
 
 
 import * as assert from 'assert';
-import * as crypto from "crypto";
+import * as tools from '../../tools';
 import { ClientUriDetails, ExternalFilesInvalidationdata, ExternalRequestType, HLASMExternalFiles } from '../../hlasmExternalFiles';
 import { EventEmitter, FileSystem, Uri } from 'vscode';
 import { FileType } from 'vscode';
-import { TextEncoder } from 'util';
-import { deflateSync } from 'zlib';
 
 suite('External files', () => {
 
@@ -77,16 +75,16 @@ suite('External files', () => {
         assert.strictEqual(deleteCounter, 1);
 
     });
-    const nameGenerator = (components: string[], service: string = 'TEST') => {
-        return 'v3.' + service + '.' + crypto.createHash('sha256').update(JSON.stringify(components)).digest().toString('hex');
+    const nameGenerator = async (components: string[], service: string = 'TEST') => {
+        return 'v3.' + service + '.' + await tools.sha256(JSON.stringify(components));
     };
     test('Access cached content', async () => {
         const cacheUri = Uri.parse('test:cache/');
-        const dirResponse = deflateSync(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/DIR', not_exists: true })));
+        const dirResponse = await tools.deflate(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/DIR', not_exists: true })));
         const dir2Content = ['/DIR2/FILE'];
-        const dir2Response = deflateSync(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/DIR2', data: dir2Content })));
+        const dir2Response = await tools.deflate(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/DIR2', data: dir2Content })));
         const fileContent = 'file content';
-        const fileResponse = deflateSync(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/DIR2/FILE', data: fileContent })));
+        const fileResponse = await tools.deflate(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/DIR2/FILE', data: fileContent })));
 
         let dirWritten = false;
         let dir2Written = false;
@@ -98,27 +96,27 @@ suite('External files', () => {
         }, {
             readFile: async (uri: Uri) => {
                 const filename = uri.path.split('/').pop();
-                if (filename === nameGenerator(['SERVER', '/DIR']))
+                if (filename === await nameGenerator(['SERVER', '/DIR']))
                     return dirResponse;
-                if (filename === nameGenerator(['SERVER', '/DIR2']))
+                if (filename === await nameGenerator(['SERVER', '/DIR2']))
                     return dir2Response;
-                if (filename === nameGenerator(['SERVER', '/DIR2/FILE']))
+                if (filename === await nameGenerator(['SERVER', '/DIR2/FILE']))
                     return fileResponse;
                 assert.ok(false);
             },
             writeFile: async (uri: Uri, content: Uint8Array) => {
                 const filename = uri.path.split('/').pop();
-                if (filename === nameGenerator(['SERVER', '/DIR'])) {
+                if (filename === await nameGenerator(['SERVER', '/DIR'])) {
                     dirWritten = true;
                     assert.deepStrictEqual(content, dirResponse);
                     return;
                 }
-                if (filename === nameGenerator(['SERVER', '/DIR2'])) {
+                if (filename === await nameGenerator(['SERVER', '/DIR2'])) {
                     dir2Written = true;
                     assert.deepStrictEqual(content, dir2Response);
                     return;
                 }
-                if (filename === nameGenerator(['SERVER', '/DIR2/FILE'])) {
+                if (filename === await nameGenerator(['SERVER', '/DIR2/FILE'])) {
                     fileWritten = true;
                     assert.deepStrictEqual(content, fileResponse);
                     return;
@@ -238,10 +236,10 @@ suite('External files', () => {
         }, {
             readDirectory: async (uri: Uri) => {
                 assert.strictEqual(cacheUri.toString(), uri.toString());
-                return [[nameGenerator(['SERVER', 'B'], 'TEST2'), FileType.File], [nameGenerator(['SERVER', 'A']), FileType.File]];
+                return [[await nameGenerator(['SERVER', 'B'], 'TEST2'), FileType.File], [await nameGenerator(['SERVER', 'A']), FileType.File]];
             },
             delete: async (uri: Uri, options?: { recursive?: boolean; useTrash?: boolean }) => {
-                assert.strictEqual(uri.toString(), Uri.joinPath(cacheUri, nameGenerator(['SERVER', 'A'])).toString())
+                assert.strictEqual(uri.toString(), Uri.joinPath(cacheUri, await nameGenerator(['SERVER', 'A'])).toString())
                 resolve();
             },
         } as any as FileSystem, {
@@ -275,16 +273,16 @@ suite('External files', () => {
         }, {
             readDirectory: async (uri: Uri) => {
                 assert.strictEqual(cacheUri.toString(), uri.toString());
-                return [[nameGenerator(['SERVER', 'B'], 'TEST2'), FileType.File], [nameGenerator(['SERVER', 'A']), FileType.File]];
+                return [[await nameGenerator(['SERVER', 'B'], 'TEST2'), FileType.File], [await nameGenerator(['SERVER', 'A']), FileType.File]];
             },
             readFile: async (uri: Uri) => {
-                if (uri.path.endsWith(nameGenerator(['SERVER', 'A'])))
-                    return deflateSync(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/SERVER/A' })));
+                if (uri.path.endsWith(await nameGenerator(['SERVER', 'A'])))
+                    return await tools.deflate(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/SERVER/A' })));
                 else
-                    return deflateSync(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/SERVER/B' })));
+                    return await tools.deflate(new TextEncoder().encode(JSON.stringify({ normalizedPath: '/SERVER/B' })));
             },
             delete: async (uri: Uri, options?: { recursive?: boolean; useTrash?: boolean }) => {
-                assert.strictEqual(uri.toString(), Uri.joinPath(cacheUri, nameGenerator(['SERVER', 'A'])).toString())
+                assert.strictEqual(uri.toString(), Uri.joinPath(cacheUri, await nameGenerator(['SERVER', 'A'])).toString())
                 resolve();
             },
         } as any as FileSystem, {
