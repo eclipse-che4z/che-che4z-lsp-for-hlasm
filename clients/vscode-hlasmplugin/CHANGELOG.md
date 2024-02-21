@@ -6,6 +6,7 @@
 - Highlight lines in listings that originate from macros and copybooks
 - Navigation actions for listings
 - Integration with Explorer for Endevor 1.7.0+
+- Folding ranges support
 
 #### Fixed
 - Inconsistent completion list with implicitly defined private CSECT

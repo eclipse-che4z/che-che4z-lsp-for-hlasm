@@ -30,4 +30,5 @@ target_sources(library_test PRIVATE
 	lsp_context_seq_sym_test.cpp
 	lsp_context_var_sym_test.cpp
 	lsp_features_test.cpp
+	lsp_folding_test.cpp
 )

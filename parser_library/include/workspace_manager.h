@@ -24,6 +24,7 @@
 #include <utility>
 
 #include "branch_info.h"
+#include "folding_range.h"
 #include "lib_config.h"
 #include "message_consumer.h"
 #include "parser_library_export.h"
@@ -149,6 +150,9 @@ public:
 
     virtual void branch_information(
         const char* document_uri, workspace_manager_response<continuous_sequence<branch_info>> resp) = 0;
+
+    virtual void folding(
+        const char* document_uri, workspace_manager_response<continuous_sequence<folding_range>> resp) = 0;
 };
 
 workspace_manager* create_workspace_manager_impl(

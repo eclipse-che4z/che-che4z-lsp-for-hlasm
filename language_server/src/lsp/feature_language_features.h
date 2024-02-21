@@ -48,6 +48,7 @@ private:
     void document_symbol(const request_id& id, const nlohmann::json& params);
     void opcode_suggestion(const request_id& id, const nlohmann::json& params);
     void branch_information(const request_id& id, const nlohmann::json& params);
+    void folding(const request_id& id, const nlohmann::json& params);
 
     nlohmann::json document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol);
     nlohmann::json document_symbol_list_json(hlasm_plugin::parser_library::document_symbol_list symbol_list);

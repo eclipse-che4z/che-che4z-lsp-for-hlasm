@@ -467,3 +467,29 @@ TEST(language_features, branch_information)
 
     notifs["textDocument/$/branch_information"].as_request_handler()(request_id(0), params1);
 }
+
+TEST(language_features, folding)
+{
+    auto ws_mngr = parser_library::create_workspace_manager();
+    response_provider_mock response_mock;
+    lsp::feature_language_features f(*ws_mngr, response_mock);
+    std::map<std::string, method> notifs;
+    f.register_methods(notifs);
+
+    std::string file_text = "*\n*\n*\n";
+
+    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
+
+    nlohmann::json response = nlohmann::json::array();
+    response.push_back({
+        { "startLine", 0 },
+        { "endLine", 2 },
+        { "kind", "comment" },
+    });
+
+    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
+    notifs["textDocument/foldingRange"].as_request_handler()(request_id(0), params1);
+
+    ws_mngr->idle_handler();
+}

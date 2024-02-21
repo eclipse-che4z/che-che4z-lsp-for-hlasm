@@ -27,6 +27,7 @@
 #include "file_manager.h"
 #include "lsp/completion_item.h"
 #include "lsp/document_symbol_item.h"
+#include "lsp/folding.h"
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"
 #include "macro_cache.h"
@@ -943,6 +944,21 @@ std::vector<branch_info> workspace::branch_information(const resource_location& 
         return lsp_context->get_opencode_branch_info();
     else
         return {};
+}
+
+std::vector<folding_range> workspace::folding(const resource_location& document_loc) const
+{
+    auto comp = find_processor_file_impl(document_loc);
+    if (!comp)
+        return {};
+
+    auto lines = lsp::generate_indentation_map(comp->m_file->get_text());
+
+    lsp::mark_suspicious(lines);
+
+    auto data = lsp::compute_folding_data(lines);
+
+    return lsp::generate_folding_ranges(data);
 }
 
 std::optional<performance_metrics> workspace::last_metrics(const resource_location& document_loc) const

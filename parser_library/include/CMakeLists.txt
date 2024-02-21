@@ -15,6 +15,7 @@ target_sources(parser_library PUBLIC
 	branch_info.h
 	debugger.h
 	external_configuration_requests.h
+	folding_range.h
 	lib_config.h
 	message_consumer.h
 	protocol.h

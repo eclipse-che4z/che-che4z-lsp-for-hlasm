@@ -33,6 +33,7 @@
 
 #include "debugging/debugger_configuration.h"
 #include "external_configuration_requests.h"
+#include "folding_range.h"
 #include "lsp/completion_item.h"
 #include "lsp/document_symbol_item.h"
 #include "nlohmann/json.hpp"
@@ -634,7 +635,9 @@ public:
         };
     }
 
-    void definition(const char* document_uri, position pos, workspace_manager_response<position_uri> r) override
+    template<typename R,
+        std::invocable<workspace_manager_response<R>, workspaces::workspace&, const resource_location&> A>
+    void handle_request(const char* document_uri, workspace_manager_response<R> r, A a)
     {
         auto [ows, uri] = ws_path_match(document_uri);
 
@@ -642,46 +645,33 @@ public:
             next_unique_id(),
             ows,
             response_handle(r,
-                [&ws = ows->ws, doc_loc = std::move(uri), pos](const workspace_manager_response<position_uri>& resp) {
-                    resp.provide(position_uri(ws.definition(doc_loc, pos)));
-                }),
+                [&ws = ows->ws, doc_loc = std::move(uri), a = std::move(a)](
+                    const workspace_manager_response<R>& resp) { std::invoke(a, resp, ws, doc_loc); }),
             [r]() { return r.valid(); },
             work_item_type::query,
+        });
+    }
+
+    void definition(const char* document_uri, position pos, workspace_manager_response<position_uri> r) override
+    {
+        handle_request(document_uri, std::move(r), [pos](const auto& resp, auto& ws, const auto& doc_loc) {
+            resp.provide(position_uri(ws.definition(doc_loc, pos)));
         });
     }
 
     void references(const char* document_uri, position pos, workspace_manager_response<position_uri_list> r) override
     {
-        auto [ows, uri] = ws_path_match(document_uri);
-
-        m_work_queue.emplace_back(work_item {
-            next_unique_id(),
-            ows,
-            response_handle(r,
-                [&ws = ows->ws, doc_loc = std::move(uri), pos](
-                    const workspace_manager_response<position_uri_list>& resp) {
-                    auto references_result = ws.references(doc_loc, pos);
-                    resp.provide({ references_result.data(), references_result.size() });
-                }),
-            [r]() { return r.valid(); },
-            work_item_type::query,
+        handle_request(document_uri, std::move(r), [pos](const auto& resp, auto& ws, const auto& doc_loc) {
+            auto references_result = ws.references(doc_loc, pos);
+            resp.provide({ references_result.data(), references_result.size() });
         });
     }
 
     void hover(const char* document_uri, position pos, workspace_manager_response<sequence<char>> r) override
     {
-        auto [ows, uri] = ws_path_match(document_uri);
-
-        m_work_queue.emplace_back(work_item {
-            next_unique_id(),
-            ows,
-            response_handle(r,
-                [&ws = ows->ws, doc_loc = std::move(uri), pos](const workspace_manager_response<sequence<char>>& resp) {
-                    auto hover_result = ws.hover(doc_loc, pos);
-                    resp.provide(sequence<char>(hover_result));
-                }),
-            [r]() { return r.valid(); },
-            work_item_type::query,
+        handle_request(document_uri, std::move(r), [pos](const auto& resp, auto& ws, const auto& doc_loc) {
+            auto hover_result = ws.hover(doc_loc, pos);
+            resp.provide(sequence<char>(hover_result));
         });
     }
 
@@ -692,38 +682,20 @@ public:
         completion_trigger_kind trigger_kind,
         workspace_manager_response<completion_list> r) override
     {
-        auto [ows, uri] = ws_path_match(document_uri);
-
-        m_work_queue.emplace_back(work_item {
-            next_unique_id(),
-            ows,
-            response_handle(r,
-                [&ws = ows->ws, doc_loc = std::move(uri), pos, trigger_char, trigger_kind](
-                    const workspace_manager_response<completion_list>& resp) {
-                    auto completion_result = ws.completion(doc_loc, pos, trigger_char, trigger_kind);
-                    resp.provide(completion_list(completion_result.data(), completion_result.size()));
-                }),
-            [r]() { return r.valid(); },
-            work_item_type::query,
-        });
+        handle_request(document_uri,
+            std::move(r),
+            [pos, trigger_char, trigger_kind](const auto& resp, auto& ws, const auto& doc_loc) {
+                auto completion_result = ws.completion(doc_loc, pos, trigger_char, trigger_kind);
+                resp.provide(completion_list(completion_result.data(), completion_result.size()));
+            });
     }
 
     void document_symbol(
         const char* document_uri, long long limit, workspace_manager_response<document_symbol_list> r) override
     {
-        auto [ows, uri] = ws_path_match(document_uri);
-
-        m_work_queue.emplace_back(work_item {
-            next_unique_id(),
-            ows,
-            response_handle(r,
-                [&ws = ows->ws, doc_loc = std::move(uri), limit](
-                    const workspace_manager_response<document_symbol_list>& resp) {
-                    auto document_symbol_result = ws.document_symbol(doc_loc, limit);
-                    resp.provide(document_symbol_list(document_symbol_result.data(), document_symbol_result.size()));
-                }),
-            [r]() { return r.valid(); },
-            work_item_type::query,
+        handle_request(document_uri, std::move(r), [limit](const auto& resp, auto& ws, const auto& doc_loc) {
+            auto document_symbol_result = ws.document_symbol(doc_loc, limit);
+            resp.provide(document_symbol_list(document_symbol_result.data(), document_symbol_result.size()));
         });
     }
 
@@ -768,36 +740,23 @@ public:
     void semantic_tokens(
         const char* document_uri, workspace_manager_response<continuous_sequence<token_info>> r) override
     {
-        auto [ows, uri] = ws_path_match(document_uri);
-
-        m_work_queue.emplace_back(work_item {
-            next_unique_id(),
-            ows,
-            response_handle(r,
-                [&ws = ows->ws, doc_loc = std::move(uri)](
-                    const workspace_manager_response<continuous_sequence<token_info>>& resp) {
-                    resp.provide(make_continuous_sequence(ws.semantic_tokens(doc_loc)));
-                }),
-            [r]() { return r.valid(); },
-            work_item_type::query,
+        handle_request(document_uri, std::move(r), [](const auto& resp, auto& ws, const auto& doc_loc) {
+            resp.provide(make_continuous_sequence(ws.semantic_tokens(doc_loc)));
         });
     }
 
     void branch_information(
         const char* document_uri, workspace_manager_response<continuous_sequence<branch_info>> r) override
     {
-        auto [ows, uri] = ws_path_match(document_uri);
+        handle_request(document_uri, std::move(r), [](const auto& resp, auto& ws, const auto& doc_loc) {
+            resp.provide(make_continuous_sequence(ws.branch_information(doc_loc)));
+        });
+    }
 
-        m_work_queue.emplace_back(work_item {
-            next_unique_id(),
-            ows,
-            response_handle(r,
-                [&ws = ows->ws, doc_loc = std::move(uri)](
-                    const workspace_manager_response<continuous_sequence<branch_info>>& resp) {
-                    resp.provide(make_continuous_sequence(ws.branch_information(doc_loc)));
-                }),
-            [r]() { return r.valid(); },
-            work_item_type::query,
+    void folding(const char* document_uri, workspace_manager_response<continuous_sequence<folding_range>> r) override
+    {
+        handle_request(document_uri, std::move(r), [](const auto& resp, auto& ws, const auto& doc_loc) {
+            resp.provide(make_continuous_sequence(ws.folding(doc_loc)));
         });
     }
 

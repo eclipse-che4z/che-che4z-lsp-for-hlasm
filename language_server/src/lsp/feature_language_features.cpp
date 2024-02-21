@@ -25,6 +25,22 @@
 #include "utils/resource_location.h"
 #include "workspace_manager_response.h"
 
+namespace hlasm_plugin::parser_library {
+void to_json(nlohmann::json& j, const folding_range& fr)
+{
+    j["startLine"] = fr.start;
+    j["endLine"] = fr.end;
+    switch (fr.type)
+    {
+        case parser_library::fold_type::none:
+            break;
+        case parser_library::fold_type::comment:
+            j["kind"] = "comment";
+            break;
+    }
+}
+} // namespace hlasm_plugin::parser_library
+
 namespace hlasm_plugin::language_server::lsp {
 
 namespace {
@@ -222,6 +238,7 @@ void feature_language_features::register_methods(std::map<std::string, method>& 
     add_method("textDocument/documentSymbol", &feature_language_features::document_symbol);
     add_method("textDocument/$/opcode_suggestion", &feature_language_features::opcode_suggestion);
     add_method("textDocument/$/branch_information", &feature_language_features::branch_information);
+    add_method("textDocument/foldingRange", &feature_language_features::folding);
 }
 
 nlohmann::json feature_language_features::register_capabilities()
@@ -239,6 +256,7 @@ nlohmann::json feature_language_features::register_capabilities()
                 { "triggerCharacters", { "&", ".", "_", "$", "#", "@", "*" } },
             },
         },
+        { "foldingRangeProvider", true },
         {
             "semanticTokensProvider",
             {
@@ -775,4 +793,16 @@ void feature_language_features::branch_information(const request_id& id, const n
     response_->register_cancellable_request(id, std::move(resp));
 }
 
+void feature_language_features::folding(const request_id& id, const nlohmann::json& params)
+{
+    auto document_uri = extract_document_uri(params);
+
+    auto resp = make_response(id, response_, [](continuous_sequence<folding_range> folding_range_list) {
+        return nlohmann::json(folding_range_list);
+    });
+
+    ws_mngr_.folding(document_uri.c_str(), resp);
+
+    response_->register_cancellable_request(id, std::move(resp));
+}
 } // namespace hlasm_plugin::language_server::lsp

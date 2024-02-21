@@ -18,6 +18,8 @@ target_sources(parser_library PRIVATE
 	document_symbol_item.h
 	file_info.cpp
 	file_info.h
+	folding.cpp
+	folding.h
 	item_convertors.cpp
 	item_convertors.h
 	lsp_context.cpp
