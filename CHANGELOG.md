@@ -1,3 +1,40 @@
+## [1.12.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.11.1...1.12.0) (2024-03-05)
+
+
+### Features
+
+* Folding ranges support ([32b2500](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/32b2500d78b0652be5afc67227c212c77153be4e))
+* Highlight lines in listings that originate from macros and copybooks ([febdcb8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/febdcb8a8d559d998a272228e4c69e201d787846))
+* Integration with Explorer for Endevor 1.7.0+ ([43c91db](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/43c91db05898254c9f381f9365bdf095190b7086))
+* Navigation actions for listings ([21a63a5](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/21a63a5be430c3d00f26a248f09a46fd871cc575))
+
+
+### Fixes
+
+* Adjust CA expression grammar ([7a9c523](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7a9c523dcdaf2dde362f6ed744ad8b144e3ea47e))
+* Avoid duplicate collection of CA instructions in macros ([c628cce](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c628cce16107d7a3d6a978231ad093d899e0f131))
+* Consider scope for SYSM_SEV value in debugger ([d5e0bb2](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/d5e0bb27bfe057db80407146054eb57f3e4cd0e5))
+* Inconsistent completion list with implicitly defined private CSECT ([ae23b97](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ae23b97e19db5961dd7fd3d295431ba625c9acba))
+* Incorrect results of CA conversion functions for multibyte UTF-8 codepoints ([ad91834](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ad91834260b0e97361410c6808cffd9492bc60d9))
+* Incorrect results of string comparison in CA expressions ([9c1ec71](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9c1ec7134b71cf43aef34c4e6cd88dded9d9b929))
+* Lookahead not triggered by attribute references in array indices in string concatenations ([40f01c4](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/40f01c4d91ec3c884279436e150280a1f23d8bfe))
+* More efficient line tracking ([a50a041](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a50a04127e319c86ff6e99fa48f36610d70b2c48))
+* Rework system variables ([9e6f036](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9e6f036cf0941d93c2635837d30c4f2e3ea170a1))
+* Server startup failure not reported ([9b9c78b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9b9c78b1c9c3ec52c6888cfabff31fc5c45950ec))
+* Trivial symbol_occurrence structure ([8c85623](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/8c85623d980505feaaad923faac04c79f37d0ade))
+* Use raw URI path in external files ([c80ae7d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c80ae7d613508bd8819aef57aecfaf7c220f2800))
+
+
+### Other changes
+
+* CA statement processing ([af695b5](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/af695b57d76577e651b11e498b3f695b9ec0e226))
+* Remove broken node workaround ([2fb8c41](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2fb8c41e97d0110f7e9564013583dca444975640))
+* Remove unused owning shared pointers ([3303f23](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/3303f23c9ecbfeb7305a8670372f0a532cfe989e))
+* Reorganize variable ownership ([1f2f315](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1f2f315c1db0b885959339415e204b6b34f43026))
+* Run more tests in the browser environment ([e32d812](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/e32d812e82f65afb063cc5369fe4a1386488ef8a))
+* SET_t structure cleanup ([652f507](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/652f507874857094d2d8d5e5acc27da13f6edc2a))
+* Upgrade deprecated dependencies ([8de6e4d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/8de6e4dc17b382917c3f3d9ac9465128ddf92b0f))
+
 ### [1.11.1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.11.0...1.11.1) (2023-12-04)
 
 

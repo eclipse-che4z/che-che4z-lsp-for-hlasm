@@ -1,6 +1,6 @@
 # Changelog
 
-## ****Unreleased****
+## [1.12.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.11.1...1.12.0) (2024-03-05)
 
 #### Added
 - Highlight lines in listings that originate from macros and copybooks
