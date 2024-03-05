@@ -23,8 +23,8 @@ import { decorateArgs, ServerVariant } from './serverFactory.common';
 const supportedNativePlatforms: Readonly<{ [key: string]: string }> = Object.freeze({
     'win32.x64': 'win32',
     'linux.x64': 'linux',
-    'darwin.x64': 'darwin',
-    'darwin.arm64': 'darwin',
+    'darwin.x64': 'darwin_x64',
+    'darwin.arm64': 'darwin_arm64',
 });
 
 export async function createLanguageServer(serverVariant: ServerVariant, clientOptions: vscodelc.LanguageClientOptions, extUri: vscode.Uri): Promise<vscodelc.BaseLanguageClient> {

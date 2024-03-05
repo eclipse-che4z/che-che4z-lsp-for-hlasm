@@ -177,8 +177,10 @@ jobs:
           - os: windows-2022
             native: win32
             artifacts-ext: .exe
-          - os: macos-12
-            native: darwin
+          - os: macos-13
+            native: darwin_x64
+          - os: macos-14
+            native: darwin_arm64
     container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v4
@@ -238,7 +240,7 @@ jobs:
             native: win32
             chmod: false
           - os: macos-11
-            native: darwin
+            native: darwin_x64
             chmod: true
           - os: ubuntu-22.04
             native: linux
@@ -247,10 +249,13 @@ jobs:
             native: win32
             chmod: false
           - os: macos-12
-            native: darwin
+            native: darwin_x64
             chmod: true
           - os: macos-13
-            native: darwin
+            native: darwin_x64
+            chmod: true
+          - os: macos-14
+            native: darwin_arm64
             chmod: true
 
     env:
@@ -340,18 +345,24 @@ jobs:
         with:
           name: language_server_wasm
           path: ${{ env.CLIENT_DIR }}/bin/wasm/
-      - name: Download MacOS language server
+      - name: Download MacOS language server (x64)
         uses: actions/download-artifact@v4
         with:
-          name: language_server_darwin
-          path: ${{ env.CLIENT_DIR }}/bin/darwin/
+          name: language_server_darwin_x64
+          path: ${{ env.CLIENT_DIR }}/bin/darwin_x64/
+      - name: Download MacOS language server (arm64)
+        uses: actions/download-artifact@v4
+        with:
+          name: language_server_darwin_arm64
+          path: ${{ env.CLIENT_DIR }}/bin/darwin_arm64/
       - name: Download Release Info
         uses: actions/download-artifact@v4
         with:
           name: release-info
       - name: Set executable flag
         run: |
-          chmod +x ${{ env.CLIENT_DIR }}/bin/darwin/language_server
+          chmod +x ${{ env.CLIENT_DIR }}/bin/darwin_x64/language_server
+          chmod +x ${{ env.CLIENT_DIR }}/bin/darwin_arm64/language_server
           chmod +x ${{ env.CLIENT_DIR }}/bin/linux/language_server
       - name: NPM CI
         run: npm ci

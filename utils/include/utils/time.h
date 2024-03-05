@@ -31,7 +31,7 @@ class timestamp
     unsigned long long m_second : 6 = 0;
     unsigned long long m_microsecond : 20 = 0;
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) || defined(__clang__)
     unsigned long long as_ull() const noexcept
     {
         auto v = (unsigned long long)m_year;
@@ -80,7 +80,7 @@ public:
     unsigned second() const noexcept { return m_second; }
     unsigned microsecond() const noexcept { return m_microsecond; }
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
     auto operator<=>(const timestamp&) const noexcept = default;
 #else
     // both gcc and clang have issues with this???
