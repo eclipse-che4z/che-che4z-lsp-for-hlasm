@@ -15,6 +15,11 @@
           "name": "CMAKE_VS_JUST_MY_CODE_DEBUGGING",
           "value": "On",
           "type": "BOOL"
+        },
+        {
+          "name": "LANGUAGE_SERVER_BIN_SUBDIR",
+          "value": "win32_x64",
+          "type": "STRING"
         }
       ]
     },
@@ -28,7 +33,13 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
-      "variables": []
+      "variables": [
+        {
+          "name": "LANGUAGE_SERVER_BIN_SUBDIR",
+          "value": "win32_x64",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "name": "x64-Release-Profile",
@@ -40,7 +51,13 @@
       "cmakeCommandArgs": "-DCMAKE_EXE_LINKER_FLAGS=\"/PROFILE\" -DCMAKE_EXPORT_COMPILE_COMMANDS=1",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
-      "variables": []
+      "variables": [
+        {
+          "name": "LANGUAGE_SERVER_BIN_SUBDIR",
+          "value": "win32_x64",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "name": "WSL-GNU-Release",
@@ -55,7 +72,13 @@
       "inheritEnvironments": [ "linux_x64" ],
       "wslPath": "${defaultWSLPath}",
       "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "variables": [
+        {
+          "name": "LANGUAGE_SERVER_BIN_SUBDIR",
+          "value": "linux_x64",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "name": "WSL-Clang-Release",
@@ -70,7 +93,13 @@
       "inheritEnvironments": [ "linux_x64" ],
       "wslPath": "${defaultWSLPath}",
       "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "variables": [
+        {
+          "name": "LANGUAGE_SERVER_BIN_SUBDIR",
+          "value": "linux_x64",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "name": "WSL-Clang-Debug-ASAN",
@@ -85,7 +114,13 @@
       "inheritEnvironments": [ "linux_x64" ],
       "wslPath": "${defaultWSLPath}",
       "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "variables": [
+        {
+          "name": "LANGUAGE_SERVER_BIN_SUBDIR",
+          "value": "linux_x64",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "name": "WSL-Clang-Release-ASAN",
@@ -100,7 +135,13 @@
       "inheritEnvironments": [ "linux_x64" ],
       "wslPath": "${defaultWSLPath}",
       "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "variables": [
+        {
+          "name": "LANGUAGE_SERVER_BIN_SUBDIR",
+          "value": "linux_x64",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "name": "WSL-Clang-Release-TSAN",
@@ -115,7 +156,13 @@
       "inheritEnvironments": [ "linux_x64" ],
       "wslPath": "${defaultWSLPath}",
       "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "variables": [
+        {
+          "name": "LANGUAGE_SERVER_BIN_SUBDIR",
+          "value": "linux_x64",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "name": "WSL-Clang-Debug-TSAN",
@@ -130,7 +177,13 @@
       "inheritEnvironments": [ "linux_x64" ],
       "wslPath": "${defaultWSLPath}",
       "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "variables": [
+        {
+          "name": "LANGUAGE_SERVER_BIN_SUBDIR",
+          "value": "linux_x64",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "name": "WSL-Clang-Fuzzer",
@@ -145,7 +198,13 @@
       "inheritEnvironments": [ "linux_x64" ],
       "wslPath": "${defaultWSLPath}",
       "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "variables": [
+        {
+          "name": "LANGUAGE_SERVER_BIN_SUBDIR",
+          "value": "linux_x64",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "name": "x64-Debug-ASAN",
@@ -162,31 +221,14 @@
           "name": "CMAKE_VS_JUST_MY_CODE_DEBUGGING",
           "value": "On",
           "type": "BOOL"
+        },
+        {
+          "name": "LANGUAGE_SERVER_BIN_SUBDIR",
+          "value": "linux_x64",
+          "type": "STRING"
         }
       ],
       "addressSanitizerEnabled": true
-    },
-    {
-      "name": "x86-Debug",
-      "generator": "Ninja",
-      "configurationType": "Debug",
-      "inheritEnvironments": [ "msvc_x86" ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\install\\${name}",
-      "cmakeCommandArgs": "",
-      "buildCommandArgs": "-v",
-      "ctestCommandArgs": ""
-    },
-    {
-      "name": "x86-Release",
-      "generator": "Ninja",
-      "configurationType": "RelWithDebInfo",
-      "inheritEnvironments": [ "msvc_x86" ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\install\\${name}",
-      "cmakeCommandArgs": "",
-      "buildCommandArgs": "-v",
-      "ctestCommandArgs": ""
     }
   ]
 }

@@ -57,6 +57,7 @@ option(BUILD_VSIX "When disabled, the VS Code client is not built and it is not 
 option(BUILD_FUZZER "Enable building of the fuzzer. Tested with clang and libstdc++ (enable with -DWITH_LIBCXX=Off)" Off)
 
 set(USE_PRE_GENERATED_GRAMMAR "" CACHE PATH "Directory with pre-generated grammar files")
+set(LANGUAGE_SERVER_BIN_SUBDIR "" CACHE STRING "Subdirectory for the language server binary in the client project")
 
 if(BUILD_SHARED_LIBS AND WITH_STATIC_CRT AND MSVC)
   message(WARNING "Building shared libraries with static CRT!")

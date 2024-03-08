@@ -21,8 +21,10 @@ import { getConfig } from './eventsHandler';
 import { decorateArgs, ServerVariant } from './serverFactory.common';
 
 const supportedNativePlatforms: Readonly<{ [key: string]: string }> = Object.freeze({
-    'win32.x64': 'win32',
-    'linux.x64': 'linux',
+    'win32.x64': 'win32_x64',
+    'win32.arm64': 'win32_arm64',
+    'linux.x64': 'linux_x64',
+    'linux.arm64': 'linux_arm64',
     'darwin.x64': 'darwin_x64',
     'darwin.arm64': 'darwin_arm64',
 });

@@ -158,25 +158,52 @@ jobs:
           ./hlasm_utils_test
         working-directory: build/bin
 
+  aarch64-linux-musl:
+    name: Build Linux ARM64 toolchain
+    runs-on: ubuntu-22.04
+    container: alpine:3.19
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install TAR
+        run: apk add tar
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: toolchain.tar.gz
+          key: ${{ hashFiles('scripts/toolchain.linux_arm64.sh') }}
+          lookup-only: true
+      - name: Build image
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: ./scripts/toolchain.linux_arm64.sh
+
   build-matrix:
     name: Build
     runs-on: ${{ matrix.os }}
-    needs: [generate_grammar]
+    needs: [generate_grammar, aarch64-linux-musl]
     strategy:
       matrix:
         include:
           - os: ubuntu-22.04
-            native: linux
+            native: linux_x64
             container: alpine:3.16
             dbg-strip: objcopy --only-keep-debug language_server language_server.dbg && objcopy --strip-unneeded language_server && objcopy --add-gnu-debuglink=language_server.dbg language_server
+            dbg-pattern: build/bin/language_server.dbg
+          - os: ubuntu-22.04
+            native: linux_arm64
+            container: alpine:3.19
+            dbg-strip: aarch64-linux-musl-objcopy --only-keep-debug language_server language_server.dbg && aarch64-linux-musl-objcopy --strip-unneeded language_server && aarch64-linux-musl-objcopy --add-gnu-debuglink=language_server.dbg language_server
             dbg-pattern: build/bin/language_server.dbg
           - os: ubuntu-22.04
             native: wasm
             container: emscripten/emsdk:3.1.46
             artifacts-ext: .*
           - os: windows-2022
-            native: win32
+            native: win32_x64
             artifacts-ext: .exe
+          - os: windows-2022
+            native: win32_arm64
+            artifacts-ext: .exe
+            skip-test: true
           - os: macos-13
             native: darwin_x64
           - os: macos-14
@@ -191,6 +218,18 @@ jobs:
           path: build/generated_parser
       - name: Requirements install
         run: if [ -f ./scripts/prereq.${{ matrix.native }}.sh ]; then ./scripts/prereq.${{ matrix.native }}.sh; fi
+      - name: Download toolchain
+        if: ${{ hashFiles(format('scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        uses: actions/cache/restore@v4
+        with:
+          path: toolchain.tar.gz
+          key: ${{ hashFiles(format('scripts/toolchain.{0}.sh', matrix.native)) }}
+          fail-on-cache-miss: true
+      - name: Extract toolchain
+        if: ${{ hashFiles(format('scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        run: |
+          tar xzf toolchain.tar.gz
+          echo "$PWD/toolchain/bin" >> $GITHUB_PATH
       - name: Configure
         run: ../scripts/config.${{ matrix.native }}.sh
         working-directory: build
@@ -198,6 +237,7 @@ jobs:
         run: cmake --build . $([ -f ../scripts/build-extra.${{ matrix.native }}.conf ] && cat ../scripts/build-extra.${{ matrix.native }}.conf || true)
         working-directory: build
       - name: Server Test
+        if: ${{ !matrix.skip-test }}
         run: |
           if [ -f ../../scripts/test-runner.${{ matrix.native }}.sh ]; then
             ../../scripts/test-runner.${{ matrix.native }}.sh ./library_test
@@ -234,19 +274,22 @@ jobs:
       matrix:
         include:
           - os: ubuntu-20.04
-            native: linux
+            native: linux_x64
             chmod: true
           - os: windows-2019
-            native: win32
+            native: win32_x64
             chmod: false
           - os: macos-11
             native: darwin_x64
             chmod: true
           - os: ubuntu-22.04
-            native: linux
+            native: linux_x64
+            chmod: true
+          - os: ubuntu-22.04
+            native: linux_arm64
             chmod: true
           - os: windows-2022
-            native: win32
+            native: win32_x64
             chmod: false
           - os: macos-12
             native: darwin_x64
@@ -259,7 +302,7 @@ jobs:
             chmod: true
 
     env:
-      XVFB: ${{ matrix.native == 'linux' && 'xvfb-run -a' || '' }}
+      XVFB: ${{ startsWith(matrix.native, 'linux') && 'xvfb-run -a' || '' }}
     defaults:
       run:
         working-directory: ${{ env.CLIENT_DIR }}
@@ -278,6 +321,9 @@ jobs:
       - name: Set executable flag
         if: ${{ matrix.chmod }}
         run: chmod +x bin/${{ matrix.native }}/language_server
+      - name: Setup emulation
+        if: ${{ hashFiles(format('scripts/emulation.{0}.sh', matrix.native)) != '' }}
+        run: ../../scripts/emulation.${{ matrix.native }}.sh
       - name: NPM CI
         run: npm ci
       - name: Extension Test
@@ -330,16 +376,26 @@ jobs:
     needs: [build-matrix, release-info]
     steps:
       - uses: actions/checkout@v4
-      - name: Download windows language server
+      - name: Download windows language server (x64)
         uses: actions/download-artifact@v4
         with:
-          name: language_server_win32
-          path: ${{ env.CLIENT_DIR }}/bin/win32/
-      - name: Download linux language server
+          name: language_server_win32_x64
+          path: ${{ env.CLIENT_DIR }}/bin/win32_x64/
+      - name: Download windows language server (arm64)
         uses: actions/download-artifact@v4
         with:
-          name: language_server_linux
-          path: ${{ env.CLIENT_DIR }}/bin/linux/
+          name: language_server_win32_arm64
+          path: ${{ env.CLIENT_DIR }}/bin/win32_arm64/
+      - name: Download linux language server (x64)
+        uses: actions/download-artifact@v4
+        with:
+          name: language_server_linux_x64
+          path: ${{ env.CLIENT_DIR }}/bin/linux_x64/
+      - name: Download linux language server (arm64)
+        uses: actions/download-artifact@v4
+        with:
+          name: language_server_linux_arm64
+          path: ${{ env.CLIENT_DIR }}/bin/linux_arm64/
       - name: Download wasm language server
         uses: actions/download-artifact@v4
         with:
@@ -363,7 +419,8 @@ jobs:
         run: |
           chmod +x ${{ env.CLIENT_DIR }}/bin/darwin_x64/language_server
           chmod +x ${{ env.CLIENT_DIR }}/bin/darwin_arm64/language_server
-          chmod +x ${{ env.CLIENT_DIR }}/bin/linux/language_server
+          chmod +x ${{ env.CLIENT_DIR }}/bin/linux_x64/language_server
+          chmod +x ${{ env.CLIENT_DIR }}/bin/linux_arm64/language_server
       - name: NPM CI
         run: npm ci
         working-directory: ${{ env.CLIENT_DIR }}

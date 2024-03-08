@@ -28,15 +28,16 @@ else()
 endif()
 
 set(BIN_EXTRAS "")
-if(EMSCRIPTEN)
+if(NOT "${LANGUAGE_SERVER_BIN_SUBDIR}" STREQUAL "")
+	set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/${LANGUAGE_SERVER_BIN_SUBDIR}/")
+elseif(EMSCRIPTEN)
 	set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/wasm/")
-	list(APPEND BIN_EXTRAS "$<TARGET_FILE_DIR:language_server>/language_server.js" "$<TARGET_FILE_DIR:language_server>/language_server.worker.js" "$<TARGET_FILE_DIR:language_server>/language_server.wasm")
-elseif(WIN32)
-	set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/win32/")
-elseif(APPLE)
-	set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/darwin/")
 else()
-	set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/linux/")
+	message(FATAL_ERROR "LANGUAGE_SERVER_BIN_SUBDIR was not specified and could not have been guessed")
+endif()
+
+if(EMSCRIPTEN)
+	list(APPEND BIN_EXTRAS "$<TARGET_FILE_DIR:language_server>/language_server.js" "$<TARGET_FILE_DIR:language_server>/language_server.worker.js" "$<TARGET_FILE_DIR:language_server>/language_server.wasm")
 endif()
 
 
