@@ -145,6 +145,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install ninja-build
+      - name: Reduce ASLR entropy #https://github.com/actions/runner-images/issues/9491
+        run: sudo sysctl -w vm.mmap_rnd_bits=28
       - name: Configure
         run: cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
         working-directory: build
