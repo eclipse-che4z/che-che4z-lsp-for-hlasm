@@ -27,6 +27,7 @@
 #include "analyzing_context.h"
 #include "lsp/completion_item.h"
 #include "lsp/completion_list_source.h"
+#include "lsp/folding.h"
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"
 #include "preprocessor_options.h"
@@ -171,6 +172,17 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         case 4:
             a.context().lsp_ctx->references(empty_location, position(num1, num2));
             break;
+
+        case 5: {
+            auto lines = lsp::generate_indentation_map(source);
+
+            lsp::mark_suspicious(lines);
+
+            auto fold_data = lsp::compute_folding_data(lines);
+
+            lsp::generate_folding_ranges(fold_data);
+            break;
+        }
 
         default:
             break;
