@@ -46,20 +46,23 @@ processing_frame_details::processing_frame_details(position pos,
     : pos(pos)
     , resource_loc(std::move(resource_loc))
     , scope(scope)
-    , proc_type(std::move(proc_type))
     , member_name(member)
+    , proc_type(std::move(proc_type))
 {}
 
 processing_frame_tree::processing_frame_tree()
-    : m_root(std::to_address(
-        m_frames.emplace(processing_frame_node { nullptr, processing_frame({}, {}, id_index()) }).first))
+    : m_root(std::to_address(m_frames.emplace().first))
 {}
 
-processing_frame_tree::node_pointer processing_frame_tree::step(processing_frame next, node_pointer current)
+processing_frame_tree::node_pointer processing_frame_tree::step(node_pointer current,
+    position pos,
+    const utils::resource::resource_location* resource_loc,
+    id_index member,
+    file_processing_type proc_type)
 {
     assert(current.m_node);
 
-    return node_pointer(std::to_address(m_frames.emplace(processing_frame_node { current.m_node, next }).first));
+    return node_pointer(std::to_address(m_frames.emplace(current.m_node, pos, resource_loc, member, proc_type).first));
 }
 
 

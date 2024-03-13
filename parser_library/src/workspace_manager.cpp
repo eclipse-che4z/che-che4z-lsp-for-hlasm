@@ -690,11 +690,10 @@ public:
             });
     }
 
-    void document_symbol(
-        const char* document_uri, long long limit, workspace_manager_response<document_symbol_list> r) override
+    void document_symbol(const char* document_uri, workspace_manager_response<document_symbol_list> r) override
     {
-        handle_request(document_uri, std::move(r), [limit](const auto& resp, auto& ws, const auto& doc_loc) {
-            auto document_symbol_result = ws.document_symbol(doc_loc, limit);
+        handle_request(document_uri, std::move(r), [](const auto& resp, auto& ws, const auto& doc_loc) {
+            auto document_symbol_result = ws.document_symbol(doc_loc);
             resp.provide(document_symbol_list(document_symbol_result.data(), document_symbol_result.size()));
         });
     }

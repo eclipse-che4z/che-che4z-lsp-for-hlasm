@@ -111,10 +111,12 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
         case label_si_type::CONC:
             label_inserter(concatenation_point::evaluate(std::get<concat_chain>(label_ref.value), eval_ctx),
                 label_ref.field_range);
+            result.was_model = true;
             break;
         case label_si_type::VAR:
             label_inserter(
                 var_sym_conc::evaluate(std::get<vs_ptr>(label_ref.value)->evaluate(eval_ctx)), label_ref.field_range);
+            result.was_model = true;
             break;
         case label_si_type::MAC:
             if (stmt.opcode_ref().value.to_string_view() != "TITLE")

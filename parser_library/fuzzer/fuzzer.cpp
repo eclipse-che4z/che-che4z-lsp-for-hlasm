@@ -161,7 +161,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
             break;
 
         case 2:
-            a.context().lsp_ctx->document_symbol(empty_location, 5000);
+            a.context().lsp_ctx->document_symbol(empty_location);
             break;
 
         case 3:

@@ -152,6 +152,8 @@ private:
     collection_info_t get_active_collection(const utils::resource::resource_location& loc, bool evaluated_model);
 
     lsp::line_occurence_details& line_details(const range& r, const collection_info_t& collection_info);
+
+    void collect_title(const processing::resolved_statement& statement);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -124,9 +124,14 @@ struct line_occurence_details
     unsigned char offset_to_jump_opcode = 0;
 };
 
-using file_occurrences_t = std::unordered_map<utils::resource::resource_location,
-    std::pair<std::vector<symbol_occurrence>, std::vector<line_occurence_details>>,
-    utils::resource::resource_location_hasher>;
+struct file_occur_value
+{
+    std::vector<symbol_occurrence> symbols;
+    std::vector<line_occurence_details> line_details;
+};
+
+using file_occurrences_t =
+    std::unordered_map<utils::resource::resource_location, file_occur_value, utils::resource::resource_location_hasher>;
 
 class lsp_context;
 

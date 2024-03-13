@@ -143,6 +143,18 @@ macro_info_ptr file_info::find_scope(position pos) const
     return nullptr;
 }
 
+std::vector<bool> file_info::macro_map() const
+{
+    std::vector<bool> result;
+    for (const auto& [_, scope] : slices)
+    {
+        if (scope.file_lines.end > result.size())
+            result.resize(scope.file_lines.end);
+        std::fill(result.begin() + scope.file_lines.begin, result.begin() + scope.file_lines.end, true);
+    }
+    return result;
+}
+
 std::vector<position> file_info::find_references(
     const symbol_occurrence& occurrence, const std::vector<symbol_occurrence>& occurrences)
 {

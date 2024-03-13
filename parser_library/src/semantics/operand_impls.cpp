@@ -53,6 +53,30 @@ machine_operand* operand::access_mach() { return dynamic_cast<machine_operand*>(
 
 assembler_operand* operand::access_asm() { return dynamic_cast<assembler_operand*>(this); }
 
+const model_operand* operand::access_model() const
+{
+    return type == operand_type::MODEL ? static_cast<const model_operand*>(this) : nullptr;
+}
+
+const ca_operand* operand::access_ca() const
+{
+    return type == operand_type::CA ? static_cast<const ca_operand*>(this) : nullptr;
+}
+
+const macro_operand* operand::access_mac() const
+{
+    return type == operand_type::MAC ? static_cast<const macro_operand*>(this) : nullptr;
+}
+
+const data_def_operand* operand::access_data_def() const
+{
+    return type == operand_type::DAT ? static_cast<const data_def_operand*>(this) : nullptr;
+}
+
+const machine_operand* operand::access_mach() const { return dynamic_cast<const machine_operand*>(this); }
+
+const assembler_operand* operand::access_asm() const { return dynamic_cast<const assembler_operand*>(this); }
+
 //***************** empty, model, evaluable operand *********************
 
 empty_operand::empty_operand(range operand_range)
@@ -354,6 +378,26 @@ complex_assembler_operand* assembler_operand::access_complex()
 string_assembler_operand* assembler_operand::access_string()
 {
     return kind == asm_kind::STRING ? static_cast<string_assembler_operand*>(this) : nullptr;
+}
+
+const expr_assembler_operand* assembler_operand::access_expr() const
+{
+    return kind == asm_kind::EXPR ? static_cast<const expr_assembler_operand*>(this) : nullptr;
+}
+
+const using_instr_assembler_operand* assembler_operand::access_base_end() const
+{
+    return kind == asm_kind::BASE_END ? static_cast<const using_instr_assembler_operand*>(this) : nullptr;
+}
+
+const complex_assembler_operand* assembler_operand::access_complex() const
+{
+    return kind == asm_kind::COMPLEX ? static_cast<const complex_assembler_operand*>(this) : nullptr;
+}
+
+const string_assembler_operand* assembler_operand::access_string() const
+{
+    return kind == asm_kind::STRING ? static_cast<const string_assembler_operand*>(this) : nullptr;
 }
 
 //***************** expr_assembler_operand *********************

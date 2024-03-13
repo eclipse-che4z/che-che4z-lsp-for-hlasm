@@ -483,16 +483,18 @@ processing_stack_t hlasm_context::processing_stack()
 
     for (bool first = true; const auto& source : source_stack_)
     {
-        result = m_stack_tree.step(processing_frame(source.current_instruction.pos,
-                                       shared_resource_location(source.current_instruction.resource_loc),
-                                       id_index()),
-            result);
+        result = m_stack_tree.step(result,
+            source.current_instruction.pos,
+            shared_resource_location(source.current_instruction.resource_loc),
+            id_index(),
+            file_processing_type::OPENCODE);
         for (const auto& member : source.copy_stack)
         {
-            result = m_stack_tree.step(processing_frame(member.current_statement_position(),
-                                           shared_resource_location(member.definition_location()->resource_loc),
-                                           member.name()),
-                result);
+            result = m_stack_tree.step(result,
+                member.current_statement_position(),
+                shared_resource_location(member.definition_location()->resource_loc),
+                member.name(),
+                file_processing_type::COPY);
         }
 
         if (first) // append macros immediately after ordinary processing
@@ -500,11 +502,13 @@ processing_stack_t hlasm_context::processing_stack()
             first = false;
             for (size_t j = 1; j < scope_stack_.size(); ++j)
             {
-                for (const auto& nest : scope_stack_[j].this_macro->get_current_copy_nest())
+                for (auto type = file_processing_type::MACRO;
+                     const auto& nest : scope_stack_[j].this_macro->get_current_copy_nest())
+                {
                     result = m_stack_tree.step(
-                        processing_frame(
-                            nest.loc.pos, shared_resource_location(nest.loc.resource_loc), nest.member_name),
-                        result);
+                        result, nest.loc.pos, shared_resource_location(nest.loc.resource_loc), nest.member_name, type);
+                    type = file_processing_type::COPY;
+                }
             }
         }
     }
@@ -524,8 +528,10 @@ processing_frame hlasm_context::processing_stack_top(bool consider_macros)
         if (const auto& nest = scope_stack_.back().this_macro->get_current_copy_nest(); !nest.empty())
         {
             const auto& last_copy = nest.back();
-            return processing_frame(
-                last_copy.loc.pos, shared_resource_location(last_copy.loc.resource_loc), last_copy.member_name);
+            return processing_frame(last_copy.loc.pos,
+                shared_resource_location(last_copy.loc.resource_loc),
+                last_copy.member_name,
+                nest.size() == 1 ? file_processing_type::MACRO : file_processing_type::COPY);
         }
     }
 
@@ -535,12 +541,14 @@ processing_frame hlasm_context::processing_stack_top(bool consider_macros)
         const auto& last_member = last_source.copy_stack.back();
         return processing_frame(last_member.current_statement_position(),
             shared_resource_location(last_member.definition_location()->resource_loc),
-            last_member.name());
+            last_member.name(),
+            file_processing_type::COPY);
     }
 
     return processing_frame(last_source.current_instruction.pos,
         shared_resource_location(last_source.current_instruction.resource_loc),
-        id_index());
+        id_index(),
+        file_processing_type::OPENCODE);
 }
 
 processing_stack_details_t hlasm_context::processing_stack_details()

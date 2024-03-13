@@ -24,1194 +24,213 @@ using namespace hlasm_plugin::utils::resource;
 
 namespace {
 const auto empty_loc = resource_location("");
-}
+const auto COPYSECT_loc = resource_location("COPYSECT");
+const auto MACSECT_loc = resource_location("MACSECT");
+const auto TITLE_loc = resource_location("$TITLE");
+} // namespace
 
-TEST(lsp_context_document_symbol, ord_sect_1)
-{
-    std::string input =
-        R"(SEC0 CSECT
-AUX  LR    1,1
-E    EQU   1
-SEC1 DSECT
-)";
-    analyzer a(input);
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string SEC0 = "SEC0", SEC1 = "SEC1", AUX = "AUX", E = "E";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            E,
-            document_symbol_kind::EQU,
-            range { { 2, 0 }, { 2, 0 } },
-        },
-        document_symbol_item_s {
-            SEC1,
-            document_symbol_kind::DUMMY,
-            range { { 3, 0 }, { 3, 0 } },
-        },
-        document_symbol_item_s {
-            SEC0,
-            document_symbol_kind::EXECUTABLE,
-            range { { 0, 0 }, { 0, 0 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    AUX,
-                    document_symbol_kind::MACH,
-                    range { { 1, 5 }, { 1, 5 } },
-                },
-            },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_sect_2)
-{
-    std::string input =
-        R"(SEC0 CSECT
-AUX0 LR    1,1
-E    EQU   1
-SEC1 DSECT
-AUX1 LR    1,1
-SEC0 CSECT
-AUX2 LR    1,1
-SEC1 DSECT
-AUX3 LR    1,1
-)";
-    analyzer a(input);
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string SEC0 = "SEC0", SEC1 = "SEC1", AUX0 = "AUX0", AUX1 = "AUX1", AUX2 = "AUX2", AUX3 = "AUX3", E = "E";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            E,
-            document_symbol_kind::EQU,
-            range { { 2, 0 }, { 2, 0 } },
-        },
-        document_symbol_item_s {
-            SEC1,
-            document_symbol_kind::DUMMY,
-            range { { 3, 0 }, { 3, 0 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    AUX3,
-                    document_symbol_kind::MACH,
-                    range { { 8, 5 }, { 8, 5 } },
-                },
-                document_symbol_item_s {
-                    AUX1,
-                    document_symbol_kind::MACH,
-                    range { { 4, 5 }, { 4, 5 } },
-                },
-            },
-        },
-        document_symbol_item_s {
-            SEC0,
-            document_symbol_kind::EXECUTABLE,
-            range { { 0, 0 }, { 0, 0 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    AUX2,
-                    document_symbol_kind::MACH,
-                    range { { 6, 5 }, { 6, 5 } },
-                },
-                document_symbol_item_s {
-                    AUX0,
-                    document_symbol_kind::MACH,
-                    range { { 1, 5 }, { 1, 5 } },
-                },
-            },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_macro_1)
-{
-    std::string input =
-        R"(    MACRO
-    MAC
-E   EQU 1
-    MEND
-)";
-    analyzer a(input);
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    document_symbol_list_s expected = {};
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_macro_2)
-{
-    std::string input =
-        R"(    MACRO
-    MAC
-AUX LR  1,1
-E   EQU 1
-    MEND
-    MAC
-)";
-    analyzer a(input);
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string MAC = "MAC", E = "E", AUX = "AUX";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            MAC,
-            document_symbol_kind::MACRO,
-            range { { 5, 4 }, { 5, 4 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    E,
-                    document_symbol_kind::EQU,
-                    range { { 5, 4 }, { 5, 4 } },
-                },
-                document_symbol_item_s {
-                    AUX,
-                    document_symbol_kind::MACH,
-                    range { { 5, 4 }, { 5, 4 } },
-                },
-            },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_macro_3)
-{
-    std::string input =
-        R"(     MACRO
-     MAC1
-E1   EQU 1
-AUX1 LR  1,1
-     MEND
-    
-     MACRO
-     MAC2
-E2   EQU 1
-AUX2 LR  1,1
-     MAC1
-     MEND
-
-     MAC2
-)";
-    analyzer a(input);
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string MAC1 = "MAC1", MAC2 = "MAC2", E1 = "E1", E2 = "E2", AUX1 = "AUX1", AUX2 = "AUX2";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            MAC2,
-            document_symbol_kind::MACRO,
-            range { { 13, 5 }, { 13, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    MAC1,
-                    document_symbol_kind::MACRO,
-                    range { { 13, 5 }, { 13, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            E1,
-                            document_symbol_kind::EQU,
-                            range { { 13, 5 }, { 13, 5 } },
-                        },
-                        document_symbol_item_s {
-                            AUX1,
-                            document_symbol_kind::MACH,
-                            range { { 13, 5 }, { 13, 5 } },
-                        },
-                    },
-                },
-                document_symbol_item_s {
-                    AUX2,
-                    document_symbol_kind::MACH,
-                    range { { 13, 5 }, { 13, 5 } },
-                },
-                document_symbol_item_s {
-                    E2,
-                    document_symbol_kind::EQU,
-                    range { { 13, 5 }, { 13, 5 } },
-                },
-            },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_macro_4)
-{
-    std::string input =
-        R"(     MACRO
-     MAC1
-E1   EQU 1  
-AUX1 LR  1,1
-     MEND
-
-     MACRO
-     MAC2
-     MAC1
-E2   EQU 1  
-AUX2 LR  1,1
-     MEND
-
-SEC  CSECT
-AUX3 LR 1,1
-     MAC2
-)";
-    analyzer a(input);
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string MAC1 = "MAC1", E1 = "E1", MAC2 = "MAC2", E2 = "E2", AUX1 = "AUX1", AUX2 = "AUX2", AUX3 = "AUX3",
-                SEC = "SEC";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            MAC2,
-            document_symbol_kind::MACRO,
-            range { { 15, 5 }, { 15, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    E2,
-                    document_symbol_kind::EQU,
-                    range { { 15, 5 }, { 15, 5 } },
-                },
-                document_symbol_item_s {
-                    MAC1,
-                    document_symbol_kind::MACRO,
-                    range { { 15, 5 }, { 15, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            E1,
-                            document_symbol_kind::EQU,
-                            range { { 15, 5 }, { 15, 5 } },
-                        },
-                    },
-                },
-            },
-        },
-        document_symbol_item_s {
-            SEC,
-            document_symbol_kind::EXECUTABLE,
-            range { { 13, 0 }, { 13, 0 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    MAC2,
-                    document_symbol_kind::MACRO,
-                    range { { 15, 5 }, { 15, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            AUX2,
-                            document_symbol_kind::MACH,
-                            range { { 15, 5 }, { 15, 5 } },
-                        },
-                        document_symbol_item_s {
-                            MAC1,
-                            document_symbol_kind::MACRO,
-                            range { { 15, 5 }, { 15, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    AUX1,
-                                    document_symbol_kind::MACH,
-                                    range { { 15, 5 }, { 15, 5 } },
-                                },
-                            },
-                        },
-                    },
-                },
-                document_symbol_item_s {
-                    AUX3,
-                    document_symbol_kind::MACH,
-                    range { { 14, 5 }, { 14, 5 } },
-                },
-            },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_macro_5)
-{
-    std::string input =
-        R"(     MACRO
-     MAC1
-E1   EQU 1
-AUX1 LR  1,1
-     MEND
-
-     MACRO
-     MAC2
-E2   EQU 1
-AUX2 LR  1,1
-SEC1 CSECT
-     MAC1
-AUX3 LR  1,1
-     MEND
-
-SEC2 CSECT
-AUX4 LR 1,1
-     MAC2
-E3   EQU 1
-)";
-    analyzer a(input);
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string MAC1 = "MAC1", MAC2 = "MAC2", E1 = "E1", E2 = "E2", E3 = "E3", AUX1 = "AUX1", AUX2 = "AUX2",
-                AUX3 = "AUX3", AUX4 = "AUX4", SEC1 = "SEC1", SEC2 = "SEC2";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            E3,
-            document_symbol_kind::EQU,
-            range { { 18, 0 }, { 18, 0 } },
-        },
-        document_symbol_item_s {
-            MAC2,
-            document_symbol_kind::MACRO,
-            range { { 17, 5 }, { 17, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    MAC1,
-                    document_symbol_kind::MACRO,
-                    range { { 17, 5 }, { 17, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            E1,
-                            document_symbol_kind::EQU,
-                            range { { 17, 5 }, { 17, 5 } },
-                        },
-                    },
-                },
-                document_symbol_item_s {
-                    E2,
-                    document_symbol_kind::EQU,
-                    range { { 17, 5 }, { 17, 5 } },
-                },
-                document_symbol_item_s {
-                    SEC1,
-                    document_symbol_kind::EXECUTABLE,
-                    range { { 17, 5 }, { 17, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            AUX3,
-                            document_symbol_kind::MACH,
-                            range { { 17, 5 }, { 17, 5 } },
-                        },
-                        document_symbol_item_s {
-                            MAC1,
-                            document_symbol_kind::MACRO,
-                            range { { 17, 5 }, { 17, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    AUX1,
-                                    document_symbol_kind::MACH,
-                                    range { { 17, 5 }, { 17, 5 } },
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        },
-        document_symbol_item_s {
-            SEC2,
-            document_symbol_kind::EXECUTABLE,
-            range { { 15, 0 }, { 15, 0 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    MAC2,
-                    document_symbol_kind::MACRO,
-                    range { { 17, 5 }, { 17, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            AUX2,
-                            document_symbol_kind::MACH,
-                            range { { 17, 5 }, { 17, 5 } },
-                        },
-                    },
-                },
-                document_symbol_item_s {
-                    AUX4,
-                    document_symbol_kind::MACH,
-                    range { { 16, 5 }, { 16, 5 } },
-                },
-            },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_macro_6)
-{
-    std::string opencode =
-        R"(    MAC1
-)";
-    mock_parse_lib_provider mock({
-        { "MAC1", R"(    MACRO
-    MAC1
-E   EQU 1
-AUX LR  1,1
-    MEND
-)" },
-    });
-    analyzer a(opencode, analyzer_options { &mock });
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string MAC1 = "MAC1", AUX = "AUX", E = "E";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            MAC1,
-            document_symbol_kind::MACRO,
-            range { { 0, 4 }, { 0, 4 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    AUX,
-                    document_symbol_kind::MACH,
-                    range { { 0, 4 }, { 0, 4 } },
-                },
-                document_symbol_item_s {
-                    E,
-                    document_symbol_kind::EQU,
-                    range { { 0, 4 }, { 0, 4 } },
-                },
-            },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_macro_7)
-{
-    std::string opencode =
-        R"(     MACRO
-     MAC0
-AUX0 LR   1,1
-E0   EQU  1
-     MAC1
-     MEND
-
-SEC0 CSECT
-     MAC0
-)";
-    mock_parse_lib_provider mock({
-        { "MAC1", R"(     MACRO
-     MAC1
-AUX1 LR   1,1
-SEC1 DSECT
-E1   EQU  1 
-     MAC2
-     MEND
-)" },
-        { "MAC2", R"(     MACRO
-     MAC2
-AUX2 LR   1,1
-E2   EQU  1
-     MEND
-)" },
-    });
-    analyzer a(opencode, analyzer_options { &mock });
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string MAC0 = "MAC0", AUX0 = "AUX0", MAC1 = "MAC1", AUX1 = "AUX1", MAC2 = "MAC2", AUX2 = "AUX2", SEC0 = "SEC0",
-                SEC1 = "SEC1", E0 = "E0", E1 = "E1", E2 = "E2";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            MAC0,
-            document_symbol_kind::MACRO,
-            range { { 8, 5 }, { 8, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    MAC1,
-                    document_symbol_kind::MACRO,
-                    range { { 8, 5 }, { 8, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            MAC2,
-                            document_symbol_kind::MACRO,
-                            range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    E2,
-                                    document_symbol_kind::EQU,
-                                    range { { 8, 5 }, { 8, 5 } },
-                                },
-                            },
-                        },
-                        document_symbol_item_s {
-                            E1,
-                            document_symbol_kind::EQU,
-                            range { { 8, 5 }, { 8, 5 } },
-                        },
-                        document_symbol_item_s {
-                            SEC1,
-                            document_symbol_kind::DUMMY,
-                            range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    MAC2,
-                                    document_symbol_kind::MACRO,
-                                    range { { 8, 5 }, { 8, 5 } },
-                                    document_symbol_list_s {
-                                        document_symbol_item_s {
-                                            AUX2,
-                                            document_symbol_kind::MACH,
-                                            range { { 8, 5 }, { 8, 5 } },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-                document_symbol_item_s {
-                    E0,
-                    document_symbol_kind::EQU,
-                    range { { 8, 5 }, { 8, 5 } },
-                },
-            },
-        },
-        document_symbol_item_s {
-            SEC0,
-            document_symbol_kind::EXECUTABLE,
-            range { { 7, 0 }, { 7, 0 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    MAC0,
-                    document_symbol_kind::MACRO,
-                    range { { 8, 5 }, { 8, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            MAC1,
-                            document_symbol_kind::MACRO,
-                            range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    AUX1,
-                                    document_symbol_kind::MACH,
-                                    range { { 8, 5 }, { 8, 5 } },
-                                },
-                            },
-                        },
-                        document_symbol_item_s {
-                            AUX0,
-                            document_symbol_kind::MACH,
-                            range { { 8, 5 }, { 8, 5 } },
-                        },
-                    },
-                },
-            },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_macro_8)
-{
-    std::string opencode =
-        R"(     MACRO
-     MAC0
-AUX0 LR   1,1
-E0   EQU  1
-     MAC1
-     MEND
-
-SEC0 CSECT
-     MAC0
-)";
-    mock_parse_lib_provider mock({
-        { "MAC1", R"(     MACRO
-     MAC1
-SEC1 DSECT
-AUX1 LR   1,1
-E1   EQU  1 
-     MAC2
-     MEND
-)" },
-        { "MAC2", R"(     MACRO
-     MAC2
-SEC0 CSECT
-AUX2 LR   1,1
-E2   EQU  1
-     MEND
-)" },
-    });
-    analyzer a(opencode, analyzer_options(&mock));
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string MAC0 = "MAC0", AUX0 = "AUX0", MAC1 = "MAC1", AUX1 = "AUX1", MAC2 = "MAC2", AUX2 = "AUX2", SEC0 = "SEC0",
-                SEC1 = "SEC1", E0 = "E0", E1 = "E1", E2 = "E2";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            MAC0,
-            document_symbol_kind::MACRO,
-            range { { 8, 5 }, { 8, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    MAC1,
-                    document_symbol_kind::MACRO,
-                    range { { 8, 5 }, { 8, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            MAC2,
-                            document_symbol_kind::MACRO,
-                            range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    E2,
-                                    document_symbol_kind::EQU,
-                                    range { { 8, 5 }, { 8, 5 } },
-                                },
-                            },
-                        },
-                        document_symbol_item_s {
-                            E1,
-                            document_symbol_kind::EQU,
-                            range { { 8, 5 }, { 8, 5 } },
-                        },
-                        document_symbol_item_s {
-                            SEC1,
-                            document_symbol_kind::DUMMY,
-                            range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    AUX1,
-                                    document_symbol_kind::MACH,
-                                    range { { 8, 5 }, { 8, 5 } },
-                                },
-                            },
-                        },
-                    },
-                },
-                document_symbol_item_s {
-                    E0,
-                    document_symbol_kind::EQU,
-                    range { { 8, 5 }, { 8, 5 } },
-                },
-            },
-        },
-        document_symbol_item_s {
-            SEC0,
-            document_symbol_kind::EXECUTABLE,
-            range { { 7, 0 }, { 7, 0 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    MAC0,
-                    document_symbol_kind::MACRO,
-                    range { { 8, 5 }, { 8, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            MAC1,
-                            document_symbol_kind::MACRO,
-                            range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    MAC2,
-                                    document_symbol_kind::MACRO,
-                                    range { { 8, 5 }, { 8, 5 } },
-                                    document_symbol_list_s {
-                                        document_symbol_item_s {
-                                            AUX2,
-                                            document_symbol_kind::MACH,
-                                            range { { 8, 5 }, { 8, 5 } },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        document_symbol_item_s {
-                            AUX0,
-                            document_symbol_kind::MACH,
-                            range { { 8, 5 }, { 8, 5 } },
-                        },
-                    },
-                },
-            },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_macro_9)
-{
-    std::string opencode =
-        R"(     MACRO
-     MAC0
-AUX0 LR   1,1
-E0   EQU  1
-     MAC1
-     MEND
-
-     MAC0
-SEC0 DSECT   
-     MAC3
-)";
-    mock_parse_lib_provider mock({
-        { "MAC1", R"(     MACRO
-     MAC1
-SEC1 CSECT
-AUX1 LR   1,1
-E1   EQU  1 
-     MEND
-)" },
-        { "MAC2", R"(     MACRO
-     MAC2
-AUX2 LR   1,1
-E2   EQU  1
-     MAC2
-     MEND
-)" },
-        { "MAC3", R"(     MACRO
-     MAC3
-AUX3 LR   1,1
-E3   EQU  1 
-     MAC4
-     MEND
-)" },
-        { "MAC4", R"(     MACRO
-     MAC4
-SEC1 CSECT
-AUX4 LR   1,1
-E4   EQU  1 
-     MEND
-)" },
-    });
-    analyzer a(opencode, analyzer_options(&mock));
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string MAC0 = "MAC0", AUX0 = "AUX0", MAC1 = "MAC1", AUX1 = "AUX1", MAC2 = "MAC2", AUX2 = "AUX2", SEC0 = "SEC0",
-                SEC1 = "SEC1", E0 = "E0", E1 = "E1", E2 = "E2", MAC3 = "MAC3", AUX3 = "AUX3", E3 = "E3", MAC4 = "MAC4",
-                AUX4 = "AUX4", E4 = "E4";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            MAC3,
-            document_symbol_kind::MACRO,
-            range { { 9, 5 }, { 9, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    MAC4,
-                    document_symbol_kind::MACRO,
-                    range { { 9, 5 }, { 9, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            E4,
-                            document_symbol_kind::EQU,
-                            range { { 9, 5 }, { 9, 5 } },
-                        },
-                    },
-                },
-                document_symbol_item_s {
-                    E3,
-                    document_symbol_kind::EQU,
-                    range { { 9, 5 }, { 9, 5 } },
-                },
-            },
-        },
-        document_symbol_item_s {
-            MAC0,
-            document_symbol_kind::MACRO,
-            range { { 7, 5 }, { 7, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    MAC1,
-                    document_symbol_kind::MACRO,
-                    range { { 7, 5 }, { 7, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            E1,
-                            document_symbol_kind::EQU,
-                            range { { 7, 5 }, { 7, 5 } },
-                        },
-                        document_symbol_item_s {
-                            SEC1,
-                            document_symbol_kind::EXECUTABLE,
-                            range { { 7, 5 }, { 7, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    MAC4,
-                                    document_symbol_kind::MACRO,
-                                    range { { 9, 5 }, { 9, 5 } },
-                                    document_symbol_list_s {
-                                        document_symbol_item_s {
-                                            AUX4,
-                                            document_symbol_kind::MACH,
-                                            range { { 9, 5 }, { 9, 5 } },
-                                        },
-                                    },
-                                },
-                                document_symbol_item_s {
-                                    AUX1,
-                                    document_symbol_kind::MACH,
-                                    range { { 7, 5 }, { 7, 5 } },
-                                },
-                            },
-                        },
-                    },
-                },
-                document_symbol_item_s {
-                    E0,
-                    document_symbol_kind::EQU,
-                    range { { 7, 5 }, { 7, 5 } },
-                },
-                document_symbol_item_s {
-                    AUX0,
-                    document_symbol_kind::MACH,
-                    range { { 7, 5 }, { 7, 5 } },
-                },
-            },
-        },
-        document_symbol_item_s {
-            SEC0,
-            document_symbol_kind::DUMMY,
-            range { { 8, 0 }, { 8, 0 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    MAC3,
-                    document_symbol_kind::MACRO,
-                    range { { 9, 5 }, { 9, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            AUX3,
-                            document_symbol_kind::MACH,
-                            range { { 9, 5 }, { 9, 5 } },
-                        },
-                    },
-                },
-            },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_copy)
+TEST(lsp_context_document_symbol, basics)
 {
     std::string opencode =
         R"(
-    COPY COPYFILE1
-)";
-    mock_parse_lib_provider mock({ { "COPYFILE1", "" } });
-    analyzer a(opencode, analyzer_options { &mock });
-    a.analyze();
+    MACRO
+&L  MAC1
+E   EQU 1
+&L  LR  1,1
+    MEND              
 
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    document_symbol_list_s expected = document_symbol_list_s {};
-    EXPECT_TRUE(is_similar(outline, expected));
-}
+    TITLE 'PART 1'
+SECT CSECT
+    SAM31
+    SAM31
+LBL DS 0H
+    SAM31
+    SAM31
+LB2 EQU *
+    SAM31
+    SAM31
 
-TEST(lsp_context_document_symbol, ord_copy_2)
-{
-    std::string opencode =
-        R"(E0   EQU  1
-AUX0 LR   1,1
-     COPY COPYFILE1
+LBM MAC1
+
+    $TITLE 'PART 2'
+PARM DSECT
+VAL DS   F
+
+    MACSECT
+    COPY COPYSECT
+
+T   TITLE 'EXTRA'
+C   CSECT
+C   AMODE 31
+    DC   A(0)
+.SEQ ANOP
 )";
     mock_parse_lib_provider mock({
-        { "COPYFILE1", R"(E1   EQU  1
-AUX1 LR   1,1
+        { "COPYSECT", R"(
+        TITLE 'SECT_CPY DSECT'
+SECT_CPY DSECT
+CPYFLD1  DS  F
+        )" },
+        { "MACSECT", R"( MACRO
+        MACSECT
+        TITLE 'SECT_MAC DSECT'
+SECT_MAC DSECT
+MACFLD1  DS  F
+        MEND
+)" },
+        { "$TITLE", R"( MACRO
+        $TITLE &TITLE
+        AIF (T'&TITLE EQ 'O').SKIP
+&TEXT   SETC '&TITLE'(2,K'&TITLE-2)
+        TITLE 'PREFIX: &TEXT'
+.SKIP   ANOP   ,
+.EXTRA  ANOP   ,
+        MEND
 )" },
     });
     analyzer a(opencode, analyzer_options { &mock });
     a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string E0 = "E0", AUX0 = "AUX0", E1 = "E1", AUX1 = "AUX1", COPYFILE1 = "COPYFILE1";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            COPYFILE1,
-            document_symbol_kind::MACRO,
-            range { { 2, 5 }, { 2, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    AUX1,
-                    document_symbol_kind::MACH,
-                    range { { 2, 5 }, { 2, 5 } },
-                },
-                document_symbol_item_s {
-                    E1,
-                    document_symbol_kind::EQU,
-                    range { { 2, 5 }, { 2, 5 } },
-                },
-            },
-        },
-        document_symbol_item_s {
-            AUX0,
-            document_symbol_kind::MACH,
-            range { { 1, 0 }, { 1, 0 } },
-        },
-        document_symbol_item_s {
-            E0,
-            document_symbol_kind::EQU,
-            range { { 0, 0 }, { 0, 0 } },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-TEST(lsp_context_document_symbol, ord_copy_3)
-{
-    std::string opencode =
-        R"(     MACRO
-     MAC0
-EM0  EQU   1
-AM0  LR    1,1
-     COPY  COPYFILE1
-     MEND
-
-     MAC0
-     MAC1
-)";
-    mock_parse_lib_provider mock({
-        { "COPYFILE1", R"(EC1   EQU  1
-SEC1  CSECT
-AC1   LR   1,1
-)" },
-        { "COPYFILE2", R"(EC2  EQU  1
-SEC2 DSECT
-AC2  LR   1,1
-     COPY COPYFILE3)" },
-        { "COPYFILE3", R"(EC3   EQU  1
-AC3   LR   1,1
-)" },
-        { "MAC1", R"(     MACRO
-     MAC1
-AM1  LR   1,1
-EM1  EQU  1 
-     COPY COPYFILE2
-     MEND
-)" },
-    });
-    analyzer a(opencode, analyzer_options { &mock });
-    a.analyze();
-
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-    std::string EM0 = "EM0", AM0 = "AM0", EM1 = "EM1", AM1 = "AM1", EC0 = "EC0", AC0 = "AC0", EC1 = "EC1", AC1 = "AC1",
-                EC2 = "EC2", AC2 = "AC2", EC3 = "EC3", AC3 = "AC3", COPYFILE1 = "COPYFILE1", COPYFILE2 = "COPYFILE2",
-                COPYFILE3 = "COPYFILE3", MAC0 = "MAC0", MAC1 = "MAC1", SEC1 = "SEC1", SEC2 = "SEC2";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s {
-            MAC1,
-            document_symbol_kind::MACRO,
-            range { { 8, 5 }, { 8, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    COPYFILE2,
-                    document_symbol_kind::MACRO,
-                    range { { 8, 5 }, { 8, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            EC2,
-                            document_symbol_kind::EQU,
-                            range { { 8, 5 }, { 8, 5 } },
-                        },
-                        document_symbol_item_s {
-                            COPYFILE3,
-                            document_symbol_kind::MACRO,
-                            range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    EC3,
-                                    document_symbol_kind::EQU,
-                                    range { { 8, 5 }, { 8, 5 } },
-                                },
-                            },
-                        },
-                        document_symbol_item_s {
-                            SEC2,
-                            document_symbol_kind::DUMMY,
-                            range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    COPYFILE3,
-                                    document_symbol_kind::MACRO,
-                                    range { { 8, 5 }, { 8, 5 } },
-                                    document_symbol_list_s {
-                                        document_symbol_item_s {
-                                            AC3,
-                                            document_symbol_kind::MACH,
-                                            range { { 8, 5 }, { 8, 5 } },
-                                        },
-                                    },
-                                },
-                                document_symbol_item_s {
-                                    AC2,
-                                    document_symbol_kind::MACH,
-                                    range { { 8, 5 }, { 8, 5 } },
-                                },
-                            },
-                        },
-                    },
-                },
-                document_symbol_item_s {
-                    EM1,
-                    document_symbol_kind::EQU,
-                    range { { 8, 5 }, { 8, 5 } },
-                },
-            },
-        },
-        document_symbol_item_s {
-            MAC0,
-            document_symbol_kind::MACRO,
-            range { { 7, 5 }, { 7, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s {
-                    COPYFILE1,
-                    document_symbol_kind::MACRO,
-                    range { { 7, 5 }, { 7, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            EC1,
-                            document_symbol_kind::EQU,
-                            range { { 7, 5 }, { 7, 5 } },
-                        },
-                        document_symbol_item_s {
-                            SEC1,
-                            document_symbol_kind::EXECUTABLE,
-                            range { { 7, 5 }, { 7, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    AM1,
-                                    document_symbol_kind::MACH,
-                                    range { { 8, 5 }, { 8, 5 } },
-                                },
-                                document_symbol_item_s {
-                                    AC1,
-                                    document_symbol_kind::MACH,
-                                    range { { 7, 5 }, { 7, 5 } },
-                                },
-                            },
-                        },
-                    },
-                },
-                document_symbol_item_s {
-                    AM0,
-                    document_symbol_kind::MACH,
-                    range { { 7, 5 }, { 7, 5 } },
-                },
-                document_symbol_item_s {
-                    EM0,
-                    document_symbol_kind::EQU,
-                    range { { 7, 5 }, { 7, 5 } },
-                },
-            },
-        },
-    };
-    EXPECT_TRUE(is_similar(outline, expected));
-}
-
-size_t recursive_counter(const document_symbol_list_s& x)
-{
-    size_t result = x.size();
-    for (const auto& c : x)
-        result += recursive_counter(c.children);
-    return result;
-}
-
-TEST(lsp_context_document_symbol, limit)
-{
-    std::string input =
-        R"(
-         MACRO
-         MAC  &I
-         ACTR 999999
-         LCLA &A
-
-.NEXT    ANOP
-LABEL_&A DS   A
-&A       SETA &A+1
-         AIF (&A LT &I).NEXT
-
-         MEND
-
-SECT     DSECT
-         MAC 1000
-)";
-    analyzer a(input);
-    a.analyze();
-
-    const auto limit = 10LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
-
-    EXPECT_LE(recursive_counter(outline), 100);
-    ASSERT_FALSE(outline.empty());
-    EXPECT_EQ(outline.front().name, "Outline may be truncated");
-}
-
-TEST(lsp_context_document_symbol, generated_symbols)
-{
-    std::string input =
-        R"(
-         MACRO
-         MAC
-&I       SETA  0
-.LOOP    ANOP
-&LINE    AREAD
-&L       SETC  '&LINE'(1,1)
-&IN      SETC  '&LINE'(10,6)
-&OPS     SETC  '&LINE'(16,*)
-&L       &IN   &OPS
-&I       SETA  &I+1
-         AIF   (&I LT 3).LOOP
-         MEND
-
-         MAC
-C        CSECT
-A        DS    F
-B        DS    F
-         END
-)";
-    analyzer a(input);
-    a.analyze();
+    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
-    const auto limit = 1000LL;
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc, limit);
+    using enum document_symbol_kind;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(empty_loc);
+    document_symbol_list_s outlineM = a.context().lsp_ctx->document_symbol(MACSECT_loc);
+    document_symbol_list_s outlineC = a.context().lsp_ctx->document_symbol(COPYSECT_loc);
+    document_symbol_list_s outlineT = a.context().lsp_ctx->document_symbol(TITLE_loc);
+
     document_symbol_list_s expected = document_symbol_list_s {
         document_symbol_item_s {
-            "MAC",
-            document_symbol_kind::MACRO,
-            range { { 14, 9 }, { 14, 9 } },
+            "MAC1",
+            MACRO,
+            range { { 2, 0 }, { 5, position::max_value } },
+        },
+        document_symbol_item_s {
+            "PART 1",
+            TITLE,
+            range { { 7, 0 }, { 19, position::max_value } },
             document_symbol_list_s {
                 document_symbol_item_s {
+                    "SECT",
+                    EXECUTABLE,
+                    range { { 8, 0 }, { 10, position::max_value } },
+                },
+                document_symbol_item_s {
+                    "LBL",
+                    DAT,
+                    range { { 11, 0 }, { 13, position::max_value } },
+                },
+                document_symbol_item_s {
+                    "LB2",
+                    EQU,
+                    range { { 14, 0 }, { 17, position::max_value } },
+                },
+                document_symbol_item_s {
+                    "LBM",
+                    MACH,
+                    range { { 18, 0 }, { 19, position::max_value } },
+                },
+            },
+        },
+        document_symbol_item_s {
+            "PREFIX: PART 2",
+            TITLE,
+            range { { 20, 0 }, { 23, position::max_value } },
+            document_symbol_list_s {
+                document_symbol_item_s {
+                    "PARM",
+                    DUMMY,
+                    range { { 21, 0 }, { 21, position::max_value } },
+                },
+                document_symbol_item_s {
+                    "VAL",
+                    DAT,
+                    range { { 22, 0 }, { 23, position::max_value } },
+                },
+            },
+        },
+        document_symbol_item_s {
+            "SECT_MAC DSECT",
+            TITLE,
+            range { { 24, 0 }, { 24, position::max_value } },
+        },
+        document_symbol_item_s {
+            "SECT_CPY DSECT",
+            TITLE,
+            range { { 25, 0 }, { 26, position::max_value } },
+        },
+        document_symbol_item_s {
+            "EXTRA",
+            TITLE,
+            range { { 27, 0 }, { 32, position::max_value } },
+            document_symbol_list_s {
+                document_symbol_item_s {
+                    "T",
+                    UNKNOWN,
+                    range { { 27, 0 }, { 27, position::max_value } },
+                },
+                document_symbol_item_s {
                     "C",
-                    document_symbol_kind::EXECUTABLE,
-                    range { { 14, 9 }, { 14, 9 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s {
-                            "A",
-                            document_symbol_kind::DAT,
-                            range { { 14, 9 }, { 14, 9 } },
-                        },
-                        document_symbol_item_s {
-                            "B",
-                            document_symbol_kind::DAT,
-                            range { { 14, 9 }, { 14, 9 } },
-                        },
-                    },
+                    EXECUTABLE,
+                    range { { 28, 0 }, { 30, position::max_value } },
+                },
+                document_symbol_item_s {
+                    ".SEQ",
+                    SEQ,
+                    range { { 31, 0 }, { 32, position::max_value } },
                 },
             },
         },
     };
+    document_symbol_list_s expectedM = document_symbol_list_s {
+        document_symbol_item_s {
+            "MACSECT",
+            MACRO,
+            range { { 1, 0 }, { 5, position::max_value } },
+        },
+    };
+    document_symbol_list_s expectedC = document_symbol_list_s {
+        document_symbol_item_s {
+            "SECT_CPY DSECT",
+            TITLE,
+            range { { 1, 0 }, { 4, position::max_value } },
+            document_symbol_list_s {
+                document_symbol_item_s {
+                    "SECT_CPY",
+                    DUMMY,
+                    range { { 2, 0 }, { 2, position::max_value } },
+                },
+                document_symbol_item_s {
+                    "CPYFLD1",
+                    DAT,
+                    range { { 3, 0 }, { 4, position::max_value } },
+                },
+            },
+        },
+    };
+    document_symbol_list_s expectedT = document_symbol_list_s {
+        document_symbol_item_s {
+            "$TITLE",
+            MACRO,
+            range { { 1, 0 }, { 7, position::max_value } },
+            document_symbol_list_s {
+                document_symbol_item_s {
+                    ".SKIP",
+                    SEQ,
+                    range { { 5, 0 }, { 5, position::max_value } },
+                },
+                document_symbol_item_s {
+                    ".EXTRA",
+                    SEQ,
+                    range { { 6, 0 }, { 7, position::max_value } },
+                },
+            },
+        },
+    };
+
     EXPECT_TRUE(is_similar(outline, expected));
+    EXPECT_TRUE(is_similar(outlineM, expectedM));
+    EXPECT_TRUE(is_similar(outlineC, expectedC));
+    EXPECT_TRUE(is_similar(outlineT, expectedT));
 }

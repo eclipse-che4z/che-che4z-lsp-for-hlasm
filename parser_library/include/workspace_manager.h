@@ -120,8 +120,7 @@ public:
 
     virtual void semantic_tokens(
         const char* document_uri, workspace_manager_response<continuous_sequence<token_info>> resp) = 0;
-    virtual void document_symbol(
-        const char* document_uri, long long limit, workspace_manager_response<document_symbol_list> resp) = 0;
+    virtual void document_symbol(const char* document_uri, workspace_manager_response<document_symbol_list> resp) = 0;
 
     virtual void configuration_changed(const lib_config& new_config) = 0;
 

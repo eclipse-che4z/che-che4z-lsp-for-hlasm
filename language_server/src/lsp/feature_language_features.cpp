@@ -558,9 +558,9 @@ enum class lsp_document_symbol_item_kind
 
 
 const std::unordered_map<parser_library::document_symbol_kind, lsp_document_symbol_item_kind>
-    document_symbol_item_kind_mapping { { parser_library::document_symbol_kind::DAT,
-                                            lsp_document_symbol_item_kind::Array },
-        { parser_library::document_symbol_kind::EQU, lsp_document_symbol_item_kind::Boolean },
+    document_symbol_item_kind_mapping {
+        { parser_library::document_symbol_kind::DAT, lsp_document_symbol_item_kind::Object },
+        { parser_library::document_symbol_kind::EQU, lsp_document_symbol_item_kind::Constant },
         { parser_library::document_symbol_kind::MACH, lsp_document_symbol_item_kind::Constant },
         { parser_library::document_symbol_kind::ASM, lsp_document_symbol_item_kind::Boolean },
         { parser_library::document_symbol_kind::UNKNOWN, lsp_document_symbol_item_kind::Operator },
@@ -572,7 +572,9 @@ const std::unordered_map<parser_library::document_symbol_kind, lsp_document_symb
         { parser_library::document_symbol_kind::READONLY, lsp_document_symbol_item_kind::Enum },
         { parser_library::document_symbol_kind::EXTERNAL, lsp_document_symbol_item_kind::Enum },
         { parser_library::document_symbol_kind::WEAK_EXTERNAL, lsp_document_symbol_item_kind::Enum },
-        { parser_library::document_symbol_kind::MACRO, lsp_document_symbol_item_kind::File } };
+        { parser_library::document_symbol_kind::MACRO, lsp_document_symbol_item_kind::Function },
+        { parser_library::document_symbol_kind::TITLE, lsp_document_symbol_item_kind::Module },
+    };
 
 nlohmann::json feature_language_features::document_symbol_item_json(
     hlasm_plugin::parser_library::document_symbol_item symbol)
@@ -601,12 +603,10 @@ void feature_language_features::document_symbol(const request_id& id, const nloh
 {
     auto document_uri = extract_document_uri(params);
 
-    const auto limit = 5000LL;
-
     auto resp = make_response(
         id, response_, [this](document_symbol_list symbol_list) { return document_symbol_list_json(symbol_list); });
 
-    ws_mngr_.document_symbol(document_uri.c_str(), limit, resp);
+    ws_mngr_.document_symbol(document_uri.c_str(), resp);
 
     response_->register_cancellable_request(id, std::move(resp));
 }

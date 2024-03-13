@@ -78,6 +78,13 @@ struct operand
     machine_operand* access_mach();
     assembler_operand* access_asm();
 
+    const model_operand* access_model() const;
+    const ca_operand* access_ca() const;
+    const macro_operand* access_mac() const;
+    const data_def_operand* access_data_def() const;
+    const machine_operand* access_mach() const;
+    const assembler_operand* access_asm() const;
+
     const operand_type type;
     const range operand_range;
 

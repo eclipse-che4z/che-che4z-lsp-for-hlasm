@@ -134,7 +134,8 @@ enum class PARSER_LIBRARY_EXPORT document_symbol_kind
     MACRO = 10,
     ASM = 11,
     EXTERNAL = 12,
-    WEAK_EXTERNAL = 13
+    WEAK_EXTERNAL = 13,
+    TITLE = 14,
 };
 
 struct PARSER_LIBRARY_EXPORT document_symbol_item;

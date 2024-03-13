@@ -185,6 +185,11 @@ struct assembler_operand : virtual evaluable_operand
     complex_assembler_operand* access_complex();
     string_assembler_operand* access_string();
 
+    const expr_assembler_operand* access_expr() const;
+    const using_instr_assembler_operand* access_base_end() const;
+    const complex_assembler_operand* access_complex() const;
+    const string_assembler_operand* access_string() const;
+
     const asm_kind kind;
 };
 

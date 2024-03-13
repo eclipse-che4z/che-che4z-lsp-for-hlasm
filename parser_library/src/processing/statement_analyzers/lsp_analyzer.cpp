@@ -107,6 +107,9 @@ bool lsp_analyzer::analyze(const context::hlasm_statement& statement,
                 collect_var_definition(*resolved_stmt);
                 collect_copy_operands(*resolved_stmt, collection_info);
             }
+
+            if (resolved_stmt && resolved_stmt->opcode_ref().value == context::id_index("TITLE"))
+                collect_title(*resolved_stmt);
             break;
         }
         case processing_kind::MACRO: {
@@ -171,6 +174,21 @@ lsp::line_occurence_details& lsp_analyzer::line_details(const range& r, const co
     return (*ci.line_details)[r.start.line];
 }
 
+void lsp_analyzer::collect_title(const processing::resolved_statement& stmt)
+{
+    const auto& ops = stmt.operands_ref().value;
+    if (ops.size() < 1)
+        return;
+    const auto* op = ops.front()->access_asm();
+    if (!op)
+        return;
+    const auto* str = op->access_string();
+    if (!str)
+        return;
+
+    lsp_ctx_.add_title(str->value, hlasm_ctx_.processing_stack());
+}
+
 void lsp_analyzer::collect_endline(const range& r, const collection_info_t& ci)
 {
     auto& line_detail = line_details(r, ci);
@@ -218,7 +236,7 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
             std::move(result.variable_symbols),
             std::move(result.file_scopes),
             std::move(macro_occurrences_));
-        m_i->file_occurrences_[macro_file].first.emplace_back(md->id, md, result.prototype.macro_name_range);
+        m_i->file_occurrences_[macro_file].symbols.emplace_back(md->id, md, result.prototype.macro_name_range);
 
         if (result.external)
             lsp_ctx_.add_macro(std::move(m_i), lsp::text_data_view(file_text_));

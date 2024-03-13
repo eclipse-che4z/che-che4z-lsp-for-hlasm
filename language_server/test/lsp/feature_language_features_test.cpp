@@ -157,12 +157,14 @@ TEST(language_features, document_symbol)
     ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
-    nlohmann::json r = { { "start", { { "line", 0 }, { "character", 0 } } },
-        { "end", { { "line", 0 }, { "character", 0 } } } };
+    nlohmann::json r = {
+        { "start", { { "line", 0 }, { "character", 0 } } },
+        { "end", { { "line", 0 }, { "character", 2147483647 } } },
+    };
     nlohmann::json response = nlohmann::json::array();
     response.push_back({
         { "name", "A" },
-        { "kind", 17 },
+        { "kind", 14 },
         { "range", r },
         { "selectionRange", r },
         { "children", nlohmann::json::array() },

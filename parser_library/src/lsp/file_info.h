@@ -119,6 +119,8 @@ public:
     const line_occurence_details* get_line_details(size_t l) const noexcept;
     const std::vector<line_occurence_details>& get_line_details() const noexcept { return line_details; }
 
+    std::vector<bool> macro_map() const;
+
 private:
     std::map<line_range, file_slice_t> slices;
     std::vector<symbol_occurrence> occurrences;

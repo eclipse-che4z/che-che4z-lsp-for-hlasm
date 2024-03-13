@@ -27,6 +27,7 @@
 #include "context/using.h"
 #include "item_convertors.h"
 #include "lsp/macro_info.h"
+#include "protocol.h"
 #include "utils/similar.h"
 #include "utils/string_operations.h"
 #include "utils/unicode_text.h"
@@ -51,469 +52,205 @@ const std::unordered_map<context::section_kind, document_symbol_kind> document_s
     { context::section_kind::WEAK_EXTERNAL, document_symbol_kind::WEAK_EXTERNAL },
 };
 
-const std::unordered_map<occurrence_kind, document_symbol_kind> document_symbol_item_kind_mapping_macro {
-    { occurrence_kind::VAR, document_symbol_kind::VAR }, { occurrence_kind::SEQ, document_symbol_kind::SEQ }
-};
+constexpr bool expand_block(const document_symbol_item_s& item) { return item.kind != document_symbol_kind::MACRO; }
 } // namespace
 
-std::string lsp_context::find_macro_copy_id(const std::vector<context::processing_frame>& stack, unsigned long i) const
+document_symbol_list_s lsp_context::document_symbol(const utils::resource::resource_location& document_loc) const
 {
-    assert(i != 0);
-    assert(i < stack.size());
-    return stack[i].member_name.empty() ? stack[i].resource_loc->get_uri() : stack[i].member_name.to_string();
-}
-
-void lsp_context::document_symbol_macro(document_symbol_list_s& result,
-    const utils::resource::resource_location& document_loc,
-    std::optional<range> r,
-    long long& limit,
-    document_symbol_cache& cache) const
-{
-    auto m = std::find_if(m_macros.begin(), m_macros.end(), [&document_loc](const auto& mac) {
-        return mac.first->definition_location.resource_loc == document_loc;
-    });
-    if (m == m_macros.end())
-        return;
-
-    const auto& [def, info] = *m;
-
-    const auto& copy_occs = copy_occurrences(document_loc, cache);
-
-    for (const auto& var : info->var_definitions)
-    {
-        if (limit <= 0)
-            break;
-        if (!belongs_to_copyfile(document_loc, var.def_position, var.name))
-        {
-            result.emplace_back(var.name.to_string(), document_symbol_kind::VAR, r.value_or(range(var.def_position)));
-            --limit;
-        }
-        else if (!r.has_value())
-            modify_with_copy(result, var.name, copy_occs, document_symbol_kind::VAR, limit);
-    }
-    for (const auto& [name, seq] : def->labels)
-    {
-        if (limit <= 0)
-            break;
-        if (!belongs_to_copyfile(document_loc, seq->symbol_location.pos, name))
-        {
-            result.emplace_back(
-                name.to_string(), document_symbol_kind::SEQ, r.value_or(range(seq->symbol_location.pos)));
-            --limit;
-        }
-        else if (!r.has_value())
-            modify_with_copy(result, name, copy_occs, document_symbol_kind::SEQ, limit);
-    }
-}
-
-bool lsp_context::belongs_to_copyfile(
-    const utils::resource::resource_location& document_loc, position pos, context::id_index id) const
-{
-    const auto* aux = find_occurrence_with_scope(document_loc, pos).first;
-    return aux == nullptr || aux->name.to_string_view() != id.to_string_view();
-}
-
-void lsp_context::document_symbol_copy(document_symbol_list_s& result,
-    const std::vector<symbol_occurrence>& occurrence_list,
-    const utils::resource::resource_location& document_loc,
-    std::optional<range> r,
-    long long& limit) const
-{
-    for (const auto& occ : occurrence_list)
-    {
-        if (limit <= 0)
-            return;
-        if (occ.kind == occurrence_kind::VAR || occ.kind == occurrence_kind::SEQ)
-        {
-            position aux = definition(document_loc, occ.occurrence_range.start).pos;
-            document_symbol_item_s item = { occ.name.to_string(),
-                document_symbol_item_kind_mapping_macro.at(occ.kind),
-                r.value_or(range(aux,
-                    position(
-                        aux.line, aux.column + occ.occurrence_range.end.column - occ.occurrence_range.start.column))) };
-            if (std::none_of(result.begin(), result.end(), utils::is_similar_to(item)))
-            {
-                result.push_back(item);
-                --limit;
-            }
-        }
-    }
-}
-
-std::span<const symbol_occurrence* const> lsp_context::get_occurrences_by_name(
-    const file_info& document, context::id_index name, document_symbol_cache& cache) const
-{
-    auto [it, inserted] = cache.occurrences_by_name.try_emplace(&document);
-
-    auto& occurrences_by_name = it->second;
-    if (inserted)
-    {
-        const auto& occurrences = document.get_occurrences();
-        occurrences_by_name.reserve(occurrences.size());
-        std::transform(
-            occurrences.begin(), occurrences.end(), std::back_inserter(occurrences_by_name), [](const auto& occ) {
-                return &occ;
-            });
-        std::sort(occurrences_by_name.begin(), occurrences_by_name.end(), [](const auto* l, const auto* r) {
-            return l->name < r->name;
-        });
-    }
-
-    if (name.empty())
-        return occurrences_by_name;
-
-    struct
-    {
-        bool operator()(const symbol_occurrence* l, context::id_index r) const { return l->name < r; }
-        bool operator()(context::id_index l, const symbol_occurrence* r) const { return l < r->name; }
-    } search_predicate;
-
-    auto [low, high] = std::equal_range(occurrences_by_name.begin(), occurrences_by_name.end(), name, search_predicate);
-
-    return std::span<const symbol_occurrence* const>(low, high);
-}
-
-void lsp_context::fill_cache(
-    std::vector<std::pair<symbol_occurrence, lsp_context::vector_set<context::id_index>>>& copy_occurrences,
-    const utils::resource::resource_location& document_loc,
-    document_symbol_cache& cache) const
-{
-    const auto& document = *m_files.at(document_loc);
-    for (const auto& [_, info] : m_files)
-    {
-        if (info->type != file_type::COPY)
-            continue;
-
-        for (const auto* occ :
-            get_occurrences_by_name(document, std::get<context::copy_member_ptr>(info->owner)->name, cache))
-        {
-            lsp_context::vector_set<context::id_index> occurrences;
-            for (std::optional<context::id_index> last;
-                 const auto* new_occ : get_occurrences_by_name(*info, context::id_index(), cache))
-            {
-                if (last == new_occ->name)
-                    continue;
-                last = new_occ->name;
-
-                if (new_occ->kind == occurrence_kind::VAR || new_occ->kind == occurrence_kind::SEQ)
-                    occurrences.data.push_back(new_occ->name);
-            }
-            copy_occurrences.emplace_back(*occ, std::move(occurrences));
-        }
-    }
-}
-
-const std::vector<std::pair<symbol_occurrence, lsp_context::vector_set<context::id_index>>>&
-lsp_context::copy_occurrences(
-    const utils::resource::resource_location& document_loc, document_symbol_cache& cache) const
-{
-    auto [it, inserted] = cache.occurrences.try_emplace(document_loc);
-
-    if (inserted)
-        fill_cache(it->second, document_loc, cache);
-
-    return it->second;
-}
-
-void lsp_context::modify_with_copy(document_symbol_list_s& modified,
-    context::id_index sym_name,
-    const std::vector<std::pair<symbol_occurrence, lsp_context::vector_set<context::id_index>>>& copy_occs,
-    const document_symbol_kind kind,
-    long long& limit) const
-{
-    for (const auto& [copy_occ, occs] : copy_occs)
-    {
-        if (limit <= 0)
-            return;
-        if (!occs.contains(sym_name))
-            continue;
-
-        bool have_already = false;
-        document_symbol_item_s sym_item(sym_name.to_string(), kind, copy_occ.occurrence_range);
-        for (auto& item : modified)
-        {
-            if (item.name == copy_occ.name.to_string_view()
-                && std::none_of(item.children.begin(), item.children.end(), utils::is_similar_to(sym_item)))
-            {
-                item.children.push_back(sym_item);
-                have_already = true;
-                --limit;
-                break;
-            }
-        }
-        if (!have_already)
-        {
-            modified.emplace_back(copy_occ.name.to_string(),
-                document_symbol_kind::MACRO,
-                copy_occ.occurrence_range,
-                document_symbol_list_s { std::move(sym_item) });
-            --limit;
-        }
-    }
-}
-
-bool do_not_need_nodes(const std::vector<context::processing_frame>& sym,
-    const std::vector<context::processing_frame>& sect_sym,
-    unsigned long& i)
-{
-    if (sym.size() == 1)
-    {
-        return true;
-    }
-    const auto size = sym.size() < sect_sym.size() ? sym.size() : sect_sym.size();
-    while (i < size)
-    {
-        if (sym[i].pos != sect_sym[i].pos || sym[i].resource_loc != sect_sym[i].resource_loc)
-        {
-            if (i + 1 == sym.size())
-            {
-                return true;
-            }
-            if (i < sym.size() - 1)
-            {
-                i++;
-            }
-            return false;
-        }
-        i++;
-    }
-    return i >= sym.size();
-}
-
-void lsp_context::document_symbol_symbol(document_symbol_list_s& modified,
-    document_symbol_list_s children,
-    context::id_index id,
-    const std::vector<context::processing_frame>& sym_stack,
-    document_symbol_kind kind,
-    unsigned long i,
-    long long& limit) const
-{
-    document_symbol_item_s aux(find_macro_copy_id(sym_stack, i), document_symbol_kind::MACRO, range(sym_stack[0].pos));
-
-    const auto comp_aux = [&aux](const auto& e) {
-        return aux.name == e.name && aux.kind == e.kind && aux.symbol_range == e.symbol_range
-            && aux.symbol_selection_range == e.symbol_selection_range;
+    using enum document_symbol_kind;
+    static constexpr const auto block = [](auto f, auto l) {
+        return range(position(f, 0), position(l, position::max_value));
+    };
+    static constexpr const auto one_line = [](auto line) {
+        return range(position(line, 0), position(line, position::max_value));
+    };
+    static constexpr const auto end_before = [](position& p, position s) {
+        if (p.line < s.line)
+            p.line = s.line - 1;
     };
 
-    auto i_find = std::find_if(modified.begin(), modified.end(), comp_aux);
-    if (i_find == modified.end())
-    {
-        modified.push_back(aux);
-        --limit;
-        i_find = modified.end() - 1;
-    }
-    i++;
-    while (i < sym_stack.size())
-    {
-        aux.name = find_macro_copy_id(sym_stack, i);
-        document_symbol_list_s* aux_list = &i_find->children;
-        i_find = std::find_if(aux_list->begin(), aux_list->end(), comp_aux);
-        if (i_find == aux_list->end())
-        {
-            aux_list->push_back(aux);
-            --limit;
-            i_find = aux_list->end() - 1;
-        }
-        i++;
-    }
-    i_find->children.emplace_back(id.to_string(), kind, i_find->symbol_range, std::move(children));
-    --limit;
-}
+    auto dl_it = m_files.find(document_loc);
+    if (dl_it == m_files.end())
+        return {};
 
-void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& result, long long& limit) const
-{
-    const auto& symbol_list = m_hlasm_ctx->ord_ctx.symbols();
-    std::map<const context::section*, document_symbol_list_s> children_of_sects;
-    for (const auto& [id, sym_var] : symbol_list)
-    {
-        const auto* sym = std::get_if<context::symbol>(&sym_var);
-        if (sym && sym->attributes().origin() == context::symbol_origin::SECT)
-        {
-            if (auto sect = m_hlasm_ctx->ord_ctx.get_section(id))
-            {
-                children_of_sects.try_emplace(sect, document_symbol_list_s {});
-                --limit;
-            }
-        }
-    }
+    const auto& dl = dl_it->first;
 
-    std::vector<context::processing_frame> sym_stack;
-    std::vector<context::processing_frame> sect_sym_stack;
-
-    for (const auto& [id, sym_var] : symbol_list)
-    {
-        if (limit <= 0)
-            break;
-        if (!std::holds_alternative<context::symbol>(sym_var))
-            continue;
-        const auto& sym = std::get<context::symbol>(sym_var);
-        if (sym.attributes().origin() == context::symbol_origin::SECT)
-            continue;
-
-        sym.proc_stack().to_vector(sym_stack);
-
-        const auto* sect =
-            sym.value().value_kind() == context::symbol_value_kind::RELOC && sym.value().get_reloc().bases().size() == 1
-            ? sym.value().get_reloc().bases().front().first.owner
-            : nullptr;
-        if (sect == nullptr || children_of_sects.find(sect) == children_of_sects.end())
-        {
-            if (sym_stack.size() == 1)
-            {
-                result.emplace_back(id.to_string(),
-                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin()),
-                    range(sym.symbol_location().pos));
-                --limit;
-            }
-            else
-            {
-                document_symbol_symbol(result,
-                    document_symbol_list_s {},
-                    id,
-                    sym_stack,
-                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin()),
-                    1,
-                    limit);
-            }
-        }
-        else
-        {
-            const auto* sect_sym = m_hlasm_ctx->ord_ctx.get_symbol(sect->name);
-
-            sect_sym->proc_stack().to_vector(sect_sym_stack);
-
-            auto& children = children_of_sects.find(sect)->second;
-            unsigned long i = 1;
-            if (do_not_need_nodes(sym_stack, sect_sym_stack, i))
-            {
-                children.emplace_back(id.to_string(),
-                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin()),
-                    range(sym_stack[0].pos));
-                --limit;
-            }
-            else
-            {
-                document_symbol_symbol(children,
-                    document_symbol_list_s {},
-                    id,
-                    sym_stack,
-                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin()),
-                    i,
-                    limit);
-            }
-        }
-    }
-
-    for (auto&& [sect, children] : children_of_sects)
-    {
-        const auto& sym = *m_hlasm_ctx->ord_ctx.get_symbol(sect->name);
-
-        sym.proc_stack().to_vector(sym_stack);
-
-        if (sym_stack.size() == 1)
-        {
-            result.emplace_back(sect->name.to_string(),
-                document_symbol_item_kind_mapping_section.at(sect->kind),
-                range(sym.symbol_location().pos),
-                std::move(children));
-        }
-        else
-        {
-            ++limit; // already counted
-            document_symbol_symbol(result,
-                std::move(children),
-                sect->name,
-                sym_stack,
-                document_symbol_item_kind_mapping_section.at(sect->kind),
-                1,
-                limit);
-        }
-    }
-}
-
-void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_list_s& result,
-    const std::unordered_map<std::string_view, utils::resource::resource_location>& name_to_location_cache,
-    long long& limit,
-    document_symbol_cache& cache) const
-{
-    for (auto& item : result)
-    {
-        if (item.kind != document_symbol_kind::MACRO)
-            continue;
-
-        auto location = name_to_location_cache.find(item.name);
-        if (location == name_to_location_cache.end() || location->second.empty())
-            return;
-
-        if (const auto& file = m_files.find(location->second); file != m_files.end())
-        {
-            if (file->second->type == file_type::MACRO)
-                document_symbol_macro(item.children, file->first, item.symbol_range, limit, cache);
-            else if (file->second->type == file_type::COPY)
-                document_symbol_copy(
-                    item.children, file->second->get_occurrences(), file->first, item.symbol_range, limit);
-        }
-        document_symbol_opencode_var_seq_symbol_aux(item.children, name_to_location_cache, limit, cache);
-    }
-}
-
-void lsp_context::document_symbol_other(document_symbol_list_s& result,
-    const utils::resource::resource_location& document_loc,
-    long long& limit,
-    document_symbol_cache& cache) const
-{
-    std::unordered_map<std::string_view, utils::resource::resource_location> name_to_location;
-    for (const auto& [def, info] : m_macros)
-        name_to_location.insert_or_assign(def->id.to_string_view(), info->definition_location.resource_loc);
-    for (const auto& [def, info] : m_hlasm_ctx->copy_members())
-        name_to_location.insert_or_assign(info->name.to_string_view(), info->definition_location.resource_loc);
-
-    document_symbol_opencode_ord_symbol(result, limit);
-    document_symbol_opencode_var_seq_symbol_aux(result, name_to_location, limit, cache);
-
-    for (const auto& sym : m_opencode->variable_definitions)
-    {
-        if (limit <= 0)
-            break;
-        if (!belongs_to_copyfile(document_loc, sym.def_position, sym.name))
-        {
-            result.emplace_back(sym.name.to_string(), document_symbol_kind::VAR, range(sym.def_position));
-            --limit;
-        }
-    }
-}
-
-document_symbol_list_s lsp_context::document_symbol(
-    const utils::resource::resource_location& document_loc, long long limit) const
-{
     document_symbol_list_s result;
-    const auto& file = m_files.find(document_loc);
-    if (file == m_files.end() || limit <= 0)
-        return result;
 
-    document_symbol_cache cache;
-
-    switch (file->second->type)
+    for (const auto& [title, stack] : m_titles)
     {
-        case file_type::MACRO:
-            document_symbol_macro(result, document_loc, std::nullopt, limit, cache);
-            break;
+        const position* p = nullptr;
 
-        case file_type::COPY:
-            document_symbol_copy(result, file->second->get_occurrences(), document_loc, std::nullopt, limit);
-            break;
+        for (auto s = stack; !s.empty(); s = s.parent())
+        {
+            if (*s.frame().resource_loc == dl)
+                p = &s.frame().pos;
+            if (s.frame().proc_type == context::file_processing_type::MACRO)
+                p = nullptr;
+        }
 
-        default:
-            document_symbol_other(result, document_loc, limit, cache);
-            break;
+        if (p)
+            result.emplace_back(title, TITLE, one_line(p->line));
     }
-    if (limit <= 0)
-        result.emplace(result.begin(), "Outline may be truncated", document_symbol_kind::DUMMY, range());
+
+    for (const auto& [def, info] : m_macros)
+    {
+        if (info->definition_location.resource_loc != dl)
+            continue;
+
+        const auto first_line = info->definition_location.pos.line;
+        auto last_line = first_line;
+        if (!def->copy_nests.empty() && !def->copy_nests.back().empty())
+            last_line = def->copy_nests.back().front().loc.pos.line;
+
+        auto& m = result.emplace_back(def->id.to_string(), MACRO, block(first_line, last_line));
+        for (const auto& [name, seq] : def->labels)
+        {
+            if (seq->symbol_location.resource_loc != dl)
+                continue;
+
+            m.children.emplace_back("." + name.to_string(), SEQ, one_line(seq->symbol_location.pos.line));
+        }
+        if (m.children.empty())
+            continue;
+
+        std::sort(m.children.begin(), m.children.end(), [](const auto& l, const auto& r) {
+            return l.symbol_range.start.line < r.symbol_range.start.line;
+        });
+
+        m.children.back().symbol_range.end.line = last_line;
+        m.children.back().symbol_selection_range.end.line = last_line;
+        for (auto it = m.children.begin(); it != std::prev(m.children.end()); ++it)
+        {
+            end_before(it->symbol_range.end, std::next(it)->symbol_range.start);
+            end_before(it->symbol_selection_range.end, std::next(it)->symbol_selection_range.start);
+        }
+    }
+
+    const auto macro_map = dl_it->second->macro_map();
+
+    if (auto it = m_opencode->file_occurrences.find(dl); it != m_opencode->file_occurrences.end())
+    {
+        for (const auto& o : it->second.symbols)
+        {
+            if (o.occurrence_range.start.column != 0)
+                continue;
+            if (o.name.empty())
+                continue;
+
+            std::string prefix;
+            document_symbol_kind kind = UNKNOWN;
+
+            switch (o.kind)
+            {
+                case occurrence_kind::ORD:
+                    if (const auto* sym = m_hlasm_ctx->ord_ctx.get_symbol(o.name))
+                    {
+                        if (auto origin = sym->attributes().origin(); origin != context::symbol_origin::SECT)
+                            kind = document_symbol_item_kind_mapping_symbol.at(origin);
+                        else if (const auto* sect = m_hlasm_ctx->ord_ctx.get_section(o.name))
+                            kind = document_symbol_item_kind_mapping_section.at(sect->kind);
+                    }
+                    break;
+                case occurrence_kind::SEQ:
+                    prefix = ".";
+                    kind = SEQ;
+                    break;
+                default:
+                    continue;
+            }
+            auto l = o.occurrence_range.start.line;
+            if (l >= macro_map.size() || !macro_map[l])
+                result.emplace_back(prefix + o.name.to_string(), kind, one_line(o.occurrence_range.start.line));
+        }
+    }
+
+    std::stable_sort(result.begin(), result.end(), [](const auto& l, const auto& r) {
+        if (const auto c = l.symbol_range.start.line <=> r.symbol_range.start.line; c != 0)
+            return c < 0;
+
+        const bool l_title = l.kind == TITLE;
+        const bool r_title = r.kind == TITLE;
+
+        return l_title > r_title;
+    });
+
+    if (!result.empty() && expand_block(result.back()))
+    {
+        const auto lines = dl_it->second->data.get_number_of_lines();
+        end_before(result.back().symbol_range.end, position(lines, 0));
+        end_before(result.back().symbol_selection_range.end, position(lines, 0));
+    }
+
+    static constexpr const auto same_symbol = [](const auto& l, const auto& r) {
+        return l.name == r.name && l.kind == r.kind;
+    };
+    for (auto it = result.begin(); it != result.end();)
+    {
+        auto next = std::next(it);
+
+        while (next != result.end() && same_symbol(*it, *next))
+            ++next;
+
+        if (next != result.end() && expand_block(*it))
+        {
+            end_before(it->symbol_range.end, next->symbol_range.start);
+            end_before(it->symbol_selection_range.end, next->symbol_selection_range.start);
+        }
+        else
+        {
+            auto last = std::prev(next);
+            it->symbol_range.end = last->symbol_range.end;
+            it->symbol_selection_range.end = last->symbol_selection_range.end;
+        }
+
+        it = next;
+    }
+
+    result.erase(std::unique(result.begin(), result.end(), same_symbol), result.end());
+
+    static constexpr const auto is_title = [](const auto& s) { return s.kind == TITLE; };
+
+    for (auto it = result.rbegin(); it != result.rend();)
+    {
+        const auto title = std::find_if(it, result.rend(), is_title);
+
+        if (title == result.rend())
+            break;
+
+        const auto next = std::next(title);
+
+        title->children.insert(
+            title->children.end(), std::make_move_iterator(title.base()), std::make_move_iterator(it.base()));
+        result.erase(title.base(), it.base());
+
+        it = next;
+    }
+
+    for (auto it = std::find_if(result.begin(), result.end(), is_title); it != result.end();)
+    {
+        auto next = std::next(it);
+
+        if (expand_block(*it))
+        {
+            if (next == result.end())
+            {
+                const auto lines = dl_it->second->data.get_number_of_lines();
+                end_before(it->symbol_range.end, position(lines, 0));
+                end_before(it->symbol_selection_range.end, position(lines, 0));
+            }
+            else
+            {
+                end_before(it->symbol_range.end, next->symbol_range.start);
+                end_before(it->symbol_selection_range.end, next->symbol_selection_range.start);
+            }
+        }
+
+        it = next;
+    }
 
     return result;
 }
-
-
 
 void lsp_context::add_file(file_info file_i)
 {
@@ -564,6 +301,11 @@ void lsp_context::add_opencode(
     std::erase_if(m_instr_like, [](const auto& e) { return e.second.empty(); });
 }
 
+void lsp_context::add_title(std::string title, context::processing_stack_t stack)
+{
+    m_titles.emplace_back(std::move(title), std::move(stack));
+}
+
 macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name, context::opcode_generation gen) const
 {
     // This function does not respect OPSYN, so we do not use hlasm_context::get_macro_definition
@@ -597,7 +339,7 @@ void collect_references(location_list& refs, const symbol_occurrence& occ, const
 {
     for (const auto& [file, occs] : file_occs)
     {
-        auto file_refs = file_info::find_references(occ, occs.first);
+        auto file_refs = file_info::find_references(occ, occs.symbols);
         for (auto&& ref : file_refs)
             refs.emplace_back(std::move(ref), file);
     }
@@ -840,7 +582,7 @@ void lsp_context::distribute_file_occurrences(const file_occurrences_t& occurren
     assert(files_present(m_files, occurrences));
 
     for (const auto& [file, occs] : occurrences)
-        m_files[file]->update_occurrences(occs.first, occs.second);
+        m_files[file]->update_occurrences(occs.symbols, occs.line_details);
 }
 
 occurrence_scope_t lsp_context::find_occurrence_with_scope(

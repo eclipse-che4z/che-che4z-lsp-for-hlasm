@@ -45,8 +45,9 @@ struct source_context
     source_snapshot create_snapshot() const;
 };
 
-enum class file_processing_type
+enum class file_processing_type : unsigned char
 {
+    NONE,
     OPENCODE,
     COPY,
     MACRO
@@ -56,15 +57,20 @@ struct code_scope;
 
 struct processing_frame
 {
-    constexpr processing_frame(position pos, const utils::resource::resource_location* resource_loc, id_index member)
+    constexpr processing_frame(position pos,
+        const utils::resource::resource_location* resource_loc,
+        id_index member,
+        file_processing_type proc_type)
         : pos(pos)
         , resource_loc(resource_loc)
         , member_name(member)
+        , proc_type(proc_type)
     {}
 
     position pos;
     const utils::resource::resource_location* resource_loc;
     id_index member_name;
+    file_processing_type proc_type;
 
     bool operator==(const processing_frame&) const = default;
 
@@ -82,8 +88,8 @@ struct processing_frame_details
     position pos;
     const utils::resource::resource_location* resource_loc;
     const code_scope& scope;
-    file_processing_type proc_type;
     id_index member_name;
+    file_processing_type proc_type;
 };
 
 using processing_stack_details_t = std::vector<processing_frame_details>;
@@ -97,6 +103,19 @@ class processing_frame_tree
         processing_frame frame;
 
         bool operator==(const processing_frame_node&) const = default;
+
+        constexpr processing_frame_node(const processing_frame_node* parent,
+            position pos,
+            const utils::resource::resource_location* resource_loc,
+            id_index member,
+            file_processing_type proc_type)
+            : m_parent(parent)
+            , frame(pos, resource_loc, member, proc_type)
+        {}
+        explicit constexpr processing_frame_node()
+            : m_parent(nullptr)
+            , frame({}, nullptr, id_index(), file_processing_type::NONE)
+        {}
     };
 
     struct hasher
@@ -145,7 +164,11 @@ public:
 
     processing_frame_tree();
 
-    node_pointer step(processing_frame next, node_pointer current);
+    node_pointer step(node_pointer current,
+        position pos,
+        const utils::resource::resource_location* resource_loc,
+        id_index member,
+        file_processing_type proc_type);
 };
 
 using processing_stack_t = processing_frame_tree::node_pointer;
