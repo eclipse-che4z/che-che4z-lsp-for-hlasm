@@ -144,7 +144,7 @@ jobs:
       - name: Requirements install
         run: |
           sudo apt-get update
-          sudo apt-get install ninja-build
+          sudo apt-get install ninja-build xvfb
       - name: Reduce ASLR entropy #https://github.com/actions/runner-images/issues/9491
         run: sudo sysctl -w vm.mmap_rnd_bits=28
       - name: Configure
@@ -159,6 +159,15 @@ jobs:
           ./library_test
           ./hlasm_utils_test
         working-directory: build/bin
+      - name: Prepare UI tests
+        run: |
+          mkdir -p ${{ env.CLIENT_DIR }}/bin/linux_x64
+          cp build/bin/language_server ${{ env.CLIENT_DIR }}/bin/linux_x64/language_server
+      - name: Run UI tests
+        run: |
+          npm ci
+          xvfb-run -a npm run test
+        working-directory: ${{ env.CLIENT_DIR }}
 
   aarch64-linux-musl:
     name: Build Linux ARM64 toolchain
