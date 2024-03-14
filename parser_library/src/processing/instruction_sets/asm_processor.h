@@ -53,7 +53,7 @@ namespace hlasm_plugin::parser_library::processing {
 // processor of assembler instructions
 class asm_processor : public low_language_processor
 {
-    using process_table_t = std::unordered_map<context::id_index, std::function<void(rebuilt_statement)>>;
+    using process_table_t = std::unordered_map<context::id_index, std::function<void(rebuilt_statement&&)>>;
 
     const process_table_t table_;
 
@@ -85,33 +85,33 @@ private:
 
     context::id_index find_sequence_symbol(const rebuilt_statement& stmt);
 
-    void process_sect(const context::section_kind kind, rebuilt_statement stmt);
-    void process_LOCTR(rebuilt_statement stmt);
-    void process_EQU(rebuilt_statement stmt);
-    void process_DC(rebuilt_statement stmt);
-    void process_DS(rebuilt_statement stmt);
-    void process_COPY(rebuilt_statement stmt);
-    void process_EXTRN(rebuilt_statement stmt);
-    void process_WXTRN(rebuilt_statement stmt);
-    void process_ORG(rebuilt_statement stmt);
-    void process_OPSYN(rebuilt_statement stmt);
-    void process_AINSERT(rebuilt_statement stmt);
-    void process_CCW(rebuilt_statement stmt);
-    void process_CNOP(rebuilt_statement stmt);
-    void process_START(rebuilt_statement stmt);
-    void process_ALIAS(rebuilt_statement stmt);
-    void process_END(rebuilt_statement stmt);
-    void process_LTORG(rebuilt_statement stmt);
-    void process_USING(rebuilt_statement stmt);
-    void process_DROP(rebuilt_statement stmt);
-    void process_PUSH(rebuilt_statement stmt);
-    void process_POP(rebuilt_statement stmt);
-    void process_MNOTE(rebuilt_statement stmt);
-    void process_CXD(rebuilt_statement stmt);
-    void process_TITLE(rebuilt_statement stmt);
+    void process_sect(const context::section_kind kind, rebuilt_statement&& stmt);
+    void process_LOCTR(rebuilt_statement&& stmt);
+    void process_EQU(rebuilt_statement&& stmt);
+    void process_DC(rebuilt_statement&& stmt);
+    void process_DS(rebuilt_statement&& stmt);
+    void process_COPY(rebuilt_statement&& stmt);
+    void process_EXTRN(rebuilt_statement&& stmt);
+    void process_WXTRN(rebuilt_statement&& stmt);
+    void process_ORG(rebuilt_statement&& stmt);
+    void process_OPSYN(rebuilt_statement&& stmt);
+    void process_AINSERT(rebuilt_statement&& stmt);
+    void process_CCW(rebuilt_statement&& stmt);
+    void process_CNOP(rebuilt_statement&& stmt);
+    void process_START(rebuilt_statement&& stmt);
+    void process_ALIAS(rebuilt_statement&& stmt);
+    void process_END(rebuilt_statement&& stmt);
+    void process_LTORG(rebuilt_statement&& stmt);
+    void process_USING(rebuilt_statement&& stmt);
+    void process_DROP(rebuilt_statement&& stmt);
+    void process_PUSH(rebuilt_statement&& stmt);
+    void process_POP(rebuilt_statement&& stmt);
+    void process_MNOTE(rebuilt_statement&& stmt);
+    void process_CXD(rebuilt_statement&& stmt);
+    void process_TITLE(rebuilt_statement&& stmt);
 
     template<checking::data_instr_type instr_type>
-    void process_data_instruction(rebuilt_statement stmt);
+    void process_data_instruction(rebuilt_statement&& stmt);
 
     enum class external_type
     {
@@ -119,7 +119,7 @@ private:
         weak,
     };
 
-    void process_external(rebuilt_statement stmt, external_type t);
+    void process_external(rebuilt_statement&& stmt, external_type t);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

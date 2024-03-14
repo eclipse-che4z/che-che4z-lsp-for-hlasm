@@ -107,7 +107,7 @@ struct statement_si_deferred final : public deferred_statement
 };
 
 // struct holding full semantic information (si) about whole instruction statement, whole logical line
-struct statement_si : public complete_statement
+struct statement_si final : public complete_statement
 {
     statement_si(range stmt_range,
         label_si label,
@@ -140,7 +140,7 @@ struct statement_si : public complete_statement
 };
 
 // structure holding deferred statement that is now complete
-struct statement_si_defer_done : public complete_statement
+struct statement_si_defer_done final : public complete_statement
 {
     statement_si_defer_done(std::shared_ptr<const deferred_statement> deferred_stmt,
         operands_si operands,

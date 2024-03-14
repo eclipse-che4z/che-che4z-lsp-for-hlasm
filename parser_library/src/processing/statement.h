@@ -38,7 +38,7 @@ struct resolved_statement : public context::hlasm_statement, public semantics::c
     {}
 };
 
-struct resolved_statement_impl : public resolved_statement
+struct resolved_statement_impl final : public resolved_statement
 {
     resolved_statement_impl(std::shared_ptr<const semantics::complete_statement> base_stmt, processing_status status)
         : base_stmt(std::move(base_stmt))
@@ -71,7 +71,7 @@ struct resolved_statement_impl : public resolved_statement
 };
 
 // statement used for preprocessing of resolved statements
-struct rebuilt_statement : public resolved_statement
+struct rebuilt_statement final : public resolved_statement
 {
     rebuilt_statement(std::shared_ptr<const resolved_statement> base_stmt,
         std::optional<semantics::label_si> label,

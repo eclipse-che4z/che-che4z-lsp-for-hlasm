@@ -80,7 +80,7 @@ std::optional<int> try_get_number(std::string_view s)
 
 } // namespace
 
-void asm_processor::process_sect(const context::section_kind kind, rebuilt_statement stmt)
+void asm_processor::process_sect(const context::section_kind kind, rebuilt_statement&& stmt)
 {
     auto sect_name = find_label_symbol(stmt);
 
@@ -115,7 +115,7 @@ void asm_processor::process_sect(const context::section_kind kind, rebuilt_state
         lib_info);
 }
 
-void asm_processor::process_LOCTR(rebuilt_statement stmt)
+void asm_processor::process_LOCTR(rebuilt_statement&& stmt)
 {
     auto loctr_name = find_label_symbol(stmt);
 
@@ -156,7 +156,7 @@ struct override_symbol_candidates final : public context::dependency_solver_redi
     {}
 };
 
-void asm_processor::process_EQU(rebuilt_statement stmt)
+void asm_processor::process_EQU(rebuilt_statement&& stmt)
 {
     auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, lib_info);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr, lib_info);
@@ -272,7 +272,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 }
 
 template<checking::data_instr_type instr_type>
-void asm_processor::process_data_instruction(rebuilt_statement stmt)
+void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
 {
     if (const auto& ops = stmt.operands_ref().value; ops.empty()
         || std::any_of(
@@ -456,17 +456,17 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     adder.finish();
 }
 
-void asm_processor::process_DC(rebuilt_statement stmt)
+void asm_processor::process_DC(rebuilt_statement&& stmt)
 {
     process_data_instruction<checking::data_instr_type::DC>(std::move(stmt));
 }
 
-void asm_processor::process_DS(rebuilt_statement stmt)
+void asm_processor::process_DS(rebuilt_statement&& stmt)
 {
     process_data_instruction<checking::data_instr_type::DS>(std::move(stmt));
 }
 
-void asm_processor::process_COPY(rebuilt_statement stmt)
+void asm_processor::process_COPY(rebuilt_statement&& stmt)
 {
     find_sequence_symbol(stmt);
 
@@ -495,11 +495,14 @@ void asm_processor::process_COPY(rebuilt_statement stmt)
     }
 }
 
-void asm_processor::process_EXTRN(rebuilt_statement stmt) { process_external(std::move(stmt), external_type::strong); }
+void asm_processor::process_EXTRN(rebuilt_statement&& stmt)
+{
+    process_external(std::move(stmt), external_type::strong);
+}
 
-void asm_processor::process_WXTRN(rebuilt_statement stmt) { process_external(std::move(stmt), external_type::weak); }
+void asm_processor::process_WXTRN(rebuilt_statement&& stmt) { process_external(std::move(stmt), external_type::weak); }
 
-void asm_processor::process_external(rebuilt_statement stmt, external_type t)
+void asm_processor::process_external(rebuilt_statement&& stmt, external_type t)
 {
     if (auto label_type = stmt.label_ref().type; label_type != semantics::label_si_type::EMPTY)
     {
@@ -549,7 +552,7 @@ void asm_processor::process_external(rebuilt_statement stmt, external_type t)
         lib_info);
 }
 
-void asm_processor::process_ORG(rebuilt_statement stmt)
+void asm_processor::process_ORG(rebuilt_statement&& stmt)
 {
     find_sequence_symbol(stmt);
 
@@ -683,7 +686,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
     }
 }
 
-void asm_processor::process_OPSYN(rebuilt_statement stmt)
+void asm_processor::process_OPSYN(rebuilt_statement&& stmt)
 {
     const auto& operands = stmt.operands_ref().value;
 
@@ -822,39 +825,39 @@ asm_processor::process_table_t asm_processor::create_table()
 {
     process_table_t table;
     table.emplace(context::id_index("CSECT"),
-        [this](rebuilt_statement stmt) { process_sect(context::section_kind::EXECUTABLE, std::move(stmt)); });
+        [this](rebuilt_statement&& stmt) { process_sect(context::section_kind::EXECUTABLE, std::move(stmt)); });
     table.emplace(context::id_index("DSECT"),
-        [this](rebuilt_statement stmt) { process_sect(context::section_kind::DUMMY, std::move(stmt)); });
+        [this](rebuilt_statement&& stmt) { process_sect(context::section_kind::DUMMY, std::move(stmt)); });
     table.emplace(context::id_index("RSECT"),
-        [this](rebuilt_statement stmt) { process_sect(context::section_kind::READONLY, std::move(stmt)); });
+        [this](rebuilt_statement&& stmt) { process_sect(context::section_kind::READONLY, std::move(stmt)); });
     table.emplace(context::id_index("COM"),
-        [this](rebuilt_statement stmt) { process_sect(context::section_kind::COMMON, std::move(stmt)); });
-    table.emplace(context::id_index("LOCTR"), [this](rebuilt_statement stmt) { process_LOCTR(std::move(stmt)); });
-    table.emplace(context::id_index("EQU"), [this](rebuilt_statement stmt) { process_EQU(std::move(stmt)); });
-    table.emplace(context::id_index("DC"), [this](rebuilt_statement stmt) { process_DC(std::move(stmt)); });
-    table.emplace(context::id_index("DS"), [this](rebuilt_statement stmt) { process_DS(std::move(stmt)); });
+        [this](rebuilt_statement&& stmt) { process_sect(context::section_kind::COMMON, std::move(stmt)); });
+    table.emplace(context::id_index("LOCTR"), [this](rebuilt_statement&& stmt) { process_LOCTR(std::move(stmt)); });
+    table.emplace(context::id_index("EQU"), [this](rebuilt_statement&& stmt) { process_EQU(std::move(stmt)); });
+    table.emplace(context::id_index("DC"), [this](rebuilt_statement&& stmt) { process_DC(std::move(stmt)); });
+    table.emplace(context::id_index("DS"), [this](rebuilt_statement&& stmt) { process_DS(std::move(stmt)); });
     table.emplace(
-        context::id_storage::well_known::COPY, [this](rebuilt_statement stmt) { process_COPY(std::move(stmt)); });
-    table.emplace(context::id_index("EXTRN"), [this](rebuilt_statement stmt) { process_EXTRN(std::move(stmt)); });
-    table.emplace(context::id_index("WXTRN"), [this](rebuilt_statement stmt) { process_WXTRN(std::move(stmt)); });
-    table.emplace(context::id_index("ORG"), [this](rebuilt_statement stmt) { process_ORG(std::move(stmt)); });
-    table.emplace(context::id_index("OPSYN"), [this](rebuilt_statement stmt) { process_OPSYN(std::move(stmt)); });
-    table.emplace(context::id_index("AINSERT"), [this](rebuilt_statement stmt) { process_AINSERT(std::move(stmt)); });
-    table.emplace(context::id_index("CCW"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
-    table.emplace(context::id_index("CCW0"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
-    table.emplace(context::id_index("CCW1"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
-    table.emplace(context::id_index("CNOP"), [this](rebuilt_statement stmt) { process_CNOP(std::move(stmt)); });
-    table.emplace(context::id_index("START"), [this](rebuilt_statement stmt) { process_START(std::move(stmt)); });
-    table.emplace(context::id_index("ALIAS"), [this](rebuilt_statement stmt) { process_ALIAS(std::move(stmt)); });
-    table.emplace(context::id_index("END"), [this](rebuilt_statement stmt) { process_END(std::move(stmt)); });
-    table.emplace(context::id_index("LTORG"), [this](rebuilt_statement stmt) { process_LTORG(std::move(stmt)); });
-    table.emplace(context::id_index("USING"), [this](rebuilt_statement stmt) { process_USING(std::move(stmt)); });
-    table.emplace(context::id_index("DROP"), [this](rebuilt_statement stmt) { process_DROP(std::move(stmt)); });
-    table.emplace(context::id_index("PUSH"), [this](rebuilt_statement stmt) { process_PUSH(std::move(stmt)); });
-    table.emplace(context::id_index("POP"), [this](rebuilt_statement stmt) { process_POP(std::move(stmt)); });
-    table.emplace(context::id_index("MNOTE"), [this](rebuilt_statement stmt) { process_MNOTE(std::move(stmt)); });
-    table.emplace(context::id_index("CXD"), [this](rebuilt_statement stmt) { process_CXD(std::move(stmt)); });
-    table.emplace(context::id_index("TITLE"), [this](rebuilt_statement stmt) { process_TITLE(std::move(stmt)); });
+        context::id_storage::well_known::COPY, [this](rebuilt_statement&& stmt) { process_COPY(std::move(stmt)); });
+    table.emplace(context::id_index("EXTRN"), [this](rebuilt_statement&& stmt) { process_EXTRN(std::move(stmt)); });
+    table.emplace(context::id_index("WXTRN"), [this](rebuilt_statement&& stmt) { process_WXTRN(std::move(stmt)); });
+    table.emplace(context::id_index("ORG"), [this](rebuilt_statement&& stmt) { process_ORG(std::move(stmt)); });
+    table.emplace(context::id_index("OPSYN"), [this](rebuilt_statement&& stmt) { process_OPSYN(std::move(stmt)); });
+    table.emplace(context::id_index("AINSERT"), [this](rebuilt_statement&& stmt) { process_AINSERT(std::move(stmt)); });
+    table.emplace(context::id_index("CCW"), [this](rebuilt_statement&& stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(context::id_index("CCW0"), [this](rebuilt_statement&& stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(context::id_index("CCW1"), [this](rebuilt_statement&& stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(context::id_index("CNOP"), [this](rebuilt_statement&& stmt) { process_CNOP(std::move(stmt)); });
+    table.emplace(context::id_index("START"), [this](rebuilt_statement&& stmt) { process_START(std::move(stmt)); });
+    table.emplace(context::id_index("ALIAS"), [this](rebuilt_statement&& stmt) { process_ALIAS(std::move(stmt)); });
+    table.emplace(context::id_index("END"), [this](rebuilt_statement&& stmt) { process_END(std::move(stmt)); });
+    table.emplace(context::id_index("LTORG"), [this](rebuilt_statement&& stmt) { process_LTORG(std::move(stmt)); });
+    table.emplace(context::id_index("USING"), [this](rebuilt_statement&& stmt) { process_USING(std::move(stmt)); });
+    table.emplace(context::id_index("DROP"), [this](rebuilt_statement&& stmt) { process_DROP(std::move(stmt)); });
+    table.emplace(context::id_index("PUSH"), [this](rebuilt_statement&& stmt) { process_PUSH(std::move(stmt)); });
+    table.emplace(context::id_index("POP"), [this](rebuilt_statement&& stmt) { process_POP(std::move(stmt)); });
+    table.emplace(context::id_index("MNOTE"), [this](rebuilt_statement&& stmt) { process_MNOTE(std::move(stmt)); });
+    table.emplace(context::id_index("CXD"), [this](rebuilt_statement&& stmt) { process_CXD(std::move(stmt)); });
+    table.emplace(context::id_index("TITLE"), [this](rebuilt_statement&& stmt) { process_TITLE(std::move(stmt)); });
 
     return table;
 }
@@ -890,7 +893,7 @@ public:
 };
 } // namespace
 
-void asm_processor::process_AINSERT(rebuilt_statement stmt)
+void asm_processor::process_AINSERT(rebuilt_statement&& stmt)
 {
     static constexpr std::string_view AINSERT = "AINSERT";
     const auto& ops = stmt.operands_ref();
@@ -947,7 +950,7 @@ void asm_processor::process_AINSERT(rebuilt_statement stmt)
     }
 }
 
-void asm_processor::process_CCW(rebuilt_statement stmt)
+void asm_processor::process_CCW(rebuilt_statement&& stmt)
 {
     constexpr context::alignment ccw_align = context::doubleword;
     constexpr size_t ccw_length = 8U;
@@ -972,7 +975,7 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
         lib_info);
 }
 
-void asm_processor::process_CNOP(rebuilt_statement stmt)
+void asm_processor::process_CNOP(rebuilt_statement&& stmt)
 {
     auto loctr = hlasm_ctx.ord_ctx.align(context::halfword, lib_info);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr, lib_info);
@@ -1006,7 +1009,7 @@ void asm_processor::process_CNOP(rebuilt_statement stmt)
 }
 
 
-void asm_processor::process_START(rebuilt_statement stmt)
+void asm_processor::process_START(rebuilt_statement&& stmt)
 {
     auto sect_name = find_label_symbol(stmt);
 
@@ -1061,7 +1064,7 @@ void asm_processor::process_START(rebuilt_statement stmt)
 
     section->current_location_counter().reserve_storage_area(offset, context::no_align);
 }
-void asm_processor::process_END(rebuilt_statement stmt)
+void asm_processor::process_END(rebuilt_statement&& stmt)
 {
     const auto& label = stmt.label_ref();
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
@@ -1093,7 +1096,7 @@ void asm_processor::process_END(rebuilt_statement stmt)
 
     hlasm_ctx.end_reached();
 }
-void asm_processor::process_ALIAS(rebuilt_statement stmt)
+void asm_processor::process_ALIAS(rebuilt_statement&& stmt)
 {
     auto symbol_name = find_label_symbol(stmt);
     if (symbol_name.empty())
@@ -1108,7 +1111,7 @@ void asm_processor::process_ALIAS(rebuilt_statement stmt)
         std::move(dep_solver).derive_current_dependency_evaluation_context(),
         lib_info);
 }
-void asm_processor::process_LTORG(rebuilt_statement stmt)
+void asm_processor::process_LTORG(rebuilt_statement&& stmt)
 {
     constexpr size_t sectalgn = 8;
     auto loctr = hlasm_ctx.ord_ctx.align(context::alignment { 0, sectalgn }, lib_info);
@@ -1136,7 +1139,7 @@ void asm_processor::process_LTORG(rebuilt_statement stmt)
         lib_info);
 }
 
-void asm_processor::process_USING(rebuilt_statement stmt)
+void asm_processor::process_USING(rebuilt_statement&& stmt)
 {
     using namespace expressions;
 
@@ -1217,7 +1220,7 @@ void asm_processor::process_USING(rebuilt_statement stmt)
         hlasm_ctx.processing_stack());
 }
 
-void asm_processor::process_DROP(rebuilt_statement stmt)
+void asm_processor::process_DROP(rebuilt_statement&& stmt)
 {
     using namespace expressions;
 
@@ -1272,7 +1275,7 @@ bool asm_expr_quals(const semantics::operand_ptr& op, std::string_view value)
 }
 } // namespace
 
-void asm_processor::process_PUSH(rebuilt_statement stmt)
+void asm_processor::process_PUSH(rebuilt_statement&& stmt)
 {
     const auto& ops = stmt.operands_ref().value;
 
@@ -1286,7 +1289,7 @@ void asm_processor::process_PUSH(rebuilt_statement stmt)
         lib_info);
 }
 
-void asm_processor::process_POP(rebuilt_statement stmt)
+void asm_processor::process_POP(rebuilt_statement&& stmt)
 {
     const auto& ops = stmt.operands_ref().value;
 
@@ -1301,7 +1304,7 @@ void asm_processor::process_POP(rebuilt_statement stmt)
         lib_info);
 }
 
-void asm_processor::process_MNOTE(rebuilt_statement stmt)
+void asm_processor::process_MNOTE(rebuilt_statement&& stmt)
 {
     static constexpr std::string_view MNOTE = "MNOTE";
     const auto& ops = stmt.operands_ref().value;
@@ -1397,7 +1400,7 @@ void asm_processor::process_MNOTE(rebuilt_statement stmt)
     hlasm_ctx.update_mnote_max((unsigned)level.value());
 }
 
-void asm_processor::process_CXD(rebuilt_statement stmt)
+void asm_processor::process_CXD(rebuilt_statement&& stmt)
 {
     context::address loctr = hlasm_ctx.ord_ctx.align(context::fullword, lib_info);
     constexpr uint32_t cxd_length = 4;
@@ -1428,7 +1431,7 @@ struct title_label_visitor
     std::string operator()(const semantics::vs_ptr&) const { return {}; }
 };
 
-void asm_processor::process_TITLE(rebuilt_statement stmt)
+void asm_processor::process_TITLE(rebuilt_statement&& stmt)
 {
     const auto& label = stmt.label_ref();
 

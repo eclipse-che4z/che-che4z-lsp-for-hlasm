@@ -22,7 +22,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 template<checking::data_instr_type instr_type>
-data_def_postponed_statement<instr_type>::data_def_postponed_statement(rebuilt_statement stmt,
+data_def_postponed_statement<instr_type>::data_def_postponed_statement(rebuilt_statement&& stmt,
     context::processing_stack_t stmt_location_stack,
     std::vector<data_def_dependency<instr_type>> dependencies)
     : postponed_statement_impl(std::move(stmt), std::move(stmt_location_stack))
