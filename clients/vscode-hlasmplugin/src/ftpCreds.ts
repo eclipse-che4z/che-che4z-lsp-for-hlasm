@@ -15,6 +15,7 @@
 import * as vscode from 'vscode';
 import { askUser, pickUser } from './uiUtils';
 import { AccessOptions } from 'basic-ftp';
+import { MementoKey } from './mementoKeys';
 
 export enum connectionSecurityLevel {
     "rejectUnauthorized",
@@ -106,10 +107,8 @@ export async function gatherConnectionInfo(lastInput: {
     return { host, port, user, password, hostInput, securityLevel, zowe: false };
 }
 
-const mementoKey = "hlasm.downloadDependencies";
-
 export function getLastRunConfig(context: vscode.ExtensionContext) {
-    let lastRun = context.globalState.get(mementoKey, { host: '', user: '', jobcard: '' });
+    let lastRun = context.globalState.get(MementoKey.DownloadDependencies, { host: '', user: '', jobcard: '' });
     return {
         host: '' + (lastRun.host || ''),
         user: '' + (lastRun.user || ''),
@@ -123,4 +122,4 @@ interface DownloadDependenciesInputMemento {
     jobcard: string;
 };
 
-export const updateLastRunConfig = (context: vscode.ExtensionContext, lastInput: DownloadDependenciesInputMemento) => context.globalState.update(mementoKey, lastInput);
+export const updateLastRunConfig = (context: vscode.ExtensionContext, lastInput: DownloadDependenciesInputMemento) => context.globalState.update(MementoKey.DownloadDependencies, lastInput);

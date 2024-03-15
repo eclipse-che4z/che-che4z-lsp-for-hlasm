@@ -20,7 +20,8 @@ import { HLASMExternalConfigurationProvider } from '../../hlasmExternalConfigura
 suite('External configuration provider', () => {
     test('Dispose', async () => {
         let disposeCalled = 0;
-        const c = new HLASMExternalConfigurationProvider({
+        const c = new HLASMExternalConfigurationProvider();
+        const attached = c.attach({
             onRequest: <R, E>(method: string, handler: vscodelc.GenericRequestHandler<R, E>): vscode.Disposable => {
                 return { dispose: () => { ++disposeCalled; } };
             },
@@ -32,13 +33,14 @@ suite('External configuration provider', () => {
         assert.ok(h);
         assert.strictEqual(typeof h, 'object');
 
-        c.dispose();
+        attached.dispose();
 
         assert.strictEqual(disposeCalled, 1);
     });
 
     test('Query after dispose', async () => {
-        const c = new HLASMExternalConfigurationProvider({
+        const c = new HLASMExternalConfigurationProvider();
+        const attached = c.attach({
             onRequest: <R, E>(method: string, handler: vscodelc.GenericRequestHandler<R, E>): vscode.Disposable => {
                 return { dispose: () => { } };
             },
@@ -55,10 +57,13 @@ suite('External configuration provider', () => {
         const f = await c.handleRawMessage({ uri: '' });
         assert.ok('code' in f);
         assert.deepStrictEqual(f.code, 0);
+
+        attached.dispose();
     });
 
     test('Not found', async () => {
-        const c = new HLASMExternalConfigurationProvider({
+        const c = new HLASMExternalConfigurationProvider()
+        const attached = c.attach({
             onRequest: <R, E>(method: string, handler: vscodelc.GenericRequestHandler<R, E>): vscode.Disposable => {
                 return { dispose: () => { } };
             },
@@ -78,10 +83,13 @@ suite('External configuration provider', () => {
 
         assert.ok(calledWithUri instanceof vscode.Uri);
         assert.deepStrictEqual(calledWithUri.toString(), 'schema:path');
+
+        attached.dispose();
     });
 
     test('Return configuration', async () => {
-        const c = new HLASMExternalConfigurationProvider({
+        const c = new HLASMExternalConfigurationProvider();
+        const attached = c.attach({
             onRequest: <R, E>(method: string, handler: vscodelc.GenericRequestHandler<R, E>): vscode.Disposable => {
                 return { dispose: () => { } };
             },
@@ -100,11 +108,14 @@ suite('External configuration provider', () => {
 
         assert.ok(calledWithUri instanceof vscode.Uri);
         assert.deepStrictEqual(calledWithUri.toString(), 'schema:path');
+
+        attached.dispose();
     });
 
     test('Invalidation', async () => {
         let notificationParam: unknown;
-        const c = new HLASMExternalConfigurationProvider({
+        const c = new HLASMExternalConfigurationProvider();
+        const attached = c.attach({
             onRequest: <R, E>(method: string, handler: vscodelc.GenericRequestHandler<R, E>): vscode.Disposable => {
                 return { dispose: () => { } };
             },
@@ -121,10 +132,13 @@ suite('External configuration provider', () => {
 
         await h.invalidate(vscode.Uri.parse('schema:path'));
         assert.deepStrictEqual(notificationParam, { uri: 'schema:path' });
+
+        attached.dispose();
     });
 
     test('Throwing handler', async () => {
-        const c = new HLASMExternalConfigurationProvider({
+        const c = new HLASMExternalConfigurationProvider();
+        const attached = c.attach({
             onRequest: <R, E>(method: string, handler: vscodelc.GenericRequestHandler<R, E>): vscode.Disposable => {
                 return { dispose: () => { } };
             },
@@ -137,5 +151,8 @@ suite('External configuration provider', () => {
         assert.ok('code' in f && 'message' in f);
         assert.deepStrictEqual(f.code, -106);
         assert.deepStrictEqual(f.message, 'Error message');
+
+        h.dispose();
+        attached.dispose();
     });
 });

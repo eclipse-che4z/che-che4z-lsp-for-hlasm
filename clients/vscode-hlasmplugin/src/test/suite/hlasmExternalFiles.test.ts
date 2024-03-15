@@ -23,11 +23,13 @@ suite('External files', () => {
 
     test('Invalid messages', async () => {
         const ext = new HLASMExternalFiles('test', {
-            onNotification: (_, __) => { return { dispose: () => { } }; },
-            sendNotification: (_: any, __: any) => Promise.resolve(),
-        }, {
             readFile: async (_: Uri) => { throw Error('not found'); }
         } as any as FileSystem);
+
+        const attached = ext.attach({
+            onNotification: (_, __) => { return { dispose: () => { } }; },
+            sendNotification: (_: any, __: any) => Promise.resolve(),
+        });
 
         assert.strictEqual(await ext.handleRawMessage(null), null);
         assert.strictEqual(await ext.handleRawMessage(undefined), null);
@@ -43,6 +45,8 @@ suite('External files', () => {
         assert.deepStrictEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: 'unknown:scheme' }), { id: 5, error: { code: -1000, msg: 'not found' } });
 
         assert.deepStrictEqual(await ext.handleRawMessage({ id: 5, op: 'read_file', url: 'test:/SERVICE' }), { id: 5, error: { code: -1000, msg: 'No client' } });
+
+        attached.dispose();
     });
 
     test('Clear cache', async () => {
@@ -52,9 +56,6 @@ suite('External files', () => {
         let deleteCounter = 0;
 
         const ext = new HLASMExternalFiles('test', {
-            onNotification: (_, __) => { return { dispose: () => { } }; },
-            sendNotification: (_: any, __: any) => Promise.resolve(),
-        }, {
             readDirectory: async (uri: Uri) => {
                 ++readCounter;
                 assert.strictEqual(cacheUri.toString(), uri.toString());
@@ -68,12 +69,18 @@ suite('External files', () => {
             uri: cacheUri,
 
         });
+        const attached = ext.attach({
+            onNotification: (_, __) => { return { dispose: () => { } }; },
+            sendNotification: (_: any, __: any) => Promise.resolve(),
+        });
 
         await ext.clearCache();
 
         assert.strictEqual(readCounter, 1);
         assert.strictEqual(deleteCounter, 1);
 
+
+        attached.dispose();
     });
     const nameGenerator = async (components: string[], service: string = 'TEST') => {
         return 'v3.' + service + '.' + await tools.sha256(JSON.stringify(components));
@@ -91,9 +98,6 @@ suite('External files', () => {
         let fileWritten = false;
 
         const ext = new HLASMExternalFiles('test', {
-            onNotification: (_, __) => { return { dispose: () => { } }; },
-            sendNotification: (_: any, __: any) => Promise.resolve(),
-        }, {
             readFile: async (uri: Uri) => {
                 const filename = uri.path.split('/').pop();
                 if (filename === await nameGenerator(['SERVER', '/DIR']))
@@ -126,6 +130,10 @@ suite('External files', () => {
         } as any as FileSystem, {
             uri: cacheUri,
 
+        });
+        const attached = ext.attach({
+            onNotification: (_, __) => { return { dispose: () => { } }; },
+            sendNotification: (_: any, __: any) => Promise.resolve(),
         });
 
         ext.setClient('TEST', {
@@ -185,7 +193,7 @@ suite('External files', () => {
         assert.ok('data' in fileh);
         assert.strictEqual(fileh.data, fileContent);
 
-        ext.dispose();
+        attached.dispose();
 
         assert.strictEqual(dirWritten, true);
         assert.strictEqual(dir2Written, true);
@@ -194,13 +202,14 @@ suite('External files', () => {
 
     test('Access invalid cache content', async () => {
         const ext = new HLASMExternalFiles('test', {
-            onNotification: (_, __) => { return { dispose: () => { } }; },
-            sendNotification: (_: any, __: any) => Promise.resolve(),
-        }, {
             readFile: async (_: Uri) => Uint8Array.from([0]),
             writeFile: async (_uri: Uri, _content: Uint8Array) => { },
         } as any as FileSystem, {
             uri: Uri.parse('test:cache/')
+        });
+        const attached = ext.attach({
+            onNotification: (_, __) => { return { dispose: () => { } }; },
+            sendNotification: (_: any, __: any) => Promise.resolve(),
         });
 
         ext.setClient('TEST', {
@@ -222,6 +231,8 @@ suite('External files', () => {
         assert.strictEqual(dir.id, 4);
         assert.ok('error' in dir);
         assert.strictEqual(dir?.error?.code, 0);
+
+        attached.dispose();
     });
 
     test('Selective cache clear', async () => {
@@ -231,9 +242,6 @@ suite('External files', () => {
         const deletePromise = new Promise<void>((r) => { resolve = r; });
 
         const ext = new HLASMExternalFiles('test', {
-            onNotification: (_, __) => { return { dispose: () => { } }; },
-            sendNotification: (_: any, __: any) => Promise.resolve(),
-        }, {
             readDirectory: async (uri: Uri) => {
                 assert.strictEqual(cacheUri.toString(), uri.toString());
                 return [[await nameGenerator(['SERVER', 'B'], 'TEST2'), FileType.File], [await nameGenerator(['SERVER', 'A']), FileType.File]];
@@ -244,6 +252,10 @@ suite('External files', () => {
             },
         } as any as FileSystem, {
             uri: cacheUri,
+        });
+        const attached = ext.attach({
+            onNotification: (_, __) => { return { dispose: () => { } }; },
+            sendNotification: (_: any, __: any) => Promise.resolve(),
         });
 
         const emmiter = new EventEmitter<ExternalFilesInvalidationdata | undefined>();
@@ -259,6 +271,7 @@ suite('External files', () => {
 
         await deletePromise;
 
+        attached.dispose();
     });
 
     test('Selective cache clear with predicate', async () => {
@@ -268,9 +281,6 @@ suite('External files', () => {
         const deletePromise = new Promise<void>((r) => { resolve = r; });
 
         const ext = new HLASMExternalFiles('test', {
-            onNotification: (_, __) => { return { dispose: () => { } }; },
-            sendNotification: (_: any, __: any) => Promise.resolve(),
-        }, {
             readDirectory: async (uri: Uri) => {
                 assert.strictEqual(cacheUri.toString(), uri.toString());
                 return [[await nameGenerator(['SERVER', 'B'], 'TEST2'), FileType.File], [await nameGenerator(['SERVER', 'A']), FileType.File]];
@@ -288,6 +298,10 @@ suite('External files', () => {
         } as any as FileSystem, {
             uri: cacheUri,
         });
+        const attached = ext.attach({
+            onNotification: (_, __) => { return { dispose: () => { } }; },
+            sendNotification: (_: any, __: any) => Promise.resolve(),
+        });
 
         const emmiter = new EventEmitter<ExternalFilesInvalidationdata | undefined>();
         ext.setClient('TEST', {
@@ -302,5 +316,6 @@ suite('External files', () => {
 
         await deletePromise;
 
+        attached.dispose();
     });
 });

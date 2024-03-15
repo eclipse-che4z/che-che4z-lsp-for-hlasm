@@ -155,9 +155,13 @@ interface ClientInstance<ConnectArgs, ReadArgs extends ClientUriDetails, ListArg
 
 function asFragment(s: string) { return s ? '#' + s : ''; }
 
-export class HLASMExternalFiles {
-    private toDispose: vscode.Disposable[] = [];
+type ChannelType = {
+    onNotification(method: string, handler: vscodelc.GenericNotificationHandler): vscode.Disposable;
+    sendNotification<P>(type: vscodelc.NotificationType<P>, params?: P): Promise<void>;
+    sendNotification(method: string, params: any): Promise<void>;
+};
 
+export class HLASMExternalFiles {
     private memberLists = new Map<string, CacheEntry<string[]>>();
     private memberContent = new Map<string, CacheEntry<string>>();
 
@@ -165,18 +169,26 @@ export class HLASMExternalFiles {
 
     private clients = new Map<string, ClientInstance<any, any, any>>();
 
+    private channel?: ChannelType = undefined;
+
     constructor(
         private magicScheme: string,
-        private channel: {
-            onNotification(method: string, handler: vscodelc.GenericNotificationHandler): vscode.Disposable;
-            sendNotification<P>(type: vscodelc.NotificationType<P>, params?: P): Promise<void>;
-            sendNotification(method: string, params: any): Promise<void>;
-        },
         private fs: vscode.FileSystem,
         private cache?: { uri: vscode.Uri }) {
-        this.toDispose.push(this.channel.onNotification('external_file_request', params => this.handleRawMessage(params).then(
-            msg => { if (msg) this.channel.sendNotification('external_file_response', msg); }
-        )));
+    }
+
+    public attach(channel: {
+        onNotification(method: string, handler: vscodelc.GenericNotificationHandler): vscode.Disposable;
+        sendNotification<P>(type: vscodelc.NotificationType<P>, params?: P): Promise<void>;
+        sendNotification(method: string, params: any): Promise<void>;
+    }) {
+        this.channel = channel;
+        return vscode.Disposable.from(
+            { dispose: () => { this.channel = undefined; } },
+            channel.onNotification('external_file_request', params => this.handleRawMessage(params).then(
+                msg => { if (msg) channel.sendNotification('external_file_response', msg); }
+            ))
+        );
     }
 
     setClient<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails>(
@@ -304,7 +316,7 @@ export class HLASMExternalFiles {
     }
 
     private notifyAllWorkspaces(service: string, all: boolean) {
-        this.channel.sendNotification(vscodelc.DidChangeWatchedFilesNotification.type, {
+        this.channel?.sendNotification(vscodelc.DidChangeWatchedFilesNotification.type, {
             changes: (vscode.workspace.workspaceFolders || []).map(w => {
                 return {
                     uri: `${this.magicScheme}:/${service}${asFragment(uriFriendlyBase16Encode(w.uri.toString()))}`,
@@ -394,7 +406,6 @@ export class HLASMExternalFiles {
     public reset() { this.pendingRequests.clear(); }
 
     dispose() {
-        this.toDispose.forEach(x => x.dispose());
         [...this.clients.values()].forEach(x => x.dispose());
     }
 

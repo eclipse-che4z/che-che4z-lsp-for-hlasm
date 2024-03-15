@@ -189,20 +189,21 @@ export interface ConfigurationProviderRegistration {
     invalidate(uri: vscode.Uri | null): PromiseLike<void> | void;
 };
 
+type ChannelType = {
+    onRequest<R, E>(method: string, handler: vscodelc.GenericRequestHandler<R, E>): vscode.Disposable;
+    sendNotification(method: string, params: any): Promise<void>;
+}
+
 export class HLASMExternalConfigurationProvider {
-    private toDispose: vscode.Disposable[] = [];
     private requestHandlers: HLASMExternalConfigurationProviderHandler[] = [];
+    private channel?: ChannelType = undefined;
 
-    constructor(
-        private channel: {
-            onRequest<R, E>(method: string, handler: vscodelc.GenericRequestHandler<R, E>): vscode.Disposable;
-            sendNotification(method: string, params: any): Promise<void>;
-        }) {
-        this.toDispose.push(this.channel.onRequest('external_configuration_request', (...params: any[]) => this.handleRawMessage(...params)));
-    }
-
-    dispose() {
-        this.toDispose.forEach(x => x.dispose());
+    public attach(channel: ChannelType) {
+        this.channel = channel;
+        return vscode.Disposable.from(
+            { dispose: () => { this.channel = undefined; } },
+            channel.onRequest('external_configuration_request', (...params: any[]) => this.handleRawMessage(...params))
+        );
     }
 
     private async handleRequest(uri: vscode.Uri): Promise<ExternalConfigurationResponse | vscodelc.ResponseError> {
@@ -233,7 +234,7 @@ export class HLASMExternalConfigurationProvider {
     }
 
     private invalidateConfiguration(uri: vscode.Uri | null) {
-        this.channel.sendNotification('invalidate_external_configuration', uri ? { uri: uri.toString() } : {});
+        this.channel?.sendNotification('invalidate_external_configuration', uri ? { uri: uri.toString() } : {});
     }
 
     public addHandler(h: HLASMExternalConfigurationProviderHandler): ConfigurationProviderRegistration {

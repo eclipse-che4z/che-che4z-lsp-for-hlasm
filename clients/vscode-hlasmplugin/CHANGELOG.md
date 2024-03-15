@@ -4,6 +4,7 @@
 
 #### Added
 - New document outline implementation
+- Fallback to WebAssembly language server automatically
 
 ## [1.12.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.11.1...1.12.0) (2024-03-05)
 
