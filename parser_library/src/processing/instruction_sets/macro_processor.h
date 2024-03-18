@@ -31,8 +31,9 @@ struct macro_arguments
 class macro_processor : public instruction_processor
 {
 public:
-    macro_processor(
-        analyzing_context ctx, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider);
+    macro_processor(const analyzing_context& ctx,
+        branching_provider& branch_provider,
+        workspaces::parse_lib_provider& lib_provider);
 
     void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 

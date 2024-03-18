@@ -34,7 +34,7 @@ class copy_processor final : public statement_processor
     bool first_statement_;
 
 public:
-    copy_processor(analyzing_context ctx, processing_state_listener& listener, copy_start_data start);
+    copy_processor(const analyzing_context& ctx, processing_state_listener& listener, copy_start_data start);
 
     std::optional<processing_status> get_processing_status(
         const std::optional<context::id_index>& instruction, const range& r) const override;

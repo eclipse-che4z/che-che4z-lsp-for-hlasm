@@ -47,7 +47,7 @@ class processing_manager final : public processing_state_listener, public branch
 {
 public:
     processing_manager(std::unique_ptr<opencode_provider> base_provider,
-        analyzing_context ctx,
+        const analyzing_context& ctx,
         workspaces::library_data data,
         utils::resource::resource_location file_loc,
         std::string_view file_text,

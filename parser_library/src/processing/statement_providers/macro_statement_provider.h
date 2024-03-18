@@ -23,7 +23,7 @@ namespace hlasm_plugin::parser_library::processing {
 class macro_statement_provider final : public members_statement_provider
 {
 public:
-    macro_statement_provider(analyzing_context ctx,
+    macro_statement_provider(const analyzing_context& ctx,
         statement_fields_parser& parser,
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& listener,

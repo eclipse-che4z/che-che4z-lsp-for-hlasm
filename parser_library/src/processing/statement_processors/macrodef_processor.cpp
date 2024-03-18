@@ -20,11 +20,11 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-macrodef_processor::macrodef_processor(analyzing_context ctx,
+macrodef_processor::macrodef_processor(const analyzing_context& ctx,
     processing_state_listener& listener,
     branching_provider& branching_provider_,
     macrodef_start_data start)
-    : statement_processor(processing_kind::MACRO, std::move(ctx))
+    : statement_processor(processing_kind::MACRO, ctx)
     , listener_(listener)
     , branching_provider_(branching_provider_)
     , start_(std::move(start))

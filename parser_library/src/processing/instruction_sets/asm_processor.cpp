@@ -735,7 +735,7 @@ void asm_processor::process_OPSYN(rebuilt_statement&& stmt)
         lib_info);
 }
 
-asm_processor::asm_processor(analyzing_context ctx,
+asm_processor::asm_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
     workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser,

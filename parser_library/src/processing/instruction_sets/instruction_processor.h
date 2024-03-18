@@ -44,7 +44,7 @@ protected:
     expressions::evaluation_context eval_ctx;
 
     instruction_processor(
-        analyzing_context ctx, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider)
+        const analyzing_context& ctx, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider)
         : diagnosable_ctx(*ctx.hlasm_ctx)
         , ctx(ctx)
         , hlasm_ctx(*ctx.hlasm_ctx)

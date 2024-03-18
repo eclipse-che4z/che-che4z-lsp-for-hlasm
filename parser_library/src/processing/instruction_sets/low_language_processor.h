@@ -29,7 +29,7 @@ protected:
     statement_fields_parser& parser;
     const processing_manager& proc_mgr;
 
-    low_language_processor(analyzing_context ctx,
+    low_language_processor(const analyzing_context& ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser,

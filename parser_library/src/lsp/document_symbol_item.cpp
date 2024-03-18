@@ -19,18 +19,18 @@
 namespace hlasm_plugin::parser_library::lsp {
 
 document_symbol_item_s::document_symbol_item_s(std::string name, document_symbol_kind kind, range symbol_range)
-    : name(name)
+    : name(std::move(name))
     , kind(kind)
     , symbol_range(symbol_range)
     , symbol_selection_range(symbol_range)
 {}
 document_symbol_item_s::document_symbol_item_s(
     std::string name, document_symbol_kind kind, range symbol_range, document_symbol_list_s children)
-    : name(name)
+    : name(std::move(name))
     , kind(kind)
     , symbol_range(symbol_range)
     , symbol_selection_range(symbol_range)
-    , children(children)
+    , children(std::move(children))
 {}
 
 bool is_similar(const document_symbol_list_s& l, const document_symbol_list_s& r)

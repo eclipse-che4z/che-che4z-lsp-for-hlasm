@@ -58,7 +58,7 @@ class asm_processor : public low_language_processor
     const process_table_t table_;
 
 public:
-    asm_processor(analyzing_context ctx,
+    asm_processor(const analyzing_context& ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser,

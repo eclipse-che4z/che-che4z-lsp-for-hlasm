@@ -41,7 +41,7 @@ class members_statement_provider : public statement_provider
 
 public:
     members_statement_provider(const statement_provider_kind kind,
-        analyzing_context ctx,
+        const analyzing_context& ctx,
         statement_fields_parser& parser,
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& listener,

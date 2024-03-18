@@ -32,7 +32,7 @@ std::filesystem::path lexically_normal(const std::filesystem::path& p) { return 
 
 std::filesystem::path lexically_relative(const std::filesystem::path& p, std::string q)
 {
-    return p.lexically_relative(q);
+    return p.lexically_relative(std::move(q));
 }
 
 std::filesystem::path filename(const std::filesystem::path& p) { return p.filename(); }

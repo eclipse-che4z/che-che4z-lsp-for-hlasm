@@ -23,7 +23,7 @@ namespace hlasm_plugin::parser_library::processing {
 class mach_processor : public low_language_processor
 {
 public:
-    mach_processor(analyzing_context ctx,
+    mach_processor(const analyzing_context& ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser,

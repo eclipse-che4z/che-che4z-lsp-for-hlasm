@@ -34,7 +34,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 opencode_provider::opencode_provider(std::string_view text,
-    analyzing_context& ctx,
+    const analyzing_context& ctx,
     workspaces::parse_lib_provider& lib_provider,
     processing_state_listener& state_listener,
     const processing::processing_manager& proc_manager,
@@ -53,7 +53,7 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_multiline { parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer, true),
         parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, true),
         parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, true) }
-    , m_ctx(&ctx)
+    , m_ctx(ctx)
     , m_lib_provider(&lib_provider)
     , m_state_listener(&state_listener)
     , m_processing_manager(proc_manager)
@@ -140,10 +140,10 @@ utils::value_task<std::string> opencode_provider::deferred_aread(utils::task pre
 
 std::string opencode_provider::aread_from_copybook() const
 {
-    auto& opencode_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
+    auto& opencode_stack = m_ctx.hlasm_ctx->opencode_copy_stack();
     auto& copy = opencode_stack.back();
     const auto line = copy.suspended_at;
-    std::string_view remaining_text = m_ctx->lsp_ctx->get_file_info(copy.definition_location()->resource_loc)
+    std::string_view remaining_text = m_ctx.lsp_ctx->get_file_info(copy.definition_location()->resource_loc)
                                           ->data.get_lines_beginning_at({ line, 0 });
     std::string result(lexing::extract_line(remaining_text).first);
     if (remaining_text.empty())
@@ -218,7 +218,7 @@ void opencode_provider::feed_line(const parsing::parser_holder& p, bool is_proce
 
     p.parser->get_collector().prepare_for_next_statement();
 
-    m_ctx->hlasm_ctx->metrics.lines += m_current_logical_line.segments.size();
+    m_ctx.hlasm_ctx->metrics.lines += m_current_logical_line.segments.size();
 }
 
 bool opencode_provider::is_comment()
@@ -284,7 +284,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
     auto proc_status =
         proc.get_processing_status(proc.resolve_instruction(current_instr), current_instr.field_range).value();
 
-    m_ctx->hlasm_ctx->set_source_position(current_instr.field_range.start);
+    m_ctx.hlasm_ctx->set_source_position(current_instr.field_range.start);
 
     const auto& [op_text, op_range, op_logical_column] = operands;
 
@@ -293,7 +293,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
     // optimization : only COPY, EQU and DC/DS/DXD statements actually need operands in lookahead mode
     {
         const auto& h = prepare_operand_parser(*op_text,
-            *m_ctx->hlasm_ctx,
+            *m_ctx.hlasm_ctx,
             nullptr,
             semantics::range_provider(),
             op_range,
@@ -318,9 +318,9 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
     auto result = collector.extract_statement(proc_status, statement_range);
 
     if (m_current_logical_line.segments.size() > 1)
-        m_ctx->hlasm_ctx->metrics.continued_statements++;
+        m_ctx.hlasm_ctx->metrics.continued_statements++;
     else
-        m_ctx->hlasm_ctx->metrics.non_continued_statements++;
+        m_ctx.hlasm_ctx->metrics.non_continued_statements++;
 
     return result;
 }
@@ -343,7 +343,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     std::optional<context::id_index> resolved_instr)
 {
     const auto& current_instr = collector.current_instruction();
-    m_ctx->hlasm_ctx->set_source_position(current_instr.field_range.start);
+    m_ctx.hlasm_ctx->set_source_position(current_instr.field_range.start);
 
     const auto proc_status_o = proc.get_processing_status(resolved_instr, current_instr.field_range);
     if (!proc_status_o.has_value()) [[unlikely]]
@@ -369,7 +369,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
         const auto& [format, opcode] = proc_status;
 
         const auto& h = prepare_operand_parser(*op_text,
-            *m_ctx->hlasm_ctx,
+            *m_ctx.hlasm_ctx,
             (format.occurrence == operand_occurrence::PRESENT && format.form == processing_form::UNKNOWN)
                 ? &diags_filter
                 : diags,
@@ -432,7 +432,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                             r, ranges, semantics::adjusting_state::MACRO_REPARSE, h.lex->get_line_limits());
 
                         const auto& h_second = prepare_operand_parser(to_parse,
-                            *m_ctx->hlasm_ctx,
+                            *m_ctx.hlasm_ctx,
                             format.form == processing_form::UNKNOWN ? &diags_filter : diags,
                             std::move(tmp_provider),
                             r,
@@ -469,15 +469,15 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
 
     if (proc.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(*result,
-            { *m_ctx->hlasm_ctx, library_info_transitional(*m_lib_provider), drop_diagnostic_op },
+            { *m_ctx.hlasm_ctx, library_info_transitional(*m_lib_provider), drop_diagnostic_op },
             *m_state_listener,
             std::move(lookahead_references)))
         return nullptr;
 
     if (m_current_logical_line.segments.size() > 1)
-        m_ctx->hlasm_ctx->metrics.continued_statements++;
+        m_ctx.hlasm_ctx->metrics.continued_statements++;
     else
-        m_ctx->hlasm_ctx->metrics.non_continued_statements++;
+        m_ctx.hlasm_ctx->metrics.non_continued_statements++;
 
     m_src_proc->process_hl_symbols(collector.extract_hl_symbols());
 
@@ -538,21 +538,21 @@ utils::task opencode_provider::run_preprocessor()
     const size_t stop_line = it != m_input_document.end() ? it->lineno().value() : current_line;
     const auto last_index = it - m_input_document.begin();
 
-    auto virtual_file_name = m_ctx->hlasm_ctx->ids().add("PREPROCESSOR_" + std::to_string(current_line));
+    auto virtual_file_name = m_ctx.hlasm_ctx->ids().add("PREPROCESSOR_" + std::to_string(current_line));
 
     auto [new_file, inserted] = m_virtual_files->try_emplace(virtual_file_name, std::move(preprocessor_text));
 
     // set up "call site"
     const auto last_statement_line = stop_line - (stop_line != current_line);
-    m_ctx->hlasm_ctx->set_source_position(position(last_statement_line, 0));
-    m_ctx->hlasm_ctx->set_source_indices(m_next_line_index, last_index);
+    m_ctx.hlasm_ctx->set_source_position(position(last_statement_line, 0));
+    m_ctx.hlasm_ctx->set_source_indices(m_next_line_index, last_index);
     m_next_line_index = last_index;
 
 
     if (!inserted)
     {
         assert(preprocessor_text == new_file->second); // isn't moved if insert fails
-        m_ctx->hlasm_ctx->enter_copy_member(virtual_file_name);
+        m_ctx.hlasm_ctx->enter_copy_member(virtual_file_name);
         return utils::task();
     }
     else
@@ -564,7 +564,7 @@ utils::task opencode_provider::run_preprocessor()
             analyzer_options {
                 std::move(file_location),
                 m_lib_provider,
-                *m_ctx,
+                m_ctx,
                 workspaces::library_data { processing_kind::COPY, virtual_file_name },
             },
             virtual_file_name);
@@ -577,12 +577,12 @@ utils::task opencode_provider::start_nested_parser(
     analyzer a(text, std::move(opts));
     co_await a.co_analyze();
     m_diagnoser->collect_diags_from_child(a);
-    m_ctx->hlasm_ctx->enter_copy_member(vf_name);
+    m_ctx.hlasm_ctx->enter_copy_member(vf_name);
 }
 
 bool opencode_provider::suspend_copy_processing(remove_empty re) const
 {
-    auto& opencode_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
+    auto& opencode_stack = m_ctx.hlasm_ctx->opencode_copy_stack();
 
     if (opencode_stack.empty())
         return false;
@@ -594,7 +594,7 @@ bool opencode_provider::suspend_copy_processing(remove_empty re) const
 
         const auto pos = copy.current_statement_position();
         std::string_view remaining_text =
-            m_ctx->lsp_ctx->get_file_info(copy.definition_location()->resource_loc)->data.get_lines_beginning_at(pos);
+            m_ctx.lsp_ctx->get_file_info(copy.definition_location()->resource_loc)->data.get_lines_beginning_at(pos);
         auto remaining_text_it = remaining_text.begin();
         const size_t line_no = pos.line;
 
@@ -629,7 +629,7 @@ utils::task opencode_provider::convert_ainsert_buffer_to_copybook()
     m_ainsert_buffer.clear();
 
     auto virtual_copy_name =
-        m_ctx->hlasm_ctx->ids().add("AINSERT_" + std::to_string(m_ctx->hlasm_ctx->obtain_ainsert_id()));
+        m_ctx.hlasm_ctx->ids().add("AINSERT_" + std::to_string(m_ctx.hlasm_ctx->obtain_ainsert_id()));
 
     auto new_file = m_virtual_files->try_emplace(virtual_copy_name, std::move(result)).first;
 
@@ -640,7 +640,7 @@ utils::task opencode_provider::convert_ainsert_buffer_to_copybook()
         analyzer_options {
             std::move(file_location),
             m_lib_provider,
-            *m_ctx,
+            m_ctx,
             workspaces::library_data { processing_kind::COPY, virtual_copy_name },
         },
         virtual_copy_name);
@@ -716,7 +716,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
                 std::move(collector.diag_container().diags));
     }
 
-    m_ctx->hlasm_ctx->set_source_indices(
+    m_ctx.hlasm_ctx->set_source_indices(
         m_current_logical_line_source.first_index, m_current_logical_line_source.last_index);
 
     if (lookahead)
@@ -724,13 +724,13 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
     if (proc.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(collector.current_instruction(),
-            { *m_ctx->hlasm_ctx, library_info_transitional(*m_lib_provider), drop_diagnostic_op },
+            { *m_ctx.hlasm_ctx, library_info_transitional(*m_lib_provider), drop_diagnostic_op },
             *m_state_listener,
             std::move(lookahead_references)))
         return nullptr;
 
     const auto& current_instr = collector.current_instruction();
-    m_ctx->hlasm_ctx->set_source_position(current_instr.field_range.start);
+    m_ctx.hlasm_ctx->set_source_position(current_instr.field_range.start);
 
     return process_ordinary(proc, collector, std::move(operands), diag_target, proc.resolve_instruction(current_instr));
 }
@@ -741,11 +741,11 @@ bool opencode_provider::finished() const
         return false;
     if (m_next_line_index < m_input_document.size())
         return false;
-    if (!m_ctx->hlasm_ctx->in_opencode())
+    if (!m_ctx.hlasm_ctx->in_opencode())
         return true;
     if (!m_ainsert_buffer.empty())
         return false;
-    const auto& o = m_ctx->hlasm_ctx->opencode_copy_stack();
+    const auto& o = m_ctx.hlasm_ctx->opencode_copy_stack();
     if (o.empty())
         return true;
     return std::none_of(o.begin(), o.end(), [](const auto& c) { return c.suspended(); });
@@ -811,9 +811,9 @@ bool opencode_provider::is_next_line_process() const
 
 extract_next_logical_line_result opencode_provider::extract_next_logical_line_from_copy_buffer()
 {
-    assert(m_ctx->hlasm_ctx->in_opencode());
+    assert(m_ctx.hlasm_ctx->in_opencode());
 
-    auto& opencode_copy_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
+    auto& opencode_copy_stack = m_ctx.hlasm_ctx->opencode_copy_stack();
     while (!opencode_copy_stack.empty())
     {
         auto& copy_file = opencode_copy_stack.back();
@@ -837,7 +837,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
         }
         copy_file.current_statement = resync;
 
-        const auto* copy_text = m_ctx->lsp_ctx->get_file_info(copy_file.definition_location()->resource_loc);
+        const auto* copy_text = m_ctx.lsp_ctx->get_file_info(copy_file.definition_location()->resource_loc);
         if (std::string_view remaining_text = copy_text->data.get_lines_beginning_at({ line, 0 });
             !lexing::extract_logical_line(m_current_logical_line,
                 utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>(remaining_text.begin()),
@@ -872,7 +872,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     m_current_logical_line.clear();
     m_current_logical_line_source = {};
 
-    if (m_ctx->hlasm_ctx->in_opencode())
+    if (m_ctx.hlasm_ctx->in_opencode())
     {
         if (!m_ainsert_buffer.empty())
         {
@@ -880,7 +880,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
             return extract_next_logical_line_result::failed;
         }
 
-        if (!m_ctx->hlasm_ctx->opencode_copy_stack().empty())
+        if (!m_ctx.hlasm_ctx->opencode_copy_stack().empty())
             return extract_next_logical_line_from_copy_buffer();
     }
 

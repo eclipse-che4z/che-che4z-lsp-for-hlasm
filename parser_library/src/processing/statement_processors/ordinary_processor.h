@@ -51,7 +51,7 @@ class ordinary_processor final : public statement_processor
     processing_manager& proc_mgr;
 
 public:
-    ordinary_processor(analyzing_context ctx,
+    ordinary_processor(const analyzing_context& ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         processing_state_listener& state_listener,

@@ -26,7 +26,7 @@ complex_operand::complex_operand() = default;
 
 complex_operand::complex_operand(
     std::string operand_identifier, std::vector<std::unique_ptr<asm_operand>> operand_params)
-    : operand_identifier(operand_identifier)
+    : operand_identifier(std::move(operand_identifier))
     , operand_parameters(std::move(operand_params)) {};
 
 machine_operand::machine_operand() = default;
@@ -227,13 +227,13 @@ one_operand::one_operand()
 {}
 
 one_operand::one_operand(std::string operand_identifier, int value)
-    : operand_identifier(operand_identifier)
+    : operand_identifier(std::move(operand_identifier))
     , value(value)
     , is_default(false)
 {}
 
 one_operand::one_operand(std::string operand_identifier)
-    : operand_identifier(operand_identifier)
+    : operand_identifier(std::move(operand_identifier))
     , value(0)
     , is_default(true)
 {}
@@ -246,7 +246,7 @@ one_operand::one_operand(int value)
 
 one_operand::one_operand(std::string operand_identifier, range range)
     : operand(range)
-    , operand_identifier(operand_identifier)
+    , operand_identifier(std::move(operand_identifier))
     , value(0)
     , is_default(true)
 {}

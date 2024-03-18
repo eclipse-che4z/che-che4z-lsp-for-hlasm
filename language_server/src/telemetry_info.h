@@ -16,7 +16,7 @@
 #define HLASMPLUGIN_LANGUAGESERVER_TELEMETRY_INFO_H
 
 #include <optional>
-#include <string>
+#include <string_view>
 #include <variant>
 
 #include "protocol.h"
@@ -30,15 +30,15 @@ struct telemetry_metrics_info
 
 struct telemetry_info
 {
-    std::string method_name;
+    std::string_view method_name;
     double duration;
     std::optional<telemetry_metrics_info> metrics;
 };
 
 struct telemetry_error
 {
-    std::string error_type;
-    std::string error_details;
+    std::string_view error_type;
+    std::string_view error_details;
 };
 
 using telemetry_message = std::variant<telemetry_info, telemetry_error>;

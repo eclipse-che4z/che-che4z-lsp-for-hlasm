@@ -105,7 +105,7 @@ bool lookahead_processor::finished() { return finished_flag_; }
 
 void lookahead_processor::collect_diags() const {}
 
-lookahead_processor::lookahead_processor(analyzing_context ctx,
+lookahead_processor::lookahead_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
     processing_state_listener& listener,
     workspaces::parse_lib_provider& lib_provider,

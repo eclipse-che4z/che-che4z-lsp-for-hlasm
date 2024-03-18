@@ -46,7 +46,7 @@ class macrodef_processor final : public statement_processor
     const process_table_t table_;
 
 public:
-    macrodef_processor(analyzing_context ctx,
+    macrodef_processor(const analyzing_context& ctx,
         processing_state_listener& listener,
         branching_provider& branching_provider_,
         macrodef_start_data start);

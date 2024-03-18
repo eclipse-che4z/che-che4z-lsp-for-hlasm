@@ -19,8 +19,8 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-empty_processor::empty_processor(analyzing_context ctx)
-    : statement_processor(processing_kind::ORDINARY, std::move(ctx))
+empty_processor::empty_processor(const analyzing_context& ctx)
+    : statement_processor(processing_kind::ORDINARY, ctx)
 {}
 
 std::optional<context::id_index> empty_processor::resolve_concatenation(

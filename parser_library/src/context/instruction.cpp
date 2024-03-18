@@ -416,7 +416,7 @@ std::span<const assembler_instruction> instruction::all_assembler_instructions()
 }
 
 bool hlasm_plugin::parser_library::context::machine_instruction::check(std::string_view name_of_instruction,
-    const std::vector<const checking::machine_operand*> to_check,
+    const std::vector<const checking::machine_operand*>& to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {

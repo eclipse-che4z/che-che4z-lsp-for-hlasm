@@ -27,12 +27,12 @@ using namespace hlasm_plugin::parser_library;
 using namespace processing;
 using namespace workspaces;
 
-low_language_processor::low_language_processor(analyzing_context ctx,
+low_language_processor::low_language_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
     const processing_manager& proc_mgr)
-    : instruction_processor(std::move(ctx), branch_provider, lib_provider)
+    : instruction_processor(ctx, branch_provider, lib_provider)
     , parser(parser)
     , proc_mgr(proc_mgr)
 {}

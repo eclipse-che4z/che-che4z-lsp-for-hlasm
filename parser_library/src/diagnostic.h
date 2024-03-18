@@ -820,7 +820,7 @@ public:
         : file_uri(std::move(file_uri))
         , diag_range(range)
         , severity(diagnostic_severity::unspecified)
-        , code(code)
+        , code(std::move(code))
         , message(std::move(message))
     {}
     diagnostic_s(std::string file_uri,

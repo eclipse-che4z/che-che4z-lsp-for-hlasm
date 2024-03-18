@@ -42,7 +42,7 @@ class lookahead_processor final : public statement_processor
 public:
     const lookahead_action action;
 
-    lookahead_processor(analyzing_context ctx,
+    lookahead_processor(const analyzing_context& ctx,
         branching_provider& branch_provider,
         processing_state_listener& listener,
         workspaces::parse_lib_provider& lib_provider,

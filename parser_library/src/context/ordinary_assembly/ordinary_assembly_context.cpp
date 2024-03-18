@@ -54,12 +54,14 @@ bool ordinary_assembly_context::create_symbol(
 {
     assert(symbol_can_be_assigned(symbols_, name));
 
+    const auto value_kind = value.value_kind();
+
     symbols_.insert_or_assign(
-        name, symbol(name, value, attributes, std::move(symbol_location), hlasm_ctx_.processing_stack()));
+        name, symbol(name, std::move(value), attributes, std::move(symbol_location), hlasm_ctx_.processing_stack()));
 
     bool ok = true;
 
-    if (value.value_kind() != symbol_value_kind::UNDEF)
+    if (value_kind != symbol_value_kind::UNDEF)
         m_symbol_dependencies->add_defined(name, nullptr, li);
 
     return ok;

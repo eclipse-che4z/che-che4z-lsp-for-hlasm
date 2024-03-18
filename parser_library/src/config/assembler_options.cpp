@@ -15,6 +15,7 @@
 #include "assembler_options.h"
 
 #include <span>
+#include <string_view>
 
 #include "compiler_options.h"
 #include "nlohmann/json.hpp"
@@ -215,7 +216,7 @@ bool assembler_options::has_value() const noexcept
 }
 
 template<typename T>
-void optional_to_json(nlohmann::json& j, std::string name, const std::optional<T>& o)
+void optional_to_json(nlohmann::json& j, std::string_view name, const std::optional<T>& o)
 {
     if (o.has_value())
         j[name] = o.value();

@@ -34,7 +34,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_provider,
-    analyzing_context ctx,
+    const analyzing_context& ctx,
     workspaces::library_data data,
     utils::resource::resource_location file_loc,
     std::string_view file_text,
@@ -42,7 +42,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     statement_fields_parser& parser,
     std::shared_ptr<std::vector<fade_message_s>> fade_msgs)
     : diagnosable_ctx(*ctx.hlasm_ctx)
-    , ctx_(std::move(ctx))
+    , ctx_(ctx)
     , hlasm_ctx_(*ctx_.hlasm_ctx)
     , lib_provider_(lib_provider)
     , opencode_prov_(*base_provider)

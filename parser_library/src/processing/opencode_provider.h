@@ -121,7 +121,7 @@ class opencode_provider final : public statement_provider, virtual_file_monitor
     parser_set m_singleline;
     parser_set m_multiline;
 
-    analyzing_context* m_ctx;
+    analyzing_context m_ctx;
     workspaces::parse_lib_provider* m_lib_provider;
     processing::processing_state_listener* m_state_listener;
     const processing::processing_manager& m_processing_manager;
@@ -174,7 +174,7 @@ public:
     void ainsert(const std::string& rec, ainsert_destination dest);
 
     opencode_provider(std::string_view text,
-        analyzing_context& ctx,
+        const analyzing_context& ctx,
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& state_listener,
         const processing::processing_manager& proc_manager,

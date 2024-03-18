@@ -99,7 +99,7 @@ void server::call_method(const std::string& method, std::optional<request_id> id
     }
 }
 
-void server::send_telemetry_error(std::string where, std::string what)
+void server::send_telemetry_error(std::string_view where, std::string_view what)
 {
     if (!telemetry_provider_)
         return;
@@ -111,8 +111,9 @@ void server::telemetry_request_done(method_telemetry_data start)
 {
     if (telemetry_provider_ && !start.method_name.empty())
         telemetry_provider_->send_telemetry(telemetry_info {
-            std::string(start.method_name),
+            start.method_name,
             std::chrono::duration<double>(std::chrono::steady_clock::now() - start.start).count(),
+            std::nullopt,
         });
 }
 

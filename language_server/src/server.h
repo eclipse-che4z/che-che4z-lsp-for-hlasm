@@ -18,9 +18,9 @@
 #include <chrono>
 #include <map>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #include "feature.h"
@@ -77,7 +77,7 @@ protected:
     // Calls a method that is registered in methods_ with the specified name with arguments and id of request.
     void call_method(const std::string& method, std::optional<request_id> id, const nlohmann::json& args);
 
-    void send_telemetry_error(std::string where, std::string what = "");
+    void send_telemetry_error(std::string_view where, std::string_view what = "");
 
     void cancel_request_handler(const nlohmann::json& args);
 

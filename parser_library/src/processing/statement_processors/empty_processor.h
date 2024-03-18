@@ -23,7 +23,7 @@ namespace hlasm_plugin::parser_library::processing {
 class empty_processor final : public statement_processor
 {
 public:
-    empty_processor(analyzing_context ctx);
+    empty_processor(const analyzing_context& ctx);
     std::optional<processing_status> get_processing_status(
         const std::optional<context::id_index>& instruction, const range& r) const override;
     void process_statement(context::shared_stmt_ptr statement) override;
