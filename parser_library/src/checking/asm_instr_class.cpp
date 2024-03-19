@@ -15,7 +15,11 @@
 #include "asm_instr_class.h"
 
 #include <array>
+#include <charconv>
+#include <optional>
+#include <string_view>
 
+#include "checker_helper.h"
 #include "diagnostic_collector.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -204,6 +208,9 @@ bool assembler_instruction::check_typecheck_operands(const std::vector<std::uniq
 bool assembler_instruction::check_codepage_parameter(
     const one_operand& input, const diagnostic_collector& add_diagnostic) const
 {
+    static constexpr const int min_value = 0x0474;
+    static constexpr const int max_value = 0x047C;
+
     // hexa value
     const std::string& input_str = input.operand_identifier;
     if (input_str.front() == 'X')
@@ -214,30 +221,18 @@ bool assembler_instruction::check_codepage_parameter(
             return false;
         }
         // get value
-        std::string value = "";
-        for (size_t i = 2; i < input_str.size() - 1; i++)
+        const char* const b = input_str.data() + 2;
+        const char* const e = input_str.data() + input_str.size() - 1;
+        if (std::any_of(b, e, [](unsigned char c) { return !isxdigit(c); }))
         {
-            if (!isxdigit((unsigned char)input_str[i]))
-            {
-                add_diagnostic(diagnostic_op::error_A215_CODEPAGE_format(name_of_instruction, input.operand_range));
-                return false;
-            }
-            value += input_str[i];
+            add_diagnostic(diagnostic_op::error_A215_CODEPAGE_format(name_of_instruction, input.operand_range));
+            return false;
         }
-        try
+        const auto val = as_int(std::string_view(b, e), 16);
+        if (!val || *val < min_value || *val > max_value)
         {
-            int val_hexa = std::stoul(value, nullptr, 16);
-            int min_value = 0x0474;
-            int max_value = 0x047C;
-            if (val_hexa < min_value || val_hexa > max_value)
-            {
-                add_diagnostic(diagnostic_op::error_A216_CODEPAGE_value(name_of_instruction, input.operand_range));
-                return false;
-            }
-        }
-        catch (...)
-        {
-            assert(false);
+            add_diagnostic(diagnostic_op::error_A216_CODEPAGE_value(name_of_instruction, input.operand_range));
+            return false;
         }
     }
     // decimal value
@@ -248,8 +243,8 @@ bool assembler_instruction::check_codepage_parameter(
             add_diagnostic(diagnostic_op::error_A215_CODEPAGE_format(name_of_instruction, input.operand_range));
             return false;
         }
-        auto val = std::stoi(input_str);
-        if (val < 1140 || val > 1148)
+        const auto val = as_int(input_str);
+        if (!val || *val < min_value || *val > max_value)
         {
             add_diagnostic(diagnostic_op::error_A216_CODEPAGE_value(name_of_instruction, input.operand_range));
             return false;
@@ -296,12 +291,8 @@ bool assembler_instruction::check_fail_parameters(const std::vector<std::unique_
                 return false;
             }
             auto ident = get_simple_operand(current_operand->operand_parameters[0].get());
-            int ident_val = 0;
-            try
-            {
-                ident_val = std::stoi(ident->operand_identifier);
-            }
-            catch (...)
+            const auto ident_val = as_int(ident->operand_identifier);
+            if (!ident_val)
             {
                 add_diagnostic(diagnostic_op::error_A235_FAIL_param_number_format(instr_name,
                     current_operand->operand_identifier,
@@ -310,7 +301,7 @@ bool assembler_instruction::check_fail_parameters(const std::vector<std::unique_
             }
             if (current_operand->operand_identifier == "MNOTE" || current_operand->operand_identifier == "MSG")
             {
-                if (ident_val < 0 || ident_val > 7)
+                if (*ident_val < 0 || *ident_val > 7)
                 {
                     add_diagnostic(diagnostic_op::error_A237_FAIL_severity_message(
                         instr_name, current_operand->operand_identifier, ident->operand_range));
@@ -320,7 +311,7 @@ bool assembler_instruction::check_fail_parameters(const std::vector<std::unique_
             else if (current_operand->operand_identifier == "MAXERRS"
                 || current_operand->operand_identifier == "NOMAXERRS")
             {
-                if (ident_val < 32 || ident_val > 65535)
+                if (*ident_val < 32 || *ident_val > 65535)
                 {
                     add_diagnostic(diagnostic_op::error_A236_FAIL_MAXXERS_value(
                         instr_name, current_operand->operand_identifier, ident->operand_range));
@@ -441,19 +432,15 @@ bool assembler_instruction::check_using_parameters(const std::vector<std::unique
             auto param = get_simple_operand(current_operand->operand_parameters[0].get());
             if (current_operand->operand_identifier == "WARN")
             {
-                int number = 0;
-                try
-                {
-                    number = std::stoi(param->operand_identifier);
-                }
-                catch (...)
+                const auto number = as_int(param->operand_identifier);
+                if (!number)
                 {
                     add_diagnostic(diagnostic_op::error_A228_USING_complex_param_no(instr_name,
                         current_operand->operand_identifier,
                         current_operand->operand_parameters[0]->operand_range));
                     return false;
                 }
-                if (!is_byte_value(number))
+                if (!is_byte_value(*number))
                 {
                     add_diagnostic(diagnostic_op::error_A229_USING_WARN_format(
                         instr_name, current_operand->operand_parameters[0]->operand_range));
@@ -462,12 +449,12 @@ bool assembler_instruction::check_using_parameters(const std::vector<std::unique
             }
             else if (current_operand->operand_identifier == "LIMIT")
             {
-                auto ident = param->operand_identifier;
+                const std::string_view ident = param->operand_identifier;
                 if (ident.size() >= 3 && ident.front() == 'X' && ident[1] == '\'' && ident.back() == '\''
                     && is_value_hexa(ident.substr(2, ident.size() - 3)))
                 {
                     // the value is specified in hexa
-                    if (std::stoul(ident.substr(2, ident.size() - 3), nullptr, 16) > 0xFFF)
+                    if (auto val = as_int(ident.substr(2, ident.size() - 3), 16); !val || *val > 0xFFF)
                     {
                         add_diagnostic(
                             diagnostic_op::error_A232_USING_LIMIT_hexa(instr_name, current_operand->operand_range));
@@ -476,19 +463,14 @@ bool assembler_instruction::check_using_parameters(const std::vector<std::unique
                 }
                 else
                 {
-                    int number = 0;
-                    try
-                    {
-                        number = std::stoi(ident);
-                    }
-                    catch (...)
+                    if (auto number = as_int(ident); !number)
                     {
                         // the value is in incorrect format
                         add_diagnostic(
                             diagnostic_op::error_A230_USING_LIMIT_format(instr_name, current_operand->operand_range));
                         return false;
-                    };
-                    if (number > 4095)
+                    }
+                    else if (*number > 4095)
                     {
                         // the number is specified in decimal but is not lower than the allowed value
                         add_diagnostic(

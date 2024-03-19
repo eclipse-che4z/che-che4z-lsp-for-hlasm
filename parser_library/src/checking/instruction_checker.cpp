@@ -23,17 +23,14 @@ bool assembler_checker::check(std::string_view instruction_name,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
-    try
-    {
-        std::vector<const asm_operand*> ops;
-        for (auto& op : operand_vector)
-            ops.push_back(dynamic_cast<const asm_operand*>(op));
-        return assembler_instruction_map.at(instruction_name)->check(ops, stmt_range, add_diagnostic);
-    }
-    catch (...)
-    {
+    const auto it = assembler_instruction_map.find(instruction_name);
+    if (it == assembler_instruction_map.end())
         return false;
-    }
+
+    std::vector<const asm_operand*> ops;
+    for (auto& op : operand_vector)
+        ops.push_back(dynamic_cast<const asm_operand*>(op));
+    return it->second->check(ops, stmt_range, add_diagnostic);
 }
 
 namespace {

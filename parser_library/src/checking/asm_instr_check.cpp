@@ -18,7 +18,7 @@
 #include <array>
 #include <regex>
 
-#include "context/common_types.h"
+#include "checker_helper.h"
 #include "diagnostic_collector.h"
 #include "lexing/tools.h"
 #include "utils/string_operations.h"
@@ -1150,67 +1150,63 @@ bool alias::check(const std::vector<const asm_operand*>& to_check,
 {
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
-    auto first = get_simple_operand(to_check[0]);
-    if (first == nullptr || first->operand_identifier.size() < 3)
+    const auto& r = to_check.front()->operand_range;
+    const auto first = get_simple_operand(to_check[0]);
+    if (!first)
     {
-        add_diagnostic(diagnostic_op::error_A151_ALIAS_op_format(to_check[0]->operand_range));
+        add_diagnostic(diagnostic_op::error_A151_ALIAS_op_format(r));
         return false;
     }
-    if (first->operand_identifier[1] == '\'' && first->operand_identifier[first->operand_identifier.size() - 1] == '\'')
+    std::string_view value = first->operand_identifier;
+    if (value.size() < 3 || value[1] != '\'' || value.back() != '\'')
     {
-        if (first->operand_identifier[0] == 'C')
-        {
+        add_diagnostic(diagnostic_op::error_A151_ALIAS_op_format(r));
+        return false;
+    }
+    const auto type = value.front();
+    value.remove_prefix(2);
+    value.remove_suffix(1);
+    switch (type)
+    {
+        case 'c':
+        case 'C':
             // TO DO - no support for four characters in EBCDIC (¢, ¬, ±, ¦) - we throw an error although it should
             // not be
-            static const std::regex regex(R"([\.<¢\(\+\|&!\$\*\);¬\-\/¦,%_>\?`,:#@\=\"~±\[\]\{\}\^\\a-zA-Z0-9]*)");
-            std::string substr = first->operand_identifier.substr(2, first->operand_identifier.size() - 3);
-            if (!std::regex_match(substr, regex))
+            if (static const std::regex regex(R"([\.<¢\(\+\|&!\$\*\);¬\-\/¦,%_>\?`,:#@\=\"~±\[\]\{\}\^\\a-zA-Z0-9]*)");
+                !std::regex_match(value.cbegin(), value.cend(), regex))
             {
                 add_diagnostic(diagnostic_op::error_A152_ALIAS_C_format(first->operand_range));
                 return false;
             }
             return true;
-        }
-        else if (first->operand_identifier[0] == 'X')
-        {
-            if ((first->operand_identifier.size() - 3) % 2 == 1)
+
+        case 'x':
+        case 'X':
+            if (value.size() % 2 == 1)
             {
                 add_diagnostic(diagnostic_op::error_A154_ALIAS_X_format_no_of_chars(first->operand_range));
                 return false;
             }
-            int max_value = ALIAS_max_val;
-            int min_value = ALIAS_min_val;
-            for (size_t i = 2; i < first->operand_identifier.size() - 1; i += 2)
+            for (size_t i = 0; i < value.size(); i += 2)
             {
-                std::string tocomp = "";
-                tocomp.push_back(first->operand_identifier[i]);
-                tocomp.push_back(first->operand_identifier[i + 1]);
-                if (tocomp == "0x" || tocomp == "0X")
+                const auto val = as_int(value.substr(i, 2), 16);
+                if (!val)
                 {
                     add_diagnostic(diagnostic_op::error_A153_ALIAS_X_format(first->operand_range));
                     return false;
                 }
-                int comparing = 0;
-                try
-                {
-                    comparing = std::stoul(tocomp, nullptr, 16);
-                }
-                catch (...)
-                {
-                    add_diagnostic(diagnostic_op::error_A153_ALIAS_X_format(first->operand_range));
-                    return false;
-                }
-                if (comparing < min_value || comparing > max_value)
+                if (*val < ALIAS_min_val || *val > ALIAS_max_val)
                 {
                     add_diagnostic(diagnostic_op::error_A155_ALIAS_X_format_range(first->operand_range));
                     return false;
                 }
             }
             return true;
-        }
+
+        default:
+            add_diagnostic(diagnostic_op::error_A151_ALIAS_op_format(r));
+            return false;
     }
-    add_diagnostic(diagnostic_op::error_A151_ALIAS_op_format(first->operand_range));
-    return false;
 }
 
 ainsert::ainsert(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
