@@ -78,16 +78,7 @@ void server::call_method(const std::string& method, std::optional<request_id> id
         // - notification can be ignored
         // - requests should be responded to with MethodNotFound
         if (id)
-            send_message_->reply(nlohmann::json {
-                { "id", nlohmann ::json(*id) },
-                {
-                    "error",
-                    {
-                        { "code", -32601 },
-                        { "message", "MethodNotFound" },
-                    },
-                },
-            });
+            respond_error(id.value(), method, -32601, "MethodNotFound", {});
     }
     else
     {
@@ -96,6 +87,9 @@ void server::call_method(const std::string& method, std::optional<request_id> id
         LOG_WARNING(ss.str());
 
         send_telemetry_error("method_not_implemented", method);
+
+        if (id)
+            respond_error(id.value(), method, -32601, "MethodNotFound", {});
     }
 }
 

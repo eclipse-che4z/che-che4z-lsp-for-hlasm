@@ -104,8 +104,14 @@ TEST(lsp_server, not_implemented_method)
             "method_name":"server_error/method_not_implemented",
             "properties":{"error_details":"unknown_method"}
            }})"_json;
+    auto expected_not_implemented =
+        R"({"jsonrpc":"2.0","id":47,"error":{
+            "code":-32601,
+            "message":"MethodNotFound",
+            "data":null
+           }})"_json;
 
-    // Only telemetry expected
+    EXPECT_CALL(smpm, reply(expected_not_implemented));
     EXPECT_CALL(smpm, reply(expected_telemetry));
 
     s.message_received(j);
