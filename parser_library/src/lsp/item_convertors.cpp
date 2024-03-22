@@ -89,7 +89,7 @@ std::string hover_text(const context::symbol& sym)
                 markdown.append(" + ");
 
             if (d != 1 && d != -1)
-                markdown.append(std::to_string(-(unsigned)d)).append("*");
+                markdown.append(std::to_string(d < 0 ? -(unsigned)d : (unsigned)d)).append("*");
 
             if (!base.qualifier.empty())
                 markdown.append(base.qualifier.to_string_view()).append(".");
