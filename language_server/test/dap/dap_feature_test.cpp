@@ -59,14 +59,14 @@ struct notif_mock
 
 struct response_provider_mock : public response_provider
 {
-    void request(const std::string&,
+    void request(std::string_view,
         const nlohmann::json&,
         std::function<void(const nlohmann::json& params)>,
         std::function<void(int, const char*)>) override
     {}
-    void respond(const request_id& id, const std::string& requested_method, const nlohmann::json& args) override
+    void respond(const request_id& id, std::string_view requested_method, const nlohmann::json& args) override
     {
-        responses.push_back({ id, requested_method, args });
+        responses.push_back({ id, std::string(requested_method), args });
     }
     void notify(const std::string& method, const nlohmann::json& args) override
     {
@@ -76,8 +76,7 @@ struct response_provider_mock : public response_provider
         if (method == "exited")
             exited = true;
     }
-    void respond_error(const request_id&, const std::string&, int, const std::string&, const nlohmann::json&) override
-    {}
+    void respond_error(const request_id&, std::string_view, int, std::string_view, const nlohmann::json&) override {}
 
     void register_cancellable_request(const request_id&, request_invalidator) override {}
 

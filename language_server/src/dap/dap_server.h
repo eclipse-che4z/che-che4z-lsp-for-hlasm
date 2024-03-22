@@ -33,19 +33,19 @@ public:
     explicit server(
         parser_library::debugger_configuration_provider& dc_provider, telemetry_sink* telemetry_reporter = nullptr);
 
-    void request(const std::string& requested_method,
+    void request(std::string_view requested_method,
         const nlohmann::json& args,
         std::function<void(const nlohmann::json& params)> handler,
         std::function<void(int, const char*)> error_handler) override;
 
-    void respond(const request_id& id, const std::string& requested_method, const nlohmann::json& args) override;
+    void respond(const request_id& id, std::string_view requested_method, const nlohmann::json& args) override;
 
     void notify(const std::string& method, const nlohmann::json& args) override;
 
     void respond_error(const request_id& id,
-        const std::string& requested_method,
+        std::string_view requested_method,
         int err_code,
-        const std::string& err_message,
+        std::string_view err_message,
         const nlohmann::json& error) override;
 
     void register_cancellable_request(const request_id& id, request_invalidator cancel_handler) override;

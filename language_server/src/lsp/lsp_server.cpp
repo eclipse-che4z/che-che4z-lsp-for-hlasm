@@ -164,7 +164,7 @@ void server::message_received(const nlohmann::json& message)
     }
 }
 
-void server::request(const std::string& requested_method,
+void server::request(std::string_view requested_method,
     const nlohmann::json& args,
     std::function<void(const nlohmann::json& params)> handler,
     std::function<void(int, const char*)> error_handler)
@@ -180,7 +180,7 @@ void server::request(const std::string& requested_method,
     send_message_->reply(reply);
 }
 
-void server::respond(const request_id& id, const std::string&, const nlohmann::json& args)
+void server::respond(const request_id& id, std::string_view, const nlohmann::json& args)
 {
     if (auto node = cancellable_requests_.extract(id))
         telemetry_request_done(node.mapped().second);
@@ -204,7 +204,7 @@ void server::notify(const std::string& method, const nlohmann::json& args)
 }
 
 void server::respond_error(
-    const request_id& id, const std::string&, int err_code, const std::string& err_message, const nlohmann::json& error)
+    const request_id& id, std::string_view, int err_code, std::string_view err_message, const nlohmann::json& error)
 {
     cancellable_requests_.erase(id);
     nlohmann::json reply {

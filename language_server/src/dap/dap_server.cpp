@@ -30,7 +30,7 @@ server::server(parser_library::debugger_configuration_provider& dc_provider, tel
     register_feature_methods();
 }
 
-void server::request(const std::string&,
+void server::request(std::string_view,
     const nlohmann::json&,
     std::function<void(const nlohmann::json& params)>,
     std::function<void(int, const char*)>)
@@ -40,7 +40,7 @@ void server::request(const std::string&,
         { "seq", request_seq }, { "type", "request" }, { "command", requested_command }, { "arguments", args } });*/
 }
 
-void server::respond(const request_id& request_seq, const std::string& requested_command, const nlohmann::json& args)
+void server::respond(const request_id& request_seq, std::string_view requested_command, const nlohmann::json& args)
 {
     send_message_->reply(nlohmann::json {
         { "seq", ++last_seq_ },
@@ -63,9 +63,9 @@ void server::notify(const std::string& method, const nlohmann::json& args)
 }
 
 void server::respond_error(const request_id& request_seq,
-    const std::string& requested_command,
+    std::string_view requested_command,
     int,
-    const std::string& err_message,
+    std::string_view err_message,
     const nlohmann::json& error)
 {
     send_message_->reply(nlohmann::json {
