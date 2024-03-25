@@ -97,7 +97,7 @@ context::SET_t variable_symbol::evaluate(const expressions::evaluation_context& 
 {
     auto [name, evaluated_subscript] = evaluate_symbol(eval_ctx);
 
-    auto val = get_var_sym_value(eval_ctx.hlasm_ctx, name, evaluated_subscript, symbol_range, eval_ctx.diags);
+    auto val = get_var_sym_value(eval_ctx, name, evaluated_subscript, symbol_range);
 
     return val;
 }

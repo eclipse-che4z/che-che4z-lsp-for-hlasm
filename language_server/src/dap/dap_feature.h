@@ -64,6 +64,7 @@ public:
     void on_variables(const request_id& request_seq, const nlohmann::json& args);
     void on_continue(const request_id& request_seq, const nlohmann::json& args);
     void on_pause(const request_id& request_seq, const nlohmann::json& args);
+    void on_evaluate(const request_id& request_seq, const nlohmann::json& args);
 
     void idle_handler(const std::atomic<unsigned char>* yield_indicator);
 

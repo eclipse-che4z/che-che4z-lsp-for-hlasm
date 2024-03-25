@@ -5,6 +5,7 @@
 #### Added
 - New document outline implementation
 - Fallback to WebAssembly language server automatically
+- Watch support in the Macro tracer
 
 #### Fixed
 - Unknown requests were dropped without a proper response

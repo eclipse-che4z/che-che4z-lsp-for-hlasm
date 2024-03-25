@@ -21,6 +21,7 @@
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
+#include "expressions/evaluation_context.h"
 #include "instruction.h"
 #include "lexing/lexer.h"
 #include "lexing/tools.h"
@@ -204,9 +205,9 @@ std::vector<macro_data_ptr>& hlasm_context::ensure_dynamic_ptrs_count()
     return dp;
 }
 
-hlasm_context::sysvar_map hlasm_context::get_system_variables(const code_scope& scope)
+system_variable_map hlasm_context::get_system_variables(const code_scope& scope)
 {
-    sysvar_map result;
+    system_variable_map result;
     add_global_system_variables(result);
     auto match = [&scope](const auto& e) { return &scope == &e; };
     auto it = std::find_if(scope_stack_.rbegin(), scope_stack_.rend(), match);
@@ -215,7 +216,7 @@ hlasm_context::sysvar_map hlasm_context::get_system_variables(const code_scope& 
     return result;
 }
 
-void hlasm_context::add_global_system_variables(sysvar_map& sysvars)
+void hlasm_context::add_global_system_variables(system_variable_map& sysvars)
 {
     // Available without macro scope
     auto [datc_val, date_val, systime] = time_sysvars(scope_stack_.front().time);
@@ -247,7 +248,7 @@ void hlasm_context::add_global_system_variables(sysvar_map& sysvars)
         true));
 }
 
-void hlasm_context::add_scoped_system_variables(sysvar_map& sysvars, size_t skip_last, bool globals_only)
+void hlasm_context::add_scoped_system_variables(system_variable_map& sysvars, size_t skip_last, bool globals_only)
 {
     struct view_t
     {
@@ -674,23 +675,27 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
 
 const hlasm_context::global_variable_storage& hlasm_context::globals() const { return globals_; }
 
-variable_symbol* hlasm_context::get_var_sym(id_index name) const
+variable_symbol* hlasm_context::get_var_sym(
+    id_index name, const code_scope& scope, const system_variable_map& sysvars) const
 {
-    const auto* scope = curr_scope();
-    if (auto tmp = scope->variables.find(name); tmp != scope->variables.end())
+    if (auto tmp = scope.variables.find(name); tmp != scope.variables.end())
         return tmp->second.ref;
 
-    if (auto s = system_variables.find(name); s != system_variables.end() && (is_in_macro() || s->second.second))
+    if (auto s = sysvars.find(name); s && (scope.is_in_macro() || s->second.second))
         return s->second.first.get();
 
-    if (scope->is_in_macro())
+    if (scope.is_in_macro())
     {
-        auto m_tmp = scope->this_macro->named_params.find(name);
-        if (m_tmp != scope->this_macro->named_params.end())
+        auto m_tmp = scope.this_macro->named_params.find(name);
+        if (m_tmp != scope.this_macro->named_params.end())
             return m_tmp->second.get();
     }
 
     return nullptr;
+}
+variable_symbol* hlasm_context::get_var_sym(id_index name) const
+{
+    return get_var_sym(name, current_scope(), system_variables);
 }
 
 void hlasm_context::add_opencode_sequence_symbol(std::unique_ptr<opencode_sequence_symbol> seq_sym)
@@ -1104,14 +1109,20 @@ hlasm_context::name_result hlasm_context::try_get_symbol_name(id_index symbol) c
     return std::make_pair(true, symbol);
 }
 
-SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
+const code_scope& get_current_scope(const context::hlasm_context& ctx) { return ctx.current_scope(); }
+variable_symbol* get_var_sym(const expressions::evaluation_context& eval_ctx, id_index name)
+{
+    return eval_ctx.hlasm_ctx.get_var_sym(
+        name, eval_ctx.active_scope(), eval_ctx.sysvars ? *eval_ctx.sysvars : eval_ctx.hlasm_ctx.system_variables);
+}
+
+SET_t get_var_sym_value(const expressions::evaluation_context& eval_ctx,
     id_index name,
     std::span<const context::A_t> subscript,
-    range symbol_range,
-    diagnostic_op_consumer& diags)
+    range symbol_range)
 {
-    auto var = hlasm_ctx.get_var_sym(name);
-    if (!test_symbol_for_read(var, subscript, symbol_range, diags, name.to_string_view()))
+    auto var = get_var_sym(eval_ctx, name);
+    if (!test_symbol_for_read(var, subscript, symbol_range, eval_ctx.diags, name.to_string_view()))
         return SET_t();
 
     if (auto set_sym = var->access_set_symbol_base())

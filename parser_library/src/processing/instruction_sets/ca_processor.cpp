@@ -107,7 +107,7 @@ ca_processor::SET_info ca_processor::get_SET_symbol(const semantics::complete_st
 
     context::set_symbol_base* set_sym = nullptr;
 
-    if (auto var_symbol = hlasm_ctx.get_var_sym(name); var_symbol)
+    if (auto var_symbol = get_var_sym(eval_ctx, name); var_symbol)
     {
         if (var_symbol->access_macro_param_base())
         {
@@ -220,7 +220,7 @@ bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, st
             if (id.empty())
                 continue;
 
-            if (auto var_sym = hlasm_ctx.get_var_sym(id))
+            if (auto var_sym = get_var_sym(eval_ctx, id))
             {
                 if (var_sym->access_set_symbol_base())
                     add_diagnostic(diagnostic_op::error_E051(id.to_string_view(), ca_op->operand_range));

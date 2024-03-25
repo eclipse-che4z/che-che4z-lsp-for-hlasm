@@ -49,7 +49,7 @@ public:
         std::vector<semantics::literal_si> literals;
     };
 
-    parse_result parse_operand_field(std::string field,
+    parse_result parse_operand_field(std::string_view field,
         bool after_substitution,
         semantics::range_provider field_range,
         size_t logical_column,

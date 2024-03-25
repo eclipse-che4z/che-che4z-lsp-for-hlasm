@@ -97,4 +97,16 @@ suite('Debugging Test Suite', () => {
 
         await helper.debugStop();
     }).timeout(20000).slow(10000);
+
+    // Watch/evaluate
+    test('Evaluate', async () => {
+        const session = await helper.debugStartSession();
+
+        const sysasm = await session.customRequest('evaluate', { expression: "&SYSASM" });
+
+        assert.deepStrictEqual(sysasm, { result: 'HIGH LEVEL ASSEMBLER', variablesReference: 0 });
+
+        await helper.debugStop();
+
+    }).timeout(20000).slow(10000);
 });

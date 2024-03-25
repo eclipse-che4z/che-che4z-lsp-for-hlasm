@@ -41,7 +41,7 @@ constexpr bool is_multiline(std::string_view v)
     return !v.empty();
 }
 
-statement_fields_parser::parse_result statement_fields_parser::parse_operand_field(std::string field,
+statement_fields_parser::parse_result statement_fields_parser::parse_operand_field(std::string_view field,
     bool after_substitution,
     semantics::range_provider field_range,
     size_t logical_column,

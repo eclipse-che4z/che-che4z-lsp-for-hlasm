@@ -55,6 +55,16 @@ struct notif_mock
     }
 };
 
+struct error_msg
+{
+    request_id id;
+    std::string command;
+    int code;
+    std::string message;
+    nlohmann::json details;
+
+    bool operator==(const error_msg&) const = default;
+};
 
 
 struct response_provider_mock : public response_provider
@@ -76,12 +86,21 @@ struct response_provider_mock : public response_provider
         if (method == "exited")
             exited = true;
     }
-    void respond_error(const request_id&, std::string_view, int, std::string_view, const nlohmann::json&) override {}
+    void respond_error(const request_id& id,
+        std::string_view command,
+        int code,
+        std::string_view message,
+        const nlohmann::json& details) override
+    {
+        errors.push_back({ id, std::string(command), code, std::string(message), details });
+    }
 
+    // response_->respond_error(request_seq, "evaluate", -1, std::string_view(result.result()), nlohmann::json());
     void register_cancellable_request(const request_id&, request_invalidator) override {}
 
     std::vector<response_mock> responses;
     std::vector<notif_mock> notifs;
+    std::vector<error_msg> errors;
     bool stopped = false;
     bool exited = false;
 
@@ -90,6 +109,7 @@ struct response_provider_mock : public response_provider
     {
         responses.clear();
         notifs.clear();
+        errors.clear();
     }
 };
 
@@ -460,4 +480,45 @@ TEST_F(feature_launch_test, pause)
     resp_provider.reset();
 
     feature.on_disconnect(request_id(2), {});
+}
+
+namespace {
+const std::string evaluate_file = R"(
+F  DS   A
+)";
+}
+
+TEST_F(feature_launch_test, evaluate)
+{
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, evaluate_file.c_str(), evaluate_file.size());
+    ws_mngr->idle_handler();
+
+    feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
+    ws_mngr->idle_handler();
+
+    wait_for_stopped();
+    std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
+    EXPECT_EQ(resp_provider.responses, expected_resp);
+    resp_provider.reset();
+
+    feature.on_evaluate(request_id(1), nlohmann::json { { "expression", "&SYSASM" } });
+    expected_resp = { {
+        request_id(1),
+        "evaluate",
+        nlohmann::json {
+            { "result", "HIGH LEVEL ASSEMBLER" },
+            { "variablesReference", 0 },
+        },
+    } };
+    EXPECT_EQ(resp_provider.responses, expected_resp);
+    resp_provider.reset();
+
+    feature.on_evaluate(request_id(2), nlohmann::json { { "expression", "&BAD" } });
+    std::vector<error_msg> expected_errors = {
+        { request_id(2), "evaluate", -1, "Variable not found", nlohmann::json() },
+    };
+    EXPECT_EQ(resp_provider.errors, expected_errors);
+    resp_provider.reset();
+
+    feature.on_disconnect(request_id(3), {});
 }

@@ -219,6 +219,9 @@ struct parser_holder
     virtual void op_rem_body_mach() const = 0;
     virtual void op_rem_body_asm() const = 0;
 
+    virtual semantics::operand_ptr ca_op_expr() const = 0;
+    virtual semantics::operand_ptr operand_mach() const = 0;
+
     struct mac_op_data
     {
         semantics::op_rem operands;
@@ -230,7 +233,7 @@ struct parser_holder
 
     virtual semantics::literal_si literal_reparse() const = 0;
 
-    void prepare_parser(const std::string& text,
+    void prepare_parser(std::string_view text,
         context::hlasm_context* hlasm_ctx,
         diagnostic_op_consumer* diags,
         semantics::range_provider range_prov,

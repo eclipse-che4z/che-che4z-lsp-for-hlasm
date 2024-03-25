@@ -226,10 +226,8 @@ bool iequals(std::string_view l, std::string_view r)
     });
 }
 
-context::C_t get_current_macro_name_field(const context::hlasm_context& ctx)
+context::C_t get_current_macro_name_field(const context::code_scope& scope)
 {
-    const auto& scope = ctx.current_scope();
-
     if (!scope.is_in_macro())
         return {};
     return scope.this_macro->named_params.at(context::id_storage::well_known::SYSLIST)
@@ -276,7 +274,9 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
     if (attribute == context::data_attr_kind::D)
         return defined;
 
-    if (!eval_ctx.hlasm_ctx.current_scope().is_in_macro())
+    const auto& scope = eval_ctx.active_scope();
+
+    if (!scope.is_in_macro())
         literals.mentioned_in_ca_expr(std::shared_ptr<const expressions::data_definition>(lit, &lit->get_dd()));
 
     if (attribute == context::data_attr_kind::O)
@@ -285,7 +285,7 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
     {
         if (!defined)
         {
-            auto name_field = get_current_macro_name_field(eval_ctx.hlasm_ctx);
+            auto name_field = get_current_macro_name_field(scope);
             if (name_field == lit->get_text())
                 return "M";
 
@@ -349,7 +349,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
     auto [var_name, expr_subscript] = vs->evaluate_symbol(eval_ctx);
 
     // get symbol
-    auto var_symbol = eval_ctx.hlasm_ctx.get_var_sym(var_name);
+    auto var_symbol = get_var_sym(eval_ctx, var_name);
 
     if (!var_symbol)
     {
@@ -415,8 +415,7 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
     range var_range,
     const evaluation_context& eval_ctx) const
 {
-    context::SET_t substituted_name =
-        get_var_sym_value(eval_ctx.hlasm_ctx, var_name, expr_subscript, var_range, eval_ctx.diags);
+    context::SET_t substituted_name = get_var_sym_value(eval_ctx, var_name, expr_subscript, var_range);
 
     if (substituted_name.type() != context::SET_t_enum::C_TYPE)
     {
@@ -431,7 +430,7 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
     {
         if (auto lit = reparse_substituted_literal(text, var_range, eval_ctx))
             return evaluate_literal(lit, eval_ctx);
-        else if (iequals(text, get_current_macro_name_field(eval_ctx.hlasm_ctx)))
+        else if (iequals(text, get_current_macro_name_field(eval_ctx.active_scope())))
             return "M";
         else
             return context::symbol_attributes::default_ca_value(attribute);

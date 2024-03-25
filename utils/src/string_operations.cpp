@@ -107,4 +107,6 @@ std::string to_upper_copy(std::string s)
     return s;
 }
 
+std::string to_upper_copy(std::string_view s) { return to_upper_copy(std::string(s)); }
+
 } // namespace hlasm_plugin::utils

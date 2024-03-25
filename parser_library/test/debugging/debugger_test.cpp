@@ -17,6 +17,7 @@
 #include <regex>
 #include <string_view>
 #include <thread>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -1270,6 +1271,96 @@ TEST(debugger, invalid_file)
 
     while (!resp.resolved())
         d.analysis_step(nullptr);
+
+    d.disconnect();
+}
+
+TEST(debugger, evaluate)
+{
+    std::string open_code = R"(
+    MACRO
+    INNER
+&A  SETA 123
+&B  SETB 1
+&C  SETC 'ABCDEF'
+    MEND
+*
+    MACRO
+    OUTER
+    INNER &SYSLIST(1),&SYSLIST(2),&SYSLIST(3)
+    MEND
+*
+C   CSECT
+    DS    F
+L   DS    F
+*
+    OUTER X,Y,Z
+)";
+
+
+    file_manager_impl file_manager;
+    NiceMock<debugger_configuration_provider_mock> dc_provider;
+    EXPECT_CALL(dc_provider, provide_debugger_configuration).WillRepeatedly(Invoke([&file_manager](auto, auto r) {
+        r.provide({ .fm = &file_manager });
+    }));
+    debugger d;
+    debug_event_consumer_s_mock m(d);
+
+    const resource_location file_loc("test");
+
+    file_manager.did_open_file(file_loc, 0, open_code);
+
+    breakpoint bp(6);
+    d.breakpoints(file_loc.get_uri(), sequence<breakpoint>(&bp, 1));
+
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(file_loc.get_uri(), dc_provider, false, resp);
+
+    m.wait_for_stopped();
+
+    std::tuple<std::tuple<std::string_view, frame_id_t>, std::tuple<std::string_view, bool, bool>> cases[] = {
+        { { "&SYSNEST", -1 }, { "2", false, false } },
+        { { "&SYSNEST", 2 }, { "2", false, false } },
+        { { "&SYSNEST", 1 }, { "1", false, false } },
+        { { "&SYSNEST", 0 }, { "", true, false } },
+        { { "&A", 2 }, { "123", false, false } },
+        { { "&B", 2 }, { "TRUE", false, false } },
+        { { "&C", 2 }, { "ABCDEF", false, false } },
+        { { "&A", 1 }, { "", true, false } },
+        { { "&B", 1 }, { "", true, false } },
+        { { "&C", 1 }, { "", true, false } },
+        { { "&A+&A", -1 }, { "246", false, false } },
+        { { "(&B)", -1 }, { "TRUE", false, false } },
+        { { "(&A GE 100)", -1 }, { "TRUE", false, false } },
+        { { "(&A LT 100)", -1 }, { "FALSE", false, false } },
+        { { "'&C'", -1 }, { "ABCDEF", false, false } },
+        { { "'&C'(3,2)", -1 }, { "CD", false, false } },
+        { { "'&SYSLIST(&SYSNEST)'", 2 }, { "Y", false, false } },
+        { { "'&SYSLIST(&SYSNEST)'", 1 }, { "X", false, false } },
+        { { "'&SYSLIST(&SYSNEST)'", 0 }, { "", true, false } },
+        { { "&SYSLIST", -1 }, { "(,X,Y,Z)", false, true } },
+        { { "L", -1 }, { "C + X'4'", false, false } },
+        { { "L", 0 }, { "C + X'4'", false, false } },
+        { { "L", 1 }, { "C + X'4'", false, false } },
+        { { "L", 2 }, { "C + X'4'", false, false } },
+        { { "K'&C", 2 }, { "6", false, false } },
+        { { "&A + &A", -1 }, { "", true, false } },
+    };
+
+    for (const auto& [args, expected] : cases)
+    {
+        const auto& [expr, frame] = args;
+        SCOPED_TRACE(testing::Message() << expr << ", " << frame);
+
+        const auto& [exp, error, structured] = expected;
+        auto res = d.evaluate(sequence<char>(expr), frame);
+
+        if (!exp.empty())
+            EXPECT_EQ(std::string_view(res.result()), exp);
+        EXPECT_EQ(res.is_error(), error);
+        EXPECT_EQ(!!res.var_ref(), structured);
+    }
 
     d.disconnect();
 }

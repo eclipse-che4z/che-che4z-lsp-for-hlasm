@@ -37,6 +37,7 @@ namespace hlasm_plugin::parser_library {
 class library_info;
 } // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::expressions {
+struct evaluation_context;
 class mach_expression;
 } // namespace hlasm_plugin::parser_library::expressions
 namespace hlasm_plugin::parser_library::context {
@@ -45,15 +46,31 @@ class using_collection;
 
 namespace hlasm_plugin::parser_library::context {
 
+class system_variable_map
+{
+    std::unordered_map<id_index, std::pair<std::shared_ptr<system_variable>, bool>> map;
+
+public:
+    void insert(std::pair<id_index, std::pair<std::shared_ptr<system_variable>, bool>> p) { map.insert(std::move(p)); }
+
+    const decltype(map)::value_type* find(id_index name) const
+    {
+        auto it = map.find(name);
+        if (it == map.end())
+            return nullptr;
+        return std::to_address(it);
+    }
+
+    auto begin() const { return map.begin(); }
+    auto end() const { return map.end(); }
+};
+
 // class helping to perform semantic analysis of hlasm source code
 // wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one
 // place contains methods that store gathered information from semantic analysis helping it to correctly evaluate parsed
 // code
 class hlasm_context
 {
-public:
-    using sysvar_map = std::unordered_map<id_index, std::pair<std::shared_ptr<system_variable>, bool>>;
-
 private:
     using macro_storage = std::unordered_map<id_index, std::vector<std::pair<macro_def_ptr, opcode_generation>>>;
     using copy_member_storage = std::unordered_map<id_index, copy_member_ptr>;
@@ -64,7 +81,7 @@ private:
 
     // storage of global variables
     global_variable_storage globals_;
-    sysvar_map system_variables;
+    system_variable_map system_variables;
 
     // storage of defined macros
     macro_storage macros_;
@@ -94,8 +111,8 @@ private:
 
     // map of active instructions in HLASM
     static void init_instruction_map(opcode_map& opcodes, id_storage& ids, instruction_set_version active_instr_set);
-    void add_global_system_variables(sysvar_map& sysvars);
-    void add_scoped_system_variables(sysvar_map& sysvars, size_t skip_last, bool globals_only);
+    void add_global_system_variables(system_variable_map& sysvars);
+    void add_scoped_system_variables(system_variable_map& sysvars, size_t skip_last, bool globals_only);
 
     std::vector<macro_data_ptr>& ensure_dynamic_ptrs_count();
     std::vector<macro_data_ptr> dynamic_ptrs_vector;
@@ -127,6 +144,9 @@ private:
     unsigned mnote_max = 0;
 
     label_storage opencode_sequence_symbols;
+
+    // return variable symbol from an arbitrary scope
+    variable_symbol* get_var_sym(id_index name, const code_scope& scope, const system_variable_map& sysvars) const;
 
 public:
     hlasm_context(utils::resource::resource_location file_loc = utils::resource::resource_location(""),
@@ -195,8 +215,7 @@ public:
     const global_variable_storage& globals() const;
 
     // return variable symbol in current scope
-    // returns empty shared_ptr if there is none in the current scope
-    variable_symbol* get_var_sym(id_index name) const;
+    variable_symbol* get_var_sym(id_index name) const; // testing only
 
     // registers sequence symbol
     void add_opencode_sequence_symbol(std::unique_ptr<opencode_sequence_symbol> seq_sym);
@@ -319,7 +338,9 @@ public:
 
     const auto& get_opencode_sequence_symbols() const noexcept { return opencode_sequence_symbols; }
 
-    sysvar_map get_system_variables(const code_scope&);
+    system_variable_map get_system_variables(const code_scope&);
+
+    friend variable_symbol* get_var_sym(const expressions::evaluation_context& eval_ctx, id_index name);
 };
 
 bool test_symbol_for_read(const variable_symbol* var,
@@ -328,12 +349,11 @@ bool test_symbol_for_read(const variable_symbol* var,
     diagnostic_op_consumer& diags,
     std::string_view var_name);
 
-SET_t get_var_sym_value(const hlasm_context& hlasm_ctx,
-    id_index name,
-    std::span<const A_t> subscript,
-    range symbol_range,
-    diagnostic_op_consumer& diags);
+SET_t get_var_sym_value(
+    const expressions::evaluation_context& eval_ctx, id_index name, std::span<const A_t> subscript, range symbol_range);
 
+const code_scope& get_current_scope(const context::hlasm_context&);
+variable_symbol* get_var_sym(const expressions::evaluation_context& eval_ctx, id_index name);
 } // namespace hlasm_plugin::parser_library::context
 
 #endif

@@ -198,7 +198,7 @@ mach_expression::value_t mach_expr_location_counter::evaluate(
 {
     auto location_counter = mi.get_loctr();
     if (!location_counter.has_value())
-        return context::address(context::address::base {}, 0, {});
+        return context::address();
     else
         return std::move(*location_counter);
 }

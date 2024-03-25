@@ -21,12 +21,14 @@
 #include "context/literal_pool.h"
 #include "error_strategy.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
+#include "expressions/conditional_assembly/ca_expression.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "hlasmparser_multiline.h"
 #include "hlasmparser_singleline.h"
 #include "lexing/input_source.h"
 #include "lexing/token_stream.h"
 #include "processing/op_code.h"
+#include "semantics/operand.h"
 #include "utils/string_operations.h"
 
 namespace hlasm_plugin::parser_library::parsing {
@@ -117,6 +119,9 @@ struct parser_holder_impl final : parser_holder
         auto rule = get_parser().op_rem_body_mac();
         return { std::move(rule->line), rule->line_range, rule->line_logical_column };
     }
+
+    operand_ptr ca_op_expr() const override { return std::move(get_parser().ca_op_expr()->op); }
+    operand_ptr operand_mach() const override { return std::move(get_parser().operand_mach()->op); }
 
     semantics::literal_si literal_reparse() const override { return std::move(get_parser().literal_reparse()->value); }
 };
@@ -439,7 +444,7 @@ std::string parser_impl::get_context_text(const antlr4::ParserRuleContext* ctx) 
 
 parser_holder::~parser_holder() = default;
 
-void parser_holder::prepare_parser(const std::string& text,
+void parser_holder::prepare_parser(std::string_view text,
     context::hlasm_context* hlasm_ctx,
     diagnostic_op_consumer* diags,
     semantics::range_provider range_prov,
