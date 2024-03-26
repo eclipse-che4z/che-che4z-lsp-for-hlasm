@@ -32,6 +32,7 @@
 #include "ebcdic_encoding.h"
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expr_visitor.h"
+#include "output_handler.h"
 #include "postponed_statement_impl.h"
 #include "processing/branching_provider.h"
 #include "processing/opencode_provider.h"
@@ -740,10 +741,12 @@ asm_processor::asm_processor(const analyzing_context& ctx,
     workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
     opencode_provider& open_code,
-    const processing_manager& proc_mgr)
+    const processing_manager& proc_mgr,
+    output_handler* output)
     : low_language_processor(ctx, branch_provider, lib_provider, parser, proc_mgr)
     , table_(create_table())
     , open_code_(&open_code)
+    , output(output)
 {}
 
 void asm_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
@@ -858,6 +861,7 @@ asm_processor::process_table_t asm_processor::create_table()
     table.emplace(context::id_index("MNOTE"), [this](rebuilt_statement&& stmt) { process_MNOTE(std::move(stmt)); });
     table.emplace(context::id_index("CXD"), [this](rebuilt_statement&& stmt) { process_CXD(std::move(stmt)); });
     table.emplace(context::id_index("TITLE"), [this](rebuilt_statement&& stmt) { process_TITLE(std::move(stmt)); });
+    table.emplace(context::id_index("PUNCH"), [this](rebuilt_statement&& stmt) { process_PUNCH(std::move(stmt)); });
 
     return table;
 }
@@ -1395,6 +1399,9 @@ void asm_processor::process_MNOTE(rebuilt_statement&& stmt)
     sanitized.reserve(text.size());
     utils::append_utf8_sanitized(sanitized, text);
 
+    if (output)
+        output->mnote(level.value(), sanitized);
+
     add_diagnostic(diagnostic_op::mnote_diagnostic(level.value(), sanitized, r));
 
     hlasm_ctx.update_mnote_max((unsigned)level.value());
@@ -1448,6 +1455,51 @@ void asm_processor::process_TITLE(rebuilt_statement&& stmt)
         context::ordinary_assembly_dependency_solver(hlasm_ctx.ord_ctx, lib_info)
             .derive_current_dependency_evaluation_context(),
         lib_info);
+}
+
+void asm_processor::process_PUNCH(rebuilt_statement&& stmt)
+{
+    static constexpr std::string_view PUNCH = "PUNCH";
+    find_sequence_symbol(stmt);
+
+    const auto& ops = stmt.operands_ref().value;
+    if (ops.size() != 1)
+    {
+        add_diagnostic(diagnostic_op::error_A011_exact(PUNCH, 1, stmt.operands_ref().field_range));
+        return;
+    }
+
+    std::string_view text;
+
+    const auto& r = ops.front()->operand_range;
+    if (auto* asm_op = ops.front()->access_asm(); asm_op && asm_op->kind == semantics::asm_kind::STRING)
+        text = asm_op->access_string()->value;
+    else
+    {
+        add_diagnostic(diagnostic_op::warning_A300_op_apostrophes_missing(PUNCH, r));
+        return;
+    }
+
+    if (text.empty())
+    {
+        add_diagnostic(diagnostic_op::warning_A302_punch_empty(r));
+        return;
+    }
+
+    if (utils::length_utf32_no_validation(text) > checking::string_max_length)
+    {
+        add_diagnostic(diagnostic_op::error_A108_PUNCH_too_long(r));
+        return;
+    }
+
+    if (!output)
+        return;
+
+    std::string sanitized;
+    sanitized.reserve(text.size());
+    utils::append_utf8_sanitized(sanitized, text);
+
+    output->punch(sanitized);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

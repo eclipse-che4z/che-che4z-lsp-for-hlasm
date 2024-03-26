@@ -28,6 +28,7 @@ namespace hlasm_plugin::parser_library {
 struct analyzing_context;
 class diagnosable_ctx;
 struct range;
+class output_handler;
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::context {
@@ -63,7 +64,8 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
         opencode_provider& open_code,
-        const processing_manager& proc_mgr);
+        const processing_manager& proc_mgr,
+        output_handler* output);
 
     void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
     struct extract_copy_id_result
@@ -81,6 +83,7 @@ public:
 
 private:
     opencode_provider* open_code_;
+    output_handler* output;
     process_table_t create_table();
 
     context::id_index find_sequence_symbol(const rebuilt_statement& stmt);
@@ -109,6 +112,7 @@ private:
     void process_MNOTE(rebuilt_statement&& stmt);
     void process_CXD(rebuilt_statement&& stmt);
     void process_TITLE(rebuilt_statement&& stmt);
+    void process_PUNCH(rebuilt_statement&& stmt);
 
     template<checking::data_instr_type instr_type>
     void process_data_instruction(rebuilt_statement&& stmt);

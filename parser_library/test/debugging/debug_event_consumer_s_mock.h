@@ -23,6 +23,9 @@ class debug_event_consumer_s_mock : public hlasm_plugin::parser_library::debuggi
     bool exited_ = false;
     size_t stop_count = 0;
 
+    std::pair<unsigned char, std::string> last_mnote;
+    std::string last_punch;
+
     hlasm_plugin::parser_library::debugging::debugger& d;
 
 public:
@@ -37,10 +40,20 @@ public:
 
     void exited(int exit_code) override;
 
+    void mnote(unsigned char level, hlasm_plugin::parser_library::sequence<char> text) override
+    {
+        last_mnote.first = level;
+        last_mnote.second = std::string_view(text);
+    }
+
+    void punch(hlasm_plugin::parser_library::sequence<char> text) override { last_punch = std::string_view(text); }
 
     void wait_for_stopped();
 
     void wait_for_exited();
+
+    const auto& get_last_mnote() const { return last_mnote; }
+    const auto& get_last_punch() const { return last_punch; }
 };
 
 #endif // !HLASMPLUGIN_PARSERLIBRARY_TEST_DEBUG_EVENT_CONSUMER_S_MOCK_H

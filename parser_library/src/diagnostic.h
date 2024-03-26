@@ -184,7 +184,7 @@ struct diagnostic_op
 
     static diagnostic_op error_A107_RMODE_op_format(const range& range);
 
-    static diagnostic_op error_A108_PUNCH_string_chars(const range& range);
+    static diagnostic_op error_A108_PUNCH_too_long(const range& range);
 
     static diagnostic_op error_A109_PRINT_op_format(const range& range);
 
@@ -415,6 +415,8 @@ struct diagnostic_op
     static diagnostic_op warning_A300_op_apostrophes_missing(std::string_view instr_name, const range& range);
 
     static diagnostic_op error_A301_op_apostrophes_missing(std::string_view instr_name, const range& range);
+
+    static diagnostic_op warning_A302_punch_empty(const range& range);
 
     static diagnostic_op error_NOERR(const range& range);
 

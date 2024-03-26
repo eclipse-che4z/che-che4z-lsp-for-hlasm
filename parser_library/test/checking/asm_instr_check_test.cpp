@@ -1043,16 +1043,6 @@ TEST_F(instruction_test, print)
     EXPECT_FALSE(checker.check("PRINT", test_extrn_true_two, range(), collector));
 }
 
-TEST_F(instruction_test, punch)
-{
-    EXPECT_FALSE(checker.check("PUNCH", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("PUNCH", test_punch_true, range(), collector));
-    EXPECT_FALSE(checker.check("PUNCH", test_punch_false_one, range(), collector));
-    EXPECT_FALSE(checker.check("PUNCH", test_punch_false_two, range(), collector));
-    EXPECT_FALSE(checker.check("PUNCH", test_stack_true_one, range(), collector));
-    EXPECT_FALSE(checker.check("PUNCH", test_extrn_true_two, range(), collector));
-}
-
 TEST_F(instruction_test, rmode)
 {
     EXPECT_FALSE(checker.check("RMODE", test_no_operand_true, range(), collector));

@@ -40,6 +40,7 @@
 #include "library_info_transitional.h"
 #include "macro_param_variable.h"
 #include "ordinary_symbol_variable.h"
+#include "output_handler.h"
 #include "parsing/parser_impl.h"
 #include "processing/op_code.h"
 #include "processing/statement.h"
@@ -141,7 +142,7 @@ evaluated_expression_t::~evaluated_expression_t()
 // Implements DAP for macro tracing. Starts analyzer in a separate thread
 // then controls the flow of analyzer by implementing processing_tracer
 // interface.
-class debugger::impl final : public processing::statement_analyzer
+class debugger::impl final : public processing::statement_analyzer, output_handler
 {
     bool debug_ended_ = false;
     bool continue_ = false;
@@ -211,6 +212,7 @@ class debugger::impl final : public processing::statement_analyzer
                 std::move(dc.opts),
                 std::move(dc.pp_opts),
                 &vfm,
+                static_cast<output_handler*>(this),
             });
 
         a.register_stmt_analyzer(this);
@@ -219,6 +221,18 @@ class debugger::impl final : public processing::statement_analyzer
         lib_provider_ = &debug_provider;
 
         co_await a.co_analyze();
+    }
+
+    void mnote(unsigned char level, std::string_view text) override
+    {
+        if (event_)
+            event_->mnote(level, sequence<char>(text));
+    }
+
+    void punch(std::string_view text) override
+    {
+        if (event_)
+            event_->punch(sequence<char>(text));
     }
 
 public:

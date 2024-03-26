@@ -253,17 +253,14 @@ diagnostic_op diagnostic_op::error_A106_TITLE_string_chars(const range& range)
 diagnostic_op diagnostic_op::error_A107_RMODE_op_format(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
-        "A108",
+        "A107",
         "Error at RMODE instruction: operand value must be one of the following: 24, 31, 64, ANY",
         range);
 }
 
-diagnostic_op diagnostic_op::error_A108_PUNCH_string_chars(const range& range)
+diagnostic_op diagnostic_op::error_A108_PUNCH_too_long(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error,
-        "A108",
-        "Error at PUNCH instruction: operand value must be a string of maximum 80 characters",
-        range);
+    return diagnostic_op(diagnostic_severity::error, "A108", "Punch record exceeds 80 characters", range);
 }
 
 diagnostic_op diagnostic_op::error_A109_PRINT_op_format(const range& range)
@@ -1288,6 +1285,11 @@ diagnostic_op diagnostic_op::error_A301_op_apostrophes_missing(std::string_view 
         "A301",
         concat("Error at ", instr_name, " instruction: operand not properly enclosed in quotes"),
         range);
+}
+
+diagnostic_op diagnostic_op::warning_A302_punch_empty(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning, "A302", "Operand is empty, record not punched", range);
 }
 
 diagnostic_op diagnostic_op::error_NOERR(const range& range)

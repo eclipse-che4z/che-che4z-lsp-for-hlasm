@@ -54,6 +54,7 @@ class source_info_processor;
 
 namespace hlasm_plugin::parser_library {
 struct fade_message_s;
+class output_handler;
 class virtual_file_monitor;
 class virtual_file_handle;
 
@@ -81,6 +82,7 @@ class analyzer_options
     std::vector<preprocessor_options> preprocessor_args;
     virtual_file_monitor* vf_monitor = nullptr;
     std::shared_ptr<std::vector<fade_message_s>> fade_messages = nullptr;
+    output_handler* output = nullptr;
 
     void set(utils::resource::resource_location rl) { file_loc = std::move(rl); }
     void set(workspaces::parse_lib_provider* lp) { lib_provider = lp; }
@@ -94,6 +96,7 @@ class analyzer_options
     void set(std::vector<preprocessor_options> pp) { preprocessor_args = std::move(pp); }
     void set(virtual_file_monitor* vfm) { vf_monitor = vfm; }
     void set(std::shared_ptr<std::vector<fade_message_s>> fmc) { fade_messages = fmc; };
+    void set(output_handler* o) { output = o; }
 
     context::hlasm_context& get_hlasm_context();
     analyzing_context& get_context();
@@ -124,8 +127,9 @@ public:
         constexpr auto vfm_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, virtual_file_monitor*>);
         constexpr auto fmc_cnt =
             (0 + ... + std::is_same_v<std::decay_t<Args>, std::shared_ptr<std::vector<fade_message_s>>>);
+        constexpr auto o_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, output_handler*>);
         constexpr auto cnt = rl_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt + pp_cnt
-            + vfm_cnt + fmc_cnt;
+            + vfm_cnt + fmc_cnt + o_cnt;
 
         static_assert(rl_cnt <= 1, "Duplicate resource_location");
         static_assert(lib_cnt <= 1, "Duplicate parse_lib_provider");
@@ -140,6 +144,7 @@ public:
         static_assert(fmc_cnt <= 1, "Duplicate fade message container");
         static_assert(!(ac_cnt && (ao_cnt || ids_cnt || pp_cnt)),
             "Do not specify both analyzing_context and asm_option, id_storage or preprocessor_args");
+        static_assert(o_cnt <= 1, "Duplicate output_handler");
         static_assert(cnt == sizeof...(Args), "Unrecognized argument provided");
 
         (set(std::forward<Args>(args)), ...);

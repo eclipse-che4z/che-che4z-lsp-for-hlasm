@@ -43,6 +43,7 @@ target_sources(parser_library PRIVATE
 	location.h
 	preprocessor_options.h
 	protocol.cpp
+	output_handler.h
 	tagged_index.h
 	virtual_file_monitor.h
 	workspace_manager.cpp

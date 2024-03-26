@@ -26,6 +26,7 @@ target_sources(library_test PRIVATE
 	message_consumer_mock.h
 	metrics_test.cpp
 	mock_parse_lib_provider.h
+	output_handler_mock.h
 	stability_test.cpp
 	utf_conv_test.cpp
 	workspace_manager_response_mock.h

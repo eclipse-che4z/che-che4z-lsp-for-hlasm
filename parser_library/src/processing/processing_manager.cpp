@@ -40,7 +40,8 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     std::string_view file_text,
     workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
-    std::shared_ptr<std::vector<fade_message_s>> fade_msgs)
+    std::shared_ptr<std::vector<fade_message_s>> fade_msgs,
+    output_handler* output)
     : diagnosable_ctx(*ctx.hlasm_ctx)
     , ctx_(ctx)
     , hlasm_ctx_(*ctx_.hlasm_ctx)
@@ -55,8 +56,8 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     {
         case processing_kind::ORDINARY:
             provs_.emplace_back(std::make_unique<macro_statement_provider>(ctx_, parser, lib_provider, *this, *this));
-            procs_.emplace_back(
-                std::make_unique<ordinary_processor>(ctx_, *this, lib_provider, *this, parser, opencode_prov_, *this));
+            procs_.emplace_back(std::make_unique<ordinary_processor>(
+                ctx_, *this, lib_provider, *this, parser, opencode_prov_, *this, output));
             break;
         case processing_kind::COPY:
             start_copy_member(copy_start_data { data.library_member, std::move(file_loc) });

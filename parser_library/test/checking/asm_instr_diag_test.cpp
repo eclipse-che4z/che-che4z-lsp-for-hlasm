@@ -12,9 +12,13 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../output_handler_mock.h"
+
+using namespace ::testing;
 
 TEST(diagnostics, org_incorrect_second_op)
 {
@@ -1097,4 +1101,17 @@ TEST(mnote, nonprintable_characters)
 
     ASSERT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
     EXPECT_EQ(a.diags()[0].message, "<01><01>");
+}
+
+TEST(mnote, output)
+{
+    std::string input = " MNOTE 1,'test string'";
+
+    NiceMock<output_hanler_mock> output;
+
+    analyzer a(input, analyzer_options(&output));
+
+    EXPECT_CALL(output, mnote(1, StrEq("test string")));
+
+    a.analyze();
 }

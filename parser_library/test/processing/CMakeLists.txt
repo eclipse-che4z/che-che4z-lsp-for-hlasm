@@ -31,6 +31,7 @@ target_sources(library_test PRIVATE
 	opsyn_test.cpp
 	org_test.cpp
 	preprocessor_utils_test.cpp
+	punch_test.cpp
 	start_test.cpp
 )
 

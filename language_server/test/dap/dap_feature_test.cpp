@@ -522,3 +522,51 @@ TEST_F(feature_launch_test, evaluate)
 
     feature.on_disconnect(request_id(3), {});
 }
+
+namespace {
+const std::string debug_output_file = R"(
+ PUNCH 'punch test'
+ MNOTE 2,'mnote test'
+)";
+}
+
+TEST_F(feature_launch_test, debug_output)
+{
+    ws_mngr->did_open_file(
+        utils::path::path_to_uri(file_path).c_str(), 0, debug_output_file.c_str(), debug_output_file.size());
+    ws_mngr->idle_handler();
+
+    feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
+    ws_mngr->idle_handler();
+
+    wait_for_exited();
+    const std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
+    const std::vector<notif_mock> expected_notify = {
+        {
+            "output",
+            {
+                { "category", "stdout" },
+                { "output", "punch test\n" },
+            },
+        },
+        {
+            "output",
+            {
+                { "category", "stderr" },
+                { "output", "2:mnote test\n" },
+            },
+        },
+        {
+            "exited",
+            {
+                { "exitCode", 0 },
+            },
+        },
+        { "terminated", nlohmann::json() },
+    };
+    EXPECT_EQ(resp_provider.responses, expected_resp);
+    EXPECT_EQ(resp_provider.notifs, expected_notify);
+    resp_provider.reset();
+
+    feature.on_disconnect(request_id(1), {});
+}

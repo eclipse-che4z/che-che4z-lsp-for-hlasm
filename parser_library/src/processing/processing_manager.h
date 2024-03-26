@@ -33,6 +33,9 @@
 #include "utils/task.h"
 #include "workspaces/parse_lib_provider.h"
 
+namespace hlasm_plugin::parser_library {
+class output_handler;
+} // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::parsing {
 class hlasmparser_multiline;
 } // namespace hlasm_plugin::parser_library::parsing
@@ -53,7 +56,8 @@ public:
         std::string_view file_text,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
-        std::shared_ptr<std::vector<fade_message_s>> fade_msgs);
+        std::shared_ptr<std::vector<fade_message_s>> fade_msgs,
+        output_handler* output);
 
     [[nodiscard]] utils::task co_step();
 

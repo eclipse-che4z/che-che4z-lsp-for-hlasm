@@ -131,7 +131,8 @@ struct analyzer::impl
               text,
               opts.get_lib_provider(),
               field_parser,
-              std::move(opts.fade_messages))
+              std::move(opts.fade_messages),
+              opts.output)
     {}
 
     analyzing_context ctx;

@@ -57,7 +57,8 @@ public:
         processing_state_listener& state_listener,
         statement_fields_parser& parser,
         opencode_provider& open_code,
-        processing_manager& proc_mgr);
+        processing_manager& proc_mgr,
+        output_handler* output);
 
     std::optional<processing_status> get_processing_status(
         const std::optional<context::id_index>& instruction, const range& r) const override;

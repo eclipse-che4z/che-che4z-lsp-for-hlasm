@@ -34,6 +34,8 @@ protected:
 public:
     virtual void stopped(sequence<char> reason, sequence<char> addtl_info) = 0;
     virtual void exited(int exit_code) = 0;
+    virtual void mnote(unsigned char level, sequence<char> text) = 0;
+    virtual void punch(sequence<char> text) = 0;
 
     void stopped(std::string_view reason, std::string_view addtl_info)
     {

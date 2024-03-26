@@ -120,6 +120,24 @@ void dap_feature::exited(int exit_code)
     response_->notify("terminated", nlohmann::json());
 }
 
+void dap_feature::mnote(unsigned char level, hlasm_plugin::parser_library::sequence<char> text)
+{
+    response_->notify("output",
+        nlohmann::json {
+            { "category", "stderr" },
+            { "output", (std::to_string(level) + ":").append(std::string_view(text)).append("\n") },
+        });
+}
+
+void dap_feature::punch(hlasm_plugin::parser_library::sequence<char> text)
+{
+    response_->notify("output",
+        nlohmann::json {
+            { "category", "stdout" },
+            { "output", std::string(std::string_view(text)).append("\n") },
+        });
+}
+
 void dap_feature::on_initialize(const request_id& requested_seq, const nlohmann::json& args)
 {
     response_->respond(requested_seq,

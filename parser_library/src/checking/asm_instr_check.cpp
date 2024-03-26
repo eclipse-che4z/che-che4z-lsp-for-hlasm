@@ -250,35 +250,7 @@ bool punch::check(const std::vector<const asm_operand*>& to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
-    if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic)) // check number of operands
-        return false;
-    auto first = get_simple_operand(to_check[0]);
-    if (first == nullptr)
-    {
-        add_diagnostic(diagnostic_op::error_A244_PUNCH_char_string(to_check[0]->operand_range));
-        return false;
-    }
-    if (first->operand_identifier.size() < 2 || first->operand_identifier.front() != '\''
-        || first->operand_identifier.back() != '\'')
-    {
-        add_diagnostic(diagnostic_op::warning_A300_op_apostrophes_missing(name_of_instruction, first->operand_range));
-        return false;
-    }
-    int size_of_string = 0;
-    size_t i = 0;
-    for (const auto& op_id = first->operand_identifier; i < op_id.size() - 1; ++size_of_string)
-    {
-        if (op_id[i] == '&' && op_id[i + 1] == '&')
-            i += 2;
-        else if (op_id[i] == '\'' && op_id[i + 1] == '\'')
-            i += 2;
-        else
-            i++;
-    }
-    if (size_of_string <= string_max_length)
-        return true;
-    add_diagnostic(diagnostic_op::error_A108_PUNCH_string_chars(to_check[0]->operand_range));
-    return false;
+    return true;
 }
 
 print::print(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
