@@ -13,6 +13,7 @@
  */
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import { languageIdHlasm } from '../../constants';
 
 const debuggerWaitRequests = new Map<string, () => void>();
 
@@ -75,7 +76,7 @@ export async function closeAllEditors() {
 }
 
 export async function addBreakpoints(file: string, lines: Array<number>) {
-    const document = (await showDocument(file, 'hlasm')).document;
+    const document = (await showDocument(file, languageIdHlasm)).document;
 
     await vscode.debug.addBreakpoints(lines.map(l => new vscode.SourceBreakpoint(new vscode.Location(document.uri, new vscode.Position(l, 0)), true)));
 }

@@ -13,9 +13,7 @@
  */
 
 import * as vscode from 'vscode';
-import { EXTENSION_ID } from './extension';
-
-const languageIdHlasmListing = 'hlasmListing';
+import { EXTENSION_ID, initialBlanks, languageIdHlasmListing } from './constants';
 
 const ordchar = /[A-Za-z0-9$#@_]/;
 
@@ -385,7 +383,7 @@ function isolateSymbol(l: Listing, document: vscode.TextDocument, position: vsco
     const prevContinued = prevLine >= 0 && /[^ ]/.test(prevText[right]);
     const thisContinued = /[^ ]/.test(thisText[right]);
 
-    const thisOffset = prevContinued ? 15 : 0;
+    const thisOffset = prevContinued ? initialBlanks : 0;
 
     while (start > left + thisOffset && ordchar.test(thisText[start - 1]))
         --start;
@@ -404,10 +402,10 @@ function isolateSymbol(l: Listing, document: vscode.TextDocument, position: vsco
         prefix = prevText.substring(start, right);
     }
     if (thisContinued && end == right) {
-        end = left + 15;
+        end = left + initialBlanks;
         while (end < right && ordchar.test(nextText[end]))
             ++end;
-        suffix = nextText.substring(left + 15, end);
+        suffix = nextText.substring(left + initialBlanks, end);
     }
 
     return (prefix + result + suffix).toUpperCase();

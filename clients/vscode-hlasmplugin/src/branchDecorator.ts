@@ -15,6 +15,7 @@
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
 import { HlasmPluginMiddleware } from './languageClientMiddleware';
+import { languageIdHlasm } from './constants';
 
 type BranchInfo = {
     line: number, col: number, up: boolean, down: boolean, somewhere: boolean,
@@ -144,9 +145,9 @@ function initializeRequestHandling(client: vscodelc.BaseLanguageClient) {
 
 function decorationsEnabled(document: vscode.TextDocument, expectedVersion: number | undefined = undefined) {
     return !document.isClosed
-        && document.languageId === 'hlasm'
+        && document.languageId === languageIdHlasm
         && (expectedVersion === undefined || document.version === expectedVersion)
-        && vscode.workspace.getConfiguration('hlasm', document).get<boolean>('showBranchInformation', true);
+        && vscode.workspace.getConfiguration(languageIdHlasm, document).get<boolean>('showBranchInformation', true);
 }
 
 function ignoreFailure() { }

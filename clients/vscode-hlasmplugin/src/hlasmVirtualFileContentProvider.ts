@@ -14,6 +14,7 @@
 
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
+import { schemeVirtualFiles } from './constants';
 
 interface FileContent {
     content: string;
@@ -25,7 +26,7 @@ export class HLASMVirtualFileContentProvider implements vscode.TextDocumentConte
         return new Promise((resolve, reject) => {
             const trimmed = uri.authority.trim();
             const file_id = +trimmed;
-            if (uri.scheme === 'hlasm' && trimmed.length > 0 && !isNaN(file_id))
+            if (uri.scheme === schemeVirtualFiles && trimmed.length > 0 && !isNaN(file_id))
                 this.client.sendRequest<FileContent>("get_virtual_file_content", { id: file_id }, token)
                     .then(c => resolve(c.content))
                     .catch(e => reject(e));

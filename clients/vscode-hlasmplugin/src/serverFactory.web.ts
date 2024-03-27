@@ -14,9 +14,9 @@
 
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient/browser';
-import { EXTENSION_ID } from './extension';
 import { getConfig } from './eventsHandler';
 import { ServerVariant, decorateArgs } from './serverFactory.common';
+import { EXTENSION_ID } from './constants';
 
 function worker_main(extensionUri: string, hlasm_arguments: string[]) {
 

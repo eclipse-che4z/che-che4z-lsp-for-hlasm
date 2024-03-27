@@ -13,6 +13,7 @@
  */
 
 import * as vscode from 'vscode';
+import { continuationColumn } from './constants';
 
 export enum CommentOption {
     toggle,
@@ -35,7 +36,7 @@ function seq(low: number, high: number): number[] {
 }
 
 function isContinued(text: string): boolean {
-    return text.length > 71 && ([...text][71] ?? ' ') !== ' ';
+    return text.length > continuationColumn && ([...text][continuationColumn] ?? ' ') !== ' ';
 }
 
 function findFirstLine(doc: vscode.TextDocument, lineno: number): number {

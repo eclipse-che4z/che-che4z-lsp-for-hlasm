@@ -17,6 +17,7 @@ import * as vscodelc from 'vscode-languageclient';
 import { uriFriendlyBase16Decode, uriFriendlyBase16Encode } from './conversions';
 import { isCancellationError } from './helpers';
 import { pickUser } from './uiUtils';
+import { languageIdHlasm, schemeOutput } from './constants';
 
 type OutputLine = {
     level: number;
@@ -25,8 +26,6 @@ type OutputLine = {
 type OutputResult = OutputLine[];
 
 type Options = { mnote: true, punch: true } | { mnote: false, punch: true } | { mnote: true, punch: false };
-
-const scheme = 'hlasm-output';
 
 function translateOptions(options: Options) {
     let result = '';
@@ -49,11 +48,11 @@ function createOutputUri(uri: vscode.Uri, options: Options) {
     const query = uriFriendlyBase16Encode(uri.toString());
     const path = `/${translateOptions(options)}/${uri.path.substring(uri.path.lastIndexOf('/') + 1)}.output`;
 
-    return vscode.Uri.from({ scheme, path, query });
+    return vscode.Uri.from({ scheme: schemeOutput, path, query });
 }
 
 export async function showOutputCommand(editor: vscode.TextEditor, _: vscode.TextEditorEdit, args: any) {
-    if (editor.document.languageId !== 'hlasm') return;
+    if (editor.document.languageId !== languageIdHlasm) return;
     if (!args || args instanceof vscode.Uri)
         args = await pickUser('Outputs to include:', [
             { label: 'MNOTE and PUNCH', value: { mnote: true, punch: true } },
@@ -80,7 +79,7 @@ export function registerOutputDocumentContentProvider(
     }, disposables: vscode.Disposable[]) {
 
     const changed = new vscode.EventEmitter<vscode.Uri>()
-    const provider = vscode.workspace.registerTextDocumentContentProvider(scheme, {
+    const provider = vscode.workspace.registerTextDocumentContentProvider(schemeOutput, {
         onDidChange: changed.event,
         async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken) {
             const opts = extractOptions(uri);

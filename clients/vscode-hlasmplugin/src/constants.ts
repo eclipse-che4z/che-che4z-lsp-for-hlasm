@@ -22,3 +22,17 @@ export const ebg_folder = '.ebg';
 
 export const hlasmplugin_folder_filter: vscode.DocumentFilter = { language: 'json', pattern: '**/.hlasmplugin/*' };
 export const bridge_json_filter: vscode.DocumentFilter = { language: 'json', pattern: '**/.bridge.json' };
+
+export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
+
+export const continuationColumn = 71;
+export const initialBlanks = 15;
+
+export const languageIdHlasm = 'hlasm';
+export const languageIdHlasmListing = 'hlasmListing';
+
+export const debugTypeHlasm = 'hlasm';
+
+export const schemeExternalFiles = 'hlasm-external';
+export const schemeVirtualFiles = 'hlasm';
+export const schemeOutput = 'hlasm-output';

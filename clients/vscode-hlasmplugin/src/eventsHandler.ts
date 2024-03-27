@@ -17,6 +17,7 @@ import * as vscode from 'vscode';
 import { ConfigurationsHandler } from './configurationsHandler'
 import { isLineContinued } from './customEditorCommands';
 import { HLASMLanguageDetection } from './hlasmLanguageDetection'
+import { languageIdHlasm } from './constants';
 
 /**
  * Handles various events happening in VSCode
@@ -49,11 +50,11 @@ export class EventsHandler {
     // when contents of a document change, issue a completion request
     onDidChangeTextDocument(event: vscode.TextDocumentChangeEvent, continuationOffset: number): boolean {
         if (getConfig<boolean>('continuationHandling', false)) {
-            if (event.document.languageId != 'hlasm')
+            if (event.document.languageId != languageIdHlasm)
                 return false;
 
             //const editor = vscode.window.activeTextEditor;
-            if (event.contentChanges.length == 0 || event.document.languageId != "hlasm")
+            if (event.contentChanges.length == 0 || event.document.languageId != languageIdHlasm)
                 return false;
 
             const change = event.contentChanges[0];
@@ -138,6 +139,6 @@ export class EventsHandler {
  * @param defaultValue default value to return if option is not set
  */
 export function getConfig<T>(option: string, defaultValue: T) {
-    const config = vscode.workspace.getConfiguration('hlasm');
+    const config = vscode.workspace.getConfiguration(languageIdHlasm);
     return config.get<T>(option, defaultValue);
 }

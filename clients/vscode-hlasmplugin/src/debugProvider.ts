@@ -13,6 +13,7 @@
  */
 
 import * as vscode from 'vscode';
+import { debugTypeHlasm, languageIdHlasm } from './constants';
 
 // debug configuration provider, adds port number dynamically
 export class HLASMConfigurationProvider implements vscode.DebugConfigurationProvider {
@@ -21,10 +22,10 @@ export class HLASMConfigurationProvider implements vscode.DebugConfigurationProv
         : vscode.ProviderResult<vscode.DebugConfiguration> {
         // no launch.json, debug current
         if (!config.type && !config.request && !config.name) {
-            config.type = "hlasm";
-            config.request = "launch";
-            config.name = "Macro tracer: current program";
-            config.program = "${command:extension.hlasm-plugin.getCurrentProgramName}";
+            config.type = debugTypeHlasm;
+            config.request = 'launch';
+            config.name = 'Macro tracer: current program';
+            config.program = '${command:extension.hlasm-plugin.getCurrentProgramName}';
             config.stopOnEntry = true;
         }
         return config;
@@ -34,8 +35,8 @@ export class HLASMConfigurationProvider implements vscode.DebugConfigurationProv
 // show an input box to select the program to trace
 export function getProgramName() {
     return vscode.window.showInputBox({
-        placeHolder: "Please enter the name of a program in the workspace folder",
-        value: "pgm"
+        placeHolder: 'Please enter the name of a program in the workspace folder',
+        value: 'pgm'
     });
 }
 
@@ -46,7 +47,7 @@ export function getCurrentProgramName() {
         vscode.window.showErrorMessage('No file open.');
         return undefined;
     }
-    if (editor.document.languageId != 'hlasm') {
+    if (editor.document.languageId != languageIdHlasm) {
         vscode.window.showErrorMessage(editor.document.fileName + ' is not a HLASM file.');
         return undefined;
     }

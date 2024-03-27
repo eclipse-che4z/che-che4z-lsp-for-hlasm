@@ -15,6 +15,7 @@
 import * as vscode from 'vscode';
 import { ConfigurationsHandler } from './configurationsHandler'
 import { getConfig } from './eventsHandler';
+import { continuationColumn, languageIdHlasm } from './constants';
 
 /**
  * Runs automatic HLASM language detection on given files
@@ -39,11 +40,11 @@ export class HLASMLanguageDetection {
         // check only plain text files
         if (document.languageId == 'plaintext' && this.withoutExtension(document.uri)) {
             if (this.checkHlasmLanguage(document)) {
-                vscode.languages.setTextDocumentLanguage(document, 'hlasm');
+                vscode.languages.setTextDocumentLanguage(document, languageIdHlasm);
                 return true;
             }
         }
-        return document.languageId == 'hlasm';
+        return document.languageId == languageIdHlasm;
     }
 
     //Checks for extension for plaintext files
@@ -80,7 +81,7 @@ export class HLASMLanguageDetection {
                 if ((this.referenceInstructions.test(line.toUpperCase()) || lastContinued) && line.length <= 80) {
                     score++;
                     // naive continuation check
-                    lastContinued = line.length > 71 && ([...line][71] ?? ' ') !== ' ';
+                    lastContinued = line.length > continuationColumn && ([...line][continuationColumn] ?? ' ') !== ' ';
                 }
             }
         });

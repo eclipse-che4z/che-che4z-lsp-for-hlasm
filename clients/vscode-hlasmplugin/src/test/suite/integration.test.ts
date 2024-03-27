@@ -15,20 +15,21 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as helper from './testHelper';
-import { EXTENSION_ID, activate } from '../../extension';
+import { activate } from '../../extension';
 import { ConfigurationProviderRegistration } from '../../hlasmExternalConfigurationProvider';
+import { EXTENSION_ID } from '../../constants';
 
 suite('Integration Test Suite', () => {
     const workspace_file = 'open';
     let editor: vscode.TextEditor;
 
-    suiteSetup(async function () {
+    suiteSetup(async function() {
         this.timeout(30000);
 
         editor = (await helper.showDocument(workspace_file)).editor;
     });
 
-    suiteTeardown(async function () {
+    suiteTeardown(async function() {
         await helper.closeAllEditors();
     });
 
