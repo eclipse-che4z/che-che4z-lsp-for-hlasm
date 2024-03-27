@@ -66,6 +66,14 @@ void server::consume_parsing_metadata(
     });
 }
 
+void server::outputs_changed(parser_library::sequence<char> uri)
+{
+    notify("$/retrieve_outputs",
+        nlohmann::json {
+            { "uri", std::string_view(uri) },
+        });
+}
+
 namespace {
 constexpr std::pair<int, const char*> unknown_error { -1, "Unknown error" };
 std::pair<int, const char*> extract_lsp_error(const nlohmann::json& errmsg) noexcept

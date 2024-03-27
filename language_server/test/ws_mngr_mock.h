@@ -101,6 +101,11 @@ public:
         folding,
         (const char* document_uri, workspace_manager_response<continuous_sequence<folding_range>> resp),
         (override));
+
+    MOCK_METHOD(void,
+        retrieve_output,
+        (const char* document_uri, workspace_manager_response<continuous_sequence<output_line>> resp),
+        (override));
 };
 
 } // namespace hlasm_plugin::language_server::test

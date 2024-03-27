@@ -367,3 +367,25 @@ TEST(lsp_server_test, toggle_advisory_configuration_diagnostics)
     s.message_received(
         R"({"jsonrpc":"2.0","method":"toggle_advisory_configuration_diagnostics","params":[null]})"_json);
 }
+
+TEST(lsp_server_test, output_notification)
+{
+    auto ws_mngr = parser_library::create_workspace_manager();
+    NiceMock<send_message_provider_mock> smpm;
+    lsp::server s(*ws_mngr);
+    s.set_send_message_provider(&smpm);
+
+    s.message_received(
+        R"({"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"test:test","languageId":"hlasm","version":1,"text":" PUNCH 'A'"}}})"_json);
+
+    EXPECT_CALL(smpm, reply(_)).Times(AnyNumber());
+    EXPECT_CALL(smpm, reply(R"({"jsonrpc":"2.0","method":"$/retrieve_outputs","params":{"uri":"test:test"}})"_json));
+
+    ws_mngr->idle_handler(nullptr);
+
+    EXPECT_CALL(smpm, reply(R"({"jsonrpc":"2.0","method":"$/retrieve_outputs","params":{"uri":"test:test"}})"_json));
+    s.message_received(
+        R"({"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"test:test","version":2},"contentChanges":[{"text":""}]}})"_json);
+
+    ws_mngr->idle_handler(nullptr);
+}

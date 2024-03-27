@@ -59,6 +59,7 @@ struct parse_file_result
     std::optional<performance_metrics> metrics_to_report;
     size_t errors = 0;
     size_t warnings = 0;
+    bool outputs_changed = false;
 };
 // Represents a LSP workspace. It solves all dependencies between files -
 // implements parse lib provider and decides which files are to be parsed
@@ -117,6 +118,8 @@ public:
     std::vector<branch_info> branch_information(const resource_location& document_loc) const;
 
     std::vector<folding_range> folding(const resource_location& document_loc) const;
+
+    std::vector<std::pair<int, std::string>> retrieve_output(const resource_location& document_loc) const;
 
     std::optional<performance_metrics> last_metrics(const resource_location& document_loc) const;
 

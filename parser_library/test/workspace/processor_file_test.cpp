@@ -57,7 +57,7 @@ TEST(processor_file, parse_macro)
 
     run_if_valid(ws.did_open_file(opencode_loc, file_content_state::changed_content));
 
-    auto [url, wf_info, metrics, errors, warnings] = ws.parse_file().run().value();
+    auto [url, wf_info, metrics, errors, warnings, outputs_changed] = ws.parse_file().run().value();
     EXPECT_EQ(url, opencode_loc);
     EXPECT_TRUE(metrics);
 

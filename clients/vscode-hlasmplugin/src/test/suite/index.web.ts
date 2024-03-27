@@ -114,6 +114,7 @@ export async function run(): Promise<void> {
 	//await import('./hlasmExternalFilesFtp.test.js');
 	await import('./hlasmLanguageDetection.test.js');
 	await import('./hlasmListingServices.test.js');
+	await import('./hlasmOutputContentProvider.test.js');
 	await import('./integration.test.js');
 	await import('./utils.test.js');
 

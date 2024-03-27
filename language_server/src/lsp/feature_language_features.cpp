@@ -39,6 +39,12 @@ void to_json(nlohmann::json& j, const folding_range& fr)
             break;
     }
 }
+
+void to_json(nlohmann::json& j, const output_line& ol)
+{
+    j["level"] = ol.level;
+    j["text"] = std::string_view(sequence<char>(ol.text));
+}
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::language_server::lsp {
@@ -239,6 +245,7 @@ void feature_language_features::register_methods(std::map<std::string, method>& 
     add_method("textDocument/$/opcode_suggestion", &feature_language_features::opcode_suggestion);
     add_method("textDocument/$/branch_information", &feature_language_features::branch_information);
     add_method("textDocument/foldingRange", &feature_language_features::folding);
+    add_method("textDocument/$/retrieve_outputs", &feature_language_features::retrieve_outputs);
 }
 
 nlohmann::json feature_language_features::register_capabilities()
@@ -802,6 +809,18 @@ void feature_language_features::folding(const request_id& id, const nlohmann::js
     });
 
     ws_mngr_.folding(document_uri.c_str(), resp);
+
+    response_->register_cancellable_request(id, std::move(resp));
+}
+
+void feature_language_features::retrieve_outputs(const request_id& id, const nlohmann::json& params)
+{
+    auto document_uri = extract_document_uri(params);
+
+    auto resp =
+        make_response(id, response_, [](continuous_sequence<output_line> outputs) { return nlohmann::json(outputs); });
+
+    ws_mngr_.retrieve_output(document_uri.c_str(), resp);
 
     response_->register_cancellable_request(id, std::move(resp));
 }

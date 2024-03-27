@@ -31,6 +31,7 @@
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"
 #include "macro_cache.h"
+#include "output_handler.h"
 #include "processing/statement_analyzers/hit_count_analyzer.h"
 #include "semantics/highlighting_info.h"
 #include "utils/bk_tree.h"
@@ -56,6 +57,8 @@ struct parsing_results
 
     std::vector<diagnostic_s> opencode_diagnostics;
     std::vector<diagnostic_s> macro_diagnostics;
+
+    std::vector<std::pair<int, std::string>> outputs;
 };
 
 [[nodiscard]] utils::value_task<parsing_results> parse_one_file(std::shared_ptr<context::id_storage> ids,
@@ -65,6 +68,14 @@ struct parsing_results
     std::vector<preprocessor_options> pp,
     virtual_file_monitor* vfm)
 {
+    struct output_t final : output_handler
+    {
+        std::vector<std::pair<int, std::string>> outputs;
+
+        void mnote(unsigned char level, std::string_view text) override { outputs.emplace_back(level, text); }
+        void punch(std::string_view text) override { outputs.emplace_back(-1, text); }
+    } outputs;
+
     auto fms = std::make_shared<std::vector<fade_message_s>>();
     analyzer a(file->get_text(),
         analyzer_options {
@@ -77,6 +88,7 @@ struct parsing_results
             std::move(pp),
             vfm,
             fms,
+            &outputs,
         });
 
     processing::hit_count_analyzer hc_analyzer(a.hlasm_ctx());
@@ -94,6 +106,7 @@ struct parsing_results
     result.metrics = a.get_metrics();
     result.vf_handles = a.take_vf_handles();
     result.hc_opencode_map = hc_analyzer.take_hit_count_map();
+    result.outputs = std::move(outputs.outputs);
 
     co_return result;
 }
@@ -596,6 +609,7 @@ utils::value_task<parse_file_result> workspace::parse_file(const resource_locati
             &self.fm_vfm_);
         results.hc_macro_map = std::move(comp.m_last_results->hc_macro_map); // save macro stuff
         results.macro_diagnostics = std::move(comp.m_last_results->macro_diagnostics);
+        const bool outputs_changed = comp.m_last_results->outputs != results.outputs;
         *comp.m_last_results = std::move(results);
 
         std::set<resource_location> files_to_close;
@@ -619,6 +633,7 @@ utils::value_task<parse_file_result> workspace::parse_file(const resource_locati
                                                       : std::optional<performance_metrics>(),
             .errors = errors,
             .warnings = warnings,
+            .outputs_changed = outputs_changed,
         };
     }(comp, *this);
 }
@@ -961,6 +976,15 @@ std::vector<folding_range> workspace::folding(const resource_location& document_
     return lsp::generate_folding_ranges(data);
 }
 
+std::vector<std::pair<int, std::string>> workspace::retrieve_output(const resource_location& document_loc) const
+{
+    auto comp = find_processor_file_impl(document_loc);
+    if (!comp)
+        return {};
+
+    return comp->m_last_results->outputs;
+}
+
 std::optional<performance_metrics> workspace::last_metrics(const resource_location& document_loc) const
 {
     auto comp = find_processor_file_impl(document_loc);
@@ -1221,7 +1245,8 @@ utils::task workspace::processor_file_compoments::update_source_if_needed(file_m
     {
         return fm.add_file(m_file->get_location()).then([this](std::shared_ptr<file> f) {
             m_file = std::move(f);
-            *m_last_results = {};
+            // preserve output - extra change notification event exists
+            *m_last_results = { .outputs = std::move(m_last_results->outputs) };
         });
     }
     return {};

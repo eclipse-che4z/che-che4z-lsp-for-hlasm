@@ -495,3 +495,53 @@ TEST(language_features, folding)
 
     ws_mngr->idle_handler();
 }
+
+TEST(language_features, retrieve_output)
+{
+    auto ws_mngr = parser_library::create_workspace_manager();
+    response_provider_mock response_mock;
+    lsp::feature_language_features f(*ws_mngr, response_mock);
+    std::map<std::string, method> notifs;
+    f.register_methods(notifs);
+
+    std::string file_text = " PUNCH 'A'\n MNOTE 2,'B'";
+
+    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
+
+    nlohmann::json response = nlohmann::json::array();
+    response.push_back({
+        { "level", -1 },
+        { "text", "A" },
+    });
+    response.push_back({
+        { "level", 2 },
+        { "text", "B" },
+    });
+
+    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
+    notifs["textDocument/$/retrieve_outputs"].as_request_handler()(request_id(0), params1);
+
+    ws_mngr->idle_handler();
+}
+
+TEST(language_features, retrieve_output_empty)
+{
+    auto ws_mngr = parser_library::create_workspace_manager();
+    response_provider_mock response_mock;
+    lsp::feature_language_features f(*ws_mngr, response_mock);
+    std::map<std::string, method> notifs;
+    f.register_methods(notifs);
+
+    std::string file_text = "";
+
+    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
+
+    nlohmann::json response = nlohmann::json::array();
+
+    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
+    notifs["textDocument/$/retrieve_outputs"].as_request_handler()(request_id(0), params1);
+
+    ws_mngr->idle_handler();
+}

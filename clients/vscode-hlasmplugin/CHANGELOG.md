@@ -7,6 +7,7 @@
 - Fallback to WebAssembly language server automatically
 - Watch support in the Macro tracer
 - Emit MNOTE and PUNCH arguments to the debug console
+- Make MNOTE and PUNCH outputs available from VSCode
 
 #### Fixed
 - Unknown requests were dropped without a proper response

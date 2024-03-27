@@ -319,13 +319,18 @@ public:
 
         std::chrono::duration<double> duration = std::chrono::steady_clock::now() - start;
 
-        const auto& [url, metadata, perf_metrics, errors, warnings] = task.value();
+        const auto& [url, metadata, perf_metrics, errors, warnings, outputs_changed] = task.value();
 
         if (perf_metrics)
         {
             parsing_metadata data { perf_metrics.value(), metadata, errors, warnings };
             for (auto consumer : m_parsing_metadata_consumers)
                 consumer->consume_parsing_metadata(sequence<char>(url.get_uri()), duration.count(), data);
+        }
+        if (outputs_changed)
+        {
+            for (auto consumer : m_parsing_metadata_consumers)
+                consumer->outputs_changed(sequence<char>(url.get_uri()));
         }
 
         m_active_task = {};
@@ -1099,6 +1104,21 @@ private:
             auto [ows, conf_uri] = ws_path_match(std::string_view(uri));
             ows->ws.invalidate_external_configuration(conf_uri);
         }
+    }
+
+    void retrieve_output(
+        const char* document_uri, workspace_manager_response<continuous_sequence<output_line>> r) override
+    {
+        handle_request(document_uri, std::move(r), [](const auto& resp, auto& ws, const auto& doc_loc) {
+            auto result = ws.retrieve_output(doc_loc);
+
+            std::vector<output_line> tmp;
+
+            for (auto&& [level, text] : result)
+                tmp.emplace_back(output_line { level, make_continuous_sequence(std::move(text)) });
+
+            resp.provide(make_continuous_sequence(std::move(tmp)));
+        });
     }
 };
 

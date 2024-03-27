@@ -367,6 +367,12 @@
         "command": "extension.hlasm-plugin.toggleAdvisoryConfigurationDiagnostics",
         "category": "HLASM",
         "title": "Toggle advisory configuration diagnostics"
+      },
+      {
+        "command": "extension.hlasm-plugin.showOutput",
+        "category": "HLASM",
+        "title": "Show Generated Output",
+        "icon": "$(output)"
       }
     ],
     "keybindings": [
@@ -409,6 +415,22 @@
         "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
       }
     ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "extension.hlasm-plugin.showOutput",
+          "when": "editorLangId == hlasm",
+          "group": "showOutput"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "extension.hlasm-plugin.showOutput",
+          "when": "!isInDiffEditor && editorLangId == hlasm",
+          "group": "navigation@1"
+        }
+      ]
+    },
     "configuration": {
       "type": "object",
       "title": "HLASM language support configuration",

@@ -110,6 +110,8 @@ struct parsing_metadata_collector final : public parser_library::parsing_metadat
         data.emplace_back(metadata);
     }
 
+    void outputs_changed(parser_library::sequence<char>) override {}
+
     std::vector<parser_library::parsing_metadata> data;
 };
 

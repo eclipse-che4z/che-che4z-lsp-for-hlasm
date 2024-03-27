@@ -31,6 +31,7 @@ public:
     {
         metrics_ = metadata.metrics;
     }
+    void outputs_changed(sequence<char>) override {}
 
     performance_metrics metrics_;
 };

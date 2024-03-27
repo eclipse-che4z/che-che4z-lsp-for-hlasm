@@ -57,6 +57,7 @@ class parsing_metadata_consumer
 {
 public:
     virtual void consume_parsing_metadata(sequence<char> uri, double duration, const parsing_metadata& metrics) = 0;
+    virtual void outputs_changed(sequence<char> uri) = 0;
 
 protected:
     ~parsing_metadata_consumer() = default;
@@ -152,6 +153,9 @@ public:
 
     virtual void folding(
         const char* document_uri, workspace_manager_response<continuous_sequence<folding_range>> resp) = 0;
+
+    virtual void retrieve_output(
+        const char* document_uri, workspace_manager_response<continuous_sequence<output_line>> resp) = 0;
 };
 
 workspace_manager* create_workspace_manager_impl(

@@ -407,6 +407,12 @@ struct breakpoint
     size_t line;
 };
 
+struct output_line
+{
+    int level; // -1 if N/A
+    continuous_sequence<char> text;
+};
+
 } // namespace hlasm_plugin::parser_library
 #pragma warning(pop)
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROTOCOL_H

@@ -105,6 +105,9 @@ private:
     void consume_parsing_metadata(
         parser_library::sequence<char> uri, double duration, const parser_library::parsing_metadata& metadata) override;
 
+    // Notify vscode that outputs have changed
+    void outputs_changed(parser_library::sequence<char> uri) override;
+
     void request_workspace_configuration(
         const char* url, parser_library::workspace_manager_response<parser_library::sequence<char>> json_text) override;
     void request_file_configuration(parser_library::sequence<char> url,

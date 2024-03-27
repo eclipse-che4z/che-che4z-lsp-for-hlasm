@@ -641,7 +641,7 @@ TEST(regress_test, check_diagnostic_tags)
     s.message_received(notf);
     ws_mngr->idle_handler();
 
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)3); // diags+open+parsing
+    ASSERT_EQ(mess_p.notfs.size(), (size_t)4); // diags+open+parsing+output
     auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](nlohmann::json notif) {
         return notif["method"] == "textDocument/publishDiagnostics";
     });

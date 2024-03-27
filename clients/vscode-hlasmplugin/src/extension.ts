@@ -43,6 +43,7 @@ import { activateBranchDecorator } from './branchDecorator';
 import { asError } from './helpers';
 import { registerListingServices } from './hlasmListingServices';
 import { MementoKey } from './mementoKeys';
+import { registerOutputDocumentContentProvider, showOutputCommand } from './hlasmOutputContentProvider';
 
 export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
 
@@ -137,6 +138,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
     await registerDebugSupport(context, hlasmpluginClient);
     await registerExternalFileSupport(context, hlasmpluginClient, extFiles);
     await registerToContextWithClient(context, hlasmpluginClient, telemetry);
+    registerOutputDocumentContentProvider(hlasmpluginClient, context.subscriptions);
 
     let api: HlasmExtension = {
         registerExternalFileClient(service, client) {
@@ -317,6 +319,8 @@ async function registerToContextWithClient(context: vscode.ExtensionContext, cli
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("hlasm", new HLASMVirtualFileContentProvider(client)));
 
     context.subscriptions.push(vscode.commands.registerCommand("extension.hlasm-plugin.downloadDependencies", (...args: any[]) => downloadDependencies(context, telemetry, client.outputChannel, ...args)));
+
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand('extension.hlasm-plugin.showOutput', showOutputCommand));
 
     activateBranchDecorator(context, client);
 }
