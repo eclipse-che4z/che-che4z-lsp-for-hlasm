@@ -11,6 +11,7 @@
 #### Fixed
 - Unknown requests were dropped without a proper response
 - Hover text for complex relocation symbols contains incorrect multiplicative factors
+- Produce more specific diagnostic on grammar predicate failure
 
 ## [1.12.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.11.1...1.12.0) (2024-03-05)
 

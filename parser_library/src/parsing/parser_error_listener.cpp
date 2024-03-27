@@ -230,7 +230,7 @@ void parser_error_listener_base::syntaxError(
         else
             add_parser_diagnostic(diagnostic_op::error_S0002, range(position(line, char_pos_in_line)));
     }
-    catch (antlr4::InputMismatchException& excp)
+    catch (antlr4::RecognitionException& excp)
     {
         auto offender = excp.getOffendingToken();
         auto expected = excp.getExpectedTokens();
