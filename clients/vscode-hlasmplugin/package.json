@@ -346,27 +346,27 @@
       {
         "command": "extension.hlasm-plugin.resumeRemoteActivity",
         "category": "HLASM",
-        "title": "Resume retrieval of remote files"
+        "title": "Resume Retrieval of Remote Files"
       },
       {
         "command": "extension.hlasm-plugin.suspendRemoteActivity",
         "category": "HLASM",
-        "title": "Suspend retrieval of remote files"
+        "title": "Suspend Retrieval of Remote Files"
       },
       {
         "command": "extension.hlasm-plugin.clearRemoteActivityCache",
         "category": "HLASM",
-        "title": "Clear remote files cache"
+        "title": "Clear Remote Files Cache"
       },
       {
         "command": "extension.hlasm-plugin.clearRemoteActivityCacheForService",
         "category": "HLASM",
-        "title": "Clear remote files cache for a specific service"
+        "title": "Clear Remote Files Cache for a Specific Service"
       },
       {
         "command": "extension.hlasm-plugin.toggleAdvisoryConfigurationDiagnostics",
         "category": "HLASM",
-        "title": "Toggle advisory configuration diagnostics"
+        "title": "Toggle Advisory Configuration Diagnostics"
       },
       {
         "command": "extension.hlasm-plugin.showOutput",
@@ -433,7 +433,7 @@
     },
     "configuration": {
       "type": "object",
-      "title": "HLASM language support configuration",
+      "title": "HLASM Language Support Configuration",
       "properties": {
         "hlasm.arguments": {
           "type": "array",
@@ -441,7 +441,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Arguments for hlasmplugin server"
+          "description": "Arguments for HLASM Language Server"
         },
         "hlasm.syncFileEvents": {
           "type": "boolean",
