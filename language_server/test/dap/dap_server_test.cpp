@@ -57,7 +57,7 @@ TEST(dap_server, dap_server)
     serv.message_received(initialize_message);
 
     std::vector expected_response_init = {
-        R"({"body":{"supportsConfigurationDoneRequest":true,"supportsEvaluateForHovers":true},"command":"initialize","request_seq":1,"seq":1,"success":true,"type":"response"})"_json,
+        R"({"body":{"supportsConfigurationDoneRequest":true,"supportsEvaluateForHovers":true,"supportsFunctionBreakpoints":true},"command":"initialize","request_seq":1,"seq":1,"success":true,"type":"response"})"_json,
         R"({"body":null,"event" : "initialized","seq" : 2,"type" : "event"})"_json
     };
 

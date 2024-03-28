@@ -54,6 +54,7 @@ public:
     void on_launch(const request_id& request_seq, const nlohmann::json& args);
     void on_set_breakpoints(const request_id& request_seq, const nlohmann::json& args);
     void on_set_exception_breakpoints(const request_id& request_seq, const nlohmann::json& args);
+    void on_set_function_breakpoints(const request_id& request_seq, const nlohmann::json& args);
     void on_configuration_done(const request_id& request_seq, const nlohmann::json& args);
     void on_threads(const request_id& request_seq, const nlohmann::json& args);
     void on_stack_trace(const request_id& request_seq, const nlohmann::json& args);

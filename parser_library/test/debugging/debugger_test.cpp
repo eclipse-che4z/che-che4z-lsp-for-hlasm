@@ -1252,6 +1252,39 @@ TEST(debugger, breakpoints_set_get)
     EXPECT_EQ(bp.line, bps.begin()->line);
 }
 
+TEST(debugger, function_breakpoints)
+{
+    std::string open_code = R"(
+    LR 1,1
+    SAM31
+)";
+
+    file_manager_impl file_manager;
+    NiceMock<debugger_configuration_provider_mock> dc_provider;
+    EXPECT_CALL(dc_provider, provide_debugger_configuration).WillRepeatedly(Invoke([&file_manager](auto, auto r) {
+        r.provide({ .fm = &file_manager });
+    }));
+    debugger d;
+    debug_event_consumer_s_mock m(d);
+
+    const resource_location file_loc("test");
+
+    file_manager.did_open_file(file_loc, 0, open_code);
+
+    function_breakpoint bp(sequence(std::string_view("SAM31")));
+    d.function_breakpoints(sequence<function_breakpoint>(&bp, 1));
+
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(file_loc.get_uri(), dc_provider, false, resp);
+
+    m.wait_for_stopped();
+
+    EXPECT_EQ(m.get_last_reason(), "function breakpoint");
+
+    d.disconnect();
+}
+
 TEST(debugger, invalid_file)
 {
     file_manager_impl file_manager;

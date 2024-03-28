@@ -1,0 +1,8 @@
+    MACRO
+    UNIQUE_MACRO
+    MEND
+
+&A  SETA 0
+    UNIQUE_MACRO
+&A  SETA 1
+    UNIQUE_MACRO

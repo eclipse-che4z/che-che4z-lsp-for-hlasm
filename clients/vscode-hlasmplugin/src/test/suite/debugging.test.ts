@@ -109,4 +109,23 @@ suite('Debugging Test Suite', () => {
         await helper.debugStop();
 
     }).timeout(20000).slow(10000);
+
+    test('Function breakpoint test', async () => {
+        await helper.addFunctionBreakpoints(['uniQue_maCro']);
+
+        await helper.showDocument('function_break');
+
+        const session = await helper.debugStartSession();
+
+        // Continue until breakpoint is hit
+        await helper.debugContinue();
+        const a0 = await session.customRequest('evaluate', { expression: "&A" });
+        assert.deepStrictEqual(a0, { result: '0', variablesReference: 0 });
+
+        await helper.debugContinue();
+        const a1 = await session.customRequest('evaluate', { expression: "&A" });
+        assert.deepStrictEqual(a1, { result: '1', variablesReference: 0 });
+
+        await helper.debugStop();
+    }).timeout(20000).slow(10000);
 });

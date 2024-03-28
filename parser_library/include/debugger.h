@@ -15,6 +15,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DEBUGGER_H
 #define HLASMPLUGIN_PARSERLIBRARY_DEBUGGER_H
 
+#include <span>
+
 #include "parser_library_export.h"
 #include "protocol.h"
 #include "range.h"
@@ -119,6 +121,12 @@ public:
     void breakpoints(std::string_view source, sequence<breakpoint> bps) { breakpoints(sequence(source), bps); }
     [[nodiscard]] breakpoints_t breakpoints(sequence<char> source) const;
     [[nodiscard]] breakpoints_t breakpoints(std::string_view source) const { return breakpoints(sequence(source)); }
+
+    void function_breakpoints(sequence<function_breakpoint> bps);
+    void function_breakpoints(std::span<const function_breakpoint> bps)
+    {
+        function_breakpoints(sequence<function_breakpoint>(bps));
+    }
 
     // Retrieval of current context.
     stack_frames_t stack_frames() const;

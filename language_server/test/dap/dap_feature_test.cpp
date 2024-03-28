@@ -351,6 +351,41 @@ TEST_F(feature_launch_test, breakpoint)
     feature.on_disconnect(request_id(5), {});
 }
 
+const std::string file_function_breakpoint = R"(
+  LR 1,1
+  SAM31
+)";
+
+TEST_F(feature_launch_test, function_breakpoint)
+{
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path).c_str(),
+        0,
+        file_function_breakpoint.c_str(),
+        file_function_breakpoint.size());
+    ws_mngr->idle_handler();
+
+    nlohmann::json bp_args { { "breakpoints", R"([{"name":"sam31"}])"_json } };
+    feature.on_set_function_breakpoints(request_id(47), bp_args);
+    std::vector<response_mock> expected_resp_bp = {
+        { request_id(47), "setFunctionBreakpoints", R"( { "breakpoints":[ {"verified":true} ]})"_json }
+    };
+    EXPECT_EQ(resp_provider.responses, expected_resp_bp);
+    resp_provider.reset();
+
+    feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
+    ws_mngr->idle_handler();
+    feature.idle_handler(nullptr);
+    std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
+    EXPECT_EQ(resp_provider.responses, expected_resp);
+    wait_for_stopped();
+    resp_provider.reset();
+
+    check_simple_stack_trace(request_id(2), 2);
+
+
+    feature.on_disconnect(request_id(3), {});
+}
+
 const std::string file_variables = R"(&VARA SETA 4
 &VARB SETB 1
 &VARC SETC 'STH'

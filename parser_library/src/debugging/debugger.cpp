@@ -175,6 +175,8 @@ class debugger::impl final : public processing::statement_analyzer, output_handl
         utils::resource::resource_location_hasher>
         breakpoints_;
 
+    std::unordered_set<std::string, utils::hashers::string_hasher, std::equal_to<>> function_breakpoints_;
+
     size_t add_variable(std::vector<variable_ptr> vars)
     {
         variables_[next_var_ref_].variables = std::move(vars);
@@ -307,9 +309,12 @@ public:
         if (!resolved_stmt)
             return false;
 
+        const auto& op_code = resolved_stmt->opcode_ref().value;
         // Continue only for non-empty statements
-        if (resolved_stmt->opcode_ref().value.empty())
+        if (op_code.empty())
             return false;
+
+        const bool function_breakpoint_hit = function_breakpoints_.contains(op_code.to_string_view());
 
         range stmt_range = resolved_stmt->stmt_range_ref();
 
@@ -333,7 +338,8 @@ public:
         };
 
         // breakpoint check
-        if (stop_on_next_stmt_ || breakpoint_hit || (stop_on_stack_changes_ && stack_condition_violated(stack_node)))
+        if (stop_on_next_stmt_ || breakpoint_hit || function_breakpoint_hit
+            || (stop_on_stack_changes_ && stack_condition_violated(stack_node)))
         {
             variables_.clear();
             stack_frames_.clear();
@@ -348,8 +354,17 @@ public:
             stop_on_stack_condition_ = std::make_pair(stack_node, nullptr);
 
             continue_ = false;
+
+            static constexpr const std::string_view reasons[] = {
+                "entry",
+                "breakpoint",
+                "function breakpoint",
+                "breakpoint",
+            };
+            const auto reason_id = breakpoint_hit + 2 * function_breakpoint_hit;
+
             if (event_)
-                event_->stopped("entry", "");
+                event_->stopped(reasons[reason_id], "");
         }
         return !continue_;
     }
@@ -812,6 +827,13 @@ public:
         return {};
     }
 
+    void function_breakpoints(std::span<const function_breakpoint> bps)
+    {
+        function_breakpoints_.clear();
+        for (const auto& bp : bps)
+            function_breakpoints_.emplace(utils::to_upper_copy(std::string_view(bp.name)));
+    }
+
     ~impl() { disconnect(); }
 };
 
@@ -864,6 +886,11 @@ breakpoints_t debugger::breakpoints(sequence<char> source) const
 
 
     return result;
+}
+
+void debugger::function_breakpoints(sequence<function_breakpoint> bps)
+{
+    pimpl->function_breakpoints(std::span<const function_breakpoint>(bps.begin(), bps.end()));
 }
 
 stack_frames_t debugger::stack_frames() const

@@ -23,7 +23,7 @@ using namespace std::chrono_literals;
 void debug_event_consumer_s_mock::stopped(
     sequence<char> reason, hlasm_plugin::parser_library::sequence<char> addtl_info)
 {
-    (void)reason;
+    last_reason = std::string_view(reason);
     (void)addtl_info;
     ++stop_count;
     stopped_ = true;

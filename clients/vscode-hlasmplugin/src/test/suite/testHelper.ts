@@ -81,6 +81,10 @@ export async function addBreakpoints(file: string, lines: Array<number>) {
     await vscode.debug.addBreakpoints(lines.map(l => new vscode.SourceBreakpoint(new vscode.Location(document.uri, new vscode.Position(l, 0)), true)));
 }
 
+export async function addFunctionBreakpoints(functions: Array<string>) {
+    await vscode.debug.addBreakpoints(functions.map(f => new vscode.FunctionBreakpoint(f)));
+}
+
 export async function removeAllBreakpoints() {
     await vscode.debug.removeBreakpoints(vscode.debug.breakpoints);
 }

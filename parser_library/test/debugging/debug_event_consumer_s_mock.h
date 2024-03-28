@@ -19,6 +19,7 @@
 
 class debug_event_consumer_s_mock : public hlasm_plugin::parser_library::debugging::debug_event_consumer
 {
+    std::string last_reason;
     bool stopped_ = false;
     bool exited_ = false;
     size_t stop_count = 0;
@@ -54,6 +55,8 @@ public:
 
     const auto& get_last_mnote() const { return last_mnote; }
     const auto& get_last_punch() const { return last_punch; }
+
+    const auto& get_last_reason() const { return last_reason; }
 };
 
 #endif // !HLASMPLUGIN_PARSERLIBRARY_TEST_DEBUG_EVENT_CONSUMER_S_MOCK_H

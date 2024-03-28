@@ -89,6 +89,7 @@ void dap_feature::register_methods(std::map<std::string, method>& methods)
     add_method("launch", &dap_feature::on_launch, LOG_EVENT);
     add_method("setBreakpoints", &dap_feature::on_set_breakpoints, LOG_EVENT);
     add_method("setExceptionBreakpoints", &dap_feature::on_set_exception_breakpoints, LOG_EVENT);
+    add_method("setFunctionBreakpoints", &dap_feature::on_set_function_breakpoints, LOG_EVENT);
     add_method("configurationDone", &dap_feature::on_configuration_done);
     add_method("threads", &dap_feature::on_threads);
     add_method("stackTrace", &dap_feature::on_stack_trace);
@@ -145,6 +146,7 @@ void dap_feature::on_initialize(const request_id& requested_seq, const nlohmann:
         nlohmann::json {
             { "supportsConfigurationDoneRequest", true },
             { "supportsEvaluateForHovers", true },
+            { "supportsFunctionBreakpoints", true },
         });
 
     line_1_based_ = args.at("linesStartAt1").get<bool>() ? 1 : 0;
@@ -229,6 +231,29 @@ void dap_feature::on_set_breakpoints(const request_id& request_seq, const nlohma
 void dap_feature::on_set_exception_breakpoints(const request_id& request_seq, const nlohmann::json&)
 {
     response_->respond(request_seq, "setExceptionBreakpoints", nlohmann::json());
+}
+
+void dap_feature::on_set_function_breakpoints(const request_id& request_seq, const nlohmann::json& args)
+{
+    if (!debugger)
+        return;
+
+    nlohmann::json breakpoints_verified = nlohmann::json::array();
+    std::vector<parser_library::function_breakpoint> breakpoints;
+
+    if (auto bpoints_found = args.find("breakpoints"); bpoints_found != args.end())
+    {
+        for (auto& bp_json : bpoints_found.value())
+        {
+            breakpoints.emplace_back(parser_library::sequence<char>(bp_json.at("name").get<std::string_view>()));
+            breakpoints_verified.push_back(nlohmann::json { { "verified", true } });
+        }
+    }
+
+    debugger->function_breakpoints(breakpoints);
+
+    response_->respond(
+        request_seq, "setFunctionBreakpoints", nlohmann::json { { "breakpoints", breakpoints_verified } });
 }
 
 void dap_feature::on_configuration_done(const request_id& request_seq, const nlohmann::json&)
