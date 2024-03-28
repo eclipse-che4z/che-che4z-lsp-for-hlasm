@@ -105,14 +105,20 @@ void dap_feature::register_methods(std::map<std::string, method>& methods)
 nlohmann::json dap_feature::register_capabilities() { return nlohmann::json(); }
 
 void dap_feature::stopped(
-    hlasm_plugin::parser_library::sequence<char> reason, hlasm_plugin::parser_library::sequence<char>)
+    hlasm_plugin::parser_library::sequence<char> reason, hlasm_plugin::parser_library::sequence<char> details)
 {
-    response_->notify("stopped",
-        nlohmann::json {
-            { "reason", std::string_view(reason) },
-            { "threadId", THREAD_ID },
-            { "allThreadsStopped", true },
-        });
+    nlohmann::json args {
+        { "reason", std::string_view(reason) },
+        { "threadId", THREAD_ID },
+        { "allThreadsStopped", true },
+    };
+    if (details.size() > 0)
+    {
+        args["description"] = std::string_view(details);
+        args["text"] = std::string_view(details);
+    }
+
+    response_->notify("stopped", args);
 }
 
 void dap_feature::exited(int exit_code)

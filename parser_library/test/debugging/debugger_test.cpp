@@ -1431,3 +1431,34 @@ TEST(debugger, outputs)
     EXPECT_EQ(m.get_last_mnote(), expected_mnote);
     EXPECT_EQ(m.get_last_punch(), expected_punch);
 }
+
+TEST(debugger, actr_limit_break)
+{
+    std::string open_code = R"(
+.A AGO .A
+)";
+
+
+    file_manager_impl file_manager;
+    NiceMock<debugger_configuration_provider_mock> dc_provider;
+    EXPECT_CALL(dc_provider, provide_debugger_configuration).WillRepeatedly(Invoke([&file_manager](auto, auto r) {
+        r.provide({ .fm = &file_manager });
+    }));
+    debugger d;
+    debug_event_consumer_s_mock m(d);
+
+    const resource_location file_loc("test");
+
+    file_manager.did_open_file(file_loc, 0, open_code);
+
+    auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
+    EXPECT_CALL(*mock, provide(true));
+    d.launch(file_loc.get_uri(), dc_provider, false, resp);
+
+    m.wait_for_stopped();
+
+    EXPECT_EQ(m.get_last_reason(), "exception");
+    EXPECT_EQ(m.get_last_details(), "ACTR limit reached");
+
+    d.disconnect();
+}

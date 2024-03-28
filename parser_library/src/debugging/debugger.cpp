@@ -314,6 +314,8 @@ public:
         if (op_code.empty())
             return false;
 
+        const bool actr_limit = ctx_->get_branch_counter() < 0;
+
         const bool function_breakpoint_hit = function_breakpoints_.contains(op_code.to_string_view());
 
         range stmt_range = resolved_stmt->stmt_range_ref();
@@ -338,7 +340,7 @@ public:
         };
 
         // breakpoint check
-        if (stop_on_next_stmt_ || breakpoint_hit || function_breakpoint_hit
+        if (stop_on_next_stmt_ || breakpoint_hit || function_breakpoint_hit || actr_limit
             || (stop_on_stack_changes_ && stack_condition_violated(stack_node)))
         {
             variables_.clear();
@@ -364,7 +366,12 @@ public:
             const auto reason_id = breakpoint_hit + 2 * function_breakpoint_hit;
 
             if (event_)
-                event_->stopped(reasons[reason_id], "");
+            {
+                if (actr_limit)
+                    event_->stopped("exception", "ACTR limit reached");
+                else
+                    event_->stopped(reasons[reason_id], "");
+            }
         }
         return !continue_;
     }

@@ -605,3 +605,39 @@ TEST_F(feature_launch_test, debug_output)
 
     feature.on_disconnect(request_id(1), {});
 }
+
+namespace {
+const std::string debug_actr_limit = R"(
+.A AGO .A
+)";
+}
+
+TEST_F(feature_launch_test, debug_actr_limit)
+{
+    ws_mngr->did_open_file(
+        utils::path::path_to_uri(file_path).c_str(), 0, debug_actr_limit.c_str(), debug_actr_limit.size());
+    ws_mngr->idle_handler();
+
+    feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
+    ws_mngr->idle_handler();
+
+    wait_for_stopped();
+    const std::vector<response_mock> expected_resp = { { request_id(0), "launch", nlohmann::json() } };
+    const std::vector<notif_mock> expected_notify = {
+        {
+            "stopped",
+            {
+                { "reason", "exception" },
+                { "description", "ACTR limit reached" },
+                { "text", "ACTR limit reached" },
+                { "allThreadsStopped", true },
+                { "threadId", 1 },
+            },
+        },
+    };
+    EXPECT_EQ(resp_provider.responses, expected_resp);
+    EXPECT_EQ(resp_provider.notifs, expected_notify);
+    resp_provider.reset();
+
+    feature.on_disconnect(request_id(1), {});
+}

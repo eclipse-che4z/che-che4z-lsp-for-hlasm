@@ -14,17 +14,12 @@
 
 #include "debug_event_consumer_s_mock.h"
 
-#include <chrono>
-#include <thread>
-
 using namespace hlasm_plugin::parser_library;
-using namespace std::chrono_literals;
 
-void debug_event_consumer_s_mock::stopped(
-    sequence<char> reason, hlasm_plugin::parser_library::sequence<char> addtl_info)
+void debug_event_consumer_s_mock::stopped(sequence<char> reason, hlasm_plugin::parser_library::sequence<char> details)
 {
     last_reason = std::string_view(reason);
-    (void)addtl_info;
+    last_details = std::string_view(details);
     ++stop_count;
     stopped_ = true;
 }
