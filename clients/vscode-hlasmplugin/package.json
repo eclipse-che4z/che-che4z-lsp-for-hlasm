@@ -446,7 +446,8 @@
         "hlasm.syncFileEvents": {
           "type": "boolean",
           "default": true,
-          "description": "Whether or not to send file events to hlasmplugin (File created, changed or deleted). This can be disabled for performance consideration."
+          "description": "Whether or not to send file events to HLASM LS extension (file created, changed or deleted). This can be disabled for performance consideration.",
+          "deprecationMessage": "Deprected: Language server follows dynamic registration options"
         },
         "hlasm.continuationHandling": {
           "type": "boolean",

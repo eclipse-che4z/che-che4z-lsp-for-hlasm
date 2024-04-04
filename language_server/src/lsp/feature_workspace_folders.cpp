@@ -65,9 +65,11 @@ void feature_workspace_folders::initialize_feature(const nlohmann::json& initial
 
     if (auto ws = capabs.find("workspace"); ws != capabs.end())
     {
-        auto ws_folders = ws->find("workspaceFolders");
-        if (ws_folders != ws->end())
+        if (auto ws_folders = ws->find("workspaceFolders"); ws_folders != ws->end())
             ws_folders_support = ws_folders->get<bool>();
+
+        if (auto watcher = ws->find("didChangeWatchedFiles"); watcher != ws->end() && watcher->is_object())
+            m_supports_dynamic_file_change_notification = watcher->value("dynamicRegistration", false);
     }
 
     if (ws_folders_support)
@@ -95,6 +97,8 @@ void feature_workspace_folders::initialize_feature(const nlohmann::json& initial
 void feature_workspace_folders::initialized()
 {
     send_configuration_request();
+    if (m_supports_dynamic_file_change_notification)
+        register_file_change_notifictions();
     for (const auto& [name, uri] : std::exchange(m_initial_workspaces, {}))
         add_workspace(name, uri);
 }
@@ -118,6 +122,7 @@ void feature_workspace_folders::add_workspaces(const nlohmann::json& added)
         add_workspace(name, uri);
     }
 }
+
 void feature_workspace_folders::remove_workspaces(const nlohmann::json& removed)
 {
     for (const auto& ws : removed)
@@ -127,6 +132,7 @@ void feature_workspace_folders::remove_workspaces(const nlohmann::json& removed)
         ws_mngr_.remove_workspace(uri.c_str());
     }
 }
+
 void feature_workspace_folders::add_workspace(const std::string& name, const std::string& path)
 {
     ws_mngr_.add_workspace(name.c_str(), path.c_str());
@@ -170,6 +176,41 @@ void feature_workspace_folders::send_configuration_request()
         [this](const nlohmann::json& params) { configuration(params); },
         [](int, [[maybe_unused]] const char* msg) {
             LOG_WARNING("Unexpected error configuration response received: " + std::string(msg));
+        });
+}
+
+void feature_workspace_folders::register_file_change_notifictions()
+{
+    static const nlohmann::json global_patterns {
+        {
+            "registrations",
+            nlohmann::json::array_t {
+                {
+                    { "id", "global_watchers" },
+                    { "method", "workspace/didChangeWatchedFiles" },
+                    {
+                        "registerOptions",
+                        {
+                            {
+                                "watchers",
+                                nlohmann::json::array_t {
+                                    { { "globPattern", "**/*" } },
+                                    { { "globPattern", ".hlasmplugin/*.json" } },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    };
+
+    response_->request(
+        "client/registerCapability",
+        global_patterns,
+        [](const nlohmann::json&) {},
+        [](int, [[maybe_unused]] const char* msg) {
+            LOG_WARNING("Error occurred while registering file watcher: " + std::string(msg));
         });
 }
 

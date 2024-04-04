@@ -29,7 +29,7 @@ import { HLASMVirtualFileContentProvider } from './hlasmVirtualFileContentProvid
 import { downloadDependencies } from './hlasmDownloadCommands';
 import { blockCommentCommand, CommentOption, lineCommentCommand } from './commentEditorCommands';
 import { HLASMCodeActionsProvider } from './hlasmCodeActionsProvider';
-import { hlasmplugin_folder, hlasmplugin_folder_filter, bridge_json_filter, schemeExternalFiles, continuationColumn, initialBlanks, languageIdHlasm, debugTypeHlasm, schemeVirtualFiles } from './constants';
+import { hlasmplugin_folder_filter, bridge_json_filter, schemeExternalFiles, continuationColumn, initialBlanks, languageIdHlasm, debugTypeHlasm, schemeVirtualFiles } from './constants';
 import { ConfigurationsHandler } from './configurationsHandler';
 import { HlasmPluginMiddleware, getLanguageClientMiddleware } from './languageClientMiddleware';
 import { HLASMExternalFiles } from './hlasmExternalFiles';
@@ -97,21 +97,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
     registerListingServices(context);
     await registerEditHelpers(context);
 
-    // patterns for files and configs
-    const filePattern: string = '**/*';
-
     const clientErrorHandler = new LanguageClientErrorHandler(telemetry);
     const middleware = getLanguageClientMiddleware();
     // create client options
-    const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
     const clientOptions: vscodelc.LanguageClientOptions = {
         documentSelector: [{ language: languageIdHlasm }],
-        synchronize: !syncFileEvents ? undefined : {
-            fileEvents: [
-                vscode.workspace.createFileSystemWatcher(filePattern),
-                vscode.workspace.createFileSystemWatcher(hlasmplugin_folder + '/*.json'),
-            ]
-        },
         errorHandler: clientErrorHandler,
         middleware: middleware,
     };
