@@ -10,7 +10,7 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-target_sources(language_server_base PRIVATE
+target_sources(hlasm_language_server_base PRIVATE
 	base_protocol_channel.cpp
 	base_protocol_channel.h
 	blocking_queue.h
@@ -41,12 +41,12 @@ target_sources(language_server_base PRIVATE
 )
 
 if(EMSCRIPTEN)
-	target_sources(language_server_base PRIVATE emscripten_server_streams.cpp)
+	target_sources(hlasm_language_server_base PRIVATE emscripten_server_streams.cpp)
 else()
-	target_sources(language_server_base PRIVATE native_server_streams.cpp)
+	target_sources(hlasm_language_server_base PRIVATE native_server_streams.cpp)
 endif()
 
-target_sources(language_server PRIVATE 
+target_sources(hlasm_language_server PRIVATE
 	main.cpp
 )
 

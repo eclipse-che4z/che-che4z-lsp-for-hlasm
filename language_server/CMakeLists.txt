@@ -10,30 +10,30 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-PROJECT(language_server)
+PROJECT(hlasm_language_server)
 
 include(GoogleTest)
 
 # compile sources to the executable
-add_library(language_server_base OBJECT)
+add_library(hlasm_language_server_base OBJECT)
 
-target_include_directories(language_server_base PUBLIC src)
+target_include_directories(hlasm_language_server_base PUBLIC src)
 
-add_executable(language_server)
-generate_emscripten_node_runner(language_server)
+add_executable(hlasm_language_server)
+generate_emscripten_node_runner(hlasm_language_server)
 
 add_subdirectory(src)
 
 # link executable with libraries
-target_link_libraries(language_server_base nlohmann_json::nlohmann_json)
-target_link_libraries(language_server_base parser_library)
-target_link_libraries(language_server_base boost-asio)
+target_link_libraries(hlasm_language_server_base nlohmann_json::nlohmann_json)
+target_link_libraries(hlasm_language_server_base parser_library)
+target_link_libraries(hlasm_language_server_base boost-asio)
 
-target_link_libraries(language_server language_server_base)
-target_link_libraries(language_server nlohmann_json::nlohmann_json)
-target_link_libraries(language_server boost-asio)
-target_link_libraries(language_server Threads::Threads)
-target_link_libraries(language_server hlasm_utils)
+target_link_libraries(hlasm_language_server hlasm_language_server_base)
+target_link_libraries(hlasm_language_server nlohmann_json::nlohmann_json)
+target_link_libraries(hlasm_language_server boost-asio)
+target_link_libraries(hlasm_language_server Threads::Threads)
+target_link_libraries(hlasm_language_server hlasm_utils)
 
 if(BUILD_TESTING)
 	add_subdirectory(test)

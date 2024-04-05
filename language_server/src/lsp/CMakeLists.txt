@@ -10,7 +10,7 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-target_sources(language_server_base PRIVATE
+target_sources(hlasm_language_server_base PRIVATE
 	feature_language_features.cpp
 	feature_language_features.h
 	feature_text_synchronization.cpp

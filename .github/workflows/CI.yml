@@ -162,7 +162,7 @@ jobs:
       - name: Prepare UI tests
         run: |
           mkdir -p ${{ env.CLIENT_DIR }}/bin/linux_x64
-          cp build/bin/language_server ${{ env.CLIENT_DIR }}/bin/linux_x64/language_server
+          cp build/bin/hlasm_language_server ${{ env.CLIENT_DIR }}/bin/linux_x64/hlasm_language_server
       - name: Run UI tests
         run: |
           npm ci
@@ -197,13 +197,13 @@ jobs:
           - os: ubuntu-22.04
             native: linux_x64
             container: alpine:3.16
-            dbg-strip: objcopy --only-keep-debug language_server language_server.dbg && objcopy --strip-unneeded language_server && objcopy --add-gnu-debuglink=language_server.dbg language_server
-            dbg-pattern: build/bin/language_server.dbg
+            dbg-strip: objcopy --only-keep-debug hlasm_language_server hlasm_language_server.dbg && objcopy --strip-unneeded hlasm_language_server && objcopy --add-gnu-debuglink=hlasm_language_server.dbg hlasm_language_server
+            dbg-pattern: build/bin/hlasm_language_server.dbg
           - os: ubuntu-22.04
             native: linux_arm64
             container: alpine:3.19
-            dbg-strip: aarch64-linux-musl-objcopy --only-keep-debug language_server language_server.dbg && aarch64-linux-musl-objcopy --strip-unneeded language_server && aarch64-linux-musl-objcopy --add-gnu-debuglink=language_server.dbg language_server
-            dbg-pattern: build/bin/language_server.dbg
+            dbg-strip: aarch64-linux-musl-objcopy --only-keep-debug hlasm_language_server hlasm_language_server.dbg && aarch64-linux-musl-objcopy --strip-unneeded hlasm_language_server && aarch64-linux-musl-objcopy --add-gnu-debuglink=hlasm_language_server.dbg hlasm_language_server
+            dbg-pattern: build/bin/hlasm_language_server.dbg
           - os: ubuntu-22.04
             native: wasm
             container: emscripten/emsdk:3.1.46
@@ -267,13 +267,13 @@ jobs:
       - name: Actions artifact
         uses: actions/upload-artifact@v4
         with:
-          name: language_server_${{ matrix.native }}
-          path: build/bin/language_server${{ matrix.artifacts-ext }}
+          name: hlasm_language_server_${{ matrix.native }}
+          path: build/bin/hlasm_language_server${{ matrix.artifacts-ext }}
       - name: Actions artifact
         if: ${{ matrix.dbg-pattern }}
         uses: actions/upload-artifact@v4
         with:
-          name: language_server_${{ matrix.native }}_dbg
+          name: hlasm_language_server_${{ matrix.native }}_dbg
           path: ${{ matrix.dbg-pattern }}
 
   test-matrix:
@@ -322,16 +322,16 @@ jobs:
       - name: Download native language server
         uses: actions/download-artifact@v4
         with:
-          name: language_server_${{ matrix.native }}
+          name: hlasm_language_server_${{ matrix.native }}
           path: ${{ env.CLIENT_DIR }}/bin/${{ matrix.native }}/
       - name: Download wasm language server
         uses: actions/download-artifact@v4
         with:
-          name: language_server_wasm
+          name: hlasm_language_server_wasm
           path: ${{ env.CLIENT_DIR }}/bin/wasm/
       - name: Set executable flag
         if: ${{ matrix.chmod }}
-        run: chmod +x bin/${{ matrix.native }}/language_server
+        run: chmod +x bin/${{ matrix.native }}/hlasm_language_server
       - name: Setup emulation
         if: ${{ hashFiles(format('scripts/emulation.{0}.sh', matrix.native)) != '' }}
         run: ../../scripts/emulation.${{ matrix.native }}.sh
@@ -353,7 +353,7 @@ jobs:
       - name: Download wasm language server
         uses: actions/download-artifact@v4
         with:
-          name: language_server_wasm
+          name: hlasm_language_server_wasm
           path: ${{ env.CLIENT_DIR }}/bin/wasm/
       - name: Download Release Info
         uses: actions/download-artifact@v4
@@ -390,37 +390,37 @@ jobs:
       - name: Download windows language server (x64)
         uses: actions/download-artifact@v4
         with:
-          name: language_server_win32_x64
+          name: hlasm_language_server_win32_x64
           path: ${{ env.CLIENT_DIR }}/bin/win32_x64/
       - name: Download windows language server (arm64)
         uses: actions/download-artifact@v4
         with:
-          name: language_server_win32_arm64
+          name: hlasm_language_server_win32_arm64
           path: ${{ env.CLIENT_DIR }}/bin/win32_arm64/
       - name: Download linux language server (x64)
         uses: actions/download-artifact@v4
         with:
-          name: language_server_linux_x64
+          name: hlasm_language_server_linux_x64
           path: ${{ env.CLIENT_DIR }}/bin/linux_x64/
       - name: Download linux language server (arm64)
         uses: actions/download-artifact@v4
         with:
-          name: language_server_linux_arm64
+          name: hlasm_language_server_linux_arm64
           path: ${{ env.CLIENT_DIR }}/bin/linux_arm64/
       - name: Download wasm language server
         uses: actions/download-artifact@v4
         with:
-          name: language_server_wasm
+          name: hlasm_language_server_wasm
           path: ${{ env.CLIENT_DIR }}/bin/wasm/
       - name: Download MacOS language server (x64)
         uses: actions/download-artifact@v4
         with:
-          name: language_server_darwin_x64
+          name: hlasm_language_server_darwin_x64
           path: ${{ env.CLIENT_DIR }}/bin/darwin_x64/
       - name: Download MacOS language server (arm64)
         uses: actions/download-artifact@v4
         with:
-          name: language_server_darwin_arm64
+          name: hlasm_language_server_darwin_arm64
           path: ${{ env.CLIENT_DIR }}/bin/darwin_arm64/
       - name: Download Release Info
         uses: actions/download-artifact@v4
@@ -428,10 +428,10 @@ jobs:
           name: release-info
       - name: Set executable flag
         run: |
-          chmod +x ${{ env.CLIENT_DIR }}/bin/darwin_x64/language_server
-          chmod +x ${{ env.CLIENT_DIR }}/bin/darwin_arm64/language_server
-          chmod +x ${{ env.CLIENT_DIR }}/bin/linux_x64/language_server
-          chmod +x ${{ env.CLIENT_DIR }}/bin/linux_arm64/language_server
+          chmod +x ${{ env.CLIENT_DIR }}/bin/darwin_x64/hlasm_language_server
+          chmod +x ${{ env.CLIENT_DIR }}/bin/darwin_arm64/hlasm_language_server
+          chmod +x ${{ env.CLIENT_DIR }}/bin/linux_x64/hlasm_language_server
+          chmod +x ${{ env.CLIENT_DIR }}/bin/linux_arm64/hlasm_language_server
       - name: NPM CI
         run: npm ci
         working-directory: ${{ env.CLIENT_DIR }}

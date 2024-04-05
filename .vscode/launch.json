@@ -8,7 +8,7 @@
       "name": "(gdb) Attach",
       "type": "cppdbg",
       "request": "attach",
-      "program": "${workspaceFolder}/build/bin/language_server",
+      "program": "${workspaceFolder}/build/bin/hlasm_language_server",
       "processId": "${command:pickProcess}",
       "MIMode": "gdb",
       "setupCommands": [
@@ -43,7 +43,7 @@
       "name": "Attach to proccess",
       "type": "cppdbg",
       "request": "attach",
-      "program": "${workspaceFolder}/build/bin/language_server",
+      "program": "${workspaceFolder}/build/bin/hlasm_language_server",
       "processId":"${command:pickProcess}",
       "MIMode": "gdb",
       "setupCommands": [

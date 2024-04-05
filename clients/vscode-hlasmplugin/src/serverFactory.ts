@@ -47,7 +47,7 @@ async function generateServerOption(method: ServerVariant): Promise<vscodelc.Ser
 
         //spawn the server
         cp.execFile(
-            path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
+            path.join(__dirname, '..', 'bin', langServerFolder, 'hlasm_language_server'),
             decorateArgs([lspPort.toString()]));
 
         return () => {
@@ -61,14 +61,14 @@ async function generateServerOption(method: ServerVariant): Promise<vscodelc.Ser
     }
     else if (method === 'native') {
         const server: vscodelc.Executable = {
-            command: path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
+            command: path.join(__dirname, '..', 'bin', langServerFolder, 'hlasm_language_server'),
             args: decorateArgs(getConfig<string[]>('arguments', []))
         };
         return server;
     }
     else if (method === 'wasm') {
         const server: vscodelc.NodeModule = {
-            module: path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
+            module: path.join(__dirname, '..', 'bin', 'wasm', 'hlasm_language_server'),
             args: decorateArgs(getConfig<string[]>('arguments', [])),
             options: { execArgv: getWasmRuntimeArgs() }
         };

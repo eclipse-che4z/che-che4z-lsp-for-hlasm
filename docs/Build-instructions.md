@@ -72,7 +72,7 @@ The project can be built for the WASM target using the Emscripten SDK. Currently
 
 The project tests or the language server itself then needs to be run in the Node with several experimental features enabled.
 
-    node --experimental-wasm-threads --experimental-wasm-bulk-memory language_server.js
+    node hlasm_language_server.js
 
 Mac OS
 ------

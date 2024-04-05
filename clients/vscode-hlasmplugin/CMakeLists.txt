@@ -37,7 +37,7 @@ else()
 endif()
 
 if(EMSCRIPTEN)
-	list(APPEND BIN_EXTRAS "$<TARGET_FILE_DIR:language_server>/language_server.js" "$<TARGET_FILE_DIR:language_server>/language_server.worker.js" "$<TARGET_FILE_DIR:language_server>/language_server.wasm")
+	list(APPEND BIN_EXTRAS "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.js" "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.worker.js" "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.wasm")
 endif()
 
 
@@ -89,13 +89,13 @@ add_custom_command(
 		COMMAND
 			${COPY_ANTLR_LIBRARY_COMMAND}
 		COMMAND
-			${CMAKE_COMMAND} -E copy  $<TARGET_FILE:language_server> ${BIN_EXTRAS} ${BIN_FOLDER}
+			${CMAKE_COMMAND} -E copy  $<TARGET_FILE:hlasm_language_server> ${BIN_EXTRAS} ${BIN_FOLDER}
 		COMMAND
 			npx vsce package --no-dependencies -o ${GLOBAL_OUTPUT_PATH}/vscode-hlasmplugin.vsix
 		COMMAND 
 			${CMAKE_COMMAND} -E touch ${CHECK_BUILD}
 		DEPENDS
-			${CHECK_CI} ${CMAKE_CURRENT_SOURCE_DIR} parser_library language_server
+			${CHECK_CI} ${CMAKE_CURRENT_SOURCE_DIR} parser_library hlasm_language_server
 		WORKING_DIRECTORY
 			${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -107,4 +107,4 @@ add_custom_target(vsix
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_dependencies(vsix language_server parser_library)
+add_dependencies(vsix hlasm_language_server parser_library)

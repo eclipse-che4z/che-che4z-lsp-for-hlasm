@@ -10,7 +10,7 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-target_sources(language_server_base PRIVATE
+target_sources(hlasm_language_server_base PRIVATE
 	dap_feature.cpp
 	dap_feature.h
 	dap_message_wrappers.cpp

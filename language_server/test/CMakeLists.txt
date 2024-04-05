@@ -35,7 +35,7 @@ add_subdirectory(lsp)
 target_link_libraries(server_test nlohmann_json::nlohmann_json)
 target_link_libraries(server_test network-uri)
 target_link_libraries(server_test boost-asio)
-target_link_libraries(server_test language_server_base)
+target_link_libraries(server_test hlasm_language_server_base)
 
 target_link_libraries(server_test gmock_main)
 target_link_libraries(server_test network-uri)
