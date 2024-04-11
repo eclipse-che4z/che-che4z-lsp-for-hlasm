@@ -30,6 +30,9 @@ target_sources(hlasm_utils_test PRIVATE
 
 target_link_libraries(hlasm_utils_test hlasm_utils)
 target_link_libraries(hlasm_utils_test gmock_main)
+if (BUILD_SHARED_LIBS)
+    set_target_properties(hlasm_utils_test PROPERTIES COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
+endif()
 
 if(DISCOVER_TESTS)
 	gtest_discover_tests(hlasm_utils_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 120)	

@@ -17,8 +17,6 @@
 
 #include <cstddef>
 
-#include "parser_library_export.h"
-
 namespace hlasm_plugin::parser_library {
 
 enum class branch_direction : unsigned char

@@ -27,7 +27,6 @@
 #include "folding_range.h"
 #include "lib_config.h"
 #include "message_consumer.h"
-#include "parser_library_export.h"
 #include "protocol.h"
 #include "sequence.h"
 #include "workspace_manager_requests.h"

@@ -21,19 +21,10 @@ else()
 	set(GENERATED_GRAMMER_FOLDER ${USE_PRE_GENERATED_GRAMMAR})
 endif()
 
-add_library(parser_library)
+add_library(parser_library STATIC)
 
 add_subdirectory(src)
 add_subdirectory(include)
-
-if(NOT BUILD_SHARED_LIBS)
-	target_compile_definitions(parser_library PUBLIC PARSER_LIBRARY_STATIC_DEFINE=1)
-endif()
-
-generate_export_header(parser_library
-			EXPORT_FILE_NAME ${GENERATED_FOLDER}/parser_library_export.h)
-
-target_sources(parser_library PUBLIC ${GENERATED_FOLDER}/parser_library_export.h)
 
 target_include_directories(parser_library PUBLIC
 	${PROJECT_SOURCE_DIR}/include

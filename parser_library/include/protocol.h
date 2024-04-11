@@ -24,7 +24,6 @@
 #include <cstdint>
 #include <cstring>
 
-#include "parser_library_export.h"
 #include "range.h"
 #include "sequence.h"
 
@@ -42,7 +41,7 @@ struct highlighting_info;
 
 // in case any changes are done to these scopes, the tokenTypes field in feature_language_features.cpp
 // needs to be adjusted accordingly, as they are implicitly but directly mapped to each other
-enum class PARSER_LIBRARY_EXPORT hl_scopes : size_t
+enum class hl_scopes : size_t
 {
     label = 0,
     instruction = 1,
@@ -84,14 +83,14 @@ class diagnostic_related_info_s;
 class diagnostic_s;
 struct fade_message_s;
 
-enum class PARSER_LIBRARY_EXPORT completion_trigger_kind
+enum class completion_trigger_kind
 {
     invoked = 1,
     trigger_character = 2,
     trigger_for_incomplete_completions = 3
 };
 
-enum class PARSER_LIBRARY_EXPORT completion_item_kind
+enum class completion_item_kind
 {
     mach_instr = 0,
     asm_instr = 1,
@@ -102,7 +101,7 @@ enum class PARSER_LIBRARY_EXPORT completion_item_kind
     ord_sym = 6,
 };
 
-struct PARSER_LIBRARY_EXPORT completion_item
+struct completion_item
 {
     explicit completion_item(const lsp::completion_item_s& item);
     std::string_view label() const;
@@ -119,7 +118,7 @@ private:
 
 using completion_list = sequence<completion_item, const lsp::completion_item_s*>;
 
-enum class PARSER_LIBRARY_EXPORT document_symbol_kind
+enum class document_symbol_kind
 {
     DAT = 0,
     EQU = 1,
@@ -138,10 +137,10 @@ enum class PARSER_LIBRARY_EXPORT document_symbol_kind
     TITLE = 14,
 };
 
-struct PARSER_LIBRARY_EXPORT document_symbol_item;
+struct document_symbol_item;
 using document_symbol_list = sequence<document_symbol_item, const lsp::document_symbol_item_s*>;
 
-struct PARSER_LIBRARY_EXPORT document_symbol_item
+struct document_symbol_item
 {
     explicit document_symbol_item(const lsp::document_symbol_item_s& item);
     sequence<char> name() const;
@@ -154,7 +153,7 @@ private:
     const lsp::document_symbol_item_s& item_;
 };
 
-struct PARSER_LIBRARY_EXPORT position_uri
+struct position_uri
 {
     explicit position_uri(const location& item);
     position pos() const;
@@ -166,7 +165,7 @@ private:
 
 using position_uri_list = sequence<position_uri, const location*>;
 
-struct PARSER_LIBRARY_EXPORT range_uri
+struct range_uri
 {
     explicit range_uri(range_uri_s& range);
     range get_range() const;
@@ -176,7 +175,7 @@ private:
     range_uri_s& impl_;
 };
 
-struct PARSER_LIBRARY_EXPORT document_change
+struct document_change
 {
     document_change(const char* new_text, size_t text_length)
         : whole(true)
@@ -202,14 +201,14 @@ struct PARSER_LIBRARY_EXPORT document_change
     const size_t text_length;
 };
 
-struct PARSER_LIBRARY_EXPORT text_document_item
+struct text_document_item
 {
     char* document_uri;
     version_t version;
     char* text;
 };
 
-enum class PARSER_LIBRARY_EXPORT diagnostic_severity
+enum class diagnostic_severity
 {
     error = 1,
     warning = 2,
@@ -218,14 +217,14 @@ enum class PARSER_LIBRARY_EXPORT diagnostic_severity
     unspecified = 5
 };
 
-enum class PARSER_LIBRARY_EXPORT diagnostic_tag
+enum class diagnostic_tag
 {
     none = 0,
     unnecessary = 1 << 0,
     deprecated = 1 << 1,
 };
 
-struct PARSER_LIBRARY_EXPORT diagnostic_related_info
+struct diagnostic_related_info
 {
     diagnostic_related_info(diagnostic_related_info_s&);
 
@@ -236,7 +235,7 @@ private:
     diagnostic_related_info_s& impl_;
 };
 
-struct PARSER_LIBRARY_EXPORT diagnostic
+struct diagnostic
 {
     explicit diagnostic(diagnostic_s&);
 
@@ -254,7 +253,7 @@ private:
     diagnostic_s& impl_;
 };
 
-struct PARSER_LIBRARY_EXPORT fade_message
+struct fade_message
 {
     explicit fade_message(fade_message_s&);
 
@@ -268,7 +267,7 @@ private:
     fade_message_s& impl_;
 };
 
-struct PARSER_LIBRARY_EXPORT performance_metrics
+struct performance_metrics
 {
     size_t lines = 0;
     size_t macro_def_statements = 0;
@@ -284,7 +283,7 @@ struct PARSER_LIBRARY_EXPORT performance_metrics
     bool operator==(const performance_metrics&) const noexcept = default;
 };
 
-struct PARSER_LIBRARY_EXPORT workspace_file_info
+struct workspace_file_info
 {
     size_t files_processed = 0;
     bool config_parsing = false;
@@ -292,7 +291,7 @@ struct PARSER_LIBRARY_EXPORT workspace_file_info
     bool processor_group_found = false;
 };
 
-struct PARSER_LIBRARY_EXPORT parsing_metadata
+struct parsing_metadata
 {
     performance_metrics metrics;
     workspace_file_info ws_info;
@@ -300,7 +299,7 @@ struct PARSER_LIBRARY_EXPORT parsing_metadata
     size_t warnings = 0;
 };
 
-struct PARSER_LIBRARY_EXPORT diagnostic_list
+struct diagnostic_list
 {
     diagnostic_list();
     diagnostic_list(diagnostic_s* begin, size_t size);
@@ -313,7 +312,7 @@ private:
     size_t size_;
 };
 
-struct PARSER_LIBRARY_EXPORT fade_message_list
+struct fade_message_list
 {
     fade_message_list();
     fade_message_list(fade_message_s* begin, size_t size);
@@ -326,7 +325,7 @@ private:
     size_t size_;
 };
 
-struct PARSER_LIBRARY_EXPORT token_info
+struct token_info
 {
     token_info(const range& token_range, semantics::hl_scopes scope)
         : token_range(token_range)
@@ -346,14 +345,14 @@ struct PARSER_LIBRARY_EXPORT token_info
     bool operator==(const token_info& rhs) const noexcept = default;
 };
 
-struct PARSER_LIBRARY_EXPORT source
+struct source
 {
     source(const debugging::source& source);
 
     sequence<char> uri;
 };
 
-struct PARSER_LIBRARY_EXPORT stack_frame
+struct stack_frame
 {
     explicit stack_frame(const debugging::stack_frame& frame);
 
@@ -376,7 +375,7 @@ enum class set_type
     UNDEF_TYPE
 };
 
-struct PARSER_LIBRARY_EXPORT scope
+struct scope
 {
     explicit scope(const debugging::scope& impl);
 
@@ -387,7 +386,7 @@ struct PARSER_LIBRARY_EXPORT scope
 
 using scopes_t = sequence<scope, const debugging::scope*>;
 
-struct PARSER_LIBRARY_EXPORT variable
+struct variable
 {
     explicit variable(const debugging::variable& impl);
 

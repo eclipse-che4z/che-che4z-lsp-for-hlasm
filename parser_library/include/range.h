@@ -21,11 +21,9 @@
 #include <compare>
 #include <string>
 
-#include "parser_library_export.h"
-
 namespace hlasm_plugin::parser_library {
 
-struct PARSER_LIBRARY_EXPORT position
+struct position
 {
     static constexpr const size_t max_value = (size_t)2147483647;
     constexpr position() = default;
@@ -53,7 +51,7 @@ struct PARSER_LIBRARY_EXPORT position
     }
 };
 
-struct PARSER_LIBRARY_EXPORT range
+struct range
 {
     range() = default;
     range(position start, position end)
@@ -75,7 +73,7 @@ inline range union_range(const range& lhs, const range& rhs)
     return range(position::min(lhs.start, rhs.start), position::max(lhs.end, rhs.end));
 }
 
-struct PARSER_LIBRARY_EXPORT file_range
+struct file_range
 {
     file_range(range r, const std::string* file)
         : r(r)

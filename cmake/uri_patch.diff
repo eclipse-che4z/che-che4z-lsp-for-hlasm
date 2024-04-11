@@ -13,6 +13,19 @@ index 8ff7a5e..a482a51 100644
    }
  
    constexpr int compare(size_type pos1, size_type n1,
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index d7f387c..5b3f189 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -14,7 +14,7 @@ set(Uri_SRCS
+   ${CMAKE_CURRENT_SOURCE_DIR}/detail/uri_resolve.cpp
+   )
+ 
+-add_library(network-uri ${Uri_SRCS})
++add_library(network-uri STATIC ${Uri_SRCS})
+ target_link_libraries(network-uri)
+ if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
+   if (NOT Uri_DISABLE_LIBCXX)
 diff --git a/src/detail/uri_parse.cpp b/src/detail/uri_parse.cpp
 index 7f77148..73f581e 100644
 --- a/src/detail/uri_parse.cpp

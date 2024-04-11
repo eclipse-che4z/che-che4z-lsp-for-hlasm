@@ -1,3 +1,16 @@
+diff --git a/runtime/Cpp/runtime/CMakeLists.txt b/runtime/Cpp/runtime/CMakeLists.txt
+index 86fdab97f..97486fb1a 100644
+--- a/runtime/Cpp/runtime/CMakeLists.txt
++++ b/runtime/Cpp/runtime/CMakeLists.txt
+@@ -120,7 +120,7 @@ set(static_lib_suffix "")
+ if (WIN32)
+   set(static_lib_suffix "-static")
+   if (TARGET antlr4_shared)
+-    target_compile_definitions(antlr4_shared PUBLIC ANTLR4CPP_EXPORTS)
++    target_compile_definitions(antlr4_shared PRIVATE ANTLR4CPP_EXPORTS)
+   endif()
+   if (TARGET antlr4_static)
+     target_compile_definitions(antlr4_static PUBLIC ANTLR4CPP_STATIC)
 diff --git a/runtime/Cpp/runtime/src/DefaultErrorStrategy.cpp b/runtime/Cpp/runtime/src/DefaultErrorStrategy.cpp
 index 54d35ee3b..f7d033e3f 100755
 --- a/runtime/Cpp/runtime/src/DefaultErrorStrategy.cpp
@@ -76,7 +89,7 @@ index 337bcba17..391a8ce05 100755
      for (size_t d = 0; d < simulator->decisionToDFA.size(); d++) {
        dfa::DFA &dfa = simulator->decisionToDFA[d];
 diff --git a/runtime/Cpp/runtime/src/Recognizer.cpp b/runtime/Cpp/runtime/src/Recognizer.cpp
-index c8a183324..15c6bb98d 100755
+index c8a183324..0a2251787 100755
 --- a/runtime/Cpp/runtime/src/Recognizer.cpp
 +++ b/runtime/Cpp/runtime/src/Recognizer.cpp
 @@ -20,8 +20,8 @@ using namespace antlr4;
@@ -85,8 +98,8 @@ index c8a183324..15c6bb98d 100755
  
 -std::map<const dfa::Vocabulary*, std::map<std::string_view, size_t>> Recognizer::_tokenTypeMapCache;
 -std::map<std::vector<std::string>, std::map<std::string, size_t>> Recognizer::_ruleIndexMapCache;
-+thread_local std::map<const dfa::Vocabulary*, std::map<std::string_view, size_t>> Recognizer::_tokenTypeMapCache;
-+thread_local std::map<std::vector<std::string>, std::map<std::string, size_t>> Recognizer::_ruleIndexMapCache;
++thread_local std::map<const dfa::Vocabulary*, std::map<std::string_view, size_t>> _tokenTypeMapCache;
++thread_local std::map<std::vector<std::string>, std::map<std::string, size_t>> _ruleIndexMapCache;
  
  Recognizer::Recognizer() {
    InitializeInstanceFields();
@@ -107,10 +120,10 @@ index c8a183324..15c6bb98d 100755
    auto iterator = _ruleIndexMapCache.find(ruleNames);
    if (iterator != _ruleIndexMapCache.end()) {
 diff --git a/runtime/Cpp/runtime/src/Recognizer.h b/runtime/Cpp/runtime/src/Recognizer.h
-index bc62aea23..34abbc5e4 100755
+index bc62aea23..2b2157883 100755
 --- a/runtime/Cpp/runtime/src/Recognizer.h
 +++ b/runtime/Cpp/runtime/src/Recognizer.h
-@@ -142,12 +142,9 @@ namespace antlr4 {
+@@ -142,12 +142,7 @@ namespace antlr4 {
    protected:
      atn::ATNSimulator *_interpreter; // Set and deleted in descendants (or the profiler).
  
@@ -120,8 +133,6 @@ index bc62aea23..34abbc5e4 100755
    private:
 -    static std::map<const dfa::Vocabulary*, std::map<std::string_view, size_t>> _tokenTypeMapCache;
 -    static std::map<std::vector<std::string>, std::map<std::string, size_t>> _ruleIndexMapCache;
-+    static thread_local std::map<const dfa::Vocabulary*, std::map<std::string_view, size_t>> _tokenTypeMapCache;
-+    static thread_local std::map<std::vector<std::string>, std::map<std::string, size_t>> _ruleIndexMapCache;
  
      ProxyErrorListener _proxListener; // Manages a collection of listeners.
  

@@ -89,7 +89,7 @@ if(NOT antlr4cpp_POPULATED)
     endif()
 endif()
 
-if(BUILD_SHARED_LIBS AND NOT EMSCRIPTEN)
+if(BUILD_SHARED_LIBS AND NOT EMSCRIPTEN AND NOT USE_STATIC_ANTLR)
     set(ANTLR4_RUNTIME antlr4_shared)
 else()
     set(ANTLR4_RUNTIME antlr4_static)

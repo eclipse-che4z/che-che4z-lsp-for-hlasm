@@ -18,7 +18,6 @@
 #include <string>
 #include <vector>
 
-#include "parser_library_export.h"
 #include "range.h"
 #include "semantics/source_info_processor.h"
 #include "token.h"

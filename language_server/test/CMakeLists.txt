@@ -38,6 +38,9 @@ target_link_libraries(server_test boost-asio)
 target_link_libraries(server_test hlasm_language_server_base)
 
 target_link_libraries(server_test gmock_main)
+if (BUILD_SHARED_LIBS)
+    set_target_properties(server_test PROPERTIES COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
+endif()
 target_link_libraries(server_test network-uri)
 target_link_libraries(server_test parser_library)
 

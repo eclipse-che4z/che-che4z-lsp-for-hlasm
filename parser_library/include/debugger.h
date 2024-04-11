@@ -17,7 +17,6 @@
 
 #include <span>
 
-#include "parser_library_export.h"
 #include "protocol.h"
 #include "range.h"
 #include "sequence.h"

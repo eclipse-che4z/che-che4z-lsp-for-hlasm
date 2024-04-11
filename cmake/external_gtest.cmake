@@ -25,7 +25,6 @@ FetchContent_GetProperties(googletest)
 
 function(add_googletest)
     set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1 CACHE BOOL "")
-    set(BUILD_SHARED_LIBS Off)
     set(gtest_force_shared_crt ${WITH_STATIC_CRT} CACHE BOOL "" FORCE)
     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
     unset(CMAKE_SUPPRESS_DEVELOPER_WARNINGS)

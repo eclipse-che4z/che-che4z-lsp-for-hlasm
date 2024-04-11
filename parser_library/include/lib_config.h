@@ -19,7 +19,6 @@
 #include <optional>
 
 #include "nlohmann/json_fwd.hpp"
-#include "parser_library_export.h"
 
 namespace hlasm_plugin::parser_library {
 namespace config {
@@ -27,7 +26,7 @@ struct pgm_conf;
 }
 
 // Encapsulates user defined settings of library and individual workspaces
-class PARSER_LIBRARY_EXPORT lib_config
+class lib_config
 {
 public:
     // Creates an instance of lib_config with values from input json.

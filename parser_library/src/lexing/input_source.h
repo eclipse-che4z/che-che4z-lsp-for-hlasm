@@ -21,7 +21,6 @@
 #include "ANTLRInputStream.h"
 
 #include "logical_line.h"
-#include "parser_library_export.h"
 #include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::lexing {

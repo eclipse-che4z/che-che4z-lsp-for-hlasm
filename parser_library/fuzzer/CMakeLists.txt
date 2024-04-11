@@ -18,7 +18,7 @@ if(BUILD_FUZZER)
 	set_target_properties(library_fuzzer PROPERTIES LINK_FLAGS "-fsanitize=fuzzer")
 	generate_emscripten_node_runner(library_fuzzer)
 else()
-	add_library(library_fuzzer)
+	add_library(library_fuzzer STATIC)
 endif()
 
 target_sources(library_fuzzer PRIVATE

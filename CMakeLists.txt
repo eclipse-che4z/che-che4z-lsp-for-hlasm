@@ -55,6 +55,7 @@ option(WITH_STATIC_CRT "(Visual C++) Enable to statically link CRT, which avoids
 option(DISCOVER_TESTS "Enables CTest by executing tests and discovering test cases. To disable with: -DDISCOVER_TESTS=Off" On)
 option(BUILD_VSIX "When disabled, the VS Code client is not built and it is not packaged into vsix." On)
 option(BUILD_FUZZER "Enable building of the fuzzer. Tested with clang and libstdc++ (enable with -DWITH_LIBCXX=Off)" Off)
+option(USE_STATIC_ANTLR "Always use static ANTLR library." On)
 
 set(USE_PRE_GENERATED_GRAMMAR "" CACHE PATH "Directory with pre-generated grammar files")
 set(LANGUAGE_SERVER_BIN_SUBDIR "" CACHE STRING "Subdirectory for the language server binary in the client project")
