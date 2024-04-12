@@ -104,7 +104,6 @@ TEST(lsp_completion_instr, consistency)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     for (size_t l = 1; l <= 3; ++l)
     {

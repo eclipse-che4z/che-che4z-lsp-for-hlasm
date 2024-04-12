@@ -32,6 +32,7 @@
 
 #include "analyzer.h"
 #include "context/common_types.h"
+#include "diagnostic.h"
 #include "ebcdic_encoding.h"
 
 namespace hlasm_plugin::utils {
@@ -39,6 +40,9 @@ class task;
 }
 namespace hlasm_plugin::parser_library {
 class workspace_manager;
+template<typename T>
+class diagnostic_consumer;
+struct diagnostic_op;
 namespace context {
 struct address;
 class section;
@@ -81,29 +85,32 @@ std::optional<std::vector<T>> get_var_vector(hlasm_context& ctx, std::string nam
 template<typename T>
 std::optional<std::unordered_map<size_t, T>> get_var_vector_map(hlasm_context& ctx, std::string name);
 
-template<typename Msg,
+template<typename CMsg,
     typename Proj,
-    std::predicate<std::decay_t<std::invoke_result_t<Proj, const Msg&>>,
-        std::decay_t<std::invoke_result_t<Proj, const Msg&>>> BinPred = std::equal_to<>,
-    typename C = std::initializer_list<std::decay_t<std::invoke_result_t<Proj, const Msg&>>>>
-inline bool matches_message_properties(const std::vector<Msg>& d, const C& c, Proj p, BinPred b = BinPred())
+    std::predicate<std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type>&>,
+        std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type&>>> BinPred =
+        std::equal_to<>,
+    typename C =
+        std::initializer_list<std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type&>>>>
+inline bool matches_message_properties(CMsg&& d, const C& c, Proj p, BinPred b = BinPred())
 {
-    std::vector<std::decay_t<std::invoke_result_t<Proj, const Msg&>>> properties;
+    std::vector<std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type&>>> properties;
     std::transform(
         d.begin(), d.end(), std::back_inserter(properties), [&p](const auto& d) { return std::invoke(p, d); });
 
     return std::is_permutation(properties.begin(), properties.end(), c.begin(), c.end(), b);
 }
 
-template<typename Msg,
+template<typename CMsg,
     typename Proj,
-    typename C = std::initializer_list<std::decay_t<std::invoke_result_t<Proj, const Msg&>>>>
-inline bool contains_message_properties(const std::vector<Msg>& d, const C& c, Proj p)
+    typename C =
+        std::initializer_list<std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type&>>>>
+inline bool contains_message_properties(CMsg&& d, const C& c, Proj p)
 {
     if (d.size() < c.size())
         return false;
 
-    std::vector<std::decay_t<std::invoke_result_t<Proj, const Msg&>>> properties;
+    std::vector<std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type&>>> properties;
     std::transform(
         d.begin(), d.end(), std::back_inserter(properties), [&p](const auto& d) { return std::invoke(p, d); });
 
@@ -115,51 +122,53 @@ inline bool contains_message_properties(const std::vector<Msg>& d, const C& c, P
     return std::includes(properties.begin(), properties.end(), to_find.begin(), to_find.end());
 }
 
-template<typename Msg, typename C = std::initializer_list<std::string>>
-inline bool matches_message_codes(const std::vector<Msg>& d, const C& c)
+template<typename CMsg, typename C = std::initializer_list<std::string>>
+inline bool matches_message_codes(CMsg&& d, const C& c)
 {
-    return matches_message_properties(d, c, &Msg::code);
+    return matches_message_properties(d, c, &std::decay_t<CMsg>::value_type::code);
 }
 
-template<typename Msg, typename C = std::initializer_list<std::string>>
-inline bool contains_message_codes(const std::vector<Msg>& d, const C& c)
+template<typename CMsg, typename C = std::initializer_list<std::string>>
+inline bool contains_message_codes(CMsg&& d, const C& c)
 {
-    return contains_message_properties(d, c, &Msg::code);
+    return contains_message_properties(d, c, &std::decay_t<CMsg>::value_type::code);
 }
 
-template<typename Msg, typename C = std::initializer_list<std::pair<size_t, size_t>>>
-inline bool matches_diagnosed_line_ranges(const std::vector<Msg>& d, const C& c)
+template<typename CMsg, typename C = std::initializer_list<std::pair<size_t, size_t>>>
+inline bool matches_diagnosed_line_ranges(CMsg&& d, const C& c)
 {
     return matches_message_properties(
         d, c, [](const auto& d) { return std::make_pair(d.diag_range.start.line, d.diag_range.end.line); });
 }
 
-template<typename Msg, typename C = std::initializer_list<std::pair<size_t, size_t>>>
-inline bool contains_diagnosed_line_ranges(const std::vector<Msg>& d, const C& c)
+template<typename CMsg, typename C = std::initializer_list<std::pair<size_t, size_t>>>
+inline bool contains_diagnosed_line_ranges(CMsg&& d, const C& c)
 {
     return contains_message_properties(
         d, c, [](const auto& d) { return std::make_pair(d.diag_range.start.line, d.diag_range.end.line); });
 }
 
-template<typename Msg, typename C = std::initializer_list<std::string>>
-inline bool matches_message_text(const std::vector<Msg>& d, const C& c)
+template<typename CMsg, typename C = std::initializer_list<std::string>>
+inline bool matches_message_text(CMsg&& d, const C& c)
 {
-    return matches_message_properties(d, c, &Msg::message);
+    return matches_message_properties(d, c, &std::decay_t<CMsg>::value_type::message);
 }
 
-template<typename Msg, typename C = std::initializer_list<std::string>>
-inline bool contains_message_text(const std::vector<Msg>& d, const C& c)
+template<typename CMsg, typename C = std::initializer_list<std::string>>
+inline bool contains_message_text(CMsg&& d, const C& c)
 {
-    return contains_message_properties(d, c, &Msg::message);
+    return contains_message_properties(d, c, &std::decay_t<CMsg>::value_type::message);
 }
 
-template<typename Msg, typename C = std::initializer_list<std::string>>
-inline bool matches_partial_message_text(const std::vector<Msg>& d, const C& c)
+template<typename CMsg, typename C = std::initializer_list<std::string>>
+inline bool matches_partial_message_text(CMsg&& d, const C& c)
 {
-    return matches_message_properties(d, c, &Msg::message, [](std::string_view a, std::string_view b) -> bool {
-        return a.find(b) != std::string_view::npos;
-    });
+    return matches_message_properties(
+        d, c, &std::decay_t<CMsg>::value_type::message, [](std::string_view a, std::string_view b) -> bool {
+            return a.find(b) != std::string_view::npos;
+        });
 }
+
 bool matches_fade_messages(const std::vector<fade_message_s>& a, const std::vector<fade_message_s>& b);
 
 bool contains_fade_messages(const std::vector<fade_message_s>& a, const std::vector<fade_message_s>& b);
@@ -177,6 +186,6 @@ std::optional<std::pair<int, std::string>> get_symbol_address(hlasm_context& ctx
 size_t get_syntax_errors(analyzer& a);
 
 std::unique_ptr<expressions::ca_expression> parse_ca_expression(analyzer& a);
-expressions::data_definition parse_data_definition(analyzer& a, diagnostic_op_consumer* diag = nullptr);
+expressions::data_definition parse_data_definition(analyzer& a, diagnostic_consumer<diagnostic_op>* diag = nullptr);
 
 #endif

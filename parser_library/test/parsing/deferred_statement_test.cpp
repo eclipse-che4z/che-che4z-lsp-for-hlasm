@@ -33,7 +33,6 @@ TEST(deferred_statement, split_var)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     auto aa1 = a.context().lsp_ctx->hover(resource_location(""), { 3, 71 });
@@ -64,7 +63,6 @@ TEST(deferred_statement, nested_macro_def_with_continuation)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -97,7 +95,6 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA DS H
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -115,7 +112,6 @@ TEST(deferred_statement, recognize_comment)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -136,7 +132,6 @@ TEST(deferred_statement, navigation_for_nonexecuted)
     analyzer a(input, analyzer_options(&libs, opencode));
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(a.context().lsp_ctx->definition(opencode, position(4, 10)).get_uri(), "INNER");
@@ -163,7 +158,6 @@ TEST(deferred_statement, share_references_for_nonexecuted)
     analyzer a(input, analyzer_options(&libs, opencode));
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     std::vector<position> expected_positions { position(1, 1), position(4, 9), position(9, 9) };

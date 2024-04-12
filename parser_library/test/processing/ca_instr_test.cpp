@@ -138,7 +138,6 @@ TEST(var_subs, instruction_substitution_space_at_end)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -151,7 +150,6 @@ TEST(var_subs, instruction_substitution_space_in_middle)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E075" }));
 }
@@ -237,7 +235,6 @@ TEST(AGO, bad_arguments_1)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E022" }));
 }
@@ -249,7 +246,6 @@ TEST(AGO, bad_arguments_2)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E015" }));
 }
@@ -261,7 +257,6 @@ TEST(AGO, bad_arguments_3)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E015" }));
 }
@@ -273,7 +268,6 @@ TEST(AGO, bad_arguments_4)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E015" }));
 }
@@ -285,7 +279,6 @@ TEST(AIF, bad_arguments_1)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E022" }));
 }
@@ -297,7 +290,6 @@ TEST(AIF, bad_arguments_2)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E015" }));
 }
@@ -309,7 +301,6 @@ TEST(AIF, bad_arguments_3)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E015" }));
 }
@@ -341,7 +332,6 @@ TEST(AIF, missing_comma)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002" }));
 }
@@ -374,7 +364,6 @@ TEST(ACTR, exceeded)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E056" }));
 }
@@ -389,7 +378,6 @@ TEST(ACTR, infinite_ACTR)
 )");
     analyzer a(input, analyzer_options(asm_option { .statement_count_limit = 10000 }));
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W063", "E077" }));
 }
@@ -405,7 +393,6 @@ TEST(ACTR, negative)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E056" }));
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), std::nullopt);
@@ -418,7 +405,6 @@ TEST(ACTR, bad_arguments_1)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E020" }));
 }
@@ -430,7 +416,6 @@ TEST(ACTR, bad_arguments_2)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E020" }));
 }
@@ -455,7 +440,6 @@ TEST(MHELP, SYSNDX_limit)
  )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E072" }));
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "LASTNDX"), "0256");
@@ -473,7 +457,6 @@ ABC EQU 1
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E021", "E020", "E020", "CE012", "CE004", "CE012" }));
 }
@@ -494,7 +477,6 @@ ABC EQU 1
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -514,7 +496,6 @@ TEST(SET, conversions_valid)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -534,7 +515,6 @@ TEST(SET, conversions_invalid)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004", "CE004", "CE017", "CE017" }));
 }
@@ -553,7 +533,6 @@ B EQU 1
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE012", "CE012", "CE012" }));
 }
@@ -563,7 +542,6 @@ TEST(var_subs, defined_by_self_ref)
     std::string input("&VAR(N'&VAR+1) SETA N'&VAR+1");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -585,7 +563,6 @@ TEST(SET, empty_args_in_arrays)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -607,7 +584,6 @@ TEST(SET, single_comma)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -629,7 +605,6 @@ TEST(SET, empty_args_in_arrays_no_overwrite)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -645,7 +620,6 @@ TEST(var_subs, expr_list_as_index)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -658,7 +632,6 @@ TEST(SET, missing_var_name)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0008", "E010" }));
 }

@@ -61,7 +61,6 @@ TEST(parser, preconstructed_string)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "NL"), "L'=C'STG'");
@@ -86,7 +85,6 @@ TEST(parser, preconstructed_string_2)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -118,7 +116,6 @@ TEST(parser, string_evaluation)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -173,7 +170,6 @@ TEST_P(parser_string_fixture, basic)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "PAR"), GetParam().expected);
@@ -192,7 +188,6 @@ TEST(parser, incomplete_string)
  MAC 'A 93)";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0005" }));
 
@@ -296,7 +291,6 @@ std::unique_ptr<analyzer> analyze(std::string s, std::string attr)
 
     auto a = std::make_unique<analyzer>(s, analyzer_options { &lib_provider });
     a->analyze();
-    a->collect_diags();
 
     return a;
 }

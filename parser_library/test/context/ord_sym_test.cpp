@@ -35,7 +35,6 @@ lbl lr 1,1
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("LBL")));
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("LCL")));
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -52,7 +51,6 @@ B DSECT
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(context::id_index("A"), section_kind::EXECUTABLE));
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(context::id_index("B"), section_kind::DUMMY));
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -66,7 +64,6 @@ A DSECT
     a.analyze();
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(context::id_index("A"), section_kind::EXECUTABLE));
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -89,7 +86,6 @@ C EQU 10
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 11);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C"), 10);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -113,7 +109,6 @@ Y LR 1,1
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->value().value_kind(), symbol_value_kind::RELOC);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "Y")->value().value_kind(), symbol_value_kind::RELOC);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -135,7 +130,6 @@ C EQU A
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "B")->kind() == symbol_value_kind::ABS);
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "C")->kind() == symbol_value_kind::ABS);
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -155,7 +149,6 @@ B EQU 100
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 101);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 100);
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -171,7 +164,6 @@ A LR 1,1
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("A")));
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "A")->kind() == symbol_value_kind::RELOC);
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M110" }));
 }
 
@@ -188,7 +180,6 @@ B LR A*2,1
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("B")));
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "A")->kind() == symbol_value_kind::RELOC);
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)2);
 }
 
@@ -207,7 +198,6 @@ Y LR 1,1
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "X")->kind() == symbol_value_kind::RELOC);
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "Y")->kind() == symbol_value_kind::RELOC);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -243,7 +233,6 @@ F EQU V-U
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "F"), 4);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -276,7 +265,6 @@ X3 EQU F-E
     ASSERT_EQ(get_symbol_abs(a.hlasm_ctx(), "X2"), 0);
     ASSERT_EQ(get_symbol_abs(a.hlasm_ctx(), "X3"), 2);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -297,7 +285,6 @@ X EQU 1
     mock_parse_lib_provider mock { { "COPYF", lib_data } };
     analyzer a(input, analyzer_options { resource_location("test"), &mock });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->symbol_location(), location({ 6, 0 }, resource_location("test")));
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "XX")->symbol_location(), location({ 3, 0 }, resource_location("test")));
@@ -315,7 +302,6 @@ X    EQU  S2-S1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -331,7 +317,6 @@ X    EQU  S2-S1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -351,7 +336,6 @@ X    EQU  *-B
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 24);
 
@@ -373,7 +357,6 @@ X    EQU    *-A
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 24);
 
@@ -394,7 +377,6 @@ C EQU B-A
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -413,7 +395,6 @@ C EQU B-A
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -439,7 +420,6 @@ YD DS 0C
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TEST_AAA"), 36);
@@ -455,7 +435,6 @@ TEST(ordinary_symbols, private_sections_valid)
         analyzer a(input);
         a.analyze();
 
-        a.collect_diags();
         EXPECT_EQ(a.diags().size(), (size_t)0) << sect_type;
     }
 }
@@ -472,7 +451,6 @@ TEST(ordinary_symbols, private_sections_invalid)
             analyzer a(input);
             a.analyze();
 
-            a.collect_diags();
             EXPECT_EQ(a.diags().size(), t1 != t2) << t1 << t2;
         }
     }
@@ -492,7 +470,6 @@ X   EQU   1
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L"), 6);
@@ -512,7 +489,6 @@ X   EQU   1
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(contains_message_codes(a.diags(), { "E033" }));
 }
 
@@ -531,7 +507,6 @@ X   EQU   1
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L"), 8);

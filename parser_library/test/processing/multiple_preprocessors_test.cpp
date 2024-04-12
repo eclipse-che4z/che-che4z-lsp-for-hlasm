@@ -31,7 +31,6 @@ RO       SQL  TYPE IS ROWID
         }));
 
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -58,7 +57,6 @@ TESTLEN EQU    *-TEST
                 preprocessor_options(cics_preprocessor_options(false, false, false)),
             } });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 

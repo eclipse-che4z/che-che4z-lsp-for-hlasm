@@ -476,7 +476,6 @@ AAAAAA   SAM31
     analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
 
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CIC001" }));
 }
@@ -496,7 +495,6 @@ NOSPACE  EXEC CICS)";
     analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
 
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CIC003", "CIC003" }));
 }
@@ -515,7 +513,6 @@ TEST(cics_preprocessor, check_null_argument_message)
     analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
 
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(contains_message_codes(a.diags(), { "CIC002", "CIC002" }));
 }
@@ -529,7 +526,6 @@ TEST(cics_preprocessor, dfhresp_substitution)
     analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
 
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -543,7 +539,6 @@ TEST(cics_preprocessor, dfhvalue_substitution)
     analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
 
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -562,7 +557,6 @@ TEST(cics_preprocessor, substitution_in_macros)
     analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
 
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }

@@ -619,7 +619,6 @@ TEST(context, create_global_var_identical_types_macro)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -640,7 +639,6 @@ TEST(context, create_global_var_different_types_macro)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E078" }));
 }
@@ -656,7 +654,6 @@ TEST(context, create_local_var_different_types)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E051" }));
 }
@@ -702,7 +699,6 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
@@ -733,7 +729,6 @@ TEST(context_system_variables, SYSVER)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 

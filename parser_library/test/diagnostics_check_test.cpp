@@ -32,7 +32,6 @@ LABEL EQU *+2
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -58,7 +57,6 @@ TEST(diagnostics, string_substitution)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -85,7 +83,6 @@ TEST(diagnostics, division_by_zero) // test ok
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -106,7 +103,6 @@ TEST(diagnostics, instr_zero_op) // test ok
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -129,7 +125,6 @@ TEST(diagnostics, unkown_symbols) // to do? number of errors?
         analyzer a(input);
         a.analyze();
 
-        a.collect_diags();
 
         EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -150,7 +145,6 @@ TEST(diagnostics, case_insensitivity)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -171,7 +165,6 @@ TEST(diagnostics, machine)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -234,7 +227,6 @@ LABEL2 equ *+79000
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -290,7 +282,6 @@ label1 RSECT
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -309,7 +300,6 @@ TEST(diagnostics, parser_diagnostics_passing)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -324,7 +314,6 @@ PRINT EQU *
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }

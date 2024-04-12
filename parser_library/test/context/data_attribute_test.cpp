@@ -150,7 +150,6 @@ TEST(data_attributes, N_var_syms)
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "NN2"), 1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "NN3"), 1);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -186,7 +185,6 @@ TEST(data_attributes, N_var_syms_2)
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR1"), 1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR2"), 1);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -219,7 +217,6 @@ TEST(data_attributes, K_var_syms_good)
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "NN2"), 1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "NN3"), 5);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -243,7 +240,6 @@ TEST(data_attributes, K_var_syms_unicode)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "K1"), 2);
@@ -270,7 +266,6 @@ TEST(data_attributes, K_var_syms_unicode_array)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "K1"), 2);
@@ -287,7 +282,6 @@ TEST(data_attributes, K_var_syms_bad)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -306,7 +300,6 @@ C LOCTR
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "B")->attributes().type(), 'J'_ebcdic);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "C")->attributes().type(), 'J'_ebcdic);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -338,7 +331,6 @@ TEST(data_attributes, T_var_syms)
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T5"), "N");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T6"), "U");
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -363,7 +355,6 @@ TEST(data_attributes, T_macro_params)
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T1"), "O");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T2"), "N");
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -390,7 +381,6 @@ SYMA    DC A(0)
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T2"), "C");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T3"), "A");
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -409,7 +399,6 @@ SYMA    DC A(0)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E012" }));
 }
 
@@ -438,7 +427,6 @@ B LR 1,1
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "V4"), true);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "V5"), false);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -458,7 +446,6 @@ B EQU L'LBL
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 2);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -480,7 +467,6 @@ TEST EQU 11,10
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V1"), 10);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V2"), 10);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -498,7 +484,6 @@ B EQU S'A
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 12);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -516,7 +501,6 @@ A DC FS12'1'
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V1"), 12);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -539,7 +523,6 @@ EXTEND DC LS10'5.312'
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LONG")->attributes().integer(), (symbol_attributes::len_attr)9);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "EXTEND")->attributes().integer(), (symbol_attributes::len_attr)18);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -555,7 +538,6 @@ X EQU I'HALFCON
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 9);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -571,7 +553,6 @@ HALFCON DC HS6'-25.93'
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V"), 9);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -601,7 +582,6 @@ TEST(data_attributes, O_opencode_ord)
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V5"), "M");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V6"), "U");
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -627,7 +607,6 @@ TEST(data_attributes, O_opencode_var)
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V1"), "O");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V2"), "M");
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -656,7 +635,6 @@ TEST(data_attributes, O_libraries)
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V2"), "U");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V3"), "M");
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -677,7 +655,6 @@ B EQU T'W
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), symbol_attributes::undef_type);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -698,7 +675,6 @@ W EQU 4,5,6
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 2);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 6);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -719,7 +695,6 @@ B EQU 1,11
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V1"), 1);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "A")->attributes().length(), (symbol_attributes::len_attr)1);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -732,7 +707,6 @@ A EQU L'Q
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -755,7 +729,6 @@ B EQU L'A
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 11);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "B")->attributes().length(), (symbol_attributes::len_attr)1);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -776,7 +749,6 @@ C EQU 1,12
 
     ASSERT_EQ(get_symbol(a.hlasm_ctx(), "X")->kind(), symbol_value_kind::ABS);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -791,7 +763,6 @@ V EQU I'C
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -808,7 +779,6 @@ C    EQU  L'*
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
@@ -834,7 +804,6 @@ TEST(data_attributes, expression_without_spaces)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 0);
@@ -863,7 +832,6 @@ TEST(data_attributes, attribute_after_paren)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "X"), true);
@@ -904,7 +872,6 @@ A_       MAC   A_
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -965,7 +932,6 @@ A    DS     A
 
         analyzer a(input);
         a.analyze();
-        a.collect_diags();
 
         EXPECT_TRUE(matches_message_codes(a.diags(), errs));
 
@@ -993,7 +959,6 @@ A    DS     A
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -1017,7 +982,6 @@ TEST(data_attributes, delayed_literal_definition)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -1043,7 +1007,6 @@ V6  EQU   O'UNKNOWN
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -1085,7 +1048,6 @@ A_       MAC   A_
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L1"), 0xE4);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "E1"), 0xE4);
@@ -1130,7 +1092,6 @@ V1 EQU T'W
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -1159,7 +1120,6 @@ E4    EQU   O'MAC
 
     analyzer a(input, analyzer_options(&lib));
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -1192,7 +1152,6 @@ X     EQU   0
 
     analyzer a(input, analyzer_options(&lib));
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -1228,7 +1187,6 @@ MAC   OPSYN
 
     analyzer a(input, analyzer_options(&lib));
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -1254,7 +1212,6 @@ A   USE
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "U");

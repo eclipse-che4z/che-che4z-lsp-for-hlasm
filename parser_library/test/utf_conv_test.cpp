@@ -164,7 +164,6 @@ TEST(encoding, server_substitution)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W017" }));
 }
 
@@ -175,7 +174,6 @@ TEST(encoding, client_substitution_vscode)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W018" }));
 }
 
@@ -186,6 +184,5 @@ TEST(encoding, client_server_substitution_multiple_vscode)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W017", "W018" }));
 }

@@ -388,7 +388,6 @@ TEST(macro_cache_test, inline_depends_on_copy)
     // try parsing the opencode now
     analyzer opencode(opencode_text, analyzer_options { opencode_file_loc, ctx });
     opencode.analyze();
-    opencode.collect_diags();
     EXPECT_TRUE(opencode.diags().empty());
 
     macro_cache_key copy_key { { processing::processing_kind::COPY, copy_id }, {} };

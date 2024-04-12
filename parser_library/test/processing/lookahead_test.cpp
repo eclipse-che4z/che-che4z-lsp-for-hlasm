@@ -58,7 +58,6 @@ TEST(lookahead, forward_jump_to_continued)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -81,7 +80,6 @@ TEST(lookahead, forward_jump_from_continued)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -136,7 +134,6 @@ TEST(lookahead, rewinding_from_last_line)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -152,7 +149,6 @@ TEST(lookahead, rewinding_from_one_from_last_line)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -169,7 +165,6 @@ TEST(lookahead, forward_jump_before_comment)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -187,7 +182,6 @@ TEST(lookahead, forward_jump_before_continued_comment)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -206,7 +200,6 @@ TEST(lookahead, jump_to_incomplete_instruction)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -332,7 +325,6 @@ Y EQU X+1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "T");
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), 10);
@@ -351,7 +343,6 @@ X EQU 1,10,C'T'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 0);
 
@@ -368,7 +359,6 @@ X EQU 1,Y+11,C'T'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 
@@ -388,7 +378,6 @@ X EQU 1,2,**&
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
 
@@ -407,7 +396,6 @@ X EQU 1,2,&a
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
 
@@ -426,7 +414,6 @@ X EQU &a,2
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 
@@ -445,7 +432,6 @@ X EQU =**)-,2
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 
@@ -470,7 +456,6 @@ X EQU 1,2,C'X'
     mock_parse_lib_provider mock { { "LIB", LIB } };
     analyzer a(input, analyzer_options { &mock });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_BEFORE"), true);
@@ -499,7 +484,6 @@ X EQU 1,2
     mock_parse_lib_provider mock { { "LIB2", LIB2 } };
     analyzer a(input, analyzer_options { &mock });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_BEFORE"), true);
@@ -532,7 +516,6 @@ X EQU 1,2
     mock_parse_lib_provider mock { { "LIB3", LIB3 } };
     analyzer a(input, analyzer_options { &mock });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_global_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "AFTER_MAC"), true);
@@ -551,7 +534,6 @@ TEST(attribute_lookahead, lookup_from_macro_last_line)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -568,7 +550,6 @@ TEST(attribute_lookahead, lookup_from_macro_one_to_last_line)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -584,7 +565,6 @@ Y EQU 2,11
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 21);
 
@@ -602,7 +582,6 @@ X LR 1,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "I");
@@ -621,7 +600,6 @@ X CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "J");
@@ -640,7 +618,6 @@ X        DS   F
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "D"), "D");
@@ -658,7 +635,6 @@ X DC FS24'6'       remark
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 4);
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "F");
@@ -677,7 +653,6 @@ X DC C'A'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 0);
 
@@ -695,7 +670,6 @@ Y EQU 2,11
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 21);
 
@@ -712,7 +686,6 @@ X EQU 1,10
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 11);
 
@@ -731,7 +704,6 @@ B EQU 2,22
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 22);
 
@@ -756,7 +728,6 @@ A EQU 1,1,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -772,7 +743,6 @@ A EQU 1,2,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -792,7 +762,6 @@ A EQU 1,2,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -807,7 +776,6 @@ C DC C'STH'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     auto var = a.context().hlasm_ctx->get_var_sym(id_index("VAR"));
@@ -833,7 +801,6 @@ A DC AL(*-B+2)(*)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
@@ -851,7 +818,6 @@ C     DC C'STH'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -888,7 +854,6 @@ LABEL DC    C'&S'
     mock_parse_lib_provider mock { { "LIB", LIB }, { "MAC", MAC } };
     analyzer a(input, analyzer_options { &mock });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W013" }));
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "RESULT"), "1 U");
@@ -923,7 +888,6 @@ LABEL LLILF 0,C'&S'
     mock_parse_lib_provider mock { { "LIB", LIB }, { "MAC", MAC } };
     analyzer a(input, analyzer_options { &mock });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "RESULT"), "6 I");
@@ -939,7 +903,6 @@ A  DS   C
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -958,7 +921,6 @@ TEST(lookahead, unused_duplicate_seq)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -981,7 +943,6 @@ TEST(lookahead, hidden_duplicate_seq)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1006,7 +967,6 @@ TEST(lookahead, used_duplicate_seq)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E045", "E045" }));
 }
@@ -1029,7 +989,6 @@ TEST(lookahead, unconditional_redefinition)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E045" }));
 }
@@ -1053,7 +1012,6 @@ TEST(lookahead, unconditional_redefinition_2)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E045" }));
 }
@@ -1079,7 +1037,6 @@ TEST(lookahead, combined_redefinition)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E045", "E045", "E045" }));
 }
@@ -1105,7 +1062,6 @@ X     DS    C
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
 }
@@ -1133,7 +1089,6 @@ TEST     DS    CL(X)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1161,7 +1116,6 @@ TEST     DS    CL(X)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1190,7 +1144,6 @@ TEST     DS    CL(X)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1218,7 +1171,6 @@ TEST     DS    CL(X)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W013" }));
 }
@@ -1247,7 +1199,6 @@ TEST     DS    CL(X)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W013" }));
 }
@@ -1276,7 +1227,6 @@ TEST     DS    CL(X)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W013", "W013" }));
 }
@@ -1305,7 +1255,6 @@ TEST     DS    CL(X)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W013", "W013" }));
 }
@@ -1348,7 +1297,6 @@ Y        DS    C
 
     analyzer a(input, analyzer_options(opencode, &libs));
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 

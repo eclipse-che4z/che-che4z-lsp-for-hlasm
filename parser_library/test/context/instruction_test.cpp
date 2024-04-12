@@ -131,7 +131,6 @@ TEST(instruction_sets_fixture, identical_macro_name_inline_definition)
     {
         analyzer a(input, analyzer_options { asm_option { "", "", c.instr_set } });
         a.analyze();
-        a.collect_diags();
         EXPECT_EQ(a.diags().size(), 0);
 
         EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR"), c.expected_var_value);
@@ -162,7 +161,6 @@ TEST(instruction_sets_fixture, identical_macro_name_linked_definition)
     {
         analyzer a(input, analyzer_options { asm_option { "", "", c.instr_set }, &lib_provider });
         a.analyze();
-        a.collect_diags();
         EXPECT_EQ(a.diags().size(), 0);
 
         EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR"), c.expected_var_value);
@@ -199,7 +197,6 @@ TEST(instruction_sets_fixture, identical_macro_name_inline_and_linked_definition
     {
         analyzer a(input, analyzer_options { asm_option { "", "", c.instr_set }, &lib_provider });
         a.analyze();
-        a.collect_diags();
         EXPECT_EQ(a.diags().size(), 0);
 
         EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR"), c.expected_var_value);

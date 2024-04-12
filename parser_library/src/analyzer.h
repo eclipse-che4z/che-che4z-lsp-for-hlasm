@@ -15,9 +15,8 @@
 #ifndef HLASMPARSER_PARSERLIBRARY_ANALYZER_H
 #define HLASMPARSER_PARSERLIBRARY_ANALYZER_H
 
-#include <atomic>
 #include <memory>
-#include <optional>
+#include <span>
 #include <string_view>
 #include <utility>
 #include <variant>
@@ -25,7 +24,6 @@
 
 #include "analyzing_context.h"
 #include "compiler_options.h"
-#include "diagnosable_ctx.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
 #include "protocol.h"
@@ -38,6 +36,7 @@ class task;
 
 namespace hlasm_plugin::parser_library::context {
 class hlasm_context;
+class id_storage;
 } // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::parsing {
@@ -57,6 +56,10 @@ struct fade_message_s;
 class output_handler;
 class virtual_file_monitor;
 class virtual_file_handle;
+
+template<typename T>
+class diagnostic_consumer;
+struct diagnostic_op;
 
 enum class collect_highlighting_info : bool
 {
@@ -102,7 +105,7 @@ class analyzer_options
     analyzing_context& get_context();
     workspaces::parse_lib_provider& get_lib_provider() const;
     std::unique_ptr<processing::preprocessor> get_preprocessor(
-        processing::library_fetcher, diagnostic_op_consumer&, semantics::source_info_processor&) const;
+        processing::library_fetcher, diagnostic_consumer<diagnostic_op>&, semantics::source_info_processor&) const;
 
     friend class analyzer;
 
@@ -152,7 +155,7 @@ public:
 };
 
 // this class analyzes provided text and produces diagnostics and highlighting info with respect to provided context
-class analyzer : public diagnosable_ctx
+class analyzer
 {
     struct impl;
 
@@ -171,8 +174,9 @@ public:
     void analyze();
     [[nodiscard]] utils::task co_analyze() &;
 
-    void collect_diags() const override;
     const performance_metrics& get_metrics() const;
+
+    std::span<diagnostic_s> diags() const noexcept;
 
     void register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer);
 

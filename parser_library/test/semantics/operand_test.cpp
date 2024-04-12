@@ -174,7 +174,6 @@ A       DS     A
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }

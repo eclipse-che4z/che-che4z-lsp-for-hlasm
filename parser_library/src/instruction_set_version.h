@@ -15,10 +15,6 @@
 #ifndef HLASMPARSER_PARSERLIBRARY_INSTRUCTION_SET_VERSION_H
 #define HLASMPARSER_PARSERLIBRARY_INSTRUCTION_SET_VERSION_H
 
-#include <algorithm>
-#include <array>
-#include <string>
-
 // Available instruction sets versions
 namespace hlasm_plugin::parser_library {
 enum class instruction_set_version

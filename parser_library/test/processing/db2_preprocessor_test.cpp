@@ -13,6 +13,7 @@
  */
 
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <string_view>
 #include <unordered_map>
@@ -253,7 +254,6 @@ TEST(db2_preprocessor, sqlsect_available)
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -267,7 +267,6 @@ TEST(db2_preprocessor, instruction_not_recognized)
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
@@ -288,7 +287,6 @@ TEST(db2_preprocessor, aread_from_preprocessor)
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(get_var_value<std::string>(a.hlasm_ctx(), "RES"), std::string("***$$$").append(74, ' '));
@@ -316,7 +314,6 @@ TEST(db2_preprocessor, aread_from_two_preprocessor_outputs)
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     std::array expected {
         std::string { "***$$$" },
@@ -354,7 +351,6 @@ TEST(db2_preprocessor, ignore_comments)
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
@@ -376,7 +372,6 @@ TEST(db2_preprocessor, continuation_in_buffer)
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
@@ -409,7 +404,6 @@ TEST(db2_preprocessor, include_valid)
     {
         analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
         a.analyze();
-        a.collect_diags();
 
         EXPECT_EQ(a.diags().size(), (size_t)0);
 
@@ -437,7 +431,6 @@ TEST(db2_preprocessor, include_double)
     {
         analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
         a.analyze();
-        a.collect_diags();
 
         EXPECT_TRUE(matches_message_codes(a.diags(), { "DB002" }));
         EXPECT_EQ(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, 0);
@@ -457,7 +450,6 @@ TEST(db2_preprocessor, include_member_not_present)
     {
         analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
         a.analyze();
-        a.collect_diags();
 
         EXPECT_TRUE(matches_message_codes(a.diags(), { "DB007" }));
         EXPECT_EQ(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, 0);
@@ -473,7 +465,6 @@ TEST(db2_preprocessor, include_insensitive)
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
@@ -485,7 +476,6 @@ TEST(db2_preprocessor, include_nonexistent)
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "DB002" }));
 }
@@ -499,7 +489,6 @@ TEST(db2_preprocessor, include_invalid)
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, 0);
 }
@@ -517,7 +506,6 @@ TEST(db2_preprocessor, ago_in_include)
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
@@ -541,7 +529,6 @@ TEST(db2_preprocessor, ago_into_include)
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
@@ -566,7 +553,6 @@ TEST(db2_preprocessor, ago_from_include)
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
@@ -595,7 +581,6 @@ TEST(db2_preprocessor, ago_around_include)
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
@@ -622,7 +607,6 @@ TEST(db2_preprocessor, copy_in_include)
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
@@ -740,7 +724,6 @@ A
         mock_parse_lib_provider libs(t.deps);
         analyzer a(t.opencode, analyzer_options { &libs, db2_preprocessor_options {} });
         a.analyze();
-        a.collect_diags();
 
         ASSERT_EQ(a.diags().size(), (size_t)1);
         EXPECT_EQ(a.diags()[0].diag_range.start.line, t.lineno);
@@ -756,7 +739,6 @@ TEST(db2_preprocessor, multiline_exec_sql)
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -767,7 +749,6 @@ TEST(db2_preprocessor, end_sqldsect_injection)
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -921,7 +902,6 @@ DFILE SQL TYPE IS DBCLOB_FILE
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -949,7 +929,6 @@ DFILE SQL TYPE IS DBCLOB_FILE               comment
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1065,7 +1044,6 @@ TEST(db2_preprocessor, no_codegen_for_unacceptable_sql_statement)
 
     analyzer a(input, analyzer_options(db2_preprocessor_options()));
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty()); // TODO(optional): original warns
 }
@@ -1079,7 +1057,6 @@ TEST(db2_preprocessor, package_info_missing)
 
     analyzer a(input, analyzer_options(db2_preprocessor_options()));
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E010" }));
 }
@@ -1094,7 +1071,6 @@ TEST(db2_preprocessor, package_info_short)
 
     analyzer a(input, analyzer_options(db2_preprocessor_options("AAA")));
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1111,7 +1087,6 @@ TEST(db2_preprocessor, package_info_long)
 
     analyzer a(input, analyzer_options(db2_preprocessor_options(std::string(48, 'A'))));
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1131,7 +1106,6 @@ RO_LEN  EQU *-RO
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -1158,7 +1132,6 @@ TEST(db2_preprocessor, preprocessor_continuation_overflow)
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     EXPECT_NO_FATAL_FAILURE(a.analyze());
-    a.collect_diags();
 
     EXPECT_FALSE(a.diags().empty());
 }
@@ -1178,7 +1151,6 @@ LEN EQU  E-B
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 0);
@@ -1203,7 +1175,6 @@ A   DS    F
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     auto l1 = get_symbol_abs(a.hlasm_ctx(), "L1");

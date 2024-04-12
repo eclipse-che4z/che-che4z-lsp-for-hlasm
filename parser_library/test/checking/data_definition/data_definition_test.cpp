@@ -24,7 +24,6 @@ void expect_no_errors(const std::string& text)
     std::string input = (text);
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
@@ -33,7 +32,6 @@ void expect_errors(const std::string& text, std::initializer_list<std::string> m
     std::string input = (text);
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     const auto& diags = a.diags();
     EXPECT_GT(diags.size(), (size_t)0);
@@ -393,7 +391,6 @@ TEST(data_definition, B_wrong_nominal_value)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -408,7 +405,6 @@ TEST(data_definition, suppres_syntax_errors_in_macro)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -426,7 +422,6 @@ TEST(data_definition, syntax_error_for_each_call)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D003", "D003" }));
 }
 
@@ -440,7 +435,6 @@ TEST(data_definition, trim_labels)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -484,7 +478,6 @@ TEST(data_definition, externals_type_support)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "$");
@@ -502,7 +495,6 @@ TEST(data_definition, externals_part_type_support)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "$");
@@ -539,7 +531,6 @@ LZ   EQU *-Z
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LX"), 24);
@@ -583,7 +574,6 @@ LEN EQU   *-X
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 16);
@@ -599,7 +589,6 @@ LEN EQU   *-X
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 24);
@@ -615,7 +604,6 @@ L   EQU   *
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -635,7 +623,6 @@ TEST EQU  *-X
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TEST"), 120);

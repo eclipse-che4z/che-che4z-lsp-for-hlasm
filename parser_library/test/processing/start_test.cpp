@@ -25,7 +25,6 @@ S START
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(id_index("S"), section_kind::EXECUTABLE));
@@ -40,7 +39,6 @@ E EQU *
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     const auto* s = a.hlasm_ctx().ord_ctx.get_section(id_index("S"));
@@ -66,7 +64,6 @@ S CSECT
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -79,7 +76,6 @@ S START
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E073" }));
 }
 
@@ -92,7 +88,6 @@ S START
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E073" }));
 }
 
@@ -106,7 +101,6 @@ S START
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -119,6 +113,5 @@ E EQU 0
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A250" }));
 }

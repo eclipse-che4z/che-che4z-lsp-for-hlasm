@@ -201,7 +201,6 @@ TEST(macro, macro_lookahead_fail)
     id = id_index("INNER_M");
     EXPECT_TRUE(a.hlasm_ctx().find_macro(id));
 
-    a.collect_diags();
     ASSERT_EQ(a.diags().size(), 1U);
     EXPECT_EQ(a.diags()[0].code, "E047");
 
@@ -220,7 +219,6 @@ TEST(macro, macro_positional_param_subs)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
@@ -238,7 +236,6 @@ TEST(macro, macro_keyword_param)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
@@ -256,7 +253,6 @@ TEST(macro, macro_undefined_keyword_param)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(contains_message_properties(a.diags(), { diagnostic_severity::warning }, &diagnostic_s::severity));
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
@@ -277,7 +273,6 @@ TEST(macro, macro_param_expr)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)2);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
@@ -294,7 +289,6 @@ TEST(macro, macro_composite_param_no_err)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
@@ -311,7 +305,6 @@ TEST(macro, macro_composite_param_err)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
@@ -329,7 +322,6 @@ TEST(macro, macro_name_param)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
@@ -356,7 +348,6 @@ TEST(macro, macro_name_param_repetition)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)3);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
@@ -419,7 +410,6 @@ TEST(macro, MEXIT)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
@@ -438,7 +428,6 @@ TEST(macro, cyclic_call_infinite)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
@@ -460,7 +449,6 @@ TEST(macro, cyclic_call_finite)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)10);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
@@ -481,7 +469,6 @@ TEST(macro, arguments_concatenation)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_global_var_value<C_t>(a.hlasm_ctx(), "V"), "(B-C)+(A-D)");
 
@@ -506,7 +493,6 @@ TEST(macro, arguments_continuation)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_global_var_value<C_t>(a.hlasm_ctx(), "Q"), "X");
     EXPECT_EQ(get_global_var_value<C_t>(a.hlasm_ctx(), "W"), "Y");
@@ -530,7 +516,6 @@ TEST(external_macro, bad_name)
     mock_parse_lib_provider lib_provider { { "MAC", content_bad_name } };
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
-    a.collect_diags();
     ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
     EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 1U);
     EXPECT_EQ(a.diags().size(), 2U);
@@ -554,7 +539,6 @@ TEST(external_macro, bad_begin)
     mock_parse_lib_provider lib_provider { { "MAC", content_bad_begin } };
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
-    a.collect_diags();
     ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
     EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 1U);
     EXPECT_EQ(a.diags().size(), 2U);
@@ -578,7 +562,6 @@ TEST(external_macro, library_with_begin_comment)
     mock_parse_lib_provider lib_provider { { "MAC", content_comment } };
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
-    a.collect_diags();
     ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
     EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 0U);
     EXPECT_TRUE(a.diags().empty());
@@ -599,7 +582,6 @@ TEST(external_macro, process_ordinary_restart)
     mock_parse_lib_provider lib_provider { { "MAC", ext_macro } };
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -623,7 +605,6 @@ TEST(external_macro, deferred_macro_restart)
     mock_parse_lib_provider lib_provider { { "MAC", ext_macro1 }, { "MAC2", ext_macro2 } };
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -743,7 +724,6 @@ TEST(macro, parse_args)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
@@ -760,7 +740,6 @@ TEST(macro, seq_numbers)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
@@ -779,7 +758,6 @@ TEST(macro, apostrophe_in_substitution)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
@@ -797,7 +775,6 @@ TEST(macro, macro_call_reparse_range)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     ASSERT_EQ(a.diags().size(), 1U);
     EXPECT_EQ(a.diags()[0].code, "S0003");
@@ -817,7 +794,6 @@ TEST(macro, skip_invalid)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -832,7 +808,6 @@ TEST(macro, invalid_not_invoked)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -848,7 +823,6 @@ TEST(macro, invalid_invoked)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
@@ -863,7 +837,6 @@ TEST(macro, invalid_prototype)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     const auto& d = a.diags();
 
     EXPECT_NE(std::find_if(d.begin(), d.end(), [](const auto& diag) { return diag.code == "E071"; }), d.end());
@@ -881,7 +854,6 @@ AAA
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E001", "S0003" }));
 }
@@ -901,7 +873,6 @@ TEST(macro, missing_mend)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E001", "E046" }));
 }
@@ -931,7 +902,6 @@ ALIAS    OPSYN SAM64
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -950,7 +920,6 @@ TEST(macro, operand_string_substitution)
 )";
     analyzer a(input, analyzer_options(asm_option { .sysparm = "ABC" }));
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "'test string ABC'");
@@ -982,7 +951,6 @@ TEST(macro, operand_string_substitution_continuation)
         input += std::move(suffix);
         analyzer a(input);
         a.analyze();
-        a.collect_diags();
 
         EXPECT_TRUE(a.diags().empty()) << i;
         EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "'test string ABC'") << i;
@@ -1011,7 +979,6 @@ TEST(macro, operand_sublist_continuation)
         input += std::move(suffix);
         analyzer a(input);
         a.analyze();
-        a.collect_diags();
 
         ASSERT_TRUE(a.diags().empty()) << i;
     }
@@ -1036,7 +1003,6 @@ TEST(macro, pass_empty_operand_components)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR"), 2);
@@ -1061,7 +1027,6 @@ TEST(macro, pass_empty_concat_strings)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "");
@@ -1079,7 +1044,6 @@ TEST(macro, multiline_comment)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1098,7 +1062,6 @@ LABEL   DS   CL80
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TEST"), 0);
@@ -1119,7 +1082,6 @@ LABEL   DS   A
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TEST"), 4);
@@ -1136,7 +1098,6 @@ TEST(macro, empty_parms)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1159,7 +1120,6 @@ TEST(macro, empty_parms_after_continuation)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "RESULT"), true);
@@ -1191,7 +1151,6 @@ T11  MAC ,, A
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -1216,7 +1175,6 @@ TEST(macro, illegal_ampersand)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     ASSERT_TRUE(matches_message_codes(a.diags(), { "E064" }));
     EXPECT_EQ(a.diags()[0].diag_range, range({ 2, 9 }, { 2, 18 }));
@@ -1238,7 +1196,6 @@ TEST(macro, multiple_apostrophes)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STR"), "' TXT('''");
@@ -1258,7 +1215,6 @@ A    EQU                                                               X
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);

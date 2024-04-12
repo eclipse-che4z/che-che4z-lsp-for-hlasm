@@ -26,7 +26,7 @@ TEST(mach_instr_processing, reloc_imm_expected)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M113" }));
 }
@@ -42,7 +42,6 @@ LENGTH DS CL(SIZE)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M113" }));
 }
@@ -58,7 +57,6 @@ LENGTH DS CL(SIZE)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -74,7 +72,6 @@ LEN120 DS CL1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME003" }));
 }
@@ -86,7 +83,6 @@ TEST(mach_instr_processing, vec_reg_expected)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M114" }));
 }
@@ -98,7 +94,6 @@ TEST(mach_instr_processing, reloc_symbol_expected)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D032" }));
 }
 TEST(mach_instr_processing, setc_variable_mnemonic_reloc_operand)
@@ -112,7 +107,6 @@ TEST(mach_instr_processing, setc_variable_mnemonic_reloc_operand)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(a.diags().empty());
 }
@@ -128,7 +122,6 @@ TEST CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(a.diags().empty());
 }
@@ -144,7 +137,6 @@ TEST CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D032" }));
 }
 TEST(mach_instr_processing, reloc_parsed_in_macro_valid)
@@ -160,7 +152,6 @@ LABEL   BRAS  0,*+12
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(a.diags().empty());
 }
@@ -177,7 +168,6 @@ LABEL  BRAS  0,12
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D032" }));
 }
 TEST(mach_instr_processing, reloc_parsed_in_macro_alignment_error)
@@ -195,7 +185,6 @@ LEN120 DS CL1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME003" }));
 }
 
@@ -209,7 +198,6 @@ SYM  DS   CL15
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M120" }));
 }
 
@@ -223,7 +211,6 @@ SYM  DS   CL1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -271,7 +258,6 @@ A   DS    0H
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -286,7 +272,6 @@ LABEL DS    0H
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -300,7 +285,6 @@ LABEL DS    0H
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005" }));
 }
@@ -314,7 +298,6 @@ TEST(mach_instr_processing, literals_with_index_register)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -331,7 +314,6 @@ TEST(mach_instr_processing, mach_expr_limits)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -344,7 +326,6 @@ TEST(mach_instr_processing, mach_expr_out_of_bounds)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE007" }));
 }
@@ -363,7 +344,6 @@ A   MVI  0,X'0000000000'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -377,7 +357,6 @@ A   LARL 0,A+-00000000000
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE007" }));
 }

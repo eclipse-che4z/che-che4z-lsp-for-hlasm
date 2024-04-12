@@ -107,7 +107,6 @@ TEST(stability_test, entry_8)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 }
 
 TEST(stability_test, entry_9)
@@ -119,7 +118,6 @@ TEST(stability_test, entry_9)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 }
 
 TEST(stability_test, entry_10)
@@ -128,7 +126,6 @@ TEST(stability_test, entry_10)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 }
 
 TEST(stability_test, entry_11)
@@ -145,7 +142,6 @@ D DS  z)"
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 }
 
 TEST(stability_test, entry_12)
@@ -156,5 +152,4 @@ TEST(stability_test, entry_12)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 }

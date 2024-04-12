@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 

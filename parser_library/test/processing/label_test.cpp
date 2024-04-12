@@ -30,7 +30,6 @@ TEST(instruction_label, empty_concatenation)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     const auto& diags = a.diags();
 
     EXPECT_EQ(diags.size(), 0);
@@ -47,7 +46,6 @@ TEST(instruction_label, invalid_concatenation)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     const auto& diags = a.diags();
 
     EXPECT_EQ(diags.size(), 2);
@@ -69,7 +67,6 @@ MixedCase TEST
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }

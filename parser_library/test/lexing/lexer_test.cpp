@@ -182,8 +182,7 @@ TEST(lexer_test, bad_continuation)
     analyzer a(in);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
 
     ASSERT_EQ(diags.size(), (size_t)1);
     EXPECT_EQ(diags[0].code, "E001");

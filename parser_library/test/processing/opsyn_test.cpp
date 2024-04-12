@@ -29,7 +29,7 @@ OP2 OPSYN OP1
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -40,7 +40,7 @@ OP2 OPSYN OP1
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -51,7 +51,7 @@ OP2 OPSYN
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -63,7 +63,7 @@ TEST(OPSYN, missing_name)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -74,7 +74,7 @@ LR OPSYN A,B
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -86,7 +86,7 @@ LR OPSYN
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -99,7 +99,7 @@ LR OPSYN
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -115,7 +115,7 @@ OPSYN_THIS OPSYN SAM31
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -131,7 +131,7 @@ OPSYN_THIS OPSYN SAM31
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -147,7 +147,7 @@ OPSYN_THIS OPSYN SAM31
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -168,7 +168,7 @@ AGO OPSYN ACTR
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -187,7 +187,7 @@ MENDX OPSYN MEND
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -210,7 +210,7 @@ M_ OPSYN M
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -228,7 +228,7 @@ LR_ OPSYN LR
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -246,7 +246,7 @@ LRX OPSYN LR
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -258,7 +258,7 @@ X OPSYN LR
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -276,7 +276,7 @@ LR OPSYN
     mock_parse_lib_provider mock { { "LR", LIB } };
     analyzer a(input, analyzer_options { &mock });
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -287,7 +287,7 @@ LR OPSYN ,
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -313,7 +313,7 @@ B        DS    C
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "CNT"), 1);
 }
@@ -336,7 +336,6 @@ A     DS    0H
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -357,7 +356,6 @@ BCT_ OPSYN BCT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -377,7 +375,6 @@ JCT_ OPSYN JCT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME007" }));
 }
@@ -395,7 +392,6 @@ TEST(OPSYN, macro_replacement_3)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -412,7 +408,6 @@ TEST(OPSYN, macro_replacement_4)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME007" }));
 }
@@ -434,7 +429,6 @@ SETA       OPSYN SETB
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_vector<A_t>(a.hlasm_ctx(), "VAR"), std::vector<A_t>(2, 2));
@@ -456,7 +450,6 @@ SETA       OPSYN SETB
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E013" }));
 }

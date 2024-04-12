@@ -31,7 +31,6 @@ A EQU 1
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -49,7 +48,6 @@ B EQU A+A-10
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), -8);
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -69,7 +67,6 @@ X EQU 5,2
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 5);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "Y")->attributes().length(), (symbol_attributes::len_attr)12);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -89,7 +86,6 @@ ZZ EQU *+X
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "Z")->attributes().length(), (symbol_attributes::len_attr)1);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "ZZ")->attributes().length(), (symbol_attributes::len_attr)1);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -106,7 +102,6 @@ UNKNOWN EQU L'X
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 11);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -124,7 +119,6 @@ LEM EQU A+1,100000
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().length(), (symbol_attributes::len_attr)1);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEM")->attributes().length(), (symbol_attributes::len_attr)12);
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)2);
 }
 
@@ -139,7 +133,6 @@ LEN EQU 11,3,4
 
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().type(), 4);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -154,7 +147,6 @@ LEN EQU 11,3
 
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().type(), symbol_attributes::undef_type);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -171,7 +163,6 @@ LEM EQU 11,1,300
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().type(), symbol_attributes::undef_type);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEM")->attributes().type(), symbol_attributes::undef_type);
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)2);
 }
 
@@ -186,7 +177,6 @@ C  EQU   B-*+A
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -204,7 +194,6 @@ RES  EQU   *-TEST
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "RES"), 24);
@@ -224,7 +213,6 @@ RES  EQU   *-TEST
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "RES"), 24);
@@ -239,7 +227,6 @@ B   EQU 0,0,C'X',0,GR,0
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A012", "A012" }));
 }
@@ -252,7 +239,6 @@ A   EQU ,0
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A132" }));
 }
@@ -266,7 +252,6 @@ B   EQU A,*-A,T'TYPO
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     auto b = get_symbol(a.hlasm_ctx(), "B");

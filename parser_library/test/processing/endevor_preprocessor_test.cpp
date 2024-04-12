@@ -158,7 +158,6 @@ TESTVAL EQU 42
 
     analyzer a(input, analyzer_options { &libs, endevor_preprocessor_options {} });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 

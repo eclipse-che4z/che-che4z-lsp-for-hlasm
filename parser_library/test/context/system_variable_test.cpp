@@ -104,7 +104,6 @@ TEST_P(system_variable_standard_behavior_fixture, standard_behavior)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     for (size_t i = 0; i < exp_behavior.size(); ++i)
     {
@@ -122,7 +121,6 @@ TEST(system_variable, sysstmt)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STRING"), "00000003");
@@ -153,7 +151,6 @@ TEST(system_variable, sysstmt_macros)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR1"), "00000027");
@@ -188,7 +185,6 @@ TEST(system_variable, sysstmt_copy)
     mock_parse_lib_provider lib_prov_instance { { copy1_filename, copy1_source }, { copy2_filename, copy2_source } };
     analyzer a(input, analyzer_options { resource_location("ipnut"), &lib_prov_instance });
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR1"), "00000006");
@@ -211,7 +207,6 @@ TEST(system_variable, sysstmt_aread)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 13);
@@ -234,7 +229,6 @@ MAIN    CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "CSECT");
@@ -256,7 +250,6 @@ TEST(system_variable, sysstyp_empty)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "");
@@ -274,7 +267,6 @@ TEST(system_variable, sysopt_xobject)
     {
         analyzer a(input, analyzer_options(asm_option { .sysopt_xobject = xobject }));
         a.analyze();
-        a.collect_diags();
         EXPECT_TRUE(a.diags().empty());
 
         EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "VAR"), expected);
@@ -301,7 +293,6 @@ TEST(system_variable, sysin_empty)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "O 0 O 0");
@@ -327,7 +318,6 @@ TEST(system_variable, sysin_nonempty)
 
     analyzer a(input, analyzer_options { asm_option { .sysin_dsn = "DATASET.NAME", .sysin_member = "MEMBER" } });
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "U 12 U 6");
@@ -342,7 +332,6 @@ TEST(system_variable, sysin_out_of_scope)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E010", "E010" }));
 }
@@ -358,7 +347,6 @@ LEN     EQU  *-X
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -444,7 +432,6 @@ TEST(system_variable, mnote_sys_variables)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE", "MNOTE", "MNOTE" }));
 
     std::vector<C_t> expected_res { "000", "000", "000", "000", "000", "008", "000", "000", "002", "004" };
@@ -484,7 +471,6 @@ TEST(system_variable, sysclock)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "U 26");

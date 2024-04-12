@@ -52,7 +52,6 @@ TEST(label_parsing, pass)
 
         analyzer a(input);
         a.analyze();
-        a.collect_diags();
 
         EXPECT_TRUE(a.diags().empty()) << p;
     }
@@ -92,7 +91,6 @@ TEST(label_parsing, fail)
 
         analyzer a(input);
         a.analyze();
-        a.collect_diags();
 
         EXPECT_FALSE(a.diags().empty()) << p;
     }

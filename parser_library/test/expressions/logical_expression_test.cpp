@@ -33,7 +33,6 @@ TEST(logical_expressions, valid_assignment)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 1);
@@ -52,7 +51,6 @@ TEST(logical_expressions, empty_string_conversion)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "B1"), false);
@@ -73,7 +71,6 @@ TEST(logical_expressions, invalid_assignment)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE016", "CE004", "CE004", "CE004", "CE004", "CE004", "CE004" }));
 }
 
@@ -89,7 +86,6 @@ NOT EQU  1
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE012", "CE003", "CE003" }));
 }
 TEST(logical_expressions, valid_expression)
@@ -105,7 +101,6 @@ AND EQU  1
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 1);
@@ -129,7 +124,6 @@ TEST(logical_expressions, valid_relational_expression)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 0);
@@ -155,7 +149,6 @@ TEST(logical_expressions, invalid_relational_expression)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004", "CE004", "CE004", "CE004", "CE004", "CE004", "CE002" }));
 }
 
@@ -174,7 +167,6 @@ TEST(logical_expressions, priority)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 1);
@@ -198,7 +190,6 @@ TEST(logical_expressions, arithmetic_logical_clash)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 0);
@@ -219,7 +210,6 @@ TEST(logical_expressions, signs_in_arithmetic_expressions)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 1);
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A2"), 1);
@@ -240,7 +230,6 @@ TEST(logical_expressions, signs_in_logical_expressions)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004", "CE004", "CE004", "CE004" }));
 }
 
@@ -254,7 +243,6 @@ TEST(logical_expressions, no_parenthesis)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE016", "CE016" }));
 }
 
@@ -269,7 +257,6 @@ TEST(logical_expressions, no_spaces)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 1);
@@ -286,7 +273,6 @@ TEST(logical_expressions, bad_number_of_operands)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE006" }));
 }
 
@@ -302,7 +288,6 @@ TEST(logical_expressions, is_functions)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A"), 1);
@@ -323,7 +308,6 @@ TEST(logical_expressions, parenthesis_around_expressions)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     const auto& diags = a.diags();
     EXPECT_EQ(diags.size(), (size_t)2);
     EXPECT_TRUE(std::all_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "CE016"; }));
@@ -341,7 +325,6 @@ TEST(logical_expressions, not_operator_valid)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "B1"), false);
@@ -361,7 +344,6 @@ TEST(logical_expressions, not_operator_valid_logical_expr)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "B1"), false);
@@ -380,7 +362,6 @@ TEST(logical_expressions, not_operator_valid_relational_expr)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "B1"), false);
@@ -410,7 +391,6 @@ TEST(logical_expressions, operator_precedence)
             + args;
         analyzer a(input);
         a.analyze();
-        a.collect_diags();
 
         EXPECT_EQ(a.diags().empty(), expected) << args;
     }
@@ -425,7 +405,6 @@ TEST(logical_expressions, operator_precedence_not)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "B1"), false);
@@ -455,7 +434,6 @@ TEST(logical_expressions, relational_operator_eq)
         analyzer a(input);
         a.analyze();
 
-        a.collect_diags();
         EXPECT_TRUE(a.diags().empty()) << input;
         EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "A"), res) << input;
     }
@@ -485,7 +463,6 @@ TEST(logical_expressions, relational_operator_ne)
         analyzer a(input);
         a.analyze();
 
-        a.collect_diags();
         EXPECT_TRUE(a.diags().empty()) << input;
         EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "A"), res) << input;
     }
@@ -515,7 +492,6 @@ TEST(logical_expressions, relational_operator_le)
         analyzer a(input);
         a.analyze();
 
-        a.collect_diags();
         EXPECT_TRUE(a.diags().empty()) << input;
         EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "A"), res) << input;
     }
@@ -545,7 +521,6 @@ TEST(logical_expressions, relational_operator_lt)
         analyzer a(input);
         a.analyze();
 
-        a.collect_diags();
         EXPECT_TRUE(a.diags().empty()) << input;
         EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "A"), res) << input;
     }
@@ -575,7 +550,6 @@ TEST(logical_expressions, relational_operator_ge)
         analyzer a(input);
         a.analyze();
 
-        a.collect_diags();
         EXPECT_TRUE(a.diags().empty()) << input;
         EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "A"), res) << input;
     }
@@ -605,7 +579,6 @@ TEST(logical_expressions, relational_operator_gt)
         analyzer a(input);
         a.analyze();
 
-        a.collect_diags();
         EXPECT_TRUE(a.diags().empty()) << input;
         EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "A"), res) << input;
     }
@@ -621,7 +594,6 @@ AAA EQU 1
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "B"), true);
@@ -637,7 +609,6 @@ AAA EQU 1
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004" }));
 }
@@ -652,7 +623,6 @@ AAA EQU 1
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE017" }));
 }
@@ -666,7 +636,6 @@ TEST(logical_expressions, simple_string_equality)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "B"), true);
@@ -681,7 +650,6 @@ TEST(logical_expressions, logical_expr_and_string_function)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "A1"), true);
@@ -701,7 +669,6 @@ TEST(logical_expressions, subscript_evaluation)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "X"), false);
@@ -719,7 +686,6 @@ TEST(logical_expressions, evaluation_mix)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "RES1"), true);

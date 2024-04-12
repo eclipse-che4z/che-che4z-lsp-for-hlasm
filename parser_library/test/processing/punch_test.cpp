@@ -29,7 +29,6 @@ TEST(punch, parameter_count)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A011", "A011" }));
 }
@@ -41,7 +40,6 @@ TEST(punch, string_only)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A300" }));
 }
@@ -53,7 +51,6 @@ TEST(punch, non_empty)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A302" }));
 }
@@ -66,7 +63,6 @@ TEST(punch, limit_80)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A108" }));
 }
@@ -82,7 +78,6 @@ TEST(punch, output)
     EXPECT_CALL(output, punch(StrEq("test string")));
 
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 };

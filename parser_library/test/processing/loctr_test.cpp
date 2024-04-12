@@ -46,7 +46,6 @@ Z EQU Y-X
 
     ASSERT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 16);
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)2);
 }
 
@@ -73,7 +72,6 @@ Z EQU Y-X
 
     ASSERT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 2);
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -88,7 +86,6 @@ X2   DS   0H
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }

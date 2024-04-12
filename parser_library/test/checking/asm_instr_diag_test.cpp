@@ -28,7 +28,6 @@ TEST(diagnostics, org_incorrect_second_op)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A115" }));
 }
@@ -41,7 +40,6 @@ TEST(diagnostics, exitctl_op_incorrect_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A020" }));
 }
@@ -54,7 +52,6 @@ TEST(diagnostics, exitctl_op_incorrect_value)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A131" }));
 }
@@ -67,7 +64,6 @@ TEST(diagnostics, extrn_incorrect_part_operand)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A129" }));
 }
@@ -80,7 +76,6 @@ TEST(diagnostics, extrn_incorrect_complex_operand)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A129" }));
 }
@@ -93,7 +88,6 @@ TEST(diagnostics, extrn_incorrect_part_type)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A129" }));
@@ -107,7 +101,6 @@ TEST(diagnostics, ictl_empty_op)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A021" }));
 }
@@ -120,7 +113,6 @@ TEST(diagnostics, ictl_undefined_op)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A242" }));
 }
@@ -133,7 +125,6 @@ TEST(diagnostics, ictl_incorrect_begin_val)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A123" }));
 }
@@ -146,7 +137,6 @@ TEST(diagnostics, ictl_incorrect_continuation_val)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A126" }));
 }
@@ -159,7 +149,6 @@ TEST(diagnostics, ictl_incorrect_end_begin_diff)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A125" }));
 }
@@ -172,7 +161,6 @@ TEST(diagnostics, ictl_incorrect_continuation_begin_diff)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A127" }));
 }
@@ -185,7 +173,6 @@ TEST(diagnostics, end_incorrect_first_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A243" }));
 }
@@ -199,7 +186,6 @@ simple equ 2
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A001" }));
 }
@@ -213,7 +199,6 @@ TEST(diagnostics, end_incorrect_language_third_char)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A140" }));
 }
@@ -226,7 +211,6 @@ TEST(diagnostics, end_incorrect_language_second_char)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A139" }));
 }
@@ -239,7 +223,6 @@ TEST(diagnostics, end_incorrect_language_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A137" }));
 }
@@ -252,7 +235,6 @@ TEST(diagnostics, drop_incorrect_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A141" }));
 }
@@ -265,7 +247,6 @@ TEST(diagnostics, cnop_incorrect_first_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A143" }));
 }
@@ -278,7 +259,6 @@ TEST(diagnostics, cnop_incorrect_second_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A143" }));
 }
@@ -291,7 +271,6 @@ TEST(diagnostics, cnop_incorrect_boundary)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A145" }));
 }
@@ -304,7 +283,6 @@ TEST(diagnostics, ccw_unspecified_operand)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A147" }));
 }
@@ -317,7 +295,6 @@ TEST(diagnostics, ccw_incorrect_first_op)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A143" }));
 }
@@ -330,7 +307,6 @@ TEST(diagnostics, ccw_incorrect_second_op)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A247" }));
 }
@@ -343,7 +319,6 @@ TEST(diagnostics, space_incorrect_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A240" }));
 }
@@ -356,7 +331,6 @@ TEST(diagnostics, space_incorrect_op_value)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A148" }));
 }
@@ -369,7 +343,6 @@ TEST(diagnostics, cattr_incorrect_simple_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A149" }));
 }
@@ -382,7 +355,6 @@ TEST(diagnostics, cattr_incorrect_complex_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A149" }));
 }
@@ -395,7 +367,6 @@ TEST(diagnostics, cattr_incorrect_complex_params)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A016" }));
 }
@@ -408,7 +379,6 @@ TEST(diagnostics, cattr_incorrect_rmode_param)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A204" }));
 }
@@ -421,7 +391,6 @@ TEST(diagnostics, cattr_incorrect_align_param)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A205" }));
 }
@@ -434,7 +403,6 @@ TEST(diagnostics, cattr_incorrect_fill_param)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A206" }));
 }
@@ -447,7 +415,6 @@ TEST(diagnostics, cattr_incorrect_priority_param)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A208" }));
 }
@@ -460,7 +427,6 @@ TEST(diagnostics, cattr_incorrect_part_param)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A207" }));
 }
@@ -473,7 +439,6 @@ TEST(diagnostics, cattr_empty_op)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A021" }));
 }
@@ -486,7 +451,6 @@ TEST(diagnostics, ainsert_incorrect_string)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A301" }));
 }
@@ -499,7 +463,6 @@ TEST(diagnostics, ainsert_incorrect_second_op)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A156" }));
 }
@@ -512,7 +475,6 @@ TEST(diagnostics, adata_incorrect_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A158" }));
 }
@@ -525,7 +487,6 @@ TEST(diagnostics, adata_incorrect_last_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A239" }));
 }
@@ -538,7 +499,6 @@ TEST(diagnostics, adata_string_not_enclosed)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A300" }));
 }
@@ -556,7 +516,6 @@ TEST(diagnostics, adata_string_too_long)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A160" }));
 }
@@ -569,7 +528,6 @@ TEST(diagnostics, acontrol_incorrect_simple_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A161" }));
 }
@@ -582,7 +540,6 @@ TEST(diagnostics, acontrol_incorrect_complex_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A161" }));
 }
@@ -595,7 +552,6 @@ TEST(diagnostics, acontrol_compat_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A209" }));
 }
@@ -608,7 +564,6 @@ TEST(diagnostics, acontrol_flag_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A211" }));
 }
@@ -621,7 +576,6 @@ TEST(diagnostics, acontrol_optable_params_size)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A018" }));
 }
@@ -634,7 +588,6 @@ TEST(diagnostics, acontrol_optable_first_params_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A212" }));
 }
@@ -647,7 +600,6 @@ TEST(diagnostics, acontrol_optable_second_params_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A213" }));
 }
@@ -660,7 +612,6 @@ TEST(diagnostics, acontrol_typecheck_param)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A214" }));
 }
@@ -673,7 +624,6 @@ TEST(diagnostics, acontrol_empty_op)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A021" }));
 }
@@ -687,7 +637,6 @@ TEST(diagnostics, extrn_empty_op)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A021" }));
 }
@@ -700,7 +649,6 @@ TEST(diagnostics, xattr_scope_value)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A200" }));
 }
@@ -713,7 +661,6 @@ TEST(diagnostics, xattr_linkage_value)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A201" }));
 }
@@ -726,7 +673,6 @@ TEST(diagnostics, xattr_reference_value)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A288" }));
 }
@@ -739,7 +685,6 @@ TEST(diagnostics, xattr_reference_direct_indirect_options)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A202" }));
 }
@@ -752,7 +697,6 @@ TEST(diagnostics, xattr_reference_number_of_params)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A018" }));
 }
@@ -765,7 +709,6 @@ TEST(diagnostics, mnote_incorrect_message)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A119" }));
 }
@@ -778,7 +721,6 @@ TEST(diagnostics, mnote_first_op_value)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A119" }));
 }
@@ -791,7 +733,6 @@ TEST(diagnostics, mnote_first_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A300", "MNOTE" }));
 }
@@ -822,7 +763,6 @@ TEST(diagnostics, mnote_long_message)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A117", "MNOTE" }));
 }
@@ -835,7 +775,6 @@ TEST(diagnostics, iseq_number_of_operands)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A013" }));
 }
@@ -848,7 +787,6 @@ TEST(diagnostics, iseq_incorrect_op_value)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A120" }));
 }
@@ -861,7 +799,6 @@ TEST(diagnostics, push_print_specified)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A112" }));
 }
@@ -874,7 +811,6 @@ TEST(diagnostics, push_acontrol_specified)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A112" }));
 }
@@ -887,7 +823,6 @@ TEST(diagnostics, pop_noprint_first)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A113" }));
 }
@@ -900,7 +835,6 @@ TEST(diagnostics, pop_incorrect_last_operand)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A110" }));
 }
@@ -913,7 +847,6 @@ TEST(diagnostics, pop_only_noprint_specified)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A114" }));
 }
@@ -926,7 +859,6 @@ TEST(diagnostics, push_incorrect_op_value)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A111" }));
 }
@@ -939,7 +871,6 @@ TEST(diagnostics, org_incorrect_first_op)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A245" }));
 }
@@ -982,7 +913,6 @@ TEST_P(mnote_fixture, diagnostic_severity)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
@@ -1001,7 +931,6 @@ TEST(mnote, substitution_first)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
@@ -1021,7 +950,6 @@ TEST(mnote, substitution_both)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
@@ -1039,7 +967,6 @@ TEST(mnote, empty_first_arg)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
@@ -1057,7 +984,6 @@ TEST(mnote, three_args)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A012" }));
 }
@@ -1070,7 +996,6 @@ TEST(mnote, emtpy_second_arg)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE", "A300" }));
 }
@@ -1083,7 +1008,6 @@ TEST(mnote, missing_quotes)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE", "A300" }));
 }
@@ -1097,7 +1021,6 @@ TEST(mnote, nonprintable_characters)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     ASSERT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
     EXPECT_EQ(a.diags()[0].message, "<01><01>");

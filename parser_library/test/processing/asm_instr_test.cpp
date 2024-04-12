@@ -32,7 +32,6 @@ ADDR   DS CL4
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     auto& ctx = *a.context().hlasm_ctx;
@@ -53,7 +52,6 @@ SYM  DS   CL249
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M122" }));
 }
 
@@ -69,7 +67,6 @@ A LR 1,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     auto& ctx = *a.context().hlasm_ctx;
@@ -97,7 +94,6 @@ A        LR 1,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     auto& ctx = *a.context().hlasm_ctx;
@@ -121,7 +117,6 @@ CNOPSYM CNOP ADDR,16
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -145,7 +140,6 @@ TEST(asm_instr_processing, ALIAS_mandatory_label)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A163", "A163" }));
 }
@@ -159,7 +153,6 @@ A ALIAS C'SOMESTRING'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "????" }));
     */
@@ -194,7 +187,6 @@ J ALIAS C'STRING'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -209,7 +201,6 @@ L X     C'SOMESTRING'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -229,7 +220,6 @@ L   EQU  *-C
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E066", "E066" })); // S, I attributes
 
@@ -258,7 +248,6 @@ C   CXD
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E066", "E066" })); // S, I attributes
 
@@ -277,7 +266,6 @@ TEST(asm_instr_processing, TITLE_text_label)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -293,7 +281,6 @@ TEST(asm_instr_processing, TITLE_multiple_labels)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W016" }));
 
@@ -309,7 +296,6 @@ TEST(asm_instr_processing, TITLE_sequence_does_not_count)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 

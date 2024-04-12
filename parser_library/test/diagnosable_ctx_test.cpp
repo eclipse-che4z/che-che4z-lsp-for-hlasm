@@ -40,7 +40,6 @@ TEST(diagnosable_ctx, one_file_diag)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
     EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)2);

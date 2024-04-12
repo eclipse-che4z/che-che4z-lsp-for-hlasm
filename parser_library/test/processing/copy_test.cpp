@@ -207,7 +207,6 @@ TEST(copy, copy_enter_fail)
     auto a = get_analyzer(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)0);
     EXPECT_EQ(a.hlasm_ctx().whole_copy_stack().size(), (size_t)0);
@@ -224,7 +223,6 @@ TEST(copy, copy_enter_success)
     auto a = get_analyzer(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
@@ -244,7 +242,6 @@ TEST(copy, copy_enter_diag_test)
     auto a = get_analyzer(input, "start");
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
@@ -269,7 +266,6 @@ TEST(copy, copy_jump)
     auto a = get_analyzer(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
 
@@ -289,7 +285,6 @@ TEST(copy, copy_unbalanced_macro)
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
@@ -309,7 +304,6 @@ TEST(copy, copy_twice)
     auto a = get_analyzer(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
@@ -327,7 +321,6 @@ TEST(copy, macro_call_from_copy_enter)
     auto a = get_analyzer(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
@@ -352,7 +345,6 @@ TEST(copy, copy_enter_from_macro_call)
     auto a = get_analyzer(input, "start");
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
@@ -388,7 +380,6 @@ TEST(copy, copy_enter_from_lookahead)
     auto a = get_analyzer(input, "start");
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
@@ -407,7 +398,6 @@ TEST(copy, nested_macro_copy_call)
     auto a = get_analyzer(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
     ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
@@ -433,7 +423,6 @@ TEST(copy, macro_from_copy_call)
     auto a = get_analyzer(input, "start");
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
     ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
@@ -457,7 +446,6 @@ TEST(copy, inner_copy_jump)
     auto a = get_analyzer(input);
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
@@ -474,7 +462,6 @@ TEST(copy, jump_from_copy_fail)
     auto a = get_analyzer(input, "start");
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
@@ -504,7 +491,6 @@ TEST(copy, jump_in_macro_from_copy_fail)
     auto a = get_analyzer(input, "start");
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
@@ -532,7 +518,6 @@ TEST(copy, macro_nested_diagnostics)
     auto a = get_analyzer(input, "start");
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
 
@@ -557,7 +542,6 @@ TEST(copy, copy_call_with_jump_before_comment)
     auto a = get_analyzer(input, "start");
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
@@ -582,7 +566,6 @@ TEST(copy, copy_empty_file)
     auto a = get_analyzer(input, "start");
     a.analyze();
 
-    a.collect_diags();
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
 
@@ -620,7 +603,6 @@ aaaaaaaaa
     analyzer a(input, analyzer_options { &lib_provider });
 
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -637,7 +619,6 @@ TEST(copy, invalid_quotes_on_operandless)
 
     analyzer a(input, analyzer_options(&libs));
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }

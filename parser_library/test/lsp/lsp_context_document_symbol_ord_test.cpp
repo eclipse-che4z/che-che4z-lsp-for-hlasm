@@ -90,7 +90,6 @@ MACFLD1  DS  F
     });
     analyzer a(opencode, analyzer_options { &mock });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 

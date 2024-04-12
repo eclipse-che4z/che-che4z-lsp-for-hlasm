@@ -70,7 +70,7 @@ public:
         auto a = std::make_unique<analyzer>(it->second.content,
             analyzer_options { hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data });
         co_await a->co_analyze();
-        a->collect_diags();
+
         analyzers.insert_or_assign(std::move(library), std::move(a));
 
         co_return true;

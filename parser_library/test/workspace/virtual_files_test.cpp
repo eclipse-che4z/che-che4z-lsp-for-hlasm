@@ -52,7 +52,6 @@ TEST(virtual_files, callback_test_ainsert)
 )";
     analyzer a(input, analyzer_options(&vf));
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -69,7 +68,6 @@ TEST(virtual_files, callback_test_preprocessor)
 )";
     analyzer a(input, analyzer_options(&vf, db2_preprocessor_options()));
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -110,9 +108,8 @@ TEST(virtual_files, callback_test_ainsert_valid_vfm)
 )";
     analyzer a(input, analyzer_options(&vf));
     a.analyze();
-    a.collect_diags();
 
-    const auto& d = a.diags();
+    const auto d = a.diags();
     ASSERT_EQ(d.size(), 1);
     EXPECT_EQ(d[0].file_uri, "hlasm://0/AINSERT_1.hlasm");
 }

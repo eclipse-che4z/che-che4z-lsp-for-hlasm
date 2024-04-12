@@ -28,8 +28,7 @@ TEST(ainsert, ainsert_with_substitution)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -43,8 +42,7 @@ TEST(ainsert, empty_ainsert_record)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 1);
     EXPECT_EQ(diags.front().code, "A021");
 }
@@ -63,8 +61,7 @@ TEST(ainsert, lookahead_in_ainsert)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     EXPECT_TRUE(diags.empty());
 }
 
@@ -87,8 +84,7 @@ A        DS  C
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     EXPECT_TRUE(diags.empty());
 }
 
@@ -116,9 +112,8 @@ A        DC C
     analyzer a(input, analyzer_options { &lib_provider });
 
     a.analyze();
-    a.collect_diags();
 
-    const auto& diags = a.diags();
+    const auto diags = a.diags();
 
     ASSERT_EQ(diags.size(), 1);
 
@@ -144,7 +139,6 @@ TEST(ainsert, argument_limit)
     analyzer a(input);
 
     a.analyze();
-    a.collect_diags();
 
     ASSERT_TRUE(a.diags().empty());
 }
@@ -163,7 +157,6 @@ TEST(ainsert, argument_limit_over)
     analyzer a(input);
 
     a.analyze();
-    a.collect_diags();
 
     ASSERT_TRUE(matches_message_codes(a.diags(), { "A157" }));
 }
@@ -193,7 +186,6 @@ TEST(ainsert, postponed_variable_evaluation)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 40);
@@ -227,7 +219,6 @@ TEST(ainsert, immediate_variable_evaluation)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 22);
@@ -258,7 +249,6 @@ TEST(ainsert, grammar_valid_01)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STR12"), "00000032");
@@ -291,7 +281,6 @@ TEST(ainsert, grammar_valid_02)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "9");
@@ -321,7 +310,6 @@ TEST(ainsert, grammar_unknown_label)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(),
         {
             "A011",
@@ -357,7 +345,6 @@ TEST(ainsert, grammar_unknown_variable)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(),
         {
             "E010",
@@ -388,7 +375,6 @@ TEST(ainsert, grammar_invalid_string)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(),
         {
             "S0005",
@@ -431,7 +417,6 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_two_01)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002" }));
 }
 
@@ -456,7 +441,6 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_two_02)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0005" }));
 }
 
@@ -485,7 +469,6 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_one_01)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A011", "S0005", "S0005" }));
 }
@@ -511,7 +494,6 @@ TEST(ainsert, grammar_non_matching_apostrophes_by_one_02)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "S0005", "S0005", "A011" }));
 }

@@ -60,7 +60,6 @@ TEST(data_def_checker, unknown_extension_analyzer)
     std::string input = " DC BA'1'";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D006" }));
 }
@@ -732,7 +731,6 @@ TEST(data_def_checker, V_ok)
     std::string input = " DC V(SYMBOL)";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -742,14 +740,12 @@ TEST(data_def_checker, V_single_symbol_expected)
     std::string input = " DC V(SYMBOL+5)";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D030" }));
 
     std::string input2 = " DC V(12(13))";
     analyzer a2(input);
     a2.analyze();
-    a2.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D030" }));
 }

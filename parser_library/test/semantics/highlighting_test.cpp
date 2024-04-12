@@ -350,7 +350,6 @@ TEST(highlighting, multiline_macro_param)
 )";
     analyzer a(contents, analyzer_options { collect_highlighting_info::yes });
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -537,7 +536,6 @@ TEST_P(highlighting_fixture, macro_params_no_definition)
 {
     analyzer a(GetParam().text_to_test, analyzer_options { collect_highlighting_info::yes });
     a.analyze();
-    a.collect_diags();
 
     matches_message_codes(a.diags(), { "E049" });
 

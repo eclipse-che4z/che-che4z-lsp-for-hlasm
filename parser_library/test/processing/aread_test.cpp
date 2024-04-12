@@ -34,8 +34,7 @@ TEST(aread, only_from_macro)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
 
     ASSERT_EQ(diags.size(), 1);
     EXPECT_TRUE(std::any_of(diags.begin(), diags.end(), [](const auto& msg) { return msg.code == "E069"; }));
@@ -57,8 +56,7 @@ This is a raw text
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -85,8 +83,7 @@ This is a raw text 2
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -120,8 +117,7 @@ This is a raw text 2
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -150,8 +146,7 @@ TEST(aread, empty_input)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -180,8 +175,7 @@ TEST(aread, invalid_operands)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 4);
 
     EXPECT_TRUE(std::all_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "E070"; }));
@@ -214,8 +208,7 @@ TEST(aread, from_ainsert_buffer)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -247,8 +240,7 @@ Line5
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 }
 
@@ -274,8 +266,7 @@ Line5
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 1);
     EXPECT_EQ(diags[0].diag_range.start.line, 15);
 }
@@ -298,8 +289,7 @@ TEST(aread, macro_called_in_copybook)
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -332,8 +322,7 @@ TEST(aread, aread_from_source_stack)
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -365,8 +354,7 @@ TEST(aread, aread_from_opencode)
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -407,8 +395,7 @@ removed by aread
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -449,8 +436,7 @@ removed by aread
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -483,8 +469,7 @@ TEST(aread, last_statements_in_copy)
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -520,8 +505,7 @@ removed on first call                                                  X
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -554,8 +538,7 @@ TEST(aread, copy_in_macro)
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -587,8 +570,7 @@ TEST(aread, normal_processing_recovery)
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();
@@ -621,8 +603,7 @@ TEST(aread, normal_processing_recovery_line_skipped)
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
-    a.collect_diags();
-    auto& diags = a.diags();
+    auto diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 
     auto& ctx = a.hlasm_ctx();

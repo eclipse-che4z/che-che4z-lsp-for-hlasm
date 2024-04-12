@@ -27,7 +27,6 @@ TEST(system_id, basic_properties)
     analyzer a(input, analyzer_options { asm_option { "", "", instruction_set_version::UNI, "VSE" } });
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "VSE");
@@ -46,7 +45,6 @@ TEST(system_id, check_defaults)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "z/OS 02.04.00");

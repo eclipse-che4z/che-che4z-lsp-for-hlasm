@@ -32,7 +32,6 @@ R EQU B-A
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -48,7 +47,6 @@ R EQU B-A
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "R"), 2);
@@ -67,7 +65,6 @@ R EQU C-B
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "R"), 4);
@@ -85,7 +82,6 @@ R EQU C-B
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "R"), 4);
@@ -103,7 +99,6 @@ R EQU C-B
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D022" }));
 }
@@ -118,7 +113,6 @@ B LR 1,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -133,7 +127,6 @@ D LR 1,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
@@ -146,7 +139,6 @@ A DC CL(X+14)'A'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "a")->attributes().length(), (symbol_attributes::len_attr)2);
 
@@ -162,7 +154,6 @@ A DC FS(X+14)'1'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "a")->attributes().scale(), (symbol_attributes::scale_attr)36);
 
@@ -178,7 +169,6 @@ M DC FS-12'1'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "P")->attributes().scale(), (symbol_attributes::scale_attr)12);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "M")->attributes().scale(), (symbol_attributes::scale_attr)-12);
@@ -195,7 +185,6 @@ A EQU L'X
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 0);
 
@@ -211,7 +200,6 @@ X DC CL(A+1)'X'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
 
@@ -228,7 +216,6 @@ Y EQU L'A
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->attributes().length(), (symbol_attributes::len_attr)1);
@@ -247,7 +234,6 @@ Y EQU A
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->attributes().length(), (symbol_attributes::len_attr)1);
@@ -264,7 +250,6 @@ X DC CL(L'X)'X'
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -280,7 +265,6 @@ T   EQU   *
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -300,7 +284,6 @@ TEST(DC, tolerate_incorrect_nominal_value)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D018", "D017" }));
 }
@@ -317,7 +300,6 @@ TEST CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D034", "D034", "D034", "D034" }));
 }
@@ -335,7 +317,6 @@ TEST(DC, correctly_count_long_utf8_chars)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -353,7 +334,6 @@ TEST(DC, validate_attribute_in_nominal)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E010" }));
 }
@@ -369,7 +349,6 @@ H        DS    CL(H-C)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -382,7 +361,6 @@ H        DS    CL(L'H)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E033" }));
 }

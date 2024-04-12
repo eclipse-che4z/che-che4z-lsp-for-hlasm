@@ -23,7 +23,7 @@
 #include <utility>
 
 #include "analyzing_context.h"
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "processing/processing_format.h"
 #include "utils/resource_location.h"
 #include "utils/task.h"

@@ -1013,7 +1013,6 @@ LABEL USING TEST,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1028,7 +1027,6 @@ LABEL USING ,
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A164", "A104" }));
 }
@@ -1043,7 +1041,6 @@ LABEL USING 'FAIL',1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A164", "A164", "A104" }));
 }
@@ -1057,7 +1054,6 @@ TEST(using, push_pop)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1070,7 +1066,6 @@ TEST(using, pop_empty)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A165" }));
 }
@@ -1085,7 +1080,6 @@ R1    EQU   1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1101,7 +1095,6 @@ LABEL DS    F
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E031" }));
 }
@@ -1117,7 +1110,6 @@ R1    EQU   1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E031" }));
 }
@@ -1136,9 +1128,8 @@ TEST  CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
-    auto& diags = a.diags();
+    auto diags = a.diags();
 
     ASSERT_EQ(diags.size(), 1);
 
@@ -1163,7 +1154,6 @@ LABEL MAC    TEST1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1180,7 +1170,6 @@ TESTL EQU   *-TEST
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -1199,7 +1188,6 @@ TESTL EQU   *-TEST
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -1216,7 +1204,6 @@ LABEL2 DS    0H
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1229,7 +1216,6 @@ LABEL DROP
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A251" }));
 }
@@ -1244,7 +1230,6 @@ L     USING  A,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME004" }));
 }
@@ -1263,7 +1248,6 @@ L     USING  TEST1,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME006", "ME009" }));
 }
@@ -1279,7 +1263,6 @@ L     USING  A,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005", "ME005" }));
 }
@@ -1296,7 +1279,6 @@ L     USING  A,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005", "ME005", "ME007" }));
 }
@@ -1312,7 +1294,6 @@ L     USING  A,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME005" }));
 }
@@ -1329,7 +1310,6 @@ L     USING  A,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1344,7 +1324,6 @@ L     USING  A,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1360,7 +1339,6 @@ L     USING  A,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1375,7 +1353,6 @@ L     USING  A,1
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
 }
@@ -1390,7 +1367,6 @@ L     USING  A,1,2
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1405,7 +1381,6 @@ A     CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
 }
@@ -1420,7 +1395,6 @@ A     CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
 }
@@ -1437,7 +1411,6 @@ A     CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1454,7 +1427,6 @@ A     CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1470,7 +1442,6 @@ A     CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008", "ME008" }));
 }
@@ -1486,7 +1457,6 @@ A     CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1501,7 +1471,6 @@ A     CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
 }
@@ -1516,7 +1485,6 @@ A     CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D033", "D034" }));
 }
@@ -1531,7 +1499,6 @@ A     CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1545,7 +1512,6 @@ A     CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME007" }));
 }
@@ -1560,7 +1526,6 @@ A     CSECT
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
 }
@@ -1577,7 +1542,6 @@ A   DC    S(L)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1592,7 +1556,6 @@ L   DS    F
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1607,7 +1570,6 @@ L   DS    F
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1622,7 +1584,6 @@ A   DS    A
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1638,7 +1599,6 @@ B   DS    A
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -1656,7 +1616,6 @@ F   DS    F
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M113" }));
 }

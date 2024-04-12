@@ -14,6 +14,8 @@
 
 #include "analyzer.h"
 
+#include "context/id_storage.h"
+#include "diagnosable_ctx.h"
 #include "lsp/lsp_context.h"
 #include "processing/opencode_provider.h"
 #include "processing/preprocessor.h"
@@ -105,10 +107,11 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
     return std::make_unique<combined_preprocessor>(std::move(tmp));
 }
 
-struct analyzer::impl
+struct analyzer::impl : public diagnosable_ctx
 {
-    impl(std::string_view text, analyzer_options&& opts, diagnosable_ctx& diag_consumer)
-        : ctx(std::move(opts.get_context()))
+    impl(std::string_view text, analyzer_options&& opts)
+        : diagnosable_ctx(opts.get_hlasm_context())
+        , ctx(std::move(opts.get_context()))
         , src_proc(opts.collect_hl_info == collect_highlighting_info::yes)
         , field_parser(ctx.hlasm_ctx.get())
         , mngr(std::make_unique<processing::opencode_provider>(text,
@@ -117,10 +120,9 @@ struct analyzer::impl
                    mngr,
                    mngr,
                    src_proc,
-                   diag_consumer,
-                   opts.get_preprocessor(std::bind_front(&parse_lib_provider::get_library, &opts.get_lib_provider()),
-                       diag_consumer,
-                       src_proc),
+                   *this,
+                   opts.get_preprocessor(
+                       std::bind_front(&parse_lib_provider::get_library, &opts.get_lib_provider()), *this, src_proc),
                    opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
                                                                   : processing::opencode_provider_options {},
                    opts.vf_monitor,
@@ -144,11 +146,16 @@ struct analyzer::impl
     std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>> vf_handles;
 
     processing::processing_manager mngr;
+
+    void collect_diags() const override
+    {
+        collect_diags_from_child(mngr);
+        collect_diags_from_child(field_parser);
+    }
 };
 
 analyzer::analyzer(std::string_view text, analyzer_options opts)
-    : diagnosable_ctx(opts.get_hlasm_context())
-    , m_impl(std::make_unique<impl>(text, std::move(opts), *this))
+    : m_impl(std::make_unique<impl>(text, std::move(opts)))
 {}
 
 analyzer::~analyzer() = default;
@@ -173,15 +180,13 @@ hlasm_plugin::utils::task analyzer::co_analyze() &
     co_await m_impl->mngr.co_step();
 
     m_impl->src_proc.finish();
-}
 
-void analyzer::collect_diags() const
-{
-    collect_diags_from_child(m_impl->mngr);
-    collect_diags_from_child(m_impl->field_parser);
+    m_impl->collect_diags();
 }
 
 const performance_metrics& analyzer::get_metrics() const { return m_impl->ctx.hlasm_ctx->metrics; }
+
+std::span<diagnostic_s> analyzer::diags() const noexcept { return m_impl->diags(); }
 
 void analyzer::register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer)
 {

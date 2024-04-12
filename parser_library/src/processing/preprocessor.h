@@ -24,7 +24,6 @@
 #include <utility>
 #include <vector>
 
-#include "diagnostic_consumer.h"
 #include "document.h"
 #include "utils/resource_location.h"
 
@@ -32,6 +31,10 @@ namespace hlasm_plugin::parser_library {
 struct cics_preprocessor_options;
 struct db2_preprocessor_options;
 struct endevor_preprocessor_options;
+
+template<typename T>
+class diagnostic_consumer;
+struct diagnostic_op;
 
 namespace lexing {
 template<typename It>
@@ -72,15 +75,19 @@ public:
 
     [[nodiscard]] virtual utils::value_task<document> generate_replacement(document doc) = 0;
 
-    static std::unique_ptr<preprocessor> create(
-        const cics_preprocessor_options&, library_fetcher, diagnostic_op_consumer*, semantics::source_info_processor&);
+    static std::unique_ptr<preprocessor> create(const cics_preprocessor_options&,
+        library_fetcher,
+        diagnostic_consumer<diagnostic_op>*,
+        semantics::source_info_processor&);
 
-    static std::unique_ptr<preprocessor> create(
-        const db2_preprocessor_options&, library_fetcher, diagnostic_op_consumer*, semantics::source_info_processor&);
+    static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&,
+        library_fetcher,
+        diagnostic_consumer<diagnostic_op>*,
+        semantics::source_info_processor&);
 
     static std::unique_ptr<preprocessor> create(const endevor_preprocessor_options&,
         library_fetcher,
-        diagnostic_op_consumer*,
+        diagnostic_consumer<diagnostic_op>*,
         semantics::source_info_processor&);
 
     virtual std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> take_statements();

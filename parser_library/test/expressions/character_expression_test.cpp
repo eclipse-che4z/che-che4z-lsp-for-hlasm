@@ -29,7 +29,6 @@ TEST(character_expression, operator_priority)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C1"), "ABCDEFDEFDEF");
@@ -50,7 +49,6 @@ TEST(character_expression, substring_notation)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C1"), "ABC");
@@ -72,7 +70,6 @@ TEST(character_expression, invalid_substring_notation)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)3);
 }
 
@@ -86,7 +83,6 @@ TEST(character_expression, exceeds_warning)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
 }*/
@@ -100,7 +96,6 @@ TEST(character_expression, invalid_string)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0008", "CE004", "CE011" })); // CE004 is artifact of S0008
 }
@@ -120,7 +115,6 @@ TEST(character_expression, escaping)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C1"), "L'SYMBOL");
@@ -144,7 +138,6 @@ TEST(character_expression, single_operand_with_spaces)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "C1"), "A");
@@ -164,7 +157,6 @@ TEST(character_expression, single_operand_fail)
         analyzer a(input);
         a.analyze();
 
-        a.collect_diags();
         EXPECT_FALSE(a.diags().empty());
     }
 }
@@ -181,7 +173,6 @@ TEST(character_expression, zero_length_substring)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -199,7 +190,6 @@ TEST(character_expression, dots)
         analyzer a(input);
         a.analyze();
 
-        a.collect_diags();
         ASSERT_EQ(a.diags().empty(), ok);
     }
 }
@@ -214,7 +204,6 @@ TEST(character_expression, valid_subscript_expression)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "X"), "XZ");
@@ -229,7 +218,6 @@ TEST(character_expression, invalid_subscript_expression)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004" }));
 }
@@ -247,7 +235,6 @@ TEST(character_expression, valid_dupl_expression)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "ABC");
@@ -266,7 +253,6 @@ TEST(character_expression, invalid_dupl_expression)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE005" }));
 }
@@ -282,7 +268,6 @@ TEST(character_expression, subscripted_concat_evaluation)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "X"), "10");
@@ -296,7 +281,6 @@ TEST(character_expression, invalid_expression)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004" }));
 }
@@ -311,7 +295,6 @@ TEST(character_expression, invalid_expression)
 //)";
 //    analyzer a(input);
 //    a.analyze();
-//    a.collect_diags();
 //
 //    EXPECT_TRUE(a.diags().empty());
 //    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C"), "VENFG");
@@ -326,7 +309,6 @@ TEST(character_expression, valid_function)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C"), "K");
@@ -341,7 +323,6 @@ TEST(character_expression, invalid_function)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE012" }));
 }
@@ -352,7 +333,6 @@ TEST(character_expression, multi_byte_substr)
 
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -378,7 +358,6 @@ TEST(character_expression, bounds)
 
         analyzer a(input);
         a.analyze();
-        a.collect_diags();
 
         if (err.empty())
             EXPECT_TRUE(a.diags().empty());

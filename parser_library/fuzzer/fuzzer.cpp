@@ -67,7 +67,6 @@ public:
         analyzer a(
             files[lib.value()], analyzer_options(resource_location(std::move(library)), this, std::move(ctx), data));
         co_await a.co_analyze();
-        a.collect_diags();
         co_return true;
     }
 

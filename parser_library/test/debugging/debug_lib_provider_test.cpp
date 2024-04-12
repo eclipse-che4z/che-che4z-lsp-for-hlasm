@@ -61,7 +61,6 @@ TEST_F(debug_lib_provider_test, parse_library)
     std::string input = " COPY AAA";
     analyzer a(input, analyzer_options(&lib));
     analyze(a);
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
 }

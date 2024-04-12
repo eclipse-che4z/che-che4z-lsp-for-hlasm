@@ -34,7 +34,6 @@ TEST(literals, duplicate_when_loctr_references)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -55,7 +54,6 @@ TEST(literals, unique_when_no_loctr_references)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -72,7 +70,6 @@ TEST(literals, no_nested_literals)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0013", "S0013" }));
 }
@@ -86,7 +83,6 @@ A   EQU  L'=A(0)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -108,7 +104,6 @@ TEST(literals, attribute_references_to_literals_in_ca)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -137,7 +132,6 @@ B DC A(0)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -161,7 +155,6 @@ B   EQU   *-A
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -186,7 +179,6 @@ TEST(literals, ltorg_repeating_literals)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -224,7 +216,6 @@ TEST(literals, similar)
         std::string input = "A EQU 1\nB EQU 2\nT1   EQU  L'" + t.l + '\n' + "T2   EQU  L'" + t.r;
         analyzer a(input);
         a.analyze();
-        a.collect_diags();
 
         EXPECT_TRUE(a.diags().empty());
 
@@ -242,7 +233,6 @@ TEST(literals, in_machine_instructions)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -260,7 +250,6 @@ TEST(literals, strange_literals)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -272,7 +261,6 @@ TEST(literals, missing_label_in_literal)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     ASSERT_TRUE(matches_message_codes(a.diags(), { "E010" }));
     EXPECT_TRUE(a.diags()[0].message.ends_with(": LABEL"));
@@ -289,9 +277,8 @@ TEST(literals, processing_stack_in_messages)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
-    auto& d = a.diags();
+    auto d = a.diags();
     ASSERT_TRUE(matches_message_codes(d, { "E010" }));
     EXPECT_EQ(d.front().related.size(), 1);
 }
@@ -304,7 +291,6 @@ TEST(literals, halfward_alignment)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -317,7 +303,6 @@ TEST(literals, halfward_alignment_expression)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -332,7 +317,6 @@ TEST(literals, halfward_alignment_delayed)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -353,7 +337,6 @@ B        CSECT
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -375,7 +358,6 @@ B        CSECT
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M136" }));
 }
@@ -388,7 +370,6 @@ TEST(literals, no_csect_available)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M136" }));
 }
@@ -402,7 +383,6 @@ TEST(literals, ltorg_in_dsect)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -414,7 +394,6 @@ TEST(literals, bad_attribute)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W011" }));
 }
@@ -426,7 +405,6 @@ TEST(literals, bad_nominal_value)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D017" }));
 }
@@ -440,7 +418,6 @@ X   DS    0H
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D018" }));
 }
@@ -455,7 +432,6 @@ X   DS    0H
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D017", "D018" }));
 }
@@ -467,7 +443,6 @@ TEST(literals, zero_length)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D031" }));
 }
@@ -480,7 +455,6 @@ TEST(literals, deduplicate_loctr_len_reference)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -500,7 +474,6 @@ TEST(literals, invalid_loctr_references)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0012", "S0012", "S0005", "S0005" }));
 }
@@ -513,7 +486,6 @@ TEST(literals, part_of_expression)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -525,7 +497,6 @@ TEST(literals, propagate_error_from_literals)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0003", "D031" }));
 }
@@ -539,7 +510,6 @@ LEN EQU   *-L
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 16);
@@ -558,7 +528,6 @@ TEST(literals, attribute_references_to_substituted_literal)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -587,7 +556,6 @@ TEST(literals, defined_in_ca_expr)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -610,7 +578,6 @@ TEST(literals, in_ca_expr_previously_mentioned)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -626,7 +593,6 @@ TEST(literals, undefined_after_ltorg)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 
@@ -651,7 +617,6 @@ TEST(literals, suppress_messages_from_DTO_attributes)
 )";
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
 

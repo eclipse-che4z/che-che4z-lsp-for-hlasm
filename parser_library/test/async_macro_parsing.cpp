@@ -25,7 +25,7 @@ using namespace ::testing;
 struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
 {
     std::unordered_map<std::string, std::string, hashers::string_hasher, std::equal_to<>> m_files;
-    analyzer* current = nullptr;
+    std::vector<diagnostic_s> m_diags;
 
     // Inherited via parse_lib_provider
     value_task<bool> parse_library(std::string library, analyzing_context ctx, library_data data) override
@@ -46,7 +46,8 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
                 });
 
             co_await a.co_analyze();
-            current->collect_diags_from_child(a);
+            auto d = a.diags();
+            m_diags.insert(m_diags.end(), std::make_move_iterator(d.begin()), std::make_move_iterator(d.end()));
             co_return true;
         }
     }
@@ -70,19 +71,20 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
 
     void analyze(analyzer& a)
     {
-        current = &a;
         a.co_analyze().run();
-        current = nullptr;
+        auto d = a.diags();
+        m_diags.insert(m_diags.end(), std::make_move_iterator(d.begin()), std::make_move_iterator(d.end()));
     }
+
+    std::span<const diagnostic_s> diags() const noexcept { return m_diags; }
 };
 
 TEST_F(async_macro_parsing_fixture, macro_not_found)
 {
     analyzer a(" MAC", analyzer_options(this));
     analyze(a);
-    a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
+    EXPECT_TRUE(matches_message_codes(diags(), { "E049" }));
 }
 
 TEST_F(async_macro_parsing_fixture, macro_not_found_twice)
@@ -93,18 +95,16 @@ TEST_F(async_macro_parsing_fixture, macro_not_found_twice)
 )",
         analyzer_options(this));
     analyze(a);
-    a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E049", "E049" }));
+    EXPECT_TRUE(matches_message_codes(diags(), { "E049", "E049" }));
 }
 
 TEST_F(async_macro_parsing_fixture, copy_not_found)
 {
     analyzer a(" COPY MAC", analyzer_options(this));
     analyze(a);
-    a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E058" }));
+    EXPECT_TRUE(matches_message_codes(diags(), { "E058" }));
 }
 
 TEST_F(async_macro_parsing_fixture, copy_not_found_twice)
@@ -115,9 +115,8 @@ TEST_F(async_macro_parsing_fixture, copy_not_found_twice)
 )",
         analyzer_options(this));
     analyze(a);
-    a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E058", "E058" }));
+    EXPECT_TRUE(matches_message_codes(diags(), { "E058", "E058" }));
 }
 
 TEST_F(async_macro_parsing_fixture, copy_not_found_in_macro)
@@ -129,9 +128,8 @@ TEST_F(async_macro_parsing_fixture, copy_not_found_in_macro)
 )");
     analyzer a(" MAC", analyzer_options(this));
     analyze(a);
-    a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E058" }));
+    EXPECT_TRUE(matches_message_codes(diags(), { "E058" }));
 }
 
 TEST_F(async_macro_parsing_fixture, copy_in_macro)
@@ -144,9 +142,8 @@ TEST_F(async_macro_parsing_fixture, copy_in_macro)
     m_files.try_emplace("COPYBOOK", " MNOTE 'AAA'");
     analyzer a(" MAC", analyzer_options(this));
     analyze(a);
-    a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
+    EXPECT_TRUE(matches_message_codes(diags(), { "MNOTE" }));
 }
 
 TEST_F(async_macro_parsing_fixture, copy_from_ainsert)
@@ -154,9 +151,8 @@ TEST_F(async_macro_parsing_fixture, copy_from_ainsert)
     m_files.try_emplace("COPYBOOK", " MNOTE 'AAA'");
     analyzer a(" AINSERT ' COPY COPYBOOK',BACK", analyzer_options(this));
     analyze(a);
-    a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
+    EXPECT_TRUE(matches_message_codes(diags(), { "MNOTE" }));
 }
 
 TEST_F(async_macro_parsing_fixture, self_calling_macro)
@@ -169,9 +165,8 @@ TEST_F(async_macro_parsing_fixture, self_calling_macro)
 )");
     analyzer a(" MAC 0", analyzer_options(this));
     analyze(a);
-    a.collect_diags();
 
-    EXPECT_TRUE(a.diags().empty());
+    EXPECT_TRUE(diags().empty());
 }
 
 TEST_F(async_macro_parsing_fixture, delete_macro)
@@ -188,9 +183,8 @@ MAC OPSYN
 )",
         analyzer_options(this));
     analyze(a);
-    a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE", "MNOTE" }));
+    EXPECT_TRUE(matches_message_codes(diags(), { "MNOTE", "MNOTE" }));
 }
 
 TEST_F(async_macro_parsing_fixture, delete_inline_macro)
@@ -214,9 +208,8 @@ MAC OPSYN
 )",
         analyzer_options(this));
     analyze(a);
-    a.collect_diags();
 
-    EXPECT_TRUE(matches_message_text(a.diags(), { "AAA", "BBB", "AAA" }));
+    EXPECT_TRUE(matches_message_text(diags(), { "AAA", "BBB", "AAA" }));
 }
 
 TEST_F(async_macro_parsing_fixture, unknown_instruction)
@@ -246,7 +239,6 @@ TEST_F(async_macro_parsing_fixture, unknown_instruction)
 )",
         analyzer_options(this));
     analyze(a);
-    a.collect_diags();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE", "MNOTE" }));
+    EXPECT_TRUE(matches_message_codes(diags(), { "MNOTE", "MNOTE" }));
 }

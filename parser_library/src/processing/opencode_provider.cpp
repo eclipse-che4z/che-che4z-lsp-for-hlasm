@@ -576,7 +576,10 @@ utils::task opencode_provider::start_nested_parser(
 {
     analyzer a(text, std::move(opts));
     co_await a.co_analyze();
-    m_diagnoser->collect_diags_from_child(a);
+
+    for (auto&& d : a.diags())
+        m_diagnoser->add_diagnostic(std::move(d));
+
     m_ctx.hlasm_ctx->enter_copy_member(vf_name);
 }
 

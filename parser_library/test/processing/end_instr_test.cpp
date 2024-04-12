@@ -25,7 +25,6 @@ TEST CSECT
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, relocatable_expression)
@@ -37,7 +36,6 @@ TEST CSECT
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, external_symbol)
@@ -50,7 +48,6 @@ TEST(END, external_symbol)
     analyzer a(input);
     a.analyze();
 
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, multiple_ends)
@@ -61,7 +58,7 @@ TEST(END, multiple_ends)
  )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, no_operands)
@@ -71,7 +68,7 @@ TEST(END, no_operands)
  )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, undefined_symbol)
@@ -81,7 +78,7 @@ TEST(END, undefined_symbol)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     ASSERT_TRUE(matches_message_codes(a.diags(), { "E010" }));
     EXPECT_TRUE(a.diags()[0].message.ends_with(": UNDEF"));
 }
@@ -93,7 +90,7 @@ UNDEF EQU 12
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E032" }));
 }
 TEST(END, no_operand)
@@ -103,7 +100,7 @@ TEST(END, no_operand)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, two_operands_true)
@@ -116,7 +113,7 @@ ENTRYPT  BALR            2,0
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, two_operands_with_operand_identifier_false)
@@ -129,7 +126,7 @@ ENTRYPT  BALR            2,0
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A137" }));
 }
 TEST(END, three_operands_empty_false)
@@ -142,7 +139,7 @@ ENTRYPT  BALR            2,0
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A012" }));
 }
 
@@ -153,7 +150,7 @@ TEST(END, strange_operands)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, label_sequenceSymbol_true)
@@ -163,7 +160,6 @@ TEST(END, label_sequenceSymbol_true)
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, label_sequenceSymbol_false)
@@ -173,7 +169,7 @@ NAME  END
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A249" }));
 }
 TEST(END, three_operands_false)
@@ -186,7 +182,7 @@ ENTRYPT  BALR            2,0
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E010" }));
 }
 
@@ -202,7 +198,7 @@ TEST CSECT
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -219,7 +215,7 @@ TEST CSECT
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 
@@ -241,7 +237,7 @@ X    DS    C
 )");
     analyzer a(input);
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 
@@ -261,9 +257,8 @@ TEST(END, end_called_from_macro_inside_copy_book_one_with_warning_after_end)
 )";
     mock_parse_lib_provider lib_provider { { "COPYBOOK_TWO", copybook_content } };
     analyzer a(input, analyzer_options { &lib_provider });
-
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, end_called_from_copybook)
@@ -279,9 +274,8 @@ TEST(END, end_called_from_copybook)
 )";
     mock_parse_lib_provider lib_provider { { "COPYBOOK_TWO", copybook_content } };
     analyzer a(input, analyzer_options { &lib_provider });
-
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, end_called_from_copybook_with_warning_after_EndStatement)
@@ -298,9 +292,8 @@ TEST(END, end_called_from_copybook_with_warning_after_EndStatement)
 )";
     mock_parse_lib_provider lib_provider { { "COPYBOOK_TWO", copybook_content } };
     analyzer a(input, analyzer_options { &lib_provider });
-
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 
@@ -321,9 +314,8 @@ TEST(END, end_called_from_macro_inside_copybook_two)
 )";
     mock_parse_lib_provider lib_provider { { "COPYBOOK", copybook_content } };
     analyzer a(input, analyzer_options { &lib_provider });
-
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, end_called_from_nested_macro)
@@ -341,9 +333,8 @@ TEST(END, end_called_from_nested_macro)
     OUTER_MACRO
 )";
     analyzer a(input);
-
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, end_called_from_nested_macro_with_warning_issued)
@@ -362,9 +353,8 @@ TEST(END, end_called_from_nested_macro_with_warning_issued)
     UNDEF
 )";
     analyzer a(input);
-
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, end_called_from_copy_book_inside_macro_with_warning)
@@ -384,7 +374,7 @@ TEST(END, end_called_from_copy_book_inside_macro_with_warning)
     mock_parse_lib_provider lib_provider { { "COPYBOOK", copybook_content } };
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, end_called_from_copy_book_inside_macro)
@@ -404,7 +394,7 @@ TEST(END, end_called_from_copy_book_inside_macro)
     mock_parse_lib_provider lib_provider { { "COPYBOOK", copybook_content } };
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
-    a.collect_diags();
+
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, stops_lookahead)
@@ -417,7 +407,6 @@ TEST(END, stops_lookahead)
     analyzer a(input);
 
     a.analyze();
-    a.collect_diags();
 
     EXPECT_EQ(0, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "E045"; }));
 }
