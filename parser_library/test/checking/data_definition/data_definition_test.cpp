@@ -24,7 +24,8 @@ void expect_no_errors(const std::string& text)
     std::string input = (text);
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_TRUE(a.diags().empty());
 }
 
 void expect_errors(const std::string& text, std::initializer_list<std::string> msgs = {})
@@ -33,11 +34,8 @@ void expect_errors(const std::string& text, std::initializer_list<std::string> m
     analyzer a(input);
     a.analyze();
 
-    const auto& diags = a.diags();
-    EXPECT_GT(diags.size(), (size_t)0);
-    for (const auto& msg : msgs)
-        EXPECT_NE(
-            std::find_if(diags.begin(), diags.end(), [&msg](const auto& d) { return d.code == msg; }), diags.end());
+    EXPECT_FALSE(a.diags().empty());
+    EXPECT_TRUE(contains_message_codes(a.diags(), msgs));
 }
 
 TEST(data_definition_grammar, modifiers)

@@ -25,10 +25,7 @@ TEST(special_lines, process)
     analyzer a(input, analyzer_options { file_is_opencode::yes });
     a.analyze();
 
-    auto diags = a.diags();
-
-    ASSERT_EQ(diags.size(), 1);
-    EXPECT_TRUE(std::any_of(diags.begin(), diags.end(), [](const auto& msg) { return msg.code == "A010"; }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A010" }));
 }
 
 TEST(special_lines, process_in_macro)
@@ -37,9 +34,7 @@ TEST(special_lines, process_in_macro)
     analyzer a(input, analyzer_options { file_is_opencode::no });
     a.analyze();
 
-    auto diags = a.diags();
-
-    ASSERT_EQ(diags.size(), 0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(special_lines, process_after_code_encountered)
@@ -49,9 +44,7 @@ TEST(special_lines, process_after_code_encountered)
     analyzer a(input, analyzer_options { file_is_opencode::yes });
     a.analyze();
 
-    auto diags = a.diags();
-
-    ASSERT_EQ(diags.size(), 0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(special_lines, process_multiple)
@@ -61,10 +54,7 @@ TEST(special_lines, process_multiple)
     analyzer a(input, analyzer_options { file_is_opencode::yes });
     a.analyze();
 
-    auto diags = a.diags();
-
-    ASSERT_EQ(diags.size(), 1);
-    EXPECT_TRUE(std::any_of(diags.begin(), diags.end(), [](const auto& msg) { return msg.code == "A010"; }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A010" }));
 }
 
 TEST(special_lines, process_after_limit)
@@ -83,9 +73,7 @@ TEST(special_lines, process_after_limit)
     analyzer a(input, analyzer_options { file_is_opencode::yes });
     a.analyze();
 
-    auto diags = a.diags();
-
-    ASSERT_EQ(diags.size(), 0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(special_lines, process_after_ictl)
@@ -104,10 +92,7 @@ TEST(special_lines, process_after_ictl)
     analyzer a(input, analyzer_options { file_is_opencode::yes });
     a.analyze();
 
-    auto diags = a.diags();
-
-    ASSERT_EQ(diags.size(), 1);
-    EXPECT_TRUE(std::any_of(diags.begin(), diags.end(), [](const auto& msg) { return msg.code == "A010"; }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A010" }));
 }
 
 TEST(special_lines, process_after_limit_and_ictl)
@@ -127,9 +112,7 @@ TEST(special_lines, process_after_limit_and_ictl)
     analyzer a(input, analyzer_options { file_is_opencode::yes });
     a.analyze();
 
-    auto diags = a.diags();
-
-    ASSERT_EQ(diags.size(), 0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(special_lines, single_op)
@@ -138,9 +121,7 @@ TEST(special_lines, single_op)
     analyzer a(input, analyzer_options { file_is_opencode::yes });
     a.analyze();
 
-    auto diags = a.diags();
-
-    EXPECT_TRUE(diags.empty());
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(special_lines, mix_op_and_override)
@@ -149,7 +130,5 @@ TEST(special_lines, mix_op_and_override)
     analyzer a(input, analyzer_options { file_is_opencode::yes });
     a.analyze();
 
-    auto diags = a.diags();
-
-    EXPECT_TRUE(diags.empty());
+    EXPECT_TRUE(a.diags().empty());
 }

@@ -167,11 +167,9 @@ TEST(parser, parse_bad_model)
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
 
-    ASSERT_EQ(diags.size(), 1U);
-    EXPECT_EQ(diags[0].message, "While evaluating the result of substitution ''' => Unexpected end of statement");
-
-    range expected_range = { { 0, 5 }, { 0, 5 } };
-    EXPECT_EQ(diags[0].diag_range, expected_range);
+    EXPECT_TRUE(matches_message_text(
+        diags, { "While evaluating the result of substitution ''' => Unexpected end of statement" }));
+    EXPECT_TRUE(matches_message_properties(diags, { range({ 0, 5 }, { 0, 5 }) }, &diagnostic_op::diag_range));
 }
 
 TEST(parser, parse_bad_model_no_substitution)
@@ -182,10 +180,8 @@ TEST(parser, parse_bad_model_no_substitution)
     auto [op, rem, lit] = parse_model("'", r, false, &diag_container);
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
-    ASSERT_EQ(diags.size(), 1U);
-    EXPECT_EQ(diags[0].message, "Unexpected end of statement");
-    range expected_range = { { 0, 5 }, { 0, 5 } };
-    EXPECT_EQ(diags[0].diag_range, expected_range);
+    EXPECT_TRUE(matches_message_text(diags, { "Unexpected end of statement" }));
+    EXPECT_TRUE(matches_message_properties(diags, { range({ 0, 5 }, { 0, 5 }) }, &diagnostic_op::diag_range));
 }
 
 TEST(parser, invalid_self_def)
@@ -196,11 +192,9 @@ TEST(parser, invalid_self_def)
     auto [op, rem, lit] = parse_model("1,A'10'", r, false, &diag_container);
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
-    ASSERT_EQ(diags.size(), 1U);
-    EXPECT_EQ(diags[0].code, "CE015");
 
-    range expected_range = { { 0, 7 }, { 0, 12 } };
-    EXPECT_EQ(diags[0].diag_range, expected_range);
+    EXPECT_TRUE(matches_message_codes(diags, { "CE015" }));
+    EXPECT_TRUE(matches_message_properties(diags, { range({ 0, 7 }, { 0, 12 }) }, &diagnostic_op::diag_range));
 }
 
 TEST(parser, invalid_macro_param_alternative)
@@ -213,11 +207,9 @@ TEST(parser, invalid_macro_param_alternative)
     auto [op, rem, lit] = parse_model(input, r, false, &diag_container, processing_form::MAC);
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
-    ASSERT_EQ(diags.size(), 1U);
-    EXPECT_EQ(diags[0].code, "S0003");
 
-    range expected_range = { { 1, 16 }, { 1, 16 } };
-    EXPECT_EQ(diags[0].diag_range, expected_range);
+    EXPECT_TRUE(matches_message_codes(diags, { "S0003" }));
+    EXPECT_TRUE(matches_message_properties(diags, { range({ 1, 16 }, { 1, 16 }) }, &diagnostic_op::diag_range));
 }
 
 TEST(parser, parse_single_apostrophe_string)

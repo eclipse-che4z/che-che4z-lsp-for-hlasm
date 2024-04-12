@@ -40,10 +40,12 @@ TEST(diagnosable_ctx, one_file_diag)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    auto diags = a.diags();
+    ASSERT_EQ(diags.size(), (size_t)1);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)2);
-    EXPECT_EQ(a.diags()[0].related.size(), (size_t)2);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)8);
-    EXPECT_EQ(a.diags()[0].related[1].location.rang.start.line, (size_t)13);
+    const auto& d = diags.front();
+    EXPECT_EQ(d.diag_range.start.line, (size_t)2);
+    EXPECT_EQ(d.related.size(), (size_t)2);
+    EXPECT_EQ(d.related[0].location.rang.start.line, (size_t)8);
+    EXPECT_EQ(d.related[1].location.rang.start.line, (size_t)13);
 }

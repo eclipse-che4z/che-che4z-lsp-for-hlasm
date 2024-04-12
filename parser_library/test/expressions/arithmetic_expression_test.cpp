@@ -242,7 +242,7 @@ TEST(arithmetic_expressions, operator_priorities_invalid)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_NE(a.diags().size(), (size_t)0);
+    EXPECT_FALSE(a.diags().empty());
 }
 
 TEST(arithmetic_expressions, not_operator)
@@ -370,7 +370,7 @@ TEST(arithmetic_expressions, dots)
         analyzer a(input);
         a.analyze();
 
-        ASSERT_EQ(a.diags().empty(), ok);
+        EXPECT_EQ(a.diags().empty(), ok);
     }
 }
 

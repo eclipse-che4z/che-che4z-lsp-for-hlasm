@@ -308,9 +308,7 @@ TEST(logical_expressions, parenthesis_around_expressions)
     analyzer a(input);
     a.analyze();
 
-    const auto& diags = a.diags();
-    EXPECT_EQ(diags.size(), (size_t)2);
-    EXPECT_TRUE(std::all_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "CE016"; }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE016", "CE016" }));
 }
 
 TEST(logical_expressions, not_operator_valid)

@@ -589,7 +589,7 @@ X  EQU 5
 
     EXPECT_EQ(get_symbol_abs(a2.hlasm_ctx(), "Y"), 5);
 
-    ASSERT_EQ(a2.diags().size(), (size_t)0);
+    EXPECT_TRUE(a2.diags().empty());
 }
 
 TEST(org, available_competing_complex)
@@ -795,7 +795,7 @@ Y EQU 4
 
     EXPECT_EQ(get_symbol_abs(a2.hlasm_ctx(), "B"), 6);
 
-    ASSERT_EQ(a2.diags().size(), (size_t)0);
+    EXPECT_TRUE(a2.diags().empty());
 }
 
 TEST(org, unknown_absolute_part_jump_before_space_loctr)
@@ -887,7 +887,7 @@ X EQU 10
 
     EXPECT_EQ(get_symbol_abs(a2.hlasm_ctx(), "B"), 14);
 
-    ASSERT_EQ(a2.diags().size(), (size_t)0);
+    EXPECT_TRUE(a2.diags().empty());
 }
 
 TEST(org, unknown_absolute_part_with_available_value_loctr)
@@ -922,7 +922,7 @@ X EQU 10
 
     EXPECT_EQ(get_symbol_abs(a2.hlasm_ctx(), "B"), 14);
 
-    ASSERT_EQ(a2.diags().size(), (size_t)0);
+    EXPECT_TRUE(a2.diags().empty());
 }
 
 TEST(org, unknown_part_non_absolute)

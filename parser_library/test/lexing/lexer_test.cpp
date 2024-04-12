@@ -18,6 +18,7 @@
 #include "antlr4-runtime.h"
 #include "gtest/gtest.h"
 
+#include "../common_testing.h"
 #include "analyzer.h"
 #include "hlasmparser_multiline.h"
 #include "lexing/input_source.h"
@@ -182,12 +183,6 @@ TEST(lexer_test, bad_continuation)
     analyzer a(in);
     a.analyze();
 
-    auto diags = a.diags();
-
-    ASSERT_EQ(diags.size(), (size_t)1);
-    EXPECT_EQ(diags[0].code, "E001");
-    EXPECT_EQ(diags[0].diag_range.start.line, 1);
-    EXPECT_EQ(diags[0].diag_range.start.column, 0);
-    EXPECT_EQ(diags[0].diag_range.end.line, 1);
-    EXPECT_EQ(diags[0].diag_range.end.column, 4);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E001" }));
+    EXPECT_TRUE(matches_message_properties(a.diags(), { range({ 1, 0 }, { 1, 4 }) }, &diagnostic_s::diag_range));
 }

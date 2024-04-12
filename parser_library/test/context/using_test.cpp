@@ -1129,13 +1129,7 @@ TEST  CSECT
     analyzer a(input);
     a.analyze();
 
-    auto diags = a.diags();
-
-    ASSERT_EQ(diags.size(), 1);
-
-    const auto& d = diags.front();
-
-    EXPECT_FALSE(d.related.empty());
+    EXPECT_TRUE(matches_message_properties(a.diags(), { false }, [](const auto& m) { return m.related.empty(); }));
 }
 
 TEST(using, macro_model)

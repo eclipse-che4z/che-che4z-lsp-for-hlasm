@@ -725,8 +725,8 @@ A
         analyzer a(t.opencode, analyzer_options { &libs, db2_preprocessor_options {} });
         a.analyze();
 
-        ASSERT_EQ(a.diags().size(), (size_t)1);
-        EXPECT_EQ(a.diags()[0].diag_range.start.line, t.lineno);
+        static constexpr const auto start_line = [](const auto& m) { return m.diag_range.start.line; };
+        EXPECT_TRUE(matches_message_properties(a.diags(), { t.lineno }, start_line));
     }
 }
 

@@ -802,9 +802,9 @@ A DC AL(*-B+2)(*)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
-    EXPECT_EQ(a.diags().front().diag_range.start.line, (size_t)5);
+    EXPECT_TRUE(matches_message_properties(a.diags(),
+        { std::pair<diagnostic_severity, size_t>(diagnostic_severity::warning, 5) },
+        [](const auto& m) { return std::pair(m.severity, m.diag_range.start.line); }));
 }
 
 TEST(attribute_lookahead, ignore_invalid_code)

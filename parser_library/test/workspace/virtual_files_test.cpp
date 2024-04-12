@@ -109,9 +109,7 @@ TEST(virtual_files, callback_test_ainsert_valid_vfm)
     analyzer a(input, analyzer_options(&vf));
     a.analyze();
 
-    const auto d = a.diags();
-    ASSERT_EQ(d.size(), 1);
-    EXPECT_EQ(d[0].file_uri, "hlasm://0/AINSERT_1.hlasm");
+    EXPECT_TRUE(matches_message_properties(a.diags(), { "hlasm://0/AINSERT_1.hlasm" }, &diagnostic_s::file_uri));
 }
 
 TEST(virtual_files, file_manager_vfm)

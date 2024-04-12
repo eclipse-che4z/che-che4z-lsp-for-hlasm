@@ -190,7 +190,7 @@ TEST(character_expression, dots)
         analyzer a(input);
         a.analyze();
 
-        ASSERT_EQ(a.diags().empty(), ok);
+        EXPECT_EQ(a.diags().empty(), ok);
     }
 }
 

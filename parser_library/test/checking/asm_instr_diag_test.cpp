@@ -902,6 +902,8 @@ INSTANTIATE_TEST_SUITE_P(mnote,
         mnote_test { 150, "test", diagnostic_severity::error },
         mnote_test { 255, "test", diagnostic_severity::error }));
 
+static constexpr const auto proj_cms = [](const auto& m) { return std::make_tuple(m.code, m.message, m.severity); };
+
 TEST_P(mnote_fixture, diagnostic_severity)
 {
     const auto& [code, text, expected] = GetParam();
@@ -914,12 +916,7 @@ TEST_P(mnote_fixture, diagnostic_severity)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-
-    const auto& d = a.diags()[0];
-    EXPECT_EQ(d.code, "MNOTE");
-    EXPECT_EQ(d.message, text);
-    EXPECT_EQ(d.severity, expected);
+    EXPECT_TRUE(matches_message_properties(a.diags(), { std::make_tuple("MNOTE", text, expected) }, proj_cms));
 }
 
 TEST(mnote, substitution_first)
@@ -932,12 +929,8 @@ TEST(mnote, substitution_first)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-
-    const auto& d = a.diags()[0];
-    EXPECT_EQ(d.code, "MNOTE");
-    EXPECT_EQ(d.message, "test message");
-    EXPECT_EQ(d.severity, diagnostic_severity::warning);
+    static constexpr const auto expected = std::make_tuple("MNOTE", "test message", diagnostic_severity::warning);
+    EXPECT_TRUE(matches_message_properties(a.diags(), { expected }, proj_cms));
 }
 
 TEST(mnote, substitution_both)
@@ -951,12 +944,8 @@ TEST(mnote, substitution_both)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-
-    const auto& d = a.diags()[0];
-    EXPECT_EQ(d.code, "MNOTE");
-    EXPECT_EQ(d.message, "test message");
-    EXPECT_EQ(d.severity, diagnostic_severity::error);
+    static constexpr const auto expected = std::make_tuple("MNOTE", "test message", diagnostic_severity::error);
+    EXPECT_TRUE(matches_message_properties(a.diags(), { expected }, proj_cms));
 }
 
 TEST(mnote, empty_first_arg)
@@ -968,12 +957,8 @@ TEST(mnote, empty_first_arg)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
-
-    const auto& d = a.diags()[0];
-    EXPECT_EQ(d.code, "MNOTE");
-    EXPECT_EQ(d.message, "test message");
-    EXPECT_EQ(d.severity, diagnostic_severity::hint);
+    static constexpr const auto expected = std::make_tuple("MNOTE", "test message", diagnostic_severity::hint);
+    EXPECT_TRUE(matches_message_properties(a.diags(), { expected }, proj_cms));
 }
 
 TEST(mnote, three_args)
@@ -1022,8 +1007,8 @@ TEST(mnote, nonprintable_characters)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
-    EXPECT_EQ(a.diags()[0].message, "<01><01>");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
+    EXPECT_TRUE(matches_message_text(a.diags(), { "<01><01>" }));
 }
 
 TEST(mnote, output)

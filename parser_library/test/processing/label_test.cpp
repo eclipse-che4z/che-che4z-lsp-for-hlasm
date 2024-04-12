@@ -30,9 +30,7 @@ TEST(instruction_label, empty_concatenation)
     analyzer a(input);
     a.analyze();
 
-    const auto& diags = a.diags();
-
-    EXPECT_EQ(diags.size(), 0);
+    EXPECT_TRUE(a.diags().empty());
 }
 
 TEST(instruction_label, invalid_concatenation)
@@ -46,9 +44,7 @@ TEST(instruction_label, invalid_concatenation)
     analyzer a(input);
     a.analyze();
 
-    const auto& diags = a.diags();
-
-    EXPECT_EQ(diags.size(), 2);
+    EXPECT_EQ(a.diags().size(), 2);
 }
 
 TEST(instruction_label, mixed_case_in_macro_call)
