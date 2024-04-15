@@ -68,7 +68,7 @@ namespace debugging {
 struct stack_frame;
 struct source;
 struct scope;
-class variable;
+struct variable;
 struct variable_store;
 } // namespace debugging
 

@@ -38,8 +38,6 @@
 #include "lexing/input_source.h"
 #include "lexing/tools.h"
 #include "library_info_transitional.h"
-#include "macro_param_variable.h"
-#include "ordinary_symbol_variable.h"
 #include "output_handler.h"
 #include "parsing/parser_impl.h"
 #include "processing/op_code.h"
@@ -47,7 +45,6 @@
 #include "processing/statement_analyzers/statement_analyzer.h"
 #include "processing/statement_fields_parser.h"
 #include "semantics/operand_impls.h"
-#include "set_symbol_variable.h"
 #include "utils/async_busy_wait.h"
 #include "utils/factory.h"
 #include "utils/string_operations.h"
@@ -177,7 +174,7 @@ class debugger::impl final : public processing::statement_analyzer, output_handl
 
     std::unordered_set<std::string, utils::hashers::string_hasher, std::equal_to<>> function_breakpoints_;
 
-    size_t add_variable(std::vector<variable_ptr> vars)
+    size_t add_variable(std::vector<variable> vars)
     {
         variables_[next_var_ref_].variables = std::move(vars);
         return next_var_ref_++;
@@ -463,9 +460,9 @@ public:
         if (frame_id >= proc_stack_.size())
             return scopes_;
 
-        std::vector<variable_ptr> scope_vars;
-        std::vector<variable_ptr> globals;
-        std::vector<variable_ptr> ordinary_symbols;
+        std::vector<variable> scope_vars;
+        std::vector<variable> globals;
+        std::vector<variable> ordinary_symbols;
         // we show only global variables that are valid for current scope,
         // moreover if we show variable in globals, we do not show it in locals
 
@@ -477,7 +474,7 @@ public:
             {
                 if (name.empty())
                     continue;
-                scope_vars.push_back(std::make_unique<macro_param_variable>(*value, std::vector<context::A_t> {}));
+                scope_vars.push_back(generate_macro_param_variable(*value, std::vector<context::A_t> {}));
             }
         }
 
@@ -485,9 +482,9 @@ public:
         {
             const auto& [ref, _data, global] = value_type;
             if (global)
-                globals.push_back(std::make_unique<set_symbol_variable>(*ref));
+                globals.push_back(generate_set_symbol_variable(*ref));
             else
-                scope_vars.push_back(std::make_unique<set_symbol_variable>(*ref));
+                scope_vars.push_back(generate_set_symbol_variable(*ref));
         }
 
         auto [sysvars, _] = last_system_variables_.try_emplace(frame_id, ctx_->get_system_variables(current_scope));
@@ -495,19 +492,17 @@ public:
         {
             const auto& [value, global] = value_type;
             if (global)
-                globals.push_back(std::make_unique<macro_param_variable>(*value, std::vector<context::A_t> {}));
+                globals.push_back(generate_macro_param_variable(*value, std::vector<context::A_t> {}));
             else
-                scope_vars.push_back(std::make_unique<macro_param_variable>(*value, std::vector<context::A_t> {}));
+                scope_vars.push_back(generate_macro_param_variable(*value, std::vector<context::A_t> {}));
             // fetch all vars
         }
 
         for (const auto& it : ctx_->ord_ctx.symbols())
             if (const auto* sym = std::get_if<context::symbol>(&it.second))
-                ordinary_symbols.push_back(std::make_unique<ordinary_symbol_variable>(*sym));
+                ordinary_symbols.push_back(generate_ordinary_symbol_variable(*sym));
 
-        constexpr auto compare_variables = [](const variable_ptr& l, const variable_ptr& r) {
-            return l->get_name() < r->get_name();
-        };
+        constexpr auto compare_variables = [](const variable& l, const variable& r) { return l.name < r.name; };
 
         std::sort(globals.begin(), globals.end(), compare_variables);
         std::sort(scope_vars.begin(), scope_vars.end(), compare_variables);
@@ -530,12 +525,12 @@ public:
         auto it = variables_.find(var_ref);
         if (it == variables_.end())
             return empty_variables;
-        for (const auto& var : it->second.variables)
+        for (auto& var : it->second.variables)
         {
-            if (var->is_scalar())
+            if (var.is_scalar())
                 continue;
 
-            var->var_reference = add_variable(var->values());
+            var.var_reference = add_variable(var.values());
         }
 
         return it->second;
@@ -699,7 +694,7 @@ public:
         const context::code_scope& scope,
         const context::system_variable_map& sysvars)
     {
-        debugging::variable_ptr var;
+        std::optional<debugging::variable> var;
 
         if (scope.is_in_macro())
         {
@@ -707,7 +702,7 @@ public:
             {
                 if (name.to_string_view() != var_name)
                     continue;
-                var = std::make_unique<macro_param_variable>(*value, std::vector<context::A_t> {});
+                var = generate_macro_param_variable(*value, std::vector<context::A_t> {});
                 break;
             }
         }
@@ -718,7 +713,7 @@ public:
             {
                 if (name.to_string_view() != var_name)
                     continue;
-                var = std::make_unique<set_symbol_variable>(*value.ref);
+                var = generate_set_symbol_variable(*value.ref);
                 break;
             }
         }
@@ -729,7 +724,7 @@ public:
             {
                 if (name.to_string_view() != var_name)
                     continue;
-                var = std::make_unique<macro_param_variable>(*value.first, std::vector<context::A_t> {});
+                var = generate_macro_param_variable(*value.first, std::vector<context::A_t> {});
                 break;
             }
         }
@@ -737,7 +732,7 @@ public:
         if (!var)
             return result.set_error("Variable not found");
 
-        result.set_value(var->get_value());
+        result.set_value(std::move(var->value));
         if (!var->is_scalar())
         {
             result.var_ref = add_variable(var->values());

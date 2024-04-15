@@ -200,15 +200,15 @@ scope sequence_item_get(const sequence<scope, const debugging::scope*>* self, si
 //********************** variable **********************
 
 variable::variable(const debugging::variable& impl)
-    : name(impl.get_name())
-    , value(impl.get_value())
+    : name(impl.name)
+    , value(impl.value)
     , variable_reference(impl.var_reference)
-    , type(impl.type())
+    , type(impl.type)
 {}
 
 variable sequence_item_get(const sequence<variable, const debugging::variable_store*>* self, size_t index)
 {
-    return variable(*self->stor_->variables[index]);
+    return variable(self->stor_->variables[index]);
 }
 
 

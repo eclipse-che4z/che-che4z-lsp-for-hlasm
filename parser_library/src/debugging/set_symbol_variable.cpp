@@ -12,73 +12,20 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "set_symbol_variable.h"
+#include "context/variables/set_symbol.h"
+#include "variable.h"
 
-#include <cassert>
-#include <stdexcept>
+namespace hlasm_plugin::parser_library::debugging {
+namespace {
+std::string get_string_array_value(const context::set_symbol_base& set_sym);
+std::string get_string_value(const context::set_symbol_base& set_sym, const std::optional<int>& index);
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::debugging;
-
-set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym, int index)
-    : set_symbol_(set_sym)
-    , index_(index)
-    , name_(std::to_string(index))
-{
-    value_ = get_string_value(index_);
-}
-
-set_symbol_variable::set_symbol_variable(const context::set_symbol_base& set_sym)
-    : set_symbol_(set_sym)
-    , index_()
-    , name_("&" + set_symbol_.id.to_string())
-{
-    value_ = get_string_value(index_);
-}
-
-const std::string& set_symbol_variable::get_name() const { return name_; }
-
-const std::string& set_symbol_variable::get_value() const { return value_; }
-
-set_type set_symbol_variable::type() const { return (set_type)set_symbol_.type; }
-
-bool set_symbol_variable::is_scalar() const
-{
-    if (index_)
-        // set symbols may only have one level of nesting
-        return true;
-    else
-        return set_symbol_.is_scalar;
-}
-
-std::vector<variable_ptr> set_symbol_variable::values() const
-{
-    std::vector<std::unique_ptr<debugging::variable>> vals;
-
-    for (auto keys = set_symbol_.keys(); const auto& key : keys)
-        vals.push_back(std::make_unique<set_symbol_variable>(set_symbol_, key));
-
-    return vals;
-}
-
-std::string set_symbol_variable::get_string_value(const std::optional<int>& index) const
-{
-    if (!index && !is_scalar())
-        return get_string_array_value();
-    else if (type() == set_type::A_TYPE)
-        return std::to_string(get_value<context::A_t>(index));
-    else if (type() == set_type::B_TYPE)
-        return get_value<context::B_t>(index) ? "TRUE" : "FALSE";
-    else
-        return get_value<context::C_t>(index);
-}
-
-std::string set_symbol_variable::get_string_array_value() const
+std::string get_string_array_value(const context::set_symbol_base& set_sym)
 {
     std::string array_value;
     array_value.append("(");
 
-    auto keys = set_symbol_.keys();
+    auto keys = set_sym.keys();
 
     if (keys.empty())
     {
@@ -88,7 +35,7 @@ std::string set_symbol_variable::get_string_array_value() const
 
     for (const auto& key : keys)
     {
-        array_value.append(get_string_value(key));
+        array_value.append(get_string_value(set_sym, key));
         array_value.append(",");
     }
     array_value.back() = ')';
@@ -97,10 +44,73 @@ std::string set_symbol_variable::get_string_array_value() const
 }
 
 template<typename T>
-inline T set_symbol_variable::get_value(const std::optional<int> index) const
+inline T get_value(const context::set_symbol_base& set_sym, const std::optional<int>& index)
 {
-    if (!set_symbol_.is_scalar && index)
-        return set_symbol_.access_set_symbol<T>()->get_value(*index);
+    if (!set_sym.is_scalar && index)
+        return set_sym.access_set_symbol<T>()->get_value(*index);
     else
-        return set_symbol_.access_set_symbol<T>()->get_value();
+        return set_sym.access_set_symbol<T>()->get_value();
 }
+
+std::string get_string_value(const context::set_symbol_base& set_sym, const std::optional<int>& index)
+{
+    using enum context::SET_t_enum;
+    if (!index && !set_sym.is_scalar)
+        return get_string_array_value(set_sym);
+    else if (set_sym.type == A_TYPE)
+        return std::to_string(get_value<context::A_t>(set_sym, index));
+    else if (set_sym.type == B_TYPE)
+        return get_value<context::B_t>(set_sym, index) ? "TRUE" : "FALSE";
+    else
+        return get_value<context::C_t>(set_sym, index);
+}
+
+set_type to_set_type(context::SET_t_enum e)
+{
+    switch (e)
+    {
+        case context::SET_t_enum::A_TYPE:
+            return set_type::A_TYPE;
+        case context::SET_t_enum::B_TYPE:
+            return set_type::B_TYPE;
+        case context::SET_t_enum::C_TYPE:
+            return set_type::C_TYPE;
+        case context::SET_t_enum::UNDEF_TYPE:
+            return set_type::UNDEF_TYPE;
+    }
+}
+} // namespace
+
+variable generate_set_symbol_variable(const context::set_symbol_base& set_sym, int index)
+{
+    return variable {
+        .name = std::to_string(index),
+        .value = get_string_value(set_sym, index),
+        .type = to_set_type(set_sym.type),
+    };
+}
+
+variable generate_set_symbol_variable(const context::set_symbol_base& set_sym)
+{
+    variable result {
+        .name = "&" + set_sym.id.to_string(),
+        .value = get_string_value(set_sym, std::nullopt),
+        .type = to_set_type(set_sym.type),
+    };
+
+    if (!set_sym.is_scalar)
+    {
+        result.values = [&set_sym]() {
+            std::vector<variable> vars;
+
+            for (const auto& key : set_sym.keys())
+                vars.emplace_back(generate_set_symbol_variable(set_sym, key));
+
+            return vars;
+        };
+    }
+
+    return result;
+}
+
+} // namespace hlasm_plugin::parser_library::debugging

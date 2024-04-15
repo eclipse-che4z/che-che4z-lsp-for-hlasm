@@ -12,25 +12,16 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "attribute_variable.h"
+#include "variable.h"
 
-#include <cassert>
-#include <stdexcept>
+namespace hlasm_plugin::parser_library::debugging {
 
-using namespace hlasm_plugin::parser_library;
-using namespace debugging;
+variable generate_attribute_variable(std::string name, std::string value)
+{
+    return variable {
+        .name = std::move(name),
+        .value = std::move(value),
+    };
+}
 
-attribute_variable::attribute_variable(std::string name, std::string value)
-    : name_(std::move(name))
-    , value_(std::move(value))
-{}
-
-const std::string& attribute_variable::get_name() const { return name_; }
-
-const std::string& attribute_variable::get_value() const { return value_; }
-
-set_type attribute_variable::type() const { return set_type::UNDEF_TYPE; }
-
-bool attribute_variable::is_scalar() const { return true; }
-
-std::vector<variable_ptr> attribute_variable::values() const { return std::vector<variable_ptr>(); }
+} // namespace hlasm_plugin::parser_library::debugging

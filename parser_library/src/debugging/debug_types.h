@@ -70,7 +70,7 @@ struct scope
 
 struct variable_store
 {
-    std::vector<variable_ptr> variables;
+    std::vector<variable> variables;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

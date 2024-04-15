@@ -12,77 +12,70 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "ordinary_symbol_variable.h"
-
-#include <cassert>
-#include <stdexcept>
-
-#include "attribute_variable.h"
+#include "context/ordinary_assembly/symbol.h"
 #include "ebcdic_encoding.h"
+#include "variable.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace debugging;
-
+namespace hlasm_plugin::parser_library::debugging {
 static const std::string empty_string = "";
 static const std::string undef_string = "UNDEF";
 static const std::string reloc_string = "RELOC";
 static const std::string complex_string = "COMPLEX";
 
-ordinary_symbol_variable::ordinary_symbol_variable(const context::symbol& symbol)
-    : symbol_(symbol)
-    , name_(symbol_.name().to_string())
+namespace {
+std::string get_string_value(const context::symbol& symbol)
 {
-    value_ = get_string_value();
-}
-
-std::string ordinary_symbol_variable::get_string_value() const
-{
-    switch (symbol_.kind())
+    using enum context::symbol_value_kind;
+    switch (symbol.kind())
     {
-        case context::symbol_value_kind::ABS:
-            return std::to_string(symbol_.value().get_abs());
-        case context::symbol_value_kind::RELOC:
-            if (symbol_.value().get_reloc().is_complex())
+        case ABS:
+            return std::to_string(symbol.value().get_abs());
+
+        case RELOC:
+            if (symbol.value().get_reloc().is_complex())
                 return complex_string;
             else
                 return reloc_string;
-        case context::symbol_value_kind::UNDEF:
+
+        case UNDEF:
             return undef_string;
+
         default:
             return empty_string;
     }
 }
+} // namespace
 
-const std::string& ordinary_symbol_variable::get_name() const { return name_; }
-
-const std::string& ordinary_symbol_variable::get_value() const { return value_; }
-
-set_type ordinary_symbol_variable::type() const { return set_type::UNDEF_TYPE; }
-
-bool ordinary_symbol_variable::is_scalar() const
+variable generate_ordinary_symbol_variable(const context::symbol& symbol)
 {
-    return !(symbol_.attributes().is_defined(context::data_attr_kind::L)
-        || symbol_.attributes().is_defined(context::data_attr_kind::I)
-        || symbol_.attributes().is_defined(context::data_attr_kind::S)
-        || symbol_.attributes().is_defined(context::data_attr_kind::T));
+    using enum context::data_attr_kind;
+    variable result = {
+        .name = symbol.name().to_string(),
+        .value = get_string_value(symbol),
+    };
+
+    if (const auto& attr = symbol.attributes();
+        attr.is_defined(L) || attr.is_defined(I) || attr.is_defined(S) || attr.is_defined(T))
+    {
+        result.values = [&symbol]() {
+            std::vector<variable> vars;
+
+            const auto& attr = symbol.attributes();
+            if (attr.is_defined(I))
+                vars.emplace_back(generate_attribute_variable("I", std::to_string(attr.get_attribute_value(I))));
+            if (attr.is_defined(L))
+                vars.emplace_back(generate_attribute_variable("L", std::to_string(attr.get_attribute_value(L))));
+            if (attr.is_defined(S))
+                vars.emplace_back(generate_attribute_variable("S", std::to_string(attr.get_attribute_value(S))));
+            if (attr.is_defined(T))
+                vars.emplace_back(generate_attribute_variable(
+                    "T", ebcdic_encoding::to_ascii((unsigned char)attr.get_attribute_value(T))));
+
+            return vars;
+        };
+    }
+
+    return result;
 }
 
-std::vector<variable_ptr> ordinary_symbol_variable::values() const
-{
-    std::vector<std::unique_ptr<variable>> vars;
-    if (symbol_.attributes().is_defined(context::data_attr_kind::I))
-        vars.emplace_back(std::make_unique<attribute_variable>(
-            "I", std::to_string(symbol_.attributes().get_attribute_value(context::data_attr_kind::I))));
-    if (symbol_.attributes().is_defined(context::data_attr_kind::L))
-        vars.emplace_back(std::make_unique<attribute_variable>(
-            "L", std::to_string(symbol_.attributes().get_attribute_value(context::data_attr_kind::L))));
-    if (symbol_.attributes().is_defined(context::data_attr_kind::S))
-        vars.emplace_back(std::make_unique<attribute_variable>(
-            "S", std::to_string(symbol_.attributes().get_attribute_value(context::data_attr_kind::S))));
-    if (symbol_.attributes().is_defined(context::data_attr_kind::T))
-        vars.emplace_back(std::make_unique<attribute_variable>("T",
-            ebcdic_encoding::to_ascii(
-                (unsigned char)symbol_.attributes().get_attribute_value(context::data_attr_kind::T))));
-
-    return vars;
-}
+} // namespace hlasm_plugin::parser_library::debugging

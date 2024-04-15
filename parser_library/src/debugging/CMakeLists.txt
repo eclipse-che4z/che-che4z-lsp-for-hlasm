@@ -12,18 +12,14 @@
 
 target_sources(parser_library PRIVATE
 	attribute_variable.cpp
-	attribute_variable.h
 	debug_lib_provider.cpp
 	debug_lib_provider.h
 	debug_types.h
 	debugger.cpp
 	debugger_configuration.h
 	macro_param_variable.cpp
-	macro_param_variable.h
 	ordinary_symbol_variable.cpp
-	ordinary_symbol_variable.h
 	set_symbol_variable.cpp
-	set_symbol_variable.h
 	variable.h
 )
 

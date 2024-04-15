@@ -12,54 +12,41 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "macro_param_variable.h"
+#include "context/variables/macro_param.h"
+#include "variable.h"
 
-#include <cstddef>
-#include <stdexcept>
+namespace hlasm_plugin::parser_library::debugging {
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::debugging;
-
-macro_param_variable::macro_param_variable(const context::macro_param_base& param, std::vector<context::A_t> index)
-    : macro_param_(param)
-    , index_(std::move(index))
+variable generate_macro_param_variable(const context::macro_param_base& param, std::vector<int32_t> index)
 {
-    if (!index_.empty())
+    variable result {
+        .name = index.empty() ? "&" + param.id.to_string() : std::to_string(index.back()),
+        .value = index.empty() ? param.macro_param_base::get_value() : param.get_value(index),
+        .type = set_type::C_TYPE,
+    };
+
+    if (const auto index_range = param.index_range(index); index_range)
     {
-        name_ = std::to_string(index_.back());
-        value_ = macro_param_.get_value(index_);
+        result.values = index_range->first > index_range->second
+            ? std::function([]() { return std::vector<variable>(); })
+            : std::function([index = std::move(index), r = index_range.value(), &param]() {
+                  std::vector<variable> vars;
+
+                  auto child_index = index;
+                  child_index.push_back(0);
+
+                  vars.reserve(r.second - r.first);
+                  for (long long i = r.first; i <= r.second; ++i)
+                  {
+                      child_index.back() = (context::A_t)i;
+                      vars.emplace_back(generate_macro_param_variable(param, child_index));
+                  }
+
+                  return vars;
+              });
     }
-    else
-    {
-        name_ = "&" + macro_param_.id.to_string();
-        value_ = macro_param_.macro_param_base::get_value();
-    }
+
+    return result;
 }
 
-const std::string& macro_param_variable::get_name() const { return name_; }
-
-const std::string& macro_param_variable::get_value() const { return value_; }
-
-set_type macro_param_variable::type() const { return set_type::C_TYPE; }
-
-bool macro_param_variable::is_scalar() const { return !macro_param_.index_range(index_).has_value(); }
-
-std::vector<variable_ptr> macro_param_variable::values() const
-{
-    std::vector<std::unique_ptr<variable>> vals;
-
-    auto index_range = macro_param_.index_range(index_);
-    if (!index_range || index_range->first > index_range->second)
-        return vals;
-
-    std::vector<context::A_t> child_index = index_;
-    child_index.push_back(0);
-
-    for (long long i = index_range->first; i <= index_range->second; ++i)
-    {
-        child_index.back() = (context::A_t)i;
-        vals.push_back(std::make_unique<macro_param_variable>(macro_param_, child_index));
-    }
-
-    return vals;
-}
+} // namespace hlasm_plugin::parser_library::debugging
