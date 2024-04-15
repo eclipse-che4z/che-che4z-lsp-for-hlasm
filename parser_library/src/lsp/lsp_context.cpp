@@ -26,6 +26,7 @@
 #include "context/macro.h"
 #include "context/using.h"
 #include "item_convertors.h"
+#include "lsp/instruction_completions.h"
 #include "lsp/macro_info.h"
 #include "protocol.h"
 #include "utils/similar.h"
@@ -719,8 +720,8 @@ std::string lsp_context::hover_for_macro(const macro_info& macro) const
 }
 std::string lsp_context::hover_for_instruction(context::id_index name) const
 {
-    auto it = completion_item_s::m_instruction_completion_items.find(name.to_string_view());
-    if (it == completion_item_s::m_instruction_completion_items.end())
+    auto it = instruction_completion_items.find(name.to_string_view());
+    if (it == instruction_completion_items.end())
         return "";
     return it->documentation;
 }

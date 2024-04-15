@@ -23,6 +23,7 @@
 #include "context/using.h"
 #include "ebcdic_encoding.h"
 #include "file_info.h"
+#include "lsp/instruction_completions.h"
 #include "lsp/lsp_context.h"
 #include "lsp/macro_info.h"
 #include "text_data_view.h"
@@ -350,7 +351,7 @@ completion_list_s generate_completion(const completion_list_instructions& cli)
     completion_list_s result;
 
     // Store only instructions from the currently active instruction set
-    for (const auto& instr : completion_item_s::m_instruction_completion_items)
+    for (const auto& instr : instruction_completion_items)
     {
         auto id = hlasm_ctx.ids().find(instr.label);
         // TODO: we could provide more precise results here if actual generation is provided

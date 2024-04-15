@@ -20,6 +20,8 @@ target_sources(parser_library PRIVATE
 	file_info.h
 	folding.cpp
 	folding.h
+	instruction_completions.cpp
+	instruction_completions.h
 	item_convertors.cpp
 	item_convertors.h
 	lsp_context.cpp

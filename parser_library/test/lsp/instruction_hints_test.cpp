@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "lsp/completion_item.h"
+#include "lsp/instruction_completions.h"
 #include "utils/concat.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -53,8 +54,8 @@ TEST_P(instr_hint_test_fixture, instructions)
 {
     auto [name, operands, snippet, substitution] = GetParam();
 
-    auto it = completion_item_s::m_instruction_completion_items.find(name);
-    ASSERT_NE(it, completion_item_s::m_instruction_completion_items.end());
+    auto it = instruction_completion_items.find(name);
+    ASSERT_NE(it, instruction_completion_items.end());
 
     const auto& item = *it;
 
