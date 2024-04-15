@@ -11,13 +11,13 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	macro_param.cpp
-	macro_param.h
-	set_symbol.cpp
-	set_symbol.h
-	system_variable.cpp
-	system_variable.h
-	variable.cpp
-	variable.h
+    macro_param.cpp
+    macro_param.h
+    set_symbol.cpp
+    set_symbol.h
+    system_variable.cpp
+    system_variable.h
+    variable.cpp
+    variable.h
 )
 

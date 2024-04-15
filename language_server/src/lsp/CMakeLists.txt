@@ -11,12 +11,12 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(hlasm_language_server_base PRIVATE
-	feature_language_features.cpp
-	feature_language_features.h
-	feature_text_synchronization.cpp
-	feature_text_synchronization.h
-	feature_workspace_folders.cpp
-	feature_workspace_folders.h
-	lsp_server.cpp
-	lsp_server.h
+    feature_language_features.cpp
+    feature_language_features.h
+    feature_text_synchronization.cpp
+    feature_text_synchronization.h
+    feature_workspace_folders.cpp
+    feature_workspace_folders.h
+    lsp_server.cpp
+    lsp_server.h
 )

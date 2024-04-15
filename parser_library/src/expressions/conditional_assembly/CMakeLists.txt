@@ -11,15 +11,15 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	ca_expr_policy.cpp
-	ca_expr_policy.h
-	ca_expr_visitor.h
-	ca_expression.cpp
-	ca_expression.h
-	ca_operator_binary.cpp
-	ca_operator_binary.h
-	ca_operator_unary.cpp
-	ca_operator_unary.h
+    ca_expr_policy.cpp
+    ca_expr_policy.h
+    ca_expr_visitor.h
+    ca_expression.cpp
+    ca_expression.h
+    ca_operator_binary.cpp
+    ca_operator_binary.h
+    ca_operator_unary.cpp
+    ca_operator_unary.h
 )
 
 add_subdirectory(terms)

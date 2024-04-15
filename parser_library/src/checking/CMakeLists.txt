@@ -11,20 +11,20 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	asm_instr_check.cpp
-	asm_instr_check.h
-	asm_instr_class.cpp
-	asm_instr_class.h
-	checker_helper.h
-	diagnostic_collector.cpp
-	diagnostic_collector.h
-	instr_operand.cpp
-	instr_operand.h
-	instruction_checker.cpp
-	instruction_checker.h
-	operand.h
-	using_label_checker.cpp
-	using_label_checker.h
+    asm_instr_check.cpp
+    asm_instr_check.h
+    asm_instr_class.cpp
+    asm_instr_class.h
+    checker_helper.h
+    diagnostic_collector.cpp
+    diagnostic_collector.h
+    instr_operand.cpp
+    instr_operand.h
+    instruction_checker.cpp
+    instruction_checker.h
+    operand.h
+    using_label_checker.cpp
+    using_label_checker.h
 )
 
 add_subdirectory(data_definition)

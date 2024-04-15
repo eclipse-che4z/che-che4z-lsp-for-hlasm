@@ -14,37 +14,37 @@ The pgm\_conf configuration file contains a JSON array of program names (or wild
 
 From this configuration, the workspace remembers the processor group - open code mapping.
 
-    	{
-    	  "pgroups": [
-    	    {
-    	      "name":"GROUP1",
-    	      "libs": [
-    	        "ASMMAC/",
-    	        "C:/SYS.ASMMAC",
-    	        "C:/common/**/maclib"
-    	      ]
-    	    },
-    	    {
-    	      "name":"GROUP2",
-    	      "libs": [
-    	        "G2MAC/",
-    	        "C:/SYS.ASMMAC"
-    	      ]
-    	    }
-    	  ]
-    	}
-    	
+        {
+          "pgroups": [
+            {
+              "name":"GROUP1",
+              "libs": [
+                "ASMMAC/",
+                "C:/SYS.ASMMAC",
+                "C:/common/**/maclib"
+              ]
+            },
+            {
+              "name":"GROUP2",
+              "libs": [
+                "G2MAC/",
+                "C:/SYS.ASMMAC"
+              ]
+            }
+          ]
+        }
 
-    	{
-    	  "pgms": [
-    	    {
-    	      "program": "source_code",
-    	      "pgroup": "GROUP1"
-    	    },
-    	    {
-    	      "program": "second_file",
-    	      "pgroup": "GROUP2"
-    	    },
-    	  ]
-    	}
-    	
+
+        {
+          "pgms": [
+            {
+              "program": "source_code",
+              "pgroup": "GROUP1"
+            },
+            {
+              "program": "second_file",
+              "pgroup": "GROUP2"
+            },
+          ]
+        }
+

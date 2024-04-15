@@ -72,7 +72,7 @@ std::string pgroups_file_optable_Z10 = R"({
 
 std::string pgmconf_file = R"({
   "pgms": [
-	{
+    {
       "program": "source",
       "pgroup": "P1"
     }

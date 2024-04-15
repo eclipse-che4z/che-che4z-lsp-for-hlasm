@@ -14,23 +14,23 @@ add_executable(library_test)
 generate_emscripten_node_runner(library_test)
 
 target_sources(library_test PRIVATE
-	aread_time_test.cpp
-	async_macro_parsing.cpp
-	common_testing.cpp
-	common_testing.h
-	diagnosable_ctx_test.cpp
-	diagnostics_check_test.cpp
-	diagnostics_sysvar_test.cpp
-	gtest_stringers.cpp
-	gtest_stringers.h
-	message_consumer_mock.h
-	metrics_test.cpp
-	mock_parse_lib_provider.h
-	output_handler_mock.h
-	stability_test.cpp
-	utf_conv_test.cpp
-	workspace_manager_response_mock.h
-	workspace_manager_test.cpp
+    aread_time_test.cpp
+    async_macro_parsing.cpp
+    common_testing.cpp
+    common_testing.h
+    diagnosable_ctx_test.cpp
+    diagnostics_check_test.cpp
+    diagnostics_sysvar_test.cpp
+    gtest_stringers.cpp
+    gtest_stringers.h
+    message_consumer_mock.h
+    metrics_test.cpp
+    mock_parse_lib_provider.h
+    output_handler_mock.h
+    stability_test.cpp
+    utf_conv_test.cpp
+    workspace_manager_response_mock.h
+    workspace_manager_test.cpp
 )
 
 add_subdirectory(checking)
@@ -46,7 +46,7 @@ add_subdirectory(semantics)
 add_subdirectory(workspace)
 
 if(MSVC)
-	target_compile_options(library_test PRIVATE /bigobj)
+    target_compile_options(library_test PRIVATE /bigobj)
 endif()
 
 add_custom_target(library_tests_copy
@@ -65,5 +65,5 @@ target_link_libraries(library_test nlohmann_json::nlohmann_json)
 add_dependencies(library_test library_tests_copy)
 
 if(DISCOVER_TESTS)
-	gtest_discover_tests(library_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 120)
+    gtest_discover_tests(library_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 120)
 endif()

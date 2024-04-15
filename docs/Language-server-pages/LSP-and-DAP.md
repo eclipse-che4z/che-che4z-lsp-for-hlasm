@@ -5,7 +5,7 @@ The [Language Server Protocol](https://microsoft.github.io/language-server-proto
 
 The main purpose of the LSP is to allow the language server to provide a language-specific response to various user interactions with the code editor. Messages that flow through LSP are divided into three categories:
 
--   **Parsing results presentation**  
+-   **Parsing results presentation**
 Messages from the first category allow the language server to send results of source code analysis to the LSP client. The editor is then able to show them to the user. For example, when the user clicks on a symbol in HLASM code and then uses the ‘Go to definition’ function, the LSP client sends a request to the language server with the name of the currently open file and current location in the file. The server is then expected to send back the location of the definition, so the editor can present it to the user (e.g. the editor moves the caret to the definition location). All such messages are listed in the following table:
 
     | Message                 | Description |
@@ -16,7 +16,7 @@ Messages from the first category allow the language server to send results of so
     | textDocument/completion |The client sends a position in an open file and how a completion box was triggered (i.e. with what key, automatically/manually). The server responds with a list of strings suggested for completion at the position.|
     |textDocument/publishDiagnostics|The server sends diagnostics to the client. A diagnostic represents a problem with the source code, e.g. compilation errors and warnings.|
 
--   **Editor state and file content synchronization**  
+-   **Editor state and file content synchronization**
 Messages from the second category flow mainly from the client to the server and ensure that the server has enough information to correctly analyze source code. All such messages are listed in the following table:
     | Message                   | Description |
     |:--------------------------|:------------|
@@ -24,7 +24,7 @@ Messages from the second category flow mainly from the client to the server and 
     | workspace/didChangeWatchedFiles|The client notifies the server when a watched file is changed outside of the editor. Watched files selector is defined when the client is started (in the extension component.)|
     | workspace/didChangeWorkspaceFolders|The client notifies the server that the user has opened or closed a workspace.|
 
--   **LSP initialization and finalization**  
+-   **LSP initialization and finalization**
 Lastly, there are several messages that handle protocol initialization and finalization.
 
 LSP is based on [JSON RPC](https://www.jsonrpc.org/specification). There are two types of interaction in JSON RPC: requests and notifications. Both of them carry the information to invoke a method on the recipient side — the name of the method and its arguments. The difference between the two is that each request requires a response containing the result of the method, whereas the notifications do not.
@@ -35,7 +35,7 @@ The LSP uses the JSON RPC specification and further specifies how messages are t
     \r\n
     {"jsonrpc":"2.0","method":"textDocument/didClose","params":{"textDocument":
     {"uri":"file:/c%3A/Users/admin/Documents/source.hlasm"}}}
-    	
+
 
 The raw messages have HTTP-like headers. The only mandatory header is `Content-Length`, which tells the recipient the length of the following message. The JSON itself is sent after the header.
 

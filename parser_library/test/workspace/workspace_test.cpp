@@ -411,8 +411,8 @@ TEST_F(workspace_test, did_close_file)
 
     ws.open().run();
     // 3 files are open
-    //	- open codes source1 and source2 with syntax errors using macro ERROR
-    //	- macro file lib/ERROR with syntax error
+    // - open codes source1 and source2 with syntax errors using macro ERROR
+    // - macro file lib/ERROR with syntax error
     // on first reparse, there should be 3 diagnostics from sources and lib/ERROR file
     run_if_valid(ws.did_open_file(source1_loc));
     run_if_valid(ws.did_open_file(source2_loc));

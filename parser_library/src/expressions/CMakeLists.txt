@@ -11,18 +11,18 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	data_definition.cpp
-	data_definition.h
-	evaluation_context.h
-	mach_expr_term.cpp
-	mach_expr_term.h
-	mach_expr_visitor.h
-	mach_expression.cpp
-	mach_expression.h
-	mach_operator.cpp
-	mach_operator.h
-	nominal_value.cpp
-	nominal_value.h
+    data_definition.cpp
+    data_definition.h
+    evaluation_context.h
+    mach_expr_term.cpp
+    mach_expr_term.h
+    mach_expr_visitor.h
+    mach_expression.cpp
+    mach_expression.h
+    mach_operator.cpp
+    mach_operator.h
+    nominal_value.cpp
+    nominal_value.h
 )
 
 add_subdirectory(conditional_assembly)

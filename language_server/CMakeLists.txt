@@ -36,5 +36,5 @@ target_link_libraries(hlasm_language_server Threads::Threads)
 target_link_libraries(hlasm_language_server hlasm_utils)
 
 if(BUILD_TESTING)
-	add_subdirectory(test)
+    add_subdirectory(test)
 endif()

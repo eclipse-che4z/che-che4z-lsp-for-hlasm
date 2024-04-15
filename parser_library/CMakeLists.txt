@@ -16,9 +16,9 @@ project(parser_library)
 
 set(GENERATED_FOLDER ${CMAKE_BINARY_DIR}/generated_sources/)
 if(NOT USE_PRE_GENERATED_GRAMMAR)
-	set(GENERATED_GRAMMER_FOLDER ${CMAKE_BINARY_DIR}/generated_parser/)
+    set(GENERATED_GRAMMER_FOLDER ${CMAKE_BINARY_DIR}/generated_parser/)
 else()
-	set(GENERATED_GRAMMER_FOLDER ${USE_PRE_GENERATED_GRAMMAR})
+    set(GENERATED_GRAMMER_FOLDER ${USE_PRE_GENERATED_GRAMMAR})
 endif()
 
 add_library(parser_library STATIC)
@@ -27,10 +27,10 @@ add_subdirectory(src)
 add_subdirectory(include)
 
 target_include_directories(parser_library PUBLIC
-	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/src
-	${GENERATED_GRAMMER_FOLDER}
-	${GENERATED_FOLDER}
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${GENERATED_GRAMMER_FOLDER}
+    ${GENERATED_FOLDER}
 )
 
 target_link_libraries(parser_library parser_library_generated)
@@ -40,7 +40,7 @@ target_link_libraries(parser_library std::filesystem)
 target_link_libraries(parser_library hlasm_utils)
 
 if(BUILD_TESTING)
-	add_subdirectory(test)
+    add_subdirectory(test)
 endif()
 
 add_subdirectory(fuzzer)

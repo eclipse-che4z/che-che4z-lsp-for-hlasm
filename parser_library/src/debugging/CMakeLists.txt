@@ -11,15 +11,15 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	attribute_variable.cpp
-	debug_lib_provider.cpp
-	debug_lib_provider.h
-	debug_types.h
-	debugger.cpp
-	debugger_configuration.h
-	macro_param_variable.cpp
-	ordinary_symbol_variable.cpp
-	set_symbol_variable.cpp
-	variable.h
+    attribute_variable.cpp
+    debug_lib_provider.cpp
+    debug_lib_provider.h
+    debug_types.h
+    debugger.cpp
+    debugger_configuration.h
+    macro_param_variable.cpp
+    ordinary_symbol_variable.cpp
+    set_symbol_variable.cpp
+    variable.h
 )
 

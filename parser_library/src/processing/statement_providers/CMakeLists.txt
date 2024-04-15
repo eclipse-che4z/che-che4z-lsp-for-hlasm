@@ -11,14 +11,14 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	copy_statement_provider.cpp
-	copy_statement_provider.h
-	macro_statement_provider.cpp
-	macro_statement_provider.h
-	members_statement_provider.cpp
-	members_statement_provider.h
-	statement_provider.cpp
-	statement_provider.h
-	statement_provider_kind.h
+    copy_statement_provider.cpp
+    copy_statement_provider.h
+    macro_statement_provider.cpp
+    macro_statement_provider.h
+    members_statement_provider.cpp
+    members_statement_provider.h
+    statement_provider.cpp
+    statement_provider.h
+    statement_provider_kind.h
 )
 

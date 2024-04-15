@@ -20,20 +20,20 @@ const theiaDir = process.argv[2];
 
 async function main() {
     // prepare plugin for theia
-    process.env.THEIA_DEFAULT_PLUGINS='local-dir:./plugin/';
+    process.env.THEIA_DEFAULT_PLUGINS = 'local-dir:./plugin/';
 
     // run integration tests as plugin for theia
     const child = spawn('node', [
-        theiaDir+'/src-gen/backend/main.js',
+        theiaDir + '/src-gen/backend/main.js',
         './dist_test/workspace/',
-        '--extensionTestsPath='+process.cwd()+'/dist_test/test/suite', 
+        '--extensionTestsPath=' + process.cwd() + '/dist_test/test/suite',
         '--hostname', '0.0.0.0',
-        '--port','3000' 
+        '--port', '3000'
     ]);
 
     // give theia 5 seconds to start, then connect
     setTimeout(async function() {
-        const browser = await puppeteer.launch({executablePath: '/usr/lib/chromium/chromium', headless:true,args: ['--no-sandbox', '--disable-gpu']});
+        const browser = await puppeteer.launch({ executablePath: '/usr/lib/chromium/chromium', headless: true, args: ['--no-sandbox', '--disable-gpu'] });
         const page = await browser.newPage();
         try {
             await page.goto('http://localhost:3000');
@@ -41,7 +41,7 @@ async function main() {
         catch (err) {
             console.log(err);
         }
-    },5000);
+    }, 5000);
 
     // check for the results
     child.stdout.on('data', function(data) {
@@ -61,12 +61,12 @@ async function main() {
     child.on('close', function() {
         process.exit(2);
     })
-    
+
     // Give all the tests 60 seconds to finish, otherwise timeout
     setTimeout(async function() {
         process.exit(2);
     }, 60000)
-    
+
 }
 
 main();

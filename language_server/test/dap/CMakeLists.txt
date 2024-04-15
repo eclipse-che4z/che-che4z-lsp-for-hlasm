@@ -11,7 +11,7 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(server_test PRIVATE
-	dap_feature_test.cpp
-	dap_server_test.cpp
-	dap_sessions_test.cpp
+    dap_feature_test.cpp
+    dap_server_test.cpp
+    dap_sessions_test.cpp
 )

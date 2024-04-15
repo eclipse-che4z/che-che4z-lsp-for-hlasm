@@ -19,6 +19,6 @@
 set(PATCH_STAMP "${CMAKE_BINARY_DIR}/antlr_patch_applied.stamp")
 
 if(NOT EXISTS ${PATCH_STAMP})
-	execute_process(COMMAND ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/cmake/antlr_patch.diff)
-	execute_process(COMMAND ${CMAKE_COMMAND} -E touch ${PATCH_STAMP})
+    execute_process(COMMAND ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/cmake/antlr_patch.diff)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E touch ${PATCH_STAMP})
 endif()

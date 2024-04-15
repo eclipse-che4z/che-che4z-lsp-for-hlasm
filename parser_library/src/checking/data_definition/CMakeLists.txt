@@ -11,16 +11,16 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	data_def_fields.h
-	data_def_type_base.cpp
-	data_def_type_base.h
-	data_def_types.h
-	data_def_types_address.cpp
-	data_def_types_fixed_point.cpp
-	data_def_types_floating_point.cpp
-	data_def_types_string.cpp
-	data_definition_operand.cpp
-	data_definition_operand.h
-	data_instruction.cpp
+    data_def_fields.h
+    data_def_type_base.cpp
+    data_def_type_base.h
+    data_def_types.h
+    data_def_types_address.cpp
+    data_def_types_fixed_point.cpp
+    data_def_types_floating_point.cpp
+    data_def_types_string.cpp
+    data_definition_operand.cpp
+    data_definition_operand.h
+    data_instruction.cpp
 )
 

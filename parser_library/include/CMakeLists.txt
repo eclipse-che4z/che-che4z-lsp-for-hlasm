@@ -12,17 +12,17 @@
 #
 
 target_sources(parser_library PUBLIC
-	branch_info.h
-	debugger.h
-	external_configuration_requests.h
-	folding_range.h
-	lib_config.h
-	message_consumer.h
-	protocol.h
-	range.h
-	sequence.h
-	workspace_manager.h
-	workspace_manager_external_file_requests.h
-	workspace_manager_requests.h
-	workspace_manager_response.h
+    branch_info.h
+    debugger.h
+    external_configuration_requests.h
+    folding_range.h
+    lib_config.h
+    message_consumer.h
+    protocol.h
+    range.h
+    sequence.h
+    workspace_manager.h
+    workspace_manager_external_file_requests.h
+    workspace_manager_requests.h
+    workspace_manager_response.h
 )

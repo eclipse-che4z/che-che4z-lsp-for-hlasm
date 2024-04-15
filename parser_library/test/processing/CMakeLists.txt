@@ -11,27 +11,27 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(library_test PRIVATE
-	ainsert_test.cpp	
-	aread_test.cpp
-	asm_instr_test.cpp
-	ca_instr_test.cpp
-	cics_preprocessor_test.cpp
-	copy_test.cpp
-	db2_preprocessor_test.cpp
-	dc_test.cpp
-	end_instr_test.cpp
-	endevor_preprocessor_test.cpp
-	equ_test.cpp
-	label_test.cpp
-	loctr_test.cpp
-	lookahead_test.cpp
-	mach_instr_test.cpp
-	multiple_preprocessors_test.cpp
-	occurrence_collector_test.cpp
-	opsyn_test.cpp
-	org_test.cpp
-	preprocessor_utils_test.cpp
-	punch_test.cpp
-	start_test.cpp
+    ainsert_test.cpp
+    aread_test.cpp
+    asm_instr_test.cpp
+    ca_instr_test.cpp
+    cics_preprocessor_test.cpp
+    copy_test.cpp
+    db2_preprocessor_test.cpp
+    dc_test.cpp
+    end_instr_test.cpp
+    endevor_preprocessor_test.cpp
+    equ_test.cpp
+    label_test.cpp
+    loctr_test.cpp
+    lookahead_test.cpp
+    mach_instr_test.cpp
+    multiple_preprocessors_test.cpp
+    occurrence_collector_test.cpp
+    opsyn_test.cpp
+    org_test.cpp
+    preprocessor_utils_test.cpp
+    punch_test.cpp
+    start_test.cpp
 )
 

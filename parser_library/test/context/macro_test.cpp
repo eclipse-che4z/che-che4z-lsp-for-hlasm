@@ -718,7 +718,7 @@ TEST(macro, parse_args)
  mend
 
          IF    PXXXXXS+L'PXXXXXS-1,O,X'01',TM
-		 if    =d'01'
+         if    =d'01'
 )";
     analyzer a(input);
     a.analyze();

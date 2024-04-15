@@ -306,7 +306,7 @@ TEST(context_macro, add_macro)
     args.emplace_back(nullptr);
     args.emplace_back(nullptr, op3);
 
-    // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
+    // prototype->|&LBL        MAC        &KEY=,&OP1,,&OP3
     auto& m = *ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
 
     EXPECT_EQ(m.named_params().size(), (size_t)4);
@@ -338,7 +338,7 @@ TEST(context_macro, call_and_leave_macro)
     args.emplace_back(nullptr);
     args.emplace_back(nullptr, op3);
 
-    // prototype->|		MAC		&KEY=,&OP1,,&OP3
+    // prototype->|        MAC        &KEY=,&OP1,,&OP3
     auto& m = *ctx.add_macro(idx, context::id_index(), std::move(args), {}, {}, {}, {}, {}, false);
 
     // creating param data
@@ -352,7 +352,7 @@ TEST(context_macro, call_and_leave_macro)
     params.emplace_back(std::move(p3));
     params.emplace_back(std::move(p4));
 
-    // call->|		MAC		ada,mko,
+    // call->|        MAC        ada,mko,
     auto [m2, t2] = ctx.enter_macro(idx, nullptr, std::move(params));
 
     EXPECT_FALSE(t2);
@@ -401,7 +401,7 @@ TEST(context_macro, repeat_call_same_macro)
     args.emplace_back(nullptr);
     args.emplace_back(nullptr, op3);
 
-    // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
+    // prototype->|&LBL        MAC        &KEY=,&OP1,,&OP3
     ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
 
     // creating param data
@@ -417,7 +417,7 @@ TEST(context_macro, repeat_call_same_macro)
     params.emplace_back(std::move(p4));
 
     // calling macro
-    // call->|lbl		MAC		ada,mko,
+    // call->|lbl        MAC        ada,mko,
     auto [m2, t2] = ctx.enter_macro(idx, std::move(lb), std::move(params));
 
     EXPECT_FALSE(t2);
@@ -445,7 +445,7 @@ TEST(context_macro, repeat_call_same_macro)
     params.emplace_back(std::move(np3));
     params.emplace_back(std::move(dat));
 
-    // call->|		MAC		,KEY=cas,,(first,second,third)
+    // call->|        MAC        ,KEY=cas,,(first,second,third)
     auto [m3, t3] = ctx.enter_macro(idx, nullptr, std::move(params));
 
     EXPECT_FALSE(t3);
@@ -493,7 +493,7 @@ TEST(context_macro, recurr_call)
     args.emplace_back(nullptr);
     args.emplace_back(nullptr, op3);
 
-    // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
+    // prototype->|&LBL        MAC        &KEY=,&OP1,,&OP3
     ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
 
     // creating param data
@@ -510,7 +510,7 @@ TEST(context_macro, recurr_call)
     params.emplace_back(std::move(p4));
 
     // calling macro
-    // call->|lbl		MAC		ada,mko,
+    // call->|lbl        MAC        ada,mko,
     auto [m2, t2] = ctx.enter_macro(idx, std::move(lb), std::move(params));
 
     //*****created first macro call
@@ -539,7 +539,7 @@ TEST(context_macro, recurr_call)
     params.emplace_back(std::move(np3));
     params.emplace_back(std::move(dat));
 
-    // call->|		MAC		,KEY=cas,,(first,second,third)
+    // call->|        MAC        ,KEY=cas,,(first,second,third)
     auto [m3, t3] = ctx.enter_macro(idx, nullptr, std::move(params));
 
     //********called again the same macro without calling leave

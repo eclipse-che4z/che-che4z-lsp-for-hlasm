@@ -11,23 +11,23 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(library_test PRIVATE
-	analyzer_fixture.h
-	instruction_hints_test.cpp
-	item_convertors_test.cpp
-	lsp_completion_test.cpp
-	lsp_context_branch_info_test.cpp
-	lsp_context_copy_in_macro_test.cpp
-	lsp_context_document_symbol_ord_test.cpp
-	lsp_context_instr_test.cpp
-	lsp_context_macro_documentation_test.cpp
-	lsp_context_macro_in_opencode_test.cpp
-	lsp_context_macro_operands_test.cpp
-	lsp_context_nested_macro_test.cpp
-	lsp_context_ord_sym_test.cpp
-	lsp_context_ordinary_operands_test.cpp
-	lsp_context_preprocessor_test.cpp
-	lsp_context_seq_sym_test.cpp
-	lsp_context_var_sym_test.cpp
-	lsp_features_test.cpp
-	lsp_folding_test.cpp
+    analyzer_fixture.h
+    instruction_hints_test.cpp
+    item_convertors_test.cpp
+    lsp_completion_test.cpp
+    lsp_context_branch_info_test.cpp
+    lsp_context_copy_in_macro_test.cpp
+    lsp_context_document_symbol_ord_test.cpp
+    lsp_context_instr_test.cpp
+    lsp_context_macro_documentation_test.cpp
+    lsp_context_macro_in_opencode_test.cpp
+    lsp_context_macro_operands_test.cpp
+    lsp_context_nested_macro_test.cpp
+    lsp_context_ord_sym_test.cpp
+    lsp_context_ordinary_operands_test.cpp
+    lsp_context_preprocessor_test.cpp
+    lsp_context_seq_sym_test.cpp
+    lsp_context_var_sym_test.cpp
+    lsp_features_test.cpp
+    lsp_folding_test.cpp
 )

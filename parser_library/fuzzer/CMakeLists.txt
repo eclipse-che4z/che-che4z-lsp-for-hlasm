@@ -14,21 +14,21 @@
 Project(fuzzer)
 
 if(BUILD_FUZZER)
-	add_executable(library_fuzzer)
-	set_target_properties(library_fuzzer PROPERTIES LINK_FLAGS "-fsanitize=fuzzer")
-	generate_emscripten_node_runner(library_fuzzer)
+    add_executable(library_fuzzer)
+    set_target_properties(library_fuzzer PROPERTIES LINK_FLAGS "-fsanitize=fuzzer")
+    generate_emscripten_node_runner(library_fuzzer)
 else()
-	add_library(library_fuzzer STATIC)
+    add_library(library_fuzzer STATIC)
 endif()
 
 target_sources(library_fuzzer PRIVATE
-	fuzzer.cpp
+    fuzzer.cpp
 )
 
 configure_file(
-			fuzzer.dict
-			${CMAKE_BINARY_DIR}/bin/fuzzer.dict
-			COPYONLY)
+            fuzzer.dict
+            ${CMAKE_BINARY_DIR}/bin/fuzzer.dict
+            COPYONLY)
 
 target_link_libraries(library_fuzzer parser_library)
 target_link_libraries(library_fuzzer Threads::Threads)

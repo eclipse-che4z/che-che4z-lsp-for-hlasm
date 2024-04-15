@@ -11,30 +11,30 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	configuration_datatypes.h
-	file.cpp
-	file.h
-	file_manager.h
-	file_manager_impl.cpp
-	file_manager_impl.h
-	file_manager_vfm.cpp
-	file_manager_vfm.h
-	library.h
-	library_local.cpp
-	library_local.h
-	macro_cache.cpp
-	macro_cache.h
-	parse_lib_provider.cpp
-	parse_lib_provider.h
-	processor_group.cpp
-	processor_group.h
-	program_configuration_storage.cpp
-	program_configuration_storage.h
-	wildcard.cpp
-	wildcard.h
-	workspace.cpp
-	workspace.h
-	workspace_configuration.cpp
-	workspace_configuration.h
+    configuration_datatypes.h
+    file.cpp
+    file.h
+    file_manager.h
+    file_manager_impl.cpp
+    file_manager_impl.h
+    file_manager_vfm.cpp
+    file_manager_vfm.h
+    library.h
+    library_local.cpp
+    library_local.h
+    macro_cache.cpp
+    macro_cache.h
+    parse_lib_provider.cpp
+    parse_lib_provider.h
+    processor_group.cpp
+    processor_group.h
+    program_configuration_storage.cpp
+    program_configuration_storage.h
+    wildcard.cpp
+    wildcard.h
+    workspace.cpp
+    workspace.h
+    workspace_configuration.cpp
+    workspace_configuration.h
 )
 

@@ -68,14 +68,14 @@ An example of an instruction where its last operand exceeded column 72 of the li
 
         OP1                            REG12,REG07,REG04,REG00,REG01,REG11,Rx
                     EG02
-    	
+
 
 Some instructions also support the *extended format* of the operands. This allows the presence of a continuation character even when the contents of a line have not reached the continuation column (see \[lst:extended\]).
 
               AIF   ('&VAR' FIND '~').A,     REMARK1                        x
                     ('&VAR'  EQ  'L').B,     REMARK2                        x
-                    (T'&VAR  EQ  'U').C      REMARK3 
-    	
+                    (T'&VAR  EQ  'U').C      REMARK3
+
 
 <img src="img/line.png" alt="Description of line columns (source: HLASM Language Reference)." />
 
@@ -141,7 +141,7 @@ Following are examples of assembler instructions:
                 be assembled as addresses
         5AY(A+4,B) would assemble total of 20 bytes, first 2 bytes is value
                    of expression A+4, then B and then 4 more copies of the same
-    	
+
 
 #### Resolution of Ordinary Symbols
 
@@ -154,7 +154,7 @@ ADDR       DS    CL(SIZE)
 HERE       DS    0C
 LEN        EQU   HERE-ADDR
 SIZE       EQU   1
-	
+
 ```
 
 In the next step, `LEN` is defined. However, it cannot be evaluated, because the subtraction of addresses `ADDR` and `HERE` is dependent on the unknown length of the instruction on the second line and therefore on the symbol `SIZE`. The whole program is resolved only when the assembly reaches the last line, which defines the length of instruction `02`. Afterwards, it is possible to resolve `LEN` and finally the length of instruction `01`.
@@ -230,16 +230,16 @@ The instruction `DC` on line `17` creates a value of the double type and assigns
 `ANOP` is an empty assembler action which defines the `.END` symbol and line `19` ends the assembling of the program.
 
     name        operation   operands
-        
+
 
 ``` numberLines
-            MACRO                   
+            MACRO
 &NAME       GEN_LABEL
 &NAME       EQU         *
             MEND
-        
+
             COPY        REGS
-        
+
 TEST        CSECT
 &VAR        SETA        L'DOUBLE
             AIF         (&VAR EQ 4).END
@@ -252,7 +252,7 @@ LEN         EQU         LBL2-LBL1
 DOUBLE      DC          H'-3.729'
 .END        ANOP
             END
-	
+
 ```
 
 Although CA processing might act like text preprocessing, it is still interlinked with ordinary processing. CA has mechanics that allow the assembler to gather information about statements that are printed during the processing. It can also access values created in ordinary assembly and use them in conditional branching, and is able to lookup constants that are not yet defined prior to the currently processed statement. During ordinary assembly, the names of these instructions can also be aliased.

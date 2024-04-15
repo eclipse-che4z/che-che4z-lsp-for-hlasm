@@ -11,43 +11,43 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(hlasm_language_server_base PRIVATE
-	base_protocol_channel.cpp
-	base_protocol_channel.h
-	blocking_queue.h
-	external_file_reader.cpp
-	external_file_reader.h
-	feature.cpp
-	feature.h
-	json_channel.cpp
-	json_channel.h
-	json_queue_channel.cpp
-	json_queue_channel.h
-	logger.cpp
-	logger.h
-	message_router.cpp
-	message_router.h
-	parsing_metadata_serialization.cpp
-	parsing_metadata_serialization.h
-	send_message_provider.h
-	server.cpp
-	server.h
-	server_streams.h
-	stream_helper.h
-	telemetry_broker.h
-	telemetry_info.h
-	telemetry_sink.h
-	virtual_file_provider.cpp
-	virtual_file_provider.h
+    base_protocol_channel.cpp
+    base_protocol_channel.h
+    blocking_queue.h
+    external_file_reader.cpp
+    external_file_reader.h
+    feature.cpp
+    feature.h
+    json_channel.cpp
+    json_channel.h
+    json_queue_channel.cpp
+    json_queue_channel.h
+    logger.cpp
+    logger.h
+    message_router.cpp
+    message_router.h
+    parsing_metadata_serialization.cpp
+    parsing_metadata_serialization.h
+    send_message_provider.h
+    server.cpp
+    server.h
+    server_streams.h
+    stream_helper.h
+    telemetry_broker.h
+    telemetry_info.h
+    telemetry_sink.h
+    virtual_file_provider.cpp
+    virtual_file_provider.h
 )
 
 if(EMSCRIPTEN)
-	target_sources(hlasm_language_server_base PRIVATE emscripten_server_streams.cpp)
+    target_sources(hlasm_language_server_base PRIVATE emscripten_server_streams.cpp)
 else()
-	target_sources(hlasm_language_server_base PRIVATE native_server_streams.cpp)
+    target_sources(hlasm_language_server_base PRIVATE native_server_streams.cpp)
 endif()
 
 target_sources(hlasm_language_server PRIVATE
-	main.cpp
+    main.cpp
 )
 
 add_subdirectory(dap)

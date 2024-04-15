@@ -14,18 +14,18 @@ add_executable(hlasm_utils_test)
 generate_emscripten_node_runner(hlasm_utils_test)
 
 target_sources(hlasm_utils_test PRIVATE
-	bk_tree_test.cpp
-	encoding_test.cpp
-	filter_vector_test.cpp
-	levenshtein_distance_test.cpp
-	merge_sorted_test.cpp
-	path_test.cpp
-	path_conversions_test.cpp
-	platform_test.cpp
-	resource_location_test.cpp
-	unicode_text_test.cpp
-	time_test.cpp
-	task_test.cpp
+    bk_tree_test.cpp
+    encoding_test.cpp
+    filter_vector_test.cpp
+    levenshtein_distance_test.cpp
+    merge_sorted_test.cpp
+    path_test.cpp
+    path_conversions_test.cpp
+    platform_test.cpp
+    resource_location_test.cpp
+    unicode_text_test.cpp
+    time_test.cpp
+    task_test.cpp
 )
 
 target_link_libraries(hlasm_utils_test hlasm_utils)
@@ -35,5 +35,5 @@ if (BUILD_SHARED_LIBS)
 endif()
 
 if(DISCOVER_TESTS)
-	gtest_discover_tests(hlasm_utils_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 120)	
+    gtest_discover_tests(hlasm_utils_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 120)
 endif()

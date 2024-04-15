@@ -11,16 +11,16 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(library_test PRIVATE
-	address_test.cpp
-	context_test.cpp
-	data_attribute_test.cpp
-	dependency_collector_test.cpp
-	instruction_test.cpp
-	literals_test.cpp
-	macro_test.cpp
-	ord_sym_test.cpp
-	system_variable_subscripts_test.cpp
-	system_variable_test.cpp
-	using_test.cpp
+    address_test.cpp
+    context_test.cpp
+    data_attribute_test.cpp
+    dependency_collector_test.cpp
+    instruction_test.cpp
+    literals_test.cpp
+    macro_test.cpp
+    ord_sym_test.cpp
+    system_variable_subscripts_test.cpp
+    system_variable_test.cpp
+    using_test.cpp
 )
 

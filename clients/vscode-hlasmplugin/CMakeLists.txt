@@ -16,44 +16,44 @@ set(CHECK_CI "${GLOBAL_OUTPUT_PATH}/npm_ci.stamp")
 set(CHECK_BUILD "${GLOBAL_OUTPUT_PATH}/npm_build.stamp")
 
 if (WIN32)
-	set(CALL "call")
+    set(CALL "call")
 else()
-	set(CALL "")
+    set(CALL "")
 endif()
 
 if(WIN32)
-	set(ANTLR_VERSION_SUFFIX "")
+    set(ANTLR_VERSION_SUFFIX "")
 else()
-	set(ANTLR_VERSION_SUFFIX .${ANTLR4CPP_EXTERNAL_TAG})
+    set(ANTLR_VERSION_SUFFIX .${ANTLR4CPP_EXTERNAL_TAG})
 endif()
 
 set(BIN_EXTRAS "")
 if(NOT "${LANGUAGE_SERVER_BIN_SUBDIR}" STREQUAL "")
-	set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/${LANGUAGE_SERVER_BIN_SUBDIR}/")
+    set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/${LANGUAGE_SERVER_BIN_SUBDIR}/")
 elseif(EMSCRIPTEN)
-	set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/wasm/")
+    set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/wasm/")
 else()
-	message(FATAL_ERROR "LANGUAGE_SERVER_BIN_SUBDIR was not specified and could not have been guessed")
+    message(FATAL_ERROR "LANGUAGE_SERVER_BIN_SUBDIR was not specified and could not have been guessed")
 endif()
 
 if(EMSCRIPTEN)
-	list(APPEND BIN_EXTRAS "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.js" "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.worker.js" "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.wasm")
+    list(APPEND BIN_EXTRAS "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.js" "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.worker.js" "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.wasm")
 endif()
 
 
 set(COPY_PARSER_LIBRARY_COMMAND "")
 set(COPY_ANTLR_LIBRARY_COMMAND "")
 if(BUILD_SHARED_LIBS)
-	set(COPY_PARSER_LIBRARY_COMMAND
-		${CMAKE_COMMAND} -E copy $<TARGET_FILE:parser_library> ${BIN_FOLDER})
+    set(COPY_PARSER_LIBRARY_COMMAND
+        ${CMAKE_COMMAND} -E copy $<TARGET_FILE:parser_library> ${BIN_FOLDER})
 
-	if(APPLE)
-		set(COPY_ANTLR_LIBRARY_COMMAND
-			${CMAKE_COMMAND} -E copy ${GLOBAL_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}antlr4-runtime${ANTLR_VERSION_SUFFIX}${CMAKE_SHARED_LIBRARY_SUFFIX} ${BIN_FOLDER})
-	else()
-		set(COPY_ANTLR_LIBRARY_COMMAND
-			${CMAKE_COMMAND} -E copy ${GLOBAL_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}antlr4-runtime${CMAKE_SHARED_LIBRARY_SUFFIX}${ANTLR_VERSION_SUFFIX} ${BIN_FOLDER})
-	endif()
+    if(APPLE)
+        set(COPY_ANTLR_LIBRARY_COMMAND
+            ${CMAKE_COMMAND} -E copy ${GLOBAL_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}antlr4-runtime${ANTLR_VERSION_SUFFIX}${CMAKE_SHARED_LIBRARY_SUFFIX} ${BIN_FOLDER})
+    else()
+        set(COPY_ANTLR_LIBRARY_COMMAND
+            ${CMAKE_COMMAND} -E copy ${GLOBAL_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}antlr4-runtime${CMAKE_SHARED_LIBRARY_SUFFIX}${ANTLR_VERSION_SUFFIX} ${BIN_FOLDER})
+    endif()
 endif()
 
 #Check whether npm is installed and in path
@@ -63,48 +63,48 @@ if(NPM_RETURN MATCHES "NPM_RETURN-NOTFOUND")
 endif()
 
 add_custom_command(
-		OUTPUT
-			${CHECK_CI}
-		COMMAND
-			${CALL} ${NPM_RETURN} --unsafe-perm ci
-			#the --unsafe-perm is needed when user with root rights runs the build on linux
-		COMMAND
-			${CMAKE_COMMAND} -E touch ${CHECK_CI}
-		DEPENDS
-			package.json package-lock.json build/bin/postinstall.js
-		WORKING_DIRECTORY
-			${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT
+            ${CHECK_CI}
+        COMMAND
+            ${CALL} ${NPM_RETURN} --unsafe-perm ci
+            #the --unsafe-perm is needed when user with root rights runs the build on linux
+        COMMAND
+            ${CMAKE_COMMAND} -E touch ${CHECK_CI}
+        DEPENDS
+            package.json package-lock.json build/bin/postinstall.js
+        WORKING_DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_custom_command(
-		OUTPUT
-			${CHECK_BUILD}
-		COMMAND
-			${CALL} ${NPM_RETURN} --unsafe-perm run compile
-			#the --unsafe-perm is needed when user with root rights runs the build on linux
-		COMMAND
-			${CMAKE_COMMAND} -E make_directory ${BIN_FOLDER}
-		COMMAND
-			${COPY_PARSER_LIBRARY_COMMAND}
-		COMMAND
-			${COPY_ANTLR_LIBRARY_COMMAND}
-		COMMAND
-			${CMAKE_COMMAND} -E copy  $<TARGET_FILE:hlasm_language_server> ${BIN_EXTRAS} ${BIN_FOLDER}
-		COMMAND
-			npx vsce package --no-dependencies -o ${GLOBAL_OUTPUT_PATH}/vscode-hlasmplugin.vsix
-		COMMAND 
-			${CMAKE_COMMAND} -E touch ${CHECK_BUILD}
-		DEPENDS
-			${CHECK_CI} ${CMAKE_CURRENT_SOURCE_DIR} parser_library hlasm_language_server
-		WORKING_DIRECTORY
-			${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT
+            ${CHECK_BUILD}
+        COMMAND
+            ${CALL} ${NPM_RETURN} --unsafe-perm run compile
+            #the --unsafe-perm is needed when user with root rights runs the build on linux
+        COMMAND
+            ${CMAKE_COMMAND} -E make_directory ${BIN_FOLDER}
+        COMMAND
+            ${COPY_PARSER_LIBRARY_COMMAND}
+        COMMAND
+            ${COPY_ANTLR_LIBRARY_COMMAND}
+        COMMAND
+            ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:hlasm_language_server> ${BIN_EXTRAS} ${BIN_FOLDER}
+        COMMAND
+            npx vsce package --no-dependencies -o ${GLOBAL_OUTPUT_PATH}/vscode-hlasmplugin.vsix
+        COMMAND
+            ${CMAKE_COMMAND} -E touch ${CHECK_BUILD}
+        DEPENDS
+            ${CHECK_CI} ${CMAKE_CURRENT_SOURCE_DIR} parser_library hlasm_language_server
+        WORKING_DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_custom_target(vsix
-		ALL
-		DEPENDS
-			${CHECK_BUILD}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        ALL
+        DEPENDS
+            ${CHECK_BUILD}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_dependencies(vsix hlasm_language_server parser_library)

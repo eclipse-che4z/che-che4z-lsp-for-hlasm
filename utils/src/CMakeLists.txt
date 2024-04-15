@@ -11,19 +11,19 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(hlasm_utils PRIVATE
-	content_loader.cpp
-	encoding.cpp
-	filesystem_content_loader.cpp
-	path_conversions.cpp
-	platform.cpp
-	resource_location.cpp
-	string_operations.cpp
-	unicode_text.cpp
-	time.cpp
+    content_loader.cpp
+    encoding.cpp
+    filesystem_content_loader.cpp
+    path_conversions.cpp
+    platform.cpp
+    resource_location.cpp
+    string_operations.cpp
+    unicode_text.cpp
+    time.cpp
 )
 
 if(EMSCRIPTEN)
-	target_sources(hlasm_utils PRIVATE emscripten_path.cpp)
+    target_sources(hlasm_utils PRIVATE emscripten_path.cpp)
 else()
-	target_sources(hlasm_utils PRIVATE native_path.cpp)
+    target_sources(hlasm_utils PRIVATE native_path.cpp)
 endif()

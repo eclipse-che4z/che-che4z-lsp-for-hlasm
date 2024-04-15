@@ -11,9 +11,9 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(library_test PRIVATE
-	debug_event_consumer_s_mock.cpp
-	debug_event_consumer_s_mock.h
-	debug_lib_provider_test.cpp
-	debugger_test.cpp
+    debug_event_consumer_s_mock.cpp
+    debug_event_consumer_s_mock.h
+    debug_lib_provider_test.cpp
+    debugger_test.cpp
 )
 

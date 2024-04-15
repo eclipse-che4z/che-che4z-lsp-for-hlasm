@@ -11,8 +11,8 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(server_test PRIVATE
-	feature_language_features_test.cpp
-	feature_text_synchronization_test.cpp
-	lsp_server_test.cpp
-	workspace_folders_test.cpp
+    feature_language_features_test.cpp
+    feature_text_synchronization_test.cpp
+    lsp_server_test.cpp
+    workspace_folders_test.cpp
 )

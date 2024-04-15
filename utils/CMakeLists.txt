@@ -23,5 +23,5 @@ add_subdirectory(src)
 target_link_libraries(hlasm_utils network-uri)
 
 if(BUILD_TESTING)
-	add_subdirectory(test)
+    add_subdirectory(test)
 endif()

@@ -11,16 +11,16 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(library_test PRIVATE
-	arithmetic_expression_test.cpp
-	ca_constant_test.cpp
-	ca_expr_list_test.cpp
-	ca_function_test.cpp
-	ca_operator_test.cpp
-	ca_string_test.cpp
-	ca_symbol_attribute_test.cpp
-	ca_symbol_test.cpp
-	ca_var_sym_test.cpp
-	character_expression_test.cpp
-	logical_expression_test.cpp
+    arithmetic_expression_test.cpp
+    ca_constant_test.cpp
+    ca_expr_list_test.cpp
+    ca_function_test.cpp
+    ca_operator_test.cpp
+    ca_string_test.cpp
+    ca_symbol_attribute_test.cpp
+    ca_symbol_test.cpp
+    ca_var_sym_test.cpp
+    character_expression_test.cpp
+    logical_expression_test.cpp
 )
 

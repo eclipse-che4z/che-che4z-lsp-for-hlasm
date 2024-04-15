@@ -11,20 +11,20 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	asm_processor.cpp
-	asm_processor.h
-	ca_processor.cpp
-	ca_processor.h
-	data_def_postponed_statement.cpp
-	data_def_postponed_statement.h
-	instruction_processor.cpp
-	instruction_processor.h
-	low_language_processor.cpp
-	low_language_processor.h
-	mach_processor.cpp
-	mach_processor.h
-	macro_processor.cpp
-	macro_processor.h
-	postponed_statement_impl.h
+    asm_processor.cpp
+    asm_processor.h
+    ca_processor.cpp
+    ca_processor.h
+    data_def_postponed_statement.cpp
+    data_def_postponed_statement.h
+    instruction_processor.cpp
+    instruction_processor.h
+    low_language_processor.cpp
+    low_language_processor.h
+    mach_processor.cpp
+    mach_processor.h
+    macro_processor.cpp
+    macro_processor.h
+    postponed_statement_impl.h
 )
 

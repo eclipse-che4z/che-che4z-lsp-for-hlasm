@@ -11,23 +11,23 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	collector.cpp
-	collector.h
-	concatenation.cpp
-	concatenation.h
-	highlighting_info.h
-	operand.h
-	operand_impls.cpp
-	operand_impls.h
-	operand_visitor.h
-	range_provider.cpp
-	range_provider.h
-	source_info_processor.cpp
-	source_info_processor.h
-	statement.cpp
-	statement.h
-	statement_fields.cpp
-	statement_fields.h
-	variable_symbol.cpp
-	variable_symbol.h
+    collector.cpp
+    collector.h
+    concatenation.cpp
+    concatenation.h
+    highlighting_info.h
+    operand.h
+    operand_impls.cpp
+    operand_impls.h
+    operand_visitor.h
+    range_provider.cpp
+    range_provider.h
+    source_info_processor.cpp
+    source_info_processor.h
+    statement.cpp
+    statement.h
+    statement_fields.cpp
+    statement_fields.h
+    variable_symbol.cpp
+    variable_symbol.h
 )

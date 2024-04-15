@@ -62,7 +62,7 @@ std::string pgmconf_generator(std::string program)
 {
     return R"({
   "pgms": [
-	{
+    {
       "program": ")"
         + std::string(program) + R"(",
       "pgroup": "P1"

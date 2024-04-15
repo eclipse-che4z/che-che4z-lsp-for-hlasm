@@ -34,9 +34,9 @@ using namespace hlasm_plugin::utils::resource;
 
 std::string one_proc_grps = R"(
 {
-	"pgroups": [
+    "pgroups": [
         { "name": "P1", "libs": [] }
-	]
+    ]
 }
 )";
 

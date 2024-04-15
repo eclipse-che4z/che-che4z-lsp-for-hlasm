@@ -13,7 +13,7 @@ The abstract class *HLASM statement* is the ancestor for all statement related c
          MAC      &INSTR
          &INSTR   3(2,0),13      <- deferred statement
          MEND
-    	
+
 
 #### Copy and Macro Definition Processors
 

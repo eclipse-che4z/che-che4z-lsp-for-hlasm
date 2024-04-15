@@ -11,14 +11,14 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(hlasm_language_server_base PRIVATE
-	dap_feature.cpp
-	dap_feature.h
-	dap_message_wrappers.cpp
-	dap_message_wrappers.h
-	dap_server.cpp
-	dap_server.h
-	dap_session.cpp
-	dap_session.h
-	dap_session_manager.cpp
-	dap_session_manager.h
+    dap_feature.cpp
+    dap_feature.h
+    dap_message_wrappers.cpp
+    dap_message_wrappers.h
+    dap_server.cpp
+    dap_server.h
+    dap_session.cpp
+    dap_session.h
+    dap_session_manager.cpp
+    dap_session_manager.h
 )

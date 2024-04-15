@@ -11,24 +11,24 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	completion_item.cpp
-	completion_item.h
-	completion_list_source.h
-	document_symbol_item.cpp
-	document_symbol_item.h
-	file_info.cpp
-	file_info.h
-	folding.cpp
-	folding.h
-	instruction_completions.cpp
-	instruction_completions.h
-	item_convertors.cpp
-	item_convertors.h
-	lsp_context.cpp
-	lsp_context.h
-	macro_info.h
-	opencode_info.h
-	symbol_occurrence.h
-	text_data_view.cpp
-	text_data_view.h
+    completion_item.cpp
+    completion_item.h
+    completion_list_source.h
+    document_symbol_item.cpp
+    document_symbol_item.h
+    file_info.cpp
+    file_info.h
+    folding.cpp
+    folding.h
+    instruction_completions.cpp
+    instruction_completions.h
+    item_convertors.cpp
+    item_convertors.h
+    lsp_context.cpp
+    lsp_context.h
+    macro_info.h
+    opencode_info.h
+    symbol_occurrence.h
+    text_data_view.cpp
+    text_data_view.h
 )

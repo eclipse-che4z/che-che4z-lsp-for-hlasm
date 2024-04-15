@@ -20,7 +20,7 @@ const workspace_vscode = path.join(workspace_dir, '.vscode');
 recursiveRemoveSync(workspace_dir);
 recursiveCopySync(path.join(__dirname, '..', '..', 'src/test/workspace/'), workspace_dir);
 
-const source_settings_file = (function () {
+const source_settings_file = (function() {
     if (process.argv.indexOf('wasm') !== -1) {
         console.log('Preparing WASM');
         return 'settings.wasm.json';

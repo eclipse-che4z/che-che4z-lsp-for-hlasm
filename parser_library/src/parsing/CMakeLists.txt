@@ -11,12 +11,12 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-	error_strategy.cpp
-	error_strategy.h
-	parser_error_listener.cpp
-	parser_error_listener.h
-	parser_impl.cpp
-	parser_impl.h
+    error_strategy.cpp
+    error_strategy.h
+    parser_error_listener.cpp
+    parser_error_listener.h
+    parser_impl.cpp
+    parser_impl.h
 )
 
 add_subdirectory(grammar)
