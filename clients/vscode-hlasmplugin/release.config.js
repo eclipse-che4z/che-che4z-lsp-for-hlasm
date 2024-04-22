@@ -107,13 +107,13 @@ function getGitHubPublisherPlugin() {
                 },
                 {
                     'path': 'bin/win32_x64/hlasm_language_server.exe',
-                    'label': 'hlasm-language-support-win32-x64-${nextRelease.version}',
-                    'name': 'hlasm-language-support-win32-x64-${nextRelease.version}'
+                    'label': 'hlasm-language-support-win32-x64-${nextRelease.version}.exe',
+                    'name': 'hlasm-language-support-win32-x64-${nextRelease.version}.exe'
                 },
                 {
                     'path': 'bin/win32_arm64/hlasm_language_server.exe',
-                    'label': 'hlasm-language-support-win32-arm64-${nextRelease.version}',
-                    'name': 'hlasm-language-support-win32-arm64-${nextRelease.version}'
+                    'label': 'hlasm-language-support-win32-arm64-${nextRelease.version}.exe',
+                    'name': 'hlasm-language-support-win32-arm64-${nextRelease.version}.exe'
                 },
                 {
                     'path': 'bin/linux_x64/hlasm_language_server',
@@ -134,11 +134,6 @@ function getGitHubPublisherPlugin() {
                     'path': 'bin/darwin_arm64/hlasm_language_server',
                     'label': 'hlasm-language-support-darwin-arm64-${nextRelease.version}',
                     'name': 'hlasm-language-support-darwin-arm64-${nextRelease.version}'
-                },
-                {
-                    'path': 'bin/wasm/hlasm_language_server.*',
-                    'label': 'hlasm-language-support-wasm-${nextRelease.version}',
-                    'name': 'hlasm-language-support-wasm-${nextRelease.version}'
                 }
             ]
         }
