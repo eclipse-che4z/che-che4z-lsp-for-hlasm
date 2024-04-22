@@ -108,32 +108,32 @@ function getGitHubPublisherPlugin() {
                 {
                     'path': 'bin/win32_x64/hlasm_language_server.exe',
                     'label': 'hlasm-language-support-win32-x64-${nextRelease.version}.exe',
-                    'name': 'hlasm-language-support-win32-x64-${nextRelease.version}.exe'
+                    'name': 'hlasm_language_server.exe'
                 },
                 {
                     'path': 'bin/win32_arm64/hlasm_language_server.exe',
                     'label': 'hlasm-language-support-win32-arm64-${nextRelease.version}.exe',
-                    'name': 'hlasm-language-support-win32-arm64-${nextRelease.version}.exe'
+                    'name': 'hlasm_language_server.exe'
                 },
                 {
                     'path': 'bin/linux_x64/hlasm_language_server',
                     'label': 'hlasm-language-support-linux-x64-${nextRelease.version}',
-                    'name': 'hlasm-language-support-linux-x64-${nextRelease.version}'
+                    'name': 'hlasm_language_server'
                 },
                 {
                     'path': 'bin/linux_arm64/hlasm_language_server',
                     'label': 'hlasm-language-support-linux-arm64-${nextRelease.version}',
-                    'name': 'hlasm-language-support-linux-arm64-${nextRelease.version}'
+                    'name': 'hlasm_language_server'
                 },
                 {
                     'path': 'bin/darwin_x64/hlasm_language_server',
                     'label': 'hlasm-language-support-darwin-x64-${nextRelease.version}',
-                    'name': 'hlasm-language-support-darwin-x64-${nextRelease.version}'
+                    'name': 'hlasm_language_server'
                 },
                 {
                     'path': 'bin/darwin_arm64/hlasm_language_server',
                     'label': 'hlasm-language-support-darwin-arm64-${nextRelease.version}',
-                    'name': 'hlasm-language-support-darwin-arm64-${nextRelease.version}'
+                    'name': 'hlasm_language_server'
                 }
             ]
         }
