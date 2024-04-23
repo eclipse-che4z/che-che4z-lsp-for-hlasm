@@ -36,6 +36,7 @@
 #include "diagnostic_consumer.h"
 #include "expressions/evaluation_context.h"
 #include "lexing/input_source.h"
+#include "lexing/token_stream.h"
 #include "lexing/tools.h"
 #include "library_info_transitional.h"
 #include "output_handler.h"
@@ -801,7 +802,7 @@ public:
             return nullptr;
         };
 
-        if (p->input->LA(1) != (size_t)-1)
+        if (p->stream->LA(1) != (size_t)-1)
             result.pimpl->set_error("Invalid expression");
         else if (!error_msg.empty())
             result.pimpl->set_error(std::move(error_msg));

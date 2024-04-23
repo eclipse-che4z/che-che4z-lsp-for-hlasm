@@ -1379,6 +1379,7 @@ L   DS    F
         { { "L", 2 }, { "C + X'4'", false, false } },
         { { "K'&C", 2 }, { "6", false, false } },
         { { "&A + &A", -1 }, { "", true, false } },
+        { { "&A+&A+", -1 }, { "", true, false } },
     };
 
     for (const auto& [args, expected] : cases)
