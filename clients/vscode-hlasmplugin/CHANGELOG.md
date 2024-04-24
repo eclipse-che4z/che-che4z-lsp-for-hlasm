@@ -1,6 +1,6 @@
 # Changelog
 
-## ****Unreleased****
+## [1.13.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.12.0...1.13.0) (2024-04-24)
 
 #### Added
 - New document outline implementation

@@ -1,3 +1,46 @@
+## [1.13.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.12.0...1.13.0) (2024-04-24)
+
+
+### Features
+
+* Emit MNOTE and PUNCH arguments to the debug console ([67cfec3](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/67cfec34d76d70d40e73bb8b33db01132154197d))
+* Fallback to WebAssembly language server automatically ([5230327](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/523032773f14675f7ca40b98500a1c88e0f88e70))
+* Function breakpoint support in the Macro tracer ([c8f45a6](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c8f45a6d5d8c1aa8dc8e96183c3170b69f9e7815))
+* Make MNOTE and PUNCH outputs available from VSCode ([3665e6a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/3665e6a1e69dc61af9a2e241c05b7b863d415a31))
+* New document outline implementation ([277e044](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/277e0447405610ba3aeeac665a915579aa1c69f0))
+* Reaching ACTR limit pauses Macro tracer session ([e21ea32](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/e21ea32346e8b0954b8b121a55bfa84171769f12))
+* Watch support in the Macro tracer ([e265836](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/e26583615fcf77c1cc1caec7775e6b658b25bae9))
+
+
+### Other changes
+
+* **github:** Reduce ASLR entropy ([d932a45](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/d932a4544affa48fa62959507162fa9cfd4149c8))
+* Hide diagnostic collection details ([7c5d260](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7c5d26089c4ef14cf4c7c2d87160bea314b97f20))
+* Move constants ([dc08a9b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/dc08a9bd4bea9ddc5d59715a31c4837b73cd977f))
+* Publish individual language server binaries ([438e7c5](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/438e7c52249e11f457f244108edddab2e998ba53))
+* Reduce large structure moves ([6749e73](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/6749e73e10f09096a721b36c89df7288eafbe947))
+* Remove unnecessary copies ([7d929f5](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7d929f5e57357c9e13eeb280b4e8ab9fd565c9a8))
+* Remove unneeded catch-all blocks ([ea812ce](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ea812ce45859f81382afee395a927d9678bc712b))
+* Run UI tests with sanitizers ([5f977e6](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5f977e69b8ab4f789e48ef0fde982bb93318889a))
+* Simplify debugger variable representation ([baabb42](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/baabb429c6d1042fc91408f14c50790fa52a9cb1))
+* Split instruction completion table ([8538a72](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/8538a72a43d7d02dd44ad4b900aaef08c1e09a90))
+* Support MacOS on ARM64 ([8b10e58](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/8b10e582b38713cb1aefde652439286bcd6b1b60))
+* Support Windows and Linux on ARM ([5aaf7b9](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5aaf7b9dc57b3f29cc9e5c32bd9f2a0fadbea425))
+* Tolerate BUILD_SHARED_LIBS=On ([b8119f4](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/b8119f44c034c16751b08a40d3abdf3f3e543f08))
+* Upgrade diagnostics matching ([afceacc](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/afceacc8bcca7662df38c94bd33185e0b43d433f))
+* Use more string_views ([965c274](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/965c274bc322974930a844d3aae1f480f746949c))
+
+
+### Fixes
+
+* Debugger does not correctly diagnose invalid expressions ([a024556](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a0245568d108a40658b015142dd44e3f51dc2368))
+* Expand Neovim configuration scripts ([d5b341e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/d5b341e90fca52f8504f404debcc94c0f2f752be))
+* Hover text for complex relocation symbols contains incorrect multiplicative factors ([82ebcd6](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/82ebcd65f7e659c20711662720e9be5bc0da1853))
+* Produce more specific diagnostic on grammar predicate failure ([28ed301](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/28ed301a72b37acbcabc6f82fb2958e986bc9d6f))
+* Unknown requests were dropped without a proper response ([9366130](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9366130c070f9bd8be9026f3955b2a37baecf5f2))
+* Use Title Case for Command Names ([6fd038c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/6fd038cb8a0c410558838a310d0340df84490130))
+* Using LSP dynamic registration of file change notifications ([dc43d9a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/dc43d9a39806035bce69b2c2ea4b8e1860b0ec1c))
+
 ## [1.12.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.11.1...1.12.0) (2024-03-05)
 
 
