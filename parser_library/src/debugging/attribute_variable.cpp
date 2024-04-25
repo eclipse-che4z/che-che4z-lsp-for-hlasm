@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include "debug_types.h"
 #include "variable.h"
 
 namespace hlasm_plugin::parser_library::debugging {

@@ -25,7 +25,8 @@
 
 #include "analyzer.h"
 #include "analyzing_context.h"
-#include "lsp/completion_item.h"
+#include "completion_item.h"
+#include "completion_trigger_kind.h"
 #include "lsp/completion_list_source.h"
 #include "lsp/folding.h"
 #include "lsp/item_convertors.h"

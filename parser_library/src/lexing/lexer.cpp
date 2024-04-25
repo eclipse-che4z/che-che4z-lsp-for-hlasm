@@ -108,13 +108,13 @@ void lexer::create_token(size_t ttype, size_t channel)
                 src_proc_->add_hl_symbol(
                     token_info(range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16),
                                    position(input_state_->line, end.char_position_in_line_utf16)),
-                        semantics::hl_scopes::continuation));
+                        hl_scopes::continuation));
                 break;
             case IGNORED:
                 src_proc_->add_hl_symbol(
                     token_info(range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16),
                                    position(token_start_state_.line, end.char_position_in_line_utf16)),
-                        semantics::hl_scopes::ignored));
+                        hl_scopes::ignored));
                 break;
                 // case COMMENT: Line comments are already handled in opencode_provider::process_comment()
         }

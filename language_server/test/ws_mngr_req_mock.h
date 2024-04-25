@@ -24,15 +24,11 @@ class workspace_manager_requests_mock : public hlasm_plugin::parser_library::wor
 public:
     MOCK_METHOD(void,
         request_workspace_configuration,
-        (const char* url,
-            hlasm_plugin::parser_library::workspace_manager_response<hlasm_plugin::parser_library::sequence<char>>
-                json_text),
+        (std::string_view url, hlasm_plugin::parser_library::workspace_manager_response<std::string_view> json_text),
         (override));
     MOCK_METHOD(void,
         request_file_configuration,
-        (hlasm_plugin::parser_library::sequence<char> url,
-            hlasm_plugin::parser_library::workspace_manager_response<hlasm_plugin::parser_library::sequence<char>>
-                json_text),
+        (std::string_view url, hlasm_plugin::parser_library::workspace_manager_response<std::string_view> json_text),
         (override));
 };
 

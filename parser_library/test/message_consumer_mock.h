@@ -26,7 +26,7 @@ namespace hlasm_plugin::parser_library {
 class message_consumer_mock : public hlasm_plugin::parser_library::message_consumer
 {
 public:
-    void show_message(const char* message, message_type type) override { messages.emplace_back(message, type); }
+    void show_message(std::string_view message, message_type type) override { messages.emplace_back(message, type); }
     std::vector<std::pair<std::string, message_type>> messages;
 };
 

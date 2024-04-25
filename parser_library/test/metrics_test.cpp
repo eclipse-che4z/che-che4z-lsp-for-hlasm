@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 
 #include "analyzer.h"
+#include "diagnostic.h"
 #include "mock_parse_lib_provider.h"
 #include "workspace_manager.h"
 #include "workspaces/parse_lib_provider.h"
@@ -27,11 +28,11 @@ using namespace hlasm_plugin::utils::resource;
 class metrics_mock : public parsing_metadata_consumer
 {
 public:
-    void consume_parsing_metadata(sequence<char>, double, const parsing_metadata& metadata) override
+    void consume_parsing_metadata(std::string_view, double, const parsing_metadata& metadata) override
     {
         metrics_ = metadata.metrics;
     }
-    void outputs_changed(sequence<char>) override {}
+    void outputs_changed(std::string_view) override {}
 
     performance_metrics metrics_;
 };
@@ -39,12 +40,11 @@ public:
 class diagnostic_counter_mock : public hlasm_plugin::parser_library::diagnostics_consumer
 {
 public:
-    void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics,
-        hlasm_plugin::parser_library::fade_message_list) override
+    void consume_diagnostics(std::span<const diagnostic> diagnostics, std::span<const fade_message>) override
     {
-        for (size_t i = 0; i < diagnostics.diagnostics_size(); i++)
+        for (const auto& d : diagnostics)
         {
-            auto diag_sev = diagnostics.diagnostics(i).severity();
+            auto diag_sev = d.severity;
             if (diag_sev == hlasm_plugin::parser_library::diagnostic_severity::error)
                 error_count++;
             else if (diag_sev == hlasm_plugin::parser_library::diagnostic_severity::warning)

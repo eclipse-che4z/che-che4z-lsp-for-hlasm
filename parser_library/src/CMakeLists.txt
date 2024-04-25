@@ -23,9 +23,10 @@ target_sources(parser_library PRIVATE
     diagnosable_ctx.h
     diagnosable_impl.h
     diagnostic.cpp
-    diagnostic.h
     diagnostic_adder.h
     diagnostic_consumer.h
+    diagnostic_op.cpp
+    diagnostic_op.h
     diagnostic_tools.h
     diagnostic_tools.cpp
     document.cpp
@@ -34,15 +35,12 @@ target_sources(parser_library PRIVATE
     ebcdic_encoding.h
     error_messages.h
     fade_messages.cpp
-    fade_messages.h
     instruction_set_version.h
     lib_config.cpp
     library_info.h
     library_info_transitional.cpp
     library_info_transitional.h
-    location.h
     preprocessor_options.h
-    protocol.cpp
     output_handler.h
     tagged_index.h
     virtual_file_monitor.h

@@ -630,7 +630,7 @@ std::optional<std::pair<int, range>> data_definition_parser::parse_number(std::s
         m_errors.push_back(diagnostic_op::error_D001({ range_start.start, r.start }));
         return std::nullopt;
     }
-    m_collector->add_hl_symbol(token_info(range(range_start.start, r.start), semantics::hl_scopes::number));
+    m_collector->add_hl_symbol(token_info(range(range_start.start, r.start), hl_scopes::number));
 
     return std::make_pair((int)result, range(range_start.start, r.start));
 }
@@ -756,7 +756,7 @@ void data_definition_parser::push(push_arg v, range r)
 
                     type_range.end = r.start;
                 }
-                m_collector->add_hl_symbol(token_info(type_range, semantics::hl_scopes::data_def_type));
+                m_collector->add_hl_symbol(token_info(type_range, hl_scopes::data_def_type));
                 m_state = { state::try_reading_program, { false, false, false, false }, std::nullopt };
                 break;
             }
@@ -767,7 +767,7 @@ void data_definition_parser::push(push_arg v, range r)
                     m_state.parsing_state = state::try_reading_length;
                     break;
                 }
-                m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
+                m_collector->add_hl_symbol(token_info(move_by_one(), hl_scopes::data_def_modifier));
                 m_state = { state::read_program, { true, false, true, false }, r.start };
                 break;
 
@@ -786,7 +786,7 @@ void data_definition_parser::push(push_arg v, range r)
                     m_state.parsing_state = state::try_reading_scale;
                     break;
                 }
-                m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
+                m_collector->add_hl_symbol(token_info(move_by_one(), hl_scopes::data_def_modifier));
                 m_state = { state::try_reading_bitfield, { true, false, false, true }, r.start };
                 break;
 
@@ -816,7 +816,7 @@ void data_definition_parser::push(push_arg v, range r)
                     m_state.parsing_state = state::try_reading_exponent;
                     break;
                 }
-                m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
+                m_collector->add_hl_symbol(token_info(move_by_one(), hl_scopes::data_def_modifier));
                 m_state = { state::read_scale, { true, false, true, false }, r.start };
                 break;
 
@@ -835,7 +835,7 @@ void data_definition_parser::push(push_arg v, range r)
                     m_state.parsing_state = state::too_much_text;
                     break;
                 }
-                m_collector->add_hl_symbol(token_info(move_by_one(), semantics::hl_scopes::data_def_modifier));
+                m_collector->add_hl_symbol(token_info(move_by_one(), hl_scopes::data_def_modifier));
                 m_state = { state::read_exponent, { true, false, true, false }, r.start };
                 break;
 

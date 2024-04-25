@@ -24,7 +24,7 @@
 namespace hlasm_plugin::parser_library {
 struct diagnostic_op;
 template<typename T>
-class diagnostic_consumer;
+class diagnostic_consumer_t;
 struct range;
 } // namespace hlasm_plugin::parser_library
 
@@ -57,7 +57,7 @@ public:
     virtual A_t count(std::span<const A_t> offset) const = 0;
 
     virtual bool can_read(
-        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const = 0;
+        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer_t<diagnostic_op>& diags) const = 0;
 
     virtual ~variable_symbol() = default;
 

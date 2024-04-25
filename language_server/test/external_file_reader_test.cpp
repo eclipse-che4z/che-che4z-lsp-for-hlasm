@@ -41,8 +41,8 @@ TEST(external_file_reader, file_reading)
     NiceMock<mock_json_sink> sink;
     MockFunction<void()> wakeup;
 
-    auto [r, resp] =
-        make_workspace_manager_response(std::in_place_type<NiceMock<workspace_manager_response_mock<sequence<char>>>>);
+    auto [r, resp] = make_workspace_manager_response(
+        std::in_place_type<NiceMock<workspace_manager_response_mock<std::string_view>>>);
     external_file_reader reader(sink);
 
     auto reg = reader.register_thread(wakeup.AsStdFunction());
@@ -62,7 +62,7 @@ TEST(external_file_reader, file_reading)
 
     reader.read_external_file("AAA", r);
 
-    EXPECT_CALL(*resp, provide(Truly([](sequence<char> v) { return std::string_view(v) == "AAACONTENT"; })));
+    EXPECT_CALL(*resp, provide(Truly([](std::string_view v) { return v == "AAACONTENT"; })));
     EXPECT_CALL(wakeup, Call());
 
     reader.write(R"(
@@ -81,8 +81,8 @@ TEST(external_file_reader, file_reading_bad)
     NiceMock<mock_json_sink> sink;
     MockFunction<void()> wakeup;
 
-    auto [r, resp] =
-        make_workspace_manager_response(std::in_place_type<NiceMock<workspace_manager_response_mock<sequence<char>>>>);
+    auto [r, resp] = make_workspace_manager_response(
+        std::in_place_type<NiceMock<workspace_manager_response_mock<std::string_view>>>);
     external_file_reader reader(sink);
 
     auto reg = reader.register_thread(wakeup.AsStdFunction());
@@ -121,8 +121,8 @@ TEST(external_file_reader, file_reading_error)
     NiceMock<mock_json_sink> sink;
     MockFunction<void()> wakeup;
 
-    auto [r, resp] =
-        make_workspace_manager_response(std::in_place_type<NiceMock<workspace_manager_response_mock<sequence<char>>>>);
+    auto [r, resp] = make_workspace_manager_response(
+        std::in_place_type<NiceMock<workspace_manager_response_mock<std::string_view>>>);
     external_file_reader reader(sink);
 
     auto reg = reader.register_thread(wakeup.AsStdFunction());
@@ -186,8 +186,7 @@ TEST(external_file_reader, directory_reading)
     reader.read_external_directory("CCC", r);
 
     EXPECT_CALL(*resp, provide(Truly([](workspace_manager_external_directory_result v) {
-        return v.member_urls.size() == 2 && std::string_view(v.member_urls.item(0)) == "A"
-            && std::string_view(v.member_urls.item(1)) == "B";
+        return v.member_urls.size() == 2 && v.member_urls[0] == "A" && v.member_urls[1] == "B";
     })));
     EXPECT_CALL(wakeup, Call());
 

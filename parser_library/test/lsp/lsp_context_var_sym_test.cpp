@@ -15,8 +15,8 @@
 #include "gtest/gtest.h"
 
 #include "analyzer_fixture.h"
+#include "completion_trigger_kind.h"
 #include "lsp/lsp_context.h"
-#include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;

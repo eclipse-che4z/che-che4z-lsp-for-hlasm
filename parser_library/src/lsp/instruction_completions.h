@@ -25,20 +25,20 @@ struct completion_label_comparer
 {
     using is_transparent = void;
 
-    bool operator()(const completion_item_s& l, const completion_item_s& r) const { return l.label < r.label; }
+    bool operator()(const completion_item& l, const completion_item& r) const { return l.label < r.label; }
     template<typename L>
-    bool operator()(const L& l, const completion_item_s& r) const
+    bool operator()(const L& l, const completion_item& r) const
     {
         return l < r.label;
     }
     template<typename R>
-    bool operator()(const completion_item_s& l, const R& r) const
+    bool operator()(const completion_item& l, const R& r) const
     {
         return l.label < r;
     }
 };
 
-extern const std::set<completion_item_s, completion_label_comparer> instruction_completion_items;
+extern const std::set<completion_item, completion_label_comparer> instruction_completion_items;
 
 } // namespace hlasm_plugin::parser_library::lsp
 

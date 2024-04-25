@@ -75,11 +75,10 @@ private:
     nlohmann::json register_capabilities() override;
 
     // Inherited via debug_event_consumer
-    void stopped(hlasm_plugin::parser_library::sequence<char> reason,
-        hlasm_plugin::parser_library::sequence<char> addtl_info) override;
+    void stopped(std::string_view reason, std::string_view addtl_info) override;
     void exited(int exit_code) override;
-    void mnote(unsigned char level, hlasm_plugin::parser_library::sequence<char> text) override;
-    void punch(hlasm_plugin::parser_library::sequence<char> text) override;
+    void mnote(unsigned char level, std::string_view text) override;
+    void punch(std::string_view text) override;
 
     parser_library::debugger_configuration_provider& dc_provider;
     std::optional<hlasm_plugin::parser_library::debugging::debugger> debugger;

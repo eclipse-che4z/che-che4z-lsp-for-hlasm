@@ -104,13 +104,12 @@ void log_w(Args... args)
 
 struct parsing_metadata_collector final : public parser_library::parsing_metadata_consumer
 {
-    void consume_parsing_metadata(
-        parser_library::sequence<char>, double, const parser_library::parsing_metadata& metadata) override
+    void consume_parsing_metadata(std::string_view, double, const parser_library::parsing_metadata& metadata) override
     {
         data.emplace_back(metadata);
     }
 
-    void outputs_changed(parser_library::sequence<char>) override {}
+    void outputs_changed(std::string_view) override {}
 
     std::vector<parser_library::parsing_metadata> data;
 };
@@ -402,7 +401,7 @@ private:
             annotation = get_file_message(current_iteration, bc);
             ws->register_diagnostics_consumer(&diag_counter);
             ws->register_parsing_metadata_consumer(&collector);
-            ws->add_workspace(bc.ws_folder.c_str(), utils::path::path_to_uri(bc.ws_folder).c_str());
+            ws->add_workspace(bc.ws_folder, utils::path::path_to_uri(bc.ws_folder));
             ws->idle_handler();
         }
 
@@ -592,7 +591,7 @@ private:
         annotation.append(parse_params.annotation).append(reparse ? "Reparsing " : "Parsing ");
         auto& ws = parse_params.ws;
         const auto source_uri = utils::path::path_to_uri(parse_params.source_path);
-        static const parser_library::document_change dummy_change({}, "", 0);
+        static const parser_library::document_change dummy_change({}, {});
 
         // Log a message before starting the clock
         log_if(annotation, "file: ", parse_params.source_file);
@@ -604,8 +603,8 @@ private:
         // open file/parse
         try
         {
-            reparse ? ws->did_change_file(source_uri.c_str(), 1, &dummy_change, 1)
-                    : ws->did_open_file(source_uri.c_str(), 1, content.c_str(), content.length());
+            reparse ? ws->did_change_file(source_uri, 1, std::span(&dummy_change, 1))
+                    : ws->did_open_file(source_uri, 1, content);
 
             ws->idle_handler();
         }

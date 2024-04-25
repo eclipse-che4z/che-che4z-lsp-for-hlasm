@@ -276,26 +276,26 @@ std::string get_logical_line(const text_data_view& text, size_t definition_line)
     return result;
 }
 
-completion_item_s generate_completion_item(const context::sequence_symbol& sym)
+completion_item generate_completion_item(const context::sequence_symbol& sym)
 {
     std::string label = "." + sym.name.to_string();
-    return completion_item_s(label, "Sequence symbol", label, "", completion_item_kind::seq_sym);
+    return completion_item(label, "Sequence symbol", label, "", completion_item_kind::seq_sym);
 }
 
-completion_item_s generate_completion_item(const variable_symbol_definition& vardef)
+completion_item generate_completion_item(const variable_symbol_definition& vardef)
 {
-    return completion_item_s("&" + vardef.name.to_string(),
+    return completion_item("&" + vardef.name.to_string(),
         hover_text(vardef),
         "&" + vardef.name.to_string(),
         "",
         completion_item_kind::var_sym);
 }
 
-completion_item_s generate_completion_item(const macro_info& sym, const file_info* info)
+completion_item generate_completion_item(const macro_info& sym, const file_info* info)
 {
     const context::macro_definition& m = *sym.macro_definition;
 
-    return completion_item_s(m.id.to_string(),
+    return completion_item(m.id.to_string(),
         get_macro_signature(m),
         m.id.to_string(),
         info ? get_macro_documentation(info->data, sym.definition_location.pos.line) : "",
@@ -303,16 +303,16 @@ completion_item_s generate_completion_item(const macro_info& sym, const file_inf
 }
 
 
-completion_list_s generate_completion(const completion_list_source& cls)
+std::vector<completion_item> generate_completion(const completion_list_source& cls)
 {
     return std::visit([](auto v) { return generate_completion(v); }, cls);
 }
 
-completion_list_s generate_completion(std::monostate) { return completion_list_s(); }
+std::vector<completion_item> generate_completion(std::monostate) { return std::vector<completion_item>(); }
 
-completion_list_s generate_completion(const vardef_storage* var_defs)
+std::vector<completion_item> generate_completion(const vardef_storage* var_defs)
 {
-    completion_list_s items;
+    std::vector<completion_item> items;
     for (const auto& vardef : *var_defs)
     {
         items.emplace_back(generate_completion_item(vardef));
@@ -321,9 +321,9 @@ completion_list_s generate_completion(const vardef_storage* var_defs)
     return items;
 }
 
-completion_list_s generate_completion(const context::label_storage* seq_syms)
+std::vector<completion_item> generate_completion(const context::label_storage* seq_syms)
 {
-    completion_list_s items;
+    std::vector<completion_item> items;
     items.reserve(seq_syms->size());
     for (const auto& [_, sym] : *seq_syms)
     {
@@ -332,7 +332,7 @@ completion_list_s generate_completion(const context::label_storage* seq_syms)
     return items;
 }
 
-completion_list_s generate_completion(const completion_list_instructions& cli)
+std::vector<completion_item> generate_completion(const completion_list_instructions& cli)
 {
     assert(cli.lsp_ctx);
 
@@ -348,7 +348,7 @@ completion_list_s generate_completion(const completion_list_instructions& cli)
         return it == s.end() ? nullptr : std::to_address(it);
     };
 
-    completion_list_s result;
+    std::vector<completion_item> result;
 
     // Store only instructions from the currently active instruction set
     for (const auto& instr : instruction_completion_items)
@@ -401,8 +401,8 @@ std::string_view ordinal_suffix(size_t i)
     return suffixes[i < std::size(suffixes) ? i : 0];
 }
 
-std::vector<completion_item_s> generate_completion(
-    std::vector<completion_item_s>& result, const context::macro_definition* md)
+std::vector<completion_item> generate_completion(
+    std::vector<completion_item>& result, const context::macro_definition* md)
 {
     for (const auto& positional : md->get_positional_params())
     {
@@ -433,12 +433,12 @@ std::vector<completion_item_s> generate_completion(
     return result;
 }
 
-std::vector<completion_item_s> generate_completion(const std::pair<const context::macro_definition*,
+std::vector<completion_item> generate_completion(const std::pair<const context::macro_definition*,
     std::vector<std::pair<const context::symbol*, context::id_index>>>& args)
 {
     const auto& [md, symbols] = args;
 
-    std::vector<completion_item_s> result;
+    std::vector<completion_item> result;
 
     if (md)
         generate_completion(result, md);

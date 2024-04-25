@@ -27,43 +27,46 @@ using namespace parser_library;
 class ws_mngr_mock : public workspace_manager
 {
 public:
-    MOCK_METHOD(void, add_workspace, (const char* name, const char* uri), (override));
-    MOCK_METHOD(void, remove_workspace, (const char* uri), (override));
+    MOCK_METHOD(void, add_workspace, (std::string_view name, std::string_view uri), (override));
+    MOCK_METHOD(void, remove_workspace, (std::string_view uri), (override));
 
-    MOCK_METHOD(void,
-        did_open_file,
-        (const char* document_uri, version_t version, const char* text, size_t text_length),
-        (override));
+    MOCK_METHOD(
+        void, did_open_file, (std::string_view document_uri, version_t version, std::string_view text), (override));
     MOCK_METHOD(void,
         did_change_file,
-        (const char* document_uri, version_t version, const document_change* changes, size_t ch_size),
+        (std::string_view document_uri, version_t version, std::span<const document_change> changes),
         (override));
-    MOCK_METHOD(void, did_close_file, (const char* document_uri), (override));
-    MOCK_METHOD(void, did_change_watched_files, (sequence<fs_change> changes), (override));
+    MOCK_METHOD(void, did_close_file, (std::string_view document_uri), (override));
+    MOCK_METHOD(void, did_change_watched_files, (std::span<const fs_change> changes), (override));
 
     MOCK_METHOD(void,
         definition,
-        (const char* document_uri, position pos, workspace_manager_response<position_uri>),
+        (std::string_view document_uri, position pos, workspace_manager_response<const location&>),
         (override));
     MOCK_METHOD(void,
         references,
-        (const char* document_uri, position pos, workspace_manager_response<position_uri_list>),
+        (std::string_view document_uri, position pos, workspace_manager_response<std::span<const location>>),
         (override));
-    MOCK_METHOD(
-        void, hover, (const char* document_uri, position pos, workspace_manager_response<sequence<char>>), (override));
+    MOCK_METHOD(void,
+        hover,
+        (std::string_view document_uri, position pos, workspace_manager_response<std::string_view>),
+        (override));
     MOCK_METHOD(void,
         completion,
-        (const char* document_uri,
+        (std::string_view document_uri,
             position pos,
             const char trigger_char,
             completion_trigger_kind trigger_kind,
-            workspace_manager_response<completion_list>),
+            workspace_manager_response<std::span<const completion_item>>),
         (override));
 
 
     MOCK_METHOD(
-        void, semantic_tokens, (const char*, workspace_manager_response<continuous_sequence<token_info>>), (override));
-    MOCK_METHOD(void, document_symbol, (const char*, workspace_manager_response<document_symbol_list>), (override));
+        void, semantic_tokens, (std::string_view, workspace_manager_response<std::span<const token_info>>), (override));
+    MOCK_METHOD(void,
+        document_symbol,
+        (std::string_view, workspace_manager_response<std::span<const document_symbol_item>>),
+        (override));
 
     MOCK_METHOD(void, configuration_changed, (const lib_config& new_config), (override));
 
@@ -74,37 +77,37 @@ public:
     MOCK_METHOD(void, set_message_consumer, (message_consumer * consumer), (override));
     MOCK_METHOD(void, set_request_interface, (workspace_manager_requests * requests), (override));
 
-    MOCK_METHOD(continuous_sequence<char>, get_virtual_file_content, (unsigned long long id), (const, override));
+    MOCK_METHOD(std::string, get_virtual_file_content, (unsigned long long id), (const, override));
     MOCK_METHOD(void, toggle_advisory_configuration_diagnostics, (), (override));
 
 
     MOCK_METHOD(void,
         make_opcode_suggestion,
-        (const char* document_uri,
-            const char* opcode,
+        (std::string_view document_uri,
+            std::string_view opcode,
             bool extended,
-            workspace_manager_response<continuous_sequence<opcode_suggestion>>),
+            workspace_manager_response<std::span<const opcode_suggestion>>),
         (override));
 
     MOCK_METHOD(void, idle_handler, (const std::atomic<unsigned char>* yield_indicator), (override));
 
     MOCK_METHOD(debugger_configuration_provider&, get_debugger_configuration_provider, (), (override));
 
-    MOCK_METHOD(void, invalidate_external_configuration, (sequence<char> uri), (override));
+    MOCK_METHOD(void, invalidate_external_configuration, (std::string_view uri), (override));
 
     MOCK_METHOD(void,
         branch_information,
-        (const char* document_uri, workspace_manager_response<continuous_sequence<branch_info>> resp),
+        (std::string_view document_uri, workspace_manager_response<std::span<const branch_info>> resp),
         (override));
 
     MOCK_METHOD(void,
         folding,
-        (const char* document_uri, workspace_manager_response<continuous_sequence<folding_range>> resp),
+        (std::string_view document_uri, workspace_manager_response<std::span<const folding_range>> resp),
         (override));
 
     MOCK_METHOD(void,
         retrieve_output,
-        (const char* document_uri, workspace_manager_response<continuous_sequence<output_line>> resp),
+        (std::string_view document_uri, workspace_manager_response<std::span<const output_line>> resp),
         (override));
 };
 

@@ -14,18 +14,16 @@
 
 #include "document_symbol_item.h"
 
-#include "utils/similar.h"
+namespace hlasm_plugin::parser_library {
 
-namespace hlasm_plugin::parser_library::lsp {
-
-document_symbol_item_s::document_symbol_item_s(std::string name, document_symbol_kind kind, range symbol_range)
+document_symbol_item::document_symbol_item(std::string name, document_symbol_kind kind, range symbol_range)
     : name(std::move(name))
     , kind(kind)
     , symbol_range(symbol_range)
     , symbol_selection_range(symbol_range)
 {}
-document_symbol_item_s::document_symbol_item_s(
-    std::string name, document_symbol_kind kind, range symbol_range, document_symbol_list_s children)
+document_symbol_item::document_symbol_item(
+    std::string name, document_symbol_kind kind, range symbol_range, std::vector<document_symbol_item> children)
     : name(std::move(name))
     , kind(kind)
     , symbol_range(symbol_range)
@@ -33,15 +31,4 @@ document_symbol_item_s::document_symbol_item_s(
     , children(std::move(children))
 {}
 
-bool is_similar(const document_symbol_list_s& l, const document_symbol_list_s& r)
-{
-    return l.size() == r.size() && std::is_permutation(l.begin(), l.end(), r.begin(), utils::is_similar);
-}
-
-bool is_similar(const document_symbol_item_s& l, const document_symbol_item_s& r)
-{
-    return l.name == r.name && l.kind == r.kind && l.symbol_range == r.symbol_range
-        && l.symbol_selection_range == r.symbol_selection_range && is_similar(l.children, r.children);
-}
-
-} // namespace hlasm_plugin::parser_library::lsp
+} // namespace hlasm_plugin::parser_library

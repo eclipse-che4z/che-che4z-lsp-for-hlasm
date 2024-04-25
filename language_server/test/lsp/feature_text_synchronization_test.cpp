@@ -43,23 +43,9 @@ TEST(text_synchronization, did_open_file)
     auto params1 = nlohmann::json::parse(
         R"({"textDocument":{"uri":")" + txt_file_uri + R"(","languageId":"plaintext","version":4,"text":"sad"}})");
 
-    EXPECT_CALL(ws_mngr, did_open_file(StrEq(txt_file_uri), 4, StrEq("sad"), 3));
+    EXPECT_CALL(ws_mngr, did_open_file(StrEq(txt_file_uri), 4, StrEq("sad")));
 
     notifs["textDocument/didOpen"].as_notification_handler()(params1);
-}
-
-MATCHER_P2(PointerAndSizeEqArray, pointer, size, "")
-{
-    (void)result_listener;
-    const size_t actual_size = std::get<1>(arg);
-    if (actual_size != size)
-        return false;
-    for (size_t i = 0; i < size; i++)
-    {
-        if (!(std::get<0>(arg)[i] == pointer[i]))
-            return false;
-    }
-    return true;
 }
 
 TEST(text_synchronization, did_change_file)
@@ -74,20 +60,20 @@ TEST(text_synchronization, did_change_file)
     auto params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + txt_file_uri
         + R"(","version":7},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":0,"character":8}},"rangeLength":8,"text":"sad"}, {"range":{"start":{"line":1,"character":12},"end":{"line":1,"character":14}},"rangeLength":2,"text":""}]})");
 
-    parser_library::document_change expected1[2] { { { { 0, 0 }, { 0, 8 } }, "sad", 3 },
-        { { { 1, 12 }, { 1, 14 } }, "", 0 } };
+    const parser_library::document_change expected1[2] {
+        { { { 0, 0 }, { 0, 8 } }, "sad" },
+        { { { 1, 12 }, { 1, 14 } }, "" },
+    };
 
-    EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_uri), 7, _, 2))
-        .With(Args<2, 3>(PointerAndSizeEqArray(expected1, std::size(expected1))));
+    EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_uri), 7, Pointwise(Eq(), std::span(expected1))));
     notifs["textDocument/didChange"].as_notification_handler()(params1);
 
 
 
-    parser_library::document_change expected2[1] { { "sad", 3 } };
+    const parser_library::document_change expected2[1] { { "sad" } };
     auto params2 = nlohmann::json::parse(
         R"({"textDocument":{"uri":")" + txt_file_uri + R"(","version":7},"contentChanges":[{"text":"sad"}]})");
-    EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_uri), 7, _, 1))
-        .With(Args<2, 3>(PointerAndSizeEqArray(expected2, std::size(expected2))));
+    EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_uri), 7, Pointwise(Eq(), std::span(expected2))));
 
     notifs["textDocument/didChange"].as_notification_handler()(params2);
 

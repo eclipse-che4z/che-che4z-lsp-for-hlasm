@@ -100,7 +100,7 @@ void feature_workspace_folders::initialized()
     if (m_supports_dynamic_file_change_notification)
         register_file_change_notifictions();
     for (const auto& [name, uri] : std::exchange(m_initial_workspaces, {}))
-        add_workspace(name, uri);
+        ws_mngr_.add_workspace(name, uri);
 }
 
 void feature_workspace_folders::on_did_change_workspace_folders(const nlohmann::json& params)
@@ -116,10 +116,7 @@ void feature_workspace_folders::add_workspaces(const nlohmann::json& added)
 {
     for (const auto& ws : added)
     {
-        const auto& name = ws.at("name").get_ref<const std::string&>();
-        const auto& uri = ws.at("uri").get_ref<const std::string&>();
-
-        add_workspace(name, uri);
+        ws_mngr_.add_workspace(ws.at("name").get<std::string_view>(), ws.at("uri").get<std::string_view>());
     }
 }
 
@@ -127,15 +124,8 @@ void feature_workspace_folders::remove_workspaces(const nlohmann::json& removed)
 {
     for (const auto& ws : removed)
     {
-        const auto& uri = ws.at("uri").get_ref<const std::string&>();
-
-        ws_mngr_.remove_workspace(uri.c_str());
+        ws_mngr_.remove_workspace(ws.at("uri").get<std::string_view>());
     }
-}
-
-void feature_workspace_folders::add_workspace(const std::string& name, const std::string& path)
-{
-    ws_mngr_.add_workspace(name.c_str(), path.c_str());
 }
 
 void feature_workspace_folders::did_change_watched_files(const nlohmann::json& params)
@@ -152,9 +142,9 @@ void feature_workspace_folders::did_change_watched_files(const nlohmann::json& p
                 auto type = change.at("type").get<long long>();
                 if (type < 1 || type > 3)
                     type = 0;
-                return fs_change { sequence<char>(uri), static_cast<fs_change_type>(type) };
+                return fs_change { uri, static_cast<fs_change_type>(type) };
             });
-        ws_mngr_.did_change_watched_files(sequence<fs_change>(changes));
+        ws_mngr_.did_change_watched_files(changes);
     }
     catch (const nlohmann::json::exception& j)
     {

@@ -16,19 +16,26 @@
 
 namespace hlasm_plugin::parser_library {
 
-fade_message_s fade_message_s::preprocessor_statement(std::string uri, const range& range)
+fade_message fade_message::preprocessor_statement(std::string uri, const range& range)
 {
-    return fade_message_s("PREP", "Statement processed by a preprocessor", std::move(uri), range);
+    return fade_message("PREP", "Statement processed by a preprocessor", std::move(uri), range);
 }
 
-fade_message_s fade_message_s::inactive_statement(std::string uri, const range& range)
+fade_message fade_message::inactive_statement(std::string uri, const range& range)
 {
-    return fade_message_s("INACT", "Inactive statement (based on opened files)", std::move(uri), range);
+    return fade_message("INACT", "Inactive statement (based on opened files)", std::move(uri), range);
 }
 
-fade_message_s fade_message_s::unused_macro(std::string uri, const range& range)
+fade_message fade_message::unused_macro(std::string uri, const range& range)
 {
-    return fade_message_s("MAC_UNUSED", "Macro defined but not used (based on opened files)", std::move(uri), range);
+    return fade_message("MAC_UNUSED", "Macro defined but not used (based on opened files)", std::move(uri), range);
 }
+
+fade_message::fade_message(std::string code, std::string message, std::string uri, range r)
+    : code(std::move(code))
+    , message(std::move(message))
+    , uri(std::move(uri))
+    , r(std::move(r))
+{}
 
 } // namespace hlasm_plugin::parser_library

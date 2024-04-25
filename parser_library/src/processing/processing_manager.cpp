@@ -40,7 +40,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     std::string_view file_text,
     workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
-    std::shared_ptr<std::vector<fade_message_s>> fade_msgs,
+    std::shared_ptr<std::vector<fade_message>> fade_msgs,
     output_handler* output)
     : diagnosable_ctx(*ctx.hlasm_ctx)
     , ctx_(ctx)
@@ -212,7 +212,7 @@ void processing_manager::finish_preprocessor()
             continue;
 
         if (m_fade_msgs && stmt->m_details.instruction.preproc_specific_r)
-            m_fade_msgs->emplace_back(fade_message_s::preprocessor_statement(
+            m_fade_msgs->emplace_back(fade_message::preprocessor_statement(
                 file_loc_.get_uri(), *stmt->m_details.instruction.preproc_specific_r));
 
         lsp_analyzer_.analyze(*stmt);

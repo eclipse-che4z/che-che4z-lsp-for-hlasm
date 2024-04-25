@@ -14,9 +14,10 @@
 
 #include "gtest/gtest.h"
 
-#include "analyzer_fixture.h"
+#include "analyzer.h"
+#include "completion_item.h"
+#include "completion_trigger_kind.h"
 #include "instruction_set_version.h"
-#include "lsp/completion_item.h"
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"
 
@@ -47,7 +48,7 @@ struct lsp_context_instr : public ::testing::Test
         return a;
     }
 
-    lsp::completion_list_s get_completion_list(instruction_set_version instr_set)
+    std::vector<completion_item> get_completion_list(instruction_set_version instr_set)
     {
         analyzer a(input,
             analyzer_options {

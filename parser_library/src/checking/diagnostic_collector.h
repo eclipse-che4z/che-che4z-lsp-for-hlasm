@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "context/source_context.h"
-#include "diagnostic.h"
+#include "diagnostic_op.h"
 #include "protocol.h"
 
 namespace hlasm_plugin::parser_library {

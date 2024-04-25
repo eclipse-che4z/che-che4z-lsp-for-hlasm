@@ -19,9 +19,9 @@
 
 namespace hlasm_plugin::parser_library {
 struct diagnostic_op;
-class diagnostic_s;
+struct diagnostic;
 
-diagnostic_s add_stack_details(diagnostic_op diagnostic, context::processing_stack_t stack);
+diagnostic add_stack_details(diagnostic_op diagnostic, context::processing_stack_t stack);
 
 } // namespace hlasm_plugin::parser_library
 

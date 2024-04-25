@@ -61,81 +61,21 @@ using namespace hlasm_plugin::parser_library::workspaces;
 
 namespace hlasm_plugin::parser_library::debugging {
 
-class breakpoints_t::impl
+evaluated_expression evaluated_expression_value(std::string s = {}, var_reference_t var_def = 0)
 {
-    friend class debugger;
-    friend class breakpoints_t;
-
-    std::vector<breakpoint> m_breakpoints;
-};
-
-breakpoints_t::breakpoints_t()
-    : pimpl(new impl())
-{}
-breakpoints_t::breakpoints_t(breakpoints_t&& b) noexcept
-    : pimpl(std::exchange(b.pimpl, nullptr))
-{}
-breakpoints_t& breakpoints_t::operator=(breakpoints_t&& b) & noexcept
-{
-    breakpoints_t tmp(std::move(b));
-    std::swap(pimpl, tmp.pimpl);
-    return *this;
-};
-breakpoints_t::~breakpoints_t()
-{
-    if (pimpl)
-        delete pimpl;
-}
-const breakpoint* breakpoints_t::begin() const { return pimpl->m_breakpoints.data(); }
-const breakpoint* breakpoints_t::end() const { return pimpl->m_breakpoints.data() + pimpl->m_breakpoints.size(); }
-std::size_t breakpoints_t::size() const { return pimpl->m_breakpoints.size(); }
-
-class evaluated_expression_t::impl
-{
-    friend class debugger;
-    friend class evaluated_expression_t;
-
-    std::string result;
-    bool error = false;
-    std::size_t var_ref = 0;
-
-    void set_value(std::string s) noexcept
-    {
-        result = std::move(s);
-        error = false;
-    }
-
-    void set_error(std::string s) noexcept
-    {
-        result = std::move(s);
-        error = true;
-    }
-};
-
-evaluated_expression_t::evaluated_expression_t()
-    : pimpl(new impl())
-{}
-
-evaluated_expression_t::evaluated_expression_t(evaluated_expression_t&& o) noexcept
-    : pimpl(std::exchange(o.pimpl, nullptr))
-{}
-
-evaluated_expression_t& evaluated_expression_t::operator=(evaluated_expression_t&& o) & noexcept
-{
-    auto tmp(std::move(o));
-    std::swap(pimpl, tmp.pimpl);
-    return *this;
+    return {
+        .result = std::move(s),
+        .var_ref = var_def,
+    };
 }
 
-evaluated_expression_t::~evaluated_expression_t()
+evaluated_expression evaluated_expression_error(std::string s)
 {
-    if (pimpl)
-        delete pimpl;
+    return {
+        .result = std::move(s),
+        .error = true,
+    };
 }
-
-[[nodiscard]] sequence<char> evaluated_expression_t::result() const noexcept { return sequence<char>(pimpl->result); }
-[[nodiscard]] bool evaluated_expression_t::is_error() const noexcept { return pimpl->error; }
-[[nodiscard]] std::size_t evaluated_expression_t::var_ref() const noexcept { return pimpl->var_ref; }
 
 // Implements DAP for macro tracing. Starts analyzer in a separate thread
 // then controls the flow of analyzer by implementing processing_tracer
@@ -164,7 +104,7 @@ class debugger::impl final : public processing::statement_analyzer, output_handl
     std::vector<scope> scopes_;
     std::unordered_map<frame_id_t, context::system_variable_map> last_system_variables_;
 
-    std::unordered_map<size_t, variable_store> variables_;
+    std::unordered_map<size_t, std::vector<variable>> variables_;
     size_t next_var_ref_ = 1;
     context::processing_stack_details_t proc_stack_;
 
@@ -177,7 +117,7 @@ class debugger::impl final : public processing::statement_analyzer, output_handl
 
     size_t add_variable(std::vector<variable> vars)
     {
-        variables_[next_var_ref_].variables = std::move(vars);
+        variables_[next_var_ref_] = std::move(vars);
         return next_var_ref_++;
     }
 
@@ -226,13 +166,13 @@ class debugger::impl final : public processing::statement_analyzer, output_handl
     void mnote(unsigned char level, std::string_view text) override
     {
         if (event_)
-            event_->mnote(level, sequence<char>(text));
+            event_->mnote(level, text);
     }
 
     void punch(std::string_view text) override
     {
         if (event_)
-            event_->punch(sequence<char>(text));
+            event_->punch(text);
     }
 
 public:
@@ -256,7 +196,7 @@ public:
             void error(int, const char*) const noexcept {}
         };
         auto [conf_resp, conf] = make_workspace_manager_response(std::in_place_type<conf_t>);
-        dc_provider.provide_debugger_configuration(sequence<char>(source), conf_resp);
+        dc_provider.provide_debugger_configuration(source, conf_resp);
         analyzer_task =
             utils::async_busy_wait(std::move(conf_resp), &conf->conf)
                 .then(std::bind_front(
@@ -517,16 +457,16 @@ public:
         return scopes_;
     }
 
-    const hlasm_plugin::parser_library::debugging::variable_store& variables(var_reference_t var_ref)
+    std::span<const hlasm_plugin::parser_library::debugging::variable> variables(var_reference_t var_ref)
     {
-        static const hlasm_plugin::parser_library::debugging::variable_store empty_variables;
-
         if (debug_ended_)
-            return empty_variables;
+            return {};
+
         auto it = variables_.find(var_ref);
         if (it == variables_.end())
-            return empty_variables;
-        for (auto& var : it->second.variables)
+            return {};
+
+        for (auto& var : it->second)
         {
             if (var.is_scalar())
                 continue;
@@ -554,8 +494,7 @@ public:
         }
     };
 
-    void evaluate_expression(evaluated_expression_t::impl& result,
-        const expressions::ca_expression& expr,
+    evaluated_expression evaluate_expression(const expressions::ca_expression& expr,
         const context::code_scope& scope,
         const context::system_variable_map& sysvars) const
     {
@@ -566,26 +505,22 @@ public:
         auto eval = expr.evaluate({ *ctx_, lib_info, diags, scope, sysvars });
 
         if (!error_msg.empty())
-            return result.set_error(std::move(error_msg));
+            return evaluated_expression_error(std::move(error_msg));
 
         using enum context::SET_t_enum;
         switch (eval.type())
         {
             case UNDEF_TYPE:
-                result.set_value("<UNDEFINED>");
-                break;
+                return evaluated_expression_value("<UNDEFINED>");
 
             case A_TYPE:
-                result.set_value(std::to_string(eval.access_a()));
-                break;
+                return evaluated_expression_value(std::to_string(eval.access_a()));
 
             case B_TYPE:
-                result.set_value(eval.access_b() ? "TRUE" : "FALSE");
-                break;
+                return evaluated_expression_value(eval.access_b() ? "TRUE" : "FALSE");
 
             case C_TYPE:
-                result.set_value(std::move(eval.access_c()));
-                break;
+                return evaluated_expression_value(std::move(eval.access_c()));
         }
     }
 
@@ -634,7 +569,7 @@ public:
         return text;
     }
 
-    void evaluate_expression(evaluated_expression_t::impl& result, const expressions::mach_expression& expr) const
+    evaluated_expression evaluate_expression(const expressions::mach_expression& expr) const
     {
         std::string error_msg;
         error_collector diags(error_msg);
@@ -647,30 +582,28 @@ public:
             lib_info);
 
         if (auto d = expr.get_dependencies(dep_solver); d.has_error)
-            return result.set_error("Expression cannot be evaluated");
+            return evaluated_expression_error("Expression cannot be evaluated");
         else if (d.contains_dependencies())
-            return result.set_error("Expression has unresolved dependencies");
+            return evaluated_expression_error("Expression has unresolved dependencies");
 
         auto eval = expr.evaluate(dep_solver, diags).ignore_qualification();
 
         if (!error_msg.empty())
-            return result.set_error(std::move(error_msg));
+            return evaluated_expression_error(std::move(error_msg));
 
         using enum context::symbol_value_kind;
         switch (eval.value_kind())
         {
             case UNDEF:
-                result.set_value("<UNDEFINED>");
-                break;
+                return evaluated_expression_value("<UNDEFINED>");
 
             case ABS:
-                result.set_value(std::to_string(eval.get_abs()));
-                break;
+                return evaluated_expression_value(std::to_string(eval.get_abs()));
 
             case RELOC:
-                result.set_value(to_string(eval.get_reloc()));
-                break;
+                return evaluated_expression_value(to_string(eval.get_reloc()));
         }
+        // unreachable
     }
 
     static constexpr const processing::processing_status mach_status = {
@@ -690,10 +623,8 @@ public:
         processing::op_code(context::id_storage::well_known::SETC, context::instruction_type::CA, nullptr)
     };
 
-    void evaluate_exact_match(evaluated_expression_t::impl& result,
-        std::string_view var_name,
-        const context::code_scope& scope,
-        const context::system_variable_map& sysvars)
+    evaluated_expression evaluate_exact_match(
+        std::string_view var_name, const context::code_scope& scope, const context::system_variable_map& sysvars)
     {
         std::optional<debugging::variable> var;
 
@@ -731,39 +662,28 @@ public:
         }
 
         if (!var)
-            return result.set_error("Variable not found");
+            return evaluated_expression_error("Variable not found");
 
-        result.set_value(std::move(var->value));
-        if (!var->is_scalar())
-        {
-            result.var_ref = add_variable(var->values());
-        }
+        return evaluated_expression_value(std::move(var->value), var->is_scalar() ? 0 : add_variable(var->values()));
     }
 
-    evaluated_expression_t evaluate(std::string_view expr, frame_id_t frame_id)
+    evaluated_expression evaluate(std::string_view expr, frame_id_t frame_id)
     {
-        evaluated_expression_t result;
-
         if (debug_ended_ || expr.empty())
-            return result;
+            return evaluated_expression_value();
 
         if (frame_id == (size_t)-1)
             frame_id = proc_stack_.size() - 1;
 
         if (frame_id >= proc_stack_.size())
-        {
-            result.pimpl->set_error("Invalid frame id");
-            return result;
-        }
+            return evaluated_expression_error("Invalid frame id");
+
         const auto& scope = proc_stack_[frame_id].scope;
         auto [sysvars, _] = last_system_variables_.try_emplace(
             frame_id, utils::factory([this, &scope]() { return ctx_->get_system_variables(scope); }));
 
         if (expr.starts_with("&") && lexing::is_valid_symbol_name(expr.substr(1)))
-        {
-            evaluate_exact_match(*result.pimpl, utils::to_upper_copy(expr.substr(1)), scope, sysvars->second);
-            return result;
-        }
+            return evaluate_exact_match(utils::to_upper_copy(expr.substr(1)), scope, sysvars->second);
 
         static constexpr const auto stringy_attribute = [](std::string_view s) {
             return s.starts_with("T'") || s.starts_with("O'") || s.starts_with("t'") || s.starts_with("o'");
@@ -803,27 +723,25 @@ public:
         };
 
         if (p->stream->LA(1) != (size_t)-1)
-            result.pimpl->set_error("Invalid expression");
+            return evaluated_expression_error("Invalid expression");
         else if (!error_msg.empty())
-            result.pimpl->set_error(std::move(error_msg));
+            return evaluated_expression_error(std::move(error_msg));
         else if (!op)
-            result.pimpl->set_error("Single expression expected");
+            return evaluated_expression_error("Single expression expected");
         else if (const auto* caop = ca_expr(op))
-            evaluate_expression(*result.pimpl, *caop, scope, sysvars->second);
+            return evaluate_expression(*caop, scope, sysvars->second);
         else if (const auto* mop = mach_expr(op))
-            evaluate_expression(*result.pimpl, *mop);
+            return evaluate_expression(*mop);
         else
-            result.pimpl->set_error("Unexpected operand format");
-
-        return result;
+            return evaluated_expression_error("Unexpected operand format");
     }
 
-    void breakpoints(const utils::resource::resource_location& source, std::vector<breakpoint> bps)
+    void breakpoints(const utils::resource::resource_location& source, std::span<const breakpoint> bps)
     {
-        breakpoints_[source] = std::move(bps);
+        breakpoints_[source].assign(bps.begin(), bps.end());
     }
 
-    [[nodiscard]] std::vector<breakpoint> breakpoints(const utils::resource::resource_location& source) const
+    [[nodiscard]] std::span<const breakpoint> breakpoints(const utils::resource::resource_location& source) const
     {
         if (auto it = breakpoints_.find(source); it != breakpoints_.end())
             return it->second;
@@ -834,7 +752,7 @@ public:
     {
         function_breakpoints_.clear();
         for (const auto& bp : bps)
-            function_breakpoints_.emplace(utils::to_upper_copy(std::string_view(bp.name)));
+            function_breakpoints_.emplace(utils::to_upper_copy(bp.name));
     }
 
     ~impl() { disconnect(); }
@@ -858,12 +776,12 @@ debugger::~debugger()
         delete pimpl;
 }
 
-void debugger::launch(sequence<char> source,
+void debugger::launch(std::string_view source,
     debugger_configuration_provider& dc_provider,
     bool stop_on_entry,
     workspace_manager_response<bool> resp)
 {
-    pimpl->launch(std::string_view(source), dc_provider, stop_on_entry, std::move(resp));
+    pimpl->launch(source, dc_provider, stop_on_entry, std::move(resp));
 }
 
 void debugger::set_event_consumer(debug_event_consumer* event) { pimpl->set_event_consumer(event); }
@@ -877,44 +795,21 @@ void debugger::pause() { pimpl->pause(); }
 void debugger::analysis_step(const std::atomic<unsigned char>* yield_indicator) { pimpl->step(yield_indicator); }
 
 
-void debugger::breakpoints(sequence<char> source, sequence<breakpoint> bps)
+void debugger::breakpoints(std::string_view source, std::span<const breakpoint> bps)
 {
-    pimpl->breakpoints(utils::resource::resource_location(std::string(source)), std::vector<breakpoint>(bps));
+    pimpl->breakpoints(utils::resource::resource_location(source), bps);
 }
-breakpoints_t debugger::breakpoints(sequence<char> source) const
+std::span<const breakpoint> debugger::breakpoints(std::string_view source) const
 {
-    breakpoints_t result;
-
-    result.pimpl->m_breakpoints = pimpl->breakpoints(utils::resource::resource_location(std::string(source)));
-
-
-    return result;
+    return pimpl->breakpoints(utils::resource::resource_location(source));
 }
 
-void debugger::function_breakpoints(sequence<function_breakpoint> bps)
-{
-    pimpl->function_breakpoints(std::span<const function_breakpoint>(bps.begin(), bps.end()));
-}
+void debugger::function_breakpoints(std::span<const function_breakpoint> bps) { pimpl->function_breakpoints(bps); }
 
-stack_frames_t debugger::stack_frames() const
-{
-    const auto& frames = pimpl->stack_frames();
-    return stack_frames_t(frames.data(), frames.size());
-}
-scopes_t debugger::scopes(frame_id_t frame_id) const
-{
-    const auto& s = pimpl->scopes(frame_id);
-    return scopes_t(s.data(), s.size());
-}
-variables_t debugger::variables(var_reference_t var_ref) const
-{
-    const auto& v = pimpl->variables(var_ref);
-    return variables_t(&v, v.variables.size());
-}
+std::span<const stack_frame> debugger::stack_frames() const { return pimpl->stack_frames(); }
+std::span<const scope> debugger::scopes(frame_id_t frame_id) const { return pimpl->scopes(frame_id); }
+std::span<const variable> debugger::variables(var_reference_t var_ref) const { return pimpl->variables(var_ref); }
 
-evaluated_expression_t debugger::evaluate(sequence<char> expr, frame_id_t id)
-{
-    return pimpl->evaluate(std::string_view(expr), id);
-}
+evaluated_expression debugger::evaluate(std::string_view expr, frame_id_t id) { return pimpl->evaluate(expr, id); }
 
 } // namespace hlasm_plugin::parser_library::debugging

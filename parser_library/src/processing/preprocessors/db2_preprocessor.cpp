@@ -1173,7 +1173,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
                 comment_start_column -= 2; // Compensate for code part having the '--' separator while comment part not
                 src_proc.add_hl_symbol(token_info(range(position(lineno, comment_start_column),
                                                       position(lineno, comment_start_column + comment->length() + 2)),
-                    semantics::hl_scopes::remark));
+                    hl_scopes::remark));
             }
 
             if (segment.code != segment.continuation)
@@ -1181,7 +1181,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
                     operand_start_column < comment_start_column)
                     src_proc.add_hl_symbol(token_info(
                         range(position(lineno, operand_start_column), position(lineno, comment_start_column)),
-                        semantics::hl_scopes::operand));
+                        hl_scopes::operand));
         }
     }
 

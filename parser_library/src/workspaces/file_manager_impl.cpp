@@ -324,10 +324,9 @@ file_content_state file_manager_impl::did_open_file(
 
 void file_manager_impl::did_change_file(const utils::resource::resource_location& document_loc,
     version_t lsp_version,
-    const document_change* changes_start,
-    size_t ch_size)
+    std::span<const document_change> changes)
 {
-    if (!ch_size)
+    if (changes.empty())
         return;
 
     std::shared_ptr<mapped_file> to_release;
@@ -360,8 +359,8 @@ void file_manager_impl::did_change_file(const utils::resource::resource_location
 
     // now we can be sure that we are the only ones who have access to file
 
-    auto last_whole = changes_start + ch_size;
-    while (last_whole != changes_start)
+    auto last_whole = changes.end();
+    while (last_whole != changes.begin())
     {
         --last_whole;
         if (last_whole->whole)
@@ -370,14 +369,13 @@ void file_manager_impl::did_change_file(const utils::resource::resource_location
 
     if (last_whole->whole)
     {
-        file->m_text = std::string_view(last_whole->text, last_whole->text_length);
+        file->m_text = last_whole->text;
         ++last_whole;
     }
 
-    for (const auto& change : std::span(last_whole, changes_start + ch_size))
+    for (const auto& change : std::span(last_whole, changes.end()))
     {
-        std::string_view text_s(change.text, change.text_length);
-        apply_text_diff(file->m_text, file->m_lines, change.change_range, text_s);
+        apply_text_diff(file->m_text, file->m_lines, change.change_range, change.text);
     }
 
     file->m_lsp_version = lsp_version;

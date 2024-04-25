@@ -13,6 +13,7 @@
  */
 
 #include "context/variables/set_symbol.h"
+#include "debug_types.h"
 #include "variable.h"
 
 namespace hlasm_plugin::parser_library::debugging {
@@ -81,7 +82,7 @@ set_type to_set_type(context::SET_t_enum e)
 }
 } // namespace
 
-variable generate_set_symbol_variable(const context::set_symbol_base& set_sym, int index)
+variable generate_set_symbol_variable(const context::set_symbol_base& set_sym, int32_t index)
 {
     return variable {
         .name = std::to_string(index),

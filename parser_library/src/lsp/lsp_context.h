@@ -33,6 +33,10 @@
 #include "range.h"
 #include "utils/resource_location.h"
 
+namespace hlasm_plugin::parser_library {
+enum class completion_trigger_kind;
+} // namespace hlasm_plugin::parser_library
+
 namespace hlasm_plugin::parser_library::workspaces {
 class parse_lib_provider;
 } // namespace hlasm_plugin::parser_library::workspaces
@@ -84,13 +88,13 @@ public:
     [[nodiscard]] const file_info* get_file_info(const utils::resource::resource_location& file_loc) const;
 
     location definition(const utils::resource::resource_location& document_loc, position pos) const;
-    location_list references(const utils::resource::resource_location& document_loc, position pos) const;
+    std::vector<location> references(const utils::resource::resource_location& document_loc, position pos) const;
     std::string hover(const utils::resource::resource_location& document_loc, position pos) const;
     completion_list_source completion(const utils::resource::resource_location& document_uri,
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind) const;
-    document_symbol_list_s document_symbol(const utils::resource::resource_location& document_loc) const;
+    std::vector<document_symbol_item> document_symbol(const utils::resource::resource_location& document_loc) const;
 
     const context::hlasm_context& get_related_hlasm_context() const { return *m_hlasm_ctx; }
 

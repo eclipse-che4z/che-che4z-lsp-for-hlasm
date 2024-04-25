@@ -161,7 +161,7 @@ TEST(workspace_folders, initialize_folder_with_configuration)
 
     EXPECT_CALL(rpm, request(std::string("workspace/configuration"), _, _, _)).Times(1);
 
-    parser_library::workspace_manager_response<parser_library::sequence<char>> json_text;
+    parser_library::workspace_manager_response<std::string_view> json_text;
     EXPECT_CALL(req_mock, request_workspace_configuration(StrEq(ws1_uri), _))
         .WillOnce(WithArg<1>([p = &json_text](auto&& x) { *p = std::move(x); }));
 
@@ -175,7 +175,7 @@ TEST(workspace_folders, initialize_folder_with_configuration)
     f.initialize_feature(init);
     f.initialized();
 
-    EXPECT_NO_THROW(json_text.provide(parser_library::sequence<char>(std::string_view("{}"))));
+    EXPECT_NO_THROW(json_text.provide("{}"));
 }
 
 TEST(workspace_folders, did_change_configuration)

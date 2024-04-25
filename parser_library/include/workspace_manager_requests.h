@@ -15,7 +15,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_REQUESTS_H
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_REQUESTS_H
 
-#include "sequence.h"
+#include <string_view>
+
 #include "workspace_manager_response.h"
 
 namespace hlasm_plugin::parser_library {
@@ -27,9 +28,9 @@ protected:
 
 public:
     virtual void request_workspace_configuration(
-        const char* url, workspace_manager_response<sequence<char>> json_text) = 0;
+        std::string_view url, workspace_manager_response<std::string_view> json_text) = 0;
     virtual void request_file_configuration(
-        sequence<char> url, workspace_manager_response<sequence<char>> json_text) = 0;
+        std::string_view url, workspace_manager_response<std::string_view> json_text) = 0;
 };
 
 } // namespace hlasm_plugin::parser_library

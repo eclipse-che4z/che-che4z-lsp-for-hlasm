@@ -60,7 +60,8 @@ bool external_file_reader::enqueue_message(
     return true;
 }
 
-void external_file_reader::read_external_file(const char* url, workspace_manager_response<sequence<char>> content)
+void external_file_reader::read_external_file(
+    std::string_view url, workspace_manager_response<std::string_view> content)
 {
     auto next_id = m_next_id.fetch_add(1, std::memory_order_relaxed);
     nlohmann::json msg = {
@@ -78,7 +79,7 @@ void external_file_reader::read_external_file(const char* url, workspace_manager
         else if (!result.is_string())
             content.error(utils::error::invalid_json);
         else
-            content.provide(sequence<char>(result.get<std::string_view>()));
+            content.provide(result.get<std::string_view>());
     };
 
     if (!enqueue_message(next_id, std::move(msg), std::move(handler)))
@@ -86,7 +87,7 @@ void external_file_reader::read_external_file(const char* url, workspace_manager
 }
 
 void external_file_reader::read_external_directory(
-    const char* url, workspace_manager_response<workspace_manager_external_directory_result> members, bool subdir)
+    std::string_view url, workspace_manager_response<workspace_manager_external_directory_result> members, bool subdir)
 {
     auto next_id = m_next_id.fetch_add(1, std::memory_order_relaxed);
     nlohmann::json msg = {
@@ -110,7 +111,7 @@ void external_file_reader::read_external_directory(
             members.error(utils::error::invalid_json);
             return;
         }
-        std::vector<sequence<char>> tmp;
+        std::vector<std::string_view> tmp;
         try
         {
             tmp.reserve(result.size());
@@ -127,12 +128,10 @@ void external_file_reader::read_external_directory(
                 members.error(utils::error::invalid_json);
                 return;
             }
-            tmp.emplace_back(sequence<char>(item.get<std::string_view>()));
+            tmp.emplace_back(item.get<std::string_view>());
         }
 
-        members.provide({
-            .member_urls = sequence<sequence<char>>(tmp),
-        });
+        members.provide({ .member_urls = tmp });
     };
 
     if (!enqueue_message(next_id, std::move(msg), std::move(handler)))

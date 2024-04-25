@@ -37,18 +37,17 @@ public:
         d.set_event_consumer(this);
     }
 
-    void stopped(hlasm_plugin::parser_library::sequence<char> reason,
-        hlasm_plugin::parser_library::sequence<char> details) override;
+    void stopped(std::string_view reason, std::string_view details) override;
 
     void exited(int exit_code) override;
 
-    void mnote(unsigned char level, hlasm_plugin::parser_library::sequence<char> text) override
+    void mnote(unsigned char level, std::string_view text) override
     {
         last_mnote.first = level;
-        last_mnote.second = std::string_view(text);
+        last_mnote.second = text;
     }
 
-    void punch(hlasm_plugin::parser_library::sequence<char> text) override { last_punch = std::string_view(text); }
+    void punch(std::string_view text) override { last_punch = text; }
 
     void wait_for_stopped();
 

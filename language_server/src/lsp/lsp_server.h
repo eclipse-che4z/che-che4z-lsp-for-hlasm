@@ -87,7 +87,7 @@ private:
     // client notifications
 
     // Implements the LSP showMessage request.
-    void show_message(const char* message, parser_library::message_type type) override;
+    void show_message(std::string_view message, parser_library::message_type type) override;
 
     // Remembers name of files for which were sent diagnostics the last time
     // diagnostics were sent to client. Used to clear diagnostics in client
@@ -95,23 +95,23 @@ private:
     std::unordered_set<std::string> last_diagnostics_files_;
     // Implements parser_library::diagnostics_consumer: wraps the diagnostics in json and
     // sends them to client.
-    void consume_diagnostics(
-        parser_library::diagnostic_list diagnostics, parser_library::fade_message_list fade_messages) override;
+    void consume_diagnostics(std::span<const parser_library::diagnostic> diagnostics,
+        std::span<const parser_library::fade_message> fade_messages) override;
 
     // Registers LSP methods implemented by this server (not by features).
     void register_methods();
 
     // Ingest parsing metadata and forward them to telemetry client
     void consume_parsing_metadata(
-        parser_library::sequence<char> uri, double duration, const parser_library::parsing_metadata& metadata) override;
+        std::string_view uri, double duration, const parser_library::parsing_metadata& metadata) override;
 
     // Notify vscode that outputs have changed
-    void outputs_changed(parser_library::sequence<char> uri) override;
+    void outputs_changed(std::string_view uri) override;
 
     void request_workspace_configuration(
-        const char* url, parser_library::workspace_manager_response<parser_library::sequence<char>> json_text) override;
-    void request_file_configuration(parser_library::sequence<char> url,
-        parser_library::workspace_manager_response<parser_library::sequence<char>> json_text) override;
+        std::string_view url, parser_library::workspace_manager_response<std::string_view> json_text) override;
+    void request_file_configuration(
+        std::string_view url, parser_library::workspace_manager_response<std::string_view> json_text) override;
 
     void invalidate_external_configuration(const nlohmann::json& error);
 

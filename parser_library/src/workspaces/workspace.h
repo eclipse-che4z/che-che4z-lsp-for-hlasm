@@ -37,11 +37,16 @@
 #include "macro_cache.h"
 #include "message_consumer.h"
 #include "processor_group.h"
+#include "semantics/highlighting_info.h"
 #include "utils/resource_location.h"
 #include "utils/task.h"
 #include "workspace_configuration.h"
 
 namespace hlasm_plugin::parser_library {
+struct completion_item;
+enum class completion_trigger_kind;
+struct document_symbol_item;
+struct fade_message;
 class external_configuration_requests;
 } // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::workspaces {
@@ -109,9 +114,9 @@ public:
     location definition(const resource_location& document_loc, position pos) const;
     std::vector<location> references(const resource_location& document_loc, position pos) const;
     std::string hover(const resource_location& document_loc, position pos) const;
-    std::vector<lsp::completion_item_s> completion(
+    std::vector<completion_item> completion(
         const resource_location& document_loc, position pos, char trigger_char, completion_trigger_kind trigger_kind);
-    std::vector<lsp::document_symbol_item_s> document_symbol(const resource_location& document_loc) const;
+    std::vector<document_symbol_item> document_symbol(const resource_location& document_loc) const;
 
     std::vector<token_info> semantic_tokens(const resource_location& document_loc) const;
 
@@ -119,7 +124,7 @@ public:
 
     std::vector<folding_range> folding(const resource_location& document_loc) const;
 
-    std::vector<std::pair<int, std::string>> retrieve_output(const resource_location& document_loc) const;
+    std::vector<output_line> retrieve_output(const resource_location& document_loc) const;
 
     std::optional<performance_metrics> last_metrics(const resource_location& document_loc) const;
 
@@ -143,7 +148,7 @@ public:
     std::vector<std::pair<std::string, size_t>> make_opcode_suggestion(
         const resource_location& file, std::string_view opcode, bool extended);
 
-    void retrieve_fade_messages(std::vector<fade_message_s>& fms) const;
+    void retrieve_fade_messages(std::vector<fade_message>& fms) const;
 
     utils::value_task<debugging::debugger_configuration> get_debugger_configuration(resource_location url);
 
@@ -160,7 +165,7 @@ private:
 
     bool is_dependency(const resource_location& file_location) const;
 
-    void show_message(const std::string& message);
+    void show_message(std::string_view message);
 
     message_consumer* message_consumer_ = nullptr;
 

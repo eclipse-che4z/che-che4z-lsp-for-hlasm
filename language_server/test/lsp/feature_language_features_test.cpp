@@ -16,7 +16,7 @@
 
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
-#include "lsp/completion_item.h"
+#include "completion_item.h"
 #include "lsp/feature_language_features.h"
 #include "nlohmann/json.hpp"
 #include "utils/platform.h"
@@ -58,15 +58,13 @@ TEST(language_features, completion_resolve)
     auto params1 = nlohmann::json::parse(
         R"({"textDocument":{"uri":")" + uri + R"("},"position":{"line":0,"character":1},"context":{"triggerKind":1}})");
 
-    static const hlasm_plugin::parser_library::lsp::completion_list_s compl_list {
-        hlasm_plugin::parser_library::lsp::completion_item_s("LABEL", "", "", "DOC"),
+    static const std::vector compl_list {
+        hlasm_plugin::parser_library::completion_item("LABEL", "", "", "DOC"),
     };
     EXPECT_CALL(ws_mngr,
         completion(
             StrEq(uri), parser_library::position(0, 1), '\0', parser_library::completion_trigger_kind::invoked, _))
-        .WillOnce(WithArg<4>(Invoke([](auto channel) {
-            channel.provide({ compl_list.data(), compl_list.size() });
-        })));
+        .WillOnce(WithArg<4>(Invoke([](auto channel) { channel.provide(compl_list); })));
     nlohmann::json completion_response;
     EXPECT_CALL(response_mock, respond(request_id(0), StrEq(""), _)).WillOnce(SaveArg<2>(&completion_response));
     notifs["textDocument/completion"].as_request_handler()(request_id(0), params1);
@@ -154,7 +152,7 @@ TEST(language_features, document_symbol)
 
     std::string file_text = "A EQU 1";
 
-    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri, 0, file_text);
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     nlohmann::json r = {
@@ -185,7 +183,7 @@ TEST(language_features, semantic_tokens)
 
     std::string file_text = "A EQU 1\n SAM31";
 
-    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri, 0, file_text);
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     nlohmann::json response { { "data", { 0, 0, 1, 0, 0, 0, 2, 3, 1, 0, 0, 4, 1, 10, 0, 1, 1, 5, 1, 0 } } };
@@ -206,7 +204,7 @@ TEST(language_features, semantic_tokens_cancelled)
 
     std::string file_text = "A EQU 1\n SAM31";
 
-    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri, 0, file_text);
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     nlohmann::json response { { "data", { 0, 0, 1, 0, 0, 0, 2, 3, 1, 0, 0, 4, 1, 10, 0, 1, 1, 5, 1, 0 } } };
@@ -236,7 +234,7 @@ D EQU                                                                 1X3145
 IIIIIIIIIIIIIII1
 )";
 
-    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri, 0, file_text);
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     // clang-format off
@@ -271,7 +269,7 @@ TEST(language_features, semantic_tokens_multiline_overlap)
 .Y ANOP
 )";
 
-    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri, 0, file_text);
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     // clang-format off
@@ -327,15 +325,15 @@ INSTANTIATE_TEST_SUITE_P(convert_tokens_to_num_array,
     ::testing::Values(test_param { "empty", {}, nlohmann::json::array() },
         test_param { "one_token",
             {
-                { { { 0, 0 }, { 0, 5 } }, parser_library::semantics::hl_scopes::instruction },
+                { { { 0, 0 }, { 0, 5 } }, parser_library::hl_scopes::instruction },
             },
             { 0, 0, 5, 1, 0 } },
         test_param {
             "one_side_overlap",
             {
-                { { { 0, 0 }, { 0, 5 } }, parser_library::semantics::hl_scopes::instruction },
-                { { { 0, 3 }, { 0, 8 } }, parser_library::semantics::hl_scopes::remark },
-                { { { 0, 10 }, { 0, 11 } }, parser_library::semantics::hl_scopes::ignored },
+                { { { 0, 0 }, { 0, 5 } }, parser_library::hl_scopes::instruction },
+                { { { 0, 3 }, { 0, 8 } }, parser_library::hl_scopes::remark },
+                { { { 0, 10 }, { 0, 11 } }, parser_library::hl_scopes::ignored },
             },
             // clang-format off
             { 0, 0, 3, 1, 0,
@@ -347,11 +345,11 @@ INSTANTIATE_TEST_SUITE_P(convert_tokens_to_num_array,
         test_param {
             "enclosed_overlap",
             {
-                { { { 0, 0 }, { 0, 10 } }, parser_library::semantics::hl_scopes::string },
-                { { { 0, 1 }, { 0, 3 } }, parser_library::semantics::hl_scopes::var_symbol },
-                { { { 0, 5 }, { 0, 7 } }, parser_library::semantics::hl_scopes::var_symbol },
-                { { { 0, 7 }, { 0, 9 } }, parser_library::semantics::hl_scopes::var_symbol },
-                { { { 0, 10 }, { 0, 11 } }, parser_library::semantics::hl_scopes::ignored },
+                { { { 0, 0 }, { 0, 10 } }, parser_library::hl_scopes::string },
+                { { { 0, 1 }, { 0, 3 } }, parser_library::hl_scopes::var_symbol },
+                { { { 0, 5 }, { 0, 7 } }, parser_library::hl_scopes::var_symbol },
+                { { { 0, 7 }, { 0, 9 } }, parser_library::hl_scopes::var_symbol },
+                { { { 0, 10 }, { 0, 11 } }, parser_library::hl_scopes::ignored },
             },
             // clang-format off
             { 0, 0, 1, 9, 0,   // beginning of string
@@ -368,11 +366,11 @@ INSTANTIATE_TEST_SUITE_P(convert_tokens_to_num_array,
             // Case like this probably never happens from the real grammar, but the code should be able to handle it.
             "nested_enclosed_overlap",
             {
-                { { { 0, 0 }, { 0, 15 } }, parser_library::semantics::hl_scopes::string },
-                { { { 0, 1 }, { 0, 3 } }, parser_library::semantics::hl_scopes::var_symbol },
-                { { { 0, 4 }, { 0, 10 } }, parser_library::semantics::hl_scopes::instruction },
-                { { { 0, 5 }, { 0, 8 } }, parser_library::semantics::hl_scopes::var_symbol },
-                { { { 0, 11 }, { 0, 14 } }, parser_library::semantics::hl_scopes::var_symbol },
+                { { { 0, 0 }, { 0, 15 } }, parser_library::hl_scopes::string },
+                { { { 0, 1 }, { 0, 3 } }, parser_library::hl_scopes::var_symbol },
+                { { { 0, 4 }, { 0, 10 } }, parser_library::hl_scopes::instruction },
+                { { { 0, 5 }, { 0, 8 } }, parser_library::hl_scopes::var_symbol },
+                { { { 0, 11 }, { 0, 14 } }, parser_library::hl_scopes::var_symbol },
             },
             // clang-format off
             { 0, 0, 1, 9, 0,   // beginning of string
@@ -433,11 +431,11 @@ TEST(language_features, branch_information)
     using namespace hlasm_plugin::parser_library;
 
     EXPECT_CALL(ws_mngr, branch_information(StrEq(uri), _)).WillOnce(WithArg<1>(Invoke([](auto channel) {
-        channel.provide(make_continuous_sequence(std::vector<branch_info> {
+        channel.provide(std::vector<branch_info> {
             branch_info(1, 2, branch_direction::up),
             branch_info(3, 4, branch_direction::down),
             branch_info(5, 6, branch_direction::somewhere),
-        }));
+        });
     })));
 
     auto expected_json = nlohmann::json::parse(R"(
@@ -480,7 +478,7 @@ TEST(language_features, folding)
 
     std::string file_text = "*\n*\n*\n";
 
-    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri, 0, file_text);
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     nlohmann::json response = nlohmann::json::array();
@@ -506,7 +504,7 @@ TEST(language_features, retrieve_output)
 
     std::string file_text = " PUNCH 'A'\n MNOTE 2,'B'";
 
-    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri, 0, file_text);
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     nlohmann::json response = nlohmann::json::array();
@@ -535,7 +533,7 @@ TEST(language_features, retrieve_output_empty)
 
     std::string file_text = "";
 
-    ws_mngr->did_open_file(uri.c_str(), 0, file_text.c_str(), file_text.size());
+    ws_mngr->did_open_file(uri, 0, file_text);
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     nlohmann::json response = nlohmann::json::array();

@@ -30,8 +30,8 @@
 #include "../workspace_manager_response_mock.h"
 #include "compiler_options.h"
 #include "debug_event_consumer_s_mock.h"
+#include "debug_types.h"
 #include "debugger.h"
-#include "debugging/debug_types.h"
 #include "debugging/debugger_configuration.h"
 #include "protocol.h"
 #include "utils/resource_location.h"
@@ -88,7 +88,7 @@ class debugger_configuration_provider_mock : public debugger_configuration_provi
 public:
     MOCK_METHOD(void,
         provide_debugger_configuration,
-        (sequence<char> document_uri, workspace_manager_response<debugger_configuration> conf),
+        (std::string_view document_uri, workspace_manager_response<debugger_configuration> conf),
         (override));
 };
 } // namespace
@@ -110,25 +110,25 @@ TEST(debugger, stopped_on_entry)
 
     auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
     EXPECT_CALL(*mock, provide(true));
-    d.launch(file_name.c_str(), dc_provider, true, resp);
+    d.launch(file_name, dc_provider, true, resp);
 
     m.wait_for_stopped();
 
     auto frames = d.stack_frames();
     ASSERT_EQ(frames.size(), 1U);
-    const auto f = frames.item(0);
-    EXPECT_EQ(std::string_view(f.source_file.uri), file_loc.get_uri());
-    EXPECT_EQ(f.source_range.start.line, 0U);
-    EXPECT_EQ(f.source_range.end.line, 0U);
-    EXPECT_EQ(std::string_view(f.name), "OPENCODE");
+    const auto& f = frames[0];
+    EXPECT_EQ(f.frame_source.uri, file_loc.get_uri());
+    EXPECT_EQ(f.begin_line, 0U);
+    EXPECT_EQ(f.end_line, 0U);
+    EXPECT_EQ(f.name, "OPENCODE");
     auto sc = d.scopes(f.id);
     ASSERT_EQ(sc.size(), 3U);
-    EXPECT_EQ(std::string_view(sc.item(0).name), "Globals");
-    EXPECT_EQ(std::string_view(sc.item(1).name), "Locals");
-    EXPECT_EQ(std::string_view(sc.item(2).name), "Ordinary symbols");
-    auto globs = d.variables(sc.item(0).variable_reference);
+    EXPECT_EQ(sc[0].name, "Globals");
+    EXPECT_EQ(sc[1].name, "Locals");
+    EXPECT_EQ(sc[2].name, "Ordinary symbols");
+    auto globs = d.variables(sc[0].var_reference);
     EXPECT_EQ(globs.size(), 12U);
-    auto locs = d.variables(sc.item(1).variable_reference);
+    auto locs = d.variables(sc[1].var_reference);
     EXPECT_EQ(locs.size(), 0U);
 
     d.next();
@@ -151,7 +151,7 @@ TEST(debugger, disconnect)
     file_manager.did_open_file(file_loc, 0, "   LR 1,2");
     auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
     EXPECT_CALL(*mock, provide(true));
-    d.launch(file_name.c_str(), dc_provider, true, resp);
+    d.launch(file_name, dc_provider, true, resp);
     m.wait_for_stopped();
 
     d.disconnect();
@@ -191,7 +191,7 @@ public:
         : data_(str)
     {}
 
-    bool check(debugger& d, const hlasm_plugin::parser_library::variable& var) const
+    bool check(debugger& d, const hlasm_plugin::parser_library::debugging::variable& var) const
     {
         if (ignore_)
             return true;
@@ -207,11 +207,11 @@ public:
             return var.value.size() == 0;
     }
 
-    bool has_children(const hlasm_plugin::parser_library::variable& var) const { return var.variable_reference; }
+    bool has_children(const hlasm_plugin::parser_library::debugging::variable& var) const { return var.var_reference; }
 
-    bool check_children(debugger& d, const hlasm_plugin::parser_library::variable& var) const
+    bool check_children(debugger& d, const hlasm_plugin::parser_library::debugging::variable& var) const
     {
-        auto child_vars = var.variable_reference;
+        auto child_vars = var.var_reference;
         if (!child_vars)
             return false;
         auto actual_children = d.variables(child_vars);
@@ -286,7 +286,7 @@ struct frame_vars_ignore_sys_vars : public frame_vars
 };
 
 bool check_vars(debugger& d,
-    const std::vector<hlasm_plugin::parser_library::variable>& vars,
+    std::span<const hlasm_plugin::parser_library::debugging::variable> vars,
     const std::unordered_map<std::string, test_var_value>& exp_vars)
 {
     if (vars.size() != exp_vars.size())
@@ -310,33 +310,32 @@ bool check_step(
         return false;
     for (size_t i = 0; i != exp_frames.size(); ++i)
     {
-        auto f = frames.item(i);
-        if (exp_frames[i].begin_line != f.source_range.start.line)
+        const auto& f = frames[i];
+        if (exp_frames[i].begin_line != f.begin_line)
             return false;
-        if (exp_frames[i].end_line != f.source_range.end.line)
+        if (exp_frames[i].end_line != f.end_line)
             return false;
-        if (!exp_frames[i].check_frame_source(std::string_view(f.source_file.uri)))
+        if (!exp_frames[i].check_frame_source(f.frame_source.uri))
             return false;
         if (exp_frames[i].id != f.id)
             return false;
-        if (exp_frames[i].name != std::string_view(f.name))
+        if (exp_frames[i].name != f.name)
             return false;
     }
     if (frames.size() != exp_frame_vars.size())
         return false;
     for (size_t i = 0; i < frames.size(); ++i)
     {
-        auto sc = d.scopes(frames.item(i).id);
+        auto sc = d.scopes(frames[i].id);
         if (sc.size() != 3U)
             return false;
-        using variables = std::vector<hlasm_plugin::parser_library::variable>;
-        variables globs(d.variables(sc.item(0).variable_reference));
+        auto globs = d.variables(sc[0].var_reference);
         if (!check_vars(d, globs, exp_frame_vars[i].globals))
             return false;
-        variables locs(d.variables(sc.item(1).variable_reference));
+        auto locs(d.variables(sc[1].var_reference));
         if (!check_vars(d, locs, exp_frame_vars[i].locals))
             return false;
-        variables ords(d.variables(sc.item(2).variable_reference));
+        auto ords(d.variables(sc[2].var_reference));
         if (!check_vars(d, ords, exp_frame_vars[i].ord_syms))
             return false;
     }
@@ -436,7 +435,7 @@ public:
                 return result;
             }
 
-            void copy_diagnostics(std::vector<diagnostic_s>&) const override { assert(false); }
+            void copy_diagnostics(std::vector<diagnostic>&) const override { assert(false); }
 
             const resource_location& get_location() const
             {
@@ -498,7 +497,7 @@ TEST(debugger, test)
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration)
         .WillRepeatedly(Invoke([&file_manager, &lib_provider](auto uri, auto r) {
-            resource_location res = resource_location(std::string_view(uri));
+            resource_location res = resource_location(uri);
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
@@ -603,7 +602,7 @@ TEST(debugger, sysstmt)
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration)
         .WillRepeatedly(Invoke([&file_manager, &lib_provider](auto uri, auto r) {
-            resource_location res = resource_location(std::string_view(uri));
+            resource_location res = resource_location(uri);
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
@@ -678,7 +677,7 @@ A  MAC_IN ()
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration)
         .WillRepeatedly(Invoke([&file_manager, &lib_provider](auto uri, auto r) {
-            resource_location res = resource_location(std::string_view(uri));
+            resource_location res = resource_location(uri);
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
@@ -858,7 +857,7 @@ TEST(debugger, positional_parameters)
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration)
         .WillRepeatedly(Invoke([&file_manager, &lib_provider](auto uri, auto r) {
-            resource_location res = resource_location(std::string_view(uri));
+            resource_location res = resource_location(uri);
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
@@ -992,7 +991,7 @@ TEST(debugger, arrays)
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration)
         .WillRepeatedly(Invoke([&file_manager, &lib_provider](auto uri, auto r) {
-            resource_location res = resource_location(std::string_view(uri));
+            resource_location res = resource_location(uri);
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
@@ -1061,7 +1060,7 @@ B EQU A
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration)
         .WillRepeatedly(Invoke([&file_manager, &lib_provider](auto uri, auto r) {
-            resource_location res = resource_location(std::string_view(uri));
+            resource_location res = resource_location(uri);
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
@@ -1121,7 +1120,7 @@ TEST(debugger, ainsert)
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration)
         .WillRepeatedly(Invoke([&file_manager, &lib_provider](auto uri, auto r) {
-            resource_location res = resource_location(std::string_view(uri));
+            resource_location res = resource_location(uri);
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
@@ -1198,7 +1197,7 @@ TEST(debugger, concurrent_next_and_file_change)
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration)
         .WillRepeatedly(Invoke([&file_manager, &lib_provider](auto uri, auto r) {
-            resource_location res = resource_location(std::string_view(uri));
+            resource_location res = resource_location(uri);
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
@@ -1220,11 +1219,9 @@ TEST(debugger, concurrent_next_and_file_change)
     m.wait_for_stopped();
     std::string new_string = "SOME NEW FILE DOES NOT MATTER";
     std::vector<document_change> chs;
-    chs.emplace_back(new_string.c_str(), new_string.size());
+    chs.emplace_back(new_string);
     d.next();
-    std::thread t([&file_manager, &copy1_file_loc, &chs]() {
-        file_manager.did_change_file(copy1_file_loc, 0, chs.data(), chs.size());
-    });
+    std::thread t([&file_manager, &copy1_file_loc, &chs]() { file_manager.did_change_file(copy1_file_loc, 0, chs); });
     t.join();
     m.wait_for_stopped();
 
@@ -1245,7 +1242,7 @@ TEST(debugger, breakpoints_set_get)
 
     breakpoint bp(5);
 
-    d.breakpoints("file", sequence<breakpoint>(&bp, 1));
+    d.breakpoints("file", std::span(&bp, 1));
     auto bps = d.breakpoints("file");
 
     ASSERT_EQ(bps.size(), 1);
@@ -1271,8 +1268,8 @@ TEST(debugger, function_breakpoints)
 
     file_manager.did_open_file(file_loc, 0, open_code);
 
-    function_breakpoint bp(sequence(std::string_view("SAM31")));
-    d.function_breakpoints(sequence<function_breakpoint>(&bp, 1));
+    function_breakpoint bp("SAM31");
+    d.function_breakpoints(std::span(&bp, 1));
 
     auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
     EXPECT_CALL(*mock, provide(true));
@@ -1300,7 +1297,7 @@ TEST(debugger, invalid_file)
 
     auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
     EXPECT_CALL(*mock, provide(false));
-    d.launch(file_name.c_str(), dc_provider, true, resp);
+    d.launch(file_name, dc_provider, true, resp);
 
     while (!resp.resolved())
         d.analysis_step(nullptr);
@@ -1344,7 +1341,7 @@ L   DS    F
     file_manager.did_open_file(file_loc, 0, open_code);
 
     breakpoint bp(6);
-    d.breakpoints(file_loc.get_uri(), sequence<breakpoint>(&bp, 1));
+    d.breakpoints(file_loc.get_uri(), std::span(&bp, 1));
 
     auto [resp, mock] = make_workspace_manager_response(std::in_place_type<workspace_manager_response_mock<bool>>);
     EXPECT_CALL(*mock, provide(true));
@@ -1388,12 +1385,12 @@ L   DS    F
         SCOPED_TRACE(testing::Message() << expr << ", " << frame);
 
         const auto& [exp, error, structured] = expected;
-        auto res = d.evaluate(sequence<char>(expr), frame);
+        auto res = d.evaluate(expr, frame);
 
         if (!exp.empty())
-            EXPECT_EQ(std::string_view(res.result()), exp);
-        EXPECT_EQ(res.is_error(), error);
-        EXPECT_EQ(!!res.var_ref(), structured);
+            EXPECT_EQ(res.result, exp);
+        EXPECT_EQ(res.error, error);
+        EXPECT_EQ(!!res.var_ref, structured);
     }
 
     d.disconnect();

@@ -14,6 +14,7 @@
 
 #include "../common_testing.h"
 #include "analyzer_fixture.h"
+#include "completion_trigger_kind.h"
 #include "context/ordinary_assembly/symbol.h"
 #include "lsp/lsp_context.h"
 

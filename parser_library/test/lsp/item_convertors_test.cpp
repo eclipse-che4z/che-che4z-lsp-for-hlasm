@@ -19,8 +19,8 @@
 
 #include "gtest/gtest.h"
 
+#include "completion_item.h"
 #include "context/using.h"
-#include "lsp/completion_item.h"
 #include "lsp/file_info.h"
 #include "lsp/item_convertors.h"
 #include "lsp/macro_info.h"
@@ -34,7 +34,7 @@ constexpr auto zero_stmt_id = context::statement_id { 0 };
 TEST(item_convertors, macro_sequence_symbol)
 {
     const macro_sequence_symbol seq(id_index("INMAC"), location(), zero_stmt_id);
-    const lsp::completion_item_s expected(".INMAC", "Sequence symbol", ".INMAC", "", completion_item_kind::seq_sym);
+    const completion_item expected(".INMAC", "Sequence symbol", ".INMAC", "", completion_item_kind::seq_sym);
 
     EXPECT_EQ(generate_completion_item(seq), expected);
 }
@@ -42,7 +42,7 @@ TEST(item_convertors, macro_sequence_symbol)
 TEST(item_convertors, opencode_sequence_symbol)
 {
     const opencode_sequence_symbol seq(id_index("OUTMAC"), location(), source_position(), source_snapshot());
-    const lsp::completion_item_s expected(".OUTMAC", "Sequence symbol", ".OUTMAC", "", completion_item_kind::seq_sym);
+    const completion_item expected(".OUTMAC", "Sequence symbol", ".OUTMAC", "", completion_item_kind::seq_sym);
 
     EXPECT_EQ(generate_completion_item(seq), expected);
 }
@@ -50,7 +50,7 @@ TEST(item_convertors, opencode_sequence_symbol)
 TEST(item_convertors, macro_param)
 {
     const variable_symbol_definition var(id_index("LABEL"), zero_stmt_id, position());
-    const lsp::completion_item_s expected("&LABEL", "MACRO parameter", "&LABEL", "", completion_item_kind::var_sym);
+    const completion_item expected("&LABEL", "MACRO parameter", "&LABEL", "", completion_item_kind::var_sym);
 
 
     EXPECT_EQ(generate_completion_item(var), expected);
@@ -59,7 +59,7 @@ TEST(item_convertors, macro_param)
 TEST(item_convertors, set_symbol_a)
 {
     const variable_symbol_definition var(id_index("KEY_PAR"), SET_t_enum::A_TYPE, false, zero_stmt_id, position());
-    const lsp::completion_item_s expected("&KEY_PAR", "SETA variable", "&KEY_PAR", "", completion_item_kind::var_sym);
+    const completion_item expected("&KEY_PAR", "SETA variable", "&KEY_PAR", "", completion_item_kind::var_sym);
 
 
     EXPECT_EQ(generate_completion_item(var), expected);
@@ -68,7 +68,7 @@ TEST(item_convertors, set_symbol_a)
 TEST(item_convertors, set_symbol_b)
 {
     const variable_symbol_definition var(id_index("KEY_PAR"), SET_t_enum::B_TYPE, false, zero_stmt_id, position());
-    const lsp::completion_item_s expected("&KEY_PAR", "SETB variable", "&KEY_PAR", "", completion_item_kind::var_sym);
+    const completion_item expected("&KEY_PAR", "SETB variable", "&KEY_PAR", "", completion_item_kind::var_sym);
 
 
     EXPECT_EQ(generate_completion_item(var), expected);
@@ -77,7 +77,7 @@ TEST(item_convertors, set_symbol_b)
 TEST(item_convertors, set_symbol_c)
 {
     const variable_symbol_definition var(id_index("KEY_PAR"), SET_t_enum::C_TYPE, false, zero_stmt_id, position());
-    const lsp::completion_item_s expected("&KEY_PAR", "SETC variable", "&KEY_PAR", "", completion_item_kind::var_sym);
+    const completion_item expected("&KEY_PAR", "SETC variable", "&KEY_PAR", "", completion_item_kind::var_sym);
 
 
     EXPECT_EQ(generate_completion_item(var), expected);
@@ -159,9 +159,9 @@ TEST(item_convertors, macro)
     auto result_with_doc = generate_completion_item(mi, &fi);
     auto result_without_doc = generate_completion_item(mi, nullptr);
 
-    lsp::completion_item_s expected_with_doc(
+    completion_item expected_with_doc(
         "MAC", "MAC &FIRST_PARAM,&SECOND_PARAM=1", "MAC", macro_def_expected, completion_item_kind::macro);
-    lsp::completion_item_s expected_without_doc(
+    completion_item expected_without_doc(
         "MAC", "MAC &FIRST_PARAM,&SECOND_PARAM=1", "MAC", "", completion_item_kind::macro);
 
     EXPECT_EQ(result_with_doc, expected_with_doc);
@@ -187,6 +187,6 @@ TEST(item_convertors, using_hover_text)
         EXPECT_EQ(out, expected);
     }
 
-    EXPECT_EQ(lsp::hover_text({}), "");
+    EXPECT_EQ(lsp::hover_text(std::span<const context::using_context_description>()), "");
     EXPECT_EQ(lsp::hover_text(std::span(&input.front().first, 1)), "Active USINGs: **A**+X'5'(X'3'),R1,R2\n");
 }

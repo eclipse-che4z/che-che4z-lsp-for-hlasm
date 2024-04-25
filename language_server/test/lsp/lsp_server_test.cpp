@@ -269,7 +269,7 @@ TEST(lsp_server_test, non_compliant_uri)
     lsp::server s(ws_mngr);
     s.set_send_message_provider(&smpm);
 
-    EXPECT_CALL(ws_mngr, did_open_file(StrEq("user_storage:/user/storage/layout"), 4, StrEq("sad"), 3));
+    EXPECT_CALL(ws_mngr, did_open_file(StrEq("user_storage:/user/storage/layout"), 4, StrEq("sad")));
 
     s.message_received(
         R"({"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"user_storage:/user/storage/layout","languageId":"plaintext","version":4,"text":"sad"}}})"_json);
@@ -305,7 +305,7 @@ TEST(lsp_server_test, external_configuration_request)
     {
         std::variant<std::string, std::pair<int, std::string>> result;
 
-        void provide(parser_library::sequence<char> c) { result = std::string(c); }
+        void provide(std::string_view c) { result = std::string(c); }
         void error(int err, const char* errmsg) noexcept { result = std::pair<int, std::string>(err, errmsg); }
     };
 
@@ -315,7 +315,7 @@ TEST(lsp_server_test, external_configuration_request)
         reply(
             R"({"jsonrpc":"2.0","id":0,"method":"external_configuration_request","params":{"uri":"scheme:path"}})"_json));
 
-    wmr->request_file_configuration(parser_library::sequence<char>(std::string_view("scheme:path")), c);
+    wmr->request_file_configuration("scheme:path", c);
 
     s.message_received(R"({"jsonrpc":"2.0","id":0,"result":{"configuration":"GRP1"}})"_json);
 
@@ -339,7 +339,7 @@ TEST(lsp_server_test, external_configuration_request_error)
     {
         std::variant<std::string, std::pair<int, std::string>> result;
 
-        void provide(parser_library::sequence<char> c) { result = std::string(c); }
+        void provide(std::string_view c) { result = std::string(c); }
         void error(int err, const char* errmsg) noexcept { result = std::pair<int, std::string>(err, errmsg); }
     };
 
@@ -349,7 +349,7 @@ TEST(lsp_server_test, external_configuration_request_error)
         reply(
             R"({"jsonrpc":"2.0","id":0,"method":"external_configuration_request","params":{"uri":"scheme:path"}})"_json));
 
-    wmr->request_file_configuration(parser_library::sequence<char>(std::string_view("scheme:path")), c);
+    wmr->request_file_configuration("scheme:path", c);
 
     s.message_received(R"({"jsonrpc":"2.0","id":0,"error":{"code":123456, "message":"error message"}})"_json);
 

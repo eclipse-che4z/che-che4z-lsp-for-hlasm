@@ -18,8 +18,9 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "completion_item.h"
+#include "completion_trigger_kind.h"
 #include "empty_configs.h"
-#include "lsp/completion_item.h"
 #include "nlohmann/json.hpp"
 #include "semantics/highlighting_info.h"
 #include "utils/content_loader.h"
@@ -165,7 +166,7 @@ public:
     {
         return file_content_state::changed_content;
     }
-    void did_change_file(const resource_location&, version_t, const document_change*, size_t) override {}
+    void did_change_file(const resource_location&, version_t, std::span<const document_change>) override {}
     void did_close_file(const resource_location&) override {}
 };
 
@@ -694,18 +695,20 @@ TEST(workspace, lsp_file_not_processed_yet)
 
     mngr.did_open_file(file_loc, 0, " LR 1,1");
 
+    static const std::vector<completion_item> empty_list;
+
     EXPECT_EQ(ws.definition(file_loc, { 0, 5 }), location({ 0, 5 }, file_loc));
-    EXPECT_EQ(ws.references(file_loc, { 0, 5 }), location_list());
+    EXPECT_EQ(ws.references(file_loc, { 0, 5 }), std::vector<location>());
     EXPECT_EQ(ws.hover(file_loc, { 0, 5 }), "");
-    EXPECT_EQ(ws.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked), lsp::completion_list_s());
+    EXPECT_EQ(ws.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked), empty_list);
 
     run_if_valid(ws.did_open_file(file_loc));
     // parsing not done yet
 
     EXPECT_EQ(ws.definition(file_loc, { 0, 5 }), location({ 0, 5 }, file_loc));
-    EXPECT_EQ(ws.references(file_loc, { 0, 5 }), location_list());
+    EXPECT_EQ(ws.references(file_loc, { 0, 5 }), std::vector<location>());
     EXPECT_EQ(ws.hover(file_loc, { 0, 5 }), "");
-    EXPECT_EQ(ws.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked), lsp::completion_list_s());
+    EXPECT_EQ(ws.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked), empty_list);
 
     // Prior to parsing, it should return default values
     EXPECT_EQ(ws.semantic_tokens(file_loc), semantics::lines_info());

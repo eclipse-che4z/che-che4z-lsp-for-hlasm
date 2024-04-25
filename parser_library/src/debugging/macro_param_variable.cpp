@@ -13,6 +13,7 @@
  */
 
 #include "context/variables/macro_param.h"
+#include "debug_types.h"
 #include "variable.h"
 
 namespace hlasm_plugin::parser_library::debugging {

@@ -169,8 +169,7 @@ void ordinary_processor::end_processing()
     hlasm_ctx.ord_ctx.symbol_dependencies().resolve_all_as_default();
 
     // do not replace stack trace in the messages - it is already provided
-    diagnostic_consumer_transform using_diags(
-        [this](diagnostic_s d) { diagnosable_impl::add_diagnostic(std::move(d)); });
+    diagnostic_consumer_transform using_diags([this](diagnostic d) { diagnosable_impl::add_diagnostic(std::move(d)); });
     hlasm_ctx.using_resolve(using_diags, lib_info);
 
     process_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies().collect_postponed());

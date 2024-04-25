@@ -78,15 +78,15 @@ void preprocessor::do_highlighting(const semantics::preprocessor_statement_si& s
     const auto& details = stmt.m_details;
 
     if (!details.label.name.empty())
-        src_proc.add_hl_symbol(token_info(details.label.r, semantics::hl_scopes::label), continue_column);
+        src_proc.add_hl_symbol(token_info(details.label.r, hl_scopes::label), continue_column);
 
-    src_proc.add_hl_symbol(token_info(details.instruction.nr.r, semantics::hl_scopes::instruction), continue_column);
+    src_proc.add_hl_symbol(token_info(details.instruction.nr.r, hl_scopes::instruction), continue_column);
 
     for (const auto& operand : details.operands)
-        src_proc.add_hl_symbol(token_info(operand.r, semantics::hl_scopes::operand), continue_column);
+        src_proc.add_hl_symbol(token_info(operand.r, hl_scopes::operand), continue_column);
 
     for (const auto& remark_r : details.remarks)
-        src_proc.add_hl_symbol(token_info(remark_r, semantics::hl_scopes::remark), continue_column);
+        src_proc.add_hl_symbol(token_info(remark_r, hl_scopes::remark), continue_column);
 }
 
 void preprocessor::do_highlighting(const semantics::preprocessor_statement_si& stmt,
@@ -106,12 +106,12 @@ void preprocessor::do_highlighting(const semantics::preprocessor_statement_si& s
         if (continuation)
             src_proc.add_hl_symbol(
                 token_info(range(position(lineno, continuation_column), position(lineno, ignore_column)),
-                    semantics::hl_scopes::continuation));
+                    hl_scopes::continuation));
 
         if (const size_t ignore_len = std::distance(segment.ignore, segment.end); ignore_len)
             src_proc.add_hl_symbol(token_info(
                 range(position(lineno, ignore_column), position(lineno, ignore_column + ignore_len - !continuation)),
-                semantics::hl_scopes::ignored));
+                hl_scopes::ignored));
     }
 }
 

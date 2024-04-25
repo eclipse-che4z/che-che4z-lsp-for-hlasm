@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_RESPONSE_H
 
 #include <atomic>
+#include <type_traits>
 #include <utility>
 
 namespace hlasm_plugin::parser_library {
@@ -193,7 +194,10 @@ class workspace_manager_response : workspace_manager_response_base
                 auto* ptr = static_cast<shared_data<U>*>(p);
                 try
                 {
-                    ptr->data.provide(std::move(*static_cast<T*>(t)));
+                    if constexpr (std::is_reference_v<T>)
+                        ptr->data.provide(*static_cast<std::remove_reference_t<T>*>(t));
+                    else
+                        ptr->data.provide(std::move(*static_cast<T*>(t)));
                 }
                 catch (...)
                 {
@@ -232,7 +236,8 @@ public:
     using workspace_manager_response_base::resolved;
     using workspace_manager_response_base::valid;
 
-    void provide(T&& t) const noexcept { workspace_manager_response_base::provide(&t); }
+    void provide(const T& t) const noexcept requires(!std::is_reference_v<T>) { provide(T(t)); }
+    void provide(T&& t) const noexcept { workspace_manager_response_base::provide((void*)&t); }
 
     friend decltype(make_workspace_manager_response);
 };

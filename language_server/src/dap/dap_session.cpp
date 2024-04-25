@@ -74,7 +74,7 @@ void session::thread_routine()
         LOG_ERROR("DAP Thread encountered an unknown exception.");
     }
 }
-void session::provide_debugger_configuration(parser_library::sequence<char> document_uri,
+void session::provide_debugger_configuration(std::string_view document_uri,
     parser_library::workspace_manager_response<parser_library::debugging::debugger_configuration> conf)
 {
     struct proxy

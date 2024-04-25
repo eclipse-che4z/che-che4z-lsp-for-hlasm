@@ -33,7 +33,7 @@ struct db2_preprocessor_options;
 struct endevor_preprocessor_options;
 
 template<typename T>
-class diagnostic_consumer;
+class diagnostic_consumer_t;
 struct diagnostic_op;
 
 namespace lexing {
@@ -77,17 +77,17 @@ public:
 
     static std::unique_ptr<preprocessor> create(const cics_preprocessor_options&,
         library_fetcher,
-        diagnostic_consumer<diagnostic_op>*,
+        diagnostic_consumer_t<diagnostic_op>*,
         semantics::source_info_processor&);
 
     static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&,
         library_fetcher,
-        diagnostic_consumer<diagnostic_op>*,
+        diagnostic_consumer_t<diagnostic_op>*,
         semantics::source_info_processor&);
 
     static std::unique_ptr<preprocessor> create(const endevor_preprocessor_options&,
         library_fetcher,
-        diagnostic_consumer<diagnostic_op>*,
+        diagnostic_consumer_t<diagnostic_op>*,
         semantics::source_info_processor&);
 
     virtual std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> take_statements();

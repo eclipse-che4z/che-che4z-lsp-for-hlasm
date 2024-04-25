@@ -30,7 +30,7 @@ class diagnosable_ctx : public diagnosable_impl, public diagnostic_op_consumer
     context::hlasm_context& ctx_;
 
 public:
-    void add_diagnostic(diagnostic_s diagnostic) const override;
+    void add_diagnostic(diagnostic diagnostic) const override;
     void add_diagnostic(diagnostic_op diagnostic) const override;
 
 protected:

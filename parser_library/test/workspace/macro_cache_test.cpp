@@ -130,8 +130,8 @@ TEST(macro_cache_test, copy_from_macro)
     EXPECT_NE(new_ctx.hlasm_ctx->get_copy_member(copy_id), nullptr);
 
     // introduce macro change
-    document_change simple_change({}, " ", 1);
-    file_mngr.did_change_file(macro_file_loc, 0, &simple_change, 1);
+    document_change simple_change({}, " ");
+    file_mngr.did_change_file(macro_file_loc, 0, std::span(&simple_change, 1));
 
     // After macro change, copy should still be cached
     analyzing_context ctx_macro_changed = create_analyzing_context(opencode_file_name, new_ctx.hlasm_ctx->ids_ptr());
@@ -144,7 +144,7 @@ TEST(macro_cache_test, copy_from_macro)
     save_dependency(macro_c, parse_dependency(macro_file, ctx, processing::processing_kind::MACRO));
 
     // introduce change into copy
-    file_mngr.did_change_file(copyfile_file_loc, 0, &simple_change, 1);
+    file_mngr.did_change_file(copyfile_file_loc, 0, std::span(&simple_change, 1));
 
     // Macro depends on the copyfile, so none should be cached.
     analyzing_context ctx_copy_changed = create_analyzing_context(opencode_file_name, ids);
@@ -287,11 +287,10 @@ MAC OPSYN AREAD
 }
 
 namespace {
-std::optional<diagnostic_s> find_diag_with_filename(
-    const std::vector<diagnostic_s>& diags, const resource_location& file)
+std::optional<diagnostic> find_diag_with_filename(const std::vector<diagnostic>& diags, const resource_location& file)
 {
     auto macro_diag =
-        std::find_if(diags.begin(), diags.end(), [&](const diagnostic_s& d) { return d.file_uri == file.get_uri(); });
+        std::find_if(diags.begin(), diags.end(), [&](const diagnostic& d) { return d.file_uri == file.get_uri(); });
     if (macro_diag == diags.end())
         return std::nullopt;
     else
@@ -396,7 +395,7 @@ TEST(macro_cache_test, inline_depends_on_copy)
     EXPECT_TRUE(copy_c.load_from_cache(copy_key, new_ctx));
 
     analyzing_context new_ctx_2 = create_analyzing_context(opencode_file_name, ids);
-    document_change simple_change({ { 0, 4 }, { 0, 5 } }, "16", 2);
-    file_mngr.did_change_file(copy_file_loc, 0, &simple_change, 1);
+    document_change simple_change({ { 0, 4 }, { 0, 5 } }, "16");
+    file_mngr.did_change_file(copy_file_loc, 0, std::span(&simple_change, 1));
     EXPECT_FALSE(copy_c.load_from_cache(copy_key, new_ctx_2));
 }

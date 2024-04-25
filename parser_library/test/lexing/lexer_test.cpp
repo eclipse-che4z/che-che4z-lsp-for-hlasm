@@ -184,5 +184,5 @@ TEST(lexer_test, bad_continuation)
     a.analyze();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E001" }));
-    EXPECT_TRUE(matches_message_properties(a.diags(), { range({ 1, 0 }, { 1, 4 }) }, &diagnostic_s::diag_range));
+    EXPECT_TRUE(matches_message_properties(a.diags(), { range({ 1, 0 }, { 1, 4 }) }, &diagnostic::diag_range));
 }

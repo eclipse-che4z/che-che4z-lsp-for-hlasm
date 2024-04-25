@@ -146,7 +146,7 @@ std::string_view get_implicit_parameters_text(bool has_some)
 }
 
 void process_machine_instruction(
-    const context::machine_instruction& machine_instr, std::set<completion_item_s, completion_label_comparer>& items)
+    const context::machine_instruction& machine_instr, std::set<completion_item, completion_label_comparer>& items)
 {
     operand_formatter detail; // operands used for hover - e.g. V,D12U(X,B)[,M]
     operand_formatter autocomplete; // operands used for autocomplete - e.g. V,D12U(X,B) [,M]
@@ -205,7 +205,7 @@ void process_machine_instruction(
 }
 
 void process_assembler_instruction(
-    const context::assembler_instruction& asm_instr, std::set<completion_item_s, completion_label_comparer>& items)
+    const context::assembler_instruction& asm_instr, std::set<completion_item, completion_label_comparer>& items)
 {
     items.emplace(std::string(asm_instr.name()),
         utils::concat(asm_instr.name(), "   ", asm_instr.description()),
@@ -234,7 +234,7 @@ std::array<unsigned char, context::machine_instruction::max_operand_count> compu
 }
 
 void process_mnemonic_code(
-    const context::mnemonic_code& mnemonic_instr, std::set<completion_item_s, completion_label_comparer>& items)
+    const context::mnemonic_code& mnemonic_instr, std::set<completion_item, completion_label_comparer>& items)
 {
     operand_formatter subs_ops_mnems;
     operand_formatter subs_ops_nomnems;
@@ -373,7 +373,7 @@ void process_mnemonic_code(
 }
 
 void process_ca_instruction(
-    const context::ca_instruction& ca_instr, std::set<completion_item_s, completion_label_comparer>& items)
+    const context::ca_instruction& ca_instr, std::set<completion_item, completion_label_comparer>& items)
 {
     items.emplace(std::string(ca_instr.name()),
         "",
@@ -384,8 +384,8 @@ void process_ca_instruction(
 
 } // namespace
 
-const std::set<completion_item_s, completion_label_comparer> instruction_completion_items = [] {
-    std::set<completion_item_s, completion_label_comparer> result;
+const std::set<completion_item, completion_label_comparer> instruction_completion_items = [] {
+    std::set<completion_item, completion_label_comparer> result;
 
     for (const auto& instr : context::instruction::all_ca_instructions())
     {

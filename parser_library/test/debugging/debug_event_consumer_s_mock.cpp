@@ -16,10 +16,10 @@
 
 using namespace hlasm_plugin::parser_library;
 
-void debug_event_consumer_s_mock::stopped(sequence<char> reason, hlasm_plugin::parser_library::sequence<char> details)
+void debug_event_consumer_s_mock::stopped(std::string_view reason, std::string_view details)
 {
-    last_reason = std::string_view(reason);
-    last_details = std::string_view(details);
+    last_reason = reason;
+    last_details = details;
     ++stop_count;
     stopped_ = true;
 }

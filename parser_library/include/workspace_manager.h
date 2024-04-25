@@ -21,21 +21,28 @@
 
 #include <atomic>
 #include <memory>
+#include <span>
 #include <utility>
 
 #include "branch_info.h"
+#include "completion_trigger_kind.h"
 #include "folding_range.h"
 #include "lib_config.h"
+#include "location.h"
 #include "message_consumer.h"
 #include "protocol.h"
-#include "sequence.h"
 #include "workspace_manager_requests.h"
 
 namespace hlasm_plugin::parser_library {
+struct completion_item;
+struct diagnostic;
+struct document_symbol_item;
+struct fade_message;
 class workspace_manager_external_file_requests;
 class external_configuration_requests;
 namespace debugging {
 struct debugger_configuration;
+struct output_line;
 } // namespace debugging
 
 // Interface that can be implemented to be able to get list of
@@ -44,7 +51,8 @@ struct debugger_configuration;
 class diagnostics_consumer
 {
 public:
-    virtual void consume_diagnostics(diagnostic_list diagnostics, fade_message_list fade_messages) = 0;
+    virtual void consume_diagnostics(
+        std::span<const diagnostic> diagnostics, std::span<const fade_message> fade_messages) = 0;
 
 protected:
     ~diagnostics_consumer() = default;
@@ -55,8 +63,8 @@ protected:
 class parsing_metadata_consumer
 {
 public:
-    virtual void consume_parsing_metadata(sequence<char> uri, double duration, const parsing_metadata& metrics) = 0;
-    virtual void outputs_changed(sequence<char> uri) = 0;
+    virtual void consume_parsing_metadata(std::string_view uri, double duration, const parsing_metadata& metrics) = 0;
+    virtual void outputs_changed(std::string_view uri) = 0;
 
 protected:
     ~parsing_metadata_consumer() = default;
@@ -72,13 +80,13 @@ enum class fs_change_type
 
 struct fs_change
 {
-    sequence<char> uri;
+    std::string_view uri;
     fs_change_type change_type;
 };
 
 struct opcode_suggestion
 {
-    continuous_sequence<char> opcode;
+    std::string opcode;
     size_t distance;
 };
 
@@ -92,35 +100,38 @@ protected:
 
 public:
     virtual void provide_debugger_configuration(
-        sequence<char> document_uri, workspace_manager_response<debugging::debugger_configuration> conf) = 0;
+        std::string_view document_uri, workspace_manager_response<debugging::debugger_configuration> conf) = 0;
 };
 
 class workspace_manager
 {
 public:
     virtual ~workspace_manager() = default;
-    virtual void add_workspace(const char* name, const char* uri) = 0;
-    virtual void remove_workspace(const char* uri) = 0;
+    virtual void add_workspace(std::string_view name, std::string_view uri) = 0;
+    virtual void remove_workspace(std::string_view uri) = 0;
 
-    virtual void did_open_file(const char* document_uri, version_t version, const char* text, size_t text_size) = 0;
+    virtual void did_open_file(std::string_view document_uri, version_t version, std::string_view text) = 0;
     virtual void did_change_file(
-        const char* document_uri, version_t version, const document_change* changes, size_t ch_size) = 0;
-    virtual void did_close_file(const char* document_uri) = 0;
-    virtual void did_change_watched_files(sequence<fs_change> changes) = 0;
+        std::string_view document_uri, version_t version, std::span<const document_change> changes) = 0;
+    virtual void did_close_file(std::string_view document_uri) = 0;
+    virtual void did_change_watched_files(std::span<const fs_change> changes) = 0;
 
-    virtual void definition(const char* document_uri, position pos, workspace_manager_response<position_uri> resp) = 0;
+    virtual void definition(
+        std::string_view document_uri, position pos, workspace_manager_response<const location&> resp) = 0;
     virtual void references(
-        const char* document_uri, position pos, workspace_manager_response<position_uri_list> resp) = 0;
-    virtual void hover(const char* document_uri, position pos, workspace_manager_response<sequence<char>> resp) = 0;
-    virtual void completion(const char* document_uri,
+        std::string_view document_uri, position pos, workspace_manager_response<std::span<const location>> resp) = 0;
+    virtual void hover(
+        std::string_view document_uri, position pos, workspace_manager_response<std::string_view> resp) = 0;
+    virtual void completion(std::string_view document_uri,
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind,
-        workspace_manager_response<completion_list> resp) = 0;
+        workspace_manager_response<std::span<const completion_item>> resp) = 0;
 
     virtual void semantic_tokens(
-        const char* document_uri, workspace_manager_response<continuous_sequence<token_info>> resp) = 0;
-    virtual void document_symbol(const char* document_uri, workspace_manager_response<document_symbol_list> resp) = 0;
+        std::string_view document_uri, workspace_manager_response<std::span<const token_info>> resp) = 0;
+    virtual void document_symbol(
+        std::string_view document_uri, workspace_manager_response<std::span<const document_symbol_item>> resp) = 0;
 
     virtual void configuration_changed(const lib_config& new_config) = 0;
 
@@ -132,29 +143,29 @@ public:
     virtual void set_message_consumer(message_consumer* consumer) = 0;
     virtual void set_request_interface(workspace_manager_requests* requests) = 0;
 
-    virtual continuous_sequence<char> get_virtual_file_content(unsigned long long id) const = 0;
+    virtual std::string get_virtual_file_content(unsigned long long id) const = 0;
 
     virtual void toggle_advisory_configuration_diagnostics() = 0;
 
-    virtual void make_opcode_suggestion(const char* document_uri,
-        const char* opcode,
+    virtual void make_opcode_suggestion(std::string_view document_uri,
+        std::string_view opcode,
         bool extended,
-        workspace_manager_response<continuous_sequence<opcode_suggestion>>) = 0;
+        workspace_manager_response<std::span<const opcode_suggestion>>) = 0;
 
     virtual void idle_handler(const std::atomic<unsigned char>* yield_indicator = nullptr) = 0;
 
     virtual debugger_configuration_provider& get_debugger_configuration_provider() = 0;
 
-    virtual void invalidate_external_configuration(sequence<char> uri) = 0;
+    virtual void invalidate_external_configuration(std::string_view uri) = 0;
 
     virtual void branch_information(
-        const char* document_uri, workspace_manager_response<continuous_sequence<branch_info>> resp) = 0;
+        std::string_view document_uri, workspace_manager_response<std::span<const branch_info>> resp) = 0;
 
     virtual void folding(
-        const char* document_uri, workspace_manager_response<continuous_sequence<folding_range>> resp) = 0;
+        std::string_view document_uri, workspace_manager_response<std::span<const folding_range>> resp) = 0;
 
     virtual void retrieve_output(
-        const char* document_uri, workspace_manager_response<continuous_sequence<output_line>> resp) = 0;
+        std::string_view document_uri, workspace_manager_response<std::span<const output_line>> resp) = 0;
 };
 
 workspace_manager* create_workspace_manager_impl(

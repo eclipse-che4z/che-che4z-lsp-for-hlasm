@@ -16,28 +16,24 @@
 #define HLASMPLUGIN_PARSERLIBRARY_FADE_MESSAGES_H
 
 #include <string>
-#include <utility>
+#include <string_view>
 
-#include "protocol.h"
+#include "range.h"
 
 namespace hlasm_plugin::parser_library {
-struct fade_message_s
+struct fade_message
 {
     std::string code;
     std::string message;
+    static constexpr const std::string_view source = "HLASM Plugin";
     std::string uri;
     range r;
-    inline static const std::string source = "HLASM Plugin";
 
-    fade_message_s(std::string code, std::string message, std::string uri, range r)
-        : code(std::move(code))
-        , message(std::move(message))
-        , uri(std::move(uri))
-        , r(std::move(r)) {};
+    fade_message(std::string code, std::string message, std::string uri, range r);
 
-    static fade_message_s preprocessor_statement(std::string uri, const range& range);
-    static fade_message_s inactive_statement(std::string uri, const range& range);
-    static fade_message_s unused_macro(std::string uri, const range& range);
+    static fade_message preprocessor_statement(std::string uri, const range& range);
+    static fade_message inactive_statement(std::string uri, const range& range);
+    static fade_message unused_macro(std::string uri, const range& range);
 };
 
 } // namespace hlasm_plugin::parser_library

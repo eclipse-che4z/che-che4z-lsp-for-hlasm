@@ -168,15 +168,14 @@ const resource_location copynd1("COPYND1");
 const resource_location copynd2("COPYND2");
 const resource_location copyr("COPYR");
 
-void check_diag(const hlasm_plugin::parser_library::diagnostic_s& diag,
-    size_t expected_line,
-    const resource_location& expected_file)
+void check_diag(
+    const hlasm_plugin::parser_library::diagnostic& diag, size_t expected_line, const resource_location& expected_file)
 {
     EXPECT_EQ(diag.diag_range.start.line, expected_line);
     EXPECT_EQ(diag.file_uri, expected_file.get_uri());
 }
 
-void check_related_diag(const hlasm_plugin::parser_library::diagnostic_related_info_s& diag,
+void check_related_diag(const hlasm_plugin::parser_library::diagnostic_related_info& diag,
     size_t expected_line,
     const resource_location& expected_file)
 {

@@ -134,9 +134,8 @@ TEST(workspace_configuration, external_configurations_group_name)
     cfg.parse_configuration_file().run();
 
     EXPECT_CALL(ext_confg,
-        read_external_configuration(
-            Truly([](sequence<char> v) { return std::string_view(v) == "test://workspace/file1.hlasm"; }), _))
-        .WillOnce(Invoke([](auto, auto channel) { channel.provide(sequence<char>(std::string_view(R"("GRP1")"))); }));
+        read_external_configuration(Truly([](std::string_view v) { return v == "test://workspace/file1.hlasm"; }), _))
+        .WillOnce(Invoke([](auto, auto channel) { channel.provide(R"("GRP1")"); }));
 
     const resource_location pgm_loc("test://workspace/file1.hlasm");
 
@@ -169,16 +168,15 @@ TEST(workspace_configuration, external_configurations_group_inline)
     cfg.parse_configuration_file().run();
 
     EXPECT_CALL(ext_confg,
-        read_external_configuration(
-            Truly([](sequence<char> v) { return std::string_view(v) == "test://workspace/file1.hlasm"; }), _))
+        read_external_configuration(Truly([](std::string_view v) { return v == "test://workspace/file1.hlasm"; }), _))
         .WillOnce(Invoke([](auto, auto channel) {
-            channel.provide(sequence<char>(std::string_view(R"({
+            channel.provide(R"({
       "name": "GRP1",
       "libs": [
         "path"
       ],
       "asm_options": {"SYSPARM": "PARM1"}
-    })")));
+    })");
         }));
 
     const resource_location pgm_loc("test://workspace/file1.hlasm");
@@ -220,18 +218,16 @@ TEST(workspace_configuration, external_configurations_prune)
     })");
 
     EXPECT_CALL(ext_confg,
-        read_external_configuration(
-            Truly([](sequence<char> v) { return std::string_view(v) == "test://workspace/file1.hlasm"; }), _))
-        .WillOnce(Invoke([](auto, auto channel) { channel.provide(sequence<char>(grp_def)); }));
+        read_external_configuration(Truly([](std::string_view v) { return v == "test://workspace/file1.hlasm"; }), _))
+        .WillOnce(Invoke([](auto, auto channel) { channel.provide(grp_def); }));
 
     const resource_location pgm_loc("test://workspace/file1.hlasm");
 
     cfg.load_alternative_config_if_needed(pgm_loc).run();
 
     EXPECT_CALL(ext_confg,
-        read_external_configuration(
-            Truly([](sequence<char> v) { return std::string_view(v) == "test://workspace/file2.hlasm"; }), _))
-        .WillOnce(Invoke([](auto, auto channel) { channel.provide(sequence<char>(grp_def)); }));
+        read_external_configuration(Truly([](std::string_view v) { return v == "test://workspace/file2.hlasm"; }), _))
+        .WillOnce(Invoke([](auto, auto channel) { channel.provide(grp_def); }));
 
     const resource_location pgm_loc_2("test://workspace/file2.hlasm");
 
@@ -274,9 +270,8 @@ TEST(workspace_configuration, external_configurations_prune_all)
     })");
 
     EXPECT_CALL(ext_confg,
-        read_external_configuration(
-            Truly([](sequence<char> v) { return std::string_view(v) == "test://workspace/file1.hlasm"; }), _))
-        .WillOnce(Invoke([](auto, auto channel) { channel.provide(sequence<char>(grp_def)); }));
+        read_external_configuration(Truly([](std::string_view v) { return v == "test://workspace/file1.hlasm"; }), _))
+        .WillOnce(Invoke([](auto, auto channel) { channel.provide(grp_def); }));
 
     const resource_location pgm_loc("test://workspace/file1.hlasm");
 

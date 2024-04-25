@@ -154,9 +154,9 @@ void change_instruction_set(
     const range& change_range, const std::string& process_group, file_manager& fm, workspace& ws)
 {
     std::vector<document_change> changes;
-    changes.push_back(document_change({ change_range }, process_group.c_str(), process_group.size()));
+    changes.push_back(document_change({ change_range }, process_group));
 
-    fm.did_change_file(proc_grps_loc, 1, changes.data(), changes.size());
+    fm.did_change_file(proc_grps_loc, 1, changes);
     run_if_valid(ws.did_change_file(proc_grps_loc, file_content_state::changed_content));
     parse_all_files(ws);
 }

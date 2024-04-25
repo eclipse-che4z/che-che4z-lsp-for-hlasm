@@ -116,7 +116,7 @@ public:
 };
 
 namespace {
-static bool has_same_content(const location_list& a, const location_list& b)
+static bool has_same_content(const std::vector<location>& a, const std::vector<location>& b)
 {
     return std::is_permutation(a.begin(), a.end(), b.begin(), b.end());
 }
@@ -148,19 +148,19 @@ TEST_F(lsp_context_endevor_preprocessor_test, go_to)
 
 TEST_F(lsp_context_endevor_preprocessor_test, refs)
 {
-    const location_list expected_inc_locations {
+    const std::vector<location> expected_inc_locations {
         location(position(1, 0), source_loc),
         location(position(2, 0), source_loc),
         location(position(3, 0), source_loc),
     };
-    const location_list expected_member_locations {
+    const std::vector<location> expected_member_locations {
         location(position(1, 6), source_loc),
         location(position(2, 11), source_loc),
     };
-    const location_list expected_member2_locations {
+    const std::vector<location> expected_member2_locations {
         location(position(3, 6), source_loc),
     };
-    const location_list expected_blabla_locations {};
+    const std::vector<location> expected_blabla_locations {};
 
     // -INC/++INCLUDE reference
     EXPECT_TRUE(has_same_content(expected_inc_locations, a.context().lsp_ctx->references(source_loc, position(1, 1))));
@@ -257,25 +257,25 @@ TEST_F(lsp_context_cics_preprocessor_test, go_to)
 
 TEST_F(lsp_context_cics_preprocessor_test, refs_exec_cics)
 {
-    const location_list expected_exec_cics_abend_locations {
+    const std::vector<location> expected_exec_cics_abend_locations {
         location(position(1, 4), source_loc),
         location(position(3, 5), source_loc),
     };
-    const location_list expected_abcode1234_locations {
+    const std::vector<location> expected_abcode1234_locations {
         location(position(1, 20), source_loc),
         location(position(3, 24), source_loc),
     };
-    const location_list expected_nodump_locations {
+    const std::vector<location> expected_nodump_locations {
         location(position(1, 35), source_loc),
         location(position(4, 22), source_loc),
     };
-    const location_list expected_exec_cics_allocate_locations {
+    const std::vector<location> expected_exec_cics_allocate_locations {
         location(position(2, 2), source_loc),
     };
-    const location_list expected_sysid4321_locations {
+    const std::vector<location> expected_sysid4321_locations {
         location(position(2, 23), source_loc),
     };
-    const location_list expected_noqueue_locations {
+    const std::vector<location> expected_noqueue_locations {
         location(position(2, 37), source_loc),
     };
 
@@ -309,23 +309,23 @@ TEST_F(lsp_context_cics_preprocessor_test, refs_exec_cics)
 
 TEST_F(lsp_context_cics_preprocessor_test, refs_dfh)
 {
-    const location_list expected_larl_locations {
+    const std::vector<location> expected_larl_locations {
         location(position(6, 4), source_loc),
         location(position(1, 9), *preproc6_loc),
         location(position(10, 4), source_loc),
         location(position(11, 4), source_loc),
     };
-    const location_list expected_l_locations {
+    const std::vector<location> expected_l_locations {
         location(position(7, 4), source_loc),
         location(position(8, 4), source_loc),
         location(position(3, 9), *preproc6_loc),
         location(position(5, 9), *preproc6_loc),
     };
-    const location_list expected_dfhresp_normal_locations {
+    const std::vector<location> expected_dfhresp_normal_locations {
         location(position(6, 11), source_loc),
         location(position(8, 12), source_loc),
     };
-    const location_list expected_dfhvalue_busy_locations {
+    const std::vector<location> expected_dfhvalue_busy_locations {
         location(position(7, 10), source_loc),
     };
 
@@ -402,15 +402,15 @@ TEST_F(lsp_context_db2_preprocessor_include_test, go_to_include)
 
 TEST_F(lsp_context_db2_preprocessor_include_test, refs_label)
 {
-    const location_list expected_a_locations {
+    const std::vector<location> expected_a_locations {
         location(position(1, 0), source_loc),
         location(position(0, 0), *preproc1_loc),
     };
-    const location_list expected_b_locations {
+    const std::vector<location> expected_b_locations {
         location(position(2, 0), source_loc),
         location(position(6, 0), *preproc1_loc),
     };
-    const location_list expected_c_locations {
+    const std::vector<location> expected_c_locations {
         location(position(3, 0), source_loc),
         location(position(32, 0), *preproc1_loc),
     };
@@ -426,7 +426,7 @@ TEST_F(lsp_context_db2_preprocessor_include_test, refs_label)
 
 TEST_F(lsp_context_db2_preprocessor_include_test, refs_exec_sql)
 {
-    const location_list expected_exec_sql_locations {
+    const std::vector<location> expected_exec_sql_locations {
         location(position(1, 7), source_loc),
         location(position(2, 8), source_loc),
         location(position(3, 6), source_loc),
@@ -445,14 +445,14 @@ TEST_F(lsp_context_db2_preprocessor_include_test, refs_exec_sql)
 
 TEST_F(lsp_context_db2_preprocessor_include_test, refs_include)
 {
-    const location_list expected_member_locations {
+    const std::vector<location> expected_member_locations {
         location(position(1, 29), source_loc),
     };
-    const location_list expected_sqlca_locations {
+    const std::vector<location> expected_sqlca_locations {
         location(position(2, 28), source_loc),
         location(position(10, 0), *preproc1_loc),
     };
-    const location_list expected_sqlda_locations {
+    const std::vector<location> expected_sqlda_locations {
         location(position(3, 24), source_loc),
         location(position(42, 0), *preproc1_loc),
         location(position(60, 0), *preproc1_loc),
@@ -524,16 +524,16 @@ TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, go_to)
 
 TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, refs)
 {
-    const location_list expected_xwv_locations {
+    const std::vector<location> expected_xwv_locations {
         location(position(6, 15), source_loc),
         location(position(11, 0), source_loc),
     };
-    const location_list expected_abcde_locations {
+    const std::vector<location> expected_abcde_locations {
         location(position(6, 43), source_loc),
         location(position(9, 38), source_loc),
         location(position(12, 0), source_loc),
     };
-    const location_list expected_zyxwv_locations {
+    const std::vector<location> expected_zyxwv_locations {
         location(position(9, 32), source_loc),
         location(position(13, 0), source_loc),
     };

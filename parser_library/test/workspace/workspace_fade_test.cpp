@@ -65,7 +65,7 @@ namespace {
 struct test_params
 {
     std::vector<std::string> text_to_insert;
-    std::vector<fade_message_s> expected_fade_messages;
+    std::vector<fade_message> expected_fade_messages;
     std::vector<std::string> diag_message_codes;
 };
 
@@ -76,7 +76,7 @@ public:
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
     workspace ws;
-    std::vector<fade_message_s> fms;
+    std::vector<fade_message> fms;
 
     fade_fixture_base()
         : ws(workspace(fade_loc, file_manager, config, global_settings))
@@ -94,7 +94,7 @@ public:
         collect_diags_from_child(ws);
     }
 
-    std::vector<diagnostic_s> collect_and_get_diags()
+    std::vector<diagnostic> collect_and_get_diags()
     {
         collect_diags();
         return diags();
@@ -154,7 +154,7 @@ INSTANTIATE_TEST_SUITE_P(fade,
         test_params {
             { "1" },
             {
-                fade_message_s::inactive_statement("fade:/src1.hlasm", range(position(3, 0), position(5, 80))),
+                fade_message::inactive_statement("fade:/src1.hlasm", range(position(3, 0), position(5, 80))),
             },
         }));
 
@@ -194,13 +194,13 @@ INSTANTIATE_TEST_SUITE_P(fade,
         test_params {
             { "         MAC 1" },
             {
-                fade_message_s::inactive_statement("fade:/src1.hlasm", range(position(5, 0), position(5, 80))),
+                fade_message::inactive_statement("fade:/src1.hlasm", range(position(5, 0), position(5, 80))),
             },
         },
         test_params {
             { "*        MAC 1" },
             {
-                fade_message_s::unused_macro("fade:/src1.hlasm", range(position(3, 0), position(3, 80))),
+                fade_message::unused_macro("fade:/src1.hlasm", range(position(3, 0), position(3, 80))),
             },
         }));
 } // namespace
@@ -258,9 +258,9 @@ INSTANTIATE_TEST_SUITE_P(fade,
     ::testing::Values(test_params {
         {},
         {
-            fade_message_s::inactive_statement("fade:/src1.hlasm", range(position(3, 0), position(3, 80))),
-            fade_message_s::inactive_statement("fade:/src1.hlasm", range(position(5, 0), position(5, 80))),
-            fade_message_s::inactive_statement("fade:/src1.hlasm", range(position(7, 0), position(7, 80))),
+            fade_message::inactive_statement("fade:/src1.hlasm", range(position(3, 0), position(3, 80))),
+            fade_message::inactive_statement("fade:/src1.hlasm", range(position(5, 0), position(5, 80))),
+            fade_message::inactive_statement("fade:/src1.hlasm", range(position(7, 0), position(7, 80))),
         },
     }));
 } // namespace
@@ -302,14 +302,14 @@ INSTANTIATE_TEST_SUITE_P(fade,
         test_params {
             { "         MAC 1" },
             {
-                fade_message_s::unused_macro("fade:/src1.hlasm", range(position(5, 0), position(5, 80))),
-                fade_message_s::inactive_statement("fade:/src1.hlasm", range(position(9, 0), position(9, 80))),
+                fade_message::unused_macro("fade:/src1.hlasm", range(position(5, 0), position(5, 80))),
+                fade_message::inactive_statement("fade:/src1.hlasm", range(position(9, 0), position(9, 80))),
             },
         },
         test_params {
             { "*        MAC 1" },
             {
-                fade_message_s::unused_macro("fade:/src1.hlasm", range(position(3, 0), position(3, 80))),
+                fade_message::unused_macro("fade:/src1.hlasm", range(position(3, 0), position(3, 80))),
             },
         }));
 } // namespace
@@ -355,7 +355,7 @@ INSTANTIATE_TEST_SUITE_P(fade,
         INNER)",
             },
             {
-                fade_message_s::unused_macro("fade:/src1.hlasm", range(position(10, 0), position(10, 80))),
+                fade_message::unused_macro("fade:/src1.hlasm", range(position(10, 0), position(10, 80))),
             },
         },
         test_params {
@@ -365,7 +365,7 @@ INSTANTIATE_TEST_SUITE_P(fade,
         INNER)",
             },
             {
-                fade_message_s::unused_macro("fade:/src1.hlasm", range(position(2, 0), position(2, 80))),
+                fade_message::unused_macro("fade:/src1.hlasm", range(position(2, 0), position(2, 80))),
             },
         },
         test_params {
@@ -375,8 +375,8 @@ INSTANTIATE_TEST_SUITE_P(fade,
 *       INNER)",
             },
             {
-                fade_message_s::unused_macro("fade:/src1.hlasm", range(position(4, 0), position(4, 80))),
-                fade_message_s::unused_macro("fade:/src1.hlasm", range(position(10, 0), position(10, 80))),
+                fade_message::unused_macro("fade:/src1.hlasm", range(position(4, 0), position(4, 80))),
+                fade_message::unused_macro("fade:/src1.hlasm", range(position(10, 0), position(10, 80))),
             },
         },
         test_params {
@@ -386,8 +386,8 @@ INSTANTIATE_TEST_SUITE_P(fade,
 *       INNER)",
             },
             {
-                fade_message_s::unused_macro("fade:/src1.hlasm", range(position(2, 0), position(2, 80))),
-                fade_message_s::unused_macro("fade:/src1.hlasm", range(position(10, 0), position(10, 80))),
+                fade_message::unused_macro("fade:/src1.hlasm", range(position(2, 0), position(2, 80))),
+                fade_message::unused_macro("fade:/src1.hlasm", range(position(10, 0), position(10, 80))),
             },
         }));
 } // namespace
@@ -434,7 +434,7 @@ INSTANTIATE_TEST_SUITE_P(fade,
         test_params {
             { "         MAC 1" },
             {
-                fade_message_s::inactive_statement("fade:/libs/mac", range(position(3, 0), position(3, 80))),
+                fade_message::inactive_statement("fade:/libs/mac", range(position(3, 0), position(3, 80))),
             },
         },
         test_params {
@@ -489,7 +489,7 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC 1",
             },
             {
-                fade_message_s::inactive_statement("fade:/libs/mac", range(position(3, 0), position(3, 80))),
+                fade_message::inactive_statement("fade:/libs/mac", range(position(3, 0), position(3, 80))),
             },
         },
         test_params {
@@ -498,7 +498,7 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC 0",
             },
             {
-                fade_message_s::unused_macro("fade:/libs/mac", range(position(7, 0), position(7, 80))),
+                fade_message::unused_macro("fade:/libs/mac", range(position(7, 0), position(7, 80))),
             },
         },
         test_params {
@@ -507,8 +507,8 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC 1",
             },
             {
-                fade_message_s::inactive_statement("fade:/libs/mac", range(position(3, 0), position(3, 80))),
-                fade_message_s::unused_macro("fade:/libs/mac", range(position(7, 0), position(7, 80))),
+                fade_message::inactive_statement("fade:/libs/mac", range(position(3, 0), position(3, 80))),
+                fade_message::unused_macro("fade:/libs/mac", range(position(7, 0), position(7, 80))),
             },
         },
         test_params {
@@ -574,8 +574,8 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "*        MAC3 0",
             },
             {
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(20, 0), position(20, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(20, 0), position(20, 80))),
             },
         },
         test_params {
@@ -584,9 +584,9 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "*        MAC3 1",
             },
             {
-                fade_message_s::inactive_statement("fade:/libs/CPYBOOK", range(position(3, 0), position(3, 80))),
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(20, 0), position(20, 80))),
+                fade_message::inactive_statement("fade:/libs/CPYBOOK", range(position(3, 0), position(3, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(20, 0), position(20, 80))),
             },
         },
         test_params {
@@ -595,8 +595,8 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC3 0",
             },
             {
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
             },
         },
         test_params {
@@ -605,9 +605,9 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC3 1",
             },
             {
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
-                fade_message_s::inactive_statement("fade:/libs/CPYBOOK", range(position(22, 0), position(22, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::inactive_statement("fade:/libs/CPYBOOK", range(position(22, 0), position(22, 80))),
             },
         },
         test_params {
@@ -616,7 +616,7 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC3 0",
             },
             {
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
             },
         },
         test_params {
@@ -625,8 +625,8 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC3 0",
             },
             {
-                fade_message_s::inactive_statement("fade:/libs/CPYBOOK", range(position(3, 0), position(3, 80))),
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::inactive_statement("fade:/libs/CPYBOOK", range(position(3, 0), position(3, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
             },
         },
         test_params {
@@ -635,8 +635,8 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC3 1",
             },
             {
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
-                fade_message_s::inactive_statement("fade:/libs/CPYBOOK", range(position(22, 0), position(22, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::inactive_statement("fade:/libs/CPYBOOK", range(position(22, 0), position(22, 80))),
             },
         },
         test_params {
@@ -645,9 +645,9 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC3 1",
             },
             {
-                fade_message_s::inactive_statement("fade:/libs/CPYBOOK", range(position(3, 0), position(3, 80))),
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
-                fade_message_s::inactive_statement("fade:/libs/CPYBOOK", range(position(22, 0), position(22, 80))),
+                fade_message::inactive_statement("fade:/libs/CPYBOOK", range(position(3, 0), position(3, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::inactive_statement("fade:/libs/CPYBOOK", range(position(22, 0), position(22, 80))),
             },
         },
         test_params {
@@ -656,8 +656,8 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC3 0",
             },
             {
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
             },
         },
         test_params {
@@ -666,8 +666,8 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC3 0",
             },
             {
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
             },
         },
         test_params {
@@ -676,8 +676,8 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC3 1",
             },
             {
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
             },
         },
         test_params {
@@ -686,9 +686,9 @@ INSTANTIATE_TEST_SUITE_P(fade,
                 "         MAC3 1",
             },
             {
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
-                fade_message_s::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
-                fade_message_s::inactive_statement("fade:/libs/CPYBOOK", range(position(22, 0), position(22, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(1, 0), position(1, 80))),
+                fade_message::unused_macro("fade:/libs/CPYBOOK", range(position(10, 0), position(10, 80))),
+                fade_message::inactive_statement("fade:/libs/CPYBOOK", range(position(22, 0), position(22, 80))),
             },
         }));
 } // namespace
@@ -760,7 +760,7 @@ INSTANTIATE_TEST_SUITE_P(fade,
         },
         test_params {
             { "1", "1" },
-            { fade_message_s::inactive_statement("fade:/libs/CPYBOOK", range(position(2, 0), position(2, 80))) },
+            { fade_message::inactive_statement("fade:/libs/CPYBOOK", range(position(2, 0), position(2, 80))) },
         }));
 } // namespace
 
@@ -801,22 +801,22 @@ INSTANTIATE_TEST_SUITE_P(fade,
         test_params {
             { "         MAC 0,1" },
             {
-                fade_message_s::inactive_statement("fade:/libs/CPYBOOK", range(position(2, 0), position(2, 80))),
-                fade_message_s::inactive_statement("fade:/libs/mac", range(position(4, 0), position(4, 80))),
+                fade_message::inactive_statement("fade:/libs/CPYBOOK", range(position(2, 0), position(2, 80))),
+                fade_message::inactive_statement("fade:/libs/mac", range(position(4, 0), position(4, 80))),
             },
         },
         test_params {
             { "         MAC 1,0" },
             {
-                fade_message_s::inactive_statement("fade:/libs/CPYBOOK", range(position(1, 0), position(2, 80))),
-                fade_message_s::inactive_statement("fade:/libs/mac", range(position(3, 0), position(3, 80))),
+                fade_message::inactive_statement("fade:/libs/CPYBOOK", range(position(1, 0), position(2, 80))),
+                fade_message::inactive_statement("fade:/libs/mac", range(position(3, 0), position(3, 80))),
             },
         },
         test_params {
             { "         MAC 1,1" },
             {
-                fade_message_s::inactive_statement("fade:/libs/CPYBOOK", range(position(1, 0), position(2, 80))),
-                fade_message_s::inactive_statement("fade:/libs/mac", range(position(3, 0), position(3, 80))),
+                fade_message::inactive_statement("fade:/libs/CPYBOOK", range(position(1, 0), position(2, 80))),
+                fade_message::inactive_statement("fade:/libs/mac", range(position(3, 0), position(3, 80))),
             },
         },
         test_params {
@@ -945,15 +945,15 @@ INSTANTIATE_TEST_SUITE_P(fade,
         test_params {
             { "0" },
             {
-                fade_message_s::inactive_statement("fade:/src1.hlasm", range(position(4, 0), position(4, 80))),
-                fade_message_s::inactive_statement("fade:/src1.hlasm", range(position(6, 0), position(6, 80))),
+                fade_message::inactive_statement("fade:/src1.hlasm", range(position(4, 0), position(4, 80))),
+                fade_message::inactive_statement("fade:/src1.hlasm", range(position(6, 0), position(6, 80))),
             },
         },
         test_params {
             { "1" },
             {
-                fade_message_s::inactive_statement("fade:/src1.hlasm", range(position(4, 0), position(4, 80))),
-                fade_message_s::inactive_statement("fade:/libs/mac", range(position(4, 0), position(5, 80))),
+                fade_message::inactive_statement("fade:/src1.hlasm", range(position(4, 0), position(4, 80))),
+                fade_message::inactive_statement("fade:/libs/mac", range(position(4, 0), position(5, 80))),
             },
         }));
 } // namespace
@@ -1000,7 +1000,7 @@ INSTANTIATE_TEST_SUITE_P(fade,
     ::testing::Values(test_params {
         {},
         {
-            fade_message_s::inactive_statement("fade:/src1.hlasm", range(position(17, 0), position(17, 80))),
+            fade_message::inactive_statement("fade:/src1.hlasm", range(position(17, 0), position(17, 80))),
         },
     }));
 } // namespace
@@ -1128,7 +1128,7 @@ public:
         parse_all_files(ws);
     }
 
-    std::vector<fade_message_s>& fade_messages()
+    std::vector<fade_message>& fade_messages()
     {
         m_fmsgs.clear();
         ws.retrieve_fade_messages(m_fmsgs);
@@ -1176,7 +1176,7 @@ private:
     const lib_config m_empty_config;
     const shared_json m_global_settings = make_empty_shared_json();
     workspace ws = workspace(resource_location("fade:/"), m_fm, m_empty_config, m_global_settings);
-    std::vector<fade_message_s> m_fmsgs;
+    std::vector<fade_message> m_fmsgs;
 };
 } // namespace
 
@@ -1193,42 +1193,42 @@ TEST(fade, cpybook_as_pgm)
     }));
 
     EXPECT_TRUE(matches_fade_messages(fh.fade_messages(),
-        std::vector<fade_message_s>({
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(3, 0), position(3, 80))),
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(8, 0), position(8, 80))),
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(15, 0), position(15, 80))),
+        std::vector<fade_message>({
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(3, 0), position(3, 80))),
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(8, 0), position(8, 80))),
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(15, 0), position(15, 80))),
         })));
 
     // Toggle open and close of a file a few times
     fh.did_close_file(srcA_loc);
     EXPECT_TRUE(matches_fade_messages(fh.fade_messages(),
-        std::vector<fade_message_s>({
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(3, 0), position(3, 80))),
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(8, 0), position(11, 80))),
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(15, 0), position(15, 80))),
+        std::vector<fade_message>({
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(3, 0), position(3, 80))),
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(8, 0), position(11, 80))),
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(15, 0), position(15, 80))),
         })));
 
     fh.did_open_file(srcA_loc);
     EXPECT_TRUE(matches_fade_messages(fh.fade_messages(),
-        std::vector<fade_message_s>({
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(3, 0), position(3, 80))),
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(8, 0), position(8, 80))),
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(15, 0), position(15, 80))),
+        std::vector<fade_message>({
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(3, 0), position(3, 80))),
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(8, 0), position(8, 80))),
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(15, 0), position(15, 80))),
         })));
 
     fh.did_close_file(srcA_loc);
     EXPECT_TRUE(matches_fade_messages(fh.fade_messages(),
-        std::vector<fade_message_s>({
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(3, 0), position(3, 80))),
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(8, 0), position(11, 80))),
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(15, 0), position(15, 80))),
+        std::vector<fade_message>({
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(3, 0), position(3, 80))),
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(8, 0), position(11, 80))),
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(15, 0), position(15, 80))),
         })));
 
     fh.did_close_file(srcB_loc);
     EXPECT_TRUE(matches_fade_messages(fh.fade_messages(),
-        std::vector<fade_message_s>({
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(3, 0), position(3, 80))),
-            fade_message_s::inactive_statement("fade:/C.hlasm", range(position(8, 0), position(15, 80))),
+        std::vector<fade_message>({
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(3, 0), position(3, 80))),
+            fade_message::inactive_statement("fade:/C.hlasm", range(position(8, 0), position(15, 80))),
         })));
 
     fh.did_close_file(srcC_loc);
@@ -1277,47 +1277,47 @@ A        EXEC CICS ABEND ABCODE('1234')
          DFHECALL
          END)";
 
-    ws_mngr->did_open_file("test/library/test_wks/.hlasmplugin/pgm_conf.json", 1, pgm_conf.c_str(), pgm_conf.size());
-    ws_mngr->did_open_file("test/library/test_wks/.hlasmplugin/proc_grps.json", 1, proc_grps.c_str(), proc_grps.size());
-    ws_mngr->did_open_file("test/library/test_wks/file_1", 1, f1.c_str(), f1.size());
+    ws_mngr->did_open_file("test/library/test_wks/.hlasmplugin/pgm_conf.json", 1, pgm_conf);
+    ws_mngr->did_open_file("test/library/test_wks/.hlasmplugin/proc_grps.json", 1, proc_grps);
+    ws_mngr->did_open_file("test/library/test_wks/file_1", 1, f1);
     ws_mngr->idle_handler();
-    EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
+    EXPECT_TRUE(consumer.diags.empty());
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
-    EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
-    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 9), position(6, 18)));
+    EXPECT_EQ(consumer.fms[0].uri, "test/library/test_wks/file_1");
+    EXPECT_EQ(consumer.fms[0].r, range(position(6, 9), position(6, 18)));
 
     std::vector<document_change> changes;
-    ws_mngr->did_change_file("test/library/test_wks/file_1", 2, changes.data(), 0);
+    ws_mngr->did_change_file("test/library/test_wks/file_1", 2, changes);
     ws_mngr->idle_handler();
-    EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
+    EXPECT_TRUE(consumer.diags.empty());
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
-    EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
-    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 9), position(6, 18)));
+    EXPECT_EQ(consumer.fms[0].uri, "test/library/test_wks/file_1");
+    EXPECT_EQ(consumer.fms[0].r, range(position(6, 9), position(6, 18)));
 
     std::string new_f1_text = "A         EXEC  CICS   ABEND ABCODE('1234')\n";
-    changes.push_back(document_change({ { 6, 0 }, { 6, 43 } }, new_f1_text.c_str(), new_f1_text.size()));
-    ws_mngr->did_change_file("test/library/test_wks/file_1", 3, changes.data(), 1);
+    changes.push_back(document_change({ { 6, 0 }, { 6, 43 } }, new_f1_text));
+    ws_mngr->did_change_file("test/library/test_wks/file_1", 3, changes);
     ws_mngr->idle_handler();
-    EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
+    EXPECT_TRUE(consumer.diags.empty());
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
-    EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
-    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 10), position(6, 20)));
+    EXPECT_EQ(consumer.fms[0].uri, "test/library/test_wks/file_1");
+    EXPECT_EQ(consumer.fms[0].r, range(position(6, 10), position(6, 20)));
 
     std::string f2 = "";
-    ws_mngr->did_open_file("test/library/test_wks/diff_file_2", 1, f2.c_str(), f2.size());
+    ws_mngr->did_open_file("test/library/test_wks/diff_file_2", 1, f2);
     ws_mngr->idle_handler();
-    EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
+    EXPECT_TRUE(consumer.diags.empty());
     ASSERT_EQ(consumer.fms.size(), static_cast<size_t>(1));
-    EXPECT_EQ(std::string(consumer.fms.message(0).file_uri()), "test/library/test_wks/file_1");
-    EXPECT_EQ(consumer.fms.message(0).get_range(), range(position(6, 10), position(6, 20)));
+    EXPECT_EQ(consumer.fms[0].uri, "test/library/test_wks/file_1");
+    EXPECT_EQ(consumer.fms[0].r, range(position(6, 10), position(6, 20)));
 
     new_f1_text = "*A         EXEC  CICS   ABEND ABCODE('1234')\n";
     changes.clear();
-    changes.push_back(document_change({ { 6, 0 }, { 6, 44 } }, new_f1_text.c_str(), new_f1_text.size()));
-    ws_mngr->did_change_file("test/library/test_wks/file_1", 4, changes.data(), 1);
+    changes.push_back(document_change({ { 6, 0 }, { 6, 44 } }, new_f1_text));
+    ws_mngr->did_change_file("test/library/test_wks/file_1", 4, changes);
     ws_mngr->idle_handler();
-    EXPECT_GE(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
-    EXPECT_EQ(consumer.fms.size(), static_cast<size_t>(0));
+    EXPECT_TRUE(consumer.diags.empty());
+    EXPECT_TRUE(consumer.fms.empty());
 
     new_f1_text = R"(         
          MACRO
@@ -1327,9 +1327,9 @@ A        EXEC CICS ABEND ABCODE('1234')
          DFHECALL
          END)";
     changes.clear();
-    changes.push_back(document_change(new_f1_text.c_str(), new_f1_text.size()));
-    ws_mngr->did_change_file("test/library/test_wks/file_1", 5, changes.data(), 1);
+    changes.push_back(document_change(new_f1_text));
+    ws_mngr->did_change_file("test/library/test_wks/file_1", 5, changes);
     ws_mngr->idle_handler();
-    EXPECT_EQ(consumer.diags.diagnostics_size(), static_cast<size_t>(0));
-    EXPECT_EQ(consumer.fms.size(), static_cast<size_t>(0));
+    EXPECT_TRUE(consumer.diags.empty());
+    EXPECT_TRUE(consumer.fms.empty());
 }

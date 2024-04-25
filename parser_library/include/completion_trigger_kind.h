@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Broadcom.
+ * Copyright (c) 2024 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -12,28 +12,16 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBRARY_MESSAGE_CONSUMER_H
-#define HLASMPLUGIN_PARSERLIBRARY_MESSAGE_CONSUMER_H
-
-#include <string_view>
+#ifndef HLASMPLUGIN_PARSERLIBRARY_COMPLETION_TRIGGER_KIND_H
+#define HLASMPLUGIN_PARSERLIBRARY_COMPLETION_TRIGGER_KIND_H
 
 namespace hlasm_plugin::parser_library {
 
-enum class message_type
+enum class completion_trigger_kind
 {
-    MT_ERROR = 1,
-    MT_WARNING = 2,
-    MT_INFO = 3,
-    MT_LOG = 4
-};
-
-class message_consumer
-{
-public:
-    virtual void show_message(std::string_view message, message_type type) = 0;
-
-protected:
-    ~message_consumer() = default;
+    invoked = 1,
+    trigger_character = 2,
+    trigger_for_incomplete_completions = 3
 };
 
 } // namespace hlasm_plugin::parser_library

@@ -125,7 +125,7 @@ TEST(using, basic)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto sect = c.create_section("SECT");
 
@@ -156,7 +156,7 @@ TEST(using, multiple_registers)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto sect = c.create_section("SECT");
 
@@ -189,7 +189,7 @@ TEST(using, with_offset)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto sect = c.create_section("SECT");
 
@@ -218,7 +218,7 @@ TEST(using, with_negative_offset)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto sect = c.create_section("SECT");
 
@@ -252,7 +252,7 @@ TEST(using, dependent_using)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto sect = c.create_section("SECT");
     auto sect2 = c.create_section("SECT2");
@@ -300,7 +300,7 @@ TEST(using, labeled)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto sect = c.create_section("SECT");
     auto label = c.id("LABEL");
@@ -333,7 +333,7 @@ TEST(using, drop_one)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto sect = c.create_section("SECT");
 
@@ -369,7 +369,7 @@ TEST(using, drop_dependent)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto sect = c.create_section("SECT");
     auto sect2 = c.create_section("SECT2");
@@ -411,7 +411,7 @@ TEST(using, override_label)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto sect = c.create_section("SECT");
     auto sect2 = c.create_section("SECT2");
@@ -453,7 +453,7 @@ TEST(using, drop_reg_with_labeled_dependent)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto label = c.id("LABEL");
     auto sect = c.create_section("SECT");
@@ -500,7 +500,7 @@ TEST(using, no_drop_warning)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto after_drop2 =
         coll.remove(current, args(c.number(2)), dependency_evaluation_context(opcode_generation::current), {});
@@ -516,7 +516,7 @@ TEST(using, use_reg_16)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
@@ -539,7 +539,7 @@ TEST(using, use_non_simple_reloc)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto with_sect = coll.add(current,
         id_index(),
@@ -560,7 +560,7 @@ TEST(using, drop_qualified_label)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
@@ -588,7 +588,7 @@ TEST(using, drop_reg_16)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto after_drop2 =
         coll.remove(current, args(c.number(16)), dependency_evaluation_context(opcode_generation::current), {});
@@ -604,7 +604,7 @@ TEST(using, drop_reloc)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("LABEL");
     [[maybe_unused]] auto after_drop2 = coll.remove(current,
@@ -623,7 +623,7 @@ TEST(using, dependent_no_active_using)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
     [[maybe_unused]] auto sect2 = c.create_section("SECT2");
@@ -647,7 +647,7 @@ TEST(using, dependent_no_active_matching_using)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
     [[maybe_unused]] auto sect2 = c.create_section("SECT2");
@@ -683,7 +683,7 @@ TEST(using, using_undefined_begin)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto with_sect = coll.add(current,
         id_index(),
@@ -704,7 +704,7 @@ TEST(using, using_qualified_begin)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
@@ -727,7 +727,7 @@ TEST(using, using_undefined_end)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
@@ -750,7 +750,7 @@ TEST(using, using_qualified_end)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
@@ -773,7 +773,7 @@ TEST(using, using_bad_range)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
     [[maybe_unused]] auto sect2 = c.create_section("SECT2");
@@ -805,7 +805,7 @@ TEST(using, use_complex_reloc)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto s1 = c.create_section("S1");
     [[maybe_unused]] auto s2 = c.create_section("S2");
@@ -830,7 +830,7 @@ TEST(using, drop_invalid)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto after_drop2 = coll.remove(
         current, args(c.create_symbol("LABEL")), dependency_evaluation_context(opcode_generation::current), {});
@@ -846,7 +846,7 @@ TEST(using, drop_inactive)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto label = c.label("LABEL");
 
@@ -864,7 +864,7 @@ TEST(using, basic_with_limit)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto sect = c.create_section("SECT");
 
@@ -891,7 +891,7 @@ TEST(using, duplicate_base)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
@@ -914,7 +914,7 @@ TEST(using, absolute)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto with_sect = coll.add(current,
         id_index(),
@@ -941,7 +941,7 @@ TEST(using, smaller_offset_but_invalid)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     [[maybe_unused]] auto sect = c.create_section("SECT");
 
@@ -973,7 +973,7 @@ TEST(using, describe)
 
     using_collection coll;
     index_t<using_collection> current;
-    diagnostic_consumer_container<diagnostic_s> d_s;
+    diagnostic_consumer_container<diagnostic> d_s;
 
     auto sect = c.create_section("SECT");
     auto label = c.id("LABEL");

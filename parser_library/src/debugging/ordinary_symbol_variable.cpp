@@ -13,6 +13,7 @@
  */
 
 #include "context/ordinary_assembly/symbol.h"
+#include "debug_types.h"
 #include "ebcdic_encoding.h"
 #include "variable.h"
 

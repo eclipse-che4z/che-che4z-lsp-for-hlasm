@@ -25,7 +25,7 @@ using namespace ::testing;
 struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
 {
     std::unordered_map<std::string, std::string, hashers::string_hasher, std::equal_to<>> m_files;
-    std::vector<diagnostic_s> m_diags;
+    std::vector<diagnostic> m_diags;
 
     // Inherited via parse_lib_provider
     value_task<bool> parse_library(std::string library, analyzing_context ctx, library_data data) override
@@ -76,7 +76,7 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
         m_diags.insert(m_diags.end(), std::make_move_iterator(d.begin()), std::make_move_iterator(d.end()));
     }
 
-    std::span<const diagnostic_s> diags() const noexcept { return m_diags; }
+    std::span<const diagnostic> diags() const noexcept { return m_diags; }
 };
 
 TEST_F(async_macro_parsing_fixture, macro_not_found)

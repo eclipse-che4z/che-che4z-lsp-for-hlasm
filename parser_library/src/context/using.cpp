@@ -15,6 +15,7 @@
 #include "using.h"
 
 #include <bitset>
+#include <iterator>
 #include <limits>
 #include <span>
 
@@ -33,12 +34,12 @@ constexpr std::string_view USING = "USING";
 
 namespace hlasm_plugin::parser_library::context {
 
-void using_collection::using_entry::resolve(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag)
+void using_collection::using_entry::resolve(using_collection& coll, diagnostic_consumer_t<diagnostic_op>& diag)
 {
     resolved = definition.resolve(coll, diag);
 }
 
-void using_collection::using_entry::compute_context(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag)
+void using_collection::using_entry::compute_context(using_collection& coll, diagnostic_consumer_t<diagnostic_op>& diag)
 {
     std::visit(
         [&coll, &diag, this](const auto& e) {
@@ -51,13 +52,13 @@ void using_collection::using_entry::compute_context(using_collection& coll, diag
 }
 
 void using_collection::using_entry::compute_context_correction(
-    const failed_entry_resolved&, diagnostic_consumer<diagnostic_op>&)
+    const failed_entry_resolved&, diagnostic_consumer_t<diagnostic_op>&)
 {
     // just keep the duplicated previous state on error
 }
 
 void using_collection::using_entry::compute_context_correction(
-    const using_entry_resolved& u, diagnostic_consumer<diagnostic_op>&)
+    const using_entry_resolved& u, diagnostic_consumer_t<diagnostic_op>&)
 {
     // drop conflicting usings
     if (!u.label.empty())
@@ -73,7 +74,7 @@ std::string_view convert_diag(const id_index& id) // lifetime! id needs to outli
 int convert_diag(using_collection::register_t c) { return c; }
 
 void using_collection::using_entry::compute_context_correction(
-    const drop_entry_resolved& d, diagnostic_consumer<diagnostic_op>& diag)
+    const drop_entry_resolved& d, diagnostic_consumer_t<diagnostic_op>& diag)
 {
     for (const auto& [drop, rng] : d.drop)
         std::visit(
@@ -164,7 +165,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     std::optional<offset_t> len,
     const qualified_address& base,
     const range& rng,
-    diagnostic_consumer<diagnostic_op>& diag) const
+    diagnostic_consumer_t<diagnostic_op>& diag) const
 {
     if (!m_parent)
     {
@@ -186,7 +187,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 }
 
 using_collection::resolved_entry using_collection::using_drop_definition::resolve_using(
-    const using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const
+    const using_collection& coll, diagnostic_consumer_t<diagnostic_op>& diag) const
 {
     assert(!m_base.empty() && m_base.size() <= reg_set_size);
 
@@ -273,11 +274,11 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 }
 
 using_collection::resolved_entry using_collection::using_drop_definition::resolve_drop(
-    const using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const
+    const using_collection& coll, diagnostic_consumer_t<diagnostic_op>& diag) const
 {
     struct
     {
-        diagnostic_consumer<diagnostic_op>& diag;
+        diagnostic_consumer_t<diagnostic_op>& diag;
         std::vector<std::pair<std::variant<id_index, register_t>, range>> args;
 
         void operator()(std::monostate, range rng)
@@ -306,7 +307,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 }
 
 using_collection::resolved_entry using_collection::using_drop_definition::resolve(
-    using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const
+    using_collection& coll, diagnostic_consumer_t<diagnostic_op>& diag) const
 {
     if (is_using())
         return resolve_using(coll, diag);
@@ -334,7 +335,7 @@ id_index identify_label(const ordinary_assembly_context& ord_context, const expr
 } // namespace
 
 void using_collection::resolve_all(
-    ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag, const library_info& li)
+    ordinary_assembly_context& ord_context, diagnostic_consumer_t<diagnostic>& diag, const library_info& li)
 {
     assert(!m_resolved);
 

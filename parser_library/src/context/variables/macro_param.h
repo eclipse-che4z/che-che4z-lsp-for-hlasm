@@ -51,7 +51,7 @@ public:
     A_t count(std::span<const A_t> offset) const override;
 
     bool can_read(
-        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const override;
+        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer_t<diagnostic_op>& diags) const override;
 
     virtual std::optional<std::pair<A_t, A_t>> index_range(std::span<const A_t> offset) const;
 

@@ -73,8 +73,8 @@ TEST(processor_file, parse_macro)
     EXPECT_EQ(ws.hover(macro_loc, { 2, 2 }), sam31_hover_message);
 
     semantics::lines_info open_expected_hl {
-        { 0, 1, 0, 6, semantics::hl_scopes::instruction },
-        { 1, 1, 1, 4, semantics::hl_scopes::instruction },
+        { 0, 1, 0, 6, hl_scopes::instruction },
+        { 1, 1, 1, 4, hl_scopes::instruction },
     };
 
     EXPECT_EQ(ws.semantic_tokens(opencode_loc), open_expected_hl);
@@ -91,10 +91,10 @@ TEST(processor_file, parse_macro)
 
     // Macro file tests
     semantics::lines_info macro_expected_hl {
-        { 0, 1, 0, 6, semantics::hl_scopes::instruction },
-        { 1, 1, 1, 4, semantics::hl_scopes::instruction },
-        { 2, 1, 2, 6, semantics::hl_scopes::instruction },
-        { 3, 1, 3, 5, semantics::hl_scopes::instruction },
+        { 0, 1, 0, 6, hl_scopes::instruction },
+        { 1, 1, 1, 4, hl_scopes::instruction },
+        { 2, 1, 2, 6, hl_scopes::instruction },
+        { 3, 1, 3, 5, hl_scopes::instruction },
     };
 
     EXPECT_EQ(ws.semantic_tokens(macro_loc), macro_expected_hl);

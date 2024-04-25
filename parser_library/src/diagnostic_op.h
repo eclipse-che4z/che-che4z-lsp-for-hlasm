@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_H
-#define HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_OP_H
+#define HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_OP_H
 
 // This file contains class diagnostic, which represents LSP diagnostic.
 // It also contains definitions (static methods) of almost all diagnostics
@@ -23,9 +23,8 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
 
-#include "protocol.h"
+#include "diagnostic.h"
 #include "range.h"
 
 namespace hlasm_plugin::utils::resource {
@@ -125,6 +124,21 @@ struct diagnostic_op
         , message(std::move(message))
         , diag_range(std::move(diag_range))
         , tag(tag) {};
+
+    diagnostic to_diagnostic(std::string file_uri) const&
+    {
+        return diagnostic(std::move(file_uri), diag_range, severity, code, message, {}, tag);
+    }
+    diagnostic to_diagnostic(std::string file_uri) &&
+    {
+        return diagnostic(std::move(file_uri), diag_range, severity, std::move(code), std::move(message), {}, tag);
+    }
+    diagnostic to_diagnostic() const& { return diagnostic("", diag_range, severity, code, message, {}, tag); }
+    diagnostic to_diagnostic() &&
+    {
+        return diagnostic("", diag_range, severity, std::move(code), std::move(message), {}, tag);
+    }
+
 
     static diagnostic_op error_I999(std::string_view instr_name, const range& range);
 
@@ -786,161 +800,74 @@ struct diagnostic_op
 
 std::string diagnostic_decorate_message(std::string_view field, std::string_view message);
 
-struct range_uri_s
-{
-    range_uri_s() = default;
-    range_uri_s(std::string uri, range range)
-        : uri(std::move(uri))
-        , rang(range)
-    {}
+/*
+Lxxxx - local library messages
+- L0001 - Error loading library
+- L0002 - Library does not exist
+- L0003 - Deprecated file extension specification was used
+- L0004 - Macro with multiple definitions
+*/
+diagnostic error_L0001(
+    const utils::resource::resource_location& config_loc, const utils::resource::resource_location& lib_loc);
 
-    std::string uri;
-    range rang;
-};
+diagnostic error_L0002(
+    const utils::resource::resource_location& config_loc, const utils::resource::resource_location& lib_loc);
 
-// Represents related info (location with message) of LSP diagnostic.
-class diagnostic_related_info_s
-{
-public:
-    diagnostic_related_info_s() = default;
-    diagnostic_related_info_s(range_uri_s location, std::string message)
-        : location(std::move(location))
-        , message(std::move(message))
-    {}
-    range_uri_s location;
-    std::string message;
-};
+// warning_L0003 - removed
 
-// Represents a LSP diagnostic.
-class diagnostic_s
-{
-public:
-    diagnostic_s()
-        : severity(diagnostic_severity::unspecified)
-    {}
-    diagnostic_s(std::string file_uri, range range, std::string code, std::string message)
-        : file_uri(std::move(file_uri))
-        , diag_range(range)
-        , severity(diagnostic_severity::unspecified)
-        , code(std::move(code))
-        , message(std::move(message))
-    {}
-    diagnostic_s(std::string file_uri,
-        range range,
-        diagnostic_severity severity,
-        std::string code,
-        std::string message,
-        std::vector<diagnostic_related_info_s> related,
-        diagnostic_tag tag)
-        : file_uri(std::move(file_uri))
-        , diag_range(range)
-        , severity(severity)
-        , code(std::move(code))
-        , source("HLASM Plugin")
-        , message(std::move(message))
-        , related(std::move(related))
-        , tag(tag)
-    {}
-    diagnostic_s(std::string file_uri, diagnostic_op diag_op)
-        : file_uri(std::move(file_uri))
-        , diag_range(std::move(diag_op.diag_range))
-        , severity(diag_op.severity)
-        , code(std::move(diag_op.code))
-        , source("HLASM Plugin")
-        , message(std::move(diag_op.message))
-        , tag(diag_op.tag)
-    {}
-    diagnostic_s(diagnostic_op diag_op)
-        : diag_range(std::move(diag_op.diag_range))
-        , severity(diag_op.severity)
-        , code(std::move(diag_op.code))
-        , source("HLASM Plugin")
-        , message(std::move(diag_op.message))
-        , tag(diag_op.tag)
-    {}
+diagnostic warning_L0004(const utils::resource::resource_location& config_loc,
+    const utils::resource::resource_location& lib_loc,
+    std::string_view macro_name,
+    bool has_extensions);
 
+diagnostic warning_L0005(const utils::resource::resource_location& config_loc, std::string_view pattern, size_t limit);
 
-    std::string file_uri;
-    range diag_range;
-    diagnostic_severity severity;
-    std::string code;
-    std::string source;
-    std::string message;
-    std::vector<diagnostic_related_info_s> related;
-    diagnostic_tag tag = diagnostic_tag::none;
+diagnostic warning_L0006(const utils::resource::resource_location& config_loc, std::string_view path);
 
-    /*
-    Lxxxx - local library messages
-    - L0001 - Error loading library
-    - L0002 - Library does not exist
-    - L0003 - Deprecated file extension specification was used
-    - L0004 - Macro with multiple definitions
-    */
-    static diagnostic_s error_L0001(
-        const utils::resource::resource_location& config_loc, const utils::resource::resource_location& lib_loc);
+diagnostic error_W0001(const utils::resource::resource_location& file_name);
 
-    static diagnostic_s error_L0002(
-        const utils::resource::resource_location& config_loc, const utils::resource::resource_location& lib_loc);
+diagnostic error_W0002(const utils::resource::resource_location& file_name);
 
-    // warning_L0003 - removed
+diagnostic error_W0003(const utils::resource::resource_location& file_name);
 
-    static diagnostic_s warning_L0004(const utils::resource::resource_location& config_loc,
-        const utils::resource::resource_location& lib_loc,
-        std::string_view macro_name,
-        bool has_extensions);
+diagnostic error_W0004(const utils::resource::resource_location&, std::string_view pgroup);
 
-    static diagnostic_s warning_L0005(
-        const utils::resource::resource_location& config_loc, std::string_view pattern, size_t limit);
+diagnostic error_W0005(const utils::resource::resource_location&, std::string_view name, std::string_view type);
 
-    static diagnostic_s warning_L0006(const utils::resource::resource_location& config_loc, std::string_view path);
+diagnostic error_W0006(const utils::resource::resource_location&, std::string_view proc_group, std::string_view type);
 
-    static diagnostic_s error_W0001(const utils::resource::resource_location& file_name);
+diagnostic warn_W0007(const utils::resource::resource_location&, std::string_view substitution);
 
-    static diagnostic_s error_W0002(const utils::resource::resource_location& file_name);
+diagnostic warn_W0008(const utils::resource::resource_location&, std::string_view pgroup);
 
-    static diagnostic_s error_W0003(const utils::resource::resource_location& file_name);
+diagnostic error_B4G001(const utils::resource::resource_location&);
 
-    static diagnostic_s error_W0004(const utils::resource::resource_location&, std::string_view pgroup);
+diagnostic error_B4G002(const utils::resource::resource_location&, std::string_view grp_name);
 
-    static diagnostic_s error_W0005(
-        const utils::resource::resource_location&, std::string_view name, std::string_view type);
+diagnostic warn_B4G003(const utils::resource::resource_location& file_name, std::string_view grp_name);
 
-    static diagnostic_s error_W0006(
-        const utils::resource::resource_location&, std::string_view proc_group, std::string_view type);
+diagnostic info_SUP(const utils::resource::resource_location& file_name);
 
-    static diagnostic_s warn_W0007(const utils::resource::resource_location&, std::string_view substitution);
+/*
+E01x - wrong format
+- E010 - unknown name
+- E011 - operand/param already exist and are defined
+- E012 - wrong format (exists but contains space etc)
+- E013 - inconsistent format (with instruction, operation etc)
 
-    static diagnostic_s warn_W0008(const utils::resource::resource_location&, std::string_view pgroup);
+E02x - operand/parameter/instruction number issues
+- E020 - operands number problem (too many)
+- E021 - operands number problem (too little)
+- E022 - missing operand
 
-    static diagnostic_s error_B4G001(const utils::resource::resource_location&);
+E03x - runtime problems
+- E030 - assignment not allowed
+- E031 - naming problem - name already exists
 
-    static diagnostic_s error_B4G002(const utils::resource::resource_location&, std::string_view grp_name);
+W01x - wrong format
+- W010 - unexpected field/name/instr
 
-    static diagnostic_s warn_B4G003(const utils::resource::resource_location& file_name, std::string_view grp_name);
-
-    static diagnostic_s info_SUP(const utils::resource::resource_location& file_name);
-
-    /*
-    E01x - wrong format
-    - E010 - unknown name
-    - E011 - operand/param already exist and are defined
-    - E012 - wrong format (exists but contains space etc)
-    - E013 - inconsistent format (with instruction, operation etc)
-
-    E02x - operand/parameter/instruction number issues
-    - E020 - operands number problem (too many)
-    - E021 - operands number problem (too little)
-    - E022 - missing operand
-
-    E03x - runtime problems
-    - E030 - assignment not allowed
-    - E031 - naming problem - name already exists
-
-    W01x - wrong format
-    - W010 - unexpected field/name/instr
-
-    */
-};
+*/
 
 } // namespace hlasm_plugin::parser_library
 

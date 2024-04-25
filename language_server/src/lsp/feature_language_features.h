@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_FEATURE_LANGUAGEFEATURES_H
 #define HLASMPLUGIN_LANGUAGESERVER_FEATURE_LANGUAGEFEATURES_H
 
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -36,7 +37,7 @@ public:
     nlohmann::json register_capabilities() override;
     void initialize_feature(const nlohmann::json& initialise_params) override;
 
-    static nlohmann::json convert_tokens_to_num_array(const std::vector<parser_library::token_info>& tokens);
+    static nlohmann::json convert_tokens_to_num_array(std::span<const parser_library::token_info> tokens);
 
 private:
     void definition(const request_id& id, const nlohmann::json& params);
@@ -51,12 +52,14 @@ private:
     void folding(const request_id& id, const nlohmann::json& params);
     void retrieve_outputs(const request_id& id, const nlohmann::json& params);
 
-    nlohmann::json document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol);
-    nlohmann::json document_symbol_list_json(hlasm_plugin::parser_library::document_symbol_list symbol_list);
+    nlohmann::json document_symbol_item_json(const hlasm_plugin::parser_library::document_symbol_item& symbol);
+    nlohmann::json document_symbol_list_json(
+        std::span<const hlasm_plugin::parser_library::document_symbol_item> symbol_list);
 
     parser_library::workspace_manager& ws_mngr_;
 
-    nlohmann::json translate_completion_list_and_save_doc(hlasm_plugin::parser_library::completion_list list);
+    nlohmann::json translate_completion_list_and_save_doc(
+        std::span<const hlasm_plugin::parser_library::completion_item> list);
     std::unordered_map<std::string, std::string> saved_completion_list_doc;
 };
 

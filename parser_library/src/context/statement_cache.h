@@ -15,7 +15,7 @@
 #ifndef CONTEXT_PROCESSING_STATEMENT_CACHE_H
 #define CONTEXT_PROCESSING_STATEMENT_CACHE_H
 
-#include "diagnostic.h"
+#include "diagnostic_op.h"
 #include "hlasm_statement.h"
 #include "processing/op_code.h"
 

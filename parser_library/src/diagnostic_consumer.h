@@ -19,15 +19,18 @@
 #include <vector>
 
 #include "diagnostic.h"
+#include "diagnostic_op.h"
 
 // Interface that allows to consume diagnostics regardless of how are they processed afterwards
 
 namespace hlasm_plugin::parser_library {
+struct diagnostic;
+struct diagnostic_op;
 
 // Interface that allows to collect objects (diagnostics)
 // from a tree structure of objects.
 template<typename T>
-class diagnostic_consumer
+class diagnostic_consumer_t
 {
     // TODO The reason why this function is const is that all current implementations have mutable containers where
     // the diagnostics are stored and large parts of the project depend on that constness of the function
@@ -35,11 +38,11 @@ public:
     virtual void add_diagnostic(T diagnostic) const = 0;
 
 protected:
-    ~diagnostic_consumer() = default;
+    ~diagnostic_consumer_t() = default;
 };
 
-using diagnostic_s_consumer = diagnostic_consumer<diagnostic_s>;
-using diagnostic_op_consumer = diagnostic_consumer<diagnostic_op>;
+using diagnostic_consumer = diagnostic_consumer_t<diagnostic>;
+using diagnostic_op_consumer = diagnostic_consumer_t<diagnostic_op>;
 
 namespace transform_traits {
 template<typename R, typename T>
@@ -50,7 +53,7 @@ using arg0_t = decltype(arg0(std::function(std::declval<T>())));
 } // namespace transform_traits
 
 template<typename F, typename T = typename transform_traits::arg0_t<F>>
-class diagnostic_consumer_transform final : public diagnostic_consumer<T>
+class diagnostic_consumer_transform final : public diagnostic_consumer_t<T>
 {
     F consumer;
 
@@ -62,17 +65,17 @@ public:
 };
 
 template<typename T>
-class drop_diagnostics_t final : public diagnostic_consumer<T>
+class drop_diagnostics_t final : public diagnostic_consumer_t<T>
 {
 public:
     void add_diagnostic(T) const override { /* drop the diagnostic */ };
 };
 
 inline constinit drop_diagnostics_t<diagnostic_op> drop_diagnostic_op;
-inline constinit drop_diagnostics_t<diagnostic_op> drop_diagnostic_s;
+inline constinit drop_diagnostics_t<diagnostic> drop_diagnostic;
 
 template<typename T>
-class diagnostic_consumer_container final : public diagnostic_consumer<T>
+class diagnostic_consumer_container final : public diagnostic_consumer_t<T>
 {
 public:
     mutable std::vector<T> diags;

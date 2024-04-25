@@ -52,7 +52,7 @@ TEST(virtual_file_provider, file_missing)
 
     virtual_file_provider vfp(ws_mngr, sink);
 
-    ON_CALL(ws_mngr, get_virtual_file_content(0)).WillByDefault([](auto) { return continuous_sequence<char>(); });
+    ON_CALL(ws_mngr, get_virtual_file_content(0)).WillByDefault([](auto) { return std::string(); });
 
     nlohmann::json result;
 
@@ -81,9 +81,7 @@ TEST(virtual_file_provider, file_present)
 
     virtual_file_provider vfp(ws_mngr, sink);
 
-    ON_CALL(ws_mngr, get_virtual_file_content(1)).WillByDefault([](auto) {
-        return make_continuous_sequence(std::string("test"));
-    });
+    ON_CALL(ws_mngr, get_virtual_file_content(1)).WillByDefault([](auto) { return std::string("test"); });
 
     nlohmann::json result;
 

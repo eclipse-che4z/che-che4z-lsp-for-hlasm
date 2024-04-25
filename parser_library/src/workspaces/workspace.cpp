@@ -21,12 +21,13 @@
 #include <unordered_set>
 
 #include "analyzer.h"
+#include "completion_item.h"
+#include "completion_trigger_kind.h"
 #include "context/instruction.h"
+#include "document_symbol_item.h"
 #include "fade_messages.h"
 #include "file.h"
 #include "file_manager.h"
-#include "lsp/completion_item.h"
-#include "lsp/document_symbol_item.h"
 #include "lsp/folding.h"
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"
@@ -49,16 +50,16 @@ struct parsing_results
 {
     semantics::lines_info hl_info;
     std::shared_ptr<lsp::lsp_context> lsp_context;
-    std::shared_ptr<const std::vector<fade_message_s>> fade_messages;
+    std::shared_ptr<const std::vector<fade_message>> fade_messages;
     performance_metrics metrics;
     std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>> vf_handles;
     processing::hit_count_map hc_opencode_map;
     processing::hit_count_map hc_macro_map;
 
-    std::vector<diagnostic_s> opencode_diagnostics;
-    std::vector<diagnostic_s> macro_diagnostics;
+    std::vector<diagnostic> opencode_diagnostics;
+    std::vector<diagnostic> macro_diagnostics;
 
-    std::vector<std::pair<int, std::string>> outputs;
+    std::vector<output_line> outputs;
 };
 
 [[nodiscard]] utils::value_task<parsing_results> parse_one_file(std::shared_ptr<context::id_storage> ids,
@@ -70,13 +71,13 @@ struct parsing_results
 {
     struct output_t final : output_handler
     {
-        std::vector<std::pair<int, std::string>> outputs;
+        std::vector<output_line> outputs;
 
         void mnote(unsigned char level, std::string_view text) override { outputs.emplace_back(level, text); }
         void punch(std::string_view text) override { outputs.emplace_back(-1, text); }
     } outputs;
 
-    auto fms = std::make_shared<std::vector<fade_message_s>>();
+    auto fms = std::make_shared<std::vector<fade_message>>();
     analyzer a(file->get_text(),
         analyzer_options {
             file->get_location(),
@@ -356,7 +357,7 @@ using rl_mac_cpy_map = std::unordered_map<resource_location, mac_cpy_definitions
 void generate_merged_fade_messages(const resource_location& rl,
     const processing::hit_count_entry& hc_entry,
     const rl_mac_cpy_map& active_rl_mac_cpy_map,
-    std::vector<fade_message_s>& fms)
+    std::vector<fade_message>& fms)
 {
     if (!hc_entry.has_sections)
         return;
@@ -404,7 +405,7 @@ void generate_merged_fade_messages(const resource_location& rl,
     while (faded_line_it != line_details_it_e)
     {
         auto active_line = std::find_if_not(std::next(faded_line_it), line_details_it_e, faded_line_predicate);
-        fms.emplace_back(fade_message_s::inactive_statement(uri,
+        fms.emplace_back(fade_message::inactive_statement(uri,
             range(position(std::distance(line_details_it_b, faded_line_it), 0),
                 position(std::distance(line_details_it_b, std::prev(active_line)), 80))));
 
@@ -470,7 +471,7 @@ void filter_and_emplace_mac_cpy_definitions(
 
 void fade_unused_mac_names(const processing::hit_count_map& hc_map,
     const rl_mac_cpy_map& active_rl_mac_cpy_map,
-    std::vector<fade_message_s>& fms)
+    std::vector<fade_message>& fms)
 {
     for (const auto& [active_rl, active_mac_cpy_defs] : active_rl_mac_cpy_map)
     {
@@ -481,7 +482,7 @@ void fade_unused_mac_names(const processing::hit_count_map& hc_map,
         for (const auto& [mac_cpy_def_start_line, mac_cpy_def_details] : active_mac_cpy_defs)
         {
             if (!mac_cpy_def_details.cpy_book && !hc_map_it->second.contains_line(mac_cpy_def_start_line))
-                fms.emplace_back(fade_message_s::unused_macro(active_rl.get_uri(),
+                fms.emplace_back(fade_message::unused_macro(active_rl.get_uri(),
                     range(position(mac_cpy_def_details.prototype_line, 0),
                         position(mac_cpy_def_details.prototype_line, 80))));
         }
@@ -489,7 +490,7 @@ void fade_unused_mac_names(const processing::hit_count_map& hc_map,
 }
 } // namespace
 
-void workspace::retrieve_fade_messages(std::vector<fade_message_s>& fms) const
+void workspace::retrieve_fade_messages(std::vector<fade_message>& fms) const
 {
     processing::hit_count_map hc_map;
     rl_mac_cpy_map active_rl_mac_cpy_map;
@@ -562,13 +563,13 @@ void workspace::delete_diags(processor_file_compoments& pfc)
         }
     }
 
-    pfc.m_last_results->opencode_diagnostics.push_back(diagnostic_s::info_SUP(pfc.m_file->get_location()));
+    pfc.m_last_results->opencode_diagnostics.push_back(info_SUP(pfc.m_file->get_location()));
 }
 
-void workspace::show_message(const std::string& message)
+void workspace::show_message(std::string_view message)
 {
     if (message_consumer_)
-        message_consumer_->show_message(message.c_str(), message_type::MT_INFO);
+        message_consumer_->show_message(message, message_type::MT_INFO);
 }
 
 lib_config workspace::get_config() const { return m_configuration.get_config().fill_missing_settings(global_config_); }
@@ -882,7 +883,7 @@ location workspace::definition(const resource_location& document_loc, position p
         return { pos, document_loc };
 }
 
-location_list workspace::references(const resource_location& document_loc, position pos) const
+std::vector<location> workspace::references(const resource_location& document_loc, position pos) const
 {
     auto opencodes = find_related_opencodes(document_loc);
     if (opencodes.empty())
@@ -906,7 +907,7 @@ std::string workspace::hover(const resource_location& document_loc, position pos
         return {};
 }
 
-lsp::completion_list_s workspace::completion(
+std::vector<completion_item> workspace::completion(
     const resource_location& document_loc, position pos, const char trigger_char, completion_trigger_kind trigger_kind)
 {
     auto opencodes = find_related_opencodes(document_loc);
@@ -928,7 +929,7 @@ lsp::completion_list_s workspace::completion(
     return lsp::generate_completion(comp);
 }
 
-lsp::document_symbol_list_s workspace::document_symbol(const resource_location& document_loc) const
+std::vector<document_symbol_item> workspace::document_symbol(const resource_location& document_loc) const
 {
     auto opencodes = find_related_opencodes(document_loc);
     if (opencodes.empty())
@@ -976,7 +977,7 @@ std::vector<folding_range> workspace::folding(const resource_location& document_
     return lsp::generate_folding_ranges(data);
 }
 
-std::vector<std::pair<int, std::string>> workspace::retrieve_output(const resource_location& document_loc) const
+std::vector<output_line> workspace::retrieve_output(const resource_location& document_loc) const
 {
     auto comp = find_processor_file_impl(document_loc);
     if (!comp)

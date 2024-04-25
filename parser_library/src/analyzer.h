@@ -52,13 +52,14 @@ class source_info_processor;
 } // namespace hlasm_plugin::parser_library::semantics
 
 namespace hlasm_plugin::parser_library {
-struct fade_message_s;
+struct fade_message;
 class output_handler;
 class virtual_file_monitor;
 class virtual_file_handle;
 
 template<typename T>
-class diagnostic_consumer;
+class diagnostic_consumer_t;
+struct diagnostic;
 struct diagnostic_op;
 
 enum class collect_highlighting_info : bool
@@ -84,7 +85,7 @@ class analyzer_options
     std::shared_ptr<context::id_storage> ids_init;
     std::vector<preprocessor_options> preprocessor_args;
     virtual_file_monitor* vf_monitor = nullptr;
-    std::shared_ptr<std::vector<fade_message_s>> fade_messages = nullptr;
+    std::shared_ptr<std::vector<fade_message>> fade_messages = nullptr;
     output_handler* output = nullptr;
 
     void set(utils::resource::resource_location rl) { file_loc = std::move(rl); }
@@ -98,14 +99,14 @@ class analyzer_options
     void set(preprocessor_options pp) { preprocessor_args.push_back(std::move(pp)); }
     void set(std::vector<preprocessor_options> pp) { preprocessor_args = std::move(pp); }
     void set(virtual_file_monitor* vfm) { vf_monitor = vfm; }
-    void set(std::shared_ptr<std::vector<fade_message_s>> fmc) { fade_messages = fmc; };
+    void set(std::shared_ptr<std::vector<fade_message>> fmc) { fade_messages = fmc; };
     void set(output_handler* o) { output = o; }
 
     context::hlasm_context& get_hlasm_context();
     analyzing_context& get_context();
     workspaces::parse_lib_provider& get_lib_provider() const;
     std::unique_ptr<processing::preprocessor> get_preprocessor(
-        processing::library_fetcher, diagnostic_consumer<diagnostic_op>&, semantics::source_info_processor&) const;
+        processing::library_fetcher, diagnostic_consumer_t<diagnostic_op>&, semantics::source_info_processor&) const;
 
     friend class analyzer;
 
@@ -129,7 +130,7 @@ public:
             0 + ... + std::is_same_v<std::decay_t<Args>, std::vector<preprocessor_options>>);
         constexpr auto vfm_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, virtual_file_monitor*>);
         constexpr auto fmc_cnt =
-            (0 + ... + std::is_same_v<std::decay_t<Args>, std::shared_ptr<std::vector<fade_message_s>>>);
+            (0 + ... + std::is_same_v<std::decay_t<Args>, std::shared_ptr<std::vector<fade_message>>>);
         constexpr auto o_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, output_handler*>);
         constexpr auto cnt = rl_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt + pp_cnt
             + vfm_cnt + fmc_cnt + o_cnt;
@@ -176,7 +177,7 @@ public:
 
     const performance_metrics& get_metrics() const;
 
-    std::span<diagnostic_s> diags() const noexcept;
+    std::span<diagnostic> diags() const noexcept;
 
     void register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer);
 

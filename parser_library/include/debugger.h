@@ -17,9 +17,7 @@
 
 #include <span>
 
-#include "protocol.h"
-#include "range.h"
-#include "sequence.h"
+#include "debug_types.h"
 #include "workspace_manager.h"
 #include "workspace_manager_response.h"
 
@@ -33,51 +31,10 @@ protected:
     ~debug_event_consumer() = default;
 
 public:
-    virtual void stopped(sequence<char> reason, sequence<char> addtl_info) = 0;
+    virtual void stopped(std::string_view reason, std::string_view addtl_info) = 0;
     virtual void exited(int exit_code) = 0;
-    virtual void mnote(unsigned char level, sequence<char> text) = 0;
-    virtual void punch(sequence<char> text) = 0;
-
-    void stopped(std::string_view reason, std::string_view addtl_info)
-    {
-        stopped(sequence(reason), sequence(addtl_info));
-    }
-};
-
-class breakpoints_t
-{
-    class impl;
-    impl* pimpl;
-    friend class debugger;
-
-public:
-    breakpoints_t();
-    breakpoints_t(const breakpoints_t&) = delete;
-    breakpoints_t(breakpoints_t&&) noexcept;
-    breakpoints_t& operator=(const breakpoints_t&) = delete;
-    breakpoints_t& operator=(breakpoints_t&&) & noexcept;
-    ~breakpoints_t();
-
-    [[nodiscard]] const breakpoint* begin() const;
-    [[nodiscard]] const breakpoint* end() const;
-    [[nodiscard]] std::size_t size() const;
-};
-
-class evaluated_expression_t
-{
-    class impl;
-    impl* pimpl;
-    friend class debugger;
-
-public:
-    evaluated_expression_t();
-    evaluated_expression_t(evaluated_expression_t&&) noexcept;
-    evaluated_expression_t& operator=(evaluated_expression_t&&) & noexcept;
-    ~evaluated_expression_t();
-
-    [[nodiscard]] sequence<char> result() const noexcept;
-    [[nodiscard]] bool is_error() const noexcept;
-    [[nodiscard]] std::size_t var_ref() const noexcept;
+    virtual void mnote(unsigned char level, std::string_view text) = 0;
+    virtual void punch(std::string_view text) = 0;
 };
 
 // Implements DAP for macro tracing. Starts analyzer in a separate thread
@@ -94,17 +51,10 @@ public:
     debugger& operator=(debugger&&) & noexcept;
     ~debugger();
 
-    void launch(sequence<char> source,
-        debugger_configuration_provider& dc_provider,
-        bool stop_on_entry,
-        workspace_manager_response<bool> resp);
     void launch(std::string_view source,
         debugger_configuration_provider& dc_provider,
         bool stop_on_entry,
-        workspace_manager_response<bool> resp)
-    {
-        launch(sequence(source), dc_provider, stop_on_entry, std::move(resp));
-    }
+        workspace_manager_response<bool> resp);
 
     void set_event_consumer(debug_event_consumer* event);
 
@@ -116,22 +66,16 @@ public:
     void continue_debug();
     void pause();
 
-    void breakpoints(sequence<char> source, sequence<breakpoint> bps);
-    void breakpoints(std::string_view source, sequence<breakpoint> bps) { breakpoints(sequence(source), bps); }
-    [[nodiscard]] breakpoints_t breakpoints(sequence<char> source) const;
-    [[nodiscard]] breakpoints_t breakpoints(std::string_view source) const { return breakpoints(sequence(source)); }
+    void breakpoints(std::string_view source, std::span<const breakpoint> bps);
+    [[nodiscard]] std::span<const breakpoint> breakpoints(std::string_view source) const;
 
-    void function_breakpoints(sequence<function_breakpoint> bps);
-    void function_breakpoints(std::span<const function_breakpoint> bps)
-    {
-        function_breakpoints(sequence<function_breakpoint>(bps));
-    }
+    void function_breakpoints(std::span<const function_breakpoint> bps);
 
     // Retrieval of current context.
-    stack_frames_t stack_frames() const;
-    scopes_t scopes(frame_id_t frame_id) const;
-    variables_t variables(var_reference_t var_ref) const;
-    evaluated_expression_t evaluate(sequence<char> expr, frame_id_t id = -1);
+    std::span<const stack_frame> stack_frames() const;
+    std::span<const scope> scopes(frame_id_t frame_id) const;
+    std::span<const variable> variables(var_reference_t var_ref) const;
+    evaluated_expression evaluate(std::string_view expr, frame_id_t id = -1);
 
     void analysis_step(const std::atomic<unsigned char>* yield_indicator);
 };

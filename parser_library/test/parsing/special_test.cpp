@@ -132,3 +132,63 @@ TEST(special_lines, mix_op_and_override)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(special_lines, codepage)
+{
+    std::string input("*PROCESS CODEPAGE(COMPLEX())");
+    analyzer a(input, analyzer_options { file_is_opencode::yes });
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A215" }));
+}
+
+TEST(special_lines, mxref)
+{
+    std::string input("*PROCESS MXREF(COMPLEX())");
+    analyzer a(input, analyzer_options { file_is_opencode::yes });
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A218" }));
+}
+
+TEST(special_lines, sectalgn)
+{
+    std::string input(R"(*PROCESS SECTALGN(COMPLEX())
+*PROCESS SECTALGN(1)
+)");
+    analyzer a(input, analyzer_options { file_is_opencode::yes });
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A219", "A220" }));
+}
+
+TEST(special_lines, machine)
+{
+    std::string input(R"(*PROCESS MACHINE(,)
+*PROCESS MACHINE(S370,ABC)
+)");
+    analyzer a(input, analyzer_options { file_is_opencode::yes });
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A221", "A222" }));
+}
+
+TEST(special_lines, pcontrol)
+{
+    std::string input(R"(*PROCESS PCONTROL())");
+    analyzer a(input, analyzer_options { file_is_opencode::yes });
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A223" }));
+}
+
+TEST(special_lines, suprwarn)
+{
+    std::string input(R"(*PROCESS SUPRWARN(12345)
+*PROCESS SUPRWARN(ABCDE)
+)");
+    analyzer a(input, analyzer_options { file_is_opencode::yes });
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A225", "A226" }));
+}

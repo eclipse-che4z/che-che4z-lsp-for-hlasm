@@ -90,7 +90,7 @@ A_t macro_param_base::count(std::span<const A_t> offset) const
 }
 
 bool macro_param_base::can_read(
-    std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const
+    std::span<const A_t> subscript, range symbol_range, diagnostic_consumer_t<diagnostic_op>& diags) const
 {
     if (subscript.empty())
     {

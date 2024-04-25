@@ -110,7 +110,7 @@ bool library_local::has_file(std::string_view file, utils::resource::resource_lo
     return true;
 }
 
-void library_local::copy_diagnostics(std::vector<diagnostic_s>& target) const
+void library_local::copy_diagnostics(std::vector<diagnostic>& target) const
 {
     if (auto files = m_files_collection.load(); files)
         target.insert(target.end(), files->second.begin(), files->second.end());
@@ -127,7 +127,7 @@ library_local::files_collection_t library_local::load_files(
                                                     utils::resource::resource_location,
                                                     utils::hashers::string_hasher,
                                                     std::equal_to<>>,
-        std::vector<diagnostic_s>>>();
+        std::vector<diagnostic>>>();
     auto& [new_files, new_diags] = *new_state;
 
     switch (rc)
@@ -136,13 +136,13 @@ library_local::files_collection_t library_local::load_files(
             break;
         case hlasm_plugin::utils::path::list_directory_rc::not_exists:
             if (!m_optional)
-                new_diags.push_back(diagnostic_s::error_L0002(m_proc_grps_loc, m_lib_loc));
+                new_diags.push_back(error_L0002(m_proc_grps_loc, m_lib_loc));
             break;
         case hlasm_plugin::utils::path::list_directory_rc::not_a_directory:
-            new_diags.push_back(diagnostic_s::error_L0002(m_proc_grps_loc, m_lib_loc));
+            new_diags.push_back(error_L0002(m_proc_grps_loc, m_lib_loc));
             break;
         case hlasm_plugin::utils::path::list_directory_rc::other_failure:
-            new_diags.push_back(diagnostic_s::error_L0001(m_proc_grps_loc, m_lib_loc));
+            new_diags.push_back(error_L0001(m_proc_grps_loc, m_lib_loc));
             break;
     }
 
@@ -193,8 +193,7 @@ library_local::files_collection_t library_local::load_files(
     }
 
     if (conflict_count > 0)
-        new_diags.push_back(
-            diagnostic_s::warning_L0004(m_proc_grps_loc, m_lib_loc, file_name_conflicts, !m_extensions.empty()));
+        new_diags.push_back(warning_L0004(m_proc_grps_loc, m_lib_loc, file_name_conflicts, !m_extensions.empty()));
 
     m_files_collection.store(new_state);
 

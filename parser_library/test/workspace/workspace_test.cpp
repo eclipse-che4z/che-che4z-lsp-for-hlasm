@@ -437,8 +437,8 @@ TEST_F(workspace_test, did_close_file)
     // dependency of source2
     std::vector<document_change> changes;
     std::string new_text = "";
-    changes.push_back(document_change({ { 0, 0 }, { 0, 6 } }, new_text.c_str(), new_text.size()));
-    file_manager.did_change_file(source2_loc, 1, changes.data(), changes.size());
+    changes.push_back(document_change({ { 0, 0 }, { 0, 6 } }, new_text));
+    file_manager.did_change_file(source2_loc, 1, changes);
     run_if_valid(ws.did_change_file(source2_loc, file_content_state::changed_content));
     parse_all_files(ws);
     EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)1);
@@ -462,8 +462,8 @@ TEST_F(workspace_test, did_close_file_without_save)
     parse_all_files(ws);
     EXPECT_EQ(collect_and_get_diags_size(ws), 0);
 
-    document_change c(range(position(2, 0), position(2, 0)), "ERR\n", 4);
-    file_manager.did_change_file(correct_macro_loc, 2, &c, 1);
+    document_change c(range(position(2, 0), position(2, 0)), "ERR\n");
+    file_manager.did_change_file(correct_macro_loc, 2, std::span(&c, 1));
     run_if_valid(ws.did_change_file(correct_macro_loc, file_content_state::changed_content));
     parse_all_files(ws);
 
@@ -496,7 +496,7 @@ TEST_F(workspace_test, did_change_watched_files)
     run_if_valid(ws.did_change_watched_files({ correct_macro_loc }, { workspaces::file_content_state::identical }));
     parse_all_files(ws);
     ASSERT_EQ(collect_and_get_diags_size(ws), (size_t)1);
-    EXPECT_STREQ(diags()[0].code.c_str(), "E049");
+    EXPECT_EQ(diags()[0].code, "E049");
 
     file_manager.insert_correct_macro = true;
     run_if_valid(ws.did_change_watched_files({ correct_macro_loc }, { workspaces::file_content_state::identical }));
@@ -654,13 +654,13 @@ TEST_F(workspace_test, use_external_library)
     NiceMock<external_file_reader_mock> external_files;
     file_manager_impl fm(external_files);
 
-    const auto source_match = [](auto seq) { return std::string_view(seq) == source1_loc.get_uri(); };
+    const auto source_match = [](auto seq) { return seq == source1_loc.get_uri(); };
     const auto provide_pg = [](auto, auto channel) {
-        channel.provide(sequence<char>(std::string_view(R"(
+        channel.provide(R"(
     {
       "name": "P1",
       "libs": [ {"dataset": "REMOTE.DATASET"} ]
-    })")));
+    })");
     };
     EXPECT_CALL(external_conf_mock, read_external_configuration(Truly(source_match), _)).WillOnce(Invoke(provide_pg));
     fm.did_open_file(source1_loc, 1, "");

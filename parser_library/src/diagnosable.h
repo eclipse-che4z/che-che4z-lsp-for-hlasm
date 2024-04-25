@@ -20,6 +20,7 @@
 
 #include "diagnostic.h"
 #include "diagnostic_consumer.h"
+#include "diagnostic_op.h"
 #include "protocol.h"
 
 // Interface that allows to collect objects (diagnostics)
@@ -35,7 +36,7 @@ namespace hlasm_plugin::parser_library {
 // Interface that allows to collect objects (diagnostics)
 // from a tree structure of objects.
 template<typename T>
-class collectable : public diagnostic_consumer<T>
+class collectable : public diagnostic_consumer_t<T>
 {
 public:
     using diagnostic_container = std::vector<T>;
@@ -50,7 +51,7 @@ protected:
     ~collectable() = default;
 };
 
-using diagnosable = collectable<diagnostic_s>;
+using diagnosable = collectable<diagnostic>;
 
 } // namespace hlasm_plugin::parser_library
 

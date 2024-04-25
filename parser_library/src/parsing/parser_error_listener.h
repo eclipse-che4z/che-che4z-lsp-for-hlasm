@@ -17,6 +17,7 @@
 
 #include "ANTLRErrorListener.h"
 
+#include "diagnostic.h"
 #include "diagnostic_consumer.h"
 #include "semantics/range_provider.h"
 

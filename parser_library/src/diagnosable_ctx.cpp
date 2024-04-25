@@ -19,7 +19,7 @@
 
 namespace hlasm_plugin::parser_library {
 
-void diagnosable_ctx::add_diagnostic(diagnostic_s diagnostic) const
+void diagnosable_ctx::add_diagnostic(diagnostic diagnostic) const
 {
     diagnosable_impl::add_diagnostic(add_stack_details(
         diagnostic_op(

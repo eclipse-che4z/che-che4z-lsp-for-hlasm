@@ -21,7 +21,7 @@
 namespace hlasm_plugin::parser_library::context {
 
 bool set_symbol_base::can_read(
-    std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const
+    std::span<const A_t> subscript, range symbol_range, diagnostic_consumer_t<diagnostic_op>& diags) const
 {
     if (subscript.size() > 1)
     {

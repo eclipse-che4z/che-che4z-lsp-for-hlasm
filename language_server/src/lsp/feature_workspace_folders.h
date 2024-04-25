@@ -54,9 +54,6 @@ private:
     // Removes all workspaces specified in the json from the workspace manager.
     void remove_workspaces(const nlohmann::json& removed);
 
-    // Adds one workspace to the workspace manager.
-    void add_workspace(const std::string& name, const std::string& uri);
-
     void send_configuration_request();
 
     void register_file_change_notifictions();

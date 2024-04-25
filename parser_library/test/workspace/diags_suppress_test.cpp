@@ -129,9 +129,9 @@ TEST(diags_suppress, pgm_supress_limit_changed)
     EXPECT_EQ(ws.diags().size(), 6U);
 
     std::string new_limit_str = R"("diagnosticsSuppressLimit":5,)";
-    document_change ch(range({ 0, 1 }, { 0, 1 }), new_limit_str.c_str(), new_limit_str.size());
+    document_change ch(range({ 0, 1 }, { 0, 1 }), new_limit_str);
 
-    fm.did_change_file(empty_pgm_conf_name, 1, &ch, 1);
+    fm.did_change_file(empty_pgm_conf_name, 1, std::span(&ch, 1));
     run_if_valid(ws.did_change_file(empty_pgm_conf_name, file_content_state::changed_content));
     parse_all_files(ws);
 

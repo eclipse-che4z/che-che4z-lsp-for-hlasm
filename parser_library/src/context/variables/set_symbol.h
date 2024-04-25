@@ -52,7 +52,7 @@ public:
     virtual std::vector<A_t> keys() const = 0;
 
     bool can_read(
-        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const override;
+        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer_t<diagnostic_op>& diags) const override;
 
 protected:
     set_symbol_base(id_index name, bool is_scalar, SET_t_enum type);

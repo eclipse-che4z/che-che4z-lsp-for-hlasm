@@ -56,7 +56,7 @@ public:
         std::string_view file_text,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
-        std::shared_ptr<std::vector<fade_message_s>> fade_msgs,
+        std::shared_ptr<std::vector<fade_message>> fade_msgs,
         output_handler* output);
 
     [[nodiscard]] utils::task co_step();
@@ -102,11 +102,11 @@ private:
         lookahead_done,
         diagnostics,
     };
-    std::unordered_map<context::id_index, std::pair<pending_seq_redifinition_state, std::vector<diagnostic_s>>>
+    std::unordered_map<context::id_index, std::pair<pending_seq_redifinition_state, std::vector<diagnostic>>>
         m_lookahead_seq_redifinitions;
     std::vector<decltype(m_lookahead_seq_redifinitions)::iterator> m_pending_seq_redifinitions;
 
-    std::shared_ptr<std::vector<fade_message_s>> m_fade_msgs;
+    std::shared_ptr<std::vector<fade_message>> m_fade_msgs;
 
     std::map<std::pair<std::string, processing::processing_kind>, bool> m_external_requests;
 

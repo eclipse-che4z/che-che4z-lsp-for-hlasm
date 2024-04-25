@@ -17,10 +17,10 @@
 
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include "diagnostic.h"
 #include "nlohmann/json.hpp"
 #include "protocol.h"
 #include "workspace_manager.h"
@@ -30,17 +30,16 @@ namespace hlasm_plugin::benchmark {
 class diagnostic_counter : public hlasm_plugin::parser_library::diagnostics_consumer
 {
 public:
-    void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics,
-        hlasm_plugin::parser_library::fade_message_list) override
+    void consume_diagnostics(std::span<const hlasm_plugin::parser_library::diagnostic> diagnostics,
+        std::span<const hlasm_plugin::parser_library::fade_message>) override
     {
-        for (size_t i = 0; i < diagnostics.diagnostics_size(); i++)
+        for (const auto& d : diagnostics)
         {
-            if (auto diag_sev = diagnostics.diagnostics(i).severity();
-                diag_sev == hlasm_plugin::parser_library::diagnostic_severity::error)
+            if (auto diag_sev = d.severity; diag_sev == hlasm_plugin::parser_library::diagnostic_severity::error)
                 error_count++;
             else if (diag_sev == hlasm_plugin::parser_library::diagnostic_severity::warning)
                 warning_count++;
-            message_counts[diagnostics.diagnostics(i).code()]++;
+            message_counts[d.code]++;
         }
     }
 

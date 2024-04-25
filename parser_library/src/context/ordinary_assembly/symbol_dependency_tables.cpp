@@ -95,7 +95,7 @@ bool symbol_dependency_tables::check_cycle(
 struct resolve_dependant_visitor
 {
     symbol_value& val;
-    diagnostic_s_consumer* diag_consumer;
+    diagnostic_consumer* diag_consumer;
     ordinary_assembly_context& sym_ctx;
     std::unordered_map<dependant, statement_ref>& dependency_source_stmts;
     const dependency_evaluation_context& dep_ctx;
@@ -233,7 +233,7 @@ struct dependant_hash
 
 void symbol_dependency_tables::resolve_dependant(dependant target,
     const resolvable* dep_src,
-    diagnostic_s_consumer* diag_consumer,
+    diagnostic_consumer* diag_consumer,
     const dependency_evaluation_context& dep_ctx,
     const library_info& li)
 {
@@ -417,7 +417,7 @@ symbol_dependency_tables::dep_iterator symbol_dependency_tables::dep_end()
 }
 
 void symbol_dependency_tables::resolve(
-    std::variant<id_index, space_ptr> what_changed, diagnostic_s_consumer* diag_consumer, const library_info& li)
+    std::variant<id_index, space_ptr> what_changed, diagnostic_consumer* diag_consumer, const library_info& li)
 {
     m_dependencies_filters.reset_global(std::visit(dependant_hash(), what_changed));
 
@@ -734,7 +734,7 @@ dependency_adder symbol_dependency_tables::add_dependencies(
 }
 
 void symbol_dependency_tables::add_defined(
-    const std::variant<id_index, space_ptr>& what_changed, diagnostic_s_consumer* diag_consumer, const library_info& li)
+    const std::variant<id_index, space_ptr>& what_changed, diagnostic_consumer* diag_consumer, const library_info& li)
 {
     resolve(what_changed, diag_consumer, li);
 }

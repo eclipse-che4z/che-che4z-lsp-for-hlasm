@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-#include "lsp/completion_item.h"
+#include "completion_item.h"
 #include "lsp/instruction_completions.h"
 #include "utils/concat.h"
 

@@ -56,7 +56,7 @@ private:
     mutable typename collectable<T>::diagnostic_container container;
 };
 
-using diagnosable_impl = collectable_impl<diagnostic_s>;
+using diagnosable_impl = collectable_impl<diagnostic>;
 using diagnosable_op_impl = collectable_impl<diagnostic_op>;
 
 } // namespace hlasm_plugin::parser_library

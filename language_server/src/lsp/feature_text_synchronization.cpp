@@ -66,7 +66,7 @@ void feature_text_synchronization::on_did_open(const nlohmann::json& params)
     const auto version = text_doc.at("version").get<nlohmann::json::number_unsigned_t>();
     const auto text = text_doc.at("text").get<std::string_view>();
 
-    ws_mngr_.did_open_file(doc_uri.c_str(), version, text.data(), text.size());
+    ws_mngr_.did_open_file(doc_uri, version, text);
 }
 
 void feature_text_synchronization::on_did_change(const nlohmann::json& params)
@@ -87,21 +87,21 @@ void feature_text_synchronization::on_did_change(const nlohmann::json& params)
         auto range_it = ch.find("range");
         if (range_it == ch.end())
         {
-            changes.emplace_back(text.data(), text.size());
+            changes.emplace_back(text);
         }
         else
         {
-            changes.emplace_back(parse_range(*range_it), text.data(), text.size());
+            changes.emplace_back(parse_range(*range_it), text);
         }
     }
-    ws_mngr_.did_change_file(doc_uri.c_str(), version, changes.data(), changes.size());
+    ws_mngr_.did_change_file(doc_uri, version, changes);
 }
 
 void feature_text_synchronization::on_did_close(const nlohmann::json& params)
 {
     const std::string& doc_uri = params.at("textDocument").at("uri").get_ref<const std::string&>();
 
-    ws_mngr_.did_close_file(doc_uri.c_str());
+    ws_mngr_.did_close_file(doc_uri);
 }
 
 } // namespace hlasm_plugin::language_server::lsp

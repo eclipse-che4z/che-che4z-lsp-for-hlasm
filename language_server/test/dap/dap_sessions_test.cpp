@@ -46,7 +46,7 @@ public:
 
 struct dummy_debugger_configuration_provider : hlasm_plugin::parser_library::debugger_configuration_provider
 {
-    void provide_debugger_configuration(hlasm_plugin::parser_library::sequence<char>,
+    void provide_debugger_configuration(std::string_view,
         hlasm_plugin::parser_library::workspace_manager_response<
             hlasm_plugin::parser_library::debugging::debugger_configuration> conf) override
     {

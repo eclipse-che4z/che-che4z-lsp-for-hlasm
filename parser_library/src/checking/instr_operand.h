@@ -25,6 +25,7 @@
 
 #include "context/ordinary_assembly/alignment.h"
 #include "diagnostic.h"
+#include "diagnostic_op.h"
 #include "operand.h"
 
 namespace hlasm_plugin::parser_library::checking {

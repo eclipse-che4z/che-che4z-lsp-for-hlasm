@@ -68,8 +68,8 @@ void change_reparse_and_recollect_diags(
     file_manager& fm, workspace& ws, const resource_location& rl, std::string_view new_content)
 {
     static size_t version = 2;
-    document_change doc_change(new_content.data(), new_content.size());
-    fm.did_change_file(rl, version++, &doc_change, 1);
+    document_change doc_change(new_content);
+    fm.did_change_file(rl, version++, std::span(&doc_change, 1));
     run_if_valid(ws.did_change_file(rl, file_content_state::changed_content));
     parse_all_files(ws);
 

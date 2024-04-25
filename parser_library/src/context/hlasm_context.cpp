@@ -1086,7 +1086,7 @@ bool hlasm_context::using_pop()
     return true;
 }
 
-void hlasm_context::using_resolve(diagnostic_s_consumer& diag, const library_info& li)
+void hlasm_context::using_resolve(diagnostic_consumer& diag, const library_info& li)
 {
     m_usings->resolve_all(ord_ctx, diag, li);
 }

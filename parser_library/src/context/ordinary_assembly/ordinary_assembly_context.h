@@ -23,6 +23,7 @@
 
 #include "alignment.h"
 #include "dependable.h"
+#include "diagnostic.h"
 #include "diagnostic_consumer.h"
 #include "section.h"
 #include "symbol.h"
@@ -161,7 +162,7 @@ public:
     space_ptr register_ordinary_space(alignment align);
 
     // creates layout of every section
-    void finish_module_layout(diagnostic_s_consumer* diag_consumer, const library_info& li);
+    void finish_module_layout(diagnostic_consumer* diag_consumer, const library_info& li);
 
     size_t current_literal_pool_generation() const;
     size_t next_unique_id() { return ++m_statement_unique_id; }

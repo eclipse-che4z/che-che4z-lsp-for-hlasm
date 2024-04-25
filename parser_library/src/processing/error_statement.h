@@ -16,7 +16,7 @@
 #define HLASMPARSER_PARSERLIBRARY_PROCESSING_ERROR_STATEMENT_H
 
 #include "context/hlasm_statement.h"
-#include "diagnostic.h"
+#include "diagnostic_op.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

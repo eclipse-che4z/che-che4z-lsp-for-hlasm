@@ -26,9 +26,7 @@ class external_configuration_requests_mock : public hlasm_plugin::parser_library
 public:
     MOCK_METHOD(void,
         read_external_configuration,
-        (hlasm_plugin::parser_library::sequence<char> url,
-            hlasm_plugin::parser_library::workspace_manager_response<hlasm_plugin::parser_library::sequence<char>>
-                content),
+        (std::string_view url, hlasm_plugin::parser_library::workspace_manager_response<std::string_view> content),
         (override));
 };
 } // namespace

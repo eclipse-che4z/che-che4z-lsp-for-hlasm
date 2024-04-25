@@ -26,7 +26,6 @@
 
 #include "message_router.h"
 #include "nlohmann/json_fwd.hpp"
-#include "sequence.h"
 #include "workspace_manager_external_file_requests.h"
 
 namespace hlasm_plugin::language_server {
@@ -54,8 +53,8 @@ public:
 
     // Inherited via workspace_manager_external_file_requests
     void read_external_file(
-        const char* url, parser_library::workspace_manager_response<parser_library::sequence<char>> content) override;
-    void read_external_directory(const char* url,
+        std::string_view url, parser_library::workspace_manager_response<std::string_view> content) override;
+    void read_external_directory(std::string_view url,
         parser_library::workspace_manager_response<parser_library::workspace_manager_external_directory_result> members,
         bool subdir = false) override;
 

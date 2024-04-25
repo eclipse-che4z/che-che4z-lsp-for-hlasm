@@ -19,25 +19,66 @@
 // used to present the context of HLASM analysis to
 // the user.
 
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <string>
-
-#include "protocol.h"
-#include "variable.h"
 
 namespace hlasm_plugin::parser_library::debugging {
 
+using frame_id_t = size_t;
+using var_reference_t = size_t;
+
+enum class set_type
+{
+    A_TYPE,
+    B_TYPE,
+    C_TYPE,
+    UNDEF_TYPE
+};
+
+// Interface that represents a variable to be shown to the user
+// through DAP.
+struct variable
+{
+    std::string name;
+    std::string value;
+    set_type type = set_type::UNDEF_TYPE;
+    var_reference_t var_reference = 0;
+
+    std::function<std::vector<variable>()> values;
+
+    bool is_scalar() const noexcept { return !values; }
+};
+
+struct breakpoint
+{
+    explicit breakpoint(size_t line)
+        : line(line)
+    {}
+    size_t line;
+};
+
+struct function_breakpoint
+{
+    explicit function_breakpoint(std::string_view name)
+        : name(name)
+    {}
+    std::string_view name;
+};
+
 struct source
 {
-    source(std::string uri)
+    explicit source(std::string uri)
         : uri(std::move(uri))
     {}
     std::string uri;
-    bool operator==(const source& oth) const { return uri == oth.uri; }
+    bool operator==(const source& oth) const noexcept = default;
 };
 
 struct stack_frame
 {
-    stack_frame(size_t begin_line, size_t end_line, uint32_t id, std::string name, source source)
+    explicit stack_frame(size_t begin_line, size_t end_line, uint32_t id, std::string name, source source)
         : begin_line(begin_line)
         , end_line(end_line)
         , id(id)
@@ -49,16 +90,11 @@ struct stack_frame
     uint32_t id;
     std::string name;
     source frame_source;
-    bool operator==(const stack_frame& oth) const
-    {
-        return begin_line == oth.begin_line && end_line == oth.end_line && name == oth.name
-            && frame_source == oth.frame_source;
-    }
 };
 
 struct scope
 {
-    scope(std::string name, var_reference_t ref, source source)
+    explicit scope(std::string name, var_reference_t ref, source source)
         : name(std::move(name))
         , scope_source(std::move(source))
         , var_reference(ref)
@@ -68,9 +104,11 @@ struct scope
     var_reference_t var_reference;
 };
 
-struct variable_store
+struct evaluated_expression
 {
-    std::vector<variable> variables;
+    std::string result;
+    bool error = false;
+    std::size_t var_ref = 0;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

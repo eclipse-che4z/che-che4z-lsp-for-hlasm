@@ -44,7 +44,7 @@ class session final : public json_sink, parser_library::debugger_configuration_p
 
     void thread_routine();
 
-    void provide_debugger_configuration(parser_library::sequence<char> document_uri,
+    void provide_debugger_configuration(std::string_view document_uri,
         parser_library::workspace_manager_response<parser_library::debugging::debugger_configuration> conf) override;
 
 public:

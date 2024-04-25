@@ -188,7 +188,7 @@ class workspace_configuration
     struct b4g_config
     {
         std::optional<config::b4g_map> config;
-        std::vector<diagnostic_s> diags;
+        std::vector<diagnostic> diags;
     };
 
     std::unordered_map<utils::resource::resource_location, b4g_config, utils::resource::resource_location_hasher>
@@ -198,7 +198,7 @@ class workspace_configuration
 
     lib_config m_local_config;
 
-    std::vector<diagnostic_s> m_config_diags;
+    std::vector<diagnostic> m_config_diags;
 
     std::map<std::pair<utils::resource::resource_location, library_options>,
         std::pair<std::shared_ptr<library>, bool>,
@@ -214,26 +214,26 @@ class workspace_configuration
     [[nodiscard]] utils::task process_processor_group(const config::processor_group& pg,
         std::span<const std::string> fallback_macro_extensions,
         const utils::resource::resource_location& alternative_root,
-        std::vector<diagnostic_s>& diags);
+        std::vector<diagnostic>& diags);
 
     [[nodiscard]] utils::task process_processor_group_library(const config::library& lib,
         const utils::resource::resource_location& alternative_root,
-        std::vector<diagnostic_s>& diags,
+        std::vector<diagnostic>& diags,
         std::span<const std::string> fallback_macro_extensions,
         processor_group& prc_grp);
     [[nodiscard]] utils::task process_processor_group_library(const config::dataset& dsn,
         const utils::resource::resource_location& alternative_root,
-        std::vector<diagnostic_s>& diags,
+        std::vector<diagnostic>& diags,
         std::span<const std::string> fallback_macro_extensions,
         processor_group& prc_grp);
     [[nodiscard]] utils::task process_processor_group_library(const config::endevor& end,
         const utils::resource::resource_location& alternative_root,
-        std::vector<diagnostic_s>& diags,
+        std::vector<diagnostic>& diags,
         std::span<const std::string> fallback_macro_extensions,
         processor_group& prc_grp);
     [[nodiscard]] utils::task process_processor_group_library(const config::endevor_dataset& end,
         const utils::resource::resource_location& alternative_root,
-        std::vector<diagnostic_s>& diags,
+        std::vector<diagnostic>& diags,
         std::span<const std::string> fallback_macro_extensions,
         processor_group& prc_grp);
 
@@ -241,9 +241,9 @@ class workspace_configuration
         std::span<const config::processor_group> pgs,
         std::span<const std::string> fallback_macro_extensions,
         const utils::resource::resource_location& alternative_root,
-        std::vector<diagnostic_s>& diags);
+        std::vector<diagnostic>& diags);
 
-    void process_program(const config::program_mapping& pgm, std::vector<diagnostic_s>& diags);
+    void process_program(const config::program_mapping& pgm, std::vector<diagnostic>& diags);
 
     bool is_config_file(const utils::resource::resource_location& file_location) const;
     bool is_b4g_config_file(const utils::resource::resource_location& file) const;
@@ -251,19 +251,18 @@ class workspace_configuration
     [[nodiscard]] utils::value_task<parse_config_file_result> parse_b4g_config_file(
         utils::resource::resource_location cfg_file_rl);
 
-    [[nodiscard]] utils::value_task<parse_config_file_result> load_and_process_config(std::vector<diagnostic_s>& diags);
+    [[nodiscard]] utils::value_task<parse_config_file_result> load_and_process_config(std::vector<diagnostic>& diags);
 
-    [[nodiscard]] utils::value_task<parse_config_file_result> load_proc_config(config::proc_grps& proc_groups,
-        global_settings_map& utilized_settings_values,
-        std::vector<diagnostic_s>& diags);
+    [[nodiscard]] utils::value_task<parse_config_file_result> load_proc_config(
+        config::proc_grps& proc_groups, global_settings_map& utilized_settings_values, std::vector<diagnostic>& diags);
     [[nodiscard]] utils::value_task<parse_config_file_result> load_pgm_config(
-        config::pgm_conf& pgm_config, global_settings_map& utilized_settings_values, std::vector<diagnostic_s>& diags);
+        config::pgm_conf& pgm_config, global_settings_map& utilized_settings_values, std::vector<diagnostic>& diags);
 
     [[nodiscard]] utils::task find_and_add_libs(utils::resource::resource_location root,
         utils::resource::resource_location path_pattern,
         processor_group& prc_grp,
         library_local_options opts,
-        std::vector<diagnostic_s>& diags);
+        std::vector<diagnostic>& diags);
 
     void add_missing_diags(const diagnosable& target,
         const utils::resource::resource_location& config_file_rl,

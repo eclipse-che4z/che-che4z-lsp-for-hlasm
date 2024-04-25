@@ -20,7 +20,9 @@
 #include <vector>
 
 namespace hlasm_plugin {
-class diagnostic_s;
+namespace parser_library {
+struct diagnostic;
+} // namespace parser_library
 namespace utils::resource {
 class resource_location;
 } // namespace utils::resource
@@ -42,7 +44,7 @@ public:
     virtual std::vector<std::string> list_files() = 0;
     virtual const utils::resource::resource_location& get_location() const = 0;
     virtual bool has_file(std::string_view file, utils::resource::resource_location* url = nullptr) = 0;
-    virtual void copy_diagnostics(std::vector<diagnostic_s>&) const = 0;
+    virtual void copy_diagnostics(std::vector<diagnostic>&) const = 0;
     virtual bool has_cached_content() const = 0;
 };
 

@@ -18,20 +18,21 @@
 #include <utility>
 
 #include "diagnostic.h"
+#include "diagnostic_op.h"
 
 namespace hlasm_plugin::parser_library {
 
-diagnostic_s add_stack_details(diagnostic_op diagnostic, context::processing_stack_t stack)
+diagnostic add_stack_details(diagnostic_op d, context::processing_stack_t stack)
 {
     if (stack.empty())
-        return diagnostic_s(std::move(diagnostic));
+        return std::move(d).to_diagnostic();
 
-    diagnostic_s diag(stack.frame().resource_loc->get_uri(), std::move(diagnostic));
+    auto diag = std::move(d).to_diagnostic(stack.frame().resource_loc->get_uri());
 
     for (stack = stack.parent(); !stack.empty(); stack = stack.parent())
     {
         const auto& f = stack.frame();
-        diag.related.emplace_back(range_uri_s(f.resource_loc->get_uri(), range(f.pos)),
+        diag.related.emplace_back(range_uri(f.resource_loc->get_uri(), range(f.pos)),
             "While compiling " + f.resource_loc->to_presentable() + '(' + std::to_string(f.pos.line + 1) + ")");
     }
 

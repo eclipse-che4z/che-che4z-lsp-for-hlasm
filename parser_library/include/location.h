@@ -15,8 +15,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_LOCATION_H
 #define HLASMPLUGIN_PARSERLIBRARY_LOCATION_H
 
+#include <compare>
 #include <string>
-#include <vector>
 
 #include "range.h"
 #include "utils/resource_location.h"
@@ -37,8 +37,6 @@ struct location
     position pos;
     utils::resource::resource_location resource_loc;
 };
-
-using location_list = std::vector<location>;
 
 } // namespace hlasm_plugin::parser_library
 

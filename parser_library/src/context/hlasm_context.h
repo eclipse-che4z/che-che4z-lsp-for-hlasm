@@ -30,6 +30,7 @@
 #include "opcode_generation.h"
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
+#include "protocol.h"
 #include "source_context.h"
 #include "tagged_index.h"
 
@@ -315,7 +316,7 @@ public:
         processing_stack_t stack);
     void using_push();
     bool using_pop();
-    void using_resolve(diagnostic_s_consumer&, const library_info&);
+    void using_resolve(diagnostic_consumer&, const library_info&);
     index_t<using_collection> using_current() const;
 
     const using_collection& usings() const { return *m_usings; }

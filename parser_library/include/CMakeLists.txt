@@ -13,14 +13,20 @@
 
 target_sources(parser_library PUBLIC
     branch_info.h
+    completion_item.h
+    completion_trigger_kind.h
+    debug_types.h
     debugger.h
+    diagnostic.h
+    document_symbol_item.h
     external_configuration_requests.h
+    fade_messages.h
     folding_range.h
     lib_config.h
+    location.h
     message_consumer.h
     protocol.h
     range.h
-    sequence.h
     workspace_manager.h
     workspace_manager_external_file_requests.h
     workspace_manager_requests.h

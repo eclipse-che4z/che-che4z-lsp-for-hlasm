@@ -74,8 +74,7 @@ public:
         const utils::resource::resource_location& document_loc, version_t version, std::string text) override;
     void did_change_file(const utils::resource::resource_location& document_loc,
         version_t version,
-        const document_change* changes,
-        size_t ch_size) override;
+        std::span<const document_change> changes) override;
     void did_close_file(const utils::resource::resource_location& document_loc) override;
 
     std::string_view put_virtual_file(

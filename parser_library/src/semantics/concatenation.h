@@ -16,14 +16,14 @@
 #define SEMANTICS_CONCATENATION_H
 
 #include <memory>
-#include <set>
 #include <string>
 #include <variant>
 #include <vector>
 
 #include "context/common_types.h"
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "diagnostic_consumer.h"
+#include "range.h"
 #include "variable_symbol.h"
 
 // this file is a composition of structures that create concat_chain

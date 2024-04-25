@@ -105,7 +105,7 @@ const macro_param_data_component* system_variable_sysmac::get_data(std::span<con
     return tmp;
 }
 
-bool system_variable_sysmac::can_read(std::span<const A_t>, range, diagnostic_consumer<diagnostic_op>&) const
+bool system_variable_sysmac::can_read(std::span<const A_t>, range, diagnostic_consumer_t<diagnostic_op>&) const
 {
     return true;
 }
@@ -130,7 +130,7 @@ const macro_param_data_component* system_variable_syslist::get_data(std::span<co
 }
 
 bool system_variable_syslist::can_read(
-    std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const
+    std::span<const A_t> subscript, range symbol_range, diagnostic_consumer_t<diagnostic_op>& diags) const
 {
     if (subscript.empty())
     {

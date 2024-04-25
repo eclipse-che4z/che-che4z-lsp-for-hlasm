@@ -36,12 +36,12 @@ TEST(fading, endevor)
 -INC  MEMBER bla bla
 ++INCLUDE MEM)";
 
-    std::vector<fade_message_s> expected_fmsg {
-        fade_message_s::preprocessor_statement("file_name", range(position(1, 0), position(1, 4))),
-        fade_message_s::preprocessor_statement("file_name", range(position(2, 0), position(2, 9))),
+    std::vector<fade_message> expected_fmsg {
+        fade_message::preprocessor_statement("file_name", range(position(1, 0), position(1, 4))),
+        fade_message::preprocessor_statement("file_name", range(position(2, 0), position(2, 9))),
     };
 
-    auto fms = std::make_shared<std::vector<fade_message_s>>();
+    auto fms = std::make_shared<std::vector<fade_message>>();
 
     analyzer a(contents, analyzer_options { source_file_loc, endevor_preprocessor_options(), fms });
     a.analyze();
@@ -71,13 +71,13 @@ B   L 0,DFHRESP ( NORMAL ) bla                                         X00000002
                                                                        X00000004
                L 1,DFHRESP(NORMAL))";
 
-    std::vector<fade_message_s> expected_fmsg {
-        fade_message_s::preprocessor_statement("file_name", range(position(1, 4), position(1, 13))),
-        fade_message_s::preprocessor_statement("file_name", range(position(2, 4), position(2, 13))),
-        fade_message_s::preprocessor_statement("file_name", range(position(4, 1), position(4, 10))),
+    std::vector<fade_message> expected_fmsg {
+        fade_message::preprocessor_statement("file_name", range(position(1, 4), position(1, 13))),
+        fade_message::preprocessor_statement("file_name", range(position(2, 4), position(2, 13))),
+        fade_message::preprocessor_statement("file_name", range(position(4, 1), position(4, 10))),
     };
 
-    auto fms = std::make_shared<std::vector<fade_message_s>>();
+    auto fms = std::make_shared<std::vector<fade_message>>();
 
     analyzer a(contents, analyzer_options { source_file_loc, cics_preprocessor_options(), fms });
     a.analyze();
@@ -108,15 +108,15 @@ B SQL  TYPE   IS RESULT_SET_LOCATOR VARYING   comment comment2          00000060
 C   SQL TYPE                                                           X00000700
                   IS RESULT_SET_LOCATOR VARYING   comment comment2)";
 
-    std::vector<fade_message_s> expected_fmsg {
-        fade_message_s::preprocessor_statement("file_name", range(position(1, 5), position(1, 14))),
-        fade_message_s::preprocessor_statement("file_name", range(position(2, 57), position(2, 65))),
-        fade_message_s::preprocessor_statement("file_name", range(position(4, 18), position(4, 31))),
-        fade_message_s::preprocessor_statement("file_name", range(position(11, 2), position(11, 11))),
-        fade_message_s::preprocessor_statement("file_name", range(position(12, 4), position(12, 12))),
+    std::vector<fade_message> expected_fmsg {
+        fade_message::preprocessor_statement("file_name", range(position(1, 5), position(1, 14))),
+        fade_message::preprocessor_statement("file_name", range(position(2, 57), position(2, 65))),
+        fade_message::preprocessor_statement("file_name", range(position(4, 18), position(4, 31))),
+        fade_message::preprocessor_statement("file_name", range(position(11, 2), position(11, 11))),
+        fade_message::preprocessor_statement("file_name", range(position(12, 4), position(12, 12))),
     };
 
-    auto fms = std::make_shared<std::vector<fade_message_s>>();
+    auto fms = std::make_shared<std::vector<fade_message>>();
 
     analyzer a(contents, analyzer_options { source_file_loc, db2_preprocessor_options(), fms });
     a.analyze();

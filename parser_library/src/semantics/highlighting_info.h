@@ -15,9 +15,6 @@
 #ifndef HIGHLIGHTING_INFO
 #define HIGHLIGHTING_INFO
 
-#include <map>
-#include <set>
-#include <string>
 #include <vector>
 
 #include "protocol.h"

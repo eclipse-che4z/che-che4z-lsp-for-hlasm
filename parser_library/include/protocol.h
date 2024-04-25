@@ -23,9 +23,9 @@
 
 #include <cstdint>
 #include <cstring>
+#include <string_view>
 
 #include "range.h"
-#include "sequence.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4661)
@@ -33,11 +33,6 @@
 namespace hlasm_plugin::parser_library {
 
 using version_t = uint64_t;
-
-namespace semantics {
-struct position_uri_s;
-struct completion_list_s;
-struct highlighting_info;
 
 // in case any changes are done to these scopes, the tokenTypes field in feature_language_features.cpp
 // needs to be adjusted accordingly, as they are implicitly but directly mapped to each other
@@ -61,144 +56,24 @@ enum class hl_scopes : size_t
     self_def_type = 15,
     ordinary_symbol = 16
 };
-} // namespace semantics
-
-namespace debugging {
-
-struct stack_frame;
-struct source;
-struct scope;
-struct variable;
-struct variable_store;
-} // namespace debugging
-
-namespace lsp {
-struct completion_item_s;
-struct document_symbol_item_s;
-} // namespace lsp
-
-struct location;
-struct range_uri_s;
-class diagnostic_related_info_s;
-class diagnostic_s;
-struct fade_message_s;
-
-enum class completion_trigger_kind
-{
-    invoked = 1,
-    trigger_character = 2,
-    trigger_for_incomplete_completions = 3
-};
-
-enum class completion_item_kind
-{
-    mach_instr = 0,
-    asm_instr = 1,
-    ca_instr = 2,
-    macro = 3,
-    var_sym = 4,
-    seq_sym = 5,
-    ord_sym = 6,
-};
-
-struct completion_item
-{
-    explicit completion_item(const lsp::completion_item_s& item);
-    std::string_view label() const;
-    completion_item_kind kind() const;
-    std::string_view detail() const;
-    std::string_view documentation() const;
-    std::string_view insert_text() const;
-    bool is_snippet() const;
-    std::string_view suggestion_for() const;
-
-private:
-    const lsp::completion_item_s& item_;
-};
-
-using completion_list = sequence<completion_item, const lsp::completion_item_s*>;
-
-enum class document_symbol_kind
-{
-    DAT = 0,
-    EQU = 1,
-    MACH = 2,
-    UNKNOWN = 3,
-    VAR = 4,
-    SEQ = 5,
-    COMMON = 6,
-    DUMMY = 7,
-    EXECUTABLE = 8,
-    READONLY = 9,
-    MACRO = 10,
-    ASM = 11,
-    EXTERNAL = 12,
-    WEAK_EXTERNAL = 13,
-    TITLE = 14,
-};
-
-struct document_symbol_item;
-using document_symbol_list = sequence<document_symbol_item, const lsp::document_symbol_item_s*>;
-
-struct document_symbol_item
-{
-    explicit document_symbol_item(const lsp::document_symbol_item_s& item);
-    sequence<char> name() const;
-    document_symbol_kind kind() const;
-    range symbol_range() const;
-    range symbol_selection_range() const;
-    document_symbol_list children() const;
-
-private:
-    const lsp::document_symbol_item_s& item_;
-};
-
-struct position_uri
-{
-    explicit position_uri(const location& item);
-    position pos() const;
-    std::string_view file_uri() const;
-
-private:
-    const location& item_;
-};
-
-using position_uri_list = sequence<position_uri, const location*>;
-
-struct range_uri
-{
-    explicit range_uri(range_uri_s& range);
-    range get_range() const;
-    const char* uri() const;
-
-private:
-    range_uri_s& impl_;
-};
 
 struct document_change
 {
-    document_change(const char* new_text, size_t text_length)
+    document_change(std::string_view new_text)
         : whole(true)
         , text(new_text)
-        , text_length(text_length)
     {}
-    document_change(range change_range, const char* new_text, size_t text_length)
+    document_change(range change_range, std::string_view new_text)
         : whole(false)
         , change_range(change_range)
         , text(new_text)
-        , text_length(text_length)
     {}
 
-    bool operator==(const document_change& ch) const
-    {
-        return whole == ch.whole && change_range == ch.change_range && text_length == ch.text_length
-            && std::memcmp(text, ch.text, text_length) == 0;
-    }
+    bool whole;
+    range change_range;
+    std::string_view text;
 
-    const bool whole;
-    const range change_range;
-    const char* const text;
-    const size_t text_length;
+    bool operator==(const document_change&) const noexcept = default;
 };
 
 struct text_document_item
@@ -206,65 +81,6 @@ struct text_document_item
     char* document_uri;
     version_t version;
     char* text;
-};
-
-enum class diagnostic_severity
-{
-    error = 1,
-    warning = 2,
-    info = 3,
-    hint = 4,
-    unspecified = 5
-};
-
-enum class diagnostic_tag
-{
-    none = 0,
-    unnecessary = 1 << 0,
-    deprecated = 1 << 1,
-};
-
-struct diagnostic_related_info
-{
-    diagnostic_related_info(diagnostic_related_info_s&);
-
-    range_uri location() const;
-    const char* message() const;
-
-private:
-    diagnostic_related_info_s& impl_;
-};
-
-struct diagnostic
-{
-    explicit diagnostic(diagnostic_s&);
-
-    const char* file_uri() const;
-    range get_range() const;
-    diagnostic_severity severity() const;
-    const char* code() const;
-    const char* source() const;
-    const char* message() const;
-    const diagnostic_related_info related_info(size_t index) const;
-    size_t related_info_size() const;
-    diagnostic_tag tags() const;
-
-private:
-    diagnostic_s& impl_;
-};
-
-struct fade_message
-{
-    explicit fade_message(fade_message_s&);
-
-    const char* file_uri() const;
-    range get_range() const;
-    const char* code() const;
-    const char* source() const;
-    const char* message() const;
-
-private:
-    fade_message_s& impl_;
 };
 
 struct performance_metrics
@@ -299,125 +115,40 @@ struct parsing_metadata
     size_t warnings = 0;
 };
 
-struct diagnostic_list
-{
-    diagnostic_list();
-    diagnostic_list(diagnostic_s* begin, size_t size);
-
-    diagnostic diagnostics(size_t index);
-    size_t diagnostics_size() const;
-
-private:
-    diagnostic_s* begin_;
-    size_t size_;
-};
-
-struct fade_message_list
-{
-    fade_message_list();
-    fade_message_list(fade_message_s* begin, size_t size);
-
-    fade_message message(size_t index);
-    size_t size() const;
-
-private:
-    fade_message_s* begin_;
-    size_t size_;
-};
-
 struct token_info
 {
-    token_info(const range& token_range, semantics::hl_scopes scope)
+    token_info(const range& token_range, hl_scopes scope)
         : token_range(token_range)
         , scope(scope)
     {}
-    token_info(position start, position end, semantics::hl_scopes scope)
+    token_info(position start, position end, hl_scopes scope)
         : token_range(start, end)
         , scope(scope)
     {}
-    token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::hl_scopes scope)
+    token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, hl_scopes scope)
         : token_range({ line_start, column_start }, { line_end, column_end })
         , scope(scope)
     {}
     range token_range;
-    semantics::hl_scopes scope;
+    hl_scopes scope;
 
     bool operator==(const token_info& rhs) const noexcept = default;
 };
 
-struct source
-{
-    source(const debugging::source& source);
-
-    sequence<char> uri;
-};
-
-struct stack_frame
-{
-    explicit stack_frame(const debugging::stack_frame& frame);
-
-    sequence<char> name;
-    source source_file;
-    range source_range;
-    uint32_t id;
-};
-
-using stack_frames_t = sequence<stack_frame, const debugging::stack_frame*>;
-
-using frame_id_t = size_t;
-using var_reference_t = size_t;
-
-enum class set_type
-{
-    A_TYPE,
-    B_TYPE,
-    C_TYPE,
-    UNDEF_TYPE
-};
-
-struct scope
-{
-    explicit scope(const debugging::scope& impl);
-
-    sequence<char> name;
-    var_reference_t variable_reference;
-    source source_file;
-};
-
-using scopes_t = sequence<scope, const debugging::scope*>;
-
-struct variable
-{
-    explicit variable(const debugging::variable& impl);
-
-    sequence<char> name;
-    sequence<char> value;
-    var_reference_t variable_reference;
-    set_type type;
-};
-
-using variables_t = sequence<variable, const debugging::variable_store*>;
-
-struct breakpoint
-{
-    explicit breakpoint(size_t line)
-        : line(line)
-    {}
-    size_t line;
-};
-
-struct function_breakpoint
-{
-    explicit function_breakpoint(sequence<char> name)
-        : name(name)
-    {}
-    sequence<char> name;
-};
-
 struct output_line
 {
-    int level; // -1 if N/A
-    continuous_sequence<char> text;
+    output_line(int level, std::string text)
+        : level(level)
+        , text(std::move(text))
+    {} // clang-14
+    output_line(int level, std::string_view text)
+        : level(level)
+        , text(text)
+    {} // clang-14
+    int level;
+    std::string text;
+
+    bool operator==(const output_line&) const noexcept = default;
 };
 
 } // namespace hlasm_plugin::parser_library

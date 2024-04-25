@@ -60,7 +60,7 @@ public:
     C_t get_value() const override;
     const macro_param_data_component* get_data(std::span<const A_t> offset) const override;
     bool can_read(
-        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const override;
+        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer_t<diagnostic_op>& diags) const override;
 };
 
 // SYSLIST extras
@@ -72,7 +72,7 @@ public:
     // SYSLIST special behavior
     const macro_param_data_component* get_data(std::span<const A_t> offset) const override;
     bool can_read(
-        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer<diagnostic_op>& diags) const override;
+        std::span<const A_t> subscript, range symbol_range, diagnostic_consumer_t<diagnostic_op>& diags) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::context

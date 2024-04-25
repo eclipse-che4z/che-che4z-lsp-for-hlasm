@@ -62,13 +62,13 @@ class main_program final : public json_sink,
 
     void reply(const nlohmann::json& message) final { json_output.write(message); }
 
-    void provide_debugger_configuration(hlasm_plugin::parser_library::sequence<char> document_uri,
+    void provide_debugger_configuration(std::string_view document_uri,
         hlasm_plugin::parser_library::workspace_manager_response<
             hlasm_plugin::parser_library::debugging::debugger_configuration> conf) override
     {
         std::unique_lock g(proxies_mutex);
         proxies.emplace_back([this, uri = std::string(document_uri), conf = std::move(conf)]() {
-            dc_provider.provide_debugger_configuration(hlasm_plugin::parser_library::sequence<char>(uri), conf);
+            dc_provider.provide_debugger_configuration(uri, conf);
         });
         g.unlock();
         lsp_queue.write(nlohmann::json::value_t::discarded);

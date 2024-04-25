@@ -23,6 +23,7 @@
 #include <variant>
 
 #include "completion_item.h"
+#include "completion_trigger_kind.h"
 #include "context/macro.h"
 #include "context/using.h"
 #include "item_convertors.h"
@@ -53,10 +54,11 @@ const std::unordered_map<context::section_kind, document_symbol_kind> document_s
     { context::section_kind::WEAK_EXTERNAL, document_symbol_kind::WEAK_EXTERNAL },
 };
 
-constexpr bool expand_block(const document_symbol_item_s& item) { return item.kind != document_symbol_kind::MACRO; }
+constexpr bool expand_block(const document_symbol_item& item) { return item.kind != document_symbol_kind::MACRO; }
 } // namespace
 
-document_symbol_list_s lsp_context::document_symbol(const utils::resource::resource_location& document_loc) const
+std::vector<document_symbol_item> lsp_context::document_symbol(
+    const utils::resource::resource_location& document_loc) const
 {
     using enum document_symbol_kind;
     static constexpr const auto block = [](auto f, auto l) {
@@ -76,7 +78,7 @@ document_symbol_list_s lsp_context::document_symbol(const utils::resource::resou
 
     const auto& dl = dl_it->first;
 
-    document_symbol_list_s result;
+    std::vector<document_symbol_item> result;
 
     for (const auto& [title, stack] : m_titles)
     {
@@ -336,7 +338,7 @@ location lsp_context::definition(const utils::resource::resource_location& docum
     return { pos, document_loc };
 }
 
-void collect_references(location_list& refs, const symbol_occurrence& occ, const file_occurrences_t& file_occs)
+void collect_references(std::vector<location>& refs, const symbol_occurrence& occ, const file_occurrences_t& file_occs)
 {
     for (const auto& [file, occs] : file_occs)
     {
@@ -346,9 +348,10 @@ void collect_references(location_list& refs, const symbol_occurrence& occ, const
     }
 }
 
-location_list lsp_context::references(const utils::resource::resource_location& document_loc, position pos) const
+std::vector<location> lsp_context::references(
+    const utils::resource::resource_location& document_loc, position pos) const
 {
-    location_list result;
+    std::vector<location> result;
 
     auto [occ, macro_scope] = find_occurrence_with_scope(document_loc, pos);
 

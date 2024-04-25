@@ -89,7 +89,7 @@ public:
 
     bool has_file(std::string_view file, utils::resource::resource_location* url = nullptr) override;
 
-    void copy_diagnostics(std::vector<diagnostic_s>& target) const override;
+    void copy_diagnostics(std::vector<diagnostic>& target) const override;
 
     bool has_cached_content() const override;
 
@@ -98,7 +98,7 @@ private:
                                                                    utils::resource::resource_location,
                                                                    utils::hashers::string_hasher,
                                                                    std::equal_to<>>,
-        std::vector<diagnostic_s>>>;
+        std::vector<diagnostic>>>;
 #if __cpp_lib_atomic_shared_ptr >= 201711L
     using atomic_files_collection_t = std::atomic<files_collection_t>;
 #else

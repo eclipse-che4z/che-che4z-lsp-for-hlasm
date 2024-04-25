@@ -186,7 +186,7 @@ hlasm_plugin::utils::task analyzer::co_analyze() &
 
 const performance_metrics& analyzer::get_metrics() const { return m_impl->ctx.hlasm_ctx->metrics; }
 
-std::span<diagnostic_s> analyzer::diags() const noexcept { return m_impl->diags(); }
+std::span<diagnostic> analyzer::diags() const noexcept { return m_impl->diags(); }
 
 void analyzer::register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer)
 {

@@ -57,8 +57,7 @@ public:
         did_change_file,
         (const resource_location& document_loc,
             hlasm_plugin::parser_library::version_t version,
-            const hlasm_plugin::parser_library::document_change* changes,
-            size_t ch_size),
+            std::span<const hlasm_plugin::parser_library::document_change> changes),
         (override));
     MOCK_METHOD(void, did_close_file, (const resource_location& document_loc), (override));
     MOCK_METHOD(std::string_view,

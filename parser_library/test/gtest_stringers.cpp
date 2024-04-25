@@ -16,8 +16,8 @@
 
 #include <ostream>
 
+#include "completion_item.h"
 #include "location.h"
-#include "lsp/completion_item.h"
 #include "lsp/symbol_occurrence.h"
 #include "protocol.h"
 
@@ -61,7 +61,7 @@ std::ostream& operator<<(std::ostream& stream, const symbol_occurrence& item)
                   << "\n range: " << item.occurrence_range << " }";
 }
 
-std::ostream& operator<<(std::ostream& stream, const lsp::completion_item_s& item)
+std::ostream& operator<<(std::ostream& stream, const completion_item item)
 {
     return stream << "{ label: " << item.label << "\n detail: " << item.detail << "\n insert text: " << item.insert_text
                   << "\n documentation: " << item.documentation << "\n kind: " << (int)item.kind << " }";

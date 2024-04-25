@@ -33,9 +33,9 @@
 
 namespace hlasm_plugin::parser_library {
 template<typename T>
-class diagnostic_consumer;
+class diagnostic_consumer_t;
 struct diagnostic_op;
-class diagnostic_s;
+struct diagnostic;
 class library_info;
 
 namespace expressions {
@@ -178,14 +178,14 @@ private:
         index_t<mach_expression> m_end;
         std::vector<index_t<mach_expression>> m_base;
 
-        resolved_entry resolve_using(const using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
+        resolved_entry resolve_using(const using_collection& coll, diagnostic_consumer_t<diagnostic_op>& diag) const;
         resolved_entry resolve_using_dep(const using_collection& coll,
             const std::pair<const section*, offset_t>& b,
             std::optional<offset_t> len,
             const qualified_address& base,
             const range& rng,
-            diagnostic_consumer<diagnostic_op>& diag) const;
-        resolved_entry resolve_drop(const using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
+            diagnostic_consumer_t<diagnostic_op>& diag) const;
+        resolved_entry resolve_drop(const using_collection& coll, diagnostic_consumer_t<diagnostic_op>& diag) const;
 
         static std::pair<std::optional<qualified_address>, range> abs_or_reloc(
             const using_collection& coll, index_t<mach_expression> e, bool abs_is_register);
@@ -210,7 +210,7 @@ private:
         bool is_using() const { return !!m_begin; }
         bool is_drop() const { return !m_begin; }
 
-        resolved_entry resolve(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag) const;
+        resolved_entry resolve(using_collection& coll, diagnostic_consumer_t<diagnostic_op>& diag) const;
     };
 
     struct context_evaluate_result
@@ -258,8 +258,8 @@ private:
         index_t<instruction_context> instruction_ctx;
         index_t<mach_expression> expression_used_limit;
 
-        void resolve(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag);
-        void compute_context(using_collection& coll, diagnostic_consumer<diagnostic_op>& diag);
+        void resolve(using_collection& coll, diagnostic_consumer_t<diagnostic_op>& diag);
+        void compute_context(using_collection& coll, diagnostic_consumer_t<diagnostic_op>& diag);
 
         using_entry(index_t<using_collection> parent,
             index_t<mach_expression> expression_used_limit,
@@ -282,9 +282,9 @@ private:
         {}
 
     private:
-        void compute_context_correction(const failed_entry_resolved& f, diagnostic_consumer<diagnostic_op>& diag);
-        void compute_context_correction(const using_entry_resolved& u, diagnostic_consumer<diagnostic_op>& diag);
-        void compute_context_correction(const drop_entry_resolved& d, diagnostic_consumer<diagnostic_op>& diag);
+        void compute_context_correction(const failed_entry_resolved& f, diagnostic_consumer_t<diagnostic_op>& diag);
+        void compute_context_correction(const using_entry_resolved& u, diagnostic_consumer_t<diagnostic_op>& diag);
+        void compute_context_correction(const drop_entry_resolved& d, diagnostic_consumer_t<diagnostic_op>& diag);
         size_t compute_context_drop(id_index d);
         size_t compute_context_drop(register_t d);
     };
@@ -336,7 +336,7 @@ public:
     ~using_collection();
 
     void resolve_all(
-        ordinary_assembly_context& ord_context, diagnostic_consumer<diagnostic_s>& diag, const library_info& li);
+        ordinary_assembly_context& ord_context, diagnostic_consumer_t<diagnostic>& diag, const library_info& li);
 
     bool resolved() const { return m_resolved; }
 

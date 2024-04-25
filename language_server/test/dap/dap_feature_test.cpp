@@ -189,8 +189,7 @@ const std::string file_stop_on_entry = "  LR 1,1";
 
 TEST_F(feature_launch_test, stop_on_entry)
 {
-    ws_mngr->did_open_file(
-        utils::path::path_to_uri(file_path).c_str(), 0, file_stop_on_entry.c_str(), file_stop_on_entry.size());
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path), 0, file_stop_on_entry);
     ws_mngr->idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
@@ -220,7 +219,7 @@ const std::string file_step = R"(  LR 1,1
 
 TEST_F(feature_launch_test, step)
 {
-    ws_mngr->did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, file_step.c_str(), file_step.size());
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path), 0, file_step);
     ws_mngr->idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
@@ -313,8 +312,7 @@ const std::string file_breakpoint = R"(  LR 1,1
 
 TEST_F(feature_launch_test, breakpoint)
 {
-    ws_mngr->did_open_file(
-        utils::path::path_to_uri(file_path).c_str(), 0, file_breakpoint.c_str(), file_breakpoint.size());
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path), 0, file_breakpoint);
     ws_mngr->idle_handler();
 
     nlohmann::json bp_args { { "source", { { "path", file_path } } },
@@ -358,10 +356,7 @@ const std::string file_function_breakpoint = R"(
 
 TEST_F(feature_launch_test, function_breakpoint)
 {
-    ws_mngr->did_open_file(utils::path::path_to_uri(file_path).c_str(),
-        0,
-        file_function_breakpoint.c_str(),
-        file_function_breakpoint.size());
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path), 0, file_function_breakpoint);
     ws_mngr->idle_handler();
 
     nlohmann::json bp_args { { "breakpoints", R"([{"name":"sam31"}])"_json } };
@@ -393,8 +388,7 @@ const std::string file_variables = R"(&VARA SETA 4
 
 TEST_F(feature_launch_test, variables)
 {
-    ws_mngr->did_open_file(
-        utils::path::path_to_uri(file_path).c_str(), 0, file_variables.c_str(), file_variables.size());
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path), 0, file_variables);
     ws_mngr->idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
@@ -496,7 +490,7 @@ const std::string pause_file = ".A AGO .A";
 
 TEST_F(feature_launch_test, pause)
 {
-    ws_mngr->did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, pause_file.c_str(), pause_file.size());
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path), 0, pause_file);
     ws_mngr->idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
@@ -525,7 +519,7 @@ F  DS   A
 
 TEST_F(feature_launch_test, evaluate)
 {
-    ws_mngr->did_open_file(utils::path::path_to_uri(file_path).c_str(), 0, evaluate_file.c_str(), evaluate_file.size());
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path), 0, evaluate_file);
     ws_mngr->idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", true } });
@@ -567,8 +561,7 @@ const std::string debug_output_file = R"(
 
 TEST_F(feature_launch_test, debug_output)
 {
-    ws_mngr->did_open_file(
-        utils::path::path_to_uri(file_path).c_str(), 0, debug_output_file.c_str(), debug_output_file.size());
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path), 0, debug_output_file);
     ws_mngr->idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });
@@ -614,8 +607,7 @@ const std::string debug_actr_limit = R"(
 
 TEST_F(feature_launch_test, debug_actr_limit)
 {
-    ws_mngr->did_open_file(
-        utils::path::path_to_uri(file_path).c_str(), 0, debug_actr_limit.c_str(), debug_actr_limit.size());
+    ws_mngr->did_open_file(utils::path::path_to_uri(file_path), 0, debug_actr_limit);
     ws_mngr->idle_handler();
 
     feature.on_launch(request_id(0), nlohmann::json { { "program", file_path }, { "stopOnEntry", false } });

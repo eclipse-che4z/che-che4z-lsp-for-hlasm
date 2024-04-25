@@ -19,6 +19,7 @@
 
 namespace hlasm_plugin::parser_library {
 
+struct completion_item;
 struct position;
 struct range;
 struct location;
@@ -37,11 +38,10 @@ std::ostream& operator<<(std::ostream& stream, const performance_metrics& item);
 namespace hlasm_plugin::parser_library::lsp {
 
 struct symbol_occurrence;
-struct completion_item_s;
 
 std::ostream& operator<<(std::ostream& stream, const symbol_occurrence& item);
 
-std::ostream& operator<<(std::ostream& stream, const completion_item_s& item);
+std::ostream& operator<<(std::ostream& stream, const completion_item& item);
 
 } // namespace hlasm_plugin::parser_library::lsp
 

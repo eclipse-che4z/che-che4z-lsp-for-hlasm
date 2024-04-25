@@ -19,6 +19,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 
 namespace hlasm_plugin::utils {
 

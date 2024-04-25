@@ -31,11 +31,12 @@
 #include <unordered_map>
 #include <vector>
 
+#include "completion_item.h"
 #include "debugging/debugger_configuration.h"
+#include "document_symbol_item.h"
 #include "external_configuration_requests.h"
+#include "fade_messages.h"
 #include "folding_range.h"
-#include "lsp/completion_item.h"
-#include "lsp/document_symbol_item.h"
 #include "nlohmann/json.hpp"
 #include "protocol.h"
 #include "utils/async_busy_wait.h"
@@ -73,7 +74,7 @@ class workspace_manager_impl final : public workspace_manager,
     struct opened_workspace
     {
         opened_workspace(const resource_location& location,
-            const std::string&,
+            std::string_view,
             workspaces::file_manager& file_manager,
             const lib_config& global_config,
             external_configuration_requests* ecr)
@@ -286,11 +287,10 @@ public:
                 return wi && wi->remove_pending_request(request_id) ? wi : nullptr;
             }
 
-            void provide(sequence<char> json_text) const
+            void provide(std::string_view json_text) const
             {
                 if (auto* wi = get_wi())
-                    wi->ows->settings =
-                        std::make_shared<const nlohmann::json>(nlohmann::json::parse(std::string_view(json_text)));
+                    wi->ows->settings = std::make_shared<const nlohmann::json>(nlohmann::json::parse(json_text));
             }
 
             void error(int, const char*) const noexcept
@@ -305,7 +305,7 @@ public:
 
         wi.pending_requests.emplace_back(configuration_request, [resp = resp]() noexcept { resp.invalidate(); });
 
-        m_requests->request_workspace_configuration(wi.ows->ws.uri().c_str(), std::move(resp));
+        m_requests->request_workspace_configuration(wi.ows->ws.uri(), std::move(resp));
 
         return true;
     }
@@ -325,12 +325,12 @@ public:
         {
             parsing_metadata data { perf_metrics.value(), metadata, errors, warnings };
             for (auto consumer : m_parsing_metadata_consumers)
-                consumer->consume_parsing_metadata(sequence<char>(url.get_uri()), duration.count(), data);
+                consumer->consume_parsing_metadata(url.get_uri(), duration.count(), data);
         }
         if (outputs_changed)
         {
             for (auto consumer : m_parsing_metadata_consumers)
-                consumer->outputs_changed(sequence<char>(url.get_uri()));
+                consumer->outputs_changed(url.get_uri());
         }
 
         m_active_task = {};
@@ -436,14 +436,14 @@ public:
         }
     }
 
-    void did_open_file(const char* document_uri, version_t version, const char* text_ptr, size_t text_size) override
+    void did_open_file(std::string_view document_uri, version_t version, std::string_view text) override
     {
         auto [ows, uri] = ws_path_match(document_uri);
         auto open_result = std::make_shared<workspaces::file_content_state>();
         m_work_queue.emplace_back(work_item {
             next_unique_id(),
             nullptr,
-            [this, document_loc = uri, version, text = std::string(text_ptr, text_size), open_result]() mutable {
+            [this, document_loc = uri, version, text = std::string(text), open_result]() mutable {
                 *open_result = m_file_manager.did_open_file(document_loc, version, std::move(text));
             },
             {},
@@ -461,7 +461,7 @@ public:
     }
 
     void did_change_file(
-        const char* document_uri, version_t version, const document_change* changes, size_t ch_size) override
+        std::string_view document_uri, version_t version, std::span<const document_change> changes) override
     {
         auto [ows, uri] = ws_path_match(document_uri);
 
@@ -473,13 +473,13 @@ public:
         };
 
         std::vector<captured_change> captured_changes;
-        captured_changes.reserve(ch_size);
+        captured_changes.reserve(changes.size());
         std::transform(
-            changes, changes + ch_size, std::back_inserter(captured_changes), [](const document_change& change) {
+            changes.begin(), changes.end(), std::back_inserter(captured_changes), [](const document_change& change) {
                 return captured_change {
                     .whole = change.whole,
                     .change_range = change.change_range,
-                    .text = std::string(change.text, change.text_length),
+                    .text = std::string(change.text),
                 };
             });
 
@@ -493,10 +493,9 @@ public:
                     captured_changes.end(),
                     std::back_inserter(list),
                     [](const captured_change& cc) {
-                        return cc.whole ? document_change(cc.text.data(), cc.text.size())
-                                        : document_change(cc.change_range, cc.text.data(), cc.text.size());
+                        return cc.whole ? document_change(cc.text) : document_change(cc.change_range, cc.text);
                     });
-                m_file_manager.did_change_file(document_loc, version, list.data(), list.size());
+                m_file_manager.did_change_file(document_loc, version, list);
             },
             {},
             work_item_type::file_change,
@@ -508,8 +507,8 @@ public:
             std::function<utils::task()>(
                 [document_loc = std::move(uri),
                     &ws = ows->ws,
-                    file_content_status = ch_size ? workspaces::file_content_state::changed_content
-                                                  : workspaces::file_content_state::identical]() mutable {
+                    file_content_status = !changes.empty() ? workspaces::file_content_state::changed_content
+                                                           : workspaces::file_content_state::identical]() mutable {
                     return ws.did_change_file(std::move(document_loc), file_content_status);
                 }),
             {},
@@ -517,7 +516,7 @@ public:
         });
     }
 
-    void did_close_file(const char* document_uri) override
+    void did_close_file(std::string_view document_uri) override
     {
         auto [ows, uri] = ws_path_match(document_uri);
         m_work_queue.emplace_back(work_item {
@@ -538,13 +537,13 @@ public:
         });
     }
 
-    void did_change_watched_files(sequence<fs_change> changes) override
+    void did_change_watched_files(std::span<const fs_change> changes) override
     {
         auto paths_for_ws = std::make_shared<std::unordered_map<opened_workspace*,
             std::pair<std::vector<resource_location>, std::vector<workspaces::file_content_state>>>>();
-        for (auto& change : changes)
+        for (const auto& change : changes)
         {
-            auto [ows, uri] = ws_path_match(std::string_view(change.uri));
+            auto [ows, uri] = ws_path_match(change.uri);
             auto& [path_list, _] = (*paths_for_ws)[ows];
             path_list.emplace_back(std::move(uri));
         }
@@ -642,7 +641,7 @@ public:
 
     template<typename R,
         std::invocable<workspace_manager_response<R>, workspaces::workspace&, const resource_location&> A>
-    void handle_request(const char* document_uri, workspace_manager_response<R> r, A a)
+    void handle_request(std::string_view document_uri, workspace_manager_response<R> r, A a)
     {
         auto [ows, uri] = ws_path_match(document_uri);
 
@@ -657,49 +656,47 @@ public:
         });
     }
 
-    void definition(const char* document_uri, position pos, workspace_manager_response<position_uri> r) override
+    void definition(std::string_view document_uri, position pos, workspace_manager_response<const location&> r) override
     {
         handle_request(document_uri, std::move(r), [pos](const auto& resp, auto& ws, const auto& doc_loc) {
-            resp.provide(position_uri(ws.definition(doc_loc, pos)));
+            resp.provide(ws.definition(doc_loc, pos));
         });
     }
 
-    void references(const char* document_uri, position pos, workspace_manager_response<position_uri_list> r) override
+    void references(
+        std::string_view document_uri, position pos, workspace_manager_response<std::span<const location>> r) override
     {
         handle_request(document_uri, std::move(r), [pos](const auto& resp, auto& ws, const auto& doc_loc) {
-            auto references_result = ws.references(doc_loc, pos);
-            resp.provide({ references_result.data(), references_result.size() });
+            resp.provide(ws.references(doc_loc, pos));
         });
     }
 
-    void hover(const char* document_uri, position pos, workspace_manager_response<sequence<char>> r) override
+    void hover(std::string_view document_uri, position pos, workspace_manager_response<std::string_view> r) override
     {
         handle_request(document_uri, std::move(r), [pos](const auto& resp, auto& ws, const auto& doc_loc) {
-            auto hover_result = ws.hover(doc_loc, pos);
-            resp.provide(sequence<char>(hover_result));
+            resp.provide(ws.hover(doc_loc, pos));
         });
     }
 
 
-    void completion(const char* document_uri,
+    void completion(std::string_view document_uri,
         position pos,
         const char trigger_char,
         completion_trigger_kind trigger_kind,
-        workspace_manager_response<completion_list> r) override
+        workspace_manager_response<std::span<const completion_item>> r) override
     {
         handle_request(document_uri,
             std::move(r),
             [pos, trigger_char, trigger_kind](const auto& resp, auto& ws, const auto& doc_loc) {
-                auto completion_result = ws.completion(doc_loc, pos, trigger_char, trigger_kind);
-                resp.provide(completion_list(completion_result.data(), completion_result.size()));
+                resp.provide(ws.completion(doc_loc, pos, trigger_char, trigger_kind));
             });
     }
 
-    void document_symbol(const char* document_uri, workspace_manager_response<document_symbol_list> r) override
+    void document_symbol(
+        std::string_view document_uri, workspace_manager_response<std::span<const document_symbol_item>> r) override
     {
         handle_request(document_uri, std::move(r), [](const auto& resp, auto& ws, const auto& doc_loc) {
-            auto document_symbol_result = ws.document_symbol(doc_loc);
-            resp.provide(document_symbol_list(document_symbol_result.data(), document_symbol_result.size()));
+            resp.provide(ws.document_symbol(doc_loc));
         });
     }
 
@@ -742,31 +739,31 @@ public:
     }
 
     void semantic_tokens(
-        const char* document_uri, workspace_manager_response<continuous_sequence<token_info>> r) override
+        std::string_view document_uri, workspace_manager_response<std::span<const token_info>> r) override
     {
         handle_request(document_uri, std::move(r), [](const auto& resp, auto& ws, const auto& doc_loc) {
-            resp.provide(make_continuous_sequence(ws.semantic_tokens(doc_loc)));
+            resp.provide(ws.semantic_tokens(doc_loc));
         });
     }
 
     void branch_information(
-        const char* document_uri, workspace_manager_response<continuous_sequence<branch_info>> r) override
+        std::string_view document_uri, workspace_manager_response<std::span<const branch_info>> r) override
     {
         handle_request(document_uri, std::move(r), [](const auto& resp, auto& ws, const auto& doc_loc) {
-            resp.provide(make_continuous_sequence(ws.branch_information(doc_loc)));
+            resp.provide(ws.branch_information(doc_loc));
         });
     }
 
-    void folding(const char* document_uri, workspace_manager_response<continuous_sequence<folding_range>> r) override
+    void folding(std::string_view document_uri, workspace_manager_response<std::span<const folding_range>> r) override
     {
         handle_request(document_uri, std::move(r), [](const auto& resp, auto& ws, const auto& doc_loc) {
-            resp.provide(make_continuous_sequence(ws.folding(doc_loc)));
+            resp.provide(ws.folding(doc_loc));
         });
     }
 
-    continuous_sequence<char> get_virtual_file_content(unsigned long long id) const override
+    std::string get_virtual_file_content(unsigned long long id) const override
     {
-        return make_continuous_sequence(m_file_manager.get_virtual_file(id));
+        return m_file_manager.get_virtual_file(id);
     }
 
     void toggle_advisory_configuration_diagnostics() override
@@ -780,10 +777,10 @@ public:
         notify_diagnostics_consumers();
     }
 
-    void make_opcode_suggestion(const char* document_uri,
-        const char* opcode,
+    void make_opcode_suggestion(std::string_view document_uri,
+        std::string_view opcode,
         bool extended,
-        workspace_manager_response<continuous_sequence<opcode_suggestion>> r) override
+        workspace_manager_response<std::span<const opcode_suggestion>> r) override
     {
         auto [ows, uri] = ws_path_match(document_uri);
         // performed out of order
@@ -792,9 +789,9 @@ public:
         std::vector<opcode_suggestion> res;
 
         for (auto&& [suggestion, distance] : suggestions)
-            res.emplace_back(opcode_suggestion { make_continuous_sequence(std::move(suggestion)), distance });
+            res.emplace_back(opcode_suggestion { std::move(suggestion), distance });
 
-        r.provide(make_continuous_sequence(std::move(res)));
+        r.provide(res);
     }
 
 private:
@@ -838,8 +835,7 @@ private:
             ows.ws.retrieve_fade_messages(m_fade_messages);
 
         for (auto consumer : m_diag_consumers)
-            consumer->consume_diagnostics(diagnostic_list(diags().data(), diags().size()),
-                fade_message_list(m_fade_messages.data(), m_fade_messages.size()));
+            consumer->consume_diagnostics(diags(), m_fade_messages);
     }
 
     static size_t prefix_match(std::string_view first, std::string_view second)
@@ -857,11 +853,11 @@ private:
         {
             std::optional<std::string> result;
 
-            void provide(sequence<char> c) { result = std::string(c); }
+            void provide(std::string_view c) { result = std::string(c); }
             void error(int, const char*) noexcept { result.reset(); }
         };
         auto [channel, data] = make_workspace_manager_response(std::in_place_type<content_t>);
-        m_external_file_requests->read_external_file(document_loc.get_uri().c_str(), channel);
+        m_external_file_requests->read_external_file(document_loc.get_uri(), channel);
 
         return utils::async_busy_wait(std::move(channel), &data->result);
     }
@@ -902,7 +898,7 @@ private:
                     auto& dirs = result.first;
                     for (auto s : c.member_urls)
                     {
-                        auto url = utils::resource::resource_location(std::string_view(s));
+                        auto url = utils::resource::resource_location(s);
                         auto filename = url.filename();
                         if (subdir)
                             url.join("");
@@ -931,7 +927,7 @@ private:
             }
         };
         auto [channel, data] = make_workspace_manager_response(std::in_place_type<content_t>, directory, subdir);
-        m_external_file_requests->read_external_directory(data->dir.get_uri().c_str(), channel, subdir);
+        m_external_file_requests->read_external_directory(data->dir.get_uri(), channel, subdir);
 
         return utils::async_busy_wait(std::move(channel), &data->result);
     }
@@ -992,10 +988,10 @@ private:
     std::vector<parsing_metadata_consumer*> m_parsing_metadata_consumers;
     message_consumer* m_message_consumer = nullptr;
     workspace_manager_requests* m_requests = nullptr;
-    std::vector<fade_message_s> m_fade_messages;
+    std::vector<fade_message> m_fade_messages;
     unsigned long long m_unique_id_sequence = 0;
 
-    void add_workspace(const char* name, const char* uri) override
+    void add_workspace(std::string_view name, std::string_view uri) override
     {
         auto normalized_uri = resource_location(uri).lexically_normal();
         auto& ows = m_workspaces
@@ -1022,7 +1018,7 @@ private:
         attach_configuration_request(new_workspace);
     }
 
-    void remove_workspace(const char* uri) override
+    void remove_workspace(std::string_view uri) override
     {
         auto it = m_workspaces.find(resource_location(uri).lexically_normal());
         if (it == m_workspaces.end())
@@ -1050,9 +1046,9 @@ private:
     debugger_configuration_provider& get_debugger_configuration_provider() override { return *this; }
 
     void provide_debugger_configuration(
-        sequence<char> document_uri, workspace_manager_response<debugging::debugger_configuration> conf) override
+        std::string_view document_uri, workspace_manager_response<debugging::debugger_configuration> conf) override
     {
-        auto [ows, uri] = ws_path_match(std::string_view(document_uri));
+        auto [ows, uri] = ws_path_match(document_uri);
         work_item wi {
             next_unique_id(),
             ows,
@@ -1078,7 +1074,8 @@ private:
     }
 
 
-    void read_external_configuration(sequence<char> uri, workspace_manager_response<sequence<char>> content) override
+    void read_external_configuration(
+        std::string_view uri, workspace_manager_response<std::string_view> content) override
     {
         if (!m_requests || !m_vscode_extensions)
         {
@@ -1089,7 +1086,7 @@ private:
         m_requests->request_file_configuration(uri, content);
     }
 
-    void invalidate_external_configuration(sequence<char> uri) override
+    void invalidate_external_configuration(std::string_view uri) override
     {
         if (uri.size() == 0)
         {
@@ -1101,23 +1098,16 @@ private:
         }
         else
         {
-            auto [ows, conf_uri] = ws_path_match(std::string_view(uri));
+            auto [ows, conf_uri] = ws_path_match(uri);
             ows->ws.invalidate_external_configuration(conf_uri);
         }
     }
 
     void retrieve_output(
-        const char* document_uri, workspace_manager_response<continuous_sequence<output_line>> r) override
+        std::string_view document_uri, workspace_manager_response<std::span<const output_line>> r) override
     {
         handle_request(document_uri, std::move(r), [](const auto& resp, auto& ws, const auto& doc_loc) {
-            auto result = ws.retrieve_output(doc_loc);
-
-            std::vector<output_line> tmp;
-
-            for (auto&& [level, text] : result)
-                tmp.emplace_back(output_line { level, make_continuous_sequence(std::move(text)) });
-
-            resp.provide(make_continuous_sequence(std::move(tmp)));
+            resp.provide(ws.retrieve_output(doc_loc));
         });
     }
 };

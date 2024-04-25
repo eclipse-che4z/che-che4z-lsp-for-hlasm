@@ -16,9 +16,11 @@
 
 #include "context/hlasm_context.h"
 #include "context/variables/set_symbol.h"
+#include "document_symbol_item.h"
 #include "fade_messages.h"
 #include "hlasmparser_multiline.h"
 #include "utils/resource_location.h"
+#include "utils/similar.h"
 #include "utils/task.h"
 #include "workspace_manager.h"
 #include "workspaces/workspace.h"
@@ -59,14 +61,14 @@ void close_parse_and_recollect_diags(
     ws.collect_diags();
 }
 
-bool matches_fade_messages(const std::vector<fade_message_s>& a, const std::vector<fade_message_s>& b)
+bool matches_fade_messages(const std::vector<fade_message>& a, const std::vector<fade_message>& b)
 {
     return std::is_permutation(a.begin(), a.end(), b.begin(), b.end(), [](const auto& msg_a, const auto& msg_b) {
         return msg_a.code == msg_b.code && msg_a.r == msg_b.r && msg_a.uri == msg_b.uri;
     });
 }
 
-bool contains_fade_messages(const std::vector<fade_message_s>& a, const std::vector<fade_message_s>& b)
+bool contains_fade_messages(const std::vector<fade_message>& a, const std::vector<fade_message>& b)
 {
     return std::includes(a.begin(), a.end(), b.begin(), b.end(), [](const auto& msg_a, const auto& msg_b) {
         return msg_a.code == msg_b.code && msg_a.r == msg_b.r && msg_a.uri == msg_b.uri;
@@ -275,3 +277,16 @@ expressions::data_definition parse_data_definition(analyzer& a, diagnostic_op_co
         a.parser().set_diagnoser(diag);
     return std::move(a.parser().data_def()->value);
 }
+
+namespace hlasm_plugin::parser_library {
+bool is_similar(const std::vector<document_symbol_item>& l, const std::vector<document_symbol_item>& r)
+{
+    return l.size() == r.size() && std::is_permutation(l.begin(), l.end(), r.begin(), utils::is_similar);
+}
+
+bool is_similar(const document_symbol_item& l, const document_symbol_item& r)
+{
+    return l.name == r.name && l.kind == r.kind && l.symbol_range == r.symbol_range
+        && l.symbol_selection_range == r.symbol_selection_range && is_similar(l.children, r.children);
+}
+} // namespace hlasm_plugin::parser_library

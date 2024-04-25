@@ -93,15 +93,14 @@ void opencode_provider::generate_aread_highlighting(std::string_view text, size_
     auto [rest, utf16_skipped] = utils::skip_chars(text, 80);
     if (utf16_skipped)
         m_src_proc->add_hl_symbol(
-            token_info(range(position(line_no, 0), position(line_no, utf16_skipped)), semantics::hl_scopes::string));
+            token_info(range(position(line_no, 0), position(line_no, utf16_skipped)), hl_scopes::string));
 
     if (rest.empty())
         return;
 
     if (auto rest_len = utils::length_utf16(rest))
-        m_src_proc->add_hl_symbol(
-            token_info(range(position(line_no, utf16_skipped), position(line_no, utf16_skipped + rest_len)),
-                semantics::hl_scopes::ignored));
+        m_src_proc->add_hl_symbol(token_info(
+            range(position(line_no, utf16_skipped), position(line_no, utf16_skipped + rest_len)), hl_scopes::ignored));
 }
 
 std::variant<std::string, utils::value_task<std::string>> opencode_provider::aread()
@@ -242,8 +241,8 @@ void opencode_provider::process_comment()
             auto skip_len = lexing::logical_distance(l.begin, l.code);
             auto code_len = lexing::logical_distance(l.begin, l.continuation);
 
-            m_src_proc->add_hl_symbol(token_info(
-                range(position(line_no, skip_len), position(line_no, code_len)), semantics::hl_scopes::comment));
+            m_src_proc->add_hl_symbol(
+                token_info(range(position(line_no, skip_len), position(line_no, code_len)), hl_scopes::comment));
         }
         ++line_no;
     }
