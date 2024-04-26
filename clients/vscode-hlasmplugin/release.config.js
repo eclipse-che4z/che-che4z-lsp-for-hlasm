@@ -94,6 +94,7 @@ function getGitHubPublisherPlugin() {
     return [
         '@semantic-release/github',
         {
+            'successComment': false,
             'assets': [
                 {
                     'path': 'hlasm-language-support.vsix',
