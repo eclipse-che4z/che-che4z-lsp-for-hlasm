@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_EXPRESSIONS_DATA_DEF_H
 #define HLASMPLUGIN_PARSERLIBRARY_EXPRESSIONS_DATA_DEF_H
 
+#include <cstdint>
 #include <optional>
 
 #include "checking/data_definition/data_def_fields.h"

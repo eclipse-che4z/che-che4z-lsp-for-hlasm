@@ -25,7 +25,7 @@ class copy_statement_provider final : public members_statement_provider
 public:
     copy_statement_provider(const analyzing_context& ctx,
         statement_fields_parser& parser,
-        workspaces::parse_lib_provider& lib_provider,
+        parse_lib_provider& lib_provider,
         processing::processing_state_listener& listener,
         diagnostic_op_consumer& diag_consumer);
 

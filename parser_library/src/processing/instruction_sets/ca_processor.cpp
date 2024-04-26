@@ -16,17 +16,21 @@
 
 #include <utility>
 
+#include "aread_time.h"
 #include "context/hlasm_context.h"
 #include "context/variables/set_symbol.h"
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
+#include "processing/branching_provider.h"
+#include "processing/opencode_provider.h"
+#include "processing/processing_state_listener.h"
 #include "semantics/operand_impls.h"
+#include "semantics/operand_visitor.h"
 #include "semantics/range_provider.h"
 #include "utils/task.h"
 #include "utils/time.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace processing;
-using namespace workspaces;
 
 ca_processor::ca_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,

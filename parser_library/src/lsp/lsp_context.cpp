@@ -29,11 +29,11 @@
 #include "item_convertors.h"
 #include "lsp/instruction_completions.h"
 #include "lsp/macro_info.h"
+#include "parse_lib_provider.h"
 #include "protocol.h"
 #include "utils/similar.h"
 #include "utils/string_operations.h"
 #include "utils/unicode_text.h"
-#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 namespace {
@@ -278,8 +278,7 @@ void lsp_context::add_macro(macro_info_ptr macro_i, text_data_view text_data)
     assert(inserted);
 }
 
-void lsp_context::add_opencode(
-    opencode_info_ptr opencode_i, text_data_view text_data, workspaces::parse_lib_provider& libs)
+void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_view text_data, parse_lib_provider& libs)
 {
     m_opencode = std::move(opencode_i);
     add_file(file_info(m_hlasm_ctx->opencode_location(), std::move(text_data)));

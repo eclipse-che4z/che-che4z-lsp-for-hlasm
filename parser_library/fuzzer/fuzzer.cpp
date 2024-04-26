@@ -31,14 +31,13 @@
 #include "lsp/folding.h"
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"
+#include "parse_lib_provider.h"
 #include "preprocessor_options.h"
 #include "utils/resource_location.h"
 #include "utils/unicode_text.h"
-#include "workspaces/parse_lib_provider.h"
 
 using namespace hlasm_plugin::utils;
 using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::workspaces;
 
 class fuzzer_lib_provider : public parse_lib_provider
 {
@@ -59,14 +58,20 @@ class fuzzer_lib_provider : public parse_lib_provider
     }
 
 public:
-    [[nodiscard]] value_task<bool> parse_library(std::string library, analyzing_context ctx, library_data data) override
+    [[nodiscard]] value_task<bool> parse_library(
+        std::string library, analyzing_context ctx, processing::processing_kind kind) override
     {
         auto lib = read_library_name(library);
         if (!lib.has_value())
             co_return false;
 
-        analyzer a(
-            files[lib.value()], analyzer_options(resource_location(std::move(library)), this, std::move(ctx), data));
+        analyzer a(files[lib.value()],
+            analyzer_options {
+                resource_location(library),
+                this,
+                std::move(ctx),
+                analyzer_options::dependency(library, kind),
+            });
         co_await a.co_analyze();
         co_return true;
     }

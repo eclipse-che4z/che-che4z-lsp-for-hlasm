@@ -19,6 +19,7 @@
 
 #include "../gtest_stringers.h"
 #include "analyzer.h"
+#include "empty_parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library {
 
@@ -27,7 +28,7 @@ struct analyzer_fixture : public ::testing::Test
     static const inline auto opencode_loc = utils::resource::resource_location("source");
     analyzer a;
     analyzer_fixture(const std::string& input,
-        workspaces::parse_lib_provider& provider = workspaces::empty_parse_lib_provider::instance,
+        parse_lib_provider& provider = empty_parse_lib_provider::instance,
         asm_option opts = {})
         : a(input, analyzer_options { opencode_loc, &provider, std::move(opts) })
     {

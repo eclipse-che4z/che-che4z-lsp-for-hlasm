@@ -20,8 +20,8 @@
 #include <unordered_set>
 
 #include "../server.h"
+#include "../telemetry_sink.h"
 #include "nlohmann/json_fwd.hpp"
-#include "telemetry_sink.h"
 #include "workspace_manager.h"
 #include "workspace_manager_requests.h"
 

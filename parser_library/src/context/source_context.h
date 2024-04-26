@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "copy_member.h"
-#include "processing/processing_format.h"
+#include "processing_format.h"
 #include "source_snapshot.h"
 #include "utils/general_hashers.h"
 

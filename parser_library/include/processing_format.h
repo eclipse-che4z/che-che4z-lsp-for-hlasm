@@ -55,10 +55,7 @@ struct processing_format
         , occurrence(occurrence)
     {}
 
-    bool operator==(const processing_format& oth) const
-    {
-        return kind == oth.kind && form == oth.form && occurrence == oth.occurrence;
-    }
+    bool operator==(const processing_format& oth) const noexcept = default;
 
     processing_kind kind;
     processing_form form;

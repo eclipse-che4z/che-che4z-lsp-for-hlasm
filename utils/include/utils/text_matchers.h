@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_UTILS_TEXT_MATCHERS_H
 #define HLASMPLUGIN_UTILS_TEXT_MATCHERS_H
 
+#include <array>
 #include <cctype>
 #include <optional>
 #include <string_view>

@@ -31,7 +31,7 @@ debug_lib_provider::debug_lib_provider(
 {}
 
 utils::value_task<bool> debug_lib_provider::parse_library(
-    std::string library, analyzing_context ctx, workspaces::library_data data)
+    std::string library, analyzing_context ctx, processing::processing_kind kind)
 {
     utils::resource::resource_location url;
     for (const auto& lib : m_libraries)
@@ -45,7 +45,14 @@ utils::value_task<bool> debug_lib_provider::parse_library(
 
         const auto& [location, content] = *m_files.try_emplace(std::move(url), std::move(content_o).value()).first;
 
-        analyzer a(content, analyzer_options(location, this, std::move(ctx), data, collect_highlighting_info::no));
+        analyzer a(content,
+            analyzer_options {
+                location,
+                this,
+                std::move(ctx),
+                analyzer_options::dependency(std::move(library), kind),
+                collect_highlighting_info::no,
+            });
 
         co_await a.co_analyze();
 

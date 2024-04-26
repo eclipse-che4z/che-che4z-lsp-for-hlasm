@@ -26,7 +26,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 macro_processor::macro_processor(
-    const analyzing_context& ctx, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider)
+    const analyzing_context& ctx, branching_provider& branch_provider, parse_lib_provider& lib_provider)
     : instruction_processor(ctx, branch_provider, lib_provider)
 {}
 

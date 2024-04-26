@@ -35,10 +35,11 @@ namespace hlasm_plugin::parser_library::processing {
 
 processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_provider,
     const analyzing_context& ctx,
-    workspaces::library_data data,
+    processing::processing_kind proc_kind,
+    std::string dep_name,
     utils::resource::resource_location file_loc,
     std::string_view file_text,
-    workspaces::parse_lib_provider& lib_provider,
+    parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
     std::shared_ptr<std::vector<fade_message>> fade_msgs,
     output_handler* output)
@@ -52,7 +53,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     , file_loc_(file_loc)
     , m_fade_msgs(std::move(fade_msgs))
 {
-    switch (data.proc_kind)
+    switch (proc_kind)
     {
         case processing_kind::ORDINARY:
             provs_.emplace_back(std::make_unique<macro_statement_provider>(ctx_, parser, lib_provider, *this, *this));
@@ -60,10 +61,11 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
                 ctx_, *this, lib_provider, *this, parser, opencode_prov_, *this, output));
             break;
         case processing_kind::COPY:
-            start_copy_member(copy_start_data { data.library_member, std::move(file_loc) });
+            start_copy_member(copy_start_data { ctx.hlasm_ctx->ids().add(std::move(dep_name)), std::move(file_loc) });
             break;
         case processing_kind::MACRO:
-            start_macro_definition(macrodef_start_data(data.library_member), std::move(file_loc));
+            start_macro_definition(
+                macrodef_start_data(ctx.hlasm_ctx->ids().add(std::move(dep_name))), std::move(file_loc));
             break;
         default:
             break;
@@ -330,7 +332,7 @@ std::optional<bool> processing_manager::request_external_processing(
         return it->second;
     }
 
-    auto next_task = lib_provider_.parse_library(name.to_string(), ctx_, { proc_kind, name })
+    auto next_task = lib_provider_.parse_library(name.to_string(), ctx_, proc_kind)
                          .then([this, key, callback = std::move(callback)](bool result) {
                              m_external_requests.insert_or_assign(key, result);
                              if (callback)

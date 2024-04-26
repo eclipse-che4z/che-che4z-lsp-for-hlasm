@@ -21,12 +21,13 @@
 #include "../mock_parse_lib_provider.h"
 #include "analyzer.h"
 #include "context/instruction.h"
+#include "empty_parse_lib_provider.h"
 #include "location.h"
 #include "lsp/lsp_context.h"
+#include "parse_lib_provider.h"
 #include "range.h"
 #include "utils/resource_location.h"
 #include "virtual_file_monitor.h"
-#include "workspaces/parse_lib_provider.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::utils::resource;
@@ -55,7 +56,7 @@ class lsp_context_preprocessor_test : public testing::Test
 {
 public:
     lsp_context_preprocessor_test(const std::string& contents,
-        std::shared_ptr<workspaces::parse_lib_provider> lib_provider,
+        std::shared_ptr<parse_lib_provider> lib_provider,
         preprocessor_options preproc_options)
         : lib_provider(lib_provider)
         , a(contents, analyzer_options { source_loc, lib_provider.get(), preproc_options, &vf_monitor })
@@ -68,7 +69,7 @@ public:
     }
 
 protected:
-    std::shared_ptr<workspaces::parse_lib_provider> lib_provider;
+    std::shared_ptr<parse_lib_provider> lib_provider;
     struct : virtual_file_monitor
     {
         unsigned long long next_id = 12345;
@@ -211,7 +212,7 @@ protected:
 public:
     lsp_context_cics_preprocessor_test()
         : lsp_context_preprocessor_test(
-            contents, std::make_shared<workspaces::empty_parse_lib_provider>(), cics_preprocessor_options())
+            contents, std::make_shared<empty_parse_lib_provider>(), cics_preprocessor_options())
     {}
 
     void SetUp() override

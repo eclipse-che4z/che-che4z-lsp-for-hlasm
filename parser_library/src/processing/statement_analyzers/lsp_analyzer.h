@@ -24,13 +24,14 @@
 #include "context/macro.h"
 #include "lsp/macro_info.h"
 #include "lsp/symbol_occurrence.h"
-#include "processing/processing_format.h"
 #include "processing/statement_providers/statement_provider_kind.h"
+#include "processing_format.h"
 #include "statement_analyzer.h"
 
 namespace hlasm_plugin::parser_library {
 class library_info;
 struct range;
+class parse_lib_provider;
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::context {
@@ -61,10 +62,6 @@ struct operands_si;
 struct preprocessor_statement_si;
 struct variable_symbol;
 } // namespace hlasm_plugin::parser_library::semantics
-
-namespace hlasm_plugin::parser_library::workspaces {
-class parse_lib_provider;
-} // namespace hlasm_plugin::parser_library::workspaces
 
 namespace hlasm_plugin::utils::resource {
 class resource_location;
@@ -111,7 +108,7 @@ public:
 
     void copydef_finished(context::copy_member_ptr copydef, copy_processing_result&& result);
 
-    void opencode_finished(workspaces::parse_lib_provider& libs);
+    void opencode_finished(parse_lib_provider& libs);
 
     void collect_branch_info(
         const std::vector<

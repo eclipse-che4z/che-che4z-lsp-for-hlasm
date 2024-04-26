@@ -16,7 +16,9 @@
 
 #include "context/id_storage.h"
 #include "diagnosable_ctx.h"
+#include "empty_parse_lib_provider.h"
 #include "lsp/lsp_context.h"
+#include "parse_lib_provider.h"
 #include "processing/opencode_provider.h"
 #include "processing/preprocessor.h"
 #include "processing/processing_manager.h"
@@ -26,7 +28,6 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lexing;
 using namespace hlasm_plugin::parser_library::parsing;
-using namespace hlasm_plugin::parser_library::workspaces;
 using namespace hlasm_plugin::utils::resource;
 
 analyzing_context& analyzer_options::get_context()
@@ -46,12 +47,12 @@ analyzing_context& analyzer_options::get_context()
 
 context::hlasm_context& analyzer_options::get_hlasm_context() { return *get_context().hlasm_ctx; }
 
-workspaces::parse_lib_provider& analyzer_options::get_lib_provider() const
+parse_lib_provider& analyzer_options::get_lib_provider() const
 {
     if (lib_provider)
         return *lib_provider;
     else
-        return workspaces::empty_parse_lib_provider::instance;
+        return empty_parse_lib_provider::instance;
 }
 
 std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(processing::library_fetcher asm_lf,
@@ -128,7 +129,8 @@ struct analyzer::impl : public diagnosable_ctx
                    opts.vf_monitor,
                    vf_handles),
               ctx,
-              opts.library_data,
+              opts.dep_kind,
+              std::move(opts.dep_name),
               opts.file_loc,
               text,
               opts.get_lib_provider(),

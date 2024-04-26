@@ -15,17 +15,15 @@
 #ifndef PROCESSING_INSTRUCTION_PROCESSOR_H
 #define PROCESSING_INSTRUCTION_PROCESSOR_H
 
-#include <functional>
-#include <unordered_map>
-
+#include "analyzing_context.h"
 #include "diagnosable_ctx.h"
 #include "expressions/evaluation_context.h"
 #include "library_info_transitional.h"
-#include "processing/branching_provider.h"
 #include "processing/statement.h"
-#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::processing {
+class branching_provider;
+class parser_library;
 
 // interface for processing instructions
 // processing is divided into classes for assembler, conditional assembly, machine, macro instruction processing
@@ -39,12 +37,12 @@ protected:
     analyzing_context ctx;
     context::hlasm_context& hlasm_ctx;
     branching_provider& branch_provider;
-    workspaces::parse_lib_provider& lib_provider;
+    parse_lib_provider& lib_provider;
     library_info_transitional lib_info;
     expressions::evaluation_context eval_ctx;
 
     instruction_processor(
-        const analyzing_context& ctx, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider)
+        const analyzing_context& ctx, branching_provider& branch_provider, parse_lib_provider& lib_provider)
         : diagnosable_ctx(*ctx.hlasm_ctx)
         , ctx(ctx)
         , hlasm_ctx(*ctx.hlasm_ctx)

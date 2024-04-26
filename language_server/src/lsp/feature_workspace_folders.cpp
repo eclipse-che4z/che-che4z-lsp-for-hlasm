@@ -21,6 +21,25 @@
 #include "utils/path_conversions.h"
 #include "utils/platform.h"
 
+NLOHMANN_JSON_NAMESPACE_BEGIN
+template<>
+struct adl_serializer<hlasm_plugin::parser_library::lib_config>
+{
+    static void from_json(const nlohmann::json& config, hlasm_plugin::parser_library::lib_config& cfg)
+    {
+        cfg = {};
+
+        auto found = config.find("diagnosticsSuppressLimit");
+        if (found != config.end() && found->is_number())
+        {
+            cfg.diag_supress_limit = found->get<int64_t>();
+            if (cfg.diag_supress_limit < 0)
+                cfg.diag_supress_limit = 0;
+        }
+    }
+};
+NLOHMANN_JSON_NAMESPACE_END
+
 namespace hlasm_plugin::language_server::lsp {
 
 feature_workspace_folders::feature_workspace_folders(
@@ -212,7 +231,7 @@ void feature_workspace_folders::configuration(const nlohmann::json& params) cons
         return;
     }
 
-    ws_mngr_.configuration_changed(parser_library::lib_config::load_from_json(params[0]));
+    ws_mngr_.configuration_changed(parser_library::lib_config(params[0]));
 }
 
 void feature_workspace_folders::did_change_configuration(const nlohmann::json&) { send_configuration_request(); }

@@ -22,14 +22,19 @@
 #include "processing/instruction_sets/macro_processor.h"
 #include "processing/opencode_provider.h"
 #include "statement_processor.h"
-#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::context {
 struct dependency_evaluation_context;
 struct postponed_statement;
 } // namespace hlasm_plugin::parser_library::context
 
+namespace hlasm_plugin::parser_library::workspaces {
+class parse_lib_provider;
+} // namespace hlasm_plugin::parser_library::workspaces
+
 namespace hlasm_plugin::parser_library::processing {
+class branching_provider;
+class processing_state_listener;
 
 // statement processor that evaluates the written code, processes instructions
 class ordinary_processor final : public statement_processor
@@ -53,7 +58,7 @@ class ordinary_processor final : public statement_processor
 public:
     ordinary_processor(const analyzing_context& ctx,
         branching_provider& branch_provider,
-        workspaces::parse_lib_provider& lib_provider,
+        parse_lib_provider& lib_provider,
         processing_state_listener& state_listener,
         statement_fields_parser& parser,
         opencode_provider& open_code,

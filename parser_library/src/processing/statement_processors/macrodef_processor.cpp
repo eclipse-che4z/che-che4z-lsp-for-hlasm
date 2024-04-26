@@ -14,8 +14,11 @@
 
 #include "macrodef_processor.h"
 
+#include "context/instruction.h"
+#include "processing/branching_provider.h"
 #include "processing/instruction_sets/asm_processor.h"
 #include "processing/instruction_sets/macro_processor.h"
+#include "processing/processing_state_listener.h"
 #include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -156,8 +159,7 @@ void macrodef_processor::collect_diags() const {}
 
 bool macrodef_processor::process_statement(const context::hlasm_statement& statement)
 {
-    if (finished_flag_)
-        throw std::runtime_error("bad operation");
+    assert(!finished_flag_);
 
     auto res_stmt = statement.access_resolved();
 

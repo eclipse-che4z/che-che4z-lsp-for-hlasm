@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "common_testing.h"
+#include "parse_lib_provider.h"
 #include "utils/general_hashers.h"
 #include "utils/task.h"
 
@@ -28,7 +29,8 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
     std::vector<diagnostic> m_diags;
 
     // Inherited via parse_lib_provider
-    value_task<bool> parse_library(std::string library, analyzing_context ctx, library_data data) override
+    value_task<bool> parse_library(
+        std::string library, analyzing_context ctx, processing::processing_kind kind) override
     {
         auto it = m_files.find(library);
         if (it == m_files.end())
@@ -39,10 +41,10 @@ struct async_macro_parsing_fixture : ::testing::Test, parse_lib_provider
         {
             analyzer a(it->second,
                 analyzer_options {
-                    hlasm_plugin::utils::resource::resource_location(std::move(library)),
+                    hlasm_plugin::utils::resource::resource_location(library),
                     this,
                     std::move(ctx),
-                    data,
+                    analyzer_options::dependency(library, kind),
                 });
 
             co_await a.co_analyze();

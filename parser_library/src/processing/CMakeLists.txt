@@ -20,7 +20,6 @@ target_sources(parser_library PRIVATE
     opencode_provider.h
     preprocessor.cpp
     preprocessor.h
-    processing_format.h
     processing_manager.cpp
     processing_manager.h
     processing_state_listener.h

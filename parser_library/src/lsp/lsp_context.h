@@ -35,11 +35,8 @@
 
 namespace hlasm_plugin::parser_library {
 enum class completion_trigger_kind;
-} // namespace hlasm_plugin::parser_library
-
-namespace hlasm_plugin::parser_library::workspaces {
 class parse_lib_provider;
-} // namespace hlasm_plugin::parser_library::workspaces
+} // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::lsp {
 
@@ -80,7 +77,7 @@ public:
 
     void add_copy(context::copy_member_ptr copy, text_data_view text_data);
     void add_macro(macro_info_ptr macro_i, text_data_view text_data = text_data_view());
-    void add_opencode(opencode_info_ptr opencode_i, text_data_view text_data, workspaces::parse_lib_provider& libs);
+    void add_opencode(opencode_info_ptr opencode_i, text_data_view text_data, parse_lib_provider& libs);
     void add_title(std::string title, context::processing_stack_t stack);
 
     [[nodiscard]] macro_info_ptr get_macro_info(

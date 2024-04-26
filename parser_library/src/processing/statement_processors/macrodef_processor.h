@@ -17,12 +17,11 @@
 
 #include "context/hlasm_context.h"
 #include "macrodef_processing_info.h"
-#include "processing/processing_state_listener.h"
 #include "statement_processor.h"
-#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::processing {
 class branching_provider;
+class processing_state_listener;
 
 // processor that creates macro definition from provided statements
 class macrodef_processor final : public statement_processor

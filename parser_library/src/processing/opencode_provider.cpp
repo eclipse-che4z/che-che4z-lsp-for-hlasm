@@ -35,7 +35,7 @@ namespace hlasm_plugin::parser_library::processing {
 
 opencode_provider::opencode_provider(std::string_view text,
     const analyzing_context& ctx,
-    workspaces::parse_lib_provider& lib_provider,
+    parse_lib_provider& lib_provider,
     processing_state_listener& state_listener,
     const processing::processing_manager& proc_manager,
     semantics::source_info_processor& src_proc,
@@ -564,7 +564,7 @@ utils::task opencode_provider::run_preprocessor()
                 std::move(file_location),
                 m_lib_provider,
                 m_ctx,
-                workspaces::library_data { processing_kind::COPY, virtual_file_name },
+                analyzer_options::dependency(virtual_file_name.to_string(), processing_kind::COPY),
             },
             virtual_file_name);
     }
@@ -643,7 +643,7 @@ utils::task opencode_provider::convert_ainsert_buffer_to_copybook()
             std::move(file_location),
             m_lib_provider,
             m_ctx,
-            workspaces::library_data { processing_kind::COPY, virtual_copy_name },
+            analyzer_options::dependency(virtual_copy_name.to_string(), processing_kind::COPY),
         },
         virtual_copy_name);
 }

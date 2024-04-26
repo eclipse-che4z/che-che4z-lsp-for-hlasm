@@ -23,13 +23,13 @@
 #include <vector>
 
 #include "context/copy_member.h"
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "lsp/macro_info.h"
-#include "parse_lib_provider.h"
 #include "protocol.h"
 
 namespace hlasm_plugin::parser_library {
 class analyzer;
+struct analyzing_context;
 } // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::context {
 class hlasm_context;
@@ -52,17 +52,21 @@ struct cached_opsyn_mnemo
 // Contains all the context that affects parsing an external file (macro or copy member)
 struct macro_cache_key
 {
-    [[nodiscard]] static macro_cache_key create_from_context(context::hlasm_context& hlasm_ctx, library_data data);
+    [[nodiscard]] static macro_cache_key create_from_context(
+        context::hlasm_context& hlasm_ctx, processing::processing_kind kind, context::id_index name);
     static void sort_opsyn_state(std::vector<cached_opsyn_mnemo>& opsyn_state);
     static std::vector<cached_opsyn_mnemo> get_opsyn_state(context::hlasm_context& hlasm_ctx);
 
-    library_data data;
+    processing::processing_kind kind;
+    context::id_index name;
     std::vector<cached_opsyn_mnemo> opsyn_state;
 
     bool operator==(const macro_cache_key&) const = default;
     auto operator<=>(const macro_cache_key& o) const
     {
-        if (auto c = data <=> o.data; c != 0)
+        if (auto c = kind <=> o.kind; c != 0)
+            return c;
+        if (auto c = name <=> o.name; c != 0)
             return c;
         if (auto c = opsyn_state.size() <=> o.opsyn_state.size(); c != 0)
             return c;

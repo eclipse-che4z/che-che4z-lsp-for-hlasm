@@ -15,12 +15,11 @@
 #ifndef PROCESSING_LOW_LANGUAGE_PROCESSOR_H
 #define PROCESSING_LOW_LANGUAGE_PROCESSOR_H
 
-#include "checking/instruction_checker.h"
 #include "instruction_processor.h"
-#include "processing/statement_fields_parser.h"
 
 namespace hlasm_plugin::parser_library::processing {
 class processing_manager;
+class statement_fields_parser;
 
 // common ancestor for ASM and MACH processing containing useful methods
 class low_language_processor : public instruction_processor
@@ -31,7 +30,7 @@ protected:
 
     low_language_processor(const analyzing_context& ctx,
         branching_provider& branch_provider,
-        workspaces::parse_lib_provider& lib_provider,
+        parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
         const processing_manager& proc_mgr);
 

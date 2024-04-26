@@ -14,20 +14,17 @@
 
 #include "mach_processor.h"
 
-#include <algorithm>
-
 #include "context/hlasm_context.h"
-#include "context/instruction_type.h"
+#include "context/instruction.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/ordinary_assembly/symbol_dependency_tables.h"
 #include "postponed_statement_impl.h"
-#include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
 mach_processor::mach_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
-    workspaces::parse_lib_provider& lib_provider,
+    parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
     const processing_manager& proc_mgr)
     : low_language_processor(ctx, branch_provider, lib_provider, parser, proc_mgr)

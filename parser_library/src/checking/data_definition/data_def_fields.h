@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEF_FIELDS_H
 #define HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEF_FIELDS_H
 
+#include <cstdint>
 #include <variant>
 #include <vector>
 

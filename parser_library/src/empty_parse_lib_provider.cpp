@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Broadcom.
+ * Copyright (c) 2024 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -12,14 +12,17 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "parse_lib_provider.h"
+#include "empty_parse_lib_provider.h"
 
 #include <cassert>
 
-namespace hlasm_plugin::parser_library::workspaces {
+#include "analyzing_context.h"
+
+namespace hlasm_plugin::parser_library {
 
 
-utils::value_task<bool> empty_parse_lib_provider::parse_library(std::string, analyzing_context, library_data)
+utils::value_task<bool> empty_parse_lib_provider::parse_library(
+    std::string, analyzing_context, processing::processing_kind)
 {
     co_return false;
 };
@@ -32,4 +35,4 @@ empty_parse_lib_provider::get_library(std::string)
 
 empty_parse_lib_provider empty_parse_lib_provider::instance;
 
-} // namespace hlasm_plugin::parser_library::workspaces
+} // namespace hlasm_plugin::parser_library

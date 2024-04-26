@@ -29,6 +29,7 @@
 #include "diagnostic_consumer.h"
 #include "document.h"
 #include "lexing/logical_line.h"
+#include "parse_lib_provider.h"
 #include "preprocessor_options.h"
 #include "preprocessor_utils.h"
 #include "processing/preprocessor.h"
@@ -42,7 +43,6 @@
 #include "utils/text_matchers.h"
 #include "utils/truth_table.h"
 #include "utils/unicode_text.h"
-#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

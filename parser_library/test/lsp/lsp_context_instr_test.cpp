@@ -17,6 +17,7 @@
 #include "analyzer.h"
 #include "completion_item.h"
 #include "completion_trigger_kind.h"
+#include "empty_parse_lib_provider.h"
 #include "instruction_set_version.h"
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"
@@ -42,7 +43,7 @@ struct lsp_context_instr : public ::testing::Test
     {
         auto a = std::make_unique<analyzer>(input,
             analyzer_options {
-                opencode_file_loc, &workspaces::empty_parse_lib_provider::instance, asm_option { "", "", instr_set } });
+                opencode_file_loc, &empty_parse_lib_provider::instance, asm_option { "", "", instr_set } });
 
         a->analyze();
         return a;
@@ -52,7 +53,7 @@ struct lsp_context_instr : public ::testing::Test
     {
         analyzer a(input,
             analyzer_options {
-                opencode_file_loc, &workspaces::empty_parse_lib_provider::instance, asm_option { "", "", instr_set } });
+                opencode_file_loc, &empty_parse_lib_provider::instance, asm_option { "", "", instr_set } });
 
         a.analyze();
 

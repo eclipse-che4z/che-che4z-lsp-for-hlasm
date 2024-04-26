@@ -15,6 +15,7 @@
 #ifndef CONTEXT_COMMON_TYPES_H
 #define CONTEXT_COMMON_TYPES_H
 
+#include <cstdint>
 #include <string>
 
 namespace hlasm_plugin::parser_library::context {

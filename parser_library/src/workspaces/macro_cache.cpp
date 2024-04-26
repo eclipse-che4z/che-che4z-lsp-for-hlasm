@@ -51,9 +51,10 @@ std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_
     return result;
 }
 
-macro_cache_key macro_cache_key::create_from_context(context::hlasm_context& hlasm_ctx, library_data data)
+macro_cache_key macro_cache_key::create_from_context(
+    context::hlasm_context& hlasm_ctx, processing::processing_kind kind, context::id_index name)
 {
-    return { data, get_opsyn_state(hlasm_ctx) };
+    return { kind, name, get_opsyn_state(hlasm_ctx) };
 }
 
 void macro_cache_key::sort_opsyn_state(std::vector<cached_opsyn_mnemo>& opsyn_state)
@@ -91,7 +92,7 @@ std::optional<std::vector<std::shared_ptr<file>>> macro_cache::load_from_cache(
     if (auto cached_data = find_cached_data(key))
     {
         auto& locs = result.emplace();
-        if (key.data.proc_kind == processing::processing_kind::MACRO)
+        if (key.kind == processing::processing_kind::MACRO)
         {
             lsp::macro_info_ptr info = std::get<lsp::macro_info_ptr>(cached_data->cached_member);
             if (!info)
@@ -107,7 +108,7 @@ std::optional<std::vector<std::shared_ptr<file>>> macro_cache::load_from_cache(
                 ctx.lsp_ctx->add_copy(copy_ptr, lsp::text_data_view(file->get_text()));
             }
         }
-        else if (key.data.proc_kind == processing::processing_kind::COPY)
+        else if (key.kind == processing::processing_kind::COPY)
         {
             const auto& copy_member = std::get<context::copy_member_ptr>(cached_data->cached_member);
             ctx.hlasm_ctx->add_copy_member(copy_member);
@@ -134,10 +135,10 @@ version_stamp macro_cache::get_copy_member_versions(context::macro_definition& m
 void macro_cache::save_macro(const macro_cache_key& key, const analyzer& analyzer)
 {
     auto& cache_data = cache_[key];
-    if (key.data.proc_kind == processing::processing_kind::MACRO)
+    if (key.kind == processing::processing_kind::MACRO)
     {
         // Add stamps for all macro dependencies
-        auto parsed_macro = analyzer.context().hlasm_ctx->get_macro_definition(key.data.library_member);
+        auto parsed_macro = analyzer.context().hlasm_ctx->get_macro_definition(key.name);
         if (parsed_macro)
             cache_data.stamps = get_copy_member_versions(*parsed_macro);
         else
@@ -147,11 +148,11 @@ void macro_cache::save_macro(const macro_cache_key& key, const analyzer& analyze
         cache_data.stamps.clear();
 
     cache_data.stamps.try_emplace(macro_file_->get_location(), macro_file_->get_version());
-    if (key.data.proc_kind == processing::processing_kind::MACRO)
+    if (key.kind == processing::processing_kind::MACRO)
         cache_data.cached_member =
-            analyzer.context().lsp_ctx->get_macro_info(key.data.library_member, context::opcode_generation::current);
-    else if (key.data.proc_kind == processing::processing_kind::COPY)
-        cache_data.cached_member = analyzer.context().hlasm_ctx->get_copy_member(key.data.library_member);
+            analyzer.context().lsp_ctx->get_macro_info(key.name, context::opcode_generation::current);
+    else if (key.kind == processing::processing_kind::COPY)
+        cache_data.cached_member = analyzer.context().hlasm_ctx->get_copy_member(key.name);
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

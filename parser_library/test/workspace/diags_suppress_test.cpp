@@ -72,7 +72,7 @@ TEST(diags_suppress, no_suppress)
 
 TEST(diags_suppress, do_suppress)
 {
-    auto config = lib_config::load_from_json(R"({"diagnosticsSuppressLimit":5})"_json);
+    lib_config config { .diag_supress_limit = 5 };
     shared_json global_settings = make_empty_shared_json();
 
     file_manager_impl fm;
@@ -158,7 +158,7 @@ TEST(diags_suppress, mark_for_parsing_only)
     LR 1,
 )");
 
-    auto config = lib_config::load_from_json(R"({"diagnosticsSuppressLimit":5})"_json);
+    lib_config config { .diag_supress_limit = 5 };
     shared_json global_settings = make_empty_shared_json();
 
     workspace ws(empty_ws, fm, config, global_settings);

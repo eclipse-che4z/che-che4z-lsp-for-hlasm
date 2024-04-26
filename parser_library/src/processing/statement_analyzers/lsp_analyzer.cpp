@@ -253,7 +253,7 @@ void lsp_analyzer::copydef_finished(context::copy_member_ptr copydef, copy_proce
     lsp_ctx_.add_copy(std::move(copydef), lsp::text_data_view(file_text_));
 }
 
-void lsp_analyzer::opencode_finished(workspaces::parse_lib_provider& libs)
+void lsp_analyzer::opencode_finished(parse_lib_provider& libs)
 {
     lsp_ctx_.add_opencode(
         std::make_unique<lsp::opencode_info>(std::move(opencode_var_defs_), std::move(opencode_occurrences_)),

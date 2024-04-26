@@ -16,10 +16,10 @@
 #define PROCESSING_STATEMENT_ANALYZER_H
 
 #include "context/hlasm_statement.h"
-#include "processing/processing_format.h"
 #include "processing/statement_processors/copy_processing_info.h"
 #include "processing/statement_processors/macrodef_processing_info.h"
 #include "processing/statement_providers/statement_provider_kind.h"
+#include "processing_format.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

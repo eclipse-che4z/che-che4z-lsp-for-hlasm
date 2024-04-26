@@ -29,6 +29,7 @@ struct analyzing_context;
 class diagnosable_ctx;
 struct range;
 class output_handler;
+class parse_lib_provider;
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::context {
@@ -45,10 +46,6 @@ struct rebuit_statement;
 struct resolved_statement;
 } // namespace hlasm_plugin::parser_library::processing
 
-namespace hlasm_plugin::parser_library::workspaces {
-class parse_lib_provider;
-}
-
 namespace hlasm_plugin::parser_library::processing {
 
 // processor of assembler instructions
@@ -61,7 +58,7 @@ class asm_processor : public low_language_processor
 public:
     asm_processor(const analyzing_context& ctx,
         branching_provider& branch_provider,
-        workspaces::parse_lib_provider& lib_provider,
+        parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
         opencode_provider& open_code,
         const processing_manager& proc_mgr,

@@ -14,10 +14,7 @@ target_sources(parser_library PRIVATE
     aread_time.cpp
     aread_time.h
     analyzer.cpp
-    analyzer.h
-    analyzing_context.h
     compiler_options.cpp
-    compiler_options.h
     diagnosable.h
     diagnosable_ctx.cpp
     diagnosable_ctx.h
@@ -30,17 +27,16 @@ target_sources(parser_library PRIVATE
     diagnostic_tools.h
     diagnostic_tools.cpp
     document.cpp
-    document.h
     ebcdic_encoding.cpp
     ebcdic_encoding.h
+    empty_parse_lib_provider.cpp
+    empty_parse_lib_provider.h
     error_messages.h
     fade_messages.cpp
-    instruction_set_version.h
     lib_config.cpp
     library_info.h
     library_info_transitional.cpp
     library_info_transitional.h
-    preprocessor_options.h
     output_handler.h
     tagged_index.h
     virtual_file_monitor.h

@@ -16,12 +16,15 @@
 #define PROCESSING_LOOKAHEAD_PROCESSOR_H
 
 #include "lookahead_processing_info.h"
-#include "processing/branching_provider.h"
-#include "processing/processing_state_listener.h"
 #include "statement_processor.h"
-#include "workspaces/parse_lib_provider.h"
+
+namespace hlasm_plugin::parser_library {
+class parse_lib_provider;
+} // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::processing {
+class branching_provider;
+class processing_state_listener;
 
 // processor used for lookahead, hence finding desired symbol
 class lookahead_processor final : public statement_processor
@@ -34,7 +37,7 @@ class lookahead_processor final : public statement_processor
     size_t macro_nest_;
     branching_provider& branch_provider_;
     processing_state_listener& listener_;
-    workspaces::parse_lib_provider& lib_provider_;
+    parse_lib_provider& lib_provider_;
 
     std::vector<context::id_index> to_find_;
     context::id_index target_;
@@ -45,7 +48,7 @@ public:
     lookahead_processor(const analyzing_context& ctx,
         branching_provider& branch_provider,
         processing_state_listener& listener,
-        workspaces::parse_lib_provider& lib_provider,
+        parse_lib_provider& lib_provider,
         lookahead_start_data start);
 
     std::optional<processing_status> get_processing_status(

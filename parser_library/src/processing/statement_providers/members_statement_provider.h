@@ -23,6 +23,10 @@
 #include "processing/statement_fields_parser.h"
 #include "statement_provider.h"
 
+namespace hlasm_plugin::parser_library {
+class parse_lib_provider;
+} // namespace hlasm_plugin::parser_library
+
 namespace hlasm_plugin::parser_library::context {
 struct copy_member_invocation;
 struct macro_invocation;
@@ -43,7 +47,7 @@ public:
     members_statement_provider(const statement_provider_kind kind,
         const analyzing_context& ctx,
         statement_fields_parser& parser,
-        workspaces::parse_lib_provider& lib_provider,
+        parse_lib_provider& lib_provider,
         processing::processing_state_listener& listener,
         diagnostic_op_consumer& diag_consumer);
 
@@ -53,7 +57,7 @@ public:
 protected:
     analyzing_context m_ctx;
     statement_fields_parser& m_parser;
-    workspaces::parse_lib_provider& m_lib_provider;
+    parse_lib_provider& m_lib_provider;
     processing::processing_state_listener& m_listener;
     diagnostic_op_consumer& m_diagnoser;
     std::optional<std::optional<context::id_index>> m_resolved_instruction;

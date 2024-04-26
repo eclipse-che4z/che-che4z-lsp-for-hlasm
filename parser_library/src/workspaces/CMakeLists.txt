@@ -24,8 +24,6 @@ target_sources(parser_library PRIVATE
     library_local.h
     macro_cache.cpp
     macro_cache.h
-    parse_lib_provider.cpp
-    parse_lib_provider.h
     processor_group.cpp
     processor_group.h
     program_configuration_storage.cpp

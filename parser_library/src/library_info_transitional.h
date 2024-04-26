@@ -18,21 +18,20 @@
 #include "library_info.h"
 
 namespace hlasm_plugin::parser_library {
+class parse_lib_provider;
+
 namespace context {
 class hlasm_context;
 } // namespace context
-namespace workspaces {
-class parse_lib_provider;
-} // namespace workspaces
 
 class library_info_transitional final : public library_info
 {
-    workspaces::parse_lib_provider* m_lib_provider;
+    parse_lib_provider* m_lib_provider;
 
 public:
     bool has_library(std::string_view member) const override;
 
-    explicit library_info_transitional(workspaces::parse_lib_provider& lib_provider)
+    explicit library_info_transitional(parse_lib_provider& lib_provider)
         : m_lib_provider(&lib_provider)
     {}
 

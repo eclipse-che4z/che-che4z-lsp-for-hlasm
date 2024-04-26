@@ -19,8 +19,8 @@
 #include <optional>
 
 #include "analyzing_context.h"
+#include "checking/asm_instr_check.h"
 #include "checking/diagnostic_collector.h"
-#include "checking/instr_operand.h"
 #include "context/common_types.h"
 #include "context/hlasm_context.h"
 #include "context/literal_pool.h"
@@ -33,6 +33,7 @@
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expr_visitor.h"
 #include "output_handler.h"
+#include "parse_lib_provider.h"
 #include "postponed_statement_impl.h"
 #include "processing/branching_provider.h"
 #include "processing/opencode_provider.h"
@@ -43,7 +44,6 @@
 #include "semantics/operand_impls.h"
 #include "utils/string_operations.h"
 #include "utils/unicode_text.h"
-#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -738,7 +738,7 @@ void asm_processor::process_OPSYN(rebuilt_statement&& stmt)
 
 asm_processor::asm_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
-    workspaces::parse_lib_provider& lib_provider,
+    parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
     opencode_provider& open_code,
     const processing_manager& proc_mgr,

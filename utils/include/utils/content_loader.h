@@ -18,12 +18,10 @@
 #include <optional>
 #include <string>
 #include <system_error>
-#include <unordered_map>
 #include <vector>
 
+#include "list_directory_rc.h"
 #include "resource_location.h"
-#include "utils/general_hashers.h"
-#include "utils/list_directory_rc.h"
 
 namespace hlasm_plugin::utils::resource {
 

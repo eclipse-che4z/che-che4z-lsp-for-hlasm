@@ -15,7 +15,6 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DEBUG_LIB_PROVIDER_H
 #define HLASMPLUGIN_PARSERLIBRARY_DEBUG_LIB_PROVIDER_H
 
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -24,8 +23,8 @@
 #include <utility>
 #include <vector>
 
+#include "parse_lib_provider.h"
 #include "utils/resource_location.h"
-#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::utils {
 class task;
@@ -45,7 +44,7 @@ namespace hlasm_plugin::parser_library::debugging {
 // Implements dependency (macro and COPY files) fetcher for macro tracer.
 // Takes the information from a workspace, but calls special methods for
 // parsing that do not collide with LSP.
-class debug_lib_provider final : public workspaces::parse_lib_provider
+class debug_lib_provider final : public parse_lib_provider
 {
     std::unordered_map<utils::resource::resource_location, std::string, utils::resource::resource_location_hasher>
         m_files;
@@ -56,7 +55,7 @@ public:
     debug_lib_provider(std::vector<std::shared_ptr<workspaces::library>> libraries, workspaces::file_manager& fm);
 
     [[nodiscard]] utils::value_task<bool> parse_library(
-        std::string library, analyzing_context ctx, workspaces::library_data data) override;
+        std::string library, analyzing_context ctx, processing::processing_kind kind) override;
 
     bool has_library(std::string_view library, utils::resource::resource_location* loc) override;
 

@@ -474,6 +474,16 @@ bool workspace_configuration::is_b4g_config_file(const utils::resource::resource
     return file.filename() == B4G_CONF_FILE;
 }
 
+lib_config load_from_pgm_config(const config::pgm_conf& config)
+{
+    lib_config loaded;
+
+    if (config.diagnostics_suppress_limit.has_value())
+        loaded.diag_supress_limit = config.diagnostics_suppress_limit.value();
+
+    return loaded;
+}
+
 // open config files and parse them
 utils::value_task<parse_config_file_result> workspace_configuration::load_and_process_config(
     std::vector<diagnostic>& diags)
@@ -503,7 +513,7 @@ utils::value_task<parse_config_file_result> workspace_configuration::load_and_pr
     }
     else
     {
-        m_local_config = lib_config::load_from_pgm_config(pgm_config);
+        m_local_config = load_from_pgm_config(pgm_config);
 
         // process programs
         for (const auto& pgm : pgm_config.pgms)

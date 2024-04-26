@@ -15,10 +15,12 @@
 #include "lookahead_processor.h"
 
 #include "context/hlasm_context.h"
+#include "context/instruction.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "ebcdic_encoding.h"
 #include "expressions/mach_expr_term.h"
 #include "ordinary_processor.h"
+#include "processing/branching_provider.h"
 #include "processing/instruction_sets/asm_processor.h"
 #include "semantics/operand_impls.h"
 
@@ -108,7 +110,7 @@ void lookahead_processor::collect_diags() const {}
 lookahead_processor::lookahead_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
     processing_state_listener& listener,
-    workspaces::parse_lib_provider& lib_provider,
+    parse_lib_provider& lib_provider,
     lookahead_start_data start)
     : statement_processor(processing_kind::LOOKAHEAD, ctx)
     , finished_flag_(start.action == lookahead_action::ORD && start.targets.empty())

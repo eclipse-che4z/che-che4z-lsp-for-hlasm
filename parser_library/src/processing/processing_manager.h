@@ -27,11 +27,11 @@
 #include "branching_provider.h"
 #include "fade_messages.h"
 #include "opencode_provider.h"
+#include "parse_lib_provider.h"
 #include "processing_state_listener.h"
 #include "statement_analyzers/lsp_analyzer.h"
 #include "statement_fields_parser.h"
 #include "utils/task.h"
-#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library {
 class output_handler;
@@ -51,10 +51,11 @@ class processing_manager final : public processing_state_listener, public branch
 public:
     processing_manager(std::unique_ptr<opencode_provider> base_provider,
         const analyzing_context& ctx,
-        workspaces::library_data data,
+        processing::processing_kind proc_kind,
+        std::string dep_name,
         utils::resource::resource_location file_loc,
         std::string_view file_text,
-        workspaces::parse_lib_provider& lib_provider,
+        parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
         std::shared_ptr<std::vector<fade_message>> fade_msgs,
         output_handler* output);
@@ -81,7 +82,7 @@ public:
 private:
     analyzing_context ctx_;
     context::hlasm_context& hlasm_ctx_;
-    workspaces::parse_lib_provider& lib_provider_;
+    parse_lib_provider& lib_provider_;
     opencode_provider& opencode_prov_;
 
     std::vector<processor_ptr> procs_;

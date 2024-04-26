@@ -18,6 +18,7 @@
 #include <utility>
 
 #include "analyzer.h"
+#include "parse_lib_provider.h"
 #include "utils/general_hashers.h"
 
 namespace hlasm_plugin::parser_library {
@@ -40,7 +41,7 @@ struct mock_file_t
     mutable mock_file_stats_t stats;
 };
 
-class mock_parse_lib_provider : public workspaces::parse_lib_provider
+class mock_parse_lib_provider : public parse_lib_provider
 {
     std::unordered_map<std::string, mock_file_t, utils::hashers::string_hasher, std::equal_to<>> m_files;
 
@@ -58,7 +59,7 @@ public:
     {}
 
     utils::value_task<bool> parse_library(
-        std::string library, analyzing_context ctx, workspaces::library_data data) override
+        std::string library, analyzing_context ctx, processing::processing_kind kind) override
     {
         auto it = m_files.find(library);
         if (it == m_files.end())
@@ -68,7 +69,12 @@ public:
 
         ++it->second.stats.parse_requests;
         auto a = std::make_unique<analyzer>(it->second.content,
-            analyzer_options { hlasm_plugin::utils::resource::resource_location(library), this, std::move(ctx), data });
+            analyzer_options {
+                hlasm_plugin::utils::resource::resource_location(library),
+                this,
+                std::move(ctx),
+                analyzer_options::dependency(library, kind),
+            });
         co_await a->co_analyze();
 
         analyzers.insert_or_assign(std::move(library), std::move(a));

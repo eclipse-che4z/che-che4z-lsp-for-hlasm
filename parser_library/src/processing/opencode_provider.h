@@ -27,7 +27,6 @@
 
 #include "context/source_snapshot.h"
 #include "lexing/logical_line.h"
-#include "parsing/parser_error_listener.h"
 #include "preprocessor.h"
 #include "range.h"
 #include "statement_providers/statement_provider.h"
@@ -44,6 +43,7 @@ class value_task;
 namespace hlasm_plugin::parser_library {
 class analyzer_options;
 class diagnosable_ctx;
+class parse_lib_provider;
 } // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::parsing {
 class hlasmparser_multiline;
@@ -59,9 +59,6 @@ class source_info_processor;
 namespace hlasm_plugin::parser_library {
 struct analyzing_context;
 } // namespace hlasm_plugin::parser_library
-namespace hlasm_plugin::parser_library::workspaces {
-class parse_lib_provider;
-} // namespace hlasm_plugin::parser_library::workspaces
 
 namespace hlasm_plugin::parser_library::processing {
 class processing_manager;
@@ -122,7 +119,7 @@ class opencode_provider final : public statement_provider, virtual_file_monitor
     parser_set m_multiline;
 
     analyzing_context m_ctx;
-    workspaces::parse_lib_provider* m_lib_provider;
+    parse_lib_provider* m_lib_provider;
     processing::processing_state_listener* m_state_listener;
     const processing::processing_manager& m_processing_manager;
     semantics::source_info_processor* m_src_proc;
@@ -175,7 +172,7 @@ public:
 
     opencode_provider(std::string_view text,
         const analyzing_context& ctx,
-        workspaces::parse_lib_provider& lib_provider,
+        parse_lib_provider& lib_provider,
         processing::processing_state_listener& state_listener,
         const processing::processing_manager& proc_manager,
         semantics::source_info_processor& src_proc,

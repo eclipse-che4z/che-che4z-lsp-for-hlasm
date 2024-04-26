@@ -21,8 +21,8 @@
 // in the library.
 // Most of the types are C++ representation of LSP/DAP data types.
 
+#include <cstddef>
 #include <cstdint>
-#include <cstring>
 #include <string_view>
 
 #include "range.h"

@@ -22,8 +22,8 @@
 #include <utility>
 #include <vector>
 
-#include "processing/processing_format.h"
 #include "processing/statement_providers/statement_provider_kind.h"
+#include "processing_format.h"
 #include "statement_analyzer.h"
 #include "utils/resource_location.h"
 

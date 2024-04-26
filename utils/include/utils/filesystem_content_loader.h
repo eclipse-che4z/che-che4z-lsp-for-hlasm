@@ -17,8 +17,8 @@
 
 #include <optional>
 
-#include "utils/content_loader.h"
-#include "utils/resource_location.h"
+#include "content_loader.h"
+#include "resource_location.h"
 
 namespace hlasm_plugin::utils::resource {
 

@@ -36,7 +36,7 @@ namespace hlasm_plugin::parser_library::processing {
 
 ordinary_processor::ordinary_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
-    workspaces::parse_lib_provider& lib_provider,
+    parse_lib_provider& lib_provider,
     processing_state_listener& state_listener,
     statement_fields_parser& parser,
     opencode_provider& open_code,

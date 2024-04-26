@@ -33,6 +33,7 @@
 #include "lsp/lsp_context.h"
 #include "macro_cache.h"
 #include "output_handler.h"
+#include "parse_lib_provider.h"
 #include "processing/statement_analyzers/hit_count_analyzer.h"
 #include "semantics/highlighting_info.h"
 #include "utils/bk_tree.h"
@@ -189,7 +190,7 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
 
     // Inherited via parse_lib_provider
     [[nodiscard]] utils::value_task<bool> parse_library(
-        std::string library, analyzing_context ctx, library_data data) override
+        std::string library, analyzing_context ctx, processing::processing_kind kind) override
     {
         resource_location url = get_url(library);
         if (url.empty())
@@ -200,7 +201,7 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
 
         auto& macro_pfc = co_await ws.add_processor_file_impl(file);
 
-        auto cache_key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, data);
+        auto cache_key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, kind, ctx.hlasm_ctx->ids().add(library));
 
         auto& mc = get_cache(url, file);
 
@@ -223,7 +224,7 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
                 std::move(url),
                 this,
                 std::move(ctx),
-                data,
+                analyzer_options::dependency(std::move(library), kind),
                 collect_hl ? collect_highlighting_info::yes : collect_highlighting_info::no,
             });
 

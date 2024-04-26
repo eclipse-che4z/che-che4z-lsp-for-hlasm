@@ -20,7 +20,6 @@
 #include "diagnostic.h"
 #include "mock_parse_lib_provider.h"
 #include "workspace_manager.h"
-#include "workspaces/parse_lib_provider.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::utils::resource;

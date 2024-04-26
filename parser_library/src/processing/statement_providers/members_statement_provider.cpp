@@ -21,7 +21,7 @@ namespace hlasm_plugin::parser_library::processing {
 members_statement_provider::members_statement_provider(const statement_provider_kind kind,
     const analyzing_context& ctx,
     statement_fields_parser& parser,
-    workspaces::parse_lib_provider& lib_provider,
+    parse_lib_provider& lib_provider,
     processing::processing_state_listener& listener,
     diagnostic_op_consumer& diag_consumer)
     : statement_provider(kind)
