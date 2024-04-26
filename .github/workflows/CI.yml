@@ -196,7 +196,7 @@ jobs:
         include:
           - os: ubuntu-22.04
             native: linux_x64
-            container: alpine:3.16
+            container: alpine:3.19
             dbg-strip: objcopy --only-keep-debug hlasm_language_server hlasm_language_server.dbg && objcopy --strip-unneeded hlasm_language_server && objcopy --add-gnu-debuglink=hlasm_language_server.dbg hlasm_language_server
             dbg-pattern: build/bin/hlasm_language_server.dbg
           - os: ubuntu-22.04
@@ -246,6 +246,9 @@ jobs:
         working-directory: build
       - name: Build
         run: cmake --build . $([ -f ../scripts/build-extra.${{ matrix.native }}.conf ] && cat ../scripts/build-extra.${{ matrix.native }}.conf || true)
+        working-directory: build
+      - name: Verify headers
+        run: cmake --build . --target parser_library_verify_interface_header_sets hlasm_utils_verify_interface_header_sets
         working-directory: build
       - name: Server Test
         if: ${{ !matrix.skip-test }}

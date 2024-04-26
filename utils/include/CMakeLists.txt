@@ -10,4 +10,31 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-add_subdirectory(utils)
+target_sources(hlasm_utils PUBLIC
+    FILE_SET public_headers TYPE HEADERS FILES
+    utils/async_busy_wait.h
+    utils/bk_tree.h
+    utils/content_loader.h
+    utils/encoding.h
+    utils/error_codes.h
+    utils/factory.h
+    utils/filesystem_content_loader.h
+    utils/filter_vector.h
+    utils/general_hashers.h
+    utils/levenshtein_distance.h
+    utils/list_directory_rc.h
+    utils/merge_sorted.h
+    utils/path.h
+    utils/path_conversions.h
+    utils/platform.h
+    utils/resource_location.h
+    utils/scope_exit.h
+    utils/similar.h
+    utils/string_operations.h
+    utils/task.h
+    utils/text_matchers.h
+    utils/time.h
+    utils/transform_inserter.h
+    utils/truth_table.h
+    utils/unicode_text.h
+)

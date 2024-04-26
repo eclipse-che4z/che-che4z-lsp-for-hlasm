@@ -32,17 +32,19 @@ target_sources(server_test PRIVATE
 add_subdirectory(dap)
 add_subdirectory(lsp)
 
-target_link_libraries(server_test nlohmann_json::nlohmann_json)
-target_link_libraries(server_test network-uri)
-target_link_libraries(server_test boost-asio)
-target_link_libraries(server_test hlasm_language_server_base)
+target_include_directories(server_test PRIVATE ../src)
 
-target_link_libraries(server_test gmock_main)
+target_link_libraries(server_test PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(server_test PRIVATE network-uri)
+target_link_libraries(server_test PRIVATE boost-asio)
+target_link_libraries(server_test PRIVATE hlasm_language_server_base)
+
+target_link_libraries(server_test PRIVATE gmock_main)
 if (BUILD_SHARED_LIBS)
     set_target_properties(server_test PROPERTIES COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
 endif()
-target_link_libraries(server_test network-uri)
-target_link_libraries(server_test parser_library)
+target_link_libraries(server_test PRIVATE network-uri)
+target_link_libraries(server_test PRIVATE parser_library)
 
 if(DISCOVER_TESTS)
     gtest_discover_tests(server_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 120)

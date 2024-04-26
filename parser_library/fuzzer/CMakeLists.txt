@@ -30,8 +30,11 @@ configure_file(
             ${CMAKE_BINARY_DIR}/bin/fuzzer.dict
             COPYONLY)
 
-target_link_libraries(library_fuzzer parser_library)
-target_link_libraries(library_fuzzer Threads::Threads)
-target_link_libraries(library_fuzzer ${ANTLR4_RUNTIME})
-target_link_libraries(library_fuzzer std::filesystem)
-target_link_libraries(library_fuzzer nlohmann_json::nlohmann_json)
+target_include_directories(library_fuzzer
+    PRIVATE
+    ../src
+)
+target_link_libraries(library_fuzzer PRIVATE parser_library)
+target_link_libraries(library_fuzzer PRIVATE Threads::Threads)
+target_link_libraries(library_fuzzer PRIVATE std::filesystem)
+target_link_libraries(library_fuzzer PRIVATE nlohmann_json::nlohmann_json)

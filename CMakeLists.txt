@@ -10,7 +10,7 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.23)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0135 NEW)
 
@@ -127,27 +127,13 @@ if(BUILD_VSIX)
   add_subdirectory(clients)
 endif()
 
-
-
 # Installation
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  set(EXECUTABLE "")
-  set(LIBRARY ".so")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  set(EXECUTABLE ".exe")
-  set(LIBRARY ".dll")
-endif()
-
-# Copies files from build directory into install directory.
-file(GLOB_RECURSE executables "${GLOBAL_OUTPUT_PATH}/*${EXECUTABLE}" )
-install(FILES ${executables} DESTINATION "bin")
-
-
-file(GLOB_RECURSE libraries "${GLOBAL_OUTPUT_PATH}/*${LIBRARY}")
-install(FILES ${libraries} DESTINATION "bin")
-
-
-# SDK Installation
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/parser_library/include/" DESTINATION "include" FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/parser_library/include/" DESTINATION "include" FILES_MATCHING PATTERN "*.hpp")
+install(TARGETS
+    hlasm_language_server
+    parser_library
+    hlasm_utils
+    ${ANTLR4_RUNTIME}
+    network-uri
+    FILE_SET public_headers
+)

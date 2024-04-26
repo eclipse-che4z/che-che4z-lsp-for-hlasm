@@ -26,18 +26,22 @@ add_library(parser_library STATIC)
 add_subdirectory(src)
 add_subdirectory(include)
 
-target_include_directories(parser_library PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/src
+set_property(TARGET parser_library PROPERTY VERIFY_INTERFACE_HEADER_SETS ON)
+
+target_include_directories(parser_library
+    PUBLIC
+    include
+    PRIVATE
+    src
     ${GENERATED_GRAMMER_FOLDER}
     ${GENERATED_FOLDER}
 )
 
-target_link_libraries(parser_library parser_library_generated)
-target_link_libraries(parser_library nlohmann_json::nlohmann_json)
-target_link_libraries(parser_library ${ANTLR4_RUNTIME})
-target_link_libraries(parser_library std::filesystem)
-target_link_libraries(parser_library hlasm_utils)
+target_link_libraries(parser_library PRIVATE parser_library_generated)
+target_link_libraries(parser_library PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(parser_library PRIVATE ${ANTLR4_RUNTIME})
+target_link_libraries(parser_library PRIVATE std::filesystem)
+target_link_libraries(parser_library PUBLIC hlasm_utils)
 
 if(BUILD_TESTING)
     add_subdirectory(test)

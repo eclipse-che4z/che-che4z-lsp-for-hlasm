@@ -53,14 +53,20 @@ add_custom_target(library_tests_copy
                 COMMAND ${CMAKE_COMMAND} -E copy_directory
                     ${PROJECT_SOURCE_DIR}/test/res ${CMAKE_BINARY_DIR}/bin/test/library)
 
-target_link_libraries(library_test parser_library)
-target_link_libraries(library_test gmock_main)
+target_include_directories(library_test
+    PRIVATE
+    ../src
+    ${GENERATED_GRAMMER_FOLDER}
+    ${GENERATED_FOLDER}
+)
+target_link_libraries(library_test PRIVATE parser_library)
+target_link_libraries(library_test PRIVATE gmock_main)
 if (BUILD_SHARED_LIBS)
     set_target_properties(library_test PROPERTIES COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
 endif()
-target_link_libraries(library_test ${ANTLR4_RUNTIME})
-target_link_libraries(library_test std::filesystem)
-target_link_libraries(library_test nlohmann_json::nlohmann_json)
+target_link_libraries(library_test PRIVATE ${ANTLR4_RUNTIME})
+target_link_libraries(library_test PRIVATE std::filesystem)
+target_link_libraries(library_test PRIVATE nlohmann_json::nlohmann_json)
 
 add_dependencies(library_test library_tests_copy)
 

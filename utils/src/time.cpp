@@ -20,7 +20,7 @@
 
 #    include <emscripten/bind.h>
 #else
-#    define __STDC_WANT_LIB_EXT1__
+#    define __STDC_WANT_LIB_EXT1__ 1
 #    include <chrono>
 #    include <time.h>
 #endif

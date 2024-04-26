@@ -17,8 +17,13 @@ add_executable(benchmark
     diagnostic_counter.h)
 generate_emscripten_node_runner(benchmark)
 
-target_link_libraries(benchmark nlohmann_json::nlohmann_json)
+target_include_directories(benchmark
+    PRIVATE
+    ../parser_library/src
+)
 
-target_link_libraries(benchmark parser_library hlasm_utils)
+target_link_libraries(benchmark PRIVATE nlohmann_json::nlohmann_json)
 
-target_link_libraries(benchmark Threads::Threads)
+target_link_libraries(benchmark PRIVATE parser_library hlasm_utils)
+
+target_link_libraries(benchmark PRIVATE Threads::Threads)
