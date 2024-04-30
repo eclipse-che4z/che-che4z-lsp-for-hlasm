@@ -76,7 +76,7 @@ TEST(diagnostics, division_by_zero) // test ok
  
  L 1,2(2,3/0)
 
- CLCL 10/0,3
+ CLCL 10/0,4
 
 )");
 

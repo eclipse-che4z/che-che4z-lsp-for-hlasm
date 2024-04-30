@@ -379,3 +379,29 @@ TEST(mach_instr_processing, check_combined_lookup)
         EXPECT_EQ(mn, &orig_mn);
     }
 }
+
+TEST(mach_instr_processing, validate_even_odd)
+
+{
+    std::string input = R"(
+    MVCL 0,3
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M120" }));
+}
+
+TEST(mach_instr_processing, validate_minimal)
+
+{
+    std::string input = R"(
+    SORTL 0,2
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M120" }));
+}

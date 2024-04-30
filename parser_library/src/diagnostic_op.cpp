@@ -1383,11 +1383,19 @@ diagnostic_op diagnostic_op::error_M114(std::string_view instr_name, const range
         range);
 }
 
-diagnostic_op diagnostic_op::error_M120(std::string_view instr_name, const range& range)
+diagnostic_op diagnostic_op::error_M120(
+    std::string_view instr_name, const range& range, std::string_view qual, int min_value)
 {
     return diagnostic_op(diagnostic_severity::error,
         "M120",
-        concat("Error at ", instr_name, " instruction: register operand absolute value must be between 0 and 15"),
+        concat("Error at ",
+            instr_name,
+            " instruction: register operand absolute value must be ",
+            qual,
+            std::string_view(" ", +!qual.empty()),
+            "between ",
+            std::to_string(min_value),
+            " and 15"),
         range);
 }
 

@@ -207,6 +207,21 @@ enum class mach_format : unsigned char
 
 constexpr checking::parameter empty = { false, 0, checking::machine_operand_type::NONE };
 constexpr checking::parameter reg = { false, 4, checking::machine_operand_type::REG };
+constexpr checking::parameter reg_nz = {
+    false, 4, checking::machine_operand_type::REG, checking::even_odd_register::NONE, 1
+};
+constexpr checking::parameter reg_2 = {
+    false, 4, checking::machine_operand_type::REG, checking::even_odd_register::NONE, 2
+};
+constexpr checking::parameter reg_odd = {
+    false, 4, checking::machine_operand_type::REG, checking::even_odd_register::ODD
+};
+constexpr checking::parameter reg_even = {
+    false, 4, checking::machine_operand_type::REG, checking::even_odd_register::EVEN
+};
+constexpr checking::parameter reg_even_nz = {
+    false, 4, checking::machine_operand_type::REG, checking::even_odd_register::EVEN, 2
+};
 constexpr checking::parameter dis_reg = { false, 4, checking::machine_operand_type::DIS_REG };
 constexpr checking::parameter dis_reg_r = { false, 4, checking::machine_operand_type::REG };
 constexpr checking::parameter mask = { false, 4, checking::machine_operand_type::MASK };
@@ -247,6 +262,11 @@ constexpr checking::machine_operand_format dxb_12_4x4_U(dis_12u, dis_reg, base_)
 constexpr checking::machine_operand_format dxb_20_4x4_S(dis_20s, dis_reg, base_);
 constexpr checking::machine_operand_format dvb_12_5x4_U(dis_12u, vec_reg, base_);
 constexpr checking::machine_operand_format reg_4_U(reg, empty, empty);
+constexpr checking::machine_operand_format reg_4_U_nz(reg_nz, empty, empty);
+constexpr checking::machine_operand_format reg_4_U_2(reg_2, empty, empty);
+constexpr checking::machine_operand_format reg_4_U_odd(reg_odd, empty, empty);
+constexpr checking::machine_operand_format reg_4_U_even(reg_even, empty, empty);
+constexpr checking::machine_operand_format reg_4_U_even_nz(reg_even_nz, empty, empty);
 constexpr checking::machine_operand_format mask_4_U(mask, empty, empty);
 constexpr checking::machine_operand_format imm_4_U(imm_4u, empty, empty);
 constexpr checking::machine_operand_format imm_8_S(imm_8s, empty, empty);
