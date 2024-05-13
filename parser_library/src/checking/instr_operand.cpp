@@ -108,28 +108,23 @@ diagnostic_op address_operand::get_first_parameter_error(machine_operand_type op
     return diagnostic_op::error_I999(instr_name, stmt_range);
 }
 
-bool address_operand::check(diagnostic_op& diag,
-    const machine_operand_format& to_check,
-    std::string_view instr_name,
-    const range& stmt_range) const
+std::optional<diagnostic_op> address_operand::check(
+    machine_operand_format to_check, std::string_view instr_name, const range& stmt_range) const
 {
     if (is_simple_operand(to_check))
     {
         // operand must be simple
-        diag = get_simple_operand_expected(to_check, instr_name, stmt_range);
-        return false;
+        return get_simple_operand_expected(to_check, instr_name, stmt_range);
     }
     if (op_state == operand_state::SECOND_OMITTED)
     {
-        diag = diagnostic_op::error_M004(instr_name, stmt_range);
-        return false;
+        return diagnostic_op::error_M004(instr_name, stmt_range);
     }
     if (state == address_state::RES_VALID)
-        return true;
+        return std::nullopt;
     else if (state == address_state::RES_INVALID)
     {
-        diag = diagnostic_op::error_M010(instr_name, stmt_range);
-        return false;
+        return diagnostic_op::error_M010(instr_name, stmt_range);
     }
     else
     {
@@ -139,11 +134,10 @@ bool address_operand::check(diagnostic_op& diag,
             if (to_check.identifier.is_signed)
             {
                 auto boundary = 1ll << (to_check.identifier.size - 1);
-                diag = diagnostic_op::error_M130(instr_name, -boundary, boundary - 1, operand_range);
+                return diagnostic_op::error_M130(instr_name, -boundary, boundary - 1, operand_range);
             }
             else
-                diag = diagnostic_op::error_M130(instr_name, 0, (1ll << to_check.identifier.size) - 1, operand_range);
-            return false;
+                return diagnostic_op::error_M130(instr_name, 0, (1ll << to_check.identifier.size) - 1, operand_range);
         }
         // check the D(B) operand format
         if (to_check.first.is_empty())
@@ -151,14 +145,12 @@ bool address_operand::check(diagnostic_op& diag,
             if (op_state != operand_state::ONE_OP)
             {
                 // error, cannot be present
-                diag = diagnostic_op::error_M104(instr_name, operand_range);
-                return false;
+                return diagnostic_op::error_M104(instr_name, operand_range);
             }
             // check second parameter, in all cases this is the base parameter
             if (!is_operand_corresponding(second_op, to_check.second))
             {
-                diag = diagnostic_op::error_M131(instr_name, operand_range);
-                return false;
+                return diagnostic_op::error_M131(instr_name, operand_range);
             }
         }
         else
@@ -170,8 +162,7 @@ bool address_operand::check(diagnostic_op& diag,
             {
                 if (!is_operand_corresponding(second_op, to_check.second))
                 {
-                    diag = diagnostic_op::error_M131(instr_name, operand_range);
-                    return false;
+                    return diagnostic_op::error_M131(instr_name, operand_range);
                 }
             }
             // base is now checked, now check the first parameter, which is specified either in D(X,B) or D(X)
@@ -188,21 +179,19 @@ bool address_operand::check(diagnostic_op& diag,
                 if (to_check.first.type == machine_operand_type::LENGTH
                     && !is_length_corresponding(first_op, to_check.first.size))
                 {
-                    diag = get_first_parameter_error(
+                    return get_first_parameter_error(
                         to_check.first.type, instr_name, 0, 1ll << to_check.first.size, stmt_range);
-                    return false;
                 }
                 if (to_check.first.type != machine_operand_type::LENGTH
                     && !is_operand_corresponding(first_op, to_check.first))
                 {
                     assert(!to_check.first.is_signed);
-                    diag = get_first_parameter_error(
+                    return get_first_parameter_error(
                         to_check.first.type, instr_name, 0, (1ll << to_check.first.size) - 1, stmt_range);
-                    return false;
                 }
             }
         }
-        return true;
+        return std::nullopt;
     }
 }
 
@@ -279,26 +268,24 @@ one_operand::one_operand(const one_operand& op)
     , value(op.value)
     , is_default(op.is_default) {};
 
-bool one_operand::check(
-    diagnostic_op& diag, const machine_operand_format& to_check, std::string_view instr_name, const range&) const
+std::optional<diagnostic_op> one_operand::check(
+    machine_operand_format to_check, std::string_view instr_name, const range&) const
 {
     if (!is_simple_operand(to_check))
     {
         // therefore it is an address operand, but represented only by a single value
 
         // check only the displacement
-        if (!is_operand_corresponding(value, to_check.identifier))
+        if (is_operand_corresponding(value, to_check.identifier))
+            return std::nullopt;
+
+        if (to_check.identifier.is_signed)
         {
-            if (to_check.identifier.is_signed)
-            {
-                auto boundary = 1ll << (to_check.identifier.size - 1);
-                diag = diagnostic_op::error_M130(instr_name, -boundary, boundary - 1, operand_range);
-            }
-            else
-                diag = diagnostic_op::error_M130(instr_name, 0, (1ll << to_check.identifier.size) - 1, operand_range);
-            return false;
+            auto boundary = 1ll << (to_check.identifier.size - 1);
+            return diagnostic_op::error_M130(instr_name, -boundary, boundary - 1, operand_range);
         }
-        return true;
+        else
+            return diagnostic_op::error_M130(instr_name, 0, (1ll << to_check.identifier.size) - 1, operand_range);
     }
 
     // it is a simple operand
@@ -308,15 +295,12 @@ bool one_operand::check(
         switch (to_check.identifier.type)
         {
             case machine_operand_type::IMM:
-                diag = diagnostic_op::warn_M137(instr_name, -boundary, boundary - 1, operand_range);
-                break;
+                return diagnostic_op::warn_M137(instr_name, -boundary, boundary - 1, operand_range);
             case machine_operand_type::RELOC_IMM:
-                diag = diagnostic_op::error_M123(instr_name, -boundary, boundary - 1, operand_range);
-                break;
+                return diagnostic_op::error_M123(instr_name, -boundary, boundary - 1, operand_range);
             default:
                 assert(false);
         }
-        return false;
     }
     if (!to_check.identifier.is_signed
         && (!is_size_corresponding_unsigned(value, to_check.identifier.size)
@@ -327,26 +311,21 @@ bool one_operand::check(
         switch (to_check.identifier.type)
         {
             case machine_operand_type::REG:
-                diag = diagnostic_op::error_M120(instr_name,
+                return diagnostic_op::error_M120(instr_name,
                     operand_range,
                     reg_qual[(int)to_check.identifier.evenodd],
                     to_check.identifier.min_register);
-                break;
             case machine_operand_type::MASK:
-                diag = diagnostic_op::error_M121(instr_name, operand_range);
-                break;
+                return diagnostic_op::error_M121(instr_name, operand_range);
             case machine_operand_type::IMM:
-                diag = diagnostic_op::warn_M137(instr_name, 0, boundary, operand_range);
-                break;
+                return diagnostic_op::warn_M137(instr_name, 0, boundary, operand_range);
             case machine_operand_type::VEC_REG:
-                diag = diagnostic_op::error_M124(instr_name, operand_range);
-                break;
+                return diagnostic_op::error_M124(instr_name, operand_range);
             default:
                 assert(false);
         }
-        return false;
     }
-    return true;
+    return std::nullopt;
 }
 
 empty_operand::empty_operand() = default;
@@ -354,11 +333,10 @@ empty_operand::empty_operand(range r)
     : operand(r)
 {}
 
-bool empty_operand::check(
-    diagnostic_op& diag, const machine_operand_format&, std::string_view instr_name, const range&) const
+std::optional<diagnostic_op> empty_operand::check(
+    machine_operand_format, std::string_view instr_name, const range&) const
 {
-    diag = diagnostic_op::error_M003(instr_name, operand_range);
-    return false;
+    return diagnostic_op::error_M003(instr_name, operand_range);
 }
 
 std::string parameter::to_string() const

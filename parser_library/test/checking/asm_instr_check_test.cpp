@@ -747,162 +747,161 @@ protected:
     one_operand equ_CR32 = one_operand("CR32");
     one_operand equ_A1 = one_operand("A1");
 
-    assembler_checker checker;
     diagnostic_collector collector;
 
-    std::vector<const checking::operand*> test_no_operand_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_adata_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_adata_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_acontrol_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_ainsert_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_ainsert_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_ainsert_false = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_alias_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_alias_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_alias_false = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_amode_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_cattr_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_expression_true = std::vector<const checking::operand*>();
+    std::vector<const checking::asm_operand*> test_no_operand_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_adata_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_adata_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_acontrol_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_ainsert_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_ainsert_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_ainsert_false = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_alias_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_alias_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_alias_false = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_amode_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_cattr_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_expression_true = std::vector<const checking::asm_operand*>();
 
-    std::vector<const checking::operand*> test_cnop_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_cnop_one_false = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_cnop_two_false = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_copy_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_data_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_data_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_drop_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_drop_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_end_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_end_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_end_false = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_equ_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_exitctl_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_exitctl_false_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_extrn_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_extrn_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_ictl_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_ictl_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_ictl_false_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_ictl_false_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_iseq_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_iseq_false = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_mnote_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_mnote_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_mnote_true_three = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_mnote_false_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_mnote_false_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_opsyn_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_org_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_org_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_org_false = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_stack_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_stack_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_stack_false_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_stack_false_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_print_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_punch_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_punch_false_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_punch_false_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_rmode_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_rmode_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_using_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_using_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_using_true_three = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_using_false_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_using_false_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_xattr_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_xattr_false_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_xattr_false_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_true_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_true_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_true_three = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_false_one = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_false_two = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_false_three = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_false_four = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_false_five = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_false_six = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_false_seven = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_false_eight = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_process_false_nine = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_entry_false = std::vector<const checking::operand*>();
+    std::vector<const checking::asm_operand*> test_cnop_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_cnop_one_false = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_cnop_two_false = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_copy_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_data_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_data_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_drop_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_drop_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_end_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_end_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_end_false = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_equ_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_exitctl_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_exitctl_false_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_extrn_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_extrn_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_ictl_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_ictl_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_ictl_false_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_ictl_false_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_iseq_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_iseq_false = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_mnote_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_mnote_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_mnote_true_three = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_mnote_false_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_mnote_false_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_opsyn_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_org_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_org_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_org_false = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_stack_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_stack_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_stack_false_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_stack_false_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_print_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_punch_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_punch_false_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_punch_false_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_rmode_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_rmode_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_using_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_using_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_using_true_three = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_using_false_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_using_false_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_xattr_true = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_xattr_false_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_xattr_false_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_true_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_true_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_true_three = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_false_one = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_false_two = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_false_three = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_false_four = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_false_five = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_false_six = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_false_seven = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_false_eight = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_process_false_nine = std::vector<const checking::asm_operand*>();
+    std::vector<const checking::asm_operand*> test_entry_false = std::vector<const checking::asm_operand*>();
 };
 
 TEST_F(instruction_test, process)
 {
-    EXPECT_FALSE(checker.check("*PROCESS", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("*PROCESS", test_process_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("*PROCESS", test_process_true_two, range(), collector));
-    EXPECT_TRUE(checker.check("*PROCESS", test_process_true_three, range(), collector));
-    EXPECT_FALSE(checker.check("*PROCESS", test_process_false_one, range(), collector));
-    EXPECT_FALSE(checker.check("*PROCESS", test_process_false_two, range(), collector));
-    EXPECT_FALSE(checker.check("*PROCESS", test_process_false_three, range(), collector));
-    EXPECT_FALSE(checker.check("*PROCESS", test_process_false_four, range(), collector));
-    EXPECT_FALSE(checker.check("*PROCESS", test_process_false_five, range(), collector));
-    EXPECT_FALSE(checker.check("*PROCESS", test_process_false_six, range(), collector));
-    EXPECT_FALSE(checker.check("*PROCESS", test_process_false_seven, range(), collector));
-    EXPECT_FALSE(checker.check("*PROCESS", test_process_false_eight, range(), collector));
-    EXPECT_FALSE(checker.check("*PROCESS", test_process_false_nine, range(), collector));
+    EXPECT_FALSE(check_asm_ops("*PROCESS", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("*PROCESS", test_process_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("*PROCESS", test_process_true_two, range(), collector));
+    EXPECT_TRUE(check_asm_ops("*PROCESS", test_process_true_three, range(), collector));
+    EXPECT_FALSE(check_asm_ops("*PROCESS", test_process_false_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("*PROCESS", test_process_false_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("*PROCESS", test_process_false_three, range(), collector));
+    EXPECT_FALSE(check_asm_ops("*PROCESS", test_process_false_four, range(), collector));
+    EXPECT_FALSE(check_asm_ops("*PROCESS", test_process_false_five, range(), collector));
+    EXPECT_FALSE(check_asm_ops("*PROCESS", test_process_false_six, range(), collector));
+    EXPECT_FALSE(check_asm_ops("*PROCESS", test_process_false_seven, range(), collector));
+    EXPECT_FALSE(check_asm_ops("*PROCESS", test_process_false_eight, range(), collector));
+    EXPECT_FALSE(check_asm_ops("*PROCESS", test_process_false_nine, range(), collector));
 }
 
 TEST_F(instruction_test, no_operand)
 {
-    EXPECT_TRUE(checker.check("LOCTR", test_no_operand_true, range(), collector));
-    EXPECT_FALSE(checker.check("LOCTR", test_acontrol_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("LOCTR", test_no_operand_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("LOCTR", test_acontrol_true, range(), collector));
 }
 
 TEST_F(instruction_test, adata)
 {
-    EXPECT_FALSE(checker.check("ADATA", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("ADATA", test_adata_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("ADATA", test_adata_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ADATA", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ADATA", test_adata_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ADATA", test_adata_true_two, range(), collector));
 }
 
 TEST_F(instruction_test, acontrol)
 {
-    EXPECT_FALSE(checker.check("ACONTROL", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("ACONTROL", test_acontrol_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ACONTROL", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ACONTROL", test_acontrol_true, range(), collector));
 }
 
 TEST_F(instruction_test, ainsert)
 {
-    EXPECT_TRUE(checker.check("AINSERT", test_ainsert_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("AINSERT", test_ainsert_true_two, range(), collector));
-    EXPECT_FALSE(checker.check("AINSERT", test_ainsert_false, range(), collector));
-    EXPECT_FALSE(checker.check("AINSERT", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("AINSERT", test_ainsert_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("AINSERT", test_ainsert_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("AINSERT", test_ainsert_false, range(), collector));
+    EXPECT_FALSE(check_asm_ops("AINSERT", test_no_operand_true, range(), collector));
 }
 
 TEST_F(instruction_test, alias)
 {
-    EXPECT_FALSE(checker.check("ALIAS", test_alias_false, range(), collector));
-    EXPECT_TRUE(checker.check("ALIAS", test_alias_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("ALIAS", test_alias_true_two, range(), collector));
-    EXPECT_FALSE(checker.check("ALIAS", test_acontrol_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ALIAS", test_alias_false, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ALIAS", test_alias_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ALIAS", test_alias_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ALIAS", test_acontrol_true, range(), collector));
 }
 
 TEST_F(instruction_test, amode)
 {
-    EXPECT_FALSE(checker.check("AMODE", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("AMODE", test_amode_true, range(), collector));
-    EXPECT_FALSE(checker.check("AMODE", test_alias_true_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("AMODE", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("AMODE", test_amode_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("AMODE", test_alias_true_one, range(), collector));
 }
 
 TEST_F(instruction_test, cattr)
 {
-    EXPECT_FALSE(checker.check("CATTR", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("CATTR", test_cattr_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("CATTR", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("CATTR", test_cattr_true, range(), collector));
 }
 
 TEST_F(instruction_test, expression)
 {
-    EXPECT_TRUE(checker.check("CEJECT", test_no_operand_true, range(), collector));
-    EXPECT_FALSE(checker.check("CEJECT", test_acontrol_true, range(), collector));
-    EXPECT_TRUE(checker.check("CEJECT", test_expression_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("CEJECT", test_no_operand_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("CEJECT", test_acontrol_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("CEJECT", test_expression_true, range(), collector));
 }
 
 TEST_F(instruction_test, ccw)
 {
-    EXPECT_FALSE(checker.check("CCW", test_no_operand_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("CCW", test_no_operand_true, range(), collector));
 
     one_operand ccw_first("X'06'", 6);
     // Current value of relocatable symbols for checker is one_operand("0", 0), see
@@ -911,179 +910,179 @@ TEST_F(instruction_test, ccw)
     one_operand big_absolute("17000000", 17000000);
     one_operand ccw_third("X'40'", 64);
     one_operand ccw_fourth("MyBlkSize", 20);
-    std::vector<const checking::operand*> test_ccw_true { &ccw_first, &relocatable, &ccw_third, &ccw_fourth };
-    EXPECT_TRUE(checker.check("CCW", test_ccw_true, range(), collector));
+    std::vector<const checking::asm_operand*> test_ccw_true { &ccw_first, &relocatable, &ccw_third, &ccw_fourth };
+    EXPECT_TRUE(check_asm_ops("CCW", test_ccw_true, range(), collector));
 
-    std::vector<const checking::operand*> ccw_big_absolute_address {
+    std::vector<const checking::asm_operand*> ccw_big_absolute_address {
         &ccw_first, &big_absolute, &ccw_third, &ccw_fourth
     };
-    EXPECT_FALSE(checker.check("CCW", ccw_big_absolute_address, range(), collector));
-    EXPECT_TRUE(checker.check("CCW1", ccw_big_absolute_address, range(), collector));
+    EXPECT_FALSE(check_asm_ops("CCW", ccw_big_absolute_address, range(), collector));
+    EXPECT_TRUE(check_asm_ops("CCW1", ccw_big_absolute_address, range(), collector));
 
-    EXPECT_FALSE(checker.check("CCW", test_expression_true, range(), collector));
-    EXPECT_FALSE(checker.check("CCW", test_acontrol_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("CCW", test_expression_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("CCW", test_acontrol_true, range(), collector));
 }
 
 TEST_F(instruction_test, cnop)
 {
-    EXPECT_FALSE(checker.check("CNOP", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("CNOP", test_cnop_true, range(), collector));
-    EXPECT_FALSE(checker.check("CNOP", test_cnop_one_false, range(), collector));
-    EXPECT_FALSE(checker.check("CNOP", test_cnop_two_false, range(), collector));
-    EXPECT_FALSE(checker.check("CNOP", test_acontrol_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("CNOP", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("CNOP", test_cnop_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("CNOP", test_cnop_one_false, range(), collector));
+    EXPECT_FALSE(check_asm_ops("CNOP", test_cnop_two_false, range(), collector));
+    EXPECT_FALSE(check_asm_ops("CNOP", test_acontrol_true, range(), collector));
 }
 
 TEST_F(instruction_test, copy)
 {
-    EXPECT_FALSE(checker.check("COPY", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("COPY", test_copy_true, range(), collector));
-    EXPECT_FALSE(checker.check("COPY", test_acontrol_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("COPY", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("COPY", test_copy_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("COPY", test_acontrol_true, range(), collector));
 }
 
 TEST_F(instruction_test, drop)
 {
-    EXPECT_TRUE(checker.check("DROP", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("DROP", test_drop_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("DROP", test_drop_true_two, range(), collector));
-    EXPECT_FALSE(checker.check("DROP", test_acontrol_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("DROP", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("DROP", test_drop_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("DROP", test_drop_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("DROP", test_acontrol_true, range(), collector));
 }
 
 TEST_F(instruction_test, end)
 {
-    EXPECT_TRUE(checker.check("END", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("END", test_end_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("END", test_end_true_two, range(), collector));
-    EXPECT_FALSE(checker.check("END", test_end_false, range(), collector));
-    EXPECT_FALSE(checker.check("END", test_exitctl_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("END", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("END", test_end_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("END", test_end_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("END", test_end_false, range(), collector));
+    EXPECT_FALSE(check_asm_ops("END", test_exitctl_true, range(), collector));
 }
 
 TEST_F(instruction_test, entry)
 {
-    EXPECT_FALSE(checker.check("ENTRY", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("ENTRY", test_data_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("ENTRY", test_ainsert_true_one, range(), collector));
-    EXPECT_FALSE(checker.check("ENTRY", test_end_true_one, range(), collector));
-    EXPECT_FALSE(checker.check("ENTRY", test_entry_false, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ENTRY", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ENTRY", test_data_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ENTRY", test_ainsert_true_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ENTRY", test_end_true_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ENTRY", test_entry_false, range(), collector));
 }
 TEST_F(instruction_test, exitctl)
 {
-    EXPECT_FALSE(checker.check("EXITCTL", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("EXITCTL", test_exitctl_true, range(), collector));
-    EXPECT_FALSE(checker.check("EXITCTL", test_exitctl_false_one, range(), collector));
-    EXPECT_FALSE(checker.check("EXITCTL", test_exitctl_false_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("EXITCTL", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("EXITCTL", test_exitctl_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("EXITCTL", test_exitctl_false_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("EXITCTL", test_exitctl_false_one, range(), collector));
 }
 
 TEST_F(instruction_test, external)
 {
-    EXPECT_FALSE(checker.check("EXTRN", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("EXTRN", test_extrn_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("EXTRN", test_extrn_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("EXTRN", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("EXTRN", test_extrn_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("EXTRN", test_extrn_true_two, range(), collector));
 }
 
 TEST_F(instruction_test, ictl)
 {
-    EXPECT_FALSE(checker.check("ICTL", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("ICTL", test_ictl_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("ICTL", test_ictl_true_two, range(), collector));
-    EXPECT_FALSE(checker.check("ICTL", test_ictl_false_one, range(), collector));
-    EXPECT_FALSE(checker.check("ICTL", test_ictl_false_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ICTL", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ICTL", test_ictl_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ICTL", test_ictl_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ICTL", test_ictl_false_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ICTL", test_ictl_false_two, range(), collector));
 }
 
 TEST_F(instruction_test, iseq)
 {
-    EXPECT_TRUE(checker.check("ISEQ", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("ISEQ", test_iseq_true, range(), collector));
-    EXPECT_FALSE(checker.check("ISEQ", test_iseq_false, range(), collector));
-    EXPECT_FALSE(checker.check("ISEQ", test_ainsert_true_one, range(), collector));
-    EXPECT_FALSE(checker.check("ISEQ", test_extrn_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ISEQ", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ISEQ", test_iseq_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ISEQ", test_iseq_false, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ISEQ", test_ainsert_true_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ISEQ", test_extrn_true_one, range(), collector));
 }
 
 TEST_F(instruction_test, mnote)
 {
-    EXPECT_FALSE(checker.check("MNOTE", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("MNOTE", test_mnote_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("MNOTE", test_mnote_true_two, range(), collector));
-    EXPECT_TRUE(checker.check("MNOTE", test_mnote_true_three, range(), collector));
-    EXPECT_FALSE(checker.check("MNOTE", test_mnote_false_one, range(), collector));
-    EXPECT_FALSE(checker.check("MNOTE", test_mnote_false_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("MNOTE", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("MNOTE", test_mnote_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("MNOTE", test_mnote_true_two, range(), collector));
+    EXPECT_TRUE(check_asm_ops("MNOTE", test_mnote_true_three, range(), collector));
+    EXPECT_FALSE(check_asm_ops("MNOTE", test_mnote_false_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("MNOTE", test_mnote_false_two, range(), collector));
 }
 
 TEST_F(instruction_test, opsyn)
 {
-    EXPECT_TRUE(checker.check("OPSYN", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("OPSYN", test_opsyn_true, range(), collector));
-    EXPECT_FALSE(checker.check("OPSYN", test_mnote_true_one, range(), collector));
-    EXPECT_FALSE(checker.check("OPSYN", test_extrn_true_two, range(), collector));
+    EXPECT_TRUE(check_asm_ops("OPSYN", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("OPSYN", test_opsyn_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("OPSYN", test_mnote_true_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("OPSYN", test_extrn_true_two, range(), collector));
 }
 
 TEST_F(instruction_test, org)
 {
-    EXPECT_TRUE(checker.check("ORG", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("ORG", test_org_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("ORG", test_org_true_two, range(), collector));
-    EXPECT_FALSE(checker.check("ORG", test_org_false, range(), collector));
-    EXPECT_FALSE(checker.check("ORG", test_equ_true_two, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ORG", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ORG", test_org_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("ORG", test_org_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ORG", test_org_false, range(), collector));
+    EXPECT_FALSE(check_asm_ops("ORG", test_equ_true_two, range(), collector));
 }
 
 TEST_F(instruction_test, stack)
 {
-    EXPECT_FALSE(checker.check("POP", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("POP", test_stack_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("POP", test_stack_true_two, range(), collector));
-    EXPECT_FALSE(checker.check("POP", test_stack_false_one, range(), collector));
-    EXPECT_FALSE(checker.check("POP", test_stack_false_two, range(), collector));
-    EXPECT_FALSE(checker.check("POP", test_extrn_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("POP", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("POP", test_stack_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("POP", test_stack_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("POP", test_stack_false_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("POP", test_stack_false_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("POP", test_extrn_true_two, range(), collector));
 }
 
 TEST_F(instruction_test, print)
 {
-    EXPECT_FALSE(checker.check("PRINT", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("PRINT", test_print_true, range(), collector));
-    EXPECT_FALSE(checker.check("PRINT", test_stack_true_one, range(), collector));
-    EXPECT_FALSE(checker.check("PRINT", test_extrn_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("PRINT", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("PRINT", test_print_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("PRINT", test_stack_true_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("PRINT", test_extrn_true_two, range(), collector));
 }
 
 TEST_F(instruction_test, rmode)
 {
-    EXPECT_FALSE(checker.check("RMODE", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("RMODE", test_rmode_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("RMODE", test_rmode_true_two, range(), collector));
-    EXPECT_FALSE(checker.check("RMODE", test_amode_true, range(), collector));
-    EXPECT_FALSE(checker.check("RMODE", test_extrn_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("RMODE", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("RMODE", test_rmode_true_one, range(), collector));
+    EXPECT_TRUE(check_asm_ops("RMODE", test_rmode_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("RMODE", test_amode_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("RMODE", test_extrn_true_two, range(), collector));
 }
 
 TEST_F(instruction_test, title)
 {
-    EXPECT_FALSE(checker.check("TITLE", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("TITLE", test_punch_true, range(), collector));
-    EXPECT_FALSE(checker.check("TITLE", test_punch_false_two, range(), collector));
-    EXPECT_FALSE(checker.check("TITLE", test_punch_false_one, range(), collector));
-    EXPECT_FALSE(checker.check("TITLE", test_amode_true, range(), collector));
-    EXPECT_FALSE(checker.check("TITLE", test_extrn_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("TITLE", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("TITLE", test_punch_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("TITLE", test_punch_false_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("TITLE", test_punch_false_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("TITLE", test_amode_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("TITLE", test_extrn_true_two, range(), collector));
 }
 
 TEST_F(instruction_test, using_instr)
 {
-    EXPECT_FALSE(checker.check("USING", test_no_operand_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("USING", test_no_operand_true, range(), collector));
     /*
 
     TO DO once using is resolved
 
-    EXPECT_FALSE(checker.check("USING", test_extrn_true_two, range(), collector));
-    EXPECT_TRUE(checker.check("USING", test_using_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("USING", test_using_true_two, range(), collector));
-    EXPECT_TRUE(checker.check("USING", test_using_true_three, range(), collector));
-    EXPECT_FALSE(checker.check("USING", test_using_false_one, range(), collector));
-    EXPECT_FALSE(checker.check("USING", test_using_false_two, range(), collector));
-    EXPECT_FALSE(checker.check("USING", test_rmode_true_one, range(), collector)); */
+    EXPECT_FALSE(check_assembler_instruction("USING", test_extrn_true_two, range(), collector));
+    EXPECT_TRUE(check_assembler_instruction("USING", test_using_true_one, range(), collector));
+    EXPECT_TRUE(check_assembler_instruction("USING", test_using_true_two, range(), collector));
+    EXPECT_TRUE(check_assembler_instruction("USING", test_using_true_three, range(), collector));
+    EXPECT_FALSE(check_assembler_instruction("USING", test_using_false_one, range(), collector));
+    EXPECT_FALSE(check_assembler_instruction("USING", test_using_false_two, range(), collector));
+    EXPECT_FALSE(check_assembler_instruction("USING", test_rmode_true_one, range(), collector)); */
 }
 
 TEST_F(instruction_test, xattr)
 {
-    EXPECT_FALSE(checker.check("XATTR", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("XATTR", test_xattr_true, range(), collector));
-    EXPECT_FALSE(checker.check("XATTR", test_xattr_false_one, range(), collector));
-    EXPECT_FALSE(checker.check("XATTR", test_xattr_false_two, range(), collector));
-    EXPECT_FALSE(checker.check("XATTR", test_extrn_true_two, range(), collector));
-    EXPECT_FALSE(checker.check("XATTR", test_acontrol_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("XATTR", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("XATTR", test_xattr_true, range(), collector));
+    EXPECT_FALSE(check_asm_ops("XATTR", test_xattr_false_one, range(), collector));
+    EXPECT_FALSE(check_asm_ops("XATTR", test_xattr_false_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("XATTR", test_extrn_true_two, range(), collector));
+    EXPECT_FALSE(check_asm_ops("XATTR", test_acontrol_true, range(), collector));
 }

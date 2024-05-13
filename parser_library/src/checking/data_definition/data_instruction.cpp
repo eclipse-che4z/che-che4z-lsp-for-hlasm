@@ -30,7 +30,7 @@ data::data(const std::vector<label_types>& allowed_types, std::string_view name_
 {}
 
 template<data_instr_type instr_type>
-bool data::check_data(const std::vector<const asm_operand*>& to_check,
+bool data::check_data(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -72,7 +72,7 @@ dc::dc(const std::vector<label_types>& allowed_types, std::string_view name_of_i
     : data(allowed_types, name_of_instruction)
 {}
 
-bool dc::check(const std::vector<const asm_operand*>& to_check,
+bool dc::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -82,7 +82,7 @@ bool dc::check(const std::vector<const asm_operand*>& to_check,
 ds_dxd::ds_dxd(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : data(allowed_types, name_of_instruction) {};
 
-bool ds_dxd::check(const std::vector<const asm_operand*>& to_check,
+bool ds_dxd::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {

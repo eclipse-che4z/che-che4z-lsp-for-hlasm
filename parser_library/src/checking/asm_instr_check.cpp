@@ -32,7 +32,7 @@ namespace hlasm_plugin::parser_library::checking {
 xattr::xattr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool xattr::check(const std::vector<const asm_operand*>& to_check,
+bool xattr::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -150,7 +150,7 @@ bool xattr::check(const std::vector<const asm_operand*>& to_check,
 using_instr::using_instr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 2, 17) {};
 
-bool using_instr::check(const std::vector<const asm_operand*>& to_check,
+bool using_instr::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -198,7 +198,7 @@ bool using_instr::check(const std::vector<const asm_operand*>& to_check,
 title::title(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool title::check(const std::vector<const asm_operand*>& to_check,
+bool title::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -228,7 +228,7 @@ bool title::check(const std::vector<const asm_operand*>& to_check,
 rmode::rmode(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool rmode::check(const std::vector<const asm_operand*>& to_check,
+bool rmode::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -246,7 +246,7 @@ bool rmode::check(const std::vector<const asm_operand*>& to_check,
 punch::punch(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool punch::check(const std::vector<const asm_operand*>& to_check,
+bool punch::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -256,7 +256,7 @@ bool punch::check(const std::vector<const asm_operand*>& to_check,
 print::print(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool print::check(const std::vector<const asm_operand*>& to_check,
+bool print::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -283,7 +283,7 @@ bool print::check(const std::vector<const asm_operand*>& to_check,
 stack_instr::stack_instr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 4) {};
 
-bool stack_instr::check(const std::vector<const asm_operand*>& to_check,
+bool stack_instr::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -373,7 +373,7 @@ bool stack_instr::check(const std::vector<const asm_operand*>& to_check,
 org::org(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 3) {};
 
-bool org::check(const std::vector<const asm_operand*>& to_check,
+bool org::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -430,7 +430,7 @@ bool org::check(const std::vector<const asm_operand*>& to_check,
 opsyn::opsyn(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 1) {};
 
-bool opsyn::check(const std::vector<const asm_operand*>& to_check,
+bool opsyn::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -454,7 +454,7 @@ bool opsyn::check(const std::vector<const asm_operand*>& to_check,
 mnote::mnote(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 2) {};
 
-bool mnote::check(const std::vector<const asm_operand*>& to_check,
+bool mnote::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -517,7 +517,7 @@ bool mnote::check(const std::vector<const asm_operand*>& to_check,
 iseq::iseq(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 2) {};
 
-bool iseq::check(const std::vector<const asm_operand*>& to_check,
+bool iseq::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -554,7 +554,7 @@ bool iseq::check(const std::vector<const asm_operand*>& to_check,
 ictl::ictl(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 3) {};
 
-bool ictl::check(const std::vector<const asm_operand*>& to_check,
+bool ictl::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -624,7 +624,7 @@ bool ictl::check(const std::vector<const asm_operand*>& to_check,
 external::external(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool external::check(const std::vector<const asm_operand*>& to_check,
+bool external::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -671,7 +671,7 @@ bool external::check(const std::vector<const asm_operand*>& to_check,
 exitctl::exitctl(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 2, 5) {};
 
-bool exitctl::check(const std::vector<const asm_operand*>& to_check,
+bool exitctl::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -711,15 +711,12 @@ bool exitctl::check(const std::vector<const asm_operand*>& to_check,
 equ::equ(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 5) {};
 
-bool equ::check(const std::vector<const asm_operand*>&, const range&, const diagnostic_collector&) const
-{
-    return true;
-}
+bool equ::check(std::span<const asm_operand* const>, const range&, const diagnostic_collector&) const { return true; }
 
 entry::entry(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool entry::check(const std::vector<const asm_operand*>& to_check,
+bool entry::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -745,7 +742,7 @@ bool entry::check(const std::vector<const asm_operand*>& to_check,
 end::end(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 2) {};
 
-bool end::check(const std::vector<const asm_operand*>& to_check,
+bool end::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -822,7 +819,7 @@ drop::drop(const std::vector<label_types>& allowed_types, std::string_view name_
     : assembler_instruction(allowed_types, name_of_instruction, 0, -1) {};
 
 bool drop::check(
-    const std::vector<const asm_operand*>& to_check, const range&, const diagnostic_collector& add_diagnostic) const
+    std::span<const asm_operand* const> to_check, const range&, const diagnostic_collector& add_diagnostic) const
 {
     // TODO: at this point the check is more or less redundant to the one performed in the process_DROP function
     if (has_one_comma(to_check))
@@ -841,7 +838,7 @@ bool drop::check(
 copy::copy(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool copy::check(const std::vector<const asm_operand*>& to_check,
+bool copy::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -862,7 +859,7 @@ bool copy::check(const std::vector<const asm_operand*>& to_check,
 cnop::cnop(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 2, 2) {};
 
-bool cnop::check(const std::vector<const asm_operand*>& to_check,
+bool cnop::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -908,7 +905,7 @@ ccw::ccw(const std::vector<label_types>& allowed_types, std::string_view name_of
     , variant_(variant) {};
 
 
-bool ccw::check(const std::vector<const asm_operand*>& to_check,
+bool ccw::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -958,7 +955,7 @@ expression_instruction::expression_instruction(
     const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 1) {};
 
-bool expression_instruction::check(const std::vector<const asm_operand*>& to_check,
+bool expression_instruction::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -975,7 +972,7 @@ bool expression_instruction::check(const std::vector<const asm_operand*>& to_che
         add_diagnostic(diagnostic_op::error_A240_expression_format(name_of_instruction, to_check[0]->operand_range));
         return false;
     }
-    if (first->is_default || !is_positive_number(first->value))
+    if (first->is_default || first->value <= 0)
     {
         add_diagnostic(diagnostic_op::error_A148_EXPR_op_format(name_of_instruction, first->operand_range));
         return false;
@@ -986,7 +983,7 @@ bool expression_instruction::check(const std::vector<const asm_operand*>& to_che
 cattr::cattr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool cattr::check(const std::vector<const asm_operand*>& to_check,
+bool cattr::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -1077,7 +1074,7 @@ bool cattr::check(const std::vector<const asm_operand*>& to_check,
             else if (complex_op->operand_identifier == "PRIORITY")
             {
                 if (parameter == nullptr || !has_all_digits(parameter->operand_identifier) || parameter->is_default
-                    || !is_positive_number(parameter->value))
+                    || parameter->value <= 0)
                 {
                     add_diagnostic(diagnostic_op::error_A208_PRIORITY_param_format(
                         name_of_instruction, complex_op->operand_parameters[0]->operand_range));
@@ -1097,7 +1094,7 @@ bool cattr::check(const std::vector<const asm_operand*>& to_check,
 amode::amode(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool amode::check(const std::vector<const asm_operand*>& to_check,
+bool amode::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -1116,7 +1113,7 @@ bool amode::check(const std::vector<const asm_operand*>& to_check,
 alias::alias(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool alias::check(const std::vector<const asm_operand*>& to_check,
+bool alias::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -1184,7 +1181,7 @@ bool alias::check(const std::vector<const asm_operand*>& to_check,
 ainsert::ainsert(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 2, 2) {};
 
-bool ainsert::check(const std::vector<const asm_operand*>& to_check,
+bool ainsert::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -1222,7 +1219,7 @@ bool ainsert::check(const std::vector<const asm_operand*>& to_check,
 adata::adata(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 5, 5) {};
 
-bool adata::check(const std::vector<const asm_operand*>& to_check,
+bool adata::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -1265,7 +1262,7 @@ bool adata::check(const std::vector<const asm_operand*>& to_check,
 no_operands::no_operands(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, 0) {};
 
-bool no_operands::check(const std::vector<const asm_operand*>& to_check,
+bool no_operands::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -1275,7 +1272,7 @@ bool no_operands::check(const std::vector<const asm_operand*>& to_check,
 process::process(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool process::check(const std::vector<const asm_operand*>& to_check,
+bool process::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -1283,8 +1280,8 @@ bool process::check(const std::vector<const asm_operand*>& to_check,
         return false;
 
     // OVERRIDE can be used together with assembler options despite what the doc says
-    auto b = to_check.cbegin();
-    auto e = to_check.cend();
+    auto b = to_check.begin();
+    auto e = to_check.end();
 
     if (auto process_operands = get_complex_operand(to_check.back()); process_operands
         && process_operands->operand_identifier == "OVERRIDE") // everything parsed is parameter of operand
@@ -1306,7 +1303,7 @@ bool process::check(const std::vector<const asm_operand*>& to_check,
 acontrol::acontrol(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool acontrol::check(const std::vector<const asm_operand*>& to_check,
+bool acontrol::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {

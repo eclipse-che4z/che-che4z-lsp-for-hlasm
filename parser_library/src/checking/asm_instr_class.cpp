@@ -31,7 +31,7 @@ bool assembler_instruction::is_param_in_vector(
     return std::find(options.cbegin(), options.cend(), parameter) != options.cend();
 }
 
-bool assembler_instruction::operands_size_corresponding(const std::vector<const asm_operand*>& to_check,
+bool assembler_instruction::operands_size_corresponding(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {

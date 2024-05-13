@@ -16,15 +16,11 @@
 #define HLASMPLUGIN_PARSERLIBRARY_INSTR_OPERAND_H
 
 #include <assert.h>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
-#include <variant>
 #include <vector>
 
-#include "context/ordinary_assembly/alignment.h"
-#include "diagnostic.h"
 #include "diagnostic_op.h"
 #include "operand.h"
 
@@ -130,10 +126,8 @@ public:
     machine_operand();
 
     // check whether the operand satisfies its format
-    virtual bool check(diagnostic_op& diag,
-        const machine_operand_format& to_check,
-        std::string_view instr_name,
-        const range& stmt_range) const = 0;
+    virtual std::optional<diagnostic_op> check(
+        machine_operand_format to_check, std::string_view instr_name, const range& stmt_range) const = 0;
 
     diagnostic_op get_simple_operand_expected(
         const machine_operand_format& op_format, std::string_view instr_name, const range& stmt_range) const;
@@ -163,10 +157,8 @@ public:
         long long to,
         const range& stmt_range) const;
 
-    bool check(diagnostic_op& diag,
-        const machine_operand_format& to_check,
-        std::string_view instr_name,
-        const range& range) const override;
+    std::optional<diagnostic_op> check(
+        machine_operand_format to_check, std::string_view instr_name, const range& range) const override;
 
     bool is_length_corresponding(int param_value, int length_size) const;
 };
@@ -194,10 +186,8 @@ public:
 
     one_operand(const one_operand& op);
 
-    bool check(diagnostic_op& diag,
-        const machine_operand_format& to_check,
-        std::string_view instr_name,
-        const range& stmt_range) const override;
+    std::optional<diagnostic_op> check(
+        machine_operand_format to_check, std::string_view instr_name, const range& stmt_range) const override;
 };
 
 class empty_operand final : public machine_operand, public asm_operand
@@ -206,10 +196,8 @@ public:
     empty_operand();
     explicit empty_operand(range r);
 
-    bool check(diagnostic_op& diag,
-        const machine_operand_format& to_check,
-        std::string_view instr_name,
-        const range& stmt_range) const override;
+    std::optional<diagnostic_op> check(
+        machine_operand_format to_check, std::string_view instr_name, const range& stmt_range) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::checking

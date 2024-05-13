@@ -567,7 +567,7 @@ public:
     constexpr const instruction_set_affiliation& instr_set_affiliation() const { return m_instr_set_affiliation; };
 
     bool check(std::string_view name_of_instruction,
-        const std::vector<const checking::machine_operand*>& operands,
+        std::span<const checking::machine_operand* const> operands,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const; // input vector is the vector of the actual incoming values
 

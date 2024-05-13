@@ -20,6 +20,7 @@
 #include "checking/instruction_checker.h"
 #include "checking/using_label_checker.h"
 #include "context/hlasm_context.h"
+#include "context/instruction.h"
 #include "context/literal_pool.h"
 #include "context/ordinary_assembly/location_counter.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
@@ -321,7 +322,8 @@ checking::check_op_ptr get_check_op(const semantics::operand* op,
     return uniq;
 }
 
-std::optional<std::vector<checking::check_op_ptr>> transform_mnemonic(const resolved_statement& stmt,
+bool transform_mnemonic(std::vector<checking::check_op_ptr>& result,
+    const resolved_statement& stmt,
     context::dependency_solver& dep_solver,
     const context::mnemonic_code& mnemonic,
     const diagnostic_collector& add_diagnostic)
@@ -340,7 +342,7 @@ std::optional<std::vector<checking::check_op_ptr>> transform_mnemonic(const reso
     {
         add_diagnostic(
             diagnostic_op::error_optional_number_of_operands(instr_name, high - low, high, stmt.stmt_range_ref()));
-        return std::nullopt;
+        return false;
     }
     assert(operands.size() <= context::machine_instruction::max_operand_count);
 
@@ -372,7 +374,7 @@ std::optional<std::vector<checking::check_op_ptr>> transform_mnemonic(const reso
         {
             t = get_check_op(operand.get(), dep_solver, add_diagnostic, stmt, op_id, mnemonic.instruction());
             if (!t)
-                return std::nullopt; // contains dependencies
+                return false; // contains dependencies
             t->operand_range = operand->operand_range;
             if (const auto* ao = dynamic_cast<const checking::one_operand*>(t.get()); ao)
                 provided_operand_values[po_id].value = ao->value;
@@ -392,7 +394,7 @@ std::optional<std::vector<checking::check_op_ptr>> transform_mnemonic(const reso
     std::span<checking::check_op_ptr> provided_operands(po.data(), operands.size());
 
     // create vector of empty operands
-    std::vector<checking::check_op_ptr> result(curr_instr->operands().size());
+    result.resize(curr_instr->operands().size());
 
     // add other
     for (size_t processed = 0; auto& op : result)
@@ -442,67 +444,33 @@ std::optional<std::vector<checking::check_op_ptr>> transform_mnemonic(const reso
         ++processed;
     }
     std::erase_if(result, [](const auto& x) { return !x; });
-    return result;
+    return true;
 }
 
-std::optional<std::vector<checking::check_op_ptr>> transform_default(const resolved_statement& stmt,
+bool transform_default(std::vector<checking::check_op_ptr>& result,
+    const resolved_statement& stmt,
     context::dependency_solver& dep_solver,
     const diagnostic_collector& add_diagnostic,
     const context::machine_instruction* mi)
 {
-    std::vector<checking::check_op_ptr> operand_vector;
-    const auto& ops = stmt.operands_ref().value;
-    operand_vector.reserve(ops.size());
-    for (const auto& op : ops)
+    for (const auto& op : stmt.operands_ref().value)
     {
         // check whether operand isn't empty
         if (op->type == semantics::operand_type::EMPTY)
         {
-            operand_vector.push_back(std::make_unique<checking::empty_operand>(op->operand_range));
+            result.push_back(std::make_unique<checking::empty_operand>(op->operand_range));
             continue;
         }
 
-        auto uniq = get_check_op(op.get(), dep_solver, add_diagnostic, stmt, operand_vector.size(), mi);
+        auto uniq = get_check_op(op.get(), dep_solver, add_diagnostic, stmt, result.size(), mi);
 
         if (!uniq)
-            return std::nullopt; // contains dependencies
+            return false; // contains dependencies
 
         uniq->operand_range = op.get()->operand_range;
-        operand_vector.push_back(std::move(uniq));
+        result.push_back(std::move(uniq));
     }
-    return operand_vector;
-}
-
-bool statement_check(const resolved_statement& stmt,
-    const context::processing_stack_t& processing_stack,
-    context::dependency_solver& dep_solver,
-    const checking::instruction_checker& checker,
-    const diagnosable_ctx& diagnoser)
-{
-    diagnostic_collector collector(&diagnoser, processing_stack);
-
-    std::vector<const checking::operand*> operand_ptr_vector;
-    std::optional<std::vector<checking::check_op_ptr>> operand_vector;
-
-    std::string_view instruction_name = stmt.opcode_ref().value.to_string_view();
-
-    if (const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(instruction_name); mn)
-    {
-        operand_vector = transform_mnemonic(stmt, dep_solver, *mn, collector);
-    }
-    else
-    {
-        operand_vector = transform_default(stmt, dep_solver, collector, mi);
-    }
-
-    if (!operand_vector)
-        return false;
-
-    operand_ptr_vector.reserve(operand_vector->size());
-    for (const auto& op : *operand_vector)
-        operand_ptr_vector.push_back(op.get());
-
-    return checker.check(instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
+    return true;
 }
 
 } // namespace
@@ -510,8 +478,9 @@ bool statement_check(const resolved_statement& stmt,
 void ordinary_processor::check_postponed_statements(
     const std::vector<std::pair<context::post_stmt_ptr, context::dependency_evaluation_context>>& stmts)
 {
-    static const checking::assembler_checker asm_checker;
-    static const checking::machine_checker mach_checker;
+    std::vector<const checking::asm_operand*> operand_asm_vector;
+    std::vector<const checking::machine_operand*> operand_mach_vector;
+    std::vector<checking::check_op_ptr> operand_vector;
 
     for (const auto& [stmt, dep_ctx] : stmts)
     {
@@ -521,14 +490,37 @@ void ordinary_processor::check_postponed_statements(
         context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, dep_ctx, lib_info);
 
         const auto* rs = stmt->resolved_stmt();
+        diagnostic_collector collector(this, stmt->location_stack());
+
+        operand_vector.clear();
+
+        std::string_view instruction_name = rs->opcode_ref().value.to_string_view();
+
+        if (const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(instruction_name); mn)
+        {
+            if (!transform_mnemonic(operand_vector, *rs, dep_solver, *mn, collector))
+                continue;
+        }
+        else
+        {
+            if (!transform_default(operand_vector, *rs, dep_solver, collector, mi))
+                continue;
+        }
+
         switch (const auto& opcode = rs->opcode_ref(); opcode.type)
         {
             case hlasm_plugin::parser_library::context::instruction_type::MACH:
-                statement_check(*rs, stmt->location_stack(), dep_solver, mach_checker, *this);
+                operand_mach_vector.clear();
+                for (const auto& op : operand_vector)
+                    operand_mach_vector.push_back(dynamic_cast<const checking::machine_operand*>(op.get()));
+                checking::check_mach_ops(instruction_name, operand_mach_vector, rs->stmt_range_ref(), collector);
                 break;
 
             case hlasm_plugin::parser_library::context::instruction_type::ASM:
-                statement_check(*rs, stmt->location_stack(), dep_solver, asm_checker, *this);
+                operand_asm_vector.clear();
+                for (const auto& op : operand_vector)
+                    operand_asm_vector.push_back(dynamic_cast<const checking::asm_operand*>(op.get()));
+                checking::check_asm_ops(instruction_name, operand_asm_vector, rs->stmt_range_ref(), collector);
                 break;
 
             default:

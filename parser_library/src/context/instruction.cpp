@@ -416,7 +416,7 @@ std::span<const assembler_instruction> instruction::all_assembler_instructions()
 }
 
 bool hlasm_plugin::parser_library::context::machine_instruction::check(std::string_view name_of_instruction,
-    const std::vector<const checking::machine_operand*>& to_check,
+    std::span<const checking::machine_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
@@ -429,17 +429,16 @@ bool hlasm_plugin::parser_library::context::machine_instruction::check(std::stri
         return false;
     }
     bool error = false;
-    for (size_t i = 0; i < to_check.size(); i++)
+    for (const auto* fmt = m_operands; const auto* op : to_check)
     {
-        assert(to_check[i] != nullptr);
-        diagnostic_op diag;
-        if (!(*to_check[i]).check(diag, m_operands[i], name_of_instruction, stmt_range))
+        assert(op != nullptr);
+        if (auto diag = op->check(*fmt++, name_of_instruction, stmt_range); diag.has_value())
         {
-            add_diagnostic(diag);
+            add_diagnostic(std::move(diag).value());
             error = true;
         }
     };
-    return (!error);
+    return !error;
 }
 
 template<mach_format F, const machine_operand_format&... Ops>

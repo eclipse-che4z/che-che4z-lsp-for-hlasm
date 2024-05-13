@@ -56,7 +56,7 @@ inline bool is_operand_empty(const asm_operand* to_check_operand)
     return dynamic_cast<const empty_operand*>(to_check_operand) != nullptr;
 }
 
-inline bool has_one_comma(const std::vector<const asm_operand*>& to_check)
+inline bool has_one_comma(std::span<const asm_operand* const> to_check)
 {
     return to_check.size() == 2 && is_operand_empty(to_check[0]) && is_operand_empty(to_check[1]);
 }
@@ -65,8 +65,6 @@ inline bool has_all_digits(std::string_view str)
 {
     return std::all_of(str.begin(), str.end(), [](unsigned char c) { return std::isdigit(c); });
 }
-
-inline bool is_positive_number(int to_test) { return to_test > 0; }
 
 // function to convert numbers less than 64000 to hexadecimal
 inline std::string dec_to_hexa(int to_convert)

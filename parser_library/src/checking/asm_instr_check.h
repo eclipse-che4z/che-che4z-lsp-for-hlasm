@@ -65,7 +65,7 @@ class xattr final : public assembler_instruction
 {
 public:
     xattr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -74,7 +74,7 @@ class using_instr final : public assembler_instruction
 {
 public:
     using_instr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -83,7 +83,7 @@ class title final : public assembler_instruction
 {
 public:
     title(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -92,7 +92,7 @@ class rmode final : public assembler_instruction
 {
 public:
     rmode(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -101,7 +101,7 @@ class punch final : public assembler_instruction
 {
 public:
     punch(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -110,7 +110,7 @@ class print final : public assembler_instruction
 {
 public:
     print(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -119,7 +119,7 @@ class stack_instr final : public assembler_instruction
 {
 public:
     stack_instr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -128,7 +128,7 @@ class org final : public assembler_instruction
 {
 public:
     org(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -138,7 +138,7 @@ class opsyn final : public assembler_instruction
 {
 public:
     opsyn(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -147,7 +147,7 @@ class mnote final : public assembler_instruction
 {
 public:
     mnote(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -156,7 +156,7 @@ class iseq final : public assembler_instruction
 {
 public:
     iseq(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -165,7 +165,7 @@ class ictl final : public assembler_instruction
 {
 public:
     ictl(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -175,7 +175,7 @@ class external final : public assembler_instruction
 {
 public:
     external(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -184,7 +184,7 @@ class exitctl final : public assembler_instruction
 {
 public:
     exitctl(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -194,7 +194,7 @@ class equ final : public assembler_instruction
 {
 public:
     equ(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -204,7 +204,7 @@ class entry final : public assembler_instruction
 {
 public:
     entry(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -213,7 +213,7 @@ class end final : public assembler_instruction
 {
 public:
     end(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -222,7 +222,7 @@ class drop final : public assembler_instruction
 {
 public:
     drop(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector&) const override;
 };
@@ -235,14 +235,14 @@ public:
 protected:
     template<data_instr_type instr_type>
     bool check_data(
-        const std::vector<const asm_operand*>& to_check, const range& stmt_range, const diagnostic_collector&) const;
+        std::span<const asm_operand* const> to_check, const range& stmt_range, const diagnostic_collector&) const;
 };
 
 class dc final : public data
 {
 public:
     dc(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector&) const override;
 };
@@ -251,7 +251,7 @@ class ds_dxd final : public data
 {
 public:
     ds_dxd(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector&) const override;
 };
@@ -261,7 +261,7 @@ class copy final : public assembler_instruction
 {
 public:
     copy(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -270,7 +270,7 @@ class cnop final : public assembler_instruction
 {
 public:
     cnop(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -288,7 +288,7 @@ class ccw final : public assembler_instruction
 
 public:
     ccw(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction, CCW_variant variant);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -299,7 +299,7 @@ class expression_instruction final : public assembler_instruction
 {
 public:
     expression_instruction(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -308,7 +308,7 @@ class cattr final : public assembler_instruction
 {
 public:
     cattr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -317,7 +317,7 @@ class amode final : public assembler_instruction
 {
 public:
     amode(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -326,7 +326,7 @@ class alias final : public assembler_instruction
 {
 public:
     alias(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -335,7 +335,7 @@ class ainsert final : public assembler_instruction
 {
 public:
     ainsert(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -344,7 +344,7 @@ class acontrol final : public assembler_instruction
 {
 public:
     acontrol(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -353,7 +353,7 @@ class adata final : public assembler_instruction
 {
 public:
     adata(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -363,7 +363,7 @@ class no_operands final : public assembler_instruction
 {
 public:
     no_operands(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
@@ -373,7 +373,7 @@ class process final : public assembler_instruction
 {
 public:
     process(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(const std::vector<const asm_operand*>& to_check,
+    bool check(std::span<const asm_operand* const> to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
