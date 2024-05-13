@@ -12,17 +12,17 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include <chrono>
+#include <optional>
 #include <span>
 #include <thread>
+
+#include "server_options.h"
 #ifdef WIN32
 #    include <locale.h>
 #endif
 
 #include "json_queue_channel.h"
 
-#include "dap/dap_message_wrappers.h"
-#include "dap/dap_server.h"
 #include "dap/dap_session_manager.h"
 #include "external_file_reader.h"
 #include "logger.h"
@@ -138,7 +138,7 @@ public:
             }
             catch (const std::exception& e)
             {
-                LOG_ERROR(std::string("LSP thread exception: ") + e.what());
+                LOG_ERROR("LSP thread exception: ", e.what());
                 ret = -1;
             }
             catch (...)
@@ -178,6 +178,16 @@ auto separate_arguments(int argc, char** argv)
     return std::span<const char* const>(start, end - start);
 }
 
+void log_options(server_options opts)
+{
+    LOG_INFO("Options: vscode-extensions=",
+        opts.enable_vscode_extension ? "true" : "false",
+        ", log-level=",
+        std::to_string(opts.log_level),
+        ", lsp-port=",
+        std::to_string(opts.port));
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -189,14 +199,16 @@ int main(int argc, char** argv)
 
     auto args = separate_arguments(argc, argv);
 
-    bool vscode_extensions = false;
-    if (!args.empty() && std::string_view(args.front()) == "--vscode-extensions")
-    {
-        vscode_extensions = true;
-        args = args.subspan(1);
-    }
+    auto opts = parse_options(args);
+    if (!opts)
+        return 1;
 
-    auto io_setup = server_streams::create(args);
+    if (opts->log_level >= 0)
+        logger::instance.level(opts->log_level);
+
+    log_options(*opts);
+
+    auto io_setup = server_streams::create(*opts);
     if (!io_setup)
         return 1;
 
@@ -204,7 +216,7 @@ int main(int argc, char** argv)
     {
         int ret = 0;
 
-        main_program pgm(io_setup->get_response_stream(), ret, vscode_extensions);
+        main_program pgm(io_setup->get_response_stream(), ret, opts->enable_vscode_extension);
 
         for (auto& source = io_setup->get_request_stream();;)
         {
@@ -219,8 +231,8 @@ int main(int argc, char** argv)
             }
             catch (const nlohmann::json::exception&)
             {
-                LOG_WARNING("Could not parse received JSON: "
-                    + msg.value().dump(-1, ' ', true, nlohmann::detail::error_handler_t::replace));
+                LOG_WARNING("Could not parse received JSON: ",
+                    msg.value().dump(-1, ' ', true, nlohmann::detail::error_handler_t::replace));
             }
         }
 
@@ -228,7 +240,7 @@ int main(int argc, char** argv)
     }
     catch (const std::exception& ex)
     {
-        LOG_ERROR(ex.what());
+        LOG_ERROR("Main loop exception: ", ex.what());
         return 1;
     }
     catch (...)

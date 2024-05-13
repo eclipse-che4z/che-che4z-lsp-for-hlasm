@@ -59,7 +59,7 @@ void virtual_file_provider::write(const nlohmann::json& m)
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_ERROR(std::string("Virtual file provider exception: ") + e.what());
+        LOG_ERROR("Virtual file provider exception: ", e.what());
     }
 }
 void virtual_file_provider::write(nlohmann::json&& m) { write(m); }

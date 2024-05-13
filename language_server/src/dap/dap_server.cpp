@@ -89,7 +89,7 @@ void server::message_received(const nlohmann::json& message)
     {
         if (message.at("type") != "request")
         {
-            LOG_WARNING(std::string("Invalid message receive: ") + message.dump());
+            LOG_WARNING("Invalid message receive: ", message.dump());
             send_telemetry_error("dap_server/invalid_message");
             return;
         }
@@ -100,7 +100,7 @@ void server::message_received(const nlohmann::json& message)
     catch (const nlohmann::json::exception& e)
     {
         (void)e;
-        LOG_WARNING(std::string("There was an error with received request:") + e.what());
+        LOG_WARNING("There was an error with received request: ", e.what());
         send_telemetry_error("dap_server/method_unknown_error");
     }
 }

@@ -39,7 +39,7 @@ void server::call_method(const std::string& method, std::optional<request_id> id
 {
     if (shutdown_request_received_)
     {
-        LOG_WARNING("Request " + method + " was received after shutdown request.");
+        LOG_WARNING("Request ", method, " was received after shutdown request.");
     }
 
     auto found = methods_.find(method);
@@ -47,7 +47,7 @@ void server::call_method(const std::string& method, std::optional<request_id> id
     {
         if (found->second.is_request_handler() && !id)
         {
-            LOG_WARNING("Missing request id for method:" + method);
+            LOG_WARNING("Missing request id for method: ", method);
             send_telemetry_error("call_method/missing_id");
             return;
         }
@@ -68,7 +68,7 @@ void server::call_method(const std::string& method, std::optional<request_id> id
         catch (const nlohmann::basic_json<>::exception& e)
         {
             (void)e;
-            LOG_WARNING("There is an error regarding the JSON or LSP:" + std::string(e.what()));
+            LOG_WARNING("There is an error regarding the JSON or LSP: ", e.what());
             send_telemetry_error("call_method/json_error");
         }
     }
@@ -82,9 +82,7 @@ void server::call_method(const std::string& method, std::optional<request_id> id
     }
     else
     {
-        std::ostringstream ss;
-        ss << "Method " << method << " is not available on this server.";
-        LOG_WARNING(ss.str());
+        LOG_WARNING("Method ", method, " is not available on this server.");
 
         send_telemetry_error("method_not_implemented", method);
 

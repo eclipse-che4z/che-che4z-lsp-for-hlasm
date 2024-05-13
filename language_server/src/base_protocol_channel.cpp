@@ -110,14 +110,12 @@ bool base_protocol_channel::read_message(std::string& out)
 
     if (content_length > message_size_limit)
     { // 1024M
-        std::ostringstream ss;
-        ss << "Refusing to read message with long Content-Length" << content_length << ". ";
-        LOG_WARNING(ss.str());
+        LOG_WARNING("Refusing to read message with long Content-Length: ", std::to_string(content_length), ".");
         return false;
     }
     if (content_length == 0)
     {
-        LOG_WARNING("Warning: Missing Content-Length header, or zero-length message.");
+        LOG_WARNING("Missing Content-Length header, or zero-length message.");
         return false;
     }
 
@@ -129,9 +127,10 @@ bool base_protocol_channel::read_message(std::string& out)
         std::streamsize read = input.gcount();
         if (read <= 0)
         {
-            std::ostringstream ss;
-            ss << "Input was aborted. Read only " << pos << " bytes of expected " << content_length;
-            LOG_WARNING(ss.str());
+            LOG_WARNING("Input was aborted. Read only ",
+                std::to_string(pos),
+                " bytes of expected ",
+                std::to_string(content_length));
             return false;
         }
         pos += read;
@@ -167,7 +166,7 @@ std::optional<nlohmann::json> base_protocol_channel::read()
             }
             catch (const nlohmann::json::exception&)
             {
-                LOG_WARNING("Could not parse received JSON: " + message_buffer);
+                LOG_WARNING("Could not parse received JSON: ", message_buffer);
             }
         }
     }

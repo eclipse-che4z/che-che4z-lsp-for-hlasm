@@ -373,6 +373,11 @@
         "category": "HLASM",
         "title": "Show Generated Output",
         "icon": "$(output)"
+      },
+      {
+        "command": "extension.hlasm-plugin.setLogLevel",
+        "category": "HLASM",
+        "title": "Set Language Server Logging Level"
       }
     ],
     "keybindings": [

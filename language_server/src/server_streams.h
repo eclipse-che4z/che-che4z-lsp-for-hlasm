@@ -16,11 +16,12 @@
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_SERVER_STREAMS_H
 
 #include <memory>
-#include <span>
 
 #include "json_channel.h"
 
 namespace hlasm_plugin::language_server {
+struct server_options;
+
 class server_streams
 {
 public:
@@ -28,7 +29,7 @@ public:
     virtual json_sink& get_response_stream() & = 0;
     virtual json_source& get_request_stream() & = 0;
 
-    static std::unique_ptr<server_streams> create(std::span<const char* const> args);
+    static std::unique_ptr<server_streams> create(server_options);
 };
 } // namespace hlasm_plugin::language_server
 

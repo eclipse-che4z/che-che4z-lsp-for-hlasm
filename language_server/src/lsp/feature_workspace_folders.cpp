@@ -167,7 +167,7 @@ void feature_workspace_folders::did_change_watched_files(const nlohmann::json& p
     }
     catch (const nlohmann::json::exception& j)
     {
-        LOG_ERROR(std::string("Invalid didChangeWatchedFiles notification parameter: ") + j.what());
+        LOG_ERROR("Invalid didChangeWatchedFiles notification parameter: ", j.what());
     }
 }
 
@@ -184,7 +184,7 @@ void feature_workspace_folders::send_configuration_request()
         config_request_args,
         [this](const nlohmann::json& params) { configuration(params); },
         [](int, [[maybe_unused]] const char* msg) {
-            LOG_WARNING("Unexpected error configuration response received: " + std::string(msg));
+            LOG_WARNING("Unexpected error configuration response received: ", msg);
         });
 }
 
@@ -219,7 +219,7 @@ void feature_workspace_folders::register_file_change_notifictions()
         global_patterns,
         [](const nlohmann::json&) {},
         [](int, [[maybe_unused]] const char* msg) {
-            LOG_WARNING("Error occurred while registering file watcher: " + std::string(msg));
+            LOG_WARNING("Error occurred while registering file watcher: ", msg);
         });
 }
 

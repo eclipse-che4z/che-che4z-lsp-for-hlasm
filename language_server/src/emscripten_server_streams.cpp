@@ -12,7 +12,6 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 #include <emscripten.h>
-#include <iostream>
 #include <string>
 
 #include <emscripten/bind.h>
@@ -20,6 +19,7 @@
 #include "blocking_queue.h"
 #include "logger.h"
 #include "nlohmann/json.hpp"
+#include "server_options.h"
 #include "server_streams.h"
 #include "utils/platform.h"
 
@@ -189,14 +189,13 @@ EMSCRIPTEN_BINDINGS(main_thread)
 
 } // namespace
 
-std::unique_ptr<server_streams> server_streams::create(std::span<const char* const> args)
+std::unique_ptr<server_streams> server_streams::create(server_options opts)
 {
-    if (!args.empty())
+    if (opts.port > 0)
     {
-        utils::platform::log("No arguments allowed");
+        utils::platform::log("TCP/IP not available in WASM mode.");
         return {};
     }
-
     return std::make_unique<emscripten_std_setup>();
 }
 

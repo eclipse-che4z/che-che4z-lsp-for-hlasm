@@ -14,13 +14,15 @@
 
 #include "logger.h"
 
-#include <iostream>
 #include <string>
+#include <string_view>
 
 #include "utils/platform.h"
 #include "utils/time.h"
 
-using namespace hlasm_plugin::language_server;
+namespace hlasm_plugin::language_server {
+
+logger logger::instance;
 
 std::string current_time()
 {
@@ -31,9 +33,26 @@ std::string current_time()
         return t->to_string();
 }
 
-void logger::log(std::string_view data)
+void logger::log_impl(unsigned level, std::span<std::string_view> args)
 {
-    std::lock_guard g(mutex_);
+    static constexpr std::string_view levels[] = {
+        "ERROR",
+        "WARN",
+        "INFO",
+    };
+    if (level >= std::size(levels))
+        level = std::size(levels) - 1;
 
-    utils::platform::log(current_time(), " ", data);
+    std::lock_guard g(m_mutex);
+
+    auto t = current_time();
+
+    args[0] = t;
+    args[1] = ":";
+    args[2] = levels[level];
+    args[3] = ":";
+
+    utils::platform::log(args);
 }
+
+} // namespace hlasm_plugin::language_server

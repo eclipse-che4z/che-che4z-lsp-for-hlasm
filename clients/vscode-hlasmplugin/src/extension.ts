@@ -44,6 +44,7 @@ import { asError } from './helpers';
 import { registerListingServices } from './hlasmListingServices';
 import { MementoKey } from './mementoKeys';
 import { registerOutputDocumentContentProvider, showOutputCommand } from './hlasmOutputContentProvider';
+import { setServerLogLevel } from './hlasmLogLevel';
 
 const sleep = (ms: number) => {
     return new Promise((resolve) => { setTimeout(resolve, ms) });
@@ -305,6 +306,8 @@ async function registerToContextWithClient(context: vscode.ExtensionContext, cli
     context.subscriptions.push(vscode.commands.registerCommand("extension.hlasm-plugin.downloadDependencies", (...args: any[]) => downloadDependencies(context, telemetry, client.outputChannel, ...args)));
 
     context.subscriptions.push(vscode.commands.registerTextEditorCommand('extension.hlasm-plugin.showOutput', showOutputCommand));
+
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.setLogLevel', () => setServerLogLevel(client)));
 
     activateBranchDecorator(context, client);
 }

@@ -15,44 +15,58 @@
 #ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_LOGGER_H
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_LOGGER_H
 
+#include <concepts>
 #include <mutex>
+#include <span>
 #include <string_view>
 
 namespace hlasm_plugin::language_server {
 
-// LOG_INFO is disabled in release, because it writes vast amount of text
-// which takes significant time
-#ifdef _DEBUG
-#    define LOG_ON
-#endif
+#define LOG_WRITE(l, ...)                                                                                              \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        const unsigned level = l;                                                                                      \
+        if (level > hlasm_plugin::language_server::logger::instance.level())                                           \
+            break;                                                                                                     \
+        hlasm_plugin::language_server::logger::instance.log(level, __VA_ARGS__);                                       \
+    } while (false)
 
-
-#ifdef LOG_ON
-#    define LOG_ERROR(x) hlasm_plugin::language_server::logger::get_instance().log(x)
-#    define LOG_WARNING(x) hlasm_plugin::language_server::logger::get_instance().log(x)
-#    define LOG_INFO(x) hlasm_plugin::language_server::logger::get_instance().log(x)
-#else
-#    define LOG_ERROR(x) hlasm_plugin::language_server::logger::get_instance().log(x)
-#    define LOG_WARNING(x)
-#    define LOG_INFO(x)
-#endif
+#define LOG_ERROR(...) LOG_WRITE(0, __VA_ARGS__)
+#define LOG_WARNING(...) LOG_WRITE(1, __VA_ARGS__)
+#define LOG_INFO(...) LOG_WRITE(2, __VA_ARGS__)
 
 class logger
 {
+#ifdef _DEBUG
+    static constexpr unsigned default_log_level = 2;
+#else
+    static constexpr unsigned default_log_level = 0;
+#endif
+
+    unsigned m_level = default_log_level;
+    std::mutex m_mutex;
+
+    void log_impl(unsigned level, std::span<std::string_view> args);
+
 public:
-    // Gets singleton instance of logger.
-    static logger& get_instance()
+    static logger instance;
+    static constexpr unsigned max_log_level = 2;
+
+    unsigned level() const noexcept { return m_level; }
+    void level(unsigned l) noexcept
     {
-        static logger instance;
-        return instance;
+        if (l > max_log_level)
+            m_level = max_log_level;
+        else
+            m_level = l;
     }
 
-    // Writes a message to log file.
-    void log(std::string_view data);
-
-private:
-    // File to write the log into.
-    std::mutex mutex_;
+    template<std::convertible_to<std::string_view>... Args>
+    void log(unsigned level, Args&&... args)
+    {
+        std::string_view args_sv[] { {}, {}, {}, {}, std::string_view(args)... };
+        log_impl(level, args_sv);
+    }
 };
 
 } // namespace hlasm_plugin::language_server

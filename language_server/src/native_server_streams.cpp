@@ -14,6 +14,7 @@
 #include <iostream>
 
 #include "base_protocol_channel.h"
+#include "server_options.h"
 #include "server_streams.h"
 #include "stream_helper.h"
 #include "utils/platform.h"
@@ -81,25 +82,10 @@ public:
 
 } // namespace
 
-std::unique_ptr<server_streams> server_streams::create(std::span<const char* const> args)
+std::unique_ptr<server_streams> server_streams::create(server_options opts)
 {
-    if (args.size() > 1)
-    {
-        utils::platform::log("Invalid arguments. Use language_server [<lsp port>]");
-        return {};
-    }
-    const bool use_tcp = args.size() == 1;
-    int lsp_port = 0;
-    if (use_tcp)
-    {
-        lsp_port = atoi(args.front());
-        if (lsp_port <= 0 || lsp_port > 65535)
-        {
-            utils::platform::log("Wrong port entered.");
-            return {};
-        }
-        return std::make_unique<tcp_setup>((uint16_t)lsp_port);
-    }
+    if (opts.port > 0)
+        return std::make_unique<tcp_setup>(opts.port);
     else
         return std::make_unique<stdio_setup>();
 }

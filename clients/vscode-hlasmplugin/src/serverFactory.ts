@@ -48,7 +48,7 @@ async function generateServerOption(method: ServerVariant): Promise<vscodelc.Ser
         //spawn the server
         cp.execFile(
             path.join(__dirname, '..', 'bin', langServerFolder, 'hlasm_language_server'),
-            decorateArgs([lspPort.toString()]));
+            decorateArgs([`--lsp-port=${lspPort.toString()}`]));
 
         return () => {
             let socket = net.connect(lspPort, 'localhost');

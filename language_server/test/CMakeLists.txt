@@ -22,6 +22,7 @@ target_sources(server_test PRIVATE
     regress_test.cpp
     response_provider_mock.h
     send_message_provider_mock.h
+    server_options_test.cpp
     stream_helper_test.cpp
     ws_mngr_mock.h
     ws_mngr_req_mock.h
