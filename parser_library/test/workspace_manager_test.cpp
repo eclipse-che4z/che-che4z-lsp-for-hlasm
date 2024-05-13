@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "common_testing.h"
@@ -22,10 +23,12 @@
 #include "utils/platform.h"
 #include "workspace/consume_diagnostics_mock.h"
 #include "workspace_manager.h"
+#include "workspace_manager_external_file_requests.h"
 #include "workspace_manager_response.h"
 #include "workspace_manager_response_mock.h"
 
 using namespace hlasm_plugin::parser_library;
+using namespace ::testing;
 
 TEST(workspace_manager, add_not_existing_workspace)
 {
@@ -117,4 +120,49 @@ TEST(workspace_manager, cancel_debugger_configuration_request)
     ws_mngr->remove_workspace("not_existing");
 
     ws_mngr->idle_handler();
+}
+
+struct workspace_manager_external_file_requests_mock : public workspace_manager_external_file_requests
+{
+    MOCK_METHOD(void, read_external_file, (std::string_view url, workspace_manager_response<std::string_view> content));
+    MOCK_METHOD(void,
+        read_external_directory,
+        (std::string_view url,
+            workspace_manager_response<workspace_manager_external_directory_result> members,
+            bool subdir));
+};
+
+TEST(workspace_manager, extended_scheme_allowed_list)
+{
+    const std::string_view uri = "test:/dir/file";
+    NiceMock<workspace_manager_external_file_requests_mock> ext_mock;
+    diag_consumer_mock diags;
+
+    auto ws_mngr = create_workspace_manager(&ext_mock, true);
+    ws_mngr->register_diagnostics_consumer(&diags);
+
+    bool called = false;
+    EXPECT_CALL(ext_mock, read_external_file).WillRepeatedly(Invoke([&called](auto, auto r) {
+        called = true;
+        r.error(-1, "");
+    }));
+
+    ws_mngr->did_open_file(uri, 1, " ERROR");
+
+    ws_mngr->idle_handler();
+
+    EXPECT_TRUE(matches_message_codes(diags.diags, { "SUP" })); // quiet due to allow list
+    EXPECT_FALSE(called);
+
+    ws_mngr->did_close_file(uri);
+    ws_mngr->idle_handler();
+
+    ws_mngr->add_workspace("dir", "test:/dir");
+    ws_mngr->did_open_file(uri, 1, " ERROR");
+
+    ws_mngr->idle_handler();
+
+    EXPECT_FALSE(contains_message_codes(diags.diags, { "SUP" })); // no longer quiet
+    EXPECT_FALSE(diags.diags.empty()); // not suppressed
+    EXPECT_TRUE(called);
 }

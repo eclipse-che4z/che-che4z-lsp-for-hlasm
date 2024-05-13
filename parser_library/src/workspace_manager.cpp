@@ -26,9 +26,11 @@
 #include <limits>
 #include <optional>
 #include <set>
+#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "completion_item.h"
@@ -62,7 +64,7 @@ namespace hlasm_plugin::parser_library {
 
 class workspace_manager_impl final : public workspace_manager,
                                      debugger_configuration_provider,
-                                     public diagnosable_impl,
+                                     diagnosable_impl,
                                      workspaces::external_file_reader,
                                      external_configuration_requests
 {
@@ -89,44 +91,37 @@ class workspace_manager_impl final : public workspace_manager,
         workspaces::workspace ws;
     };
 
-public:
-    explicit workspace_manager_impl(
-        workspace_manager_external_file_requests* external_file_requests, bool vscode_extensions)
-        : m_external_file_requests(external_file_requests)
-        , m_file_manager(*this)
-        , m_implicit_workspace(m_file_manager, m_global_config, this)
-        , m_quiet_implicit_workspace(m_file_manager, supress_all, this)
-        , m_vscode_extensions(vscode_extensions)
-    {}
-    workspace_manager_impl(const workspace_manager_impl&) = delete;
-    workspace_manager_impl& operator=(const workspace_manager_impl&) = delete;
-
-    workspace_manager_impl(workspace_manager_impl&&) = delete;
-    workspace_manager_impl& operator=(workspace_manager_impl&&) = delete;
-
-
     static constexpr std::string_view hlasm_external_scheme = "hlasm-external:";
-    static constexpr std::string_view allowed_scheme_list[] = {
-        "file:",
-        "untitled:",
-        hlasm_external_scheme,
-        "vscode-vfs:",
-        "vscode-test-web:",
+    static constexpr std::string_view default_allowed_schemes[] = {
         // e4e integration
+        "e4e-change-lvl:",
         "e4e-element:",
         "e4e-listing:",
-        "e4e-change-lvl:",
-        "e4e-readonly-file:",
         "e4e-read-only-cached-element:",
-        "e4e-readonly-report:",
+        "e4e-readonly-file:",
         "e4e-readonly-generic-report:",
+        "e4e-readonly-report:",
+
+        "file:",
+        hlasm_external_scheme,
+
+        // e4e integration
         "ndvr:",
+
+        "untitled:",
+        "vscode-test-web:",
+        "vscode-vfs:",
     };
-    static bool allowed_scheme(const resource_location& uri)
+    static_assert(std::is_sorted(std::begin(default_allowed_schemes), std::end(default_allowed_schemes)));
+    std::vector<std::string> allowed_schemes = {
+        std::begin(default_allowed_schemes),
+        std::end(default_allowed_schemes),
+    };
+    bool allowed_scheme(std::string_view uri) const noexcept
     {
-        const auto matches_scheme = [&u = uri.get_uri()](const auto& p) { return u.starts_with(p); };
-        return std::any_of(std::begin(allowed_scheme_list), std::end(allowed_scheme_list), matches_scheme);
+        return std::binary_search(allowed_schemes.begin(), allowed_schemes.end(), extract_scheme(uri));
     }
+    bool allowed_scheme(const resource_location& uri) const noexcept { return allowed_scheme(uri.get_uri()); }
 
     static auto ws_path_match(auto& self, std::string_view unnormalized_uri)
     {
@@ -163,10 +158,8 @@ public:
 
         if (max_ows != nullptr)
             return std::pair(max_ows, std::move(uri));
-        else if (allowed_scheme(uri))
-            return std::pair(&self.m_implicit_workspace, std::move(uri));
         else
-            return std::pair(&self.m_quiet_implicit_workspace, std::move(uri));
+            return std::pair(&self.m_implicit_workspace, std::move(uri));
     }
 
     // returns implicit workspace, if the file does not belong to any workspace
@@ -365,7 +358,6 @@ public:
             r.second |= n.second;
         };
         auto result = run_parse_loop(m_implicit_workspace, yield_indicator);
-        combine(result, run_parse_loop(m_quiet_implicit_workspace, yield_indicator));
         for (auto& [_, ows] : m_workspaces)
             combine(result, run_parse_loop(ows, yield_indicator));
 
@@ -794,11 +786,20 @@ public:
         r.provide(res);
     }
 
-private:
     void collect_diags() const override
     {
         collect_diags_from_child(m_implicit_workspace.ws);
-        collect_diags_from_child(m_quiet_implicit_workspace.ws);
+
+        std::unordered_set<std::string> suppress_files;
+        std::erase_if(diags(), [this, &suppress_files](const auto& d) {
+            return !allowed_scheme(d.file_uri) && (suppress_files.emplace(d.file_uri), true);
+        });
+        for (auto it = suppress_files.begin(); it != suppress_files.end();)
+        {
+            auto node = suppress_files.extract(it++);
+            diags().emplace_back(info_SUP(utils::resource::resource_location(std::move(node.value()))));
+        }
+
         for (auto& it : m_workspaces)
             collect_diags_from_child(it.second.ws);
     }
@@ -830,7 +831,6 @@ private:
 
         m_fade_messages.clear();
         m_implicit_workspace.ws.retrieve_fade_messages(m_fade_messages);
-        m_quiet_implicit_workspace.ws.retrieve_fade_messages(m_fade_messages);
         for (const auto& [_, ows] : m_workspaces)
             ows.ws.retrieve_fade_messages(m_fade_messages);
 
@@ -981,7 +981,6 @@ private:
 
     std::unordered_map<resource_location, opened_workspace, utils::resource::resource_location_hasher> m_workspaces;
     opened_workspace m_implicit_workspace;
-    opened_workspace m_quiet_implicit_workspace;
     bool m_vscode_extensions;
 
     std::vector<diagnostics_consumer*> m_diag_consumers;
@@ -990,6 +989,22 @@ private:
     workspace_manager_requests* m_requests = nullptr;
     std::vector<fade_message> m_fade_messages;
     unsigned long long m_unique_id_sequence = 0;
+
+    static std::string_view extract_scheme(std::string_view uri) { return uri.substr(0, uri.find(':') + 1); }
+    void recompute_allow_list()
+    {
+        allowed_schemes.assign(std::begin(default_allowed_schemes), std::end(default_allowed_schemes));
+        for (const auto& [uri, _] : m_workspaces)
+        {
+            const auto scheme = extract_scheme(uri.get_uri());
+            if (scheme.empty())
+                continue;
+            allowed_schemes.emplace_back(scheme);
+        }
+        std::sort(allowed_schemes.begin(), allowed_schemes.end());
+        auto new_end = std::unique(allowed_schemes.begin(), allowed_schemes.end());
+        allowed_schemes.erase(new_end, allowed_schemes.end());
+    }
 
     void add_workspace(std::string_view name, std::string_view uri) override
     {
@@ -1004,6 +1019,8 @@ private:
                         .first->second;
         ows.ws.set_message_consumer(m_message_consumer);
         ows.ws.include_advisory_configuration_diagnostics(m_include_advisory_cfg_diags);
+
+        recompute_allow_list();
 
         auto& new_workspace = m_work_queue.emplace_back(work_item {
             next_unique_id(),
@@ -1040,6 +1057,9 @@ private:
             m_active_task = {};
 
         m_workspaces.erase(it);
+
+        recompute_allow_list();
+
         notify_diagnostics_consumers();
     }
 
@@ -1094,7 +1114,6 @@ private:
             for (auto& [_, ows] : m_workspaces)
                 ows.ws.invalidate_external_configuration(res);
             m_implicit_workspace.ws.invalidate_external_configuration(res);
-            m_quiet_implicit_workspace.ws.invalidate_external_configuration(res);
         }
         else
         {
@@ -1110,6 +1129,20 @@ private:
             resp.provide(ws.retrieve_output(doc_loc));
         });
     }
+
+public:
+    explicit workspace_manager_impl(
+        workspace_manager_external_file_requests* external_file_requests, bool vscode_extensions)
+        : m_external_file_requests(external_file_requests)
+        , m_file_manager(*this)
+        , m_implicit_workspace(m_file_manager, m_global_config, this)
+        , m_vscode_extensions(vscode_extensions)
+    {}
+    workspace_manager_impl(const workspace_manager_impl&) = delete;
+    workspace_manager_impl& operator=(const workspace_manager_impl&) = delete;
+
+    workspace_manager_impl(workspace_manager_impl&&) = delete;
+    workspace_manager_impl& operator=(workspace_manager_impl&&) = delete;
 };
 
 workspace_manager* create_workspace_manager_impl(
