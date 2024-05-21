@@ -21,25 +21,6 @@
 #include "utils/path_conversions.h"
 #include "utils/platform.h"
 
-NLOHMANN_JSON_NAMESPACE_BEGIN
-template<>
-struct adl_serializer<hlasm_plugin::parser_library::lib_config>
-{
-    static void from_json(const nlohmann::json& config, hlasm_plugin::parser_library::lib_config& cfg)
-    {
-        cfg = {};
-
-        auto found = config.find("diagnosticsSuppressLimit");
-        if (found != config.end() && found->is_number())
-        {
-            cfg.diag_supress_limit = found->get<int64_t>();
-            if (cfg.diag_supress_limit < 0)
-                cfg.diag_supress_limit = 0;
-        }
-    }
-};
-NLOHMANN_JSON_NAMESPACE_END
-
 namespace hlasm_plugin::language_server::lsp {
 
 feature_workspace_folders::feature_workspace_folders(
@@ -176,7 +157,8 @@ void feature_workspace_folders::send_configuration_request()
     static const nlohmann::json config_request_args { {
         "items",
         nlohmann::json::array_t {
-            { { "section", "hlasm" } },
+            { { "section", "hlasm.diagnosticsSuppressLimit" } },
+            nlohmann::json::object(),
         },
     } };
     response_->request(
@@ -225,13 +207,23 @@ void feature_workspace_folders::register_file_change_notifictions()
 
 void feature_workspace_folders::configuration(const nlohmann::json& params) const
 {
-    if (params.size() != 1)
+    if (params.size() != 2)
     {
         LOG_WARNING("Unexpected configuration response received.");
         return;
     }
 
-    ws_mngr_.configuration_changed(parser_library::lib_config(params[0]));
+    const auto& suppressLimit = params[0];
+    parser_library::lib_config cfg;
+    if (suppressLimit.is_number())
+    {
+        cfg.diag_supress_limit = suppressLimit.get<int64_t>();
+        if (cfg.diag_supress_limit < 0)
+            cfg.diag_supress_limit = 0;
+    }
+    const auto& full_cfg = params[1];
+
+    ws_mngr_.configuration_changed(cfg, full_cfg.dump());
 }
 
 void feature_workspace_folders::did_change_configuration(const nlohmann::json&) { send_configuration_request(); }

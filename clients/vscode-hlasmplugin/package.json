@@ -25,7 +25,8 @@
     "multi-root ready"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onFileSystem:broadcommfd.hlasm-language-support-configuration"
   ],
   "icon": "resources/logo.png",
   "main": "./dist/extension.js",
@@ -440,6 +441,22 @@
       "type": "object",
       "title": "HLASM Language Support Configuration",
       "properties": {
+        "hlasm.proc_grps": {
+          "scope": "resource",
+          "description": "Processor group configuration",
+          "$ref": "broadcommfd.hlasm-language-support-configuration:///schema/proc_grps.schema.json",
+          "default": {
+            "pgroups": []
+          }
+        },
+        "hlasm.pgm_conf": {
+          "scope": "resource",
+          "description": "Program configuration",
+          "$ref": "broadcommfd.hlasm-language-support-configuration:///schema/pgm_conf.schema.json",
+          "default": {
+            "pgms": []
+          }
+        },
         "hlasm.arguments": {
           "type": "array",
           "default": [],
@@ -452,7 +469,7 @@
           "type": "boolean",
           "default": true,
           "description": "Whether or not to send file events to HLASM LS extension (file created, changed or deleted). This can be disabled for performance consideration.",
-          "deprecationMessage": "Deprected: Language server follows dynamic registration options"
+          "deprecationMessage": "Deprecated: Language server follows dynamic registration options"
         },
         "hlasm.continuationHandling": {
           "type": "boolean",

@@ -72,7 +72,7 @@ public:
     library_local(file_manager& file_manager,
         utils::resource::resource_location lib_loc,
         library_local_options options,
-        utils::resource::resource_location proc_grps_loc);
+        utils::resource::resource_location err_loc);
 
     library_local(const library_local&) = delete;
     library_local& operator=(const library_local&) = delete;
@@ -123,7 +123,7 @@ private:
     atomic_files_collection_t m_files_collection;
     std::vector<std::string> m_extensions;
     bool m_optional = false;
-    utils::resource::resource_location m_proc_grps_loc;
+    utils::resource::resource_location m_err_loc;
 
     files_collection_t load_files(std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
         utils::path::list_directory_rc>);

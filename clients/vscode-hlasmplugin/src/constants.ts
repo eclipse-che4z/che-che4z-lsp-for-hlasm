@@ -36,3 +36,4 @@ export const debugTypeHlasm = 'hlasm';
 export const schemeExternalFiles = 'hlasm-external';
 export const schemeVirtualFiles = 'hlasm';
 export const schemeOutput = 'hlasm-output';
+export const schemaConfiguration = 'broadcommfd.hlasm-language-support-configuration';

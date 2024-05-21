@@ -52,7 +52,7 @@ library_local::library_local(file_manager& file_manager,
     , m_lib_loc(std::move(lib_loc))
     , m_extensions(std::move(options.extensions))
     , m_optional(options.optional_library)
-    , m_proc_grps_loc(std::move(proc_grps_loc))
+    , m_err_loc(std::move(proc_grps_loc))
 {
     if (m_extensions.size())
         adjust_extensions_vector(m_extensions);
@@ -64,7 +64,7 @@ library_local::library_local(library_local&& l) noexcept
     , m_files_collection(l.m_files_collection.exchange(nullptr))
     , m_extensions(std::move(l.m_extensions))
     , m_optional(l.m_optional)
-    , m_proc_grps_loc(std::move(l.m_proc_grps_loc))
+    , m_err_loc(std::move(l.m_err_loc))
 {}
 
 utils::task library_local::refresh()
@@ -136,13 +136,13 @@ library_local::files_collection_t library_local::load_files(
             break;
         case hlasm_plugin::utils::path::list_directory_rc::not_exists:
             if (!m_optional)
-                new_diags.push_back(error_L0002(m_proc_grps_loc, m_lib_loc));
+                new_diags.push_back(error_L0002(m_err_loc, m_lib_loc));
             break;
         case hlasm_plugin::utils::path::list_directory_rc::not_a_directory:
-            new_diags.push_back(error_L0002(m_proc_grps_loc, m_lib_loc));
+            new_diags.push_back(error_L0002(m_err_loc, m_lib_loc));
             break;
         case hlasm_plugin::utils::path::list_directory_rc::other_failure:
-            new_diags.push_back(error_L0001(m_proc_grps_loc, m_lib_loc));
+            new_diags.push_back(error_L0001(m_err_loc, m_lib_loc));
             break;
     }
 
@@ -193,7 +193,7 @@ library_local::files_collection_t library_local::load_files(
     }
 
     if (conflict_count > 0)
-        new_diags.push_back(warning_L0004(m_proc_grps_loc, m_lib_loc, file_name_conflicts, !m_extensions.empty()));
+        new_diags.push_back(warning_L0004(m_err_loc, m_lib_loc, file_name_conflicts, !m_extensions.empty()));
 
     m_files_collection.store(new_state);
 

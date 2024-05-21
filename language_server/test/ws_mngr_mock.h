@@ -68,7 +68,7 @@ public:
         (std::string_view, workspace_manager_response<std::span<const document_symbol_item>>),
         (override));
 
-    MOCK_METHOD(void, configuration_changed, (const lib_config& new_config), (override));
+    MOCK_METHOD(void, configuration_changed, (const lib_config& new_config, std::string_view full_cfg), (override));
 
     MOCK_METHOD(void, register_diagnostics_consumer, (diagnostics_consumer * consumer), (override));
     MOCK_METHOD(void, unregister_diagnostics_consumer, (diagnostics_consumer * consumer), (override));

@@ -23,6 +23,7 @@
 #include "nlohmann/json.hpp"
 #include "utils/platform.h"
 
+using namespace ::testing;
 using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
 using hlasm_plugin::utils::platform::is_windows;
@@ -44,23 +45,23 @@ TEST(workspace_folders, did_change_workspace_folders)
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
-    EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("OneDrive"), ::testing::StrEq(ws1_uri)));
+    EXPECT_CALL(ws_mngr, add_workspace(StrEq("OneDrive"), StrEq(ws1_uri)));
 
     auto params1 =
         nlohmann::json::parse(R"({"event":{"added":[{"uri":")" + ws1_uri + R"(","name":"OneDrive"}],"removed":[]}})");
     notifs["workspace/didChangeWorkspaceFolders"].as_notification_handler()(params1);
 
-    EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("TwoDrive"), ::testing::StrEq(ws2_uri)));
-    EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("ThreeDrive"), ::testing::StrEq(ws3_uri)));
-    EXPECT_CALL(ws_mngr, remove_workspace(::testing::StrEq(ws1_uri)));
+    EXPECT_CALL(ws_mngr, add_workspace(StrEq("TwoDrive"), StrEq(ws2_uri)));
+    EXPECT_CALL(ws_mngr, add_workspace(StrEq("ThreeDrive"), StrEq(ws3_uri)));
+    EXPECT_CALL(ws_mngr, remove_workspace(StrEq(ws1_uri)));
 
     auto params2 = nlohmann::json::parse(R"({"event":{"added":[{"uri":")" + ws2_uri + R"(","name":"TwoDrive"},{"uri":")"
         + ws3_uri + R"(","name":"ThreeDrive"}],"removed":[{"uri":")" + ws1_uri + R"(","name":"OneDrive"}]}})");
     notifs["workspace/didChangeWorkspaceFolders"].as_notification_handler()(params2);
 
-    EXPECT_CALL(ws_mngr, remove_workspace(::testing::StrEq(ws2_uri)));
-    EXPECT_CALL(ws_mngr, remove_workspace(::testing::StrEq(ws3_uri)));
-    EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("FourDrive"), ::testing::StrEq(ws4_uri)));
+    EXPECT_CALL(ws_mngr, remove_workspace(StrEq(ws2_uri)));
+    EXPECT_CALL(ws_mngr, remove_workspace(StrEq(ws3_uri)));
+    EXPECT_CALL(ws_mngr, add_workspace(StrEq("FourDrive"), StrEq(ws4_uri)));
     auto params3 = nlohmann::json::parse(R"({"event":{"added":[{"uri":")" + ws4_uri
         + R"(","name":"FourDrive"}],"removed":[{"uri":")" + ws2_uri + R"(","name":"TwoDrive"},{"uri":")" + ws3_uri
         + R"(","name":"ThreeDrive"}]}})");
@@ -113,8 +114,8 @@ TEST(workspace_folders, initialize_folders)
                      "workspaceFolders":[{"uri":")"
         + ws1_uri + R"(","name":"one"},{"uri":")" + ws2_uri + R"(","name":"two"}]})");
 
-    EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("one"), ::testing::StrEq(ws1_uri)));
-    EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("two"), ::testing::StrEq(ws2_uri)));
+    EXPECT_CALL(ws_mngr, add_workspace(StrEq("one"), StrEq(ws1_uri)));
+    EXPECT_CALL(ws_mngr, add_workspace(StrEq("two"), StrEq(ws2_uri)));
     f.initialize_feature(init2);
     f.initialized();
 
@@ -125,7 +126,7 @@ TEST(workspace_folders, initialize_folders)
         + ws1_uri
         + R"(","capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true,
                      "workspaceFolders":false},"textDocument":{"publishDiagnostics":{"relatedInformation":true},"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"contextSupport":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true,"documentationFormat":["markdown","plaintext"],"deprecatedSupport":true,"preselectSupport":true},"completionItemKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}},"hover":{"dynamicRegistration":true,"contentFormat":["markdown","plaintext"]},"signatureHelp":{"dynamicRegistration":true,"signatureInformation":{"documentationFormat":["markdown","plaintext"]}},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]},"hierarchicalDocumentSymbolSupport":true},"codeAction":{"dynamicRegistration":true,"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports"]}}},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true},"typeDefinition":{"dynamicRegistration":true},"implementation":{"dynamicRegistration":true},"colorProvider":{"dynamicRegistration":true},"foldingRange":{"dynamicRegistration":true,"rangeLimit":5000,"lineFoldingOnly":true}}},"trace":"off"})");
-    EXPECT_CALL(ws_mngr, add_workspace(_, ::testing::StrEq(ws1_uri)));
+    EXPECT_CALL(ws_mngr, add_workspace(_, StrEq(ws1_uri)));
     f.initialize_feature(init3);
     f.initialized();
 
@@ -135,7 +136,7 @@ TEST(workspace_folders, initialize_folders)
         + ws1_path_json_string + R"(",
                      "rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true,
                      "workspaceFolders":false},"textDocument":{"publishDiagnostics":{"relatedInformation":true},"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"contextSupport":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true,"documentationFormat":["markdown","plaintext"],"deprecatedSupport":true,"preselectSupport":true},"completionItemKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}},"hover":{"dynamicRegistration":true,"contentFormat":["markdown","plaintext"]},"signatureHelp":{"dynamicRegistration":true,"signatureInformation":{"documentationFormat":["markdown","plaintext"]}},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]},"hierarchicalDocumentSymbolSupport":true},"codeAction":{"dynamicRegistration":true,"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports"]}}},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true},"typeDefinition":{"dynamicRegistration":true},"implementation":{"dynamicRegistration":true},"colorProvider":{"dynamicRegistration":true},"foldingRange":{"dynamicRegistration":true,"rangeLimit":5000,"lineFoldingOnly":true}}},"trace":"off"})");
-    EXPECT_CALL(ws_mngr, add_workspace(_, ::testing::StrEq(ws1_uri)));
+    EXPECT_CALL(ws_mngr, add_workspace(_, StrEq(ws1_uri)));
     f.initialize_feature(init4);
     f.initialized();
 
@@ -144,7 +145,7 @@ TEST(workspace_folders, initialize_folders)
                      "rootPath":")"
         + ws1_path_json_string
         + R"(","capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true},"textDocument":{"publishDiagnostics":{"relatedInformation":true},"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"contextSupport":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true,"documentationFormat":["markdown","plaintext"],"deprecatedSupport":true,"preselectSupport":true},"completionItemKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}},"hover":{"dynamicRegistration":true,"contentFormat":["markdown","plaintext"]},"signatureHelp":{"dynamicRegistration":true,"signatureInformation":{"documentationFormat":["markdown","plaintext"]}},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]},"hierarchicalDocumentSymbolSupport":true},"codeAction":{"dynamicRegistration":true,"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports"]}}},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true},"typeDefinition":{"dynamicRegistration":true},"implementation":{"dynamicRegistration":true},"colorProvider":{"dynamicRegistration":true},"foldingRange":{"dynamicRegistration":true,"rangeLimit":5000,"lineFoldingOnly":true}}},"trace":"off"})");
-    EXPECT_CALL(ws_mngr, add_workspace(_, ::testing::StrEq(ws1_uri)));
+    EXPECT_CALL(ws_mngr, add_workspace(_, StrEq(ws1_uri)));
     f.initialize_feature(init5);
     f.initialized();
 }
@@ -196,24 +197,24 @@ TEST(workspace_folders, did_change_configuration)
         {
             "items",
             nlohmann::json::array_t {
-                {
-                    { "section", "hlasm" },
-                },
+                { { "section", "hlasm.diagnosticsSuppressLimit" } },
+                nlohmann::json::object(),
             },
         },
     };
 
-    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, ::testing::_, ::testing::_))
-        .WillOnce(::testing::SaveArg<2>(&handler));
+    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, _, _)).WillOnce(SaveArg<2>(&handler));
 
     methods["workspace/didChangeConfiguration"].as_notification_handler()("{}"_json);
 
     parser_library::lib_config expected_config;
     expected_config.diag_supress_limit = 42;
 
-    EXPECT_CALL(ws_mngr, configuration_changed(::testing::Eq(expected_config)));
+    EXPECT_CALL(ws_mngr,
+        configuration_changed(Eq(expected_config),
+            Eq(R"({"hlasm":{"diagnosticsSuppressLimit":42,"pgm_conf":{"pgms":[]},"proc_grps":{"pgroups":[]}}})")));
 
-    handler(R"([{"diagnosticsSuppressLimit":42}])"_json);
+    handler(R"([42,{"hlasm":{"diagnosticsSuppressLimit":42,"pgm_conf":{"pgms":[]},"proc_grps":{"pgroups":[]}}}])"_json);
 }
 
 TEST(workspace_folders, did_change_configuration_with_requests)
@@ -229,7 +230,7 @@ TEST(workspace_folders, did_change_configuration_with_requests)
 
     EXPECT_CALL(req_mock, request_workspace_configuration(StrEq("testurl"), _));
 
-    ws_mngr->configuration_changed({});
+    ws_mngr->configuration_changed({}, {});
 }
 
 TEST(workspace_folders, did_change_configuration_empty_configuration_params)
@@ -251,17 +252,17 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
         {
             "items",
             nlohmann::json::array_t {
-                { { "section", "hlasm" } },
+                { { "section", "hlasm.diagnosticsSuppressLimit" } },
+                nlohmann::json::object(),
             },
         },
     };
 
-    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, ::testing::_, ::testing::_))
-        .WillOnce(::testing::SaveArg<2>(&handler));
+    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, _, _)).WillOnce(SaveArg<2>(&handler));
 
     methods["workspace/didChangeConfiguration"].as_notification_handler()("{}"_json);
 
-    EXPECT_CALL(ws_mngr, configuration_changed(::testing::_)).Times(0);
+    EXPECT_CALL(ws_mngr, configuration_changed(_, _)).Times(0);
 
     handler(R"([])"_json);
 }

@@ -166,9 +166,11 @@ export class ConfigurationsHandler {
         return generateConfigurationFilesCodeActions(
             !configNodes.procGrps.exists,
             !(configNodes.pgmConf.exists || configNodes.bridgeJson.exists || configNodes.ebgFolder.exists),
-            configNodes,
-            workspace.uri,
-            documentRelativeUri)
+            {
+                nodes: configNodes,
+                ws: workspace.uri,
+                documentRelativeUri
+            })
             .map(x => new vscode.CodeLens(document.lineAt(0).range, x.command));
     }
 }

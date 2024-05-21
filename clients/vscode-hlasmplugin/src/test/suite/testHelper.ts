@@ -69,6 +69,16 @@ export async function showDocument(workspace_file: string, language_id: string |
     return result;
 }
 
+export async function showUntitledDocument(content: string, language: string | undefined = undefined) {
+    // open and show the file
+    let document = await vscode.workspace.openTextDocument({ content, language });
+
+    const visible = activeEditorChanged();
+    const result = { editor: await vscode.window.showTextDocument(document, { preview: false }), document };
+    assert.strictEqual(await visible, result.editor);
+    return result;
+}
+
 export async function closeAllEditors() {
     await vscode.commands.executeCommand('workbench.action.files.revert');
     // workbench.action.closeAllEditors et al. saves content

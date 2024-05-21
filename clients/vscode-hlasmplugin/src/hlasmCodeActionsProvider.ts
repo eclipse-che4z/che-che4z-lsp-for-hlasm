@@ -36,19 +36,19 @@ export class HLASMCodeActionsProvider implements vscode.CodeActionProvider {
         if (E049.length > 0)
             result.push(...await generateOpcodeSuggestionsCodeActions(E049, this.client, document));
 
-        const wsUri = vscode.workspace.getWorkspaceFolder(document.uri)?.uri;
-        if (!wsUri)
-            return result;
-        const documentRelativeUri = vscode.workspace.asRelativePath(document.uri);
+        const ws = vscode.workspace.getWorkspaceFolder(document.uri)?.uri;
 
-        const configNodes = await retrieveConfigurationNodes(wsUri, document.uri);
+        const config = ws
+            ? { nodes: await retrieveConfigurationNodes(ws, document.uri), ws, documentRelativeUri: vscode.workspace.asRelativePath(document.uri) }
+            : { nodes: await retrieveConfigurationNodes(undefined, document.uri) };
 
-        if (E049.length > 0 && configNodes.procGrps.exists)
+        if (E049.length > 0 && config.nodes.procGrps.exists)
             result.push(...generateDownloadDependenciesCodeActions());
 
         const suggestProcGrpsChange = E049.length > 0;
         const suggestPgmConfChange = E049.length > 0 || context.diagnostics.some(x => x.code === 'SUP');
-        result.push(...generateConfigurationFilesCodeActions(suggestProcGrpsChange, suggestPgmConfChange, configNodes, wsUri, documentRelativeUri));
+
+        result.push(...generateConfigurationFilesCodeActions(suggestProcGrpsChange, suggestPgmConfChange, config));
 
         return result;
     }

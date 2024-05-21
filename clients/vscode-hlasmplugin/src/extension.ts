@@ -45,6 +45,7 @@ import { registerListingServices } from './hlasmListingServices';
 import { MementoKey } from './mementoKeys';
 import { registerOutputDocumentContentProvider, showOutputCommand } from './hlasmOutputContentProvider';
 import { setServerLogLevel } from './hlasmLogLevel';
+import { registerConfigurationFileSystemProvider } from './configurationSchemaFileSystem';
 
 const sleep = (ms: number) => {
     return new Promise((resolve) => { setTimeout(resolve, ms) });
@@ -84,6 +85,8 @@ function whenString(x: any): string | undefined {
  * activates the extension
  */
 export async function activate(context: vscode.ExtensionContext): Promise<HlasmExtension> {
+    registerConfigurationFileSystemProvider(context.extensionUri);
+
     const serverVariant = getConfig<ServerVariant>('serverVariant', 'native');
     const version = whenString(context.extension.packageJSON?.version);
 

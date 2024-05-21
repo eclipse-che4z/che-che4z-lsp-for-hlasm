@@ -133,7 +133,7 @@ public:
     virtual void document_symbol(
         std::string_view document_uri, workspace_manager_response<std::span<const document_symbol_item>> resp) = 0;
 
-    virtual void configuration_changed(const lib_config& new_config) = 0;
+    virtual void configuration_changed(const lib_config& new_config, std::string_view full_cfg) = 0;
 
     // implementation of observer pattern - register consumer.
     virtual void register_diagnostics_consumer(diagnostics_consumer* consumer) = 0;

@@ -123,4 +123,14 @@ suite('Code actions', () => {
 
         await helper.closeAllEditors();
     }).timeout(15000).slow(10000);
+
+    test('Without workspace', async () => {
+        const { document } = await helper.showUntitledDocument(' MAC\n END', 'hlasm');
+
+        const codeActionsList = await queryCodeActions(document.uri, new vscode.Range(0, 1, 0, 3), 500);
+
+        assert.strictEqual(codeActionsList.map(x => x.title).filter(x => x.indexOf('settings key') != -1).length, 2);
+
+        await helper.closeAllEditors();
+    }).timeout(15000).slow(10000);
 });

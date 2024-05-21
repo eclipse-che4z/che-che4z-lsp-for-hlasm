@@ -4,6 +4,7 @@
 
 #### Added
 - Validate even-odd register requirements of machine instructions
+- Support configuration in user or workspace settings
 
 #### Fixed
 - Accept additional URI schemes based on currently opened workspaces
