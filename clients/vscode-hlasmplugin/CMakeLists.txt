@@ -37,7 +37,7 @@ else()
 endif()
 
 if(EMSCRIPTEN)
-    list(APPEND BIN_EXTRAS "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.js" "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.worker.js" "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.wasm")
+    list(APPEND BIN_EXTRAS "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.js" "$<TARGET_FILE_DIR:hlasm_language_server>/hlasm_language_server.wasm")
 endif()
 
 

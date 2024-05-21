@@ -50,3 +50,4 @@ BinPackParameters: false
 
 SpaceInEmptyBlock: false
 AlwaysBreakTemplateDeclarations: Yes
+RequiresClausePosition: SingleLine

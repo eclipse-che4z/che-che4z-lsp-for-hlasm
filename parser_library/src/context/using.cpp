@@ -108,9 +108,9 @@ size_t using_collection::using_entry::compute_context_drop(register_t d)
     return invalidated;
 }
 
-auto using_collection::using_drop_definition::abs_or_reloc(
-    const using_collection& coll, index_t<mach_expression> e, bool abs_is_register)
-    -> std::pair<std::optional<qualified_address>, range>
+auto using_collection::using_drop_definition::abs_or_reloc(const using_collection& coll,
+    index_t<mach_expression> e,
+    bool abs_is_register) -> std::pair<std::optional<qualified_address>, range>
 {
     if (!e)
         return { std::nullopt, range() };
@@ -136,8 +136,8 @@ auto using_collection::using_drop_definition::abs_or_reloc(
 
     return { std::nullopt, rng };
 }
-auto using_collection::using_drop_definition::reg_or_label(const using_collection& coll, index_t<mach_expression> e)
-    -> std::pair<std::variant<std::monostate, qualified_id, register_t>, range>
+auto using_collection::using_drop_definition::reg_or_label(const using_collection& coll,
+    index_t<mach_expression> e) -> std::pair<std::variant<std::monostate, qualified_id, register_t>, range>
 {
     if (!e)
         return { std::monostate(), range() };

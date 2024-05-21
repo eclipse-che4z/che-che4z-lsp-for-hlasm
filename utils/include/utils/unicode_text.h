@@ -100,33 +100,18 @@ template<size_t n>
 constexpr counter_index_t<n> counter_index = {};
 
 template<typename T>
-concept HasCounter = requires(const T& c)
-{
-    {
-        c.counter()
-    }
-    noexcept->std::same_as<size_t>;
+concept HasCounter = requires(const T& c) {
+    { c.counter() } noexcept -> std::same_as<size_t>;
 };
 template<typename T, size_t n>
-concept HasCounters = requires(const T& c)
-{
-    {
-        c.counter(counter_index<n>)
-    }
-    noexcept->std::same_as<size_t>;
+concept HasCounters = requires(const T& c) {
+    { c.counter(counter_index<n>) } noexcept -> std::same_as<size_t>;
 };
 
 template<typename T>
-concept ByteCounter = std::semiregular<T> && HasCounter<T> && requires(T t, unsigned char c)
-{
-    {
-        t.add(c)
-    }
-    noexcept;
-    {
-        t.remove(c)
-    }
-    noexcept;
+concept ByteCounter = std::semiregular<T> && HasCounter<T> && requires(T t, unsigned char c) {
+    { t.add(c) } noexcept;
+    { t.remove(c) } noexcept;
 };
 
 class utf8_dummy_counter
@@ -218,11 +203,9 @@ public:
     template<size_t n>
     size_t counter(counter_index_t<n> = {}) const noexcept
     {
-        return [this]<size_t... idx>(std::index_sequence<idx...>)
-        {
+        return [this]<size_t... idx>(std::index_sequence<idx...>) {
             return ((idx == n ? static_cast<const Counters*>(this)->counter() : 0) + ...);
-        }
-        (std::index_sequence_for<Counters...>());
+        }(std::index_sequence_for<Counters...>());
     }
     size_t counter() const noexcept { return counter(counter_index<0>); }
 };
@@ -250,7 +233,8 @@ public:
     {}
 
     explicit utf8_iterator(BidirIt it, size_t counter) requires std::is_constructible_v<Counter, size_t>
-        : Counter(counter), m_base(std::move(it))
+        : Counter(counter)
+        , m_base(std::move(it))
     {}
 
     explicit utf8_iterator(BidirIt it, Counter counter)
@@ -301,18 +285,18 @@ public:
     auto operator->() const noexcept requires std::is_pointer_v<BidirIt> { return m_base; }
     auto operator->() const noexcept(noexcept(m_base.operator->())) { return m_base.operator->(); }
 
-    friend difference_type operator-(
-        const utf8_iterator& l, const utf8_iterator& r) noexcept requires std::sized_sentinel_for<BidirIt, BidirIt>
+    friend difference_type operator-(const utf8_iterator& l, const utf8_iterator& r) noexcept
+        requires std::sized_sentinel_for<BidirIt, BidirIt>
     {
         return l.m_base - r.m_base;
     }
-    friend difference_type operator-(
-        const BidirIt& l, const utf8_iterator& r) noexcept requires std::sized_sentinel_for<BidirIt, BidirIt>
+    friend difference_type operator-(const BidirIt& l, const utf8_iterator& r) noexcept
+        requires std::sized_sentinel_for<BidirIt, BidirIt>
     {
         return l - r.m_base;
     }
-    friend difference_type operator-(
-        const utf8_iterator& l, const BidirIt& r) noexcept requires std::sized_sentinel_for<BidirIt, BidirIt>
+    friend difference_type operator-(const utf8_iterator& l, const BidirIt& r) noexcept
+        requires std::sized_sentinel_for<BidirIt, BidirIt>
     {
         return l.m_base - r;
     }

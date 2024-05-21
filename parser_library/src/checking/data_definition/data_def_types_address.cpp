@@ -26,8 +26,15 @@ using namespace hlasm_plugin::parser_library;
 //***************************   types A, Y   *****************************//
 
 data_def_type_A_AD_Y::data_def_type_A_AD_Y(char type, char extension, alignment align, uint64_t implicit_length)
-    : data_def_type(
-        type, extension, no_check(), no_check(), n_a(), n_a(), nominal_value_type::EXPRESSIONS, align, implicit_length)
+    : data_def_type(type,
+          extension,
+          no_check(),
+          no_check(),
+          n_a(),
+          n_a(),
+          nominal_value_type::EXPRESSIONS,
+          align,
+          implicit_length)
 {}
 
 data_def_type_A::data_def_type_A()
@@ -128,14 +135,14 @@ bool data_def_type_Y::check(
 
 data_def_type_S_SY::data_def_type_S_SY(char extension, int size)
     : data_def_type('S',
-        extension,
-        n_a(),
-        modifier_bound { size, size },
-        n_a(),
-        n_a(),
-        nominal_value_type::ADDRESS_OR_EXPRESSION,
-        halfword,
-        (unsigned long long)size)
+          extension,
+          n_a(),
+          modifier_bound { size, size },
+          n_a(),
+          n_a(),
+          nominal_value_type::ADDRESS_OR_EXPRESSION,
+          halfword,
+          (unsigned long long)size)
 {}
 
 data_def_type_S::data_def_type_S()
@@ -228,7 +235,7 @@ bool data_def_type_SY::check(
 data_def_type_single_symbol::data_def_type_single_symbol(
     char type, char extension, modifier_spec length_bound, alignment align, uint64_t implicit_length)
     : data_def_type(
-        type, extension, n_a(), length_bound, n_a(), n_a(), nominal_value_type::EXPRESSIONS, align, implicit_length)
+          type, extension, n_a(), length_bound, n_a(), n_a(), nominal_value_type::EXPRESSIONS, align, implicit_length)
 {}
 
 bool hlasm_plugin::parser_library::checking::data_def_type_single_symbol::expects_single_symbol() const { return true; }

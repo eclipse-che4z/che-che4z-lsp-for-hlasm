@@ -79,9 +79,7 @@ void server::respond_error(const request_id& request_seq,
     });
 }
 
-void server::register_cancellable_request(const request_id&, request_invalidator)
-{ /* not supported in dap */
-}
+void server::register_cancellable_request(const request_id&, request_invalidator) { /* not supported in dap */ }
 
 void server::message_received(const nlohmann::json& message)
 {

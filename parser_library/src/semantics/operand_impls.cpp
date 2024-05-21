@@ -666,7 +666,7 @@ data_def_operand::data_def_operand(std::shared_ptr<const expressions::data_defin
 
 data_def_operand_inline::data_def_operand_inline(expressions::data_definition val, range operand_range)
     : data_def_operand(
-        std::shared_ptr<const expressions::data_definition>(std::shared_ptr<const void>(), &data_def), operand_range)
+          std::shared_ptr<const expressions::data_definition>(std::shared_ptr<const void>(), &data_def), operand_range)
     , data_def(std::move(val))
 {}
 

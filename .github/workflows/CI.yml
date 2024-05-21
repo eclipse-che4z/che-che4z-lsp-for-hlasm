@@ -36,11 +36,11 @@ defaults:
 jobs:
   formal-checks:
     name: Checks
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Run clang-format
-        run: clang-format-14 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
+        run: clang-format-18 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
       - name: Check format
         run: |
           if [ -s clang-format-output.txt ]
@@ -55,7 +55,7 @@ jobs:
 
   release-info:
     name: Update version and changelogs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       issues: write
@@ -97,7 +97,7 @@ jobs:
 
   generate_grammar:
     name: Generate grammar
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [formal-checks]
     steps:
       - uses: actions/checkout@v4
@@ -126,7 +126,7 @@ jobs:
 
   sanitizer-builds:
     name: Build with sanitizers
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [generate_grammar]
     strategy:
       matrix:
@@ -145,10 +145,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install ninja-build xvfb
-      - name: Reduce ASLR entropy #https://github.com/actions/runner-images/issues/9491
-        run: sudo sysctl -w vm.mmap_rnd_bits=28
       - name: Configure
-        run: cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
+        run: cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
         working-directory: build
       - name: Build
         run: cmake --build .
@@ -171,7 +169,7 @@ jobs:
 
   aarch64-linux-musl:
     name: Build Linux ARM64 toolchain
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     container: alpine:3.19
     steps:
       - uses: actions/checkout@v4
@@ -194,19 +192,19 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             native: linux_x64
             container: alpine:3.19
             dbg-strip: objcopy --only-keep-debug hlasm_language_server hlasm_language_server.dbg && objcopy --strip-unneeded hlasm_language_server && objcopy --add-gnu-debuglink=hlasm_language_server.dbg hlasm_language_server
             dbg-pattern: build/bin/hlasm_language_server.dbg
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             native: linux_arm64
             container: alpine:3.19
             dbg-strip: aarch64-linux-musl-objcopy --only-keep-debug hlasm_language_server hlasm_language_server.dbg && aarch64-linux-musl-objcopy --strip-unneeded hlasm_language_server && aarch64-linux-musl-objcopy --add-gnu-debuglink=hlasm_language_server.dbg hlasm_language_server
             dbg-pattern: build/bin/hlasm_language_server.dbg
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             native: wasm
-            container: emscripten/emsdk:3.1.46
+            container: emscripten/emsdk:3.1.59
             artifacts-ext: .*
           - os: windows-2022
             native: win32_x64
@@ -299,7 +297,10 @@ jobs:
           - os: ubuntu-22.04
             native: linux_x64
             chmod: true
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
+            native: linux_x64
+            chmod: true
+          - os: ubuntu-24.04
             native: linux_arm64
             chmod: true
           - os: windows-2022
@@ -349,7 +350,7 @@ jobs:
 
   VSIX-web:
     name: Test and VSIX (Web)
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [build-matrix, release-info]
     steps:
       - uses: actions/checkout@v4
@@ -386,7 +387,7 @@ jobs:
           path: ${{ env.CLIENT_DIR }}/hlasm-language-support-web.vsix
 
   VSIX:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [build-matrix, release-info]
     steps:
       - uses: actions/checkout@v4
@@ -457,7 +458,7 @@ jobs:
 
   release:
     name: Release VSIXs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       issues: write
@@ -553,7 +554,7 @@ jobs:
 
   theia-test:
     name: Theia Integration Test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: VSIX
     strategy:
       matrix:

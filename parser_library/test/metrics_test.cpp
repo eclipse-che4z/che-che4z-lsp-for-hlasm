@@ -65,8 +65,8 @@ public:
        LR    &VAR,&VAR
        MEND
 )" },
-            { "COPYFILE",
-                R"(R2 EQU 2
+              { "COPYFILE",
+                  R"(R2 EQU 2
             LR R2,R2)" } }) {};
     void SetUp() override {}
     void TearDown() override {}

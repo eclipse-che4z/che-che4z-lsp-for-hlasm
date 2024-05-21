@@ -32,9 +32,10 @@ struct trivial_merger
 };
 
 template<typename T, typename TargetVector, typename SourceIterator>
-concept merge_key_comparator = std::is_same_v<std::strong_ordering,
-    std::invoke_result_t<T, typename TargetVector::reference, typename TargetVector::reference>> && std::
-    is_same_v<std::strong_ordering,
+concept merge_key_comparator =
+    std::is_same_v<std::strong_ordering,
+        std::invoke_result_t<T, typename TargetVector::reference, typename TargetVector::reference>>
+    && std::is_same_v<std::strong_ordering,
         std::invoke_result_t<T,
             typename TargetVector::reference,
             typename std::iterator_traits<SourceIterator>::reference>>;

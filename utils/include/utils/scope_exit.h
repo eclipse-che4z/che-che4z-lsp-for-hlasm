@@ -17,12 +17,8 @@
 
 namespace hlasm_plugin::utils {
 template<typename T>
-concept scope_exit_handler = requires(T t)
-{
-    {
-        t()
-    }
-    noexcept;
+concept scope_exit_handler = requires(T t) {
+    { t() } noexcept;
 };
 
 template<scope_exit_handler T>

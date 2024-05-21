@@ -64,7 +64,7 @@ struct lsp_context_instr : public ::testing::Test
 
 namespace {
 auto label_addfrr_compare = [](const auto& item) { return item.label == "ADDFRR"; };
-}
+} // namespace
 TEST_F(lsp_context_instr, ADDFRR_not_loaded)
 {
     auto comp_list = get_completion_list(instruction_set_version::Z15);

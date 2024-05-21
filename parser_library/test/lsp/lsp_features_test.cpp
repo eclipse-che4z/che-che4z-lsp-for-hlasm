@@ -36,7 +36,7 @@ public:
        MAC   &VAR
        LR    &VAR,&VAR
        MEND)" },
-            { "COPYFILE", R"(R2 EQU 2
+              { "COPYFILE", R"(R2 EQU 2
             LR R2,R2)" } })
         , a(contents, analyzer_options { SOURCE_FILE, &lib_provider }) {};
 

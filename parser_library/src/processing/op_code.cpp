@@ -57,8 +57,8 @@ processing_status_cache_key::processing_status_cache_key(
 
 processing_status_cache_key::processing_status_cache_key(const processing_status& s) noexcept
     : processing_status_cache_key(s,
-        s.second.type != context::instruction_type::MACH
-            ? common_processing_status_cache_key_details
-            : get_processing_status_cache_key_details(s.second.value.to_string_view()))
+          s.second.type != context::instruction_type::MACH
+              ? common_processing_status_cache_key_details
+              : get_processing_status_cache_key_details(s.second.value.to_string_view()))
 {}
 } // namespace hlasm_plugin::parser_library::processing

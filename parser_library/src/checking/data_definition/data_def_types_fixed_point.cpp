@@ -27,14 +27,14 @@ using namespace hlasm_plugin::parser_library;
 
 data_def_type_H_F_FD::data_def_type_H_F_FD(char type, char extension, uint8_t word_length)
     : data_def_type(type,
-        extension,
-        modifier_bound { 1, 64 },
-        modifier_bound { 1, 8 },
-        modifier_bound { -187, 346 },
-        modifier_bound { -85, 75 },
-        nominal_value_type::STRING,
-        { 0, word_length },
-        word_length)
+          extension,
+          modifier_bound { 1, 64 },
+          modifier_bound { 1, 8 },
+          modifier_bound { -187, 346 },
+          modifier_bound { -85, 75 },
+          nominal_value_type::STRING,
+          { 0, word_length },
+          word_length)
 {}
 
 class H_F_FD_number_spec
@@ -125,14 +125,14 @@ public:
 
 data_def_type_P_Z::data_def_type_P_Z(char type)
     : data_def_type(type,
-        '\0',
-        modifier_bound { 1, 128 },
-        modifier_bound { 1, 16 },
-        n_a(),
-        n_a(),
-        nominal_value_type::STRING,
-        no_align,
-        as_needed())
+          '\0',
+          modifier_bound { 1, 128 },
+          modifier_bound { 1, 16 },
+          n_a(),
+          n_a(),
+          nominal_value_type::STRING,
+          no_align,
+          as_needed())
 {}
 
 bool data_def_type_P_Z::check(

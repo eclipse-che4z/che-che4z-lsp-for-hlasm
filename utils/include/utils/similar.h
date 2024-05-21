@@ -28,13 +28,13 @@ void is_similar(const T&, const T&); // dummy if ADL fails
 class is_similar_t
 {
     template<typename T>
-    static auto use_standalone(const T& t)
-        -> std::enable_if_t<std::is_same_v<bool, decltype(is_similar(t, t))>, std::true_type>;
+    static auto use_standalone(
+        const T& t) -> std::enable_if_t<std::is_same_v<bool, decltype(is_similar(t, t))>, std::true_type>;
     static std::false_type use_standalone(...);
 
     template<typename T>
-    static auto use_member(const T& t)
-        -> std::enable_if_t<std::is_same_v<bool, decltype(t.is_similar(t))>, std::true_type>;
+    static auto use_member(
+        const T& t) -> std::enable_if_t<std::is_same_v<bool, decltype(t.is_similar(t))>, std::true_type>;
     static std::false_type use_member(...);
 
     template<typename T>

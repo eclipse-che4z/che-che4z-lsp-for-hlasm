@@ -107,17 +107,17 @@ const std::string pgroups_file_pattern_uri_non_standard_2 =
 
 const std::string pgroups_file_pattern_combination = is_windows()
     ? pgroups_generator({ "C:\\\\Temp\\\\Lib",
-        "C:\\\\Temp\\\\Lib2\\\\L%25bs;\\\\**",
-        "different_libs",
-        "different_libs2\\\\Libs\\\\**",
-        file_scheme_user_dir_encoded + "**/pattern_?est/l%2525bs;/sublib1",
-        file_scheme_user_dir_encoded + "ws/product/pattern_test/l%2525bs;/sublib2" })
+          "C:\\\\Temp\\\\Lib2\\\\L%25bs;\\\\**",
+          "different_libs",
+          "different_libs2\\\\Libs\\\\**",
+          file_scheme_user_dir_encoded + "**/pattern_?est/l%2525bs;/sublib1",
+          file_scheme_user_dir_encoded + "ws/product/pattern_test/l%2525bs;/sublib2" })
     : pgroups_generator({ "/home/Temp/Lib",
-        "/home/Temp/Lib2/L%25bs;/**",
-        "different_libs",
-        "different_libs2/Libs/**",
-        file_scheme_user_dir_encoded + "**/pattern_?est/l%2525bs;/sublib1",
-        file_scheme_user_dir_encoded + "ws/product/pattern_test/l%2525bs;/sublib2" });
+          "/home/Temp/Lib2/L%25bs;/**",
+          "different_libs",
+          "different_libs2/Libs/**",
+          file_scheme_user_dir_encoded + "**/pattern_?est/l%2525bs;/sublib1",
+          file_scheme_user_dir_encoded + "ws/product/pattern_test/l%2525bs;/sublib2" });
 
 const std::string pgroups_file_pattern_double_dot_absolute =
     pgroups_generator({ file_scheme_user_dir_encoded + "ws/product/../product/pattern_test/l%2525bs;/**" });

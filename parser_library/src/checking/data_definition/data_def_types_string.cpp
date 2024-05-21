@@ -82,14 +82,14 @@ bool check_comma_separated(const std::string& nom, F is_valid_digit)
 //******************************   type B   ********************************//
 data_def_type_B::data_def_type_B()
     : data_def_type('B',
-        '\0',
-        modifier_bound { 1, 2048 },
-        modifier_bound { 1, 256 },
-        n_a(),
-        n_a(),
-        nominal_value_type::STRING,
-        no_align,
-        as_needed())
+          '\0',
+          modifier_bound { 1, 2048 },
+          modifier_bound { 1, 256 },
+          n_a(),
+          n_a(),
+          nominal_value_type::STRING,
+          no_align,
+          as_needed())
 {}
 
 bool data_def_type_B::check(
@@ -134,15 +134,15 @@ uint32_t data_def_type_B::get_nominal_length_attribute(const reduced_nominal_val
 //******************************   type C   ********************************//
 data_def_type_CA_CE::data_def_type_CA_CE(char extension)
     : data_def_type('C',
-        extension,
-        modifier_bound { 1, 2048 },
-        modifier_bound { 1, 256 },
-        65535,
-        n_a(),
-        n_a(),
-        nominal_value_type::STRING,
-        no_align,
-        as_needed())
+          extension,
+          modifier_bound { 1, 2048 },
+          modifier_bound { 1, 256 },
+          65535,
+          n_a(),
+          n_a(),
+          nominal_value_type::STRING,
+          no_align,
+          as_needed())
 {}
 
 uint64_t data_def_type_CA_CE::get_nominal_length(const reduced_nominal_value_t& op) const
@@ -182,7 +182,7 @@ data_def_type_CE::data_def_type_CE()
 
 data_def_type_CU::data_def_type_CU()
     : data_def_type(
-        'C', 'U', n_a(), modifier_bound { 1, 256 }, n_a(), n_a(), nominal_value_type::STRING, no_align, as_needed())
+          'C', 'U', n_a(), modifier_bound { 1, 256 }, n_a(), n_a(), nominal_value_type::STRING, no_align, as_needed())
 {}
 
 uint64_t data_def_type_CU::get_nominal_length(const reduced_nominal_value_t& op) const
@@ -222,15 +222,15 @@ bool data_def_type_CU::check(const data_definition_operand& op, const diagnostic
 
 data_def_type_G::data_def_type_G()
     : data_def_type('G',
-        '\0',
-        n_a(),
-        modifier_bound { 1, 256 },
-        65534,
-        n_a(),
-        n_a(),
-        nominal_value_type::STRING,
-        no_align,
-        as_needed())
+          '\0',
+          n_a(),
+          modifier_bound { 1, 256 },
+          65534,
+          n_a(),
+          n_a(),
+          nominal_value_type::STRING,
+          no_align,
+          as_needed())
 {}
 
 bool data_def_type_G::check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
@@ -280,15 +280,15 @@ uint32_t data_def_type_G::get_nominal_length_attribute(const reduced_nominal_val
 
 data_def_type_X::data_def_type_X()
     : data_def_type('X',
-        '\0',
-        modifier_bound { 1, 2048 },
-        modifier_bound { 1, 256 },
-        65535,
-        n_a(),
-        n_a(),
-        nominal_value_type::STRING,
-        no_align,
-        as_needed())
+          '\0',
+          modifier_bound { 1, 2048 },
+          modifier_bound { 1, 256 },
+          65535,
+          n_a(),
+          n_a(),
+          nominal_value_type::STRING,
+          no_align,
+          as_needed())
 {}
 
 bool data_def_type_X::check(

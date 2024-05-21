@@ -43,9 +43,9 @@ We follow the [Conventional commits](https://www.conventionalcommits.org/en/v1.0
 Each pull request is automatically verified in the following environments (in a GitHub Actions pipeline):
 
 - Windows build with the MSVC compiler
-- Alpine Linux 3.16 build with GNU GCC 11 compiler
-- Ubuntu 22.04 build with the Clang 14 compiler using the libstdc++ standard library and address sanitizer
-- MacOS 12 build with CLang 14 using the libc++ standard library
+- Alpine Linux 3.19 build with GNU GCC 13 compiler
+- Ubuntu 24.04 build with the Clang 18 compiler using the libstdc++ standard library and address sanitizer
+- MacOS 12 build with CLang 18 using the libc++ standard library
 
 Further, all C++ sources must be formatted with clang-format. The required configuration is available in the [.clang-format](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/blob/development/.clang-format) file in the root of the repository.
 

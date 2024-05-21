@@ -34,13 +34,9 @@ struct is_in_place_type_t<std::in_place_type_t<T>>
 };
 
 template<typename U, typename T>
-concept workspace_manager_response_compatible = requires(U& u, T t)
-{
+concept workspace_manager_response_compatible = requires(U& u, T t) {
     u.provide(std::move(t));
-    {
-        u.error(0, "")
-    }
-    noexcept;
+    { u.error(0, "") } noexcept;
 };
 
 } // namespace detail
@@ -228,7 +224,7 @@ public:
     template<detail::workspace_manager_response_compatible<T> U, typename... Args>
     explicit workspace_manager_response(std::in_place_type_t<U> u, Args&&... args)
         : workspace_manager_response_base(
-            new shared_data<U>(std::move(u), std::forward<Args>(args)...), &get_actions<U>)
+              new shared_data<U>(std::move(u), std::forward<Args>(args)...), &get_actions<U>)
     {}
 
     using workspace_manager_response_base::error;

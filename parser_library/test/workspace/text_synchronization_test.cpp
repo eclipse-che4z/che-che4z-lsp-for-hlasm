@@ -77,7 +77,7 @@ TEST(apply_text_diff, text_synchronization_rn)
 
 
     std::string utf8test = "onexxxWASSPECIAL"; // one你WASSPECIAL
-    utf8test[3] = (unsigned char)0xE4; //你 has 2 byte representation in utf-16 (one code unit)
+    utf8test[3] = (unsigned char)0xE4; // 你 has 2 byte representation in utf-16 (one code unit)
     utf8test[4] = (unsigned char)0xBD;
     utf8test[5] = (unsigned char)0xA0;
 

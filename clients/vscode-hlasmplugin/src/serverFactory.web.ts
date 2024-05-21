@@ -33,7 +33,7 @@ function worker_main(extensionUri: string, hlasm_arguments: string[]) {
         filereader.readAsDataURL(x);
     });
 
-    Promise.all(['hlasm_language_server.mjs', 'hlasm_language_server.wasm', 'hlasm_language_server.worker.js'].map(f => fetch(extensionUri + 'bin/wasm/' + f).then(x => x.blob()))).then(([main_blob, wasm_blob, worker_blob]) => {
+    Promise.all(['hlasm_language_server.mjs', 'hlasm_language_server.wasm'].map(f => fetch(extensionUri + 'bin/wasm/' + f).then(x => x.blob()))).then(([main_blob, wasm_blob]) => {
         asDataUri(main_blob).then(main_text => import(main_text).then(m => m.default({
             tmpQueue,
             worker: self,
@@ -43,9 +43,6 @@ function worker_main(extensionUri: string, hlasm_arguments: string[]) {
                 if (typeof path !== 'string') return path;
                 if (path.endsWith(".wasm")) {
                     return URL.createObjectURL(wasm_blob);
-                }
-                else if (path.endsWith("hlasm_language_server.worker.js")) {
-                    return URL.createObjectURL(worker_blob);
                 }
                 return path;
             },

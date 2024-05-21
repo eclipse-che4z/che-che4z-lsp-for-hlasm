@@ -386,8 +386,9 @@ public:
         const char (&t1)[L1],
         const char (&t2)[L2],
         const char (&t3)[L3],
-        const char (&qualification)[Qual]) noexcept requires(L0 > 0 && L1 > 0 && L2 > 0 && L3 > 0 && Qual > 1
-        && L0 < 256 && L1 < 256 && L2 < 256 && L3 < 256 && Qual < 256)
+        const char (&qualification)[Qual]) noexcept
+        requires(L0 > 0 && L1 > 0 && L2 > 0 && L3 > 0 && Qual > 1 && L0 < 256 && L1 < 256 && L2 < 256 && L3 < 256
+                    && Qual < 256)
         : text { L0 == 1 ? nullptr : t0,
             L1 == 1 ? nullptr : t1,
             L2 == 1 ? nullptr : t2,

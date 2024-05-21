@@ -25,14 +25,14 @@ struct mock_json_source : public hlasm_plugin::language_server::json_source
 struct mock_json_sink : public hlasm_plugin::language_server::json_sink
 {
     MOCK_METHOD(void, write, (const nlohmann::json&), (override));
-    MOCK_METHOD(void, write_rvr, (nlohmann::json &&));
+    MOCK_METHOD(void, write_rvr, (nlohmann::json&&));
     void write(nlohmann::json&& j) override { write_rvr(std::move(j)); }
 };
 struct mock_json_channel : public hlasm_plugin::language_server::json_channel
 {
     MOCK_METHOD(std::optional<nlohmann::json>, read, (), (override));
     MOCK_METHOD(void, write, (const nlohmann::json&), (override));
-    MOCK_METHOD(void, write_rvr, (nlohmann::json &&));
+    MOCK_METHOD(void, write_rvr, (nlohmann::json&&));
     void write(nlohmann::json&& j) override { write_rvr(std::move(j)); }
 };
 } // namespace

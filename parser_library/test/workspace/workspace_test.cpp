@@ -669,9 +669,8 @@ TEST_F(workspace_test, use_external_library)
     ws.open().run();
 
     EXPECT_CALL(external_files, list_directory_files(resource_location("hlasm-external:/DATASET/REMOTE.DATASET")))
-        .WillOnce(Invoke([]() {
-            return value_task<list_directory_result>::from_value({ {}, path::list_directory_rc::done });
-        }));
+        .WillOnce(Invoke(
+            []() { return value_task<list_directory_result>::from_value({ {}, path::list_directory_rc::done }); }));
 
 
     run_if_valid(ws.did_open_file(source1_loc));
@@ -707,9 +706,8 @@ TEST_F(workspace_test, use_external_library_with_workspace_uri)
 
     EXPECT_CALL(
         external_files, list_directory_files(resource_location("hlasm-external:/DATASET/REMOTE.DATASET#hhhddkcp")))
-        .WillOnce(Invoke([]() {
-            return value_task<list_directory_result>::from_value({ {}, path::list_directory_rc::done });
-        }));
+        .WillOnce(Invoke(
+            []() { return value_task<list_directory_result>::from_value({ {}, path::list_directory_rc::done }); }));
 
 
     run_if_valid(ws.did_open_file(source1_loc));

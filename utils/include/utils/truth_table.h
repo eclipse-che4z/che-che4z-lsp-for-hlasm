@@ -34,9 +34,9 @@ constexpr auto create_truth_table(std::string_view true_values, T true_value = (
 }
 
 template<typename T, typename U>
-constexpr size_t find_mismatch(std::basic_string_view<T> s,
-    const std::array<U, std::numeric_limits<unsigned char>::max() + 1>& table) requires(std::numeric_limits<T>::max()
-    <= std::numeric_limits<unsigned char>::max())
+constexpr size_t find_mismatch(
+    std::basic_string_view<T> s, const std::array<U, std::numeric_limits<unsigned char>::max() + 1>& table)
+    requires(std::numeric_limits<T>::max() <= std::numeric_limits<unsigned char>::max())
 {
     size_t result = 0;
 

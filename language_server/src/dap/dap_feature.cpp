@@ -63,9 +63,7 @@ constexpr const int THREAD_ID = 1;
 } // namespace
 
 namespace hlasm_plugin::language_server::dap {
-void dap_feature::initialize_feature(const nlohmann::json&)
-{ /* nothing to do */
-}
+void dap_feature::initialize_feature(const nlohmann::json&) { /* nothing to do */ }
 
 dap_feature::dap_feature(parser_library::debugger_configuration_provider& dc_provider,
     response_provider& response_provider,
