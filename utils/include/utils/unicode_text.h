@@ -304,17 +304,17 @@ public:
     friend difference_type operator-(
         const utf8_iterator& l, const utf8_iterator& r) noexcept requires std::sized_sentinel_for<BidirIt, BidirIt>
     {
-        return std::distance(l.m_base, r.m_base);
+        return l.m_base - r.m_base;
     }
     friend difference_type operator-(
         const BidirIt& l, const utf8_iterator& r) noexcept requires std::sized_sentinel_for<BidirIt, BidirIt>
     {
-        return std::distance(l, r.m_base);
+        return l - r.m_base;
     }
     friend difference_type operator-(
         const utf8_iterator& l, const BidirIt& r) noexcept requires std::sized_sentinel_for<BidirIt, BidirIt>
     {
-        return std::distance(l.m_base, r);
+        return l.m_base - r;
     }
 
     auto to_address() const noexcept { return std::to_address(m_base); }
