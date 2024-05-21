@@ -17,9 +17,7 @@
 #include <algorithm>
 #include <cassert>
 #include <concepts>
-#if __cpp_lib_polymorphic_allocator >= 201902L && __cpp_lib_memory_resource >= 201603L
-#    include <memory_resource>
-#endif
+#include <memory_resource>
 #include <numeric>
 #include <span>
 #include <type_traits>
@@ -77,7 +75,7 @@ void space::resolve(space_ptr this_space, space_ptr value)
 
     assert(this_space->kind == space_kind::LOCTR_UNKNOWN);
 
-    this_space->resolved_ptrs.push_back(address::space_entry(value, 1));
+    this_space->resolved_ptrs.emplace_back(std::move(value), 1);
 
     this_space->resolved_ = true;
 }
@@ -121,7 +119,6 @@ struct normalization_helper
     normalization_helper(normalization_helper&&) = delete;
     normalization_helper& operator=(const normalization_helper&) = delete;
     normalization_helper& operator=(normalization_helper&&) = delete;
-#if __cpp_lib_polymorphic_allocator >= 201902L && __cpp_lib_memory_resource >= 201603L
     normalization_helper()
         : buffer_resource(buffer.data(), buffer.size())
         , map(&buffer_resource)
@@ -129,10 +126,6 @@ struct normalization_helper
     alignas(std::max_align_t) std::array<unsigned char, 8 * 1024> buffer;
     std::pmr::monotonic_buffer_resource buffer_resource;
     std::pmr::unordered_map<space*, size_t> map;
-#else
-    normalization_helper() = default;
-    std::unordered_map<space*, size_t> map;
-#endif
 };
 
 int get_unresolved_spaces(std::span<const address::space_entry> spaces,
@@ -235,7 +228,7 @@ address::base_list merge_bases(const address::base_list& l, const address::base_
                 cnt *= -1;
             return address::base_list(std::move(result));
         }
-        if (std::equal(l.bases.begin(), l.bases.end(), r.bases.begin(), r.bases.end()))
+        if (std::ranges::equal(l.bases, r.bases))
             return {};
     }
 
@@ -246,7 +239,7 @@ address::base_list merge_bases(const address::base_list& l, const address::base_
     for (auto& [b, cnt] : r.bases)
         result->emplace_back(b, operation == merge_op::add ? cnt : -cnt);
 
-    std::sort(result->begin(), result->end(), [](const auto& l, const auto& r) { return l.first < r.first; });
+    std::ranges::sort(*result, {}, &address::base_entry::first);
     utils::merge_unsorted(
         *result,
         l.bases,
@@ -287,7 +280,7 @@ std::pair<std::span<const address::space_entry>, std::span<const address::space_
         auto common = std::min(l.size(), r.size());
         return { l.subspan(common), r.subspan(common) };
     }
-    auto [le, re] = std::mismatch(l.begin(), l.end(), r.begin(), r.end());
+    auto [le, re] = std::ranges::mismatch(l, r);
     return { { le, l.end() }, { re, r.end() } };
 }
 

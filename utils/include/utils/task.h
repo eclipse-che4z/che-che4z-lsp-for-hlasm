@@ -281,7 +281,7 @@ public:
             for (auto& t : tasks)
                 co_await std::move(t);
         }
-    } static constexpr wait_all = {}; // clang-14 workaround
+    } static constexpr wait_all = {};
 };
 
 template<std::move_constructible T>

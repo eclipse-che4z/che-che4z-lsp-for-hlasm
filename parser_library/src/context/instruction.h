@@ -522,13 +522,8 @@ public:
         , m_instr_set_affiliation(instr_set_affiliation)
         , m_format(format)
         , m_reladdr_mask(generate_reladdr_bitmask(operands))
-#ifdef __cpp_lib_ranges
         , m_optional_op_count(
-              (unsigned char)std::ranges::count(operands, true, &checking::machine_operand_format::optional))
-#else
-        , m_optional_op_count((unsigned char)std::count_if(
-              operands.begin(), operands.end(), [](const auto& op) { return op.optional; }))
-#endif
+              (unsigned char)std::ranges::count_if(operands, &checking::machine_operand_format::optional))
         , m_operand_len((unsigned char)operands.size())
         , m_operands(operands.data())
         , m_details(d)
@@ -729,8 +724,8 @@ public:
         , m_name(name)
     {
         assert(transform.size() <= m_transform.size());
-        std::copy(transform.begin(), transform.end(), m_transform.begin());
-        const auto insert_count = std::count_if(transform.begin(), transform.end(), [](auto t) { return t.insert; });
+        std::ranges::copy(transform, m_transform.begin());
+        const auto insert_count = std::ranges::count_if(transform, [](auto t) { return t.insert; });
         [[maybe_unused]] const auto total = std::accumulate(
             transform.begin(), transform.end(), (size_t)0, [](size_t res, auto t) { return res + t.skip + t.insert; });
         assert(total <= instr->operands().size());

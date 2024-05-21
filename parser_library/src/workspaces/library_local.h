@@ -46,21 +46,7 @@ struct library_local_options
     std::vector<std::string> extensions;
     bool optional_library = false;
 
-#ifdef __cpp_lib_three_way_comparison
     auto operator<=>(const library_local_options&) const = default;
-#else
-    // libc++ (not even in main!!!)
-    bool operator<(const library_local_options& o) const
-    {
-        if (extensions < o.extensions)
-            return true;
-        if (extensions > o.extensions)
-            return false;
-        if (optional_library < o.optional_library)
-            return true;
-        return false;
-    }
-#endif
 };
 
 // library holds absolute path to a directory and finds macro files in it

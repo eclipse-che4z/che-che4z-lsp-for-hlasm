@@ -137,14 +137,6 @@ struct token_info
 
 struct output_line
 {
-    output_line(int level, std::string text)
-        : level(level)
-        , text(std::move(text))
-    {} // clang-14
-    output_line(int level, std::string_view text)
-        : level(level)
-        , text(text)
-    {} // clang-14
     int level;
     std::string text;
 

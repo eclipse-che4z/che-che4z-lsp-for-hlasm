@@ -43,7 +43,7 @@ std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_
         // If there is an opsyn, that aliases an instruction to be CA instruction, add it to result
         if (context::instruction_resolved_during_macro_parsing(opcode.opcode)
             || context::instruction_resolved_during_macro_parsing(from))
-            result.push_back({ from, opcode.opcode, opcode.is_macro() });
+            result.emplace_back(from, opcode.opcode, opcode.is_macro());
     }
 
     sort_opsyn_state(result);

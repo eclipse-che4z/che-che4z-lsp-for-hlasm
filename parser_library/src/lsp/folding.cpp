@@ -149,7 +149,7 @@ void folding_by_indentation(std::vector<fold_data>& data, std::span<const line_e
     };
 
     std::stack<prev_region> pr;
-    pr.push({ lines.back().end_lineno, lines.back().end_lineno, -1 });
+    pr.emplace(lines.back().end_lineno, lines.back().end_lineno, (signed char)-1);
 
     for (auto it = lines.rbegin(); it != lines.rend(); ++it)
     {
@@ -174,7 +174,7 @@ void folding_by_indentation(std::vector<fold_data>& data, std::span<const line_e
         if (pr.top().indent == line.indent)
             pr.top().end_above = line.lineno;
         else
-            pr.push({ line.lineno, line.lineno, line.indent });
+            pr.emplace(line.lineno, line.lineno, line.indent);
     }
 }
 

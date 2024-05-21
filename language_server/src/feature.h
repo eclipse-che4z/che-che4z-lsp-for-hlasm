@@ -45,20 +45,7 @@ public:
         : id(std::move(s))
     {}
 
-#ifdef __cpp_lib_three_way_comparison
     auto operator<=>(const request_id&) const = default;
-#else
-    bool operator==(const request_id& o) const { return id == o.id; }
-    std::strong_ordering operator<=>(const request_id& o) const
-    {
-        if (auto c = id.index() <=> o.id.index(); c != 0)
-            return c;
-        if (std::holds_alternative<long>(id))
-            return std::get<long>(id) <=> std::get<long>(o.id);
-        else
-            return std::get<std::string>(id).compare(std::get<std::string>(o.id)) <=> 0;
-    }
-#endif
 
     std::string to_string() const
     {

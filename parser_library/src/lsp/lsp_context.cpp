@@ -689,18 +689,10 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
             break;
         }
         case lsp::occurrence_kind::COPY_OP: {
-#ifdef __cpp_lib_ranges
             auto copy = std::ranges::find_if(m_files, [&](const auto& f) {
                 return f.second->type == file_type::COPY
                     && std::get<context::copy_member_ptr>(f.second->owner)->name == occ.name;
             });
-#else
-            auto copy = std::find_if(m_files.begin(), m_files.end(), [&](const auto& f) {
-                return f.second->type == file_type::COPY
-                    && std::get<context::copy_member_ptr>(f.second->owner)->name == occ.name;
-            });
-#endif
-
             if (copy != m_files.end())
                 return std::get<context::copy_member_ptr>(copy->second->owner)->definition_location;
             break;

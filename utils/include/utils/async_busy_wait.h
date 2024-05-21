@@ -28,7 +28,7 @@ struct
 
         co_return std::move(*result);
     }
-} static constexpr async_busy_wait = {}; // clang 14
+} static constexpr async_busy_wait = {};
 } // namespace hlasm_plugin::utils
 
 #endif

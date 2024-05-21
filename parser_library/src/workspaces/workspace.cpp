@@ -35,6 +35,7 @@
 #include "output_handler.h"
 #include "parse_lib_provider.h"
 #include "processing/statement_analyzers/hit_count_analyzer.h"
+#include "protocol.h"
 #include "semantics/highlighting_info.h"
 #include "utils/bk_tree.h"
 #include "utils/factory.h"
@@ -72,10 +73,13 @@ struct parsing_results
 {
     struct output_t final : output_handler
     {
-        std::vector<output_line> outputs;
+        std::vector<output_line> lines;
 
-        void mnote(unsigned char level, std::string_view text) override { outputs.emplace_back(level, text); }
-        void punch(std::string_view text) override { outputs.emplace_back(-1, text); }
+        void mnote(unsigned char level, std::string_view text) override
+        {
+            lines.emplace_back(level, std::string(text));
+        }
+        void punch(std::string_view text) override { lines.emplace_back(-1, std::string(text)); }
     } outputs;
 
     auto fms = std::make_shared<std::vector<fade_message>>();
@@ -107,7 +111,7 @@ struct parsing_results
     result.metrics = a.get_metrics();
     result.vf_handles = a.take_vf_handles();
     result.hc_opencode_map = hc_analyzer.take_hit_count_map();
-    result.outputs = std::move(outputs.outputs);
+    result.outputs = std::move(outputs.lines);
 
     co_return result;
 }

@@ -18,13 +18,10 @@
 #include <array>
 #include <cassert>
 #include <cstddef>
+#include <deque>
 #include <functional>
 #include <memory>
-#if __cpp_lib_polymorphic_allocator >= 201902L && __cpp_lib_memory_resource >= 201603L
-#    include <memory_resource>
-#endif
-#include <queue>
-#include <stack>
+#include <memory_resource>
 #include <unordered_set>
 
 #include "diagnostic_tools.h"
@@ -32,7 +29,6 @@
 #include "ordinary_assembly_context.h"
 #include "ordinary_assembly_dependency_solver.h"
 #include "processing/instruction_sets/low_language_processor.h"
-#include "processing/instruction_sets/postponed_statement_impl.h"
 
 namespace hlasm_plugin::parser_library::context {
 bool symbol_dependency_tables::check_cycle(
@@ -58,13 +54,10 @@ bool symbol_dependency_tables::check_cycle(
         assert(false);
     };
 
-#if __cpp_lib_polymorphic_allocator >= 201902L && __cpp_lib_memory_resource >= 201603L
     alignas(std::max_align_t) std::array<unsigned char, 8 * 1024> buffer;
     std::pmr::monotonic_buffer_resource buffer_resource(buffer.data(), buffer.size());
     std::pmr::unordered_set<dependant_ref> seen_before(&buffer_resource);
-#else
-    std::unordered_set<dependant_ref> seen_before;
-#endif
+
     for (const auto& d : dependencies)
         seen_before.emplace(dep_to_depref(d));
 
@@ -86,7 +79,7 @@ bool symbol_dependency_tables::check_cycle(
             }
             if (!seen_before.emplace(dep_to_depref(dep)).second)
                 continue;
-            dependencies.push_back(std::move(dep));
+            dependencies.emplace_back(std::move(dep));
         }
     }
     return true;
@@ -493,7 +486,7 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(
         for (auto&& [space_id, count] : std::move(deps.unresolved_address)->normalized_spaces().first)
         {
             assert(count != 0);
-            ret.push_back(std::move(space_id));
+            ret.emplace_back(std::move(space_id));
         }
     }
 
@@ -868,7 +861,7 @@ bool dependency_adder::add_dependency(id_index target, const resolvable* depende
     if (added)
     {
         ++m_ref_count;
-        m_dependants.push_back(target);
+        m_dependants.emplace_back(target);
     }
 
     return added;
@@ -881,7 +874,7 @@ bool dependency_adder::add_dependency(id_index target, data_attr_kind attr, cons
     if (added)
     {
         ++m_ref_count;
-        m_dependants.push_back(attr_ref { attr, target });
+        m_dependants.emplace_back(std::in_place_type<attr_ref>, attr, target);
     }
 
     return added;
@@ -891,7 +884,7 @@ void dependency_adder::add_dependency(space_ptr target, const resolvable* depend
 {
     m_owner.add_dependency(dependant(target), dependency_source, false, m_dep_ctx, m_li);
     ++m_ref_count;
-    m_dependants.push_back(target);
+    m_dependants.emplace_back(target);
 }
 
 void dependency_adder::add_dependency() { ++m_ref_count; }

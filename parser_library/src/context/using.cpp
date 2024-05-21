@@ -374,14 +374,14 @@ void using_collection::resolve_all(
 index_t<using_collection::instruction_context> using_collection::add(
     dependency_evaluation_context ctx, processing_stack_t stack)
 {
-    m_instruction_contexts.push_back({ std::move(ctx), std::move(stack) });
+    m_instruction_contexts.emplace_back(std::move(ctx), std::move(stack));
     return index_t<instruction_context>(m_instruction_contexts.size() - 1);
 }
 
 index_t<using_collection::mach_expression> using_collection::add(
     std::unique_ptr<const mach_expression> expr, index_t<instruction_context> ctx)
 {
-    m_expr_values.push_back({ std::move(expr), ctx });
+    m_expr_values.emplace_back(std::move(expr), ctx);
     return index_t<mach_expression>(m_expr_values.size() - 1);
 }
 
@@ -613,14 +613,12 @@ std::vector<using_context_description> using_collection::describe(index_t<using_
     std::vector<using_context_description> result;
 
     for (const auto& u : get(context_id).context.m_state)
-        result.push_back({
-            u.label,
+        result.emplace_back(u.label,
             u.owner ? std::optional(u.owner->name) : std::nullopt,
             u.offset,
             (unsigned long)u.length,
             u.reg_offset,
-            { u.regs.begin(), std::find(u.regs.begin(), u.regs.end(), invalid_register) },
-        });
+            std::vector<using_collection::register_t>(u.regs.begin(), std::ranges::find(u.regs, invalid_register)));
 
     return result;
 }

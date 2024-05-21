@@ -54,13 +54,7 @@ constexpr std::array<instr_set_equivalent_pair, 25> instr_set_optable_equivalent
     { std::string_view("ZSA"), instruction_set_version::Z16 },
 } };
 
-#if __cpp_lib_ranges
 static_assert(std::ranges::is_sorted(instr_set_optable_equivalents, {}, &instr_set_equivalent_pair::first));
-#else
-static_assert(std::is_sorted(std::begin(instr_set_optable_equivalents),
-    std::end(instr_set_optable_equivalents),
-    [](const auto& l, const auto& r) { return l.first < r.first; }));
-#endif
 
 constexpr std::array<instr_set_equivalent_pair, 58> instr_set_machine_equivalents = { {
     { std::string_view("ARCH-0"), instruction_set_version::XA },
@@ -123,28 +117,15 @@ constexpr std::array<instr_set_equivalent_pair, 58> instr_set_machine_equivalent
     { std::string_view("ZSERIES-9"), instruction_set_version::Z15 },
 } };
 
-#if __cpp_lib_ranges
 static_assert(std::ranges::is_sorted(instr_set_machine_equivalents, {}, &instr_set_equivalent_pair::first));
-#else
-static_assert(std::is_sorted(std::begin(instr_set_machine_equivalents),
-    std::end(instr_set_machine_equivalents),
-    [](const auto& l, const auto& r) { return l.first < r.first; }));
-#endif
 
 bool instr_set_equivalent_valid(
     std::string instr_set_name, std::span<const instr_set_equivalent_pair> equivalents) noexcept
 {
     utils::to_upper(instr_set_name);
 
-#ifdef __cpp_lib_ranges
     return instr_set_name.size() == 0
         || std::ranges::any_of(equivalents, [&instr_set_name](auto item) { return instr_set_name == item.first; });
-#else
-    return instr_set_name.size() == 0
-        || std::any_of(std::begin(equivalents), std::end(equivalents), [&instr_set_name](auto item) {
-               return instr_set_name == item.first;
-           });
-#endif
 }
 } // namespace
 
@@ -167,14 +148,7 @@ std::optional<instruction_set_version> find_instruction_set(
 {
     utils::to_upper(instr_set_name);
 
-#ifdef __cpp_lib_ranges
     auto it = std::ranges::lower_bound(equivalents, instr_set_name, {}, [](const auto& instr) { return instr.first; });
-#else
-    auto it = std::lower_bound(
-        std::begin(equivalents), std::end(equivalents), instr_set_name, [](const auto& l, const auto& r) {
-            return l.first < r;
-        });
-#endif
 
     if (it == std::end(equivalents) || it->first != instr_set_name)
         return std::nullopt;

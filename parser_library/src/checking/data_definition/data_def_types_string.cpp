@@ -55,7 +55,7 @@ uint32_t get_X_B_length_attr(const std::string& s, uint64_t frac)
 }
 
 // Checks comma separated values. is_valid_digit specifies whether the char is valid character of value.
-template</* std::predicate<char> */ typename F>
+template<std::predicate<char> F>
 bool check_comma_separated(const std::string& nom, F is_valid_digit)
 {
     bool last_valid = false;

@@ -71,7 +71,7 @@ public:
     bool operator==(const resource_location& rl) const noexcept
     {
         return m_data == rl.m_data
-            || m_data && rl.m_data && m_data->get_hash() == rl.m_data->get_hash() && m_data->uri == rl.m_data->uri;
+            || (m_data && rl.m_data && m_data->get_hash() == rl.m_data->get_hash() && m_data->uri == rl.m_data->uri);
     }
     std::strong_ordering operator<=>(const resource_location& rl) const noexcept
     {
@@ -84,7 +84,7 @@ public:
             l = m_data->uri;
         if (rl.m_data)
             r = rl.m_data->uri;
-        return l.compare(r) <=> 0; // libc++14
+        return l <=> r;
     }
 
 private:
