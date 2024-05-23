@@ -183,12 +183,10 @@ address::address(base address_base, int offset, const space_storage& spaces)
     if (spaces.empty())
         return;
 
-    auto new_spaces = std::make_shared<std::vector<space_entry>>(); // libc++14 space_entry[]
-    new_spaces->reserve(spaces.size());
-    for (auto& space : spaces)
-        new_spaces->emplace_back(space, 1);
+    auto new_spaces = std::make_shared<space_entry[]>(spaces.size());
+    std::ranges::transform(spaces, new_spaces.get(), [](const auto& space) { return std::pair(space, 1); });
 
-    spaces_.spaces = *new_spaces;
+    spaces_.spaces = std::span(new_spaces.get(), spaces.size());
     spaces_.owner = std::move(new_spaces);
 }
 
@@ -199,12 +197,10 @@ address::address(base address_base, int offset, space_storage&& spaces)
     if (spaces.empty())
         return;
 
-    auto new_spaces = std::make_shared<std::vector<space_entry>>();
-    new_spaces->reserve(spaces.size());
-    for (auto& space : spaces)
-        new_spaces->emplace_back(std::move(space), 1);
+    auto new_spaces = std::make_shared<space_entry[]>(spaces.size());
+    std::ranges::transform(spaces, new_spaces.get(), [](auto& space) { return std::pair(std::move(space), 1); });
 
-    spaces_.spaces = *new_spaces;
+    spaces_.spaces = std::span(new_spaces.get(), spaces.size());
     spaces_.owner = std::move(new_spaces);
 }
 
@@ -223,16 +219,22 @@ address::base_list merge_bases(const address::base_list& l, const address::base_
     {
         if (l.empty())
         {
-            auto result = std::make_shared<std::vector<address::base_entry>>(r.bases.begin(), r.bases.end());
-            for (auto& [_, cnt] : *result)
-                cnt *= -1;
-            return address::base_list(std::move(result));
+            const auto total = std::ranges::size(r.bases);
+            auto result_owner = std::make_shared<address::base_entry[]>(total);
+            std::span result(result_owner.get(), total);
+
+            std::ranges::transform(r.bases, result.begin(), [](auto e) {
+                e.second *= -1;
+                return e;
+            });
+
+            return address::base_list(result, std::move(result_owner));
         }
         if (std::ranges::equal(l.bases, r.bases))
             return {};
     }
 
-    auto result = std::make_shared<std::vector<address::base_entry>>(); // libc++14 base_entry[]
+    auto result = std::make_shared<std::vector<address::base_entry>>();
 
     result->reserve(l.bases.size() + r.bases.size());
 
@@ -334,13 +336,18 @@ address address::operator-(int offs) const { return address(bases_, offset_ - of
 address address::operator-() const
 {
     auto [spaces, off] = normalized_spaces();
-    auto inv_bases = std::make_shared<std::vector<address::base_entry>>(
-        bases_.bases.begin(), bases_.bases.end()); // libc++14 base_entry[]
-    for (auto& [_, cnt] : *inv_bases)
-        cnt = -cnt;
+    const auto total = std::ranges::size(bases_.bases);
+    auto inv_bases_owner = std::make_shared<address::base_entry[]>(total);
+    std::span inv_bases(inv_bases_owner.get(), total);
+
+    std::ranges::transform(bases_.bases, inv_bases.begin(), [](auto b) {
+        b.second = -b.second;
+        return b;
+    });
+
     for (auto& s : spaces)
         s.second = -s.second;
-    return address(address::base_list(std::move(inv_bases)),
+    return address(address::base_list(inv_bases, std::move(inv_bases_owner)),
         -offset_ - off,
         space_list(std::make_shared<std::vector<space_entry>>(std::move(spaces))));
 }

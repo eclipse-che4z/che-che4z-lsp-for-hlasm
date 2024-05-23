@@ -20,6 +20,8 @@
 #include "context/ordinary_assembly/section.h"
 #include "library_info_transitional.h"
 
+using namespace ::testing;
+
 // test for
 // address class
 
@@ -65,4 +67,38 @@ TEST(address, has_unresolved_spaces)
     space::resolve(sp2, 1);
 
     ASSERT_FALSE(addr.has_unresolved_space());
+}
+
+TEST(address, constructors)
+{
+    hlasm_context ctx;
+    auto sect = ctx.ord_ctx.set_section(id_index("TEST"), section_kind::COMMON, {}, library_info_transitional::empty);
+
+    auto sp1 = ctx.ord_ctx.current_section()->current_location_counter().set_value_undefined(0, 0);
+    auto sp2 = ctx.ord_ctx.current_section()->current_location_counter().register_ordinary_space(halfword);
+
+    space_storage spaces { sp2 };
+
+    address addr1({ sect, id_index() }, 12345, spaces);
+    address addr2({ sect, id_index() }, 12345, std::move(spaces));
+
+    auto diff = addr1 - addr2;
+
+    EXPECT_TRUE(diff.bases().empty());
+    EXPECT_FALSE(diff.has_spaces());
+    EXPECT_EQ(diff.offset(), 0);
+}
+
+TEST(address, subtract_optimization)
+{
+    hlasm_context ctx;
+    auto sect = ctx.ord_ctx.set_section(id_index("TEST"), section_kind::COMMON, {}, library_info_transitional::empty);
+
+    address addr2({ sect, id_index() }, 12345, {});
+
+    auto diff = address() - addr2;
+
+    std::array expected_bases { address::base_entry { sect, -1 } };
+
+    EXPECT_THAT(diff.bases(), Pointwise(Eq(), expected_bases));
 }
