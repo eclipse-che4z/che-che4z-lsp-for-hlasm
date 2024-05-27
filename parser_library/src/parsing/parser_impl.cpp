@@ -190,7 +190,7 @@ self_def_t parser_impl::parse_self_def_term_in_mach(const std::string& type, con
                 if (value.empty())
                     return 0;
 
-                auto it = std::find_if(value.begin(), value.end(), [](auto c) { return c != '-' && c != '+'; });
+                auto it = std::ranges::find_if(value, [](auto c) { return c != '-' && c != '+'; });
 
                 if (it - value.begin() > 1 || value.front() == '-' && value.size() > 11)
                 {
@@ -343,11 +343,7 @@ bool parser_impl::NOT(const antlr4::Token* token) const
     static constexpr std::string_view NOT_OPERATOR = "NOT";
     auto token_txt = token->getText();
 
-    return std::equal(NOT_OPERATOR.begin(),
-        NOT_OPERATOR.end(),
-        token_txt.begin(),
-        token_txt.end(),
-        [](unsigned char l, unsigned char r) { return l == ::toupper(r); });
+    return std::ranges::equal(token_txt, NOT_OPERATOR, {}, [](unsigned char c) { return (char)::toupper(c); });
 }
 
 bool parser_impl::is_attribute_consuming(char c)

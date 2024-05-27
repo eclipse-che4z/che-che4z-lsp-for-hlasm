@@ -912,8 +912,7 @@ utils::value_task<std::optional<std::vector<const processor_group*>>> workspace_
     for (const auto& file_loc : file_locations)
         no_filename_rls.insert(utils::resource::resource_location::replace_filename(file_loc, ""));
 
-    if (std::any_of(file_locations.begin(),
-            file_locations.end(),
+    if (std::ranges::any_of(file_locations,
             [this, hlasm_folder = utils::resource::resource_location::join(m_location, HLASM_PLUGIN_FOLDER)](
                 const auto& uri) { return is_configuration_file(uri) || uri == hlasm_folder; }))
     {

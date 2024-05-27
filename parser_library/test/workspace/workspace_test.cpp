@@ -550,7 +550,7 @@ TEST_F(workspace_test, missing_library_required)
         run_if_valid(ws.did_open_file(source1_loc));
         parse_all_files(ws);
         EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
-        EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "L0002"; }));
+        EXPECT_TRUE(contains_message_codes(diags(), { "L0002" }));
     }
 }
 
@@ -572,7 +572,7 @@ TEST_F(workspace_test, invalid_assembler_options)
     ws.open().run();
 
     EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
-    EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "W0005"; }));
+    EXPECT_TRUE(contains_message_codes(diags(), { "W0005" }));
 }
 
 TEST_F(workspace_test, invalid_assembler_options_in_pgm_conf)
@@ -582,7 +582,7 @@ TEST_F(workspace_test, invalid_assembler_options_in_pgm_conf)
     ws.open().run();
 
     EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
-    EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "W0005"; }));
+    EXPECT_TRUE(contains_message_codes(diags(), { "W0005" }));
 }
 
 TEST_F(workspace_test, invalid_preprocessor_options)
@@ -592,7 +592,7 @@ TEST_F(workspace_test, invalid_preprocessor_options)
     ws.open().run();
 
     EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
-    EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "W0006"; }));
+    EXPECT_TRUE(contains_message_codes(diags(), { "W0006" }));
 }
 
 class file_manager_list_dir_failed : public file_manager_opt
@@ -627,7 +627,7 @@ TEST_F(workspace_test, library_list_failure)
     run_if_valid(ws.did_open_file(source1_loc));
     parse_all_files(ws);
     EXPECT_GE(collect_and_get_diags_size(ws), (size_t)1);
-    EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "L0001"; }));
+    EXPECT_TRUE(contains_message_codes(diags(), { "L0001" }));
 }
 
 TEST_F(workspace_test, did_change_watched_files_added_missing)

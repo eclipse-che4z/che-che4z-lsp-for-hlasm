@@ -345,7 +345,7 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
     }
     else
     {
-        if (std::find(keyword_params.begin(), keyword_params.end(), arg_name) != keyword_params.end())
+        if (std::ranges::find(keyword_params, arg_name) != keyword_params.end())
             add_diagnostic(diagnostic_op::error_E011("Keyword", op_range));
         else
             keyword_params.push_back(arg_name);

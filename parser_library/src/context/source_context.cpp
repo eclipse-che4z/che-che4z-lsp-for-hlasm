@@ -79,5 +79,5 @@ void processing_frame_tree::node_pointer::to_vector(std::vector<processing_frame
     for (auto it = *this; !it.empty(); it = it.parent())
         result.emplace_back(it.frame());
 
-    std::reverse(result.begin(), result.end());
+    std::ranges::reverse(result);
 }

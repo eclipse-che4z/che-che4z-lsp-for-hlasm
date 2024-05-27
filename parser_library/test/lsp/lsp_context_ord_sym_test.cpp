@@ -215,8 +215,8 @@ B DS F
         a_pos.push_back(r.pos);
     for (const auto& r : a.context().lsp_ctx->references(empty_loc, { 7, 22 }))
         b_pos.push_back(r.pos);
-    std::sort(a_pos.begin(), a_pos.end());
-    std::sort(b_pos.begin(), b_pos.end());
+    std::ranges::sort(a_pos);
+    std::ranges::sort(b_pos);
 
     EXPECT_EQ(a_pos, (std::vector<position> { { 3, 13 }, { 6, 15 }, { 9, 0 } }));
     EXPECT_EQ(b_pos, (std::vector<position> { { 7, 22 }, { 10, 0 } }));

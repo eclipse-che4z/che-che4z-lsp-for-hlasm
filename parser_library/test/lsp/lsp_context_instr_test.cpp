@@ -63,13 +63,13 @@ struct lsp_context_instr : public ::testing::Test
 };
 
 namespace {
-auto label_addfrr_compare = [](const auto& item) { return item.label == "ADDFRR"; };
+constexpr std::string_view ADDFRR = "ADDFRR";
 } // namespace
 TEST_F(lsp_context_instr, ADDFRR_not_loaded)
 {
     auto comp_list = get_completion_list(instruction_set_version::Z15);
 
-    auto result = std::none_of(comp_list.begin(), comp_list.end(), label_addfrr_compare);
+    auto result = std::ranges::find(comp_list, ADDFRR, &completion_item::label) == comp_list.end();
 
     EXPECT_TRUE(result);
 }
@@ -78,7 +78,7 @@ TEST_F(lsp_context_instr, ADDFRR_loaded)
 {
     auto comp_list = get_completion_list(instruction_set_version::XA);
 
-    auto result = std::any_of(comp_list.begin(), comp_list.end(), label_addfrr_compare);
+    auto result = std::ranges::find(comp_list, ADDFRR, &completion_item::label) != comp_list.end();
 
     EXPECT_TRUE(result);
 }
@@ -87,9 +87,9 @@ TEST_F(lsp_context_instr, ADDFRR_loaded_changed_instr_set)
     auto comp_list_z15 = get_completion_list(instruction_set_version::Z15);
     auto comp_list_xa = get_completion_list(instruction_set_version::XA);
 
-    auto result_z15 = std::none_of(comp_list_z15.begin(), comp_list_z15.end(), label_addfrr_compare);
+    auto result_z15 = std::ranges::find(comp_list_z15, ADDFRR, &completion_item::label) == comp_list_z15.end();
 
-    auto result_xa = std::any_of(comp_list_xa.begin(), comp_list_xa.end(), label_addfrr_compare);
+    auto result_xa = std::ranges::find(comp_list_xa, ADDFRR, &completion_item::label) != comp_list_xa.end();
 
     EXPECT_NE(comp_list_z15.size(), comp_list_xa.size());
     EXPECT_TRUE(result_z15);

@@ -150,7 +150,7 @@ private:
         {
             assert(length >= 0);
             assert(regs.size() <= reg_set.size());
-            std::copy(regs.begin(), regs.end(), reg_set.begin());
+            std::ranges::copy(regs, reg_set.begin());
         }
     };
 

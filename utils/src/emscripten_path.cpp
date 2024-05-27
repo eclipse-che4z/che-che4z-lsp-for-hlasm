@@ -26,12 +26,12 @@ using utils::platform::is_windows;
 namespace {
 std::string make_windows_preferred(std::string s)
 {
-    std::replace(s.begin(), s.end(), '/', '\\');
+    std::ranges::replace(s, '/', '\\');
     return s;
 }
 std::string make_linux_preferred(std::string s)
 {
-    std::replace(s.begin(), s.end(), '\\', '/');
+    std::ranges::replace(s, '\\', '/');
     return s;
 }
 } // namespace

@@ -294,8 +294,7 @@ MAC OPSYN AREAD
 namespace {
 std::optional<diagnostic> find_diag_with_filename(const std::vector<diagnostic>& diags, const resource_location& file)
 {
-    auto macro_diag =
-        std::find_if(diags.begin(), diags.end(), [&](const diagnostic& d) { return d.file_uri == file.get_uri(); });
+    auto macro_diag = std::ranges::find(diags, file.get_uri(), &diagnostic::file_uri);
     if (macro_diag == diags.end())
         return std::nullopt;
     else

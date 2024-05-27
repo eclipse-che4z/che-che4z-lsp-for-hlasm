@@ -1102,7 +1102,7 @@ public:
         auto label_b = matches[1].first;
         auto label_e = matches[1].second;
         label_info li {
-            (size_t)std::distance(label_b, label_e),
+            (size_t)std::ranges::distance(label_b, label_e),
             (size_t)std::count_if(label_b, label_e, [](unsigned char c) { return (c & 0xc0) != 0x80; }),
         };
         echo_text(li);
@@ -1171,7 +1171,7 @@ public:
         {
             const auto& [label_b, label_e] = label;
             label_info li {
-                (size_t)std::distance(label_b, label_e),
+                (size_t)std::ranges::distance(label_b, label_e),
                 (size_t)std::count_if(label_b, label_e, [](unsigned char c) { return (c & 0xc0) != 0x80; }),
             };
 
@@ -1377,7 +1377,7 @@ cics_preprocessor_options test_cics_current_options(const preprocessor& p)
 std::pair<int, std::string> test_cics_miniparser(const std::vector<std::string_view>& list)
 {
     lexing::logical_line<std::string_view::iterator> ll;
-    std::transform(list.begin(), list.end(), std::back_inserter(ll.segments), [](std::string_view s) {
+    std::ranges::transform(list, std::back_inserter(ll.segments), [](std::string_view s) {
         return lexing::logical_line_segment<std::string_view::iterator> {
             s.begin(), s.begin(), s.end(), s.end(), s.end()
         };

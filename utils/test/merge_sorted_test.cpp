@@ -18,6 +18,7 @@
 #include "gtest/gtest.h"
 
 #include "utils/merge_sorted.h"
+#include "utils/projectors.h"
 
 using namespace hlasm_plugin::utils;
 
@@ -69,9 +70,7 @@ TEST(merge_sorted, comparer)
 
     merge_sorted(vec, ar, [](const auto& l, const auto& r) { return l.i <=> r.i; });
 
-    EXPECT_TRUE(std::equal(vec.begin(), vec.end(), expected.begin(), expected.end(), [](const auto& l, const auto& r) {
-        return l.i == r.i;
-    }));
+    EXPECT_TRUE(std::ranges::equal(vec, expected, {}, &value::i, &value::i));
 }
 
 TEST(merge_sorted, complex_merge)
@@ -109,9 +108,7 @@ TEST(merge_sorted, move_only)
         std::make_move_iterator(vec2.end()),
         [](const auto& l, const auto& r) { return *l <=> *r; });
 
-    EXPECT_TRUE(std::equal(vec.begin(), vec.end(), expected.begin(), expected.end(), [](const auto& l, const auto& r) {
-        return *l == r;
-    }));
+    EXPECT_TRUE(std::ranges::equal(vec, expected, {}, hlasm_plugin::utils::dereference));
 }
 
 TEST(merge_unsorted, simple)
@@ -162,9 +159,7 @@ TEST(merge_unsorted, comparer)
 
     merge_unsorted(vec, ar, [](const auto& l, const auto& r) { return l.i <=> r.i; });
 
-    EXPECT_TRUE(std::equal(vec.begin(), vec.end(), expected.begin(), expected.end(), [](const auto& l, const auto& r) {
-        return l.i == r.i;
-    }));
+    EXPECT_TRUE(std::ranges::equal(vec, expected, {}, &value::i, &value::i));
 }
 
 TEST(merge_unsorted, complex_merge)
@@ -202,7 +197,5 @@ TEST(merge_unsorted, move_only)
         std::make_move_iterator(vec2.end()),
         [](const auto& l, const auto& r) { return *l <=> *r; });
 
-    EXPECT_TRUE(std::equal(vec.begin(), vec.end(), expected.begin(), expected.end(), [](const auto& l, const auto& r) {
-        return *l == r;
-    }));
+    EXPECT_TRUE(std::ranges::equal(vec, expected, {}, hlasm_plugin::utils::dereference));
 }

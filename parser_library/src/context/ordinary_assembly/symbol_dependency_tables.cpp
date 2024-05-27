@@ -29,6 +29,7 @@
 #include "ordinary_assembly_context.h"
 #include "ordinary_assembly_dependency_solver.h"
 #include "processing/instruction_sets/low_language_processor.h"
+#include "utils/projectors.h"
 
 namespace hlasm_plugin::parser_library::context {
 bool symbol_dependency_tables::check_cycle(
@@ -37,8 +38,7 @@ bool symbol_dependency_tables::check_cycle(
     if (dependencies.empty())
         return true;
 
-    if (std::find(dependencies.begin(), dependencies.end(), target)
-        != dependencies.end()) // dependencies contain target itself
+    if (std::ranges::find(dependencies, target) != dependencies.end()) // dependencies contain target itself
     {
         resolve_dependant_default(target);
         return false;
@@ -155,7 +155,7 @@ struct resolve_dependant_visitor
         const auto& addr = sym_val.get_reloc();
 
         if (auto [spaces, _] = addr.normalized_spaces();
-            std::find_if(spaces.begin(), spaces.end(), [&sp](const auto& e) { return e.first == sp; }) != spaces.end())
+            std::ranges::find(spaces, sp, utils::first_element) != spaces.end())
             add_diagnostic(diagnostic_op::error_E033);
 
         auto tmp_loctr_name = sym_ctx.current_section()->current_location_counter().name;
@@ -493,7 +493,7 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(
     constexpr auto unknown_loctr = [](const auto& entry) {
         return std::get<space_ptr>(entry)->kind == context::space_kind::LOCTR_UNKNOWN;
     };
-    if (auto known_spaces = std::partition(ret.begin(), ret.end(), unknown_loctr); known_spaces != ret.begin())
+    if (auto [known_spaces, _] = std::ranges::partition(ret, unknown_loctr); known_spaces != ret.begin())
         ret.erase(known_spaces, ret.end());
 
     return ret;
@@ -526,8 +526,8 @@ bool symbol_dependency_tables::update_dependencies(const dependency_value& d, co
                                                : std::vector<address::space_entry>();
 
     constexpr static auto unknown_loctr = [](const auto& e) { return e->kind == context::space_kind::LOCTR_UNKNOWN; };
-    const auto loctr_cnt = std::count_if(deps.unresolved_spaces.begin(), deps.unresolved_spaces.end(), unknown_loctr)
-        + std::count_if(addr_spaces.begin(), addr_spaces.end(), [](const auto& e) { return unknown_loctr(e.first); });
+    const auto loctr_cnt = std::ranges::count_if(deps.unresolved_spaces, unknown_loctr)
+        + std::ranges::count_if(addr_spaces, unknown_loctr, utils::first_element);
 
     for (const auto& e : deps.unresolved_spaces)
     {
@@ -780,8 +780,7 @@ bool symbol_dependency_tables::check_loctr_cycle(const library_info& li)
                 path.pop_back();
                 continue;
             }
-            if (auto it = std::find_if(path.begin(), path.end(), [next](const auto* v) { return *v == *next; });
-                it != path.end())
+            if (auto it = std::ranges::find(path, *next, utils::dereference); it != path.end())
             {
                 cycles.insert(it, path.end());
                 continue;

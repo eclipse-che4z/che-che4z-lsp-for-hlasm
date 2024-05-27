@@ -100,10 +100,9 @@ template<typename CMsg,
 inline bool matches_message_properties(CMsg&& d, const C& c, Proj p, BinPred b = BinPred())
 {
     std::vector<std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type&>>> properties;
-    std::transform(
-        d.begin(), d.end(), std::back_inserter(properties), [&p](const auto& d) { return std::invoke(p, d); });
+    std::ranges::transform(d, std::back_inserter(properties), std::ref(p));
 
-    return std::is_permutation(properties.begin(), properties.end(), c.begin(), c.end(), b);
+    return std::ranges::is_permutation(properties, c, std::ref(b));
 }
 
 template<typename CMsg,
@@ -116,15 +115,14 @@ inline bool contains_message_properties(CMsg&& d, const C& c, Proj p)
         return false;
 
     std::vector<std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type&>>> properties;
-    std::transform(
-        d.begin(), d.end(), std::back_inserter(properties), [&p](const auto& d) { return std::invoke(p, d); });
+    std::ranges::transform(d, std::back_inserter(properties), std::ref(p));
 
     std::vector to_find(c.begin(), c.end());
 
-    std::sort(properties.begin(), properties.end());
-    std::sort(to_find.begin(), to_find.end());
+    std::ranges::sort(properties);
+    std::ranges::sort(to_find);
 
-    return std::includes(properties.begin(), properties.end(), to_find.begin(), to_find.end());
+    return std::ranges::includes(properties, to_find);
 }
 
 template<typename CMsg, typename C = std::initializer_list<std::string>>

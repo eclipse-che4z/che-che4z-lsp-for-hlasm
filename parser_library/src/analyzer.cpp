@@ -102,8 +102,7 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
         }
     } tmp;
 
-    std::transform(
-        preprocessor_args.begin(), preprocessor_args.end(), std::back_inserter(tmp.pp), transform_preprocessor);
+    std::ranges::transform(preprocessor_args, std::back_inserter(tmp.pp), transform_preprocessor);
 
     return std::make_unique<combined_preprocessor>(std::move(tmp));
 }

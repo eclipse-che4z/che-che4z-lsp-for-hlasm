@@ -42,10 +42,10 @@ TEST(lsp_completion, completion_list_instr)
     auto result = lsp::generate_completion(lsp::completion_list_source(
         lsp::completion_list_instructions { "AAAAA", 1, &m, a.context().lsp_ctx.get(), { "AAAA", "ADATA" } }));
 
-    EXPECT_TRUE(std::any_of(
-        result.begin(), result.end(), [](const auto& e) { return e.label == "ADATA" && e.suggestion_for == "AAAAA"; }));
-    EXPECT_TRUE(std::any_of(
-        result.begin(), result.end(), [](const auto& e) { return e.label == "AAAA" && e.suggestion_for == "AAAAA"; }));
+    EXPECT_TRUE(
+        std::ranges::any_of(result, [](const auto& e) { return e.label == "ADATA" && e.suggestion_for == "AAAAA"; }));
+    EXPECT_TRUE(
+        std::ranges::any_of(result, [](const auto& e) { return e.label == "AAAA" && e.suggestion_for == "AAAAA"; }));
 }
 
 TEST(lsp_completion, completion_list_instr_exact)
@@ -66,8 +66,8 @@ TEST(lsp_completion, completion_list_instr_exact)
     auto result = lsp::generate_completion(lsp::completion_list_source(
         lsp::completion_list_instructions { "AAA", 1, &m, a.context().lsp_ctx.get(), { "AAAA", "ADATA" } }));
 
-    EXPECT_TRUE(std::any_of(
-        result.begin(), result.end(), [](const auto& e) { return e.label == "AAAA" && e.suggestion_for.empty(); }));
+    EXPECT_TRUE(
+        std::ranges::any_of(result, [](const auto& e) { return e.label == "AAAA" && e.suggestion_for.empty(); }));
 }
 
 TEST(lsp_completion, completion_list_vars)
@@ -77,7 +77,7 @@ TEST(lsp_completion, completion_list_vars)
     auto result = lsp::generate_completion(&vars);
 
     EXPECT_EQ(result.size(), 1);
-    EXPECT_EQ(std::count_if(result.begin(), result.end(), [](const auto& e) { return e.label == "&VARNAME"; }), 1);
+    EXPECT_EQ(std::ranges::count(result, "&VARNAME", &completion_item::label), 1);
 }
 
 TEST(lsp_completion, completion_list_labels)
@@ -89,7 +89,7 @@ TEST(lsp_completion, completion_list_labels)
     auto result = lsp::generate_completion(&labels);
 
     EXPECT_EQ(result.size(), 1);
-    EXPECT_EQ(std::count_if(result.begin(), result.end(), [](const auto& e) { return e.label == ".LABEL"; }), 1);
+    EXPECT_EQ(std::ranges::count(result, ".LABEL", &completion_item::label), 1);
 }
 
 TEST(lsp_completion, completion_list_empty)
@@ -119,11 +119,9 @@ TEST(lsp_completion, macro_operands)
 
     EXPECT_EQ(result.size(), 2);
 
-    EXPECT_TRUE(std::any_of(
-        result.begin(), result.end(), [](const auto& e) { return e.label == "&A" && e.documentation.empty(); }));
-    EXPECT_TRUE(std::any_of(result.begin(), result.end(), [](const auto& e) {
-        return e.label == "&B" && e.documentation.find("&B=(DEFAULTB,1)") != std::string::npos;
-    }));
+    EXPECT_TRUE(std::ranges::any_of(result, [](const auto& e) { return e.label == "&A" && e.documentation.empty(); }));
+    EXPECT_TRUE(std::ranges::any_of(result,
+        [](const auto& e) { return e.label == "&B" && e.documentation.find("&B=(DEFAULTB,1)") != std::string::npos; }));
 }
 
 TEST(lsp_completion, ordinary_operands_reloc_no_label)

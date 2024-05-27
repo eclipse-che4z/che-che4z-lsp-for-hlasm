@@ -101,17 +101,12 @@ TEST_P(cics_preprocessor_tests, basics)
 
     auto result = p->generate_replacement(document(text_template)).run().value();
 
-    EXPECT_TRUE(std::equal(expected.begin(),
-        expected.end(),
-        result.begin(),
-        result.end(),
-        [](const auto& l, const auto& r) {
-            auto text = r.text();
-            while (!text.empty() && (text.back() == '\n' || text.back() == '\r'))
-                text.remove_suffix(1);
-            return l == text;
-        }))
-        << text_template;
+    EXPECT_TRUE(std::ranges::equal(expected, result, {}, {}, [](const auto& e) {
+        auto text = e.text();
+        while (!text.empty() && (text.back() == '\n' || text.back() == '\r'))
+            text.remove_suffix(1);
+        return text;
+    })) << text_template;
 }
 
 INSTANTIATE_TEST_SUITE_P(cics_preprocessor,

@@ -97,7 +97,7 @@ std::string_view next_nonblank_sequence(std::string_view s)
 
 std::string& to_upper(std::string& s)
 {
-    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return upper_cased[c]; });
+    std::ranges::transform(s, s.begin(), [](unsigned char c) { return upper_cased[c]; });
     return s;
 }
 

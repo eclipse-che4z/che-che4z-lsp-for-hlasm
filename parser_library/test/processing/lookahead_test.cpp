@@ -237,7 +237,7 @@ TEST(attribute_lookahead, nested_lookup_triggered)
     std::vector<context::id_index> references;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
     EXPECT_EQ(references.size(), (size_t)1);
-    EXPECT_EQ(std::count(references.begin(), references.end(), id_index("B")), 1);
+    EXPECT_EQ(std::ranges::count(references, id_index("B")), 1);
 
     a.hlasm_ctx().ord_ctx.add_symbol_reference(
         context::symbol(id_index("B"),
@@ -250,7 +250,7 @@ TEST(attribute_lookahead, nested_lookup_triggered)
     references.clear();
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
     EXPECT_EQ(references.size(), (size_t)1);
-    EXPECT_EQ(std::count(references.begin(), references.end(), id_index("A")), 1);
+    EXPECT_EQ(std::ranges::count(references, id_index("A")), 1);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }

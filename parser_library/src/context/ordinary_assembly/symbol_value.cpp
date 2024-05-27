@@ -166,8 +166,7 @@ symbol_value symbol_value::ignore_qualification() const
         return *this;
 
     auto result = get_reloc();
-    if (std::all_of(
-            result.bases().begin(), result.bases().end(), [](const auto& be) { return be.first.qualifier.empty(); }))
+    if (std::ranges::all_of(result.bases(), [](const auto& be) { return be.first.qualifier.empty(); }))
     {
         if (result.bases().empty() && !result.has_unresolved_space())
             return result.offset();
@@ -177,9 +176,9 @@ symbol_value symbol_value::ignore_qualification() const
 
     auto bases = std::make_shared<std::vector<address::base_entry>>(result.bases().begin(), result.bases().end());
 
-    std::for_each(bases->begin(), bases->end(), [](auto& e) { e.first.qualifier = id_index(); });
+    std::ranges::for_each(*bases, [](auto& e) { e.first.qualifier = id_index(); });
 
-    std::sort(bases->begin(), bases->end(), [](const auto& l, const auto& r) { return l.first.owner < r.first.owner; });
+    std::ranges::sort(*bases, {}, [](const auto& e) { return e.first.owner; });
 
     bases->erase(aggregate(
                      bases->begin(),

@@ -116,7 +116,7 @@ concatenation_point::evaluate_with_range_map(concat_chain::const_iterator begin,
 {
     std::string ret;
     concatenation_point_evaluator<true> evaluator { ret, eval_ctx };
-    evaluator.ranges.reserve(std::distance(begin, end));
+    evaluator.ranges.reserve(std::ranges::distance(begin, end));
 
     for (auto it = begin; it != end; ++it)
         std::visit(evaluator, it->value);

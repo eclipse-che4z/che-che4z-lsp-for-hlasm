@@ -118,6 +118,10 @@ struct uri_path_iterator
     using pointer = std::string_view*;
     using reference = std::string_view;
 
+    uri_path_iterator()
+        : uri_path_iterator(nullptr)
+    {}
+
     explicit uri_path_iterator(pointer uri_path)
         : m_uri_path(uri_path)
         , m_started(m_uri_path != nullptr ? m_uri_path->empty() : false)
@@ -288,7 +292,7 @@ resource_location resource_location::lexically_normal() const
 {
     auto uri = get_uri();
 
-    std::replace(uri.begin(), uri.end(), '\\', '/');
+    std::ranges::replace(uri, '\\', '/');
 
     if (!utils::path::is_uri(uri))
         return resource_location(normalize_path(uri, false, false));
@@ -297,9 +301,7 @@ resource_location resource_location::lexically_normal() const
     if (dis_uri.path.empty())
         return *this;
 
-    std::transform(dis_uri.scheme.begin(), dis_uri.scheme.end(), dis_uri.scheme.begin(), [](unsigned char c) {
-        return static_cast<const char>(tolower(c));
-    });
+    std::ranges::transform(dis_uri.scheme, dis_uri.scheme.begin(), [](unsigned char c) { return (char)tolower(c); });
 
     dis_uri.path = normalize_path(dis_uri.path, dis_uri.scheme == "file", dis_uri.contains_host());
     normalize_windows_like_uri(dis_uri);
@@ -328,7 +330,7 @@ resource_location resource_location::lexically_relative(const resource_location&
     uri_path_iterator l_it(&this_uri);
     uri_path_iterator r_it(&base_uri);
 
-    auto [this_it, base_it] = std::mismatch(l_it.begin(), l_it.end(), r_it.begin(), r_it.end());
+    auto [this_it, base_it] = std::ranges::mismatch(l_it, r_it);
     if (this_it == this_it.end() && base_it == base_it.end())
         return resource_location(".");
 

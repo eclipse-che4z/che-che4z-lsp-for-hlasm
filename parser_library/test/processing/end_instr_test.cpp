@@ -408,5 +408,5 @@ TEST(END, stops_lookahead)
 
     a.analyze();
 
-    EXPECT_EQ(0, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "E045"; }));
+    EXPECT_EQ(0, std::ranges::count(a.diags(), "E045", &diagnostic::code));
 }

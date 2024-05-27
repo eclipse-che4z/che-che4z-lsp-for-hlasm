@@ -111,9 +111,8 @@ const section* ordinary_assembly_context::current_section() const { return curr_
 section* ordinary_assembly_context::set_section(
     id_index name, section_kind kind, location symbol_location, const library_info& li)
 {
-    auto tmp = std::find_if(sections_.begin(), sections_.end(), [name, kind](const auto& sect) {
-        return sect->name == name && sect->kind == kind;
-    });
+    auto tmp = std::ranges::find_if(
+        sections_, [name, kind](const auto& sect) { return sect->name == name && sect->kind == kind; });
 
     if (tmp != sections_.end())
         curr_section_ = std::to_address(*tmp);
@@ -274,7 +273,7 @@ bool ordinary_assembly_context::symbol_defined(id_index name) const
 
 bool ordinary_assembly_context::section_defined(id_index name, section_kind kind) const
 {
-    return std::find_if(sections_.begin(), sections_.end(), [name, kind](const auto& sect) {
+    return std::ranges::find_if(sections_, [name, kind](const auto& sect) {
         return sect->name == name && sect->kind == kind;
     }) != sections_.end();
 }

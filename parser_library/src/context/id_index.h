@@ -15,6 +15,7 @@
 #ifndef CONTEXT_ID_INDEX_H
 #define CONTEXT_ID_INDEX_H
 
+#include <algorithm>
 #include <cassert>
 #include <compare>
 #include <cstring>
@@ -39,7 +40,7 @@ class id_index
     {
         assert(s.size() < buffer_size);
         if (std::is_constant_evaluated())
-            std::copy(s.begin(), s.end(), m_buffer);
+            std::ranges::copy(s, m_buffer);
         else
             std::memcpy(m_buffer, s.data(), s.size());
         m_buffer[buffer_size - 1] = (char)s.size();
@@ -82,10 +83,7 @@ public:
         }
     }
 
-    constexpr bool operator==(const id_index& o) const noexcept
-    {
-        return std::equal(std::begin(m_buffer), std::end(m_buffer), std::begin(o.m_buffer), std::end(o.m_buffer));
-    }
+    constexpr bool operator==(const id_index& o) const noexcept { return std::ranges::equal(m_buffer, o.m_buffer); }
 
     std::string_view to_string_view() const noexcept
     {

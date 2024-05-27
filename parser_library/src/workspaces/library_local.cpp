@@ -20,6 +20,7 @@
 
 #include "file_manager.h"
 #include "utils/platform.h"
+#include "utils/projectors.h"
 #include "utils/string_operations.h"
 #include "wildcard.h"
 
@@ -33,14 +34,12 @@ void adjust_extensions_vector(std::vector<std::string>& extensions)
             ext.insert(0, 1, '.');
 
     // from longest to shortest, then lexicographically
-    std::sort(extensions.begin(), extensions.end(), [](const std::string& l, const std::string& r) {
-        if (l.size() > r.size())
-            return true;
-        if (l.size() < r.size())
-            return false;
+    std::ranges::sort(extensions, [](const std::string& l, const std::string& r) {
+        if (auto c = l.size() <=> r.size(); c != 0)
+            return c > 0;
         return l < r;
     });
-    extensions.erase(std::unique(extensions.begin(), extensions.end()), extensions.end());
+    extensions.erase(std::ranges::unique(extensions).begin(), extensions.end());
 }
 } // namespace
 
@@ -88,8 +87,7 @@ std::vector<std::string> library_local::list_files()
 
     std::vector<std::string> result;
     result.reserve(files->first.size());
-    std::transform(
-        files->first.begin(), files->first.end(), std::back_inserter(result), [](const auto& f) { return f.first; });
+    std::ranges::transform(files->first, std::back_inserter(result), utils::first_element);
     return result;
 }
 
@@ -169,8 +167,7 @@ library_local::files_collection_t library_local::load_files(
             if (auto off = file.find_first_of('.', 1); off != std::string::npos)
                 file.erase(off);
         }
-        else if (auto ext = std::find_if(
-                     m_extensions.begin(), m_extensions.end(), [&f = file](const auto& e) { return f.ends_with(e); });
+        else if (auto ext = std::ranges::find_if(m_extensions, [&f = file](const auto& e) { return f.ends_with(e); });
                  ext != m_extensions.end())
 
             file.erase(file.size() - ext->size());

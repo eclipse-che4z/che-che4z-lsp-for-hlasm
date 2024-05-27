@@ -121,8 +121,7 @@ matched_special_value try_matching_special_value(
 
     for (auto s : list)
     {
-        if (auto to_match = num.substr(start, s.size());
-            !std::equal(to_match.begin(), to_match.end(), s.begin(), s.end(), [](unsigned char l, unsigned char r) {
+        if (!std::ranges::equal(num.substr(start, s.size()), s, [](unsigned char l, unsigned char r) {
                 return toupper(l) == toupper(r);
             }))
             continue;

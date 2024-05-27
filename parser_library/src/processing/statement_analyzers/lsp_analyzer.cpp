@@ -363,12 +363,12 @@ void lsp_analyzer::collect_occurrence(
 
 void lsp_analyzer::collect_occurrence(const semantics::operands_si& operands, occurrence_collector& collector)
 {
-    std::for_each(operands.value.begin(), operands.value.end(), [&](const auto& op) { op->apply(collector); });
+    std::ranges::for_each(operands.value, [&collector](const auto& op) { op->apply(collector); });
 }
 
 void lsp_analyzer::collect_occurrence(const semantics::deferred_operands_si& operands, occurrence_collector& collector)
 {
-    std::for_each(operands.vars.begin(), operands.vars.end(), [&](const auto& v) { collector.get_occurrence(*v); });
+    std::ranges::for_each(operands.vars, [&collector](const auto& v) { collector.get_occurrence(*v); });
 }
 
 bool lsp_analyzer::is_LCL_GBL(
@@ -376,17 +376,14 @@ bool lsp_analyzer::is_LCL_GBL(
 {
     const auto& code = statement.opcode_ref();
 
-    for (const auto& i : LCL_GBL_instructions_)
-    {
-        if (code.value == i.name)
-        {
-            set_type = i.type;
-            global = i.global;
-            return true;
-        }
-    }
+    const auto instr = std::ranges::find(LCL_GBL_instructions_, code.value, &LCL_GBL_instr::name);
 
-    return false;
+    if (instr == LCL_GBL_instructions_.end())
+        return false;
+
+    set_type = instr->type;
+    global = instr->global;
+    return true;
 }
 
 bool lsp_analyzer::is_SET(const processing::resolved_statement& statement, context::SET_t_enum& set_type) const
@@ -458,14 +455,12 @@ void lsp_analyzer::add_var_def(const semantics::variable_symbol* var, context::S
     if (var->created)
         return;
 
-    if (std::find_if(opencode_var_defs_.begin(),
-            opencode_var_defs_.end(),
-            [&](const auto& def) { return def.name == var->access_basic()->name; })
-        != opencode_var_defs_.end())
+    const auto& name = var->access_basic()->name;
+
+    if (std::ranges::find(opencode_var_defs_, name, &lsp::variable_symbol_definition::name) != opencode_var_defs_.end())
         return;
 
-    opencode_var_defs_.emplace_back(
-        var->access_basic()->name, type, global, hlasm_ctx_.current_statement_source(), var->symbol_range.start);
+    opencode_var_defs_.emplace_back(name, type, global, hlasm_ctx_.current_statement_source(), var->symbol_range.start);
 }
 
 void lsp_analyzer::add_copy_operand(context::id_index name, const range& operand_range, const collection_info_t& ci)

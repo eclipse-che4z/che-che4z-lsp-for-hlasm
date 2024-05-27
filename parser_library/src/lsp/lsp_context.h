@@ -56,7 +56,7 @@ class lsp_context final
     {
         std::vector<T> data;
 
-        bool contains(const T& v) const { return std::binary_search(data.begin(), data.end(), v); }
+        bool contains(const T& v) const { return std::ranges::binary_search(data, v); }
     };
 
     struct title_details

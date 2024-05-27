@@ -1018,8 +1018,8 @@ Z   DS    A
     ASSERT_TRUE(s);
 
     std::vector<address::base_entry> expected_bases { { { s, id_index() }, 1 } };
-    EXPECT_TRUE(std::equal(z->bases().begin(), z->bases().end(), expected_bases.begin(), expected_bases.end()));
 
+    EXPECT_TRUE(std::ranges::equal(z->bases(), expected_bases));
     EXPECT_EQ(z->offset(), 1004);
 }
 

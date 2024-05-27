@@ -78,7 +78,7 @@ struct logical_line_segment
 template<typename It>
 size_t logical_distance(It b, It e)
 {
-    return std::distance(b, e);
+    return std::ranges::distance(b, e);
 }
 
 template<utils::HasCounter It>
@@ -179,12 +179,12 @@ struct logical_line_const_iterator
 
     auto to_address() const noexcept { return std::to_address(m_col_it); }
 
-    friend difference_type operator-(
-        const logical_line_const_iterator& e, const logical_line_const_iterator& b) noexcept
+    friend difference_type operator-(const logical_line_const_iterator& e,
+        const logical_line_const_iterator& b) noexcept requires std::sized_sentinel_for<It, It>
     {
         assert(e.m_logical_line == b.m_logical_line);
         if (e.m_segment_it == b.m_segment_it)
-            return std::distance(b, e);
+            return std::ranges::distance(b.m_col_it, e.m_col_it);
 
         if (e.m_segment_it < b.m_segment_it)
             return -(b - e);
@@ -196,13 +196,13 @@ struct logical_line_const_iterator
          * | XXXXXX<
          */
 
-        size_t result = std::distance(b.m_col_it, b.m_segment_it->continuation);
+        size_t result = std::ranges::distance(b.m_col_it, b.m_segment_it->continuation);
 
         for (auto it = std::next(b.m_segment_it); it != e.m_segment_it; ++it)
-            result += std::distance(it->code, it->continuation);
+            result += std::ranges::distance(it->code, it->continuation);
 
         if (e.m_segment_it != e.m_logical_line->segments.end())
-            result += std::distance(e.m_segment_it->code, e.m_col_it);
+            result += std::ranges::distance(e.m_segment_it->code, e.m_col_it);
 
         return result;
     }

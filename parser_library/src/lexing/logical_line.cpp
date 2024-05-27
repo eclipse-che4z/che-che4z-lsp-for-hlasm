@@ -19,7 +19,7 @@ std::pair<std::string_view, logical_line_segment_eol> extract_line(std::string_v
 {
     auto it = input.begin();
     auto [its, eol] = extract_line(it, input.end());
-    input.remove_prefix(std::distance(input.begin(), it));
+    input.remove_prefix(std::ranges::distance(input.begin(), it));
 
     return std::make_pair(std::string_view(its.first, its.second), eol);
 }

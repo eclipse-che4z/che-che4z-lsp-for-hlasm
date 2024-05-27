@@ -41,9 +41,8 @@ std::vector<preprocessor_options> translate_pp_configs(const std::vector<config:
 {
     std::vector<preprocessor_options> result;
     result.reserve(pp.size());
-    std::transform(pp.begin(), pp.end(), std::back_inserter(result), [](const auto& p) {
-        return std::visit(translate_pp_options {}, p.options);
-    });
+    std::ranges::transform(
+        pp, std::back_inserter(result), [](const auto& p) { return std::visit(translate_pp_options {}, p.options); });
     return result;
 }
 } // namespace
@@ -116,17 +115,15 @@ bool processor_group::refresh_needed(
         no_filename_rls,
     const std::vector<utils::resource::resource_location>& original_rls) const
 {
-    if (std::any_of(no_filename_rls.begin(),
-            no_filename_rls.end(),
-            [&libs = m_libs, &lib_locations = m_lib_locations](const auto& no_filename_rl) {
+    if (std::ranges::any_of(
+            no_filename_rls, [&libs = m_libs, &lib_locations = m_lib_locations](const auto& no_filename_rl) {
                 auto candidate = lib_locations.find(no_filename_rl);
                 return candidate != lib_locations.end() && libs[candidate->second]->has_cached_content();
             }))
         return true;
 
-    return std::any_of(original_rls.begin(),
-        original_rls.end(),
-        [&libs = m_libs, &lib_locations = m_lib_locations](const auto& original_rl) {
+    return std::ranges::any_of(
+        original_rls, [&libs = m_libs, &lib_locations = m_lib_locations](const auto& original_rl) {
             auto candidate = lib_locations.upper_bound(original_rl);
 
             while (candidate != lib_locations.end() && candidate->first.is_prefix_of(original_rl))

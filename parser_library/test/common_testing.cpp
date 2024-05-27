@@ -40,9 +40,7 @@ void run_if_valid(hlasm_plugin::utils::task t)
 void open_parse_and_recollect_diags(
     workspace& ws, const std::vector<hlasm_plugin::utils::resource::resource_location>& files)
 {
-    std::for_each(files.begin(), files.end(), [&ws](const hlasm_plugin::utils::resource::resource_location& f) {
-        run_if_valid(ws.did_open_file(f));
-    });
+    std::ranges::for_each(files, [&ws](const auto& f) { run_if_valid(ws.did_open_file(f)); });
     parse_all_files(ws);
 
     ws.diags().clear();
@@ -52,9 +50,7 @@ void open_parse_and_recollect_diags(
 void close_parse_and_recollect_diags(
     workspace& ws, const std::vector<hlasm_plugin::utils::resource::resource_location>& files)
 {
-    std::for_each(files.begin(), files.end(), [&ws](const hlasm_plugin::utils::resource::resource_location& f) {
-        run_if_valid(ws.did_close_file(f));
-    });
+    std::ranges::for_each(files, [&ws](const auto& f) { run_if_valid(ws.did_close_file(f)); });
     parse_all_files(ws);
 
     ws.diags().clear();
@@ -63,14 +59,14 @@ void close_parse_and_recollect_diags(
 
 bool matches_fade_messages(const std::vector<fade_message>& a, const std::vector<fade_message>& b)
 {
-    return std::is_permutation(a.begin(), a.end(), b.begin(), b.end(), [](const auto& msg_a, const auto& msg_b) {
+    return std::ranges::is_permutation(a, b, [](const auto& msg_a, const auto& msg_b) {
         return msg_a.code == msg_b.code && msg_a.r == msg_b.r && msg_a.uri == msg_b.uri;
     });
 }
 
 bool contains_fade_messages(const std::vector<fade_message>& a, const std::vector<fade_message>& b)
 {
-    return std::includes(a.begin(), a.end(), b.begin(), b.end(), [](const auto& msg_a, const auto& msg_b) {
+    return std::ranges::includes(a, b, [](const auto& msg_a, const auto& msg_b) {
         return msg_a.code == msg_b.code && msg_a.r == msg_b.r && msg_a.uri == msg_b.uri;
     });
 }
@@ -281,7 +277,7 @@ expressions::data_definition parse_data_definition(analyzer& a, diagnostic_op_co
 namespace hlasm_plugin::parser_library {
 bool is_similar(const std::vector<document_symbol_item>& l, const std::vector<document_symbol_item>& r)
 {
-    return l.size() == r.size() && std::is_permutation(l.begin(), l.end(), r.begin(), utils::is_similar);
+    return std::ranges::is_permutation(l, r, utils::is_similar);
 }
 
 bool is_similar(const document_symbol_item& l, const document_symbol_item& r)

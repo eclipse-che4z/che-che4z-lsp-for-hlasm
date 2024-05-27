@@ -103,13 +103,14 @@ std::vector<semantics::preproc_details::name_range> get_operands_list(
         auto operand_view = extract_operand_and_argument(operands);
         std::string operand;
         operand.reserve(operand_view.length());
-        std::remove_copy_if(operand_view.begin(), operand_view.end(), std::back_inserter(operand), [](unsigned char c) {
-            return utils::isblank32(c);
-        });
+        std::ranges::remove_copy_if(
+            operand_view, std::back_inserter(operand), [](unsigned char c) { return utils::isblank32(c); });
 
-        operand_list.emplace_back(semantics::preproc_details::name_range { std::move(operand),
-            rp.adjust_range(range(
-                (position(lineno, op_column_start)), (position(lineno, op_column_start + operand_view.length())))) });
+        operand_list.emplace_back(std::move(operand),
+            rp.adjust_range(range {
+                position(lineno, op_column_start),
+                position(lineno, op_column_start + operand_view.length()),
+            }));
 
         operands.remove_prefix(operand_view.length());
         op_column_start += operand_view.length();
@@ -129,8 +130,10 @@ semantics::preproc_details::name_range get_stmt_part_name_range(
     if (index < matches.size() && (index == 0 || matches[index].first != matches[index].second))
     {
         nr.name = std::string(matches[index].first, matches[index].second);
-        nr.r = rp.adjust_range(range(position(lineno, std::distance(matches[1].first, matches[index].first)),
-            position(lineno, std::distance(matches[1].first, matches[index].second))));
+        nr.r = rp.adjust_range(range {
+            position(lineno, std::ranges::distance(matches[1].first, matches[index].first)),
+            position(lineno, std::ranges::distance(matches[1].first, matches[index].second)),
+        });
     }
 
     return nr;
@@ -148,7 +151,10 @@ std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(std::span<const std::pa
         && (!ids.remarks || *ids.remarks < matches.size() || *ids.remarks == -1));
 
     const auto matches_ = [&matches](size_t n) { return matches[1 + n]; };
-    const auto lengths_ = [&matches](size_t n) { return std::distance(matches[1 + n].first, matches[1 + n].second); };
+    const auto lengths_ = [&matches](size_t n) {
+        const auto& [b, e] = matches[1 + n];
+        return std::ranges::distance(b, e);
+    };
 
     semantics::preproc_details details;
 
@@ -172,7 +178,7 @@ std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(std::span<const std::pa
 
     if (lengths_(ids.operands))
         details.operands = get_operands_list(get_stmt_part_name_range<ITERATOR>(matches, ids.operands, rp).name,
-            std::distance(matches_(0).first, matches_(ids.operands).first),
+            std::ranges::distance(matches_(0).first, matches_(ids.operands).first),
             rp);
 
     if (ids.remarks && lengths_(*ids.remarks))

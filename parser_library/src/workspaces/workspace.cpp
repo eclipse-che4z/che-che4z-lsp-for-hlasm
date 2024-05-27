@@ -41,6 +41,7 @@
 #include "utils/factory.h"
 #include "utils/levenshtein_distance.h"
 #include "utils/path_conversions.h"
+#include "utils/projectors.h"
 #include "utils/transform_inserter.h"
 
 using hlasm_plugin::utils::resource::resource_location;
@@ -139,12 +140,12 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
 
     void append_files_to_close(std::set<resource_location>& files_to_close)
     {
-        std::set_difference(pfc.m_dependencies.begin(),
-            pfc.m_dependencies.end(),
-            next_dependencies.begin(),
-            next_dependencies.end(),
-            utils::transform_inserter(files_to_close, [](const auto& v) -> const auto& { return v.first; }),
-            [](const auto& l, const auto& r) { return l.first < r.first; });
+        std::ranges::set_difference(pfc.m_dependencies,
+            next_dependencies,
+            utils::transform_inserter(files_to_close, utils::first_element),
+            {},
+            utils::first_element,
+            utils::first_element);
     }
 
     resource_location get_url(std::string_view library)
@@ -153,9 +154,8 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
         {
             return it->second;
         }
-        else if (resource_location url; std::none_of(libraries.begin(),
-                     libraries.end(),
-                     [&url, &library](const auto& lib) { return lib->has_file(library, &url); }))
+        else if (resource_location url; std::ranges::none_of(
+                     libraries, [&url, &library](const auto& lib) { return lib->has_file(library, &url); }))
         {
             next_member_map.emplace(library, resource_location());
             return resource_location();
@@ -382,7 +382,7 @@ void generate_merged_fade_messages(const resource_location& rl,
             if (!active_mac_cpy_defs_map)
                 return false;
 
-            auto lineno = static_cast<size_t>(std::distance(line_details_addr, &e));
+            auto lineno = static_cast<size_t>(std::ranges::distance(line_details_addr, &e));
             auto active_mac_cpy_it_e = active_mac_cpy_defs_map->end();
 
             auto active_mac_cpy_it = std::find_if(active_mac_cpy_defs_map->lower_bound(lineno),
@@ -402,16 +402,18 @@ void generate_merged_fade_messages(const resource_location& rl,
 
     const auto& uri = rl.get_uri();
 
-    const auto it_b = std::find_if(
-        line_details_it_b, line_details_it_e, [](const processing::line_detail& e) { return e.contains_statement; });
+    const auto it_b =
+        std::ranges::find_if(line_details_it_b, line_details_it_e, &processing::line_detail::contains_statement);
     auto faded_line_it = std::find_if(it_b, line_details_it_e, faded_line_predicate);
 
     while (faded_line_it != line_details_it_e)
     {
         auto active_line = std::find_if_not(std::next(faded_line_it), line_details_it_e, faded_line_predicate);
         fms.emplace_back(fade_message::inactive_statement(uri,
-            range(position(std::distance(line_details_it_b, faded_line_it), 0),
-                position(std::distance(line_details_it_b, std::prev(active_line)), 80))));
+            range {
+                position(std::ranges::distance(line_details_it_b, faded_line_it), 0),
+                position(std::ranges::distance(line_details_it_b, std::prev(active_line)), 80),
+            }));
 
         faded_line_it = std::find_if(active_line, line_details_it_e, faded_line_predicate);
     }
@@ -509,7 +511,7 @@ void workspace::retrieve_fade_messages(std::vector<fade_message>& fms) const
     for (const auto& [_, proc_file_component] : m_processor_files)
     {
         if (const auto& pfm = proc_file_component.m_last_results->fade_messages)
-            std::copy_if(pfm->begin(), pfm->end(), std::back_inserter(fms), [&opened_files_uris](const auto& fmsg) {
+            std::ranges::copy_if(*pfm, std::back_inserter(fms), [&opened_files_uris](const auto& fmsg) {
                 return opened_files_uris.contains(fmsg.uri);
             });
 
@@ -530,7 +532,7 @@ void workspace::retrieve_fade_messages(std::vector<fade_message>& fms) const
 
     fade_unused_mac_names(hc_map, active_rl_mac_cpy_map, fms);
 
-    std::for_each(hc_map.begin(), hc_map.end(), [&active_rl_mac_cpy_map, &fms](const auto& e) {
+    std::ranges::for_each(hc_map, [&active_rl_mac_cpy_map, &fms](const auto& e) {
         generate_merged_fade_messages(e.first, e.second, active_rl_mac_cpy_map, fms);
     });
 }
@@ -867,8 +869,7 @@ utils::task workspace::did_change_watched_files(
                 continue;
 
             auto loc = comp.m_file->get_location();
-            const auto* pg = &get_proc_grp(loc);
-            if (std::find(refreshed->begin(), refreshed->end(), pg) != refreshed->end())
+            if (std::ranges::find(*refreshed, &get_proc_grp(loc)) != refreshed->end())
                 m_parsing_pending.emplace(std::move(loc));
         }
     }
@@ -1138,7 +1139,7 @@ std::vector<std::pair<std::string, size_t>> workspace::make_opcode_suggestion(
 
     for (auto&& s : generate_instruction_suggestions(opcode, opts.instr_set, extended))
         result.emplace_back(std::move(s));
-    std::stable_sort(result.begin(), result.end(), [](const auto& l, const auto& r) { return l.second < r.second; });
+    std::ranges::stable_sort(result, {}, utils::second_element);
 
     return result;
 }

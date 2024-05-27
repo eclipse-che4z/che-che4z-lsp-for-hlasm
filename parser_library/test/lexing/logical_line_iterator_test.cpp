@@ -13,6 +13,7 @@
  */
 
 #include <algorithm>
+#include <ranges>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -35,7 +36,7 @@ TEST_P(logical_line_iterator_fixture, general_behavior)
 {
     test_logical_line line;
     const auto& parm = GetParam();
-    std::transform(parm.begin(), parm.end(), std::back_inserter(line.segments), [](const auto& c) {
+    std::ranges::transform(parm, std::back_inserter(line.segments), [](const auto& c) {
         return test_logical_line_segment { c.begin(), c.begin(), c.end(), c.end(), c.end() };
     });
 
@@ -43,11 +44,8 @@ TEST_P(logical_line_iterator_fixture, general_behavior)
     for (auto p : parm)
         concat_parm.append(p);
 
-    EXPECT_TRUE(std::equal(line.begin(), line.end(), concat_parm.begin(), concat_parm.end()));
-    EXPECT_TRUE(std::equal(std::make_reverse_iterator(line.end()),
-        std::make_reverse_iterator(line.begin()),
-        concat_parm.rbegin(),
-        concat_parm.rend()));
+    EXPECT_TRUE(std::ranges::equal(line, concat_parm));
+    EXPECT_TRUE(std::ranges::equal(std::views::reverse(line), std::views::reverse(concat_parm)));
 }
 
 INSTANTIATE_TEST_SUITE_P(logical_line,
@@ -148,7 +146,7 @@ TEST_F(logical_line_iterator_coordinates_multiline, unchanged_code_part)
 
 TEST_F(logical_line_iterator_coordinates_multiline, empty_all_lines)
 {
-    std::for_each(m_line.segments.begin(), m_line.segments.end(), [](auto& s) { s = {}; });
+    std::ranges::fill(m_line.segments, logical_line_segment<std::string_view::iterator>());
 
     auto expected = std::pair<size_t, size_t>(0, 0);
     EXPECT_EQ(m_line.begin().get_coordinates(), expected);

@@ -164,7 +164,7 @@ TEST(deferred_statement, share_references_for_nonexecuted)
 
     auto refs = a.context().lsp_ctx->references(opencode, position(4, 10));
     std::vector<position> positions;
-    std::transform(refs.begin(), refs.end(), std::back_inserter(positions), [](const auto& e) { return e.pos; });
-    std::sort(positions.begin(), positions.end());
+    std::ranges::transform(refs, std::back_inserter(positions), &location::pos);
+    std::ranges::sort(positions);
     EXPECT_EQ(positions, expected_positions);
 }

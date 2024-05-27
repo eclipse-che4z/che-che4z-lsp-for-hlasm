@@ -164,9 +164,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
         alignment = (~top_alignment & top_alignment - 1) + 1;
     }
 
-    std::stable_sort(m_pending_literals.begin(), m_pending_literals.end(), [](const auto& l, const auto& r) {
-        return l.alignment > r.alignment;
-    });
+    std::ranges::stable_sort(m_pending_literals, std::ranges::greater(), &pending_literal::alignment);
 
     constexpr auto sectalign = doubleword;
     ord_ctx.align(sectalign, li);

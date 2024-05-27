@@ -136,14 +136,13 @@ void feature_workspace_folders::did_change_watched_files(const nlohmann::json& p
         const auto& json_changes = params.at("changes");
         std::vector<fs_change> changes;
         changes.reserve(json_changes.size());
-        std::transform(
-            json_changes.begin(), json_changes.end(), std::back_inserter(changes), [](const nlohmann::json& change) {
-                auto uri = change.at("uri").get<std::string_view>();
-                auto type = change.at("type").get<long long>();
-                if (type < 1 || type > 3)
-                    type = 0;
-                return fs_change { uri, static_cast<fs_change_type>(type) };
-            });
+        std::ranges::transform(json_changes, std::back_inserter(changes), [](const nlohmann::json& change) {
+            auto uri = change.at("uri").get<std::string_view>();
+            auto type = change.at("type").get<long long>();
+            if (type < 1 || type > 3)
+                type = 0;
+            return fs_change { uri, static_cast<fs_change_type>(type) };
+        });
         ws_mngr_.did_change_watched_files(changes);
     }
     catch (const nlohmann::json::exception& j)

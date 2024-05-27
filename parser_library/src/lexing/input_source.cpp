@@ -95,7 +95,7 @@ input_source::char_substitution input_source::new_input(
     {
         const auto& s = l.segments[i];
         if (i > 0)
-            _data.append(std::distance(s.begin, s.code), s.continuation_error ? 'X' : ' ');
+            _data.append(std::ranges::distance(s.begin, s.code), s.continuation_error ? 'X' : ' ');
 
         subs |= append(std::string_view(s.code.base(), s.end.base()));
 

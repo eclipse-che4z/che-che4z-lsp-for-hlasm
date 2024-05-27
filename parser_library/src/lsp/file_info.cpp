@@ -15,7 +15,13 @@
 #include "file_info.h"
 
 #include <algorithm>
-#include <span>
+
+namespace {
+constexpr auto occurrence_end_line(const hlasm_plugin::parser_library::lsp::symbol_occurrence& o)
+{
+    return o.occurrence_range.end.line;
+}
+} // namespace
 
 namespace hlasm_plugin::parser_library::lsp {
 
@@ -56,10 +62,8 @@ occurrence_scope_t file_info::find_occurrence_with_scope(position pos) const
     std::pair<const symbol_occurrence*, size_t> found_pair(nullptr, (size_t)-1);
     auto& [found, priority] = found_pair;
 
-    auto l = std::lower_bound(occurrences.begin(), occurrences.end(), pos, [](const auto& occ, const auto& p) {
-        return occ.occurrence_range.end.line < p.line;
-    });
-    auto it_limit = occurrences_start_limit.begin() + std::distance(occurrences.begin(), l);
+    auto l = std::ranges::lower_bound(occurrences, pos.line, {}, occurrence_end_line);
+    auto it_limit = occurrences_start_limit.begin() + std::ranges::distance(occurrences.begin(), l);
     // find in occurrences
     for (auto it = l; it != occurrences.end() && *it_limit <= pos.line; ++it, ++it_limit)
     {
@@ -85,9 +89,7 @@ occurrence_scope_t file_info::find_occurrence_with_scope(position pos) const
 
 const symbol_occurrence* file_info::find_closest_instruction(position pos) const noexcept
 {
-    auto l = std::upper_bound(occurrences.begin(), occurrences.end(), pos.line, [](const auto& p, const auto& occ) {
-        return p < occ.occurrence_range.end.line;
-    });
+    auto l = std::ranges::upper_bound(occurrences, pos.line, {}, occurrence_end_line);
     auto instr = std::find_if(std::make_reverse_iterator(l), occurrences.rend(), [](const auto& occ) {
         return occ.kind == occurrence_kind::INSTR || occ.kind == occurrence_kind::INSTR_LIKE;
     });
@@ -111,9 +113,7 @@ const symbol_occurrence* file_info::find_closest_instruction(position pos) const
 std::pair<const context::section*, index_t<context::using_collection>> file_info::find_reachable_sections(
     position pos) const
 {
-    auto l = std::upper_bound(occurrences.begin(), occurrences.end(), pos.line, [](const auto& p, const auto& occ) {
-        return p < occ.occurrence_range.end.line;
-    });
+    auto l = std::ranges::upper_bound(occurrences, pos.line, {}, occurrence_end_line);
     auto instr = std::find_if(std::make_reverse_iterator(l), occurrences.rend(), [](const auto& occ) {
         return occ.kind == occurrence_kind::INSTR || occ.kind == occurrence_kind::INSTR_LIKE;
     });
@@ -162,8 +162,8 @@ std::vector<position> file_info::find_references(
     for (const auto& occ : occurrences)
         if (occurrence.is_similar(occ))
             result.emplace_back(occ.occurrence_range.start);
-    std::sort(result.begin(), result.end());
-    result.erase(std::unique(result.begin(), result.end()), result.end());
+    std::ranges::sort(result);
+    result.erase(std::ranges::unique(result).begin(), result.end());
     return result;
 }
 
@@ -246,9 +246,8 @@ const std::vector<symbol_occurrence>& file_info::get_occurrences() const { retur
 
 void file_info::process_occurrences()
 {
-    std::sort(occurrences.begin(), occurrences.end(), [](const auto& l, const auto& r) {
-        return std::tie(l.occurrence_range.end.line, l.occurrence_range.start.line, l.evaluated_model)
-            < std::tie(r.occurrence_range.end.line, r.occurrence_range.start.line, r.evaluated_model);
+    std::ranges::sort(occurrences, {}, [](const auto& e) {
+        return std::tie(e.occurrence_range.end.line, e.occurrence_range.start.line, e.evaluated_model);
     });
 
     occurrences_start_limit.resize(occurrences.size());

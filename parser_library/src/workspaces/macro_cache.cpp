@@ -59,10 +59,7 @@ macro_cache_key macro_cache_key::create_from_context(
 
 void macro_cache_key::sort_opsyn_state(std::vector<cached_opsyn_mnemo>& opsyn_state)
 {
-    std::sort(opsyn_state.begin(), opsyn_state.end(), [](const cached_opsyn_mnemo& lhs, const cached_opsyn_mnemo& rhs) {
-        return std::tie(lhs.from_instr, lhs.to_instr, lhs.is_macro)
-            < std::tie(rhs.from_instr, rhs.to_instr, rhs.is_macro);
-    });
+    std::ranges::sort(opsyn_state, {}, [](const auto& e) { return std::tie(e.from_instr, e.to_instr, e.is_macro); });
 }
 
 const macro_cache_data* macro_cache::find_cached_data(const macro_cache_key& key) const

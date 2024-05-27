@@ -68,8 +68,7 @@ TEST(dependency_collector, uresolved_addresses)
     auto deps = expr.get_dependencies(dep_solver);
 
     ASSERT_EQ(deps.unresolved_spaces.size(), (size_t)1);
-    EXPECT_TRUE(
-        std::find(deps.unresolved_spaces.begin(), deps.unresolved_spaces.end(), sp) != deps.unresolved_spaces.end());
+    EXPECT_TRUE(std::ranges::find(deps.unresolved_spaces, sp) != deps.unresolved_spaces.end());
 
     deps.unresolved_address->normalized_spaces();
 }

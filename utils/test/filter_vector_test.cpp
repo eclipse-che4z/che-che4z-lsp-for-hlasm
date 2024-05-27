@@ -180,7 +180,7 @@ TEST(filter_vector, get_set_bitset)
     bitset.front() ^= 0x00000001u;
     bitset.back() ^= 0x80000000u;
 
-    EXPECT_TRUE(std::all_of(bitset.begin(), bitset.end(), [](auto n) { return n == 0; }));
+    EXPECT_TRUE(std::ranges::all_of(bitset, [](auto n) { return n == 0; }));
 
     f.set(bitset, 0);
 

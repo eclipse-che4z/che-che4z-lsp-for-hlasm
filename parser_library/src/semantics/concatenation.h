@@ -162,12 +162,12 @@ struct concat_chain_matcher
     {
         if constexpr (exact)
         {
-            if (std::distance(b, e) != sizeof...(Ts))
+            if (std::ranges::distance(b, e) != sizeof...(Ts))
                 return false;
         }
         else
         {
-            if (std::distance(b, e) < sizeof...(Ts))
+            if (std::ranges::distance(b, e) < sizeof...(Ts))
                 return false;
         }
         return ((std::holds_alternative<Ts>(b->value) && (++b, true)) && ...);

@@ -77,12 +77,12 @@ void statement_provider::trigger_attribute_lookahead(std::vector<context::id_ind
 {
     auto&& [statement_position, snapshot] = eval_ctx.hlasm_ctx.get_begin_snapshot(false);
 
-    std::sort(references_buffer.begin(), references_buffer.end());
+    std::ranges::sort(references_buffer);
 
-    listener.start_lookahead(lookahead_start_data(
-        std::vector(references_buffer.begin(), std::unique(references_buffer.begin(), references_buffer.end())),
-        statement_position,
-        std::move(snapshot)));
+    listener.start_lookahead(
+        lookahead_start_data(std::vector(references_buffer.begin(), std::ranges::unique(references_buffer).begin()),
+            statement_position,
+            std::move(snapshot)));
 }
 
 bool statement_provider::process_label(std::vector<context::id_index>& symbols,

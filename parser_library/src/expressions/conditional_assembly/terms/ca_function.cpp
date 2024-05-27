@@ -253,7 +253,7 @@ context::SET_t ca_function::D2A(std::string_view param, diagnostic_adder& add_di
     if (param.empty())
         return 0;
 
-    auto it = std::find_if(param.begin(), param.end(), [](int c) { return c != '-' && c != '+'; });
+    auto it = std::ranges::find_if(param, [](int c) { return c != '-' && c != '+'; });
 
     if (it - param.begin() > 1)
         RET_ERRPARM;
@@ -303,7 +303,7 @@ context::SET_t ca_function::ISBIN(const context::C_t& param, diagnostic_adder& a
     if (param.empty())
         RET_ERRPARM;
 
-    if (param.size() <= 32 && std::all_of(param.cbegin(), param.cend(), [](char c) { return c == '0' || c == '1'; }))
+    if (param.size() <= 32 && std::ranges::all_of(param, [](char c) { return c == '0' || c == '1'; }))
         return true;
     return false;
 }
@@ -335,8 +335,7 @@ context::SET_t ca_function::ISHEX(const context::C_t& param, diagnostic_adder& a
     if (param.empty())
         RET_ERRPARM;
 
-    if (param.size() <= 8
-        && std::all_of(param.cbegin(), param.cend(), [](unsigned char c) { return std::isxdigit(c); }))
+    if (param.size() <= 8 && std::ranges::all_of(param, [](unsigned char c) { return std::isxdigit(c); }))
         return true;
     return false;
 }
@@ -346,10 +345,8 @@ context::SET_t ca_function::ISSYM(const context::C_t& param, diagnostic_adder& a
     if (param.empty())
         RET_ERRPARM;
 
-    if (!std::isdigit((unsigned char)param.front()) && param.size() < 64
-        && std::all_of(param.cbegin(), param.cend(), lexing::lexer::ord_char))
-        return true;
-    return false;
+    return !std::isdigit((unsigned char)param.front()) && param.size() < 64
+        && std::ranges::all_of(param, lexing::lexer::ord_char);
 }
 
 context::SET_t ca_function::X2A(std::string_view param, diagnostic_adder& add_diagnostic)
@@ -629,7 +626,7 @@ context::SET_t ca_function::ESYM(const context::C_t&) { return context::SET_t();
 
 context::SET_t ca_function::LOWER(context::C_t param)
 {
-    std::transform(param.begin(), param.end(), param.begin(), [](unsigned char c) { return (char)tolower(c); });
+    std::ranges::transform(param, param.begin(), [](unsigned char c) { return (char)tolower(c); });
     return param;
 }
 
@@ -641,7 +638,7 @@ context::SET_t ca_function::SYSATTRP(const context::C_t&) { return context::SET_
 
 context::SET_t ca_function::UPPER(context::C_t param)
 {
-    std::transform(param.begin(), param.end(), param.begin(), [](unsigned char c) { return (char)toupper(c); });
+    std::ranges::transform(param, param.begin(), [](unsigned char c) { return (char)toupper(c); });
     return param;
 }
 

@@ -47,13 +47,9 @@ TEST(fading, endevor)
     a.analyze();
 
 
-    EXPECT_TRUE(std::is_permutation(fms->begin(),
-        fms->end(),
-        expected_fmsg.begin(),
-        expected_fmsg.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(std::ranges::is_permutation(*fms, expected_fmsg, [](const auto& fmsg, const auto& expected_fmsg) {
+        return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
+    }));
 }
 
 TEST(fading, cics)
@@ -82,13 +78,9 @@ B   L 0,DFHRESP ( NORMAL ) bla                                         X00000002
     analyzer a(contents, analyzer_options { source_file_loc, cics_preprocessor_options(), fms });
     a.analyze();
 
-    EXPECT_TRUE(std::is_permutation(fms->begin(),
-        fms->end(),
-        expected_fmsg.begin(),
-        expected_fmsg.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(std::ranges::is_permutation(*fms, expected_fmsg, [](const auto& fmsg, const auto& expected_fmsg) {
+        return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
+    }));
 }
 
 TEST(fading, db2_preprocessor_statement_include)
@@ -121,11 +113,7 @@ C   SQL TYPE                                                           X00000700
     analyzer a(contents, analyzer_options { source_file_loc, db2_preprocessor_options(), fms });
     a.analyze();
 
-    EXPECT_TRUE(std::is_permutation(fms->begin(),
-        fms->end(),
-        expected_fmsg.begin(),
-        expected_fmsg.end(),
-        [](const auto& fmsg, const auto& expected_fmsg) {
-            return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
-        }));
+    EXPECT_TRUE(std::ranges::is_permutation(*fms, expected_fmsg, [](const auto& fmsg, const auto& expected_fmsg) {
+        return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
+    }));
 }

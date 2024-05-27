@@ -227,7 +227,7 @@ TEST(parser, parse_single_apostrophe_string)
     auto* model = op.value[0]->access_model();
     ASSERT_TRUE(model);
     auto cc = concatenation_point::to_string(model->chain);
-    EXPECT_EQ(std::count(cc.begin(), cc.end(), '\''), 4);
+    EXPECT_EQ(std::ranges::count(cc, '\''), 4);
 }
 
 TEST(parser, parse_single_apostrophe_literal)
@@ -245,7 +245,7 @@ TEST(parser, parse_single_apostrophe_literal)
     auto* model = op.value[0]->access_model();
     ASSERT_TRUE(model);
     auto cc = concatenation_point::to_string(model->chain);
-    EXPECT_EQ(std::count(cc.begin(), cc.end(), '\''), 4);
+    EXPECT_EQ(std::ranges::count(cc, '\''), 4);
 }
 
 TEST(parser, sanitize_message_content_replace)
@@ -259,7 +259,7 @@ TEST(parser, sanitize_message_content_replace)
 
     const auto& msg = diag_container.diags[0].message;
 
-    EXPECT_TRUE(std::all_of(msg.begin(), msg.end(), [](unsigned char c) { return c < 0x80; }));
+    EXPECT_TRUE(std::ranges::all_of(msg, [](unsigned char c) { return c < 0x80; }));
 }
 
 TEST(parser, sanitize_message_content_valid_multibyte)

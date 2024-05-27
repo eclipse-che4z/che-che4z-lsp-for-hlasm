@@ -275,9 +275,8 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
 template<checking::data_instr_type instr_type>
 void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
 {
-    if (const auto& ops = stmt.operands_ref().value; ops.empty()
-        || std::any_of(
-            ops.begin(), ops.end(), [](const auto& op) { return op->type == semantics::operand_type::EMPTY; }))
+    if (const auto& ops = stmt.operands_ref().value;
+        ops.empty() || std::ranges::find(ops, semantics::operand_type::EMPTY, &semantics::operand::type) != ops.end())
     {
         context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
         hlasm_ctx.ord_ctx.symbol_dependencies().add_dependency(
@@ -303,18 +302,8 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
         const auto has_deps = [label](auto deps, bool& self_ref) {
             if (!deps.contains_dependencies())
                 return false;
-            struct
-            {
-                bool operator()(const context::symbolic_reference& l, const context::id_index& r) const
-                {
-                    return l.name < r;
-                }
-                bool operator()(const context::id_index& l, const context::symbolic_reference& r) const
-                {
-                    return l < r.name;
-                }
-            } cmp;
-            self_ref = std::binary_search(deps.undefined_symbolics.begin(), deps.undefined_symbolics.end(), label, cmp);
+            self_ref =
+                std::ranges::binary_search(deps.undefined_symbolics, label, {}, &context::symbolic_reference::name);
             return true;
         };
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
@@ -808,11 +797,8 @@ bool asm_processor::common_copy_postprocess(
         return false;
     }
 
-    auto whole_copy_stack = hlasm_ctx.whole_copy_stack();
-
-    auto cycle_tmp = std::find(whole_copy_stack.begin(), whole_copy_stack.end(), data.name);
-
-    if (cycle_tmp != whole_copy_stack.end())
+    if (auto whole_copy_stack = hlasm_ctx.whole_copy_stack();
+        std::ranges::find(whole_copy_stack, data.name) != whole_copy_stack.end())
     {
         if (diagnoser)
             diagnoser->add_diagnostic(diagnostic_op::error_E062(data.statement));
@@ -1015,11 +1001,11 @@ void asm_processor::process_CNOP(rebuilt_statement&& stmt)
 
 void asm_processor::process_START(rebuilt_statement&& stmt)
 {
+    using enum context::section_kind;
     auto sect_name = find_label_symbol(stmt);
 
-    if (std::any_of(hlasm_ctx.ord_ctx.sections().begin(), hlasm_ctx.ord_ctx.sections().end(), [](const auto& s) {
-            return s->kind == context::section_kind::EXECUTABLE || s->kind == context::section_kind::READONLY;
-        }))
+    if (std::ranges::any_of(
+            hlasm_ctx.ord_ctx.sections(), [](const auto& s) { return s->kind == EXECUTABLE || s->kind == READONLY; }))
     {
         add_diagnostic(diagnostic_op::error_E073(stmt.stmt_range_ref()));
         return;
@@ -1033,8 +1019,7 @@ void asm_processor::process_START(rebuilt_statement&& stmt)
 
     auto sym_loc = hlasm_ctx.processing_stack_top().get_location();
     sym_loc.pos.column = 0;
-    auto* section =
-        hlasm_ctx.ord_ctx.set_section(sect_name, context::section_kind::EXECUTABLE, std::move(sym_loc), lib_info);
+    const auto* section = hlasm_ctx.ord_ctx.set_section(sect_name, EXECUTABLE, std::move(sym_loc), lib_info);
 
     const auto& ops = stmt.operands_ref().value;
     if (ops.size() != 1)
@@ -1281,9 +1266,7 @@ bool asm_expr_quals(const semantics::operand_ptr& op, std::string_view value)
 
 void asm_processor::process_PUSH(rebuilt_statement&& stmt)
 {
-    const auto& ops = stmt.operands_ref().value;
-
-    if (std::any_of(ops.begin(), ops.end(), [](const auto& op) { return asm_expr_quals(op, "USING"); }))
+    if (std::ranges::any_of(stmt.operands_ref().value, [](const auto& op) { return asm_expr_quals(op, "USING"); }))
         hlasm_ctx.using_push();
 
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
@@ -1295,9 +1278,7 @@ void asm_processor::process_PUSH(rebuilt_statement&& stmt)
 
 void asm_processor::process_POP(rebuilt_statement&& stmt)
 {
-    const auto& ops = stmt.operands_ref().value;
-
-    if (std::any_of(ops.begin(), ops.end(), [](const auto& op) { return asm_expr_quals(op, "USING"); })
+    if (std::ranges::any_of(stmt.operands_ref().value, [](const auto& op) { return asm_expr_quals(op, "USING"); })
         && !hlasm_ctx.using_pop())
         add_diagnostic(diagnostic_op::error_A165_POP_USING(stmt.stmt_range_ref()));
 

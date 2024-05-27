@@ -232,7 +232,7 @@ TEST(processor_group, opcode_suggestions)
     EXPECT_CALL(*lib, list_files).WillRepeatedly(Return(files));
     EXPECT_CALL(*lib, has_file)
         .WillRepeatedly([&files](std::string_view file, hlasm_plugin::utils::resource::resource_location* url) {
-            bool result = std::any_of(files.begin(), files.end(), [file](const auto& v) { return v == file; });
+            bool result = std::ranges::find(files, file) != files.end();
             if (result && url)
                 *url = hlasm_plugin::utils::resource::resource_location(file);
             return result;
@@ -245,13 +245,11 @@ TEST(processor_group, opcode_suggestions)
     auto mac_false = grp.suggest("MAC", false);
     std::vector<std::pair<std::string, size_t>> expected_mac_false { { "MAC1", 1 }, { "MAC2", 1 } };
 
-    EXPECT_TRUE(
-        std::is_permutation(mac_false.begin(), mac_false.end(), expected_mac_false.begin(), expected_mac_false.end()));
+    EXPECT_TRUE(std::ranges::is_permutation(mac_false, expected_mac_false));
 
     auto mac_true = grp.suggest("$LOGMAC", true);
     std::vector<std::pair<std::string, size_t>> expected_mac_true { { "LONGMAC", 2 } };
-    EXPECT_TRUE(
-        std::is_permutation(mac_true.begin(), mac_true.end(), expected_mac_true.begin(), expected_mac_true.end()));
+    EXPECT_TRUE(std::ranges::is_permutation(mac_true, expected_mac_true));
 
     EXPECT_TRUE(grp.suggest("MAC1", false).empty());
     EXPECT_TRUE(grp.suggest("MAC1", true).empty());

@@ -27,6 +27,7 @@
 #include "lsp/lsp_context.h"
 #include "lsp/macro_info.h"
 #include "text_data_view.h"
+#include "utils/projectors.h"
 #include "utils/string_operations.h"
 #include "utils/unicode_text.h"
 
@@ -73,11 +74,7 @@ std::string hover_text(const context::symbol& sym)
         bool first = true;
         const auto& reloc = sym.value().get_reloc();
         auto bases = std::vector<context::address::base_entry>(reloc.bases().begin(), reloc.bases().end());
-        std::sort(bases.begin(), bases.end(), [](const auto& l, const auto& r) {
-            if (auto c = l.first.owner->name <=> r.first.owner->name; c != 0)
-                return c < 0;
-            return l.first.qualifier < r.first.qualifier;
-        });
+        std::ranges::sort(bases, {}, [](const auto& e) { return std::tie(e.first.owner->name, e.first.qualifier); });
         for (const auto& [base, d] : bases)
         {
             if (base.owner->name.empty() || d == 0)
@@ -344,7 +341,7 @@ std::vector<completion_item> generate_completion(const completion_list_instructi
         suggestions.emplace_back(s, false);
 
     const auto locate_suggestion = [&s = suggestions](std::string_view text) {
-        auto it = std::find_if(s.begin(), s.end(), [text](const auto& e) { return e.first == text; });
+        auto it = std::ranges::find(s, text, utils::first_element);
         return it == s.end() ? nullptr : std::to_address(it);
     };
 
@@ -469,7 +466,7 @@ constexpr const auto to_hex = [](unsigned long long n) {
         s.push_back("0123456789ABCDEF"[n & 15]);
         n >>= 4;
     } while (n);
-    std::reverse(s.begin(), s.end());
+    std::ranges::reverse(s);
     return s;
 };
 

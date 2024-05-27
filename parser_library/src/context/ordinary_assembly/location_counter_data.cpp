@@ -69,8 +69,7 @@ void location_counter_data::append_data(location_counter_data data)
 
 void location_counter_data::resolve_space(const space* sp, size_t length)
 {
-    auto match = std::find_if(
-        unknown_parts.begin(), unknown_parts.end(), [sp](const auto& p) { return p.unknown_space.get() == sp; });
+    auto match = std::ranges::find(unknown_parts, sp, [](const auto& p) { return p.unknown_space.get(); });
     if (match == unknown_parts.end())
         return;
 
@@ -89,8 +88,7 @@ void location_counter_data::resolve_space(const space* sp, size_t length)
 
 void location_counter_data::resolve_space(const space* sp, space_ptr new_space)
 {
-    auto match = std::find_if(
-        unknown_parts.begin(), unknown_parts.end(), [sp](const auto& p) { return p.unknown_space.get() == sp; });
+    auto match = std::ranges::find(unknown_parts, sp, [](const auto& p) { return p.unknown_space.get(); });
     if (match == unknown_parts.end())
         return;
 

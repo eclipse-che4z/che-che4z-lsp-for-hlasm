@@ -41,8 +41,7 @@ bool is_valid_symbol_name(std::string_view s, bool extended_names_allowed)
         return false;
     if (s.front() >= '0' && s.front() <= '9')
         return false;
-    return std::all_of(
-        s.begin(), s.end(), [](unsigned char c) { return c < allowed_symbols.size() && allowed_symbols[c]; });
+    return std::ranges::all_of(s, [](unsigned char c) { return c < allowed_symbols.size() && allowed_symbols[c]; });
 }
 
 } // namespace hlasm_plugin::parser_library::lexing

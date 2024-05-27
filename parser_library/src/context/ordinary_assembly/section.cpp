@@ -33,8 +33,7 @@ section::section(id_index name, section_kind kind)
 
 void section::set_location_counter(id_index loctr_name)
 {
-    auto tmp = std::find_if(
-        loctrs_.begin(), loctrs_.end(), [loctr_name](const auto& loctr) { return loctr->name == loctr_name; });
+    auto tmp = std::ranges::find(loctrs_, loctr_name, &location_counter::name);
 
     if (tmp != loctrs_.end())
         curr_loctr_ = std::to_address(*tmp);
@@ -47,9 +46,7 @@ void section::set_location_counter(id_index loctr_name)
 
 bool section::counter_defined(id_index loctr_name)
 {
-    return std::find_if(loctrs_.begin(), loctrs_.end(), [loctr_name](const auto& loctr) {
-        return loctr->name == loctr_name;
-    }) != loctrs_.end();
+    return std::ranges::find(loctrs_, loctr_name, &location_counter::name) != loctrs_.end();
 }
 
 location_counter& section::current_location_counter() const { return *curr_loctr_; }

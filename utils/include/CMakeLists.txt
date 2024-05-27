@@ -27,6 +27,7 @@ target_sources(hlasm_utils PUBLIC
     utils/path.h
     utils/path_conversions.h
     utils/platform.h
+    utils/projectors.h
     utils/resource_location.h
     utils/scope_exit.h
     utils/similar.h

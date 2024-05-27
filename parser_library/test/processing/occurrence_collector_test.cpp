@@ -46,8 +46,7 @@ struct operand_occurrence_analyzer_mock : public processing::statement_analyzer
         EXPECT_TRUE(res_stmt);
         assert(res_stmt);
         processing::occurrence_collector collector(occ_kind, *a.context().hlasm_ctx, st, evaluated_model);
-        const auto& operands = res_stmt->operands_ref().value;
-        std::for_each(operands.begin(), operands.end(), [&](const auto& op) { op->apply(collector); });
+        std::ranges::for_each(res_stmt->operands_ref().value, [&collector](const auto& op) { op->apply(collector); });
 
         return false;
     }
@@ -66,12 +65,7 @@ auto tie_occurrence(const lsp::symbol_occurrence& lhs)
         lhs.occurrence_range.end.column);
 }
 
-void sort_occurrence_vector(std::vector<lsp::symbol_occurrence>& v)
-{
-    std::sort(v.begin(), v.end(), [](const lsp::symbol_occurrence& lhs, const lsp::symbol_occurrence& rhs) {
-        return tie_occurrence(lhs) < tie_occurrence(rhs);
-    });
-}
+void sort_occurrence_vector(std::vector<lsp::symbol_occurrence>& v) { std::ranges::sort(v, {}, tie_occurrence); }
 
 
 TEST(occurrence_collector, ord_mach_expr_simple)

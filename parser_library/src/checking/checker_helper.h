@@ -63,7 +63,7 @@ inline bool has_one_comma(std::span<const asm_operand* const> to_check)
 
 inline bool has_all_digits(std::string_view str)
 {
-    return std::all_of(str.begin(), str.end(), [](unsigned char c) { return std::isdigit(c); });
+    return std::ranges::all_of(str, [](unsigned char c) { return std::isdigit(c); });
 }
 
 // function to convert numbers less than 64000 to hexadecimal
@@ -76,14 +76,13 @@ inline std::string dec_to_hexa(int to_convert)
     {
         result.push_back("0123456789ABCDEF"[to_convert % 16]);
     } while (to_convert /= 16);
-    std::reverse(result.begin(), result.end());
+    std::ranges::reverse(result);
     return result;
 }
 
 inline bool is_value_hexa(std::string_view to_test)
 {
-    return !to_test.empty()
-        && std::all_of(to_test.cbegin(), to_test.cend(), [](unsigned char c) { return std::isxdigit(c); });
+    return !to_test.empty() && std::ranges::all_of(to_test, [](unsigned char c) { return std::isxdigit(c); });
 }
 
 inline bool is_byte_value(const int to_test) { return (to_test <= 255 && to_test >= 0); }
@@ -99,7 +98,7 @@ inline bool is_ord_symbol(std::string_view to_test)
 {
     assert(!to_test.empty());
     return !to_test.empty() && to_test.size() <= 63 && isalpha((unsigned char)to_test.front())
-        && std::all_of(to_test.cbegin(), to_test.cend(), [](unsigned char c) { return std::isalnum(c); });
+        && std::ranges::all_of(to_test, [](unsigned char c) { return std::isalnum(c); });
 }
 
 inline bool is_var_symbol(std::string_view to_test)

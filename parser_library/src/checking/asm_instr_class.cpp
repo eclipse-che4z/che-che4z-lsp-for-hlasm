@@ -28,7 +28,7 @@ using namespace hlasm_plugin::parser_library::checking;
 bool assembler_instruction::is_param_in_vector(
     std::string_view parameter, const std::vector<std::string_view>& options) const
 {
-    return std::find(options.cbegin(), options.cend(), parameter) != options.cend();
+    return std::ranges::find(options, parameter) != options.cend();
 }
 
 bool assembler_instruction::operands_size_corresponding(std::span<const asm_operand* const> to_check,
@@ -166,8 +166,7 @@ bool assembler_instruction::check_optable_operands(const std::vector<std::unique
     if (input.size() == 2)
         second = get_simple_operand(input[1].get());
     // check first parameter
-    if (first == nullptr
-        || std::find(optable_array.cbegin(), optable_array.cend(), first->operand_identifier) == optable_array.end())
+    if (first == nullptr || std::ranges::find(optable_array, first->operand_identifier) == optable_array.end())
     {
         // first parameter was wrong
         add_diagnostic(diagnostic_op::error_A212_OPTABLE_first_op(instr_name, input[0]->operand_range));
@@ -238,7 +237,7 @@ bool assembler_instruction::check_codepage_parameter(
     // decimal value
     else
     {
-        if (!std::all_of(input_str.cbegin(), input_str.cend(), [](unsigned char c) { return std::isdigit(c); }))
+        if (!std::ranges::all_of(input_str, [](unsigned char c) { return std::isdigit(c); }))
         {
             add_diagnostic(diagnostic_op::error_A215_CODEPAGE_format(name_of_instruction, input.operand_range));
             return false;

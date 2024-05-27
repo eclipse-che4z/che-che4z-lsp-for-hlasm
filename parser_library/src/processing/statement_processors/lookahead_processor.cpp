@@ -322,7 +322,7 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
     if (!valid)
         return;
 
-    if (auto it = std::find(to_find_.begin(), to_find_.end(), id); it != to_find_.end())
+    if (auto it = std::ranges::find(to_find_, id); it != to_find_.end())
     {
         std::swap(*it, to_find_.back());
         to_find_.pop_back();

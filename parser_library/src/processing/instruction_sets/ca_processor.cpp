@@ -26,6 +26,7 @@
 #include "semantics/operand_impls.h"
 #include "semantics/operand_visitor.h"
 #include "semantics/range_provider.h"
+#include "utils/projectors.h"
 #include "utils/task.h"
 #include "utils/time.h"
 
@@ -235,7 +236,7 @@ bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, st
                 continue;
             }
 
-            if (std::find_if(info.begin(), info.end(), [id = id](const auto& i) { return i.id == id; }) != info.end())
+            if (std::ranges::find(info, id, &GLB_LCL_info::id) != info.end())
                 add_diagnostic(diagnostic_op::error_E051(id.to_string_view(), ca_op->operand_range));
             else
                 info.emplace_back(id, subscript.empty(), ca_op->operand_range);
@@ -522,9 +523,7 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
             { "CLOCKB", aread_variant::clockb },
             { "CLOCKD", aread_variant::clockd },
         };
-        auto idx = std::find_if(allowed_operands.begin(),
-            allowed_operands.end(),
-            [value = op.value.to_string_view()](const auto& p) { return p.first == value; });
+        auto idx = std::ranges::find(allowed_operands, op.value.to_string_view(), utils::first_element);
         if (idx == allowed_operands.end())
             return aread_variant::invalid;
         return idx->second;

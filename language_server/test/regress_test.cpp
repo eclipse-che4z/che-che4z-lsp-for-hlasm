@@ -74,9 +74,8 @@ TEST(regress_test, behaviour_error)
     ws_mngr->idle_handler();
 
     ASSERT_EQ(mess_p.notfs.size(), (size_t)3); // diags+open+parsing
-    auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](nlohmann::json notif) {
-        return notif["method"] == "textDocument/publishDiagnostics";
-    });
+    auto publish_notif = std::ranges::find_if(
+        mess_p.notfs, [](const auto& notif) { return notif["method"] == "textDocument/publishDiagnostics"; });
     ASSERT_NE(publish_notif, mess_p.notfs.end());
     ASSERT_EQ((*publish_notif)["method"], "textDocument/publishDiagnostics");
     auto diagnostics = (*publish_notif)["params"]["diagnostics"];
@@ -114,9 +113,8 @@ TEST(regress_test, behaviour_error)
     s.message_received(notf);
     ws_mngr->idle_handler();
 
-    auto notfs_it = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [](const auto& msg_notification) {
-        return msg_notification["method"] == "textDocument/publishDiagnostics";
-    });
+    auto notfs_it = std::ranges::find_if(
+        mess_p.notfs, [](const auto& msg) { return msg["method"] == "textDocument/publishDiagnostics"; });
     ASSERT_NE(notfs_it, mess_p.notfs.end());
     EXPECT_EQ((*notfs_it)["params"]["diagnostics"].size(), (size_t)0);
 
@@ -642,9 +640,8 @@ TEST(regress_test, check_diagnostic_tags)
     ws_mngr->idle_handler();
 
     ASSERT_EQ(mess_p.notfs.size(), (size_t)4); // diags+open+parsing+output
-    auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](nlohmann::json notif) {
-        return notif["method"] == "textDocument/publishDiagnostics";
-    });
+    auto publish_notif = std::ranges::find_if(
+        mess_p.notfs, [](const auto& msg) { return msg["method"] == "textDocument/publishDiagnostics"; });
     ASSERT_NE(publish_notif, mess_p.notfs.end());
     ASSERT_EQ((*publish_notif)["method"], "textDocument/publishDiagnostics");
     auto diagnostics = (*publish_notif)["params"]["diagnostics"];

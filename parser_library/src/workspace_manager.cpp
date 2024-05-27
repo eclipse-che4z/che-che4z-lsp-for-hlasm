@@ -47,6 +47,7 @@
 #include "utils/error_codes.h"
 #include "utils/path_conversions.h"
 #include "utils/platform.h"
+#include "utils/projectors.h"
 #include "utils/resource_location.h"
 #include "utils/scope_exit.h"
 #include "utils/task.h"
@@ -112,14 +113,14 @@ class workspace_manager_impl final : public workspace_manager,
         "vscode-test-web:",
         "vscode-vfs:",
     };
-    static_assert(std::is_sorted(std::begin(default_allowed_schemes), std::end(default_allowed_schemes)));
+    static_assert(std::ranges::is_sorted(default_allowed_schemes));
     std::vector<std::string> allowed_schemes = {
         std::begin(default_allowed_schemes),
         std::end(default_allowed_schemes),
     };
     bool allowed_scheme(std::string_view uri) const noexcept
     {
-        return std::binary_search(allowed_schemes.begin(), allowed_schemes.end(), extract_scheme(uri));
+        return std::ranges::binary_search(allowed_schemes, extract_scheme(uri));
     }
     bool allowed_scheme(const resource_location& uri) const noexcept { return allowed_scheme(uri.get_uri()); }
 
@@ -196,8 +197,7 @@ class workspace_manager_impl final : public workspace_manager,
         bool is_valid() const { return !validator || validator(); }
         bool remove_pending_request(unsigned long long rid)
         {
-            auto it = std::find_if(
-                pending_requests.begin(), pending_requests.end(), [rid](const auto& e) { return e.first == rid; });
+            auto it = std::ranges::find(pending_requests, rid, utils::first_element);
 
             if (it == pending_requests.end())
                 return false;
@@ -466,14 +466,13 @@ class workspace_manager_impl final : public workspace_manager,
 
         std::vector<captured_change> captured_changes;
         captured_changes.reserve(changes.size());
-        std::transform(
-            changes.begin(), changes.end(), std::back_inserter(captured_changes), [](const document_change& change) {
-                return captured_change {
-                    .whole = change.whole,
-                    .change_range = change.change_range,
-                    .text = std::string(change.text),
-                };
-            });
+        std::ranges::transform(changes, std::back_inserter(captured_changes), [](const document_change& change) {
+            return captured_change {
+                .whole = change.whole,
+                .change_range = change.change_range,
+                .text = std::string(change.text),
+            };
+        });
 
         m_work_queue.emplace_back(work_item {
             next_unique_id(),
@@ -481,12 +480,9 @@ class workspace_manager_impl final : public workspace_manager,
             [this, document_loc = uri, version, captured_changes = std::move(captured_changes)]() {
                 std::vector<document_change> list;
                 list.reserve(captured_changes.size());
-                std::transform(captured_changes.begin(),
-                    captured_changes.end(),
-                    std::back_inserter(list),
-                    [](const captured_change& cc) {
-                        return cc.whole ? document_change(cc.text) : document_change(cc.change_range, cc.text);
-                    });
+                std::ranges::transform(captured_changes, std::back_inserter(list), [](const captured_change& cc) {
+                    return cc.whole ? document_change(cc.text) : document_change(cc.change_range, cc.text);
+                });
                 m_file_manager.did_change_file(document_loc, version, list);
             },
             {},
@@ -594,8 +590,7 @@ class workspace_manager_impl final : public workspace_manager,
 
     void unregister_diagnostics_consumer(diagnostics_consumer* consumer) override
     {
-        m_diag_consumers.erase(
-            std::remove(m_diag_consumers.begin(), m_diag_consumers.end(), consumer), m_diag_consumers.end());
+        std::erase(m_diag_consumers, consumer);
     }
 
     void register_parsing_metadata_consumer(parsing_metadata_consumer* consumer) override
@@ -605,8 +600,7 @@ class workspace_manager_impl final : public workspace_manager,
 
     void unregister_parsing_metadata_consumer(parsing_metadata_consumer* consumer) override
     {
-        auto& pmc = m_parsing_metadata_consumers;
-        pmc.erase(std::remove(pmc.begin(), pmc.end(), consumer), pmc.end());
+        std::erase(m_parsing_metadata_consumers, consumer);
     }
 
     void set_message_consumer(message_consumer* consumer) override
@@ -843,7 +837,7 @@ class workspace_manager_impl final : public workspace_manager,
 
     static size_t prefix_match(std::string_view first, std::string_view second)
     {
-        auto [f, s] = std::mismatch(first.begin(), first.end(), second.begin(), second.end());
+        auto [f, s] = std::ranges::mismatch(first, second);
         return static_cast<size_t>(std::min(f - first.begin(), s - second.begin()));
     }
 
@@ -1004,8 +998,8 @@ class workspace_manager_impl final : public workspace_manager,
                 continue;
             allowed_schemes.emplace_back(scheme);
         }
-        std::sort(allowed_schemes.begin(), allowed_schemes.end());
-        auto new_end = std::unique(allowed_schemes.begin(), allowed_schemes.end());
+        std::ranges::sort(allowed_schemes);
+        auto [new_end, _] = std::ranges::unique(allowed_schemes);
         allowed_schemes.erase(new_end, allowed_schemes.end());
     }
 
@@ -1089,8 +1083,7 @@ class workspace_manager_impl final : public workspace_manager,
             return w.request_type == work_item_type::workspace_open && w.ows == ows;
         };
         // insert as a priority request, but after matching workspace_open request if present
-        if (auto it = std::find_if(m_work_queue.begin(), m_work_queue.end(), matching_open_request);
-            it != m_work_queue.end())
+        if (auto it = std::ranges::find_if(m_work_queue, matching_open_request); it != m_work_queue.end())
             m_work_queue.insert(++it, std::move(wi));
         else
             m_work_queue.push_front(std::move(wi));

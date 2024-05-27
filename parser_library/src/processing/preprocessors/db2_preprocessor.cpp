@@ -605,19 +605,21 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
 
         s.remove_prefix(label.length());
 
-        return semantics::preproc_details::name_range { std::string(label),
-            range((position(lineno, 0)), (position(lineno, label.length()))) };
+        return semantics::preproc_details::name_range {
+            std::string(label),
+            range(position(lineno, 0), position(lineno, label.length())),
+        };
     }
 
     static std::pair<line_type, semantics::preproc_details::name_range> extract_instruction(
-        const std::string_view& line_preview, size_t lineno, size_t instr_column_start)
+        const std::string_view& line_preview, size_t lineno, size_t column)
     {
         static const std::pair<line_type, semantics::preproc_details::name_range> ignore(line_type::ignore, {});
 
         if (line_preview.empty())
             return ignore;
 
-        const auto consume_and_create = [&line_preview, lineno, instr_column_start](line_type line,
+        const auto consume_and_create = [&line_preview, lineno, column](line_type line,
                                             const consuming_regex_details& crd,
                                             std::string_view line_id) {
             auto it = line_preview.begin();
@@ -625,9 +627,10 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
                 consumed_words_end)
                 return std::make_pair(line,
                     semantics::preproc_details::name_range { std::string(line_id),
-                        range((position(lineno, instr_column_start)),
-                            (position(lineno,
-                                instr_column_start + std::distance(line_preview.begin(), *consumed_words_end)))) });
+                        range {
+                            position(lineno, column),
+                            position(lineno, column + std::ranges::distance(line_preview.begin(), *consumed_words_end)),
+                        } });
             return ignore;
         };
 
@@ -856,7 +859,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
 
             if (std::exchange(first_line, false))
             {
-                const auto appended_line_size = std::distance(segment.begin, segment.end);
+                const auto appended_line_size = std::ranges::distance(segment.begin, segment.end);
                 if (!label.empty())
                     this_line.replace(this_line.size() - appended_line_size,
                         label.size(),
@@ -1166,7 +1169,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
              ++i, ++lineno, std::exchange(line_start_column, continue_column))
         {
             const auto& segment = m_ll_helper.m_db2_ll.segments[i];
-            auto comment_start_column = line_start_column + std::distance(segment.code, segment.continuation);
+            auto comment_start_column = line_start_column + std::ranges::distance(segment.code, segment.continuation);
 
             if (const auto& comment = m_ll_helper.m_comments[i]; comment.has_value())
             {

@@ -99,8 +99,8 @@ size_t using_collection::using_entry::compute_context_drop(register_t d)
     {
         if (e.label.empty())
         {
-            invalidated += std::count(e.regs.begin(), e.regs.end(), d);
-            std::replace(e.regs.begin(), e.regs.end(), d, invalid_register);
+            invalidated += std::ranges::count(e.regs, d);
+            std::ranges::replace(e.regs, d, invalid_register);
         }
     }
     std::erase_if(context.m_state, [](const auto& e) { return e.regs == invalid_register_set; });
@@ -205,11 +205,8 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     auto [e, e_rng] = abs_or_reloc(coll, m_end, false);
 
     std::array<std::pair<std::optional<qualified_address>, range>, reg_set_size> bases_;
-    std::transform(m_base.begin(), m_base.end(), bases_.begin(), [&coll, &diag](auto base) {
-        return abs_or_reloc(coll, base, true);
-    });
-    const auto bases =
-        std::span(bases_).first(std::find(m_base.begin(), m_base.end(), index_t<mach_expression>()) - m_base.begin());
+    std::ranges::transform(m_base, bases_.begin(), [&coll](auto base) { return abs_or_reloc(coll, base, true); });
+    const auto bases = std::span(bases_).first(std::ranges::find(m_base, index_t<mach_expression>()) - m_base.begin());
 
     std::optional<offset_t> len;
     if (e.has_value())
@@ -253,9 +250,8 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 
     register_set_t reg_set_ = invalid_register_set;
     auto reg_set = std::span(reg_set_).first(bases.size());
-    std::transform(bases.begin(), bases.end(), reg_set.begin(), [](const auto& r) {
-        return r.first ? (register_t)r.first->offset : invalid_register;
-    });
+    std::ranges::transform(
+        bases, reg_set.begin(), [](const auto& r) { return r.first ? (register_t)r.first->offset : invalid_register; });
     std::bitset<reg_set_size> test_regs;
     for (size_t i = 0; i < reg_set.size(); ++i)
     {
@@ -295,9 +291,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 
     } transform { diag };
 
-    constexpr index_t<mach_expression> empty;
-
-    for (const auto& expr : std::span(m_base.begin(), std::find(m_base.begin(), m_base.end(), empty)))
+    for (const auto& expr : std::span(m_base.begin(), std::ranges::find(m_base, index_t<mach_expression>())))
     {
         auto [v, rng] = reg_or_label(coll, expr);
         std::visit([&transform, &rng = rng](auto value) { transform(value, rng); }, v);
@@ -396,19 +390,17 @@ index_t<using_collection> using_collection::add(index_t<using_collection> curren
 {
     assert(!args.empty() && args.size() <= reg_set_size);
 
-    index_t<instruction_context> ctx_id = add(std::move(eval_ctx), std::move(stack));
+    index_t<instruction_context> ctx = add(std::move(eval_ctx), std::move(stack));
 
-    auto b = add(std::move(begin), ctx_id);
-    auto e = end ? add(std::move(end), ctx_id) : index_t<mach_expression>();
+    auto b = add(std::move(begin), ctx);
+    auto e = end ? add(std::move(end), ctx) : index_t<mach_expression>();
 
     std::vector<index_t<mach_expression>> base;
     base.reserve(args.size());
 
-    std::transform(args.begin(), args.end(), std::back_inserter(base), [this, ctx_id](auto& a) {
-        return add(std::move(a), ctx_id);
-    });
+    std::ranges::transform(args, std::back_inserter(base), [this, ctx](auto& a) { return add(std::move(a), ctx); });
 
-    m_usings.emplace_back(current, index_t<mach_expression>(m_expr_values.size()), ctx_id, b, base, label, e);
+    m_usings.emplace_back(current, index_t<mach_expression>(m_expr_values.size()), ctx, b, std::move(base), label, e);
     return index_t<using_collection>(m_usings.size() - 1);
 }
 
@@ -418,15 +410,13 @@ index_t<using_collection> using_collection::remove(index_t<using_collection> cur
     processing_stack_t stack)
 {
     assert(!args.empty());
-    index_t<instruction_context> ctx_id = add(std::move(eval_ctx), std::move(stack));
+    index_t<instruction_context> ctx = add(std::move(eval_ctx), std::move(stack));
 
     std::vector<index_t<mach_expression>> base;
     base.reserve(args.size());
 
-    std::transform(args.begin(), args.end(), std::back_inserter(base), [this, ctx_id](auto& a) {
-        return add(std::move(a), ctx_id);
-    });
-    m_usings.emplace_back(current, index_t<mach_expression>(m_expr_values.size()), ctx_id, std::move(base));
+    std::ranges::transform(args, std::back_inserter(base), [this, ctx](auto& a) { return add(std::move(a), ctx); });
+    m_usings.emplace_back(current, index_t<mach_expression>(m_expr_values.size()), ctx, std::move(base));
 
     return index_t<using_collection>(m_usings.size() - 1);
 }
@@ -455,8 +445,7 @@ bool hlasm_plugin::parser_library::context::using_collection::is_label_mapping_s
 
     const auto& state = get(context_id).context.m_state;
 
-    return std::any_of(
-        state.begin(), state.end(), [label, owner](const auto& s) { return s.label == label && s.owner == owner; });
+    return std::ranges::any_of(state, [label, owner](const auto& s) { return s.label == label && s.owner == owner; });
 }
 
 template</* std::integral */ typename R, /* std::integral */ typename T>

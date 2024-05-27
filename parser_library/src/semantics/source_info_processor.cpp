@@ -38,9 +38,7 @@ void source_info_processor::process_hl_symbols(std::span<const token_info> symbo
 
 void source_info_processor::finish()
 {
-    std::sort(hl_info_.lines.begin(), hl_info_.lines.end(), [](const auto& l, const auto& r) {
-        return l.token_range.start < r.token_range.start;
-    });
+    std::ranges::sort(hl_info_.lines, {}, [](const auto& e) { return e.token_range.start; });
 }
 
 lines_info source_info_processor::take_semantic_tokens() { return std::move(hl_info_.lines); }

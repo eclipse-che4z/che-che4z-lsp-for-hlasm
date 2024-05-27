@@ -49,14 +49,13 @@ bool is_blank_comment(const logical_line& ll, unsigned char first_line_offset)
 bool is_separator(const logical_line& ll)
 {
     static constexpr const auto threshold = 36;
-    return ll.segments.size() == 1 && std::count_if(ll.begin(), ll.end(), [](unsigned char e) {
-        return e != ' ' && !std::isalnum(e);
-    }) > threshold;
+    return ll.segments.size() == 1
+        && std::ranges::count_if(ll, [](unsigned char e) { return e != ' ' && !std::isalnum(e); }) > threshold;
 }
 
 bool blank_line(const logical_line& r)
 {
-    return std::all_of(r.begin(), r.end(), [](const auto& e) { return e == ' '; });
+    return std::ranges::all_of(r, [](const auto& e) { return e == ' '; });
 }
 
 std::pair<bool, signed char> label_and_indent(const logical_line& r)
@@ -131,7 +130,7 @@ void mark_suspicious(std::vector<lsp::line_entry>& lines)
         return;
 
     const auto percentile_pos = indents.begin() + indents.size() / percentile_factor;
-    std::nth_element(indents.begin(), percentile_pos, indents.end());
+    std::ranges::nth_element(indents, percentile_pos);
     const auto limit = *percentile_pos;
 
     for (auto& x : lines)

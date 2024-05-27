@@ -44,7 +44,7 @@ std::string get_inline_string(std::string_view text, const lexing::logical_line_
         auto [next, it] = append_to_logical_line(out, text, opts);
         if (!next)
             break;
-        text.remove_prefix(std::distance(text.begin(), it));
+        text.remove_prefix(std::ranges::distance(text.begin(), it));
     }
 
     finish_logical_line(out, opts);

@@ -443,11 +443,9 @@ public:
             if (const auto* sym = std::get_if<context::symbol>(&it.second))
                 ordinary_symbols.push_back(generate_ordinary_symbol_variable(*sym));
 
-        constexpr auto compare_variables = [](const variable& l, const variable& r) { return l.name < r.name; };
-
-        std::sort(globals.begin(), globals.end(), compare_variables);
-        std::sort(scope_vars.begin(), scope_vars.end(), compare_variables);
-        std::sort(ordinary_symbols.begin(), ordinary_symbols.end(), compare_variables);
+        std::ranges::sort(globals, {}, &variable::name);
+        std::ranges::sort(scope_vars, {}, &variable::name);
+        std::ranges::sort(ordinary_symbols, {}, &variable::name);
 
         scopes_.emplace_back("Globals", add_variable(std::move(globals)), source(opencode_source_uri_));
         scopes_.emplace_back("Locals", add_variable(std::move(scope_vars)), source(opencode_source_uri_));
@@ -529,9 +527,7 @@ public:
         std::string text;
 
         auto bases = std::vector<context::address::base_entry>(reloc.bases().begin(), reloc.bases().end());
-        std::sort(bases.begin(), bases.end(), [](const auto& l, const auto& r) {
-            return l.first.owner->name < r.first.owner->name;
-        });
+        std::ranges::sort(bases, {}, [](const auto& e) { return e.first.owner->name; });
         bool first = true;
         for (const auto& [base, d] : bases)
         {

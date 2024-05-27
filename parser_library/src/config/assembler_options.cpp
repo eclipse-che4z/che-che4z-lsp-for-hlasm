@@ -19,6 +19,7 @@
 
 #include "compiler_options.h"
 #include "nlohmann/json.hpp"
+#include "utils/projectors.h"
 #include "utils/string_operations.h"
 
 namespace hlasm_plugin::parser_library::config {
@@ -125,7 +126,7 @@ bool instr_set_equivalent_valid(
     utils::to_upper(instr_set_name);
 
     return instr_set_name.size() == 0
-        || std::ranges::any_of(equivalents, [&instr_set_name](auto item) { return instr_set_name == item.first; });
+        || std::ranges::find(equivalents, instr_set_name, utils::first_element) != equivalents.end();
 }
 } // namespace
 
@@ -148,7 +149,7 @@ std::optional<instruction_set_version> find_instruction_set(
 {
     utils::to_upper(instr_set_name);
 
-    auto it = std::ranges::lower_bound(equivalents, instr_set_name, {}, [](const auto& instr) { return instr.first; });
+    auto it = std::ranges::lower_bound(equivalents, instr_set_name, {}, utils::first_element);
 
     if (it == std::end(equivalents) || it->first != instr_set_name)
         return std::nullopt;

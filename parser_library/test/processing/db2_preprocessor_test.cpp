@@ -64,7 +64,6 @@ protected:
     diagnostic_op_consumer_container m_diags;
 };
 
-
 TEST_F(db2_preprocessor_test, first_line)
 {
     auto p = create_preprocessor(db2_preprocessor_options {}, empty_library_fetcher, nullptr);
@@ -72,11 +71,10 @@ TEST_F(db2_preprocessor_test, first_line)
 
     auto result = p->generate_replacement(document()).run().value();
 
-    EXPECT_EQ(std::count_if(result.begin(),
-                  result.end(),
-                  [](const auto& l) { return l.text().find(" SQLSECT ") != std::string_view::npos; }),
+    EXPECT_EQ(std::ranges::count_if(
+                  result, [](const auto& l) { return l.text().find(" SQLSECT ") != std::string_view::npos; }),
         1);
-    EXPECT_TRUE(std::all_of(result.begin(), result.end(), [](const auto& l) { return !l.is_original(); }));
+    EXPECT_TRUE(std::ranges::all_of(result, [](const auto& l) { return !l.is_original(); }));
 }
 
 TEST_F(db2_preprocessor_test, last_line)
@@ -86,11 +84,10 @@ TEST_F(db2_preprocessor_test, last_line)
 
     auto result = p->generate_replacement(document(text)).run().value();
 
-    EXPECT_EQ(std::count_if(result.begin(),
-                  result.end(),
-                  [](const auto& l) { return l.text().find("***$$$ SQL WORKING STORAGE") == 0; }),
+    EXPECT_EQ(
+        std::ranges::count_if(result, [](const auto& l) { return l.text().starts_with("***$$$ SQL WORKING STORAGE"); }),
         1);
-    EXPECT_EQ(std::count_if(result.begin(), result.end(), [](const auto& l) { return l.text() == " END "; }), 1);
+    EXPECT_EQ(std::ranges::count_if(result, [](const auto& l) { return l.text() == " END "; }), 1);
 }
 
 TEST_F(db2_preprocessor_test, include)
@@ -108,11 +105,9 @@ TEST_F(db2_preprocessor_test, include)
 
     auto result = p->generate_replacement(document(text)).run().value();
 
+    EXPECT_EQ(std::ranges::count_if(result, [](const auto& l) { return l.text() == "member content"; }), 1);
     EXPECT_EQ(
-        std::count_if(result.begin(), result.end(), [](const auto& l) { return l.text() == "member content"; }), 1);
-    EXPECT_EQ(std::count_if(result.begin(),
-                  result.end(),
-                  [](const auto& l) { return l.text().starts_with(" EXEC SQL INCLUDE MEMBER"); }),
+        std::ranges::count_if(result, [](const auto& l) { return l.text().starts_with(" EXEC SQL INCLUDE MEMBER"); }),
         0);
 }
 
@@ -142,9 +137,8 @@ TEST_F(db2_preprocessor_test, include_sqlca)
     auto result = p->generate_replacement(document(text)).run().value();
 
     EXPECT_EQ(called, false);
-    EXPECT_EQ(std::count_if(result.begin(),
-                  result.end(),
-                  [](const auto& l) { return l.text().find("***$$$ SQLCA") != std::string::npos; }),
+    EXPECT_EQ(
+        std::ranges::count_if(result, [](const auto& l) { return l.text().find("***$$$ SQLCA") != std::string::npos; }),
         1);
 }
 
@@ -157,9 +151,8 @@ TEST_F(db2_preprocessor_test, include_sqlda)
     auto result = p->generate_replacement(document(text)).run().value();
 
     EXPECT_EQ(called, false);
-    EXPECT_EQ(std::count_if(result.begin(),
-                  result.end(),
-                  [](const auto& l) { return l.text().find("***$$$ SQLDA") != std::string::npos; }),
+    EXPECT_EQ(
+        std::ranges::count_if(result, [](const auto& l) { return l.text().find("***$$$ SQLDA") != std::string::npos; }),
         1);
 }
 
@@ -996,9 +989,8 @@ RE3                                 SQL TYPE                         ISX
     auto result = p->generate_replacement(document(text)).run().value();
 
     EXPECT_TRUE(matches_message_codes(m_diags.diags, { "DB005", "DB005", "DB005" }));
-    EXPECT_EQ(std::count_if(result.begin(),
-                  result.end(),
-                  [](const auto& l) { return l.text().find("DS    FL4") != std::string_view::npos; }),
+    EXPECT_EQ(std::ranges::count_if(
+                  result, [](const auto& l) { return l.text().find("DS    FL4") != std::string_view::npos; }),
         3);
 }
 
@@ -1029,9 +1021,8 @@ RE3                                 SQL TYPE                         ISX
             "DB005",
             "DB004",
         }));
-    EXPECT_EQ(std::count_if(result.begin(),
-                  result.end(),
-                  [](const auto& l) { return l.text().find("DS    FL4") != std::string_view::npos; }),
+    EXPECT_EQ(std::ranges::count_if(
+                  result, [](const auto& l) { return l.text().find("DS    FL4") != std::string_view::npos; }),
         0);
 }
 
@@ -1119,11 +1110,10 @@ TEST_F(db2_preprocessor_test, conditional)
 
     auto result = p->generate_replacement(document()).run().value();
 
-    EXPECT_EQ(std::count_if(result.begin(),
-                  result.end(),
-                  [](const auto& l) { return l.text().find(" SQLSECT ") != std::string_view::npos; }),
+    EXPECT_EQ(std::ranges::count_if(
+                  result, [](const auto& l) { return l.text().find(" SQLSECT ") != std::string_view::npos; }),
         0);
-    EXPECT_TRUE(std::all_of(result.begin(), result.end(), [](const auto& l) { return !l.is_original(); }));
+    EXPECT_TRUE(std::ranges::all_of(result, [](const auto& l) { return !l.is_original(); }));
 }
 
 TEST(db2_preprocessor, preprocessor_continuation_overflow)

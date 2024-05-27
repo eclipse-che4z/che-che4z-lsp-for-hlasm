@@ -254,7 +254,7 @@ uint64_t data_def_type_G::get_nominal_length(const reduced_nominal_value_t& op) 
     {
         const std::string& s = std::get<std::string>(op.value);
         return utils::length_utf32_no_validation(s)
-            - std::count_if(s.begin(), s.end(), [](char c) { return c == '<' || c == '>'; });
+            - std::ranges::count_if(s, [](char c) { return c == '<' || c == '>'; });
     }
 }
 
@@ -262,16 +262,13 @@ uint32_t data_def_type_G::get_nominal_length_attribute(const reduced_nominal_val
 {
     if (!nom.present)
         return 2;
+    else if (!std::holds_alternative<std::string>(nom.value))
+        return 0;
     else
     {
-        if (!std::holds_alternative<std::string>(nom.value))
-            return 0;
-        else
-        {
-            const std::string& s = std::get<std::string>(nom.value);
-            return (uint32_t)(utils::length_utf32_no_validation(s)
-                - std::count_if(s.begin(), s.end(), [](char c) { return c == '<' || c == '>'; }));
-        }
+        const std::string& s = std::get<std::string>(nom.value);
+        return (uint32_t)(utils::length_utf32_no_validation(s)
+            - std::ranges::count_if(s, [](char c) { return c == '<' || c == '>'; }));
     }
 }
 

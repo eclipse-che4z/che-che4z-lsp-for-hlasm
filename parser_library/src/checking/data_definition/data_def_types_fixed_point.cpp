@@ -258,7 +258,7 @@ uint64_t data_def_type_Z::get_nominal_length(const reduced_nominal_value_t& op) 
 
     // each digit is assembled as one byte
 
-    return std::count_if(s.cbegin(), s.cend(), &is_digit);
+    return std::ranges::count_if(s, &is_digit);
 }
 
 uint32_t data_def_type_Z::get_nominal_length_attribute(const reduced_nominal_value_t& op) const

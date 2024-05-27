@@ -23,6 +23,7 @@
 #include "diagnostic.h"
 #include "nlohmann/json.hpp"
 #include "protocol.h"
+#include "utils/projectors.h"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::benchmark {
@@ -62,7 +63,7 @@ inline nlohmann::json get_top_messages(const std::unordered_map<std::string, uns
 
     constexpr const auto cmp_msg = [](const auto& a, const auto& b) { return a.second > b.second; };
 
-    const auto last = std::partial_sort_copy(msgs.begin(), msgs.end(), top_msgs.begin(), top_msgs.end(), cmp_msg);
+    const auto [_, last] = std::ranges::partial_sort_copy(msgs, top_msgs, cmp_msg);
     top_msgs.erase(last, top_msgs.end());
 
     nlohmann::json result = nlohmann::json::object();

@@ -129,7 +129,7 @@ public:
         noexcept(noexcept(m_dist(std::declval<const T&>(), std::as_const(value))))
     {
         std::array<std::pair<const T*, size_t>, result_size + !result_size> result;
-        std::fill(result.begin(), result.end(), std::pair<const T*, size_t>(nullptr, max_dist));
+        std::ranges::fill(result, std::pair<const T*, size_t>(nullptr, max_dist));
 
         if (!m_nodes.empty())
             find_impl(result, std::as_const(value), 0, invalid);

@@ -1287,11 +1287,9 @@ bool process::check(std::span<const asm_operand* const> to_check,
         && process_operands->operand_identifier == "OVERRIDE") // everything parsed is parameter of operand
     {
         --e;
-        if (!std::all_of(process_operands->operand_parameters.cbegin(),
-                process_operands->operand_parameters.cend(),
-                [this, &add_diagnostic](const auto& parameter) {
-                    return check_assembler_process_operand(parameter.get(), add_diagnostic);
-                }))
+        if (!std::ranges::all_of(process_operands->operand_parameters, [this, &add_diagnostic](const auto& parameter) {
+                return check_assembler_process_operand(parameter.get(), add_diagnostic);
+            }))
             return false;
     }
     // everything else is an operand

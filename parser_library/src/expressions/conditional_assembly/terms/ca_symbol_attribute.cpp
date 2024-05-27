@@ -221,9 +221,8 @@ context::SET_t ca_symbol_attribute::retrieve_value(
 
 bool iequals(std::string_view l, std::string_view r)
 {
-    return std::equal(l.begin(), l.end(), r.begin(), r.end(), [](unsigned char lc, unsigned char rc) {
-        return std::toupper(lc) == std::toupper(rc);
-    });
+    return std::ranges::equal(
+        l, r, [](unsigned char lc, unsigned char rc) { return std::toupper(lc) == std::toupper(rc); });
 }
 
 context::C_t get_current_macro_name_field(const context::code_scope& scope)

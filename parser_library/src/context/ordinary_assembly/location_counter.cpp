@@ -237,8 +237,7 @@ void location_counter::switch_to_unresolved_value(space_ptr sp)
 {
     assert(!switched_);
 
-    auto it = std::find_if(
-        org_data_.begin(), org_data_.end(), [s = sp.get()](const auto& d) { return d.matches_first_space(s); });
+    auto it = std::ranges::find_if(org_data_, [s = sp.get()](const auto& d) { return d.matches_first_space(s); });
 
     assert(it != org_data_.end());
 
