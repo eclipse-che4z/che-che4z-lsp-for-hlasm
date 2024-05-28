@@ -150,7 +150,7 @@ std::shared_ptr<PREPROC_STATEMENT> get_preproc_statement(std::span<const std::pa
     assert(!matches.empty() && (ids.operands < matches.size() || ids.operands == -1)
         && (!ids.remarks || *ids.remarks < matches.size() || *ids.remarks == -1));
 
-    const auto matches_ = [&matches](size_t n) { return matches[1 + n]; };
+    const auto matches_ = [&matches](size_t n) -> const auto& { return matches[1 + n]; };
     const auto lengths_ = [&matches](size_t n) {
         const auto& [b, e] = matches[1 + n];
         return std::ranges::distance(b, e);

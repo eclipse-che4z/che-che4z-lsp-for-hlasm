@@ -77,7 +77,7 @@ struct rebuilt_statement final : public resolved_statement
         std::optional<semantics::label_si> label,
         std::optional<semantics::operands_si> operands,
         std::optional<std::vector<semantics::literal_si>> literals)
-        : base_stmt(base_stmt)
+        : base_stmt(std::move(base_stmt))
         , rebuilt_label(std::move(label))
         , rebuilt_operands(std::move(operands))
         , rebuilt_literals(std::move(literals))

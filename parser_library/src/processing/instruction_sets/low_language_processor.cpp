@@ -39,7 +39,7 @@ low_language_processor::low_language_processor(const analyzing_context& ctx,
 
 rebuilt_statement low_language_processor::preprocess(std::shared_ptr<const processing::resolved_statement> statement)
 {
-    auto stmt = std::static_pointer_cast<const resolved_statement>(statement);
+    auto stmt = std::static_pointer_cast<const resolved_statement>(std::move(statement));
     auto [label, ops, literals, was_model] = preprocess_inner(*stmt);
     rebuilt_statement result(std::move(stmt), std::move(label), std::move(ops), std::move(literals));
     if (was_model)

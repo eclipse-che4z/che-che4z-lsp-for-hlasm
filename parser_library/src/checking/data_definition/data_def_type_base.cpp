@@ -305,7 +305,7 @@ bool data_def_type::check_nominal_type(
             for (auto& p : std::get<nominal_value_expressions>(op.nominal_value.value))
                 if (std::holds_alternative<data_def_address>(p))
                 {
-                    auto adr = std::get<data_def_address>(p);
+                    const auto& adr = std::get<data_def_address>(p);
                     add_diagnostic(
                         diagnostic_op::error_D020({ adr.displacement.rng.start, adr.base.rng.end }, type_str));
                     ret = false;

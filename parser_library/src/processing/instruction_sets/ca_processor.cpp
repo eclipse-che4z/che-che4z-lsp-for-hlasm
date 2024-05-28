@@ -85,7 +85,7 @@ void ca_processor::register_seq_sym(const semantics::complete_statement& stmt)
 {
     if (stmt.label_ref().type == semantics::label_si_type::SEQ)
     {
-        auto symbol = std::get<semantics::seq_sym>(stmt.label_ref().value);
+        const auto& symbol = std::get<semantics::seq_sym>(stmt.label_ref().value);
         branch_provider.register_sequence_symbol(symbol.name, symbol.symbol_range);
     }
     else if (stmt.label_ref().type != semantics::label_si_type::EMPTY)
@@ -103,7 +103,7 @@ ca_processor::SET_info ca_processor::get_SET_symbol(const semantics::complete_st
         return {};
     }
 
-    auto symbol = std::get<semantics::vs_ptr>(stmt.label_ref().value).get();
+    const auto& symbol = std::get<semantics::vs_ptr>(stmt.label_ref().value).get();
     bool is_scalar_expression = symbol->subscript.empty();
 
     context::A_t index = -1;

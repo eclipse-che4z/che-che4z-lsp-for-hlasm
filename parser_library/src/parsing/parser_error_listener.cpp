@@ -114,10 +114,6 @@ void iterate_error_stream(antlr4::TokenStream* input_stream,
         left_prec = true;
 }
 
-bool is_expected(int exp_token, antlr4::misc::IntervalSet expectedTokens)
-{
-    return expectedTokens.contains(static_cast<size_t>(exp_token));
-}
 } // namespace
 
 void parser_error_listener_base::syntaxError(
@@ -126,7 +122,7 @@ void parser_error_listener_base::syntaxError(
     try
     {
         if (e)
-            std::rethrow_exception(e);
+            std::rethrow_exception(std::move(e));
     }
     catch (antlr4::NoViableAltException& excp)
     {
@@ -203,7 +199,7 @@ void parser_error_listener_base::syntaxError(
         if (!ampersand_followed)
             add_parser_diagnostic(diagnostic_op::error_S0008, range(position(line, char_pos_in_line)));
         // apostrophe expected
-        else if (odd_apostrophes && is_expected(APOSTROPHE, expected_tokens))
+        else if (odd_apostrophes && expected_tokens.contains((size_t)APOSTROPHE))
             add_parser_diagnostic(diagnostic_op::error_S0005, range(position(line, char_pos_in_line)));
         // right parenthesis has no left match
         else if (right_prec)

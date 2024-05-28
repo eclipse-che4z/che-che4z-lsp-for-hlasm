@@ -541,7 +541,7 @@ auto using_collection::using_context::evaluate(id_index label,
         }
     }
 
-    const auto& r = [](const auto& p, const auto& n) {
+    const auto& r = [](const auto& p, const auto& n) -> const auto& {
         if (p.valid.result_entry)
             return p.valid;
         if (n.valid.result_entry)

@@ -228,7 +228,7 @@ context::macro_data_ptr macro_processor::string_to_macrodata(std::string data, d
     }
 
     if (nests.top() != data.size())
-        return std::make_unique<context::macro_param_data_single>(std::string(data));
+        return std::make_unique<context::macro_param_data_single>(std::move(data));
 
     assert(macro_data.size() == 1 && macro_data.top().size() == 1);
 
@@ -338,7 +338,7 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
         add_diagnostic(diagnostic_op::warning_W014(op_range));
 
         // MACROCASE TODO
-        auto name = std::get<semantics::char_str_conc>(chain[0].value).value;
+        const auto& name = std::get<semantics::char_str_conc>(chain[0].value).value;
 
         args.emplace_back(std::make_unique<context::macro_param_data_single>(
             name + "=" + semantics::concatenation_point::to_string(chain.begin() + 2, chain.end())));

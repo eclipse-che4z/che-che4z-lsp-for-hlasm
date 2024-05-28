@@ -184,16 +184,16 @@ struct resolve_dependant_visitor
         sym_ctx.set_location_counter(tmp_loctr_name, location(), li);
 
         if (std::holds_alternative<space_ptr>(ret))
-            context::space::resolve(sp, std::move(std::get<space_ptr>(ret)));
+            context::space::resolve(std::move(sp), std::move(std::get<space_ptr>(ret)));
         else
         {
             auto& new_addr = std::get<address>(ret);
             auto pure_offset = new_addr.unresolved_offset();
             auto [space, offset_correction] = std::move(new_addr).normalized_spaces();
-            context::space::resolve(sp, pure_offset + offset_correction, std::move(space));
+            context::space::resolve(std::move(sp), pure_offset + offset_correction, std::move(space));
         }
 
-        if (!sym_ctx.symbol_dependencies().check_cycle(new_sp, li))
+        if (!sym_ctx.symbol_dependencies().check_cycle(std::move(new_sp), li))
             add_diagnostic(diagnostic_op::error_E033);
 
         for (auto& sect : sym_ctx.sections())
@@ -672,7 +672,7 @@ void symbol_dependency_tables::add_dependency(space_ptr space,
     const library_info& li)
 {
     dependency_adder adder(*this, std::move(dependency_source_stmt), dep_ctx, li);
-    adder.add_dependency(space, dependency_source);
+    adder.add_dependency(std::move(space), dependency_source);
     adder.finish();
 }
 

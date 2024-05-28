@@ -252,7 +252,7 @@ void processing_manager::finish_macro_definition(macrodef_processing_result resu
             std::move(result.used_copy_members),
             result.external);
 
-    lsp_analyzer_.macrodef_finished(mac, std::move(result));
+    lsp_analyzer_.macrodef_finished(std::move(mac), std::move(result));
 }
 
 void processing_manager::start_lookahead(lookahead_start_data start)
@@ -312,7 +312,7 @@ void processing_manager::finish_copy_member(copy_processing_result result)
         result.invalid_member ? context::statement_block() : std::move(result.definition),
         std::move(result.definition_location));
 
-    lsp_analyzer_.copydef_finished(member, std::move(result));
+    lsp_analyzer_.copydef_finished(std::move(member), std::move(result));
 }
 
 void processing_manager::finish_opencode()

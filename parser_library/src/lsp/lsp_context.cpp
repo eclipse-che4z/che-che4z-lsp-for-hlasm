@@ -330,7 +330,7 @@ location lsp_context::definition(const utils::resource::resource_location& docum
     if (!occ)
         return { pos, document_loc };
 
-    if (auto def = find_definition_location(*occ, macro_scope, document_loc, pos))
+    if (auto def = find_definition_location(*occ, std::move(macro_scope), document_loc, pos))
         return { def->pos, def->resource_loc };
     return { pos, document_loc };
 }
@@ -610,7 +610,7 @@ location lsp_context::find_symbol_definition_location(
     auto stack = sym.proc_stack();
     while (!stack.empty())
     {
-        auto frame = stack.frame();
+        const auto& frame = stack.frame();
 
         if (*frame.resource_loc == document_loc && frame.pos.line == pos.line)
         {

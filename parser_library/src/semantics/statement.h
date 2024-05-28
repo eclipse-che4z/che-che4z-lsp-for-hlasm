@@ -146,7 +146,7 @@ struct statement_si_defer_done final : public complete_statement
         operands_si operands,
         remarks_si remarks,
         std::vector<semantics::literal_si> collected_literals)
-        : deferred_stmt(deferred_stmt)
+        : deferred_stmt(std::move(deferred_stmt))
         , operands(std::move(operands))
         , remarks(std::move(remarks))
         , collected_literals(std::move(collected_literals))

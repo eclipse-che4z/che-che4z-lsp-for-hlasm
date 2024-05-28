@@ -227,7 +227,7 @@ file_slice_t file_slice_t::transform_slice(const macro_slice_t& slice, macro_inf
         fslice.file_lines.end = macro_i->macro_definition->get_copy_nest(fslice.macro_lines.end).back().loc.pos.line;
 
     fslice.type = slice.inner_macro ? scope_type::INNER_MACRO : scope_type::MACRO;
-    fslice.macro_context = macro_i;
+    fslice.macro_context = std::move(macro_i);
 
     return fslice;
 }

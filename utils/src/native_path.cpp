@@ -101,7 +101,7 @@ list_directory_rc list_directory_subdirs_and_symlinks(
 
         for (auto& p : it)
         {
-            auto path = p.path();
+            const auto& path = p.path();
             if (std::filesystem::directory_entry de(path); de.is_directory() || de.is_symlink())
                 h(path);
         }
