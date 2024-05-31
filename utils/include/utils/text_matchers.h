@@ -17,6 +17,7 @@
 
 #include <array>
 #include <cctype>
+#include <concepts>
 #include <optional>
 #include <string_view>
 #include <type_traits>
@@ -210,16 +211,28 @@ public:
     }
 };
 
+template<typename DefaultStringMatcher>
+struct matcher_convertor
+{
+    template<typename T>
+    constexpr T&& operator()(T&& t) const noexcept
+    {
+        return std::forward<T>(t);
+    }
+    template<std::convertible_to<std::string_view> T>
+    constexpr DefaultStringMatcher operator()(T&& t) const noexcept(std::is_nothrow_convertible_v<T, std::string_view>)
+    {
+        return DefaultStringMatcher(std::forward<T>(t));
+    }
+};
+template<typename DefaultStringMatcher>
+constexpr const matcher_convertor<DefaultStringMatcher> convert_matcher;
+
 template<typename DefaultStringMatcher = void, typename... Matchers>
 constexpr auto seq(Matchers&&... matchers)
 {
-    constexpr auto convert = []<typename T>(T&& t) {
-        if constexpr (std::is_convertible_v<T&&, std::string_view>)
-            return DefaultStringMatcher(std::forward<T>(t));
-        else
-            return std::forward<T>(t);
-    };
-    return [... matchers = convert(std::forward<Matchers>(matchers))]<typename It>(It& b, const It& e) noexcept {
+    return [... matchers = convert_matcher<DefaultStringMatcher>(std::forward<Matchers>(matchers))]<typename It>(
+               It& b, const It& e) noexcept {
         auto work = b;
         return ((matchers(work, e) && ...)) && (b = work, true);
     };
@@ -228,13 +241,7 @@ constexpr auto seq(Matchers&&... matchers)
 template<typename DefaultStringMatcher = void, typename... Matchers>
 constexpr auto alt(Matchers&&... matchers)
 {
-    constexpr auto convert = []<typename T>(T&& t) {
-        if constexpr (std::is_convertible_v<T&&, std::string_view>)
-            return DefaultStringMatcher(std::forward<T>(t));
-        else
-            return std::forward<T>(t);
-    };
-    return [... matchers = convert(std::forward<Matchers>(matchers))]<typename It>(
+    return [... matchers = convert_matcher<DefaultStringMatcher>(std::forward<Matchers>(matchers))]<typename It>(
                It& b, const It& e) noexcept { return ((matchers(b, e) || ...)); };
 }
 
