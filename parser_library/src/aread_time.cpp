@@ -14,31 +14,20 @@
 
 #include "aread_time.h"
 
-namespace {
-std::string zero_left_pad(std::string s, size_t len)
-{
-    if (s.size() >= len)
-        return s;
-
-    s.insert(s.begin(), len - s.size(), '0');
-    return s;
-}
-} // namespace
-
+#include <format>
 
 std::string hlasm_plugin::parser_library::time_to_clockb(std::chrono::nanoseconds d)
 {
     using namespace std::chrono;
-    return zero_left_pad(std::to_string(duration_cast<milliseconds>(d).count() / 10), 8);
+    return std::format("{:08}", duration_cast<milliseconds>(d).count() / 10);
 }
 
 std::string hlasm_plugin::parser_library::time_to_clockd(std::chrono::nanoseconds d)
 {
     using namespace std::chrono;
-    std::string result;
-    result.append(zero_left_pad(std::to_string(duration_cast<hours>(d).count()), 2));
-    result.append(zero_left_pad(std::to_string(duration_cast<minutes>(d).count() % 60), 2));
-    result.append(zero_left_pad(std::to_string(duration_cast<seconds>(d).count() % 60), 2));
-    result.append(zero_left_pad(std::to_string(duration_cast<milliseconds>(d).count() % 1000 / 10), 2));
-    return result;
+    return std::format("{:02}{:02}{:02}{:02}",
+        duration_cast<hours>(d).count(),
+        duration_cast<minutes>(d).count() % 60,
+        duration_cast<seconds>(d).count() % 60,
+        duration_cast<milliseconds>(d).count() % 1000 / 10);
 }

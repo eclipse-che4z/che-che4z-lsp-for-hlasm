@@ -15,6 +15,7 @@
 #include "item_convertors.h"
 
 #include <concepts>
+#include <format>
 #include <limits>
 
 #include "completion_item.h"
@@ -107,11 +108,11 @@ std::string hover_text(const context::symbol& sym)
         markdown.append("  \n");
     }
     if (attrs.is_defined(context::data_attr_kind::I))
-        markdown.append("I: " + std::to_string(attrs.integer()) + "  \n");
+        markdown.append("I: ").append(std::to_string(attrs.integer())).append("  \n");
     if (attrs.is_defined(context::data_attr_kind::S))
-        markdown.append("S: " + std::to_string(attrs.scale()) + "  \n");
+        markdown.append("S: ").append(std::to_string(attrs.scale())).append("  \n");
     if (attrs.is_defined(context::data_attr_kind::T))
-        markdown.append("T: " + ebcdic_encoding::to_ascii((unsigned char)attrs.type()) + "  \n");
+        markdown.append("T: ").append(ebcdic_encoding::to_ascii((unsigned char)attrs.type())).append("  \n");
 
     return markdown;
 }
@@ -406,10 +407,12 @@ std::vector<completion_item> generate_completion(
         if (!positional || positional->position == 0 || positional->id.empty()) // label parameter or invalid
             continue;
 
-        std::string suffix = " (" + std::to_string(positional->position)
-            + std::string(ordinal_suffix(positional->position)) + " positional argument)";
+
         result.emplace_back("&" + positional->id.to_string(),
-            "&" + positional->id.to_string() + suffix,
+            std::format("&{} ({}{} positional argument)",
+                positional->id.to_string(),
+                positional->position,
+                ordinal_suffix(positional->position)),
             "$0", // workaround - vscode does not support empty insertText
             "",
             completion_item_kind::var_sym,
@@ -419,12 +422,13 @@ std::vector<completion_item> generate_completion(
     {
         if (keyword->id.empty()) // invalid
             continue;
-
         result.emplace_back("&" + keyword->id.to_string(),
-            "&" + keyword->id.to_string() + " (keyword argument)",
+            std::format("&{} (keyword argument)", keyword->id.to_string()),
             keyword->id.to_string() + "=",
-            "```hlasm\n " + md->id.to_string() + " " + "&" + keyword->id.to_string() + "="
-                + keyword->default_data->get_value() + "\n```\n",
+            std::format("```hlasm\n {} &{}={}\n```\n",
+                md->id.to_string(),
+                keyword->id.to_string(),
+                keyword->default_data->get_value()),
             completion_item_kind::var_sym);
     }
     return result;

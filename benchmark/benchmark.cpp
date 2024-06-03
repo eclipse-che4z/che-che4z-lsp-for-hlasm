@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <chrono>
 #include <ctime>
+#include <format>
 #include <iostream>
 #include <limits>
 #include <optional>
@@ -411,8 +412,11 @@ private:
             if (bc.message.empty())
                 return "";
 
-            return "[" + bc.message + " " + std::to_string(iteration) + "/(" + std::to_string(bc.start_range) + "-"
-                + std::to_string(bc.end_range ? bc.end_range - 1 : bc.end_range) + ")] ";
+            return std::format("[{} {}/({}-{})]",
+                bc.message,
+                iteration,
+                bc.start_range,
+                bc.end_range ? bc.end_range - 1 : bc.end_range);
         }
     };
 

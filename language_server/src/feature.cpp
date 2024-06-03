@@ -14,6 +14,8 @@
 
 #include "feature.h"
 
+#include <format>
+
 #include "nlohmann/json.hpp"
 
 void nlohmann::adl_serializer<hlasm_plugin::language_server::request_id>::to_json(
@@ -68,6 +70,14 @@ nlohmann::json feature::range_to_json(const parser_library::range& range)
 nlohmann::json feature::position_to_json(const parser_library::position& position)
 {
     return nlohmann::json { { "line", position.line }, { "character", position.column } };
+}
+
+std::string request_id::to_string() const
+{
+    if (std::holds_alternative<long>(id))
+        return std::format("({})", std::get<long>(id));
+    else
+        return std::format("\"{}\"", std::get<std::string>(id));
 }
 
 } // namespace hlasm_plugin::language_server

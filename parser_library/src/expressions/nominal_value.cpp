@@ -84,8 +84,8 @@ size_t nominal_value_exprs::hash() const
     {
         result = hash_combine(result,
             std::visit(
-                [](const auto& v) {
-                    if constexpr (std::is_same_v<decltype(v), const mach_expr_ptr&>)
+                []<typename V>(const V& v) {
+                    if constexpr (std::is_same_v<V, mach_expr_ptr>)
                         return v->hash();
                     else
                         return v.hash();
@@ -152,8 +152,8 @@ bool is_similar(const nominal_value_exprs& left, const nominal_value_exprs& righ
     for (size_t i = 0; i < left.exprs.size(); ++i)
     {
         if (!std::visit(
-                [](const auto& l, const auto& r) {
-                    if constexpr (std::is_same_v<decltype(l), decltype(r)>)
+                []<typename L, typename R>(const L& l, const R& r) {
+                    if constexpr (std::is_same_v<L, R>)
                         return utils::is_similar(l, r);
                     else
                         return false;

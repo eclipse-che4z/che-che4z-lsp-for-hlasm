@@ -15,6 +15,7 @@
 #include "opencode_provider.h"
 
 #include <algorithm>
+#include <format>
 
 #include "analyzer.h"
 #include "hlasmparser_multiline.h"
@@ -485,16 +486,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
 
 utils::resource::resource_location generate_virtual_file_name(virtual_file_id id, std::string_view name)
 {
-    std::string result;
-    if (id)
-    {
-        result += "hlasm://";
-        result += std::to_string(id.value());
-        result += "/";
-    }
-    result += name;
-    result += ".hlasm";
-    return utils::resource::resource_location(std::move(result));
+    return utils::resource::resource_location(
+        id ? std::format("hlasm://{}/{}.hlasm", id.value(), name) : std::format("{}.hlasm", name));
 }
 
 namespace {
@@ -537,7 +530,7 @@ utils::task opencode_provider::run_preprocessor()
     const size_t stop_line = it != m_input_document.end() ? it->lineno().value() : current_line;
     const auto last_index = it - m_input_document.begin();
 
-    auto virtual_file_name = m_ctx.hlasm_ctx->ids().add("PREPROCESSOR_" + std::to_string(current_line));
+    auto virtual_file_name = m_ctx.hlasm_ctx->ids().add(std::format("PREPROCESSOR_{}", current_line));
 
     auto [new_file, inserted] = m_virtual_files->try_emplace(virtual_file_name, std::move(preprocessor_text));
 
@@ -631,7 +624,7 @@ utils::task opencode_provider::convert_ainsert_buffer_to_copybook()
     m_ainsert_buffer.clear();
 
     auto virtual_copy_name =
-        m_ctx.hlasm_ctx->ids().add("AINSERT_" + std::to_string(m_ctx.hlasm_ctx->obtain_ainsert_id()));
+        m_ctx.hlasm_ctx->ids().add(std::format("AINSERT_{}", m_ctx.hlasm_ctx->obtain_ainsert_id()));
 
     auto new_file = m_virtual_files->try_emplace(virtual_copy_name, std::move(result)).first;
 

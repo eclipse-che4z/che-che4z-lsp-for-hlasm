@@ -15,6 +15,7 @@
 #include "hlasm_context.h"
 
 #include <ctime>
+#include <format>
 #include <memory>
 #include <numeric>
 
@@ -69,14 +70,6 @@ void hlasm_context::init_instruction_map(opcode_map& opcodes, id_storage& ids, i
 }
 
 namespace {
-std::string left_pad(std::string s, size_t len, char c = ' ')
-{
-    if (auto string_len = s.length(); string_len < len)
-        s.insert(0, len - string_len, c);
-
-    return s;
-}
-
 class sysstmt_macro_param_data : public macro_param_data_single_dynamic
 {
     const performance_metrics& metrics;
@@ -96,7 +89,7 @@ public:
         size_t sysstmt = metrics.macro_def_statements + metrics.macro_statements + metrics.open_code_statements
             + metrics.copy_statements + adjustment;
 
-        return left_pad(std::to_string(sysstmt), 8, '0');
+        return std::format("{:08}", sysstmt);
     };
 
     explicit sysstmt_macro_param_data(const performance_metrics& metrics, const std::deque<code_scope>& scope_stack)
@@ -153,37 +146,11 @@ auto time_sysvars(utils::timestamp now)
         std::string datc_val;
         std::string date_val;
         std::string systime;
-    } result;
-    auto& [datc_val, date_val, systime] = result;
-    auto year = std::to_string(now.year());
-    auto month = std::to_string(now.month());
-    auto day = std::to_string(now.day());
-    if (now.month() < 10)
-        month.insert(0, 1, '0');
-    if (now.day() < 10)
-        day.insert(0, 1, '0');
-
-    datc_val.reserve(8);
-    date_val.reserve(8);
-
-    datc_val.append(year);
-    datc_val.append(month);
-    datc_val.append(day);
-
-    date_val.append(month);
-    date_val.push_back('/');
-    date_val.append(day);
-    date_val.push_back('/');
-    date_val.append(year.c_str() + 2);
-
-    if (now.hour() < 10)
-        systime.push_back('0');
-    systime.append(std::to_string(now.hour()));
-    systime.push_back(':');
-    if (now.minute() < 10)
-        systime.push_back('0');
-    systime.append(std::to_string(now.minute()));
-
+    } result = {
+        std::format("{:04}{:02}{:02}", now.year(), now.month(), now.day()),
+        std::format("{:02}/{:02}/{:02}", now.month(), now.day(), now.year() % 100),
+        std::format("{:02}.{:02}", now.hour(), now.minute()),
+    };
     return result;
 }
 
@@ -243,9 +210,8 @@ void hlasm_context::add_global_system_variables(system_variable_map& sysvars)
     static constexpr const auto emulated_asm_name = "HIGH LEVEL ASSEMBLER";
     sysvars.insert(create_system_variable(id_index("SYSASM"), emulated_asm_name, true));
 
-    sysvars.insert(create_system_variable(id_index("SYSM_HSEV"),
-        create_dynamic_var([this]() { return left_pad(std::to_string(mnote_max), 3, '0'); }),
-        true));
+    sysvars.insert(create_system_variable(
+        id_index("SYSM_HSEV"), create_dynamic_var([this]() { return std::format("{:03}", mnote_max); }), true));
 }
 
 void hlasm_context::add_scoped_system_variables(system_variable_map& sysvars, size_t skip_last, bool globals_only)
@@ -263,7 +229,7 @@ void hlasm_context::add_scoped_system_variables(system_variable_map& sysvars, si
     } view { *this, skip_last };
 
     sysvars.insert(create_system_variable(id_index("SYSM_SEV"),
-        create_dynamic_var([view]() { return left_pad(std::to_string(view.top().mnote_last_max), 3, '0'); }),
+        create_dynamic_var([view]() { return std::format("{:03}", view.top().mnote_last_max); }),
         true));
 
     if (globals_only)
@@ -279,9 +245,8 @@ void hlasm_context::add_scoped_system_variables(system_variable_map& sysvars, si
         }),
         false));
 
-    sysvars.insert(create_system_variable(id_index("SYSNDX"),
-        create_dynamic_var([view]() { return left_pad(std::to_string(view.top().sysndx), 4, '0'); }),
-        false));
+    sysvars.insert(create_system_variable(
+        id_index("SYSNDX"), create_dynamic_var([view]() { return std::format("{:04}", view.top().sysndx); }), false));
 
     sysvars.insert(create_system_variable(id_index("SYSSTYP"),
         create_dynamic_var([view]() -> std::string {

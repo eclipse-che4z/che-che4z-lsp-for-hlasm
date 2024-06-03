@@ -727,7 +727,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
 
                 add_ds_line(label, "", "0FL4");
                 add_ds_line(label, "_LENGTH", "FL4", false);
-                add_ds_line(label, "_DATA", li.prefix + std::to_string(len <= li.limit ? len : li.limit), false);
+                add_ds_line(label, "_DATA", concat(li.prefix, len <= li.limit ? len : li.limit), false);
                 if (len > li.limit)
                     m_result.emplace_back(replaced_line { concat(" ORG   *+(",
                         // there seems be this strange artificial limit

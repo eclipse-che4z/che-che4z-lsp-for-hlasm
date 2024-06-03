@@ -14,6 +14,7 @@
 
 #include "diagnostic_tools.h"
 
+#include <format>
 #include <string>
 #include <utility>
 
@@ -33,7 +34,7 @@ diagnostic add_stack_details(diagnostic_op d, context::processing_stack_t stack)
     {
         const auto& f = stack.frame();
         diag.related.emplace_back(range_uri(f.resource_loc->get_uri(), range(f.pos)),
-            "While compiling " + f.resource_loc->to_presentable() + '(' + std::to_string(f.pos.line + 1) + ")");
+            std::format("While compiling {}({})", f.resource_loc->to_presentable(), f.pos.line + 1));
     }
 
     return diag;

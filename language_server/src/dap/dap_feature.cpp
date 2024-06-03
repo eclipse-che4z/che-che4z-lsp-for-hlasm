@@ -14,6 +14,7 @@
 
 #include "dap_feature.h"
 
+#include <format>
 #include <functional>
 
 #include "nlohmann/json.hpp"
@@ -133,7 +134,7 @@ void dap_feature::mnote(unsigned char level, std::string_view text)
     response_->notify("output",
         nlohmann::json {
             { "category", "stderr" },
-            { "output", (std::to_string(level) + ":").append(text).append("\n") },
+            { "output", std::format("{}:{}\n", level, text) },
         });
 }
 
@@ -142,7 +143,7 @@ void dap_feature::punch(std::string_view text)
     response_->notify("output",
         nlohmann::json {
             { "category", "stdout" },
-            { "output", std::string(text).append("\n") },
+            { "output", std::format("{}\n", text) },
         });
 }
 

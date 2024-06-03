@@ -47,13 +47,7 @@ public:
 
     auto operator<=>(const request_id&) const = default;
 
-    std::string to_string() const
-    {
-        if (std::holds_alternative<long>(id))
-            return "(" + std::to_string(std::get<long>(id)) + ")";
-        else
-            return "\"" + std::get<std::string>(id) + "\"";
-    }
+    std::string to_string() const;
 
     auto hash() const { return std::hash<std::variant<long, std::string>>()(id); }
 

@@ -15,6 +15,7 @@
 #include "token.h"
 
 #include <CharStream.h>
+#include <format>
 
 #include <misc/Interval.h>
 
@@ -58,13 +59,6 @@ void replace_all(std::string& str, std::string const& from, std::string const& t
 
 std::string token::toString() const
 {
-    std::stringstream ss;
-
-    std::string channel_str;
-    if (channel_ > 0)
-    {
-        channel_str = ",channel=" + std::to_string(channel_);
-    }
     std::string txt = getText();
     if (!txt.empty())
     {
@@ -77,11 +71,13 @@ std::string token::toString() const
         txt = "<no text>";
     }
 
-    std::string type_string = std::to_string(static_cast<ssize_t>(type_));
-
-    ss << "[@" << static_cast<ssize_t>(getTokenIndex()) << "," << static_cast<ssize_t>(start_) << ":"
-       << static_cast<ssize_t>(stop_) << "='" << txt << "',<" << type_string << ">" << channel_str << "," << line_
-       << ":" << getCharPositionInLine() << "]";
-
-    return ss.str();
+    return std::format("[@{},{}:{}='{}',<{}>,channel={},{}:{}]",
+        static_cast<ssize_t>(getTokenIndex()),
+        static_cast<ssize_t>(start_),
+        static_cast<ssize_t>(stop_),
+        std::move(txt),
+        static_cast<ssize_t>(type_),
+        channel_,
+        line_,
+        getCharPositionInLine());
 }
