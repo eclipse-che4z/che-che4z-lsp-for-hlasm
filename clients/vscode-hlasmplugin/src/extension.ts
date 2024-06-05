@@ -110,7 +110,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
         middleware: middleware,
     };
 
-    const extConfProvider = new HLASMExternalConfigurationProvider();
+    const extConfProvider = new HLASMExternalConfigurationProvider(telemetry);
     const extFiles = new HLASMExternalFiles(
         schemeExternalFiles,
         vscode.workspace.fs,

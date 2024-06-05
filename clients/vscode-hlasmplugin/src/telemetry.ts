@@ -15,7 +15,7 @@
 import TelemetryReporter, { TelemetryEventMeasurements, TelemetryEventProperties } from '@vscode/extension-telemetry';
 import { decodeBase64 } from './tools';
 
-const TELEMETRY_DEFAULT_KEY = "NOT_TELEMETRY_KEY";
+const TELEMETRY_DEFAULT_KEY: string = "NOT_TELEMETRY_KEY";
 
 // The following line is replaced by base64 encoded telemetry key in the CI
 const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY;

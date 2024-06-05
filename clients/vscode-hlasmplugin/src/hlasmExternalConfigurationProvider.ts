@@ -14,6 +14,7 @@
 
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
+import { Telemetry } from './telemetry';
 
 interface ExternalConfigurationRequest {
     uri: string;
@@ -198,6 +199,8 @@ export class HLASMExternalConfigurationProvider {
     private requestHandlers: HLASMExternalConfigurationProviderHandler[] = [];
     private channel?: ChannelType = undefined;
 
+    constructor(private telemetry?: Telemetry) { }
+
     public attach(channel: ChannelType) {
         this.channel = channel;
         return vscode.Disposable.from(
@@ -210,10 +213,13 @@ export class HLASMExternalConfigurationProvider {
         for (const h of this.requestHandlers) {
             try {
                 const resp = await h(uri);
-                if (resp)
+                if (resp) {
+                    this.telemetry?.reportEvent('external.configuration.provided');
                     return resp;
+                }
             }
             catch (e) {
+                this.telemetry?.reportErrorEvent('external.configuration.failed');
                 return new vscodelc.ResponseError(-106, isError(e) ? e.message : 'Unknown error');
             }
         }
