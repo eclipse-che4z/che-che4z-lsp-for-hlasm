@@ -291,9 +291,6 @@ jobs:
           - os: windows-2019
             native: win32_x64
             chmod: false
-          - os: macos-11
-            native: darwin_x64
-            chmod: true
           - os: ubuntu-22.04
             native: linux_x64
             chmod: true
