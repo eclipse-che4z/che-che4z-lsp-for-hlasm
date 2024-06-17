@@ -27,6 +27,7 @@
 #include <vector>
 #include <version>
 
+#include "compiler_options.h"
 #include "config/b4g_config.h"
 #include "config/pgm_conf.h"
 #include "config/proc_grps.h"
@@ -38,8 +39,10 @@
 #include "utils/resource_location.h"
 #include "utils/task.h"
 #include "workspaces/configuration_datatypes.h"
+#include "workspaces/configuration_provider.h"
 
 namespace hlasm_plugin::parser_library {
+struct asm_option;
 class external_configuration_requests;
 } // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::workspaces {
@@ -49,16 +52,6 @@ using global_settings_map =
 class file_manager;
 class program_configuration_storage;
 struct library_local_options;
-
-struct configuration_diagnostics_parameters
-{
-    std::unordered_map<utils::resource::resource_location,
-        std::vector<utils::resource::resource_location>,
-        utils::resource::resource_location_hasher>
-        used_configs_opened_files_map;
-
-    bool include_advisory_cfg_diags;
-};
 
 enum class parse_config_file_result
 {
@@ -168,7 +161,7 @@ public:
     }
 };
 
-class workspace_configuration
+class workspace_configuration : public configuration_provider
 {
     static constexpr const char FILENAME_PROC_GRPS[] = "proc_grps.json";
     static constexpr const char FILENAME_PGM_CONF[] = "pgm_conf.json";
@@ -178,6 +171,7 @@ class workspace_configuration
     file_manager& m_file_manager;
     utils::resource::resource_location m_location;
     const shared_json& m_global_settings;
+    const lib_config& m_global_config;
 
     utils::resource::resource_location m_proc_grps_loc;
     utils::resource::resource_location m_pgm_conf_loc;
@@ -269,7 +263,7 @@ class workspace_configuration
         library_local_options opts,
         std::vector<diagnostic>& diags);
 
-    void add_missing_diags(const diagnosable& target,
+    void add_missing_diags(std::vector<diagnostic>& target,
         const utils::resource::resource_location& config_file_rl,
         const std::vector<utils::resource::resource_location>& opened_files,
         bool include_advisory_cfg_diags) const;
@@ -278,7 +272,12 @@ public:
     workspace_configuration(file_manager& fm,
         utils::resource::resource_location location,
         const shared_json& global_settings,
+        const lib_config& global_config,
         external_configuration_requests* ecr);
+    workspace_configuration(file_manager& fm,
+        const shared_json& global_settings,
+        const lib_config& global_config,
+        std::shared_ptr<library> the_library); // test-only
 
     ~workspace_configuration();
 
@@ -294,16 +293,19 @@ public:
         const utils::resource::resource_location& file_location);
 
     const program* get_program(const utils::resource::resource_location& program) const;
+    const processor_group* get_proc_grp(const utils::resource::resource_location& file) const;
     const processor_group* get_proc_grp_by_program(const program& p) const;
     processor_group* get_proc_grp_by_program(const program& p);
-    const lib_config& get_config() const { return m_local_config; }
 
     bool settings_updated() const;
-    [[nodiscard]] utils::value_task<std::optional<std::vector<const processor_group*>>> refresh_libraries(
-        const std::vector<utils::resource::resource_location>& file_locations);
+    [[nodiscard]] utils::value_task<std::optional<std::vector<index_t<processor_group, unsigned long long>>>>
+    refresh_libraries(const std::vector<utils::resource::resource_location>& file_locations);
 
-    void produce_diagnostics(
-        const diagnosable& target, const configuration_diagnostics_parameters& config_diag_params) const;
+    void produce_diagnostics(std::vector<diagnostic>& target,
+        const std::unordered_map<utils::resource::resource_location,
+            std::vector<utils::resource::resource_location>,
+            utils::resource::resource_location_hasher>& used_configs_opened_files_map,
+        bool include_advisory_cfg_diags) const;
 
     const processor_group& get_proc_grp(const proc_grp_id& p) const; // test only
 
@@ -313,6 +315,11 @@ public:
         const utils::resource::resource_location& normalized_location, std::string group_json);
 
     void prune_external_processor_groups(const utils::resource::resource_location& location);
+
+    [[nodiscard]] utils::value_task<std::pair<analyzer_configuration, index_t<processor_group, unsigned long long>>>
+    get_analyzer_configuration(utils::resource::resource_location url) override;
+    [[nodiscard]] opcode_suggestion_data get_opcode_suggestion_data(
+        const utils::resource::resource_location& url) override;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

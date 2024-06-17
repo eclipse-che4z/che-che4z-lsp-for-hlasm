@@ -20,6 +20,7 @@
 #include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
+#include "workspaces/workspace_configuration.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -457,6 +458,7 @@ struct test_variables_lib_pattern
     file_manager_lib_pattern file_manager;
     lib_config config;
     shared_json global_settings;
+    workspace_configuration ws_cfg;
     workspace ws;
 
 public:
@@ -464,9 +466,10 @@ public:
         : file_manager(pgroup_variant, pgmconf_variant)
         , config()
         , global_settings(make_empty_shared_json())
-        , ws(ws_loc, file_manager, config, global_settings)
+        , ws_cfg(file_manager, ws_loc, global_settings, config, nullptr)
+        , ws(file_manager, ws_cfg)
     {
-        ws.open().run();
+        ws_cfg.parse_configuration_file().run();
     };
 };
 
@@ -945,8 +948,9 @@ void verify_infinit_loop(pgroup_symlinks_variants pgroup_variant, pgmconf_varian
             co_return { {}, hlasm_plugin::utils::path::list_directory_rc::done };
         }));
 
-    workspace ws(ws_loc, file_manager, config, global_settings);
-    ws.open().run();
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace ws(file_manager, ws_cfg);
+    ws_cfg.parse_configuration_file().run();
     run_if_valid(ws.did_open_file(pattern_test_source_loc));
     parse_all_files(ws);
 

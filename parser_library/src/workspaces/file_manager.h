@@ -73,11 +73,9 @@ public:
         std::span<const document_change> changes) = 0;
     virtual void did_close_file(const utils::resource::resource_location& document_loc) = 0;
 
-    virtual std::string_view put_virtual_file(
-        unsigned long long id, std::string_view text, utils::resource::resource_location related_workspace) = 0;
+    virtual std::string_view put_virtual_file(unsigned long long id, std::string_view text) = 0;
     virtual void remove_virtual_file(unsigned long long id) = 0;
     virtual std::string get_virtual_file(unsigned long long id) const = 0;
-    virtual utils::resource::resource_location get_virtual_file_workspace(unsigned long long id) const = 0;
 
     [[nodiscard]] virtual utils::value_task<file_content_state> update_file(
         const utils::resource::resource_location& document_loc) = 0;

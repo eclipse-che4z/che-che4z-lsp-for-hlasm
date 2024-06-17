@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <charconv>
 #include <compare>
 #include <deque>
@@ -28,6 +29,7 @@
 #include <tuple>
 #include <unordered_set>
 
+#include "compiler_options.h"
 #include "external_configuration_requests.h"
 #include "file_manager.h"
 #include "library_local.h"
@@ -39,6 +41,7 @@
 #include "utils/path_conversions.h"
 #include "utils/platform.h"
 #include "utils/string_operations.h"
+#include "workspaces/configuration_provider.h"
 #include "workspaces/program_configuration_storage.h"
 #include "workspaces/wildcard.h"
 
@@ -243,10 +246,12 @@ const std::regex json_settings_replacer::config_reference(R"(\$\{([^}]+)\})");
 workspace_configuration::workspace_configuration(file_manager& fm,
     utils::resource::resource_location location,
     const shared_json& global_settings,
+    const lib_config& global_config,
     external_configuration_requests* ecr)
     : m_file_manager(fm)
     , m_location(std::move(location))
     , m_global_settings(global_settings)
+    , m_global_config(global_config)
     , m_external_configuration_requests(ecr)
     , m_pgm_conf_store(std::make_unique<program_configuration_storage>(m_proc_grps))
 {
@@ -256,6 +261,29 @@ workspace_configuration::workspace_configuration(file_manager& fm,
         m_proc_grps_loc = utils::resource::resource_location::join(hlasm_folder, FILENAME_PROC_GRPS);
         m_pgm_conf_loc = utils::resource::resource_location::join(hlasm_folder, FILENAME_PGM_CONF);
     }
+}
+
+workspace_configuration::workspace_configuration(file_manager& fm,
+    const shared_json& global_settings,
+    const lib_config& global_config,
+    std::shared_ptr<library> the_library)
+
+    : m_file_manager(fm)
+    , m_global_settings(global_settings)
+    , m_global_config(global_config)
+    , m_external_configuration_requests(nullptr)
+    , m_pgm_conf_store(std::make_unique<program_configuration_storage>(m_proc_grps))
+{
+    static const std::string test_group = "test_group";
+    auto [it, _] = m_proc_grps.try_emplace(basic_conf { test_group },
+        std::piecewise_construct,
+        std::forward_as_tuple(test_group, config::assembler_options(), std::vector<config::preprocessor_options>()),
+        std::forward_as_tuple());
+    it->second.first.add_library(std::move(the_library));
+    m_pgm_conf_store->add_regex_conf(
+        program { utils::resource::resource_location("**"), basic_conf { test_group }, {}, false },
+        nullptr,
+        empty_alternative_cfg_root);
 }
 
 workspace_configuration::~workspace_configuration() = default;
@@ -281,6 +309,12 @@ inline bool operator<(const std::tuple<const utils::resource::resource_location&
     return l < std::tie(rx, ry);
 }
 
+unsigned long long make_unique_id()
+{
+    static std::atomic<unsigned long long> unique_group_id = 0;
+    return unique_group_id.fetch_add(1, std::memory_order_relaxed);
+}
+
 std::shared_ptr<library> workspace_configuration::get_local_library(
     const utils::resource::resource_location& url, const library_local_options& opts)
 {
@@ -294,6 +328,7 @@ std::shared_ptr<library> workspace_configuration::get_local_library(
     m_libraries.try_emplace(std::make_pair(url, library_options(opts)), result, true);
     return result;
 }
+
 
 utils::task workspace_configuration::process_processor_group(const config::processor_group& pg,
     std::span<const std::string> fallback_macro_extensions,
@@ -314,10 +349,12 @@ utils::task workspace_configuration::process_processor_group(const config::proce
         if (t.valid())
             co_await std::move(t);
     }
+
+    auto next_id = make_unique_id();
     if (alternative_root.empty())
-        m_proc_grps.try_emplace(basic_conf { prc_grp.name() }, std::move(prc_grp));
+        m_proc_grps.try_emplace(basic_conf { prc_grp.name() }, std::move(prc_grp), next_id);
     else
-        m_proc_grps.try_emplace(b4g_conf { prc_grp.name(), alternative_root }, std::move(prc_grp));
+        m_proc_grps.try_emplace(b4g_conf { prc_grp.name(), alternative_root }, std::move(prc_grp), next_id);
 
     co_return;
 }
@@ -333,8 +370,6 @@ utils::task workspace_configuration::process_processor_group_library(const confi
     utils::path::dissected_uri new_uri_components;
     new_uri_components.scheme = external_uri_scheme;
     new_uri_components.path = "/DATASET/" + utils::encoding::percent_encode_component(dsn.dsn);
-    if (!m_location.get_uri().empty())
-        new_uri_components.fragment = utils::encoding::uri_friendly_base16_encode(m_location.get_uri());
     utils::resource::resource_location new_uri(utils::path::reconstruct_uri(new_uri_components));
 
     prc_grp.add_library(get_local_library(new_uri, { .optional_library = dsn.optional }));
@@ -356,8 +391,6 @@ utils::task workspace_configuration::process_processor_group_library(const confi
         + utils::encoding::percent_encode_component(end.system) + "/"
         + utils::encoding::percent_encode_component(end.subsystem) + "/"
         + utils::encoding::percent_encode_component(end.type);
-    if (!m_location.get_uri().empty())
-        new_uri_components.fragment = utils::encoding::uri_friendly_base16_encode(m_location.get_uri());
     utils::resource::resource_location new_uri(utils::path::reconstruct_uri(new_uri_components));
 
     prc_grp.add_library(get_local_library(new_uri, { .optional_library = end.optional }));
@@ -375,34 +408,12 @@ utils::task workspace_configuration::process_processor_group_library(const confi
     new_uri_components.scheme = external_uri_scheme;
     new_uri_components.path = "/ENDEVOR/" + utils::encoding::percent_encode_component(end.profile) + "/"
         + utils::encoding::percent_encode_component(end.dsn);
-    if (!m_location.get_uri().empty())
-        new_uri_components.fragment = utils::encoding::uri_friendly_base16_encode(m_location.get_uri());
     utils::resource::resource_location new_uri(utils::path::reconstruct_uri(new_uri_components));
 
     prc_grp.add_library(get_local_library(new_uri, { .optional_library = end.optional }));
 
     return {};
 }
-
-namespace {
-void modify_hlasm_external_uri(
-    utils::resource::resource_location& rl, const utils::resource::resource_location& workspace)
-{
-    auto rl_uri = rl.get_uri();
-    if (!rl_uri.starts_with(external_uri_scheme))
-        return;
-
-    // mainly to support testing, but could be useful in general
-    // hlasm-external:/path... is transformed into hlasm-external:/path...#<friendly workspace uri>
-    utils::path::dissected_uri uri_components = utils::path::dissect_uri(rl_uri);
-    if (uri_components.scheme == external_uri_scheme && !uri_components.fragment.has_value()
-        && !workspace.get_uri().empty())
-    {
-        uri_components.fragment = utils::encoding::uri_friendly_base16_encode(workspace.get_uri());
-        rl = utils::resource::resource_location(utils::path::reconstruct_uri(uri_components));
-    }
-}
-} // namespace
 
 utils::task workspace_configuration::process_processor_group_library(const config::library& lib,
     const utils::resource::resource_location& alternative_root,
@@ -428,7 +439,6 @@ utils::task workspace_configuration::process_processor_group_library(const confi
 
     if (auto first_wild_card = rl.get_uri().find_first_of("*?"); first_wild_card == std::string::npos)
     {
-        modify_hlasm_external_uri(rl, m_location);
         prc_grp.add_library(get_local_library(rl, lib_local_opts));
         return {};
     }
@@ -838,7 +848,7 @@ utils::task workspace_configuration::find_and_add_libs(utils::resource::resource
     }
 }
 
-void workspace_configuration::add_missing_diags(const diagnosable& target,
+void workspace_configuration::add_missing_diags(std::vector<diagnostic>& target,
     const utils::resource::resource_location& config_file_rl,
     const std::vector<utils::resource::resource_location>& opened_files,
     bool include_advisory_cfg_diags) const
@@ -858,36 +868,40 @@ void workspace_configuration::add_missing_diags(const diagnosable& target,
         if (!include_advisory_cfg_diags && !used)
             continue;
 
-        target.add_diagnostic(diags_matrix[empty_cfg_rl][used](adjusted_conf_rl, missing_pgroup_name));
+        target.push_back(diags_matrix[empty_cfg_rl][used](adjusted_conf_rl, missing_pgroup_name));
     }
 }
 
-void workspace_configuration::produce_diagnostics(
-    const diagnosable& target, const configuration_diagnostics_parameters& config_diag_params) const
+void workspace_configuration::produce_diagnostics(std::vector<diagnostic>& target,
+    const std::unordered_map<utils::resource::resource_location,
+        std::vector<utils::resource::resource_location>,
+        utils::resource::resource_location_hasher>& used_configs_opened_files_map,
+    bool include_advisory_cfg_diags) const
 {
-    for (auto& [key, pg] : m_proc_grps)
+    for (auto& [key, value] : m_proc_grps)
     {
         if (const auto* e = std::get_if<external_conf>(&key); e && e->definition.use_count() <= 1)
             continue;
+        auto& [pg, _] = value;
         pg.collect_diags();
         for (const auto& d : pg.diags())
-            target.add_diagnostic(d);
+            target.push_back(d);
         pg.diags().clear();
     }
 
     for (const auto& diag : m_config_diags)
-        target.add_diagnostic(diag);
+        target.push_back(diag);
 
-    for (const auto& [config_rl, opened_files] : config_diag_params.used_configs_opened_files_map)
+    for (const auto& [config_rl, opened_files] : used_configs_opened_files_map)
     {
         if (const auto& b4g_config_cache_it = m_b4g_config_cache.find(config_rl);
             b4g_config_cache_it != m_b4g_config_cache.end())
         {
             for (const auto& d : b4g_config_cache_it->second.diags)
-                target.add_diagnostic(d);
+                target.push_back(d);
         }
 
-        add_missing_diags(target, config_rl, opened_files, config_diag_params.include_advisory_cfg_diags);
+        add_missing_diags(target, config_rl, opened_files, include_advisory_cfg_diags);
     }
 }
 
@@ -903,10 +917,11 @@ utils::value_task<parse_config_file_result> workspace_configuration::parse_confi
     return utils::value_task<parse_config_file_result>::from_value(parse_config_file_result::not_found);
 }
 
-utils::value_task<std::optional<std::vector<const processor_group*>>> workspace_configuration::refresh_libraries(
-    const std::vector<utils::resource::resource_location>& file_locations)
+utils::value_task<std::optional<std::vector<index_t<processor_group, unsigned long long>>>>
+workspace_configuration::refresh_libraries(const std::vector<utils::resource::resource_location>& file_locations)
 {
-    std::optional<std::vector<const processor_group*>> result;
+    using return_type = std::optional<std::vector<index_t<processor_group, unsigned long long>>>;
+    return_type result;
     std::unordered_set<utils::resource::resource_location, utils::resource::resource_location_hasher> no_filename_rls;
 
     for (const auto& file_loc : file_locations)
@@ -916,26 +931,26 @@ utils::value_task<std::optional<std::vector<const processor_group*>>> workspace_
             [this, hlasm_folder = utils::resource::resource_location::join(m_location, HLASM_PLUGIN_FOLDER)](
                 const auto& uri) { return is_configuration_file(uri) || uri == hlasm_folder; }))
     {
-        co_await parse_configuration_file();
-
-        result.emplace();
         // TODO: we could diff the configuration and really return only changed groups
+        result.emplace();
         for (const auto& [_, proc_grp] : m_proc_grps)
-            result->emplace_back(&proc_grp);
+            result->emplace_back(proc_grp.second);
 
-        co_return result;
+        return parse_configuration_file()
+            .then([](auto) {})
+            .then(utils::value_task<return_type>::from_value(std::move(result)));
     }
 
-    std::unordered_set<const library*> refreshed_libs;
     std::vector<utils::task> pending_refreshes;
-    for (auto& [_, proc_grp] : m_proc_grps)
+    for (std::unordered_set<const library*> refreshed_libs; auto& [_, value] : m_proc_grps)
     {
+        auto& [proc_grp, id] = value;
         bool pending_refresh = false;
         if (!proc_grp.refresh_needed(no_filename_rls, file_locations))
             continue;
         if (!result)
             result.emplace();
-        result->emplace_back(&proc_grp);
+        result->emplace_back(id);
         for (const auto& lib : proc_grp.libraries())
         {
             if (!refreshed_libs.emplace(std::to_address(lib)).second || !lib->has_cached_content())
@@ -955,16 +970,14 @@ utils::value_task<std::optional<std::vector<const processor_group*>>> workspace_
             }(proc_grp));
     }
 
-    for (auto& r : pending_refreshes)
-        co_await std::move(r);
-
-    co_return result;
+    return utils::task::wait_all(std::move(pending_refreshes))
+        .then(utils::value_task<return_type>::from_value(std::move(result)));
 }
 
 const processor_group* workspace_configuration::get_proc_grp_by_program(const program& pgm) const
 {
     if (auto it = m_proc_grps.find(pgm.pgroup); it != m_proc_grps.end())
-        return &it->second;
+        return &it->second.first;
 
     return nullptr;
 }
@@ -972,17 +985,28 @@ const processor_group* workspace_configuration::get_proc_grp_by_program(const pr
 processor_group* workspace_configuration::get_proc_grp_by_program(const program& pgm)
 {
     if (auto it = m_proc_grps.find(pgm.pgroup); it != m_proc_grps.end())
-        return &it->second;
+        return &it->second.first;
 
     return nullptr;
 }
 
-const processor_group& workspace_configuration::get_proc_grp(const proc_grp_id& p) const { return m_proc_grps.at(p); }
+const processor_group& workspace_configuration::get_proc_grp(const proc_grp_id& p) const
+{
+    return m_proc_grps.at(p).first;
+}
 
 const program* workspace_configuration::get_program(const utils::resource::resource_location& file_location) const
 {
     return m_pgm_conf_store->get_program(file_location.lexically_normal()).pgm;
 }
+
+const processor_group* workspace_configuration::get_proc_grp(const utils::resource::resource_location& file) const
+{
+    if (const auto* pgm = get_program(file); pgm)
+        return get_proc_grp_by_program(*pgm);
+    return nullptr;
+}
+
 
 utils::value_task<decltype(workspace_configuration::m_proc_grps)::iterator>
 workspace_configuration::make_external_proc_group(
@@ -1027,7 +1051,9 @@ workspace_configuration::make_external_proc_group(
         prc_grp.add_diagnostic(std::move(d));
 
     co_return m_proc_grps
-        .try_emplace(external_conf { std::make_shared<std::string>(std::move(group_json)) }, std::move(prc_grp))
+        .try_emplace(external_conf { std::make_shared<std::string>(std::move(group_json)) },
+            std::move(prc_grp),
+            make_unique_id())
         .first;
 }
 
@@ -1071,6 +1097,62 @@ void workspace_configuration::prune_external_processor_groups(const utils::resou
         const auto* e = std::get_if<external_conf>(&pg.first);
         return e && e->definition.use_count() == 1;
     });
+}
+
+opcode_suggestion_data workspace_configuration::get_opcode_suggestion_data(
+    const utils::resource::resource_location& url)
+{
+    opcode_suggestion_data result {};
+    if (auto pgm = get_program(url))
+    {
+        if (auto proc_grp = get_proc_grp_by_program(*pgm); proc_grp)
+        {
+            proc_grp->apply_options_to(result.opts);
+            result.proc_grp = proc_grp;
+        }
+        pgm->asm_opts.apply_options_to(result.opts);
+    }
+
+    return result;
+}
+
+utils::value_task<std::pair<analyzer_configuration, index_t<processor_group, unsigned long long>>>
+workspace_configuration::get_analyzer_configuration(utils::resource::resource_location url)
+{
+    auto alt_config = co_await load_alternative_config_if_needed(url);
+    const auto* pgm = get_program(url);
+    const processor_group* proc_grp = nullptr;
+    index_t<processor_group, unsigned long long> group_id;
+    asm_option opts;
+    if (pgm)
+    {
+        if (auto it = m_proc_grps.find(pgm->pgroup); it != m_proc_grps.end())
+        {
+            proc_grp = &it->second.first;
+            group_id = it->second.second;
+            proc_grp->apply_options_to(opts);
+        }
+        pgm->asm_opts.apply_options_to(opts);
+    }
+
+    auto relative_to_location = url.lexically_relative(m_location).lexically_normal();
+
+    const auto& sysin_path = !pgm && (relative_to_location.empty() || relative_to_location.lexically_out_of_scope())
+        ? url
+        : relative_to_location;
+    opts.sysin_member = sysin_path.filename();
+    opts.sysin_dsn = sysin_path.parent().get_local_path_or_uri();
+
+    co_return {
+        analyzer_configuration {
+            .libraries = proc_grp ? proc_grp->libraries() : std::vector<std::shared_ptr<library>>(),
+            .opts = std::move(opts),
+            .pp_opts = proc_grp ? proc_grp->preprocessors() : std::vector<preprocessor_options>(),
+            .alternative_config_url = std::move(alt_config),
+            .dig_suppress_limit = m_local_config.fill_missing_settings(m_global_config).diag_supress_limit.value(),
+        },
+        group_id,
+    };
 }
 
 utils::value_task<utils::resource::resource_location> workspace_configuration::load_alternative_config_if_needed(

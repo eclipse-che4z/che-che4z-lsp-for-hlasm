@@ -77,11 +77,9 @@ public:
         std::span<const document_change> changes) override;
     void did_close_file(const utils::resource::resource_location& document_loc) override;
 
-    std::string_view put_virtual_file(
-        unsigned long long id, std::string_view text, utils::resource::resource_location related_workspace) override;
+    std::string_view put_virtual_file(unsigned long long id, std::string_view text) override;
     void remove_virtual_file(unsigned long long id) override;
     std::string get_virtual_file(unsigned long long id) const override;
-    utils::resource::resource_location get_virtual_file_workspace(unsigned long long id) const override;
 
     [[nodiscard]] utils::value_task<file_content_state> update_file(
         const utils::resource::resource_location& document_loc) override;
@@ -94,15 +92,12 @@ private:
     struct virtual_file_entry
     {
         std::string text;
-        utils::resource::resource_location related_workspace;
 
-        virtual_file_entry(std::string_view text, utils::resource::resource_location related_workspace)
+        explicit virtual_file_entry(std::string_view text)
             : text(text)
-            , related_workspace(std::move(related_workspace))
         {}
-        virtual_file_entry(std::string text, utils::resource::resource_location related_workspace)
+        explicit virtual_file_entry(std::string text)
             : text(std::move(text))
-            , related_workspace(std::move(related_workspace))
         {}
     };
     std::unordered_map<unsigned long long, virtual_file_entry> m_virtual_files;

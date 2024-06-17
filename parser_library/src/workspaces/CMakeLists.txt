@@ -12,6 +12,7 @@
 
 target_sources(parser_library PRIVATE
     configuration_datatypes.h
+    configuration_provider.h
     file.cpp
     file.h
     file_manager.h

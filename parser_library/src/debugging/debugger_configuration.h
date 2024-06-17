@@ -30,7 +30,6 @@ struct debugger_configuration
 {
     workspaces::file_manager* fm = nullptr;
     std::vector<std::shared_ptr<workspaces::library>> libraries;
-    utils::resource::resource_location workspace_uri = utils::resource::resource_location();
     asm_option opts;
     std::vector<preprocessor_options> pp_opts;
 };

@@ -21,7 +21,7 @@
 
 namespace hlasm_plugin::parser_library {
 
-template<typename Tag, /* std::integral */ typename T = std::size_t>
+template<typename Tag, std::integral T = std::size_t>
 class index_t
 {
     static constexpr T invalid_index = (T)-1;

@@ -23,23 +23,12 @@
 #include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
+#include "workspaces/workspace_configuration.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
 using namespace hlasm_plugin::utils::resource;
 using hlasm_plugin::utils::platform::is_windows;
-
-class workspace_instruction_sets_test : public diagnosable_impl, public testing::Test
-{
-public:
-    void collect_diags() const override {}
-    size_t collect_and_get_diags_size(workspace& ws)
-    {
-        diags().clear();
-        collect_diags_from_child(ws);
-        return diags().size();
-    }
-};
 
 namespace {
 std::string pgroups_file_optable_370 = R"({
@@ -150,52 +139,66 @@ public:
     }
 };
 
-void change_instruction_set(
-    const range& change_range, const std::string& process_group, file_manager& fm, workspace& ws)
+void change_instruction_set(const range& change_range,
+    const std::string& process_group,
+    file_manager& fm,
+    workspace& ws,
+    workspace_configuration& ws_cfg)
 {
     std::vector<document_change> changes;
     changes.push_back(document_change({ change_range }, process_group));
 
     fm.did_change_file(proc_grps_loc, 1, changes);
-    run_if_valid(ws.did_change_file(proc_grps_loc, file_content_state::changed_content));
+    run_if_valid(ws_cfg.parse_configuration_file(proc_grps_loc).then([&ws](auto result) {
+        if (result == parse_config_file_result::parsed)
+            ws.mark_all_opened_files();
+    }));
     parse_all_files(ws);
+}
+
+std::vector<diagnostic> extract_diags(workspace& ws, workspace_configuration& cfg)
+{
+    std::vector<diagnostic> result;
+    cfg.produce_diagnostics(result, {}, {});
+    ws.produce_diagnostics(result);
+    return result;
 }
 } // namespace
 
-TEST_F(workspace_instruction_sets_test, changed_instr_set_370_Z10)
+TEST(workspace_instruction_sets_test, changed_instr_set_370_Z10)
 {
     file_manager_opt file_manager(file_manager_opt_variant::optable_370);
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(ws_loc, file_manager, config, global_settings);
-    ws.open().run();
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace ws(file_manager, ws_cfg);
+    ws_cfg.parse_configuration_file().run();
 
     run_if_valid(ws.did_open_file(source_loc));
     parse_all_files(ws);
-    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
+    EXPECT_TRUE(extract_diags(ws, ws_cfg).empty());
 
     // Change instruction set
-    change_instruction_set({ { 0, 0 }, { 12, 1 } }, pgroups_file_optable_Z10, file_manager, ws);
+    change_instruction_set({ { 0, 0 }, { 12, 1 } }, pgroups_file_optable_Z10, file_manager, ws, ws_cfg);
 
-    collect_and_get_diags_size(ws);
-    EXPECT_TRUE(matches_message_codes(diags(), { "E049" }));
+    EXPECT_TRUE(matches_message_codes(extract_diags(ws, ws_cfg), { "E049" }));
 }
 
-TEST_F(workspace_instruction_sets_test, changed_instr_set_Z10_370)
+TEST(workspace_instruction_sets_test, changed_instr_set_Z10_370)
 {
     file_manager_opt file_manager(file_manager_opt_variant::optable_Z10);
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace ws(ws_loc, file_manager, config, global_settings);
-    ws.open().run();
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace ws(file_manager, ws_cfg);
+    ws_cfg.parse_configuration_file().run();
 
     run_if_valid(ws.did_open_file(source_loc));
     parse_all_files(ws);
-    collect_and_get_diags_size(ws);
-    EXPECT_TRUE(matches_message_codes(diags(), { "E049" }));
+    EXPECT_TRUE(matches_message_codes(extract_diags(ws, ws_cfg), { "E049" }));
 
     // Change instruction set
-    change_instruction_set({ { 0, 0 }, { 12, 1 } }, pgroups_file_optable_370, file_manager, ws);
+    change_instruction_set({ { 0, 0 }, { 12, 1 } }, pgroups_file_optable_370, file_manager, ws, ws_cfg);
 
-    EXPECT_EQ(collect_and_get_diags_size(ws), (size_t)0);
+    EXPECT_TRUE(extract_diags(ws, ws_cfg).empty());
 }

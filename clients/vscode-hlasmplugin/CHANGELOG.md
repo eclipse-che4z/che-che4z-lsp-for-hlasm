@@ -5,6 +5,7 @@
 #### Added
 - Validate even-odd register requirements of machine instructions
 - Support configuration in user or workspace settings
+- Support LSP actions across workspace folders
 
 #### Fixed
 - Accept additional URI schemes based on currently opened workspaces

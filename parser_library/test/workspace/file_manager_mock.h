@@ -60,13 +60,9 @@ public:
             std::span<const hlasm_plugin::parser_library::document_change> changes),
         (override));
     MOCK_METHOD(void, did_close_file, (const resource_location& document_loc), (override));
-    MOCK_METHOD(std::string_view,
-        put_virtual_file,
-        (unsigned long long id, std::string_view text, resource_location related_workspace),
-        (override));
+    MOCK_METHOD(std::string_view, put_virtual_file, (unsigned long long id, std::string_view text), (override));
     MOCK_METHOD(void, remove_virtual_file, (unsigned long long id), (override));
     MOCK_METHOD(std::string, get_virtual_file, (unsigned long long id), (const, override));
-    MOCK_METHOD(resource_location, get_virtual_file_workspace, (unsigned long long id), (const, override));
 
     MOCK_METHOD(value_task<hlasm_plugin::parser_library::workspaces::file_content_state>,
         update_file,

@@ -399,17 +399,16 @@ void step_out(
 }
 } // namespace
 
-class workspace_mock : public workspace
+class workspace_mock
 {
-    lib_config config;
-    shared_json global_settings = make_empty_shared_json();
+    file_manager& fm;
 
 public:
     workspace_mock(file_manager& file_mngr)
-        : workspace(file_mngr, config, global_settings)
+        : fm(file_mngr)
     {}
 
-    std::vector<std::shared_ptr<library>> get_libraries(const resource_location&) const override
+    std::vector<std::shared_ptr<library>> get_libraries(const resource_location&) const
     {
         struct debugger_mock_library : library
         {
@@ -427,7 +426,7 @@ public:
                 return {};
             }
 
-            bool has_file(std::string_view file, resource_location* url)
+            bool has_file(std::string_view file, resource_location* url) override
             {
                 bool result = !!fm.find(resource_location(file));
                 if (result && url)
@@ -437,7 +436,7 @@ public:
 
             void copy_diagnostics(std::vector<diagnostic>&) const override { assert(false); }
 
-            const resource_location& get_location() const
+            const resource_location& get_location() const override
             {
                 assert(false);
                 static resource_location rl("");
@@ -451,10 +450,10 @@ public:
             {}
         };
 
-        return { std::make_shared<debugger_mock_library>(get_file_manager()) };
+        return { std::make_shared<debugger_mock_library>(fm) };
     }
-    asm_option get_asm_options(const resource_location&) const override { return { "SEVEN", "" }; }
-    std::vector<preprocessor_options> get_preprocessor_options(const resource_location&) const override { return {}; }
+    asm_option get_asm_options(const resource_location&) const { return { "SEVEN", "" }; }
+    std::vector<preprocessor_options> get_preprocessor_options(const resource_location&) const { return {}; }
 };
 
 TEST(debugger, test)
@@ -501,7 +500,6 @@ TEST(debugger, test)
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
-                .workspace_uri = resource_location(lib_provider.uri()),
                 .opts = lib_provider.get_asm_options(res),
                 .pp_opts = lib_provider.get_preprocessor_options(res),
             });
@@ -606,7 +604,6 @@ TEST(debugger, sysstmt)
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
-                .workspace_uri = resource_location(lib_provider.uri()),
                 .opts = lib_provider.get_asm_options(res),
                 .pp_opts = lib_provider.get_preprocessor_options(res),
             });
@@ -681,7 +678,6 @@ A  MAC_IN ()
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
-                .workspace_uri = resource_location(lib_provider.uri()),
                 .opts = lib_provider.get_asm_options(res),
                 .pp_opts = lib_provider.get_preprocessor_options(res),
             });
@@ -861,7 +857,6 @@ TEST(debugger, positional_parameters)
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
-                .workspace_uri = resource_location(lib_provider.uri()),
                 .opts = lib_provider.get_asm_options(res),
                 .pp_opts = lib_provider.get_preprocessor_options(res),
             });
@@ -995,7 +990,6 @@ TEST(debugger, arrays)
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
-                .workspace_uri = resource_location(lib_provider.uri()),
                 .opts = lib_provider.get_asm_options(res),
                 .pp_opts = lib_provider.get_preprocessor_options(res),
             });
@@ -1064,7 +1058,6 @@ B EQU A
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
-                .workspace_uri = resource_location(lib_provider.uri()),
                 .opts = lib_provider.get_asm_options(res),
                 .pp_opts = lib_provider.get_preprocessor_options(res),
             });
@@ -1124,7 +1117,6 @@ TEST(debugger, ainsert)
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
-                .workspace_uri = resource_location(lib_provider.uri()),
                 .opts = lib_provider.get_asm_options(res),
                 .pp_opts = lib_provider.get_preprocessor_options(res),
             });
@@ -1201,7 +1193,6 @@ TEST(debugger, concurrent_next_and_file_change)
             r.provide({
                 .fm = &file_manager,
                 .libraries = lib_provider.get_libraries(res),
-                .workspace_uri = resource_location(lib_provider.uri()),
                 .opts = lib_provider.get_asm_options(res),
                 .pp_opts = lib_provider.get_preprocessor_options(res),
             });

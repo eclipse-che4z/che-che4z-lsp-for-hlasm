@@ -59,6 +59,7 @@ struct data_definition;
 } // namespace expressions
 namespace workspaces {
 class workspace;
+class workspace_configuration;
 } // namespace workspaces
 } // namespace hlasm_plugin::parser_library
 
@@ -73,11 +74,6 @@ void parse_all_files(hlasm_plugin::parser_library::workspaces::workspace& ws);
 
 void run_if_valid(hlasm_plugin::utils::task t);
 
-void open_parse_and_recollect_diags(hlasm_plugin::parser_library::workspaces::workspace& ws,
-    const std::vector<hlasm_plugin::utils::resource::resource_location>& files);
-void close_parse_and_recollect_diags(hlasm_plugin::parser_library::workspaces::workspace& ws,
-    const std::vector<hlasm_plugin::utils::resource::resource_location>& files);
-
 template<typename T>
 std::optional<T> get_var_value(hlasm_context& ctx, std::string name);
 
@@ -91,18 +87,15 @@ template<typename T>
 std::optional<std::unordered_map<size_t, T>> get_var_vector_map(hlasm_context& ctx, std::string name);
 
 template<typename CMsg,
-    typename Proj,
-    std::predicate<std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type>&>,
-        std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type&>>> BinPred =
-        std::equal_to<>,
-    typename C =
-        std::initializer_list<std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type&>>>>
-inline bool matches_message_properties(CMsg&& d, const C& c, Proj p, BinPred b = BinPred())
+    typename Proj1 = std::identity,
+    typename Proj2 = std::identity,
+    typename C = std::initializer_list<
+        std::decay_t<std::invoke_result_t<Proj1, const typename std::decay_t<CMsg>::value_type&>>>,
+    std::indirect_equivalence_relation<std::projected<std::ranges::iterator_t<CMsg>, Proj1>,
+        std::projected<std::ranges::iterator_t<C>, Proj2>> BinPred = std::ranges::equal_to>
+inline bool matches_message_properties(CMsg&& d, const C& c, Proj1 p1 = {}, Proj2 p2 = {}, BinPred b = BinPred())
 {
-    std::vector<std::decay_t<std::invoke_result_t<Proj, const typename std::decay_t<CMsg>::value_type&>>> properties;
-    std::ranges::transform(d, std::back_inserter(properties), std::ref(p));
-
-    return std::ranges::is_permutation(properties, c, std::ref(b));
+    return std::ranges::is_permutation(d, c, std::ref(b), std::ref(p1), std::ref(p2));
 }
 
 template<typename CMsg,
@@ -167,7 +160,7 @@ template<typename CMsg, typename C = std::initializer_list<std::string>>
 inline bool matches_partial_message_text(CMsg&& d, const C& c)
 {
     return matches_message_properties(
-        d, c, &std::decay_t<CMsg>::value_type::message, [](std::string_view a, std::string_view b) -> bool {
+        d, c, &std::decay_t<CMsg>::value_type::message, {}, [](std::string_view a, std::string_view b) -> bool {
             return a.find(b) != std::string_view::npos;
         });
 }

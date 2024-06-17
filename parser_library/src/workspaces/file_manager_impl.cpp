@@ -405,11 +405,10 @@ void file_manager_impl::did_close_file(const utils::resource::resource_location&
     }
 }
 
-std::string_view file_manager_impl::put_virtual_file(
-    unsigned long long id, std::string_view text, utils::resource::resource_location related_workspace)
+std::string_view file_manager_impl::put_virtual_file(unsigned long long id, std::string_view text)
 {
     std::lock_guard guard(virtual_files_mutex);
-    return m_virtual_files.try_emplace(id, text, std::move(related_workspace)).first->second.text;
+    return m_virtual_files.try_emplace(id, text).first->second.text;
 }
 
 void file_manager_impl::remove_virtual_file(unsigned long long id)
@@ -424,14 +423,6 @@ std::string file_manager_impl::get_virtual_file(unsigned long long id) const
     if (auto it = m_virtual_files.find(id); it != m_virtual_files.end())
         return it->second.text;
     return {};
-}
-
-utils::resource::resource_location file_manager_impl::get_virtual_file_workspace(unsigned long long id) const
-{
-    std::lock_guard guard(virtual_files_mutex);
-    if (auto it = m_virtual_files.find(id); it != m_virtual_files.end())
-        return it->second.related_workspace;
-    return utils::resource::resource_location();
 }
 
 utils::value_task<file_content_state> file_manager_impl::update_file(

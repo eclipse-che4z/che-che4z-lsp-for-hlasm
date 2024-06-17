@@ -140,7 +140,7 @@ class debugger::impl final : public processing::statement_analyzer, output_handl
         }
         resp.provide(true);
         debug_lib_provider debug_provider(std::move(dc.libraries), *dc.fm);
-        workspaces::file_manager_vfm vfm(*dc.fm, std::move(dc.workspace_uri));
+        workspaces::file_manager_vfm vfm(*dc.fm);
 
         if (auto prefetch = debug_provider.prefetch_libraries(); prefetch.valid())
             co_await std::move(prefetch);

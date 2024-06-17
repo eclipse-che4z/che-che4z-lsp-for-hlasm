@@ -103,25 +103,6 @@ TEST(workspace_manager, did_change_file)
     EXPECT_FALSE(consumer.diags.empty());
 }
 
-TEST(workspace_manager, cancel_debugger_configuration_request)
-{
-    auto [p, impl] = make_workspace_manager_response(
-        std::in_place_type<workspace_manager_response_mock<debugging::debugger_configuration>>);
-
-    EXPECT_CALL(*impl, error(-104, ::testing::StrEq("Workspace removed")));
-
-    auto ws_mngr = create_workspace_manager();
-    auto& dc = ws_mngr->get_debugger_configuration_provider();
-
-    ws_mngr->add_workspace("workspace", "not_existing");
-
-    dc.provide_debugger_configuration("not_existing/file", p);
-
-    ws_mngr->remove_workspace("not_existing");
-
-    ws_mngr->idle_handler();
-}
-
 struct workspace_manager_external_file_requests_mock : public workspace_manager_external_file_requests
 {
     MOCK_METHOD(void, read_external_file, (std::string_view url, workspace_manager_response<std::string_view> content));

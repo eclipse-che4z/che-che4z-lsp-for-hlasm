@@ -29,6 +29,7 @@
 #include <vector>
 
 #include "branch_info.h"
+#include "configuration_provider.h"
 #include "debugging/debugger_configuration.h"
 #include "diagnosable_impl.h"
 #include "file_manager_vfm.h"
@@ -40,7 +41,6 @@
 #include "semantics/highlighting_info.h"
 #include "utils/resource_location.h"
 #include "utils/task.h"
-#include "workspace_configuration.h"
 
 namespace hlasm_plugin::parser_library {
 struct completion_item;
@@ -69,23 +69,13 @@ struct parse_file_result
 // Represents a LSP workspace. It solves all dependencies between files -
 // implements parse lib provider and decides which files are to be parsed
 // when a particular file has been changed in the editor.
-class workspace : public diagnosable_impl
+class workspace
 {
 public:
     using resource_location = utils::resource::resource_location;
     using resource_location_hasher = utils::resource::resource_location_hasher;
-    // Creates just a dummy workspace with no libraries - no dependencies
-    // between files.
-    workspace(file_manager& file_manager,
-        const lib_config& global_config,
-        const shared_json& global_settings,
-        std::shared_ptr<library> implicit_library = nullptr,
-        external_configuration_requests* ecr = nullptr);
-    workspace(const resource_location& location,
-        file_manager& file_manager,
-        const lib_config& global_config,
-        const shared_json& global_settings,
-        external_configuration_requests* ecr = nullptr);
+
+    workspace(file_manager& file_manager, configuration_provider& configuration);
 
     workspace(const workspace& ws) = delete;
     workspace& operator=(const workspace&) = delete;
@@ -95,18 +85,17 @@ public:
 
     ~workspace();
 
-    void collect_diags() const override;
-    void include_advisory_configuration_diagnostics(bool include_advisory_cfg_diags);
+    void produce_diagnostics(std::vector<diagnostic>& target) const;
 
     [[nodiscard]] utils::task mark_file_for_parsing(
         const resource_location& file_location, file_content_state file_content_status);
     void mark_all_opened_files();
     [[nodiscard]] utils::task did_open_file(
         resource_location file_location, file_content_state file_content_status = file_content_state::changed_content);
-    [[nodiscard]] utils::task did_change_file(resource_location file_location, file_content_state file_content_status);
     [[nodiscard]] utils::task did_close_file(resource_location file_location);
-    [[nodiscard]] utils::task did_change_watched_files(
-        std::vector<resource_location> file_locations, std::vector<file_content_state> file_change_status);
+    [[nodiscard]] utils::task did_change_watched_files(std::vector<resource_location> file_locations,
+        std::vector<file_content_state> file_change_status,
+        std::optional<std::vector<index_t<processor_group, unsigned long long>>> changed_groups);
 
     [[nodiscard]] utils::value_task<parse_file_result> parse_file(
         const resource_location& preferred_file = resource_location());
@@ -128,40 +117,23 @@ public:
 
     std::optional<performance_metrics> last_metrics(const resource_location& document_loc) const;
 
-    virtual std::vector<std::shared_ptr<library>> get_libraries(const resource_location& file_location) const;
-    virtual asm_option get_asm_options(const resource_location& file_location) const;
-    virtual std::vector<preprocessor_options> get_preprocessor_options(const resource_location& file_location) const;
-    const ws_uri& uri() const;
-
-    [[nodiscard]] utils::task open();
-    void close();
-
     void set_message_consumer(message_consumer* consumer);
-
-    file_manager& get_file_manager() const;
-
-    [[nodiscard]] utils::value_task<bool> settings_updated();
-
-    const processor_group& get_proc_grp(const resource_location& file) const;
-    const processor_group& get_proc_grp(const proc_grp_id& id) const; // test only
 
     std::vector<std::pair<std::string, size_t>> make_opcode_suggestion(
         const resource_location& file, std::string_view opcode, bool extended);
 
     void retrieve_fade_messages(std::vector<fade_message>& fms) const;
 
-    utils::value_task<debugging::debugger_configuration> get_debugger_configuration(resource_location url);
+    void external_configuration_invalidated(const resource_location& url);
 
-    void invalidate_external_configuration(const resource_location& url);
+    std::unordered_map<utils::resource::resource_location,
+        std::vector<utils::resource::resource_location>,
+        utils::resource::resource_location_hasher>
+    report_used_configuration_files() const;
 
 private:
-    resource_location location_;
     file_manager& file_manager_;
     file_manager_vfm fm_vfm_;
-
-    processor_group implicit_proc_grp;
-
-    bool opened_ = false;
 
     bool is_dependency(const resource_location& file_location) const;
 
@@ -169,13 +141,9 @@ private:
 
     message_consumer* message_consumer_ = nullptr;
 
-    const lib_config& global_config_;
-
     lib_config get_config() const;
 
-    workspace_configuration m_configuration;
-
-    bool m_include_advisory_cfg_diags;
+    configuration_provider& m_configuration;
 
     struct dependency_cache
     {
@@ -201,9 +169,11 @@ private:
         bool m_opened = false;
         bool m_collect_perf_metrics = false;
 
-        std::shared_ptr<context::id_storage> m_last_opencode_id_storage;
         bool m_last_opencode_analyzer_with_lsp = false;
         bool m_last_macro_analyzer_with_lsp = false;
+        std::shared_ptr<context::id_storage> m_last_opencode_id_storage;
+
+        index_t<processor_group, unsigned long long> m_group_id;
 
         explicit processor_file_compoments(std::shared_ptr<file> file);
         processor_file_compoments(const processor_file_compoments&) = delete;
@@ -218,26 +188,18 @@ private:
     std::unordered_map<resource_location, processor_file_compoments, resource_location_hasher> m_processor_files;
     std::unordered_set<resource_location, resource_location_hasher> m_parsing_pending;
 
-    configuration_diagnostics_parameters get_configuration_diagnostics_params() const;
-
     [[nodiscard]] utils::value_task<processor_file_compoments&> add_processor_file_impl(std::shared_ptr<file> f);
     const processor_file_compoments* find_processor_file_impl(const resource_location& file) const;
     friend struct workspace_parse_lib_provider;
-    workspace_file_info parse_successful(processor_file_compoments& comp, workspace_parse_lib_provider libs);
+    workspace_file_info parse_successful(processor_file_compoments& comp,
+        workspace_parse_lib_provider libs,
+        bool has_processor_group,
+        std::int64_t diag_suppress_limit);
     void delete_diags(processor_file_compoments& pfc);
 
     std::vector<const processor_file_compoments*> find_related_opencodes(const resource_location& document_loc) const;
     void filter_and_close_dependencies(std::set<resource_location> files_to_close_candidates,
         const processor_file_compoments* file_to_ignore = nullptr);
-
-    struct analyzer_configuration
-    {
-        std::vector<std::shared_ptr<workspaces::library>> libraries;
-        asm_option opts;
-        std::vector<preprocessor_options> pp_opts;
-        resource_location alternative_config_url;
-    };
-    utils::value_task<analyzer_configuration> get_analyzer_configuration(resource_location url);
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

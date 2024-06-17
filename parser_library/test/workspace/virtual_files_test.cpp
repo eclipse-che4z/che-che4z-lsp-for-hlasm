@@ -75,7 +75,6 @@ TEST(virtual_files, file_manager)
 {
     constexpr std::string_view empty;
     constexpr std::string_view content = "content";
-    const hlasm_plugin::utils::resource::resource_location related_workspace("workspace");
     file_manager_impl fm;
 
     EXPECT_EQ(fm.get_virtual_file(0), empty);
@@ -84,16 +83,14 @@ TEST(virtual_files, file_manager)
 
     EXPECT_EQ(fm.get_virtual_file(0), empty);
 
-    auto stored_text = fm.put_virtual_file(0, content, related_workspace);
+    auto stored_text = fm.put_virtual_file(0, content);
 
     EXPECT_EQ(stored_text, content);
     EXPECT_EQ(fm.get_virtual_file(0), content);
-    EXPECT_EQ(fm.get_virtual_file_workspace(0), related_workspace);
 
     fm.remove_virtual_file(0);
 
     EXPECT_EQ(fm.get_virtual_file(0), empty);
-    EXPECT_EQ(fm.get_virtual_file_workspace(0).get_uri(), empty);
 }
 TEST(virtual_files, callback_test_ainsert_valid_vfm)
 {
@@ -114,17 +111,15 @@ TEST(virtual_files, callback_test_ainsert_valid_vfm)
 
 TEST(virtual_files, file_manager_vfm)
 {
-    const hlasm_plugin::utils::resource::resource_location related_workspace("workspace");
     file_manager_mock fm;
-    file_manager_vfm vfm(fm, related_workspace);
+    file_manager_vfm vfm(fm);
 
     constexpr std::string_view test_content = "test content";
 
     constexpr auto id_initial = ~0ULL;
     auto id = id_initial;
 
-    EXPECT_CALL(fm, put_virtual_file(_, Eq(test_content), Eq(related_workspace)))
-        .WillOnce(DoAll(SaveArg<0>(&id), Return(test_content)));
+    EXPECT_CALL(fm, put_virtual_file(_, Eq(test_content))).WillOnce(DoAll(SaveArg<0>(&id), Return(test_content)));
     EXPECT_CALL(fm, remove_virtual_file(Eq(std::cref(id)))).Times(1);
 
     auto [file_handle, file_text] = vfm.file_generated(test_content);

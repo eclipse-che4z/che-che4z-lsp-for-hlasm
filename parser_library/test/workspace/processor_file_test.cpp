@@ -23,6 +23,7 @@
 #include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
+#include "workspaces/workspace_configuration.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -50,7 +51,8 @@ TEST(processor_file, parse_macro)
 
     EXPECT_CALL(*library, get_location).WillOnce(ReturnRef(lib_loc));
 
-    workspace ws(mngr, config, global_settings, library);
+    workspace_configuration ws_cfg(mngr, global_settings, config, library);
+    workspace ws(mngr, ws_cfg);
 
     EXPECT_CALL(*library, has_file(std::string_view("MAC"), _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(macro_loc), Return(true)));

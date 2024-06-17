@@ -29,6 +29,7 @@
 #include "utils/resource_location.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
+#include "workspaces/workspace_configuration.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -69,17 +70,19 @@ struct test_params
     std::vector<std::string> diag_message_codes;
 };
 
-class fade_fixture_base : public diagnosable_impl, public ::testing::TestWithParam<test_params>
+class fade_fixture_base : public ::testing::TestWithParam<test_params>
 {
 public:
     file_manager_extended file_manager;
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
+    workspace_configuration ws_cfg;
     workspace ws;
     std::vector<fade_message> fms;
 
     fade_fixture_base()
-        : ws(workspace(fade_loc, file_manager, config, global_settings))
+        : ws_cfg(file_manager, fade_loc, global_settings, config, nullptr)
+        , ws(file_manager, ws_cfg)
     {}
 
     void SetUp() override
@@ -88,21 +91,19 @@ public:
         file_manager.did_open_file(proc_grps_loc, 1, proc_grps);
     }
 
-    void collect_diags() const override
-    {
-        diags().clear();
-        collect_diags_from_child(ws);
-    }
-
     std::vector<diagnostic> collect_and_get_diags()
     {
-        collect_diags();
-        return diags();
+        std::vector<diagnostic> result;
+
+        ws_cfg.produce_diagnostics(result, {}, {});
+        ws.produce_diagnostics(result);
+
+        return result;
     }
 
     void open_src_files_and_collect_fms(std::initializer_list<std::pair<resource_location, std::string>> files)
     {
-        ws.open().run();
+        ws_cfg.parse_configuration_file().run();
 
         for (const auto& [rl, text] : files)
         {
@@ -1122,7 +1123,7 @@ public:
         for (const auto& [rl, is_cpybook, _] : files_to_open)
             m_fm.did_open_file(rl, 1, is_cpybook ? cpybook : source_template);
 
-        ws.open().run();
+        ws_cfg.parse_configuration_file().run();
         for (const auto& [rl, _, open_file_res] : files_to_open)
             run_if_valid(ws.did_open_file(rl, open_file_res));
         parse_all_files(ws);
@@ -1175,7 +1176,9 @@ private:
     file_manager_impl_test m_fm;
     const lib_config m_empty_config;
     const shared_json m_global_settings = make_empty_shared_json();
-    workspace ws = workspace(resource_location("fade:/"), m_fm, m_empty_config, m_global_settings);
+    resource_location m_loc = resource_location("fade:/");
+    workspace_configuration ws_cfg = workspace_configuration(m_fm, m_loc, m_global_settings, m_empty_config, nullptr);
+    workspace ws = workspace(m_fm, ws_cfg);
     std::vector<fade_message> m_fmsgs;
 };
 } // namespace

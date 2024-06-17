@@ -24,6 +24,7 @@
 #include <variant>
 
 #include "config/assembler_options.h"
+#include "tagged_index.h"
 #include "utils/resource_location.h"
 #include "workspaces/processor_group.h"
 
@@ -102,7 +103,10 @@ struct proc_grp_id_equal
     }
 };
 
-using proc_groups_map = std::unordered_map<proc_grp_id, processor_group, proc_grp_id_hasher, proc_grp_id_equal>;
+using proc_groups_map = std::unordered_map<proc_grp_id,
+    std::pair<processor_group, index_t<processor_group, unsigned long long>>,
+    proc_grp_id_hasher,
+    proc_grp_id_equal>;
 
 // represents pair program => processor group - saves
 // information that a program uses certain processor group

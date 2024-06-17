@@ -19,7 +19,6 @@
 #include "document_symbol_item.h"
 #include "fade_messages.h"
 #include "hlasmparser_multiline.h"
-#include "utils/resource_location.h"
 #include "utils/similar.h"
 #include "utils/task.h"
 #include "workspace_manager.h"
@@ -35,26 +34,6 @@ void run_if_valid(hlasm_plugin::utils::task t)
 {
     if (t.valid())
         t.run();
-}
-
-void open_parse_and_recollect_diags(
-    workspace& ws, const std::vector<hlasm_plugin::utils::resource::resource_location>& files)
-{
-    std::ranges::for_each(files, [&ws](const auto& f) { run_if_valid(ws.did_open_file(f)); });
-    parse_all_files(ws);
-
-    ws.diags().clear();
-    ws.collect_diags();
-}
-
-void close_parse_and_recollect_diags(
-    workspace& ws, const std::vector<hlasm_plugin::utils::resource::resource_location>& files)
-{
-    std::ranges::for_each(files, [&ws](const auto& f) { run_if_valid(ws.did_close_file(f)); });
-    parse_all_files(ws);
-
-    ws.diags().clear();
-    ws.collect_diags();
 }
 
 bool matches_fade_messages(const std::vector<fade_message>& a, const std::vector<fade_message>& b)

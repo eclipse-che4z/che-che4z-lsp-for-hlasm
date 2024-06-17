@@ -30,6 +30,7 @@
 #include "workspaces/file.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
+#include "workspaces/workspace_configuration.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -37,6 +38,13 @@ using namespace hlasm_plugin::utils::hashers;
 using namespace hlasm_plugin::utils::resource;
 
 namespace {
+std::vector<diagnostic> extract_diags(workspace& ws, workspace_configuration& cfg)
+{
+    std::vector<diagnostic> result;
+    cfg.produce_diagnostics(result, {}, {});
+    ws.produce_diagnostics(result);
+    return result;
+}
 
 analyzing_context create_analyzing_context(std::string file_name, std::shared_ptr<context::id_storage> ids)
 {
@@ -338,26 +346,27 @@ TEST(macro_cache_test, overwrite_by_inline)
 
     EXPECT_CALL(*library, get_location).WillOnce(ReturnRef(lib_loc));
 
-    workspace ws(file_mngr, config, global_settings, library);
+    workspace_configuration ws_cfg(file_mngr, global_settings, config, library);
+    workspace ws(file_mngr, ws_cfg);
 
     EXPECT_CALL(*library, has_file(std::string_view("MAC"), _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(macro_file_loc), Return(true)));
 
     run_if_valid(ws.did_open_file(opencode_file_loc));
     parse_all_files(ws);
-    ws.collect_diags();
 
-    EXPECT_EQ(ws.diags().size(), 2U);
-    EXPECT_TRUE(find_diag_with_filename(ws.diags(), macro_file_loc));
-    EXPECT_TRUE(find_diag_with_filename(ws.diags(), opencode_file_loc));
+    auto diags = extract_diags(ws, ws_cfg);
+    EXPECT_EQ(diags.size(), 2U);
+    EXPECT_TRUE(find_diag_with_filename(diags, macro_file_loc));
+    EXPECT_TRUE(find_diag_with_filename(diags, opencode_file_loc));
 
-    run_if_valid(ws.did_change_file(opencode_file_loc, file_content_state::changed_content));
+    run_if_valid(ws.mark_file_for_parsing(opencode_file_loc, file_content_state::changed_content));
     parse_all_files(ws);
-    ws.diags().clear();
-    ws.collect_diags();
-    EXPECT_EQ(ws.diags().size(), 2U);
-    EXPECT_TRUE(find_diag_with_filename(ws.diags(), macro_file_loc));
-    EXPECT_TRUE(find_diag_with_filename(ws.diags(), opencode_file_loc));
+
+    diags = extract_diags(ws, ws_cfg);
+    EXPECT_EQ(diags.size(), 2U);
+    EXPECT_TRUE(find_diag_with_filename(diags, macro_file_loc));
+    EXPECT_TRUE(find_diag_with_filename(diags, opencode_file_loc));
 }
 
 TEST(macro_cache_test, inline_depends_on_copy)

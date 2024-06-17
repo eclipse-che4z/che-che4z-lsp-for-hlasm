@@ -15,7 +15,6 @@
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
 import { asError, isCancellationError } from "./helpers";
-import { uriFriendlyBase16Encode } from "./conversions";
 import { deflate, inflate, sha256 } from './tools';
 import { textDecode } from './tools.common';
 
@@ -153,8 +152,6 @@ interface ClientInstance<ConnectArgs, ReadArgs extends ClientUriDetails, ListArg
     dispose: () => void,
 };
 
-function asFragment(s: string) { return s ? '#' + s : ''; }
-
 type ChannelType = {
     onNotification(method: string, handler: vscodelc.GenericNotificationHandler): vscode.Disposable;
     sendNotification<P>(type: vscodelc.NotificationType<P>, params?: P): Promise<void>;
@@ -236,7 +233,6 @@ export class HLASMExternalFiles {
         instance: null,
         details: null,
         server: null,
-        associatedWorkspaceFragment: null,
     });
 
     private async extractUriDetails<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails>(uri: vscode.Uri, rawUri: string, purpose: ExternalRequestType): Promise<{
@@ -245,21 +241,18 @@ export class HLASMExternalFiles {
         instance: null;
         details: null;
         server: null;
-        associatedWorkspaceFragment: null;
     } | {
         cacheKey: string;
         service: string;
         instance: ClientInstance<ConnectArgs, ReadArgs, ListArgs>;
         details: ExternalRequestDetails<ReadArgs, ListArgs>[typeof purpose],
         server: ConnectArgs;
-        associatedWorkspaceFragment: string;
     } | {
         cacheKey: string;
         service: string;
         instance: null;
         details: null;
         server: null;
-        associatedWorkspaceFragment: string;
     }> {
         // skip schema, skip :, skip optional //server, extract service, extract path, end on query or fragment
         const rawPathParser = /^[^:/?#]+:(?:\/\/[^/?#]*)?\/([A-Z]+)(\/[^#?]*)?(?:[?#]|$)/;
@@ -283,7 +276,6 @@ export class HLASMExternalFiles {
                 instance: instance,
                 details: details,
                 server: server,
-                associatedWorkspaceFragment: uri.fragment
             };
         }
         else
@@ -293,7 +285,6 @@ export class HLASMExternalFiles {
                 instance: null,
                 details: null,
                 server: null,
-                associatedWorkspaceFragment: uri.fragment
             };
     }
 
@@ -319,7 +310,7 @@ export class HLASMExternalFiles {
         this.channel?.sendNotification(vscodelc.DidChangeWatchedFilesNotification.type, {
             changes: (vscode.workspace.workspaceFolders || []).map(w => {
                 return {
-                    uri: `${this.magicScheme}:/${service}${asFragment(uriFriendlyBase16Encode(w.uri.toString()))}`,
+                    uri: `${this.magicScheme}:/${service}`,
                     type: vscodelc.FileChangeType.Changed
                 };
             })
@@ -528,7 +519,7 @@ export class HLASMExternalFiles {
         responseTransform: (result: T, pathTransform: (p: string) => string) => (T extends string[] ? ExternalListDirectoryResponse : ExternalReadFileResponse)['data']):
         Promise<(T extends string[] ? ExternalListDirectoryResponse : ExternalReadFileResponse) | ExternalErrorResponse | null> {
         if (msg.op !== ExternalRequestType.read_file && msg.op !== ExternalRequestType.list_directory) throw Error("");
-        const { cacheKey, service, instance, details, server, associatedWorkspaceFragment } = await this.extractUriDetails<ConnectArgs, ReadArgs, ListArgs>(uri, msg.url, msg.op);
+        const { cacheKey, service, instance, details, server } = await this.extractUriDetails<ConnectArgs, ReadArgs, ListArgs>(uri, msg.url, msg.op);
         if (!cacheKey || instance && !details)
             return this.generateError(msg.id, -5, 'Invalid request');
 
@@ -548,7 +539,7 @@ export class HLASMExternalFiles {
         }
         content.references.add(msg.url);
 
-        const { response, cache } = await this.transformResult(msg.id, content, x => responseTransform(x, x => `${this.magicScheme}:/${service}${x}${asFragment(associatedWorkspaceFragment)}`));
+        const { response, cache } = await this.transformResult(msg.id, content, x => responseTransform(x, x => `${this.magicScheme}:/${service}${x}`));
 
         if (cache && instance && !content.cached)
             content.cached = await this.storeCachedResult(await serverId(details, instance), service, details.normalizedPath(), content.result);
