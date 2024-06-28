@@ -331,9 +331,9 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
     std::vector<context::id_index>& keyword_params,
     range op_range) const
 {
-    auto named = hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().find(arg_name);
-    if (named == hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().end()
-        || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
+    const auto& named_params = hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params();
+    auto named = named_params.find(arg_name);
+    if (named == named_params.end() || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
     {
         add_diagnostic(diagnostic_op::warning_W014(op_range));
 

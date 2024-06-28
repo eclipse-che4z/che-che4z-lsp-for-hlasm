@@ -29,7 +29,7 @@ class opencode_provider;
 class ca_processor : public instruction_processor
 {
     using process_table_t =
-        std::unordered_map<context::id_index, std::function<void(const semantics::complete_statement&)>>;
+        std::unordered_map<context::id_index, std::function<void(const processing::resolved_statement&)>>;
 
     const process_table_t table_;
     processing_state_listener& listener_;
@@ -48,7 +48,7 @@ private:
 
     process_table_t create_table();
 
-    void register_seq_sym(const semantics::complete_statement& stmt);
+    void register_seq_sym(const processing::resolved_statement& stmt);
 
     struct SET_info
     {
@@ -73,38 +73,38 @@ private:
     std::vector<expressions::ca_expression*> m_set_work;
 
     template<typename T>
-    SET_info get_SET_symbol(const semantics::complete_statement& stmt);
+    SET_info get_SET_symbol(const processing::resolved_statement& stmt);
     bool prepare_SET_operands(
-        const semantics::complete_statement& stmt, std::vector<expressions::ca_expression*>& expr_values);
+        const processing::resolved_statement& stmt, std::vector<expressions::ca_expression*>& expr_values);
 
     template<typename T>
-    void process_SET(const semantics::complete_statement& stmt);
+    void process_SET(const processing::resolved_statement& stmt);
 
-    bool prepare_GBL_LCL(const semantics::complete_statement& stmt, std::vector<GLB_LCL_info>& info) const;
+    bool prepare_GBL_LCL(const processing::resolved_statement& stmt, std::vector<GLB_LCL_info>& info) const;
 
     template<typename T, bool global>
-    void process_GBL_LCL(const semantics::complete_statement& stmt);
+    void process_GBL_LCL(const processing::resolved_statement& stmt);
 
-    void process_ANOP(const semantics::complete_statement& stmt);
+    void process_ANOP(const processing::resolved_statement& stmt);
 
-    void process_ACTR(const semantics::complete_statement& stmt);
+    void process_ACTR(const processing::resolved_statement& stmt);
 
-    const semantics::seq_sym* prepare_AGO(const semantics::complete_statement& stmt);
-    void process_AGO(const semantics::complete_statement& stmt);
+    const semantics::seq_sym* prepare_AGO(const processing::resolved_statement& stmt);
+    void process_AGO(const processing::resolved_statement& stmt);
 
-    const semantics::seq_sym* prepare_AIF(const semantics::complete_statement& stmt);
-    void process_AIF(const semantics::complete_statement& stmt);
+    const semantics::seq_sym* prepare_AIF(const processing::resolved_statement& stmt);
+    void process_AIF(const processing::resolved_statement& stmt);
 
-    void process_MACRO(const semantics::complete_statement& stmt);
-    void process_MEXIT(const semantics::complete_statement& stmt);
-    void process_MEND(const semantics::complete_statement& stmt);
-    void process_AEJECT(const semantics::complete_statement& stmt);
-    void process_ASPACE(const semantics::complete_statement& stmt);
-    void process_AREAD(const semantics::complete_statement& stmt);
+    void process_MACRO(const processing::resolved_statement& stmt);
+    void process_MEXIT(const processing::resolved_statement& stmt);
+    void process_MEND(const processing::resolved_statement& stmt);
+    void process_AEJECT(const processing::resolved_statement& stmt);
+    void process_ASPACE(const processing::resolved_statement& stmt);
+    void process_AREAD(const processing::resolved_statement& stmt);
 
-    void process_empty(const semantics::complete_statement&);
+    void process_empty(const processing::resolved_statement&);
 
-    void process_MHELP(const semantics::complete_statement& stmt);
+    void process_MHELP(const processing::resolved_statement& stmt);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

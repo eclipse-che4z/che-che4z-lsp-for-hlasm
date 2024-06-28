@@ -19,8 +19,8 @@
 #include "hlasm_statement.h"
 #include "processing/op_code.h"
 
-namespace hlasm_plugin::parser_library::semantics {
-struct complete_statement;
+namespace hlasm_plugin::parser_library::processing {
+struct statement_si_defer_done;
 }
 
 namespace hlasm_plugin::parser_library::context {
@@ -32,7 +32,7 @@ class statement_cache
 public:
     struct cached_statement_t
     {
-        std::shared_ptr<semantics::complete_statement> stmt;
+        std::shared_ptr<processing::statement_si_defer_done> stmt;
         std::vector<diagnostic_op> diags;
     };
     // pair of processing format and reparsed statement
@@ -46,9 +46,7 @@ private:
 public:
     statement_cache(shared_stmt_ptr base);
 
-    bool contains(processing::processing_status_cache_key key) const;
-
-    void insert(processing::processing_status_cache_key key, cached_statement_t statement);
+    const cached_statement_t& insert(processing::processing_status_cache_key key, cached_statement_t statement);
 
     const cached_statement_t* get(processing::processing_status_cache_key key) const;
 

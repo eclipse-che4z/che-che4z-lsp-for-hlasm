@@ -76,7 +76,7 @@ private:
     void assign_machine_attributes(context::id_index symbol_name, const resolved_statement& statement);
     void assign_assembler_attributes(context::id_index symbol_name, const resolved_statement& statement);
 
-    void find_seq(const semantics::core_statement& statement);
+    void find_seq(const semantics::label_si& label);
     void find_ord(const resolved_statement& statement);
 
     void register_attr_ref(context::id_index name, context::symbol_attributes attributes);

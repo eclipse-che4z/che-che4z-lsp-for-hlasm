@@ -53,7 +53,7 @@ protected:
     {}
 
     void register_literals(
-        const semantics::complete_statement& stmt, context::alignment loctr_alignment, size_t unique_id);
+        const processing::resolved_statement& stmt, context::alignment loctr_alignment, size_t unique_id);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

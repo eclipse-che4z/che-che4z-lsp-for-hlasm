@@ -20,7 +20,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 void instruction_processor::register_literals(
-    const semantics::complete_statement& stmt, context::alignment loctr_alignment, size_t unique_id)
+    const processing::resolved_statement& stmt, context::alignment loctr_alignment, size_t unique_id)
 {
     if (auto literals = stmt.literals(); !literals.empty())
     {

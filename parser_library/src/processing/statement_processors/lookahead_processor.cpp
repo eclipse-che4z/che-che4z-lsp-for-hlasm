@@ -64,7 +64,7 @@ void lookahead_processor::process_statement(context::shared_stmt_ptr statement)
 
         if (macro_nest_ == 0)
         {
-            find_seq(*resolved);
+            find_seq(resolved->label_ref());
             find_ord(*resolved);
         }
         if (opcode == context::id_storage::well_known::MACRO)
@@ -295,19 +295,19 @@ void lookahead_processor::assign_cxd_attributes(context::id_index symbol_name, c
     register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::ASM, 'A'_ebcdic, 4));
 }
 
-void lookahead_processor::find_seq(const semantics::core_statement& statement)
+void lookahead_processor::find_seq(const semantics::label_si& label)
 {
-    if (statement.label_ref().type == semantics::label_si_type::SEQ)
+    if (label.type != semantics::label_si_type::SEQ)
+        return;
+
+    const auto& symbol = std::get<semantics::seq_sym>(label.value);
+
+    branch_provider_.register_sequence_symbol(symbol.name, symbol.symbol_range);
+
+    if (symbol.name == target_)
     {
-        const auto& symbol = std::get<semantics::seq_sym>(statement.label_ref().value);
-
-        branch_provider_.register_sequence_symbol(symbol.name, symbol.symbol_range);
-
-        if (symbol.name == target_)
-        {
-            finished_flag_ = true;
-            result_ = lookahead_processing_result(symbol.name, symbol.symbol_range);
-        }
+        finished_flag_ = true;
+        result_ = lookahead_processing_result(symbol.name, symbol.symbol_range);
     }
 }
 

@@ -36,7 +36,3 @@ semantics::deferred_statement* hlasm_statement::access_deferred()
 {
     return kind == statement_kind::DEFERRED ? static_cast<semantics::deferred_statement*>(this) : nullptr;
 }
-
-hlasm_statement::hlasm_statement(const statement_kind kind)
-    : kind(kind)
-{}

@@ -15,8 +15,6 @@
 #ifndef CONTEXT_POSTPONED_STATEMENT_H
 #define CONTEXT_POSTPONED_STATEMENT_H
 
-#include <optional>
-
 #include "context/source_context.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -29,9 +27,14 @@ namespace hlasm_plugin::parser_library::context {
 // contains stack of file positions from where was it postponed
 struct postponed_statement
 {
-    virtual const processing_stack_t& location_stack() const = 0;
+    postponed_statement(processing_stack_t location_stack, const processing::resolved_statement* resolved_stmt)
+        : location_stack(location_stack)
+        , resolved_stmt(resolved_stmt)
+    {}
 
-    virtual const processing::resolved_statement* resolved_stmt() const = 0;
+    processing_stack_t location_stack;
+
+    const processing::resolved_statement* resolved_stmt;
 
     virtual ~postponed_statement() = default;
 };

@@ -14,11 +14,7 @@
 
 #include "error_statement.h"
 
-
 namespace hlasm_plugin::parser_library::processing {
-
-
-position error_statement::statement_position() const { return m_range.start; }
 
 std::span<const diagnostic_op> error_statement::diagnostics() const
 {

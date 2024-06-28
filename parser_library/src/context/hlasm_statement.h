@@ -53,14 +53,16 @@ struct hlasm_statement
     const semantics::deferred_statement* access_deferred() const;
     semantics::deferred_statement* access_deferred();
 
-    virtual position statement_position() const = 0;
+    position statement_position() const { return stmt_range_ref().start; }
 
+    virtual const range& stmt_range_ref() const = 0;
     virtual std::span<const diagnostic_op> diagnostics() const = 0;
 
-    virtual ~hlasm_statement() = default;
-
 protected:
-    hlasm_statement(const statement_kind kind);
+    explicit hlasm_statement(const statement_kind kind)
+        : kind(kind)
+    {}
+    ~hlasm_statement() = default;
 };
 
 using shared_stmt_ptr = std::shared_ptr<const hlasm_statement>;

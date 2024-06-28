@@ -269,9 +269,13 @@ namespace {
 bool operands_relevant_in_lookahead(bool has_label, const processing_status& status)
 {
     static constexpr context::id_index EQU("EQU");
-    return status.first.form == processing_form::ASM && status.second.value == context::id_storage::well_known::COPY
-        || status.first.form == processing_form::ASM && status.second.value == EQU && has_label
-        || status.first.form == processing_form::DAT && has_label;
+    using enum processing_form;
+    const auto& COPY = context::id_storage::well_known::COPY;
+
+    const auto form = status.first.form;
+    const auto& instr = status.second.value;
+
+    return form == ASM && instr == COPY || form == ASM && instr == EQU && has_label || form == DAT && has_label;
 }
 } // namespace
 

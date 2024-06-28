@@ -758,7 +758,7 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
     }
 }
 std::optional<asm_processor::extract_copy_id_result> asm_processor::extract_copy_id(
-    const semantics::complete_statement& stmt, diagnosable_ctx* diagnoser)
+    const processing::resolved_statement& stmt, diagnosable_ctx* diagnoser)
 {
     if (stmt.operands_ref().value.size() != 1 || !stmt.operands_ref().value.front()->access_asm()
         || !stmt.operands_ref().value.front()->access_asm()->access_expr())

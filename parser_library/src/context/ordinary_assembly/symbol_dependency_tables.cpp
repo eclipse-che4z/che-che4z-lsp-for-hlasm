@@ -140,8 +140,7 @@ struct resolve_dependant_visitor
 
         const auto add_diagnostic = [stmt, d = diag_consumer](auto f) {
             if (stmt)
-                d->add_diagnostic(
-                    add_stack_details(f(stmt->resolved_stmt()->stmt_range_ref()), stmt->location_stack()));
+                d->add_diagnostic(add_stack_details(f(stmt->resolved_stmt->stmt_range_ref()), stmt->location_stack));
             else
                 d->add_diagnostic(add_stack_details(f(range()), {}));
         };

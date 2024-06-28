@@ -72,7 +72,7 @@ public:
         range statement;
     };
     static std::optional<extract_copy_id_result> extract_copy_id(
-        const semantics::complete_statement& stmt, diagnosable_ctx* diagnoser);
+        const processing::resolved_statement& stmt, diagnosable_ctx* diagnoser);
     static bool common_copy_postprocess(bool processed,
         const extract_copy_id_result& data,
         context::hlasm_context& hlasm_ctx,

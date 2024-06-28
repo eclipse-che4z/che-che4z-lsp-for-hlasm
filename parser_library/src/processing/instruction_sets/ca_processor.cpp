@@ -81,7 +81,7 @@ ca_processor::process_table_t ca_processor::create_table()
     return table;
 }
 
-void ca_processor::register_seq_sym(const semantics::complete_statement& stmt)
+void ca_processor::register_seq_sym(const processing::resolved_statement& stmt)
 {
     if (stmt.label_ref().type == semantics::label_si_type::SEQ)
     {
@@ -95,7 +95,7 @@ void ca_processor::register_seq_sym(const semantics::complete_statement& stmt)
 }
 
 template<typename T>
-ca_processor::SET_info ca_processor::get_SET_symbol(const semantics::complete_statement& stmt)
+ca_processor::SET_info ca_processor::get_SET_symbol(const processing::resolved_statement& stmt)
 {
     if (stmt.label_ref().type != semantics::label_si_type::VAR)
     {
@@ -167,12 +167,12 @@ ca_processor::SET_info ca_processor::get_SET_symbol(const semantics::complete_st
     return SET_info { set_sym, name, index };
 }
 
-template ca_processor::SET_info ca_processor::get_SET_symbol<context::A_t>(const semantics::complete_statement& stmt);
-template ca_processor::SET_info ca_processor::get_SET_symbol<context::B_t>(const semantics::complete_statement& stmt);
-template ca_processor::SET_info ca_processor::get_SET_symbol<context::C_t>(const semantics::complete_statement& stmt);
+template ca_processor::SET_info ca_processor::get_SET_symbol<context::A_t>(const processing::resolved_statement& stmt);
+template ca_processor::SET_info ca_processor::get_SET_symbol<context::B_t>(const processing::resolved_statement& stmt);
+template ca_processor::SET_info ca_processor::get_SET_symbol<context::C_t>(const processing::resolved_statement& stmt);
 
 bool ca_processor::prepare_SET_operands(
-    const semantics::complete_statement& stmt, std::vector<expressions::ca_expression*>& expr_values)
+    const processing::resolved_statement& stmt, std::vector<expressions::ca_expression*>& expr_values)
 {
     const auto& ops = stmt.operands_ref().value;
     if (ops.empty())
@@ -203,7 +203,7 @@ bool ca_processor::prepare_SET_operands(
     return true;
 }
 
-bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, std::vector<GLB_LCL_info>& info) const
+bool ca_processor::prepare_GBL_LCL(const processing::resolved_statement& stmt, std::vector<GLB_LCL_info>& info) const
 {
     bool has_operand = false;
     const auto& ops = stmt.operands_ref().value;
@@ -257,13 +257,13 @@ bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, st
     return true;
 }
 
-void ca_processor::process_ANOP(const semantics::complete_statement& stmt)
+void ca_processor::process_ANOP(const processing::resolved_statement& stmt)
 {
     assert(stmt.operands_ref().value.empty());
     register_seq_sym(stmt);
 }
 
-void ca_processor::process_ACTR(const semantics::complete_statement& stmt)
+void ca_processor::process_ACTR(const processing::resolved_statement& stmt)
 {
     register_seq_sym(stmt);
 
@@ -293,7 +293,7 @@ void ca_processor::process_ACTR(const semantics::complete_statement& stmt)
     }
 }
 
-const semantics::seq_sym* ca_processor::prepare_AGO(const semantics::complete_statement& stmt)
+const semantics::seq_sym* ca_processor::prepare_AGO(const processing::resolved_statement& stmt)
 {
     const auto& ops = stmt.operands_ref().value;
     if (ops.empty())
@@ -354,7 +354,7 @@ const semantics::seq_sym* ca_processor::prepare_AGO(const semantics::complete_st
     return nullptr;
 }
 
-void ca_processor::process_AGO(const semantics::complete_statement& stmt)
+void ca_processor::process_AGO(const processing::resolved_statement& stmt)
 {
     register_seq_sym(stmt);
 
@@ -362,7 +362,7 @@ void ca_processor::process_AGO(const semantics::complete_statement& stmt)
         branch_provider.jump_in_statements(target->name, target->symbol_range);
 }
 
-const semantics::seq_sym* ca_processor::prepare_AIF(const semantics::complete_statement& stmt)
+const semantics::seq_sym* ca_processor::prepare_AIF(const processing::resolved_statement& stmt)
 {
     const auto& ops = stmt.operands_ref().value;
     if (ops.empty())
@@ -413,7 +413,7 @@ const semantics::seq_sym* ca_processor::prepare_AIF(const semantics::complete_st
     return result;
 }
 
-void ca_processor::process_AIF(const semantics::complete_statement& stmt)
+void ca_processor::process_AIF(const processing::resolved_statement& stmt)
 {
     register_seq_sym(stmt);
 
@@ -421,13 +421,13 @@ void ca_processor::process_AIF(const semantics::complete_statement& stmt)
         branch_provider.jump_in_statements(target->name, target->symbol_range);
 }
 
-void ca_processor::process_MACRO(const semantics::complete_statement& stmt)
+void ca_processor::process_MACRO(const processing::resolved_statement& stmt)
 {
     register_seq_sym(stmt);
     listener_.start_macro_definition({});
 }
 
-void ca_processor::process_MEXIT(const semantics::complete_statement& stmt)
+void ca_processor::process_MEXIT(const processing::resolved_statement& stmt)
 {
     if (!hlasm_ctx.is_in_macro())
         add_diagnostic(diagnostic_op::error_E054(stmt.stmt_range_ref()));
@@ -435,18 +435,18 @@ void ca_processor::process_MEXIT(const semantics::complete_statement& stmt)
         hlasm_ctx.leave_macro();
 }
 
-void ca_processor::process_MEND(const semantics::complete_statement& stmt)
+void ca_processor::process_MEND(const processing::resolved_statement& stmt)
 {
     if (!hlasm_ctx.is_in_macro())
         add_diagnostic(diagnostic_op::error_E054(stmt.stmt_range_ref()));
 }
 
-void ca_processor::process_AEJECT(const semantics::complete_statement&)
+void ca_processor::process_AEJECT(const processing::resolved_statement&)
 {
     // TODO
 }
 
-void ca_processor::process_ASPACE(const semantics::complete_statement& stmt)
+void ca_processor::process_ASPACE(const processing::resolved_statement& stmt)
 {
     // TODO
     (void)stmt;
@@ -484,7 +484,7 @@ struct AREAD_operand_visitor final : public semantics::operand_visitor
 };
 } // namespace
 
-void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
+void ca_processor::process_AREAD(const processing::resolved_statement& stmt)
 {
     if (stmt.label_ref().type != semantics::label_si_type::VAR)
     {
@@ -577,10 +577,10 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
     set_symbol->access_set_symbol<context::C_t>()->set_value(std::move(value_to_set), index);
 }
 
-void ca_processor::process_empty(const semantics::complete_statement&) {}
+void ca_processor::process_empty(const processing::resolved_statement&) {}
 
 template<typename T>
-void ca_processor::process_SET(const semantics::complete_statement& stmt)
+void ca_processor::process_SET(const processing::resolved_statement& stmt)
 {
     auto [set_symbol, name, index] = get_SET_symbol<T>(stmt);
 
@@ -608,12 +608,12 @@ void ca_processor::process_SET(const semantics::complete_statement& stmt)
     }
 }
 
-template void ca_processor::process_SET<context::A_t>(const semantics::complete_statement& stmt);
-template void ca_processor::process_SET<context::B_t>(const semantics::complete_statement& stmt);
-template void ca_processor::process_SET<context::C_t>(const semantics::complete_statement& stmt);
+template void ca_processor::process_SET<context::A_t>(const processing::resolved_statement& stmt);
+template void ca_processor::process_SET<context::B_t>(const processing::resolved_statement& stmt);
+template void ca_processor::process_SET<context::C_t>(const processing::resolved_statement& stmt);
 
 template<typename T, bool global>
-void ca_processor::process_GBL_LCL(const semantics::complete_statement& stmt)
+void ca_processor::process_GBL_LCL(const processing::resolved_statement& stmt)
 {
     register_seq_sym(stmt);
 
@@ -636,14 +636,14 @@ void ca_processor::process_GBL_LCL(const semantics::complete_statement& stmt)
     }
 }
 
-template void ca_processor::process_GBL_LCL<context::A_t, false>(const semantics::complete_statement& stmt);
-template void ca_processor::process_GBL_LCL<context::B_t, false>(const semantics::complete_statement& stmt);
-template void ca_processor::process_GBL_LCL<context::C_t, false>(const semantics::complete_statement& stmt);
-template void ca_processor::process_GBL_LCL<context::A_t, true>(const semantics::complete_statement& stmt);
-template void ca_processor::process_GBL_LCL<context::B_t, true>(const semantics::complete_statement& stmt);
-template void ca_processor::process_GBL_LCL<context::C_t, true>(const semantics::complete_statement& stmt);
+template void ca_processor::process_GBL_LCL<context::A_t, false>(const processing::resolved_statement& stmt);
+template void ca_processor::process_GBL_LCL<context::B_t, false>(const processing::resolved_statement& stmt);
+template void ca_processor::process_GBL_LCL<context::C_t, false>(const processing::resolved_statement& stmt);
+template void ca_processor::process_GBL_LCL<context::A_t, true>(const processing::resolved_statement& stmt);
+template void ca_processor::process_GBL_LCL<context::B_t, true>(const processing::resolved_statement& stmt);
+template void ca_processor::process_GBL_LCL<context::C_t, true>(const processing::resolved_statement& stmt);
 
-void ca_processor::process_MHELP(const semantics::complete_statement& stmt)
+void ca_processor::process_MHELP(const processing::resolved_statement& stmt)
 {
     register_seq_sym(stmt);
 

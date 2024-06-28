@@ -191,6 +191,51 @@ void collector::append_operand_field(collector&& c)
     lit_.insert(lit_.end(), std::make_move_iterator(c.lit_.begin()), std::make_move_iterator(c.lit_.end()));
 }
 
+// struct holding full semantic information (si) about whole instruction statement, whole logical line
+struct statement_si final : public processing::resolved_statement
+{
+    statement_si(range stmt_range,
+        label_si label,
+        instruction_si instruction,
+        operands_si operands,
+        remarks_si remarks,
+        std::vector<semantics::literal_si>&& literals,
+        processing::processing_status status,
+        std::vector<diagnostic_op>&& diags)
+        : label(std::move(label))
+        , instruction(std::move(instruction))
+        , operands(std::move(operands))
+        , remarks(std::move(remarks))
+        , collected_literals(std::make_move_iterator(literals.begin()), std::make_move_iterator(literals.end()))
+        , status(std::move(status))
+        , statement_diagnostics(std::make_move_iterator(diags.begin()), std::make_move_iterator(diags.end()))
+        , stmt_range(stmt_range)
+    {}
+
+    label_si label;
+    instruction_si instruction;
+    operands_si operands;
+    remarks_si remarks;
+    std::vector<semantics::literal_si> collected_literals;
+    processing::processing_status status;
+    std::vector<diagnostic_op> statement_diagnostics;
+    range stmt_range;
+
+    const range& stmt_range_ref() const override { return stmt_range; }
+    const label_si& label_ref() const override { return label; }
+    const instruction_si& instruction_ref() const override { return instruction; }
+    const operands_si& operands_ref() const override { return operands; }
+    std::span<const semantics::literal_si> literals() const override { return collected_literals; }
+    const remarks_si& remarks_ref() const override { return remarks; }
+
+    const processing::op_code& opcode_ref() const override { return status.second; }
+    processing::processing_format format_ref() const override { return status.first; }
+    std::span<const diagnostic_op> diagnostics() const override
+    {
+        return { statement_diagnostics.data(), statement_diagnostics.data() + statement_diagnostics.size() };
+    }
+};
+
 context::shared_stmt_ptr collector::extract_statement(processing::processing_status status, range& statement_range)
 {
     if (!lbl_)
@@ -209,7 +254,7 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
         assert(lit_.empty());
         if (!def_)
             def_.emplace(instr_->field_range, 0, "", std::vector<vs_ptr>());
-        return std::make_shared<statement_si_deferred>(union_range(lbl_->field_range, def_->field_range),
+        return std::make_shared<deferred_statement>(union_range(lbl_->field_range, def_->field_range),
             std::move(*lbl_),
             std::move(*instr_),
             std::move(*def_),
@@ -228,11 +273,14 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
                 op_->value[i] = std::make_unique<empty_operand>(instr_.value().field_range);
         }
 
-        statement_range = union_range(lbl_->field_range, op_->field_range);
-        auto stmt_si = std::make_shared<statement_si>(
-            statement_range, std::move(*lbl_), std::move(*instr_), std::move(*op_), std::move(*rem_), std::move(lit_));
-        return std::make_shared<processing::resolved_statement_impl>(
-            std::move(stmt_si), std::move(status), std::move(statement_diagnostics.diags));
+        return std::make_shared<statement_si>(union_range(lbl_->field_range, op_->field_range),
+            std::move(*lbl_),
+            std::move(*instr_),
+            std::move(*op_),
+            std::move(*rem_),
+            std::move(lit_),
+            std::move(status),
+            std::move(statement_diagnostics.diags));
     }
 }
 

@@ -33,7 +33,7 @@ class hlasm_context;
 } // namespace context
 
 namespace semantics {
-struct core_statement;
+struct instruction_si;
 } // namespace semantics
 } // namespace hlasm_plugin::parser_library
 
@@ -186,7 +186,7 @@ private:
     const utils::resource::resource_location& get_current_stmt_rl(processing_kind proc_kind) const;
     hit_count_entry& get_hc_entry_reference(const utils::resource::resource_location& rl);
 
-    statement_type get_stmt_type(const semantics::core_statement& statement);
+    statement_type get_stmt_type(const semantics::instruction_si& instr);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

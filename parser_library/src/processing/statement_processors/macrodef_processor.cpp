@@ -164,8 +164,8 @@ bool macrodef_processor::process_statement(const context::hlasm_statement& state
 
         if (!res_stmt || res_stmt->opcode_ref().value != context::id_storage::well_known::MACRO)
         {
-            range r = res_stmt ? res_stmt->stmt_range_ref() : range(statement.statement_position());
-            add_diagnostic(diagnostic_op::error_E059(start_.external_name.to_string_view(), r));
+            add_diagnostic(
+                diagnostic_op::error_E059(start_.external_name.to_string_view(), statement.stmt_range_ref()));
             result_.invalid = true;
             finished_flag_ = true;
             return false;
@@ -177,8 +177,7 @@ bool macrodef_processor::process_statement(const context::hlasm_statement& state
     {
         if (!res_stmt)
         {
-            range r = res_stmt ? res_stmt->stmt_range_ref() : range(statement.statement_position());
-            add_diagnostic(diagnostic_op::error_E071(r));
+            add_diagnostic(diagnostic_op::error_E071(statement.stmt_range_ref()));
             result_.invalid = true;
             return false;
         }
@@ -203,7 +202,7 @@ bool macrodef_processor::process_statement(const context::hlasm_statement& state
         }
         else if (auto def_stmt = statement.access_deferred())
         {
-            process_sequence_symbol(def_stmt->label_ref());
+            process_sequence_symbol(def_stmt->label);
         }
     }
     return false;
@@ -384,22 +383,41 @@ bool macrodef_processor::process_MEND()
     return false;
 }
 
+struct empty_statement_t final : public resolved_statement
+{
+    explicit empty_statement_t(range r)
+        : label(r)
+        , instruction(r)
+        , operands(r, {})
+        , remarks(r, {})
+    {}
+
+    static const processing_status status;
+
+    semantics::label_si label;
+    semantics::instruction_si instruction;
+    semantics::operands_si operands;
+    semantics::remarks_si remarks;
+
+    const range& stmt_range_ref() const override { return instruction.field_range; }
+    const semantics::label_si& label_ref() const override { return label; }
+    const semantics::instruction_si& instruction_ref() const override { return instruction; }
+    const semantics::operands_si& operands_ref() const override { return operands; }
+    const semantics::remarks_si& remarks_ref() const override { return remarks; }
+    std::span<const semantics::literal_si> literals() const override { return {}; }
+    const op_code& opcode_ref() const override { return status.second; }
+    processing_format format_ref() const override { return status.first; }
+    std::span<const diagnostic_op> diagnostics() const override { return {}; }
+};
+
+const processing_status empty_statement_t::status(
+    processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurrence::ABSENT),
+    op_code(context::id_storage::well_known::ANOP, context::instruction_type::CA, nullptr));
+
 bool macrodef_processor::process_COPY(const resolved_statement& statement)
 {
     // substitute copy for anop to not be processed again
-
-    auto empty_sem = std::make_shared<semantics::statement_si>(statement.stmt_range_ref(),
-        semantics::label_si(statement.stmt_range_ref()),
-        semantics::instruction_si(statement.stmt_range_ref()),
-        semantics::operands_si(statement.stmt_range_ref(), {}),
-        semantics::remarks_si(statement.stmt_range_ref(), {}),
-        std::vector<semantics::literal_si>());
-
-    auto empty = std::make_unique<resolved_statement_impl>(std::move(empty_sem),
-        processing_status(processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurrence::ABSENT),
-            op_code(context::id_storage::well_known::ANOP, context::instruction_type::CA, nullptr)));
-
-    result_.definition.push_back(std::move(empty));
+    result_.definition.push_back(std::make_shared<empty_statement_t>(statement.stmt_range_ref()));
     add_correct_copy_nest();
 
     if (auto extract = asm_processor::extract_copy_id(statement, nullptr); extract.has_value())

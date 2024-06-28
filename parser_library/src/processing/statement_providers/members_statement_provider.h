@@ -69,7 +69,7 @@ protected:
 private:
     const semantics::instruction_si* retrieve_instruction(const context::statement_cache& cache) const;
 
-    void fill_cache(context::statement_cache& cache,
+    const context::statement_cache::cached_statement_t& fill_cache(context::statement_cache& cache,
         std::shared_ptr<const semantics::deferred_statement> def_stmt,
         const processing_status& status);
 

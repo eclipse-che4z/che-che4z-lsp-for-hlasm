@@ -50,7 +50,7 @@ bool statement_provider::try_trigger_attribute_lookahead(const context::hlasm_st
 
     if (auto def_stmt = statement.access_deferred())
     {
-        label = &def_stmt->label_ref();
+        label = &def_stmt->label;
     }
     else if (auto res_stmt = statement.access_resolved())
     {

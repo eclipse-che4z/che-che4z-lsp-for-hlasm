@@ -63,7 +63,7 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
             break;
         case context::statement_kind::DEFERRED: {
             stmt = cache->get_base();
-            const auto& current_instr = stmt->access_deferred()->instruction_ref();
+            const auto& current_instr = stmt->access_deferred()->instruction;
             if (!resolved_instruction.has_value())
                 resolved_instruction.emplace(processor.resolve_instruction(current_instr));
             auto proc_status_o = processor.get_processing_status(*resolved_instruction, current_instr.field_range);
@@ -101,7 +101,7 @@ const semantics::instruction_si* members_statement_provider::retrieve_instructio
         case context::statement_kind::RESOLVED:
             return &cache.get_base()->access_resolved()->instruction_ref();
         case context::statement_kind::DEFERRED:
-            return &cache.get_base()->access_deferred()->instruction_ref();
+            return &cache.get_base()->access_deferred()->instruction;
         case context::statement_kind::ERROR:
             return nullptr;
         default:
@@ -109,38 +109,81 @@ const semantics::instruction_si* members_statement_provider::retrieve_instructio
     }
 }
 
-void members_statement_provider::fill_cache(context::statement_cache& cache,
+// structure holding deferred statement that is now complete
+struct statement_si_defer_done final
+{
+    statement_si_defer_done(std::shared_ptr<const semantics::deferred_statement> deferred_stmt,
+        semantics::operands_si operands,
+        semantics::remarks_si remarks,
+        std::vector<semantics::literal_si> collected_literals)
+        : deferred_stmt(std::move(deferred_stmt))
+        , operands(std::move(operands))
+        , remarks(std::move(remarks))
+        , collected_literals(std::move(collected_literals))
+    {}
+
+    std::shared_ptr<const semantics::deferred_statement> deferred_stmt;
+
+    semantics::operands_si operands;
+    semantics::remarks_si remarks;
+    std::vector<semantics::literal_si> collected_literals;
+};
+
+const context::statement_cache::cached_statement_t& members_statement_provider::fill_cache(
+    context::statement_cache& cache,
     std::shared_ptr<const semantics::deferred_statement> def_stmt,
     const processing_status& status)
 {
     context::statement_cache::cached_statement_t reparsed_stmt { {}, filter_cached_diagnostics(*def_stmt) };
-    const auto& def_s = def_stmt->deferred_ref();
+    const auto& def_ops = def_stmt->deferred_operands;
 
     if (status.first.occurrence == operand_occurrence::ABSENT || status.first.form == processing_form::UNKNOWN
         || status.first.form == processing_form::IGNORED)
     {
-        semantics::operands_si op(def_s.field_range, semantics::operand_list());
-        semantics::remarks_si rem(def_s.field_range, {});
+        semantics::operands_si op(def_ops.field_range, semantics::operand_list());
+        semantics::remarks_si rem(def_ops.field_range, {});
 
-        reparsed_stmt.stmt = std::make_shared<semantics::statement_si_defer_done>(
+        reparsed_stmt.stmt = std::make_shared<statement_si_defer_done>(
             std::move(def_stmt), std::move(op), std::move(rem), std::vector<semantics::literal_si>());
     }
     else
     {
         diagnostic_consumer_transform diag_consumer(
             [&reparsed_stmt](diagnostic_op diag) { reparsed_stmt.diags.push_back(std::move(diag)); });
-        auto [op, rem, lits] = m_parser.parse_operand_field(def_s.value,
+        auto [op, rem, lits] = m_parser.parse_operand_field(def_ops.value,
             false,
-            semantics::range_provider(def_s.field_range, semantics::adjusting_state::NONE),
-            def_s.logical_column,
+            semantics::range_provider(def_ops.field_range, semantics::adjusting_state::NONE),
+            def_ops.logical_column,
             status,
             diag_consumer);
 
-        reparsed_stmt.stmt = std::make_shared<semantics::statement_si_defer_done>(
+        reparsed_stmt.stmt = std::make_shared<statement_si_defer_done>(
             std::move(def_stmt), std::move(op), std::move(rem), std::move(lits));
     }
-    cache.insert(processing_status_cache_key(status), std::move(reparsed_stmt));
+    return cache.insert(processing_status_cache_key(status), std::move(reparsed_stmt));
 }
+
+struct deferred_statement_adapter final : public resolved_statement
+{
+    deferred_statement_adapter(std::shared_ptr<const statement_si_defer_done> base_stmt, processing_status status)
+        : base_stmt(std::move(base_stmt))
+        , status(std::move(status))
+    {}
+
+    std::shared_ptr<const statement_si_defer_done> base_stmt;
+    processing_status status;
+
+    const range& stmt_range_ref() const override { return base_stmt->deferred_stmt->stmt_range; }
+    const semantics::label_si& label_ref() const override { return base_stmt->deferred_stmt->label; }
+    const semantics::instruction_si& instruction_ref() const override { return base_stmt->deferred_stmt->instruction; }
+    const semantics::operands_si& operands_ref() const override { return base_stmt->operands; }
+    const semantics::remarks_si& remarks_ref() const override { return base_stmt->remarks; }
+    std::span<const semantics::literal_si> literals() const override { return base_stmt->collected_literals; }
+    const op_code& opcode_ref() const override { return status.second; }
+    processing_format format_ref() const override { return status.first; }
+    std::span<const diagnostic_op> diagnostics() const override { return {}; }
+};
+
 
 context::shared_stmt_ptr members_statement_provider::preprocess_deferred(const statement_processor& processor,
     context::statement_cache& cache,
@@ -151,10 +194,9 @@ context::shared_stmt_ptr members_statement_provider::preprocess_deferred(const s
 
     processing_status_cache_key key(status);
 
-    if (!cache.contains(key))
-        fill_cache(cache, { std::move(base_stmt), &def_stmt }, status);
-
-    const auto& cache_item = cache.get(key);
+    const auto* cache_item = cache.get(key);
+    if (!cache_item)
+        cache_item = &fill_cache(cache, { std::move(base_stmt), &def_stmt }, status);
 
     if (processor.kind != processing_kind::LOOKAHEAD)
     {
@@ -162,7 +204,7 @@ context::shared_stmt_ptr members_statement_provider::preprocess_deferred(const s
             m_diagnoser.add_diagnostic(diag);
     }
 
-    return std::make_shared<resolved_statement_impl>(cache_item->stmt, status);
+    return std::make_shared<deferred_statement_adapter>(cache_item->stmt, status);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

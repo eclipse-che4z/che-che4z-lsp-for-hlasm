@@ -23,29 +23,14 @@
 namespace hlasm_plugin::parser_library::processing {
 
 // implementation of postponed_statement interface
-struct postponed_statement_impl : public context::postponed_statement, public resolved_statement
+struct postponed_statement_impl : public context::postponed_statement
 {
-    postponed_statement_impl(rebuilt_statement&& stmt, context::processing_stack_t stmt_location_stack)
-        : stmt(std::move(stmt))
-        , stmt_location_stack(std::move(stmt_location_stack))
+    postponed_statement_impl(rebuilt_statement&& s, context::processing_stack_t stmt_location_stack)
+        : context::postponed_statement(stmt_location_stack, &stmt)
+        , stmt(std::move(s))
     {}
 
     rebuilt_statement stmt;
-    context::processing_stack_t stmt_location_stack;
-
-    const processing::resolved_statement* resolved_stmt() const override { return this; }
-
-    const semantics::label_si& label_ref() const override { return stmt.label_ref(); }
-    const semantics::instruction_si& instruction_ref() const override { return stmt.instruction_ref(); }
-    const semantics::operands_si& operands_ref() const override { return stmt.operands_ref(); }
-    const semantics::remarks_si& remarks_ref() const override { return stmt.remarks_ref(); }
-    std::span<const semantics::literal_si> literals() const override { return stmt.literals(); }
-    const range& stmt_range_ref() const override { return stmt.stmt_range_ref(); }
-    const op_code& opcode_ref() const override { return stmt.opcode_ref(); }
-    processing_format format_ref() const override { return stmt.format_ref(); }
-
-    const context::processing_stack_t& location_stack() const override { return stmt_location_stack; }
-    std::span<const diagnostic_op> diagnostics() const override { return stmt.diagnostics(); }
 };
 
 } // namespace hlasm_plugin::parser_library::processing
