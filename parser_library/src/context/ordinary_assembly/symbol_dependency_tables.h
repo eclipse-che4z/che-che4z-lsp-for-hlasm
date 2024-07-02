@@ -65,25 +65,21 @@ struct dependency_evaluation_context
     {}
 };
 
-// helper structure to count dependencies of a statement
-struct statement_ref
-{
-    using ref_t = std::unordered_map<post_stmt_ptr, dependency_evaluation_context>::const_iterator;
-    statement_ref(ref_t stmt_ref, size_t ref_count = (size_t)1);
-
-    ref_t stmt_ref;
-    size_t ref_count;
-};
+using postponed_statements_t = std::vector<std::pair<post_stmt_ptr, dependency_evaluation_context>>;
 
 class dependency_adder;
 // class holding data about dependencies between symbols
 class symbol_dependency_tables
 {
+    friend struct resolve_dependant_visitor;
     struct dependency_value
     {
         const resolvable* m_resolvable;
         dependency_evaluation_context m_dec;
         size_t m_last_dependencies;
+
+        index_t<postponed_statements_t> related_statement_id;
+        addr_res_ptr related_source_addr;
 
         dependency_value(const resolvable* r, dependency_evaluation_context dec, size_t last_dependencies)
             : m_resolvable(r)
@@ -100,7 +96,7 @@ class symbol_dependency_tables
     std::vector<bool> m_dependencies_has_t_attr;
     std::vector<bool> m_dependencies_space_ptr_type;
 
-    void insert_depenency(
+    dependency_value* insert_depenency(
         dependant target, const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx);
 
     dependant delete_dependency(std::unordered_map<dependant, dependency_value>::iterator it);
@@ -114,14 +110,16 @@ class symbol_dependency_tables
     dep_iterator dep_end();
     size_t m_dependencies_skip_index = 0;
 
-    // statements where dependencies are from
-    std::unordered_map<dependant, statement_ref> m_dependency_source_stmts;
-    // addresses where dependencies are from
-    std::unordered_map<dependant, addr_res_ptr> m_dependency_source_addrs;
     // list of statements containing dependencies that can not be checked yet
-    std::unordered_map<post_stmt_ptr, dependency_evaluation_context> m_postponed_stmts;
+    postponed_statements_t m_postponed_stmts;
+    std::vector<size_t> m_postponed_stmts_references;
+    std::vector<index_t<postponed_statements_t>> m_postponed_stmts_free;
 
     ordinary_assembly_context& m_sym_ctx;
+
+    template<typename T>
+    index_t<postponed_statements_t> add_postponed(post_stmt_ptr, T&&);
+    void delete_postponed(index_t<postponed_statements_t>);
 
     bool check_cycle(dependant target, std::vector<dependant> dependencies, const library_info& li);
 
@@ -139,17 +137,14 @@ class symbol_dependency_tables
     std::vector<dependant> extract_dependencies(
         const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx, const library_info& li);
     bool update_dependencies(const dependency_value& v, const library_info& li);
-    std::vector<dependant> extract_dependencies(const std::vector<const resolvable*>& dependency_sources,
-        const dependency_evaluation_context& dep_ctx,
-        const library_info& li);
 
-    void try_erase_source_statement(const dependant& index);
-
-    bool add_dependency(dependant target,
+    dependency_value* add_dependency(dependant target,
         const resolvable* dependency_source,
         bool check_cycle,
         const dependency_evaluation_context& dep_ctx,
         const library_info& li);
+
+    void establish_statement_dependency(dependency_value& val, index_t<postponed_statements_t> id);
 
 public:
     symbol_dependency_tables(ordinary_assembly_context& sym_ctx);
@@ -184,8 +179,7 @@ public:
         post_stmt_ptr dependency_source_stmt = nullptr);
     bool check_cycle(space_ptr target, const library_info& li);
 
-    // add statement dependency on its operands
-    void add_dependency(post_stmt_ptr target, const dependency_evaluation_context& dep_ctx, const library_info& li);
+    void add_postponed_statement(post_stmt_ptr target, dependency_evaluation_context dep_ctx);
 
     // method for creating more than one dependency assigned to one statement
     dependency_adder add_dependencies(
@@ -201,7 +195,7 @@ public:
     bool check_loctr_cycle(const library_info& li);
 
     // collect all postponed statements either if they still contain dependent objects
-    std::vector<std::pair<post_stmt_ptr, dependency_evaluation_context>> collect_postponed();
+    postponed_statements_t collect_postponed();
 
     // assign default values to all unresoved dependants
     void resolve_all_as_default();
@@ -212,22 +206,22 @@ public:
 // helper class to add dependencies
 class dependency_adder
 {
+    friend class symbol_dependency_tables;
+
     symbol_dependency_tables& m_owner;
-    size_t m_ref_count;
-
-    std::vector<dependant> m_dependants;
-    dependency_evaluation_context m_dep_ctx;
-
-    post_stmt_ptr m_source_stmt;
-
+    index_t<postponed_statements_t> m_id;
     const library_info& m_li;
 
-public:
-    dependency_adder(symbol_dependency_tables& owner,
-        post_stmt_ptr dependency_source_stmt,
-        const dependency_evaluation_context& dep_ctx,
-        const library_info& li);
+    dependency_adder(symbol_dependency_tables& owner, index_t<postponed_statements_t> id, const library_info& li)
+        : m_owner(owner)
+        , m_id(id)
+        , m_li(li)
+    {}
 
+    [[nodiscard]] symbol_dependency_tables::dependency_value* add_dependency(
+        dependant target, const resolvable* dependency_source, bool check_cycle);
+
+public:
     // add symbol dependency on statement
     [[nodiscard]] bool add_dependency(id_index target, const resolvable* dependency_source);
 
@@ -236,12 +230,6 @@ public:
 
     // add space dependency
     void add_dependency(space_ptr target, const resolvable* dependency_source);
-
-    // add statement dependency on its operands
-    void add_dependency();
-
-    // finish adding dependencies
-    void finish();
 };
 
 } // namespace hlasm_plugin::parser_library::context

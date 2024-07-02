@@ -210,7 +210,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
             diags.add_diagnostic(diagnostic_op::error_E033(it->second.r));
         else
         {
-            auto adder = ord_ctx.symbol_dependencies().add_dependencies(
+            ord_ctx.symbol_dependencies().add_postponed_statement(
                 std::make_unique<literal_postponed_statement>(lit, lit_val),
                 dependency_evaluation_context {
                     lit_val.loctr,
@@ -218,10 +218,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
                     lit_key.unique_id,
                     active_using,
                     ord_ctx.current_opcode_generation(),
-                },
-                li);
-            adder.add_dependency();
-            adder.finish();
+                });
         }
     }
 

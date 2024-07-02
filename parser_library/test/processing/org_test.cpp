@@ -935,7 +935,7 @@ Y LR 1,1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E033", "E068" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E016", "E033", "E068" }));
 }
 
 TEST(org, unknown_part_underflow)
