@@ -9,6 +9,7 @@
 
 #### Fixed
 - Accept additional URI schemes based on currently opened workspaces
+- Web Extension fails to load in VSCode 1.92.0
 
 ## [1.13.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.12.0...1.13.0) (2024-04-24)
 
