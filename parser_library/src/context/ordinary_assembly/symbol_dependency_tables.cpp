@@ -159,9 +159,9 @@ struct resolve_dependant_visitor
             std::ranges::find(spaces, sp, utils::first_element) != spaces.end())
             add_diagnostic(diagnostic_op::error_E033);
 
-        auto tmp_loctr_name = sym_ctx.current_section()->current_location_counter().name;
+        auto& tmp_loctr_name = sym_ctx.current_section()->current_location_counter();
 
-        sym_ctx.set_location_counter(sp->owner.name, location(), li);
+        sym_ctx.set_location_counter(sp->owner);
         sym_ctx.current_section()->current_location_counter().switch_to_unresolved_value(sp);
 
         if (auto org = check_address_for_ORG(
@@ -174,7 +174,7 @@ struct resolve_dependant_visitor
                 add_diagnostic(diagnostic_op::error_A115_ORG_op_format);
 
             (void)sym_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
-            sym_ctx.set_location_counter(tmp_loctr_name, location(), li);
+            sym_ctx.set_location_counter(tmp_loctr_name);
             return;
         }
 
@@ -182,7 +182,7 @@ struct resolve_dependant_visitor
             addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr, dep_ctx, li);
 
         auto ret = sym_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
-        sym_ctx.set_location_counter(tmp_loctr_name, location(), li);
+        sym_ctx.set_location_counter(tmp_loctr_name);
 
         if (std::holds_alternative<space_ptr>(ret))
             context::space::resolve(std::move(sp), std::move(std::get<space_ptr>(ret)));

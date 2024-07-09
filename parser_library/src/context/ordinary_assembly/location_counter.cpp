@@ -25,7 +25,7 @@ bool location_counter::has_unresolved_spaces() const { return org_data_.back().h
 
 size_t location_counter::storage() const { return curr_data().storage; }
 
-location_counter::location_counter(id_index name, const section& owner, loctr_kind kind)
+location_counter::location_counter(id_index name, section& owner, loctr_kind kind)
     : switched_(nullptr)
     , layout_created_(false)
     , base_list_(std::make_shared<address::base_entry>(address::base { &owner, id_index() }, 1))

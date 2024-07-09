@@ -31,7 +31,7 @@ section::section(id_index name, section_kind kind)
     curr_loctr_ = loctrs_.back().get();
 }
 
-void section::set_location_counter(id_index loctr_name)
+location_counter& section::set_location_counter(id_index loctr_name)
 {
     auto tmp = std::ranges::find(loctrs_, loctr_name, &location_counter::name);
 
@@ -42,11 +42,22 @@ void section::set_location_counter(id_index loctr_name)
         loctrs_.emplace_back(std::make_unique<location_counter>(loctr_name, *this, loctr_kind::NONSTARTING));
         curr_loctr_ = loctrs_.back().get();
     }
+    return *curr_loctr_;
 }
 
-bool section::counter_defined(id_index loctr_name)
+location_counter& section::set_location_counter(location_counter& l)
 {
-    return std::ranges::find(loctrs_, loctr_name, &location_counter::name) != loctrs_.end();
+    assert(std::ranges::find(loctrs_, &l, &std::unique_ptr<location_counter>::get) != loctrs_.end());
+    curr_loctr_ = &l;
+    return l;
+}
+
+location_counter* section::find_location_counter(id_index loctr_name)
+{
+    if (auto it = std::ranges::find(loctrs_, loctr_name, &location_counter::name); it != loctrs_.end())
+        return it->get();
+    else
+        return nullptr;
 }
 
 location_counter& section::current_location_counter() const { return *curr_loctr_; }

@@ -78,6 +78,9 @@ class ordinary_assembly_context
 
     std::unique_ptr<symbol_dependency_tables> m_symbol_dependencies;
 
+    section* ensure_current_section();
+    location_counter& loctr();
+
 public:
     // access sections
     const std::vector<std::unique_ptr<section>>& sections() const;
@@ -114,6 +117,7 @@ public:
 
     // sets current section
     section* set_section(id_index name, section_kind kind, location symbol_location, const library_info& li);
+    section* set_section(section& s);
 
     // creates an external section
     void create_external_section(
@@ -121,6 +125,7 @@ public:
 
     // sets current location counter of current section
     void set_location_counter(id_index name, location symbol_location, const library_info& li);
+    void set_location_counter(location_counter& l);
 
     // sets value of the current location counter
     void set_location_counter_value(const address& addr,
@@ -171,12 +176,12 @@ public:
     literal_pool& literals() { return *m_literals; }
     const literal_pool& literals() const { return *m_literals; }
     void generate_pool(diagnosable_ctx& diags, index_t<using_collection> active_using, const library_info& li) const;
-    location_counter* implicit_ltorg_target()
+    location_counter& implicit_ltorg_target()
     {
         if (!first_control_section_)
             create_private_section();
 
-        return &first_control_section_->current_location_counter();
+        return first_control_section_->current_location_counter();
     }
 
     bool is_using_label(id_index name) const;

@@ -45,13 +45,13 @@ class location_counter
 
 public:
     const id_index name;
-    const section& owner;
+    section& owner;
     const loctr_kind kind;
 
     bool has_unresolved_spaces() const;
     size_t storage() const;
 
-    location_counter(id_index name, const section& owner, loctr_kind kind);
+    location_counter(id_index name, section& owner, loctr_kind kind);
 
     address current_address() const;
 

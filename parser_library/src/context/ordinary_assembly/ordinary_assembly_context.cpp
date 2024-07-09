@@ -35,7 +35,7 @@ bool symbol_can_be_assigned(const auto& symbols, auto name)
 
 void ordinary_assembly_context::create_private_section()
 {
-    curr_section_ = create_section(id_index(), section_kind::EXECUTABLE);
+    set_section(*create_section(id_index(), section_kind::EXECUTABLE));
 }
 
 const std::vector<std::unique_ptr<section>>& ordinary_assembly_context::sections() const { return sections_; }
@@ -48,6 +48,19 @@ ordinary_assembly_context::ordinary_assembly_context(hlasm_context& hlasm_ctx)
 {}
 ordinary_assembly_context::ordinary_assembly_context(ordinary_assembly_context&&) noexcept = default;
 ordinary_assembly_context::~ordinary_assembly_context() = default;
+
+section* ordinary_assembly_context::ensure_current_section()
+{
+    if (!curr_section_)
+        create_private_section();
+    return curr_section_;
+}
+
+location_counter& ordinary_assembly_context::loctr()
+{
+    auto* s = ensure_current_section();
+    return s->current_location_counter();
+}
 
 bool ordinary_assembly_context::create_symbol(
     id_index name, symbol_value value, symbol_attributes attributes, location symbol_location, const library_info& li)
@@ -114,18 +127,20 @@ section* ordinary_assembly_context::set_section(
     auto tmp = std::ranges::find_if(
         sections_, [name, kind](const auto& sect) { return sect->name == name && sect->kind == kind; });
 
+    section* s;
+
     if (tmp != sections_.end())
-        curr_section_ = std::to_address(*tmp);
+        s = set_section(**tmp);
     else
     {
-        curr_section_ = create_section(name, kind);
+        s = set_section(*create_section(name, kind));
 
         if (!name.empty())
         {
             assert(symbol_can_be_assigned(symbols_, name));
             symbols_.insert_or_assign(name,
                 symbol(name,
-                    curr_section_->current_location_counter().current_address(),
+                    s->current_location_counter().current_address(),
                     symbol_attributes::make_section_attrs(),
                     std::move(symbol_location),
                     hlasm_ctx_.processing_stack()));
@@ -133,7 +148,14 @@ section* ordinary_assembly_context::set_section(
         }
     }
 
-    return curr_section_;
+    return s;
+}
+
+section* ordinary_assembly_context::set_section(section& s)
+{
+    curr_section_ = &s;
+
+    return &s;
 }
 
 void ordinary_assembly_context::create_external_section(
@@ -163,34 +185,37 @@ void ordinary_assembly_context::create_external_section(
 
 void ordinary_assembly_context::set_location_counter(id_index name, location symbol_location, const library_info& li)
 {
-    if (!curr_section_)
-        create_private_section();
+    ensure_current_section();
 
-    bool defined = false;
-
+    location_counter* defined = nullptr;
     for (const auto& sect : sections_)
     {
-        if (sect->counter_defined(name))
+        if ((defined = sect->find_location_counter(name)))
         {
-            curr_section_ = sect.get();
-            defined = true;
+            set_section(*sect);
+            sect->set_location_counter(*defined);
+            break;
         }
     }
 
-    curr_section_->set_location_counter(name);
-
     if (!defined)
     {
+        auto& l = curr_section_->set_location_counter(name);
         assert(symbol_can_be_assigned(symbols_, name));
         symbols_.insert_or_assign(name,
             symbol(name,
-                curr_section_->current_location_counter().current_address(),
+                l.current_address(),
                 symbol_attributes::make_section_attrs(),
                 std::move(symbol_location),
                 hlasm_ctx_.processing_stack()));
 
         m_symbol_dependencies->add_defined(name, nullptr, li);
     }
+}
+
+void ordinary_assembly_context::set_location_counter(location_counter& l)
+{
+    set_section(l.owner)->set_location_counter(l);
 }
 
 void ordinary_assembly_context::set_location_counter_value(const address& addr,
@@ -220,12 +245,11 @@ space_ptr ordinary_assembly_context::set_location_counter_value_space(const addr
     const dependency_evaluation_context& dep_ctx,
     const library_info& li)
 {
-    if (!curr_section_)
-        create_private_section();
+    auto& l = loctr();
 
     if (undefined_address)
     {
-        auto sp = curr_section_->current_location_counter().set_value_undefined(boundary, offset);
+        auto sp = l.set_value_undefined(boundary, offset);
         m_symbol_dependencies->add_dependency(sp,
             std::make_unique<alignable_address_abs_part_resolver>(undefined_address),
             dep_ctx,
@@ -235,7 +259,7 @@ space_ptr ordinary_assembly_context::set_location_counter_value_space(const addr
     }
 
 
-    if (auto [curr_addr, sp] = curr_section_->current_location_counter().set_value(addr, boundary, offset); sp)
+    if (auto [curr_addr, sp] = l.set_value(addr, boundary, offset); sp)
     {
         m_symbol_dependencies->add_dependency(sp,
             std::make_unique<alignable_address_resolver>(
@@ -250,10 +274,7 @@ space_ptr ordinary_assembly_context::set_location_counter_value_space(const addr
 
 void ordinary_assembly_context::set_available_location_counter_value(const library_info& li)
 {
-    if (!curr_section_)
-        create_private_section();
-
-    auto [sp, addr] = curr_section_->current_location_counter().set_available_value();
+    auto [sp, addr] = loctr().set_available_value();
 
     if (sp)
         m_symbol_dependencies->add_dependency(std::move(sp),
@@ -277,12 +298,11 @@ bool ordinary_assembly_context::section_defined(id_index name, section_kind kind
 
 bool ordinary_assembly_context::counter_defined(id_index name)
 {
-    if (!curr_section_)
-        create_private_section();
+    ensure_current_section();
 
     for (const auto& sect : sections_)
     {
-        if (sect->counter_defined(name))
+        if (sect->find_location_counter(name))
             return true;
     }
     return false;
@@ -312,10 +332,7 @@ address ordinary_assembly_context::align(alignment a, const library_info& li)
 
 space_ptr ordinary_assembly_context::register_ordinary_space(alignment align)
 {
-    if (!curr_section_)
-        create_private_section();
-
-    return curr_section_->current_location_counter().register_ordinary_space(align);
+    return loctr().register_ordinary_space(align);
 }
 
 void ordinary_assembly_context::finish_module_layout(diagnostic_consumer* diag_consumer, const library_info& li)
@@ -336,20 +353,19 @@ void ordinary_assembly_context::finish_module_layout(diagnostic_consumer* diag_c
 std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_space(
     size_t length, alignment align, const dependency_evaluation_context& dep_ctx, const library_info& li)
 {
-    if (!curr_section_)
-        create_private_section();
+    auto& l = loctr();
 
-    if (curr_section_->current_location_counter().need_space_alignment(align))
+    if (l.need_space_alignment(align))
     {
-        address addr = curr_section_->current_location_counter().current_address_for_alignment_evaluation(align);
-        auto [ret_addr, sp] = curr_section_->current_location_counter().reserve_storage_area(length, align);
+        address addr = l.current_address_for_alignment_evaluation(align);
+        auto [ret_addr, sp] = l.reserve_storage_area(length, align);
         assert(sp);
 
         m_symbol_dependencies->add_dependency(
             sp, std::make_unique<address_resolver>(addr, align.boundary), dep_ctx, li);
         return std::make_pair(ret_addr, sp);
     }
-    return std::make_pair(curr_section_->current_location_counter().reserve_storage_area(length, align).first, nullptr);
+    return std::make_pair(l.reserve_storage_area(length, align).first, nullptr);
 }
 
 section* ordinary_assembly_context::create_section(id_index name, section_kind kind)

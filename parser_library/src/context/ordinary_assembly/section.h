@@ -34,7 +34,6 @@ enum class section_kind
     WEAK_EXTERNAL,
 };
 
-
 // class representing section (CSECT/DSECT ...)
 class section
 {
@@ -53,10 +52,11 @@ public:
     section(id_index name, section_kind kind);
 
     // sets current location counter
-    void set_location_counter(id_index loctr_name);
+    location_counter& set_location_counter(id_index loctr_name);
+    location_counter& set_location_counter(location_counter& l);
 
     // checker method whether the location counter with provided name already exists in the section
-    bool counter_defined(id_index name);
+    location_counter* find_location_counter(id_index name);
 
     // access current location counter
     location_counter& current_location_counter() const;
