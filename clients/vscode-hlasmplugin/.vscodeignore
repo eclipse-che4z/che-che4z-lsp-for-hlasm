@@ -16,6 +16,3 @@ start_release.sh
 terse/**
 tsconfig.json
 CMakeLists.txt
-bin/wasm/*
-!bin/wasm/hlasm_language_server.wasm
-!bin/wasm/hlasm_language_server_web.js
