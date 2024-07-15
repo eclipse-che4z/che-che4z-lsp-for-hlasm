@@ -4,7 +4,7 @@
 
 #### Added
 - Validate even-odd register requirements of machine instructions
-- Support configuration in user or workspace settings
+- Support program and processor group configuration in the extension settings
 - Support LSP actions across workspace folders
 
 #### Fixed
