@@ -1,3 +1,42 @@
+## [1.14.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.13.0...1.14.0) (2024-07-16)
+
+
+### Features
+
+* Support configuration in user or workspace settings ([610c04c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/610c04c6902404d4f98bf0ffcedb2977b22a28f1))
+* Support LSP actions across workspace folders ([385b6b8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/385b6b8a926612484e7552db5c393c8de18c9df5))
+* Validate even-odd register requirements of machine instructions ([6575b89](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/6575b892e4d4ff132cdfbb028504d59bd8f2e0a8))
+
+
+### Other changes
+
+* Analyzer interface ([2feba81](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2feba81d9169ac6b5eabb2e0f38a37210ae27bf8))
+* Disable issue and PR commenting ([3e31e4c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/3e31e4c3c5a760a66a2f669f4db00a858f7370c5))
+* Header verification ([2a52672](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2a526729f05586de8c226dcad2399f7e6e664f8d))
+* Implement workaround for MSVC 17.10 (cl 19.40) ([b9c590a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/b9c590a3083cec6579e97956736ce9d6a840bc82))
+* Operand checking ([5879157](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/587915746686ae14530a018d347e9553d09d6b8a))
+* Prune statement class hierarchy ([52fa34a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/52fa34a83139e80f61973ef128a496e8757c4238))
+* Reduce indirections in addresses ([0d5aee8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0d5aee8c85bf880e2e8f70a24d5cdda2c4a17a3a))
+* Remove C++ 20 workarounds ([08b4313](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/08b43132711ca96f2cb2b9eeaefdc192c8e82a43))
+* Remove deprecated runners ([69fdeb5](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/69fdeb561b992752218474054f94ffa5487ea10c))
+* Remove proxies ([81c1bb1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/81c1bb1068170c15b6fefb80fc9f103caffb281d))
+* Remove redundant copies ([2d8b98d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2d8b98d418ba1f706f2823e675cfef139d2cda47))
+* Reorganize location counters ([5160360](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/51603609e7654ef71368cf0bd0f6f31d1110b8a8))
+* Upgrade compilers ([a888343](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a888343c0fb74dbe101df0ccca3139606c062d24))
+* Use ranges ([ec6b856](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ec6b8568ba3bfd4fccf13d0927aa4804cdbd81d5))
+* Use std::format ([bdde5a9](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/bdde5a9bac7a13443dd3d990fa3f0e5a665bf815))
+* Use unordered_map in macro cache ([ad0c447](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ad0c447ccf270dbd0243bee51e5b26412d38b44a))
+
+
+### Fixes
+
+* Accept additional URI schemes based on currently opened workspaces ([ddf51a0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ddf51a06bc0308841abafdfa788ecfc5967498db))
+* Incorrect subtraction operator ([0a9c619](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0a9c61950fd4c170d8a7d2b6391329bc43e1a018))
+* Postponed statement handling ([5427ca0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5427ca0a9d8e727a4bdd4b2402d7c48437a3b800))
+* Report external configuration activity ([1ffae9b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1ffae9bb19cea6f9c8d56e3854fe9e39c4929fde))
+* WASM packaging problem ([a4b4674](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a4b4674e768ae1932fd984b44f442f8d086c502a))
+* Web Extension fails to load in VSCode 1.92.0 ([1dc6237](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1dc62374eccff2781e3b6f7ebc2520dbda361519))
+
 ## [1.13.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.12.0...1.13.0) (2024-04-24)
 
 
