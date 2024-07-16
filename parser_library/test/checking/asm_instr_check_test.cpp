@@ -888,7 +888,7 @@ TEST_F(instruction_test, amode)
 
 TEST_F(instruction_test, cattr)
 {
-    EXPECT_FALSE(check_asm_ops("CATTR", test_no_operand_true, range(), collector));
+    EXPECT_TRUE(check_asm_ops("CATTR", test_no_operand_true, range(), collector));
     EXPECT_TRUE(check_asm_ops("CATTR", test_cattr_true, range(), collector));
 }
 

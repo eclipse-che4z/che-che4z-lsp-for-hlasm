@@ -169,6 +169,8 @@ protected:
 
     std::string get_context_text(const antlr4::ParserRuleContext* ctx) const;
 
+    bool goff() const noexcept;
+
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;
     diagnostic_op_consumer* diagnoser_ = nullptr;

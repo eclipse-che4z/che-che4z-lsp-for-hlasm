@@ -140,6 +140,7 @@ public:
     std::pair<data_definition, std::vector<diagnostic_op>> take_result();
 
     void set_collector(semantics::collector& collector) { m_collector = &collector; }
+    void set_goff(bool goff) { m_goff = goff; }
 
 private:
     std::optional<std::pair<int, range>> parse_number(std::string_view& v, range& r);
@@ -148,6 +149,7 @@ private:
 
     data_definition m_result;
     std::vector<diagnostic_op> m_errors;
+    bool m_goff = false;
 
     semantics::collector* m_collector = nullptr;
 

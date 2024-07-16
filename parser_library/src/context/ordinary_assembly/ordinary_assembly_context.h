@@ -17,13 +17,11 @@
 
 #include <memory>
 #include <unordered_map>
-#include <unordered_set>
 #include <variant>
 #include <vector>
 
 #include "alignment.h"
 #include "dependable.h"
-#include "diagnostic.h"
 #include "diagnostic_consumer.h"
 #include "section.h"
 #include "symbol.h"
@@ -69,6 +67,7 @@ class ordinary_assembly_context
 
     section* curr_section_;
     section* first_control_section_ = nullptr;
+    section* last_active_control_section = nullptr;
 
     // literals
     std::unique_ptr<literal_pool> m_literals;
@@ -117,6 +116,8 @@ public:
 
     // sets current section
     section* set_section(id_index name, section_kind kind, location symbol_location, const library_info& li);
+    section* create_and_set_class(
+        id_index name, location symbol_location, const library_info& li, section* base, bool partitioned);
     section* set_section(section& s);
 
     // creates an external section
@@ -195,11 +196,14 @@ public:
 
     opcode_generation current_opcode_generation() const;
 
+    section* get_last_active_control_section() const { return last_active_control_section; }
+
 private:
     void create_private_section();
     std::pair<address, space_ptr> reserve_storage_area_space(
         size_t length, alignment align, const dependency_evaluation_context& dep_ctx, const library_info& li);
     section* create_section(id_index name, section_kind kind);
+    section* create_section(id_index name, section_kind kind, goff_details details);
 
     friend class ordinary_assembly_dependency_solver;
 };

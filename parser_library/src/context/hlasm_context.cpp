@@ -19,6 +19,7 @@
 #include <memory>
 #include <numeric>
 
+#include "diagnostic_tools.h"
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
@@ -1072,6 +1073,66 @@ hlasm_context::name_result hlasm_context::try_get_symbol_name(id_index symbol) c
         return std::make_pair(false, context::id_index());
 
     return std::make_pair(true, symbol);
+}
+
+bool hlasm_context::register_psect(id_index symbol, id_index psect)
+{
+    auto [_, inserted] = psect_registrations.try_emplace(symbol, psect, processing_stack());
+    return inserted;
+}
+
+namespace {
+const section* extract_symbol_base(const symbol* s)
+{
+    if (s->kind() != symbol_value_kind::RELOC)
+        return nullptr;
+    const auto& bases = s->value().get_reloc().bases();
+    if (bases.size() != 1)
+        return nullptr;
+    const auto& [base, mult] = bases.front();
+    if (mult != 1)
+        return nullptr;
+    return base.owner;
+}
+
+bool psect_compatible_symbol(const symbol* s)
+{
+    auto attr = s->attributes().origin();
+    return attr != symbol_origin::EQU && attr != symbol_origin::UNKNOWN;
+}
+
+bool psect_compatible_section(const section* s)
+{
+    return s->kind == section_kind::EXECUTABLE || s->kind == section_kind::READONLY;
+}
+} // namespace
+
+void hlasm_context::validate_psect_registrations(diagnostic_consumer& diags)
+{
+    for (const auto& [sym, details] : psect_registrations)
+    {
+        const auto& [psect, stack] = details;
+        const auto* section = ord_ctx.get_section(psect);
+        if (const symbol * s; !section && (s = ord_ctx.get_symbol(psect)) != nullptr
+            && (!psect_compatible_symbol(s) || (section = extract_symbol_base(s)) == nullptr))
+        {
+            diags.add_diagnostic(
+                add_stack_details(diagnostic_op::error_A173_invalid_psect(range(stack.frame().pos)), stack));
+            continue;
+        }
+        if (!section)
+        {
+            diags.add_diagnostic(
+                add_stack_details(diagnostic_op::error_E032(psect.to_string_view(), range(stack.frame().pos)), stack));
+            continue;
+        }
+        if (!psect_compatible_section(section))
+        {
+            diags.add_diagnostic(
+                add_stack_details(diagnostic_op::error_A173_invalid_psect(range(stack.frame().pos)), stack));
+            continue;
+        }
+    }
 }
 
 const code_scope& get_current_scope(const context::hlasm_context& ctx) { return ctx.current_scope(); }

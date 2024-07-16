@@ -21,7 +21,6 @@
 #include <unordered_map>
 
 #include "checking/data_definition/data_def_type_base.h"
-#include "context/id_storage.h"
 #include "low_language_processor.h"
 
 namespace hlasm_plugin::parser_library {
@@ -33,7 +32,7 @@ class parse_lib_provider;
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::context {
-enum class section_kind;
+enum class section_kind : std::uint8_t;
 } // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::processing {
@@ -110,6 +109,20 @@ private:
     void process_CXD(rebuilt_statement&& stmt);
     void process_TITLE(rebuilt_statement&& stmt);
     void process_PUNCH(rebuilt_statement&& stmt);
+    void process_CATTR(rebuilt_statement&& stmt);
+    struct cattr_ops_result
+    {
+        size_t op_count;
+        context::id_index part;
+        range part_range;
+    };
+    cattr_ops_result cattr_ops(const semantics::operands_si& ops);
+    void handle_cattr_ops(context::id_index class_name,
+        context::id_index part_name,
+        const range& part_rng,
+        size_t op_count,
+        const rebuilt_statement& stmt);
+    void process_XATTR(rebuilt_statement&& stmt);
 
     template<checking::data_instr_type instr_type>
     void process_data_instruction(rebuilt_statement&& stmt);

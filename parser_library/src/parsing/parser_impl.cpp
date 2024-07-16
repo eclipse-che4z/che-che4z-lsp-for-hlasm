@@ -438,6 +438,8 @@ std::string parser_impl::get_context_text(const antlr4::ParserRuleContext* ctx) 
     return result;
 }
 
+bool parser_impl::goff() const noexcept { return hlasm_ctx->goff(); }
+
 parser_holder::~parser_holder() = default;
 
 void parser_holder::prepare_parser(std::string_view text,

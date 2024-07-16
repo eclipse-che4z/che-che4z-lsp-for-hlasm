@@ -35,6 +35,8 @@ namespace hlasm_plugin::parser_library::expressions {
 using utils::hashers::hash_combine;
 
 constexpr char V_type = 'V';
+constexpr char R_type = 'R';
+constexpr char R_type_suppressed = 'r';
 
 context::dependency_collector data_definition::get_dependencies(context::dependency_solver& solver) const
 {
@@ -47,7 +49,7 @@ context::dependency_collector data_definition::get_dependencies(context::depende
 
     // In V type, the symbols are external, it is not defined in current program and does not
     // have any dependencies.
-    if (type != V_type && nominal_value)
+    if (type != V_type && type != R_type && type != R_type_suppressed && nominal_value)
         deps.merge(nominal_value->get_dependencies(solver));
 
     return deps;
@@ -744,6 +746,9 @@ void data_definition_parser::push(push_arg v, range r)
 
             case state::read_type: {
                 m_result.type = std::visit(first_letter_upper, v).value();
+                if (m_result.type == 'R' && !m_goff)
+                    m_result.type = 'r'; // suppress the R-type
+
                 m_result.type_range = move_by_one();
                 auto type_range = m_result.type_range;
 

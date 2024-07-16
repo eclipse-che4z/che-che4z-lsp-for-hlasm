@@ -151,9 +151,40 @@ section* ordinary_assembly_context::set_section(
     return s;
 }
 
+section* ordinary_assembly_context::create_and_set_class(
+    id_index name, location symbol_location, const library_info& li, section* base, bool partitioned)
+{
+    assert(std::ranges::find(sections_, name, &section::name) == sections_.end());
+    assert(symbol_can_be_assigned(symbols_, name));
+
+    auto* s = set_section(*create_section(name,
+        section_kind::EXECUTABLE,
+        {
+            .owner = last_active_control_section,
+            .parent = base,
+            .partitioned = partitioned,
+        }));
+    symbols_.insert_or_assign(name,
+        symbol(name,
+            s->current_location_counter().current_address(),
+            symbol_attributes::make_section_attrs(),
+            std::move(symbol_location),
+            hlasm_ctx_.processing_stack()));
+    m_symbol_dependencies->add_defined(name, nullptr, li);
+
+    return s;
+}
+
 section* ordinary_assembly_context::set_section(section& s)
 {
     curr_section_ = &s;
+    if (s.kind != section_kind::DUMMY)
+    {
+        if (s.goff.has_value())
+            last_active_control_section = s.goff->owner;
+        else
+            last_active_control_section = &s;
+    }
 
     return &s;
 }
@@ -370,13 +401,21 @@ std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_sp
 
 section* ordinary_assembly_context::create_section(id_index name, section_kind kind)
 {
+    using enum section_kind;
     section* ret = sections_.emplace_back(std::make_unique<section>(name, kind)).get();
-    if (first_control_section_ == nullptr
-        && (kind == section_kind::COMMON || kind == section_kind::EXECUTABLE || kind == section_kind::READONLY))
+    if (first_control_section_ == nullptr && (kind == COMMON || kind == EXECUTABLE || kind == READONLY))
         first_control_section_ = ret;
     return ret;
 }
 
+section* ordinary_assembly_context::create_section(id_index name, section_kind kind, goff_details details)
+{
+    using enum section_kind;
+    section* ret = sections_.emplace_back(std::make_unique<section>(name, kind, std::move(details))).get();
+    if (first_control_section_ == nullptr && (kind == COMMON || kind == EXECUTABLE || kind == READONLY))
+        first_control_section_ = ret;
+    return ret;
+}
 
 size_t ordinary_assembly_context::current_literal_pool_generation() const { return m_literals->current_generation(); }
 

@@ -981,7 +981,7 @@ bool expression_instruction::check(std::span<const asm_operand* const> to_check,
 }
 
 cattr::cattr(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
-    : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
+    : assembler_instruction(allowed_types, name_of_instruction, 0, -1) {};
 
 bool cattr::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,

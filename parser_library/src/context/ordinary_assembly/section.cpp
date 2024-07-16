@@ -31,6 +31,15 @@ section::section(id_index name, section_kind kind)
     curr_loctr_ = loctrs_.back().get();
 }
 
+section::section(id_index name, section_kind kind, goff_details details)
+    : name(name)
+    , kind(kind)
+    , goff(std::move(details))
+{
+    loctrs_.emplace_back(std::make_unique<location_counter>(name, *this, loctr_kind::STARTING));
+    curr_loctr_ = loctrs_.back().get();
+}
+
 location_counter& section::set_location_counter(id_index loctr_name)
 {
     auto tmp = std::ranges::find(loctrs_, loctr_name, &location_counter::name);

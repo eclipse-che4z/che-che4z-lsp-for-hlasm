@@ -743,6 +743,46 @@ diagnostic_op diagnostic_op::error_A165_POP_USING(const range& range)
     return diagnostic_op(diagnostic_severity::error, "A165", "Illegal POP USING - stack is empty.", range);
 }
 
+diagnostic_op diagnostic_op::error_A166_GOFF_required(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "A166", "GOFF/XOBJECT option is required", range);
+}
+
+diagnostic_op diagnostic_op::error_A167_CATTR_label(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "A167", "Valid class name required", range);
+}
+
+diagnostic_op diagnostic_op::error_A168_XATTR_label(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "A168", "External symbol name required", range);
+}
+
+diagnostic_op diagnostic_op::error_A169_no_section(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "A169", "Executable section must be started", range);
+}
+
+diagnostic_op diagnostic_op::error_A170_section_type_mismatch(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "A170", "Section type mismatch", range);
+}
+
+diagnostic_op diagnostic_op::warn_A171_operands_ignored(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning, "A171", "Operands ignored", range);
+}
+
+diagnostic_op diagnostic_op::warn_A172_psect_redefinition(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning, "A172", "PSECT cannot be set multiple times", range);
+}
+
+diagnostic_op diagnostic_op::error_A173_invalid_psect(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "A173", "Invalid PSECT symbol", range);
+}
+
 diagnostic_op diagnostic_op::error_A200_SCOPE_param(std::string_view instr_name, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,

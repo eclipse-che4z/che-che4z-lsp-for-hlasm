@@ -23,8 +23,8 @@ TEST(diagnostics, overall_correctness)
         R"( 
  J LABEL
  ACONTROL COMPAT(CASE)
- CATTR DEFLOAD,FILL(3)
- CATTR FILL(3)
+X CATTR DEFLOAD,FILL(3)
+X CATTR FILL(3)
  AINSERT ' sam64',BACK
 &x setc ' sam64'
  AINSERT '&x',BACK
@@ -140,7 +140,7 @@ TEST(diagnostics, case_insensitivity)
  ADATA -300,2*100,2,3,'TEST'
  AINSERT ' sAm31 this needs to be valid code',bacK
  AMODE any31
- CATTR rMODE(31),ALIgn(2)
+X CATTR rMODE(31),ALIgn(2)
 )");
     analyzer a(input);
     a.analyze();
@@ -233,8 +233,8 @@ LABEL2 equ *+79000
     EXPECT_TRUE(a.diags().empty());
 }
 
-TEST(diagnostics,
-    complex_operands) // to do - add machine, check CCW, EQU, OPSYN, other instructions with labels - org etc
+// to do - add machine, check CCW, EQU, OPSYN, other instructions with labels - org etc
+TEST(diagnostics, complex_operands)
 {
     std::string input(
         R"( 
@@ -244,8 +244,9 @@ S START 32
  ADATA -300,2*100,2,3,'test'
  AINSERT ' sam24 this must be valid code',BACK
  AMODE ANY31
- CATTR RMODE(31),ALIGN(2)
- CATTR ALIGN(1),DEFLOAD,EXECUTABLE,FILL(5),RENT,NOTREUS,PRIORITY(2)
+X CATTR RMODE(31),ALIGN(2)
+Y CATTR       ALIGN(1),DEFLOAD,EXECUTABLE,FILL(5),RENT,NOTREUS,PART(P),X
+               PRIORITY(2)
  CEJECT 10/2
  CNOP 6,8
  COM    
@@ -275,11 +276,11 @@ label1 RSECT
  USING (3,4),12
  USING 1,3,15,0,1/1
  WXTRN AW,PART(BW),PART(CW,DW),EW
- XATTR ATTR(lab),REFERENCE(DIRECT,DATA),LINK(XPLINK),SCOPE(SECTION)
+A XATTR ATTR(lab),REFERENCE(DIRECT,DATA),LINK(XPLINK),SCOPE(SECTION)
  END ,(MYCOMPIlER,0101,00273)
 )");
 
-    analyzer a(input);
+    analyzer a(input, analyzer_options(asm_option { .sysopt_xobject = true }));
     a.analyze();
 
 

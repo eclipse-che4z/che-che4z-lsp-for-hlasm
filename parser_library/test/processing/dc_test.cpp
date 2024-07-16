@@ -364,3 +364,36 @@ H        DS    CL(L'H)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E033" }));
 }
+
+TEST(DC, r_type_invalid)
+{
+    std::string input = " DC R(X)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D012" }));
+}
+
+TEST(DC, r_type_invalid_length)
+{
+    std::string input = R"(
+    DC R(X)
+A   DS 0F
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_EQ(get_symbol_address(a.hlasm_ctx(), "A"), std::pair(0, std::string()));
+}
+
+TEST(DC, r_type_valid)
+{
+    std::string input = " DC R(X)";
+
+    analyzer a(input, analyzer_options(asm_option { .sysopt_xobject = true }));
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}

@@ -17,11 +17,10 @@
 
 #include <cassert>
 #include <deque>
-#include <map>
 #include <memory>
-#include <set>
 #include <span>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -145,6 +144,8 @@ private:
     unsigned mnote_max = 0;
 
     label_storage opencode_sequence_symbols;
+
+    std::unordered_map<id_index, std::pair<id_index, processing_stack_t>> psect_registrations;
 
     // return variable symbol from an arbitrary scope
     variable_symbol* get_var_sym(id_index name, const code_scope& scope, const system_variable_map& sysvars) const;
@@ -342,6 +343,11 @@ public:
     system_variable_map get_system_variables(const code_scope&);
 
     friend variable_symbol* get_var_sym(const expressions::evaluation_context& eval_ctx, id_index name);
+
+    bool goff() const noexcept { return asm_options_.sysopt_xobject; }
+
+    bool register_psect(id_index symbol, id_index psect);
+    void validate_psect_registrations(diagnostic_consumer& diags);
 };
 
 bool test_symbol_for_read(const variable_symbol* var,

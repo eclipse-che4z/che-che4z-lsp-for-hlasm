@@ -129,6 +129,7 @@ data_def_base [data_definition_parser* p]
 data_def returns [data_definition value] locals [data_definition_parser p]
     :
     { $p.set_collector(collector); }
+    { $p.set_goff(goff()); }
     data_def_base[&$p]
     (nominal_value {$p.push(std::move($nominal_value.value));})?
     {
@@ -142,6 +143,7 @@ data_def returns [data_definition value] locals [data_definition_parser p]
 data_def_with_nominal returns [data_definition value] locals [data_definition_parser p]
     :
     { $p.set_collector(collector); }
+    { $p.set_goff(goff()); }
     data_def_base[&$p]
     nominal_value {$p.push(std::move($nominal_value.value));}
     {

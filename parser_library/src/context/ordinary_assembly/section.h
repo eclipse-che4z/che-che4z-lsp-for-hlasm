@@ -15,7 +15,9 @@
 #ifndef CONTEXT_SECTION_H
 #define CONTEXT_SECTION_H
 
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "../id_index.h"
@@ -24,7 +26,7 @@ namespace hlasm_plugin::parser_library::context {
 
 class location_counter;
 
-enum class section_kind
+enum class section_kind : std::uint8_t
 {
     DUMMY,
     COMMON,
@@ -32,6 +34,15 @@ enum class section_kind
     READONLY,
     EXTERNAL,
     WEAK_EXTERNAL,
+};
+
+class section;
+
+struct goff_details
+{
+    section* owner;
+    section* parent;
+    bool partitioned;
 };
 
 // class representing section (CSECT/DSECT ...)
@@ -45,11 +56,13 @@ public:
     // unique identifier
     const id_index name;
     const section_kind kind;
+    const std::optional<goff_details> goff;
 
     // access list of location counters
     const std::vector<std::unique_ptr<location_counter>>& location_counters() const;
 
     section(id_index name, section_kind kind);
+    section(id_index name, section_kind kind, goff_details details);
 
     // sets current location counter
     location_counter& set_location_counter(id_index loctr_name);
