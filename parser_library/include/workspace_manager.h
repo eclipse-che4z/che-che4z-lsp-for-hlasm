@@ -166,6 +166,8 @@ public:
 
     virtual void retrieve_output(
         std::string_view document_uri, workspace_manager_response<std::span<const output_line>> resp) = 0;
+
+    virtual void change_implicit_group_base(std::string_view uri) = 0;
 };
 
 workspace_manager* create_workspace_manager_impl(

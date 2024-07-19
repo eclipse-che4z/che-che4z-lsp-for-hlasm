@@ -109,6 +109,8 @@ public:
         retrieve_output,
         (std::string_view document_uri, workspace_manager_response<std::span<const output_line>> resp),
         (override));
+
+    MOCK_METHOD(void, change_implicit_group_base, (std::string_view uri), (override));
 };
 
 } // namespace hlasm_plugin::language_server::test

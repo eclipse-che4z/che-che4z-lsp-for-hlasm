@@ -178,3 +178,35 @@ TEST(workspace_manager, implicit_configuration)
 
     EXPECT_TRUE(matches_message_text(diags.diags, { "Hello" }));
 }
+
+TEST(workspace_manager, implicit_configuration_base_changed)
+{
+    const std::string_view uri = "untitled:file1";
+    NiceMock<workspace_manager_external_file_requests_mock> ext_mock;
+    diag_consumer_mock diags;
+
+    auto ws_mngr = create_workspace_manager(&ext_mock, true);
+    ws_mngr->register_diagnostics_consumer(&diags);
+    ws_mngr->add_workspace("dir", "test:/dir");
+    ws_mngr->change_implicit_group_base("test:/dir");
+    ws_mngr->configuration_changed({},
+        R"({"hlasm":{"proc_grps":{"pgroups":[{"name":"P1","libs":["macs/"]}]},"pgm_conf":{"pgms":[{"program":"**","pgroup":"P1"}]}}})");
+
+    EXPECT_CALL(ext_mock, read_external_file).WillRepeatedly(Invoke([](auto, auto r) { r.error(-1, ""); }));
+    EXPECT_CALL(ext_mock, read_external_directory(StrEq("test:/dir/macs/"), _, _))
+        .WillOnce(Invoke([](auto, auto r, auto) {
+            static constexpr std::string_view resp[] = { "test:/dir/macs/MAC" };
+            r.provide(workspace_manager_external_directory_result { .member_urls = resp });
+        }));
+
+    ws_mngr->did_open_file("test:/dir/macs/MAC", 1, R"( MACRO
+    MAC
+    MNOTE 'Hello'
+    MEND
+)");
+    ws_mngr->did_open_file(uri, 1, " MAC");
+
+    ws_mngr->idle_handler();
+
+    EXPECT_TRUE(matches_message_text(diags.diags, { "Hello" }));
+}

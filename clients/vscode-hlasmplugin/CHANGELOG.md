@@ -5,6 +5,9 @@
 #### Added
 - Support CATTR, XATTR and R-type constants
 
+#### Fixed
+- Evaluate relative paths specified in settings with respect to the root folder
+
 ## [1.14.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.13.0...1.14.0) (2024-07-16)
 
 #### Added

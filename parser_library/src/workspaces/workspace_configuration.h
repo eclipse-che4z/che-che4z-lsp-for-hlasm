@@ -170,6 +170,7 @@ class workspace_configuration : public configuration_provider
 
     file_manager& m_file_manager;
     utils::resource::resource_location m_location;
+    utils::resource::resource_location m_proc_base;
     const shared_json& m_global_settings;
     const lib_config& m_global_config;
 
@@ -320,6 +321,8 @@ public:
     get_analyzer_configuration(utils::resource::resource_location url) override;
     [[nodiscard]] opcode_suggestion_data get_opcode_suggestion_data(
         const utils::resource::resource_location& url) override;
+
+    void change_processor_group_base(utils::resource::resource_location url);
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

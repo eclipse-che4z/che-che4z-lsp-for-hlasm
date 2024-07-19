@@ -72,30 +72,30 @@ void feature_workspace_folders::initialize_feature(const nlohmann::json& initial
             m_supports_dynamic_file_change_notification = watcher->value("dynamicRegistration", false);
     }
 
+    if (auto root_uri = initialize_params.find("rootUri"); root_uri != initialize_params.end() && root_uri->is_string())
+    {
+        m_root_uri = root_uri->get<std::string>();
+    }
+    else if (auto root_path = initialize_params.find("rootPath");
+             root_path != initialize_params.end() && root_path->is_string())
+    {
+        m_root_uri = utils::path::path_to_uri(utils::path::lexically_normal(root_path->get<std::string>()).string());
+    }
+
     if (ws_folders_support)
     {
         for (const auto& ws : initialize_params.at("workspaceFolders"))
             m_initial_workspaces.emplace_back(ws.at("name").get<std::string>(), ws.at("uri").get<std::string>());
-        return;
     }
-
-    auto root_uri = initialize_params.find("rootUri");
-    if (root_uri != initialize_params.end() && !root_uri->is_null())
+    else if (!m_root_uri.empty())
     {
-        m_initial_workspaces.emplace_back(root_uri->get<std::string>(), root_uri->get<std::string>());
-        return;
-    }
-
-    auto root_path = initialize_params.find("rootPath");
-    if (root_path != initialize_params.end() && !root_path->is_null())
-    {
-        auto uri = utils::path::path_to_uri(utils::path::lexically_normal(root_path->get<std::string>()).string());
-        m_initial_workspaces.emplace_back(uri, uri);
+        m_initial_workspaces.emplace_back(m_root_uri, m_root_uri);
     }
 }
 
 void feature_workspace_folders::initialized()
 {
+    ws_mngr_.change_implicit_group_base(m_root_uri);
     send_configuration_request();
     if (m_supports_dynamic_file_change_notification)
         register_file_change_notifictions();

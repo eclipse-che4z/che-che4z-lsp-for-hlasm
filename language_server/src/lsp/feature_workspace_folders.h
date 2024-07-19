@@ -60,6 +60,7 @@ private:
 
     parser_library::workspace_manager& ws_mngr_;
     std::vector<std::pair<std::string, std::string>> m_initial_workspaces;
+    std::string m_root_uri;
 
     bool m_supports_dynamic_file_change_notification = false;
 };

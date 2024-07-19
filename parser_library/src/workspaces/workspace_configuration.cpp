@@ -249,7 +249,8 @@ workspace_configuration::workspace_configuration(file_manager& fm,
     const lib_config& global_config,
     external_configuration_requests* ecr)
     : m_file_manager(fm)
-    , m_location(std::move(location))
+    , m_location(location)
+    , m_proc_base(std::move(location))
     , m_global_settings(global_settings)
     , m_global_config(global_config)
     , m_external_configuration_requests(ecr)
@@ -424,7 +425,7 @@ utils::task workspace_configuration::process_processor_group_library(const confi
     const auto& root =
         lib.root_folder == config::processor_group_root_folder::alternate_root && !alternative_root.empty()
         ? alternative_root
-        : m_location;
+        : m_proc_base;
 
     std::optional<std::string> lib_path = substitute_home_directory(lib.path);
     if (!lib_path.has_value())
@@ -585,7 +586,7 @@ workspace_configuration::load_proc_config(
     config::proc_grps& proc_groups, global_settings_map& utilized_settings_values, std::vector<diagnostic>& diags)
 {
     const auto current_settings = m_global_settings.load();
-    json_settings_replacer json_visitor { *current_settings, utilized_settings_values, m_location };
+    json_settings_replacer json_visitor { *current_settings, utilized_settings_values, m_proc_base };
 
     auto config_source = m_proc_grps_loc;
 
@@ -651,7 +652,7 @@ workspace_configuration::load_pgm_config(
     config::pgm_conf& pgm_config, global_settings_map& utilized_settings_values, std::vector<diagnostic>& diags)
 {
     const auto current_settings = m_global_settings.load();
-    json_settings_replacer json_visitor { *current_settings, utilized_settings_values, m_location };
+    json_settings_replacer json_visitor { *current_settings, utilized_settings_values, m_proc_base };
 
     auto config_source = m_pgm_conf_loc;
 
@@ -1016,7 +1017,7 @@ workspace_configuration::make_external_proc_group(
     global_settings_map utilized_settings_values;
 
     const auto current_settings = m_global_settings.load();
-    json_settings_replacer json_visitor { *current_settings, utilized_settings_values, m_location };
+    json_settings_replacer json_visitor { *current_settings, utilized_settings_values, m_proc_base };
 
     std::vector<diagnostic> diags;
 
@@ -1218,6 +1219,11 @@ utils::value_task<utils::resource::resource_location> workspace_configuration::l
         co_return empty_alternative_cfg_root;
 
     co_return configuration_url;
+}
+
+void workspace_configuration::change_processor_group_base(utils::resource::resource_location url)
+{
+    m_proc_base = std::move(url);
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

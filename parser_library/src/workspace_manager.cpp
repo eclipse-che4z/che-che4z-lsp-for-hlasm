@@ -689,6 +689,11 @@ class workspace_manager_impl final : public workspace_manager,
         notify_diagnostics_consumers();
     }
 
+    void change_implicit_group_base(std::string_view uri) override
+    {
+        m_implicit_workspace.config.change_processor_group_base(normalized_uri(uri));
+    }
+
     void configuration_changed(const lib_config& new_config, std::string_view full_cfg) override
     {
         // TODO: should this action be also performed IN ORDER?
