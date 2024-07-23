@@ -268,6 +268,8 @@ bool print::check(std::span<const asm_operand* const> to_check,
     const static std::vector<std::string_view> print_other_operands = { "ON", "OFF", "NOPRINT" };
     for (const auto& operand : to_check)
     {
+        if (is_operand_empty(operand))
+            continue;
         auto simple = get_simple_operand(operand);
         if (simple == nullptr
             || (!is_param_in_vector(simple->operand_identifier, print_pair_operands)

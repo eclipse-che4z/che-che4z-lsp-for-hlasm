@@ -1272,3 +1272,47 @@ TEST(mnote, output)
 
     a.analyze();
 }
+
+TEST(print, simple_op)
+{
+    std::string input = " PRINT GEN";
+
+    analyzer a(input);
+
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(print, wrong_simple_op)
+{
+    std::string input = " PRINT WRONG";
+
+    analyzer a(input);
+
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A109" }));
+}
+
+TEST(print, complex_op)
+{
+    std::string input = " PRINT COMPLEX(OP)";
+
+    analyzer a(input);
+
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A109" }));
+}
+
+TEST(print, tolerate_null)
+{
+    std::string input = " PRINT ,,,,";
+
+    analyzer a(input);
+
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
