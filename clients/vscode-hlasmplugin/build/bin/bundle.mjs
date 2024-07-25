@@ -76,41 +76,6 @@ for (const bd of buildDetails) {
     });
 }
 
-if (target === 1) {
-    const main = fs.readFileSync('bin/wasm/hlasm_language_server.mjs', { encoding: 'utf8' });
-    const worker = `
-if (!isPthread) {
-    const tmpQueue = [];
-    self.onmessage = (event) => {
-        self.onmessage = (event) => { tmpQueue.push(event); };
-
-        const { extensionUri, arguments } = event.data;
-
-        return Module({
-            tmpQueue,
-            worker: self,
-            arguments,
-            locateFile(path) {
-                if (typeof path !== 'string') return path;
-                if (path.endsWith(".wasm")) {
-                    return extensionUri + 'bin/wasm/hlasm_language_server.wasm';
-                }
-                return path;
-            },
-        });
-    }
-}
-`;
-    const superRunner = main
-        .replaceAll('import.meta.url', 'self.location.href')
-        .replace('"type":"module",', '')
-        .replace('export default Module', '// export default Module')
-        .replace('if (isNode)', '// if (isNode)')
-        .concat(worker);
-
-    fs.writeFileSync('bin/wasm/hlasm_language_server_web.js', superRunner);
-}
-
 console.log('Done!');
 
 // details follow

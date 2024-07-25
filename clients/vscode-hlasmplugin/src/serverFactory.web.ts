@@ -23,7 +23,7 @@ export async function createLanguageServer(_serverVariant: ServerVariant, client
     if (!extensionUri.endsWith('/'))
         extensionUri += '/';
 
-    const worker = new Worker(extensionUri + 'bin/wasm/hlasm_language_server_web.js');
+    const worker = new Worker(extensionUri + 'bin/wasm/hlasm_language_server.js');
     worker.postMessage({ INIT: "INIT", extensionUri, arguments: decorateArgs(getConfig<string[]>('arguments', [])) });
 
     return new vscodelc.LanguageClient(EXTENSION_ID, 'HLASM extension Language Server', clientOptions, worker);

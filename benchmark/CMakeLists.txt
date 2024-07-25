@@ -15,7 +15,6 @@ project(benchmark)
 add_executable(benchmark
     benchmark.cpp
     diagnostic_counter.h)
-generate_emscripten_node_runner(benchmark)
 
 target_include_directories(benchmark
     PRIVATE

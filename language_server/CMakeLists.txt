@@ -20,7 +20,6 @@ add_library(hlasm_language_server_base OBJECT)
 target_include_directories(hlasm_language_server_base PRIVATE src)
 
 add_executable(hlasm_language_server)
-generate_emscripten_node_runner(hlasm_language_server)
 
 add_subdirectory(src)
 

@@ -11,7 +11,6 @@
 #   Broadcom, Inc. - initial API and implementation
 
 add_executable(library_test)
-generate_emscripten_node_runner(library_test)
 
 target_sources(library_test PRIVATE
     aread_time_test.cpp
