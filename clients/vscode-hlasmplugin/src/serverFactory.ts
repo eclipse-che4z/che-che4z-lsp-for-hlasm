@@ -25,6 +25,7 @@ const supportedNativePlatforms: Readonly<{ [key: string]: string }> = Object.fre
     'win32.arm64': 'win32_arm64',
     'linux.x64': 'linux_x64',
     'linux.arm64': 'linux_arm64',
+    'linux.s390x': 'linux_s390x',
     'darwin.x64': 'darwin_x64',
     'darwin.arm64': 'darwin_arm64',
 });

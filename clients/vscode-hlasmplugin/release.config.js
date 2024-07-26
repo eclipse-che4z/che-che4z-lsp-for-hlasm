@@ -127,6 +127,11 @@ function getGitHubPublisherPlugin() {
                     'name': 'hlasm-language-support-linux-arm64-${nextRelease.version}'
                 },
                 {
+                    'path': 'bin/linux_s390x/hlasm_language_server',
+                    'label': 'hlasm-language-support-linux-s390x-${nextRelease.version}',
+                    'name': 'hlasm-language-support-linux-s390x-${nextRelease.version}'
+                },
+                {
                     'path': 'bin/darwin_x64/hlasm_language_server',
                     'label': 'hlasm-language-support-darwin-x64-${nextRelease.version}',
                     'name': 'hlasm-language-support-darwin-x64-${nextRelease.version}'
