@@ -62,7 +62,8 @@ processing_frame_tree::node_pointer processing_frame_tree::step(node_pointer cur
 {
     assert(current.m_node);
 
-    return node_pointer(std::to_address(m_frames.emplace(current.m_node, pos, resource_loc, member, proc_type).first));
+    const auto [it, _] = m_frames.insert({ current.m_node, pos, resource_loc, member, proc_type });
+    return node_pointer(std::to_address(it));
 }
 
 
